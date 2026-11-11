@@ -16,6 +16,50 @@ from thenwhat.decide.steps import score_matches
 from thenwhat.domain import EntityType, ReviewState
 from thenwhat.sources.base import SourceRecord
 
+MAX_SUMMARY_CHARACTERS = 400
+
+
+def what_it_says(record: SourceRecord) -> str | None:
+    """One line on what a registry record is: for a trial its title, conditions,
+    interventions, phase and state; for a paper its title."""
+    section = record.payload.get("protocolSection")
+    if isinstance(section, dict):
+        parts: list[str] = []
+        title = section.get("identificationModule", {}).get("briefTitle")
+        if title:
+            parts.append(str(title).rstrip("."))
+        conditions = section.get("conditionsModule", {}).get("conditions", [])
+        if conditions:
+            parts.append(f"For: {', '.join(conditions)}")
+        tested = [
+            intervention.get("name")
+            for intervention in section.get("armsInterventionsModule", {}).get("interventions", [])
+        ]
+        if any(tested):
+            parts.append(f"Tests: {', '.join(name for name in tested if name)}")
+        phases = "/".join(
+            _plain_phase(phase) for phase in section.get("designModule", {}).get("phases", [])
+        )
+        state = section.get("statusModule", {}).get("overallStatus")
+        standing = ", ".join(
+            part for part in (phases, state.replace("_", " ").lower() if state else "") if part
+        )
+        if standing:
+            parts.append(standing)
+        text = ". ".join(parts)
+        return f"{text[:MAX_SUMMARY_CHARACTERS]}." if text else None
+    title = record.payload.get("title")
+    if isinstance(title, list):
+        title = title[0] if title else None
+    return str(title)[:MAX_SUMMARY_CHARACTERS] if title else None
+
+
+def _plain_phase(phase: str) -> str:
+    if phase == "NA":
+        return "No phase"
+    words = phase.replace("_", " ").replace("PHASE", "Phase ").split()
+    return " ".join(word.capitalize() if word.isalpha() else word for word in words)
+
 
 class TrialSearch(Protocol):
     def search_trials(
@@ -77,6 +121,7 @@ def resolve_claim(
             source_name=record.source_name,
             external_id=record.external_id,
             score=0.0,
+            record_summary=what_it_says(record),
         )
         session.add(match)
         added.append(match)
@@ -139,6 +184,7 @@ def rescore_claim(
             for record in trials.search_trials(term, claim.indication):
                 match = pending.pop((record.source_name, record.external_id), None)
                 if match is not None:
+                    match.record_summary = what_it_says(record)
                     again.append((entity, match, record))
     score_matches(session, backend, claim=claim, candidates=again, now=now)
     session.flush()

@@ -50,6 +50,8 @@ class QueueItem:
     assertion: str
     source_url: str | None
     score: float | None
+    # For a candidate match: what the registry record says, when that was kept.
+    detail: str | None = None
 
 
 def pending_items(
@@ -92,6 +94,7 @@ def pending_items(
                     f" record {match.external_id}{_score_note(session, match, entity)}",
                     template.format(match.external_id) if template else None,
                     match.score,
+                    match.record_summary,
                 )
             )
         for event in session.scalars(
@@ -199,6 +202,43 @@ def decide_item(
         assert claim is not None
         refresh_status(session, claim, as_of=now.date(), now=now, no_signal_years=no_signal_years)
     session.flush()
+
+
+def decide_matches(
+    session: Session,
+    claim_slug: str,
+    state: ReviewState,
+    *,
+    now: datetime,
+    at_least: float | None = None,
+    below: float | None = None,
+    no_signal_years: int = 3,
+    by: Decider = Decider.HUMAN,
+) -> list[int]:
+    """Approve or reject, in one go, a claim's pending candidates on one side of a score.
+    Returns the ids decided. Candidates already decided are left as they are."""
+    if (at_least is None) == (below is None):
+        raise EntryError("Give one of --at-least and --below.")
+    claim = find_claim(session, claim_slug)
+    if claim is None:
+        raise ClaimNotFound(f"No claim has the slug '{claim_slug}'.")
+    pending = session.scalars(
+        select(EntityMatch)
+        .join(Entity, Entity.id == EntityMatch.entity_id)
+        .where(Entity.claim_id == claim.id, EntityMatch.review_state == ReviewState.PENDING)
+        .order_by(EntityMatch.id)
+    ).all()
+    chosen = [
+        match.id
+        for match in pending
+        if (at_least is not None and match.score >= at_least)
+        or (below is not None and match.score < below)
+    ]
+    for match_id in chosen:
+        decide_item(
+            session, "match", match_id, state, now=now, no_signal_years=no_signal_years, by=by
+        )
+    return chosen
 
 
 def flag_failure(

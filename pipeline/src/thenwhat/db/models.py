@@ -177,6 +177,8 @@ class EntityMatch(Reviewed, Base):
     source_name: Mapped[str] = mapped_column(Text)
     external_id: Mapped[str] = mapped_column(Text)
     score: Mapped[float]
+    # What the registry record says, in one line, so a reviewer need not open every link.
+    record_summary: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
 
 

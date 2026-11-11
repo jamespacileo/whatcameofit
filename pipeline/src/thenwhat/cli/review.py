@@ -6,11 +6,18 @@ from typing import Annotated
 
 import typer
 
+from thenwhat.claims.entry import EntryError
 from thenwhat.cli.console import out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.domain import Decider, EvidenceStage, ReviewState
-from thenwhat.review.queue import confirm_stage, decide_item, flag_failure, pending_items
+from thenwhat.review.queue import (
+    confirm_stage,
+    decide_item,
+    decide_matches,
+    flag_failure,
+    pending_items,
+)
 
 review_app = typer.Typer(help="Approve or reject what awaits review.", no_args_is_help=True)
 
@@ -51,44 +58,95 @@ def review_list(
             score = "" if item.score is None else f"  score {item.score:.2f}"
             out.print(f"{item.kind} {item.id}  {item.claim_slug}{score}", markup=False)
             out.print(f"  {item.assertion}", markup=False)
+            if item.detail:
+                out.print(f"  {item.detail}", markup=False)
             out.print(f"  {item.source_url or 'no source link'}", markup=False)
 
 
-def _decide(kind: ItemKind, item_id: int, state: ReviewState, as_assistant: bool) -> None:
+ITEM_IDS = Annotated[
+    list[int] | None,
+    typer.Argument(help="One or more ids shown by `review list`."),
+]
+CLAIM = Annotated[
+    str | None,
+    typer.Option("--claim", help="For matches: decide this claim's pending candidates by score."),
+]
+AT_LEAST = Annotated[
+    float | None, typer.Option("--at-least", help="With --claim: candidates scored this or more.")
+]
+BELOW = Annotated[
+    float | None, typer.Option("--below", help="With --claim: candidates scored under this.")
+]
+
+
+def _decide(
+    kind: ItemKind,
+    item_ids: list[int] | None,
+    state: ReviewState,
+    as_assistant: bool,
+    claim: str | None,
+    at_least: float | None,
+    below: float | None,
+) -> None:
     settings = settings_or_exit()
+    by = ", decided by the assistant" if as_assistant else ""
     with entry_session() as session:
-        decide_item(
-            session,
-            kind.value,
-            item_id,
-            state,
-            now=datetime.now(UTC),
-            no_signal_years=settings.no_signal_years,
-            by=_decider(as_assistant),
-        )
-        by = ", decided by the assistant" if as_assistant else ""
-        out.print(f"{kind.value.capitalize()} {item_id} is now {state.value}{by}.")
+        if claim is not None:
+            if kind is not ItemKind.MATCH or item_ids:
+                raise EntryError("--claim decides matches by score; give it without ids.")
+            decided = decide_matches(
+                session,
+                claim,
+                state,
+                now=datetime.now(UTC),
+                at_least=at_least,
+                below=below,
+                no_signal_years=settings.no_signal_years,
+                by=_decider(as_assistant),
+            )
+            noun = "match" if len(decided) == 1 else "matches"
+            out.print(f"{len(decided)} {noun} of {claim} now {state.value}{by}.", markup=False)
+            return
+        if not item_ids:
+            raise EntryError("Give the ids to decide, or --claim with --at-least or --below.")
+        for item_id in item_ids:
+            decide_item(
+                session,
+                kind.value,
+                item_id,
+                state,
+                now=datetime.now(UTC),
+                no_signal_years=settings.no_signal_years,
+                by=_decider(as_assistant),
+            )
+            out.print(f"{kind.value.capitalize()} {item_id} is now {state.value}{by}.")
 
 
 @review_app.command("approve")
 def review_approve(
     kind: Annotated[ItemKind, typer.Argument(help="claim, match or event.")],
-    item_id: Annotated[int, typer.Argument(help="The id shown by `review list`.")],
+    item_ids: ITEM_IDS = None,
     as_assistant: AS_ASSISTANT = False,
+    claim: CLAIM = None,
+    at_least: AT_LEAST = None,
+    below: BELOW = None,
 ) -> None:
-    """Approve an item. Also changes an earlier rejection."""
-    _decide(kind, item_id, ReviewState.APPROVED, as_assistant)
+    """Approve one or more items. Also changes an earlier rejection."""
+    _decide(kind, item_ids, ReviewState.APPROVED, as_assistant, claim, at_least, below)
 
 
 @review_app.command("reject")
 def review_reject(
     kind: Annotated[ItemKind, typer.Argument(help="claim, match or event.")],
-    item_id: Annotated[int, typer.Argument(help="The id shown by `review list`.")],
+    item_ids: ITEM_IDS = None,
     as_assistant: AS_ASSISTANT = False,
+    claim: CLAIM = None,
+    at_least: AT_LEAST = None,
+    below: BELOW = None,
 ) -> None:
-    """Reject an item. It is kept, not deleted. Also changes an earlier approval,
-    including one made by rule."""
-    _decide(kind, item_id, ReviewState.REJECTED, as_assistant)
+    """Reject one or more items. They are kept, not deleted. Also changes an earlier
+    approval, including one made by rule."""
+    _decide(kind, item_ids, ReviewState.REJECTED, as_assistant, claim, at_least, below)
 
 
 @review_app.command("flag-failure")

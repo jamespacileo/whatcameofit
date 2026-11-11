@@ -343,6 +343,23 @@ def test_candidate_score_is_the_logged_probability_of_a_match(session: Session):
     assert "EX-1 antibody" in backend.states[0] and "EX-1 in adults" in backend.states[0]
 
 
+def test_candidate_keeps_what_its_registry_record_says(session: Session):
+    claim = new_claim(session)
+    add_entity(session, claim.slug, type=EntityType.PAPER, name="The origin paper", doi=DOI)
+    record = trial("NCT00000001", "EX-1 in adults with missing teeth")
+    record.payload["protocolSection"]["designModule"] = {"phases": ["PHASE1", "PHASE2"]}
+    record.payload["protocolSection"]["statusModule"] = {"overallStatus": "ACTIVE_NOT_RECRUITING"}
+
+    resolve(session, claim, trials=FakeTrials({"EX-1 antibody": [record]}), dois=FakeDois({DOI}))
+
+    of_the_trial, of_the_paper = matches(session)
+    assert of_the_trial.record_summary == (
+        "EX-1 in adults with missing teeth. For: Tooth Agenesis. Tests: EX-1."
+        " Phase 1/Phase 2, active not recruiting."
+    )
+    assert of_the_paper.record_summary == "A paper"
+
+
 def test_registry_search_carries_the_claims_indication(session: Session):
     """Scenario: Broad intervention name"""
     claim = new_claim(session)

@@ -32,6 +32,7 @@ from thenwhat.review.queue import (
     Kind,
     confirm_stage,
     decide_item,
+    decide_matches,
     flag_failure,
     pending_items,
 )
@@ -326,6 +327,79 @@ def test_queue_adds_nothing_to_a_candidate_read_as_a_match(session: Session):
     [item] = pending_items(session, claim_slug=SLUG, kind="match")
 
     assert item.assertion.endswith("record NCT1")
+
+
+def test_queue_shows_what_the_registry_record_says(session: Session):
+    claim = approved_claim(session)
+    [match] = candidates(session, claim, "NCT1")
+    match.record_summary = "EX-1 in adults. For: Tooth Agenesis. Phase 1, recruiting."
+    session.flush()
+
+    [item] = pending_items(session, claim_slug=SLUG, kind="match")
+
+    assert item.detail == "EX-1 in adults. For: Tooth Agenesis. Phase 1, recruiting."
+
+
+# --- several candidates at once ------------------------------------------------------
+
+
+def scored(session: Session, claim: Claim, **scores: float) -> dict[str, EntityMatch]:
+    found = candidates(session, claim, *scores)
+    for match in found:
+        match.score = scores[match.external_id]
+    session.flush()
+    return {match.external_id: match for match in found}
+
+
+def test_candidates_below_a_score_are_rejected_together(session: Session):
+    """Scenario: Clearing the noise"""
+    claim = approved_claim(session)
+    found = scored(session, claim, NCT1=0.02, NCT2=0.5, NCT3=0.97)
+
+    decided = decide_matches(session, SLUG, ReviewState.REJECTED, below=0.1, now=NOW)
+
+    assert decided == [found["NCT1"].id]
+    assert [found[n].review_state.value for n in ("NCT1", "NCT2", "NCT3")] == [
+        "rejected",
+        "pending",
+        "pending",
+    ]
+    assert found["NCT1"].reviewed_by is Decider.HUMAN
+
+
+def test_candidates_at_or_above_a_score_are_approved_together(session: Session):
+    claim = approved_claim(session)
+    found = scored(session, claim, NCT1=0.02, NCT2=0.9, NCT3=0.97)
+
+    decide_matches(session, SLUG, ReviewState.APPROVED, at_least=0.9, now=NOW)
+
+    assert [found[n].review_state.value for n in ("NCT1", "NCT2", "NCT3")] == [
+        "pending",
+        "approved",
+        "approved",
+    ]
+
+
+def test_deciding_together_leaves_decided_candidates_and_other_claims_alone(session: Session):
+    claim = approved_claim(session)
+    found = scored(session, claim, NCT1=0.01, NCT2=0.02)
+    decide_item(session, "match", found["NCT1"].id, ReviewState.APPROVED, now=EARLIER)
+    other = scored(session, approved_claim(session, "another-claim"), NCT9=0.01)
+
+    decide_matches(session, SLUG, ReviewState.REJECTED, below=0.5, now=NOW)
+
+    assert found["NCT1"].review_state is ReviewState.APPROVED
+    assert found["NCT2"].review_state is ReviewState.REJECTED
+    assert other["NCT9"].review_state is ReviewState.PENDING
+
+
+def test_deciding_together_needs_exactly_one_score_bound(session: Session):
+    approved_claim(session)
+
+    with pytest.raises(EntryError, match="one of"):
+        decide_matches(session, SLUG, ReviewState.REJECTED, now=NOW)
+    with pytest.raises(EntryError, match="one of"):
+        decide_matches(session, SLUG, ReviewState.REJECTED, below=0.1, at_least=0.9, now=NOW)
 
 
 def test_queue_for_all_claims_includes_draft_claims(session: Session):

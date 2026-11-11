@@ -5,12 +5,13 @@ from contextlib import contextmanager
 from datetime import UTC, date, datetime
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner, Result
 
 from thenwhat.claims.entry import add_article, add_claim
 from thenwhat.cli import app
-from thenwhat.db.models import Claim, EvidenceEvent
+from thenwhat.db.models import Claim, Entity, EntityMatch, EvidenceEvent
 from thenwhat.domain import (
     ClaimStatus,
     Decider,
@@ -108,6 +109,50 @@ def test_review_approve_as_assistant_records_the_assistant(run, event: EvidenceE
     assert result.exit_code == 0
     assert "decided by the assistant" in result.output
     assert event.reviewed_by is Decider.ASSISTANT
+
+
+def test_review_approve_takes_several_ids(run, session: Session, claim: Claim, event):
+    second = add_manual_event(
+        session,
+        SLUG,
+        type=EventType.TRIAL_REGISTERED,
+        event_date=date(2024, 10, 1),
+        source_url="https://registry.example/NCT2",
+        summary="Phase 1 trial registered.",
+        external_id="NCT2",
+        trial_phases=[TrialPhase.PHASE_1],
+        now=NOW,
+    )
+
+    result = run("review", "approve", "event", str(event.id), str(second.id))
+
+    assert result.exit_code == 0, result.output
+    assert event.review_state is second.review_state is ReviewState.APPROVED
+
+
+def test_review_reject_by_score_clears_a_claims_low_candidates(run, session: Session, claim):
+    intervention = session.scalars(select(Entity).where(Entity.claim_id == claim.id)).one()
+    low = EntityMatch(
+        entity_id=intervention.id, source_name="clinicaltrials.gov", external_id="NCT1", score=0.02
+    )
+    high = EntityMatch(
+        entity_id=intervention.id, source_name="clinicaltrials.gov", external_id="NCT2", score=0.95
+    )
+    session.add_all([low, high])
+    session.flush()
+
+    result = run("review", "reject", "match", "--claim", SLUG, "--below", "0.1")
+
+    assert result.exit_code == 0, result.output
+    assert "1 match" in result.output
+    assert (low.review_state, high.review_state) == (ReviewState.REJECTED, ReviewState.PENDING)
+
+
+def test_review_reject_with_nothing_to_decide_explains_and_exits_1(run, claim: Claim):
+    result = run("review", "reject", "match")
+
+    assert result.exit_code == 1
+    assert "Give the ids" in result.output
 
 
 def test_review_reject_rejects(run, event: EvidenceEvent):
