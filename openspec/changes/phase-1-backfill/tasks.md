@@ -72,7 +72,8 @@
 - [x] 9.3 Re-derive status after every decision on an event; verify the test that approves a started event moves the claim from trial registered to Phase 1
 - [x] 9.4 Implement the failure flag with its required trial, event and source URL; verify tests for a flag with a source, a flag without one, and results posted with no flag
 - [x] 9.5 Write human labels to the decision log on match decisions and on evidence stage confirmation; verify tests for a rejected match and a corrected stage
-- [ ] 9.6 Document the review workflow and every command in the README; verify each documented command runs as written against the seeded example
+- [x] 9.6 Document the review workflow and every command in the README; verify each documented command runs as written against the seeded example
+  - Run on a clean stack on 2026-11-11. Every command ran as written except `extract new`, `extract article`, `resolve` and `fetch`: with no contact address or model key configured they stopped at their documented refusal. Those four are covered by tests with scripted registries and a scripted model, not by a live run.
 
 ## 10. Export and site
 

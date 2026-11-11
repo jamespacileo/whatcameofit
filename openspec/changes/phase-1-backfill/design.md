@@ -197,9 +197,23 @@ Astro static build. Routes: `/`, `/[slug]`, `/topic/[vertical]`, `/it-happened`,
 
 Visual design follows the global workflow: an Impeccable design pass produces `PRODUCT.md` and `DESIGN.md` before page components are built.
 
+### D15a. What was built for the site
+
+The export carries codes, never wording: the site owns every status label and checks them at build for verdict words, so a build fails rather than publish one. The site validates the export against the checked-in schema before building, and a post-build check fails if any page lacks the footer notices. When no export file is present the site builds from `site/data/seed-export.json`, which a test keeps equal to the export of the seed.
+
+The claim page's main element is a year-indexed table: what was promised for a year sits beside what was recorded in it, and years with neither collapse into one quiet row. This needs no matching of promises to events, which no rule could do reliably. News reports are entries in the recorded column. Events that produced the status are marked in words. Search indexes claim pages only, including the intervention's synonyms.
+
+The visual direction (a printed public timetable) was chosen by the design skill's roll without the operator and awaits approval; see `DESIGN.md` and `.impeccable/surfaces/`.
+
+### D15b. The seed
+
+The seeded example is a real claim compiled from primary sources, in `data/seed/`. It is loaded as approved so a fresh checkout shows a page, and its decisions carry a third decider value, `seed`, so they are never mistaken for an operator's review. It writes nothing to the decision log. Its trial is registered in Japan's jRCT, not ClinicalTrials.gov, so the trial's two events are manual events in the seed file.
+
+The rule for "started" changed during this work: a trial with a completed event counts as started, because registries do not always give an actual start date and a trial cannot complete without starting.
+
 ### D16. Compose
 
-Three services: `db` (Postgres 16), `pipeline` (runs migrations on start, then idles for `docker compose run pipeline thenwhat …`), `site` (builds from the export and serves a local preview). `docker compose up` on a clean checkout loads the seeded example so the preview is never empty.
+Three services: `db` (Postgres 16), `pipeline` (on start: migrate, load the seed if absent, write the export to a shared volume, then idle for `docker compose run pipeline thenwhat …`), `site` (waits for the export, builds from it and serves a local preview). After a new export, `docker compose restart site` rebuilds the site.
 
 ### D17. Assumptions made without asking
 

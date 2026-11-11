@@ -23,4 +23,5 @@ Domain terms for thenwhat. Behavior is specified in `openspec/`; this file only 
 | **Decision step** | A bounded classification made through the `decide` interface, such as scoring a match. Always advisory. |
 | **Human label** | The operator's review decision recorded against a decision step's suggestion. Used later to evaluate and calibrate. |
 | **Export** | The JSON file of approved data that the site is built from. |
+| **Seed** | A checked-in claim loaded as already reviewed so a fresh checkout has a page. Its decisions are marked as the seed loader's, not an operator's. |
 | **Operator** | The person who enters claims and reviews matches and events. |
