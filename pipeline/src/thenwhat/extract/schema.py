@@ -1,0 +1,41 @@
+"""The shape a language model must return for one news article."""
+
+from typing import Annotated, Literal
+
+from pydantic import BaseModel, Field
+
+ShortText = Annotated[str, Field(min_length=1, max_length=200)]
+
+
+class NamedEntity(BaseModel):
+    type: Literal["person", "institution", "company"]
+    name: ShortText
+
+
+class Draft(BaseModel):
+    headline: ShortText = Field(description="What was claimed, in one neutral line.")
+    summary: str = Field(
+        min_length=1,
+        max_length=500,
+        description="Your own words. Never copy sentences from the article.",
+    )
+    intervention: ShortText = Field(description="The drug, device or method.")
+    intervention_synonyms: list[ShortText] = Field(
+        default_factory=list, description="Other names the article uses for it."
+    )
+    indication: ShortText = Field(description="The condition it is claimed to treat.")
+    paper_title: ShortText | None = Field(
+        default=None, description="Title of the scientific paper reported on, if named."
+    )
+    paper_doi: str | None = Field(
+        default=None,
+        pattern=r"^10\.\d{4,9}/\S+$",
+        description="DOI of that paper, only if the article gives it.",
+    )
+    entities: list[NamedEntity] = Field(
+        default_factory=list, description="People, institutions and companies named."
+    )
+    promises: list[Annotated[str, Field(min_length=1, max_length=300)]] = Field(
+        default_factory=list,
+        description="Each timeline the article promises, as a short phrase. Empty if none.",
+    )

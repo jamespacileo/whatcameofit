@@ -12,6 +12,7 @@ from thenwhat.db.models import Claim, Entity, Promise, SourceArticle
 from thenwhat.domain import EntityType
 
 MAX_SLUG_LENGTH = 60
+MAX_SUMMARY_LENGTH = 500
 SLUG_PATTERN = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*")
 
 
@@ -36,6 +37,10 @@ class MissingField(EntryError):
 
 
 class InvalidUrl(EntryError):
+    pass
+
+
+class InvalidField(EntryError):
     pass
 
 
@@ -73,6 +78,9 @@ def _tidy(text: str) -> str:
 def _key(text: str) -> str:
     """Form used to compare names: spacing and letter case do not matter."""
     return _tidy(text).casefold()
+
+
+name_key = _key
 
 
 def _required(field: str, value: str) -> str:
@@ -191,6 +199,56 @@ def _find_article(session: Session, claim: Claim, url: str) -> SourceArticle | N
     return session.scalars(
         select(SourceArticle).where(SourceArticle.claim_id == claim.id, SourceArticle.url == url)
     ).one_or_none()
+
+
+find_article = _find_article
+
+
+def check_new_claim(session: Session, slug: str, vertical: str) -> None:
+    """Refuse a slug or vertical that `add_claim` would refuse, before any costly work."""
+    _check_slug(slug)
+    if vertical not in VERTICALS:
+        valid = ", ".join(sorted(VERTICALS))
+        raise UnknownVertical(f"Unknown vertical '{vertical}'. Valid verticals: {valid}.")
+    if find_claim(session, slug) is not None:
+        raise SlugTaken(f"Slug '{slug}' is already taken.")
+
+
+def edit_claim(
+    session: Session,
+    slug: str,
+    *,
+    headline: str | None = None,
+    summary: str | None = None,
+    indication: str | None = None,
+    intervention: str | None = None,
+) -> Claim:
+    """Correct a claim's own fields. Changing its identity is checked against other claims."""
+    claim = _claim(session, slug)
+    entity = session.scalars(
+        select(Entity).where(Entity.claim_id == claim.id, Entity.type == EntityType.INTERVENTION)
+    ).first()
+    assert entity is not None, "every claim is created with its intervention entity"
+    if headline is not None:
+        claim.headline = _required("headline", headline)
+    if summary is not None:
+        summary = _required("summary", summary)
+        if len(summary) > MAX_SUMMARY_LENGTH:
+            raise InvalidField(f"summary is longer than {MAX_SUMMARY_LENGTH} characters.")
+        claim.summary = summary
+    if indication is not None or intervention is not None:
+        new_intervention = _required("intervention", intervention or entity.name)
+        new_indication = _required("indication", indication or claim.indication)
+        entity.name, old_name = "", entity.name  # so the claim does not match itself
+        session.flush()
+        other = _slug_of_claim_covering(session, new_intervention, new_indication)
+        if other is not None and other != claim.slug:
+            entity.name = old_name
+            raise DuplicateClaim(other)
+        entity.name = new_intervention
+        claim.indication = new_indication
+    session.flush()
+    return claim
 
 
 def add_promise(
