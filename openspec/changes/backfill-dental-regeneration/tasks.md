@@ -4,6 +4,7 @@
 
 - [ ] 1.1 Put `CONTACT_EMAIL`, `LLM_MODEL`, the provider key, `LLM_INPUT_USD_PER_MTOK` and `LLM_OUTPUT_USD_PER_MTOK` in `.env`; verify `thenwhat resolve tooth-regrowth-usag1` reaches the registries instead of stopping at a refusal
 - [ ] 1.2 Read `data/seed/claims-notes.md` and remove or correct any candidate row the operator does not want; verify `thenwhat claim import-csv` accepts the file
+  - Checked 2026-11-11 against a scratch database: the file as it stands imports as 25 pending claims, 25 articles and 3 promises. The operator's pass over the rows is still to do, so this task stays open.
 - [ ] 1.3 Review the seeded claim `tooth-regrowth-usag1` against its sources and record the result in `data/seed/tooth-regrowth-usag1.json`; verify its `note` says who checked it and when
 
 ## 2. First five claims
