@@ -34,13 +34,14 @@ The unit is the claim, not the article, and the status is derived by fixed rules
 
 ## Capabilities and Constraints
 
-- Pages: one per claim at `/{slug}`, an index per topic, a list of claims that reached approval, and a home page with search and recent status changes.
+- Pages: one per claim at `/{slug}`, an index per topic, a list of claims that reached approval, and a home page with search, the most recent news reports and recent status changes.
 - Statuses: preclinical only, trial registered, Phase 1, Phase 2, Phase 3, approved, failed, terminated, retracted. A "no signal for N years" note can accompany the first five.
 - Never: medical advice, treatment recommendations, editorial verdicts. "No signal" is never worded as dead or abandoned. A registered trial is never presented as a treatment option.
 - Never: article text. News articles are linked by outlet, title and date only.
 - Every page carries a footer: not medical advice; a registered trial is not a treatment option; data sources; last-checked date.
 - Not yet: email follow, RSS, paste-a-URL lookup, public deployment.
-- First topic: dental regeneration. More topics follow later.
+- Topics: dental regeneration was the first. On 2026-11-11 the operator asked for wide coverage of recent, popular, miraculous-sounding cure stories, clickbait titles included, so thirteen more topics are configured. A topic is listed on the site once it has a published claim.
+- Headlines: an outlet's title is shown as a quotation with the outlet named, beside the status the evidence supports. The site never repeats a headline's wording as its own.
 
 ## Brand Commitments
 
