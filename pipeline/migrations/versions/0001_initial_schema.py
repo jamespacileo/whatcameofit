@@ -23,6 +23,7 @@ def upgrade() -> None:
         sa.Column("headline", sa.Text(), nullable=False),
         sa.Column("summary", sa.Text(), nullable=False),
         sa.Column("vertical", sa.Text(), nullable=False),
+        sa.Column("indication", sa.Text(), nullable=False),
         sa.Column("first_reported_date", sa.Date(), nullable=True),
         sa.Column(
             "evidence_stage",

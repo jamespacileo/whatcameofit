@@ -27,6 +27,7 @@ def add_claim(session: Session) -> Claim:
         slug="tooth-regrowth-usag1",
         headline="h",
         summary="s",
+        indication="i",
         vertical="dental-regeneration",
         first_reported_date=date(2019, 1, 1),
     )
@@ -184,7 +185,7 @@ def test_pending_events_are_not_read(session: Session):
 
 def test_events_of_other_claims_are_not_read(session: Session):
     claim = add_claim(session)
-    other = Claim(slug="other-claim", headline="h", summary="s", vertical="v")
+    other = Claim(slug="other-claim", headline="h", summary="s", indication="i", vertical="v")
     session.add(other)
     session.flush()
     add_started_phase_1_trial(session, other)

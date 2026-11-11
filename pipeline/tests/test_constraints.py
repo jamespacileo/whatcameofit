@@ -21,7 +21,9 @@ NOW = datetime(2026, 1, 1, tzinfo=UTC)
 
 
 def add_claim(session: Session, slug: str = "tooth-regrowth-usag1") -> Claim:
-    claim = Claim(slug=slug, headline="h", summary="s", vertical="dental-regeneration")
+    claim = Claim(
+        slug=slug, headline="h", summary="s", indication="i", vertical="dental-regeneration"
+    )
     session.add(claim)
     session.flush()
     return claim
@@ -88,7 +90,7 @@ def assert_refused(session: Session, constraint: str) -> None:
 
 def test_duplicate_slug_is_refused(session: Session):
     add_claim(session, "enamel-gel")
-    session.add(Claim(slug="enamel-gel", headline="h", summary="s", vertical="v"))
+    session.add(Claim(slug="enamel-gel", headline="h", summary="s", indication="i", vertical="v"))
 
     assert_refused(session, "uq_claim_slug")
 
@@ -97,7 +99,7 @@ def test_duplicate_slug_is_refused(session: Session):
     "slug", ["Tooth-Regrowth", "tooth_regrowth", "-tooth", "tooth--regrowth", "a" * 61]
 )
 def test_malformed_slug_is_refused(session: Session, slug: str):
-    session.add(Claim(slug=slug, headline="h", summary="s", vertical="v"))
+    session.add(Claim(slug=slug, headline="h", summary="s", indication="i", vertical="v"))
 
     assert_refused(session, "ck_claim_slug_format")
 
