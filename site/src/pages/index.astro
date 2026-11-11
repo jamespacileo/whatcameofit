@@ -67,7 +67,7 @@ const recent = data.claims
               <td class="when" data-column="Reported">
                 {formatDate(report.publishedDate)}
               </td>
-              <td data-column="Status now">
+              <td class="status" data-column="Status now">
                 <StatusCell claim={report.claim} />
               </td>
             </tr>
@@ -98,7 +98,7 @@ const recent = data.claims
               <td class="claim">
                 <a href={`/${claim.slug}`}>{claim.headline}</a>
               </td>
-              <td data-column="Status">
+              <td class="status" data-column="Status">
                 <StatusCell claim={claim} />
               </td>
               <td class="when" data-column="Status set">

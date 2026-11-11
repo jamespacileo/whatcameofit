@@ -2,6 +2,7 @@
 import Base from "../layouts/Base.astro";
 import Clock from "@lucide/astro/icons/clock";
 import Info from "@lucide/astro/icons/info";
+import Share2 from "@lucide/astro/icons/share-2";
 import BasisMark from "../components/BasisMark.astro";
 import Outlet from "../components/Outlet.astro";
 import KindIcon from "../components/KindIcon.astro";
@@ -61,7 +62,13 @@ const imageAlt = cardAlt(
   imageAlt={imageAlt}
 >
   <article data-pagefind-body>
-    <TopicChip vertical={claim.vertical} />
+    <div class="above-title">
+      <TopicChip vertical={claim.vertical} />
+      <button type="button" class="share" data-share hidden data-pagefind-ignore>
+        <Share2 size={16} stroke-width={1.9} aria-hidden="true" />
+        <span data-share-text>Share</span>
+      </button>
+    </div>
     <h1 class="title">
       {
         /* A name such as "USAG-1" must not break at its hyphen. */
@@ -335,3 +342,27 @@ const imageAlt = cardAlt(
     }
   </article>
 </Base>
+
+<script>
+  // Sharing uses the device's own share sheet where there is one, and copies the
+  // page address where there is not. The button only appears when it can work.
+  const button = document.querySelector<HTMLButtonElement>("[data-share]");
+  if (button && (navigator.share || navigator.clipboard)) {
+    const text = button.querySelector<HTMLElement>("[data-share-text]")!;
+    button.hidden = false;
+    button.addEventListener("click", async () => {
+      const url = location.origin + location.pathname;
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: document.title, url });
+        } else {
+          await navigator.clipboard.writeText(url);
+          text.textContent = "Link copied";
+          setTimeout(() => (text.textContent = "Share"), 2000);
+        }
+      } catch {
+        // The reader closed the share sheet, or copying was refused: nothing to do.
+      }
+    });
+  }
+</script>

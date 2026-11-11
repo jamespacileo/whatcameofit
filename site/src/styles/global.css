@@ -325,6 +325,33 @@ a.chip:hover {
   margin-bottom: 0;
 }
 
+.above-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.share {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--blue);
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0.2rem 0.8rem;
+  cursor: pointer;
+}
+
+.share:hover {
+  background: var(--tint);
+  border-color: var(--tint);
+}
+
 /* Page title. */
 
 .title {
@@ -691,6 +718,13 @@ a.chip:hover {
   gap: 0.15rem 0.7rem;
 }
 
+@media (min-width: 40.01rem) {
+  .index .status-line {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+}
+
 .index .track {
   width: 5.5rem;
   flex: none;
@@ -915,6 +949,15 @@ a.chip:hover {
     display: none;
   }
 
+  /* The track and the label in bold say "status" without the word. */
+  .index td.status::before {
+    content: none;
+  }
+
+  .index td.status {
+    padding-top: 0.3rem;
+  }
+
   .record .origin {
     grid-column: 2 / -1;
   }
@@ -1038,6 +1081,32 @@ a.chip:hover {
 
 .stage-filter .place.off strong {
   font-size: 0.95rem;
+}
+
+.stage-filter .shown {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin: 0.7rem 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.stage-filter .shown button {
+  font: inherit;
+  font-weight: 600;
+  color: var(--blue);
+  background: none;
+  border: 0;
+  padding: 0.2rem 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.stage-filter .shown button:hover {
+  text-decoration-thickness: 2px;
 }
 
 /* The topic directory: dense, lettered, narrowed by typing. */
@@ -1207,6 +1276,12 @@ a.chip:hover {
   line-height: 1;
 }
 
+/* Beside a promise the outlet has its own line, and the date the next. */
+.promised .outlet,
+.undated .outlet {
+  display: block;
+}
+
 .promised .outlet .tile,
 .undated .outlet .tile {
   background: var(--paper);
@@ -1328,6 +1403,7 @@ a.chip:hover {
 
 @media print {
   .masthead nav,
+  .share,
   .search,
   .skip {
     display: none;

@@ -92,10 +92,11 @@ test("the topic directory lists every listed topic and no empty one", () => {
   assert.match(html, /1 topic, 3\s+claims tracked/);
 });
 
-test("a topic page shows how its claims are spread across statuses", () => {
+test("a topic page marks each row with its status and keeps amber for promises", () => {
   const html = page("topic/dental-regeneration/index.html");
-  // One button per place on the path, and a row per claim that names its status.
-  assert.equal(count(html, 'class="place"'), 6);
+  // Each row names its status, so the filter can narrow the table. Three claims are
+  // read at a glance, so the filter itself is left out of so short a list.
+  assert.equal(count(html, 'class="place"'), 0);
   for (const code of ["preclinical_only", "phase_2", "approved"]) {
     assert.equal(count(html, `<tr data-status="${code}"`), 1, code);
   }
