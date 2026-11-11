@@ -6,6 +6,12 @@
       "runtimeExecutable": "sh",
       "runtimeArgs": ["-c", "cd site && EXPORT_FILE=tests/fixture-export.json npx astro dev --port 4331"],
       "port": 4331
+    },
+    {
+      "name": "site-built",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd site && npx astro preview --port 4332"],
+      "port": 4332
     }
   ]
 }

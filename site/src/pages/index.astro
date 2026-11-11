@@ -10,6 +10,15 @@ import { formatDate } from "../lib/timetable";
 
 const reports = recentReports(data.claims, 10);
 
+// The home page names the topics with the most claims; the rest are one link away.
+const topTopics = listedTopics
+  .map((topic) => ({
+    ...topic,
+    count: data.claims.filter((claim) => claim.vertical === topic.slug).length,
+  }))
+  .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title))
+  .slice(0, 12);
+
 const recent = data.claims
   .filter((claim) => claim.status.updated_at !== null)
   .sort((a, b) => (a.status.updated_at! < b.status.updated_at! ? 1 : -1))
@@ -106,16 +115,20 @@ const recent = data.claims
   <h2 class="bar" id="topics">Topics</h2>
   <ul class="chips">
     {
-      listedTopics.map((vertical) => (
+      topTopics.map((topic) => (
         <li>
-          <TopicChip
-            vertical={vertical.slug}
-            count={data.claims.filter((claim) => claim.vertical === vertical.slug).length}
-          />
+          <TopicChip vertical={topic.slug} count={topic.count} />
         </li>
       ))
     }
   </ul>
+  {
+    listedTopics.length > topTopics.length && (
+      <p class="more-topics">
+        <a href="/topics">All {listedTopics.length} topics</a>
+      </p>
+    )
+  }
 </Base>
 
 <script>

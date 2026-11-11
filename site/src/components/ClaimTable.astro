@@ -1,17 +1,59 @@
 ---
-import type { ExportedClaim } from "../lib/export";
-import { latestPromise } from "../lib/status";
+import type { ExportedClaim, StatusCode } from "../lib/export";
+import { STAGE_PATH, STATUS_LABELS, latestPromise } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 import StatusCell from "./StatusCell.astro";
 
 interface Props {
   claims: ExportedClaim[];
   caption: string;
+  /** Show how the claims are spread across statuses, and let a reader pick one. */
+  filter?: boolean;
 }
 
-const { claims, caption } = Astro.props;
+const { claims, caption, filter = false } = Astro.props;
+const counts = new Map<StatusCode, number>();
+for (const claim of claims) counts.set(claim.status.code, (counts.get(claim.status.code) ?? 0) + 1);
+// Amber is kept for a promise that exists: with none in the list, there is no column.
+const anyPromise = claims.some((claim) => latestPromise(claim) !== null);
+const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PATH.includes(code));
 ---
 
+{
+  filter && claims.length > 1 && (
+    <div class="stage-filter" data-stage-filter>
+      <div class="places" role="group" aria-label="Show claims by status">
+        {STAGE_PATH.map((code) => {
+          const count = counts.get(code) ?? 0;
+          return (
+            <button
+              type="button"
+              class="place"
+              data-status={code}
+              aria-pressed="false"
+              disabled={count === 0}
+            >
+              <span class="dot" aria-hidden="true" />
+              <strong>{count}</strong>
+              <span class="place-name">{STATUS_LABELS[code]}</span>
+            </button>
+          );
+        })}
+      </div>
+      {offPath.length > 0 && (
+        <div class="off-path" role="group" aria-label="Statuses off the path">
+          {offPath.map((code) => (
+            <button type="button" class="place off" data-status={code} aria-pressed="false">
+              <strong>{counts.get(code)}</strong>
+              <span class="place-name">{STATUS_LABELS[code]}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <p class="visually-hidden" aria-live="polite" data-shown />
+    </div>
+  )
+}
 <div class="table-frame">
 <table class="index">
   <caption class="visually-hidden">{caption}</caption>
@@ -19,7 +61,7 @@ const { claims, caption } = Astro.props;
     <tr>
       <th scope="col">Claim</th>
       <th scope="col">First reported</th>
-      <th scope="col" class="promise">Latest promise</th>
+      {anyPromise && <th scope="col" class="promise">Latest promise</th>}
       <th scope="col">Status</th>
     </tr>
   </thead>
@@ -28,7 +70,7 @@ const { claims, caption } = Astro.props;
       claims.map((claim) => {
         const promise = latestPromise(claim);
         return (
-          <tr>
+          <tr data-status={claim.status.code}>
             <td class="claim">
               <a href={`/${claim.slug}`}>{claim.headline}</a>
             </td>
@@ -39,6 +81,7 @@ const { claims, caption } = Astro.props;
                 <span class="visually-hidden">Not recorded</span>
               )}
             </td>
+            {anyPromise && (
             <td class:list={["promise", { none: !promise }]} data-column="Latest promise">
               {promise ? (
                 <>
@@ -48,6 +91,7 @@ const { claims, caption } = Astro.props;
                 <span class="visually-hidden">None with a date</span>
               )}
             </td>
+            )}
             <td data-column="Status">
               <StatusCell claim={claim} />
             </td>
@@ -58,3 +102,28 @@ const { claims, caption } = Astro.props;
   </tbody>
 </table>
 </div>
+
+<script>
+  // Picking a place on the path shows only the claims there; picking it again shows all.
+  for (const filter of document.querySelectorAll<HTMLElement>("[data-stage-filter]")) {
+    const buttons = [...filter.querySelectorAll<HTMLButtonElement>("button[data-status]")];
+    const rows = [
+      ...filter.nextElementSibling!.querySelectorAll<HTMLTableRowElement>("tbody tr[data-status]"),
+    ];
+    const shown = filter.querySelector<HTMLElement>("[data-shown]")!;
+    for (const button of buttons) {
+      button.addEventListener("click", () => {
+        const picked = button.getAttribute("aria-pressed") === "true" ? null : button.dataset.status;
+        for (const other of buttons) {
+          other.setAttribute("aria-pressed", String(other.dataset.status === picked));
+        }
+        let visible = 0;
+        for (const row of rows) {
+          row.hidden = picked !== null && row.dataset.status !== picked;
+          if (!row.hidden) visible += 1;
+        }
+        shown.textContent = `Showing ${visible} of ${rows.length} claims.`;
+      });
+    }
+  }
+</script>

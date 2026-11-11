@@ -31,7 +31,7 @@ const claims = data.claims
     claims.length === 0 ? (
       <p>No claims are tracked in this topic yet.</p>
     ) : (
-      <ClaimTable claims={claims} caption={`Claims in ${vertical.title}`} />
+      <ClaimTable claims={claims} caption={`Claims in ${vertical.title}`} filter />
     )
   }
 </Base>

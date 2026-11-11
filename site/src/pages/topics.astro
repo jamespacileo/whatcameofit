@@ -1,0 +1,81 @@
+---
+// Every listed topic, built to stay usable with hundreds: a filter, an A to Z jump
+// row, and dense columns under each letter.
+import Base from "../layouts/Base.astro";
+import { data, listedTopics } from "../lib/export";
+
+const topics = listedTopics
+  .map((topic) => ({
+    ...topic,
+    count: data.claims.filter((claim) => claim.vertical === topic.slug).length,
+  }))
+  .sort((a, b) => a.title.localeCompare(b.title));
+
+const byLetter = new Map<string, typeof topics>();
+for (const topic of topics) {
+  const first = topic.title.charAt(0).toUpperCase();
+  const letter = /[A-Z]/.test(first) ? first : "#";
+  byLetter.set(letter, [...(byLetter.get(letter) ?? []), topic]);
+}
+const sections = Array.from(byLetter, ([letter, group]) => ({ letter, group }));
+const claimCount = topics.reduce((sum, topic) => sum + topic.count, 0);
+---
+
+<Base title="Topics" description="Every topic with a tracked claim, from A to Z." current="topics">
+  <h1 class="title">Topics</h1>
+  <p class="lede">
+    {topics.length} {topics.length === 1 ? "topic" : "topics"}, {claimCount}{" "}
+    {claimCount === 1 ? "claim" : "claims"} tracked.
+  </p>
+
+  <div class="directory" data-directory>
+    <div class="directory-tools">
+      <label class="visually-hidden" for="topic-filter">Find a topic</label>
+      <input id="topic-filter" type="search" autocomplete="off" placeholder="Find a topic" />
+      <nav class="letters" aria-label="Jump to a letter">
+        {sections.map(({ letter }) => <a href={`#letter-${letter}`}>{letter}</a>)}
+      </nav>
+    </div>
+    <p class="none" data-none hidden>No topic matches. Try the search on the home page.</p>
+    {
+      sections.map(({ letter, group }) => (
+        <section class="letter" id={`letter-${letter}`} aria-labelledby={`heading-${letter}`}>
+          <h2 id={`heading-${letter}`}>{letter}</h2>
+          <ul>
+            {group.map((topic) => (
+              <li>
+                <a href={`/topic/${topic.slug}`}>{topic.title}</a>
+                <span class="count">
+                  {topic.count}
+                  <span class="visually-hidden">{topic.count === 1 ? " claim" : " claims"}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+  </div>
+</Base>
+
+<script>
+  // Typing narrows the list in place. Without JavaScript the full list and the
+  // letter links still work.
+  const directory = document.querySelector<HTMLElement>("[data-directory]")!;
+  const input = directory.querySelector<HTMLInputElement>("#topic-filter")!;
+  const none = directory.querySelector<HTMLElement>("[data-none]")!;
+  input.addEventListener("input", () => {
+    const query = input.value.trim().toLowerCase();
+    let any = false;
+    for (const section of directory.querySelectorAll<HTMLElement>(".letter")) {
+      let shown = 0;
+      for (const item of section.querySelectorAll<HTMLLIElement>("li")) {
+        item.hidden = !item.querySelector("a")!.textContent!.toLowerCase().includes(query);
+        if (!item.hidden) shown += 1;
+      }
+      section.hidden = shown === 0;
+      any ||= shown > 0;
+    }
+    none.hidden = any;
+  });
+</script>

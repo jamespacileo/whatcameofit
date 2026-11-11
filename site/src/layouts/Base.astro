@@ -24,7 +24,7 @@ const topicLink =
   topics.length === 1
     ? { href: `/topic/${topics[0].slug}`, label: topics[0].title, here: "page" as const }
     : topics.length > 1
-      ? { href: "/#topics", label: "Topics", here: "true" as const }
+      ? { href: "/topics", label: "Topics", here: "page" as const }
       : null;
 ---
 

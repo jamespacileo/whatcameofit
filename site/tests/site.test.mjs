@@ -85,6 +85,26 @@ test("Scenario: Vertical with no published claims", () => {
   assert.match(page("index.html"), /<a href="\/topic\/dental-regeneration"[^>]*>Dental regeneration<\/a>/);
 });
 
+test("the topic directory lists every listed topic and no empty one", () => {
+  const html = page("topics/index.html");
+  assert.match(html, /<a href="\/topic\/dental-regeneration">Dental regeneration<\/a>/);
+  assert.ok(!html.includes("empty-topic"));
+  assert.match(html, /1 topic, 3\s+claims tracked/);
+});
+
+test("a topic page shows how its claims are spread across statuses", () => {
+  const html = page("topic/dental-regeneration/index.html");
+  // One button per place on the path, and a row per claim that names its status.
+  assert.equal(count(html, 'class="place"'), 6);
+  for (const code of ["preclinical_only", "phase_2", "approved"]) {
+    assert.equal(count(html, `<tr data-status="${code}"`), 1, code);
+  }
+  // Only one claim has a dated promise, so the amber column is present here
+  // and absent from the approved list, where none has.
+  assert.match(html, /Latest promise/);
+  assert.doesNotMatch(page("it-happened/index.html"), /Latest promise/);
+});
+
 test("Scenario: Search by intervention name", () => {
   // Search indexes the part of a claim page marked for it; the synonyms must be inside.
   const html = page("quiet-claim/index.html");

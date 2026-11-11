@@ -683,8 +683,17 @@ a.chip:hover {
   margin-top: 0.15rem;
 }
 
+/* In a list the track and the label share a line, so rows stay short. */
+.status-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.7rem;
+}
+
 .index .track {
-  margin-bottom: 0.25rem;
+  width: 5.5rem;
+  flex: none;
 }
 
 .quiet-note {
@@ -915,6 +924,214 @@ a.chip:hover {
     padding-block: 0.4rem;
     border-radius: 0.5rem;
   }
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* The path as a filter: how many claims sit at each place, and a way to pick one.
+   It doubles as the legend for the small tracks in the table beneath it. */
+.stage-filter {
+  margin: 1.5rem 0 0.9rem;
+}
+
+.stage-filter .places {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+}
+
+.stage-filter .place {
+  font: inherit;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.25rem 0.5rem;
+  cursor: pointer;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 0.1rem;
+  text-align: center;
+  position: relative;
+}
+
+.stage-filter .places .place::before {
+  content: "";
+  position: absolute;
+  top: calc(0.8rem - 0.75px);
+  left: 0;
+  right: 0;
+  border-top: 1.5px solid var(--rule);
+}
+
+.stage-filter .places .place:first-child::before {
+  left: 50%;
+}
+
+.stage-filter .places .place:last-child::before {
+  right: 50%;
+}
+
+.stage-filter .dot {
+  position: relative;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 1.5px solid #9aa9b9;
+}
+
+.stage-filter .place strong {
+  font-size: 1.15rem;
+  line-height: 1.2;
+}
+
+.stage-filter .place-name {
+  font-size: 0.75rem;
+  line-height: 1.25;
+  color: var(--muted);
+}
+
+.stage-filter .place:hover:not(:disabled) {
+  background: var(--panel);
+}
+
+.stage-filter .place[aria-pressed="true"] {
+  background: var(--tint);
+}
+
+.stage-filter .place[aria-pressed="true"] .dot {
+  background: var(--blue);
+  border-color: var(--blue);
+}
+
+.stage-filter .place[aria-pressed="true"] .place-name {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.stage-filter .place:disabled {
+  cursor: default;
+}
+
+.stage-filter .place:disabled strong {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.stage-filter .off-path {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.stage-filter .place.off {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  border: 1px solid var(--rule);
+  padding: 0.2rem 0.7rem;
+}
+
+.stage-filter .place.off strong {
+  font-size: 0.95rem;
+}
+
+/* The topic directory: dense, lettered, narrowed by typing. */
+.directory {
+  margin-top: 1.5rem;
+}
+
+.directory-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1.25rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.directory input {
+  font: inherit;
+  width: 16rem;
+  max-width: 100%;
+  padding: 0.5rem 0.8rem;
+  border: 1.5px solid var(--blue);
+  border-radius: 0.65rem;
+  background: var(--paper);
+  color: var(--ink);
+  caret-color: var(--blue);
+}
+
+.directory input::placeholder {
+  color: var(--muted);
+}
+
+.letters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.1rem;
+}
+
+.letters a {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.4rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.letters a:hover {
+  background: var(--tint);
+}
+
+.letter {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  padding-block: 0.9rem;
+  border-bottom: 1px solid var(--rule-soft);
+  scroll-margin-top: 1rem;
+}
+
+.letter h2 {
+  font-size: 1.2rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.letter ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  columns: 3 14rem;
+  column-gap: 2rem;
+}
+
+.letter li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding-block: 0.2rem;
+  break-inside: avoid;
+}
+
+.letter .count {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.directory .none {
+  margin-top: 1rem;
+}
+
+.more-topics {
+  margin-top: 0.8rem;
 }
 
 /* Plain lists. */

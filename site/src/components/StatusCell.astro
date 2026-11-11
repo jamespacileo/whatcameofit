@@ -13,8 +13,10 @@ const { status } = Astro.props.claim;
 const overlay = overlayText(status.overlay_years);
 ---
 
-<StageTrack code={status.code} />
-<strong class="status-name">{STATUS_LABELS[status.code]}</strong>
+<span class="status-line">
+  <StageTrack code={status.code} />
+  <strong class="status-name">{STATUS_LABELS[status.code]}</strong>
+</span>
 {
   overlay && (
     <span class="quiet-note">
