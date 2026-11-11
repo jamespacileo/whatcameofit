@@ -65,8 +65,14 @@ const imageAlt = cardAlt(
         {overlay && <p class="overlay">{overlay}</p>}
         <p class="changed" data-pagefind-ignore>
           {latestRecord ? `Latest record ${formatDate(latestRecord)}.` : "No record yet."}
-          {claim.status.updated_at && ` Status set ${formatDate(claim.status.updated_at)}.`}
         </p>
+        {
+          claim.status.updated_at && (
+            <p class="changed" data-pagefind-ignore>
+              Status set {formatDate(claim.status.updated_at)}.
+            </p>
+          )
+        }
       </div>
       <p class="lede" data-pagefind-meta="summary">{claim.summary}</p>
     </div>
@@ -114,7 +120,7 @@ const imageAlt = cardAlt(
       )
     }
     <div class="table-frame">
-    <table class="timetable" aria-describedby="timetable">
+    <table class="timetable" aria-labelledby="timetable">
       <thead>
         <tr>
           <th scope="col">Year</th>
@@ -139,7 +145,10 @@ const imageAlt = cardAlt(
                   {row.year}
                   {row.current && <small>this year</small>}
                 </th>
-                <td class="promised" data-column="Promised for this year">
+                <td
+                  class:list={["promised", { none: row.promised.length === 0 }]}
+                  data-column="Promised for this year"
+                >
                   {
                     row.promised.length === 0 ? (
                       <span class="entry-note">Nothing promised for this year.</span>
@@ -273,6 +282,8 @@ const imageAlt = cardAlt(
               <li id={`source-${mark}`}>
                 <span class="mark">{mark}</span>
                 <span>
+                  {/* Two records can share one registry entry, so each source names its record. */}
+                  <span class="entry-kind">{eventLabel(event)}</span>, {formatDate(event.event_date)}:{" "}
                   <a href={event.source_url}>
                     {sourceName(event.source_name)}
                     {event.trial_id ? `, ${event.trial_id}` : ""}

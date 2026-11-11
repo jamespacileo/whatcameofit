@@ -10,10 +10,10 @@ import { cardFacts } from "../../lib/card";
 import { data, type ExportedClaim } from "../../lib/export";
 import { STATUS_LABELS, latestPromise } from "../../lib/status";
 
-const INK = "#231f33";
-const INDIGO = "#3d2f7a";
-const MUTED = "#5d5677";
-const PANEL = "#f6f4fb";
+const INK = "#172534";
+const BLUE = "#0b5cad";
+const MUTED = "#4d5d6e";
+const PANEL = "#f3f7fb";
 const PAPER = "#ffffff";
 
 // The site's face, as static files the image renderer can read.
@@ -35,7 +35,7 @@ const box = (style: Record<string, unknown>, children: unknown): Node => ({
 function fact(label: string, value: string): Node {
   return box({ flexDirection: "column", marginRight: 64 }, [
     box({ fontSize: 26, fontWeight: 400, color: MUTED }, label),
-    box({ fontSize: 44, fontWeight: 700, lineHeight: 1.1, color: INDIGO }, value),
+    box({ fontSize: 44, fontWeight: 700, lineHeight: 1.1, color: BLUE }, value),
   ]);
 }
 
@@ -60,7 +60,7 @@ function card(claim: ExportedClaim): Node {
     },
     [
       box({ flexDirection: "column" }, [
-        box({ fontSize: 34, fontWeight: 700, color: INDIGO }, SITE.name),
+        box({ fontSize: 34, fontWeight: 700, color: BLUE }, SITE.name),
         box(
           {
             fontSize: claim.headline.length > 70 ? 60 : 76,

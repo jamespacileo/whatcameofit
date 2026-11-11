@@ -97,7 +97,7 @@ test("Scenario: No approved claims", () => {
   const result = build("data/seed-export.json", empty);
   assert.equal(result.status, 0, result.stdout + result.stderr);
   const html = fs.readFileSync(path.join(empty, "it-happened/index.html"), "utf8");
-  assert.match(html, /No tracked claim has reached approval yet/);
+  assert.match(html, /No tracked claim has an approval on record/);
 });
 
 test("Scenario: Claim promised for 2025", () => {
@@ -124,7 +124,7 @@ test("Scenario: Any page", () => {
     assert.match(html, /This site gives no medical advice/, file);
     assert.match(html, /A registered clinical trial is not a treatment option/, file);
     assert.match(html, /Data sources:/, file);
-    assert.match(html, /Registries last checked 11 Nov 2026/, file);
+    assert.match(html, /Registries last checked 11\s+Nov\s+2026/, file);
   }
 });
 

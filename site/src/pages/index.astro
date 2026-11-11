@@ -1,5 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
+import TopicChip from "../components/TopicChip.astro";
 import { SITE } from "../../site.config.mjs";
 import { data } from "../lib/export";
 import { STATUS_LABELS, overlayText } from "../lib/status";
@@ -18,7 +19,7 @@ const recent = data.claims
   <form class="search" role="search" id="search">
     <label for="query">Search by treatment, condition or name</label>
     <div class="row">
-      <input id="query" name="q" type="search" autocomplete="off" placeholder="for example: tooth regrowth" />
+      <input id="query" name="q" type="search" autocomplete="off" placeholder="tooth regrowth" />
       <button type="submit">Search</button>
     </div>
   </form>
@@ -61,14 +62,14 @@ const recent = data.claims
     )
   }
 
-  <h2 class="bar">Topics</h2>
+  <h2 class="bar" id="topics">Topics</h2>
   <ul class="plain">
     {
       data.verticals.map((vertical) => {
         const count = data.claims.filter((claim) => claim.vertical === vertical.slug).length;
         return (
           <li>
-            <a href={`/topic/${vertical.slug}`}>{vertical.title}</a>
+            <TopicChip vertical={vertical.slug} />
             <span class="entry-note">
               {count} {count === 1 ? "claim" : "claims"} tracked
             </span>

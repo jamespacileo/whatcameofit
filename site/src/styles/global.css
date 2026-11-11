@@ -2,17 +2,17 @@
 
 :root {
   --paper: #ffffff;
-  --ink: #231f33;
-  --indigo: #3d2f7a;
-  --muted: #5d5677;
-  --panel: #f6f4fb;
-  --tint: #f1eefa;
-  --tag: #e6e0f7;
-  --rule: #e6e2f0;
-  --rule-soft: #eeebf6;
+  --ink: #172534;
+  --blue: #0b5cad;
+  --muted: #4d5d6e;
+  --panel: #f3f7fb;
+  --tint: #eaf2fa;
+  --tag: #d9e8f7;
+  --rule: #dde5ee;
+  --rule-soft: #e9eff5;
   --promise: #fff7df;
   --promise-rule: #d9c88a;
-  --footer: #2a2150;
+  --footer: #0b2f57;
 
   --face: "Figtree Variable", "Helvetica Neue", Arial, sans-serif;
   --measure: 66ch;
@@ -35,7 +35,7 @@ html {
   background: var(--paper);
   font-variant-numeric: tabular-nums lining-nums;
   -webkit-text-size-adjust: 100%;
-  scrollbar-color: var(--indigo) var(--tint);
+  scrollbar-color: var(--blue) var(--tint);
 }
 
 body {
@@ -51,13 +51,13 @@ body {
 }
 
 :focus-visible {
-  outline: 3px solid var(--indigo);
+  outline: 3px solid var(--blue);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 a {
-  color: var(--indigo);
+  color: var(--blue);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.18em;
 }
@@ -90,7 +90,7 @@ p {
   position: absolute;
   left: -100vw;
   top: 0;
-  background: var(--indigo);
+  background: var(--blue);
   color: var(--paper);
   padding: 0.6rem 1rem;
   z-index: 2;
@@ -132,7 +132,7 @@ p {
   font-weight: 700;
   font-size: 1.25rem;
   letter-spacing: -0.01em;
-  color: var(--indigo);
+  color: var(--blue);
   text-decoration: none;
 }
 
@@ -146,7 +146,7 @@ p {
 }
 
 .masthead nav a {
-  color: var(--indigo);
+  color: var(--blue);
   font-weight: 600;
   font-size: 0.95rem;
   text-decoration: none;
@@ -155,7 +155,7 @@ p {
 }
 
 .masthead nav a:hover,
-.masthead nav a[aria-current="page"] {
+.masthead nav a[aria-current] {
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 0.35em;
@@ -174,7 +174,7 @@ main {
   gap: 0.4rem;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--indigo);
+  color: var(--blue);
   background: var(--tint);
   border-radius: 999px;
   padding: 0.2rem 0.8rem 0.2rem 0.5rem;
@@ -229,7 +229,7 @@ a.chip:hover {
   font-size: clamp(1.45rem, 3.6vw, 1.75rem);
   font-weight: 700;
   line-height: 1.15;
-  color: var(--indigo);
+  color: var(--blue);
   margin: 0.1rem 0 0.25rem;
 }
 
@@ -237,7 +237,7 @@ a.chip:hover {
   display: inline-block;
   font-size: 0.9rem;
   font-weight: 700;
-  border: 1.5px dashed var(--indigo);
+  border: 1.5px dashed var(--blue);
   border-radius: 6px;
   padding: 0.05rem 0.5rem;
   margin: 0.15rem 0 0.35rem;
@@ -327,7 +327,7 @@ a.chip:hover {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--muted);
-  background: #fbfaff;
+  background: #f8fafd;
   border-top: 0;
   padding-block: 0.5rem;
 }
@@ -336,7 +336,7 @@ a.chip:hover {
   width: 5.25rem;
   font-weight: 700;
   font-size: 1.1rem;
-  color: var(--indigo);
+  color: var(--blue);
   white-space: nowrap;
 }
 
@@ -409,7 +409,7 @@ a.chip:hover {
   display: inline-block;
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--indigo);
+  color: var(--blue);
   background: var(--tag);
   border-radius: 6px;
   padding: 0.05rem 0.45rem;
@@ -417,9 +417,11 @@ a.chip:hover {
   white-space: nowrap;
 }
 
+/* The letter is small, so the link reaches past it to give a finger room. */
 sup a {
   font-weight: 700;
-  padding-inline: 0.15em;
+  padding: 0.45em 0.65em;
+  margin: -0.45em -0.45em;
 }
 
 @media (max-width: 40rem) {
@@ -489,6 +491,18 @@ sup a {
     border-radius: 0.5rem;
   }
 
+  /* Stacked, an amber box for every year with no promise would outweigh the
+     records. Amber is kept for a promise that exists. */
+  .timetable .promised.none {
+    background: none;
+    margin-inline: 0;
+    padding-block: 0;
+  }
+
+  .timetable .promised.none::before {
+    content: none;
+  }
+
   .timetable .quiet {
     display: flex;
     align-items: baseline;
@@ -540,6 +554,7 @@ sup a {
 
 /* A promise is always on pale amber with dashed rules, wherever it appears. */
 .plain.undated {
+  max-width: none;
   background: var(--promise);
   border-radius: var(--radius);
   padding-inline: 0.85rem;
@@ -571,7 +586,7 @@ sup a {
 
 .footnotes .mark {
   font-weight: 700;
-  color: var(--indigo);
+  color: var(--blue);
 }
 
 .index td.claim a {
@@ -605,11 +620,11 @@ sup a {
   min-width: 0;
   font: inherit;
   padding: 0.7rem 0.9rem;
-  border: 1.5px solid var(--indigo);
+  border: 1.5px solid var(--blue);
   border-radius: 0.65rem;
   background: var(--paper);
   color: var(--ink);
-  caret-color: var(--indigo);
+  caret-color: var(--blue);
 }
 
 .search input::placeholder {
@@ -620,9 +635,9 @@ sup a {
   font: inherit;
   font-weight: 700;
   padding: 0.7rem 1.2rem;
-  border: 1.5px solid var(--indigo);
+  border: 1.5px solid var(--blue);
   border-radius: 0.65rem;
-  background: var(--indigo);
+  background: var(--blue);
   color: var(--paper);
   cursor: pointer;
 }
@@ -702,5 +717,53 @@ sup a {
 
   .colophon a {
     color: var(--ink);
+  }
+
+  /* A heading stays with what follows it, and one record is never split
+     across two sheets. */
+  h1,
+  h2 {
+    break-after: avoid;
+  }
+
+  tr,
+  .digest,
+  .entries li,
+  .footnotes li,
+  .plain li {
+    break-inside: avoid;
+  }
+
+  /* The footer should not be pushed onto a sheet of its own. */
+  main {
+    padding-bottom: 1.5rem;
+  }
+
+  /* Keep the amber that marks a promise when backgrounds are switched off. */
+  .timetable .promised,
+  .index .promise,
+  .plain.undated {
+    print-color-adjust: exact;
+  }
+
+  /* The frame would draw an empty box where a row moves to the next sheet. */
+  .table-frame {
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  .timetable,
+  .index {
+    border-block: 1px solid var(--rule);
+  }
+
+  /* On paper a link cannot be followed, so the address is printed after it. */
+  main a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    font-weight: 400;
+    color: var(--muted);
+    overflow-wrap: anywhere;
   }
 }

@@ -20,7 +20,7 @@ const approved = data.claims.filter((claim) => claim.status.code === "approved")
   <h2 class="bar">Approved</h2>
   {
     approved.length === 0 ? (
-      <p>No tracked claim has reached approval yet.</p>
+      <p>No tracked claim has an approval on record.</p>
     ) : (
       <ClaimTable claims={approved} caption="Claims with a recorded approval" />
     )

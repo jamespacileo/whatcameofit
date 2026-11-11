@@ -17,7 +17,14 @@ interface Props {
 const { title, description = SITE.description, image, imageAlt, current } = Astro.props;
 const pageTitle = title ? `${title} | ${SITE.name}` : `${SITE.name}: ${SITE.tagline}`;
 const imageUrl = image ? new URL(image, Astro.site).href : null;
-const firstTopic = data.verticals[0];
+// One topic is linked by name. With several, the item leads to the list of them all.
+const topics = data.verticals;
+const topicLink =
+  topics.length === 1
+    ? { href: `/topic/${topics[0].slug}`, label: topics[0].title, here: "page" as const }
+    : topics.length > 1
+      ? { href: "/#topics", label: "Topics", here: "true" as const }
+      : null;
 ---
 
 <!doctype html>
@@ -46,13 +53,13 @@ const firstTopic = data.verticals[0];
           <ul>
             <li><a href="/" aria-current={current === "home" ? "page" : undefined}>Search</a></li>
             {
-              firstTopic && (
+              topicLink && (
                 <li>
                   <a
-                    href={`/topic/${firstTopic.slug}`}
-                    aria-current={current === "topics" ? "page" : undefined}
+                    href={topicLink.href}
+                    aria-current={current === "topics" ? topicLink.here : undefined}
                   >
-                    {firstTopic.title}
+                    {topicLink.label}
                   </a>
                 </li>
               )
