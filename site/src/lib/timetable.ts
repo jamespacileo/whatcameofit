@@ -133,3 +133,33 @@ export function dayAndMonth(isoDate: string): string {
   const [, month, day] = isoDate.slice(0, 10).split("-").map(Number);
   return `${day}${NBSP}${MONTHS[month - 1]}`;
 }
+
+type ReportEntry = Extract<RecordedEntry, { kind: "report" }>;
+type EventEntry = Extract<RecordedEntry, { kind: "event" }>;
+
+export type RecordedLine = ReportEntry | { kind: "source"; sourceUrl: string; steps: EventEntry[] };
+
+/**
+ * A year's records as lines: records that share one source (a trial's registry entry,
+ * say) become one line with several dated steps, so the source is named once.
+ * A line sits where its first step falls.
+ */
+export function recordedLines(entries: RecordedEntry[]): RecordedLine[] {
+  const lines: RecordedLine[] = [];
+  const bySource = new Map<string, EventEntry[]>();
+  for (const entry of entries) {
+    if (entry.kind === "report") {
+      lines.push(entry);
+      continue;
+    }
+    const steps = bySource.get(entry.event.source_url);
+    if (steps) {
+      steps.push(entry);
+      continue;
+    }
+    const first = [entry];
+    bySource.set(entry.event.source_url, first);
+    lines.push({ kind: "source", sourceUrl: entry.event.source_url, steps: first });
+  }
+  return lines;
+}

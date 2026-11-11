@@ -362,6 +362,15 @@ a.chip:hover {
   margin-top: 0.8rem;
 }
 
+/* A headline that is a whole sentence is set smaller and wider, so the answer
+   beneath it stays on the first screen. */
+.title.long {
+  font-size: clamp(1.35rem, 3.4vw, 1.7rem);
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+  max-width: 44ch;
+}
+
 .lede {
   font-size: 1.08rem;
   margin-top: 1rem;
@@ -580,6 +589,17 @@ a.chip:hover {
   grid-template-columns: 1.15rem 3.6rem 1fr;
   column-gap: 0.5rem;
   align-items: start;
+}
+
+/* Steps of one source stack in the date and label columns, under one drawing. */
+.record .entry-date {
+  grid-column: 2;
+}
+
+.record .what:target {
+  background: var(--tint);
+  outline: 0.3rem solid var(--tint);
+  border-radius: 2px;
 }
 
 .record .origin {
@@ -833,13 +853,6 @@ a.chip:hover {
 .pop .pop-note {
   color: var(--muted);
   font-size: 0.85rem;
-}
-
-/* A record reached from the status panel is shown for a moment. */
-.record:target {
-  background: var(--tint);
-  outline: 0.35rem solid var(--tint);
-  border-radius: 2px;
 }
 
 @media (max-width: 40rem) {

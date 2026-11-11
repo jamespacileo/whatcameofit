@@ -24,7 +24,7 @@ import {
   type RecordKind,
 } from "../lib/status";
 import { cardAlt, cardFacts } from "../lib/card";
-import { buildTimetable, dayAndMonth, formatDate } from "../lib/timetable";
+import { buildTimetable, dayAndMonth, formatDate, recordedLines } from "../lib/timetable";
 
 export function getStaticPaths() {
   return data.claims.map((claim) => ({ params: { slug: claim.slug }, props: { claim } }));
@@ -39,6 +39,9 @@ const timetable = buildTimetable(claim, data.generated_at);
 const overlay = overlayText(claim.status.overlay_years);
 const thisYear = Number(data.generated_at.slice(0, 4));
 const latestRecord = claim.events.map((event) => event.event_date).sort().at(-1) ?? null;
+// The latest record is at the foot of a long timetable, so the date leads to it.
+const latestMark =
+  timetable.sources.find(({ event }) => event.event_date === latestRecord)?.mark ?? null;
 const hasDatedPromise = claim.promises.some((promise) => promise.parsed_date !== null);
 const hasPromise = claim.promises.length > 0;
 // The legend names only the kinds of record this page shows.
@@ -70,7 +73,7 @@ const imageAlt = cardAlt(
         <span data-share-text>Share</span>
       </button>
     </div>
-    <h1 class="title">
+    <h1 class:list={["title", { long: claim.headline.length > 70 }]}>
       {
         /* A name such as "USAG-1" must not break at its hyphen. */
         claim.headline.split(" ").map((word, index) => (
@@ -138,7 +141,13 @@ const imageAlt = cardAlt(
           )
         }
         <p class="changed" data-pagefind-ignore>
-          {latestRecord ? `Latest record ${formatDate(latestRecord)}` : "No record yet"}
+          {latestMark ? (
+            <>
+              Latest record <a href={`#record-${latestMark}`}>{formatDate(latestRecord)}</a>
+            </>
+          ) : (
+            "No record yet"
+          )}
         </p>
       </div>
       <p class="lede" data-pagefind-meta="summary">{claim.summary}</p>
@@ -266,50 +275,58 @@ const imageAlt = cardAlt(
                       </span>
                     ) : (
                       <ul class="entries">
-                        {row.recorded.map((entry) =>
-                          entry.kind === "report" ? (
+                        {recordedLines(row.recorded).map((line) =>
+                          line.kind === "report" ? (
                             <li class="record">
                               <KindIcon kind="report" />
                               <span class="visually-hidden">News report.</span>
-                              <span class="entry-date">{dayAndMonth(entry.date)}</span>
+                              <span class="entry-date">{dayAndMonth(line.date)}</span>
                               <span>
-                                <a href={entry.url}>“{entry.title}”</a>
+                                <a href={line.url}>“{line.title}”</a>
                               </span>
                               <span class="origin">
-                                <Outlet url={entry.url} outlet={entry.outlet} link={false} />
-                                {entry.archiveUrl && (
+                                <Outlet url={line.url} outlet={line.outlet} link={false} />
+                                {line.archiveUrl && (
                                   <>
                                     {" "}
-                                    (<a href={entry.archiveUrl}>archived copy</a>)
+                                    (<a href={line.archiveUrl}>archived copy</a>)
                                   </>
                                 )}
                               </span>
                             </li>
                           ) : (
-                            <li class="record" id={`record-${entry.mark}`}>
-                              <KindIcon kind={eventKind(entry.event)} />
-                              <span class="entry-date">{dayAndMonth(entry.date)}</span>
-                              <span class="what">
-                                <Pop id={`about-${entry.mark}`} class="more">
-                                  <Fragment slot="trigger">
-                                    {eventLabel(entry.event)}
-                                    {entry.explains && <BasisMark />}
-                                  </Fragment>
-                                  <p>{entry.event.summary}</p>
-                                  {entry.explains && (
-                                    <p class="pop-note">
-                                      <BasisMark label={false} /> The status rests on this record.
-                                    </p>
-                                  )}
-                                  {entry.event.date_basis && (
-                                    <p class="pop-note">Date taken from: {entry.event.date_basis}.</p>
-                                  )}
-                                </Pop>
-                              </span>
+                            <li class="record">
+                              <KindIcon kind={eventKind(line.steps[0].event)} />
+                              {line.steps.map((entry) => (
+                                <>
+                                  <span class="entry-date">{dayAndMonth(entry.date)}</span>
+                                  <span class="what" id={`record-${entry.mark}`}>
+                                    <Pop id={`about-${entry.mark}`} class="more">
+                                      <Fragment slot="trigger">
+                                        {eventLabel(entry.event)}
+                                        {entry.explains && <BasisMark />}
+                                      </Fragment>
+                                      <p>{entry.event.summary}</p>
+                                      {entry.explains && (
+                                        <p class="pop-note">
+                                          <BasisMark label={false} /> The status rests on this record.
+                                        </p>
+                                      )}
+                                      {entry.event.date_basis && (
+                                        <p class="pop-note">
+                                          Date taken from: {entry.event.date_basis}.
+                                        </p>
+                                      )}
+                                    </Pop>
+                                  </span>
+                                </>
+                              ))}
                               <span class="origin">
-                                <a href={entry.event.source_url}>
-                                  {sourceName(entry.event.source_name)}
-                                  {entry.event.trial_id ? `, ${entry.event.trial_id}` : ""}
+                                <a href={line.sourceUrl}>
+                                  {sourceName(line.steps[0].event.source_name)}
+                                  {line.steps[0].event.trial_id
+                                    ? `, ${line.steps[0].event.trial_id}`
+                                    : ""}
                                 </a>
                               </span>
                             </li>
