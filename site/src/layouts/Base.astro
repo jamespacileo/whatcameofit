@@ -16,7 +16,8 @@ interface Props {
 }
 
 const { title, description = SITE.description, image, imageAlt, current } = Astro.props;
-const pageTitle = title ? `${title} | ${SITE.name}` : `${SITE.name}: ${SITE.tagline}`;
+// The name ends in its own punctuation, so the tagline follows it with a space.
+const pageTitle = title ? `${title} | ${SITE.name}` : `${SITE.name} ${SITE.tagline}`;
 const imageUrl = image ? new URL(image, Astro.site).href : null;
 // One topic is linked by name. With several, the item leads to the list of them all.
 const topics = listedTopics;
@@ -60,7 +61,13 @@ const topicLink =
         <a class="name" href="/" aria-label={SITE.name}>
           <span class="lead" aria-hidden="true">{SITE.wordmark[0]}</span>
           <span class="tail" aria-hidden="true">{SITE.wordmark[1]}</span>
-          <span class="wait" aria-hidden="true"><i></i><i></i><i></i><b></b></span>
+          <svg class="ask" viewBox="0 0 20 30" aria-hidden="true">
+            <path
+              class="hook"
+              pathLength="1"
+              d="M4.2 8.8a5.9 5.9 0 1 1 9 5c-2.1 1.3-3.2 2.4-3.2 4.7"></path>
+            <circle class="dot" cx="10" cy="26" r="3.6"></circle>
+          </svg>
         </a>
         <nav aria-label="Site">
           <ul>

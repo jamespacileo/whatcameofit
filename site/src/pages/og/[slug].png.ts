@@ -53,6 +53,33 @@ function stamp(size: number): Node {
   });
 }
 
+// The wordmark's question mark, whose dot is the blue marker. The same drawing as
+// the masthead's.
+function ask(height: number): Node {
+  return {
+    type: "svg",
+    props: {
+      width: (height * 20) / 30,
+      height,
+      viewBox: "0 0 20 30",
+      style: { marginLeft: 2, marginTop: 3 },
+      children: [
+        {
+          type: "path",
+          props: {
+            d: "M4.2 8.8a5.9 5.9 0 1 1 9 5c-2.1 1.3-3.2 2.4-3.2 4.7",
+            fill: "none",
+            stroke: INK,
+            "stroke-width": 4.8,
+            "stroke-linecap": "round",
+          },
+        },
+        { type: "circle", props: { cx: 10, cy: 26, r: 3.6, fill: BLUE } },
+      ],
+    },
+  };
+}
+
 function fact(label: string, value: string): Node {
   return box({ flexDirection: "column", marginRight: 64 }, [
     box({ fontSize: 26, fontWeight: 400, color: MUTED }, label),
@@ -88,6 +115,7 @@ function card(claim: ExportedClaim): Node {
           stamp(46),
           box({ fontWeight: 400, marginLeft: 16 }, SITE.wordmark[0]),
           box({ fontWeight: 700, marginLeft: 9 }, SITE.wordmark[1]),
+          ask(31),
         ]),
         box(
           {

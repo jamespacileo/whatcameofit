@@ -153,74 +153,70 @@ p {
   font-weight: 800;
 }
 
-/* The wordmark's tail: three grey dots for the wait after a headline, then the
-   solid blue dot that marks where a claim stands. On a first visit they arrive
-   one by one; at rest all four are there. */
-.masthead .name .wait {
-  display: inline-flex;
-  align-items: center;
-  align-self: center;
-  gap: 0.17em;
-  margin-left: 0.12em;
+/* The name's question mark is drawn, not typed, so that its dot can be the solid
+   blue marker: the question, and under it where a claim stands. On a first visit
+   the hook is drawn and the dot lands. */
+.masthead .name {
+  gap: 0;
 }
 
-.masthead .name .wait i {
-  flex: none;
-  width: 0.19em;
-  height: 0.19em;
-  border-radius: 50%;
-  background: var(--ring);
+.masthead .name .tail {
+  margin-left: 0.26em;
 }
 
-.masthead .name .wait b {
+.masthead .name .ask {
+  height: 0.94em;
+  width: auto;
   flex: none;
-  width: 0.46em;
-  height: 0.46em;
-  margin-left: 0.08em;
-  border-radius: 50%;
-  background: var(--blue);
+  align-self: baseline;
+  margin-left: 0.05em;
+  /* The dot sits on the baseline, as a typed question mark's would. */
+  transform: translateY(0.13em);
+  overflow: visible;
+}
+
+.masthead .name .ask .hook {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 4.8;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+}
+
+.masthead .name .ask .dot {
+  fill: var(--blue);
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .masthead .name .wait i {
-    animation: wait-dot 0.35s ease-out both;
+  .masthead .name .ask .hook {
+    animation: ask-hook 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
   }
 
-  .masthead .name .wait i:nth-child(1) {
-    animation-delay: 0.2s;
+  .masthead .name .ask .dot {
+    animation: ask-dot 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.85s both;
   }
 
-  .masthead .name .wait i:nth-child(2) {
-    animation-delay: 0.5s;
+  .masthead .name:hover .ask .hook {
+    animation-name: ask-hook-again;
   }
 
-  .masthead .name .wait i:nth-child(3) {
-    animation-delay: 0.8s;
-  }
-
-  .masthead .name .wait b {
-    animation: wait-mark 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1.2s both;
-  }
-
-  .masthead .name:hover .wait i {
-    animation-name: wait-dot-again;
-  }
-
-  .masthead .name:hover .wait b {
-    animation-name: wait-mark-again;
+  .masthead .name:hover .ask .dot {
+    animation-name: ask-dot-again;
   }
 }
 
-@keyframes wait-dot {
+@keyframes ask-hook {
   from {
-    opacity: 0;
+    stroke-dashoffset: 1;
   }
   to {
-    opacity: 1;
+    stroke-dashoffset: 0;
   }
 }
 
-@keyframes wait-mark {
+@keyframes ask-dot {
   from {
     transform: scale(0);
   }
@@ -230,16 +226,16 @@ p {
 }
 
 /* The same motion under second names, so a hover plays it again. */
-@keyframes wait-dot-again {
+@keyframes ask-hook-again {
   from {
-    opacity: 0;
+    stroke-dashoffset: 1;
   }
   to {
-    opacity: 1;
+    stroke-dashoffset: 0;
   }
 }
 
-@keyframes wait-mark-again {
+@keyframes ask-dot-again {
   from {
     transform: scale(0);
   }
@@ -1457,9 +1453,9 @@ a.chip:hover {
   margin: 0;
 }
 
-/* Motion. Two authored moments tell the site's story: the name's dots counting the
-   wait, and the marker landing where a claim stands. Everything else is feedback:
-   quick, and never in the way of reading. */
+/* Motion. Two authored moments tell the site's story: the name's question mark
+   being drawn, and the marker landing where a claim stands. Everything else is
+   feedback: quick, and never in the way of reading. */
 
 .chip,
 .share,
@@ -1569,8 +1565,8 @@ a.chip:hover {
   }
 
   /* The name's story is told once a visit; a hover tells it again. */
-  .seen .masthead .name:not(:hover) .wait i,
-  .seen .masthead .name:not(:hover) .wait b {
+  .seen .masthead .name:not(:hover) .ask .hook,
+  .seen .masthead .name:not(:hover) .ask .dot {
     animation-name: none;
   }
 }
@@ -1612,11 +1608,14 @@ a.chip:hover {
    system's text colour, and the promise areas keep an outline. */
 @media (forced-colors: active) {
   .track .step.here,
-  .stage-filter .place[aria-pressed="true"] .dot,
-  .masthead .name .wait b {
+  .stage-filter .place[aria-pressed="true"] .dot {
     background: CanvasText;
     border-color: CanvasText;
     forced-color-adjust: none;
+  }
+
+  .masthead .name .ask .dot {
+    fill: CanvasText;
   }
 
   .basis-mark svg {
