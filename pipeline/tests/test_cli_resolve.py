@@ -24,7 +24,7 @@ SLUG = "tooth-regrowth-ex1"
 
 
 class Trials:
-    def search_trials(self, intervention: str) -> list[SourceRecord]:
+    def search_trials(self, intervention: str, condition: str | None = None) -> list[SourceRecord]:
         payload = {"protocolSection": {"identificationModule": {"nctId": "NCT00000001"}}}
         return [SourceRecord("clinicaltrials.gov", "NCT00000001", "https://x.test", payload, NOW)]
 
@@ -121,6 +121,16 @@ def test_resolve_stores_pending_candidates_and_suggests_a_stage(run, session: Se
     assert result.exit_code == 0, result.output
     assert "1 new candidate match" in result.output and "NCT00000001" in result.output
     assert "Suggested evidence stage: in_vitro" in result.output
+    assert len(session.scalars(select(EntityMatch)).all()) == 1
+
+
+def test_resolve_rescore_scores_the_pending_candidates_again(run, session: Session):
+    run("resolve", SLUG)
+
+    result = run("resolve", SLUG, "--rescore")
+
+    assert result.exit_code == 0, result.output
+    assert "Scored 1 pending candidate again" in result.output
     assert len(session.scalars(select(EntityMatch)).all()) == 1
 
 

@@ -1,0 +1,77 @@
+{
+  "totalCount": 2,
+  "studies": [
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT07341828",
+          "briefTitle": "A Study of C-CAR168 in the Treatment of Central Nervous System Autoimmune Diseases Refractory to Standard Therapy",
+          "officialTitle": "An Exploratory Clinical Study of Anti-CD20/B-cell Maturation Antigen(BCMA) Chimeric Antigen Receptor Autologous T Cell Product (C-CAR168) in the Treatment of Central Nervous System Autoimmune Diseases Refractory to Standard Therapy"
+        },
+        "statusModule": {
+          "overallStatus": "NOT_YET_RECRUITING"
+        },
+        "sponsorCollaboratorsModule": {
+          "leadSponsor": {
+            "name": "Huashan Hospital"
+          }
+        },
+        "conditionsModule": {
+          "conditions": [
+            "Multiple Sclerosis (MS)",
+            "Neuromyelitis Optica Spectrum Disorders (NMOSD)",
+            "Autoimmune Encephalitis",
+            "Stiff Person Syndrome"
+          ]
+        },
+        "designModule": {
+          "phases": [
+            "PHASE1"
+          ]
+        },
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "name": "CD20/BCMA-directed CAR-T cells"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT06588491",
+          "briefTitle": "KYSA-8: A Study of Anti-CD19 Chimeric Antigen Receptor T-Cell (CD19 CAR T) Therapy, in Subjects With Treatment Refractory Stiff Person Syndrome",
+          "officialTitle": "KYSA-8: A Phase 2 Open-Label, Single-Arm, Multicenter Study of KYV-101, an Autologous Fully Human Anti-CD19 Chimeric Antigen Receptor T-Cell (CD19 CAR T) Therapy, in Subjects With Treatment Refractory Stiff Person Syndrome"
+        },
+        "statusModule": {
+          "overallStatus": "COMPLETED"
+        },
+        "sponsorCollaboratorsModule": {
+          "leadSponsor": {
+            "name": "Kyverna Therapeutics"
+          }
+        },
+        "conditionsModule": {
+          "conditions": [
+            "Stiff-Person Syndrome",
+            "SPS"
+          ]
+        },
+        "designModule": {
+          "phases": [
+            "PHASE2"
+          ]
+        },
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "name": "Standard lymphodepletion regimen"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

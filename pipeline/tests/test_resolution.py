@@ -30,11 +30,12 @@ NOW = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
 DOI = "10.1000/example.2018.1"
 
 
-def trial(nct_id: str, title: str = "A trial") -> SourceRecord:
+def trial(nct_id: str, title: str = "A trial", condition: str = "Tooth Agenesis") -> SourceRecord:
     payload = {
         "protocolSection": {
             "identificationModule": {"nctId": nct_id, "briefTitle": title},
             "armsInterventionsModule": {"interventions": [{"name": "EX-1"}]},
+            "conditionsModule": {"conditions": [condition]},
         }
     }
     return SourceRecord(
@@ -48,9 +49,11 @@ class FakeTrials:
     def __init__(self, results: dict[str, list[SourceRecord]]) -> None:
         self.results = results
         self.searched: list[str] = []
+        self.conditions: list[str | None] = []
 
-    def search_trials(self, intervention: str) -> list[SourceRecord]:
+    def search_trials(self, intervention: str, condition: str | None = None) -> list[SourceRecord]:
         self.searched.append(intervention)
+        self.conditions.append(condition)
         return self.results.get(intervention, [])
 
 
@@ -79,9 +82,25 @@ class Scoring:
         if step == "entity_match":
             p = self.match_probability
             choice = "match" if p >= 0.5 else "not_a_match"
-            return BackendAnswer(choice, {"match": p, "not_a_match": 1 - p})
+            given = {"match": p, "not_a_match": 1 - p}
+            return BackendAnswer(choice, {o: given.get(o, 0.0) for o in options})
         others = (1 - 0.7) / (len(options) - 1)
         return BackendAnswer(self.stage, {o: 0.7 if o == self.stage else others for o in options})
+
+
+class ByCondition:
+    """A decision backend that reads the record: a match only when it names tooth agenesis."""
+
+    name = "fake"
+
+    def __init__(self) -> None:
+        self.states: list[str] = []
+
+    def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
+        self.states.append(state)
+        record = state.split("Candidate record", 1)[-1]
+        choice = "match" if "Tooth Agenesis" in record else "other_indication"
+        return BackendAnswer(choice, {o: 0.96 if o == choice else 0.02 for o in options})
 
 
 class Broken:
@@ -102,7 +121,7 @@ def new_claim(session: Session, slug: str = "tooth-regrowth-ex1", **overrides) -
     return add_claim(session, **(values | overrides))
 
 
-def resolve(session: Session, claim: Claim, trials=None, dois=None, backend=None):
+def resolve(session: Session, claim: Claim, trials=None, dois=None, backend=None, **options):
     return resolve_claim(
         session,
         claim,
@@ -110,6 +129,7 @@ def resolve(session: Session, claim: Claim, trials=None, dois=None, backend=None
         dois=dois or FakeDois(set()),
         backend=backend or Scoring(),
         now=NOW,
+        **options,
     )
 
 
@@ -315,12 +335,97 @@ def test_candidate_score_is_the_logged_probability_of_a_match(session: Session):
     [match] = matches(session)
     [entry] = session.scalars(select(DecisionLog)).all()
     assert (entry.step, entry.input_ref) == ("entity_match", f"entity_match:{match.id}")
-    assert entry.options == ["match", "not_a_match"]
+    assert entry.options == ["match", "other_indication", "not_a_match"]
     assert entry.output is not None
     assert (
         match.score == pytest.approx(entry.output["probabilities"]["match"]) == pytest.approx(0.83)
     )
     assert "EX-1 antibody" in backend.states[0] and "EX-1 in adults" in backend.states[0]
+
+
+def test_registry_search_carries_the_claims_indication(session: Session):
+    """Scenario: Broad intervention name"""
+    claim = new_claim(session)
+    add_synonym(session, claim.slug, "EX-1 antibody", "EX-1")
+    trials = FakeTrials({})
+
+    resolve(session, claim, trials=trials)
+
+    assert trials.searched == ["EX-1 antibody", "EX-1"]
+    assert trials.conditions == ["tooth agenesis", "tooth agenesis"]
+
+
+def test_trial_of_the_same_intervention_for_another_condition_scores_low(session: Session):
+    """Scenario: Same drug, another condition"""
+    claim = new_claim(session)
+    backend = ByCondition()
+    trials = FakeTrials(
+        {
+            "EX-1 antibody": [
+                trial("NCT00000001", "EX-1 in tooth agenesis"),
+                trial("NCT00000002", "EX-1 in lung cancer", condition="Lung Cancer"),
+            ]
+        }
+    )
+
+    resolve(session, claim, trials=trials, backend=backend)
+
+    for_the_claim, for_another = matches(session)
+    assert for_the_claim.score == pytest.approx(0.96)
+    assert for_another.score == pytest.approx(0.02)
+    # The backend was shown the claim's indication and each record's conditions, and asked
+    # about both the intervention and the indication.
+    assert "Indication: tooth agenesis" in backend.states[1]
+    assert "Lung Cancer" in backend.states[1]
+    assert "for the claim's indication" in backend.states[1]
+    entries = session.scalars(select(DecisionLog).order_by(DecisionLog.id)).all()
+    assert [entry.output["choice"] for entry in entries if entry.output] == [
+        "match",
+        "other_indication",
+    ]
+
+
+def test_paper_is_only_asked_whether_it_is_the_same_paper(session: Session):
+    claim = new_claim(session)
+    add_entity(session, claim.slug, type=EntityType.PAPER, name="The origin paper", doi=DOI)
+
+    resolve(session, claim, dois=FakeDois({DOI}))
+
+    [entry] = session.scalars(select(DecisionLog)).all()
+    assert entry.options == ["match", "not_a_match"]
+
+
+def test_rescoring_replaces_scores_of_pending_candidates_the_search_still_returns(
+    session: Session,
+):
+    claim = new_claim(session)
+    found = {
+        "EX-1 antibody": [
+            trial("NCT00000001", "EX-1 in lung cancer", condition="Lung Cancer"),
+            trial("NCT00000002", "EX-1 in bladder cancer", condition="Bladder Cancer"),
+        ]
+    }
+    resolve(session, claim, trials=FakeTrials(found), backend=Scoring(0.99))
+    pending, decided = matches(session)
+    record_decision(decided, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+    session.flush()
+
+    added = resolve(session, claim, trials=FakeTrials(found), backend=ByCondition(), rescore=True)
+
+    assert added == []
+    assert pending.score == pytest.approx(0.02)
+    # A candidate someone has decided keeps the score it was decided on.
+    assert decided.score == pytest.approx(0.99)
+
+
+def test_without_rescoring_existing_candidates_keep_their_scores(session: Session):
+    claim = new_claim(session)
+    found = {"EX-1 antibody": [trial("NCT00000001", condition="Lung Cancer")]}
+    resolve(session, claim, trials=FakeTrials(found), backend=Scoring(0.99))
+
+    resolve(session, claim, trials=FakeTrials(found), backend=ByCondition())
+
+    assert matches(session)[0].score == pytest.approx(0.99)
 
 
 def test_confident_decision_still_leaves_the_candidate_pending(session: Session):

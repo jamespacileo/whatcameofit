@@ -6,6 +6,8 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 |---|---|
 | `clinicaltrials/study_NCT02586935.json` | `GET /api/v2/studies/NCT02586935` |
 | `clinicaltrials/search_tideglusib_page{1,2,3}.json` | `GET /api/v2/studies?query.intr=tideglusib&pageSize=5&fields=…`, following `nextPageToken` |
+| `clinicaltrials/search_broad_count.json` | `GET /api/v2/studies?query.intr=CAR-T cell therapy&pageSize=3&countTotal=true&fields=…` |
+| `clinicaltrials/search_broad_with_condition.json` | the same with `query.cond=Stiff person syndrome` |
 | `europepmc/paper_srep39654.json` | `GET /search?query=DOI:"10.1038/srep39654"&resultType=core` |
 | `europepmc/citing_srep39654_page1.json` | `GET /search?query=CITES:28067250_MED&resultType=core&pageSize=3` |
 | `crossref/work_retracted_lancet_1998.json` | `GET /works/10.1016/S0140-6736(97)11096-0` |

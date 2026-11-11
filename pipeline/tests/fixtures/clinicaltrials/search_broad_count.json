@@ -1,0 +1,114 @@
+{
+  "totalCount": 2071,
+  "studies": [
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT03798509",
+          "briefTitle": "Human CD19 Targeted T Cells Injection Therapy for Relapsed and Refractory CD19-positive Leukemia",
+          "officialTitle": "A Phase I Clinical Trial to Evaluate the Safety and Tolerability of Human CD19 Targeted T Cells Injection for Subjects With Relapsed and Refractory CD19-positive B-cell Acute Lymphoblastic Leukemia"
+        },
+        "statusModule": {
+          "overallStatus": "UNKNOWN"
+        },
+        "sponsorCollaboratorsModule": {
+          "leadSponsor": {
+            "name": "Hrain Biotechnology Co., Ltd."
+          }
+        },
+        "conditionsModule": {
+          "conditions": [
+            "CD19-positive",
+            "Acute Lymphoblastic Leukemia"
+          ]
+        },
+        "designModule": {
+          "phases": [
+            "PHASE1"
+          ]
+        },
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "name": "Human CD19 targeted T Cells Injection"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT05022849",
+          "briefTitle": "A Study of JNJ-75229414 for Metastatic Castration-resistant Prostate Cancer Participants",
+          "officialTitle": "A Phase 1, Dose Escalation Study of JNJ-75229414, a Chimeric Antigen Receptor T Cell (CAR-T) Therapy Directed Against KLK2 for Metastatic Castration-Resistant Prostate Cancer"
+        },
+        "statusModule": {
+          "overallStatus": "COMPLETED"
+        },
+        "sponsorCollaboratorsModule": {
+          "leadSponsor": {
+            "name": "Janssen Research & Development, LLC"
+          }
+        },
+        "conditionsModule": {
+          "conditions": [
+            "Prostatic Neoplasms"
+          ]
+        },
+        "designModule": {
+          "phases": [
+            "PHASE1"
+          ]
+        },
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "name": "JNJ-75229414"
+            },
+            {
+              "name": "Bridging Therapy"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT07383233",
+          "briefTitle": "CD19/BAFF-R in Vivo CAR-T Cell Therapy Targeting Relapsed/Refractory B Cell Acute Leukemia/Malignant Lymphoma",
+          "officialTitle": "Clinical Study on the Efficacy and Safety of CD19/BAFF-R in Vivo CAR-T Cell Therapy Targeting Relapsed/Refractory B Cell Acute Leukemia/Malignant Lymphoma"
+        },
+        "statusModule": {
+          "overallStatus": "NOT_YET_RECRUITING"
+        },
+        "sponsorCollaboratorsModule": {
+          "leadSponsor": {
+            "name": "Qi deng"
+          }
+        },
+        "conditionsModule": {
+          "conditions": [
+            "Lymphoma",
+            "CAR T Cell Therapy",
+            "Acute Leukemia"
+          ]
+        },
+        "designModule": {
+          "phases": [
+            "PHASE1"
+          ]
+        },
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "name": "CD19/BAFF-R in vivo CAR-T cell intravenous infusion"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "nextPageToken": "ZVNj7o2Elu8o3lpyXdC5577umpOQJJxtbPKj0A"
+}

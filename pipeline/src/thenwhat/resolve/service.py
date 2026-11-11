@@ -13,12 +13,14 @@ from thenwhat.claims.entities import entities_of
 from thenwhat.db.models import Claim, Entity, EntityMatch
 from thenwhat.decide.core import Backend, DecisionFailed
 from thenwhat.decide.steps import score_match
-from thenwhat.domain import EntityType
+from thenwhat.domain import EntityType, ReviewState
 from thenwhat.sources.base import SourceRecord
 
 
 class TrialSearch(Protocol):
-    def search_trials(self, intervention: str) -> list[SourceRecord]: ...
+    def search_trials(
+        self, intervention: str, condition: str | None = None
+    ) -> list[SourceRecord]: ...
 
 
 class DoiLookup(Protocol):
@@ -33,12 +35,15 @@ def resolve_claim(
     dois: DoiLookup,
     backend: Backend,
     now: datetime,
+    rescore: bool = False,
 ) -> list[EntityMatch]:
     """Search the registries for the claim's interventions and papers and store each new
     hit as a scored, pending candidate. Returns the candidates this run added.
 
-    Candidates that already exist are left exactly as they are, whatever their state.
-    If a candidate cannot be scored, none of this run's candidates are kept.
+    Trials are searched within the claim's indication when the intervention's name is a
+    broad one. Candidates that already exist are left exactly as they are, whatever their
+    state, unless `rescore` asks for pending ones to be scored again. If a candidate
+    cannot be scored, none of this run's candidates are kept.
     """
     entities = entities_of(session, claim)
     seen = {
@@ -58,7 +63,7 @@ def resolve_claim(
     for entity in entities:
         if entity.type is EntityType.INTERVENTION:
             for term in [entity.name, *entity.synonyms]:
-                for record in trials.search_trials(term):
+                for record in trials.search_trials(term, claim.indication):
                     consider(entity, record)
         elif entity.type is EntityType.PAPER and entity.doi:
             record = dois.work(entity.doi)
@@ -87,4 +92,56 @@ def resolve_claim(
         session.flush()
         raise
     session.flush()
+    if rescore:
+        rescore_claim(session, claim, trials=trials, backend=backend, now=now, skip=added)
     return added
+
+
+def rescore_claim(
+    session: Session,
+    claim: Claim,
+    *,
+    trials: TrialSearch,
+    backend: Backend,
+    now: datetime,
+    skip: list[EntityMatch] | None = None,
+) -> list[EntityMatch]:
+    """Score again the pending trial candidates that the search still returns, and return
+    them. For candidates scored before the indication was part of the question.
+
+    A candidate someone has decided keeps the score it was decided on. A pending
+    candidate the search no longer returns keeps its old score, and the review queue
+    says how it was scored.
+    """
+    just_scored = {match.id for match in skip or []}
+    again: list[EntityMatch] = []
+    for entity in entities_of(session, claim):
+        if entity.type is not EntityType.INTERVENTION:
+            continue
+        pending = {
+            (match.source_name, match.external_id): match
+            for match in session.scalars(
+                select(EntityMatch).where(
+                    EntityMatch.entity_id == entity.id,
+                    EntityMatch.review_state == ReviewState.PENDING,
+                )
+            )
+            if match.id not in just_scored
+        }
+        for term in [entity.name, *entity.synonyms]:
+            for record in trials.search_trials(term, claim.indication):
+                match = pending.pop((record.source_name, record.external_id), None)
+                if match is None:
+                    continue
+                match.score = score_match(
+                    session,
+                    backend,
+                    claim=claim,
+                    entity=entity,
+                    match=match,
+                    candidate=record,
+                    now=now,
+                )
+                again.append(match)
+    session.flush()
+    return again

@@ -59,7 +59,7 @@ class Trials:
     def __init__(self, *nct_ids: str) -> None:
         self.nct_ids = nct_ids
 
-    def search_trials(self, intervention: str) -> list[SourceRecord]:
+    def search_trials(self, intervention: str, condition: str | None = None) -> list[SourceRecord]:
         return [
             SourceRecord("clinicaltrials.gov", i, f"https://clinicaltrials.gov/study/{i}", {}, NOW)
             for i in self.nct_ids
@@ -280,6 +280,52 @@ def test_queue_for_one_claim_lists_its_pending_items_with_source_links(session: 
     assert items[0].score == pytest.approx(0.8)
     assert "EX-1 antibody" in items[0].assertion and "NCT1" in items[0].assertion
     assert "Phase 1 trial registered." in items[2].assertion
+
+
+class OtherIndication:
+    """Reads every candidate as the same intervention for a different condition."""
+
+    name = "fake"
+
+    def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
+        choice = "other_indication"
+        return BackendAnswer(choice, {o: 0.9 if o == choice else 0.05 for o in options})
+
+
+def test_queue_says_when_a_candidate_is_for_another_indication(session: Session):
+    """Scenario: Same drug, another condition"""
+    claim = approved_claim(session)
+    resolve_claim(
+        session, claim, trials=Trials("NCT1"), dois=NoDois(), backend=OtherIndication(), now=EARLIER
+    )
+
+    [item] = pending_items(session, claim_slug=SLUG, kind="match")
+
+    assert "for another indication" in item.assertion
+
+
+def test_queue_says_when_a_score_predates_the_indication(session: Session):
+    claim = approved_claim(session)
+    [match] = candidates(session, claim, "NCT1")
+    # As a decision logged before the indication was part of the question.
+    entry = session.scalars(
+        select(DecisionLog).where(DecisionLog.input_ref == f"entity_match:{match.id}")
+    ).one()
+    entry.options = ["match", "not_a_match"]
+    session.flush()
+
+    [item] = pending_items(session, claim_slug=SLUG, kind="match")
+
+    assert "scored without the indication" in item.assertion
+
+
+def test_queue_adds_nothing_to_a_candidate_read_as_a_match(session: Session):
+    claim = approved_claim(session)
+    candidates(session, claim, "NCT1")
+
+    [item] = pending_items(session, claim_slug=SLUG, kind="match")
+
+    assert item.assertion.endswith("record NCT1")
 
 
 def test_queue_for_all_claims_includes_draft_claims(session: Session):

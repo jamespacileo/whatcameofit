@@ -15,7 +15,7 @@ from thenwhat.cli.session import settings_or_exit
 from thenwhat.decide.core import Backend, DecisionFailed, UnknownBackend, backend_named
 from thenwhat.decide.steps import has_stage_suggestion, suggest_evidence_stage
 from thenwhat.domain import EntityType
-from thenwhat.resolve.service import DoiLookup, TrialSearch, resolve_claim
+from thenwhat.resolve.service import DoiLookup, TrialSearch, rescore_claim, resolve_claim
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref
 
@@ -76,10 +76,18 @@ def entity_origin_paper(
 
 def resolve_command(
     claim_slug: Annotated[str, typer.Argument(help="Slug of the claim.")],
+    rescore: Annotated[
+        bool,
+        typer.Option(
+            "--rescore",
+            help="Also score again the pending trial candidates the search still returns.",
+        ),
+    ] = False,
 ) -> None:
     """Search the registries for a claim's interventions and papers.
 
-    Every hit becomes a pending candidate match for you to approve or reject.
+    Every hit becomes a pending candidate match for you to approve or reject. A trial
+    scores as a match only when it tests the intervention for the claim's indication.
     """
     with entry_session() as session:
         claim = find_claim(session, claim_slug)
@@ -92,6 +100,11 @@ def resolve_command(
             added = resolve_claim(
                 session, claim, trials=trials, dois=dois, backend=backend, now=now
             )
+            again = (
+                rescore_claim(session, claim, trials=trials, backend=backend, now=now, skip=added)
+                if rescore
+                else []
+            )
             if claim.evidence_stage is None and not has_stage_suggestion(session, claim):
                 stage = suggest_evidence_stage(session, backend, claim, now=now)
                 out.print(f"Suggested evidence stage: {stage.choice}. Confirm it in review.")
@@ -102,6 +115,9 @@ def resolve_command(
             raise typer.Exit(code=1) from None
         noun = "candidate match" if len(added) == 1 else "candidate matches"
         out.print(f"Found {len(added)} new {noun} for {claim.slug}. All are pending review.")
+        if rescore:
+            candidates = "candidate" if len(again) == 1 else "candidates"
+            out.print(f"Scored {len(again)} pending {candidates} again.")
         for match in sorted(added, key=lambda m: m.score, reverse=True):
             out.print(
                 f"  {match.score:.2f}  {match.source_name}  {match.external_id}", markup=False

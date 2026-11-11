@@ -15,6 +15,8 @@ EVIDENCE_STAGE = "evidence_stage"
 ENTITY_MATCH = "entity_match"
 MATCH = "match"
 NOT_A_MATCH = "not_a_match"
+# The record is about the claim's intervention, but for a different condition.
+OTHER_INDICATION = "other_indication"
 MAX_CANDIDATE_CHARACTERS = 1500
 
 
@@ -72,21 +74,40 @@ def score_match(
     candidate: SourceRecord,
     now: datetime,
 ) -> float:
-    """Probability that the registry record is about the claim's entity. Orders the
-    review queue; it approves nothing."""
+    """Probability that the registry record is evidence for the claim. Orders the review
+    queue; it approves nothing.
+
+    A claim is one intervention for one indication, so a trial is a match only when it
+    tests that intervention for that indication. The same intervention in another
+    condition is its own answer, so the reviewer can be told which it was. A paper is
+    only asked whether it is the same paper.
+    """
+    if entity.type is EntityType.INTERVENTION:
+        options = [MATCH, OTHER_INDICATION, NOT_A_MATCH]
+        question = (
+            "Is this record a trial of the claim's intervention for the claim's indication?\n"
+            f"- {MATCH}: it tests this intervention in the claim's indication, in a form of"
+            " that condition, or in patients who have it.\n"
+            f"- {OTHER_INDICATION}: it tests this intervention for a different condition,"
+            " or only in healthy volunteers.\n"
+            f"- {NOT_A_MATCH}: it is not a trial of this intervention."
+        )
+    else:
+        options = [MATCH, NOT_A_MATCH]
+        question = "Is this record about the same entity as the claim?"
     state = (
         f"{_claim_text(session, claim)}\n\n"
         f"Entity to match ({entity.type}): {entity.name}\n\n"
         f"Candidate record from {candidate.source_name} ({candidate.external_id}):\n"
         f"{_describe(candidate)}\n\n"
-        "Is this record about the same entity as the claim?"
+        f"{question}"
     )
     decision = decide(
         session,
         backend,
         step=ENTITY_MATCH,
         state=state,
-        options=[MATCH, NOT_A_MATCH],
+        options=options,
         input_ref=f"entity_match:{match.id}",
         now=now,
     )
@@ -94,6 +115,30 @@ def score_match(
 
 
 def _describe(candidate: SourceRecord) -> str:
-    return json.dumps(candidate.payload, ensure_ascii=False, sort_keys=True)[
-        :MAX_CANDIDATE_CHARACTERS
-    ]
+    """What the record says, with a trial's conditions and interventions first so that a
+    long record is never cut off before them."""
+    section = candidate.payload.get("protocolSection")
+    if isinstance(section, dict):
+        identification = section.get("identificationModule", {})
+        described = {
+            "title": identification.get("briefTitle"),
+            "official_title": identification.get("officialTitle"),
+            "conditions": section.get("conditionsModule", {}).get("conditions", []),
+            "interventions": [
+                intervention.get("name")
+                for intervention in section.get("armsInterventionsModule", {}).get(
+                    "interventions", []
+                )
+            ],
+            "phases": section.get("designModule", {}).get("phases", []),
+            "status": section.get("statusModule", {}).get("overallStatus"),
+            "sponsor": section.get("sponsorCollaboratorsModule", {})
+            .get("leadSponsor", {})
+            .get("name"),
+        }
+        text = json.dumps(
+            {name: value for name, value in described.items() if value}, ensure_ascii=False
+        )
+    else:
+        text = json.dumps(candidate.payload, ensure_ascii=False, sort_keys=True)
+    return text[:MAX_CANDIDATE_CHARACTERS]

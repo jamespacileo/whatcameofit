@@ -19,3 +19,14 @@ When the registries are searched for a claim, the search SHALL be narrowed by th
 #### Scenario: Broad intervention name
 - **WHEN** the intervention is "CAR-T cell therapy" and the indication is stiff person syndrome
 - **THEN** the search returns trials of CAR-T cell therapy in stiff person syndrome, not every CAR-T trial
+
+### Requirement: Scores given without the indication are marked
+A pending trial candidate whose score was given before the indication was part of the question SHALL be shown in the review queue as scored without the indication. An operator SHALL be able to have the pending trial candidates that the search still returns scored again. A candidate that has been decided SHALL keep the score it was decided on.
+
+#### Scenario: Old score in the queue
+- **WHEN** a pending trial candidate was last scored on the intervention alone
+- **THEN** the review queue says it was scored without the indication
+
+#### Scenario: Scoring again
+- **WHEN** an operator resolves a claim again and asks for rescoring
+- **THEN** its pending trial candidates that the search returns get a new score, and decided candidates are unchanged

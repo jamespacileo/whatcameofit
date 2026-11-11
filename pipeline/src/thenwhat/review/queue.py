@@ -21,8 +21,14 @@ from thenwhat.db.models import (
     FailureFlag,
     SourceArticle,
 )
-from thenwhat.decide.steps import ENTITY_MATCH, EVIDENCE_STAGE, MATCH, NOT_A_MATCH
-from thenwhat.domain import Decider, EvidenceStage, ReviewState
+from thenwhat.decide.steps import (
+    ENTITY_MATCH,
+    EVIDENCE_STAGE,
+    MATCH,
+    NOT_A_MATCH,
+    OTHER_INDICATION,
+)
+from thenwhat.domain import Decider, EntityType, EvidenceStage, ReviewState
 from thenwhat.review.decisions import record_decision
 
 Kind = Literal["claim", "match", "event"]
@@ -83,7 +89,7 @@ def pending_items(
                     match.id,
                     claim.slug,
                     f"{entity.type.value} '{entity.name}' is {match.source_name}"
-                    f" record {match.external_id}",
+                    f" record {match.external_id}{_score_note(session, match, entity)}",
                     template.format(match.external_id) if template else None,
                     match.score,
                 )
@@ -107,6 +113,28 @@ def pending_items(
                 )
             )
     return [item for item in items if kind is None or item.kind == kind]
+
+
+def _score_note(session: Session, match: EntityMatch, entity: Entity) -> str:
+    """What the reviewer should know about how a trial candidate's score was reached."""
+    if entity.type is not EntityType.INTERVENTION:
+        return ""
+    scored = session.scalars(
+        select(DecisionLog)
+        .where(
+            DecisionLog.step == ENTITY_MATCH,
+            DecisionLog.input_ref == f"entity_match:{match.id}",
+            DecisionLog.error.is_(None),
+        )
+        .order_by(DecisionLog.id.desc())
+    ).first()
+    if scored is None or scored.output is None:
+        return ""
+    if OTHER_INDICATION not in scored.options:
+        return " (scored without the indication: run `resolve --rescore`)"
+    if scored.output.get("choice") == OTHER_INDICATION:
+        return " (read as the same intervention for another indication)"
+    return ""
 
 
 def decide_item(

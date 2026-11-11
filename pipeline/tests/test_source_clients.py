@@ -104,6 +104,73 @@ def test_search_with_many_results_follows_every_page(session: Session, fake_time
     assert len(replay.requests) == 3
 
 
+def broad_search(fixture_json, narrowed_by=lambda condition: True):
+    """A name with thousands of trials. With a condition, the registry answers only when
+    `narrowed_by` accepts the condition's wording."""
+    broad = fixture_json("clinicaltrials/search_broad_count.json")
+    narrowed = fixture_json("clinicaltrials/search_broad_with_condition.json")
+
+    def route(request: httpx.Request):
+        condition = request.url.params.get("query.cond")
+        if condition is None:
+            return broad
+        return narrowed if narrowed_by(condition) else {"studies": [], "totalCount": 0}
+
+    return route
+
+
+def test_broad_name_is_searched_within_the_condition(session: Session, fake_time, fixture_json):
+    """Scenario: Broad intervention name"""
+    source, replay = trials(session, fake_time, broad_search(fixture_json))
+
+    records = source.search_trials("CAR-T cell therapy", condition="Stiff person syndrome")
+
+    assert [record.external_id for record in records] == ["NCT07341828", "NCT06588491"]
+    # One request to learn how many trials the name has, one within the condition;
+    # the thousands of other trials are never paged through.
+    assert [request.url.params.get("query.cond") for request in replay.requests] == [
+        None,
+        "Stiff person syndrome",
+    ]
+    assert replay.requests[0].url.params["countTotal"] == "true"
+
+
+def test_specific_name_is_searched_without_the_condition(session: Session, fake_time, fixture_json):
+    source, replay = trials(session, fake_time, search_pages(fixture_json))
+
+    records = source.search_trials("tideglusib", condition="Tooth decay")
+
+    assert len({record.external_id for record in records}) == 10
+    assert all("query.cond" not in request.url.params for request in replay.requests)
+
+
+def test_condition_wording_the_registry_does_not_know_is_tried_by_its_words(
+    session: Session, fake_time, fixture_json
+):
+    route = broad_search(fixture_json, narrowed_by=lambda condition: " OR " in condition)
+    source, replay = trials(session, fake_time, route)
+
+    records = source.search_trials(
+        "CAR-T cell therapy", condition="Stiff person syndrome, a rare disorder"
+    )
+
+    assert len(records) == 2
+    # Words every condition shares are left out of the second attempt.
+    assert replay.requests[-1].url.params["query.cond"] == "stiff OR person OR rare"
+
+
+def test_broad_name_with_no_trial_under_the_condition_keeps_the_first_page(
+    session: Session, fake_time, fixture_json
+):
+    route = broad_search(fixture_json, narrowed_by=lambda condition: False)
+    source, replay = trials(session, fake_time, route)
+
+    records = source.search_trials("CAR-T cell therapy", condition="Stiff person syndrome")
+
+    assert len(records) == 3
+    assert all("pageToken" not in request.url.params for request in replay.requests)
+
+
 # --- Europe PMC ------------------------------------------------------------------
 
 
