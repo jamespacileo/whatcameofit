@@ -14,7 +14,9 @@ interface Props {
 const { url, outlet, link = true } = Astro.props;
 const domain = outletDomain(url);
 const icon = outletIconPath(domain);
-const letter = (domain || outlet).charAt(0).toUpperCase();
+// An article recorded without its outlet's name is still named: by its domain.
+const name = outlet.trim() || domain || "Source";
+const letter = (domain || name).charAt(0).toUpperCase();
 ---
 
 <span class="outlet">
@@ -27,6 +29,6 @@ const letter = (domain || outlet).charAt(0).toUpperCase();
       </span>
     )
   }
-  {link ? <a href={url}>{outlet}</a> : <span>{outlet}</span>}
-  {domain && <span class="domain">{domain}</span>}
+  {link ? <a href={url}>{name}</a> : <span>{name}</span>}
+  {domain && domain !== name && <span class="domain">{domain}</span>}
 </span>

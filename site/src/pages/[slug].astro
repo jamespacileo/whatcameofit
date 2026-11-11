@@ -79,7 +79,7 @@ const imageAlt = cardAlt(
         claim.headline.split(" ").map((word, index) => (
           <>
             {index > 0 && " "}
-            {word.includes("-") ? <span class="unbroken">{word}</span> : word}
+            {word.includes("-") && word.length <= 16 ? <span class="unbroken">{word}</span> : word}
           </>
         ))
       }

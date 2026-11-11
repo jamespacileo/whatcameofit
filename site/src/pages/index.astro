@@ -44,6 +44,12 @@ const recent = data.claims
       <button type="submit">Look up</button>
     </div>
   </form>
+  <noscript>
+    <p class="results">
+      Looking up needs JavaScript. Without it, <a href="/topics">the list of topics</a> leads to
+      every claim.
+    </p>
+  </noscript>
   <div class="results" id="results" aria-live="polite"></div>
 
   <h2 class="bar">Headlines reported most recently</h2>
@@ -254,7 +260,11 @@ const recent = data.claims
     );
   }
 
+  // A slow answer to an earlier question must not replace the answer to a later one.
+  let latest = 0;
+
   async function search(query: string) {
+    const asked = latest;
     show("Searching…");
     let hits: Hit[];
     try {
@@ -265,9 +275,12 @@ const recent = data.claims
         found.results.slice(0, 20).map((result: { data: () => Promise<Hit> }) => result.data()),
       );
     } catch {
-      show("Search is not available right now. The topic pages list every claim.");
+      if (asked === latest) {
+        show("Search is not available right now. The topic pages list every claim.");
+      }
       return;
     }
+    if (asked !== latest) return;
     if (hits.length === 0) {
       show(`Nothing found for “${query}”. This site only covers claims it has tracked so far.`);
       return;
@@ -289,6 +302,7 @@ const recent = data.claims
   }
 
   function answer(text: string) {
+    latest += 1;
     if (!text) {
       results.replaceChildren();
       return;

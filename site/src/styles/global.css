@@ -20,6 +20,10 @@
   --gutter: clamp(1rem, 4vw, 2rem);
   --radius: 0.85rem;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  /* The outline of an empty place on the path: 3:1 against the page. */
+  --ring: #7f90a3;
+  /* Light only: form controls and scrollbars must not turn dark on their own. */
+  color-scheme: light;
 }
 
 *,
@@ -41,6 +45,8 @@ html {
 
 body {
   margin: 0;
+  /* A long name, identifier or address breaks rather than widen the page. */
+  overflow-wrap: break-word;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -713,7 +719,7 @@ a.chip:hover {
   height: 0.45rem;
   border-radius: 50%;
   background: var(--paper);
-  border: 1.5px solid #9aa9b9;
+  border: 1.5px solid var(--ring);
 }
 
 .track .step.here {
@@ -779,7 +785,7 @@ a.chip:hover {
 }
 
 .pop-trigger.more:hover,
-.pop-trigger.more[aria-expanded="true"] {
+.pop-trigger.more:has(+ .pop:popover-open) {
   text-decoration-style: solid;
   text-decoration-color: var(--ink);
 }
@@ -805,6 +811,10 @@ a.chip:hover {
   position-try-fallbacks: flip-inline, flip-block, flip-block flip-inline;
   width: max-content;
   max-width: min(22rem, calc(100vw - 2rem));
+  /* A long summary scrolls inside the panel instead of running off the screen. */
+  max-height: min(24rem, calc(100dvh - 2rem));
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0.8rem 0.95rem;
   border: 1px solid var(--rule);
   border-radius: 0.65rem;
@@ -1037,7 +1047,7 @@ a.chip:hover {
   height: 0.8rem;
   border-radius: 50%;
   background: var(--paper);
-  border: 1.5px solid #9aa9b9;
+  border: 1.5px solid var(--ring);
 }
 
 .stage-filter .place strong {
@@ -1328,8 +1338,6 @@ a.chip:hover {
   display: inline-block;
   object-fit: contain;
   background: none;
-  /* A hairline keeps a pale or see-through icon from reading as a gap. */
-  box-shadow: 0 0 0 1px var(--rule-soft);
 }
 
 /* Beside a promise the outlet has its own line, and the date the next. */
@@ -1551,7 +1559,7 @@ a.chip:hover {
      the name resolves into. */
   .digest .track .step.here {
     position: relative;
-    animation: mark-land 0.6s var(--ease-out) 0.3s both;
+    animation: mark-land 0.6s var(--ease-out) both;
   }
 
   .digest .track .step.here::after {
@@ -1560,7 +1568,7 @@ a.chip:hover {
     inset: -1.5px;
     border-radius: 50%;
     border: 1.5px solid var(--blue);
-    animation: mark-ring 0.9s var(--ease-out) 0.6s both;
+    animation: mark-ring 0.9s var(--ease-out) 0.3s both;
   }
 
   /* A record reached from the status panel shows itself, then settles. */
@@ -1575,9 +1583,10 @@ a.chip:hover {
   }
 }
 
+/* It starts small, never absent: the marker is on the page from the first frame. */
 @keyframes mark-land {
   from {
-    transform: scale(0);
+    transform: scale(0.4);
   }
   to {
     transform: scale(1);
@@ -1604,6 +1613,35 @@ a.chip:hover {
   100% {
     background: var(--tint);
     outline-color: var(--tint);
+  }
+}
+
+/* With a forced palette, fills are dropped. The marks that carry meaning take the
+   system's text colour, and the promise areas keep an outline. */
+@media (forced-colors: active) {
+  .track .step.here,
+  .stage-filter .place[aria-pressed="true"] .dot,
+  .masthead .name .wait b {
+    background: CanvasText;
+    border-color: CanvasText;
+    forced-color-adjust: none;
+  }
+
+  .basis-mark svg {
+    fill: CanvasText;
+  }
+
+  .timetable .promised,
+  .index .promise,
+  .plain.undated,
+  .digest,
+  .pop {
+    outline: 1px solid CanvasText;
+    outline-offset: -1px;
+  }
+
+  .stage-filter .place[aria-pressed="true"] {
+    outline: 2px solid Highlight;
   }
 }
 

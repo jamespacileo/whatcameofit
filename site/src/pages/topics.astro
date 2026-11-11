@@ -89,7 +89,9 @@ const claimCount = topics.reduce((sum, topic) => sum + topic.count, 0);
         {sections.map(({ id, jump }) => <a href={`#${id}`}>{jump}</a>)}
       </nav>
     </div>
-    <p class="none" data-none hidden>No topic matches. Try the search on the home page.</p>
+    <p class="none" role="status" data-none hidden>
+      No topic matches. The <a href="/">search on the home page</a> also looks inside claims.
+    </p>
     {
       sections.map(({ id, heading, match, topics }) => (
         <section class="letter" id={id} aria-labelledby={`heading-${id}`} data-match={match}>

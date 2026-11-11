@@ -97,6 +97,21 @@ Two authored moments tell the site's story; the rest is feedback. Nothing loops,
 
 Easing is `cubic-bezier(0.16, 1, 0.3, 1)` for arrivals. With reduced motion asked for: no dots, no landing, no scrolling, no cross-fade, no movement; popovers still fade and a reached record is tinted without the change. Popover fades apply only where the browser has popovers, so elsewhere a panel is plain visible content. On paper nothing is hidden by a motion style.
 
+## Resilience
+
+- Nothing widens the page: long names, identifiers and addresses break. Checked at 320 pixels on every page type.
+- A hyphenated name stays unbroken only up to 16 characters.
+- A popover taller than the screen scrolls inside itself.
+- An empty place on the path is outlined in `--ring` (`#7f90a3`, 3:1 on white).
+- With a forced palette (Windows high contrast) the marker, the basis mark and the name's dot take the system text colour, and promise areas, the digest and popovers gain an outline.
+- `color-scheme: light` keeps form controls and scrollbars light.
+- An article with no outlet name is named by its domain.
+- Without JavaScript: the home page says search needs it and points to the topic list; popovers still open on tap; the share button stays hidden.
+- A slow answer to an earlier search never replaces the answer to a later one.
+- The stage marker starts small, never absent, so it is on the page from the first frame.
+
+Weight, measured on the preview build: a claim page with 29 records is 5 KB of HTML, 6 KB of CSS and under 4 KB of script compressed, plus one 20 KB font file.
+
 ## Rules for every future page
 
 - Footer notices on every page: no medical advice; a registered trial is not a treatment option; data sources; last-checked date. A build check fails without them.
