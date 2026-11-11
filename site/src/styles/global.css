@@ -1195,6 +1195,39 @@ a.chip:hover {
   font-size: 0.85rem;
 }
 
+/* Under groups rather than letters: the heading is a name, so it gets a column
+   of its own on a wide screen and sits above its topics on a narrow one. */
+.directory.grouped .letters {
+  gap: 0.15rem 0.25rem;
+}
+
+.directory.grouped .letters a {
+  padding-inline: 0.55rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.directory.grouped .letter {
+  grid-template-columns: 13rem 1fr;
+  column-gap: 1.5rem;
+}
+
+.directory.grouped .letter h2 {
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.directory.grouped .letter ul {
+  columns: 2 14rem;
+}
+
+@media (max-width: 40rem) {
+  .directory.grouped .letter {
+    grid-template-columns: 1fr;
+    row-gap: 0.25rem;
+  }
+}
+
 .directory .none {
   margin-top: 1rem;
 }
@@ -1489,5 +1522,36 @@ a.chip:hover {
     font-weight: 400;
     color: var(--muted);
     overflow-wrap: anywhere;
+  }
+}
+
+/* --- Not yet checked by a person ----------------------------------------- */
+
+/* A band under the masthead on every page of a preview build. Never amber: amber
+   means "promised" and nothing else. */
+.preview-note {
+  border-bottom: 1px solid var(--rule);
+  background: var(--tint);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.preview-note .wrap {
+  padding-block: 0.55rem;
+}
+
+/* On a claim page that came from a seed file or from an assistant's decisions. */
+.unchecked {
+  max-width: 66ch;
+  margin-top: 1rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px dashed var(--muted);
+  border-radius: 0.65rem;
+  font-size: 0.9rem;
+}
+
+@media print {
+  .preview-note {
+    background: none;
   }
 }

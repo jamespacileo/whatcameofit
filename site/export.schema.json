@@ -296,6 +296,25 @@
       "title": "ExportedFailureFlag",
       "type": "object"
     },
+    "ExportedGroup": {
+      "additionalProperties": false,
+      "properties": {
+        "slug": {
+          "title": "Slug",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "slug",
+        "title"
+      ],
+      "title": "ExportedGroup",
+      "type": "object"
+    },
     "ExportedIntervention": {
       "additionalProperties": false,
       "properties": {
@@ -425,6 +444,17 @@
         "title": {
           "title": "Title",
           "type": "string"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedGroup"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [

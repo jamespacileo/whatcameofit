@@ -41,6 +41,7 @@ worktrees via `wt`, archive via quarantine).
 - After changing the export's shape, regenerate `site/export.schema.json`. After changing the seed, regenerate `site/data/seed-export.json`. Tests fail until both match.
 - Registry fixtures are recorded with a generic client name and have abstracts replaced. Article fixtures are always synthetic.
 - Seed decisions use the `seed` decider. Never record a model's or a script's decision as `human`.
+- A review decision you make yourself is recorded with `--as-assistant`. It stays out of the export unless a preview is asked for (`export --preview` or `EXPORT_PREVIEW=1`), and a preview is never for the public site.
 
 ## Layout
 

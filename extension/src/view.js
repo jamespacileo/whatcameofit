@@ -65,6 +65,7 @@ function claimBlock(claim, site, actions) {
       claim.no_signal && el("dd", "no-signal", claim.no_signal),
       el("dd", "meaning", claim.meaning),
     ]),
+    claim.unchecked && el("p", "unchecked", claim.unchecked),
     el("dl", "facts", [
       claim.first_reported && fact(text.firstReported, claim.first_reported),
       claim.latest_promise && fact(text.latestPromise, claim.latest_promise, "promise"),

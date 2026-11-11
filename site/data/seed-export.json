@@ -24,59 +24,115 @@
   "verticals": [
     {
       "slug": "ageing",
-      "title": "Ageing"
+      "title": "Ageing",
+      "group": {
+        "slug": "ageing-and-longevity",
+        "title": "Ageing and longevity"
+      }
     },
     {
       "slug": "allergies",
-      "title": "Allergies"
+      "title": "Allergies",
+      "group": {
+        "slug": "immune-system-and-infections",
+        "title": "Immune system and infections"
+      }
     },
     {
       "slug": "brain-and-nerves",
-      "title": "Brain and nerves"
+      "title": "Brain and nerves",
+      "group": {
+        "slug": "brain-and-mind",
+        "title": "Brain and mind"
+      }
     },
     {
       "slug": "cancer",
-      "title": "Cancer"
+      "title": "Cancer",
+      "group": {
+        "slug": "cancer",
+        "title": "Cancer"
+      }
     },
     {
       "slug": "dementia",
-      "title": "Dementia"
+      "title": "Dementia",
+      "group": {
+        "slug": "brain-and-mind",
+        "title": "Brain and mind"
+      }
     },
     {
       "slug": "dental-regeneration",
-      "title": "Dental regeneration"
+      "title": "Dental regeneration",
+      "group": {
+        "slug": "mouth-and-teeth",
+        "title": "Mouth and teeth"
+      }
     },
     {
       "slug": "diabetes-and-metabolism",
-      "title": "Diabetes and metabolism"
+      "title": "Diabetes and metabolism",
+      "group": {
+        "slug": "heart-and-metabolism",
+        "title": "Heart and metabolism"
+      }
     },
     {
       "slug": "hair-loss",
-      "title": "Hair loss"
+      "title": "Hair loss",
+      "group": {
+        "slug": "skin-and-hair",
+        "title": "Skin and hair"
+      }
     },
     {
       "slug": "heart-and-circulation",
-      "title": "Heart and circulation"
+      "title": "Heart and circulation",
+      "group": {
+        "slug": "heart-and-metabolism",
+        "title": "Heart and metabolism"
+      }
     },
     {
       "slug": "infections",
-      "title": "Infections"
+      "title": "Infections",
+      "group": {
+        "slug": "immune-system-and-infections",
+        "title": "Immune system and infections"
+      }
     },
     {
       "slug": "mental-health",
-      "title": "Mental health"
+      "title": "Mental health",
+      "group": {
+        "slug": "brain-and-mind",
+        "title": "Brain and mind"
+      }
     },
     {
       "slug": "pain",
-      "title": "Pain"
+      "title": "Pain",
+      "group": {
+        "slug": "brain-and-mind",
+        "title": "Brain and mind"
+      }
     },
     {
       "slug": "sight-and-hearing",
-      "title": "Sight and hearing"
+      "title": "Sight and hearing",
+      "group": {
+        "slug": "senses",
+        "title": "Senses"
+      }
     },
     {
       "slug": "transplants",
-      "title": "Transplants"
+      "title": "Transplants",
+      "group": {
+        "slug": "immune-system-and-infections",
+        "title": "Immune system and infections"
+      }
     }
   ],
   "claims": [

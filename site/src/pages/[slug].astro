@@ -10,6 +10,7 @@ import Pop from "../components/Pop.astro";
 import StageTrack from "../components/StageTrack.astro";
 import TopicChip from "../components/TopicChip.astro";
 import { data, type ExportedClaim } from "../lib/export";
+import { UNCHECKED_NOTE } from "../lib/notices";
 import {
   EVIDENCE_STAGES,
   KIND_NAMES,
@@ -80,6 +81,8 @@ const imageAlt = cardAlt(
         ))
       }
     </h1>
+
+    {!claim.checked_by_person && <p class="unchecked">{UNCHECKED_NOTE}</p>}
 
     <div class="digest">
       <div class="standing">

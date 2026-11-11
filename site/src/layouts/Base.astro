@@ -4,7 +4,7 @@ import "../styles/global.css";
 import faceUrl from "@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2?url";
 import { SITE } from "../../site.config.mjs";
 import { data, listedTopics } from "../lib/export";
-import { NOTICES } from "../lib/notices";
+import { NOTICES, PREVIEW_NOTE } from "../lib/notices";
 import { formatDate } from "../lib/timetable";
 
 interface Props {
@@ -44,6 +44,7 @@ const topicLink =
     {imageUrl && <meta property="og:image" content={imageUrl} />}
     {imageUrl && imageAlt && <meta property="og:image:alt" content={imageAlt} />}
     {imageUrl && <meta name="twitter:card" content="summary_large_image" />}
+    {data.preview && <meta name="robots" content="noindex" />}
   </head>
   <body>
     <a class="skip" href="#content">Skip to content</a>
@@ -77,6 +78,14 @@ const topicLink =
         </nav>
       </div>
     </header>
+
+    {
+      data.preview && (
+        <div class="preview-note" role="note">
+          <div class="wrap">{PREVIEW_NOTE}</div>
+        </div>
+      )
+    }
 
     <main id="content">
       <div class="wrap">

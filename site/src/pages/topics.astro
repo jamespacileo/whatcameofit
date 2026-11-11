@@ -1,6 +1,7 @@
 ---
-// Every listed topic, built to stay usable with hundreds: a filter, an A to Z jump
-// row, and dense columns under each letter.
+// Every listed topic, built to stay usable with hundreds: a filter, a jump row and
+// dense columns under each heading. Topics sit under their groups when the export
+// gives any topic a group, and under their first letters when it gives none.
 import Base from "../layouts/Base.astro";
 import { data, listedTopics } from "../lib/export";
 
@@ -11,38 +12,90 @@ const topics = listedTopics
   }))
   .sort((a, b) => a.title.localeCompare(b.title));
 
-const byLetter = new Map<string, typeof topics>();
-for (const topic of topics) {
-  const first = topic.title.charAt(0).toUpperCase();
-  const letter = /[A-Z]/.test(first) ? first : "#";
-  byLetter.set(letter, [...(byLetter.get(letter) ?? []), topic]);
+interface Section {
+  id: string;
+  heading: string;
+  /** What the jump row calls the section. */
+  jump: string;
+  /** A group's name, which the filter matches as well as the topics' own names. */
+  match?: string;
+  topics: typeof topics;
 }
-const sections = Array.from(byLetter, ([letter, group]) => ({ letter, group }));
+
+function byLetter(): Section[] {
+  const letters = new Map<string, typeof topics>();
+  for (const topic of topics) {
+    const first = topic.title.charAt(0).toUpperCase();
+    const letter = /[A-Z]/.test(first) ? first : "#";
+    letters.set(letter, [...(letters.get(letter) ?? []), topic]);
+  }
+  return Array.from(letters, ([letter, members]) => ({
+    id: `letter-${letter}`,
+    heading: letter,
+    jump: letter,
+    topics: members,
+  }));
+}
+
+function byGroup(): Section[] {
+  const groups = new Map<string, Section>();
+  const ungrouped: typeof topics = [];
+  for (const topic of topics) {
+    if (!topic.group) {
+      ungrouped.push(topic);
+      continue;
+    }
+    const { slug, title } = topic.group;
+    const section = groups.get(slug) ?? {
+      id: `group-${slug}`,
+      heading: title,
+      jump: title,
+      match: title,
+      topics: [],
+    };
+    section.topics.push(topic);
+    groups.set(slug, section);
+  }
+  const sections = [...groups.values()].sort((a, b) => a.heading.localeCompare(b.heading));
+  if (ungrouped.length > 0) {
+    sections.push({ id: "group-other", heading: "Other topics", jump: "Other", topics: ungrouped });
+  }
+  return sections;
+}
+
+const grouped = topics.some((topic) => topic.group);
+const sections = grouped ? byGroup() : byLetter();
 const claimCount = topics.reduce((sum, topic) => sum + topic.count, 0);
 ---
 
-<Base title="Topics" description="Every topic with a tracked claim, from A to Z." current="topics">
+<Base
+  title="Topics"
+  description={grouped
+    ? "Every topic with a tracked claim, by area."
+    : "Every topic with a tracked claim, from A to Z."}
+  current="topics"
+>
   <h1 class="title">Topics</h1>
   <p class="lede">
     {topics.length} {topics.length === 1 ? "topic" : "topics"}, {claimCount}{" "}
     {claimCount === 1 ? "claim" : "claims"} tracked.
   </p>
 
-  <div class="directory" data-directory>
+  <div class:list={["directory", { grouped }]} data-directory>
     <div class="directory-tools">
       <label class="visually-hidden" for="topic-filter">Find a topic</label>
       <input id="topic-filter" type="search" autocomplete="off" placeholder="Find a topic" />
-      <nav class="letters" aria-label="Jump to a letter">
-        {sections.map(({ letter }) => <a href={`#letter-${letter}`}>{letter}</a>)}
+      <nav class="letters" aria-label={grouped ? "Jump to a group" : "Jump to a letter"}>
+        {sections.map(({ id, jump }) => <a href={`#${id}`}>{jump}</a>)}
       </nav>
     </div>
     <p class="none" data-none hidden>No topic matches. Try the search on the home page.</p>
     {
-      sections.map(({ letter, group }) => (
-        <section class="letter" id={`letter-${letter}`} aria-labelledby={`heading-${letter}`}>
-          <h2 id={`heading-${letter}`}>{letter}</h2>
+      sections.map(({ id, heading, match, topics }) => (
+        <section class="letter" id={id} aria-labelledby={`heading-${id}`} data-match={match}>
+          <h2 id={`heading-${id}`}>{heading}</h2>
           <ul>
-            {group.map((topic) => (
+            {topics.map((topic) => (
               <li>
                 <a href={`/topic/${topic.slug}`}>{topic.title}</a>
                 <span class="count">
@@ -59,8 +112,9 @@ const claimCount = topics.reduce((sum, topic) => sum + topic.count, 0);
 </Base>
 
 <script>
-  // Typing narrows the list in place. Without JavaScript the full list and the
-  // letter links still work.
+  // Typing narrows the list in place, by a topic's name or its group's: a group
+  // that matches keeps all its topics. Without JavaScript the full list and the
+  // jump links still work.
   const directory = document.querySelector<HTMLElement>("[data-directory]")!;
   const input = directory.querySelector<HTMLInputElement>("#topic-filter")!;
   const none = directory.querySelector<HTMLElement>("[data-none]")!;
@@ -68,9 +122,11 @@ const claimCount = topics.reduce((sum, topic) => sum + topic.count, 0);
     const query = input.value.trim().toLowerCase();
     let any = false;
     for (const section of directory.querySelectorAll<HTMLElement>(".letter")) {
+      const whole = section.dataset.match?.toLowerCase().includes(query) ?? false;
       let shown = 0;
       for (const item of section.querySelectorAll<HTMLLIElement>("li")) {
-        item.hidden = !item.querySelector("a")!.textContent!.toLowerCase().includes(query);
+        item.hidden =
+          !whole && !item.querySelector("a")!.textContent!.toLowerCase().includes(query);
         if (!item.hidden) shown += 1;
       }
       section.hidden = shown === 0;

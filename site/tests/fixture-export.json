@@ -12,7 +12,11 @@
   "verticals": [
     {
       "slug": "dental-regeneration",
-      "title": "Dental regeneration"
+      "title": "Dental regeneration",
+      "group": {
+        "slug": "mouth-and-teeth",
+        "title": "Mouth and teeth"
+      }
     },
     {
       "slug": "empty-topic",

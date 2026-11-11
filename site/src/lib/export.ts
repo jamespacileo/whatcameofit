@@ -38,6 +38,8 @@ export interface ExportedClaim {
   indication: string;
   first_reported_date: string | null;
   evidence_stage: string | null;
+  // False for a claim loaded from a seed file or decided by an AI assistant.
+  checked_by_person: boolean;
   status: {
     code: StatusCode;
     overlay_years: number | null;
@@ -56,12 +58,21 @@ export interface ExportedClaim {
   failure_flags: { trial_id: string; source_url: string }[];
 }
 
+export interface ExportedVertical {
+  slug: string;
+  title: string;
+  /** The broader area the topic is filed under. Absent or null when it has none. */
+  group?: { slug: string; title: string } | null;
+}
+
 export interface Export {
   schema_version: number;
   generated_at: string;
   last_checked_at: string | null;
+  // True when the export holds claims an AI assistant decided. Never for the public site.
+  preview: boolean;
   sources: { name: string; url: string }[];
-  verticals: { slug: string; title: string }[];
+  verticals: ExportedVertical[];
   claims: ExportedClaim[];
 }
 

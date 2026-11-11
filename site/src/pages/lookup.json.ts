@@ -4,7 +4,7 @@
 import type { APIRoute } from "astro";
 import { articleKey } from "../lib/article-key.mjs";
 import { data } from "../lib/export";
-import { NOTICES } from "../lib/notices";
+import { NOTICES, UNCHECKED_NOTE } from "../lib/notices";
 import { STATUS_LABELS, STATUS_MEANINGS, latestPromise, overlayText } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 
@@ -24,6 +24,7 @@ export const GET: APIRoute = () => {
       latest_promise: promise
         ? `${promise.description} (by ${promise.parsed_date!.slice(0, 4)})`
         : null,
+      unchecked: claim.checked_by_person ? null : UNCHECKED_NOTE,
     };
     for (const article of claim.articles) {
       const key = articleKey(article.url);
@@ -37,6 +38,7 @@ export const GET: APIRoute = () => {
     schema_version: 1,
     generated_at: data.generated_at,
     last_checked: data.last_checked_at ? formatDate(data.last_checked_at) : null,
+    preview: data.preview,
     notices: NOTICES,
     articles,
     claims,

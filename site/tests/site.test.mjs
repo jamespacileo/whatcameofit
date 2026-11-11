@@ -166,6 +166,36 @@ test("Scenario: No approved claims", () => {
   assert.match(html, /No tracked claim has an approval on record/);
 });
 
+test("Scenario: Preview build", () => {
+  // A normal build carries no preview wording and may be indexed.
+  for (const file of ["index.html", "phase-claim/index.html"]) {
+    assert.doesNotMatch(page(file), /class="preview-note"|not yet been checked by a person|noindex/);
+  }
+  assert.equal(JSON.parse(page("lookup.json")).claims["phase-claim"].unchecked, null);
+
+  // A preview export marks every page, and the claim no person has checked.
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.preview = true;
+  fixture.claims.find((claim) => claim.slug === "phase-claim").checked_by_person = false;
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-site-preview-"));
+  const exportFile = path.join(directory, "export.json");
+  fs.writeFileSync(exportFile, JSON.stringify(fixture));
+  const result = build(exportFile, path.join(directory, "dist"));
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const built = (file) => fs.readFileSync(path.join(directory, "dist", file), "utf8");
+
+  for (const file of ["index.html", "quiet-claim/index.html", "topic/dental-regeneration/index.html"]) {
+    assert.match(built(file), /class="preview-note"/, file);
+    assert.match(built(file), /<meta name="robots" content="noindex"/, file);
+  }
+  assert.match(built("phase-claim/index.html"), /has not yet been checked by a person/);
+  assert.doesNotMatch(built("quiet-claim/index.html"), /has not yet been checked by a person/);
+  const lookup = JSON.parse(built("lookup.json"));
+  assert.equal(lookup.preview, true);
+  assert.match(lookup.claims["phase-claim"].unchecked, /not yet been checked by a person/);
+  assert.equal(lookup.claims["quiet-claim"].unchecked, null);
+});
+
 test("Scenario: Claim promised for 2025", () => {
   const html = page("quiet-claim/index.html");
   const alt = html.match(/property="og:image:alt" content="([^"]+)"/)?.[1] ?? "";
