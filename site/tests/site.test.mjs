@@ -35,11 +35,11 @@ test("Scenario: Reader opens a claim", () => {
   const html = page("phase-claim/index.html");
   assert.match(html, /Phase 2 trial/);
   assert.match(html, /Synthetic claim with a started trial/);
-  // Four approved events, each with a footnote that links to its source.
+  // Four approved events, each a record that links straight to its source.
   for (const id of [2, 3, 4, 5]) {
     assert.ok(html.includes(`https://registry.example/record/${id}"`), `event ${id} has no link`);
   }
-  assert.equal(count(html, 'id="source-'), 4);
+  assert.equal(count(html, 'id="record-'), 4);
 });
 
 test("Scenario: Unknown slug", () => {
@@ -49,7 +49,9 @@ test("Scenario: Unknown slug", () => {
 test("Scenario: Status produced by one trial", () => {
   const html = page("phase-claim/index.html");
   // The registered and started events produced the status; the paper and results did not.
+  // Each is marked in the timetable, and the mark is named once in the key.
   assert.equal(count(html, ">basis of status<"), 2);
+  assert.equal(count(html, "Basis of status"), 1);
   assert.match(html, /The status rests on these records/);
 });
 

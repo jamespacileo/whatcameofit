@@ -1,0 +1,12 @@
+---
+// Marks a record the status rests on. Blue, like the status label it explains.
+interface Props {
+  label?: boolean;
+}
+const { label = true } = Astro.props;
+---
+
+<span class="basis-mark">
+  <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0.6 11.4 6 6 11.4 0.6 6z" /></svg>
+  {label && <span class="visually-hidden">basis of status</span>}
+</span>

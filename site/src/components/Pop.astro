@@ -1,0 +1,23 @@
+---
+// A trigger and the small panel it opens. Built on the browser's own popover, so a
+// tap, a key press and Escape work with no script; a pointer also opens it on hover.
+// On paper the panel is printed in place.
+interface Props {
+  id: string;
+  label?: string;
+  class?: string;
+}
+
+const { id, label, class: className } = Astro.props;
+---
+
+<button
+  type="button"
+  class:list={["pop-trigger", className]}
+  popovertarget={id}
+  aria-label={label}
+  style={`anchor-name: --${id}`}><slot name="trigger" /></button
+>
+<div popover id={id} class="pop" style={`position-anchor: --${id}`}>
+  <slot />
+</div>

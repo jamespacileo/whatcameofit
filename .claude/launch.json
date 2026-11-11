@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "site-fixture",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd site && EXPORT_FILE=tests/fixture-export.json npx astro dev --port 4331"],
+      "port": 4331
+    }
+  ]
+}

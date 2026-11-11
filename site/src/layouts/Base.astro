@@ -49,7 +49,10 @@ const topicLink =
     <a class="skip" href="#content">Skip to content</a>
     <header class="masthead">
       <div class="wrap">
-        <a class="name" href="/">{SITE.name}</a>
+        <a class="name" href="/" aria-label={SITE.name}>
+          <span aria-hidden="true">{SITE.name}</span>
+          <span class="wait" aria-hidden="true"><i></i><i></i><i></i><b></b></span>
+        </a>
         <nav aria-label="Site">
           <ul>
             <li><a href="/" aria-current={current === "home" ? "page" : undefined}>Search</a></li>
@@ -111,3 +114,36 @@ const topicLink =
     </footer>
   </body>
 </html>
+
+<script>
+  // Panels open on a tap or a key press with no script. With a mouse they also open
+  // on hover, and a click then keeps one open until it is dismissed.
+  if (matchMedia("(hover: hover)").matches) {
+    for (const trigger of document.querySelectorAll<HTMLButtonElement>("[popovertarget]")) {
+      const panel = document.getElementById(trigger.getAttribute("popovertarget")!)!;
+      let timer: number | undefined;
+      let pinned = false;
+      const isOpen = () => panel.matches(":popover-open");
+      const open = () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => !isOpen() && panel.showPopover(), 150);
+      };
+      const close = () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => !pinned && isOpen() && panel.hidePopover(), 250);
+      };
+      trigger.addEventListener("mouseenter", open);
+      trigger.addEventListener("mouseleave", close);
+      panel.addEventListener("mouseenter", () => clearTimeout(timer));
+      panel.addEventListener("mouseleave", close);
+      trigger.addEventListener("click", (event) => {
+        clearTimeout(timer);
+        if (isOpen() && !pinned) event.preventDefault();
+        pinned = true;
+      });
+      panel.addEventListener("toggle", () => {
+        if (!isOpen()) pinned = false;
+      });
+    }
+  }
+</script>

@@ -1,0 +1,31 @@
+---
+// One drawing per kind of record, from one icon set so stroke and weight agree.
+// The drawing never stands alone: the legend names it, and the entry is in words.
+import Building from "@lucide/astro/icons/building";
+import ClipboardList from "@lucide/astro/icons/clipboard-list";
+import File from "@lucide/astro/icons/file";
+import FileText from "@lucide/astro/icons/file-text";
+import FileX from "@lucide/astro/icons/file-x";
+import HandCoins from "@lucide/astro/icons/hand-coins";
+import Newspaper from "@lucide/astro/icons/newspaper";
+import Stamp from "@lucide/astro/icons/stamp";
+import type { RecordKind } from "../lib/status";
+
+interface Props {
+  kind: RecordKind;
+}
+
+const ICONS = {
+  report: Newspaper,
+  trial: ClipboardList,
+  paper: FileText,
+  regulator: Stamp,
+  retraction: FileX,
+  grant: HandCoins,
+  company: Building,
+  record: File,
+};
+const Icon = ICONS[Astro.props.kind];
+---
+
+<Icon class="kind" size={18} stroke-width={1.7} aria-hidden="true" />

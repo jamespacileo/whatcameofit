@@ -1,0 +1,34 @@
+---
+// Where a status sits on the path from laboratory to approval: six places, one marked.
+// It shows a position, not progress: a claim can reach a place without passing the others.
+import type { StatusCode } from "../lib/export";
+import { STAGE_PATH, STATUS_LABELS } from "../lib/status";
+
+interface Props {
+  code: StatusCode;
+  ends?: boolean;
+}
+
+const { code, ends = false } = Astro.props;
+const place = STAGE_PATH.indexOf(code);
+---
+
+{
+  place >= 0 && (
+    <span class:list={["track", { ends }]}>
+      <span
+        class="steps"
+        role="img"
+        aria-label={`Place ${place + 1} of ${STAGE_PATH.length} on the path from preclinical to approved`}
+      >
+        {STAGE_PATH.map((_, index) => <span class:list={["step", { here: index === place }]} />)}
+      </span>
+      {ends && (
+        <span class="ends" aria-hidden="true">
+          <span>{STATUS_LABELS[STAGE_PATH[0]]}</span>
+          <span>{STATUS_LABELS[STAGE_PATH[STAGE_PATH.length - 1]]}</span>
+        </span>
+      )}
+    </span>
+  )
+}

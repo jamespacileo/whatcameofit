@@ -106,3 +106,54 @@ assertNeutral([
   overlayText(1)!,
   overlayText(6)!,
 ]);
+
+// The path a claim can move along. A status off the path (failed, terminated,
+// retracted) is shown in words only.
+export const STAGE_PATH: StatusCode[] = [
+  "preclinical_only",
+  "trial_registered",
+  "phase_1",
+  "phase_2",
+  "phase_3",
+  "approved",
+];
+
+// What kind of record an entry is. Each kind has one drawing, named once in a legend.
+export type RecordKind =
+  | "report"
+  | "trial"
+  | "paper"
+  | "regulator"
+  | "retraction"
+  | "grant"
+  | "company"
+  | "record";
+
+export const KIND_NAMES: Record<RecordKind, string> = {
+  report: "News report",
+  trial: "Trial registry record",
+  paper: "Paper",
+  regulator: "Regulator decision",
+  retraction: "Retraction notice",
+  grant: "Grant",
+  company: "Company event",
+  record: "Record",
+};
+
+export function eventKind(event: ExportedEvent): RecordKind {
+  if (event.type.startsWith("trial_")) return "trial";
+  switch (event.type) {
+    case "followup_paper":
+      return "paper";
+    case "regulatory_decision":
+      return "regulator";
+    case "retraction":
+      return "retraction";
+    case "grant_awarded":
+      return "grant";
+    case "company_event":
+      return "company";
+    default:
+      return "record";
+  }
+}

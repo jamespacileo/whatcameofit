@@ -1,10 +1,11 @@
 ---
 import Base from "../layouts/Base.astro";
+import Outlet from "../components/Outlet.astro";
+import StatusCell from "../components/StatusCell.astro";
 import TopicChip from "../components/TopicChip.astro";
 import { SITE } from "../../site.config.mjs";
 import { data, listedTopics } from "../lib/export";
 import { recentReports } from "../lib/reports";
-import { STATUS_LABELS, overlayText } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 
 const reports = recentReports(data.claims, 10);
@@ -51,17 +52,14 @@ const recent = data.claims
               <td class="claim">
                 <a href={`/${report.claim.slug}`}>“{report.title}”</a>
                 <span class="entry-note">
-                  <a href={report.url}>{report.outlet}</a>
+                  <Outlet url={report.url} outlet={report.outlet} />
                 </span>
               </td>
               <td class="when" data-column="Reported">
                 {formatDate(report.publishedDate)}
               </td>
               <td data-column="Status now">
-                <strong>{STATUS_LABELS[report.claim.status.code]}</strong>
-                {overlayText(report.claim.status.overlay_years) && (
-                  <span class="entry-note">{overlayText(report.claim.status.overlay_years)}</span>
-                )}
+                <StatusCell claim={report.claim} />
               </td>
             </tr>
           ))}
@@ -92,10 +90,7 @@ const recent = data.claims
                 <a href={`/${claim.slug}`}>{claim.headline}</a>
               </td>
               <td data-column="Status">
-                <strong>{STATUS_LABELS[claim.status.code]}</strong>
-                {overlayText(claim.status.overlay_years) && (
-                  <span class="entry-note">{overlayText(claim.status.overlay_years)}</span>
-                )}
+                <StatusCell claim={claim} />
               </td>
               <td class="when" data-column="Status set">
                 {formatDate(claim.status.updated_at)}
@@ -109,19 +104,16 @@ const recent = data.claims
   }
 
   <h2 class="bar" id="topics">Topics</h2>
-  <ul class="plain">
+  <ul class="chips">
     {
-      listedTopics.map((vertical) => {
-        const count = data.claims.filter((claim) => claim.vertical === vertical.slug).length;
-        return (
-          <li>
-            <TopicChip vertical={vertical.slug} />
-            <span class="entry-note">
-              {count} {count === 1 ? "claim" : "claims"} tracked
-            </span>
-          </li>
-        );
-      })
+      listedTopics.map((vertical) => (
+        <li>
+          <TopicChip
+            vertical={vertical.slug}
+            count={data.claims.filter((claim) => claim.vertical === vertical.slug).length}
+          />
+        </li>
+      ))
     }
   </ul>
 </Base>

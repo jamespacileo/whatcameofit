@@ -1,0 +1,20 @@
+---
+// Names where a web article comes from: a letter tile, the outlet's name and its
+// short domain. The tile is drawn here, not fetched: a page asks the network for
+// nothing but the links a reader follows.
+interface Props {
+  url: string;
+  outlet: string;
+  link?: boolean;
+}
+
+const { url, outlet, link = true } = Astro.props;
+const domain = URL.canParse(url) ? new URL(url).hostname.replace(/^www\./, "") : "";
+const letter = (domain || outlet).charAt(0).toUpperCase();
+---
+
+<span class="outlet">
+  <span class="tile" aria-hidden="true">{letter}</span>
+  {link ? <a href={url}>{outlet}</a> : <span>{outlet}</span>}
+  {domain && <span class="domain">{domain}</span>}
+</span>

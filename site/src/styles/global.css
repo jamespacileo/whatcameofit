@@ -129,11 +129,127 @@ p {
 }
 
 .masthead .name {
+  display: inline-flex;
+  align-items: baseline;
   font-weight: 700;
   font-size: 1.25rem;
   letter-spacing: -0.01em;
   color: var(--blue);
   text-decoration: none;
+}
+
+/* The name's mark tells the site's story once: three dots count the wait after a
+   headline, then close up into one solid dot, the marker for where a claim stands.
+   At rest it is the name and that dot. */
+.masthead .name .wait {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  margin-left: 0.3em;
+}
+
+.masthead .name .wait i {
+  flex: none;
+  width: 0;
+  height: 0.2em;
+  border-radius: 50%;
+  background: var(--muted);
+  opacity: 0;
+}
+
+.masthead .name .wait b {
+  flex: none;
+  width: 0.42em;
+  height: 0.42em;
+  border-radius: 50%;
+  background: var(--blue);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .masthead .name .wait i {
+    animation: wait-dot 1.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .masthead .name .wait i:nth-child(1) {
+    animation-delay: 0.2s;
+  }
+
+  .masthead .name .wait i:nth-child(2) {
+    animation-delay: 0.42s;
+  }
+
+  .masthead .name .wait i:nth-child(3) {
+    animation-delay: 0.64s;
+  }
+
+  .masthead .name .wait b {
+    animation: wait-mark 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1.45s both;
+  }
+
+  .masthead .name:hover .wait i {
+    animation-name: wait-dot-again;
+  }
+
+  .masthead .name:hover .wait b {
+    animation-name: wait-mark-again;
+  }
+}
+
+@keyframes wait-dot {
+  0% {
+    width: 0.2em;
+    margin-right: 0.16em;
+    opacity: 0;
+  }
+  15%,
+  60% {
+    width: 0.2em;
+    margin-right: 0.16em;
+    opacity: 1;
+  }
+  100% {
+    width: 0;
+    margin-right: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes wait-mark {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* The same motion under second names, so a hover plays it again. */
+@keyframes wait-dot-again {
+  0% {
+    width: 0.2em;
+    margin-right: 0.16em;
+    opacity: 0;
+  }
+  15%,
+  60% {
+    width: 0.2em;
+    margin-right: 0.16em;
+    opacity: 1;
+  }
+  100% {
+    width: 0;
+    margin-right: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes wait-mark-again {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
 .masthead nav ul {
@@ -191,6 +307,24 @@ a.chip:hover {
   background: var(--tag);
 }
 
+.chip .count {
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--paper);
+  border-radius: 999px;
+  padding: 0 0.45rem;
+  margin-right: -0.35rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin-bottom: 0;
+}
+
 /* Page title. */
 
 .title {
@@ -218,11 +352,10 @@ a.chip:hover {
   gap: 0.75rem 1.5rem;
 }
 
-.digest .where {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--muted);
-  margin: 0;
+.digest .label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .digest .label {
@@ -230,24 +363,32 @@ a.chip:hover {
   font-weight: 700;
   line-height: 1.15;
   color: var(--blue);
-  margin: 0.1rem 0 0.25rem;
+}
+
+.digest .track {
+  margin-top: 0.6rem;
 }
 
 .digest .overlay {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   font-size: 0.9rem;
   font-weight: 700;
   border: 1.5px dashed var(--blue);
   border-radius: 6px;
-  padding: 0.05rem 0.5rem;
-  margin: 0.15rem 0 0.35rem;
+  padding: 0.1rem 0.5rem;
+  margin-top: 0.6rem;
 }
 
-.digest .changed,
-.digest .meaning {
+.digest .overlay:hover {
+  background: var(--paper);
+}
+
+.digest .changed {
   font-size: 0.88rem;
   color: var(--muted);
-  margin: 0;
+  margin: 0.5rem 0 0;
 }
 
 .digest .lede {
@@ -406,23 +547,256 @@ a.chip:hover {
   font-size: 0.9rem;
 }
 
-.basis {
-  display: inline-block;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--blue);
-  background: var(--tag);
-  border-radius: 6px;
-  padding: 0.05rem 0.45rem;
-  margin-left: 0.3rem;
-  white-space: nowrap;
+/* One record on one line: what kind, when, what, and where to check it. */
+.record {
+  display: grid;
+  grid-template-columns: 1.15rem 3.6rem 1fr;
+  column-gap: 0.5rem;
+  align-items: start;
 }
 
-/* The letter is small, so the link reaches past it to give a finger room. */
-sup a {
+.record .origin {
+  grid-column: 3;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.kind {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: none;
+  color: var(--muted);
+  margin-top: 0.2rem;
+}
+
+/* The mark on a record the status rests on: blue, like the status label. */
+.basis-mark {
+  display: inline-block;
+  margin-left: 0.3rem;
+}
+
+.basis-mark svg {
+  width: 0.62rem;
+  height: 0.62rem;
+  fill: var(--blue);
+  vertical-align: 0.02em;
+}
+
+/* The key: each colour and drawing is named once, here. */
+.bar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem 1.5rem;
+  margin-top: clamp(2rem, 6vw, 2.75rem);
+}
+
+.bar-row .bar {
+  margin: 0;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.legend .kind {
+  width: 0.95rem;
+  height: 0.95rem;
+  margin: 0;
+}
+
+.legend .basis-mark {
+  margin: 0;
+}
+
+.legend .swatch {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 3px;
+  background: var(--promise);
+  border: 1px solid var(--promise-rule);
+}
+
+.bar-row + * {
+  margin-top: 0.7rem;
+}
+
+.absent {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+
+/* A status's place on the path from preclinical to approved. Position and size
+   mark the place; the label beside it says it in words. */
+.track {
+  display: block;
+  width: 6.5rem;
+}
+
+.track.ends {
+  width: min(100%, 15rem);
+}
+
+.track .steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 0.8rem;
+  background: linear-gradient(var(--rule), var(--rule)) center / 100% 1.5px no-repeat;
+}
+
+.track .step {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 1.5px solid #9aa9b9;
+}
+
+.track .step.here {
+  width: 0.8rem;
+  height: 0.8rem;
+  background: var(--blue);
+  border-color: var(--blue);
+}
+
+.track .ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 0.15rem;
+}
+
+.index .track {
+  margin-bottom: 0.25rem;
+}
+
+.quiet-note {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* Popovers: detail on demand. */
+.pop-trigger {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.pop-trigger.more {
   font-weight: 700;
-  padding: 0.45em 0.65em;
-  margin: -0.45em -0.45em;
+  text-decoration: underline dotted var(--muted);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.22em;
+}
+
+.pop-trigger.more:hover,
+.pop-trigger.more[aria-expanded="true"] {
+  text-decoration-style: solid;
+  text-decoration-color: var(--ink);
+}
+
+.pop-trigger.info {
+  display: inline-grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  color: var(--blue);
+}
+
+.pop-trigger.info:hover {
+  background: var(--tag);
+}
+
+.pop {
+  position: fixed;
+  inset: auto;
+  margin: 0.4rem 0;
+  position-area: bottom span-right;
+  position-try-fallbacks: flip-inline, flip-block, flip-block flip-inline;
+  width: max-content;
+  max-width: min(22rem, calc(100vw - 2rem));
+  padding: 0.8rem 0.95rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.65rem;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 400;
+  line-height: 1.45;
+  box-shadow:
+    0 10px 28px -8px rgb(23 37 52 / 0.2),
+    0 2px 6px -2px rgb(23 37 52 / 0.1);
+}
+
+/* Without anchor positioning the panel sits at the foot of the screen. */
+@supports not (position-area: bottom) {
+  .pop {
+    inset: auto 1rem 1rem;
+    width: auto;
+    max-width: 26rem;
+  }
+}
+
+.pop p {
+  margin: 0;
+}
+
+.pop p + p,
+.pop ul + p {
+  margin-top: 0.5rem;
+}
+
+.pop .pop-head {
+  font-weight: 700;
+}
+
+.pop .pop-head .basis-mark,
+.pop .pop-note .basis-mark {
+  margin: 0 0.15rem 0 0;
+}
+
+.pop .pop-list {
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pop .pop-note {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* A record reached from the status panel is shown for a moment. */
+.record:target {
+  background: var(--tint);
+  outline: 0.35rem solid var(--tint);
+  border-radius: 2px;
 }
 
 @media (max-width: 40rem) {
@@ -528,6 +902,14 @@ sup a {
     color: var(--muted);
   }
 
+  .index td.promise.none {
+    display: none;
+  }
+
+  .record .origin {
+    grid-column: 2 / -1;
+  }
+
   .index td.promise {
     margin: 0.3rem 0.6rem;
     padding-block: 0.4rem;
@@ -571,25 +953,6 @@ sup a {
   border-bottom: 0;
 }
 
-.footnotes {
-  padding: 0;
-  margin: 0;
-  list-style: none;
-  max-width: var(--measure);
-}
-
-.footnotes li {
-  display: grid;
-  grid-template-columns: 2rem 1fr;
-  padding-block: 0.45rem;
-  border-bottom: 1px solid var(--rule-soft);
-}
-
-.footnotes .mark {
-  font-weight: 700;
-  color: var(--ink);
-}
-
 .index td.claim a {
   font-weight: 700;
 }
@@ -599,6 +962,42 @@ sup a {
   display: inline-block;
   padding-block: 0.2rem;
   font-weight: 400;
+}
+
+/* With no page heading between them, the table follows the lede. */
+.lede + .table-frame {
+  margin-top: 1.5rem;
+}
+
+/* Where a web article comes from: letter tile, outlet, short domain. */
+.outlet .domain {
+  margin-left: 0.15rem;
+  white-space: nowrap;
+}
+
+.outlet .tile {
+  display: inline-grid;
+  place-items: center;
+  vertical-align: 0.08em;
+  margin-right: 0.3rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 4px;
+  background: var(--tint);
+  color: var(--ink);
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.promised .outlet .tile,
+.undated .outlet .tile {
+  background: var(--paper);
+}
+
+.outlet .domain {
+  font-size: 0.8rem;
+  color: var(--muted);
 }
 
 .index .when {
@@ -737,7 +1136,6 @@ sup a {
   tr,
   .digest,
   .entries li,
-  .footnotes li,
   .plain li {
     break-inside: avoid;
   }
@@ -752,6 +1150,31 @@ sup a {
   .index .promise,
   .plain.undated {
     print-color-adjust: exact;
+  }
+
+  /* On paper nothing can be opened, so each panel is printed where it belongs. */
+  .pop {
+    display: block;
+    position: static;
+    width: auto;
+    max-width: none;
+    margin: 0.15rem 0 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    color: var(--muted);
+  }
+
+  .record .pop {
+    grid-column: 3;
+  }
+
+  .pop-trigger.info {
+    display: none;
+  }
+
+  .pop-trigger.more {
+    text-decoration: none;
   }
 
   /* The frame would draw an empty box where a row moves to the next sheet. */

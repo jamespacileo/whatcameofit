@@ -6,9 +6,11 @@ import { verticalTitle } from "../lib/export";
 interface Props {
   vertical: string;
   link?: boolean;
+  /** How many claims the topic tracks, shown where topics are listed. */
+  count?: number;
 }
 
-const { vertical, link = true } = Astro.props;
+const { vertical, link = true, count } = Astro.props;
 const Tag = link ? "a" : "span";
 ---
 
@@ -31,4 +33,12 @@ const Tag = link ? "a" : "span";
     }
   </svg>
   {verticalTitle(vertical)}
+  {
+    count !== undefined && (
+      <span class="count">
+        {count}
+        <span class="visually-hidden">{count === 1 ? " claim tracked" : " claims tracked"}</span>
+      </span>
+    )
+  }
 </Tag>

@@ -15,7 +15,7 @@ History: a first direction (a printed timetable in yellow and black) was built u
 
 ## Direction contract
 
-THESIS: Answer the reader's question in the first panel, then let them check it: what was promised beside what was recorded. Refused: grades, scores, meters and verdict badges, which the reference class often uses and this product must not.
+THESIS: Answer the reader's question in the first panel, then let them check it: what was promised beside what was recorded. Refused: grades, scores, meters and verdict badges, which the reference class often uses and this product must not. One exception, approved by the operator on 2026-11-11: a stage track that marks a status's position on the path from preclinical to approved, always beside the status in words, never filled like a progress bar.
 
 OWN-WORLD: White page, one clinical blue accent (the operator asked for blue in the NHS-blue family; never the NHS identity), a pale blue summary panel, pale amber for anything promised, one friendly sans (Figtree), rounded frames, a small drawn mark per topic.
 

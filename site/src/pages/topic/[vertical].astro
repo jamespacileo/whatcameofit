@@ -25,10 +25,8 @@ const claims = data.claims
   <p class="lede">
     {claims.length}{" "}
     {claims.length === 1 ? "reported breakthrough" : "reported breakthroughs"} tracked, newest first.
-    Each row shows the latest promise beside the status the records support.
   </p>
 
-  <h2 class="bar">Claims</h2>
   {
     claims.length === 0 ? (
       <p>No claims are tracked in this topic yet.</p>

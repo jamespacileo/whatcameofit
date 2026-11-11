@@ -9,7 +9,8 @@ The visual system of the thenwhat site as built. Product context is in `PRODUCT.
 1. **Answer first.** The top of a claim page is a soft panel that says where the claim stands and when the latest record is dated, beside two sentences of summary.
 2. **Promise beside record.** What was promised for a year sits beside what was recorded in it. The reader compares; the site does not conclude.
 3. **Words carry status.** Status is always written out. Colour, shape and position only support the words.
-4. **Quiet surface.** One typeface, one accent colour, one highlight colour. No gradients, shadows, photographs or motion.
+4. **Quiet surface.** One typeface, one accent colour, one highlight colour. No gradients or photographs. One soft shadow, on popovers only. One motion, on the site name only.
+5. **Say it once.** A colour or drawing is named once in a key, then used without its words. A record appears once, with its source on the same line; detail opens on demand.
 
 ## Colour
 
@@ -30,7 +31,7 @@ The visual system of the thenwhat site as built. Product context is in `PRODUCT.
 Rules:
 
 - Pale amber means "promised" and nothing else. A promise is always on it, with dashed rules, wherever it appears.
-- An empty Promised cell says "Nothing promised for this year." in words.
+- An empty Promised cell is plain amber, with "Nothing promised for this year." for screen readers. A claim with no dated promise has no Promised column, and says "No dated promise on record." above the table.
 - There is no colour for any status. No red, no green.
 - Light only. No dark theme.
 
@@ -58,11 +59,17 @@ Figures are tabular and lining throughout. Reading measure is 66 characters. A n
 
 - **Masthead.** White, a hairline beneath. Site name in blue, three plain links; the current one is underlined. With one listed topic its name is the middle link; with several the link reads "Topics" and leads to the list on the home page. A topic is listed only once it has a published claim.
 - **Topic chip.** A pill with a small line drawing for the topic (a tooth for dental regeneration; a plain ring for a topic without a drawing) and the topic's name. It links to the topic page, from the claim page and from the home page's topic list.
-- **Digest panel.** "Where it stands", the status label, the no-signal note in a dashed outline when present, and "Latest record <date>." and "Status set <date>." on their own lines, beside the summary. The date a status was computed is never presented as the date something happened.
+- **Site name.** The name, then a solid blue dot. On load, and again on hover, three small grey dots count the wait after a headline and close up into the blue dot, the same marker the stage track uses for where a claim stands. No motion when the reader asks for reduced motion.
+- **Digest panel.** The status label with an info button, the stage track, the no-signal note in a dashed outline when present, and "Latest record <date>", beside the summary. The info button opens a panel with what the status means, the records it rests on (each linking to its line in the timetable) and the date the status was set. The no-signal note opens a panel saying what it does and does not mean. The date a status was computed is never presented as the date something happened.
+- **Stage track.** Six places on a line, from preclinical to approved, with one larger solid blue dot at the status's place. It marks a position, not progress, and is never filled up to the dot. It always sits beside the status in words. Failed, terminated and retracted have no track. The operator approved it on 2026-11-11 as the one exception to "no meters".
 - **Facts row.** Intervention with its other names, what it is claimed for, first reported, evidence then.
-- **Timetable.** A framed table: year, Promised (pale amber), Recorded. Years with nothing collapse into one quiet row. Events that produced the status carry a "basis of status" tag. Each event has a footnote letter linking to its source; each source names its record and date, because two records can share one registry entry. On a phone the rows stack, and a year with no promise shows one muted line with no amber, so amber is seen only where a promise exists.
+- **Key.** Beside the timetable heading: the amber swatch for "Promised", one drawing for each kind of record on the page, and the blue diamond for "Basis of status".
+- **Timetable.** A framed table: year, Promised (pale amber, only when a dated promise exists), Recorded. Years with nothing collapse into one quiet row. Each record is one line: the drawing for its kind, the day, what happened, and a link to its source. What happened is a dotted-underlined button that opens a panel with the record's summary and where its date came from. A record the status rests on carries the blue diamond. A news report shows its title in quotation marks and its outlet. On a phone the rows stack, and amber is seen only where a promise exists.
+- **Popover.** The browser's own popover, placed beside its trigger. Opens on tap, key press, or hover with a mouse; Escape or a tap outside closes it. White, hairline border, one soft shadow. On paper every panel is printed in place.
+- **Outlet.** Wherever a web article is named: a small letter tile, the outlet's name and its short domain. The tile is drawn, never fetched, because a page asks the network for nothing.
+- **Icons.** Lucide, stroke 1.7 to 1.9, in secondary-text grey. A drawing never stands alone: the key or the words beside it say what it is.
 - **Promised with no date.** A pale amber list with dashed rules.
-- **Index tables.** Claim, first reported, latest promise (pale amber), status.
+- **Index tables.** Claim, first reported, latest promise (pale amber, the year in bold), status with a small stage track above the label.
 - **Headlines table.** On the home page: the ten newest news reports. The outlet's title sits in quotation marks and opens the claim page; the outlet's name beneath it, in regular weight, opens the report; then the date reported and the status now. The quotation marks and the outlet name are what mark the wording as someone else's, so neither may be dropped.
 - **Search.** One labelled field and a button. Shows "Searching…", then results, a plain "Nothing found" sentence, or a plain failure sentence.
 - **Footer.** Deep navy. The two notices in bold, then data sources and the dates the registries were checked and the pages built.
@@ -79,7 +86,6 @@ Figures are tabular and lining throughout. Reading measure is 66 characters. A n
 - No stock photography. Topic imagery is a drawn mark in the accent colour.
 - Focus is a 3px blue outline (white on the footer). Selection is the tag blue, inverted on the footer. Hover thickens a link's underline, darkens the chip and the button.
 - A date never breaks across two lines.
-- A footnote letter's link is at least 24 by 24 CSS pixels.
 - Print hides navigation and search, drops the footer's fill and the table frame, never splits a record across sheets, and prints each source address after its link.
 
 ## Why blue

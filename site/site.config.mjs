@@ -1,6 +1,6 @@
-// Brand strings in one place: the name is a working codename and will change.
+// Brand strings in one place. "thenwhat" remains the repo and package codename.
 export const SITE = {
-  name: "thenwhat",
+  name: "What Came Of It",
   // Where the built site is served. The local preview until a domain is chosen;
   // the browser extension reads its lookup file from here.
   url: "http://localhost:4321",
