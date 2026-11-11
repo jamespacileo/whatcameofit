@@ -125,8 +125,12 @@ def _current_state(trial: list[Evidence]) -> TrialState | None:
     return max(changes)[-1] if changes else None
 
 
+# A trial cannot complete without having started, whether or not its start was recorded.
+SHOWS_A_START = frozenset({TrialState.STARTED, TrialState.COMPLETED})
+
+
 def _has_started(trial: list[Evidence]) -> bool:
-    return any(event.trial_state is TrialState.STARTED for event in trial)
+    return any(event.trial_state in SHOWS_A_START for event in trial)
 
 
 def _stage(trial: list[Evidence]) -> int:

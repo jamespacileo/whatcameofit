@@ -88,6 +88,7 @@ def upgrade() -> None:
             sa.Enum(
                 "human",
                 "rule",
+                "seed",
                 name="reviewed_by",
                 native_enum=False,
                 create_constraint=True,
@@ -245,6 +246,7 @@ def upgrade() -> None:
             sa.Enum(
                 "human",
                 "rule",
+                "seed",
                 name="reviewed_by",
                 native_enum=False,
                 create_constraint=True,
@@ -369,6 +371,7 @@ def upgrade() -> None:
             sa.Enum(
                 "human",
                 "rule",
+                "seed",
                 name="reviewed_by",
                 native_enum=False,
                 create_constraint=True,

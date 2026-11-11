@@ -16,6 +16,8 @@ class ReviewState(StrEnum):
 class Decider(StrEnum):
     HUMAN = "human"
     RULE = "rule"
+    # Loaded as already reviewed from a checked-in seed file. Not an operator's decision.
+    SEED = "seed"
 
 
 class EntityType(StrEnum):

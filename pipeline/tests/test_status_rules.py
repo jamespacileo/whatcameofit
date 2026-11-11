@@ -166,6 +166,19 @@ def test_started_trial_maps_its_registered_phase_to_a_stage(phases, expected):
     assert result(trial("NCT1", phases, STARTED)).status is expected
 
 
+def test_completed_trial_with_no_recorded_start_still_counts_as_started():
+    """Some registries give no actual start date; completion implies one."""
+    events = trial("NCT1", PHASE_1, TrialState.COMPLETED)
+
+    assert result(events).status is ClaimStatus.PHASE_1
+
+
+def test_suspended_trial_with_no_recorded_start_has_not_started():
+    events = trial("NCT1", PHASE_1, TrialState.SUSPENDED)
+
+    assert result(events).status is ClaimStatus.TRIAL_REGISTERED
+
+
 def test_furthest_started_trial_wins_over_an_unstarted_later_phase():
     events = trial("NCT1", PHASE_1, STARTED) + trial("NCT2", PHASE_3)
 
