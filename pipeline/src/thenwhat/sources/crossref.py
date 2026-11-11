@@ -1,7 +1,8 @@
 """Crossref REST API, including Retraction Watch notices. Terms and limits: docs/sources.md."""
 
-from dataclasses import dataclass
-from datetime import date
+from dataclasses import dataclass, field
+from datetime import date, datetime
+from typing import Any
 from urllib.parse import quote
 
 from thenwhat.sources.base import Source, SourceRecord
@@ -16,6 +17,9 @@ class Notice:
     type: str
     notice_date: date
     notice_doi: str
+    # As the registry gave it, and when; not part of what makes two notices equal.
+    raw: dict[str, Any] = field(default_factory=dict, compare=False)
+    fetched_at: datetime | None = field(default=None, compare=False)
 
 
 class Crossref(Source):
@@ -45,5 +49,13 @@ class Crossref(Source):
         notices = []
         for update in work.payload.get("updated-by") or []:
             year, month, day = (*update["updated"]["date-parts"][0], 1, 1)[:3]
-            notices.append(Notice(update["type"], date(year, month, day), update["DOI"]))
+            notices.append(
+                Notice(
+                    update["type"],
+                    date(year, month, day),
+                    update["DOI"],
+                    raw=update,
+                    fetched_at=work.fetched_at,
+                )
+            )
         return notices
