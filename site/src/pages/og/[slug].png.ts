@@ -16,6 +16,7 @@ const MUTED = "#4d5d6e";
 const PANEL = "#f3f7fb";
 const PAPER = "#ffffff";
 const TINT = "#eaf2fa";
+const RING = "#7f90a3";
 
 // The site's face, as static files the image renderer can read.
 const font = (weight: number) =>
@@ -33,7 +34,7 @@ const box = (style: Record<string, unknown>, children: unknown): Node => ({
   props: { style: { display: "flex", ...style }, children },
 });
 
-// The site's icon: a headline bar, and a reply hanging off it that ends in the marker.
+// The site's icon: a magnifying glass over lines of print, one dot picked out.
 // The same drawing as public/favicon.svg.
 function stamp(size: number): Node {
   const shape = (type: string, props: Record<string, unknown>): Node => ({ type, props });
@@ -43,15 +44,11 @@ function stamp(size: number): Node {
     viewBox: "0 0 64 64",
     children: [
       shape("rect", { width: 64, height: 64, rx: 14, fill: TINT }),
-      shape("rect", { x: 11, y: 13, width: 42, height: 9, rx: 4.5, fill: INK }),
-      shape("path", {
-        d: "M18 30v8a7 7 0 0 0 7 7h12",
-        fill: "none",
-        stroke: INK,
-        "stroke-width": 5.5,
-        "stroke-linecap": "round",
-      }),
-      shape("circle", { cx: 47, cy: 45, r: 7, fill: BLUE }),
+      shape("circle", { cx: 27, cy: 27, r: 17, fill: PAPER, stroke: INK, "stroke-width": 5 }),
+      shape("path", { d: "M40 40l13 13", stroke: INK, "stroke-width": 6.5, "stroke-linecap": "round" }),
+      shape("rect", { x: 16.5, y: 19.5, width: 21, height: 5, rx: 2.5, fill: INK }),
+      shape("rect", { x: 16.5, y: 28.5, width: 11, height: 4, rx: 2, fill: RING }),
+      shape("circle", { cx: 33.5, cy: 30.5, r: 3.6, fill: BLUE }),
     ],
   });
 }
