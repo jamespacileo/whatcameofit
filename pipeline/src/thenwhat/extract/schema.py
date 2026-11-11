@@ -19,9 +19,16 @@ class Draft(BaseModel):
         max_length=500,
         description="Your own words. Never copy sentences from the article.",
     )
-    intervention: ShortText = Field(description="The drug, device or method.")
+    intervention: ShortText = Field(
+        description="The drug, device or method, by its name alone: no maker, mechanism or brackets."
+    )
     intervention_synonyms: list[ShortText] = Field(
-        default_factory=list, description="Other names the article uses for it."
+        default_factory=list,
+        description=(
+            "Other names the article gives it: a brand name, a code such as ABC-123, or a"
+            " generic name. Never a description such as 'the drug', 'the pill' or"
+            " 'a one-time treatment'. Empty if the article gives no other name."
+        ),
     )
     indication: ShortText = Field(description="The condition it is claimed to treat.")
     paper_title: ShortText | None = Field(

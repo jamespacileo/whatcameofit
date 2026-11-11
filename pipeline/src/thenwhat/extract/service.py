@@ -25,6 +25,7 @@ from thenwhat.claims.entry import (
 )
 from thenwhat.db.models import Claim, Entity, SourceArticle
 from thenwhat.domain import EntityType, ReviewState
+from thenwhat.extract.names import is_a_name
 from thenwhat.extract.schema import Draft
 from thenwhat.llm.client import Llm
 
@@ -130,7 +131,10 @@ def _apply(
 
     intervention = next(e for e in existing if e.type is EntityType.INTERVENTION)
     names = {name_key(intervention.name), *(name_key(s) for s in intervention.synonyms)}
-    new_synonyms = [s for s in draft.intervention_synonyms if name_key(s) not in names]
+    # A description the model returned as a name is dropped: it would be searched for.
+    new_synonyms = [
+        s for s in draft.intervention_synonyms if is_a_name(s) and name_key(s) not in names
+    ]
     if new_synonyms:
         intervention.synonyms = [*intervention.synonyms, *new_synonyms]
 

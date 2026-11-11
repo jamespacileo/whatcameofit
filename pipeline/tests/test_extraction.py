@@ -28,6 +28,7 @@ from thenwhat.claims.entry import (
 )
 from thenwhat.db.models import Base, Claim, Entity
 from thenwhat.domain import Decider, EntityType, ReviewState
+from thenwhat.extract.names import is_a_name
 from thenwhat.extract.service import (
     ClaimNotPending,
     draft_claim_from_article,
@@ -142,6 +143,56 @@ def test_article_with_a_paper_and_a_promise_becomes_a_full_draft(session: Sessio
     assert [e.name for e in entities(session, claim, EntityType.INSTITUTION)] == [
         "Example University"
     ]
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "EX-1",
+        "TRG035",
+        "semaglutide",
+        "Hibsago",
+        "mRNA-4157",
+        "sac-TMT",
+        "GAE",
+        "Genicular artery embolization",
+        "BPL-003 nasal spray",
+        "Pig kidney transplant",
+    ],
+)
+def test_a_name_is_kept_as_another_name(name: str):
+    assert is_a_name(name)
+
+
+@pytest.mark.parametrize(
+    "description",
+    [
+        "the drug",
+        "the pill",
+        "The injection",
+        "a one-time treatment",
+        "one-time CRISPR treatment",
+        "experimental oral minoxidil pill",
+        "gene-editing treatment",
+        "Non-surgical knee procedure",
+        "Under-the-skin implant",
+        "experimental personalized mRNA vaccine",
+        "new therapy",
+        "  ",
+    ],
+)
+def test_a_description_is_not_another_name(description: str):
+    assert not is_a_name(description)
+
+
+def test_descriptions_the_model_returns_are_not_recorded_as_names(session: Session):
+    """Scenario: Article that only describes the intervention"""
+    output = DRAFT | {"intervention_synonyms": ["EX-1", "the drug", "experimental antibody jab"]}
+
+    claim = draft(session, output)
+
+    [intervention] = entities(session, claim, EntityType.INTERVENTION)
+    assert intervention.synonyms == ["EX-1"]
 
 
 def test_article_with_no_promise_gives_a_draft_without_promises(session: Session):
