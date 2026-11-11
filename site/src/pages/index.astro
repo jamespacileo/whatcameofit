@@ -2,9 +2,12 @@
 import Base from "../layouts/Base.astro";
 import TopicChip from "../components/TopicChip.astro";
 import { SITE } from "../../site.config.mjs";
-import { data } from "../lib/export";
+import { data, listedTopics } from "../lib/export";
+import { recentReports } from "../lib/reports";
 import { STATUS_LABELS, overlayText } from "../lib/status";
 import { formatDate } from "../lib/timetable";
+
+const reports = recentReports(data.claims, 10);
 
 const recent = data.claims
   .filter((claim) => claim.status.updated_at !== null)
@@ -24,6 +27,49 @@ const recent = data.claims
     </div>
   </form>
   <div class="results" id="results" aria-live="polite"></div>
+
+  <h2 class="bar">Headlines reported most recently</h2>
+  {
+    reports.length === 0 ? (
+      <p>No news report is on record yet.</p>
+    ) : (
+      <div class="table-frame">
+      <table class="index">
+        <caption class="visually-hidden">
+          News reports about tracked claims, newest first. Each headline is the outlet's own wording.
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Headline</th>
+            <th scope="col">Reported</th>
+            <th scope="col">Status now</th>
+          </tr>
+        </thead>
+        <tbody>
+          {reports.map((report) => (
+            <tr>
+              <td class="claim">
+                <a href={`/${report.claim.slug}`}>“{report.title}”</a>
+                <span class="entry-note">
+                  <a href={report.url}>{report.outlet}</a>
+                </span>
+              </td>
+              <td class="when" data-column="Reported">
+                {formatDate(report.publishedDate)}
+              </td>
+              <td data-column="Status now">
+                <strong>{STATUS_LABELS[report.claim.status.code]}</strong>
+                {overlayText(report.claim.status.overlay_years) && (
+                  <span class="entry-note">{overlayText(report.claim.status.overlay_years)}</span>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      </div>
+    )
+  }
 
   <h2 class="bar">Statuses set most recently</h2>
   {
@@ -65,7 +111,7 @@ const recent = data.claims
   <h2 class="bar" id="topics">Topics</h2>
   <ul class="plain">
     {
-      data.verticals.map((vertical) => {
+      listedTopics.map((vertical) => {
         const count = data.claims.filter((claim) => claim.vertical === vertical.slug).length;
         return (
           <li>

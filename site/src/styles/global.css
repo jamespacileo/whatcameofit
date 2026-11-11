@@ -594,6 +594,13 @@ sup a {
   font-weight: 700;
 }
 
+/* The outlet under a headline: quieter than the headline, still a full-size target. */
+.index td.claim .entry-note a {
+  display: inline-block;
+  padding-block: 0.2rem;
+  font-weight: 400;
+}
+
 .index .when {
   white-space: nowrap;
 }

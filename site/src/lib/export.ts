@@ -99,6 +99,11 @@ function load(): Export {
 
 export const data: Export = load();
 
+/** Topics that have at least one published claim. Only these are linked from menus and lists. */
+export const listedTopics = data.verticals.filter((vertical) =>
+  data.claims.some((claim) => claim.vertical === vertical.slug),
+);
+
 export function verticalTitle(slug: string): string {
   return data.verticals.find((vertical) => vertical.slug === slug)?.title ?? slug;
 }

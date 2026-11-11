@@ -1,6 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
-import { data } from "../lib/export";
+import { listedTopics } from "../lib/export";
 ---
 
 <Base title="No page at this address">
@@ -12,7 +12,7 @@ import { data } from "../lib/export";
   <ul class="plain">
     <li><a href="/">Search the tracked claims</a></li>
     {
-      data.verticals.map((vertical) => (
+      listedTopics.map((vertical) => (
         <li>
           <a href={`/topic/${vertical.slug}`}>All claims in {vertical.title.toLowerCase()}</a>
         </li>

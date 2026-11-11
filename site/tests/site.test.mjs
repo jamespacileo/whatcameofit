@@ -73,6 +73,16 @@ test("Scenario: Vertical with claims", () => {
   assert.match(html, /Phase 2 trial/);
 });
 
+test("Scenario: Vertical with no published claims", () => {
+  // Its page exists, but nothing links to it until a claim is published in it.
+  assert.match(page("topic/empty-topic/index.html"), /0 reported breakthroughs tracked/);
+  for (const file of ["index.html", "404.html", "phase-claim/index.html"]) {
+    assert.ok(!page(file).includes("empty-topic"), `${file} links to an empty topic`);
+  }
+  // With one listed topic, the menu names it.
+  assert.match(page("index.html"), /<a href="\/topic\/dental-regeneration"[^>]*>Dental regeneration<\/a>/);
+});
+
 test("Scenario: Search by intervention name", () => {
   // Search indexes the part of a claim page marked for it; the synonyms must be inside.
   const html = page("quiet-claim/index.html");
@@ -88,6 +98,18 @@ test("Scenario: Search with no result", () => {
     .map((name) => page(path.join("_astro", name)))
     .join("\n");
   assert.match(scripts + page("index.html"), /Nothing found for/);
+});
+
+test("Scenario: Home lists the newest reports", () => {
+  const html = page("index.html");
+  assert.match(html, /Headlines reported most recently/);
+  // Newest first, across claims: reports 3, 2, 1, then 4.
+  const order = [3, 2, 1, 4].map((number) => html.indexOf(`Example report ${number}`));
+  assert.ok(order.every((position) => position > -1), "a report is missing from the home page");
+  assert.deepEqual([...order].sort((a, b) => a - b), order);
+  // The headline opens the claim; the outlet opens the report itself.
+  assert.match(html, /<a href="\/phase-claim">“Example report 3”<\/a>/);
+  assert.match(html, /<a href="https:\/\/news\.example\.org\/3">Example Outlet 3<\/a>/);
 });
 
 test("Scenario: No approved claims", () => {

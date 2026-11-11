@@ -56,13 +56,14 @@ Figures are tabular and lining throughout. Reading measure is 66 characters. A n
 
 ## Components
 
-- **Masthead.** White, a hairline beneath. Site name in blue, three plain links; the current one is underlined. With one topic its name is the middle link; with several the link reads "Topics" and leads to the list on the home page.
+- **Masthead.** White, a hairline beneath. Site name in blue, three plain links; the current one is underlined. With one listed topic its name is the middle link; with several the link reads "Topics" and leads to the list on the home page. A topic is listed only once it has a published claim.
 - **Topic chip.** A pill with a small line drawing for the topic (a tooth for dental regeneration; a plain ring for a topic without a drawing) and the topic's name. It links to the topic page, from the claim page and from the home page's topic list.
 - **Digest panel.** "Where it stands", the status label, the no-signal note in a dashed outline when present, and "Latest record <date>." and "Status set <date>." on their own lines, beside the summary. The date a status was computed is never presented as the date something happened.
 - **Facts row.** Intervention with its other names, what it is claimed for, first reported, evidence then.
 - **Timetable.** A framed table: year, Promised (pale amber), Recorded. Years with nothing collapse into one quiet row. Events that produced the status carry a "basis of status" tag. Each event has a footnote letter linking to its source; each source names its record and date, because two records can share one registry entry. On a phone the rows stack, and a year with no promise shows one muted line with no amber, so amber is seen only where a promise exists.
 - **Promised with no date.** A pale amber list with dashed rules.
 - **Index tables.** Claim, first reported, latest promise (pale amber), status.
+- **Headlines table.** On the home page: the ten newest news reports. The outlet's title sits in quotation marks and opens the claim page; the outlet's name beneath it, in regular weight, opens the report; then the date reported and the status now. The quotation marks and the outlet name are what mark the wording as someone else's, so neither may be dropped.
 - **Search.** One labelled field and a button. Shows "Searching…", then results, a plain "Nothing found" sentence, or a plain failure sentence.
 - **Footer.** Deep navy. The two notices in bold, then data sources and the dates the registries were checked and the pages built.
 - **Link-preview card.** White, site name in blue, headline, then a rounded panel with first reported, promised by (a year, never a day count) and status. Its text alternative is built from the same facts.

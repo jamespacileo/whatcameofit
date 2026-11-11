@@ -3,7 +3,7 @@ import "../styles/global.css";
 // Preloaded so the first paint is already in the site's face and headings do not reflow.
 import faceUrl from "@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2?url";
 import { SITE } from "../../site.config.mjs";
-import { data } from "../lib/export";
+import { data, listedTopics } from "../lib/export";
 import { formatDate } from "../lib/timetable";
 
 interface Props {
@@ -18,7 +18,7 @@ const { title, description = SITE.description, image, imageAlt, current } = Astr
 const pageTitle = title ? `${title} | ${SITE.name}` : `${SITE.name}: ${SITE.tagline}`;
 const imageUrl = image ? new URL(image, Astro.site).href : null;
 // One topic is linked by name. With several, the item leads to the list of them all.
-const topics = data.verticals;
+const topics = listedTopics;
 const topicLink =
   topics.length === 1
     ? { href: `/topic/${topics[0].slug}`, label: topics[0].title, here: "page" as const }
