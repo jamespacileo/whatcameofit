@@ -291,7 +291,10 @@ const imageAlt = cardAlt(
                               <span class="entry-date">{dayAndMonth(entry.date)}</span>
                               <span class="what">
                                 <Pop id={`about-${entry.mark}`} class="more">
-                                  <Fragment slot="trigger">{eventLabel(entry.event)}</Fragment>
+                                  <Fragment slot="trigger">
+                                    {eventLabel(entry.event)}
+                                    {entry.explains && <BasisMark />}
+                                  </Fragment>
                                   <p>{entry.event.summary}</p>
                                   {entry.explains && (
                                     <p class="pop-note">
@@ -302,7 +305,6 @@ const imageAlt = cardAlt(
                                     <p class="pop-note">Date taken from: {entry.event.date_basis}.</p>
                                   )}
                                 </Pop>
-                                {entry.explains && <BasisMark />}
                               </span>
                               <span class="origin">
                                 <a href={entry.event.source_url}>

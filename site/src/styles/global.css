@@ -1506,6 +1506,21 @@ a.chip:hover {
     display: none;
   }
 
+  /* The reasons for the status go under the label, across the panel's column. */
+  .digest .label-row {
+    flex-wrap: wrap;
+  }
+
+  .digest .label-row .pop {
+    flex-basis: 100%;
+    background: none;
+    margin-bottom: 0.4rem;
+  }
+
+  .colophon {
+    break-inside: avoid;
+  }
+
   .pop-trigger.more {
     text-decoration: none;
   }
