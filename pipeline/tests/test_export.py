@@ -213,7 +213,11 @@ def test_export_states_when_it_was_made_and_when_data_was_last_checked(session: 
     assert export["schema_version"] == SCHEMA_VERSION
     assert export["generated_at"] == "2026-11-20T10:00:00Z"
     assert export["last_checked_at"] == "2026-11-19T09:00:00Z"
-    assert {"slug": "dental-regeneration", "title": "Dental regeneration"} in export["verticals"]
+    assert {
+        "slug": "dental-regeneration",
+        "title": "Dental regeneration",
+        "group": {"slug": "mouth-and-teeth", "title": "Mouth and teeth"},
+    } in export["verticals"]
     assert any(source["name"] == "ClinicalTrials.gov" for source in export["sources"])
 
 

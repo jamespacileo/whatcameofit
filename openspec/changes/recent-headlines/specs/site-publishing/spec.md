@@ -17,6 +17,17 @@ The home page SHALL list the most recently published source articles of publishe
 - **WHEN** a claim has not been approved in review
 - **THEN** none of its articles appears on the home page
 
+### Requirement: Topics are filed under groups
+The export SHALL carry, for each vertical, the group it is configured under, or none. When any listed topic has a group, the topic directory SHALL list topics under their groups' names, groups in alphabetical order and topics in alphabetical order within each, with topics that have no group last; its jump links SHALL lead to the groups, and its filter SHALL match a group's name as well as a topic's. When no listed topic has a group, the directory SHALL list topics under their first letters. The site SHALL NOT assign a topic to a group itself.
+
+#### Scenario: Topics with groups
+- **WHEN** a listed topic is configured under a group
+- **THEN** the topic directory shows the topic under that group's name and offers a jump link to the group
+
+#### Scenario: No topic has a group
+- **WHEN** no listed topic has a group
+- **THEN** the topic directory lists topics under their first letters, with a jump link for each letter
+
 ### Requirement: Topics are listed once they have a published claim
 Menus and lists of topics SHALL include a vertical only when at least one published claim belongs to it. The index page of a vertical without published claims SHALL still exist.
 

@@ -6,6 +6,7 @@
 - [x] 1.2 List a topic in menus and lists only when it has a published claim; verify the site test "Vertical with no published claims" passes and the empty topic's page still builds
 - [x] 1.3 Add the thirteen new topics to the configured set and regenerate `site/data/seed-export.json`; verify `make check` passes
 - [x] 1.4 Look at the built home page at desktop and phone widths; verify nothing overflows and the outlet link is a full-size target
+- [x] 1.5 Give each configured topic a group, carry it in the export and list the topic directory under groups; verify the site tests "Topics with groups" and "No topic has a group" pass
 
 ## 2. Candidate list
 

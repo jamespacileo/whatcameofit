@@ -10,6 +10,7 @@ Domain terms for thenwhat. Behavior is specified in `openspec/`; this file only 
 | **Source article** | A news article that reported a claim. Stored as URL, outlet, title and date. Its text is never stored. |
 | **Promise** | A timeline stated in a source article ("human trials by 2025"). A claim can have several, each tied to its article. |
 | **Vertical** | The topic area a claim belongs to, for example dental regeneration. |
+| **Group** | The broader area a vertical is filed under, such as a body system or disease area, for example mouth and teeth. Set in the pipeline's configuration; a vertical has at most one, and may have none. |
 | **Entity** | Something a claim names: an intervention, paper, person, institution or company. Has a name and synonyms. |
 | **Origin paper** | The publication the first news reports of a claim were about. At most one per claim. |
 | **Match** | A proposed link between an entity and a record in a public registry (a trial, a DOI). Always confirmed by a human. |

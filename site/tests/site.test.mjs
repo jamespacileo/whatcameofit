@@ -92,6 +92,30 @@ test("the topic directory lists every listed topic and no empty one", () => {
   assert.match(html, /1 topic, 3\s+claims tracked/);
 });
 
+test("Scenario: Topics with groups", () => {
+  const html = page("topics/index.html");
+  // The topic sits under its group's heading, and the jump row names the group.
+  const section = html.slice(html.indexOf('<section class="letter" id="group-mouth-and-teeth"'));
+  assert.match(section, /^<section[^>]*data-match="Mouth and teeth"[^>]*>\s*<h2[^>]*>Mouth and teeth<\/h2>/);
+  assert.ok(section.indexOf("/topic/dental-regeneration") < section.indexOf("</section>"));
+  assert.match(html, /aria-label="Jump to a group"[^>]*>\s*<a href="#group-mouth-and-teeth">Mouth and teeth<\/a>/);
+  assert.ok(!html.includes('id="letter-D"'));
+});
+
+test("Scenario: No topic has a group", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  for (const vertical of fixture.verticals) delete vertical.group;
+  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-flat-")), "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-site-flat-"));
+  const result = build(file, out);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const html = fs.readFileSync(path.join(out, "topics/index.html"), "utf8");
+  assert.match(html, /aria-label="Jump to a letter"[^>]*>\s*<a href="#letter-D">D<\/a>/);
+  assert.match(html, /<section class="letter" id="letter-D"/);
+  assert.ok(!html.includes('id="group-'));
+});
+
 test("a topic page marks each row with its status and keeps amber for promises", () => {
   const html = page("topic/dental-regeneration/index.html");
   // Each row names its status, so the filter can narrow the table. Three claims are

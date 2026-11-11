@@ -4,19 +4,27 @@ Only approved claims and their approved events are exported. The file is the sin
 interface between pipeline and site; its schema is checked in at site/export.schema.json.
 """
 
+import base64
 import json
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import articles_of, promises_of
 from thenwhat.claims.status import refresh_status
-from thenwhat.claims.verticals import VERTICALS
-from thenwhat.db.models import Claim, Entity, EntityMatch, EvidenceEvent, FailureFlag
+from thenwhat.claims.verticals import GROUPS, VERTICAL_GROUPS, VERTICALS
+from thenwhat.db.models import (
+    Claim,
+    Entity,
+    EntityMatch,
+    EvidenceEvent,
+    FailureFlag,
+    OutletIcon,
+)
 from thenwhat.domain import (
     ClaimStatus,
     Decider,
@@ -29,6 +37,7 @@ from thenwhat.domain import (
     TrialState,
 )
 from thenwhat.events.manual import TRIAL_TYPES
+from thenwhat.outlets.icons import outlet_domain
 
 SCHEMA_VERSION = 1
 # Registries the clients read. Always listed, as their terms ask for attribution.
@@ -50,9 +59,26 @@ class ExportedSource(Strict):
     url: str
 
 
+class ExportedGroup(Strict):
+    slug: str
+    title: str
+
+
 class ExportedVertical(Strict):
     slug: str
     title: str
+    # The broader area the vertical is filed under, when it has one.
+    group: ExportedGroup | None = None
+
+
+class ExportedOutlet(Strict):
+    """An outlet's own icon, stored by the pipeline so that no page fetches it."""
+
+    # An article's host without a leading www, as the site shows it.
+    domain: str
+    # The image itself as a data URI; the site never receives an address to fetch.
+    icon: str = Field(pattern=r"^data:image/(png|x-icon|gif|jpeg|webp);base64,[A-Za-z0-9+/]+=*$")
+    fetched_at: datetime
 
 
 class ExportedIntervention(Strict):
@@ -126,7 +152,14 @@ class Export(Strict):
     preview: bool
     sources: list[ExportedSource]
     verticals: list[ExportedVertical]
+    # Icons of the outlets whose articles are exported. An outlet without one is absent.
+    outlets: list[ExportedOutlet]
     claims: list[ExportedClaim]
+
+
+def _group_of(vertical: str) -> ExportedGroup | None:
+    slug = VERTICAL_GROUPS.get(vertical)
+    return None if slug is None else ExportedGroup(slug=slug, title=GROUPS[slug])
 
 
 def export_json_schema() -> dict[str, Any]:
@@ -152,6 +185,21 @@ def _decided_by_assistant(session: Session, claim: Claim) -> bool:
             )
         )
     )
+
+
+def _outlets(session: Session, claims: list[ExportedClaim]) -> list[ExportedOutlet]:
+    domains = {outlet_domain(article.url) for claim in claims for article in claim.articles}
+    return [
+        ExportedOutlet(
+            domain=icon.domain,
+            icon=f"data:{icon.media_type};base64,{base64.b64encode(icon.content).decode()}",
+            fetched_at=icon.fetched_at,
+        )
+        for icon in session.scalars(
+            select(OutletIcon).where(OutletIcon.domain.in_(domains)).order_by(OutletIcon.domain)
+        )
+        if icon.content is not None
+    ]
 
 
 def build_export(
@@ -282,7 +330,11 @@ def build_export(
                 ),
             ]
         ],
-        verticals=[ExportedVertical(slug=slug, title=title) for slug, title in VERTICALS.items()],
+        verticals=[
+            ExportedVertical(slug=slug, title=title, group=_group_of(slug))
+            for slug, title in VERTICALS.items()
+        ],
+        outlets=_outlets(session, claims),
         claims=claims,
     )
 
