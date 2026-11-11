@@ -11,6 +11,7 @@ interface Props {
 const { claims, caption } = Astro.props;
 ---
 
+<div class="table-frame">
 <table class="index">
   <caption class="visually-hidden">{caption}</caption>
   <thead>
@@ -47,3 +48,4 @@ const { claims, caption } = Astro.props;
     }
   </tbody>
 </table>
+</div>

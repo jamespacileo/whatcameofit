@@ -1,6 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
-import { data, verticalTitle, type ExportedClaim } from "../lib/export";
+import TopicChip from "../components/TopicChip.astro";
+import { data, type ExportedClaim } from "../lib/export";
 import {
   EVIDENCE_STAGES,
   STATUS_LABELS,
@@ -44,6 +45,7 @@ const imageAlt = cardAlt(
   imageAlt={imageAlt}
 >
   <article data-pagefind-body>
+    <TopicChip vertical={claim.vertical} />
     <h1 class="title">
       {
         /* A name such as "USAG-1" must not break at its hyphen. */
@@ -56,17 +58,51 @@ const imageAlt = cardAlt(
       }
     </h1>
 
-    <div class="status">
-      <p class="label" data-pagefind-meta="status">{STATUS_LABELS[claim.status.code]}</p>
-      {overlay && <p class="overlay">{overlay}</p>}
-      <p class="meaning">{STATUS_MEANINGS[claim.status.code]}</p>
-      <p class="changed" data-pagefind-ignore>
-        {latestRecord ? `Latest record ${formatDate(latestRecord)}.` : "No record yet."}
-        {claim.status.updated_at && ` Status set ${formatDate(claim.status.updated_at)}.`}
-      </p>
+    <div class="digest">
+      <div>
+        <p class="where">Where it stands</p>
+        <p class="label" data-pagefind-meta="status">{STATUS_LABELS[claim.status.code]}</p>
+        {overlay && <p class="overlay">{overlay}</p>}
+        <p class="changed" data-pagefind-ignore>
+          {latestRecord ? `Latest record ${formatDate(latestRecord)}.` : "No record yet."}
+          {claim.status.updated_at && ` Status set ${formatDate(claim.status.updated_at)}.`}
+        </p>
+      </div>
+      <p class="lede" data-pagefind-meta="summary">{claim.summary}</p>
     </div>
 
-    <p class="lede" data-pagefind-meta="summary">{claim.summary}</p>
+    <dl class="facts">
+      <div>
+        <dt>Intervention</dt>
+        <dd>
+          {claim.intervention.name}
+          {
+            claim.intervention.synonyms.length > 0 &&
+              ` (also known as ${claim.intervention.synonyms.join(", ")})`
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>Claimed for</dt>
+        <dd>{claim.indication}</dd>
+      </div>
+      {
+        claim.first_reported_date && (
+          <div>
+            <dt>First reported</dt>
+            <dd>{formatDate(claim.first_reported_date)}</dd>
+          </div>
+        )
+      }
+      {
+        claim.evidence_stage && (
+          <div>
+            <dt>Evidence then</dt>
+            <dd>{EVIDENCE_STAGES[claim.evidence_stage] ?? claim.evidence_stage}</dd>
+          </div>
+        )
+      }
+    </dl>
 
     <h2 class="bar" id="timetable">Promised and recorded</h2>
     {
@@ -77,6 +113,7 @@ const imageAlt = cardAlt(
         </p>
       )
     }
+    <div class="table-frame">
     <table class="timetable" aria-describedby="timetable">
       <thead>
         <tr>
@@ -172,6 +209,7 @@ const imageAlt = cardAlt(
         }
       </tbody>
     </table>
+    </div>
 
     {
       timetable.undated.length > 0 && (
@@ -225,39 +263,6 @@ const imageAlt = cardAlt(
         </p>
       )
     }
-
-    <h2 class="bar">About this claim</h2>
-    <dl class="facts">
-      <dt>Intervention</dt>
-      <dd>
-        {claim.intervention.name}
-        {
-          claim.intervention.synonyms.length > 0 && (
-            <span> (also known as {claim.intervention.synonyms.join(", ")})</span>
-          )
-        }
-      </dd>
-      <dt>Claimed for</dt>
-      <dd>{claim.indication}</dd>
-      {
-        claim.first_reported_date && (
-          <>
-            <dt>First reported</dt>
-            <dd>{formatDate(claim.first_reported_date)}</dd>
-          </>
-        )
-      }
-      {
-        claim.evidence_stage && (
-          <>
-            <dt>Evidence then</dt>
-            <dd>{EVIDENCE_STAGES[claim.evidence_stage] ?? claim.evidence_stage}</dd>
-          </>
-        )
-      }
-      <dt>Topic</dt>
-      <dd><a href={`/topic/${claim.vertical}`}>{verticalTitle(claim.vertical)}</a></dd>
-    </dl>
 
     {
       timetable.sources.length > 0 && (

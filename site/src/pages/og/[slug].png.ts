@@ -10,20 +10,20 @@ import { cardFacts } from "../../lib/card";
 import { data, type ExportedClaim } from "../../lib/export";
 import { STATUS_LABELS, latestPromise } from "../../lib/status";
 
-const INK = "#14161a";
-const YELLOW = "#ffd21e";
+const INK = "#231f33";
+const INDIGO = "#3d2f7a";
+const MUTED = "#5d5677";
+const PANEL = "#f6f4fb";
 const PAPER = "#ffffff";
 
-// The condensed cut the pages use for heads, as static files the image renderer can read.
+// The site's face, as static files the image renderer can read.
 const font = (weight: number) =>
   fs.readFileSync(
-    path.resolve(
-      `node_modules/@fontsource/archivo-narrow/files/archivo-narrow-latin-${weight}-normal.woff`,
-    ),
+    path.resolve(`node_modules/@fontsource/figtree/files/figtree-latin-${weight}-normal.woff`),
   );
 const fonts = [
-  { name: "Archivo", data: font(500), weight: 500 as const, style: "normal" as const },
-  { name: "Archivo", data: font(700), weight: 700 as const, style: "normal" as const },
+  { name: "Figtree", data: font(400), weight: 400 as const, style: "normal" as const },
+  { name: "Figtree", data: font(700), weight: 700 as const, style: "normal" as const },
 ];
 
 type Node = { type: string; props: Record<string, unknown> };
@@ -33,9 +33,9 @@ const box = (style: Record<string, unknown>, children: unknown): Node => ({
 });
 
 function fact(label: string, value: string): Node {
-  return box({ flexDirection: "column", marginRight: 56 }, [
-    box({ fontSize: 28, fontWeight: 500 }, label),
-    box({ fontSize: 52, fontWeight: 700, lineHeight: 1.05 }, value),
+  return box({ flexDirection: "column", marginRight: 64 }, [
+    box({ fontSize: 26, fontWeight: 400, color: MUTED }, label),
+    box({ fontSize: 44, fontWeight: 700, lineHeight: 1.1, color: INDIGO }, value),
   ]);
 }
 
@@ -53,27 +53,26 @@ function card(claim: ExportedClaim): Node {
       height: "100%",
       flexDirection: "column",
       justifyContent: "space-between",
-      background: YELLOW,
+      background: PAPER,
       color: INK,
-      fontFamily: "Archivo",
+      fontFamily: "Figtree",
+      padding: "52px 64px 56px",
     },
     [
-      box({ flexDirection: "column", padding: "48px 64px 0" }, [
-        box({ fontSize: 36, fontWeight: 700 }, SITE.name),
+      box({ flexDirection: "column" }, [
+        box({ fontSize: 34, fontWeight: 700, color: INDIGO }, SITE.name),
         box(
-          { fontSize: claim.headline.length > 70 ? 76 : 96, fontWeight: 700, lineHeight: 1.0, marginTop: 28 },
+          {
+            fontSize: claim.headline.length > 70 ? 60 : 76,
+            fontWeight: 700,
+            lineHeight: 1.08,
+            letterSpacing: -1,
+            marginTop: 30,
+          },
           claim.headline,
         ),
       ]),
-      box(
-        {
-          background: PAPER,
-          borderTop: `6px solid ${INK}`,
-          padding: "30px 64px 40px",
-          alignItems: "flex-start",
-        },
-        facts,
-      ),
+      box({ background: PANEL, borderRadius: 28, padding: "30px 40px 34px" }, facts),
     ],
   );
 }

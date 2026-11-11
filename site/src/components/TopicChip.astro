@@ -1,0 +1,34 @@
+---
+// A small mark for the topic a page belongs to. Each topic gets its own drawing;
+// a topic without one gets a plain ring.
+import { verticalTitle } from "../lib/export";
+
+interface Props {
+  vertical: string;
+  link?: boolean;
+}
+
+const { vertical, link = true } = Astro.props;
+const Tag = link ? "a" : "span";
+---
+
+<Tag class="chip" href={link ? `/topic/${vertical}` : undefined}>
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.7"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    {
+      vertical === "dental-regeneration" ? (
+        <path d="M7.5 3.5c-2.4 0-4 1.8-4 4.3 0 2.2.9 3.6 1.5 5.4.7 2.1.6 7.3 2.6 7.3 1.8 0 1.4-5 4.4-5s2.6 5 4.4 5c2 0 1.9-5.2 2.6-7.3.6-1.8 1.5-3.2 1.5-5.4 0-2.5-1.6-4.3-4-4.3-1.9 0-2.8 1-4.5 1s-2.6-1-4.5-1z" />
+      ) : (
+        <circle cx="12" cy="12" r="7.5" />
+      )
+    }
+  </svg>
+  {verticalTitle(vertical)}
+</Tag>
