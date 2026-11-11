@@ -80,7 +80,7 @@ Python 3.12 with `uv`; Typer and Rich for the CLI; SQLAlchemy 2 with Alembic; ht
 | `promise` | id, claim_id, source_article_id, description, parsed_date (nullable) |
 | `entity` | id, claim_id, type, name, synonyms[], is_origin_paper |
 | `entity_match` | id, entity_id, source_name, external_id, score, review columns; unique (entity_id, source_name, external_id) |
-| `evidence_event` | id, claim_id, entity_match_id (nullable), type, event_date, date_basis, source_name, source_url, external_id, trial_phases[] (nullable), trial_state (nullable), summary, confidence, raw_payload (JSONB), fetched_at, dedupe_key (unique per claim), review columns |
+| `evidence_event` | id, claim_id, entity_match_id (nullable), type, event_date, date_basis, source_name, source_url, external_id, trial_phases[] (nullable), trial_state (nullable), regulatory_outcome (approved or refused; set exactly when the type is regulatory decision), summary, confidence, raw_payload (JSONB), fetched_at, dedupe_key (unique per claim), review columns |
 | `failure_flag` | id, claim_id, trial_external_id, evidence_event_id, source_url, created_at |
 | `decision_log` | id, step, input_ref, backend, model, options, output, confidence, error, human_label (nullable), created_at |
 | `llm_usage` | id, purpose, model, input_tokens, output_tokens, cost_usd, created_at |
@@ -133,9 +133,13 @@ Alternative considered: human approval of every event. Rejected for trial events
 
 ### D8. Status rules as a pure function
 
-`derive(events, flags, first_reported_date, as_of) -> (status, overlay_years, explaining_event_ids)`. No database or clock access inside. Written test-first from the scenarios in `specs/status-derivation`, one test per scenario. Precedence: retracted, then approved, then the stage/failed/terminated/preclinical ladder, then the overlay.
+`derive(events, flags, first_reported_date, as_of, origin_paper_ids, no_signal_years) -> (status, overlay_years, explaining_event_ids)`. No database or clock access inside; a test fails if the `status` package imports anything beyond the standard library and the domain vocabulary. Written test-first from the scenarios in `specs/status-derivation`, one test per scenario. Precedence: retracted, then approved, then the stage/failed/terminated/preclinical ladder, then the overlay.
 
-The overlay depends on the as-of date, so the export recomputes it at export time. Stored status changes only when the result differs.
+The origin paper is identified by the identifiers of its human-approved matches, compared without regard to letter case. A retraction event carries the retracted paper's identifier as its external identifier. A failure flag counts only while the event it rests on is approved.
+
+The overlay depends on the as-of date, so the export recomputes it at export time. Stored status changes only when the result differs. Storing is done by `refresh_status` in the `claims` package, which reads approved events, flags and origin paper identifiers, calls `derive`, and takes the as-of date and current time from its caller.
+
+Tests sit at two seams only: `derive` for rule logic and `refresh_status` against a real database for what is read and stored. Internal helpers have no tests of their own.
 
 ### D9. Decisions
 

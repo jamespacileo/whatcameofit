@@ -17,6 +17,17 @@ An evidence event SHALL have a type, an event date, a source name, a source URL,
 - **WHEN** an event is created from a fetched trial record
 - **THEN** the event stores that record's unmodified payload and its fetch time
 
+### Requirement: Regulatory decision outcome
+Every regulatory decision event SHALL record its outcome, approved or refused. No other type of event SHALL carry an outcome.
+
+#### Scenario: Regulatory decision without an outcome
+- **WHEN** a regulatory decision event is created without an outcome
+- **THEN** the event is refused
+
+#### Scenario: Refusal recorded
+- **WHEN** an operator enters a regulatory decision event with the outcome refused
+- **THEN** the event is stored with that outcome and does not make the claim approved
+
 ### Requirement: Events come from approved matches
 A fetch for a claim SHALL create events only from registry records that an approved entity match points to.
 

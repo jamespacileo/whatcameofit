@@ -17,12 +17,12 @@
 
 ## 3. Status derivation
 
-- [ ] 3.1 Write one failing test per scenario in `specs/status-derivation/spec.md` against the pure `derive` signature in design D8; verify the test count equals the scenario count and every test fails for the right reason
-- [ ] 3.2 Implement standing trials, the phase mapping and the stage ladder; verify the stage, failed, terminated and preclinical tests pass
-- [ ] 3.3 Implement the approved and retracted overrides; verify their tests pass
-- [ ] 3.4 Implement the no-signal overlay with a configurable threshold; verify the overlay tests pass, including the claim with no events
-- [ ] 3.5 Return the explaining event ids with every result; verify the explanation test passes and the module imports no database, network or clock code
-- [ ] 3.6 Persist the derived status and change `status_updated_at` only on a real change; verify with a test that re-derives twice
+- [x] 3.1 Cover every scenario in `specs/status-derivation/spec.md` with one test named after it, written in vertical slices (tests for one rule group, seen failing, then its implementation) at the two agreed seams, `derive` and `refresh_status`; verify the scenario names in the spec and in the tests match one to one
+- [x] 3.2 Implement standing trials, the phase mapping and the stage ladder; verify the stage, failed, terminated and preclinical tests pass
+- [x] 3.3 Implement the approved and retracted overrides; verify their tests pass
+- [x] 3.4 Implement the no-signal overlay with a configurable threshold; verify the overlay tests pass, including the claim with no events
+- [x] 3.5 Return the explaining event ids with every result; verify the explanation test passes and the module imports no database, network or clock code
+- [x] 3.6 Persist the derived status and change `status_updated_at` only on a real change; verify with a test that re-derives twice
 
 ## 4. Claims and manual entry
 
