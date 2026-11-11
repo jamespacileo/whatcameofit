@@ -294,3 +294,18 @@ These hold for every future page.
 - **Don't** use yellow for text or as a small accent, or blue for anything that is not a link, focus or the search hover.
 - **Don't** drop or shorten the footer notices on any page, including error pages.
 - **Don't** hide empty years. A gap in the record is shown as a quiet row.
+
+## Changes after the first record
+
+Made on 2026-11-11 after a design review of the built pages. Where this section and an earlier one disagree, this one describes the site as it now stands.
+
+- **Promise coding holds everywhere.** A promise is always on yellow with ink links and dashed rules: in the Promised column, on phones, and in the "Promised with no date" list. An empty Promised cell says "Nothing promised for this year." in words, so absence is never shown by colour alone.
+- **Page order.** Headline, status, summary, then the timetable, so its top rows sit in the first desktop viewport. The facts list follows under "About this claim".
+- **Status block.** Reads "Latest record <date>. Status set <date>." The date a status was computed is never presented as the date something happened.
+- **Reports.** A source article is labelled "Report", since it may be a press release.
+- **Link-preview card.** Set in the condensed cut (Archivo Narrow 700), larger headline. Its text alternative is built from the same facts as the image.
+- **Selection.** Inverts to ink on the yellow fields, where the yellow selection would vanish.
+- **Phone masthead.** Navigation fits one row.
+- **Names with hyphens** in a headline never break at the hyphen.
+- **Favicon.** A yellow field with an ink bar and a "t".
+- **Search.** Says "Searching…" while it works and reports failure in words.
