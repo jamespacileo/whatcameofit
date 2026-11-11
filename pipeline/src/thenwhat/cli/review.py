@@ -5,7 +5,6 @@ from enum import StrEnum
 from typing import Annotated
 
 import typer
-from rich.table import Table
 
 from thenwhat.cli.console import out
 from thenwhat.cli.entry import entry_session
@@ -33,17 +32,12 @@ def review_list(
         if not items:
             out.print("The review queue is empty.")
             return
-        table = Table("item", "claim", "score", "what it asserts", "source")
+        # One item per block, so a long source link is never cut short.
         for item in items:
-            score = "" if item.score is None else f"{item.score:.2f}"
-            table.add_row(
-                f"{item.kind} {item.id}",
-                item.claim_slug,
-                score,
-                item.assertion,
-                item.source_url or "",
-            )
-        out.print(table)
+            score = "" if item.score is None else f"  score {item.score:.2f}"
+            out.print(f"{item.kind} {item.id}  {item.claim_slug}{score}", markup=False)
+            out.print(f"  {item.assertion}", markup=False)
+            out.print(f"  {item.source_url or 'no source link'}", markup=False)
 
 
 def _decide(kind: ItemKind, item_id: int, state: ReviewState) -> None:
