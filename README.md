@@ -85,6 +85,33 @@ Trial events from a match you approved are approved by rule; follow-up papers an
 
 Use `event add` for what no client covers yet: approvals, company events, and trials in registries other than ClinicalTrials.gov. A trial event needs `--id` and `--phase`; a status change needs `--state` (and a `started` event is what moves a claim to its phase); a regulatory decision needs `--outcome`.
 
+### Review
+
+Nothing reaches the site until you approve it. Draft claims, candidate matches, follow-up papers and events entered by hand all wait in one queue.
+
+```sh
+thenwhat review list
+thenwhat review list --claim tooth-regrowth-usag1 --kind match
+thenwhat review approve match 12
+thenwhat review reject event 40
+thenwhat review stage tooth-regrowth-usag1 animal
+thenwhat review flag-failure tooth-regrowth-usag1 --trial NCT00000000 --event 41 \
+  --source-url https://example.org/results
+```
+
+`review list` shows each item's kind and id, what it asserts, its source link and its score. Use the kind and id to approve or reject. A rejected item is kept, so it is never proposed again. `approve` and `reject` also change an earlier decision, including an approval made by rule.
+
+The order of work for one claim:
+
+1. Approve the draft claim (`review approve claim ID`) once its headline and summary are right. A claim with no summary cannot be approved.
+2. Run `resolve`, then approve or reject each candidate match. Rejecting a match also rejects the events read from it.
+3. Run `fetch`, then approve or reject the follow-up papers.
+4. Confirm the evidence stage with `review stage`.
+
+The claim's status is derived again after every decision on an event. A claim becomes "failed" only through `review flag-failure`, which needs the trial, an approved event that reports the result, and a link showing the primary endpoint was missed. Posted results alone never mean failure.
+
+Your decisions on matches and on the evidence stage are recorded as human labels against what the model suggested. They are the future test set for any model that takes over those choices.
+
 ### CSV import
 
 `thenwhat claim import-csv claims.csv` imports every row or none. Inside the container the file must be reachable, for example `docker compose run --rm -v "$PWD/data/seed:/seed" pipeline thenwhat claim import-csv /seed/claims.csv`.

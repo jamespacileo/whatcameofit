@@ -141,6 +141,12 @@ This refines the key agreed earlier (source, external identifier, type), which w
 
 Alternative considered: human approval of every event. Rejected for trial events because it doubles the operator's work without adding a check the match approval has not already made. Any rule approval can still be reversed in review.
 
+### D7a. Review
+
+One function takes every human decision: the kind of item, its id and the new state. It works on pending items and on items already decided, which is how a decision is changed. A decision on an event re-derives the claim's status. A decision on a match writes the human label for the score the match was given. Rejecting a match also rejects, as a human decision, the events read from it, since they describe a record that is not the claim's. A draft claim cannot be approved while its summary is empty.
+
+Items are addressed by kind and database id, as `review list` prints them. The queue is ordered claim by claim: the draft claim, then candidate matches with the most likely first, then events with the oldest first.
+
 ### D8. Status rules as a pure function
 
 `derive(events, flags, first_reported_date, as_of, origin_paper_ids, no_signal_years) -> (status, overlay_years, explaining_event_ids)`. No database or clock access inside; a test fails if the `status` package imports anything beyond the standard library and the domain vocabulary. Written test-first from the scenarios in `specs/status-derivation`, one test per scenario. Precedence: retracted, then approved, then the stage/failed/terminated/preclinical ladder, then the overlay.

@@ -67,11 +67,11 @@
 
 ## 9. Review
 
-- [ ] 9.1 Implement `review list` for all claims or one, by kind, showing assertion, source link and score; verify tests for a mixed queue and an empty queue
-- [ ] 9.2 Implement approve, reject and change-decision for draft claims, matches and events, recording time and decider; verify tests including reversal of a rule approval
-- [ ] 9.3 Re-derive status after every decision on an event; verify the test that approves a started event moves the claim from trial registered to Phase 1
-- [ ] 9.4 Implement the failure flag with its required trial, event and source URL; verify tests for a flag with a source, a flag without one, and results posted with no flag
-- [ ] 9.5 Write human labels to the decision log on match decisions and on evidence stage confirmation; verify tests for a rejected match and a corrected stage
+- [x] 9.1 Implement `review list` for all claims or one, by kind, showing assertion, source link and score; verify tests for a mixed queue and an empty queue
+- [x] 9.2 Implement approve, reject and change-decision for draft claims, matches and events, recording time and decider; verify tests including reversal of a rule approval
+- [x] 9.3 Re-derive status after every decision on an event; verify the test that approves a started event moves the claim from trial registered to Phase 1
+- [x] 9.4 Implement the failure flag with its required trial, event and source URL; verify tests for a flag with a source, a flag without one, and results posted with no flag
+- [x] 9.5 Write human labels to the decision log on match decisions and on evidence stage confirmation; verify tests for a rejected match and a corrected stage
 - [ ] 9.6 Document the review workflow and every command in the README; verify each documented command runs as written against the seeded example
 
 ## 10. Export and site
