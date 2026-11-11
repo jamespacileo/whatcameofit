@@ -92,7 +92,8 @@ def test_claim_add_refusal_explains_and_exits_1(run, session: Session):
     result = run(*CLAIM_ADD, "--vertical", "hair-regrowth-typo")
 
     assert result.exit_code == 1
-    assert "Valid verticals: dental-regeneration" in result.output
+    assert "Valid verticals: ageing, allergies, brain-and-nerves" in result.output
+    assert "dental-regeneration" in result.output
     assert claim_count(session) == 0
 
 

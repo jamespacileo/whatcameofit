@@ -22,8 +22,60 @@
   ],
   "verticals": [
     {
+      "slug": "ageing",
+      "title": "Ageing"
+    },
+    {
+      "slug": "allergies",
+      "title": "Allergies"
+    },
+    {
+      "slug": "brain-and-nerves",
+      "title": "Brain and nerves"
+    },
+    {
+      "slug": "cancer",
+      "title": "Cancer"
+    },
+    {
+      "slug": "dementia",
+      "title": "Dementia"
+    },
+    {
       "slug": "dental-regeneration",
       "title": "Dental regeneration"
+    },
+    {
+      "slug": "diabetes-and-metabolism",
+      "title": "Diabetes and metabolism"
+    },
+    {
+      "slug": "hair-loss",
+      "title": "Hair loss"
+    },
+    {
+      "slug": "heart-and-circulation",
+      "title": "Heart and circulation"
+    },
+    {
+      "slug": "infections",
+      "title": "Infections"
+    },
+    {
+      "slug": "mental-health",
+      "title": "Mental health"
+    },
+    {
+      "slug": "pain",
+      "title": "Pain"
+    },
+    {
+      "slug": "sight-and-hearing",
+      "title": "Sight and hearing"
+    },
+    {
+      "slug": "transplants",
+      "title": "Transplants"
     }
   ],
   "claims": [
