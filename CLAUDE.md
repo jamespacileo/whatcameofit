@@ -14,6 +14,7 @@ worktrees via `wt`, archive via quarantine).
 - `openspec/specs/`: current behavior. `openspec/changes/<change>/`: proposals, requirement deltas, design and task state. Record behavior changes in the active change; do not start a parallel PRD or task list.
 - `GLOSSARY.md`: domain terms. Use them exactly in code, CLI output and site copy.
 - `docs/adr/`: enduring architectural decisions. `docs/sources.md`: terms and rate limits per data source.
+- `PRODUCT.md`: audience and product context. `DESIGN.md`: the site's visual system as built. Both were written without the operator and await confirmation.
 
 ## Conventions and guardrails
 
@@ -31,6 +32,15 @@ worktrees via `wt`, archive via quarantine).
 - Secrets live in `.env`, which is never committed. Keep `.env.example` current.
 - Nothing public is served from the home network. The pipeline and database stay private.
 - Small commits with conventional commit messages. The README must get a clean clone running in under ten commands.
+
+## Working rules learned so far
+
+- Tests sit at agreed seams: functions that take a session (against the real test database), pure functions, and one success plus one refusal per CLI command. Internal helpers get no tests of their own.
+- The initial migration has been regenerated in place while nothing is deployed. Once any database holds real claims, add new migrations instead.
+- The site owns all wording; the export carries codes. A status label with verdict wording fails the site build.
+- After changing the export's shape, regenerate `site/export.schema.json`. After changing the seed, regenerate `site/data/seed-export.json`. Tests fail until both match.
+- Registry fixtures are recorded with a generic client name and have abstracts replaced. Article fixtures are always synthetic.
+- Seed decisions use the `seed` decider. Never record a model's or a script's decision as `human`.
 
 ## Layout
 
