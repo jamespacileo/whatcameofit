@@ -20,6 +20,10 @@ When the registries are searched for a claim, the search SHALL be narrowed by th
 - **WHEN** the intervention is "CAR-T cell therapy" and the indication is stiff person syndrome
 - **THEN** the search returns trials of CAR-T cell therapy in stiff person syndrome, not every CAR-T trial
 
+#### Scenario: Name that identifies nothing
+- **WHEN** a search name still returns more than a hundred trials within the indication, or none
+- **THEN** that name contributes no candidates
+
 ### Requirement: Scores given without the indication are marked
 A pending trial candidate whose score was given before the indication was part of the question SHALL be shown in the review queue as scored without the indication. An operator SHALL be able to have the pending trial candidates that the search still returns scored again. A candidate that has been decided SHALL keep the score it was decided on.
 

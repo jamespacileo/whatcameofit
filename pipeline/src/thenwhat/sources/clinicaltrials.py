@@ -90,28 +90,24 @@ class ClinicalTrials(Source):
 
         A specific name returns every trial it has, across all result pages. A broad name
         (more than BROAD_NAME trials) is searched within the condition instead: first by the
-        condition as worded, then by its telling words. If the registry files nothing under
-        either, the first page of the broad search is returned, so the reviewer still sees
-        that trials of the intervention exist.
+        condition as worded, then by its telling words. A name that is still broad within
+        the condition, or has no trial under it, returns nothing: it does not identify one
+        intervention, and its trials would only be noise for the reviewer.
         """
         first, total, next_token = self._page(intervention, None, None)
         if condition and total > BROAD_NAME:
             for wording in (condition, _telling_words(condition)):
-                if wording:
-                    narrowed = self._all_pages(intervention, wording)
-                    if narrowed:
-                        return narrowed
-            return first
+                if not wording:
+                    continue
+                narrowed, within, _ = self._page(intervention, wording, None)
+                if within > BROAD_NAME:
+                    return []
+                if narrowed:
+                    return narrowed
+            return []
         records = first
         while next_token:
             more, _, next_token = self._page(intervention, None, next_token)
-            records += more
-        return records
-
-    def _all_pages(self, intervention: str, condition: str) -> list[SourceRecord]:
-        records, _, next_token = self._page(intervention, condition, None)
-        while next_token:
-            more, _, next_token = self._page(intervention, condition, next_token)
             records += more
         return records
 

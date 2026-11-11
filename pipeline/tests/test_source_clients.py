@@ -159,7 +159,7 @@ def test_condition_wording_the_registry_does_not_know_is_tried_by_its_words(
     assert replay.requests[-1].url.params["query.cond"] == "stiff OR person OR rare"
 
 
-def test_broad_name_with_no_trial_under_the_condition_keeps_the_first_page(
+def test_broad_name_with_no_trial_under_the_condition_gives_no_candidates(
     session: Session, fake_time, fixture_json
 ):
     route = broad_search(fixture_json, narrowed_by=lambda condition: False)
@@ -167,8 +167,22 @@ def test_broad_name_with_no_trial_under_the_condition_keeps_the_first_page(
 
     records = source.search_trials("CAR-T cell therapy", condition="Stiff person syndrome")
 
-    assert len(records) == 3
+    assert records == []
     assert all("pageToken" not in request.url.params for request in replay.requests)
+
+
+def test_name_still_broad_within_the_condition_gives_no_candidates(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Name that identifies nothing"""
+    # A phrase such as "the drug": thousands of trials whatever the condition.
+    broad = fixture_json("clinicaltrials/search_broad_count.json")
+    source, replay = trials(session, fake_time, lambda request: broad)
+
+    records = source.search_trials("the drug", condition="Muscle loss")
+
+    assert records == []
+    assert len(replay.requests) == 2
 
 
 # --- Europe PMC ------------------------------------------------------------------
