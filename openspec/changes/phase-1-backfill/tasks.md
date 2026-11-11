@@ -34,12 +34,12 @@
 
 ## 5. Source clients
 
-- [ ] 5.1 Check current terms, authentication and rate limits for ClinicalTrials.gov API v2, Europe PMC, Crossref and the Internet Archive availability lookup, and record them in `docs/sources.md` with the date checked; verify each source has an entry with a link to its terms
-- [ ] 5.2 Implement the shared base (record contract, Postgres cache, rate limiter, User-Agent with contact address, bounded retry that honours stated delays); verify tests against a fake transport for every scenario in `specs/source-clients/spec.md` that is not source-specific
-- [ ] 5.3 Add a test-suite guard that fails any test opening a real network connection; verify a deliberately live test fails
-- [ ] 5.4 Implement the ClinicalTrials.gov client (fetch by identifier, paginated search by intervention term) with recorded fixtures; verify its tests pass offline and the field names in design D5 match the fixtures
-- [ ] 5.5 Implement the Europe PMC client (paper by DOI, citing papers) with recorded fixtures; verify its tests pass offline
-- [ ] 5.6 Implement the Crossref client (DOI metadata, retraction and correction notices) with recorded fixtures, including one retracted paper; verify its tests pass offline
+- [x] 5.1 Check current terms, authentication and rate limits for ClinicalTrials.gov API v2, Europe PMC, Crossref and the Internet Archive availability lookup, and record them in `docs/sources.md` with the date checked; verify each source has an entry with a link to its terms
+- [x] 5.2 Implement the shared base (record contract, Postgres cache, rate limiter, User-Agent with contact address, bounded retry that honours stated delays); verify tests against a fake transport for every scenario in `specs/source-clients/spec.md` that is not source-specific
+- [x] 5.3 Add a test-suite guard that fails any test opening a real network connection; verify a deliberately live test fails
+- [x] 5.4 Implement the ClinicalTrials.gov client (fetch by identifier, paginated search by intervention term) with recorded fixtures; verify its tests pass offline and the field names in design D5 match the fixtures
+- [x] 5.5 Implement the Europe PMC client (paper by DOI, citing papers) with recorded fixtures; verify its tests pass offline
+- [x] 5.6 Implement the Crossref client (DOI metadata, retraction and correction notices) with recorded fixtures, including one retracted paper; verify its tests pass offline
 
 ## 6. Language model usage and extraction
 
