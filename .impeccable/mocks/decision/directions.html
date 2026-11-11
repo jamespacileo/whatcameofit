@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>thenwhat: three design directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Public+Sans:wght@400;600;700&family=Source+Sans+3:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #e9e9ee; font: 15px/1.5 system-ui, sans-serif; color: #1c1c22; }
+  .intro { max-width: 1100px; margin: 0 auto; padding: 28px 24px 8px; }
+  .intro h1 { font-size: 22px; margin: 0 0 6px; }
+  .intro p { margin: 0 0 6px; max-width: 75ch; }
+  .option { max-width: 1100px; margin: 26px auto; padding: 0 24px; }
+  .option > h2 { font-size: 17px; margin: 0 0 4px; }
+  .option > p { margin: 0 0 12px; max-width: 80ch; color: #45454f; }
+  .frame { background: #fff; border: 1px solid #c9c9d2; overflow: hidden; }
+  .page { padding: 0 0 28px; }
+  .inner { max-width: 880px; margin: 0 auto; padding: 0 28px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 12px; }
+  a { text-underline-offset: 0.16em; }
+  .note { display: block; font-size: 0.9em; }
+
+  /* ---------- A: Clinical record ---------- */
+  .a { font-family: "Public Sans", system-ui, sans-serif; color: #1b1b1b; }
+  .a .top { background: #0b4778; color: #fff; }
+  .a .top .inner { display: flex; justify-content: space-between; align-items: center; padding-block: 12px; }
+  .a .top b { font-size: 19px; }
+  .a .top nav { display: flex; gap: 22px; font-weight: 600; font-size: 15px; }
+  .a .crumb { font-size: 14px; padding: 14px 0 0; color: #565c65; }
+  .a .crumb a, .a a { color: #0b4778; }
+  .a h1 { font-size: 34px; line-height: 1.15; margin: 10px 0 16px; max-width: 24ch; }
+  .a .record { border: 1px solid #a9aeb1; border-top: 6px solid #0b4778; display: grid; grid-template-columns: 1.1fr 1fr 1fr 1fr; }
+  .a .record div { padding: 12px 14px; border-right: 1px solid #dfe1e2; }
+  .a .record div:last-child { border-right: 0; }
+  .a .record span { display: block; font-size: 13px; color: #565c65; }
+  .a .record strong { font-size: 17px; }
+  .a .record .status strong { font-size: 22px; }
+  .a .lede { font-size: 17px; max-width: 66ch; margin: 18px 0 22px; }
+  .a h2 { font-size: 20px; margin: 0 0 8px; }
+  .a table { border: 1px solid #a9aeb1; }
+  .a thead th { background: #f0f0f0; font-size: 14px; border-bottom: 1px solid #a9aeb1; }
+  .a tbody tr + tr > * { border-top: 1px solid #dfe1e2; }
+  .a .yr { width: 84px; font-weight: 700; font-size: 18px; }
+  .a .promised { width: 32%; background: #eef5fb; border-left: 1px dashed #0b4778; border-right: 1px dashed #0b4778; }
+  .a .note { color: #565c65; }
+  .a .tag { display: inline-block; font-size: 12px; font-weight: 700; border: 1px solid #1b1b1b; padding: 0 6px; margin-left: 6px; }
+
+  /* ---------- B: Evidence digest ---------- */
+  .b { font-family: "Figtree", system-ui, sans-serif; color: #231f33; }
+  .b .top .inner { display: flex; justify-content: space-between; align-items: center; padding-block: 16px; border-bottom: 1px solid #e6e2f0; }
+  .b .top b { font-size: 20px; color: #3d2f7a; }
+  .b .top nav { display: flex; gap: 22px; font-weight: 600; font-size: 15px; color: #3d2f7a; }
+  .b .chip { display: inline-flex; align-items: center; gap: 7px; margin-top: 20px; font-size: 14px; font-weight: 600; color: #3d2f7a; background: #f1eefa; border-radius: 999px; padding: 4px 12px 4px 8px; }
+  .b .chip svg { width: 18px; height: 18px; }
+  .b h1 { font-size: 36px; line-height: 1.14; margin: 12px 0 18px; max-width: 22ch; letter-spacing: -0.01em; }
+  .b .digest { background: #f6f4fb; border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 1.2fr 2fr; gap: 20px; }
+  .b .digest .status span { font-size: 13px; font-weight: 600; color: #5d5677; display: block; }
+  .b .digest .status strong { font-size: 26px; color: #3d2f7a; display: block; line-height: 1.15; }
+  .b .digest .status em { font-style: normal; font-size: 14px; color: #5d5677; }
+  .b .digest p { margin: 0; font-size: 16px; }
+  .b .facts { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 14px 2px 24px; font-size: 14px; color: #5d5677; }
+  .b .facts b { color: #231f33; }
+  .b h2 { font-size: 20px; margin: 0 0 10px; }
+  .b table { border-radius: 12px; overflow: hidden; border: 1px solid #e6e2f0; }
+  .b thead th { font-size: 13px; font-weight: 600; color: #5d5677; background: #fbfaff; border-bottom: 1px solid #e6e2f0; }
+  .b tbody tr + tr > * { border-top: 1px solid #eeebf6; }
+  .b .yr { width: 84px; font-weight: 700; font-size: 18px; color: #3d2f7a; }
+  .b .promised { width: 32%; background: #fff7df; }
+  .b .note { color: #5d5677; }
+  .b a { color: #3d2f7a; }
+  .b .tag { display: inline-block; font-size: 12px; font-weight: 700; color: #3d2f7a; background: #e6e0f7; border-radius: 6px; padding: 1px 7px; margin-left: 6px; }
+
+  /* ---------- C: Journal abstract ---------- */
+  .c { font-family: "Source Serif 4", Georgia, serif; color: #1d1d1b; }
+  .c .top .inner { display: flex; justify-content: space-between; align-items: baseline; padding-block: 16px; border-bottom: 3px double #1d1d1b; font-family: "Source Sans 3", system-ui, sans-serif; }
+  .c .top b { font-family: "Source Serif 4", Georgia, serif; font-size: 22px; font-weight: 600; }
+  .c .top nav { display: flex; gap: 22px; font-size: 15px; }
+  .c .crumb { font: 14px "Source Sans 3", system-ui, sans-serif; color: #5a5a55; padding-top: 16px; }
+  .c h1 { font-size: 36px; font-weight: 600; line-height: 1.16; margin: 8px 0 14px; max-width: 24ch; }
+  .c .abstract { border-block: 1px solid #1d1d1b; padding: 14px 0; display: grid; grid-template-columns: 150px 1fr; gap: 8px 18px; font-size: 17px; }
+  .c .abstract dt { font: 600 14px "Source Sans 3", system-ui, sans-serif; padding-top: 3px; }
+  .c .abstract dd { margin: 0; max-width: 62ch; }
+  .c .abstract dd strong { font-size: 20px; }
+  .c h2 { font-size: 21px; font-weight: 600; margin: 24px 0 8px; }
+  .c table { font-family: "Source Sans 3", system-ui, sans-serif; border-top: 1px solid #1d1d1b; border-bottom: 1px solid #1d1d1b; }
+  .c thead th { font-size: 14px; font-weight: 600; border-bottom: 1px solid #1d1d1b; }
+  .c tbody tr + tr > * { border-top: 1px solid #d9d9d2; }
+  .c .yr { width: 84px; font: 600 18px "Source Serif 4", Georgia, serif; }
+  .c .promised { width: 32%; background: #f4f3ee; font-style: italic; }
+  .c .note { color: #5a5a55; }
+  .c a { color: #1a4f9c; }
+  .c sup { font-size: 0.75em; }
+</style>
+</head>
+<body>
+<div class="intro">
+  <h1>Three calmer directions for the claim page</h1>
+  <p>Same page, same content, same structure as now: status first, then what was promised beside what was recorded. Only the visual world changes. Each sketch shows the top of the real seeded claim.</p>
+  <p>None of them grades or rates anything: the product's rule against verdicts holds in all three.</p>
+</div>
+
+<section class="option">
+  <h2>A · Clinical record</h2>
+  <p>The look of a public health register: a deep blue header, one plain sans, a bordered record strip. Familiar from ClinicalTrials.gov and national health sites. Most sober of the three. Risk: can read as official guidance, which this site is not.</p>
+  <div class="frame"><div class="page a">
+    <div class="top"><div class="inner"><b>thenwhat</b><nav><span>Search</span><span>Dental regeneration</span><span>It happened</span></nav></div></div>
+    <div class="inner">
+      <div class="crumb"><a href="#">Dental regeneration</a> › Claim</div>
+      <h1>Antibody against USAG-1 regrows teeth in mice</h1>
+      <div class="record">
+        <div class="status"><span>Status</span><strong>Phase 1 trial</strong></div>
+        <div><span>Latest record</span><strong>3 Oct 2025</strong></div>
+        <div><span>First reported</span><strong>31 Mar 2021</strong></div>
+        <div><span>Evidence then</span><strong>Animal study</strong></div>
+      </div>
+      <p class="lede">Researchers at Kyoto University and the University of Fukui reported that one dose of an antibody blocking the protein USAG-1 grew a whole new tooth in mice with congenital tooth agenesis, with similar results in ferrets.</p>
+      <h2>Promised and recorded</h2>
+      <table>
+        <thead><tr><th>Year</th><th class="promised">Promised for this year</th><th>Recorded this year</th></tr></thead>
+        <tbody>
+          <tr><th class="yr">2021</th><td class="promised"><span class="note">Nothing promised for this year.</span></td><td><b>31 Mar · Report</b><span class="note">Kyoto University: <a href="#">New drug to regenerate lost teeth</a></span></td></tr>
+          <tr><th class="yr">2024</th><td class="promised"><span class="note">Nothing promised for this year.</span></td><td><b>8 Oct · Trial registered</b><span class="tag">basis of status</span><span class="note">Phase 1 trial jRCT2051240154 registered: a single dose of TRG035 in healthy adults.</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div></div>
+</section>
+
+<section class="option">
+  <h2>B · Evidence digest</h2>
+  <p>The look of a research-summary site such as Examine.com: white page, one soft indigo, a rounded summary panel that answers the question at once, a small topic mark (a tooth here; each topic gets its own). Friendliest of the three. A promise sits on a pale amber, like a highlighter. Risk: softer than a register, so wording has to carry the neutrality.</p>
+  <div class="frame"><div class="page b">
+    <div class="top"><div class="inner"><b>thenwhat</b><nav><span>Search</span><span>Dental regeneration</span><span>It happened</span></nav></div></div>
+    <div class="inner">
+      <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 3.5c-2.4 0-4 1.8-4 4.3 0 2.2.9 3.6 1.5 5.4.7 2.1.6 7.3 2.6 7.3 1.8 0 1.4-5 4.4-5s2.6 5 4.4 5c2 0 1.9-5.2 2.6-7.3.6-1.8 1.5-3.2 1.5-5.4 0-2.5-1.6-4.3-4-4.3-1.9 0-2.8 1-4.5 1s-2.6-1-4.5-1z"/></svg>Dental regeneration</span>
+      <h1>Antibody against USAG-1 regrows teeth in mice</h1>
+      <div class="digest">
+        <div class="status"><span>Where it stands</span><strong>Phase 1 trial</strong><em>Latest record 3 Oct 2025</em></div>
+        <p>Researchers at Kyoto University and the University of Fukui reported that one dose of an antibody blocking the protein USAG-1 grew a whole new tooth in mice with congenital tooth agenesis, with similar results in ferrets.</p>
+      </div>
+      <div class="facts"><span>First reported <b>31 Mar 2021</b></span><span>Evidence then <b>Animal study</b></span><span>Also known as <b>TRG035</b></span></div>
+      <h2>Promised and recorded</h2>
+      <table>
+        <thead><tr><th>Year</th><th class="promised">Promised for this year</th><th>Recorded this year</th></tr></thead>
+        <tbody>
+          <tr><th class="yr">2021</th><td class="promised"><span class="note">Nothing promised for this year.</span></td><td><b>31 Mar · Report</b><span class="note">Kyoto University: <a href="#">New drug to regenerate lost teeth</a></span></td></tr>
+          <tr><th class="yr">2024</th><td class="promised"><span class="note">Nothing promised for this year.</span></td><td><b>8 Oct · Trial registered</b><span class="tag">basis of status</span><span class="note">Phase 1 trial jRCT2051240154 registered: a single dose of TRG035 in healthy adults.</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div></div>
+</section>
+
+<section class="option">
+  <h2>C · Journal abstract</h2>
+  <p>The look of a paper's abstract page: a serif for reading, a structured summary with labelled parts, numbered references instead of footnote letters. Familiar to anyone who has followed a link to a study. Most bookish of the three. Risk: can feel academic to a general reader.</p>
+  <div class="frame"><div class="page c">
+    <div class="top"><div class="inner"><b>thenwhat</b><nav><span>Search</span><span>Dental regeneration</span><span>It happened</span></nav></div></div>
+    <div class="inner">
+      <div class="crumb">Dental regeneration · first reported 31 March 2021</div>
+      <h1>Antibody against USAG-1 regrows teeth in mice</h1>
+      <dl class="abstract">
+        <dt>Status</dt><dd><strong>Phase 1 trial.</strong> The furthest trial that has started is a Phase 1 trial. Latest record 3 October 2025.<sup><a href="#">1, 2</a></sup></dd>
+        <dt>What was claimed</dt><dd>One dose of an antibody blocking the protein USAG-1 grew a whole new tooth in mice with congenital tooth agenesis, with similar results in ferrets.</dd>
+        <dt>Evidence then</dt><dd>Animal study.</dd>
+      </dl>
+      <h2>Promised and recorded</h2>
+      <table>
+        <thead><tr><th>Year</th><th class="promised">Promised for this year</th><th>Recorded this year</th></tr></thead>
+        <tbody>
+          <tr><th class="yr">2021</th><td class="promised"><span class="note">Nothing promised for this year.</span></td><td><b>31 Mar · Report</b><span class="note">Kyoto University: <a href="#">New drug to regenerate lost teeth</a></span></td></tr>
+          <tr><th class="yr">2024</th><td class="promised"><span class="note">Nothing promised for this year.</span></td><td><b>8 Oct · Trial registered</b><sup><a href="#">1</a></sup><span class="note">Phase 1 trial jRCT2051240154 registered: a single dose of TRG035 in healthy adults.</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div></div>
+</section>
+</body>
+</html>
