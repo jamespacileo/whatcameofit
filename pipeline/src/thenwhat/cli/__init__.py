@@ -1,17 +1,18 @@
 """Command-line interface for the thenwhat pipeline."""
 
 import typer
-from pydantic import ValidationError
-from rich.console import Console
 from sqlalchemy.exc import OperationalError
 
 from thenwhat import __version__
-from thenwhat.config import load_settings
+from thenwhat.cli.console import err, out
+from thenwhat.cli.entry import article_app, claim_app, promise_app
+from thenwhat.cli.session import settings_or_exit
 from thenwhat.db.session import make_engine, ping
 
 app = typer.Typer(no_args_is_help=True)
-out = Console()
-err = Console(stderr=True)
+app.add_typer(claim_app, name="claim")
+app.add_typer(article_app, name="article")
+app.add_typer(promise_app, name="promise")
 
 
 @app.callback()
@@ -28,11 +29,7 @@ def version() -> None:
 @app.command("db-check")
 def db_check() -> None:
     """Check that the database is reachable."""
-    try:
-        settings = load_settings()
-    except ValidationError:
-        err.print("DATABASE_URL is not set.")
-        raise typer.Exit(code=1) from None
+    settings = settings_or_exit()
     try:
         ping(make_engine(settings.database_url))
     except OperationalError:
