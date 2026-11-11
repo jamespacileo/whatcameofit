@@ -117,7 +117,13 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
     ];
     const shown = filter.querySelector<HTMLElement>("[data-shown]")!;
     const shownText = filter.querySelector<HTMLElement>("[data-shown-text]")!;
+    // Where the browser can, the table cross-fades to its narrowed self.
     const pick = (picked: string | null) => {
+      const moving = matchMedia("(prefers-reduced-motion: no-preference)").matches;
+      if (moving && document.startViewTransition) document.startViewTransition(() => apply(picked));
+      else apply(picked);
+    };
+    const apply = (picked: string | null) => {
       for (const button of buttons) {
         button.setAttribute("aria-pressed", String(button.dataset.status === picked));
       }

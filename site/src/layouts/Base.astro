@@ -45,6 +45,13 @@ const topicLink =
     {imageUrl && imageAlt && <meta property="og:image:alt" content={imageAlt} />}
     {imageUrl && <meta name="twitter:card" content="summary_large_image" />}
     {data.preview && <meta name="robots" content="noindex" />}
+    {/* The name's animation plays on the first page of a visit only. */}
+    <script is:inline>
+      try {
+        if (sessionStorage.getItem("seen")) document.documentElement.classList.add("seen");
+        else sessionStorage.setItem("seen", "1");
+      } catch {}
+    </script>
   </head>
   <body>
     <a class="skip" href="#content">Skip to content</a>
@@ -127,6 +134,15 @@ const topicLink =
 <script>
   // Panels open on a tap or a key press with no script. With a mouse they also open
   // on hover, and a click then keeps one open until it is dismissed.
+  // A link inside a panel leads somewhere on the page, so the panel steps aside.
+  for (const panel of document.querySelectorAll<HTMLElement>(".pop")) {
+    panel.addEventListener("click", (event) => {
+      if ((event.target as Element).closest("a") && panel.matches(":popover-open")) {
+        panel.hidePopover();
+      }
+    });
+  }
+
   if (matchMedia("(hover: hover)").matches) {
     for (const trigger of document.querySelectorAll<HTMLButtonElement>("[popovertarget]")) {
       const panel = document.getElementById(trigger.getAttribute("popovertarget")!)!;

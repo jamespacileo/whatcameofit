@@ -19,6 +19,7 @@
   --page: 60rem;
   --gutter: clamp(1rem, 4vw, 2rem);
   --radius: 0.85rem;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 *,
@@ -1327,6 +1328,8 @@ a.chip:hover {
   display: inline-block;
   object-fit: contain;
   background: none;
+  /* A hairline keeps a pale or see-through icon from reading as a gap. */
+  box-shadow: 0 0 0 1px var(--rule-soft);
 }
 
 /* Beside a promise the outlet has its own line, and the date the next. */
@@ -1454,6 +1457,156 @@ a.chip:hover {
   margin: 0;
 }
 
+/* Motion. Two authored moments tell the site's story: the name's dots counting the
+   wait, and the marker landing where a claim stands. Everything else is feedback:
+   quick, and never in the way of reading. */
+
+.chip,
+.share,
+.pop-trigger,
+.stage-filter .place,
+.stage-filter .dot,
+.letters a,
+.search button {
+  transition:
+    background-color 120ms ease-out,
+    border-color 120ms ease-out,
+    color 120ms ease-out,
+    text-decoration-color 120ms ease-out;
+}
+
+.search button:active,
+.share:active {
+  transform: translateY(1px);
+}
+
+/* A record reached by a link sits clear of the screen's edge. */
+.record .what {
+  scroll-margin-block: 30vh;
+  justify-self: start;
+}
+
+/* A panel fades in beside its trigger and leaves faster than it came. Only where
+   the browser has popovers: elsewhere the panel is plain content and stays visible. */
+@supports selector(:popover-open) {
+  .pop {
+    opacity: 0;
+    transition:
+      opacity 90ms ease-in,
+      transform 90ms ease-in,
+      overlay 90ms allow-discrete,
+      display 90ms allow-discrete;
+  }
+
+  .pop:popover-open {
+    opacity: 1;
+    transition-duration: 170ms;
+    transition-timing-function: var(--ease-out);
+  }
+
+  @starting-style {
+    .pop:popover-open {
+      opacity: 0;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Moving between pages is a short cross-fade; the masthead holds still. */
+  @view-transition {
+    navigation: auto;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 170ms;
+  }
+
+  .masthead {
+    view-transition-name: masthead;
+  }
+
+  @supports selector(:popover-open) {
+    .pop {
+      transform: translateY(-4px) scale(0.98);
+      transform-origin: top left;
+    }
+
+    .pop:popover-open {
+      transform: none;
+    }
+
+    @starting-style {
+      .pop:popover-open {
+        transform: translateY(-4px) scale(0.98);
+      }
+    }
+  }
+
+  /* The marker lands on the claim's place, and one ring leaves it: the same dot
+     the name resolves into. */
+  .digest .track .step.here {
+    position: relative;
+    animation: mark-land 0.6s var(--ease-out) 0.3s both;
+  }
+
+  .digest .track .step.here::after {
+    content: "";
+    position: absolute;
+    inset: -1.5px;
+    border-radius: 50%;
+    border: 1.5px solid var(--blue);
+    animation: mark-ring 0.9s var(--ease-out) 0.6s both;
+  }
+
+  /* A record reached from the status panel shows itself, then settles. */
+  .record .what:target {
+    animation: record-found 2.2s ease-out both;
+  }
+
+  /* The name's story is told once a visit; a hover tells it again. */
+  .seen .masthead .name:not(:hover) .wait i,
+  .seen .masthead .name:not(:hover) .wait b {
+    animation-name: none;
+  }
+}
+
+@keyframes mark-land {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes mark-ring {
+  from {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  to {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+@keyframes record-found {
+  0%,
+  35% {
+    background: var(--tag);
+    outline-color: var(--tag);
+  }
+  100% {
+    background: var(--tint);
+    outline-color: var(--tint);
+  }
+}
+
 @media print {
   .masthead nav,
   .share,
@@ -1501,6 +1654,8 @@ a.chip:hover {
   /* On paper nothing can be opened, so each panel is printed where it belongs. */
   .pop {
     display: block;
+    opacity: 1;
+    transform: none;
     position: static;
     width: auto;
     max-width: none;

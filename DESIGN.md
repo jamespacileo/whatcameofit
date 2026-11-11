@@ -9,7 +9,7 @@ The visual system of the thenwhat site as built. Product context is in `PRODUCT.
 1. **Answer first.** The top of a claim page is a soft panel that says where the claim stands and when the latest record is dated, beside two sentences of summary.
 2. **Promise beside record.** What was promised for a year sits beside what was recorded in it. The reader compares; the site does not conclude.
 3. **Words carry status.** Status is always written out. Colour, shape and position only support the words.
-4. **Quiet surface.** One typeface, one accent colour, one highlight colour. No gradients or photographs. One soft shadow, on popovers only. One motion, on the site name only.
+4. **Quiet surface.** One typeface, one accent colour, one highlight colour. No gradients or photographs. One soft shadow, on popovers only. Motion is listed under Motion and nothing else moves.
 5. **Say it once.** A colour or drawing is named once in a key, then used without its words. A record appears once, with its source on the same line; detail opens on demand.
 
 ## Colour
@@ -80,6 +80,21 @@ Figures are tabular and lining throughout. Reading measure is 66 characters. A n
 - **Link-preview card.** White, site name in blue, headline, then a rounded panel with first reported, promised by (a year, never a day count) and status. Its text alternative is built from the same facts.
 - **Extension popup.** 360px wide, same tokens and face. The site name in blue over a hairline; the claim headline; the status in the digest panel's treatment ("Where it stands", blue label, no-signal note in a dashed outline, one sentence of meaning); first reported; the latest promise on pale amber; one full-width blue button, "See the evidence". The two notices and the last-checked date sit under a hairline in muted small text. Messages (not tracked, not a web page, unreachable) are a heading, one or two sentences and at most one outlined button. Light only.
 - **Favicon.** A navy rounded square with a white "t". Never a solid block of the accent blue with white lettering, which is the shape of an official health mark.
+
+## Motion
+
+Two authored moments tell the site's story; the rest is feedback. Nothing loops, nothing moves on scroll, and no content waits for an animation to become readable.
+
+| What | Motion | Time |
+|---|---|---|
+| Site name | Three grey dots count the wait and close into the blue dot. First page of a visit only; a hover plays it again. | 1.6 s, once |
+| Stage marker on a claim page | The blue dot lands on the claim's place and one ring leaves it. It lands in place and never travels along the path, because a claim can reach a place without passing the others. | 0.6 s, once |
+| Popover | Fades in and rises 4 px beside its trigger; leaves faster. | 170 ms in, 90 ms out |
+| Record reached by a link | The page scrolls to it, it shows in the tag blue, then settles to the tint. A link inside a popover closes the popover first. | 2.2 s |
+| Between pages, and when a table is filtered | A cross-fade; the masthead holds still. | 170 ms |
+| Chips, buttons, filter places | Colour changes ease; a pressed button drops 1 px. | 120 ms |
+
+Easing is `cubic-bezier(0.16, 1, 0.3, 1)` for arrivals. With reduced motion asked for: no dots, no landing, no scrolling, no cross-fade, no movement; popovers still fade and a reached record is tinted without the change. Popover fades apply only where the browser has popovers, so elsewhere a panel is plain visible content. On paper nothing is hidden by a motion style.
 
 ## Rules for every future page
 

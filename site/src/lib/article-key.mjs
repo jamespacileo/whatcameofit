@@ -3,7 +3,14 @@
 // always agree. Plain JavaScript on purpose: the extension has no build step for types.
 
 // Parameters that describe how a reader arrived, not which article this is.
-const TRACKING = /^(utm_.+|fbclid|gclid|dclid|msclkid|mc_cid|mc_eid|igshid|ref|ref_src|cmpid|ocid|smid|ito|share|at_medium|at_campaign)$/i;
+const TRACKING =
+  /^(utm_.+|fbclid|gclid|dclid|msclkid|mc_cid|mc_eid|igshid|ref|ref_src|ref_url|referrer|cmpid|cmp|ocid|smid|smtyp|ito|share|share_.+|at_.+|ns_.+|amp|amp_.+|outputtype|usqp|mibextid|xtor|guccounter|guce_.+|soc_src|soc_trk|tsrc|ncid|sr_share|taid|unlocked_article_code|emc|partner|rss)$/i;
+
+// Leading host labels that serve the same article as the bare host.
+const SAME_SITE_LABELS = /^(www|m|mobile|amp|edition)\./;
+
+// Hosts that serve one site under two names.
+const HOST_ALIASES = { "bbc.co.uk": "bbc.com" };
 
 /**
  * @param {string} address
@@ -19,10 +26,21 @@ export function articleKey(address) {
   }
   if (url.protocol !== "http:" && url.protocol !== "https:") return null;
 
-  const host = url.hostname.toLowerCase().replace(/^(www|m|amp)\./, "");
-  const path = url.pathname
+  let host = url.hostname.toLowerCase();
+  while (SAME_SITE_LABELS.test(host)) host = host.replace(SAME_SITE_LABELS, "");
+  host = HOST_ALIASES[host] ?? host;
+
+  let path = url.pathname
     .replace(/\/+$/, "")
-    .replace(/(\/amp|\.amp)$/i, "");
+    .replace(/\/index\.html?$/i, "")
+    .replace(/(\/amp|\.amp)$/i, "")
+    .replace(/^\/amp(?=\/)/i, "");
+  // CNN's AMP host repeats the site name as the first part of the path.
+  if (host === "cnn.com") path = path.replace(/^\/cnn(?=\/)/, "");
+  // A Daily Mail article is its number; the words after it vary and are often cut short.
+  const mail = host === "dailymail.co.uk" && path.match(/\/article-(\d+)(\/|$)/);
+  if (mail) path = `/article-${mail[1]}`;
+
   const kept = [...url.searchParams.entries()]
     .filter(([name]) => !TRACKING.test(name))
     .sort(([a], [b]) => a.localeCompare(b))
