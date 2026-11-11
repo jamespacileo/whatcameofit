@@ -1,0 +1,17 @@
+# secrets
+.env
+
+# python
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+
+# site
+node_modules/
+site/dist/
+site/.astro/
+site/data/export.json
+
+# os
+.DS_Store

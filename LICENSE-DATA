@@ -1,0 +1,18 @@
+Dataset licence
+
+The dataset published by this project (claims, promised timelines, evidence
+event summaries, derived statuses and the JSON export built from them) is
+licensed under the Creative Commons Attribution 4.0 International licence
+(CC BY 4.0).
+
+Full licence text: https://creativecommons.org/licenses/by/4.0/legalcode
+
+You may share and adapt the dataset for any purpose, provided you give
+appropriate credit, link to the licence and indicate if changes were made.
+
+Not covered by this licence:
+
+- Source code, which is under the MIT licence in LICENSE.
+- Raw payloads from third-party registries (for example ClinicalTrials.gov,
+  Europe PMC and Crossref), which stay under their own terms.
+- News articles, which are linked and never reproduced.
