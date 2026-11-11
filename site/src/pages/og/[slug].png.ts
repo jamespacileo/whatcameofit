@@ -6,6 +6,7 @@ import { Resvg } from "@resvg/resvg-js";
 import type { APIRoute } from "astro";
 import satori from "satori";
 import { SITE } from "../../../site.config.mjs";
+import { cardFacts } from "../../lib/card";
 import { data, type ExportedClaim } from "../../lib/export";
 import { STATUS_LABELS, latestPromise } from "../../lib/status";
 
@@ -40,11 +41,11 @@ function fact(label: string, value: string): Node {
 
 function card(claim: ExportedClaim): Node {
   const promise = latestPromise(claim);
-  const facts = [
-    claim.first_reported_date ? fact("First reported", claim.first_reported_date.slice(0, 4)) : null,
-    promise ? fact("Promised by", promise.parsed_date!.slice(0, 4)) : null,
-    fact("Status now", STATUS_LABELS[claim.status.code]),
-  ].filter(Boolean);
+  const facts = cardFacts(
+    claim,
+    STATUS_LABELS[claim.status.code],
+    promise?.parsed_date ?? null,
+  ).map(({ label, value }) => fact(label, value));
 
   return box(
     {

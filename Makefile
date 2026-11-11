@@ -1,4 +1,4 @@
-.PHONY: check lint types db-up test site-build
+.PHONY: check lint types db-up test site-test site-build
 
 DB_PORT ?= 5433
 # Tests drop and recreate this database, so its name must end in _test.
@@ -6,7 +6,7 @@ export TEST_DATABASE_URL ?= postgresql+psycopg://thenwhat:thenwhat@127.0.0.1:$(D
 
 # Everything CI runs. Needs Docker for the database; no internet access is
 # needed once dependencies and the Postgres image are present.
-check: lint types test site-build
+check: lint types test site-test site-build
 
 lint:
 	uv run --directory pipeline ruff check .
@@ -25,6 +25,9 @@ test: db-up site/node_modules
 site/node_modules: site/package-lock.json
 	npm --prefix site ci
 	@touch site/node_modules
+
+site-test: site/node_modules
+	ASTRO_TELEMETRY_DISABLED=1 npm --prefix site test
 
 site-build: site/node_modules
 	ASTRO_TELEMETRY_DISABLED=1 npm --prefix site run build

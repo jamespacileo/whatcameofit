@@ -8,10 +8,11 @@ interface Props {
   title?: string;
   description?: string;
   image?: string;
+  imageAlt?: string;
   current?: "home" | "topics" | "approved";
 }
 
-const { title, description = SITE.description, image, current } = Astro.props;
+const { title, description = SITE.description, image, imageAlt, current } = Astro.props;
 const pageTitle = title ? `${title} | ${SITE.name}` : `${SITE.name}: ${SITE.tagline}`;
 const imageUrl = image ? new URL(image, Astro.site).href : null;
 const firstTopic = data.verticals[0];
@@ -30,6 +31,7 @@ const firstTopic = data.verticals[0];
     <meta property="og:site_name" content={SITE.name} />
     <meta property="og:type" content="article" />
     {imageUrl && <meta property="og:image" content={imageUrl} />}
+    {imageUrl && imageAlt && <meta property="og:image:alt" content={imageAlt} />}
     {imageUrl && <meta name="twitter:card" content="summary_large_image" />}
   </head>
   <body>

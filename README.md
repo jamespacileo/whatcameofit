@@ -162,7 +162,7 @@ Needs [uv](https://docs.astral.sh/uv/), Node 22.23.4 or later, make and Docker.
 make check
 ```
 
-This runs ruff, ty, pytest and the site build. CI runs the same command. The tests start the Compose database and use a throwaway `thenwhat_test` database in it, which is dropped and rebuilt from the migrations on every run.
+This runs ruff, ty, pytest, the site's tests and the site build. CI runs the same command. The tests start the Compose database and use a throwaway `thenwhat_test` database in it, which is dropped and rebuilt from the migrations on every run.
 
 Database migrations live in `pipeline/migrations` and are applied each time the `pipeline` container starts. After changing a model, generate a migration with the database running:
 

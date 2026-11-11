@@ -46,6 +46,15 @@ body {
   color: var(--ink);
 }
 
+/* Yellow selection would vanish on a yellow field. */
+.masthead ::selection,
+.promised ::selection,
+.promise ::selection,
+.undated ::selection {
+  background: var(--ink);
+  color: var(--paper);
+}
+
 :focus-visible {
   outline: 3px solid var(--blue);
   outline-offset: 2px;
@@ -251,6 +260,32 @@ main {
   margin-top: 1.1rem;
 }
 
+.bar + .plain,
+.bar + .footnotes {
+  margin-top: 1.1rem;
+}
+
+/* A promise is always set on yellow with dashed rules, wherever it appears. */
+.plain.undated {
+  background: var(--yellow);
+  padding-inline: 0.8rem;
+}
+
+.plain.undated li,
+.plain.undated li:first-child {
+  border-top: 0;
+  border-bottom: 1px dashed var(--ink);
+}
+
+.plain.undated li:last-child {
+  border-bottom: 0;
+}
+
+.plain.undated a,
+.plain.undated .entry-note {
+  color: var(--ink);
+}
+
 /* The timetable: promised on yellow, recorded on white. */
 
 .timetable {
@@ -410,10 +445,6 @@ sup a {
     font-weight: 700;
     font-size: 0.95rem;
     margin-bottom: 0.3rem;
-  }
-
-  .timetable td.empty {
-    display: none;
   }
 
   .timetable .promised {

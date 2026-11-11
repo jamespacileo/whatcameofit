@@ -6,9 +6,11 @@ import {
   STATUS_LABELS,
   STATUS_MEANINGS,
   eventLabel,
+  latestPromise,
   overlayText,
   sourceName,
 } from "../lib/status";
+import { cardAlt, cardFacts } from "../lib/card";
 import { buildTimetable, dayAndMonth, formatDate } from "../lib/timetable";
 
 export function getStaticPaths() {
@@ -23,13 +25,24 @@ const { claim } = Astro.props;
 const timetable = buildTimetable(claim, data.generated_at);
 const overlay = overlayText(claim.status.overlay_years);
 const thisYear = Number(data.generated_at.slice(0, 4));
+const latestRecord = claim.events.map((event) => event.event_date).sort().at(-1) ?? null;
+const hasDatedPromise = claim.promises.some((promise) => promise.parsed_date !== null);
 const explaining = timetable.sources.filter(({ event }) =>
   claim.status.explained_by.includes(event.id),
 );
 const description = `${STATUS_LABELS[claim.status.code]}. ${claim.summary}`;
+const imageAlt = cardAlt(
+  claim,
+  cardFacts(claim, STATUS_LABELS[claim.status.code], latestPromise(claim)?.parsed_date ?? null),
+);
 ---
 
-<Base title={claim.headline} description={description} image={`/og/${claim.slug}.png`}>
+<Base
+  title={claim.headline}
+  description={description}
+  image={`/og/${claim.slug}.png`}
+  imageAlt={imageAlt}
+>
   <article data-pagefind-body>
     <h1 class="title">
       {
@@ -47,18 +60,23 @@ const description = `${STATUS_LABELS[claim.status.code]}. ${claim.summary}`;
       <p class="label" data-pagefind-meta="status">{STATUS_LABELS[claim.status.code]}</p>
       {overlay && <p class="overlay">{overlay}</p>}
       <p class="meaning">{STATUS_MEANINGS[claim.status.code]}</p>
-      {
-        claim.status.updated_at && (
-          <p class="changed" data-pagefind-ignore>
-            Status last changed {formatDate(claim.status.updated_at)}.
-          </p>
-        )
-      }
+      <p class="changed" data-pagefind-ignore>
+        {latestRecord ? `Latest record ${formatDate(latestRecord)}.` : "No record yet."}
+        {claim.status.updated_at && ` Status set ${formatDate(claim.status.updated_at)}.`}
+      </p>
     </div>
 
     <p class="lede" data-pagefind-meta="summary">{claim.summary}</p>
 
     <h2 class="bar" id="timetable">Promised and recorded</h2>
+    {
+      !hasDatedPromise && (
+        <p>
+          No promise with a date is recorded for this claim.
+          {timetable.undated.length > 0 && " A promise made without a date is listed below the table."}
+        </p>
+      )
+    }
     <table class="timetable" aria-describedby="timetable">
       <thead>
         <tr>
@@ -84,9 +102,11 @@ const description = `${STATUS_LABELS[claim.status.code]}. ${claim.summary}`;
                   {row.year}
                   {row.current && <small>this year</small>}
                 </th>
-                <td class={`promised ${row.promised.length === 0 ? "empty" : ""}`} data-column="Promised for this year">
+                <td class="promised" data-column="Promised for this year">
                   {
-                    row.promised.length > 0 && (
+                    row.promised.length === 0 ? (
+                      <span class="entry-note">Nothing promised for this year.</span>
+                    ) : (
                       <ul class="entries">
                         {row.promised.map((promise) => (
                           <li>
@@ -117,7 +137,7 @@ const description = `${STATUS_LABELS[claim.status.code]}. ${claim.summary}`;
                           entry.kind === "report" ? (
                             <li>
                               <span class="entry-date">{dayAndMonth(entry.date)}</span>{" "}
-                              <span class="entry-kind">News report</span>
+                              <span class="entry-kind">Report</span>
                               <span class="entry-note">
                                 {entry.outlet}: <a href={entry.url}>{entry.title}</a>
                                 {entry.archiveUrl && (
@@ -157,7 +177,7 @@ const description = `${STATUS_LABELS[claim.status.code]}. ${claim.summary}`;
       timetable.undated.length > 0 && (
         <>
           <h2 class="bar">Promised with no date</h2>
-          <ul class="plain">
+          <ul class="plain undated">
             {timetable.undated.map((promise) => (
               <li>
                 <strong>{promise.description}</strong>

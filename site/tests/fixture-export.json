@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-11T12:00:00Z",
+  "last_checked_at": "2026-11-11T11:00:00Z",
+  "sources": [
+    {
+      "name": "ClinicalTrials.gov",
+      "url": "https://clinicaltrials.gov/"
+    }
+  ],
+  "verticals": [
+    {
+      "slug": "dental-regeneration",
+      "title": "Dental regeneration"
+    }
+  ],
+  "claims": [
+    {
+      "slug": "quiet-claim",
+      "headline": "Synthetic claim that went quiet",
+      "summary": "Synthetic test data for quiet-claim. It describes no real treatment.",
+      "vertical": "dental-regeneration",
+      "intervention": {
+        "name": "quiet-claim agent",
+        "synonyms": [
+          "QC-77",
+          "quietamab"
+        ]
+      },
+      "indication": "example condition",
+      "first_reported_date": "2018-05-01",
+      "evidence_stage": "animal",
+      "status": {
+        "code": "preclinical_only",
+        "overlay_years": 6,
+        "updated_at": "2026-11-10T09:00:00Z",
+        "explained_by": []
+      },
+      "articles": [
+        {
+          "url": "https://news.example.org/1",
+          "outlet": "Example Outlet 1",
+          "title": "Example report 1",
+          "published_date": "2018-05-01",
+          "archive_url": null
+        },
+        {
+          "url": "https://news.example.org/2",
+          "outlet": "Example Outlet 2",
+          "title": "Example report 2",
+          "published_date": "2019-05-02",
+          "archive_url": "https://web.archive.org/web/2019/https://news.example.org/2"
+        }
+      ],
+      "promises": [
+        {
+          "description": "human trials by 2025",
+          "parsed_date": "2025-12-31",
+          "article_url": "https://news.example.org/1"
+        }
+      ],
+      "events": [
+        {
+          "id": 1,
+          "type": "followup_paper",
+          "event_date": "2020-03-01",
+          "date_basis": "first posted",
+          "summary": "A later paper.",
+          "source_name": "manual entry",
+          "source_url": "https://registry.example/record/1",
+          "trial_id": null,
+          "trial_phases": [],
+          "trial_state": null,
+          "regulatory_outcome": null
+        }
+      ],
+      "failure_flags": []
+    },
+    {
+      "slug": "phase-claim",
+      "headline": "Synthetic claim with a started trial",
+      "summary": "Synthetic test data for phase-claim. It describes no real treatment.",
+      "vertical": "dental-regeneration",
+      "intervention": {
+        "name": "phase-claim agent",
+        "synonyms": []
+      },
+      "indication": "example condition",
+      "first_reported_date": "2019-05-03",
+      "evidence_stage": "animal",
+      "status": {
+        "code": "phase_2",
+        "overlay_years": null,
+        "updated_at": "2026-11-10T09:00:00Z",
+        "explained_by": [
+          2,
+          3
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://news.example.org/3",
+          "outlet": "Example Outlet 3",
+          "title": "Example report 3",
+          "published_date": "2019-05-03",
+          "archive_url": null
+        }
+      ],
+      "promises": [],
+      "events": [
+        {
+          "id": 2,
+          "type": "trial_registered",
+          "event_date": "2022-01-10",
+          "date_basis": "first posted",
+          "summary": "Trial NCT00000002 registered (Phase 2).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://registry.example/record/2",
+          "trial_id": "NCT00000002",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null
+        },
+        {
+          "id": 3,
+          "type": "trial_status_change",
+          "event_date": "2022-06-01",
+          "date_basis": "first posted",
+          "summary": "Trial NCT00000002 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://registry.example/record/3",
+          "trial_id": "NCT00000002",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null
+        },
+        {
+          "id": 4,
+          "type": "followup_paper",
+          "event_date": "2023-02-01",
+          "date_basis": "first posted",
+          "summary": "A follow-up paper.",
+          "source_name": "manual entry",
+          "source_url": "https://registry.example/record/4",
+          "trial_id": null,
+          "trial_phases": [],
+          "trial_state": null,
+          "regulatory_outcome": null
+        },
+        {
+          "id": 5,
+          "type": "trial_results_posted",
+          "event_date": "2025-09-01",
+          "date_basis": "first posted",
+          "summary": "Results posted for trial NCT00000002.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://registry.example/record/5",
+          "trial_id": "NCT00000002",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null
+        }
+      ],
+      "failure_flags": []
+    },
+    {
+      "slug": "approved-claim",
+      "headline": "Synthetic claim that was approved",
+      "summary": "Synthetic test data for approved-claim. It describes no real treatment.",
+      "vertical": "dental-regeneration",
+      "intervention": {
+        "name": "approved-claim agent",
+        "synonyms": []
+      },
+      "indication": "example condition",
+      "first_reported_date": "2017-05-04",
+      "evidence_stage": "animal",
+      "status": {
+        "code": "approved",
+        "overlay_years": null,
+        "updated_at": "2026-11-10T09:00:00Z",
+        "explained_by": [
+          6
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://news.example.org/4",
+          "outlet": "Example Outlet 4",
+          "title": "Example report 4",
+          "published_date": "2017-05-04",
+          "archive_url": null
+        }
+      ],
+      "promises": [],
+      "events": [
+        {
+          "id": 6,
+          "type": "regulatory_decision",
+          "event_date": "2024-04-01",
+          "date_basis": "first posted",
+          "summary": "Regulator recorded an approval.",
+          "source_name": "manual entry",
+          "source_url": "https://registry.example/record/6",
+          "trial_id": null,
+          "trial_phases": [],
+          "trial_state": null,
+          "regulatory_outcome": "approved"
+        }
+      ],
+      "failure_flags": []
+    }
+  ]
+}
