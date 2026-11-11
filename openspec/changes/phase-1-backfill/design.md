@@ -78,7 +78,7 @@ Python 3.12 with `uv`; Typer and Rich for the CLI; SQLAlchemy 2 with Alembic; ht
 | `claim` | id, slug, headline, summary, vertical, indication, first_reported_date, evidence_stage (nullable), current_status, overlay_years (nullable), status_updated_at, published_at (nullable), review columns |
 | `source_article` | id, claim_id, url, outlet, title, published_date, content_hash, archive_url; unique (claim_id, url) |
 | `promise` | id, claim_id, source_article_id, description, parsed_date (nullable) |
-| `entity` | id, claim_id, type, name, synonyms[], is_origin_paper |
+| `entity` | id, claim_id, type, name, synonyms[], is_origin_paper, doi (papers only; a lead for resolution, not a confirmed identifier) |
 | `entity_match` | id, entity_id, source_name, external_id, score, review columns; unique (entity_id, source_name, external_id) |
 | `evidence_event` | id, claim_id, entity_match_id (nullable), type, event_date, date_basis, source_name, source_url, external_id, trial_phases[] (nullable), trial_state (nullable), regulatory_outcome (approved or refused; set exactly when the type is regulatory decision), summary, confidence, raw_payload (JSONB), fetched_at, dedupe_key (unique per claim), review columns |
 | `failure_flag` | id, claim_id, trial_external_id, evidence_event_id, source_url, created_at |
@@ -168,6 +168,12 @@ Before each client is written, its current terms, authentication and rate limit 
 ### D12. Article retrieval
 
 Order: robots.txt check, live fetch, Internet Archive availability lookup, then a request for pasted text. Text is kept in memory only, hashed, passed to extraction and dropped. It is never written to the database, cache, logs or fixtures; test fixtures use synthetic articles written for the purpose.
+
+### D12a. Drafts and the language model
+
+A draft is a claim in the pending review state; there is no separate draft table. `extract new` creates a pending claim from an article. `extract article` adds entities, the paper and promises from an article to a claim that is still pending, keeps what the operator already entered, and is refused once the claim has been reviewed. Running it twice adds nothing twice. The operator corrects a draft with `claim edit` before approving it.
+
+All model calls go through one class, `Llm`, which checks configuration and the month's spend before calling, records usage in a ledger even when the call fails, and reports provider failures by error type and status only, since a provider's own message can echo the credential. When output never validates, the failing fields are found by validating the model's last attempt again. Error classes live apart from the client so the CLI can import them without loading the model library, which is slow to import.
 
 ### D13. Event summaries are templates
 

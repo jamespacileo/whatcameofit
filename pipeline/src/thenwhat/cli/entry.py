@@ -10,9 +10,18 @@ import typer
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.csv_import import CsvErrors, import_csv
-from thenwhat.claims.entry import EntryError, add_article, add_claim, add_promise, rename_slug
+from thenwhat.claims.entry import (
+    EntryError,
+    add_article,
+    add_claim,
+    add_promise,
+    edit_claim,
+    rename_slug,
+)
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import open_session
+from thenwhat.llm.errors import LlmError
+from thenwhat.sources.base import SourceError
 
 claim_app = typer.Typer(help="Add and manage claims.", no_args_is_help=True)
 article_app = typer.Typer(help="Add source articles to claims.", no_args_is_help=True)
@@ -27,7 +36,7 @@ def entry_session() -> Generator[Session]:
     try:
         with open_session() as session:
             yield session
-    except EntryError as error:
+    except (EntryError, LlmError, SourceError) as error:
         err.print(str(error), markup=False)
         raise typer.Exit(code=1) from None
 
@@ -53,6 +62,27 @@ def claim_add(
             summary=summary,
         )
         out.print(f"Added claim {claim.slug}.", markup=False)
+
+
+@claim_app.command("edit")
+def claim_edit(
+    slug: Annotated[str, typer.Argument(help="Slug of the claim to correct.")],
+    headline: Annotated[str | None, typer.Option(help="New headline.")] = None,
+    summary: Annotated[str | None, typer.Option(help="New summary, in your own words.")] = None,
+    intervention: Annotated[str | None, typer.Option(help="New intervention name.")] = None,
+    indication: Annotated[str | None, typer.Option(help="New indication.")] = None,
+) -> None:
+    """Correct a claim's headline, summary, intervention or indication."""
+    with entry_session() as session:
+        claim = edit_claim(
+            session,
+            slug,
+            headline=headline,
+            summary=summary,
+            intervention=intervention,
+            indication=indication,
+        )
+        out.print(f"Updated claim {claim.slug}.", markup=False)
 
 
 @claim_app.command("rename-slug")

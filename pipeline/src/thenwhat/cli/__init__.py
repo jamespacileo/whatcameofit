@@ -6,6 +6,7 @@ from sqlalchemy.exc import OperationalError
 from thenwhat import __version__
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import article_app, claim_app, promise_app
+from thenwhat.cli.extract import extract_app
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.db.session import make_engine, ping
 
@@ -13,6 +14,7 @@ app = typer.Typer(no_args_is_help=True)
 app.add_typer(claim_app, name="claim")
 app.add_typer(article_app, name="article")
 app.add_typer(promise_app, name="promise")
+app.add_typer(extract_app, name="extract")
 
 
 @app.callback()

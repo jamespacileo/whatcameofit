@@ -41,6 +41,22 @@ thenwhat claim rename-slug tooth-regrowth-usag1 tooth-regrowth
 
 A promise's date is read from its text: a span of years counts from the article date, a single year means 31 December of that year, and anything else gets no date. Pass `--date YYYY-MM-DD` to set it yourself. A slug cannot change once its claim has been published.
 
+### Drafting from an article
+
+Needs `CONTACT_EMAIL`, `LLM_MODEL`, the two price settings and the provider's key in `.env`.
+
+```sh
+thenwhat extract new https://example.org/article --slug tooth-regrowth-usag1 \
+  --vertical dental-regeneration --outlet "Example News" --title "Mice regrow teeth" \
+  --published 2018-03-10
+thenwhat extract article tooth-regrowth-usag1 --article-url https://example.org/article
+thenwhat claim edit tooth-regrowth-usag1 --headline "Corrected headline"
+```
+
+`extract new` drafts a pending claim from the article. `extract article` adds entities, the paper and promises to a claim that is still pending. If the site's robots.txt forbids fetching, or the page is gone with no archived copy, the command says so: run it again with `--paste` and pipe the text in. Article text is used for the one call and never stored.
+
+Model calls stop for the month once the recorded cost reaches `LLM_MONTHLY_BUDGET_USD`.
+
 ### CSV import
 
 `thenwhat claim import-csv claims.csv` imports every row or none. Inside the container the file must be reachable, for example `docker compose run --rm -v "$PWD/data/seed:/seed" pipeline thenwhat claim import-csv /seed/claims.csv`.

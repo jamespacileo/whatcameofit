@@ -43,11 +43,11 @@
 
 ## 6. Language model usage and extraction
 
-- [ ] 6.1 Implement model configuration from the environment, the usage ledger and the monthly ceiling (design D10); verify tests for missing configuration, ceiling reached, new month, and no credential in error text
-- [ ] 6.2 Define the extraction schema (including the 500-character summary limit) and the extraction call with bounded retries; verify tests with recorded model responses for a valid draft, an article with no promise, and output that never validates
-- [ ] 6.3 Implement article retrieval in the order of design D12 (robots.txt, live fetch, archive lookup, pasted text); verify tests for a disallowed URL, a dead link with and without a snapshot, and pasted text
-- [ ] 6.4 Verify retention: a test that runs extraction to success and to failure and then asserts no table, cache row or log line contains the article text, using a synthetic article
-- [ ] 6.5 Implement `extract` to store the draft as pending and let the operator edit fields before approval; verify a test that edits the headline and approves
+- [x] 6.1 Implement model configuration from the environment, the usage ledger and the monthly ceiling (design D10); verify tests for missing configuration, ceiling reached, new month, and no credential in error text
+- [x] 6.2 Define the extraction schema (including the 500-character summary limit) and the extraction call with bounded retries; verify tests with recorded model responses for a valid draft, an article with no promise, and output that never validates
+- [x] 6.3 Implement article retrieval in the order of design D12 (robots.txt, live fetch, archive lookup, pasted text); verify tests for a disallowed URL, a dead link with and without a snapshot, and pasted text
+- [x] 6.4 Verify retention: a test that runs extraction to success and to failure and then asserts no table, cache row or log line contains the article text, using a synthetic article
+- [x] 6.5 Implement `extract` to store the draft as pending and let the operator edit fields before approval; verify a test that edits the headline and approves
 
 ## 7. Decisions and entity resolution
 
