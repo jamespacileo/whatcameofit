@@ -78,11 +78,11 @@
 
 - [x] 10.1 Implement `export` with the versioned JSON Schema of design D14, overlay recomputed at export time, and `published_at` set on first export; verify tests that a claim with mixed events exports only approved ones, a draft claim is absent, and the output validates against the schema
 - [ ] 10.2 Run an Impeccable design pass for the claim page, topic index and home page, producing `PRODUCT.md` and `DESIGN.md`; verify both files exist and the operator has approved the direction
-- [ ] 10.3 Build the claim page (status with overlay, promises against actual events, event list with source links, status explanation, source article links) and the not-found page; verify against the seeded example at desktop and phone width
-- [ ] 10.4 Build the topic index, the home page with Pagefind search and recent status changes, and `/it-happened` with its empty state; verify a search for an entity synonym returns the seeded claim
-- [ ] 10.5 Render a status card image per claim at build time and set it as the link preview image; verify the seeded claim's card shows headline, first reported date, "promised by" year and status, and no day count
-- [ ] 10.6 Add the footer notices to the shared layout and a build check that rejects verdict wording in status labels; verify every built page contains the footer and the build fails when a label contains "abandoned"
-- [ ] 10.7 Validate the export against the schema at build start; verify the site builds in a container with no network and no database
+- [x] 10.3 Build the claim page (status with overlay, promises against actual events, event list with source links, status explanation, source article links) and the not-found page; verify against the seeded example at desktop and phone width
+- [x] 10.4 Build the topic index, the home page with Pagefind search and recent status changes, and `/it-happened` with its empty state; verify a search for an entity synonym returns the seeded claim
+- [x] 10.5 Render a status card image per claim at build time and set it as the link preview image; verify the seeded claim's card shows headline, first reported date, "promised by" year and status, and no day count
+- [x] 10.6 Add the footer notices to the shared layout and a build check that rejects verdict wording in status labels; verify every built page contains the footer and the build fails when a label contains "abandoned"
+- [x] 10.7 Validate the export against the schema at build start; verify the site builds in a container with no network and no database
 
 ## 11. Integration
 

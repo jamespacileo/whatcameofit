@@ -1,0 +1,22 @@
+---
+import Base from "../layouts/Base.astro";
+import { data } from "../lib/export";
+---
+
+<Base title="No page at this address">
+  <h1 class="title">No page at this address</h1>
+  <p class="lede">
+    No tracked claim has this address. It may never have been tracked, or the address may be
+    mistyped.
+  </p>
+  <ul class="plain">
+    <li><a href="/">Search the tracked claims</a></li>
+    {
+      data.verticals.map((vertical) => (
+        <li>
+          <a href={`/topic/${vertical.slug}`}>All claims in {vertical.title.toLowerCase()}</a>
+        </li>
+      ))
+    }
+  </ul>
+</Base>

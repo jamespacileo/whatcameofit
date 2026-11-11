@@ -15,3 +15,8 @@ site/data/export.json
 
 # os
 .DS_Store
+
+# design review working files
+.impeccable/review/
+.impeccable/questions/
+.impeccable/config.local.json

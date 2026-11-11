@@ -1,5 +1,8 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig } from "astro/config";
 
-// https://astro.build/config
-export default defineConfig({});
+// The public address is undecided; link previews need an absolute one.
+export default defineConfig({
+  site: process.env.SITE_URL ?? "http://localhost:4321",
+  trailingSlash: "ignore",
+});

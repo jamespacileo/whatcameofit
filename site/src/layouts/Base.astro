@@ -1,0 +1,104 @@
+---
+import "../styles/global.css";
+import { SITE } from "../../site.config.mjs";
+import { data } from "../lib/export";
+import { formatDate } from "../lib/timetable";
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  current?: "home" | "topics" | "approved";
+}
+
+const { title, description = SITE.description, image, current } = Astro.props;
+const pageTitle = title ? `${title} | ${SITE.name}` : `${SITE.name}: ${SITE.tagline}`;
+const imageUrl = image ? new URL(image, Astro.site).href : null;
+const firstTopic = data.verticals[0];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title ?? SITE.name} />
+    <meta property="og:description" content={description} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:type" content="article" />
+    {imageUrl && <meta property="og:image" content={imageUrl} />}
+    {imageUrl && <meta name="twitter:card" content="summary_large_image" />}
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+    <header class="masthead">
+      <div class="wrap">
+        <a class="name" href="/">{SITE.name}</a>
+        <nav aria-label="Site">
+          <ul>
+            <li><a href="/" aria-current={current === "home" ? "page" : undefined}>Search</a></li>
+            {
+              firstTopic && (
+                <li>
+                  <a
+                    href={`/topic/${firstTopic.slug}`}
+                    aria-current={current === "topics" ? "page" : undefined}
+                  >
+                    {firstTopic.title}
+                  </a>
+                </li>
+              )
+            }
+            <li>
+              <a href="/it-happened" aria-current={current === "approved" ? "page" : undefined}>
+                It happened
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="content">
+      <div class="wrap">
+        <slot />
+      </div>
+    </main>
+
+    <footer class="colophon">
+      <div class="wrap">
+        <div class="notices">
+          <p>This site gives no medical advice and recommends no treatment.</p>
+          <p>
+            A registered clinical trial is not a treatment option. Talk to a clinician about your
+            own care.
+          </p>
+        </div>
+        <div class="details">
+          <p>
+            Data sources:
+            {
+              data.sources.map((source, index) => (
+                <>
+                  {index > 0 && ", "}
+                  <a href={source.url}>{source.name}</a>
+                </>
+              ))
+            }. Records are shown as the registries gave them; summaries are ours.
+          </p>
+          <p>
+            {
+              data.last_checked_at
+                ? `Registries last checked ${formatDate(data.last_checked_at)}.`
+                : "Registries not yet checked."
+            }
+            {` Pages built ${formatDate(data.generated_at)}.`}
+          </p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

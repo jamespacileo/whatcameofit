@@ -1,16 +1,150 @@
 ---
-// Placeholder until the export-driven pages are built (tasks 10.x).
+import Base from "../layouts/Base.astro";
+import { SITE } from "../../site.config.mjs";
+import { data } from "../lib/export";
+import { STATUS_LABELS, overlayText } from "../lib/status";
+import { formatDate } from "../lib/timetable";
+
+const recent = data.claims
+  .filter((claim) => claim.status.updated_at !== null)
+  .sort((a, b) => (a.status.updated_at! < b.status.updated_at! ? 1 : -1))
+  .slice(0, 10);
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<title>thenwhat</title>
-	</head>
-	<body>
-		<h1>thenwhat</h1>
-		<p>What happened to reported medical breakthroughs. No claims published yet.</p>
-	</body>
-</html>
+<Base current="home">
+  <h1 class="title">What happened to that breakthrough?</h1>
+  <p class="lede">{SITE.description}</p>
+
+  <form class="search" role="search" id="search">
+    <label for="query">Search by treatment, condition or name</label>
+    <div class="row">
+      <input id="query" name="q" type="search" autocomplete="off" placeholder="for example: tooth regrowth" />
+      <button type="submit">Search</button>
+    </div>
+  </form>
+  <div class="results" id="results" aria-live="polite"></div>
+
+  <h2 class="bar">Recent status changes</h2>
+  {
+    recent.length === 0 ? (
+      <p>No status has changed yet.</p>
+    ) : (
+      <table class="index">
+        <thead>
+          <tr>
+            <th scope="col">Claim</th>
+            <th scope="col">Status</th>
+            <th scope="col">Changed</th>
+          </tr>
+        </thead>
+        <tbody>
+          {recent.map((claim) => (
+            <tr>
+              <td class="claim">
+                <a href={`/${claim.slug}`}>{claim.headline}</a>
+              </td>
+              <td data-column="Status">
+                <strong>{STATUS_LABELS[claim.status.code]}</strong>
+                {overlayText(claim.status.overlay_years) && (
+                  <span class="entry-note">{overlayText(claim.status.overlay_years)}</span>
+                )}
+              </td>
+              <td class="when" data-column="Changed">
+                {formatDate(claim.status.updated_at)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )
+  }
+
+  <h2 class="bar">Topics</h2>
+  <ul class="plain">
+    {
+      data.verticals.map((vertical) => {
+        const count = data.claims.filter((claim) => claim.vertical === vertical.slug).length;
+        return (
+          <li>
+            <a href={`/topic/${vertical.slug}`}>{vertical.title}</a>
+            <span class="entry-note">
+              {count} {count === 1 ? "claim" : "claims"} tracked
+            </span>
+          </li>
+        );
+      })
+    }
+  </ul>
+</Base>
+
+<script>
+  // Search runs in the browser against an index built with the site. Without
+  // JavaScript the topic pages list every claim.
+  const form = document.querySelector<HTMLFormElement>("#search")!;
+  const input = document.querySelector<HTMLInputElement>("#query")!;
+  const results = document.querySelector<HTMLDivElement>("#results")!;
+
+  interface Hit {
+    url: string;
+    meta: { title?: string; status?: string; summary?: string };
+  }
+
+  function show(message: string) {
+    const paragraph = document.createElement("p");
+    paragraph.textContent = message;
+    results.replaceChildren(paragraph);
+  }
+
+  async function search(query: string) {
+    if (!query) {
+      results.replaceChildren();
+      return;
+    }
+    let pagefind;
+    try {
+      const indexUrl = "/pagefind/pagefind.js";
+      pagefind = await import(/* @vite-ignore */ indexUrl);
+    } catch {
+      show("Search is not available right now. The topic pages list every claim.");
+      return;
+    }
+    const found = await pagefind.search(query);
+    const hits: Hit[] = await Promise.all(
+      found.results.slice(0, 20).map((result: { data: () => Promise<Hit> }) => result.data()),
+    );
+    if (hits.length === 0) {
+      show(`Nothing found for “${query}”. This site only covers claims it has tracked so far.`);
+      return;
+    }
+    const list = document.createElement("ul");
+    list.className = "plain";
+    for (const hit of hits) {
+      const item = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = hit.url;
+      link.textContent = hit.meta.title ?? hit.url;
+      const note = document.createElement("span");
+      note.className = "entry-note";
+      note.textContent = [hit.meta.status, hit.meta.summary].filter(Boolean).join(". ");
+      item.append(link, note);
+      list.append(item);
+    }
+    results.replaceChildren(list);
+  }
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const query = input.value.trim();
+    const url = new URL(location.href);
+    if (query) url.searchParams.set("q", query);
+    else url.searchParams.delete("q");
+    history.replaceState(null, "", url);
+    void search(query);
+  });
+
+  const initial = new URL(location.href).searchParams.get("q");
+  if (initial) {
+    input.value = initial;
+    void search(initial);
+  }
+</script>

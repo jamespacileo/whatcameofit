@@ -1,0 +1,255 @@
+---
+import Base from "../layouts/Base.astro";
+import { data, verticalTitle, type ExportedClaim } from "../lib/export";
+import {
+  EVIDENCE_STAGES,
+  STATUS_LABELS,
+  STATUS_MEANINGS,
+  eventLabel,
+  overlayText,
+  sourceName,
+} from "../lib/status";
+import { buildTimetable, dayAndMonth, formatDate } from "../lib/timetable";
+
+export function getStaticPaths() {
+  return data.claims.map((claim) => ({ params: { slug: claim.slug }, props: { claim } }));
+}
+
+interface Props {
+  claim: ExportedClaim;
+}
+
+const { claim } = Astro.props;
+const timetable = buildTimetable(claim, data.generated_at);
+const overlay = overlayText(claim.status.overlay_years);
+const thisYear = Number(data.generated_at.slice(0, 4));
+const explaining = timetable.sources.filter(({ event }) =>
+  claim.status.explained_by.includes(event.id),
+);
+const description = `${STATUS_LABELS[claim.status.code]}. ${claim.summary}`;
+---
+
+<Base title={claim.headline} description={description} image={`/og/${claim.slug}.png`}>
+  <article data-pagefind-body>
+    <h1 class="title">{claim.headline}</h1>
+
+    <div class="status">
+      <p class="label" data-pagefind-meta="status">{STATUS_LABELS[claim.status.code]}</p>
+      {overlay && <p class="overlay">{overlay}</p>}
+      <p class="meaning">{STATUS_MEANINGS[claim.status.code]}</p>
+      {
+        claim.status.updated_at && (
+          <p class="changed" data-pagefind-ignore>
+            Status last changed {formatDate(claim.status.updated_at)}.
+          </p>
+        )
+      }
+    </div>
+
+    <p class="lede" data-pagefind-meta="summary">{claim.summary}</p>
+
+    <dl class="facts">
+      <dt>Intervention</dt>
+      <dd>
+        {claim.intervention.name}
+        {
+          claim.intervention.synonyms.length > 0 && (
+            <span> (also known as {claim.intervention.synonyms.join(", ")})</span>
+          )
+        }
+      </dd>
+      <dt>Claimed for</dt>
+      <dd>{claim.indication}</dd>
+      {
+        claim.first_reported_date && (
+          <>
+            <dt>First reported</dt>
+            <dd>{formatDate(claim.first_reported_date)}</dd>
+          </>
+        )
+      }
+      {
+        claim.evidence_stage && (
+          <>
+            <dt>Evidence then</dt>
+            <dd>{EVIDENCE_STAGES[claim.evidence_stage] ?? claim.evidence_stage}</dd>
+          </>
+        )
+      }
+      <dt>Topic</dt>
+      <dd><a href={`/topic/${claim.vertical}`}>{verticalTitle(claim.vertical)}</a></dd>
+    </dl>
+
+    <h2 class="bar" id="timetable">Promised and recorded</h2>
+    <table class="timetable" aria-describedby="timetable">
+      <thead>
+        <tr>
+          <th scope="col">Year</th>
+          <th scope="col" class="promised">Promised for this year</th>
+          <th scope="col">Recorded this year</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          timetable.rows.map((row) =>
+            row.kind === "quiet" ? (
+              <tr class="quiet">
+                <th scope="row" class="year">
+                  {row.from === row.to ? row.from : `${row.from} to ${row.to}`}
+                </th>
+                <td class="promised empty" />
+                <td>Nothing promised for, or recorded in, {row.from === row.to ? "this year" : "these years"}.</td>
+              </tr>
+            ) : (
+              <tr>
+                <th scope="row" class="year">
+                  {row.year}
+                  {row.current && <small>this year</small>}
+                </th>
+                <td class={`promised ${row.promised.length === 0 ? "empty" : ""}`} data-column="Promised for this year">
+                  {
+                    row.promised.length > 0 && (
+                      <ul class="entries">
+                        {row.promised.map((promise) => (
+                          <li>
+                            <span class="entry-kind">{promise.description}</span>
+                            <span class="entry-note">
+                              Said in <a href={promise.articleUrl}>{promise.outlet}</a>,{" "}
+                              {formatDate(promise.madeOn)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )
+                  }
+                </td>
+                <td data-column="Recorded this year">
+                  {
+                    row.recorded.length === 0 ? (
+                      <span class="entry-note">
+                        {row.year < thisYear
+                          ? "Nothing recorded in this year."
+                          : row.current
+                            ? "Nothing recorded so far this year."
+                            : "This year has not come yet."}
+                      </span>
+                    ) : (
+                      <ul class="entries">
+                        {row.recorded.map((entry) =>
+                          entry.kind === "report" ? (
+                            <li>
+                              <span class="entry-date">{dayAndMonth(entry.date)}</span>{" "}
+                              <span class="entry-kind">News report</span>
+                              <span class="entry-note">
+                                {entry.outlet}: <a href={entry.url}>{entry.title}</a>
+                                {entry.archiveUrl && (
+                                  <>
+                                    {" "}
+                                    (<a href={entry.archiveUrl}>archived copy</a>)
+                                  </>
+                                )}
+                              </span>
+                            </li>
+                          ) : (
+                            <li>
+                              <span class="entry-date">{dayAndMonth(entry.date)}</span>{" "}
+                              <span class="entry-kind">{eventLabel(entry.event)}</span>
+                              <sup>
+                                <a href={`#source-${entry.mark}`} aria-label={`Source ${entry.mark}`}>
+                                  {entry.mark}
+                                </a>
+                              </sup>
+                              {entry.explains && <span class="basis">basis of status</span>}
+                              <span class="entry-note">{entry.event.summary}</span>
+                            </li>
+                          ),
+                        )}
+                      </ul>
+                    )
+                  }
+                </td>
+              </tr>
+            ),
+          )
+        }
+      </tbody>
+    </table>
+
+    {
+      timetable.undated.length > 0 && (
+        <>
+          <h2 class="bar">Promised with no date</h2>
+          <ul class="plain">
+            {timetable.undated.map((promise) => (
+              <li>
+                <strong>{promise.description}</strong>
+                <span class="entry-note">
+                  Said in <a href={promise.articleUrl}>{promise.outlet}</a>,{" "}
+                  {formatDate(promise.madeOn)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )
+    }
+
+    <h2 class="bar">Why this status</h2>
+    <p>{STATUS_MEANINGS[claim.status.code]}</p>
+    {
+      explaining.length > 0 ? (
+        <>
+          <p>The status rests on these records:</p>
+          <ul class="plain">
+            {explaining.map(({ mark, event }) => (
+              <li>
+                <span class="entry-date">{formatDate(event.event_date)}</span>{" "}
+                <span class="entry-kind">{eventLabel(event)}</span>
+                <sup>
+                  <a href={`#source-${mark}`} aria-label={`Source ${mark}`}>
+                    {mark}
+                  </a>
+                </sup>
+                <span class="entry-note">{event.summary}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p>No trial, approval or retraction record is attached to this claim.</p>
+      )
+    }
+    {
+      overlay && (
+        <p>
+          {overlay}: the most recent record on this page is that old. It says nothing about work
+          that has not been published or registered.
+        </p>
+      )
+    }
+
+    {
+      timetable.sources.length > 0 && (
+        <>
+          <h2 class="bar">Sources for the records</h2>
+          <ol class="footnotes">
+            {timetable.sources.map(({ mark, event }) => (
+              <li id={`source-${mark}`}>
+                <span class="mark">{mark}</span>
+                <span>
+                  <a href={event.source_url}>
+                    {sourceName(event.source_name)}
+                    {event.trial_id ? `, ${event.trial_id}` : ""}
+                  </a>
+                  {event.date_basis && (
+                    <span class="entry-note">Date taken from: {event.date_basis}.</span>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </>
+      )
+    }
+  </article>
+</Base>

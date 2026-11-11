@@ -1,0 +1,49 @@
+---
+import type { ExportedClaim } from "../lib/export";
+import { STATUS_LABELS, latestPromise, overlayText } from "../lib/status";
+import { formatDate } from "../lib/timetable";
+
+interface Props {
+  claims: ExportedClaim[];
+  caption: string;
+}
+
+const { claims, caption } = Astro.props;
+---
+
+<table class="index">
+  <caption class="visually-hidden">{caption}</caption>
+  <thead>
+    <tr>
+      <th scope="col">Claim</th>
+      <th scope="col">First reported</th>
+      <th scope="col" class="promise">Latest promise</th>
+      <th scope="col">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {
+      claims.map((claim) => {
+        const promise = latestPromise(claim);
+        const overlay = overlayText(claim.status.overlay_years);
+        return (
+          <tr>
+            <td class="claim">
+              <a href={`/${claim.slug}`}>{claim.headline}</a>
+            </td>
+            <td class="when" data-column="First reported">
+              {claim.first_reported_date ? formatDate(claim.first_reported_date) : "Not recorded"}
+            </td>
+            <td class="promise" data-column="Latest promise">
+              {promise ? `${promise.description} (by ${promise.parsed_date!.slice(0, 4)})` : "None with a date"}
+            </td>
+            <td data-column="Status">
+              <strong>{STATUS_LABELS[claim.status.code]}</strong>
+              {overlay && <span class="entry-note">{overlay}</span>}
+            </td>
+          </tr>
+        );
+      })
+    }
+  </tbody>
+</table>

@@ -1,0 +1,28 @@
+---
+import Base from "../layouts/Base.astro";
+import ClaimTable from "../components/ClaimTable.astro";
+import { data } from "../lib/export";
+
+const approved = data.claims.filter((claim) => claim.status.code === "approved");
+---
+
+<Base
+  title="It happened"
+  description="Reported breakthroughs for which a regulator has recorded an approval."
+  current="approved"
+>
+  <h1 class="title">It happened</h1>
+  <p class="lede">
+    Reported breakthroughs for which a regulator has recorded an approval. An approval says what a
+    regulator decided; it is not advice about any one person's care.
+  </p>
+
+  <h2 class="bar">Approved</h2>
+  {
+    approved.length === 0 ? (
+      <p>No tracked claim has reached approval yet.</p>
+    ) : (
+      <ClaimTable claims={approved} caption="Claims with a recorded approval" />
+    )
+  }
+</Base>

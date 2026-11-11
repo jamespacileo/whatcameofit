@@ -1,0 +1,39 @@
+---
+import Base from "../../layouts/Base.astro";
+import ClaimTable from "../../components/ClaimTable.astro";
+import { data } from "../../lib/export";
+
+export function getStaticPaths() {
+  return data.verticals.map((vertical) => ({
+    params: { vertical: vertical.slug },
+    props: { vertical },
+  }));
+}
+
+const { vertical } = Astro.props;
+const claims = data.claims
+  .filter((claim) => claim.vertical === vertical.slug)
+  .sort((a, b) => ((a.first_reported_date ?? "") < (b.first_reported_date ?? "") ? 1 : -1));
+---
+
+<Base
+  title={vertical.title}
+  description={`Reported breakthroughs in ${vertical.title.toLowerCase()} and where each stands now.`}
+  current="topics"
+>
+  <h1 class="title">{vertical.title}</h1>
+  <p class="lede">
+    {claims.length}
+    {claims.length === 1 ? "reported breakthrough" : "reported breakthroughs"} tracked, newest first.
+    Each row shows the latest promise beside the status the records support.
+  </p>
+
+  <h2 class="bar">Claims</h2>
+  {
+    claims.length === 0 ? (
+      <p>No claims are tracked in this topic yet.</p>
+    ) : (
+      <ClaimTable claims={claims} caption={`Claims in ${vertical.title}`} />
+    )
+  }
+</Base>
