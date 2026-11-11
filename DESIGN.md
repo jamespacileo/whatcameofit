@@ -67,6 +67,7 @@ Figures are tabular and lining throughout. Reading measure is 66 characters. A n
 - **Search.** One labelled field and a button. Shows "Searching…", then results, a plain "Nothing found" sentence, or a plain failure sentence.
 - **Footer.** Deep navy. The two notices in bold, then data sources and the dates the registries were checked and the pages built.
 - **Link-preview card.** White, site name in blue, headline, then a rounded panel with first reported, promised by (a year, never a day count) and status. Its text alternative is built from the same facts.
+- **Extension popup.** 360px wide, same tokens and face. The site name in blue over a hairline; the claim headline; the status in the digest panel's treatment ("Where it stands", blue label, no-signal note in a dashed outline, one sentence of meaning); first reported; the latest promise on pale amber; one full-width blue button, "See the evidence". The two notices and the last-checked date sit under a hairline in muted small text. Messages (not tracked, not a web page, unreachable) are a heading, one or two sentences and at most one outlined button. Light only.
 - **Favicon.** A navy rounded square with a white "t". Never a solid block of the accent blue with white lettering, which is the shape of an official health mark.
 
 ## Rules for every future page
