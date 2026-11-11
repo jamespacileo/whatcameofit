@@ -76,7 +76,7 @@
 
 ## 10. Export and site
 
-- [ ] 10.1 Implement `export` with the versioned JSON Schema of design D14, overlay recomputed at export time, and `published_at` set on first export; verify tests that a claim with mixed events exports only approved ones, a draft claim is absent, and the output validates against the schema
+- [x] 10.1 Implement `export` with the versioned JSON Schema of design D14, overlay recomputed at export time, and `published_at` set on first export; verify tests that a claim with mixed events exports only approved ones, a draft claim is absent, and the output validates against the schema
 - [ ] 10.2 Run an Impeccable design pass for the claim page, topic index and home page, producing `PRODUCT.md` and `DESIGN.md`; verify both files exist and the operator has approved the direction
 - [ ] 10.3 Build the claim page (status with overlay, promises against actual events, event list with source links, status explanation, source article links) and the not-found page; verify against the seeded example at desktop and phone width
 - [ ] 10.4 Build the topic index, the home page with Pagefind search and recent status changes, and `/it-happened` with its empty state; verify a search for an entity synonym returns the seeded claim

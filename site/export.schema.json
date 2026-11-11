@@ -1,0 +1,520 @@
+{
+  "$defs": {
+    "ClaimStatus": {
+      "enum": [
+        "preclinical_only",
+        "trial_registered",
+        "phase_1",
+        "phase_2",
+        "phase_3",
+        "approved",
+        "failed",
+        "terminated",
+        "retracted"
+      ],
+      "title": "ClaimStatus",
+      "type": "string"
+    },
+    "EventType": {
+      "enum": [
+        "followup_paper",
+        "trial_registered",
+        "trial_status_change",
+        "trial_results_posted",
+        "grant_awarded",
+        "company_event",
+        "retraction",
+        "regulatory_decision"
+      ],
+      "title": "EventType",
+      "type": "string"
+    },
+    "EvidenceStage": {
+      "enum": [
+        "in_vitro",
+        "animal",
+        "early_human",
+        "late_human"
+      ],
+      "title": "EvidenceStage",
+      "type": "string"
+    },
+    "ExportedArticle": {
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "outlet": {
+          "title": "Outlet",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "published_date": {
+          "format": "date",
+          "title": "Published Date",
+          "type": "string"
+        },
+        "archive_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Archive Url"
+        }
+      },
+      "required": [
+        "url",
+        "outlet",
+        "title",
+        "published_date",
+        "archive_url"
+      ],
+      "title": "ExportedArticle",
+      "type": "object"
+    },
+    "ExportedClaim": {
+      "additionalProperties": false,
+      "properties": {
+        "slug": {
+          "title": "Slug",
+          "type": "string"
+        },
+        "headline": {
+          "title": "Headline",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "vertical": {
+          "title": "Vertical",
+          "type": "string"
+        },
+        "intervention": {
+          "$ref": "#/$defs/ExportedIntervention"
+        },
+        "indication": {
+          "title": "Indication",
+          "type": "string"
+        },
+        "first_reported_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "First Reported Date"
+        },
+        "evidence_stage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EvidenceStage"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "$ref": "#/$defs/ExportedStatus"
+        },
+        "articles": {
+          "items": {
+            "$ref": "#/$defs/ExportedArticle"
+          },
+          "title": "Articles",
+          "type": "array"
+        },
+        "promises": {
+          "items": {
+            "$ref": "#/$defs/ExportedPromise"
+          },
+          "title": "Promises",
+          "type": "array"
+        },
+        "events": {
+          "items": {
+            "$ref": "#/$defs/ExportedEvent"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "failure_flags": {
+          "items": {
+            "$ref": "#/$defs/ExportedFailureFlag"
+          },
+          "title": "Failure Flags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "slug",
+        "headline",
+        "summary",
+        "vertical",
+        "intervention",
+        "indication",
+        "first_reported_date",
+        "evidence_stage",
+        "status",
+        "articles",
+        "promises",
+        "events",
+        "failure_flags"
+      ],
+      "title": "ExportedClaim",
+      "type": "object"
+    },
+    "ExportedEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "type": {
+          "$ref": "#/$defs/EventType"
+        },
+        "event_date": {
+          "format": "date",
+          "title": "Event Date",
+          "type": "string"
+        },
+        "date_basis": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Date Basis"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "source_name": {
+          "title": "Source Name",
+          "type": "string"
+        },
+        "source_url": {
+          "title": "Source Url",
+          "type": "string"
+        },
+        "trial_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Trial Id"
+        },
+        "trial_phases": {
+          "items": {
+            "$ref": "#/$defs/TrialPhase"
+          },
+          "title": "Trial Phases",
+          "type": "array"
+        },
+        "trial_state": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TrialState"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "regulatory_outcome": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RegulatoryOutcome"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "event_date",
+        "date_basis",
+        "summary",
+        "source_name",
+        "source_url",
+        "trial_id",
+        "trial_phases",
+        "trial_state",
+        "regulatory_outcome"
+      ],
+      "title": "ExportedEvent",
+      "type": "object"
+    },
+    "ExportedFailureFlag": {
+      "additionalProperties": false,
+      "properties": {
+        "trial_id": {
+          "title": "Trial Id",
+          "type": "string"
+        },
+        "source_url": {
+          "title": "Source Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "trial_id",
+        "source_url"
+      ],
+      "title": "ExportedFailureFlag",
+      "type": "object"
+    },
+    "ExportedIntervention": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "synonyms": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Synonyms",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "synonyms"
+      ],
+      "title": "ExportedIntervention",
+      "type": "object"
+    },
+    "ExportedPromise": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "parsed_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Parsed Date"
+        },
+        "article_url": {
+          "title": "Article Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "description",
+        "parsed_date",
+        "article_url"
+      ],
+      "title": "ExportedPromise",
+      "type": "object"
+    },
+    "ExportedSource": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "url"
+      ],
+      "title": "ExportedSource",
+      "type": "object"
+    },
+    "ExportedStatus": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/ClaimStatus"
+        },
+        "overlay_years": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Overlay Years"
+        },
+        "updated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Updated At"
+        },
+        "explained_by": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Explained By",
+          "type": "array"
+        }
+      },
+      "required": [
+        "code",
+        "overlay_years",
+        "updated_at",
+        "explained_by"
+      ],
+      "title": "ExportedStatus",
+      "type": "object"
+    },
+    "ExportedVertical": {
+      "additionalProperties": false,
+      "properties": {
+        "slug": {
+          "title": "Slug",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "slug",
+        "title"
+      ],
+      "title": "ExportedVertical",
+      "type": "object"
+    },
+    "RegulatoryOutcome": {
+      "enum": [
+        "approved",
+        "refused"
+      ],
+      "title": "RegulatoryOutcome",
+      "type": "string"
+    },
+    "TrialPhase": {
+      "description": "Phases as stored on trial events, whatever spelling the registry uses.",
+      "enum": [
+        "early_phase_1",
+        "phase_1",
+        "phase_2",
+        "phase_3",
+        "phase_4",
+        "not_applicable"
+      ],
+      "title": "TrialPhase",
+      "type": "string"
+    },
+    "TrialState": {
+      "enum": [
+        "started",
+        "completed",
+        "terminated",
+        "withdrawn",
+        "suspended"
+      ],
+      "title": "TrialState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+    },
+    "last_checked_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Last Checked At"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/ExportedSource"
+      },
+      "title": "Sources",
+      "type": "array"
+    },
+    "verticals": {
+      "items": {
+        "$ref": "#/$defs/ExportedVertical"
+      },
+      "title": "Verticals",
+      "type": "array"
+    },
+    "claims": {
+      "items": {
+        "$ref": "#/$defs/ExportedClaim"
+      },
+      "title": "Claims",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "generated_at",
+    "last_checked_at",
+    "sources",
+    "verticals",
+    "claims"
+  ],
+  "title": "Export",
+  "type": "object"
+}
