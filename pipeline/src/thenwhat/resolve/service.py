@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from thenwhat.claims.entities import entities_of
 from thenwhat.db.models import Claim, Entity, EntityMatch
 from thenwhat.decide.core import Backend, DecisionFailed
-from thenwhat.decide.steps import score_match
+from thenwhat.decide.steps import score_matches
 from thenwhat.domain import EntityType, ReviewState
 from thenwhat.sources.base import SourceRecord
 
@@ -71,20 +71,27 @@ def resolve_claim(
                 consider(entity, record)
 
     added: list[EntityMatch] = []
+    for entity, record in found:
+        match = EntityMatch(
+            entity_id=entity.id,
+            source_name=record.source_name,
+            external_id=record.external_id,
+            score=0.0,
+        )
+        session.add(match)
+        added.append(match)
+    session.flush()
     try:
-        for entity, record in found:
-            match = EntityMatch(
-                entity_id=entity.id,
-                source_name=record.source_name,
-                external_id=record.external_id,
-                score=0.0,
-            )
-            session.add(match)
-            session.flush()
-            added.append(match)
-            match.score = score_match(
-                session, backend, claim=claim, entity=entity, match=match, candidate=record, now=now
-            )
+        score_matches(
+            session,
+            backend,
+            claim=claim,
+            candidates=[
+                (entity, match, record)
+                for (entity, record), match in zip(found, added, strict=True)
+            ],
+            now=now,
+        )
     except DecisionFailed:
         # The decision log keeps the failure; the unscored candidates are withdrawn.
         for match in added:
@@ -114,7 +121,7 @@ def rescore_claim(
     says how it was scored.
     """
     just_scored = {match.id for match in skip or []}
-    again: list[EntityMatch] = []
+    again: list[tuple[Entity, EntityMatch, SourceRecord]] = []
     for entity in entities_of(session, claim):
         if entity.type is not EntityType.INTERVENTION:
             continue
@@ -131,17 +138,8 @@ def rescore_claim(
         for term in [entity.name, *entity.synonyms]:
             for record in trials.search_trials(term, claim.indication):
                 match = pending.pop((record.source_name, record.external_id), None)
-                if match is None:
-                    continue
-                match.score = score_match(
-                    session,
-                    backend,
-                    claim=claim,
-                    entity=entity,
-                    match=match,
-                    candidate=record,
-                    now=now,
-                )
-                again.append(match)
+                if match is not None:
+                    again.append((entity, match, record))
+    score_matches(session, backend, claim=claim, candidates=again, now=now)
     session.flush()
-    return again
+    return [match for _, match, _ in again]

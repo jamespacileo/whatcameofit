@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.db.models import Claim, DecisionLog, Entity, EntityMatch
-from thenwhat.decide.core import Backend, Decision, decide
+from thenwhat.decide.core import Backend, Decision, decide, decide_many
 from thenwhat.domain import EntityType, EvidenceStage
 from thenwhat.sources.base import SourceRecord
 
@@ -64,54 +64,62 @@ def suggest_evidence_stage(
     )
 
 
-def score_match(
+def score_matches(
     session: Session,
     backend: Backend,
     *,
     claim: Claim,
-    entity: Entity,
-    match: EntityMatch,
-    candidate: SourceRecord,
+    candidates: list[tuple[Entity, EntityMatch, SourceRecord]],
     now: datetime,
-) -> float:
-    """Probability that the registry record is evidence for the claim. Orders the review
-    queue; it approves nothing.
+) -> None:
+    """Set each candidate's score: the probability that its registry record is evidence
+    for the claim. Scores order the review queue; they approve nothing.
 
     A claim is one intervention for one indication, so a trial is a match only when it
     tests that intervention for that indication. The same intervention in another
     condition is its own answer, so the reviewer can be told which it was. A paper is
-    only asked whether it is the same paper.
+    only asked whether it is the same paper. An entity's candidates are scored together,
+    several to a backend call.
     """
-    if entity.type is EntityType.INTERVENTION:
-        options = [MATCH, OTHER_INDICATION, NOT_A_MATCH]
-        question = (
-            "Is this record a trial of the claim's intervention for the claim's indication?\n"
-            f"- {MATCH}: it tests this intervention in the claim's indication, in a form of"
-            " that condition, or in patients who have it.\n"
-            f"- {OTHER_INDICATION}: it tests this intervention for a different condition,"
-            " or only in healthy volunteers.\n"
-            f"- {NOT_A_MATCH}: it is not a trial of this intervention."
+    by_entity: dict[int, list[tuple[Entity, EntityMatch, SourceRecord]]] = {}
+    for candidate in candidates:
+        by_entity.setdefault(candidate[0].id, []).append(candidate)
+    for group in by_entity.values():
+        entity = group[0][0]
+        if entity.type is EntityType.INTERVENTION:
+            options = [MATCH, OTHER_INDICATION, NOT_A_MATCH]
+            question = (
+                "Is this record a trial of the claim's intervention for the claim's indication?\n"
+                f"- {MATCH}: it tests this intervention in the claim's indication, in a form of"
+                " that condition, or in patients who have it.\n"
+                f"- {OTHER_INDICATION}: it tests this intervention for a different condition,"
+                " or only in healthy volunteers.\n"
+                f"- {NOT_A_MATCH}: it is not a trial of this intervention."
+            )
+        else:
+            options = [MATCH, NOT_A_MATCH]
+            question = "Is this record about the same entity as the claim?"
+        decisions = decide_many(
+            session,
+            backend,
+            step=ENTITY_MATCH,
+            intro=(
+                f"{_claim_text(session, claim)}\n\nEntity to match ({entity.type}): {entity.name}"
+            ),
+            question=question,
+            items=[
+                (
+                    f"entity_match:{match.id}",
+                    f"Candidate record from {record.source_name} ({record.external_id}):\n"
+                    f"{_describe(record)}",
+                )
+                for _, match, record in group
+            ],
+            options=options,
+            now=now,
         )
-    else:
-        options = [MATCH, NOT_A_MATCH]
-        question = "Is this record about the same entity as the claim?"
-    state = (
-        f"{_claim_text(session, claim)}\n\n"
-        f"Entity to match ({entity.type}): {entity.name}\n\n"
-        f"Candidate record from {candidate.source_name} ({candidate.external_id}):\n"
-        f"{_describe(candidate)}\n\n"
-        f"{question}"
-    )
-    decision = decide(
-        session,
-        backend,
-        step=ENTITY_MATCH,
-        state=state,
-        options=options,
-        input_ref=f"entity_match:{match.id}",
-        now=now,
-    )
-    return decision.probabilities[MATCH]
+        for (_, match, _), decision in zip(group, decisions, strict=True):
+            match.score = decision.probabilities[MATCH]
 
 
 def _describe(candidate: SourceRecord) -> str:
