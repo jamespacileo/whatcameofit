@@ -14,7 +14,7 @@ worktrees via `wt`, archive via quarantine).
 - `openspec/specs/`: current behavior. `openspec/changes/<change>/`: proposals, requirement deltas, design and task state. Record behavior changes in the active change; do not start a parallel PRD or task list.
 - `GLOSSARY.md`: domain terms. Use them exactly in code, CLI output and site copy.
 - `docs/adr/`: enduring architectural decisions. `docs/sources.md`: terms and rate limits per data source.
-- `PRODUCT.md`: audience and product context. `DESIGN.md`: the site's visual system as built. Both were written without the operator and await confirmation.
+- `PRODUCT.md`: audience and product context, inferred from `SPEC.md` and not yet confirmed line by line. `DESIGN.md`: the site's visual system as built, in the "evidence digest" direction the operator chose.
 
 ## Conventions and guardrails
 

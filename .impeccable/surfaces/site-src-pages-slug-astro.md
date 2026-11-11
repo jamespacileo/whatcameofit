@@ -9,22 +9,20 @@ related_targets: ["site/src/pages/index.astro","site/src/pages/it-happened.astro
 
 Scope: every public page of the site (claim page, topic index, home, approved list, not-found). Mode: Read.
 
-Reader: someone who remembers a headline and wants to know what became of it, usually arriving on a phone from a search or a shared link. Job: learn where the claim stands and check it. Content: status, promises, dated evidence events with source links, source articles. Constraints: no verdict wording, no medical advice, no article text, status never by colour alone, footer notices on every page.
+Reader: someone who remembers a headline and wants to know what became of it, usually on a phone from a search or a shared link. Job: learn where the claim stands and check it. Constraints: no verdict wording, no medical advice, no article text, status never by colour alone, footer notices on every page.
 
-Chosen without the operator: the direction below was assigned by the concept roll and built unattended. It awaits the operator's approval; re-roll or the category standard remain open.
-
-Grounded candidates considered, by resonance: parcel-tracking stepper; patient information leaflet; printed timetable; newspaper follow-up column; library date-stamp slip; museum object label; clinic growth chart. Catalog challengers were declined: none belongs to this reader's world. Kept from one of them: state shown by line form as well as colour.
+History: a first direction (a printed timetable in yellow and black) was built unattended from the concept roll. On 2026-11-11 the operator asked for something calmer, closer to research-summary sites readers already know, relevant to the topic and as simple, and chose "Evidence digest" from three sketches. This is the convention-led path, taken at the operator's request; reference class: research-summary and health-evidence sites such as Examine.com.
 
 ## Direction contract
 
-THESIS: A claim is a service that was announced; the page is its timetable. What was promised sits beside what the records show, year by year, and the reader compares them unaided. Refused: the fact-checker's verdict badge and meter, and the parcel-tracker stepper.
+THESIS: Answer the reader's question in the first panel, then let them check it: what was promised beside what was recorded. Refused: grades, scores, meters and verdict badges, which the reference class often uses and this product must not.
 
-OWN-WORLD: White timetable paper, black ink, one departure-sheet yellow that owns whole fields (masthead band, the Promised column), one signal blue for links. A single grotesque with a condensed cut for heads and tabular figures for dates. Hairline rules, footnote letters for sources, solid versus dashed rules for recorded versus promised.
+OWN-WORLD: White page, one indigo accent, a lavender summary panel, pale amber for anything promised, one friendly sans (Figtree), rounded frames, a small drawn mark per topic.
 
-STORY: The reader sees the status in words, reads two sentences of summary, then runs an eye down the years: promise on yellow, record on white, gaps left as gaps. Each record carries a footnote to its source.
+STORY: The reader sees the topic, the headline, where it stands and the latest record date, reads two sentences, then runs down the years: promise on amber, record on white, gaps left as gaps. Each record has a footnote to its source.
 
-FIRST VIEWPORT: Yellow masthead band with the site name and three plain links. Headline in condensed bold at the left margin. Under it the status line in large condensed type with the overlay note beside it, then the summary at a 65-character measure. The top rows of the year timetable are already visible below.
+FIRST VIEWPORT: Quiet masthead. Topic chip. Headline. The digest panel with the status label at left and the summary at right. The facts row. The heading and top rows of the timetable.
 
-FORM: Printed public timetable, candidate 3 of 7. seed:4e8bc7dce82955a8
+FORM: Category standard, chosen by the operator. seed: none (operator-pinned direction)
 
-SIGNATURE: The year-indexed twin-column table, Promised on yellow and Recorded on white, with quiet rows for years in which nothing was recorded.
+SIGNATURE: The digest panel that answers first, and the pale amber that always and only means "promised".

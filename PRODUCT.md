@@ -46,7 +46,8 @@ The unit is the claim, not the article, and the status is derived by fixed rules
 
 - Name: `thenwhat` is a working codename; the final name and domain are undecided. Brand strings live in one config file.
 - Voice: plain, exact, unexcited. States what a record shows and when.
-- No logo, palette or typeface has been chosen by the operator.
+- Look: the operator chose a calm "evidence digest" direction on 2026-11-11: familiar to readers of research-summary sites, relevant to the topic, simple. It must never borrow those sites' grades or scores. See `DESIGN.md`.
+- No logo has been chosen.
 
 ## Evidence on Hand
 
