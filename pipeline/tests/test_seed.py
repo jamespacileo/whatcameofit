@@ -77,7 +77,10 @@ def test_checked_in_site_export_is_the_export_of_the_seed(session: Session, seed
     """Regenerate site/data/seed-export.json after changing the seed (see README)."""
     load_seed(session, seed, now=NOW)
 
-    fresh = json.loads(build_export(session, now=NOW).model_dump_json())["claims"]
-    checked_in = json.loads(SEED_EXPORT.read_text())["claims"]
+    fresh = json.loads(build_export(session, now=NOW).model_dump_json())
+    checked_in = json.loads(SEED_EXPORT.read_text())
 
-    assert normalised(checked_in) == normalised(fresh)
+    assert normalised(checked_in["claims"]) == normalised(fresh["claims"])
+    # The seed carries its outlet's icon, so a fresh checkout shows it with no fetch.
+    assert [outlet["domain"] for outlet in fresh["outlets"]] == ["kyoto-u.ac.jp"]
+    assert checked_in["outlets"] == fresh["outlets"]

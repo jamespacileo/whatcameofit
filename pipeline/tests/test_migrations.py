@@ -13,6 +13,7 @@ EXPECTED_TABLES = {
     "decision_log",
     "llm_usage",
     "http_cache",
+    "outlet_icon",
 }
 
 

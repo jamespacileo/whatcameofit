@@ -125,6 +125,8 @@ docker compose restart site
 
 `docker compose up` loads `data/seed/tooth-regrowth-usag1.json` when its claim is not in the database yet, so a fresh checkout shows one real claim page. The seed was compiled from the primary sources it links and has not been reviewed by a person; its decisions are recorded as made by the seed loader, not by you. Check it before any public launch.
 
+`thenwhat icons` fetches each outlet's own icon, once per domain, for the site to show beside the outlet's name; the next `export` carries it. It needs `CONTACT_EMAIL` and honours each site's robots.txt (see `docs/sources.md`).
+
 After changing the seed, regenerate the copy the site falls back on, then rerun `make check`:
 
 ```sh

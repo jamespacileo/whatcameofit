@@ -11,6 +11,7 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Index,
+    LargeBinary,
     MetaData,
     Numeric,
     Text,
@@ -269,3 +270,25 @@ class HttpCache(Base):
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB)
     fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
     expires_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+
+
+class OutletIcon(Base):
+    """The small icon an outlet's own site serves, kept once per outlet domain.
+
+    A row with no content records that the domain was asked and had no usable icon,
+    so it is not asked again.
+    """
+
+    __tablename__ = "outlet_icon"
+    __table_args__ = (
+        CheckConstraint(
+            "(content IS NULL) = (media_type IS NULL) AND (content IS NULL) = (icon_url IS NULL)",
+            name="icon_is_whole",
+        ),
+    )
+
+    domain: Mapped[str] = mapped_column(Text, primary_key=True)
+    icon_url: Mapped[str | None] = mapped_column(Text)
+    media_type: Mapped[str | None] = mapped_column(Text)
+    content: Mapped[bytes | None] = mapped_column(LargeBinary)
+    fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)

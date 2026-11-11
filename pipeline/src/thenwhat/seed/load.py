@@ -5,6 +5,7 @@ decisions are recorded as made by the seed loader, never as a human's, and it
 writes nothing to the decision log, so the human labels stay human.
 """
 
+import base64
 from datetime import date, datetime
 from typing import Any
 
@@ -15,7 +16,7 @@ from sqlalchemy.orm import Session
 from thenwhat.claims.entities import add_entity, add_synonym, set_origin_paper
 from thenwhat.claims.entry import add_article, add_claim, add_promise, find_claim
 from thenwhat.claims.status import refresh_status
-from thenwhat.db.models import Claim, EntityMatch, EvidenceEvent
+from thenwhat.db.models import Claim, EntityMatch, EvidenceEvent, OutletIcon
 from thenwhat.domain import (
     Decider,
     EntityType,
@@ -76,6 +77,16 @@ class SeedEvent(Strict):
     summary: str
 
 
+class SeedOutletIcon(Strict):
+    """An outlet's icon as `thenwhat icons` fetched it, kept so a fresh checkout shows it."""
+
+    domain: str
+    icon_url: str
+    media_type: str
+    fetched_at: datetime
+    content_base64: str
+
+
 class SeedFile(Strict):
     compiled_by: str
     checked_on: date
@@ -86,6 +97,7 @@ class SeedFile(Strict):
     promises: list[SeedPromise] = []
     origin_paper: SeedPaper | None = None
     events: list[SeedEvent] = []
+    outlet_icons: list[SeedOutletIcon] = []
 
 
 def load_seed(session: Session, content: dict[str, Any], *, now: datetime) -> Claim | None:
@@ -164,6 +176,18 @@ def load_seed(session: Session, content: dict[str, Any], *, now: datetime) -> Cl
             "checked_on": str(seed.checked_on),
         }
         record_decision(event, ReviewState.APPROVED, by=Decider.SEED, now=now)
+
+    for icon in seed.outlet_icons:
+        if session.get(OutletIcon, icon.domain) is None:
+            session.add(
+                OutletIcon(
+                    domain=icon.domain,
+                    icon_url=icon.icon_url,
+                    media_type=icon.media_type,
+                    content=base64.b64decode(icon.content_base64),
+                    fetched_at=icon.fetched_at,
+                )
+            )
 
     claim.evidence_stage = seed.claim.evidence_stage
     record_decision(claim, ReviewState.APPROVED, by=Decider.SEED, now=now)

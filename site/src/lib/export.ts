@@ -73,6 +73,8 @@ export interface Export {
   preview: boolean;
   sources: { name: string; url: string }[];
   verticals: ExportedVertical[];
+  /** Icons of the outlets whose articles are exported, each as a data URI. */
+  outlets: { domain: string; icon: string; fetched_at: string }[];
   claims: ExportedClaim[];
 }
 

@@ -1,7 +1,10 @@
 ---
-// Names where a web article comes from: a letter tile, the outlet's name and its
-// short domain. The tile is drawn here, not fetched: a page asks the network for
+// Names where a web article comes from: the outlet's own icon, its name and its
+// short domain. The icon was fetched by the pipeline and is served by this site;
+// an outlet without one gets a drawn letter tile. A page asks the network for
 // nothing but the links a reader follows.
+import { outletDomain, outletIconPath } from "../lib/outlets";
+
 interface Props {
   url: string;
   outlet: string;
@@ -9,12 +12,21 @@ interface Props {
 }
 
 const { url, outlet, link = true } = Astro.props;
-const domain = URL.canParse(url) ? new URL(url).hostname.replace(/^www\./, "") : "";
+const domain = outletDomain(url);
+const icon = outletIconPath(domain);
 const letter = (domain || outlet).charAt(0).toUpperCase();
 ---
 
 <span class="outlet">
-  <span class="tile" aria-hidden="true">{letter}</span>
+  {
+    icon ? (
+      <img class="tile" src={icon} alt="" width="17" height="17" loading="lazy" decoding="async" />
+    ) : (
+      <span class="tile" aria-hidden="true">
+        {letter}
+      </span>
+    )
+  }
   {link ? <a href={url}>{outlet}</a> : <span>{outlet}</span>}
   {domain && <span class="domain">{domain}</span>}
 </span>

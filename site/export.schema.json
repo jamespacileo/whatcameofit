@@ -337,6 +337,33 @@
       "title": "ExportedIntervention",
       "type": "object"
     },
+    "ExportedOutlet": {
+      "additionalProperties": false,
+      "description": "An outlet's own icon, stored by the pipeline so that no page fetches it.",
+      "properties": {
+        "domain": {
+          "title": "Domain",
+          "type": "string"
+        },
+        "icon": {
+          "pattern": "^data:image/(png|x-icon|gif|jpeg|webp);base64,[A-Za-z0-9+/]+=*$",
+          "title": "Icon",
+          "type": "string"
+        },
+        "fetched_at": {
+          "format": "date-time",
+          "title": "Fetched At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "domain",
+        "icon",
+        "fetched_at"
+      ],
+      "title": "ExportedOutlet",
+      "type": "object"
+    },
     "ExportedPromise": {
       "additionalProperties": false,
       "properties": {
@@ -538,6 +565,13 @@
       "title": "Verticals",
       "type": "array"
     },
+    "outlets": {
+      "items": {
+        "$ref": "#/$defs/ExportedOutlet"
+      },
+      "title": "Outlets",
+      "type": "array"
+    },
     "claims": {
       "items": {
         "$ref": "#/$defs/ExportedClaim"
@@ -553,6 +587,7 @@
     "preview",
     "sources",
     "verticals",
+    "outlets",
     "claims"
   ],
   "title": "Export",

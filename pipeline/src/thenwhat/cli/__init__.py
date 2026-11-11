@@ -9,6 +9,7 @@ from thenwhat.cli.entry import article_app, claim_app, promise_app
 from thenwhat.cli.events import event_app, fetch_command
 from thenwhat.cli.export import export_command
 from thenwhat.cli.extract import extract_app
+from thenwhat.cli.icons import icons_command
 from thenwhat.cli.resolve import entity_app, resolve_command
 from thenwhat.cli.review import review_app
 from thenwhat.cli.seed import seed_app
@@ -25,6 +26,7 @@ app.command("resolve")(resolve_command)
 app.command("fetch")(fetch_command)
 app.add_typer(event_app, name="event")
 app.add_typer(review_app, name="review")
+app.command("icons")(icons_command)
 app.command("export")(export_command)
 app.add_typer(seed_app, name="seed")
 

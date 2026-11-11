@@ -23,6 +23,13 @@
       "title": "Empty topic"
     }
   ],
+  "outlets": [
+    {
+      "domain": "news.example.org",
+      "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFklEQVR42mPgjllLEmIY1TCqYfhqAAAZyhQQSiRdAQAAAABJRU5ErkJggg==",
+      "fetched_at": "2026-11-11T11:30:00Z"
+    }
+  ],
   "claims": [
     {
       "slug": "quiet-claim",
@@ -203,7 +210,7 @@
       },
       "articles": [
         {
-          "url": "https://news.example.org/4",
+          "url": "https://www.other.example.net/4",
           "outlet": "Example Outlet 4",
           "title": "Example report 4",
           "published_date": "2017-05-04",

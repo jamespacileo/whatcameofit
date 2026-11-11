@@ -7,6 +7,7 @@
 - [x] 1.3 Add the thirteen new topics to the configured set and regenerate `site/data/seed-export.json`; verify `make check` passes
 - [x] 1.4 Look at the built home page at desktop and phone widths; verify nothing overflows and the outlet link is a full-size target
 - [x] 1.5 Give each configured topic a group, carry it in the export and list the topic directory under groups; verify the site tests "Topics with groups" and "No topic has a group" pass
+- [x] 1.6 Fetch one icon per outlet domain with `thenwhat icons` (robots.txt, contact User-Agent, size cap, fetch time), carry it in the export and show it in place of the letter tile; verify `make check` passes, the site test "Offline build" still passes and the seed claim's page shows its outlet's icon
 
 ## 2. Candidate list
 

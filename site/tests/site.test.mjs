@@ -254,6 +254,22 @@ test("Scenario: Long-quiet claim", () => {
   assert.doesNotMatch(html, /\b(dead|abandoned|scam|hoax|debunked)\b/i);
 });
 
+test("Scenario: Outlet with a stored icon", () => {
+  // The icon is a file of this site, written from the export; the page names no other host.
+  const html = page("phase-claim/index.html");
+  assert.match(html, /<img class="tile" src="\/outlet-icons\/news\.example\.org\.png" alt=""/);
+  const icon = fs.readFileSync(path.join(dist, "outlet-icons/news.example.org.png"));
+  assert.deepEqual([...icon.subarray(0, 4)], [0x89, 0x50, 0x4e, 0x47]);
+});
+
+test("Scenario: Outlet with no stored icon", () => {
+  // The fourth report's outlet has no icon in the export, so its letter tile is drawn.
+  const html = page("approved-claim/index.html");
+  assert.match(html, /<span class="tile" aria-hidden="true">\s*O\s*<\/span>/);
+  assert.doesNotMatch(html, /<img class="tile"/);
+  assert.ok(!fs.existsSync(path.join(dist, "outlet-icons/other.example.net.png")));
+});
+
 test("Scenario: Offline build", () => {
   // The build above read one local file. The pages must also ask the network for
   // nothing but the links a reader chooses to follow.
