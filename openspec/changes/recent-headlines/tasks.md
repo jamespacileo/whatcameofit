@@ -20,6 +20,7 @@
 Needs the `.env` settings named in `backfill-dental-regeneration` task 1.1.
 
 - [ ] 3.1 Import the candidates, then run `extract article`, `resolve` and `fetch` for each claim; verify none stopped on an error that is still unexplained
+  - 2026-11-11: all 46 imported and drafted (5 articles could not be read: robots.txt or page would not load). 38 searched, fetched and decided by the assistant for the local preview. 8 broad-name claims still to finish searching. See `data/seed/claims-recent-notes.md`.
 - [ ] 3.2 The operator reviews everything pending for these claims; verify `thenwhat review list` reports an empty queue
 - [ ] 3.3 Export and rebuild the site; verify the home page lists the newest reports and each new topic with a published claim appears under Topics
 - [ ] 3.4 Check five of the new claim pages by hand against their sources, including two whose headline says more than the status; verify the page reads as the outlet's words beside the site's status
