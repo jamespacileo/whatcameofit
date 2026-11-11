@@ -88,3 +88,12 @@ One line per slug: page read, and where the date came from.
 - NJIT follow-up release: June 2022, out of range.
 - Forsyth 3D-printed bone graft: 2025.
 - Columbia tooth scaffold (2010), USC bio-root in minipigs (2006), UT Health San Antonio pulp regeneration (2012), King's College London bioteeth (2013): before 2015.
+
+## Two rows added afterwards (2026-11-11)
+
+Added by the main session to reach 25. Each page was fetched; title and date were read from the page.
+
+- `periodontal-ligament-cell-sheet-implant`: EurekAlert release 795480. Title from the page heading; date from the page's "13-Jun-2018" stamp (a search summary said 11 June; the page says 13 June). The page mentions a dog and the journal. **Double-check:** it concerns ligament around an implant, which sits at the edge of the scope.
+- `lab-grown-teeth-incisor-stem-cells`: USC Today. Title from the page; date 2015-04-21 from the page's published-time metadata. **Double-check:** this is a soft claim, a mechanism finding in rodents with a stated hope, not a treatment. The summary was written from the page's own description line, not from a full read.
+
+Leads tried and dropped in this pass: trafermin (Regroth) approval in Japan, 2016 (only a regulator report and trial records found, no news report; the company site could not be reached); mobilized dental pulp stem cells pilot study, 2017 (journal paper only); periodontal ligament cell sheets in ten patients, 2018 (journal paper only).

@@ -95,8 +95,8 @@
 
 ## 12. Backfill
 
-- [ ] 12.1 Compile dental regeneration claims first reported from 2015 to 2020 into `data/seed/claims.csv` with at least one source article each; verify the file imports cleanly and holds at least 25 claims
-  - 2026-11-11: the file holds 23 claims, each with a source article whose page was fetched and whose title and date were read from it. It imports cleanly (tried in a rolled-back transaction). Two short of 25: 41 further leads were dropped as unverifiable or out of scope, listed in `data/seed/claims-notes.md`. Left open until the operator accepts 23 or adds two.
+- [x] 12.1 Compile dental regeneration claims first reported from 2015 to 2020 into `data/seed/claims.csv` with at least one source article each; verify the file imports cleanly and holds at least 25 claims
+  - 2026-11-11: the file holds 25 claims, each with a source article whose page was fetched and whose title and date were read from it. It imports cleanly (tried in a rolled-back transaction: 25 claims, 25 articles, 3 promises). `data/seed/claims-notes.md` lists how each row was checked, the rows that deserve a second look, and the leads that were dropped. The claims are candidates: importing them creates pending drafts for the operator to review.
 - [ ] 12.2 Run extract and resolve for the first five claims and review them fully; verify their pages build, and record the review time per claim to confirm or adjust the 25 to 40 target
 - [ ] 12.3 Run extract, resolve, fetch and review for the remaining claims; verify the review queue is empty and the export holds at least 25 claims
 - [ ] 12.4 Check five published claim pages by hand against their sources; verify every status matches what the linked evidence shows and note any rule that gave a misleading result
