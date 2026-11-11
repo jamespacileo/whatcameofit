@@ -13,13 +13,16 @@ const INK = "#14161a";
 const YELLOW = "#ffd21e";
 const PAPER = "#ffffff";
 
+// The condensed cut the pages use for heads, as static files the image renderer can read.
 const font = (weight: number) =>
   fs.readFileSync(
-    path.resolve(`node_modules/@fontsource/archivo/files/archivo-latin-${weight}-normal.woff`),
+    path.resolve(
+      `node_modules/@fontsource/archivo-narrow/files/archivo-narrow-latin-${weight}-normal.woff`,
+    ),
   );
 const fonts = [
   { name: "Archivo", data: font(500), weight: 500 as const, style: "normal" as const },
-  { name: "Archivo", data: font(800), weight: 800 as const, style: "normal" as const },
+  { name: "Archivo", data: font(700), weight: 700 as const, style: "normal" as const },
 ];
 
 type Node = { type: string; props: Record<string, unknown> };
@@ -30,8 +33,8 @@ const box = (style: Record<string, unknown>, children: unknown): Node => ({
 
 function fact(label: string, value: string): Node {
   return box({ flexDirection: "column", marginRight: 56 }, [
-    box({ fontSize: 24, fontWeight: 500 }, label),
-    box({ fontSize: 40, fontWeight: 800, lineHeight: 1.1 }, value),
+    box({ fontSize: 28, fontWeight: 500 }, label),
+    box({ fontSize: 52, fontWeight: 700, lineHeight: 1.05 }, value),
   ]);
 }
 
@@ -55,9 +58,9 @@ function card(claim: ExportedClaim): Node {
     },
     [
       box({ flexDirection: "column", padding: "48px 64px 0" }, [
-        box({ fontSize: 30, fontWeight: 800 }, SITE.name),
+        box({ fontSize: 36, fontWeight: 700 }, SITE.name),
         box(
-          { fontSize: claim.headline.length > 70 ? 56 : 70, fontWeight: 800, lineHeight: 1.04, marginTop: 28 },
+          { fontSize: claim.headline.length > 70 ? 76 : 96, fontWeight: 700, lineHeight: 1.0, marginTop: 28 },
           claim.headline,
         ),
       ]),

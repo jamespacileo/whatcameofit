@@ -31,7 +31,17 @@ const description = `${STATUS_LABELS[claim.status.code]}. ${claim.summary}`;
 
 <Base title={claim.headline} description={description} image={`/og/${claim.slug}.png`}>
   <article data-pagefind-body>
-    <h1 class="title">{claim.headline}</h1>
+    <h1 class="title">
+      {
+        /* A name such as "USAG-1" must not break at its hyphen. */
+        claim.headline.split(" ").map((word, index) => (
+          <>
+            {index > 0 && " "}
+            {word.includes("-") ? <span class="unbroken">{word}</span> : word}
+          </>
+        ))
+      }
+    </h1>
 
     <div class="status">
       <p class="label" data-pagefind-meta="status">{STATUS_LABELS[claim.status.code]}</p>
@@ -47,38 +57,6 @@ const description = `${STATUS_LABELS[claim.status.code]}. ${claim.summary}`;
     </div>
 
     <p class="lede" data-pagefind-meta="summary">{claim.summary}</p>
-
-    <dl class="facts">
-      <dt>Intervention</dt>
-      <dd>
-        {claim.intervention.name}
-        {
-          claim.intervention.synonyms.length > 0 && (
-            <span> (also known as {claim.intervention.synonyms.join(", ")})</span>
-          )
-        }
-      </dd>
-      <dt>Claimed for</dt>
-      <dd>{claim.indication}</dd>
-      {
-        claim.first_reported_date && (
-          <>
-            <dt>First reported</dt>
-            <dd>{formatDate(claim.first_reported_date)}</dd>
-          </>
-        )
-      }
-      {
-        claim.evidence_stage && (
-          <>
-            <dt>Evidence then</dt>
-            <dd>{EVIDENCE_STAGES[claim.evidence_stage] ?? claim.evidence_stage}</dd>
-          </>
-        )
-      }
-      <dt>Topic</dt>
-      <dd><a href={`/topic/${claim.vertical}`}>{verticalTitle(claim.vertical)}</a></dd>
-    </dl>
 
     <h2 class="bar" id="timetable">Promised and recorded</h2>
     <table class="timetable" aria-describedby="timetable">
@@ -227,6 +205,39 @@ const description = `${STATUS_LABELS[claim.status.code]}. ${claim.summary}`;
         </p>
       )
     }
+
+    <h2 class="bar">About this claim</h2>
+    <dl class="facts">
+      <dt>Intervention</dt>
+      <dd>
+        {claim.intervention.name}
+        {
+          claim.intervention.synonyms.length > 0 && (
+            <span> (also known as {claim.intervention.synonyms.join(", ")})</span>
+          )
+        }
+      </dd>
+      <dt>Claimed for</dt>
+      <dd>{claim.indication}</dd>
+      {
+        claim.first_reported_date && (
+          <>
+            <dt>First reported</dt>
+            <dd>{formatDate(claim.first_reported_date)}</dd>
+          </>
+        )
+      }
+      {
+        claim.evidence_stage && (
+          <>
+            <dt>Evidence then</dt>
+            <dd>{EVIDENCE_STAGES[claim.evidence_stage] ?? claim.evidence_stage}</dd>
+          </>
+        )
+      }
+      <dt>Topic</dt>
+      <dd><a href={`/topic/${claim.vertical}`}>{verticalTitle(claim.vertical)}</a></dd>
+    </dl>
 
     {
       timetable.sources.length > 0 && (

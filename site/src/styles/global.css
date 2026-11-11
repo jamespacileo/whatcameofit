@@ -172,6 +172,10 @@ main {
   max-width: 22ch;
 }
 
+.unbroken {
+  white-space: nowrap;
+}
+
 .lede {
   font-size: 1.15rem;
   margin-top: 1.1rem;
@@ -218,7 +222,7 @@ main {
   display: grid;
   grid-template-columns: max-content 1fr;
   gap: 0.35rem 1.5rem;
-  margin: 1.75rem 0 0;
+  margin: 1.1rem 0 0;
   max-width: var(--measure);
 }
 
@@ -360,6 +364,14 @@ sup a {
 }
 
 @media (max-width: 40rem) {
+  .masthead nav ul {
+    gap: 0.25rem 1rem;
+  }
+
+  .masthead nav a {
+    font-size: 0.9rem;
+  }
+
   .timetable,
   .timetable tbody,
   .timetable tr,
