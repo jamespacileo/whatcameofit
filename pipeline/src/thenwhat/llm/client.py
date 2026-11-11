@@ -58,6 +58,10 @@ class Llm:
         self._now = now
         self._build_model = build_model
 
+    @property
+    def model_name(self) -> str | None:
+        return self._settings.model
+
     def run[Output: BaseModel](
         self,
         purpose: str,
