@@ -212,7 +212,13 @@ def derive(
         status = ClaimStatus.PRECLINICAL_ONLY
         explaining = []
 
-    last_signal = approved[-1].event_date if approved else first_reported_date
+    # The quiet period runs from the latest thing known: the last approved event or the
+    # first news report, whichever is later. A record older than the report (a trial
+    # registered before the story ran) does not make the claim quieter than its report.
+    signals = [event.event_date for event in approved[-1:]]
+    if first_reported_date is not None:
+        signals.append(first_reported_date)
+    last_signal = max(signals) if signals else None
     overlay_years = None
     if status in OVERLAY_STATUSES and last_signal is not None:
         quiet_years = _whole_years(last_signal, as_of)

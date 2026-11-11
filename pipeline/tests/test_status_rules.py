@@ -310,6 +310,24 @@ def test_quiet_preclinical_claim_carries_the_overlay():
     assert (outcome.status, outcome.overlay_years) == (ClaimStatus.PRECLINICAL_ONLY, 4)
 
 
+def test_quiet_period_starts_at_the_report_when_the_records_are_older():
+    """Scenario: Record older than the report"""
+    # A trial registered years before the news report: the report is the latest signal.
+    events = trial("NCT1", PHASE_1, registered_on=date(2013, 3, 20))
+
+    outcome = result(events, first_reported_date=date(2018, 9, 11), as_of=date(2026, 11, 11))
+
+    assert (outcome.status, outcome.overlay_years) == (ClaimStatus.TRIAL_REGISTERED, 8)
+
+
+def test_report_within_the_quiet_period_means_no_overlay_despite_old_records():
+    events = trial("NCT1", PHASE_1, registered_on=date(2013, 3, 20))
+
+    outcome = result(events, first_reported_date=date(2025, 6, 1), as_of=date(2026, 11, 11))
+
+    assert outcome.overlay_years is None
+
+
 def test_recent_event_means_no_overlay():
     """Scenario: Recent event"""
     events = trial("NCT1", PHASE_1, STARTED, registered_on=date(2023, 1, 1))
