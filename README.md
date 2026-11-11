@@ -26,17 +26,17 @@ Stop the stack with `docker compose down`. Add `-v` to also delete the local dat
 
 ## Entering claims
 
-A claim is one intervention for one indication. Adding a second claim for the same pair is refused and names the existing one. The commands below are shown without the `docker compose run --rm pipeline` prefix.
+A claim is one intervention for one indication. Adding a second claim for the same pair is refused and names the existing one. The commands below are shown without the `docker compose run --rm pipeline` prefix. The examples use a made-up claim, `example-enamel`, with made-up sources; it stays pending and is never published unless you approve it.
 
 ```sh
-thenwhat claim add tooth-regrowth-usag1 \
-  --headline "Antibody regrows teeth in mice" --vertical dental-regeneration \
-  --intervention "USAG-1 antibody" --indication "tooth agenesis"
-thenwhat article add tooth-regrowth-usag1 --url https://example.org/article \
-  --outlet "Example News" --title "Mice regrow teeth" --published 2018-03-10
-thenwhat promise add tooth-regrowth-usag1 --article-url https://example.org/article \
+thenwhat claim add example-enamel-gel \
+  --headline "Gel regrows tooth enamel" --vertical dental-regeneration \
+  --intervention "Enamel gel" --indication "enamel loss"
+thenwhat article add example-enamel-gel --url https://example.org/article \
+  --outlet "Example News" --title "Gel regrows enamel" --published 2019-08-30
+thenwhat promise add example-enamel-gel --article-url https://example.org/article \
   --text "human trials within five years"
-thenwhat claim rename-slug tooth-regrowth-usag1 tooth-regrowth
+thenwhat claim rename-slug example-enamel-gel example-enamel
 ```
 
 A promise's date is read from its text: a span of years counts from the article date, a single year means 31 December of that year, and anything else gets no date. Pass `--date YYYY-MM-DD` to set it yourself. A slug cannot change once its claim has been published.
@@ -46,11 +46,11 @@ A promise's date is read from its text: a span of years counts from the article 
 Needs `CONTACT_EMAIL`, `LLM_MODEL`, the two price settings and the provider's key in `.env`.
 
 ```sh
-thenwhat extract new https://example.org/article --slug tooth-regrowth-usag1 \
-  --vertical dental-regeneration --outlet "Example News" --title "Mice regrow teeth" \
-  --published 2018-03-10
-thenwhat extract article tooth-regrowth-usag1 --article-url https://example.org/article
-thenwhat claim edit tooth-regrowth-usag1 --headline "Corrected headline"
+thenwhat extract new https://example.org/other-article --slug example-draft \
+  --vertical dental-regeneration --outlet "Example News" --title "Another report" \
+  --published 2020-01-15
+thenwhat extract article example-enamel --article-url https://example.org/article
+thenwhat claim edit example-enamel --headline "Corrected headline"
 ```
 
 `extract new` drafts a pending claim from the article. `extract article` adds entities, the paper and promises to a claim that is still pending. If the site's robots.txt forbids fetching, or the page is gone with no archived copy, the command says so: run it again with `--paste` and pipe the text in. Article text is used for the one call and never stored.
@@ -60,10 +60,10 @@ Model calls stop for the month once the recorded cost reaches `LLM_MONTHLY_BUDGE
 ### Entities and registry matches
 
 ```sh
-thenwhat entity synonym tooth-regrowth-usag1 "USAG-1 antibody" "TRG-035"
-thenwhat entity add tooth-regrowth-usag1 --type paper --name "Paper title" --doi 10.1000/example
-thenwhat entity origin-paper tooth-regrowth-usag1 "Paper title"
-thenwhat resolve tooth-regrowth-usag1
+thenwhat entity synonym example-enamel "Enamel gel" "EG-1"
+thenwhat entity add example-enamel --type paper --name "Paper title" --doi 10.1000/example
+thenwhat entity origin-paper example-enamel "Paper title"
+thenwhat resolve example-enamel
 ```
 
 `resolve` searches ClinicalTrials.gov for the intervention under every name it has, looks up each paper's DOI at Crossref, and stores every hit as a pending candidate match with a score. The score only orders the review queue: nothing is approved until you approve it. It also suggests the stage of evidence at announcement, which stays unset until you confirm it. Compound names change over time, so add synonyms before resolving.
@@ -71,11 +71,11 @@ thenwhat resolve tooth-regrowth-usag1
 ### Evidence
 
 ```sh
-thenwhat fetch tooth-regrowth-usag1
-thenwhat event add tooth-regrowth-usag1 --type trial_registered --date 2024-09-01 \
+thenwhat fetch example-enamel
+thenwhat event add example-enamel --type trial_registered --date 2024-09-01 \
   --source-url https://example.org/registry/ID123 --source-name "Registry name" \
   --id ID123 --phase phase_1 --summary "Phase 1 trial registered."
-thenwhat event add tooth-regrowth-usag1 --type regulatory_decision --date 2026-03-01 \
+thenwhat event add example-enamel --type regulatory_decision --date 2026-03-01 \
   --source-url https://example.org/notice --outcome approved --summary "Regulator approved it."
 ```
 
@@ -91,15 +91,15 @@ Nothing reaches the site until you approve it. Draft claims, candidate matches, 
 
 ```sh
 thenwhat review list
-thenwhat review list --claim tooth-regrowth-usag1 --kind match
-thenwhat review approve match 12
-thenwhat review reject event 40
-thenwhat review stage tooth-regrowth-usag1 animal
-thenwhat review flag-failure tooth-regrowth-usag1 --trial NCT00000000 --event 41 \
+thenwhat review list --claim example-enamel --kind event
+thenwhat review approve event EVENT_ID
+thenwhat review reject event OTHER_EVENT_ID
+thenwhat review stage example-enamel animal
+thenwhat review flag-failure example-enamel --trial ID123 --event EVENT_ID \
   --source-url https://example.org/results
 ```
 
-`review list` shows each item's kind and id, what it asserts, its source link and its score. Use the kind and id to approve or reject. A rejected item is kept, so it is never proposed again. `approve` and `reject` also change an earlier decision, including an approval made by rule.
+Replace `EVENT_ID` with an id that `review list` shows. `review list` shows each item's kind and id, what it asserts, its source link and its score. Use the kind and id to approve or reject. A rejected item is kept, so it is never proposed again. `approve` and `reject` also change an earlier decision, including an approval made by rule.
 
 The order of work for one claim:
 
