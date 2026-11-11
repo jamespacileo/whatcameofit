@@ -112,6 +112,27 @@ test("Scenario: Home lists the newest reports", () => {
   assert.match(html, /<a href="https:\/\/news\.example\.org\/3">Example Outlet 3<\/a>/);
 });
 
+test("Scenario: Article of a published claim", () => {
+  const lookup = JSON.parse(page("lookup.json"));
+  // Each article address, in comparison form, names its claim.
+  assert.deepEqual(lookup.articles["news.example.org/3"], ["phase-claim"]);
+  assert.deepEqual(lookup.articles["news.example.org/1"], ["quiet-claim"]);
+  assert.deepEqual(lookup.articles["news.example.org/2"], ["quiet-claim"]);
+  // Only published claims, each with the site's own wording and its page address.
+  assert.deepEqual(Object.keys(lookup.claims).sort(), ["approved-claim", "phase-claim", "quiet-claim"]);
+  const claim = lookup.claims["phase-claim"];
+  assert.equal(claim.status, "Phase 2 trial");
+  assert.equal(claim.headline, "Synthetic claim with a started trial");
+  assert.equal(claim.page, "/phase-claim");
+  assert.match(claim.meaning, /Phase 2/);
+  // The notices and the check date travel with the statuses.
+  assert.equal(lookup.notices.length, 2);
+  assert.match(lookup.notices[1], /not a treatment option/);
+  assert.match(lookup.last_checked, /11\s+Nov\s+2026/);
+  // The footer shows the same notices, from the same source.
+  for (const notice of lookup.notices) assert.ok(page("index.html").includes(notice.split(". ")[0]));
+});
+
 test("Scenario: No approved claims", () => {
   // With an approved claim the page lists it; with none it says so.
   assert.ok(page("it-happened/index.html").includes('href="/approved-claim"'));

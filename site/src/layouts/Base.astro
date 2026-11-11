@@ -4,6 +4,7 @@ import "../styles/global.css";
 import faceUrl from "@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2?url";
 import { SITE } from "../../site.config.mjs";
 import { data, listedTopics } from "../lib/export";
+import { NOTICES } from "../lib/notices";
 import { formatDate } from "../lib/timetable";
 
 interface Props {
@@ -83,11 +84,7 @@ const topicLink =
     <footer class="colophon">
       <div class="wrap">
         <div class="notices">
-          <p>This site gives no medical advice and recommends no treatment.</p>
-          <p>
-            A registered clinical trial is not a treatment option. Talk to a clinician about your
-            own care.
-          </p>
+          {NOTICES.map((notice) => <p>{notice}</p>)}
         </div>
         <div class="details">
           <p>
