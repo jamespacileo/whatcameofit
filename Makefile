@@ -1,6 +1,11 @@
-.PHONY: check lint types test site-build
+.PHONY: check lint types db-up test site-build
 
-# Everything CI runs. No network access is needed once dependencies are installed.
+DB_PORT ?= 5433
+# Tests drop and recreate this database, so its name must end in _test.
+export TEST_DATABASE_URL ?= postgresql+psycopg://thenwhat:thenwhat@127.0.0.1:$(DB_PORT)/thenwhat_test
+
+# Everything CI runs. Needs Docker for the database; no internet access is
+# needed once dependencies and the Postgres image are present.
 check: lint types test site-build
 
 lint:
@@ -10,7 +15,10 @@ lint:
 types:
 	uv run --directory pipeline ty check
 
-test:
+db-up:
+	docker compose up -d --wait db
+
+test: db-up
 	uv run --directory pipeline pytest -q
 
 site/node_modules: site/package-lock.json

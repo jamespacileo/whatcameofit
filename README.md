@@ -26,13 +26,20 @@ Stop the stack with `docker compose down`. Add `-v` to also delete the local dat
 
 ## Development
 
-Needs [uv](https://docs.astral.sh/uv/), Node 22.23.4 or later and make.
+Needs [uv](https://docs.astral.sh/uv/), Node 22.23.4 or later, make and Docker.
 
 ```sh
 make check
 ```
 
-This runs ruff, ty, pytest and the site build. CI runs the same command.
+This runs ruff, ty, pytest and the site build. CI runs the same command. The tests start the Compose database and use a throwaway `thenwhat_test` database in it, which is dropped and rebuilt from the migrations on every run.
+
+Database migrations live in `pipeline/migrations` and are applied each time the `pipeline` container starts. After changing a model, generate a migration with the database running:
+
+```sh
+cd pipeline
+DATABASE_URL=postgresql+psycopg://thenwhat:thenwhat@127.0.0.1:5433/thenwhat uv run alembic revision --autogenerate -m "describe the change"
+```
 
 ## Repository
 

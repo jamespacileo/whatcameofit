@@ -15,7 +15,11 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY src ./src
 RUN uv sync --frozen --no-dev
 
+COPY alembic.ini ./
+COPY migrations ./migrations
+
 RUN useradd --create-home app
 USER app
 
-CMD ["sh", "-c", "thenwhat db-check && exec sleep infinity"]
+# Bring the schema up to date, then stay up for `docker compose run pipeline thenwhat ...`.
+CMD ["sh", "-c", "alembic upgrade head && exec sleep infinity"]

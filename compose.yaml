@@ -9,6 +9,9 @@ services:
       POSTGRES_DB: thenwhat
     volumes:
       - db-data:/var/lib/postgresql/data
+    ports:
+      # Local only: used by the test suite and by Alembic when run outside Compose.
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U thenwhat -d thenwhat"]
       interval: 2s
