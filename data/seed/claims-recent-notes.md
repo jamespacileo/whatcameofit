@@ -205,3 +205,10 @@ Columns: review state, status, evidence stage at announcement, approved matches,
 | pre-leukaemia-vitamin-c | pending | preclinical_only | - | 0 | 0 | 0 |
 | stiff-person-syndrome-car-t | pending | preclinical_only | - | 0 | 0 | 0 |
 | type-2-diabetes-glucose-catalyst-implant | pending | preclinical_only | - | 0 | 399 | 0 |
+
+## After the fixes (later on 2026-11-11)
+
+- All 46 claims now have a status in the preview; the eight broad-name claims were searched again within their condition.
+- Match scoring now asks about the treatment **and** the condition, and the search drops names that identify nothing. The assistant's word comparison is no longer needed for new searches. Candidates scored before the change are marked in the queue as scored without the indication.
+- Measured on the same data: 78 candidates scored in 77 s (was 198 s); a typical claim searched and scored in 10 to 25 s; five claims read, searched and fetched side by side in 68 s. The first run took over an hour for 46 claims and never finished eight of them.
+- Still the assistant's judgement, and worth your eye: which of several same-condition trials belong to a broad claim (`biological-ageing-glp-1-drugs`, `pre-leukaemia-vitamin-c`, `stiff-person-syndrome-car-t`, `knee-osteoarthritis-genicular-artery-embolisation`).

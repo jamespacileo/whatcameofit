@@ -66,7 +66,7 @@ thenwhat entity origin-paper example-enamel "Paper title"
 thenwhat resolve example-enamel
 ```
 
-`resolve` searches ClinicalTrials.gov for the intervention under every name it has, looks up each paper's DOI at Crossref, and stores every hit as a pending candidate match with a score. The score only orders the review queue: nothing is approved until you approve it. It also suggests the stage of evidence at announcement, which stays unset until you confirm it. Compound names change over time, so add synonyms before resolving.
+`resolve` searches ClinicalTrials.gov for the intervention under every name it has, looks up each paper's DOI at Crossref, and stores every hit as a pending candidate match with a score. A trial scores as a match only when it tests the intervention for the claim's indication; the same intervention in another condition scores low and is labelled. A broad name (more than 100 trials) is searched within the indication, and a name that is still broad there contributes nothing. The score only orders the review queue: nothing is approved until you approve it. It also suggests the stage of evidence at announcement, which stays unset until you confirm it. Compound names change over time, so add synonyms before resolving. `resolve --rescore` scores pending candidates again.
 
 ### Evidence
 
@@ -100,6 +100,21 @@ thenwhat review flag-failure example-enamel --trial ID123 --event EVENT_ID \
 ```
 
 Replace `EVENT_ID` with an id that `review list` shows. `review list` shows each item's kind and id, what it asserts, its source link and its score. Use the kind and id to approve or reject. A rejected item is kept, so it is never proposed again. `approve` and `reject` also change an earlier decision, including an approval made by rule.
+
+For many claims at once, one command does the reading, searching and fetching, several claims side by side, and says how long each step took:
+
+```sh
+thenwhat prepare --pending              # every claim awaiting review
+thenwhat prepare claim-one claim-two    # or named claims
+```
+
+Then review. `review list` shows what each registry record says, so most candidates can be judged without opening the link. Several items can be decided at once:
+
+```sh
+thenwhat review approve match 12 13 14
+thenwhat review reject match --claim example-enamel --below 0.1
+thenwhat review approve match --claim example-enamel --at-least 0.9
+```
 
 The order of work for one claim:
 
