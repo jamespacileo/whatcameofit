@@ -60,7 +60,7 @@ Figures are tabular and lining throughout. Reading measure is 66 characters. A n
 
 - **Masthead.** White, a hairline beneath. Site name in blue, three plain links; the current one is underlined. With one listed topic its name is the middle link; with several the link reads "Topics" and leads to the list on the home page. A topic is listed only once it has a published claim.
 - **Topic chip.** A pill with a small line drawing for the topic (a tooth for dental regeneration; a plain ring for a topic without a drawing) and the topic's name. It links to the topic page, from the claim page and from the home page's topic list.
-- **Site name.** The name, then a solid blue dot. On load, and again on hover, three small grey dots count the wait after a headline and close up into the blue dot, the same marker the stage track uses for where a claim stands. No motion when the reader asks for reduced motion.
+- **Wordmark.** The name in sentence case and ink, with a light lead and a heavy tail ("What came **of it**"), then three small grey dots and one solid blue dot: the wait after a headline, then where the claim stands. On a first visit the dots arrive one by one and the blue dot lands; a hover plays it again. At rest all four are there. Chosen by the operator on 2026-11-11 from `.impeccable/mocks/brand/directions.html` (direction A).
 - **Share.** On a claim page, a quiet pill opposite the topic chip. It opens the device's share sheet, or copies the page address and says "Link copied". Hidden when neither is possible, and on paper.
 - **Digest panel.** The status label with an info button, the stage track, the no-signal note in a dashed outline when present, and "Latest record <date>", where the date leads to that record in the timetable, beside the summary. The info button opens a panel with what the status means, the records it rests on (each linking to its line in the timetable) and the date the status was set. The no-signal note opens a panel saying what it does and does not mean. The date a status was computed is never presented as the date something happened.
 - **Stage track.** Six places on a line, from preclinical to approved, with one larger solid blue dot at the status's place. It marks a position, not progress, and is never filled up to the dot. It always sits beside the status in words. Failed, terminated and retracted have no track. The operator approved it on 2026-11-11 as the one exception to "no meters".
@@ -78,9 +78,9 @@ Figures are tabular and lining throughout. Reading measure is 66 characters. A n
 - **Main box.** On the home page the field is the largest control: it takes a pasted article link or search words, and answers a pasted link at once. A tracked article shows its claim and status; an untracked one shows close claims, said to be a guess.
 - **Search.** One labelled field and a button. Shows "Searching…", then results, a plain "Nothing found" sentence, or a plain failure sentence.
 - **Footer.** Deep navy. The two notices in bold, then data sources and the dates the registries were checked and the pages built.
-- **Link-preview card.** White, site name in blue, headline, then a rounded panel with first reported, promised by (a year, never a day count) and status. Its text alternative is built from the same facts.
+- **Link-preview card.** White: the icon and the wordmark, the headline, then a rounded panel with first reported, promised by (a year, never a day count) and status. Its text alternative is built from the same facts. The padding is counted inside the 1200 by 630 image, so nothing is cut off.
 - **Extension popup.** 360px wide, same tokens and face. The site name in blue over a hairline; the claim headline; the status in the digest panel's treatment ("Where it stands", blue label, no-signal note in a dashed outline, one sentence of meaning); first reported; the latest promise on pale amber; one full-width blue button, "See the evidence". The two notices and the last-checked date sit under a hairline in muted small text. Messages (not tracked, not a web page, unreachable) are a heading, one or two sentences and at most one outlined button. Light only.
-- **Favicon.** A navy rounded square with a white "t". Never a solid block of the accent blue with white lettering, which is the shape of an official health mark.
+- **Icon.** A pale blue rounded square holding a dark headline bar, a reply hook hanging off it, and the blue dot at its end: the site is the reply to a headline (direction D on the same board). Used as the favicon, the browser extension's icon and the stamp on the link-preview card. Never a solid block of the accent blue with white lettering, which is the shape of an official health mark.
 
 ## Motion
 
@@ -88,7 +88,7 @@ Two authored moments tell the site's story; the rest is feedback. Nothing loops,
 
 | What | Motion | Time |
 |---|---|---|
-| Site name | Three grey dots count the wait and close into the blue dot. First page of a visit only; a hover plays it again. | 1.6 s, once |
+| Wordmark | Three grey dots arrive one by one, then the blue dot lands. First page of a visit only; a hover plays it again. | 1.8 s, once |
 | Stage marker on a claim page | The blue dot lands on the claim's place and one ring leaves it. It lands in place and never travels along the path, because a claim can reach a place without passing the others. | 0.6 s, once |
 | Popover | Fades in and rises 4 px beside its trigger; leaves faster. | 170 ms in, 90 ms out |
 | Record reached by a link | The page scrolls to it, it shows in the tag blue, then settles to the tint. A link inside a popover closes the popover first. | 2.2 s |

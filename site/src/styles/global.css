@@ -138,43 +138,52 @@ p {
 .masthead .name {
   display: inline-flex;
   align-items: baseline;
-  font-weight: 700;
+  gap: 0.26em;
   font-size: 1.25rem;
   letter-spacing: -0.01em;
-  color: var(--blue);
+  color: var(--ink);
   text-decoration: none;
 }
 
-/* The name's mark tells the site's story once: three dots count the wait after a
-   headline, then close up into one solid dot, the marker for where a claim stands.
-   At rest it is the name and that dot. */
+.masthead .name .lead {
+  font-weight: 400;
+}
+
+.masthead .name .tail {
+  font-weight: 800;
+}
+
+/* The wordmark's tail: three grey dots for the wait after a headline, then the
+   solid blue dot that marks where a claim stands. On a first visit they arrive
+   one by one; at rest all four are there. */
 .masthead .name .wait {
   display: inline-flex;
   align-items: center;
   align-self: center;
-  margin-left: 0.3em;
+  gap: 0.17em;
+  margin-left: 0.12em;
 }
 
 .masthead .name .wait i {
   flex: none;
-  width: 0;
-  height: 0.2em;
+  width: 0.19em;
+  height: 0.19em;
   border-radius: 50%;
-  background: var(--muted);
-  opacity: 0;
+  background: var(--ring);
 }
 
 .masthead .name .wait b {
   flex: none;
-  width: 0.42em;
-  height: 0.42em;
+  width: 0.46em;
+  height: 0.46em;
+  margin-left: 0.08em;
   border-radius: 50%;
   background: var(--blue);
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .masthead .name .wait i {
-    animation: wait-dot 1.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: wait-dot 0.35s ease-out both;
   }
 
   .masthead .name .wait i:nth-child(1) {
@@ -182,15 +191,15 @@ p {
   }
 
   .masthead .name .wait i:nth-child(2) {
-    animation-delay: 0.42s;
+    animation-delay: 0.5s;
   }
 
   .masthead .name .wait i:nth-child(3) {
-    animation-delay: 0.64s;
+    animation-delay: 0.8s;
   }
 
   .masthead .name .wait b {
-    animation: wait-mark 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1.45s both;
+    animation: wait-mark 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1.2s both;
   }
 
   .masthead .name:hover .wait i {
@@ -203,21 +212,11 @@ p {
 }
 
 @keyframes wait-dot {
-  0% {
-    width: 0.2em;
-    margin-right: 0.16em;
+  from {
     opacity: 0;
   }
-  15%,
-  60% {
-    width: 0.2em;
-    margin-right: 0.16em;
+  to {
     opacity: 1;
-  }
-  100% {
-    width: 0;
-    margin-right: 0;
-    opacity: 0;
   }
 }
 
@@ -232,21 +231,11 @@ p {
 
 /* The same motion under second names, so a hover plays it again. */
 @keyframes wait-dot-again {
-  0% {
-    width: 0.2em;
-    margin-right: 0.16em;
+  from {
     opacity: 0;
   }
-  15%,
-  60% {
-    width: 0.2em;
-    margin-right: 0.16em;
+  to {
     opacity: 1;
-  }
-  100% {
-    width: 0;
-    margin-right: 0;
-    opacity: 0;
   }
 }
 

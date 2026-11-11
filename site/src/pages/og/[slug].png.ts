@@ -15,6 +15,7 @@ const BLUE = "#0b5cad";
 const MUTED = "#4d5d6e";
 const PANEL = "#f3f7fb";
 const PAPER = "#ffffff";
+const TINT = "#eaf2fa";
 
 // The site's face, as static files the image renderer can read.
 const font = (weight: number) =>
@@ -31,6 +32,29 @@ const box = (style: Record<string, unknown>, children: unknown): Node => ({
   type: "div",
   props: { style: { display: "flex", ...style }, children },
 });
+
+// The site's icon: a headline bar, and a reply hanging off it that ends in the marker.
+// The same drawing as public/favicon.svg.
+function stamp(size: number): Node {
+  const shape = (type: string, props: Record<string, unknown>): Node => ({ type, props });
+  return shape("svg", {
+    width: size,
+    height: size,
+    viewBox: "0 0 64 64",
+    children: [
+      shape("rect", { width: 64, height: 64, rx: 14, fill: TINT }),
+      shape("rect", { x: 11, y: 13, width: 42, height: 9, rx: 4.5, fill: INK }),
+      shape("path", {
+        d: "M18 30v8a7 7 0 0 0 7 7h12",
+        fill: "none",
+        stroke: INK,
+        "stroke-width": 5.5,
+        "stroke-linecap": "round",
+      }),
+      shape("circle", { cx: 47, cy: 45, r: 7, fill: BLUE }),
+    ],
+  });
+}
 
 function fact(label: string, value: string): Node {
   return box({ flexDirection: "column", marginRight: 64 }, [
@@ -49,8 +73,11 @@ function card(claim: ExportedClaim): Node {
 
   return box(
     {
-      width: "100%",
-      height: "100%",
+      // The padding is counted inside the card's size. Without this the card was laid
+      // out wider and taller than the image, and its right and bottom edges were cut off.
+      boxSizing: "border-box",
+      width: 1200,
+      height: 630,
       flexDirection: "column",
       justifyContent: "space-between",
       background: PAPER,
@@ -60,7 +87,11 @@ function card(claim: ExportedClaim): Node {
     },
     [
       box({ flexDirection: "column" }, [
-        box({ fontSize: 34, fontWeight: 700, color: BLUE }, SITE.name),
+        box({ alignItems: "center", fontSize: 34, color: INK }, [
+          stamp(46),
+          box({ fontWeight: 400, marginLeft: 16 }, SITE.wordmark[0]),
+          box({ fontWeight: 700, marginLeft: 9 }, SITE.wordmark[1]),
+        ]),
         box(
           {
             fontSize: claim.headline.length > 70 ? 60 : 76,
