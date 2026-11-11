@@ -16,6 +16,17 @@ Nothing below is worth doing until all of these are true.
 6. **What the host can count is known**, and the "What is counted" section of the method page says exactly that.
 7. **Advice has been taken** on the two points under "Questions to settle with advice".
 
+## Settings for a public build
+
+All are environment variables read when the site is built; none is a secret.
+
+| Variable | What it sets |
+|---|---|
+| `SITE_URL` | The public address. Canonical links, the sitemap, link previews, the embed snippet and the extension's lookup all use it. |
+| `PUBLIC_BUILD=1` | Stops the build if the address is still a local one. |
+| `SUGGEST_URL` | Where "suggest a headline" leads: a `mailto:` address or a public issue form. Unset, no link is shown. |
+| `CORRECTIONS_URL` | Where "report an error" leads, the same two kinds. Unset, no link is shown. |
+
 ## Order of release
 
 1. **Quietly live.** Deploy, check five claim pages against their sources, and share with a handful of people who will say what is wrong.

@@ -1,8 +1,10 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 
-// The public address is undecided; link previews need an absolute one.
+import { SITE } from "./site.config.mjs";
+
+// One address for everything absolute; see site.config.mjs.
 export default defineConfig({
-  site: process.env.SITE_URL ?? "http://localhost:4321",
+  site: SITE.url,
   trailingSlash: "ignore",
 });

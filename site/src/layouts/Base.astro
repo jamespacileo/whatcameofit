@@ -5,19 +5,38 @@ import faceUrl from "@fontsource-variable/figtree/files/figtree-latin-wght-norma
 import { SITE } from "../../site.config.mjs";
 import { data, listedTopics } from "../lib/export";
 import { NOTICES, PREVIEW_NOTE } from "../lib/notices";
+// Stops a public build whose configured address is a local one.
+import "../lib/public-build";
+import { canonicalAddress } from "../lib/structured";
 import { formatDate } from "../lib/timetable";
 
 interface Props {
   title?: string;
+  /** A shorter title for the browser tab and search results; the full one is still shared. */
+  tabTitle?: string;
   description?: string;
   image?: string;
   imageAlt?: string;
   current?: "home" | "topics" | "approved";
+  /** Structured data for search engines, written into the page as JSON-LD. */
+  structured?: Record<string, unknown>;
 }
 
-const { title, description = SITE.description, image, imageAlt, current } = Astro.props;
+const {
+  title,
+  tabTitle,
+  description = SITE.description,
+  image,
+  imageAlt,
+  current,
+  structured,
+} = Astro.props;
+const canonical = canonicalAddress(Astro.url.pathname);
+// "<" is escaped so that no text in the data can close the script element.
+const structuredJson = structured ? JSON.stringify(structured).replace(/</g, "\\u003c") : null;
 // The name ends in its own punctuation, so the tagline follows it with a space.
-const pageTitle = title ? `${title} | ${SITE.name}` : `${SITE.name} ${SITE.tagline}`;
+const pageTitle =
+  (tabTitle ?? title) ? `${tabTitle ?? title} | ${SITE.name}` : `${SITE.name} ${SITE.tagline}`;
 const imageUrl = image ? new URL(image, Astro.site).href : null;
 // One topic is linked by name. With several, the item leads to the list of them all.
 const topics = listedTopics;
@@ -38,6 +57,14 @@ const topicLink =
     <link rel="preload" as="font" type="font/woff2" href={faceUrl} crossorigin />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link
+      rel="alternate"
+      type="application/atom+xml"
+      title={`${SITE.name} Anniversaries`}
+      href="/anniversaries.xml"
+    />
+    {structuredJson && <script type="application/ld+json" is:inline set:html={structuredJson} />}
     <meta property="og:title" content={title ?? SITE.name} />
     <meta property="og:description" content={description} />
     <meta property="og:site_name" content={SITE.name} />
@@ -113,6 +140,11 @@ const topicLink =
         <div class="notices">
           {NOTICES.map((notice) => <p>{notice}</p>)}
         </div>
+        <nav class="more" aria-label="About this site">
+          <a href="/how-it-works">How it works</a>
+          <a href="/anniversaries">Anniversaries</a>
+          <a href="/data">Data</a>
+        </nav>
         <div class="details">
           <p>
             Data sources:{" "}

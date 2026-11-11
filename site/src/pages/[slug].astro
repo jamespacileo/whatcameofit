@@ -25,7 +25,9 @@ import {
   sourceName,
   type RecordKind,
 } from "../lib/status";
-import { cardAlt, shareSentence } from "../lib/card";
+import { cardAlt, clip, shareSentence } from "../lib/card";
+import { claimPageData } from "../lib/structured";
+import ReportError from "../components/ReportError.astro";
 import { SITE } from "../../site.config.mjs";
 import { cardFor } from "../lib/card-image";
 import { buildTimetable, dayAndMonth, formatDate, recordedLines } from "../lib/timetable";
@@ -58,14 +60,19 @@ const explaining = timetable.sources.filter(({ event }) =>
 );
 const description = `${STATUS_LABELS[claim.status.code]}. ${claim.summary}`;
 const imageAlt = cardAlt(cardFor(claim));
+// In a browser tab and a search result there is room for what and for what, not for
+// a whole headline: about sixty characters with the site's name.
+const tabTitle = clip(`${claim.intervention.name} for ${claim.indication}`, 41);
 const address = `${SITE.url}/${claim.slug}`;
 const sentence = shareSentence(claim, STATUS_LABELS[claim.status.code], data.last_checked_at, address);
 // The whole of what another site needs to show this claim's status.
-const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.headline.replaceAll('"', "&quot;")}" width="440" height="330" style="border:0;max-width:100%" loading="lazy"></iframe>`;
+const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.headline.replaceAll('"', "&quot;")}" width="440" height="420" style="border:0;max-width:100%" loading="lazy"></iframe>`;
 ---
 
 <Base
   title={claim.headline}
+  tabTitle={tabTitle}
+  structured={claimPageData(claim, data.last_checked_at)}
   description={description}
   image={`/og/${claim.slug}.png`}
   imageAlt={imageAlt}
@@ -177,7 +184,11 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
         claim.first_reported_date && (
           <div>
             <dt>First reported</dt>
-            <dd>{formatDate(claim.first_reported_date)}</dd>
+            <dd>
+              <a href={`/year/${claim.first_reported_date.slice(0, 4)}`}>
+                {formatDate(claim.first_reported_date)}
+              </a>
+            </dd>
           </div>
         )
       }
@@ -367,6 +378,11 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
         </>
       )
     }
+
+    <p class="about-page" data-pagefind-ignore>
+      <a href="/how-it-works">How a status is set</a>
+    </p>
+    <ReportError page={`/${claim.slug}`} />
 
     <section class="take" data-pagefind-ignore>
       <h2 class="bar" id="pass-on">Pass it on</h2>

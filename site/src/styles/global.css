@@ -308,6 +308,11 @@ a.chip:hover {
   margin-right: -0.35rem;
 }
 
+/* A chip with no drawing, for a year. */
+.chip.plain-chip {
+  padding-left: 0.8rem;
+}
+
 .chips {
   display: flex;
   flex-wrap: wrap;
@@ -342,6 +347,23 @@ a.chip:hover {
 .share:hover {
   background: var(--tint);
   border-color: var(--tint);
+}
+
+/* Under the records: how a status is set, and how to say one is wrong. */
+.about-page,
+.report {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin: 0.8rem 0 0;
+}
+
+.report {
+  margin-top: 0.3rem;
+}
+
+.suggest {
+  font-size: 0.9rem;
+  color: var(--muted);
 }
 
 /* Pass it on: a sentence to copy, the card as images, and the embed. */
@@ -426,6 +448,12 @@ body.embed {
   line-height: 1.3;
   margin: 0.5rem 0 0.7rem;
   text-wrap: pretty;
+  /* Three lines at most, so the status stays inside the frame the snippet asks for. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
 }
 
 .embed-status {
@@ -1676,6 +1704,18 @@ main ul:not([class]) li + li {
   margin-bottom: 0;
 }
 
+.colophon .more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.5rem;
+  margin-top: 1.25rem;
+  font-weight: 600;
+}
+
+.colophon .more + .details {
+  margin-top: 1rem;
+}
+
 .colophon .details {
   margin-top: 1.25rem;
   padding-top: 1.1rem;
@@ -1874,6 +1914,7 @@ main ul:not([class]) li + li {
 
 @media print {
   .masthead nav,
+  .colophon .more,
   .share,
   .take,
   .search,

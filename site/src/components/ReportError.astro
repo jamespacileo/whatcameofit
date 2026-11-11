@@ -1,0 +1,26 @@
+---
+// The way to report an error on a claim page, drawn only when a corrections address is
+// configured. The link carries the page's own address forward; the site sends nothing.
+// No reply time is promised.
+import { SITE } from "../../site.config.mjs";
+import { CORRECTION_SUBJECT, contactLink } from "../lib/contact.mjs";
+import { canonicalAddress } from "../lib/structured";
+
+interface Props {
+  /** The claim page's path, such as "/phase-claim". */
+  page: string;
+}
+
+const { page } = Astro.props;
+// The page's public address, the same one its canonical link states.
+const link = contactLink(SITE.correctionsUrl, canonicalAddress(page), CORRECTION_SUBJECT);
+---
+
+{
+  link && (
+    <p class="report">
+      Something wrong on this page? Tell us what, and the source that shows it:{" "}
+      <a href={link.href}>Report an error (opens {link.opens})</a>
+    </p>
+  )
+}

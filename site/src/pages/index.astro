@@ -4,11 +4,15 @@ import Outlet from "../components/Outlet.astro";
 import StatusCell from "../components/StatusCell.astro";
 import TopicChip from "../components/TopicChip.astro";
 import { SITE } from "../../site.config.mjs";
+import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
 import { data, listedTopics } from "../lib/export";
 import { recentReports } from "../lib/reports";
 import { formatDate } from "../lib/timetable";
 
 const reports = recentReports(data.claims, 10);
+// Drawn only when a suggestion address is configured. Nothing is carried from here;
+// the lookup's own answers carry a pasted article address.
+const suggest = contactLink(SITE.suggestUrl, "", SUGGEST_SUBJECT);
 
 // The home page names the topics with the most claims; the rest are one link away.
 const topTopics = listedTopics
@@ -18,6 +22,15 @@ const topTopics = listedTopics
   }))
   .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title))
   .slice(0, 12);
+
+// Each year in which a published claim was first reported, newest first, with its count.
+const perYear = new Map<string, number>();
+for (const claim of data.claims) {
+  if (!claim.first_reported_date) continue;
+  const year = claim.first_reported_date.slice(0, 4);
+  perYear.set(year, (perYear.get(year) ?? 0) + 1);
+}
+const years = Array.from(perYear).sort((a, b) => b[0].localeCompare(a[0]));
 
 const recent = data.claims
   .filter((claim) => claim.status.updated_at !== null)
@@ -50,7 +63,16 @@ const recent = data.claims
       every claim.
     </p>
   </noscript>
-  <div class="results" id="results" aria-live="polite"></div>
+  {/* No space inside: an empty answer area is hidden by ":empty". */}
+  <div class="results" id="results" aria-live="polite" data-suggest={SITE.suggestUrl ?? undefined}></div>
+  {
+    suggest && (
+      <p class="suggest">
+        Seen a reported breakthrough we do not track? Send the address of the news article:{" "}
+        <a href={suggest.href}>Suggest a headline (opens {suggest.opens})</a>
+      </p>
+    )
+  }
 
   <h2 class="bar">Headlines reported most recently</h2>
   {
@@ -143,17 +165,39 @@ const recent = data.claims
       </p>
     )
   }
+  {
+    years.length > 0 && (
+      <>
+        <h2 class="bar" id="years">By year first reported</h2>
+        <ul class="chips">
+          {years.map(([year, count]) => (
+            <li>
+              <a class="chip plain-chip" href={`/year/${year}`}>
+                {year}
+                <span class="count">
+                  {count}
+                  <span class="visually-hidden">{count === 1 ? " claim" : " claims"}</span>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </>
+    )
+  }
 </Base>
 
 <script>
   // A pasted link is compared with the site's lookup file here in the browser; the
   // link is never sent anywhere. Other text is searched in an index built with the
   // site. Without JavaScript the topic pages list every claim.
+  import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
   import { closestClaims, readAddress } from "../lib/lookup-match.mjs";
 
   const form = document.querySelector<HTMLFormElement>("#search")!;
   const input = document.querySelector<HTMLInputElement>("#query")!;
   const results = document.querySelector<HTMLDivElement>("#results")!;
+  const suggestAddress = results.dataset.suggest ?? null;
 
   interface Hit {
     url: string;
@@ -207,6 +251,19 @@ const recent = data.claims
     return list;
   }
 
+  // An article we do not track can be suggested, when a suggestion address is set. The
+  // pasted address goes only into this link; the reader's mail or form sends it, if
+  // they choose to.
+  function suggestion(address: string) {
+    const link = contactLink(suggestAddress, address, SUGGEST_SUBJECT);
+    if (!link) return [];
+    const anchor = element("a", `Suggest this headline (opens ${link.opens})`) as HTMLAnchorElement;
+    anchor.href = link.href;
+    const paragraph = element("p", undefined, "suggest");
+    paragraph.append(anchor);
+    return [paragraph];
+  }
+
   let lookup: Promise<Lookup> | undefined;
   const loadLookup = () => (lookup ??= fetch("/lookup.json").then((response) => response.json()));
 
@@ -252,11 +309,16 @@ const recent = data.claims
           "We do not track this exact article. These tracked claims share words with its address. That is a guess: check it is the same treatment for the same condition.",
         ),
         claimList(close),
+        ...suggestion(address),
       );
       return;
     }
-    show(
-      "This article is not one we track, and no tracked claim looks close. That says nothing about the story itself.",
+    results.replaceChildren(
+      element(
+        "p",
+        "This article is not one we track, and no tracked claim looks close. That says nothing about the story itself.",
+      ),
+      ...suggestion(address),
     );
   }
 
@@ -334,3 +396,18 @@ const recent = data.claims
     answer(initial);
   }
 </script>
+
+<style is:global>
+  /* Global, not scoped: scoping would mark every element of the page, and the
+     lookup's answers are drawn by script. */
+  .suggest {
+    margin-top: 0.8rem;
+    max-width: var(--measure);
+    color: var(--muted);
+    font-size: 0.92rem;
+  }
+
+  .results .suggest {
+    margin-top: 0.6rem;
+  }
+</style>
