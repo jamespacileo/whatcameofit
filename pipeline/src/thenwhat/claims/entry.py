@@ -202,6 +202,7 @@ def _find_article(session: Session, claim: Claim, url: str) -> SourceArticle | N
 
 
 find_article = _find_article
+slug_of_claim_covering = _slug_of_claim_covering
 
 
 def check_new_claim(session: Session, slug: str, vertical: str) -> None:
