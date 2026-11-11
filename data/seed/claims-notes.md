@@ -97,3 +97,46 @@ Added by the main session to reach 25. Each page was fetched; title and date wer
 - `lab-grown-teeth-incisor-stem-cells`: USC Today. Title from the page; date 2015-04-21 from the page's published-time metadata. **Double-check:** this is a soft claim, a mechanism finding in rodents with a stated hope, not a treatment. The summary was written from the page's own description line, not from a full read.
 
 Leads tried and dropped in this pass: trafermin (Regroth) approval in Japan, 2016 (only a regulator report and trial records found, no news report; the company site could not be reached); mobilized dental pulp stem cells pilot study, 2017 (journal paper only); periodontal ligament cell sheets in ten patients, 2018 (journal paper only).
+
+## Live run and assistant review (2026-11-11)
+
+The operator asked the assistant to carry on unattended. All 25 rows were imported as they stood (the operator's pass over the rows, task 1.2, has not happened). Every decision below is recorded with the decider **assistant** and appears only in a preview export.
+
+- **Time.** `thenwhat prepare --pending` read 25 articles, searched the registries and fetched records for 25 claims in 80 seconds, five claims at a time. A second pass to fetch after review took 37 seconds. The assistant's review of the nine candidates left in the queue took a few minutes. No review time per claim by a person has been measured.
+- **One article not read:** Queen's University Belfast's robots.txt forbids automated reading (`dentine-repair-aspirin`). That claim has only what the CSV gave it.
+- **Four intervention names were shortened** to the name alone (tideglusib, aspirin and the two amelogenin peptides), as the registry search needs.
+- **What the rule did.** 30 candidates were rejected by rule for scoring under 0.05, among them tideglusib's Alzheimer's, autism and muscular dystrophy trials, read as "the same intervention for another indication". Before the scoring change these would have made a tooth-repair claim read Phase 3.
+- **What the assistant approved:** one trial (NCT01814436, baby-tooth stem cells for necrotic pulp) and seven papers found by their DOI; one follow-up paper that names the same treatment for the same condition (event 359). It rejected one candidate (an aspirin mouth rinse after extraction, match 7432).
+- **Left for you:** 78 follow-up papers, each a paper that cites a claim's original paper. Most are about something else. Two look like real follow-ups and would shorten a no-signal note if approved: event 386 (`periodontal-adipose-stem-cells`, the same cells from the patient's own tissue, 2022) and event 443 (`periodontal-ligament-cell-sheet-implant`, 2019).
+- **A rule that misled, now changed:** the no-signal period ran from the latest approved record even when that record was older than the news report, so `pulp-regeneration-baby-tooth-stem-cells` (reported 2018, trial registered 2013) read "No signal for 13 years". It now runs from the later of the two. See `openspec/changes/quiet-period-starts-at-report`.
+- **Target of 25:** all 25 are in the preview. A normal export still holds only the seeded claim, because no person has reviewed anything.
+
+Outcome per claim. Columns: status, evidence stage at announcement, approved matches, rejected by rule, follow-up papers pending.
+
+| Claim | Status | Stage | Matches | By rule | Papers pending |
+| --- | --- | --- | --- | --- | --- |
+| dentine-regeneration-cpne7-peptide | preclinical_only | animal | 0 | 0 | 0 |
+| dentine-repair-aspirin | preclinical_only | in_vitro | 0 | 5 | 0 |
+| dentine-repair-dlk1 | preclinical_only | animal | 1 | 0 | 8 |
+| dentine-repair-tideglusib | preclinical_only | animal | 0 | 10 | 0 |
+| enamel-regeneration-protein-scaffold | preclinical_only | in_vitro | 0 | 0 | 0 |
+| enamel-regrowth-calcium-phosphate-gel | preclinical_only | in_vitro | 0 | 0 | 0 |
+| enamel-regrowth-short-amelogenin-peptide | preclinical_only | in_vitro | 0 | 0 | 0 |
+| enamel-remineralisation-amelogenin-peptide | preclinical_only | in_vitro | 0 | 1 | 0 |
+| lab-grown-teeth-incisor-stem-cells | preclinical_only | animal | 0 | 0 | 0 |
+| periodontal-3d-bioprinting | preclinical_only | animal | 0 | 3 | 0 |
+| periodontal-3d-printed-scaffold | preclinical_only | early_human | 0 | 0 | 0 |
+| periodontal-adipose-stem-cells | preclinical_only | animal | 1 | 0 | 3 |
+| periodontal-bone-adiporon | preclinical_only | animal | 0 | 1 | 0 |
+| periodontal-ligament-cell-sheet-implant | preclinical_only | animal | 1 | 0 | 2 |
+| periodontal-maresin-resolvin-stem-cells | preclinical_only | in_vitro | 0 | 1 | 0 |
+| periodontal-polydopamine-membrane | preclinical_only | animal | 0 | 0 | 0 |
+| periodontal-zinc-oxide-membrane | preclinical_only | in_vitro | 0 | 0 | 0 |
+| pulp-prefabricated-blood-vessels | preclinical_only | in_vitro | 0 | 0 | 0 |
+| pulp-regeneration-gelma-stem-cells | preclinical_only | animal | 1 | 1 | 0 |
+| pulp-regeneration-peptide-hydrogel | preclinical_only | animal | 0 | 8 | 0 |
+| regenerative-fillings-dentine | preclinical_only | in_vitro | 0 | 0 | 0 |
+| whole-tooth-bioengineered-germ-dog | preclinical_only | animal | 1 | 0 | 5 |
+| whole-tooth-germ-splitting | preclinical_only | animal | 1 | 0 | 3 |
+| whole-tooth-pulp-cell-tooth-germ | preclinical_only | in_vitro | 0 | 0 | 0 |
+| pulp-regeneration-baby-tooth-stem-cells | trial_registered | early_human | 2 | 0 | 57 |

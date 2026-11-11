@@ -41,6 +41,9 @@ worktrees via `wt`, archive via quarantine).
 - After changing the export's shape, regenerate `site/export.schema.json`. After changing the seed, regenerate `site/data/seed-export.json`. Tests fail until both match.
 - Registry fixtures are recorded with a generic client name and have abstracts replaced. Article fixtures are always synthetic.
 - Seed decisions use the `seed` decider. Never record a model's or a script's decision as `human`.
+- An intervention is entered by its name alone: no maker, mechanism or brackets. The registry search sends the name as written, and a description ("the drug") is not a name.
+- A trial matches a claim only when it tests the intervention for the claim's indication. Never approve by score alone on candidates marked as scored without the indication.
+- Prepare many claims with `thenwhat prepare`, not one command per step per claim.
 - A review decision you make yourself is recorded with `--as-assistant`. It stays out of the export unless a preview is asked for (`export --preview` or `EXPORT_PREVIEW=1`), and a preview is never for the public site.
 
 ## Layout
