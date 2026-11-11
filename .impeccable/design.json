@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-11T00:00:00Z",
+  "title": "Design System: thenwhat",
+  "extensions": {
+    "colorMeta": {
+      "yellow": {
+        "role": "primary",
+        "displayName": "Departure-sheet Yellow",
+        "canonical": "#ffd21e",
+        "tonalRamp": ["#2e2500", "#574700", "#836b00", "#b09100", "#dcb600", "#ffd21e", "#ffe37a", "#fff4c7"]
+      },
+      "blue": {
+        "role": "secondary",
+        "displayName": "Signal Blue",
+        "canonical": "#1b47b0",
+        "tonalRamp": ["#0a1a45", "#12307a", "#1b47b0", "#3f68cf", "#6c8de0", "#9db3ec", "#cbd7f6", "#eef2fd"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#14161a",
+        "tonalRamp": ["#14161a", "#2e3035", "#4a4d53", "#6b6e75", "#8f9299", "#b4b6bb", "#d9dadd", "#f3f3f4"]
+      },
+      "paper": { "role": "neutral", "displayName": "Paper", "canonical": "#ffffff" },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "canonical": "color-mix(in oklch, #14161a 66%, #ffffff)"
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "color-mix(in oklch, #14161a 24%, #ffffff)"
+      },
+      "wash": {
+        "role": "neutral",
+        "displayName": "Wash",
+        "canonical": "color-mix(in oklch, #14161a 5%, #ffffff)"
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page title, one per page, condensed, capped at 22ch." },
+      "headline": { "displayName": "Headline", "purpose": "Status label on a claim page." },
+      "title": { "displayName": "Title", "purpose": "Year in the timetable; the masthead name uses the same cut." },
+      "bar": { "displayName": "Bar", "purpose": "Uppercase section heading inside a black bar; column heads without the uppercase." },
+      "lede": { "displayName": "Lede", "purpose": "Summary paragraph under the title or status." },
+      "body": { "displayName": "Body", "purpose": "Running text at a 65ch measure, tabular lining figures." },
+      "note": { "displayName": "Note", "purpose": "Line under an entry; muted on paper, ink on yellow." },
+      "label": { "displayName": "Label", "purpose": "Basis tag and the 'this year' line." }
+    },
+    "shadows": [],
+    "motion": [],
+    "breakpoints": [{ "name": "collapse", "value": "40rem" }]
+  },
+  "components": [
+    {
+      "name": "Masthead",
+      "kind": "nav",
+      "refersTo": "masthead",
+      "description": "Yellow band with the site name and three plain links, on every page.",
+      "html": "<header class=\"ds-masthead\"><a class=\"ds-masthead-name\" href=\"#\">thenwhat</a><nav><a href=\"#\" aria-current=\"page\">Search</a><a href=\"#\">Dental regeneration</a><a href=\"#\">It happened</a></nav></header>",
+      "css": ".ds-masthead { background: var(--yellow); border-bottom: 3px solid var(--ink); display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 2rem; padding: 0.7rem 1rem; font-family: var(--face); } .ds-masthead-name { font-stretch: var(--condensed); font-weight: 800; font-size: 1.7rem; letter-spacing: -0.01em; color: var(--ink); text-decoration: none; } .ds-masthead nav { display: flex; flex-wrap: wrap; gap: 0.25rem 1.5rem; } .ds-masthead nav a { color: var(--ink); font-weight: 600; text-decoration: none; padding-block: 0.35rem; } .ds-masthead nav a:hover, .ds-masthead nav a[aria-current=\"page\"] { text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 0.3em; } .ds-masthead :focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }"
+    },
+    {
+      "name": "Section bar",
+      "kind": "custom",
+      "refersTo": "section-bar",
+      "description": "Black bar that opens every section.",
+      "html": "<h2 class=\"ds-bar\">Promised and recorded</h2>",
+      "css": ".ds-bar { background: var(--ink); color: var(--paper); font-family: var(--face); font-stretch: var(--condensed); font-size: 1.05rem; font-weight: 700; line-height: 1.05; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.55rem 0.8rem; margin: 0; }"
+    },
+    {
+      "name": "Status line with overlay tag",
+      "kind": "custom",
+      "refersTo": "status-label",
+      "description": "Status in words between two heavy rules, with the dashed no-signal tag beside it.",
+      "html": "<div class=\"ds-status\"><p class=\"ds-status-label\">Phase 1 trial</p><p class=\"ds-status-overlay\">No signal for 2 years</p><p class=\"ds-status-meaning\">The furthest trial that has started is a Phase 1 trial.</p><p class=\"ds-status-changed\">Status last changed 30 Sep 2024.</p></div>",
+      "css": ".ds-status { font-family: var(--face); color: var(--ink); padding-block: 1rem; border-block: 3px solid var(--ink); display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.25rem; } .ds-status p { margin: 0; } .ds-status-label { font-stretch: var(--condensed); font-weight: 800; font-size: clamp(1.7rem, 4.6vw, 2.5rem); line-height: 1; } .ds-status-overlay { font-weight: 700; border: 2px dashed var(--ink); padding: 0.2rem 0.6rem; } .ds-status-meaning { flex-basis: 100%; } .ds-status-changed { flex-basis: 100%; color: var(--muted); font-size: 0.9rem; }"
+    },
+    {
+      "name": "Timetable",
+      "kind": "custom",
+      "refersTo": "timetable-cell-promised",
+      "description": "Year-indexed twin-column table: promised on yellow, recorded on white, quiet rows for empty years.",
+      "html": "<table class=\"ds-timetable\"><thead><tr><th>Year</th><th class=\"ds-promised\">Promised for this year</th><th>Recorded this year</th></tr></thead><tbody><tr><th class=\"ds-year\">2018</th><td class=\"ds-promised\"></td><td><b>10 Mar News report</b><span class=\"ds-note\">Example News: <a href=\"#\">Mice regrow teeth after antibody treatment</a></span></td></tr><tr class=\"ds-quiet\"><th class=\"ds-year\">2019 to 2022</th><td class=\"ds-promised\"></td><td>Nothing promised for, or recorded in, these years.</td></tr><tr><th class=\"ds-year\">2023</th><td class=\"ds-promised\"><b>human trials within five years</b><span class=\"ds-note\">Said in <a href=\"#\">Example News</a>, 10 Mar 2018</span></td><td><span class=\"ds-note\">Nothing recorded in this year.</span></td></tr><tr><th class=\"ds-year\">2024</th><td class=\"ds-promised\"></td><td><b>18 Jul Trial registered</b><sup><a href=\"#\">a</a></sup><span class=\"ds-basis\">basis of status</span><span class=\"ds-note\">Trial registered (Phase 1).</span></td></tr></tbody></table>",
+      "css": ".ds-timetable { width: 100%; border-collapse: collapse; border-bottom: 3px solid var(--ink); font-family: var(--face); color: var(--ink); font-variant-numeric: tabular-nums lining-nums; } .ds-timetable th, .ds-timetable td { text-align: left; vertical-align: top; padding: 0.75rem 0.8rem; border-top: 1px solid var(--ink); } .ds-timetable thead th { font-stretch: var(--condensed); font-size: 1.05rem; border-top: 0; padding-block: 0.6rem; } .ds-timetable .ds-year { width: 5.5rem; font-stretch: var(--condensed); font-weight: 800; font-size: 1.6rem; line-height: 1.1; white-space: nowrap; } .ds-timetable .ds-promised { width: 34%; background: var(--yellow); } .ds-timetable .ds-promised a { color: var(--ink); } .ds-timetable .ds-promised .ds-note { color: var(--ink); } .ds-timetable .ds-quiet td, .ds-timetable .ds-quiet th { padding-block: 0.4rem; color: var(--muted); } .ds-timetable .ds-quiet .ds-year { font-size: 1rem; font-weight: 600; } .ds-timetable .ds-note { display: block; color: var(--muted); font-size: 0.9rem; } .ds-timetable a { color: var(--blue); text-decoration-thickness: 1px; text-underline-offset: 0.18em; } .ds-timetable a:hover { text-decoration-thickness: 2px; } .ds-timetable sup a { font-weight: 700; padding-inline: 0.15em; } .ds-timetable .ds-basis { display: inline-block; font-size: 0.8rem; font-weight: 700; background: var(--ink); color: var(--paper); padding: 0.05rem 0.4rem; margin-left: 0.3rem; white-space: nowrap; } .ds-timetable :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }"
+    },
+    {
+      "name": "Index table",
+      "kind": "custom",
+      "refersTo": "index-cell-promise",
+      "description": "Claim list for topic, approved and recent-changes pages, with the latest promise on yellow.",
+      "html": "<table class=\"ds-index\"><thead><tr><th>Claim</th><th>First reported</th><th class=\"ds-promise\">Latest promise</th><th>Status</th></tr></thead><tbody><tr><td class=\"ds-claim\"><a href=\"#\">Example: antibody regrows teeth in mice</a></td><td class=\"ds-when\">10 Mar 2018</td><td class=\"ds-promise\">human trials within five years (by 2023)</td><td><strong>Phase 1 trial</strong></td></tr></tbody></table>",
+      "css": ".ds-index { width: 100%; border-collapse: collapse; border-bottom: 3px solid var(--ink); font-family: var(--face); color: var(--ink); font-variant-numeric: tabular-nums lining-nums; } .ds-index th, .ds-index td { text-align: left; vertical-align: top; padding: 0.7rem 0.8rem; border-top: 1px solid var(--ink); } .ds-index thead th { border-top: 0; font-stretch: var(--condensed); } .ds-index .ds-claim a { font-weight: 700; color: var(--blue); text-decoration-thickness: 1px; text-underline-offset: 0.18em; } .ds-index .ds-claim a:hover { text-decoration-thickness: 2px; } .ds-index .ds-when { white-space: nowrap; } .ds-index .ds-promise { background: var(--yellow); } .ds-index :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }"
+    },
+    {
+      "name": "Search",
+      "kind": "input",
+      "refersTo": "search-input",
+      "description": "Labelled field joined to an ink button, on the home page.",
+      "html": "<form class=\"ds-search\" onsubmit=\"return false\"><label for=\"ds-query\">Search by treatment, condition or name</label><div class=\"ds-search-row\"><input id=\"ds-query\" type=\"search\" placeholder=\"for example: tooth regrowth\"><button type=\"submit\">Search</button></div></form>",
+      "css": ".ds-search { max-width: 44rem; font-family: var(--face); color: var(--ink); } .ds-search label { display: block; font-weight: 700; margin-bottom: 0.4rem; } .ds-search-row { display: flex; gap: 0; } .ds-search input { flex: 1; min-width: 0; font: inherit; padding: 0.75rem 0.9rem; border: 3px solid var(--ink); border-right: 0; border-radius: 0; background: var(--paper); color: var(--ink); caret-color: var(--blue); } .ds-search input::placeholder { color: var(--muted); } .ds-search button { font: inherit; font-weight: 700; padding: 0.75rem 1.25rem; border: 3px solid var(--ink); border-radius: 0; background: var(--ink); color: var(--paper); cursor: pointer; } .ds-search button:hover { background: var(--blue); border-color: var(--blue); } .ds-search :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }"
+    },
+    {
+      "name": "Footnotes",
+      "kind": "custom",
+      "description": "Lettered source list that the superscript marks in the timetable point to.",
+      "html": "<ol class=\"ds-footnotes\"><li><span class=\"ds-mark\">a</span><span><a href=\"#\">ClinicalTrials.gov, NCT00000000</a><span class=\"ds-note\">Date taken from: first posted date.</span></span></li><li><span class=\"ds-mark\">b</span><span><a href=\"#\">Europe PMC</a></span></li></ol>",
+      "css": ".ds-footnotes { padding: 0; margin: 0; list-style: none; max-width: var(--measure); font-family: var(--face); color: var(--ink); } .ds-footnotes li { display: grid; grid-template-columns: 2rem 1fr; padding-block: 0.45rem; border-bottom: 1px solid var(--hairline); } .ds-footnotes .ds-mark { font-weight: 700; } .ds-footnotes a { color: var(--blue); text-decoration-thickness: 1px; text-underline-offset: 0.18em; } .ds-footnotes a:hover { text-decoration-thickness: 2px; } .ds-footnotes .ds-note { display: block; color: var(--muted); font-size: 0.9rem; } .ds-footnotes :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }"
+    },
+    {
+      "name": "Footer",
+      "kind": "custom",
+      "refersTo": "colophon",
+      "description": "Black block on every page carrying the two notices, data sources and last-checked date.",
+      "html": "<footer class=\"ds-colophon\"><div class=\"ds-notices\"><p>This site gives no medical advice and recommends no treatment.</p><p>A registered clinical trial is not a treatment option. Talk to a clinician about your own care.</p></div><div class=\"ds-details\"><p>Data sources: <a href=\"#\">ClinicalTrials.gov</a>, <a href=\"#\">Europe PMC</a>, <a href=\"#\">Crossref</a>. Records are shown as the registries gave them; summaries are ours.</p><p>Registries last checked 10 Nov 2026. Pages built 11 Nov 2026.</p></div></footer>",
+      "css": ".ds-colophon { background: var(--ink); color: var(--paper); padding: 2.25rem 1rem 2.75rem; font-family: var(--face); font-size: 0.95rem; } .ds-colophon p { margin: 0 0 1em; max-width: var(--measure); } .ds-colophon a { color: var(--paper); } .ds-colophon a:hover { text-decoration-thickness: 2px; } .ds-colophon :focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; } .ds-notices p { font-weight: 600; } .ds-notices p:last-child { margin-bottom: 0; } .ds-details { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid color-mix(in oklch, var(--paper) 40%, var(--ink)); display: flex; flex-wrap: wrap; gap: 0.75rem 3rem; } .ds-details p { margin: 0; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Printed Timetable",
+    "overview": "A claim is treated as a service that was announced, and its page is the timetable. What was promised sits on yellow beside what the records show on white, year by year, and the reader compares them unaided. The page is white paper, black ink, one yellow that fills whole fields, and one blue for links. Nothing is decorative: every fill and rule says what kind of thing sits inside it.\n\nThe site is a reading surface for people arriving on a phone from a search or a shared link. It is dense where a timetable is dense (tables, dates, footnote letters) and plain everywhere else. There is no motion, no shadow, no rounded corner, no image, and no icon in the built pages.",
+    "keyCharacteristics": [
+      "Yellow means \"promised\" or \"the sheet's header\"; white means \"recorded\".",
+      "One typeface; a condensed cut for heads, tabular lining figures everywhere.",
+      "Rule weight and line form carry structure and state: 3px ink, 1px ink, 1px hairline, dashed.",
+      "Status is always words, set large in ink. No status has a colour.",
+      "Square corners, flat surfaces, light only."
+    ],
+    "rules": [
+      { "name": "The Whole Field Rule", "body": "Yellow fills a whole band, column or card field with ink text on it. It is not used for text, tags, underlines or small accents.", "section": "colors" },
+      { "name": "The Ink On Yellow Rule", "body": "Anything on yellow is ink, including links and notes (blue and muted are for paper only). On the masthead the focus ring is ink; on the footer it is yellow; elsewhere it is blue.", "section": "colors" },
+      { "name": "The No Status Colour Rule", "body": "No status, event type or outcome has a colour of its own. A status is its wording.", "section": "colors" },
+      { "name": "The One Family Rule", "body": "No second typeface. Contrast comes from width (72% against 100%) and weight (400, 600, 700, 800).", "section": "typography" },
+      { "name": "The Tabular Figures Rule", "body": "Tabular lining numerals are set on the root and apply to every date, year and trial number.", "section": "typography" },
+      { "name": "The Ruled Paper Rule", "body": "Depth is never used to group or lift. Use a rule or a field.", "section": "elevation" },
+      { "name": "The Solid And Dashed Rule", "body": "Solid lines belong to what is recorded; dashed lines belong to what was promised or to a noted absence of records. Line form carries this alongside the yellow field, so it survives without colour.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do state every status in words, using the wording in `site/src/lib/status.ts`. Colour, position or shape alone must never tell the reader a status.",
+      "Do build every page on the shared layout so it carries the yellow masthead and the black footer with both notices, the data sources and the last-checked date.",
+      "Do put promised material on yellow and recorded material on white, side by side, and let the reader compare.",
+      "Do pair any dashed or solid distinction with its fill and its words, so it holds in greyscale and in print.",
+      "Do open each section with a black bar and keep running text within 65ch.",
+      "Do give every table cell a `data-column` label so it survives the collapse below 40rem.",
+      "Do link every record to its source with a footnote letter.",
+      "Do keep text on yellow in ink."
+    ],
+    "donts": [
+      "Don't use verdict wording. The build fails on dead, abandoned, scam, hoax, debunked, bogus, fake, quack or fraud in status text; \"no signal\" is never worded as an ending.",
+      "Don't add verdict badges, meters, scores, ticks, crosses, or red and green for outcomes.",
+      "Don't add a progress stepper for trial phases.",
+      "Don't add a dark theme. The system is light only; no dark values exist.",
+      "Don't add a second typeface, a third colour, shadows, rounded corners or motion.",
+      "Don't use yellow for text or as a small accent, or blue for anything that is not a link, focus or the search hover.",
+      "Don't drop or shorten the footer notices on any page, including error pages.",
+      "Don't hide empty years. A gap in the record is shown as a quiet row."
+    ]
+  }
+}
