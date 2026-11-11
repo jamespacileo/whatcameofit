@@ -29,11 +29,19 @@ const recent = data.claims
   <h1 class="title">What happened to that breakthrough?</h1>
   <p class="lede">{SITE.description}</p>
 
-  <form class="search" role="search" id="search">
-    <label for="query">Search by treatment, condition or name</label>
+  <form class="search lookup" role="search" id="search">
+    <label for="query">Paste a link to an article, or search by treatment or condition</label>
     <div class="row">
-      <input id="query" name="q" type="search" autocomplete="off" placeholder="tooth regrowth" />
-      <button type="submit">Search</button>
+      <input
+        id="query"
+        name="q"
+        type="search"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        placeholder="https://… or tooth regrowth"
+      />
+      <button type="submit">Look up</button>
     </div>
   </form>
   <div class="results" id="results" aria-live="polite"></div>
@@ -132,8 +140,11 @@ const recent = data.claims
 </Base>
 
 <script>
-  // Search runs in the browser against an index built with the site. Without
-  // JavaScript the topic pages list every claim.
+  // A pasted link is compared with the site's lookup file here in the browser; the
+  // link is never sent anywhere. Other text is searched in an index built with the
+  // site. Without JavaScript the topic pages list every claim.
+  import { closestClaims, readAddress } from "../lib/lookup-match.mjs";
+
   const form = document.querySelector<HTMLFormElement>("#search")!;
   const input = document.querySelector<HTMLInputElement>("#query")!;
   const results = document.querySelector<HTMLDivElement>("#results")!;
@@ -142,18 +153,108 @@ const recent = data.claims
     url: string;
     meta: { title?: string; status?: string; summary?: string };
   }
+  interface LookupClaim {
+    headline: string;
+    page: string;
+    status: string;
+    meaning: string;
+    no_signal: string | null;
+    first_reported: string | null;
+    unchecked: string | null;
+  }
+  interface Lookup {
+    articles: Record<string, string[]>;
+    claims: Record<string, LookupClaim>;
+  }
 
-  function show(message: string) {
-    const paragraph = document.createElement("p");
-    paragraph.textContent = message;
-    results.replaceChildren(paragraph);
+  function element(tag: string, text?: string, className?: string) {
+    const node = document.createElement(tag);
+    if (text) node.textContent = text;
+    if (className) node.className = className;
+    return node;
+  }
+
+  function show(...messages: string[]) {
+    results.replaceChildren(...messages.map((message) => element("p", message)));
+  }
+
+  function claimList(claims: LookupClaim[]) {
+    const list = element("ul", undefined, "plain");
+    for (const claim of claims) {
+      const item = element("li");
+      const link = element("a", claim.headline) as HTMLAnchorElement;
+      link.href = claim.page;
+      const note = element("span", undefined, "entry-note");
+      note.append(element("strong", claim.status));
+      const rest = [
+        claim.no_signal,
+        claim.meaning,
+        claim.first_reported && `First reported ${claim.first_reported}.`,
+      ]
+        .filter(Boolean)
+        .join(" ");
+      note.append(` ${rest}`);
+      item.append(link, note);
+      if (claim.unchecked) item.append(element("span", claim.unchecked, "entry-note"));
+      list.append(item);
+    }
+    return list;
+  }
+
+  let lookup: Promise<Lookup> | undefined;
+  const loadLookup = () => (lookup ??= fetch("/lookup.json").then((response) => response.json()));
+
+  async function lookUp(address: string, read: ReturnType<typeof readAddress>) {
+    if (read.kind === "short") {
+      show(
+        `That is a shortened link (${read.host}). Open it, then paste the address of the article it leads to.`,
+      );
+      return;
+    }
+    if (read.kind === "post") {
+      show(
+        `That is a post on ${read.host}, not the article itself. Open the article it links to, then paste that address.`,
+      );
+      return;
+    }
+    show("Looking up…");
+    let index: Lookup;
+    try {
+      index = await loadLookup();
+    } catch {
+      lookup = undefined;
+      show("The lookup is not available right now. The topic pages list every claim.");
+      return;
+    }
+    const slugs = index.articles[read["key"]] ?? [];
+    const tracked = slugs.map((slug) => index.claims[slug]).filter(Boolean);
+    if (tracked.length > 0) {
+      results.replaceChildren(
+        element(
+          "p",
+          tracked.length === 1 ? "This article is one we track." : "This article reports claims we track.",
+        ),
+        claimList(tracked),
+      );
+      return;
+    }
+    const close = closestClaims(index, address).map((match: { claim: LookupClaim }) => match.claim);
+    if (close.length > 0) {
+      results.replaceChildren(
+        element(
+          "p",
+          "We do not track this exact article. These tracked claims share words with its address. That is a guess: check it is the same treatment for the same condition.",
+        ),
+        claimList(close),
+      );
+      return;
+    }
+    show(
+      "This article is not one we track, and no tracked claim looks close. That says nothing about the story itself.",
+    );
   }
 
   async function search(query: string) {
-    if (!query) {
-      results.replaceChildren();
-      return;
-    }
     show("Searching…");
     let hits: Hit[];
     try {
@@ -187,19 +288,35 @@ const recent = data.claims
     results.replaceChildren(list);
   }
 
+  function answer(text: string) {
+    if (!text) {
+      results.replaceChildren();
+      return;
+    }
+    const read = readAddress(text);
+    void (read.kind === "none" ? search(text) : lookUp(text, read));
+  }
+
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    const query = input.value.trim();
+    const text = input.value.trim();
     const url = new URL(location.href);
-    if (query) url.searchParams.set("q", query);
+    if (text) url.searchParams.set("q", text);
     else url.searchParams.delete("q");
     history.replaceState(null, "", url);
-    void search(query);
+    answer(text);
+  });
+
+  // A pasted link is answered at once; typed words wait for the button.
+  input.addEventListener("paste", () => {
+    setTimeout(() => {
+      if (readAddress(input.value.trim()).kind !== "none") form.requestSubmit();
+    });
   });
 
   const initial = new URL(location.href).searchParams.get("q");
   if (initial) {
     input.value = initial;
-    void search(initial);
+    answer(initial);
   }
 </script>

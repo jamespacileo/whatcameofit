@@ -25,6 +25,10 @@ export const GET: APIRoute = () => {
         ? `${promise.description} (by ${promise.parsed_date!.slice(0, 4)})`
         : null,
       unchecked: claim.checked_by_person ? null : UNCHECKED_NOTE,
+      // For offering close matches to an address that is not tracked: the treatment's
+      // names, then the condition and the titles of the reports.
+      names: [claim.intervention.name, ...claim.intervention.synonyms],
+      terms: [claim.indication, ...claim.articles.map((article) => article.title)].join(" "),
     };
     for (const article of claim.articles) {
       const key = articleKey(article.url);

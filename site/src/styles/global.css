@@ -1745,3 +1745,35 @@ a.chip:hover {
     background: none;
   }
 }
+
+/* --- The home page's main box: paste a link or search ---------------------- */
+
+.search.lookup {
+  max-width: 46rem;
+}
+
+.search.lookup label {
+  font-size: 1.08rem;
+}
+
+.search.lookup input {
+  padding: 0.95rem 1.1rem;
+  border-width: 2px;
+  font-size: 1.15rem;
+}
+
+.search.lookup button {
+  padding-inline: 1.5rem;
+  border-width: 2px;
+  font-size: 1.08rem;
+}
+
+.results .plain {
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 40rem) {
+  .search.lookup .row {
+    flex-direction: column;
+  }
+}
