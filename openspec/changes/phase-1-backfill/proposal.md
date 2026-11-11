@@ -18,7 +18,7 @@ Greenfield. This change creates the first working version of the system (codenam
 - A `decide()` interface with an LLM backend and a decision log, used for two advisory steps (evidence stage, entity-match scoring).
 - LLM provider and model from environment variables, with an enforced monthly spend ceiling.
 - Static site built from a JSON export of approved data: claim pages, topic index, home with search, `/it-happened`, status card images, footer disclaimers.
-- A reviewed backfill of 25 to 40 dental regeneration claims first reported from 2015 to 2020.
+- A checked list of 25 candidate dental regeneration claims first reported from 2015 to 2020. Running and reviewing them moved to the change `backfill-dental-regeneration`.
 
 Agreed departures from `SPEC.md`:
 
@@ -56,4 +56,4 @@ None. No specs exist yet.
 - **Cost**: LLM spend capped at about £10 per month.
 - **Data**: no personal data is collected in this change. Registry payloads keep their own licence terms; project code is MIT and the published dataset is CC BY 4.0.
 - **Operations**: runs locally only. Nothing is deployed publicly.
-- **People**: the backfill needs operator time to enter and review 25 to 40 claims.
+- **People**: none beyond the operator's design and decision review. The backfill's review time belongs to `backfill-dental-regeneration`.

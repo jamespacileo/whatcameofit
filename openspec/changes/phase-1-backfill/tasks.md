@@ -78,9 +78,10 @@
 ## 10. Export and site
 
 - [x] 10.1 Implement `export` with the versioned JSON Schema of design D14, overlay recomputed at export time, and `published_at` set on first export; verify tests that a claim with mixed events exports only approved ones, a draft claim is absent, and the output validates against the schema
-- [ ] 10.2 Run an Impeccable design pass for the claim page, topic index and home page, producing `PRODUCT.md` and `DESIGN.md`; verify both files exist and the operator has approved the direction
+- [x] 10.2 Run an Impeccable design pass for the claim page, topic index and home page, producing `PRODUCT.md` and `DESIGN.md`; verify both files exist and the operator has approved the direction
   - 2026-11-11: both files exist and the pages are built in the direction they describe. The direction was chosen without the operator. Left open until the operator approves it or asks for another.
   - 2026-11-11, later: the operator asked to explore other directions: calmer, closer to what readers of health-evidence sites already know, keeping the page's simplicity; the yellow timetable look may not fit. Three sketches of the claim page are in `.impeccable/mocks/decision/directions.html` (clinical record, evidence digest, journal abstract). Open until one is chosen and built.
+  - 2026-11-11, last: the operator chose "Evidence digest". The site is rebuilt in it, `DESIGN.md` describes it as built, and the claim page was checked at 1280 and 375 pixels wide.
 - [x] 10.3 Build the claim page (status with overlay, promises against actual events, event list with source links, status explanation, source article links) and the not-found page; verify against the seeded example at desktop and phone width
 - [x] 10.4 Build the topic index, the home page with Pagefind search and recent status changes, and `/it-happened` with its empty state; verify a search for an entity synonym returns the seeded claim
 - [x] 10.5 Render a status card image per claim at build time and set it as the link preview image; verify the seeded claim's card shows headline, first reported date, "promised by" year and status, and no day count
@@ -94,15 +95,13 @@
 - [x] 11.3 Load the seeded example on a fresh `docker compose up`; verify a clean checkout shows the claim page at the local preview address with no manual steps
 - [x] 11.4 Run `check` on a clean checkout with the network disabled; verify it passes
 
-## 12. Backfill
+## 12. Backfill candidates
 
 - [x] 12.1 Compile dental regeneration claims first reported from 2015 to 2020 into `data/seed/claims.csv` with at least one source article each; verify the file imports cleanly and holds at least 25 claims
   - 2026-11-11: the file holds 25 claims, each with a source article whose page was fetched and whose title and date were read from it. It imports cleanly (tried in a rolled-back transaction: 25 claims, 25 articles, 3 promises). `data/seed/claims-notes.md` lists how each row was checked, the rows that deserve a second look, and the leads that were dropped. The claims are candidates: importing them creates pending drafts for the operator to review.
-- [ ] 12.2 Run extract and resolve for the first five claims and review them fully; verify their pages build, and record the review time per claim to confirm or adjust the 25 to 40 target
-- [ ] 12.3 Run extract, resolve, fetch and review for the remaining claims; verify the review queue is empty and the export holds at least 25 claims
-- [ ] 12.4 Check five published claim pages by hand against their sources; verify every status matches what the linked evidence shows and note any rule that gave a misleading result
 
 ## Workflow follow-up
 
 - Review the change with `code-review`, giving it this change's path and the git comparison point.
 - Archive the change once review is complete, which creates the main specs under `openspec/specs/`.
+- Run and review the backfill in the change `backfill-dental-regeneration`. The operator moved the three review tasks there on 2026-11-11: they need a model key, a contact address and the operator's own review decisions.

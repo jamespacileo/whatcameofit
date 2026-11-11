@@ -203,7 +203,7 @@ The export carries codes, never wording: the site owns every status label and ch
 
 The claim page's main element is a year-indexed table: what was promised for a year sits beside what was recorded in it, and years with neither collapse into one quiet row. This needs no matching of promises to events, which no rule could do reliably. News reports are entries in the recorded column. Events that produced the status are marked in words. Search indexes claim pages only, including the intervention's synonyms.
 
-The visual direction (a printed public timetable) was chosen by the design skill's roll without the operator and awaits approval; see `DESIGN.md` and `.impeccable/surfaces/`.
+The first visual direction (a printed public timetable in yellow and black) was built without the operator. The operator then asked for something calmer and closer to research-summary sites, and chose "evidence digest" from three sketches; the site was rebuilt in it. See `DESIGN.md` and `.impeccable/surfaces/`.
 
 ### D15b. The seed
 
