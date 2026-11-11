@@ -1,0 +1,108 @@
+---
+import Base from "../layouts/Base.astro";
+import StageTrack from "../components/StageTrack.astro";
+import { data } from "../lib/export";
+import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS } from "../lib/status";
+
+const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
+---
+
+<Base
+  title="How it works"
+  description="How a claim's status is set from approved records, what each status means, and what this site does not say."
+>
+  <h1 class="title">How it works</h1>
+  <p class="lede">
+    Each page tracks one reported breakthrough and shows the records found since it was reported.
+    This page explains how the status on a claim page is set and what it does not tell you.
+  </p>
+
+  <h2 class="bar">How a status is set</h2>
+  <p>
+    A status is derived by fixed rules from the approved evidence events listed on the claim page.
+    No model and no editor decides a status. Every status lists the events that produced it.
+  </p>
+  <p>The rules are applied in this order, and the first one that fits sets the status.</p>
+  <ol>
+    <li>
+      If the paper the first news reports were about has a retraction notice, the status is
+      “{STATUS_LABELS.retracted}”.
+    </li>
+    <li>If a regulator has recorded an approval, the status is “{STATUS_LABELS.approved}”.</li>
+    <li>
+      Otherwise, trials that have not been terminated, withdrawn or marked as missing their primary
+      endpoint are the ones that count. If any remain, the status follows the furthest one that has
+      started: “{STATUS_LABELS.phase_3}”, “{STATUS_LABELS.phase_2}” or “{STATUS_LABELS.phase_1}”.
+      If none has started, or none has a phase, the status is “{STATUS_LABELS.trial_registered}”.
+    </li>
+    <li>
+      If no trial remains and a person has marked a trial as missing its primary endpoint, with a
+      source link, the status is “{STATUS_LABELS.failed}”.
+    </li>
+    <li>
+      If no trial remains and every registered trial was terminated or withdrawn, the status is
+      “{STATUS_LABELS.terminated}”.
+    </li>
+    <li>With no trial registered at all, the status is “{STATUS_LABELS.preclinical_only}”.</li>
+  </ol>
+  <p>
+    A claim that is still at a stage open to further evidence (“{STATUS_LABELS.preclinical_only}”
+    through “{STATUS_LABELS.phase_3}”) can also carry the no-signal note, described below.
+  </p>
+
+  <h2 class="bar">What each status means</h2>
+  <dl class="meanings">
+    {
+      codes.map((code) => (
+        <div>
+          <dt>
+            {STAGE_PATH.includes(code) && <StageTrack code={code} />}
+            {STATUS_LABELS[code]}
+          </dt>
+          <dd>{STATUS_MEANINGS[code]}</dd>
+        </div>
+      ))
+    }
+  </dl>
+
+  <h2 class="bar">No signal</h2>
+  <p>
+    A claim that has stayed at an open stage for several years, with no new approved record, shows a
+    note such as “No signal for 5 years”. The note means that the most recent record is that old.
+    The count starts from the date of that record, or from the date the claim was first reported
+    when no record has been found.
+  </p>
+  <p>
+    It says nothing about work that has not been published or registered, and it is not a status.
+    A new record removes it.
+  </p>
+
+  <h2 class="bar">What this site never says</h2>
+  <p class="plain">
+    This site gives no verdict on a claim, a researcher, a company or a news outlet. It gives no
+    medical advice and recommends no treatment. A registered clinical trial is not a treatment
+    option.
+  </p>
+
+  <h2 class="bar">Where the data comes from</h2>
+  <p>
+    Every record on a claim page links to the source that holds it. Records are shown as the
+    registries and databases gave them. The summaries and the wording of statuses are the site’s.
+    News articles are linked and summarised; their text is not copied.
+  </p>
+  <ul>
+    {
+      data.sources.map((source) => (
+        <li>
+          <a href={source.url}>{source.name}</a>
+        </li>
+      ))
+    }
+  </ul>
+
+  <h2 class="bar">What is counted</h2>
+  <p class="plain">Nothing is counted. This site sets no cookie and keeps no record of readers.</p>
+
+  <h2 class="bar">Report an error</h2>
+  <p>Each claim page says how to report an error in it.</p>
+</Base>

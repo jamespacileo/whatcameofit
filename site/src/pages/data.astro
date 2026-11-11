@@ -1,0 +1,47 @@
+---
+import Base from "../layouts/Base.astro";
+import { SITE } from "../../site.config.mjs";
+import { data } from "../lib/export";
+import { DATA_LICENCE, DATA_LICENCE_URL, dataCredit } from "../lib/open-data";
+
+const credit = dataCredit(SITE.name, SITE.url);
+---
+
+<Base
+  title="Data"
+  description="Every published claim, with its status, records and sources, as one file you can download and reuse."
+>
+  <h1 class="title">Data</h1>
+  <p class="lede">
+    Every published claim, with its status, the records that produced it, its source reports and
+    its promises, as one file you can download, cite and build on.
+  </p>
+
+  {
+    data.preview && (
+      <p class="entry-note">
+        This is a preview. The file holds claims that no person has yet checked, and each is marked.
+      </p>
+    )
+  }
+
+  <h2 class="bar">The file</h2>
+  <ul class="plain">
+    <li>
+      <a href="/data/claims.json" download>Download claims.json</a>
+      <span class="entry-note">
+        {data.claims.length}
+        {data.claims.length === 1 ? " claim" : " claims"}, as JSON
+      </span>
+    </li>
+  </ul>
+  <p>
+    The file leaves out article text, claims not approved in review, and outlet icons.
+  </p>
+
+  <h2 class="bar">Licence and credit</h2>
+  <p>
+    The data is offered under <a href={DATA_LICENCE_URL}>{DATA_LICENCE}</a>.
+  </p>
+  <p>Credit: {credit}</p>
+</Base>

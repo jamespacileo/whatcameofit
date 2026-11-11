@@ -1,0 +1,63 @@
+---
+// Every published claim on the calendar day of its first report, so the page is true
+// whenever it is read. A small script marks today's date; the page reads without it.
+import Base from "../layouts/Base.astro";
+import StatusCell from "../components/StatusCell.astro";
+import { calendarByMonth } from "../lib/anniversaries";
+import { data } from "../lib/export";
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+const months = calendarByMonth(data.claims);
+---
+
+<Base
+  title="Anniversaries"
+  description="Each reported claim on the calendar day it was first reported, with the year and where it stands now."
+>
+  <h1 class="title">Anniversaries</h1>
+  <p class="lede">
+    Each claim is listed on the day of the year it was first reported, with the year and where it
+    stands now.
+  </p>
+
+  {
+    months.map((month) => (
+      <section>
+        <h2 class="bar">{MONTH_NAMES[month.month - 1]}</h2>
+        <ul class="calendar">
+          {month.days.map((day) => (
+            <li class="day" data-day={day.id}>
+              <strong class="when">
+                {day.day} {MONTH_NAMES[month.month - 1].slice(0, 3)}
+              </strong>
+              <ul>
+                {day.entries.map((entry) => (
+                  <li>
+                    <span class="year"><span class="visually-hidden">First reported </span>{entry.year}</span>
+                    <a href={`/${entry.claim.slug}`}>{entry.claim.headline}</a>
+                    <span class="status">
+                      <StatusCell claim={entry.claim} />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+</Base>
+
+<script>
+  const now = new Date();
+  const today = `${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const element = document.querySelector(`[data-day="${today}"]`);
+  if (element) {
+    element.classList.add("today");
+    element.scrollIntoView({ block: "center" });
+  }
+</script>
