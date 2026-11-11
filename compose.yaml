@@ -1,0 +1,35 @@
+name: thenwhat
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: thenwhat
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-thenwhat}
+      POSTGRES_DB: thenwhat
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U thenwhat -d thenwhat"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  pipeline:
+    build: ./pipeline
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+psycopg://thenwhat:${POSTGRES_PASSWORD:-thenwhat}@db:5432/thenwhat
+    depends_on:
+      db:
+        condition: service_healthy
+
+  site:
+    build: ./site
+    ports:
+      - "127.0.0.1:${SITE_PORT:-4321}:4321"
+
+volumes:
+  db-data:
