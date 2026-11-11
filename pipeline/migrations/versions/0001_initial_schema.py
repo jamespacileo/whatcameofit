@@ -175,8 +175,12 @@ def upgrade() -> None:
         sa.Column("name", sa.Text(), nullable=False),
         sa.Column("synonyms", postgresql.ARRAY(sa.Text()), server_default="{}", nullable=False),
         sa.Column("is_origin_paper", sa.Boolean(), server_default="false", nullable=False),
+        sa.Column("doi", sa.Text(), nullable=True),
         sa.CheckConstraint(
             "NOT is_origin_paper OR type = 'paper'", name=op.f("ck_entity_origin_paper_is_paper")
+        ),
+        sa.CheckConstraint(
+            "doi IS NULL OR type = 'paper'", name=op.f("ck_entity_doi_only_on_papers")
         ),
         sa.ForeignKeyConstraint(["claim_id"], ["claim.id"], name=op.f("fk_entity_claim_id_claim")),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_entity")),

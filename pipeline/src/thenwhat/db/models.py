@@ -147,6 +147,7 @@ class Entity(Base):
             postgresql_where=text("is_origin_paper"),
         ),
         CheckConstraint("NOT is_origin_paper OR type = 'paper'", name="origin_paper_is_paper"),
+        CheckConstraint("doi IS NULL OR type = 'paper'", name="doi_only_on_papers"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -155,6 +156,9 @@ class Entity(Base):
     name: Mapped[str] = mapped_column(Text)
     synonyms: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, server_default="{}")
     is_origin_paper: Mapped[bool] = mapped_column(default=False, server_default="false")
+    # A DOI the article or operator gave for a paper. It is a lead for resolution,
+    # not a confirmed identifier: confirmation is an approved match.
+    doi: Mapped[str | None] = mapped_column(Text)
 
 
 class EntityMatch(Reviewed, Base):
