@@ -1,0 +1,43 @@
+[project]
+name = "thenwhat"
+version = "0.1.0"
+description = "Pipeline and CLI that track what happened to reported medical breakthroughs"
+authors = [
+    { name = "James Pacileo", email = "608868+jamespacileo@users.noreply.github.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.20.1",
+    "httpx>=0.28.1",
+    "psycopg[binary]>=3.3.8",
+    "pydantic>=2.14.3",
+    "pydantic-ai-slim[anthropic]>=2.67.0",
+    "pydantic-settings>=2.16.2",
+    "rich>=15.0.0",
+    "sqlalchemy>=2",
+    "typer>=0.29.1",
+]
+
+[project.scripts]
+thenwhat = "thenwhat.cli:app"
+
+[build-system]
+requires = ["uv_build>=0.11.20,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "ruff>=0.17.4",
+    "ty>=0.0.101",
+]
