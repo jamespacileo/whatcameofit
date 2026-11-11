@@ -5,6 +5,8 @@ Domain terms for thenwhat. Behavior is specified in `openspec/`; this file only 
 | Term | Meaning |
 |---|---|
 | **Claim** | One intervention for one indication, as reported in the news. The unit the site tracks. Many articles can report the same claim. |
+| **Intervention** | The drug, device or method a claim is about. Stored as the claim's intervention entity, with synonyms for its other names. |
+| **Indication** | The condition the intervention is claimed to treat. With the intervention it makes a claim's identity. |
 | **Source article** | A news article that reported a claim. Stored as URL, outlet, title and date. Its text is never stored. |
 | **Promise** | A timeline stated in a source article ("human trials by 2025"). A claim can have several, each tied to its article. |
 | **Vertical** | The topic area a claim belongs to, for example dental regeneration. |

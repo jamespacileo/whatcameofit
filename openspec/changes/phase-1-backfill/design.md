@@ -75,7 +75,7 @@ Python 3.12 with `uv`; Typer and Rich for the CLI; SQLAlchemy 2 with Alembic; ht
 
 | Table | Key columns |
 |---|---|
-| `claim` | id, slug, headline, summary, vertical, first_reported_date, evidence_stage (nullable), current_status, overlay_years (nullable), status_updated_at, published_at (nullable), review columns |
+| `claim` | id, slug, headline, summary, vertical, indication, first_reported_date, evidence_stage (nullable), current_status, overlay_years (nullable), status_updated_at, published_at (nullable), review columns |
 | `source_article` | id, claim_id, url, outlet, title, published_date, content_hash, archive_url; unique (claim_id, url) |
 | `promise` | id, claim_id, source_article_id, description, parsed_date (nullable) |
 | `entity` | id, claim_id, type, name, synonyms[], is_origin_paper |
@@ -99,6 +99,16 @@ claim add / import-csv ─▶ extract ─▶ review (draft claim, evidence stage
 ```
 
 Each arrow is a separate CLI command, so every step can be re-run on its own. `fetch` and `resolve` are idempotent.
+
+### D4a. Manual entry
+
+A claim's identity is its intervention and its indication. The indication is a column on the claim. The intervention is the claim's intervention entity, created by `claim add`, so that synonyms added later also guard against duplicates. The duplicate check runs in the entry code, not as a database constraint, because it compares against synonyms.
+
+Entry rules live in functions of the `claims` package that take a session and raise a refusal the CLI prints. Tests sit on those functions and on the pure promise-date parser; each CLI command has one success and one refusal test for wiring only.
+
+The set of verticals is a constant in `claims/verticals.py`. Promise dates are read from two wordings only, a span of years ("within five years", counted from the article date) and a single calendar year (end of that year); anything else gets no date unless the operator supplies one.
+
+CSV import takes one row per source article. Rows sharing a slug form one claim: the first defines it, later ones may leave claim columns blank and may not contradict it. Field problems in every row are collected and reported together before anything is written; the rows are then written inside one savepoint, so a refusal by an entry rule undoes the whole file. A slug that already exists is refused. Row numbers count the header as row 1.
 
 ### D5. Trial events from one record
 

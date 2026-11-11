@@ -26,11 +26,11 @@
 
 ## 4. Claims and manual entry
 
-- [ ] 4.1 Implement `claim add` and `article add` with slug and vertical validation; verify tests for duplicate slug, unknown vertical and duplicate article URL
-- [ ] 4.2 Implement promise records and date parsing (year only, relative, unparseable); verify a test for each scenario in `specs/claims/spec.md`
-- [ ] 4.3 Keep `first_reported_date` equal to the earliest article date; verify with a test that adds an earlier article later
-- [ ] 4.4 Implement all-or-nothing `claim import-csv` with row-numbered errors and document the CSV columns in the README; verify tests for a valid file and a file with one bad row
-- [ ] 4.5 Refuse slug changes once `published_at` is set; verify with a test
+- [x] 4.1 Implement `claim add` and `article add` with slug and vertical validation; verify tests for duplicate slug, unknown vertical and duplicate article URL
+- [x] 4.2 Implement promise records and date parsing (year only, relative, unparseable); verify a test for each scenario in `specs/claims/spec.md`
+- [x] 4.3 Keep `first_reported_date` equal to the earliest article date; verify with a test that adds an earlier article later
+- [x] 4.4 Implement all-or-nothing `claim import-csv` with row-numbered errors and document the CSV columns in the README; verify tests for a valid file and a file with one bad row
+- [x] 4.5 Refuse slug changes once `published_at` is set; verify with a test
 
 ## 5. Source clients
 

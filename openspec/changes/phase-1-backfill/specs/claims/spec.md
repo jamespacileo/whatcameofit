@@ -17,6 +17,17 @@ A claim SHALL represent exactly one intervention for one indication. News articl
 - **WHEN** an operator adds a claim for an intervention that already has a claim for a different indication
 - **THEN** a separate claim is created
 
+### Requirement: No duplicate claims
+Every claim SHALL record its intervention and its indication. The system SHALL refuse a new claim whose indication equals that of an existing claim and whose intervention equals that claim's intervention by name or by any synonym, ignoring letter case and spacing. The refusal SHALL name the existing claim.
+
+#### Scenario: Second claim for the same intervention and indication
+- **WHEN** an operator adds a claim for an intervention and indication that already have a claim
+- **THEN** the claim is not created and the operator is told the slug of the existing claim
+
+#### Scenario: Compound known under another name
+- **WHEN** an existing claim's intervention has the synonym "TRG-035" and an operator adds a claim for "trg-035" with the same indication
+- **THEN** the claim is not created
+
 ### Requirement: Claim slug
 Each claim SHALL have a unique slug made of lowercase letters, digits and hyphens, at most 60 characters long. A slug SHALL NOT change after the claim has been published.
 
@@ -37,7 +48,7 @@ A claim SHALL have one or more source articles, each recorded with URL, outlet, 
 
 #### Scenario: Duplicate article URL
 - **WHEN** an operator adds an article whose URL is already attached to the claim
-- **THEN** no second article record is created
+- **THEN** no second article record is created and the operator is told the claim already has it
 
 ### Requirement: No article text
 The system SHALL NOT persist the body text of a news article in any form. Only the URL, outlet, title, published date, a content hash and an archive URL MAY be kept for an article.
