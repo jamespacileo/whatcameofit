@@ -17,3 +17,10 @@
 
 - [ ] 3.1 The operator loads `extension/dist` in Chrome and clicks the button on a tracked and an untracked article; verify both views
 - [ ] 3.2 The operator runs the Safari project and does the same; verify both views
+
+## 4. Paste a link on the home page
+
+- [x] 4.1 Read a pasted address in the shapes links are shared in and name shortened links and posts; verify the address tests pass for each outlet group and wrapper
+- [x] 4.2 Offer the closest tracked claims for an untracked address; verify the three closest-match tests pass
+- [x] 4.3 Make the home page's main field take a link or search words; verify the site builds and the search scenario still passes
+- [ ] 4.4 Try the field in a browser with a tracked link, an untracked one and a shortened one; verify each answer

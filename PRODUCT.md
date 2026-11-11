@@ -40,7 +40,8 @@ The unit is the claim, not the article, and the status is derived by fixed rules
 - Never: article text. News articles are linked by outlet, title and date only.
 - Every page carries a footer: not medical advice; a registered trial is not a treatment option; data sources; last-checked date.
 - Browser extension (Chrome and Safari): one click on an article shows the tracked claim's status. It matches the address inside the browser and sends no page address anywhere. Built 2026-11-11; not yet tried in a real browser toolbar, not published in any store.
-- Not yet: email follow, RSS, paste-a-URL lookup, public deployment.
+- Paste a link: the home page's main box takes an article's address and shows the tracked claim's status, or the closest tracked claims when the article itself is not tracked. The address is compared in the browser and sent nowhere. It reads links in the shapes they are shared in (social redirects, AMP, archives, mobile hosts). It cannot open a shortened link or a social media post, and says so.
+- Not yet: email follow, RSS, public deployment.
 - Topics: dental regeneration was the first. On 2026-11-11 the operator asked for wide coverage of recent, popular, miraculous-sounding cure stories, clickbait titles included, so thirteen more topics are configured. A topic is listed on the site once it has a published claim.
 - Headlines: an outlet's title is shown as a quotation with the outlet named, beside the status the evidence supports. The site never repeats a headline's wording as its own.
 
