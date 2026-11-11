@@ -125,3 +125,83 @@ Five claims were imported, drafted and searched with `openai:gpt-6-luna`.
 - **Descriptive synonyms add noise.** The model recorded phrases such as "one-time CRISPR treatment" as other names for CTX310, and the search for them returned 84 unrelated trials. Match scoring ranked them all near zero, so nothing wrong was suggested, but each cost a model call.
 - **Match scoring separated cleanly.** CTX310: 1 of 85 trial candidates scored above 0.5. Compound 991 (worms and flies only): 0 of 23, which is right.
 - **Cost.** 140 model calls for five claims came to about $0.014.
+
+## Assistant review for the local preview (2026-11-11)
+
+The operator was away and asked the assistant to keep going until the proof of concept worked. Every decision below was recorded with the decider **assistant**, never as the operator's. Assistant-decided claims are left out of a normal export; they appear only in a preview export, where each page says no person has checked it. To make a decision your own, repeat it without `--as-assistant`.
+
+### What the assistant did
+
+- Imported all 46 claims, had the model read each article, and searched the registries for each claim.
+- Approved a trial match when the model scored it 0.90 or more **and** the trial is for the claim's own condition. Rejected matches scored 0.10 or less, and strong matches for another condition. Left the rest pending.
+- Read the registries for approved matches, confirmed the model's suggested evidence stage, and approved the claim.
+- Entered two FDA approvals by hand from the FDA's own announcements, read on the day: bepirovirsen (2026-10-20) and zilganersen (2026-09-03).
+- Gave nine claims an extra search name from its own knowledge, not from the article (for example CVN424 for solengepras, BPL-003 for mebufotenin, GS030 for the optogenetic therapy). They only widen the search; the matches they found were then judged like any other.
+
+### What you should check first
+
+- **The condition check is the assistant's, not the pipeline's.** Match scoring looks only at the treatment. For the Alzheimer's sleep finding in mice it proposed 31 trials of the laboratory drug (pexidartinib) in tumours, all scored 0.99; score alone would have shown a mouse finding as Phase 3. The assistant compared condition words by script, with a small list of lay and registry synonyms. This needs to become part of match scoring: a claim is one treatment for one condition.
+- **"Preclinical only" on claims with human studies.** The status means no trial was found in the registries checked. It reads wrongly for `drug-resistant-epilepsy-gene-therapy` (three patients treated), `type-2-diabetes-remission-diet-exercise`, `bacterial-infection-ai-designed-phage`, `peanut-allergy-microneedle-stamp` and `hair-regrowth-electric-comb`'s neighbours where the treatment has no searchable name.
+- **`dementia-lymphatic-venous-surgery` shows Phase 3** because one registered surgical trial carries that label. The rule is working as written; whether a phase label on a procedure should count is a question for the rules.
+- **Follow-up papers.** The assistant approved two low-confidence follow-up paper events without close reading (events 57 and 59) and rejected one that looked unrelated (58). They do not affect any status.
+- **Left pending for you:** matches scored between 0.10 and 0.90, combination trials (for example `hepatitis-b-bepirovirsen` match 144, `ptsd-personalised-magnetic-stimulation` matches 454 and 458), basket trials, and one trial in women on the male-pattern-baldness claim (146).
+- **Five articles were not read by the model.** The US Sun's robots.txt forbids automated reading and the pipeline respected it (three claims); two other pages would not load. Those claims have only what the CSV gave them.
+
+### Not finished
+
+Eight claims with broad names were still being searched when this was written, or their search was cut off: `biological-ageing-glp-1-drugs`, `pre-leukaemia-vitamin-c`, `stiff-person-syndrome-car-t`, `heart-failure-ipsc-heart-muscle-cells`, `type-2-diabetes-glucose-catalyst-implant`, `kidney-failure-pig-kidney-transplant`, `knee-osteoarthritis-genicular-artery-embolisation`, `muscle-loss-atr-258`. A broad name returns hundreds of loosely related trials and each is scored by a model call, one at a time. They are imported and pending.
+
+Model use for the whole run: about 2,400 calls, $0.22.
+
+### Outcome per claim
+
+Columns: review state, status, evidence stage at announcement, approved matches, pending matches, approved events.
+
+| Claim | State | Status | Stage | Matches | Pending | Events |
+| --- | --- | --- | --- | --- | --- | --- |
+| alexander-disease-zilganersen | approved | approved | late_human | 2 | 0 | 4 |
+| hepatitis-b-bepirovirsen | approved | approved | late_human | 12 | 1 | 29 |
+| cholesterol-crispr-ctx310 | approved | phase_1 | early_human | 2 | 0 | 2 |
+| retinitis-pigmentosa-optogenetic-therapy | approved | phase_1 | early_human | 2 | 0 | 2 |
+| depression-mebufotenin-nasal-spray | approved | phase_2 | early_human | 3 | 0 | 6 |
+| malaria-cabamiquine-pyronaridine | approved | phase_2 | early_human | 2 | 1 | 8 |
+| refractory-angina-coronary-sinus-reducer | approved | phase_2 | early_human | 12 | 1 | 24 |
+| respiratory-viruses-inna-051-nasal-spray | approved | phase_2 | early_human | 3 | 0 | 7 |
+| dementia-lymphatic-venous-surgery | approved | phase_3 | early_human | 13 | 3 | 17 |
+| endometrial-cancer-sac-tmt | approved | phase_3 | late_human | 2 | 4 | 4 |
+| hair-regrowth-vdphl01 | approved | phase_3 | late_human | 3 | 1 | 6 |
+| low-back-pain-rexlemestrocel-l | approved | phase_3 | late_human | 2 | 0 | 6 |
+| melanoma-mrna-vaccine-intismeran | approved | phase_3 | late_human | 3 | 1 | 6 |
+| parkinsons-solengepras | approved | phase_3 | late_human | 4 | 0 | 14 |
+| primary-aldosteronism-baxdrostat | approved | phase_3 | early_human | 3 | 0 | 7 |
+| visceral-fat-cbl-514 | approved | phase_3 | early_human | 12 | 0 | 30 |
+| alzheimers-nano-eraser | approved | preclinical_only | animal | 0 | 0 | 0 |
+| alzheimers-nasal-spray-extracellular-vesicles | approved | preclinical_only | animal | 1 | 0 | 0 |
+| alzheimers-sleep-microglia-removal | approved | preclinical_only | animal | 1 | 0 | 1 |
+| bacterial-infection-ai-designed-phage | approved | preclinical_only | early_human | 0 | 0 | 0 |
+| cell-rejuvenation-blood-to-neural-stem-cells | approved | preclinical_only | in_vitro | 1 | 0 | 0 |
+| diffuse-midline-glioma-b-sync-car-t | approved | preclinical_only | animal | 1 | 0 | 0 |
+| drug-resistant-epilepsy-gene-therapy | approved | preclinical_only | early_human | 0 | 0 | 0 |
+| hair-regrowth-electric-comb | approved | preclinical_only | animal | 0 | 0 | 0 |
+| heart-failure-temporary-gene-instructions | approved | preclinical_only | animal | 0 | 0 | 0 |
+| lifespan-ampk-activator-991 | approved | preclinical_only | animal | 0 | 0 | 0 |
+| mash-dt-109 | approved | preclinical_only | animal | 1 | 0 | 1 |
+| multiple-sclerosis-kamuvudine-k-9 | approved | preclinical_only | animal | 0 | 0 | 0 |
+| peanut-allergy-microneedle-stamp | approved | preclinical_only | early_human | 0 | 0 | 0 |
+| senescent-cells-senomune-0257 | approved | preclinical_only | animal | 0 | 0 | 0 |
+| spinal-cord-injury-engineered-implant | approved | preclinical_only | animal | 0 | 0 | 0 |
+| superbugs-ancestral-antimicrobial-peptides | approved | preclinical_only | in_vitro | 1 | 0 | 0 |
+| tauopathy-cxcr3-antibody | approved | preclinical_only | animal | 1 | 0 | 0 |
+| type-2-diabetes-glp-1-secreting-bacteria | approved | preclinical_only | animal | 0 | 0 | 0 |
+| type-2-diabetes-remission-diet-exercise | approved | preclinical_only | early_human | 1 | 3 | 0 |
+| vre-vancomycin-click-chemistry-molecule | approved | preclinical_only | in_vitro | 0 | 0 | 0 |
+| infertility-testicular-tissue-transplant | approved | trial_registered | early_human | 2 | 1 | 4 |
+| ptsd-personalised-magnetic-stimulation | approved | trial_registered | early_human | 5 | 5 | 14 |
+| biological-ageing-glp-1-drugs | pending | preclinical_only | - | 0 | 0 | 0 |
+| heart-failure-ipsc-heart-muscle-cells | pending | preclinical_only | - | 0 | 0 | 0 |
+| kidney-failure-pig-kidney-transplant | pending | preclinical_only | - | 0 | 439 | 0 |
+| knee-osteoarthritis-genicular-artery-embolisation | pending | preclinical_only | - | 0 | 338 | 0 |
+| muscle-loss-atr-258 | pending | preclinical_only | - | 0 | 0 | 0 |
+| pre-leukaemia-vitamin-c | pending | preclinical_only | - | 0 | 0 | 0 |
+| stiff-person-syndrome-car-t | pending | preclinical_only | - | 0 | 0 | 0 |
+| type-2-diabetes-glucose-catalyst-implant | pending | preclinical_only | - | 0 | 399 | 0 |
