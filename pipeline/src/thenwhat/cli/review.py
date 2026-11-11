@@ -17,6 +17,7 @@ from thenwhat.review.queue import (
     decide_matches,
     flag_failure,
     pending_items,
+    rejected_by_rule,
 )
 
 review_app = typer.Typer(help="Approve or reject what awaits review.", no_args_is_help=True)
@@ -46,13 +47,27 @@ class ItemKind(StrEnum):
 def review_list(
     claim: Annotated[str | None, typer.Option(help="Only this claim.")] = None,
     kind: Annotated[ItemKind | None, typer.Option(help="Only this kind of item.")] = None,
+    by_rule: Annotated[
+        bool,
+        typer.Option(
+            "--by-rule",
+            help="Show instead the candidate matches a rule rejected for scoring near zero."
+            " Approve any of them with `review approve match ID`.",
+        ),
+    ] = False,
 ) -> None:
     """Show what awaits review. Use the kind and id shown to approve or reject."""
     with entry_session() as session:
-        items = pending_items(session, claim_slug=claim, kind=kind.value if kind else None)
-        if not items:
-            out.print("The review queue is empty.")
-            return
+        if by_rule:
+            items = rejected_by_rule(session, claim_slug=claim)
+            if not items:
+                out.print("No candidate match has been rejected by rule.")
+                return
+        else:
+            items = pending_items(session, claim_slug=claim, kind=kind.value if kind else None)
+            if not items:
+                out.print("The review queue is empty.")
+                return
         # One item per block, so a long source link is never cut short.
         for item in items:
             score = "" if item.score is None else f"  score {item.score:.2f}"

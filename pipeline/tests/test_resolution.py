@@ -360,6 +360,68 @@ def test_candidate_keeps_what_its_registry_record_says(session: Session):
     assert of_the_paper.record_summary == "A paper"
 
 
+def two_trials() -> FakeTrials:
+    return FakeTrials(
+        {
+            "EX-1 antibody": [
+                trial("NCT00000001", "EX-1 in tooth agenesis"),
+                trial("NCT00000002", "EX-1 in lung cancer", condition="Lung Cancer"),
+            ]
+        }
+    )
+
+
+def test_candidate_scored_under_the_threshold_is_rejected_by_rule(session: Session):
+    """Scenario: Candidate scored near zero"""
+    claim = new_claim(session)
+
+    resolve(session, claim, trials=two_trials(), backend=ByCondition(), reject_below=0.05)
+
+    for_the_claim, for_another = matches(session)
+    assert for_the_claim.review_state is ReviewState.PENDING
+    assert (for_another.review_state, for_another.reviewed_by, for_another.reviewed_at) == (
+        ReviewState.REJECTED,
+        Decider.RULE,
+        NOW,
+    )
+    # A rule's rejection is not a person's answer.
+    labels = session.scalars(select(DecisionLog.human_label)).all()
+    assert all(label is None for label in labels)
+
+
+def test_candidate_scored_exactly_at_the_threshold_stays_pending(session: Session):
+    claim = new_claim(session)
+    found = FakeTrials({"EX-1 antibody": [trial("NCT00000001")]})
+
+    resolve(session, claim, trials=found, backend=Scoring(0.05), reject_below=0.05)
+
+    assert matches(session)[0].review_state is ReviewState.PENDING
+
+
+def test_without_a_threshold_no_candidate_is_rejected_by_rule(session: Session):
+    claim = new_claim(session)
+
+    resolve(session, claim, trials=two_trials(), backend=ByCondition())
+
+    assert [match.review_state for match in matches(session)] == [ReviewState.PENDING] * 2
+
+
+def test_rescoring_applies_the_rule_to_what_it_scores(session: Session):
+    claim = new_claim(session)
+    resolve(session, claim, trials=two_trials(), backend=Scoring(0.99))
+
+    resolve(
+        session, claim, trials=two_trials(), backend=ByCondition(), rescore=True, reject_below=0.05
+    )
+
+    for_the_claim, for_another = matches(session)
+    assert for_the_claim.review_state is ReviewState.PENDING
+    assert (for_another.review_state, for_another.reviewed_by) == (
+        ReviewState.REJECTED,
+        Decider.RULE,
+    )
+
+
 def test_registry_search_carries_the_claims_indication(session: Session):
     """Scenario: Broad intervention name"""
     claim = new_claim(session)

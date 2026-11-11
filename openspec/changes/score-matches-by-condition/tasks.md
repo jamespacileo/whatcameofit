@@ -25,3 +25,4 @@
 - [x] 4.5 Decide several items at once, by id or by score within a claim; verify the four bulk tests and the command tests pass
 - [x] 4.6 Add `thenwhat prepare` for many claims side by side with per-step timings; verify its planning and command tests pass
 - [x] 4.7 Time the new flow live; result: five claims prepared in 68 seconds side by side, 134 candidates scored in 14 model calls
+- [x] 4.8 Reject by rule a new candidate scored under `MATCH_REJECT_BELOW` (default 0.05), list them with `review list --by-rule`, and let the operator approve any; verify the rule, listing and command tests pass

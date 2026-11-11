@@ -35,6 +35,7 @@ from thenwhat.review.queue import (
     decide_matches,
     flag_failure,
     pending_items,
+    rejected_by_rule,
 )
 from thenwhat.sources.base import SourceRecord
 
@@ -400,6 +401,40 @@ def test_deciding_together_needs_exactly_one_score_bound(session: Session):
         decide_matches(session, SLUG, ReviewState.REJECTED, now=NOW)
     with pytest.raises(EntryError, match="one of"):
         decide_matches(session, SLUG, ReviewState.REJECTED, below=0.1, at_least=0.9, now=NOW)
+
+
+def rule_rejected(session: Session, claim: Claim, *nct_ids: str) -> list[EntityMatch]:
+    found = candidates(session, claim, *nct_ids)
+    for match in found:
+        match.score = 0.01
+        record_decision(match, ReviewState.REJECTED, by=Decider.RULE, now=EARLIER)
+    session.flush()
+    return found
+
+
+def test_candidates_a_rule_rejected_can_be_listed(session: Session):
+    """Scenario: Seeing what the rule rejected"""
+    claim = approved_claim(session)
+    [by_rule] = rule_rejected(session, claim, "NCT1")
+    [by_operator] = candidates(session, claim, "NCT2")
+    decide_item(session, "match", by_operator.id, ReviewState.REJECTED, now=NOW)
+
+    items = rejected_by_rule(session, claim_slug=SLUG)
+
+    assert [(item.kind, item.id) for item in items] == [("match", by_rule.id)]
+    assert "NCT1" in items[0].assertion and items[0].score == pytest.approx(0.01)
+    # They are not in the queue of things awaiting review.
+    assert pending_items(session, claim_slug=SLUG, kind="match") == []
+
+
+def test_operator_can_approve_a_candidate_a_rule_rejected(session: Session):
+    claim = approved_claim(session)
+    [match] = rule_rejected(session, claim, "NCT1")
+
+    decide_item(session, "match", match.id, ReviewState.APPROVED, now=NOW)
+
+    assert (match.review_state, match.reviewed_by) == (ReviewState.APPROVED, Decider.HUMAN)
+    assert rejected_by_rule(session, claim_slug=SLUG) == []
 
 
 def test_queue_for_all_claims_includes_draft_claims(session: Session):

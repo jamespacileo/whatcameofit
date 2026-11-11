@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     decision_backend: str = "llm"
 
     review_confidence_threshold: float = 0.95
+    # A new candidate match scored under this is rejected by rule instead of waiting
+    # for review. It is kept and can be listed and approved. 0 turns the rule off.
+    match_reject_below: float = 0.05
     no_signal_years: int = 3
 
 

@@ -84,19 +84,7 @@ def pending_items(
             .where(Entity.claim_id == claim.id, EntityMatch.review_state == ReviewState.PENDING)
             .order_by(EntityMatch.score.desc(), EntityMatch.id)
         ):
-            template = RECORD_URLS.get(match.source_name)
-            items.append(
-                QueueItem(
-                    "match",
-                    match.id,
-                    claim.slug,
-                    f"{entity.type.value} '{entity.name}' is {match.source_name}"
-                    f" record {match.external_id}{_score_note(session, match, entity)}",
-                    template.format(match.external_id) if template else None,
-                    match.score,
-                    match.record_summary,
-                )
-            )
+            items.append(_match_item(session, claim, match, entity))
         for event in session.scalars(
             select(EvidenceEvent)
             .where(
@@ -116,6 +104,43 @@ def pending_items(
                 )
             )
     return [item for item in items if kind is None or item.kind == kind]
+
+
+def _match_item(session: Session, claim: Claim, match: EntityMatch, entity: Entity) -> QueueItem:
+    template = RECORD_URLS.get(match.source_name)
+    return QueueItem(
+        "match",
+        match.id,
+        claim.slug,
+        f"{entity.type.value} '{entity.name}' is {match.source_name}"
+        f" record {match.external_id}{_score_note(session, match, entity)}",
+        template.format(match.external_id) if template else None,
+        match.score,
+        match.record_summary,
+    )
+
+
+def rejected_by_rule(session: Session, *, claim_slug: str | None = None) -> list[QueueItem]:
+    """The candidate matches a rule rejected for scoring near zero, likeliest first, for
+    all claims or for one. The operator can approve any of them."""
+    query = (
+        select(EntityMatch, Entity, Claim)
+        .join(Entity, Entity.id == EntityMatch.entity_id)
+        .join(Claim, Claim.id == Entity.claim_id)
+        .where(
+            EntityMatch.review_state == ReviewState.REJECTED,
+            EntityMatch.reviewed_by == Decider.RULE,
+        )
+        .order_by(Claim.id, EntityMatch.score.desc(), EntityMatch.id)
+    )
+    if claim_slug is not None:
+        if find_claim(session, claim_slug) is None:
+            raise ClaimNotFound(f"No claim has the slug '{claim_slug}'.")
+        query = query.where(Claim.slug == claim_slug)
+    return [
+        _match_item(session, claim, match, entity)
+        for match, entity, claim in session.execute(query)
+    ]
 
 
 def _score_note(session: Session, match: EntityMatch, entity: Entity) -> str:

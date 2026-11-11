@@ -155,6 +155,28 @@ def test_review_reject_with_nothing_to_decide_explains_and_exits_1(run, claim: C
     assert "Give the ids" in result.output
 
 
+def test_review_list_by_rule_shows_what_the_rule_rejected(run, session: Session, claim: Claim):
+    intervention = session.scalars(select(Entity).where(Entity.claim_id == claim.id)).one()
+    match = EntityMatch(
+        entity_id=intervention.id,
+        source_name="clinicaltrials.gov",
+        external_id="NCT7",
+        score=0.01,
+        record_summary="A trial in another condition.",
+        review_state=ReviewState.REJECTED,
+        reviewed_by=Decider.RULE,
+        reviewed_at=NOW,
+    )
+    session.add(match)
+    session.flush()
+
+    result = run("review", "list", "--by-rule")
+
+    assert result.exit_code == 0, result.output
+    assert f"match {match.id}" in result.output and "NCT7" in result.output
+    assert "A trial in another condition." in result.output
+
+
 def test_review_reject_rejects(run, event: EvidenceEvent):
     result = run("review", "reject", "event", str(event.id))
 

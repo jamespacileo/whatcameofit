@@ -17,6 +17,7 @@ from thenwhat.claims.entry import add_claim
 from thenwhat.cli import app
 from thenwhat.db.models import DecisionLog, EntityMatch
 from thenwhat.decide.core import BackendAnswer
+from thenwhat.domain import Decider
 from thenwhat.sources.base import SourceRecord
 
 NOW = datetime(2026, 11, 20, tzinfo=UTC)
@@ -55,6 +56,9 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
         session.flush()
 
     monkeypatch.setattr("thenwhat.cli.entry.open_session", test_session)
+    # The command reads its settings; the database itself is the test session above.
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://unused/unused")
+    monkeypatch.delenv("MATCH_REJECT_BELOW", raising=False)
     monkeypatch.setattr("thenwhat.cli.resolve.make_registries", lambda s: (Trials(), Dois()))
     monkeypatch.setattr("thenwhat.cli.resolve.make_backend", lambda s: Backend())
     add_claim(
@@ -132,6 +136,20 @@ def test_resolve_rescore_scores_the_pending_candidates_again(run, session: Sessi
     assert result.exit_code == 0, result.output
     assert "Scored 1 pending candidate again" in result.output
     assert len(session.scalars(select(EntityMatch)).all()) == 1
+
+
+def test_resolve_says_how_many_candidates_the_rule_rejected(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    # The fake backend scores every candidate 0.8; a threshold above that rejects it.
+    monkeypatch.setenv("MATCH_REJECT_BELOW", "0.9")
+
+    result = run("resolve", SLUG)
+
+    assert result.exit_code == 0, result.output
+    assert "1 rejected by rule" in result.output and "review list --by-rule" in result.output
+    [match] = session.scalars(select(EntityMatch)).all()
+    assert match.reviewed_by is Decider.RULE
 
 
 def test_resolve_of_an_unknown_claim_explains_and_exits_1(run):

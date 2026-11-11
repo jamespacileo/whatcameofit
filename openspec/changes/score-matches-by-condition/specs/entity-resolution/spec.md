@@ -34,3 +34,18 @@ A pending trial candidate whose score was given before the indication was part o
 #### Scenario: Scoring again
 - **WHEN** an operator resolves a claim again and asks for rescoring
 - **THEN** its pending trial candidates that the search returns get a new score, and decided candidates are unchanged
+
+### Requirement: Near-zero candidates are rejected by rule
+A newly scored candidate match whose score is under a configured threshold SHALL be rejected by rule instead of waiting for review. The decision SHALL be recorded as made by a rule, SHALL NOT be stored as a human label, and the candidate SHALL be kept. An operator SHALL be able to list the candidates a rule rejected and to approve any of them. A threshold of zero SHALL turn the rule off. A rule SHALL never approve a candidate. This replaces the earlier statement that a score never rejects a match: a candidate scored exactly at the threshold, such as 0.05 with the default, still remains pending.
+
+#### Scenario: Candidate scored near zero
+- **WHEN** a new candidate is scored 0.02 and the threshold is 0.05
+- **THEN** it is rejected, recorded as decided by a rule, and absent from the review queue
+
+#### Scenario: Seeing what the rule rejected
+- **WHEN** an operator lists the candidates rejected by rule for a claim
+- **THEN** each is shown with its id, score, record line and link, and can be approved
+
+#### Scenario: Rule turned off
+- **WHEN** the threshold is zero
+- **THEN** every new candidate stays pending whatever its score

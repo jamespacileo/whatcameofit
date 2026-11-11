@@ -13,7 +13,8 @@ from thenwhat.claims.entities import entities_of
 from thenwhat.db.models import Claim, Entity, EntityMatch
 from thenwhat.decide.core import Backend, DecisionFailed
 from thenwhat.decide.steps import score_matches
-from thenwhat.domain import EntityType, ReviewState
+from thenwhat.domain import Decider, EntityType, ReviewState
+from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord
 
 MAX_SUMMARY_CHARACTERS = 400
@@ -80,6 +81,7 @@ def resolve_claim(
     backend: Backend,
     now: datetime,
     rescore: bool = False,
+    reject_below: float = 0.0,
 ) -> list[EntityMatch]:
     """Search the registries for the claim's interventions and papers and store each new
     hit as a scored, pending candidate. Returns the candidates this run added.
@@ -88,6 +90,9 @@ def resolve_claim(
     broad one. Candidates that already exist are left exactly as they are, whatever their
     state, unless `rescore` asks for pending ones to be scored again. If a candidate
     cannot be scored, none of this run's candidates are kept.
+
+    A candidate scored under `reject_below` is rejected by rule: kept, out of the review
+    queue, and open to the operator to approve. Nothing is ever approved here.
     """
     entities = entities_of(session, claim)
     seen = {
@@ -143,10 +148,25 @@ def resolve_claim(
             session.delete(match)
         session.flush()
         raise
+    _reject_near_zero(added, reject_below, now)
     session.flush()
     if rescore:
-        rescore_claim(session, claim, trials=trials, backend=backend, now=now, skip=added)
+        rescore_claim(
+            session,
+            claim,
+            trials=trials,
+            backend=backend,
+            now=now,
+            skip=added,
+            reject_below=reject_below,
+        )
     return added
+
+
+def _reject_near_zero(scored: list[EntityMatch], reject_below: float, now: datetime) -> None:
+    for match in scored:
+        if match.review_state is ReviewState.PENDING and match.score < reject_below:
+            record_decision(match, ReviewState.REJECTED, by=Decider.RULE, now=now)
 
 
 def rescore_claim(
@@ -157,6 +177,7 @@ def rescore_claim(
     backend: Backend,
     now: datetime,
     skip: list[EntityMatch] | None = None,
+    reject_below: float = 0.0,
 ) -> list[EntityMatch]:
     """Score again the pending trial candidates that the search still returns, and return
     them. For candidates scored before the indication was part of the question.
@@ -187,5 +208,7 @@ def rescore_claim(
                     match.record_summary = what_it_says(record)
                     again.append((entity, match, record))
     score_matches(session, backend, claim=claim, candidates=again, now=now)
+    rescored = [match for _, match, _ in again]
+    _reject_near_zero(rescored, reject_below, now)
     session.flush()
-    return [match for _, match, _ in again]
+    return rescored
