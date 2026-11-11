@@ -1,5 +1,7 @@
 ---
 import "../styles/global.css";
+// Preloaded so the first paint is already in the site's face and headings do not reflow.
+import archivoUrl from "@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url";
 import { SITE } from "../../site.config.mjs";
 import { data } from "../lib/export";
 import { formatDate } from "../lib/timetable";
@@ -24,6 +26,7 @@ const firstTopic = data.verticals[0];
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preload" as="font" type="font/woff2" href={archivoUrl} crossorigin />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <meta property="og:title" content={title ?? SITE.name} />

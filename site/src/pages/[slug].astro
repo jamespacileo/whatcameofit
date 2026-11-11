@@ -112,7 +112,7 @@ const imageAlt = cardAlt(
                           <li>
                             <span class="entry-kind">{promise.description}</span>
                             <span class="entry-note">
-                              Said in <a href={promise.articleUrl}>{promise.outlet}</a>,{" "}
+                              Source: <a href={promise.articleUrl}>{promise.outlet}</a>,{" "}
                               {formatDate(promise.madeOn)}
                             </span>
                           </li>
@@ -182,7 +182,7 @@ const imageAlt = cardAlt(
               <li>
                 <strong>{promise.description}</strong>
                 <span class="entry-note">
-                  Said in <a href={promise.articleUrl}>{promise.outlet}</a>,{" "}
+                  Source: <a href={promise.articleUrl}>{promise.outlet}</a>,{" "}
                   {formatDate(promise.madeOn)}
                 </span>
               </li>
