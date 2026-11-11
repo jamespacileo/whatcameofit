@@ -1,0 +1,60 @@
+---
+// A claim's status, made to sit inside another site's frame. It asks no other host
+// for anything, stores nothing, and its links open in the whole window.
+import "../../styles/global.css";
+import StatusCell from "../../components/StatusCell.astro";
+import { SITE } from "../../../site.config.mjs";
+import { CARD_NOTICE, clip, monthAndYear } from "../../lib/card";
+import { data, type ExportedClaim } from "../../lib/export";
+import { NOTICES } from "../../lib/notices";
+import { formatDate } from "../../lib/timetable";
+
+export function getStaticPaths() {
+  return data.claims.map((claim) => ({ params: { slug: claim.slug }, props: { claim } }));
+}
+
+interface Props {
+  claim: ExportedClaim;
+}
+
+const { claim } = Astro.props;
+const page = `${SITE.url}/${claim.slug}`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {/* The claim page is the one to find; this is only its window elsewhere. */}
+    <meta name="robots" content="noindex" />
+    <title>{claim.headline} | {SITE.name}</title>
+  </head>
+  <body class="embed">
+    <article>
+      <p class="embed-name">
+        <a href={page} target="_top">{SITE.name}</a>
+        <span>{CARD_NOTICE}</span>
+      </p>
+      <h1>{clip(claim.headline, 160)}</h1>
+      <div class="embed-status">
+        <StatusCell claim={claim} />
+      </div>
+      <p class="embed-more">
+        {data.last_checked_at && <span>Checked {monthAndYear(data.last_checked_at)}.</span>}
+        <a href={page} target="_top">Records and sources</a>
+      </p>
+      <footer>
+        {NOTICES.map((notice) => <p>{notice}</p>)}
+        <p>
+          Data sources: {data.sources.map((source) => source.name).join(", ")}.
+          {
+            data.last_checked_at
+              ? ` Registries last checked ${formatDate(data.last_checked_at)}.`
+              : " Registries not yet checked."
+          }
+        </p>
+      </footer>
+    </article>
+  </body>
+</html>

@@ -1,6 +1,8 @@
 ---
 import Base from "../layouts/Base.astro";
 import Clock from "@lucide/astro/icons/clock";
+import Copy from "@lucide/astro/icons/copy";
+import ImageDown from "@lucide/astro/icons/image-down";
 import Info from "@lucide/astro/icons/info";
 import Share2 from "@lucide/astro/icons/share-2";
 import BasisMark from "../components/BasisMark.astro";
@@ -23,7 +25,9 @@ import {
   sourceName,
   type RecordKind,
 } from "../lib/status";
-import { cardAlt, cardFacts } from "../lib/card";
+import { cardAlt, shareSentence } from "../lib/card";
+import { SITE } from "../../site.config.mjs";
+import { cardFor } from "../lib/card-image";
 import { buildTimetable, dayAndMonth, formatDate, recordedLines } from "../lib/timetable";
 
 export function getStaticPaths() {
@@ -53,10 +57,11 @@ const explaining = timetable.sources.filter(({ event }) =>
   claim.status.explained_by.includes(event.id),
 );
 const description = `${STATUS_LABELS[claim.status.code]}. ${claim.summary}`;
-const imageAlt = cardAlt(
-  claim,
-  cardFacts(claim, STATUS_LABELS[claim.status.code], latestPromise(claim)?.parsed_date ?? null),
-);
+const imageAlt = cardAlt(cardFor(claim));
+const address = `${SITE.url}/${claim.slug}`;
+const sentence = shareSentence(claim, STATUS_LABELS[claim.status.code], data.last_checked_at, address);
+// The whole of what another site needs to show this claim's status.
+const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.headline.replaceAll('"', "&quot;")}" width="440" height="330" style="border:0;max-width:100%" loading="lazy"></iframe>`;
 ---
 
 <Base
@@ -362,12 +367,64 @@ const imageAlt = cardAlt(
         </>
       )
     }
+
+    <section class="take" data-pagefind-ignore>
+      <h2 class="bar" id="pass-on">Pass it on</h2>
+      <p class="sentence" id="sentence">{sentence}</p>
+      <div class="take-actions">
+        <button type="button" class="share" data-copy="sentence" hidden>
+          <Copy size={16} stroke-width={1.9} aria-hidden="true" />
+          <span data-copy-text>Copy sentence</span>
+        </button>
+        <a class="share" href={`/og/square/${claim.slug}.png`} download>
+          <ImageDown size={16} stroke-width={1.9} aria-hidden="true" />
+          Square image
+        </a>
+        <a class="share" href={`/og/tall/${claim.slug}.png`} download>
+          <ImageDown size={16} stroke-width={1.9} aria-hidden="true" />
+          Tall image
+        </a>
+      </div>
+      <p class="entry-note">Each image says: {imageAlt}</p>
+      <details class="embed-how">
+        <summary>Show this status on another site</summary>
+        <p class="entry-note">
+          Paste this where the status should appear. It shows the current status and links back
+          here; it loads nothing else and stores nothing.
+        </p>
+        <pre id="snippet"><code>{snippet}</code></pre>
+        <button type="button" class="share" data-copy="snippet" hidden>
+          <Copy size={16} stroke-width={1.9} aria-hidden="true" />
+          <span data-copy-text>Copy code</span>
+        </button>
+      </details>
+    </section>
   </article>
 </Base>
 
 <script>
   // Sharing uses the device's own share sheet where there is one, and copies the
   // page address where there is not. The button only appears when it can work.
+  // Copying: the button appears only where the clipboard can be written, says so when
+  // it has copied, and otherwise leaves the text selected for the reader to copy.
+  if (navigator.clipboard) {
+    for (const copier of document.querySelectorAll<HTMLButtonElement>("[data-copy]")) {
+      const source = document.getElementById(copier.dataset.copy!)!;
+      const label = copier.querySelector<HTMLElement>("[data-copy-text]")!;
+      const idle = label.textContent;
+      copier.hidden = false;
+      copier.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(source.textContent!.trim());
+          label.textContent = "Copied";
+          setTimeout(() => (label.textContent = idle), 2000);
+        } catch {
+          getSelection()?.selectAllChildren(source);
+        }
+      });
+    }
+  }
+
   const button = document.querySelector<HTMLButtonElement>("[data-share]");
   if (button && (navigator.share || navigator.clipboard)) {
     const text = button.querySelector<HTMLElement>("[data-share-text]")!;
