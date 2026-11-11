@@ -27,6 +27,7 @@ from thenwhat.domain import (
     EntityType,
     EventType,
     EvidenceStage,
+    RegulatoryOutcome,
     ReviewState,
     TrialState,
 )
@@ -182,6 +183,10 @@ class EvidenceEvent(Reviewed, Base):
             "(type = 'trial_status_change') = (trial_state IS NOT NULL)",
             name="status_change_has_state",
         ),
+        CheckConstraint(
+            "(type = 'regulatory_decision') = (regulatory_outcome IS NOT NULL)",
+            name="regulatory_decision_has_outcome",
+        ),
         _review_decision_recorded(),
     )
 
@@ -196,6 +201,9 @@ class EvidenceEvent(Reviewed, Base):
     external_id: Mapped[str] = mapped_column(Text)
     trial_phases: Mapped[list[str] | None] = mapped_column(ARRAY(Text))
     trial_state: Mapped[TrialState | None] = mapped_column(_enum(TrialState, "trial_state"))
+    regulatory_outcome: Mapped[RegulatoryOutcome | None] = mapped_column(
+        _enum(RegulatoryOutcome, "regulatory_outcome")
+    )
     summary: Mapped[str] = mapped_column(Text)
     confidence: Mapped[float]
     raw_payload: Mapped[dict[str, Any]] = mapped_column(JSONB)

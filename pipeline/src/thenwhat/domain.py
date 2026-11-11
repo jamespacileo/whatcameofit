@@ -45,6 +45,22 @@ class TrialState(StrEnum):
     SUSPENDED = "suspended"
 
 
+class TrialPhase(StrEnum):
+    """Phases as stored on trial events, whatever spelling the registry uses."""
+
+    EARLY_PHASE_1 = "early_phase_1"
+    PHASE_1 = "phase_1"
+    PHASE_2 = "phase_2"
+    PHASE_3 = "phase_3"
+    PHASE_4 = "phase_4"
+    NOT_APPLICABLE = "not_applicable"
+
+
+class RegulatoryOutcome(StrEnum):
+    APPROVED = "approved"
+    REFUSED = "refused"
+
+
 class ClaimStatus(StrEnum):
     PRECLINICAL_ONLY = "preclinical_only"
     TRIAL_REGISTERED = "trial_registered"

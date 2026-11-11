@@ -15,7 +15,7 @@ from thenwhat.db.models import (
     FailureFlag,
     SourceArticle,
 )
-from thenwhat.domain import EntityType, EventType, TrialState
+from thenwhat.domain import EntityType, EventType, RegulatoryOutcome, TrialState
 
 NOW = datetime(2026, 1, 1, tzinfo=UTC)
 
@@ -230,6 +230,28 @@ def test_status_change_with_state_is_accepted(session: Session):
         add_claim(session),
         type=EventType.TRIAL_STATUS_CHANGE,
         trial_state=TrialState.STARTED,
+    )
+
+
+def test_regulatory_decision_without_outcome_is_refused(session: Session):
+    session.add(event(add_claim(session), type=EventType.REGULATORY_DECISION))
+
+    assert_refused(session, "ck_evidence_event_regulatory_decision_has_outcome")
+
+
+def test_outcome_on_an_event_that_is_not_a_regulatory_decision_is_refused(session: Session):
+    session.add(event(add_claim(session), regulatory_outcome=RegulatoryOutcome.APPROVED))
+
+    assert_refused(session, "ck_evidence_event_regulatory_decision_has_outcome")
+
+
+@pytest.mark.parametrize("outcome", list(RegulatoryOutcome))
+def test_regulatory_decision_with_outcome_is_accepted(session: Session, outcome: RegulatoryOutcome):
+    add_event(
+        session,
+        add_claim(session),
+        type=EventType.REGULATORY_DECISION,
+        regulatory_outcome=outcome,
     )
 
 

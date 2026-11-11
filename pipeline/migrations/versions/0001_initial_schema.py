@@ -321,6 +321,18 @@ def upgrade() -> None:
             ),
             nullable=True,
         ),
+        sa.Column(
+            "regulatory_outcome",
+            sa.Enum(
+                "approved",
+                "refused",
+                name="regulatory_outcome",
+                native_enum=False,
+                create_constraint=True,
+                length=32,
+            ),
+            nullable=True,
+        ),
         sa.Column("summary", sa.Text(), nullable=False),
         sa.Column("confidence", sa.Double(), nullable=False),
         sa.Column("raw_payload", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
@@ -362,6 +374,10 @@ def upgrade() -> None:
         sa.CheckConstraint(
             "(review_state = 'pending') = (reviewed_at IS NULL) AND (reviewed_at IS NULL) = (reviewed_by IS NULL)",
             name=op.f("ck_evidence_event_review_decision_recorded"),
+        ),
+        sa.CheckConstraint(
+            "(type = 'regulatory_decision') = (regulatory_outcome IS NOT NULL)",
+            name=op.f("ck_evidence_event_regulatory_decision_has_outcome"),
         ),
         sa.CheckConstraint(
             "(type = 'trial_status_change') = (trial_state IS NOT NULL)",
