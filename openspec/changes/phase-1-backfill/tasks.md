@@ -2,7 +2,7 @@
 
 ## 1. Repository scaffold
 
-- [ ] 1.1 Initialise the git repository with the layout in design D1, `.gitignore`, `LICENSE` (MIT) and `LICENSE-DATA` (CC BY 4.0); verify the tree matches D1 and `git status` is clean after the first commit
+- [x] 1.1 Initialise the git repository with the layout in design D1, `.gitignore`, `LICENSE` (MIT) and `LICENSE-DATA` (CC BY 4.0); verify the tree matches D1 and `git status` is clean after the first commit
 - [x] 1.2 Create the `pipeline/` uv project on Python 3.12 with the dependencies in design D2 and a `thenwhat` console entry point; verify `uv run thenwhat --help` prints the command list
 - [x] 1.3 Create the Astro project in `site/` with a placeholder page; verify `npm run build` writes `site/dist/index.html`
 - [x] 1.4 Write `compose.yaml` with the `db`, `pipeline` and `site` services and `.env.example` with every setting named in the design; verify `docker compose up` brings `db` to healthy and `pipeline` connects to it
@@ -11,9 +11,9 @@
 
 ## 2. Schema and migrations
 
-- [ ] 2.1 Define the models for every table in design D3 and generate the first Alembic migration; verify `upgrade head` then `downgrade base` both succeed on an empty database
-- [ ] 2.2 Add the constraints (unique slug, unique article URL per claim, one origin paper per claim, unique match per entity and source, unique `dedupe_key` per claim, review-state values); verify a test for each constraint fails the insert it should fail
-- [ ] 2.3 Have the `pipeline` service apply migrations on start; verify a fresh `docker compose up` ends with all tables present
+- [x] 2.1 Define the models for every table in design D3 and generate the first Alembic migration; verify `upgrade head` then `downgrade base` both succeed on an empty database
+- [x] 2.2 Add the constraints (unique slug, unique article URL per claim, one origin paper per claim, unique match per entity and source, unique `dedupe_key` per claim, review-state values); verify a test for each constraint fails the insert it should fail
+- [x] 2.3 Have the `pipeline` service apply migrations on start; verify a fresh `docker compose up` ends with all tables present
 
 ## 3. Status derivation
 

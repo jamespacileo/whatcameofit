@@ -80,7 +80,7 @@ Python 3.12 with `uv`; Typer and Rich for the CLI; SQLAlchemy 2 with Alembic; ht
 | `promise` | id, claim_id, source_article_id, description, parsed_date (nullable) |
 | `entity` | id, claim_id, type, name, synonyms[], is_origin_paper |
 | `entity_match` | id, entity_id, source_name, external_id, score, review columns; unique (entity_id, source_name, external_id) |
-| `evidence_event` | id, claim_id, entity_match_id (nullable), type, event_date, date_basis, source_name, source_url, external_id, trial_phase (nullable), trial_state (nullable), summary, confidence, raw_payload (JSONB), fetched_at, dedupe_key (unique per claim), review columns |
+| `evidence_event` | id, claim_id, entity_match_id (nullable), type, event_date, date_basis, source_name, source_url, external_id, trial_phases[] (nullable), trial_state (nullable), summary, confidence, raw_payload (JSONB), fetched_at, dedupe_key (unique per claim), review columns |
 | `failure_flag` | id, claim_id, trial_external_id, evidence_event_id, source_url, created_at |
 | `decision_log` | id, step, input_ref, backend, model, options, output, confidence, error, human_label (nullable), created_at |
 | `llm_usage` | id, purpose, model, input_tokens, output_tokens, cost_usd, created_at |
