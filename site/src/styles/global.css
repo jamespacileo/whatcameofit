@@ -336,7 +336,8 @@ a.chip:hover {
   width: 5.25rem;
   font-weight: 700;
   font-size: 1.1rem;
-  color: var(--blue);
+  /* Blue is for links and the status label, so a year is in ink. */
+  color: var(--ink);
   white-space: nowrap;
 }
 
@@ -586,7 +587,7 @@ sup a {
 
 .footnotes .mark {
   font-weight: 700;
-  color: var(--blue);
+  color: var(--ink);
 }
 
 .index td.claim a {
