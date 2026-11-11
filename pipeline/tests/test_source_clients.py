@@ -1,0 +1,251 @@
+"""The three registry clients, replaying recorded responses (see tests/fixtures/README.md).
+
+Scenario names are from openspec source-clients.
+"""
+
+from datetime import date
+
+import httpx
+from sqlalchemy.orm import Session
+
+from thenwhat.sources.clinicaltrials import ClinicalTrials
+from thenwhat.sources.crossref import Crossref, Notice
+from thenwhat.sources.europepmc import EuropePmc, describe
+
+CONTACT = "ops@thenwhat.test"
+NOT_FOUND = httpx.Response(404, text="not found")
+
+
+class Replay:
+    """Serves recorded responses chosen by a routing function and counts requests."""
+
+    def __init__(self, route) -> None:
+        self.route = route
+        self.requests: list[httpx.Request] = []
+
+    def __call__(self, request: httpx.Request) -> httpx.Response:
+        self.requests.append(request)
+        answer = self.route(request)
+        return answer if isinstance(answer, httpx.Response) else httpx.Response(200, json=answer)
+
+
+# --- ClinicalTrials.gov ----------------------------------------------------------
+
+
+def trials(session: Session, fake_time, route) -> tuple[ClinicalTrials, Replay]:
+    replay = Replay(route)
+    source = ClinicalTrials(
+        session, contact_email=CONTACT, transport=httpx.MockTransport(replay), time=fake_time
+    )
+    return source, replay
+
+
+def test_trial_record_carries_the_common_contract(session: Session, fake_time, fixture_json):
+    """Scenario: Trial record"""
+    study = fixture_json("clinicaltrials/study_NCT02586935.json")
+    source, replay = trials(session, fake_time, lambda request: study)
+
+    record = source.fetch_trial("NCT02586935")
+
+    assert record is not None
+    assert record.source_name == "clinicaltrials.gov"
+    assert record.external_id == "NCT02586935"
+    assert record.url == "https://clinicaltrials.gov/study/NCT02586935"
+    assert record.payload == study
+    assert record.fetched_at == fake_time.now()
+    assert replay.requests[0].url.path == "/api/v2/studies/NCT02586935"
+
+
+def test_unknown_trial_identifier_is_not_found(session: Session, fake_time):
+    """Scenario: Unknown trial identifier"""
+    source, _ = trials(session, fake_time, lambda request: NOT_FOUND)
+
+    assert source.fetch_trial("NCT99999999") is None
+
+
+def test_malformed_trial_identifier_is_not_found_without_a_request(session: Session, fake_time):
+    source, replay = trials(session, fake_time, lambda request: NOT_FOUND)
+
+    assert source.fetch_trial("not-a-trial-id") is None
+    assert replay.requests == []
+
+
+def search_pages(fixture_json):
+    pages = [fixture_json(f"clinicaltrials/search_tideglusib_page{n}.json") for n in (1, 2, 3)]
+    by_token = {
+        None: pages[0],
+        pages[0]["nextPageToken"]: pages[1],
+        pages[1]["nextPageToken"]: pages[2],
+    }
+    return lambda request: by_token[request.url.params.get("pageToken")]
+
+
+def test_search_by_intervention_term_returns_matching_trials(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Search by intervention term"""
+    source, replay = trials(session, fake_time, search_pages(fixture_json))
+
+    records = source.search_trials("tideglusib")
+
+    assert replay.requests[0].url.params["query.intr"] == "tideglusib"
+    assert records[0].external_id == "NCT02586935"
+    assert records[0].url == "https://clinicaltrials.gov/study/NCT02586935"
+    assert all(record.source_name == "clinicaltrials.gov" for record in records)
+
+
+def test_search_with_many_results_follows_every_page(session: Session, fake_time, fixture_json):
+    """Scenario: Search with many results"""
+    source, replay = trials(session, fake_time, search_pages(fixture_json))
+
+    records = source.search_trials("tideglusib")
+
+    assert len({record.external_id for record in records}) == 10
+    assert len(replay.requests) == 3
+
+
+# --- Europe PMC ------------------------------------------------------------------
+
+
+def literature(session: Session, fake_time, route) -> tuple[EuropePmc, Replay]:
+    replay = Replay(route)
+    source = EuropePmc(
+        session, contact_email=CONTACT, transport=httpx.MockTransport(replay), time=fake_time
+    )
+    return source, replay
+
+
+EMPTY_SEARCH = {"hitCount": 0, "resultList": {"result": []}}
+
+
+def test_paper_is_found_by_its_doi(session: Session, fake_time, fixture_json):
+    paper = fixture_json("europepmc/paper_srep39654.json")
+    source, replay = literature(session, fake_time, lambda request: paper)
+
+    record = source.paper("10.1038/srep39654")
+
+    assert record is not None
+    assert (record.source_name, record.external_id) == ("europepmc", "10.1038/srep39654")
+    assert record.url == "https://europepmc.org/article/MED/28067250"
+    assert record.payload == paper["resultList"]["result"][0]
+    assert replay.requests[0].url.params["query"] == 'DOI:"10.1038/srep39654"'
+    info = describe(record)
+    assert info.title == "Promotion of natural tooth repair by small molecule GSK3 antagonists."
+    assert info.authors[:2] == ("Neves VC", "Babb R")
+    assert (info.published_date, info.doi) == (date(2017, 1, 9), "10.1038/srep39654")
+    assert info.abstract
+
+
+def test_unknown_doi_is_not_found(session: Session, fake_time):
+    source, _ = literature(session, fake_time, lambda request: EMPTY_SEARCH)
+
+    assert source.paper("10.9999/does-not-exist") is None
+
+
+def citing_route(fixture_json):
+    paper = fixture_json("europepmc/paper_srep39654.json")
+    first_page = fixture_json("europepmc/citing_srep39654_page1.json")
+
+    def route(request: httpx.Request):
+        query = request.url.params["query"]
+        if query.startswith("DOI:"):
+            return paper
+        assert query == "CITES:28067250_MED"
+        cursor = request.url.params["cursorMark"]
+        return first_page if cursor == "*" else EMPTY_SEARCH | {"nextCursorMark": cursor}
+
+    return route
+
+
+def test_citing_papers_are_listed_with_their_details(session: Session, fake_time, fixture_json):
+    """Scenario: Citing papers"""
+    source, _ = literature(session, fake_time, citing_route(fixture_json))
+    paper = source.paper("10.1038/srep39654")
+    assert paper is not None
+
+    citing = source.citing_papers(paper, page_size=3)
+
+    assert [record.external_id for record in citing] == [
+        "10.1007/s10735-026-10987-w",
+        "10.2147/dddt.s621268",
+        "10.3389/fcell.2026.1795445",
+    ]
+    first = describe(citing[0])
+    assert first.title.startswith("Glomerular epithelial protein-1")
+    assert first.authors[0].startswith("Pokharel")
+    assert (first.published_date, first.doi) == (date(2026, 10, 1), "10.1007/s10735-026-10987-w")
+
+
+def test_citing_papers_follow_the_cursor_until_a_page_comes_back_empty(
+    session: Session, fake_time, fixture_json
+):
+    source, replay = literature(session, fake_time, citing_route(fixture_json))
+    paper = source.paper("10.1038/srep39654")
+    assert paper is not None
+
+    source.citing_papers(paper, page_size=3)
+
+    cursors = [r.url.params["cursorMark"] for r in replay.requests if "cursorMark" in r.url.params]
+    assert cursors == ["*", "AoIIQHd8aSg1NTc4OTc0NQ=="]
+
+
+# --- Crossref --------------------------------------------------------------------
+
+RETRACTED_DOI = "10.1016/S0140-6736(97)11096-0"
+
+
+def registry(session: Session, fake_time, route) -> tuple[Crossref, Replay]:
+    replay = Replay(route)
+    source = Crossref(
+        session, contact_email=CONTACT, transport=httpx.MockTransport(replay), time=fake_time
+    )
+    return source, replay
+
+
+def test_work_metadata_is_fetched_by_doi(session: Session, fake_time, fixture_json):
+    work = fixture_json("crossref/work_srep39654.json")
+    source, replay = registry(session, fake_time, lambda request: work)
+
+    record = source.work("10.1038/srep39654")
+
+    assert record is not None
+    assert (record.source_name, record.external_id) == ("crossref", "10.1038/srep39654")
+    assert record.url == "https://doi.org/10.1038/srep39654"
+    assert record.payload == work["message"]
+    assert replay.requests[0].url.path == "/works/10.1038/srep39654"
+
+
+def test_retracted_paper_lists_its_retraction_notice(session: Session, fake_time, fixture_json):
+    """Scenario: Retracted paper"""
+    work = fixture_json("crossref/work_retracted_lancet_1998.json")
+    source, _ = registry(session, fake_time, lambda request: work)
+
+    notices = source.notices(RETRACTED_DOI)
+
+    assert Notice("retraction", date(2010, 2, 6), "10.1016/s0140-6736(10)60175-4") in notices
+    assert Notice("correction", date(2004, 3, 6), "10.1016/s0140-6736(04)15715-2") in notices
+
+
+def test_paper_with_no_notices_gives_an_empty_list(session: Session, fake_time, fixture_json):
+    """Scenario: Paper with no notices"""
+    work = fixture_json("crossref/work_srep39654.json")
+    source, _ = registry(session, fake_time, lambda request: work)
+
+    assert source.notices("10.1038/srep39654") == []
+
+
+def test_unknown_doi_has_no_work_and_no_notices(session: Session, fake_time):
+    source, _ = registry(session, fake_time, lambda request: NOT_FOUND)
+
+    assert source.work("10.9999/does-not-exist") is None
+    assert source.notices("10.9999/does-not-exist") == []
+
+
+def test_work_and_notices_for_one_doi_cost_one_request(session: Session, fake_time, fixture_json):
+    work = fixture_json("crossref/work_retracted_lancet_1998.json")
+    source, replay = registry(session, fake_time, lambda request: work)
+
+    source.work(RETRACTED_DOI)
+    source.notices(RETRACTED_DOI)
+
+    assert len(replay.requests) == 1

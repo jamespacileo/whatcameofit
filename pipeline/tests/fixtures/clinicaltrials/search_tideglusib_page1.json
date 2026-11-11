@@ -1,0 +1,174 @@
+{
+  "studies": [
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT02586935",
+          "briefTitle": "Tideglusib vs. Placebo in the Treatment of Adolescents With Autism Spectrum Disorders",
+          "officialTitle": "A Randomized Placebo-controlled Trial of Tideglusib vs. Placebo in the Treatment of Adolescents With Autism Spectrum Disorders (ASD)"
+        },
+        "statusModule": {
+          "overallStatus": "COMPLETED"
+        },
+        "sponsorCollaboratorsModule": {
+          "leadSponsor": {
+            "name": "Holland Bloorview Kids Rehabilitation Hospital"
+          }
+        },
+        "conditionsModule": {
+          "conditions": [
+            "Autism Spectrum Disorders"
+          ]
+        },
+        "designModule": {
+          "phases": [
+            "PHASE2"
+          ]
+        },
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "name": "Tideglusib"
+            },
+            {
+              "name": "Placebo"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT02858908",
+          "briefTitle": "Study of Tideglusib in Adolescent and Adult Patients With Myotonic Dystrophy",
+          "officialTitle": "A Single-Blind, Phase 2 Study To Evaluate The Safety And Efficacy Of Tideglusib 400mg Or 1000mg For The Treatment Of Adolescent And Adult Congenital And Juvenile-Onset Myotonic Dystrophy"
+        },
+        "statusModule": {
+          "overallStatus": "COMPLETED"
+        },
+        "sponsorCollaboratorsModule": {
+          "leadSponsor": {
+            "name": "AMO Pharma Limited"
+          }
+        },
+        "conditionsModule": {
+          "conditions": [
+            "Myotonic Dystrophy 1"
+          ]
+        },
+        "designModule": {
+          "phases": [
+            "PHASE2"
+          ]
+        },
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "name": "Tideglusib"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT05004129",
+          "briefTitle": "Safety and Efficacy of Tideglusib in Congenital or Childhood Onset Myotonic Dystrophy",
+          "officialTitle": "An Open-Label Study to Evaluate the Long-Term Safety and Efficacy of Tideglusib for the Treatment of Congenital or Childhood Onset DM1 (REACH CDM X)"
+        },
+        "statusModule": {
+          "overallStatus": "RECRUITING"
+        },
+        "sponsorCollaboratorsModule": {
+          "leadSponsor": {
+            "name": "AMO Pharma Limited"
+          }
+        },
+        "conditionsModule": {
+          "conditions": [
+            "Congenital Myotonic Dystrophy"
+          ]
+        },
+        "designModule": {
+          "phases": [
+            "PHASE2",
+            "PHASE3"
+          ]
+        },
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "name": "Tideglusib"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT05105958",
+          "briefTitle": "Tideglusib for the Treatment of Amyotrophic Lateral Sclerosis",
+          "officialTitle": "Tideglusib for the Treatment of Amyotrophic Lateral Sclerosis (TIDALS): a Randomized Placebo-controlled Phase II Trial"
+        },
+        "statusModule": {
+          "overallStatus": "NOT_YET_RECRUITING"
+        },
+        "sponsorCollaboratorsModule": {
+          "leadSponsor": {
+            "name": "University of Zurich"
+          }
+        },
+        "conditionsModule": {
+          "conditions": [
+            "Amyotrophic Lateral Sclerosis"
+          ]
+        },
+        "designModule": {
+          "phases": [
+            "PHASE2"
+          ]
+        },
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "name": "Tideglusib"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT07119775",
+          "briefTitle": "Tideglusib: Expanded Access Use in Congenital Myotonic Dystrophy"
+        },
+        "statusModule": {
+          "overallStatus": "AVAILABLE"
+        },
+        "sponsorCollaboratorsModule": {
+          "leadSponsor": {
+            "name": "AMO Pharma Limited"
+          }
+        },
+        "conditionsModule": {
+          "conditions": [
+            "Congenital Myotonic Dystrophy"
+          ]
+        },
+        "designModule": {},
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "name": "Tideglusib"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "nextPageToken": "ZVNj7o2Elu8o3lpyXdC5577umpOQJJxtZfij2vcbkA"
+}

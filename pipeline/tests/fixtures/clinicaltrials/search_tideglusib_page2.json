@@ -1,0 +1,202 @@
+{
+  "studies": [
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT01049399",
+          "briefTitle": "Safety, Tolerability, and Efficacy of Two Different Oral Doses of NP031112 Versus Placebo in the Treatment of Patients With Mild-to-Moderate Progressive Supranuclear Palsy",
+          "officialTitle": "A Double-Blind, Placebo-Controlled, Randomized, Parallel-Group Study Evaluating the Safety, Tolerability, and Efficacy of Two Different Oral Doses of NP031112, a GSK-3 Inhibitor, Versus Placebo in the Treatment of Patients With Mild-to-Moderate Progressive Supranuclear Palsy"
+        },
+        "statusModule": {
+          "overallStatus": "COMPLETED"
+        },
+        "sponsorCollaboratorsModule": {
+          "leadSponsor": {
+            "name": "Noscira SA"
+          }
+        },
+        "conditionsModule": {
+          "conditions": [
+            "Progressive Supranuclear Palsy"
+          ]
+        },
+        "designModule": {
+          "phases": [
+            "NA"
+          ]
+        },
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "name": "tideglusib"
+            },
+            {
+              "name": "tideglusib"
+            },
+            {
+              "name": "placebo"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT01350362",
+          "briefTitle": "Efficacy, Safety and Tolerability of Tideglusib to Treat Mild-to-Moderate Alzheimer's Disease Patients",
+          "officialTitle": "A Multicenter, Randomized, Double-blind, Placebo-controlled, 4-arm, 26 Week Parallel-Group Study to Evaluate Efficacy, Safety and Tolerability of 2 Oral Doses and 2 Regimes of Tideglusib vs Placebo in Mild-to-Moderate AD Patients"
+        },
+        "statusModule": {
+          "overallStatus": "COMPLETED"
+        },
+        "sponsorCollaboratorsModule": {
+          "leadSponsor": {
+            "name": "Noscira SA"
+          }
+        },
+        "conditionsModule": {
+          "conditions": [
+            "Alzheimer's Disease"
+          ]
+        },
+        "designModule": {
+          "phases": [
+            "PHASE2"
+          ]
+        },
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "name": "tideglusib"
+            },
+            {
+              "name": "tideglusib"
+            },
+            {
+              "name": "tideglusib"
+            },
+            {
+              "name": "Placebo"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT06174220",
+          "briefTitle": "Targeted Therapy With Glycogen Synthase Kinase-3 Inhibition for Arrhythmogenic Cardiomyopathy",
+          "officialTitle": "Targeted Therapy With Glycogen Synthase Kinase-3 Inhibition for Arrhythmogenic Cardiomyopathy"
+        },
+        "statusModule": {
+          "overallStatus": "RECRUITING"
+        },
+        "sponsorCollaboratorsModule": {
+          "leadSponsor": {
+            "name": "Hamilton Health Sciences Corporation"
+          }
+        },
+        "conditionsModule": {
+          "conditions": [
+            "Arrhythmogenic Cardiomyopathy",
+            "Arrhythmogenic Right Ventricular Cardiomyopathy"
+          ]
+        },
+        "designModule": {
+          "phases": [
+            "PHASE2"
+          ]
+        },
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "name": "Tideglusib"
+            },
+            {
+              "name": "Placebo"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT03692312",
+          "briefTitle": "Efficacy and Safety of Tideglusib in Congenital Myotonic Dystrophy",
+          "officialTitle": "A Randomized, Double-Blind Study to Evaluate the Efficacy and Safety of Tideglusib Versus Placebo for the Treatment of Children and Adolescents With Congenital Myotonic Dystrophy (REACH CDM)"
+        },
+        "statusModule": {
+          "overallStatus": "COMPLETED"
+        },
+        "sponsorCollaboratorsModule": {
+          "leadSponsor": {
+            "name": "AMO Pharma Limited"
+          }
+        },
+        "conditionsModule": {
+          "conditions": [
+            "Congenital Myotonic Dystrophy"
+          ]
+        },
+        "designModule": {
+          "phases": [
+            "PHASE2",
+            "PHASE3"
+          ]
+        },
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "name": "Tideglusib"
+            },
+            {
+              "name": "Placebo"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT00948259",
+          "briefTitle": "Safety Study of a Glycogen Synthase Kinase 3 (GSK3) Inhibitor in Patients With Alzheimer´s Disease",
+          "officialTitle": "Phase IIa 20 Week Double-blind, Placebo-controlled, Randomized, Escalating Dose Study to Evaluate the Safety and Tolerability of Four Oral Doses of NP031112, a Novel GSK3 Inhibitor, in Mild to Moderate Alzheimer's Disease Patients With Stable Anticholinesterasic Treatment."
+        },
+        "statusModule": {
+          "overallStatus": "COMPLETED"
+        },
+        "sponsorCollaboratorsModule": {
+          "leadSponsor": {
+            "name": "Noscira SA"
+          }
+        },
+        "conditionsModule": {
+          "conditions": [
+            "Alzheimer´s Disease"
+          ]
+        },
+        "designModule": {
+          "phases": [
+            "PHASE1",
+            "PHASE2"
+          ]
+        },
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "name": "NP031112"
+            },
+            {
+              "name": "Placebo"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "nextPageToken": "ZVNj7o2Elu8o3lpyXdC5577umpOQJJxsbfei3vYbkA"
+}

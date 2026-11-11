@@ -1,0 +1,365 @@
+{
+  "version": "6.9",
+  "hitCount": 1,
+  "request": {
+    "queryString": "DOI:\"10.1038/srep39654\"",
+    "resultType": "core",
+    "cursorMark": "*",
+    "pageSize": 25,
+    "sort": "",
+    "synonym": false
+  },
+  "resultList": {
+    "result": [
+      {
+        "id": "28067250",
+        "source": "MED",
+        "pmid": "28067250",
+        "pmcid": "PMC5220443",
+        "fullTextIdList": {
+          "fullTextId": [
+            "PMC5220443"
+          ]
+        },
+        "doi": "10.1038/srep39654",
+        "title": "Promotion of natural tooth repair by small molecule GSK3 antagonists.",
+        "authorString": "Neves VC, Babb R, Chandrasekaran D, Sharpe PT.",
+        "authorList": {
+          "author": [
+            {
+              "fullName": "Neves VC",
+              "lastName": "Neves",
+              "firstName": "Vitor C M",
+              "initials": "VC",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Craniofacial Development and Stem Cell Biology, Dental Institute, Kings College London, UK."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Babb R",
+              "lastName": "Babb",
+              "firstName": "Rebecca",
+              "initials": "R",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Craniofacial Development and Stem Cell Biology, Dental Institute, Kings College London, UK."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Chandrasekaran D",
+              "lastName": "Chandrasekaran",
+              "firstName": "Dhivya",
+              "initials": "D",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Craniofacial Development and Stem Cell Biology, Dental Institute, Kings College London, UK."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Sharpe PT",
+              "lastName": "Sharpe",
+              "firstName": "Paul T",
+              "initials": "PT",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-2116-9561"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Craniofacial Development and Stem Cell Biology, Dental Institute, Kings College London, UK."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "authorIdList": {
+          "authorId": [
+            {
+              "type": "ORCID",
+              "value": "0000-0002-5111-269X"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-2116-9561"
+            }
+          ]
+        },
+        "dataLinksTagsList": {
+          "dataLinkstag": [
+            "altmetrics",
+            "supporting_data",
+            "recommended_reviews",
+            "wikipedia"
+          ]
+        },
+        "journalInfo": {
+          "volume": "7",
+          "journalIssueId": 2510373,
+          "dateOfPublication": "2017 Jan",
+          "monthOfPublication": 1,
+          "yearOfPublication": 2017,
+          "journal": {
+            "medlineAbbreviation": "Sci Rep",
+            "title": "Scientific reports",
+            "essn": "2045-2322",
+            "issn": "2045-2322",
+            "isoabbreviation": "Sci Rep",
+            "nlmid": "101563288"
+          },
+          "printPublicationDate": "2017-01-01"
+        },
+        "pubYear": "2017",
+        "pageInfo": "39654",
+        "abstractText": "The restoration of dentine lost in deep caries lesions in teeth is a routine and common treatment that involves the use of inorganic cements based on calcium or silicon-based mineral aggregates. Such cements remain in the tooth and fail to degrade and thus normal mineral volume is never completely restored. Here we describe a novel, biological approach to dentine restoration that stimulates the natural formation of reparative dentine via the mobilisation of resident stem cells in the tooth pulp. Biodegradable, clinically-approved collagen sponges are used to deliver low doses of small molecule glycogen synthase kinase (GSK-3) antagonists that promote the natural processes of reparative dentine formation to completely restore dentine. Since the carrier sponge is degraded over time, dentine replaces the degraded sponge leading to a complete, effective natural repair. This simple, rapid natural tooth repair process could thus potentially provide a new approach to clinical tooth restoration.",
+        "affiliation": "Department of Craniofacial Development and Stem Cell Biology, Dental Institute, Kings College London, UK.",
+        "publicationStatus": "epublish",
+        "language": "eng",
+        "pubModel": "Electronic",
+        "pubTypeList": {
+          "pubType": [
+            "Research Support, Non-U.S. Gov't",
+            "research-article",
+            "Journal Article"
+          ]
+        },
+        "grantsList": {
+          "grant": [
+            {
+              "agency": "Medical Research Council",
+              "acronym": "MRC_",
+              "grantId": "MC_PC_15031",
+              "orderIn": 0
+            },
+            {
+              "agency": "Medical Research Council",
+              "acronym": "MRC_",
+              "grantId": "MR/K011421/1",
+              "orderIn": 0
+            },
+            {
+              "agency": "Medical Research Council",
+              "acronym": "MRC_",
+              "grantId": "MR/J006742/1",
+              "orderIn": 0
+            },
+            {
+              "agency": "Medical Research Council",
+              "acronym": "MRC_",
+              "grantId": "MR/K018035/1",
+              "orderIn": 0
+            }
+          ]
+        },
+        "meshHeadingList": {
+          "meshHeading": [
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Cells, Cultured"
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Dental Pulp",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "Y",
+                    "abbreviation": "DE",
+                    "qualifierName": "drug effects"
+                  },
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "ME",
+                    "qualifierName": "metabolism"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Dentin",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "Y",
+                    "abbreviation": "ME",
+                    "qualifierName": "metabolism"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Animals"
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Mice"
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Dental Caries",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "DT",
+                    "qualifierName": "drug therapy"
+                  },
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "ET",
+                    "qualifierName": "etiology"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Tooth Injuries",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "CO",
+                    "qualifierName": "complications"
+                  },
+                  {
+                    "majorTopic_YN": "Y",
+                    "abbreviation": "DT",
+                    "qualifierName": "drug therapy"
+                  },
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "ME",
+                    "qualifierName": "metabolism"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Collagen",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "AD",
+                    "qualifierName": "administration & dosage"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Glycogen Synthase Kinase 3",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "Y",
+                    "abbreviation": "AI",
+                    "qualifierName": "antagonists & inhibitors"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Wnt Signaling Pathway",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "DE",
+                    "qualifierName": "drug effects"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "chemicalList": {
+          "chemical": [
+            {
+              "name": "Collagen",
+              "registryNumber": "9007-34-5"
+            },
+            {
+              "name": "Glycogen Synthase Kinase 3",
+              "registryNumber": "EC 2.7.11.26"
+            }
+          ]
+        },
+        "subsetList": {
+          "subset": [
+            {
+              "code": "IM",
+              "name": "Index Medicus"
+            }
+          ]
+        },
+        "fullTextUrlList": {
+          "fullTextUrl": [
+            {
+              "availability": "Subscription required",
+              "availabilityCode": "S",
+              "documentStyle": "doi",
+              "site": "DOI",
+              "url": "https://doi.org/10.1038/srep39654"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "html",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/articles/PMC5220443"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "pdf",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/articles/PMC5220443?pdf=render"
+            }
+          ]
+        },
+        "isOpenAccess": "Y",
+        "inEPMC": "Y",
+        "inPMC": "Y",
+        "citedByCount": 144,
+        "hasReferences": "Y",
+        "hasTextMinedTerms": "Y",
+        "hasDbCrossReferences": "N",
+        "hasPDF": "Y",
+        "hasBook": "N",
+        "hasSuppl": "Y",
+        "hasLabsLinks": "Y",
+        "hasData": "Y",
+        "license": "cc by",
+        "authMan": "N",
+        "epmcAuthMan": "N",
+        "nihAuthMan": "N",
+        "hasTMAccessionNumbers": "N",
+        "dateOfCompletion": "2018-10-18",
+        "dateOfCreation": "2017-01-10",
+        "dateOfRevision": "2025-05-30",
+        "electronicPublicationDate": "2017-01-09",
+        "firstPublicationDate": "2017-01-09",
+        "firstIndexDate": "2017-01-13",
+        "fullTextReceivedDate": "2020-07-10",
+        "hasEvaluations": "N"
+      }
+    ]
+  }
+}

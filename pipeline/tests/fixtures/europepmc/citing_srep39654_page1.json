@@ -1,0 +1,1001 @@
+{
+  "version": "6.9",
+  "hitCount": 145,
+  "nextCursorMark": "AoIIQHd8aSg1NTc4OTc0NQ==",
+  "nextPageUrl": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=CITES%3A28067250_MED&cursorMark=AoIIQHd8aSg1NTc4OTc0NQ%3D%3D&resultType=core&pageSize=3&format=json",
+  "request": {
+    "queryString": "CITES:28067250_MED",
+    "resultType": "core",
+    "cursorMark": "*",
+    "pageSize": 3,
+    "sort": "",
+    "synonym": false
+  },
+  "resultList": {
+    "result": [
+      {
+        "id": "42821166",
+        "source": "MED",
+        "pmid": "42821166",
+        "doi": "10.1007/s10735-026-10987-w",
+        "title": "Glomerular epithelial protein-1 promotes reparative dentin formation in vivo.",
+        "authorString": "Pokharel E, Song MK, Rana B, Aryal YP, Kim TY, Kim JY, Jang JH, Lee JH, Kim MS, Yamamoto H, Hwang SM, An CH, Sohn WJ, An SY, Cho SJ, Ha JH, Jung JK, Kim JY.",
+        "authorList": {
+          "author": [
+            {
+              "fullName": "Pokharel E",
+              "lastName": "Pokharel",
+              "firstName": "Elina",
+              "initials": "E",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Biochemistry, School of Dentistry, IHBR, Kyungpook National University, Daegu, 41940, South Korea."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Song MK",
+              "lastName": "Song",
+              "firstName": "Moo-Keun",
+              "initials": "MK",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Biochemistry, School of Dentistry, IHBR, Kyungpook National University, Daegu, 41940, South Korea."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Rana B",
+              "lastName": "Rana",
+              "firstName": "Bandana",
+              "initials": "B",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Biochemistry, School of Dentistry, IHBR, Kyungpook National University, Daegu, 41940, South Korea."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Aryal YP",
+              "lastName": "Aryal",
+              "firstName": "Yam Prasad",
+              "initials": "YP",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Biochemistry, School of Dentistry, IHBR, Kyungpook National University, Daegu, 41940, South Korea."
+                  },
+                  {
+                    "affiliation": "Division of Developmental Biology, Cincinnati Children's Hospital Medical Center, Cincinnati, OH, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Kim TY",
+              "lastName": "Kim",
+              "firstName": "Tae-Young",
+              "initials": "TY",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Biochemistry, School of Dentistry, IHBR, Kyungpook National University, Daegu, 41940, South Korea."
+                  },
+                  {
+                    "affiliation": "Department of Anatomy, Keimyung University School of Medicine, Daegu, 42601, South Korea."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Kim JY",
+              "lastName": "Kim",
+              "firstName": "Ji-Youn",
+              "initials": "JY",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Dental Hygiene, College of Medical Science, Gachon University, Incheon, 21936, South Korea."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Jang JH",
+              "lastName": "Jang",
+              "firstName": "Je-Hee",
+              "initials": "JH",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Biochemistry, School of Dentistry, IHBR, Kyungpook National University, Daegu, 41940, South Korea."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Lee JH",
+              "lastName": "Lee",
+              "firstName": "Jae-Hee",
+              "initials": "JH",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Biochemistry, School of Dentistry, IHBR, Kyungpook National University, Daegu, 41940, South Korea."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Kim MS",
+              "lastName": "Kim",
+              "firstName": "Mee-Seon",
+              "initials": "MS",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Pathology, School of Dentistry, Kyungpook National University, Kyungpook National University Hospital, Daegu, 41940, South Korea."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Yamamoto H",
+              "lastName": "Yamamoto",
+              "firstName": "Hitoshi",
+              "initials": "H",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Histology and Developmental Biology, Tokyo Dental College, Tokyo, 101-0061, Japan."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Hwang SM",
+              "lastName": "Hwang",
+              "firstName": "Sung-Min",
+              "initials": "SM",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Periodontology, School of Dentistry, IHBR, Kyungpook National University, Daegu, 41940, South Korea."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "An CH",
+              "lastName": "An",
+              "firstName": "Chang-Hyeon",
+              "initials": "CH",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Oral and Maxillofacial Radiology, School of Dentistry, IHBR, Kyungpook National University, Daegu, 41940, South Korea."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Sohn WJ",
+              "lastName": "Sohn",
+              "firstName": "Wern-Joo",
+              "initials": "WJ",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of K-Beauty Business, College of K-BioHealth, Daegu Haany University, Gyeongsan, 38610, South Korea."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "An SY",
+              "lastName": "An",
+              "firstName": "Seo-Young",
+              "initials": "SY",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Oral and Maxillofacial Radiology, School of Dentistry, IHBR, Kyungpook National University, Daegu, 41940, South Korea."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Cho SJ",
+              "lastName": "Cho",
+              "firstName": "Sung-Jin",
+              "initials": "SJ",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Biological Sciences and Biotechnology, College of Natural Sciences, Chungbuk National University, Cheongju, 28644, South Korea."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Ha JH",
+              "lastName": "Ha",
+              "firstName": "Jung-Hong",
+              "initials": "JH",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Conservative Dentistry, School of Dentistry, IHBR, Kyungpook National University, Daegu, 41940, South Korea."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Jung JK",
+              "lastName": "Jung",
+              "firstName": "Jae-Kwang",
+              "initials": "JK",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Oral Medicine, School of Dentistry, IHBR, Kyungpook National University, Daegu, 41940, South Korea. widenmy@knu.ac.kr."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Kim JY",
+              "lastName": "Kim",
+              "firstName": "Jae-Young",
+              "initials": "JY",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-6752-5683"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Biochemistry, School of Dentistry, IHBR, Kyungpook National University, Daegu, 41940, South Korea. jykim91@knu.ac.kr."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "authorIdList": {
+          "authorId": [
+            {
+              "type": "ORCID",
+              "value": "0000-0002-6752-5683"
+            }
+          ]
+        },
+        "journalInfo": {
+          "issue": "5",
+          "volume": "57",
+          "journalIssueId": 4275118,
+          "dateOfPublication": "2026 Oct",
+          "monthOfPublication": 10,
+          "yearOfPublication": 2026,
+          "journal": {
+            "medlineAbbreviation": "J Mol Histol",
+            "title": "Journal of molecular histology",
+            "essn": "1567-2387",
+            "issn": "1567-2379",
+            "nlmid": "101193653",
+            "isoabbreviation": "J Mol Histol"
+          },
+          "printPublicationDate": "2026-10-01"
+        },
+        "pubYear": "2026",
+        "pageInfo": "322",
+        "abstractText": "Abstract replaced in this fixture: abstracts are the copyright of their publishers.",
+        "affiliation": "Department of Biochemistry, School of Dentistry, IHBR, Kyungpook National University, Daegu, 41940, South Korea.",
+        "publicationStatus": "epublish",
+        "language": "eng",
+        "pubModel": "Electronic",
+        "pubTypeList": {
+          "pubType": [
+            "Journal Article"
+          ]
+        },
+        "grantsList": {
+          "grant": [
+            {
+              "agency": "National Research Foundation of Korea",
+              "grantId": "RS-2023-00252263",
+              "orderIn": 0
+            },
+            {
+              "agency": "National Research Foundation of Korea",
+              "grantId": "NRF-2022R1I1A2063745",
+              "orderIn": 0
+            }
+          ]
+        },
+        "meshHeadingList": {
+          "meshHeading": [
+            {
+              "majorTopic_YN": "Y",
+              "descriptorName": "Dentin",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "ME",
+                    "qualifierName": "metabolism"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "Y",
+              "descriptorName": "Dentin, Secondary",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "ME",
+                    "qualifierName": "metabolism"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Animals"
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Mice"
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Dependovirus",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "GE",
+                    "qualifierName": "genetics"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "Y",
+              "descriptorName": "Dentinogenesis"
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Male"
+            }
+          ]
+        },
+        "keywordList": {
+          "keyword": [
+            "AAV",
+            "Glepp1",
+            "Reparative Dentin",
+            "Dentin Bridge",
+            "Pulp Cavity"
+          ]
+        },
+        "subsetList": {
+          "subset": [
+            {
+              "code": "IM",
+              "name": "Index Medicus"
+            }
+          ]
+        },
+        "fullTextUrlList": {
+          "fullTextUrl": [
+            {
+              "availability": "Subscription required",
+              "availabilityCode": "S",
+              "documentStyle": "doi",
+              "site": "DOI",
+              "url": "https://doi.org/10.1007/s10735-026-10987-w"
+            }
+          ]
+        },
+        "isOpenAccess": "N",
+        "inEPMC": "N",
+        "inPMC": "N",
+        "citedByCount": 0,
+        "hasReferences": "Y",
+        "hasTextMinedTerms": "Y",
+        "hasDbCrossReferences": "N",
+        "hasPDF": "N",
+        "hasBook": "N",
+        "hasSuppl": "N",
+        "hasLabsLinks": "N",
+        "hasData": "N",
+        "authMan": "N",
+        "epmcAuthMan": "N",
+        "nihAuthMan": "N",
+        "hasTMAccessionNumbers": "N",
+        "dateOfCompletion": "2026-10-01",
+        "dateOfCreation": "2026-10-01",
+        "dateOfRevision": "2026-11-05",
+        "electronicPublicationDate": "2026-10-01",
+        "firstPublicationDate": "2026-10-01",
+        "firstIndexDate": "2026-10-02",
+        "hasEvaluations": "N"
+      },
+      {
+        "id": "42542755",
+        "source": "MED",
+        "pmid": "42542755",
+        "pmcid": "PMC13428099",
+        "fullTextIdList": {
+          "fullTextId": [
+            "PMC13428099"
+          ]
+        },
+        "doi": "10.2147/dddt.s621268",
+        "title": "Tideglusib-Preactivated Osteoblasts Encapsulated in Ceramic Particle-Reinforced GelMA Hydrogel for Enhanced Critical-Size Bone Defect Regeneration.",
+        "authorString": "Cao K, Shang H, Li Y, Tan Y, Li M, Ma Y, Cai X, Tang Z.",
+        "authorList": {
+          "author": [
+            {
+              "fullName": "Cao K",
+              "lastName": "Cao",
+              "firstName": "Keqin",
+              "initials": "K",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "College of Biomedical Engineering, Chongqing Medical University, Chongqing, People's Republic of China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Shang H",
+              "lastName": "Shang",
+              "firstName": "Hongxu",
+              "initials": "H",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "College of Biomedical Engineering, Chongqing Medical University, Chongqing, People's Republic of China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Li Y",
+              "lastName": "Li",
+              "firstName": "Yexin",
+              "initials": "Y",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "College of Biomedical Engineering, Chongqing Medical University, Chongqing, People's Republic of China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Tan Y",
+              "lastName": "Tan",
+              "firstName": "Yanfei",
+              "initials": "Y",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "National Engineering Research Center for Biomaterials and College of Biomedical Engineering, Sichuan University, Chengdu, People's Republic of China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Li M",
+              "lastName": "Li",
+              "firstName": "Molin",
+              "initials": "M",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Pathology, Chongqing General Hospital, Chongqing University, Chongqing, People's Republic of China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Ma Y",
+              "lastName": "Ma",
+              "firstName": "Yufei",
+              "initials": "Y",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Research Center of Stem Cells and Ageing, Chongqing Institute of Green and Intelligent Technology, Chinese Academy of Sciences, Chongqing, People's Republic of China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Cai X",
+              "lastName": "Cai",
+              "firstName": "Xue",
+              "initials": "X",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Stomatology Department, Xiyong Community Healthcare Center, Chongqing High-Tech Zone, Chongqing, People's Republic of China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Tang Z",
+              "lastName": "Tang",
+              "firstName": "Zhurong",
+              "initials": "Z",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "College of Biomedical Engineering, Chongqing Medical University, Chongqing, People's Republic of China."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "dataLinksTagsList": {
+          "dataLinkstag": [
+            "supporting_data"
+          ]
+        },
+        "journalInfo": {
+          "volume": "20",
+          "journalIssueId": 4091778,
+          "dateOfPublication": "2026 ",
+          "monthOfPublication": 0,
+          "yearOfPublication": 2026,
+          "journal": {
+            "medlineAbbreviation": "Drug Des Devel Ther",
+            "title": "Drug design, development and therapy",
+            "essn": "1177-8881",
+            "issn": "1177-8881",
+            "nlmid": "101475745",
+            "isoabbreviation": "Drug Des Devel Ther"
+          },
+          "printPublicationDate": "2026-01-01"
+        },
+        "pubYear": "2026",
+        "pageInfo": "621268",
+        "abstractText": "Abstract replaced in this fixture: abstracts are the copyright of their publishers.",
+        "affiliation": "College of Biomedical Engineering, Chongqing Medical University, Chongqing, People's Republic of China.",
+        "publicationStatus": "epublish",
+        "language": "eng",
+        "pubModel": "Electronic-eCollection",
+        "pubTypeList": {
+          "pubType": [
+            "research-article",
+            "Journal Article"
+          ]
+        },
+        "meshHeadingList": {
+          "meshHeading": [
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Cells, Cultured"
+            },
+            {
+              "majorTopic_YN": "Y",
+              "descriptorName": "Osteoblasts",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "DE",
+                    "qualifierName": "drug effects"
+                  },
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "ME",
+                    "qualifierName": "metabolism"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Animals"
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Rats"
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Rats, Sprague-Dawley"
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Hydroxyapatites",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "PD",
+                    "qualifierName": "pharmacology"
+                  },
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "CH",
+                    "qualifierName": "chemistry"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Methacrylates"
+            },
+            {
+              "majorTopic_YN": "Y",
+              "descriptorName": "Gelatin",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "PD",
+                    "qualifierName": "pharmacology"
+                  },
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "CH",
+                    "qualifierName": "chemistry"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "Y",
+              "descriptorName": "Ceramics",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "PD",
+                    "qualifierName": "pharmacology"
+                  },
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "CH",
+                    "qualifierName": "chemistry"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "Y",
+              "descriptorName": "Hydrogels",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "PD",
+                    "qualifierName": "pharmacology"
+                  },
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "CH",
+                    "qualifierName": "chemistry"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "Y",
+              "descriptorName": "Bone Regeneration",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "DE",
+                    "qualifierName": "drug effects"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Cell Proliferation",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "DE",
+                    "qualifierName": "drug effects"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Particle Size"
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Male"
+            }
+          ]
+        },
+        "keywordList": {
+          "keyword": [
+            "Osteoblasts",
+            "Osteoinductive",
+            "Biphasic Calcium Phosphate",
+            "Tideglusib",
+            "Critical-size Bone Defect",
+            "Gelatin Methacryloyl"
+          ]
+        },
+        "chemicalList": {
+          "chemical": [
+            {
+              "name": "hydroxyapatite-beta tricalcium phosphate",
+              "registryNumber": "0"
+            },
+            {
+              "name": "Gelatin",
+              "registryNumber": "9000-70-8"
+            },
+            {
+              "name": "Methacrylates",
+              "registryNumber": "0"
+            },
+            {
+              "name": "Hydroxyapatites",
+              "registryNumber": "0"
+            },
+            {
+              "name": "Hydrogels",
+              "registryNumber": "0"
+            },
+            {
+              "name": "gelatin methacryloyl",
+              "registryNumber": "0"
+            }
+          ]
+        },
+        "subsetList": {
+          "subset": [
+            {
+              "code": "IM",
+              "name": "Index Medicus"
+            }
+          ]
+        },
+        "fullTextUrlList": {
+          "fullTextUrl": [
+            {
+              "availability": "Subscription required",
+              "availabilityCode": "S",
+              "documentStyle": "doi",
+              "site": "DOI",
+              "url": "https://doi.org/10.2147/DDDT.S621268"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "html",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/articles/PMC13428099"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "pdf",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/articles/PMC13428099?pdf=render"
+            }
+          ]
+        },
+        "isOpenAccess": "Y",
+        "inEPMC": "Y",
+        "inPMC": "Y",
+        "citedByCount": 0,
+        "hasReferences": "Y",
+        "hasTextMinedTerms": "Y",
+        "hasDbCrossReferences": "N",
+        "hasPDF": "Y",
+        "hasBook": "N",
+        "hasSuppl": "N",
+        "hasLabsLinks": "N",
+        "hasData": "Y",
+        "license": "cc by-nc",
+        "authMan": "N",
+        "epmcAuthMan": "N",
+        "nihAuthMan": "N",
+        "hasTMAccessionNumbers": "Y",
+        "tmAccessionTypeList": {
+          "accessionType": [
+            "doi"
+          ]
+        },
+        "dateOfCompletion": "2026-08-02",
+        "dateOfCreation": "2026-08-02",
+        "dateOfRevision": "2026-08-13",
+        "electronicPublicationDate": "2026-07-27",
+        "firstPublicationDate": "2026-07-27",
+        "firstIndexDate": "2026-08-03",
+        "fullTextReceivedDate": "2026-09-04",
+        "hasEvaluations": "N"
+      },
+      {
+        "id": "42306299",
+        "source": "MED",
+        "pmid": "42306299",
+        "pmcid": "PMC13265572",
+        "fullTextIdList": {
+          "fullTextId": [
+            "PMC13265572"
+          ]
+        },
+        "doi": "10.3389/fcell.2026.1795445",
+        "title": "G protein-coupled receptor signaling in osteogenic bone mesenchymal stem/stromal cells.",
+        "authorString": "Wolfe TJ, Weaver SR.",
+        "authorList": {
+          "author": [
+            {
+              "fullName": "Wolfe TJ",
+              "lastName": "Wolfe",
+              "firstName": "Trevor J",
+              "initials": "TJ",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Comparative Biosciences, University of Wisconsin-Madison, Madison, WI, United States."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Weaver SR",
+              "lastName": "Weaver",
+              "firstName": "Samantha R",
+              "initials": "SR",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Comparative Biosciences, University of Wisconsin-Madison, Madison, WI, United States."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "dataLinksTagsList": {
+          "dataLinkstag": [
+            "altmetrics",
+            "supporting_data"
+          ]
+        },
+        "journalInfo": {
+          "volume": "14",
+          "journalIssueId": 4110764,
+          "dateOfPublication": "2026 ",
+          "monthOfPublication": 0,
+          "yearOfPublication": 2026,
+          "journal": {
+            "medlineAbbreviation": "Front Cell Dev Biol",
+            "title": "Frontiers in cell and developmental biology",
+            "essn": "2296-634X",
+            "issn": "2296-634X",
+            "nlmid": "101630250",
+            "isoabbreviation": "Front Cell Dev Biol"
+          },
+          "printPublicationDate": "2026-01-01"
+        },
+        "pubYear": "2026",
+        "pageInfo": "1795445",
+        "abstractText": "Abstract replaced in this fixture: abstracts are the copyright of their publishers.",
+        "affiliation": "Department of Comparative Biosciences, University of Wisconsin-Madison, Madison, WI, United States.",
+        "publicationStatus": "epublish",
+        "language": "eng",
+        "pubModel": "Electronic-eCollection",
+        "pubTypeList": {
+          "pubType": [
+            "review-article",
+            "Review",
+            "Journal Article"
+          ]
+        },
+        "grantsList": {
+          "grant": [
+            {
+              "agency": "NIAMS NIH HHS",
+              "acronym": "AR",
+              "grantId": "R00 AR080745",
+              "orderIn": 0
+            },
+            {
+              "agency": "NIAMS NIH HHS",
+              "acronym": "AR",
+              "grantId": "K99 AR080745",
+              "orderIn": 0
+            }
+          ]
+        },
+        "keywordList": {
+          "keyword": [
+            "Osteoporosis",
+            "G protein-coupled receptor",
+            "Anabolic Therapeutics",
+            "Gpcr Effector",
+            "Bone Mesenchymal Stem/stromal Cell"
+          ]
+        },
+        "fullTextUrlList": {
+          "fullTextUrl": [
+            {
+              "availability": "Subscription required",
+              "availabilityCode": "S",
+              "documentStyle": "doi",
+              "site": "DOI",
+              "url": "https://doi.org/10.3389/fcell.2026.1795445"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "html",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/articles/PMC13265572"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "pdf",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/articles/PMC13265572?pdf=render"
+            }
+          ]
+        },
+        "isOpenAccess": "Y",
+        "inEPMC": "Y",
+        "inPMC": "Y",
+        "citedByCount": 0,
+        "hasReferences": "Y",
+        "hasTextMinedTerms": "Y",
+        "hasDbCrossReferences": "N",
+        "hasPDF": "Y",
+        "hasBook": "N",
+        "hasSuppl": "N",
+        "hasLabsLinks": "Y",
+        "hasData": "Y",
+        "license": "cc by",
+        "authMan": "N",
+        "epmcAuthMan": "N",
+        "nihAuthMan": "N",
+        "hasTMAccessionNumbers": "Y",
+        "tmAccessionTypeList": {
+          "accessionType": [
+            "refsnp",
+            "doi"
+          ]
+        },
+        "dateOfCompletion": "2026-06-17",
+        "dateOfCreation": "2026-06-17",
+        "dateOfRevision": "2026-08-13",
+        "electronicPublicationDate": "2026-06-01",
+        "firstPublicationDate": "2026-06-01",
+        "firstIndexDate": "2026-06-18",
+        "fullTextReceivedDate": "2026-06-26",
+        "hasEvaluations": "N"
+      }
+    ]
+  }
+}
