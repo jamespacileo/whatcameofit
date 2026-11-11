@@ -1,0 +1,355 @@
+{
+  "status": "ok",
+  "message-type": "work",
+  "message-version": "1.0.0",
+  "message": {
+    "indexed": {
+      "date-parts": [
+        [
+          2026,
+          11,
+          6
+        ]
+      ],
+      "date-time": "2026-11-06T00:54:47Z",
+      "timestamp": 1793926487655,
+      "version": "4.8.0"
+    },
+    "reference-count": 44,
+    "publisher": "American Association for the Advancement of Science (AAAS)",
+    "issue": "7",
+    "license": [
+      {
+        "start": {
+          "date-parts": [
+            [
+              2021,
+              2,
+              12
+            ]
+          ],
+          "date-time": "2021-02-12T00:00:00Z",
+          "timestamp": 1613088000000
+        },
+        "content-version": "vor",
+        "delay-in-days": 0,
+        "URL": "https://creativecommons.org/licenses/by/4.0/"
+      }
+    ],
+    "content-domain": {
+      "domain": [],
+      "crossmark-restriction": false
+    },
+    "short-container-title": [
+      "Sci. Adv."
+    ],
+    "published-print": {
+      "date-parts": [
+        [
+          2021,
+          2,
+          12
+        ]
+      ]
+    },
+    "DOI": "10.1126/sciadv.abf1798",
+    "type": "journal-article",
+    "created": {
+      "date-parts": [
+        [
+          2021,
+          2,
+          14
+        ]
+      ],
+      "date-time": "2021-02-14T05:00:57Z",
+      "timestamp": 1613278857000
+    },
+    "source": "Crossref",
+    "is-referenced-by-count": 45,
+    "title": [
+      "Anti\u2013USAG-1 therapy for tooth regeneration through enhanced BMP signaling"
+    ],
+    "prefix": "10.1126",
+    "volume": "7",
+    "author": [
+      {
+        "ORCID": "https://orcid.org/0000-0003-2485-8637",
+        "authenticated-orcid": true,
+        "given": "A.",
+        "family": "Murashima-Suginami",
+        "sequence": "first",
+        "affiliation": [
+          {
+            "name": "Department of Oral and Maxillofacial Surgery, Graduate School of Medicine, Kyoto University, Kyoto, Japan."
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-5719-3008",
+        "authenticated-orcid": true,
+        "given": "H.",
+        "family": "Kiso",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Oral and Maxillofacial Surgery, Graduate School of Medicine, Kyoto University, Kyoto, Japan."
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-8598-3525",
+        "authenticated-orcid": true,
+        "given": "Y.",
+        "family": "Tokita",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Disease model, Institute for Developmental Research, Aichi Human Service Center, Kasugai, Aichi, Japan."
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-9127-8643",
+        "authenticated-orcid": true,
+        "given": "E.",
+        "family": "Mihara",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Laboratory of Protein Synthesis and Expression, Institute for Protein Research, Osaka University, Osaka, Japan."
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Y.",
+        "family": "Nambu",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Molecular Genetics, Division of Medicine, Faculty of Medical Sciences, University of Fukui, Fukui, Japan."
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-9546-9869",
+        "authenticated-orcid": true,
+        "given": "R.",
+        "family": "Uozumi",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Biomedical Statistics and Bioinformatics, Graduate School of Medicine, Kyoto University, Kyoto, Japan."
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-8974-277X",
+        "authenticated-orcid": true,
+        "given": "Y.",
+        "family": "Tabata",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Laboratory of Biomaterials, Institute for Frontier Life and Medical Sciences, Kyoto University, Kyoto, Japan."
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "K.",
+        "family": "Bessho",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Oral and Maxillofacial Surgery, Graduate School of Medicine, Kyoto University, Kyoto, Japan."
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-1219-475X",
+        "authenticated-orcid": true,
+        "given": "J.",
+        "family": "Takagi",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Laboratory of Protein Synthesis and Expression, Institute for Protein Research, Osaka University, Osaka, Japan."
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-1668-7647",
+        "authenticated-orcid": true,
+        "given": "M.",
+        "family": "Sugai",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Molecular Genetics, Division of Medicine, Faculty of Medical Sciences, University of Fukui, Fukui, Japan."
+          },
+          {
+            "name": "Life Science Innovation Center, University of Fukui, 23-3 Matsuoka Shimoaizuki, Eiheiji-cho, Yoshida-gun, Fukui 910-1193, Japan."
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-2395-4715",
+        "authenticated-orcid": true,
+        "given": "K.",
+        "family": "Takahashi",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Oral and Maxillofacial Surgery, Graduate School of Medicine, Kyoto University, Kyoto, Japan."
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "member": "221",
+    "container-title": [
+      "Science Advances"
+    ],
+    "original-title": [],
+    "language": "en",
+    "link": [
+      {
+        "URL": "https://www.science.org/doi/pdf/10.1126/sciadv.abf1798",
+        "content-type": "unspecified",
+        "content-version": "vor",
+        "intended-application": "similarity-checking"
+      }
+    ],
+    "deposited": {
+      "date-parts": [
+        [
+          2024,
+          8,
+          24
+        ]
+      ],
+      "date-time": "2024-08-24T05:28:30Z",
+      "timestamp": 1724477310000
+    },
+    "score": 1,
+    "resource": {
+      "primary": {
+        "URL": "https://www.science.org/doi/10.1126/sciadv.abf1798"
+      }
+    },
+    "subtitle": [],
+    "short-title": [],
+    "issued": {
+      "date-parts": [
+        [
+          2021,
+          2,
+          12
+        ]
+      ]
+    },
+    "references-count": 44,
+    "journal-issue": {
+      "issue": "7",
+      "published-print": {
+        "date-parts": [
+          [
+            2021,
+            2,
+            12
+          ]
+        ]
+      }
+    },
+    "alternative-id": [
+      "10.1126/sciadv.abf1798"
+    ],
+    "URL": "https://doi.org/10.1126/sciadv.abf1798",
+    "relation": {},
+    "ISSN": [
+      "2375-2548"
+    ],
+    "issn-type": [
+      {
+        "value": "2375-2548",
+        "type": "electronic"
+      }
+    ],
+    "subject": [],
+    "published": {
+      "date-parts": [
+        [
+          2021,
+          2,
+          12
+        ]
+      ]
+    },
+    "article-number": "eabf1798"
+  }
+}

@@ -18,7 +18,8 @@ types:
 db-up:
 	docker compose up -d --wait db
 
-test: db-up
+# The round-trip test builds the site, so the site's dependencies must be installed.
+test: db-up site/node_modules
 	uv run --directory pipeline pytest -q
 
 site/node_modules: site/package-lock.json

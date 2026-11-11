@@ -11,6 +11,7 @@ from thenwhat.cli.export import export_command
 from thenwhat.cli.extract import extract_app
 from thenwhat.cli.resolve import entity_app, resolve_command
 from thenwhat.cli.review import review_app
+from thenwhat.cli.seed import seed_app
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.db.session import make_engine, ping
 
@@ -25,6 +26,7 @@ app.command("fetch")(fetch_command)
 app.add_typer(event_app, name="event")
 app.add_typer(review_app, name="review")
 app.command("export")(export_command)
+app.add_typer(seed_app, name="seed")
 
 
 @app.callback()

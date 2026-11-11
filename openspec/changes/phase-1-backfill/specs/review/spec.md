@@ -7,7 +7,7 @@ Keeps a human between collected data and the public site. Draft claims, entity m
 ## ADDED Requirements
 
 ### Requirement: Review states
-Every draft claim, entity match and evidence event SHALL be in exactly one review state: pending, approved or rejected. Each decision SHALL record when it was made and whether a human or a rule made it.
+Every draft claim, entity match and evidence event SHALL be in exactly one review state: pending, approved or rejected. Each decision SHALL record when it was made and whether a human, a rule or the seed loader made it.
 
 #### Scenario: Operator approves a match
 - **WHEN** an operator approves a pending entity match

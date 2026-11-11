@@ -86,8 +86,8 @@
 
 ## 11. Integration
 
-- [ ] 11.1 Find where the seeded example's trial is registered and record it in `data/seed/`; verify the seed file names the registry and whether fetch or a manual event will supply the trial
-- [ ] 11.2 Write an end-to-end test for the seeded example using recorded fixtures: article URL, extract, approve draft, resolve, approve matches, fetch, approve events, export, site build; verify the built page shows the expected status and every event links to its source
+- [x] 11.1 Find where the seeded example's trial is registered and record it in `data/seed/`; verify the seed file names the registry and whether fetch or a manual event will supply the trial
+- [x] 11.2 Write an end-to-end test for the seeded example using recorded fixtures: article URL, extract, approve draft, resolve, approve matches, fetch, approve events, export, site build; verify the built page shows the expected status and every event links to its source
 - [ ] 11.3 Load the seeded example on a fresh `docker compose up`; verify a clean checkout shows the claim page at the local preview address with no manual steps
 - [ ] 11.4 Run `check` on a clean checkout with the network disabled; verify it passes
 

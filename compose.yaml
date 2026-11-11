@@ -25,14 +25,32 @@ services:
         required: false
     environment:
       DATABASE_URL: postgresql+psycopg://thenwhat:${POSTGRES_PASSWORD:-thenwhat}@db:5432/thenwhat
+      EXPORT_PATH: /export/export.json
+    volumes:
+      - ./data/seed:/seed:ro
+      - export-data:/export
+    # Bring the schema up to date, load the seed claim if it is not there yet, write the
+    # export for the site, then stay up for `docker compose run pipeline thenwhat ...`.
+    command: >
+      sh -c "alembic upgrade head
+      && thenwhat seed load /seed/*.json
+      && thenwhat export
+      && exec sleep infinity"
     depends_on:
       db:
         condition: service_healthy
 
   site:
     build: ./site
+    environment:
+      EXPORT_FILE: /app/live/export.json
+    volumes:
+      - export-data:/app/live:ro
     ports:
       - "127.0.0.1:${SITE_PORT:-4321}:4321"
+    depends_on:
+      - pipeline
 
 volumes:
   db-data:
+  export-data:

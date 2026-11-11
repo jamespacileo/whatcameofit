@@ -1,100 +1,102 @@
 {
   "schema_version": 1,
   "generated_at": "2026-11-11T12:00:00Z",
-  "last_checked_at": "2026-11-11T11:30:00Z",
+  "last_checked_at": "2026-11-11T12:00:00Z",
   "sources": [
-    { "name": "ClinicalTrials.gov", "url": "https://clinicaltrials.gov/" },
-    { "name": "Europe PMC", "url": "https://europepmc.org/" },
-    { "name": "Crossref", "url": "https://www.crossref.org/" }
+    {
+      "name": "ClinicalTrials.gov",
+      "url": "https://clinicaltrials.gov/"
+    },
+    {
+      "name": "Europe PMC",
+      "url": "https://europepmc.org/"
+    },
+    {
+      "name": "Crossref",
+      "url": "https://www.crossref.org/"
+    },
+    {
+      "name": "jRCT",
+      "url": "https://jrct.mhlw.go.jp/"
+    }
   ],
-  "verticals": [{ "slug": "dental-regeneration", "title": "Dental regeneration" }],
+  "verticals": [
+    {
+      "slug": "dental-regeneration",
+      "title": "Dental regeneration"
+    }
+  ],
   "claims": [
     {
-      "slug": "example-tooth-antibody",
-      "headline": "Example: antibody regrows teeth in mice",
-      "summary": "Placeholder data for layout only. It describes no real treatment and will be replaced by the seeded example.",
+      "slug": "tooth-regrowth-usag1",
+      "headline": "Antibody against USAG-1 regrows teeth in mice",
+      "summary": "Researchers at Kyoto University and the University of Fukui reported that one dose of an antibody blocking the protein USAG-1 grew a whole new tooth in mice with congenital tooth agenesis, with similar results in ferrets. The paper appeared in Science Advances in February 2021.",
       "vertical": "dental-regeneration",
-      "intervention": { "name": "EX-1 antibody", "synonyms": ["EX-1", "TRG-999"] },
-      "indication": "tooth agenesis",
-      "first_reported_date": "2018-03-10",
+      "intervention": {
+        "name": "Anti-USAG-1 antibody",
+        "synonyms": [
+          "TRG035",
+          "TRG-035",
+          "USAG-1 neutralizing antibody"
+        ]
+      },
+      "indication": "congenital tooth agenesis",
+      "first_reported_date": "2021-03-31",
       "evidence_stage": "animal",
       "status": {
         "code": "phase_1",
         "overlay_years": null,
-        "updated_at": "2026-11-10T09:00:00Z",
-        "explained_by": [2, 3]
+        "updated_at": "2026-11-11T12:00:00Z",
+        "explained_by": [
+          3,
+          4
+        ]
       },
       "articles": [
         {
-          "url": "https://news.example.org/2018/teeth",
-          "outlet": "Example News",
-          "title": "Mice regrow teeth after antibody treatment",
-          "published_date": "2018-03-10",
+          "url": "https://www.kyoto-u.ac.jp/en/research-news/2021-03-31",
+          "outlet": "Kyoto University",
+          "title": "New drug to regenerate lost teeth",
+          "published_date": "2021-03-31",
           "archive_url": null
-        },
-        {
-          "url": "https://news.example.org/2021/teeth-update",
-          "outlet": "Example News",
-          "title": "Tooth drug heads for human trials",
-          "published_date": "2021-04-02",
-          "archive_url": "https://web.archive.org/web/2021/https://news.example.org/2021/teeth-update"
         }
       ],
       "promises": [
         {
-          "description": "human trials within five years",
-          "parsed_date": "2023-03-10",
-          "article_url": "https://news.example.org/2018/teeth"
-        },
-        {
-          "description": "available to patients by 2030",
-          "parsed_date": "2030-12-31",
-          "article_url": "https://news.example.org/2021/teeth-update"
-        },
-        {
-          "description": "more animal work in the near future",
+          "description": "tests in other animals such as pigs and dogs next",
           "parsed_date": null,
-          "article_url": "https://news.example.org/2018/teeth"
+          "article_url": "https://www.kyoto-u.ac.jp/en/research-news/2021-03-31"
         }
       ],
       "events": [
         {
-          "id": 1,
-          "type": "followup_paper",
-          "event_date": "2021-02-12",
-          "date_basis": "first publication date",
-          "summary": "A second paper from the same group reporting results in ferrets.",
-          "source_name": "europepmc",
-          "source_url": "https://europepmc.org/",
-          "trial_id": null,
-          "trial_phases": [],
-          "trial_state": null,
-          "regulatory_outcome": null
-        },
-        {
-          "id": 2,
-          "type": "trial_registered",
-          "event_date": "2024-07-18",
-          "date_basis": "first posted",
-          "summary": "Trial NCT00000000 registered (Phase 1).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/",
-          "trial_id": "NCT00000000",
-          "trial_phases": ["phase_1"],
-          "trial_state": null,
-          "regulatory_outcome": null
-        },
-        {
           "id": 3,
+          "type": "trial_registered",
+          "event_date": "2024-10-08",
+          "date_basis": "registry date of registration",
+          "summary": "Phase 1 trial jRCT2051240154 registered: a single dose of TRG035 in healthy adults.",
+          "source_name": "jRCT",
+          "source_url": "https://jrct.mhlw.go.jp/en-latest-detail/jRCT2051240154",
+          "trial_id": "jRCT2051240154",
+          "trial_phases": [
+            "phase_1"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null
+        },
+        {
+          "id": 4,
           "type": "trial_status_change",
-          "event_date": "2024-09-30",
-          "date_basis": "start date",
-          "summary": "Trial NCT00000000 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/",
-          "trial_id": "NCT00000000",
-          "trial_phases": ["phase_1"],
-          "trial_state": "started",
+          "event_date": "2025-10-03",
+          "date_basis": "registry last modified; the registry shows the trial as complete and gives no completion date",
+          "summary": "Trial jRCT2051240154 shown as complete in the registry.",
+          "source_name": "jRCT",
+          "source_url": "https://jrct.mhlw.go.jp/en-latest-detail/jRCT2051240154",
+          "trial_id": "jRCT2051240154",
+          "trial_phases": [
+            "phase_1"
+          ],
+          "trial_state": "completed",
           "regulatory_outcome": null
         }
       ],

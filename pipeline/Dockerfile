@@ -18,7 +18,8 @@ RUN uv sync --frozen --no-dev
 COPY alembic.ini ./
 COPY migrations ./migrations
 
-RUN useradd --create-home app
+# The export is written to a volume the site reads; the unprivileged user must own it.
+RUN useradd --create-home app && mkdir /export && chown app /export
 USER app
 
 # Bring the schema up to date, then stay up for `docker compose run pipeline thenwhat ...`.

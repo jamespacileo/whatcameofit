@@ -1,0 +1,354 @@
+{
+  "version": "6.9",
+  "hitCount": 1,
+  "request": {
+    "queryString": "DOI:\"10.1126/sciadv.abf1798\"",
+    "resultType": "core",
+    "cursorMark": "*",
+    "pageSize": 25,
+    "sort": "",
+    "synonym": false
+  },
+  "resultList": {
+    "result": [
+      {
+        "id": "33579703",
+        "source": "MED",
+        "pmid": "33579703",
+        "pmcid": "PMC7880588",
+        "fullTextIdList": {
+          "fullTextId": [
+            "PMC7880588"
+          ]
+        },
+        "doi": "10.1126/sciadv.abf1798",
+        "title": "Anti-USAG-1 therapy for tooth regeneration through enhanced BMP signaling.",
+        "authorString": "Murashima-Suginami A, Kiso H, Tokita Y, Mihara E, Nambu Y, Uozumi R, Tabata Y, Bessho K, Takagi J, Sugai M, Takahashi K.",
+        "authorList": {
+          "author": [
+            {
+              "fullName": "Murashima-Suginami A",
+              "lastName": "Murashima-Suginami",
+              "firstName": "A",
+              "initials": "A",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-2485-8637"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Oral and Maxillofacial Surgery, Graduate School of Medicine, Kyoto University, Kyoto, Japan."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Kiso H",
+              "lastName": "Kiso",
+              "firstName": "H",
+              "initials": "H",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0001-5719-3008"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Oral and Maxillofacial Surgery, Graduate School of Medicine, Kyoto University, Kyoto, Japan."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Tokita Y",
+              "lastName": "Tokita",
+              "firstName": "Y",
+              "initials": "Y",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0001-8598-3525"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Disease model, Institute for Developmental Research, Aichi Human Service Center, Kasugai, Aichi, Japan. takahask@kuhp.kyoto-u.ac.jp msugai@u-fukui.ac.jp tokita@inst-hsc.jp."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Mihara E",
+              "lastName": "Mihara",
+              "firstName": "E",
+              "initials": "E",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-9127-8643"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Laboratory of Protein Synthesis and Expression, Institute for Protein Research, Osaka University, Osaka, Japan."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Nambu Y",
+              "lastName": "Nambu",
+              "firstName": "Y",
+              "initials": "Y",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Molecular Genetics, Division of Medicine, Faculty of Medical Sciences, University of Fukui, Fukui, Japan."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Uozumi R",
+              "lastName": "Uozumi",
+              "firstName": "R",
+              "initials": "R",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-9546-9869"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Biomedical Statistics and Bioinformatics, Graduate School of Medicine, Kyoto University, Kyoto, Japan."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Tabata Y",
+              "lastName": "Tabata",
+              "firstName": "Y",
+              "initials": "Y",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0001-8974-277X"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Laboratory of Biomaterials, Institute for Frontier Life and Medical Sciences, Kyoto University, Kyoto, Japan."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Bessho K",
+              "lastName": "Bessho",
+              "firstName": "K",
+              "initials": "K",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Oral and Maxillofacial Surgery, Graduate School of Medicine, Kyoto University, Kyoto, Japan."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Takagi J",
+              "lastName": "Takagi",
+              "firstName": "J",
+              "initials": "J",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-1219-475X"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Laboratory of Protein Synthesis and Expression, Institute for Protein Research, Osaka University, Osaka, Japan."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Sugai M",
+              "lastName": "Sugai",
+              "firstName": "M",
+              "initials": "M",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-1668-7647"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Molecular Genetics, Division of Medicine, Faculty of Medical Sciences, University of Fukui, Fukui, Japan. takahask@kuhp.kyoto-u.ac.jp msugai@u-fukui.ac.jp tokita@inst-hsc.jp."
+                  },
+                  {
+                    "affiliation": "Life Science Innovation Center, University of Fukui, 23-3 Matsuoka Shimoaizuki, Eiheiji-cho, Yoshida-gun, Fukui 910-1193, Japan."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Takahashi K",
+              "lastName": "Takahashi",
+              "firstName": "K",
+              "initials": "K",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-2395-4715"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Oral and Maxillofacial Surgery, Graduate School of Medicine, Kyoto University, Kyoto, Japan. takahask@kuhp.kyoto-u.ac.jp msugai@u-fukui.ac.jp tokita@inst-hsc.jp."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "authorIdList": {
+          "authorId": [
+            {
+              "type": "ORCID",
+              "value": "0000-0001-5508-8511"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0001-5719-3008"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0001-8598-3525"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0001-8974-277X"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-1219-475X"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-9127-8643"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-9546-9869"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-1668-7647"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-2395-4715"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-2485-8637"
+            }
+          ]
+        },
+        "dataLinksTagsList": {
+          "dataLinkstag": [
+            "altmetrics",
+            "related_data"
+          ]
+        },
+        "journalInfo": {
+          "issue": "7",
+          "volume": "7",
+          "journalIssueId": 3111625,
+          "dateOfPublication": "2021 Feb",
+          "monthOfPublication": 2,
+          "yearOfPublication": 2021,
+          "journal": {
+            "medlineAbbreviation": "Sci Adv",
+            "title": "Science advances",
+            "essn": "2375-2548",
+            "issn": "2375-2548",
+            "nlmid": "101653440",
+            "isoabbreviation": "Sci Adv"
+          },
+          "printPublicationDate": "2021-02-01"
+        },
+        "pubYear": "2021",
+        "pageInfo": "eabf1798",
+        "abstractText": "Abstract replaced in this fixture: abstracts are the copyright of their publishers.",
+        "affiliation": "Department of Oral and Maxillofacial Surgery, Graduate School of Medicine, Kyoto University, Kyoto, Japan.",
+        "publicationStatus": "epublish",
+        "language": "eng",
+        "pubModel": "Electronic-Print",
+        "pubTypeList": {
+          "pubType": [
+            "Research Support, Non-U.S. Gov't",
+            "research-article",
+            "Journal Article"
+          ]
+        },
+        "subsetList": {
+          "subset": [
+            {
+              "code": "IM",
+              "name": "Index Medicus"
+            }
+          ]
+        },
+        "fullTextUrlList": {
+          "fullTextUrl": [
+            {
+              "availability": "Subscription required",
+              "availabilityCode": "S",
+              "documentStyle": "doi",
+              "site": "DOI",
+              "url": "https://doi.org/10.1126/sciadv.abf1798"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "html",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/articles/PMC7880588"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "pdf",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/articles/PMC7880588?pdf=render"
+            }
+          ]
+        },
+        "isOpenAccess": "Y",
+        "inEPMC": "Y",
+        "inPMC": "Y",
+        "citedByCount": 26,
+        "hasReferences": "Y",
+        "hasTextMinedTerms": "Y",
+        "hasDbCrossReferences": "N",
+        "hasPDF": "Y",
+        "hasBook": "N",
+        "hasSuppl": "N",
+        "hasLabsLinks": "Y",
+        "hasData": "Y",
+        "license": "cc by",
+        "authMan": "N",
+        "epmcAuthMan": "N",
+        "nihAuthMan": "N",
+        "hasTMAccessionNumbers": "N",
+        "dateOfCreation": "2021-02-13",
+        "dateOfRevision": "2022-04-18",
+        "electronicPublicationDate": "2021-02-12",
+        "firstPublicationDate": "2021-02-12",
+        "firstIndexDate": "2021-02-14",
+        "fullTextReceivedDate": "2025-02-04",
+        "hasEvaluations": "N"
+      }
+    ]
+  }
+}

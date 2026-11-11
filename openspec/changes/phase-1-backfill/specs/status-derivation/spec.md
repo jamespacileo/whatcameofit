@@ -28,7 +28,7 @@ Every derived status SHALL come with the list of evidence events that produced i
 - **THEN** the explanation lists that trial's registered and started events
 
 ### Requirement: Standing trials
-A trial SHALL count as standing unless its most recent approved status change reports terminated or withdrawn, or it carries a failure flag. A trial SHALL count as started when it has an approved started event.
+A trial SHALL count as standing unless its most recent approved status change reports terminated or withdrawn, or it carries a failure flag. A trial SHALL count as started when it has an approved started event or an approved completed event.
 
 #### Scenario: Suspended trial
 - **WHEN** a trial's most recent status change reports suspended

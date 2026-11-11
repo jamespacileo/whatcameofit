@@ -112,6 +112,27 @@ The claim's status is derived again after every decision on an event. A claim be
 
 Your decisions on matches and on the evidence stage are recorded as human labels against what the model suggested. They are the future test set for any model that takes over those choices.
 
+### Publishing to the site
+
+```sh
+thenwhat export
+docker compose restart site
+```
+
+`export` writes one JSON file holding approved claims and their approved events, and nothing else. The site is built from that file alone: `restart site` rebuilds it and serves the result at <http://localhost:4321>. A claim's slug is fixed from its first export.
+
+### The seed claim
+
+`docker compose up` loads `data/seed/tooth-regrowth-usag1.json` when its claim is not in the database yet, so a fresh checkout shows one real claim page. The seed was compiled from the primary sources it links and has not been reviewed by a person; its decisions are recorded as made by the seed loader, not by you. Check it before any public launch.
+
+After changing the seed, regenerate the copy the site falls back on, then rerun `make check`:
+
+```sh
+docker compose run --rm -v "$PWD/site/data:/out" pipeline thenwhat export --out /out/seed-export.json
+```
+
+After changing what the export contains, regenerate its schema: `thenwhat export --write-schema site/export.schema.json`.
+
 ### CSV import
 
 `thenwhat claim import-csv claims.csv` imports every row or none. Inside the container the file must be reachable, for example `docker compose run --rm -v "$PWD/data/seed:/seed" pipeline thenwhat claim import-csv /seed/claims.csv`.

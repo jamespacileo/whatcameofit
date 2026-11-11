@@ -30,11 +30,14 @@ from thenwhat.domain import (
 from thenwhat.events.manual import TRIAL_TYPES
 
 SCHEMA_VERSION = 1
+# Registries the clients read. Always listed, as their terms ask for attribution.
 SOURCES = [
     ("ClinicalTrials.gov", "https://clinicaltrials.gov/"),
     ("Europe PMC", "https://europepmc.org/"),
     ("Crossref", "https://www.crossref.org/"),
 ]
+# Registries with no client yet, listed only when an exported event came from one.
+OTHER_REGISTRIES = {"jRCT": "https://jrct.mhlw.go.jp/"}
 
 
 class Strict(BaseModel):
@@ -229,7 +232,17 @@ def build_export(session: Session, *, now: datetime, no_signal_years: int = 3) -
         schema_version=SCHEMA_VERSION,
         generated_at=now,
         last_checked_at=last_checked,
-        sources=[ExportedSource(name=name, url=url) for name, url in SOURCES],
+        sources=[
+            ExportedSource(name=name, url=url)
+            for name, url in [
+                *SOURCES,
+                *(
+                    (name, url)
+                    for name, url in OTHER_REGISTRIES.items()
+                    if any(event.source_name == name for claim in claims for event in claim.events)
+                ),
+            ]
+        ],
         verticals=[ExportedVertical(slug=slug, title=title) for slug, title in VERTICALS.items()],
         claims=claims,
     )

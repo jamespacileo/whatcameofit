@@ -1,0 +1,2511 @@
+{
+  "version": "6.9",
+  "hitCount": 29,
+  "nextCursorMark": "AoIIQFpZ/Cg1NDM1ODA1NQ==",
+  "nextPageUrl": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=CITES%3A33579703_MED&cursorMark=AoIIQFpZ%2FCg1NDM1ODA1NQ%3D%3D&resultType=core&pageSize=8&format=json",
+  "request": {
+    "queryString": "CITES:33579703_MED",
+    "resultType": "core",
+    "cursorMark": "*",
+    "pageSize": 8,
+    "sort": "",
+    "synonym": false
+  },
+  "resultList": {
+    "result": [
+      {
+        "id": "42880862",
+        "source": "MED",
+        "pmid": "42880862",
+        "doi": "10.1021/acsabm.6c01771",
+        "title": "Advances in Odontogenic Regeneration: From Fundamental Research to Clinical Application.",
+        "authorString": "Wang Y, Xia D, Wu J, Cao Y.",
+        "authorList": {
+          "author": [
+            {
+              "fullName": "Wang Y",
+              "lastName": "Wang",
+              "firstName": "Yantong",
+              "initials": "Y",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Laboratory of Molecular Signaling and Stem Cells Therapy, Beijing Key Laboratory of Tooth Regeneration and Function Reconstruction, Capital Medical University School of Stomatology, Beijing, P. R. China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Xia D",
+              "lastName": "Xia",
+              "firstName": "Dengsheng",
+              "initials": "D",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Laboratory of Molecular Signaling and Stem Cells Therapy, Beijing Key Laboratory of Tooth Regeneration and Function Reconstruction, Capital Medical University School of Stomatology, Beijing, P. R. China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Wu J",
+              "lastName": "Wu",
+              "firstName": "Jingwen",
+              "initials": "J",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-0045-5227"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Technical Institute of Physics and Chemistry, University of Chinese Academy of Sciences, Beijing100190, P. R. China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Cao Y",
+              "lastName": "Cao",
+              "firstName": "Yangyang",
+              "initials": "Y",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Laboratory of Molecular Signaling and Stem Cells Therapy, Beijing Key Laboratory of Tooth Regeneration and Function Reconstruction, Capital Medical University School of Stomatology, Beijing, P. R. China."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "authorIdList": {
+          "authorId": [
+            {
+              "type": "ORCID",
+              "value": "0000-0003-0045-5227"
+            }
+          ]
+        },
+        "journalInfo": {
+          "issue": "21",
+          "volume": "9",
+          "journalIssueId": 4304255,
+          "dateOfPublication": "2026 Nov",
+          "monthOfPublication": 11,
+          "yearOfPublication": 2026,
+          "journal": {
+            "medlineAbbreviation": "ACS Appl Bio Mater",
+            "title": "ACS applied bio materials",
+            "essn": "2576-6422",
+            "issn": "2576-6422",
+            "isoabbreviation": "ACS Appl Bio Mater",
+            "nlmid": "101729147"
+          },
+          "printPublicationDate": "2026-11-01"
+        },
+        "pubYear": "2026",
+        "pageInfo": "10049-10062",
+        "abstractText": "Abstract replaced in this fixture: abstracts are the copyright of their publishers.",
+        "affiliation": "Laboratory of Molecular Signaling and Stem Cells Therapy, Beijing Key Laboratory of Tooth Regeneration and Function Reconstruction, Capital Medical University School of Stomatology, Beijing, P. R. China.",
+        "publicationStatus": "ppublish",
+        "language": "eng",
+        "pubModel": "Print",
+        "pubTypeList": {
+          "pubType": [
+            "Review",
+            "Journal Article"
+          ]
+        },
+        "grantsList": {
+          "grant": [
+            {
+              "agency": "National Natural Science Foundation of China (NSFC)",
+              "grantId": "82401173",
+              "orderIn": 0
+            },
+            {
+              "agency": "National Natural Science Foundation of China (NSFC)",
+              "grantId": "82301019",
+              "orderIn": 0
+            },
+            {
+              "agency": "Young Scientist Program of Beijing Stomatological Hospital, Capital Medical University",
+              "grantId": "2023zhyx-C90",
+              "orderIn": 0
+            },
+            {
+              "agency": "Young Scientist Program of Beijing Stomatological Hospital, Capital Medical University",
+              "grantId": "YSP202201",
+              "orderIn": 0
+            }
+          ]
+        },
+        "subsetList": {
+          "subset": [
+            {
+              "code": "IM",
+              "name": "Index Medicus"
+            }
+          ]
+        },
+        "fullTextUrlList": {
+          "fullTextUrl": [
+            {
+              "availability": "Subscription required",
+              "availabilityCode": "S",
+              "documentStyle": "doi",
+              "site": "DOI",
+              "url": "https://doi.org/10.1021/acsabm.6c01771"
+            }
+          ]
+        },
+        "isOpenAccess": "N",
+        "inEPMC": "N",
+        "inPMC": "N",
+        "citedByCount": 0,
+        "hasReferences": "Y",
+        "hasTextMinedTerms": "Y",
+        "hasDbCrossReferences": "N",
+        "hasPDF": "N",
+        "hasBook": "N",
+        "hasSuppl": "N",
+        "hasLabsLinks": "N",
+        "hasData": "N",
+        "authMan": "N",
+        "epmcAuthMan": "N",
+        "nihAuthMan": "N",
+        "hasTMAccessionNumbers": "N",
+        "dateOfCompletion": "2026-11-02",
+        "dateOfCreation": "2026-10-15",
+        "dateOfRevision": "2026-11-02",
+        "firstPublicationDate": "2026-11-01",
+        "firstIndexDate": "2026-10-19",
+        "hasEvaluations": "N"
+      },
+      {
+        "id": "42740458",
+        "source": "MED",
+        "pmid": "42740458",
+        "pmcid": "PMC13575445",
+        "fullTextIdList": {
+          "fullTextId": [
+            "PMC13575445"
+          ]
+        },
+        "doi": "10.1002/jper.70182",
+        "title": "New technologies in oral reconstructive medicine: Consensus report of the AAP/OF/SEPA Workshop.",
+        "authorString": "Sanz M, Ivanovski S, Nart J, Schwarz F, Wang HL, Aghaloo TL, Al-Nawas B, Avila-Ortiz G, Barootchi S, Blanco J, Blasi G, Donos N, Feher B, Dragan IF, Geisinger ML, Guerrero A, Ioannidou E, Kaigler D, Hernandez-Kapila Y, Kumar PS, Levin L, Li\u00f1ares A, Mandelaris GA, Matesanz-P\u00e9rez P, Monje A, Montero E, Ortiz-Vig\u00f3n A, Otomo-Corgel J, Pirih FQ, Ramanauskaite A, Rocchietta I, Ruiz-Magaz V, Saito H, S\u00e1nchez N, Sanz Esporrin J, Sculean A, Thieringer FM, Thoma DS, Valles C, Vel\u00e1squez D, Wu DT, Giannobile WV.",
+        "authorList": {
+          "author": [
+            {
+              "fullName": "Sanz M",
+              "lastName": "Sanz",
+              "firstName": "Mariano",
+              "initials": "M",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-6293-5755"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Faculty of Dentistry, ETEP Research Group, Complutense University of Madrid, Madrid, Spain."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Ivanovski S",
+              "lastName": "Ivanovski",
+              "firstName": "Sa\u0161o",
+              "initials": "S",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0001-5339-0936"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "School of Dentistry, The University of Queensland, Brisbane, Australia."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Nart J",
+              "lastName": "Nart",
+              "firstName": "Jos\u00e9",
+              "initials": "J",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-2363-4992"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Periodontology, Universitat Internacional De Catalunya, Barcelona, Spain."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Schwarz F",
+              "lastName": "Schwarz",
+              "firstName": "Frank",
+              "initials": "F",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-5873-9903"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Oral Surgery, Implantology and Oral Medicine, Goethe University Frankfurt, Frankfurt, Germany."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Wang HL",
+              "lastName": "Wang",
+              "firstName": "Hom-Lay",
+              "initials": "HL",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-4238-1799"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Periodontics and Oral Medicine, University of Michigan School Of Dentistry, Ann Arbor, Michigan, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Aghaloo TL",
+              "lastName": "Aghaloo",
+              "firstName": "Tara L",
+              "initials": "TL",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-2079-5870"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Section of Oral and Maxillofacial Surgery, University of California Los Angeles School of Dentistry, Los Angeles, California, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Al-Nawas B",
+              "lastName": "Al-Nawas",
+              "firstName": "Bilal",
+              "initials": "B",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-8665-5803"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Oral and Maxillofacial Surgery, Universit\u00e4ts Medizin Mainz, Johannes Gutenberg University Mainz, Mainz, Germany."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Avila-Ortiz G",
+              "lastName": "Avila-Ortiz",
+              "firstName": "Gustavo",
+              "initials": "G",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-5763-0201"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Periodontics and Oral Medicine, University of Michigan School Of Dentistry, Ann Arbor, Michigan, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Barootchi S",
+              "lastName": "Barootchi",
+              "firstName": "Shayan",
+              "initials": "S",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-5347-6577"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Periodontics and Oral Medicine, University of Michigan School Of Dentistry, Ann Arbor, Michigan, USA."
+                  },
+                  {
+                    "affiliation": "Department of Oral Medicine, Infection, and Immunity, Harvard School of Dental Medicine, Boston, Massachusetts, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Blanco J",
+              "lastName": "Blanco",
+              "firstName": "Juan",
+              "initials": "J",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0001-9251-513X"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Surgery and Medical-Surgical Specialties, Universidade de Santiago de Compostela, Santiago de Compostela, Spain."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Blasi G",
+              "lastName": "Blasi",
+              "firstName": "Gonzalo",
+              "initials": "G",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-2253-3927"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Periodontology, Universitat Internacional De Catalunya, Barcelona, Spain."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Donos N",
+              "lastName": "Donos",
+              "firstName": "Nikolaos",
+              "initials": "N",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-4117-9073"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Institute of Dentistry, Queen Mary University of London, London, United\u00a0Kingdom."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Feher B",
+              "lastName": "Feher",
+              "firstName": "Balazs",
+              "initials": "B",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-4386-6237"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Oral and Maxillofacial Surgery, Harvard School of Dental Medicine, Boston, Massachusetts, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Dragan IF",
+              "lastName": "Dragan",
+              "firstName": "Irina F",
+              "initials": "IF",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-4045-8564"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Oral Medicine, Infection, and Immunity, Harvard School of Dental Medicine, Boston, Massachusetts, USA."
+                  },
+                  {
+                    "affiliation": "Department of Periodontology, Tufts University School of Dental Medicine, Boston, Massachusetts, USA."
+                  },
+                  {
+                    "affiliation": "Private Practice, The Perio Studio, Boston, Massachusetts, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Geisinger ML",
+              "lastName": "Geisinger",
+              "firstName": "Maria L",
+              "initials": "ML",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-0383-7079"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Periodontology, University of Alabama at Birmingham, Birmingham, Alabama, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Guerrero A",
+              "lastName": "Guerrero",
+              "firstName": "Adri\u00e1n",
+              "initials": "A",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-2093-6079"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Private Practice, Cl\u00ednica Guerrero, Marbella, Spain."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Ioannidou E",
+              "lastName": "Ioannidou",
+              "firstName": "Effie",
+              "initials": "E",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-1954-5900"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Division of Periodontology, University of California San Francisco School of Dentistry, San Francisco, California, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Kaigler D",
+              "lastName": "Kaigler",
+              "firstName": "Darnell",
+              "initials": "D",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-3728-4310"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Periodontics and Oral Medicine, University of Michigan School Of Dentistry, Ann Arbor, Michigan, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Hernandez-Kapila Y",
+              "lastName": "Hernandez-Kapila",
+              "firstName": "Yvonne",
+              "initials": "Y",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-1330-0654"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Section of Periodontics, Division of Regenerative and Reconstructive Sciences, University of California Los Angeles School of Dentistry, Los Angeles, California, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Kumar PS",
+              "lastName": "Kumar",
+              "firstName": "Purnima S",
+              "initials": "PS",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0001-5844-1341"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Periodontics and Oral Medicine, University of Michigan School Of Dentistry, Ann Arbor, Michigan, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Levin L",
+              "lastName": "Levin",
+              "firstName": "Liran",
+              "initials": "L",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-8123-7936"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Bitonte College of Dentistry, Northeast Ohio Medical University, Rootstown, Ohio, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Li\u00f1ares A",
+              "lastName": "Li\u00f1ares",
+              "firstName": "Antonio",
+              "initials": "A",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-1611-5884"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Surgery and Medical-Surgical Specialties, Universidade de Santiago de Compostela, Santiago de Compostela, Spain."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Mandelaris GA",
+              "lastName": "Mandelaris",
+              "firstName": "George A",
+              "initials": "GA",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-2756-2420"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Private Practice, Periodontics and Dental Implant Surgery, Glenview and Oakbrook Terrace, Illinois, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Matesanz-P\u00e9rez P",
+              "lastName": "Matesanz-P\u00e9rez",
+              "firstName": "Paula",
+              "initials": "P",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0001-9965-5768"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Faculty of Dentistry, ETEP Research Group, Complutense University of Madrid, Madrid, Spain."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Monje A",
+              "lastName": "Monje",
+              "firstName": "Alberto",
+              "initials": "A",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0001-8292-1927"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Periodontology, Universitat Internacional De Catalunya, Barcelona, Spain."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Montero E",
+              "lastName": "Montero",
+              "firstName": "Eduardo",
+              "initials": "E",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-2525-8529"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Faculty of Dentistry, ETEP Research Group, Complutense University of Madrid, Madrid, Spain."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Ortiz-Vig\u00f3n A",
+              "lastName": "Ortiz-Vig\u00f3n",
+              "firstName": "Alberto",
+              "initials": "A",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-1863-5907"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Arrow Development ARC Research, Bilbao, Spain."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Otomo-Corgel J",
+              "lastName": "Otomo-Corgel",
+              "firstName": "Joan",
+              "initials": "J",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0001-8867-2095"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Section of Periodontics, Division of Regenerative and Reconstructive Sciences, University of California Los Angeles School of Dentistry, Los Angeles, California, USA."
+                  },
+                  {
+                    "affiliation": "Greater VA Healthcare System Dental Service, Los Angeles, California, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Pirih FQ",
+              "lastName": "Pirih",
+              "firstName": "Flavia Q",
+              "initials": "FQ",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-1670-7345"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Division of Periodontology, University of California San Francisco School of Dentistry, San Francisco, California, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Ramanauskaite A",
+              "lastName": "Ramanauskaite",
+              "firstName": "Ausra",
+              "initials": "A",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-1649-1882"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Oral Surgery, Implantology and Oral Medicine, Goethe University Frankfurt, Frankfurt, Germany."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Rocchietta I",
+              "lastName": "Rocchietta",
+              "firstName": "Isabella",
+              "initials": "I",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0009-0008-5932-2211"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Periodontology, University College London Eastman Dental Institute, London, United\u00a0Kingdom."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Ruiz-Magaz V",
+              "lastName": "Ruiz-Magaz",
+              "firstName": "Vanessa",
+              "initials": "V",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0001-5639-4908"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Faculty of Dentistry, ETEP Research Group, Complutense University of Madrid, Madrid, Spain."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Saito H",
+              "lastName": "Saito",
+              "firstName": "Hanae",
+              "initials": "H",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-2677-1343"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Division of Periodontics, University of Maryland School of Dentistry, Baltimore, Maryland, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "S\u00e1nchez N",
+              "lastName": "S\u00e1nchez",
+              "firstName": "Nerea",
+              "initials": "N",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-1681-428X"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Faculty of Dentistry, ETEP Research Group, Complutense University of Madrid, Madrid, Spain."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Sanz Esporrin J",
+              "lastName": "Sanz Esporrin",
+              "firstName": "Javier",
+              "initials": "J",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-0859-3149"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Faculty of Dentistry, ETEP Research Group, Complutense University of Madrid, Madrid, Spain."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Sculean A",
+              "lastName": "Sculean",
+              "firstName": "Anton",
+              "initials": "A",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-2836-5477"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Periodontology, University of Bern, Bern, Switzerland."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Thieringer FM",
+              "lastName": "Thieringer",
+              "firstName": "Florian M",
+              "initials": "FM",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-3035-9308"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Oral and Maxillofacial Surgery, University of Basel, Basel, Switzerland."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Thoma DS",
+              "lastName": "Thoma",
+              "firstName": "Daniel S",
+              "initials": "DS",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-1764-7447"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Clinic of Reconstructive Dentistry, Center of Dental Medicine, University of Zurich, Zurich, Switzerland."
+                  },
+                  {
+                    "affiliation": "Department of Periodontology, Research Institute for Periodontal Regeneration, Yonsei University College of Dentistry, Seoul, Republic of Korea."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Valles C",
+              "lastName": "Valles",
+              "firstName": "Cristina",
+              "initials": "C",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-2690-1208"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Periodontology, Universitat Internacional De Catalunya, Barcelona, Spain."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Vel\u00e1squez D",
+              "lastName": "Vel\u00e1squez",
+              "firstName": "Diego",
+              "initials": "D",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-2780-8355"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Periodontics and Oral Medicine, University of Michigan School Of Dentistry, Ann Arbor, Michigan, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Wu DT",
+              "lastName": "Wu",
+              "firstName": "David T",
+              "initials": "DT",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-9752-5377"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Oral Medicine, Infection, and Immunity, Harvard School of Dental Medicine, Boston, Massachusetts, USA."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Giannobile WV",
+              "lastName": "Giannobile",
+              "firstName": "William V",
+              "initials": "WV",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-7102-9746"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Oral Medicine, Infection, and Immunity, Harvard School of Dental Medicine, Boston, Massachusetts, USA."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "authorIdList": {
+          "authorId": [
+            {
+              "type": "ORCID",
+              "value": "0000-0001-5339-0936"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0001-5639-4908"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0001-5844-1341"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0001-8292-1927"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0001-8867-2095"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0001-9251-513X"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0001-9965-5768"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-1649-1882"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-1764-7447"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-1863-5907"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-2079-5870"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-2363-4992"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-2677-1343"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-2690-1208"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-2756-2420"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-2780-8355"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-4045-8564"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-4117-9073"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-5347-6577"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-5763-0201"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-5873-9903"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-6293-5755"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-7102-9746"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-8123-7936"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-8665-5803"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-9752-5377"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-0383-7079"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-0859-3149"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-1330-0654"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-1611-5884"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-1670-7345"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-1681-428X"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-1954-5900"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-2093-6079"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-2253-3927"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-2525-8529"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-2836-5477"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-3035-9308"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-3728-4310"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-4238-1799"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-4386-6237"
+            },
+            {
+              "type": "ORCID",
+              "value": "0009-0008-5932-2211"
+            }
+          ]
+        },
+        "dataLinksTagsList": {
+          "dataLinkstag": [
+            "supporting_data"
+          ]
+        },
+        "journalInfo": {
+          "volume": "97 Suppl 1",
+          "journalIssueId": 4262920,
+          "dateOfPublication": "2026 Sep",
+          "monthOfPublication": 9,
+          "yearOfPublication": 2026,
+          "journal": {
+            "medlineAbbreviation": "J Periodontol",
+            "title": "Journal of periodontology",
+            "essn": "1943-3670",
+            "issn": "0022-3492",
+            "isoabbreviation": "J Periodontol",
+            "nlmid": "8000345"
+          },
+          "printPublicationDate": "2026-09-01"
+        },
+        "pubYear": "2026",
+        "pageInfo": "S8-S32",
+        "abstractText": "Abstract replaced in this fixture: abstracts are the copyright of their publishers.",
+        "affiliation": "Faculty of Dentistry, ETEP Research Group, Complutense University of Madrid, Madrid, Spain.",
+        "publicationStatus": "ppublish",
+        "language": "eng",
+        "pubModel": "Print",
+        "pubTypeList": {
+          "pubType": [
+            "research-article",
+            "Consensus Statement",
+            "Journal Article"
+          ]
+        },
+        "subsetList": {
+          "subset": [
+            {
+              "code": "IM",
+              "name": "Index Medicus"
+            }
+          ]
+        },
+        "fullTextUrlList": {
+          "fullTextUrl": [
+            {
+              "availability": "Subscription required",
+              "availabilityCode": "S",
+              "documentStyle": "doi",
+              "site": "DOI",
+              "url": "https://doi.org/10.1002/jper.70182"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "html",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/articles/PMC13575445"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "pdf",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/articles/PMC13575445?pdf=render"
+            }
+          ]
+        },
+        "isOpenAccess": "Y",
+        "inEPMC": "Y",
+        "inPMC": "Y",
+        "citedByCount": 0,
+        "hasReferences": "Y",
+        "hasTextMinedTerms": "Y",
+        "hasDbCrossReferences": "N",
+        "hasPDF": "Y",
+        "hasBook": "N",
+        "hasSuppl": "N",
+        "hasLabsLinks": "N",
+        "hasData": "Y",
+        "license": "cc by",
+        "authMan": "N",
+        "epmcAuthMan": "N",
+        "nihAuthMan": "N",
+        "hasTMAccessionNumbers": "Y",
+        "tmAccessionTypeList": {
+          "accessionType": [
+            "doi"
+          ]
+        },
+        "dateOfCompletion": "2026-09-15",
+        "dateOfCreation": "2026-09-15",
+        "dateOfRevision": "2026-09-23",
+        "firstPublicationDate": "2026-09-01",
+        "firstIndexDate": "2026-09-16",
+        "fullTextReceivedDate": "2026-09-16",
+        "hasEvaluations": "N"
+      },
+      {
+        "id": "42063187",
+        "source": "MED",
+        "pmid": "42063187",
+        "pmcid": "PMC13479916",
+        "fullTextIdList": {
+          "fullTextId": [
+            "PMC13479916"
+          ]
+        },
+        "doi": "10.1186/s13287-026-05044-y",
+        "title": "Stem cell-driven biomedical technologies for tooth regeneration: engineering scaffolds, organoid models, and molecular targeted strategies.",
+        "authorString": "Jin Z, Yang B, Zhang S, Liu Z, Wang Y, Lin A, Yang K, Yu M, Tian W, Huo F.",
+        "authorList": {
+          "author": [
+            {
+              "fullName": "Jin Z",
+              "lastName": "Jin",
+              "firstName": "Zhaorui",
+              "initials": "Z",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "State Key Laboratory of Oral Diseases, National Clinical Research Center for Oral Diseases, Engineering Research Center of Oral Translational Medicine, National Engineering Laboratory for Oral Regenerative Medicine, West China Hospital of Stomatology, Sichuan University, No.14, 3rd Section, Renmin South Road, Chengdu, 610041, China."
+                  },
+                  {
+                    "affiliation": "Department of Oral and Maxillofacial Surgery, West China Hospital of Stomatology, Sichuan University, No.14, 3rd Section, Renmin South Road, Chengdu, 610041, China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Yang B",
+              "lastName": "Yang",
+              "firstName": "Bo",
+              "initials": "B",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "State Key Laboratory of Oral Diseases, National Clinical Research Center for Oral Diseases, Engineering Research Center of Oral Translational Medicine, National Engineering Laboratory for Oral Regenerative Medicine, West China Hospital of Stomatology, Sichuan University, No.14, 3rd Section, Renmin South Road, Chengdu, 610041, China."
+                  },
+                  {
+                    "affiliation": "Department of Oral and Maxillofacial Surgery, West China Hospital of Stomatology, Sichuan University, No.14, 3rd Section, Renmin South Road, Chengdu, 610041, China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Zhang S",
+              "lastName": "Zhang",
+              "firstName": "Siyuan",
+              "initials": "S",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "State Key Laboratory of Oral Diseases, National Clinical Research Center for Oral Diseases, Engineering Research Center of Oral Translational Medicine, National Engineering Laboratory for Oral Regenerative Medicine, West China Hospital of Stomatology, Sichuan University, No.14, 3rd Section, Renmin South Road, Chengdu, 610041, China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Liu Z",
+              "lastName": "Liu",
+              "firstName": "Zhi",
+              "initials": "Z",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "State Key Laboratory of Oral Diseases, National Clinical Research Center for Oral Diseases, Engineering Research Center of Oral Translational Medicine, National Engineering Laboratory for Oral Regenerative Medicine, West China Hospital of Stomatology, Sichuan University, No.14, 3rd Section, Renmin South Road, Chengdu, 610041, China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Wang Y",
+              "lastName": "Wang",
+              "firstName": "Yuhao",
+              "initials": "Y",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "State Key Laboratory of Oral Diseases, National Clinical Research Center for Oral Diseases, Engineering Research Center of Oral Translational Medicine, National Engineering Laboratory for Oral Regenerative Medicine, West China Hospital of Stomatology, Sichuan University, No.14, 3rd Section, Renmin South Road, Chengdu, 610041, China."
+                  },
+                  {
+                    "affiliation": "Department of Oral and Maxillofacial Surgery, West China Hospital of Stomatology, Sichuan University, No.14, 3rd Section, Renmin South Road, Chengdu, 610041, China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Lin A",
+              "lastName": "Lin",
+              "firstName": "An",
+              "initials": "A",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "State Key Laboratory of Oral Diseases, National Clinical Research Center for Oral Diseases, Engineering Research Center of Oral Translational Medicine, National Engineering Laboratory for Oral Regenerative Medicine, West China Hospital of Stomatology, Sichuan University, No.14, 3rd Section, Renmin South Road, Chengdu, 610041, China."
+                  },
+                  {
+                    "affiliation": "Department of Oral and Maxillofacial Surgery, West China Hospital of Stomatology, Sichuan University, No.14, 3rd Section, Renmin South Road, Chengdu, 610041, China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Yang K",
+              "lastName": "Yang",
+              "firstName": "Kexin",
+              "initials": "K",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "State Key Laboratory of Oral Diseases, National Clinical Research Center for Oral Diseases, Engineering Research Center of Oral Translational Medicine, National Engineering Laboratory for Oral Regenerative Medicine, West China Hospital of Stomatology, Sichuan University, No.14, 3rd Section, Renmin South Road, Chengdu, 610041, China."
+                  },
+                  {
+                    "affiliation": "Department of Oral and Maxillofacial Surgery, West China Hospital of Stomatology, Sichuan University, No.14, 3rd Section, Renmin South Road, Chengdu, 610041, China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Yu M",
+              "lastName": "Yu",
+              "firstName": "Mei",
+              "initials": "M",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "State Key Laboratory of Oral Diseases, National Clinical Research Center for Oral Diseases, Engineering Research Center of Oral Translational Medicine, National Engineering Laboratory for Oral Regenerative Medicine, West China Hospital of Stomatology, Sichuan University, No.14, 3rd Section, Renmin South Road, Chengdu, 610041, China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Tian W",
+              "lastName": "Tian",
+              "firstName": "Weidong",
+              "initials": "W",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "State Key Laboratory of Oral Diseases, National Clinical Research Center for Oral Diseases, Engineering Research Center of Oral Translational Medicine, National Engineering Laboratory for Oral Regenerative Medicine, West China Hospital of Stomatology, Sichuan University, No.14, 3rd Section, Renmin South Road, Chengdu, 610041, China. drtwd@sina.com."
+                  },
+                  {
+                    "affiliation": "Department of Oral and Maxillofacial Surgery, West China Hospital of Stomatology, Sichuan University, No.14, 3rd Section, Renmin South Road, Chengdu, 610041, China. drtwd@sina.com."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Huo F",
+              "lastName": "Huo",
+              "firstName": "Fangjun",
+              "initials": "F",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "State Key Laboratory of Oral Diseases, National Clinical Research Center for Oral Diseases, Engineering Research Center of Oral Translational Medicine, National Engineering Laboratory for Oral Regenerative Medicine, West China Hospital of Stomatology, Sichuan University, No.14, 3rd Section, Renmin South Road, Chengdu, 610041, China. huofj@scu.edu.cn."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "dataLinksTagsList": {
+          "dataLinkstag": [
+            "supporting_data"
+          ]
+        },
+        "journalInfo": {
+          "issue": "1",
+          "volume": "17",
+          "journalIssueId": 4177399,
+          "dateOfPublication": "2026 Apr",
+          "monthOfPublication": 4,
+          "yearOfPublication": 2026,
+          "journal": {
+            "medlineAbbreviation": "Stem Cell Res Ther",
+            "title": "Stem cell research & therapy",
+            "essn": "1757-6512",
+            "issn": "1757-6512",
+            "isoabbreviation": "Stem Cell Res Ther",
+            "nlmid": "101527581"
+          },
+          "printPublicationDate": "2026-04-01"
+        },
+        "pubYear": "2026",
+        "pageInfo": "284",
+        "abstractText": "Abstract replaced in this fixture: abstracts are the copyright of their publishers.",
+        "affiliation": "State Key Laboratory of Oral Diseases, National Clinical Research Center for Oral Diseases, Engineering Research Center of Oral Translational Medicine, National Engineering Laboratory for Oral Regenerative Medicine, West China Hospital of Stomatology, Sichuan University, No.14, 3rd Section, Renmin South Road, Chengdu, 610041, China.",
+        "publicationStatus": "epublish",
+        "language": "eng",
+        "pubModel": "Electronic",
+        "pubTypeList": {
+          "pubType": [
+            "Research Support, Non-U.S. Gov't",
+            "review-article",
+            "Review",
+            "Journal Article"
+          ]
+        },
+        "grantsList": {
+          "grant": [
+            {
+              "agency": "National Key Research and Development Program of China",
+              "grantId": "No. 2022YFA1104400",
+              "orderIn": 0
+            },
+            {
+              "agency": "Sichuan Provincial Science and Technology Support Program",
+              "grantId": "No. 2024YFFK0068",
+              "orderIn": 0
+            },
+            {
+              "agency": "Fundamental Research Funds for the Central Universities",
+              "grantId": "No. SCU2023D014",
+              "orderIn": 0
+            }
+          ]
+        },
+        "subsetList": {
+          "subset": [
+            {
+              "code": "IM",
+              "name": "Index Medicus"
+            }
+          ]
+        },
+        "fullTextUrlList": {
+          "fullTextUrl": [
+            {
+              "availability": "Subscription required",
+              "availabilityCode": "S",
+              "documentStyle": "doi",
+              "site": "DOI",
+              "url": "https://doi.org/10.1186/s13287-026-05044-y"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "html",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/articles/PMC13479916"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "pdf",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/articles/PMC13479916?pdf=render"
+            }
+          ]
+        },
+        "isOpenAccess": "Y",
+        "inEPMC": "Y",
+        "inPMC": "Y",
+        "citedByCount": 0,
+        "hasReferences": "Y",
+        "hasTextMinedTerms": "Y",
+        "hasDbCrossReferences": "N",
+        "hasPDF": "Y",
+        "hasBook": "N",
+        "hasSuppl": "N",
+        "hasLabsLinks": "N",
+        "hasData": "Y",
+        "license": "cc by-nc-nd",
+        "authMan": "N",
+        "epmcAuthMan": "N",
+        "nihAuthMan": "N",
+        "hasTMAccessionNumbers": "Y",
+        "tmAccessionTypeList": {
+          "accessionType": [
+            "doi"
+          ]
+        },
+        "dateOfCompletion": "2026-08-18",
+        "dateOfCreation": "2026-05-01",
+        "dateOfRevision": "2026-10-03",
+        "electronicPublicationDate": "2026-04-30",
+        "firstPublicationDate": "2026-04-30",
+        "firstIndexDate": "2026-05-02",
+        "fullTextReceivedDate": "2026-09-09",
+        "hasEvaluations": "N"
+      },
+      {
+        "id": "42165989",
+        "source": "MED",
+        "pmid": "42165989",
+        "doi": "10.1007/s12015-026-11153-1",
+        "title": "Stem Cell-based Therapeutic and Endogenous Regeneration Approaches for Congenital Tooth Agenesis.",
+        "authorString": "Collart-Dutilleul PY, Veret D, Younes R, Moulis E, Cuisinier F, Joseph C, Zine A.",
+        "authorList": {
+          "author": [
+            {
+              "fullName": "Collart-Dutilleul PY",
+              "lastName": "Collart-Dutilleul",
+              "firstName": "Pierre-Yves",
+              "initials": "PY",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "LBN, Univ Montpellier, Montpellier, France. pierre-yves.collart-dutilleul@umontpellier.fr."
+                  },
+                  {
+                    "affiliation": "Odontology Department, CCMR O-Rares, CHU Montpellier, Montpellier, France. pierre-yves.collart-dutilleul@umontpellier.fr."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Veret D",
+              "lastName": "Veret",
+              "firstName": "Damien",
+              "initials": "D",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "LBN, Univ Montpellier, Montpellier, France."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Younes R",
+              "lastName": "Younes",
+              "firstName": "Richard",
+              "initials": "R",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "LBN, Univ Montpellier, Montpellier, France."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Moulis E",
+              "lastName": "Moulis",
+              "firstName": "Estelle",
+              "initials": "E",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Odontology Department, CCMR O-Rares, CHU Montpellier, Montpellier, France."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Cuisinier F",
+              "lastName": "Cuisinier",
+              "firstName": "Fr\u00e9d\u00e9ric",
+              "initials": "F",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "LBN, Univ Montpellier, Montpellier, France."
+                  },
+                  {
+                    "affiliation": "Odontology Department, CCMR O-Rares, CHU Montpellier, Montpellier, France."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Joseph C",
+              "lastName": "Joseph",
+              "firstName": "Clara",
+              "initials": "C",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Odontology Department, CCMR O-Rares, CHU Montpellier, Montpellier, France."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Zine A",
+              "lastName": "Zine",
+              "firstName": "Azel",
+              "initials": "A",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "LBN, Univ Montpellier, Montpellier, France."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "journalInfo": {
+          "issue": "6",
+          "volume": "22",
+          "journalIssueId": 4229407,
+          "dateOfPublication": "2026 Aug",
+          "monthOfPublication": 8,
+          "yearOfPublication": 2026,
+          "journal": {
+            "medlineAbbreviation": "Stem Cell Rev Rep",
+            "title": "Stem cell reviews and reports",
+            "essn": "2629-3277",
+            "issn": "2629-3269",
+            "isoabbreviation": "Stem Cell Rev Rep",
+            "nlmid": "101752767"
+          },
+          "printPublicationDate": "2026-08-01"
+        },
+        "pubYear": "2026",
+        "pageInfo": "2657-2670",
+        "abstractText": "Abstract replaced in this fixture: abstracts are the copyright of their publishers.",
+        "affiliation": "LBN, Univ Montpellier, Montpellier, France. pierre-yves.collart-dutilleul@umontpellier.fr.",
+        "publicationStatus": "ppublish",
+        "language": "eng",
+        "pubModel": "Print-Electronic",
+        "pubTypeList": {
+          "pubType": [
+            "Review",
+            "Journal Article"
+          ]
+        },
+        "subsetList": {
+          "subset": [
+            {
+              "code": "IM",
+              "name": "Index Medicus"
+            }
+          ]
+        },
+        "fullTextUrlList": {
+          "fullTextUrl": [
+            {
+              "availability": "Subscription required",
+              "availabilityCode": "S",
+              "documentStyle": "doi",
+              "site": "DOI",
+              "url": "https://doi.org/10.1007/s12015-026-11153-1"
+            }
+          ]
+        },
+        "isOpenAccess": "N",
+        "inEPMC": "N",
+        "inPMC": "N",
+        "citedByCount": 0,
+        "hasReferences": "Y",
+        "hasTextMinedTerms": "Y",
+        "hasDbCrossReferences": "N",
+        "hasPDF": "N",
+        "hasBook": "N",
+        "hasSuppl": "N",
+        "hasLabsLinks": "N",
+        "hasData": "N",
+        "authMan": "N",
+        "epmcAuthMan": "N",
+        "nihAuthMan": "N",
+        "hasTMAccessionNumbers": "N",
+        "dateOfCompletion": "2026-07-10",
+        "dateOfCreation": "2026-05-21",
+        "dateOfRevision": "2026-11-05",
+        "electronicPublicationDate": "2026-05-21",
+        "firstPublicationDate": "2026-05-21",
+        "firstIndexDate": "2026-05-22",
+        "hasEvaluations": "N"
+      },
+      {
+        "id": "41588444",
+        "source": "MED",
+        "pmid": "41588444",
+        "pmcid": "PMC12836903",
+        "fullTextIdList": {
+          "fullTextId": [
+            "PMC12836903"
+          ]
+        },
+        "doi": "10.1186/s41232-025-00397-y",
+        "title": "Wnt10a exhibit spatiotemporal singularity in the temporal changes of angiogenesis in regenerated pulp-like tissue.",
+        "authorString": "Iida N, Hayashi Y, Futenma T, Sakatoku S, Sugita Y, Nakamura K, Nawa H.",
+        "authorList": {
+          "author": [
+            {
+              "fullName": "Iida N",
+              "lastName": "Iida",
+              "firstName": "Natsuki",
+              "initials": "N",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Pediatric Dentistry, School of Dentistry, Aichi Gakuin University, 2-11 Suemori-Dori, Chikusa-Ku, Nagoya, Aichi, 464-8651, Japan."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Hayashi Y",
+              "lastName": "Hayashi",
+              "firstName": "Yuki",
+              "initials": "Y",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-1651-4850"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Pediatric Dentistry, School of Dentistry, Aichi Gakuin University, 2-11 Suemori-Dori, Chikusa-Ku, Nagoya, Aichi, 464-8651, Japan. hys8y9@dpc.ac.jp."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Futenma T",
+              "lastName": "Futenma",
+              "firstName": "Taku",
+              "initials": "T",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Pediatric Dentistry, School of Dentistry, Aichi Gakuin University, 2-11 Suemori-Dori, Chikusa-Ku, Nagoya, Aichi, 464-8651, Japan."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Sakatoku S",
+              "lastName": "Sakatoku",
+              "firstName": "Shintaro",
+              "initials": "S",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Pediatric Dentistry, School of Dentistry, Aichi Gakuin University, 2-11 Suemori-Dori, Chikusa-Ku, Nagoya, Aichi, 464-8651, Japan."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Sugita Y",
+              "lastName": "Sugita",
+              "firstName": "Yoshihiko",
+              "initials": "Y",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Oral Pathology, School of Dentistry, Aichi Gakuin University, 1-100 Kusumoto-cho, Chikusa-Ku, Nagoya, Aichi 464-8650, Japan."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Nakamura K",
+              "lastName": "Nakamura",
+              "firstName": "Keisuke",
+              "initials": "K",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Pediatric Dentistry, School of Dentistry, Aichi Gakuin University, 2-11 Suemori-Dori, Chikusa-Ku, Nagoya, Aichi, 464-8651, Japan."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Nawa H",
+              "lastName": "Nawa",
+              "firstName": "Hiroyuki",
+              "initials": "H",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Pediatric Dentistry, School of Dentistry, Aichi Gakuin University, 2-11 Suemori-Dori, Chikusa-Ku, Nagoya, Aichi, 464-8651, Japan."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "authorIdList": {
+          "authorId": [
+            {
+              "type": "ORCID",
+              "value": "0000-0003-1651-4850"
+            }
+          ]
+        },
+        "dataLinksTagsList": {
+          "dataLinkstag": [
+            "supporting_data"
+          ]
+        },
+        "journalInfo": {
+          "issue": "1",
+          "volume": "46",
+          "journalIssueId": 4091674,
+          "dateOfPublication": "2026 Jan",
+          "monthOfPublication": 1,
+          "yearOfPublication": 2026,
+          "journal": {
+            "medlineAbbreviation": "Inflamm Regen",
+            "title": "Inflammation and regeneration",
+            "essn": "1880-8190",
+            "issn": "1880-9693",
+            "isoabbreviation": "Inflamm Regen",
+            "nlmid": "101479577"
+          },
+          "printPublicationDate": "2026-01-01"
+        },
+        "pubYear": "2026",
+        "pageInfo": "6",
+        "abstractText": "Abstract replaced in this fixture: abstracts are the copyright of their publishers.",
+        "affiliation": "Department of Pediatric Dentistry, School of Dentistry, Aichi Gakuin University, 2-11 Suemori-Dori, Chikusa-Ku, Nagoya, Aichi, 464-8651, Japan.",
+        "publicationStatus": "epublish",
+        "language": "eng",
+        "pubModel": "Electronic",
+        "pubTypeList": {
+          "pubType": [
+            "research-article",
+            "Journal Article"
+          ]
+        },
+        "grantsList": {
+          "grant": [
+            {
+              "agency": "Japan Society for the Promotion of Science London",
+              "grantId": "25K20444",
+              "orderIn": 0
+            }
+          ]
+        },
+        "fullTextUrlList": {
+          "fullTextUrl": [
+            {
+              "availability": "Subscription required",
+              "availabilityCode": "S",
+              "documentStyle": "doi",
+              "site": "DOI",
+              "url": "https://doi.org/10.1186/s41232-025-00397-y"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "html",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/articles/PMC12836903"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "pdf",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/articles/PMC12836903?pdf=render"
+            }
+          ]
+        },
+        "isOpenAccess": "Y",
+        "inEPMC": "Y",
+        "inPMC": "Y",
+        "citedByCount": 2,
+        "hasReferences": "Y",
+        "hasTextMinedTerms": "Y",
+        "hasDbCrossReferences": "N",
+        "hasPDF": "Y",
+        "hasBook": "N",
+        "hasSuppl": "Y",
+        "hasLabsLinks": "Y",
+        "hasData": "Y",
+        "license": "cc by-nc-nd",
+        "authMan": "N",
+        "epmcAuthMan": "N",
+        "nihAuthMan": "N",
+        "hasTMAccessionNumbers": "N",
+        "dateOfCompletion": "2026-01-26",
+        "dateOfCreation": "2026-01-26",
+        "dateOfRevision": "2026-01-31",
+        "electronicPublicationDate": "2026-01-27",
+        "firstPublicationDate": "2026-01-27",
+        "firstIndexDate": "2026-01-27",
+        "fullTextReceivedDate": "2026-01-28",
+        "hasEvaluations": "N"
+      },
+      {
+        "id": "41632902",
+        "source": "MED",
+        "pmid": "41632902",
+        "pmcid": "PMC12867463",
+        "fullTextIdList": {
+          "fullTextId": [
+            "PMC12867463"
+          ]
+        },
+        "doi": "10.1002/cre2.70301",
+        "title": "USAG-1 and Regenerative Dentistry, Therapeutic Implications and Future Directions: Review of the Literature.",
+        "authorString": "Moradi Z, Karimi M, Kolahdouz S, Arya N, Akheshteh V, Ayanzadeh F, Aalizadeh Y, Moravvej H, Keshavarzi M, Basri A.",
+        "authorList": {
+          "author": [
+            {
+              "fullName": "Moradi Z",
+              "lastName": "Moradi",
+              "firstName": "Zahra",
+              "initials": "Z",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0009-0003-3675-8235"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Memorial Dentistry for Kids, Houston, Texas, USA."
+                  },
+                  {
+                    "affiliation": "School of Dentistry, Bushehr University of Medical Sciences, Bushehr, Iran."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Karimi M",
+              "lastName": "Karimi",
+              "firstName": "Mohammadreza",
+              "initials": "M",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0009-0001-7864-3343"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Oral and Dental Disease Research Center, School of Dentistry, Shiraz University of Medical Sciences, Shiraz, Iran."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Kolahdouz S",
+              "lastName": "Kolahdouz",
+              "firstName": "Shirin",
+              "initials": "S",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "School of Dentistry, Shahid Sadoughi University of Medical Sciences, Yazd, Iran."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Arya N",
+              "lastName": "Arya",
+              "firstName": "Narges",
+              "initials": "N",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Oral and Maxillofacial radiology, School of Dentistry, Bushehr University of Medical Sciences, Bushehr, Iran."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Akheshteh V",
+              "lastName": "Akheshteh",
+              "firstName": "Vahid",
+              "initials": "V",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Dr. Akheshteh Oral and Maxillofacial radiology Center, Karaj, Iran."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Ayanzadeh F",
+              "lastName": "Ayanzadeh",
+              "firstName": "Fatemeh",
+              "initials": "F",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "School of Dentistry, Bushehr University of Medical Sciences, Bushehr, Iran."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Aalizadeh Y",
+              "lastName": "Aalizadeh",
+              "firstName": "Yasmina",
+              "initials": "Y",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Pediatric Dentistry, School of Dentistry, Azad University (khorasgan Branch), Isfahan, Iran."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Moravvej H",
+              "lastName": "Moravvej",
+              "firstName": "Hanieh",
+              "initials": "H",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "School of Dentistry, Bushehr University of Medical Sciences, Bushehr, Iran."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Keshavarzi M",
+              "lastName": "Keshavarzi",
+              "firstName": "Marzie",
+              "initials": "M",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "School of Dentistry, Bushehr University of Medical Sciences, Bushehr, Iran."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Basri A",
+              "lastName": "Basri",
+              "firstName": "Amar",
+              "initials": "A",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "School of Dentistry, Bushehr University of Medical Sciences, Bushehr, Iran."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "authorIdList": {
+          "authorId": [
+            {
+              "type": "ORCID",
+              "value": "0009-0001-7864-3343"
+            },
+            {
+              "type": "ORCID",
+              "value": "0009-0003-3675-8235"
+            }
+          ]
+        },
+        "dataLinksTagsList": {
+          "dataLinkstag": [
+            "supporting_data"
+          ]
+        },
+        "journalInfo": {
+          "issue": "1",
+          "volume": "12",
+          "journalIssueId": 4088874,
+          "dateOfPublication": "2026 Feb",
+          "monthOfPublication": 2,
+          "yearOfPublication": 2026,
+          "journal": {
+            "medlineAbbreviation": "Clin Exp Dent Res",
+            "title": "Clinical and experimental dental research",
+            "essn": "2057-4347",
+            "issn": "2057-4347",
+            "isoabbreviation": "Clin Exp Dent Res",
+            "nlmid": "101692332"
+          },
+          "printPublicationDate": "2026-02-01"
+        },
+        "pubYear": "2026",
+        "pageInfo": "e70301",
+        "abstractText": "Abstract replaced in this fixture: abstracts are the copyright of their publishers.",
+        "affiliation": "Memorial Dentistry for Kids, Houston, Texas, USA.",
+        "publicationStatus": "ppublish",
+        "language": "eng",
+        "pubModel": "Print",
+        "pubTypeList": {
+          "pubType": [
+            "Research Support, Non-U.S. Gov't",
+            "review-article",
+            "Review",
+            "Journal Article"
+          ]
+        },
+        "subsetList": {
+          "subset": [
+            {
+              "code": "IM",
+              "name": "Index Medicus"
+            }
+          ]
+        },
+        "fullTextUrlList": {
+          "fullTextUrl": [
+            {
+              "availability": "Subscription required",
+              "availabilityCode": "S",
+              "documentStyle": "doi",
+              "site": "DOI",
+              "url": "https://doi.org/10.1002/cre2.70301"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "html",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/articles/PMC12867463"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "pdf",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/articles/PMC12867463?pdf=render"
+            }
+          ]
+        },
+        "isOpenAccess": "Y",
+        "inEPMC": "Y",
+        "inPMC": "Y",
+        "citedByCount": 1,
+        "hasReferences": "Y",
+        "hasTextMinedTerms": "Y",
+        "hasDbCrossReferences": "N",
+        "hasPDF": "Y",
+        "hasBook": "N",
+        "hasSuppl": "Y",
+        "hasLabsLinks": "N",
+        "hasData": "Y",
+        "license": "cc by",
+        "authMan": "N",
+        "epmcAuthMan": "N",
+        "nihAuthMan": "N",
+        "hasTMAccessionNumbers": "Y",
+        "tmAccessionTypeList": {
+          "accessionType": [
+            "doi"
+          ]
+        },
+        "dateOfCompletion": "2026-07-06",
+        "dateOfCreation": "2026-02-03",
+        "dateOfRevision": "2026-09-01",
+        "firstPublicationDate": "2026-02-01",
+        "firstIndexDate": "2026-02-09",
+        "fullTextReceivedDate": "2026-02-14",
+        "hasEvaluations": "N"
+      },
+      {
+        "id": "41445584",
+        "source": "MED",
+        "pmid": "41445584",
+        "pmcid": "PMC12723002",
+        "fullTextIdList": {
+          "fullTextId": [
+            "PMC12723002"
+          ]
+        },
+        "doi": "10.3389/fcell.2025.1712688",
+        "title": "Decoding dental mesenchymal stem cells diversity: single-cell transcriptomics maps heterogeneity in molar development.",
+        "authorString": "Zhang R, Chen L, Xu W, Xu W, Wu B.",
+        "authorList": {
+          "author": [
+            {
+              "fullName": "Zhang R",
+              "lastName": "Zhang",
+              "firstName": "Ruilin",
+              "initials": "R",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Nanfang Hospital, Southern Medical University, Guangzhou, Guangdong, China."
+                  },
+                  {
+                    "affiliation": "School of Stomatology, Southern Medical University, Guangzhou, Guangdong, China."
+                  },
+                  {
+                    "affiliation": "Shenzhen Clinical College of Stomatology, School of Stomatology, Southern Medical University, Shenzhen, Guangdong, China."
+                  },
+                  {
+                    "affiliation": "Shenzhen Stomatology Hospital (Pingshan) of Southern Medical University, Shenzhen, Guangdong, China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Chen L",
+              "lastName": "Chen",
+              "firstName": "Leyi",
+              "initials": "L",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-7090-3788"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Shenzhen Clinical College of Stomatology, School of Stomatology, Southern Medical University, Shenzhen, Guangdong, China."
+                  },
+                  {
+                    "affiliation": "Shenzhen Stomatology Hospital (Pingshan) of Southern Medical University, Shenzhen, Guangdong, China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Xu W",
+              "lastName": "Xu",
+              "firstName": "Wanli",
+              "initials": "W",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Shenzhen Clinical College of Stomatology, School of Stomatology, Southern Medical University, Shenzhen, Guangdong, China."
+                  },
+                  {
+                    "affiliation": "Shenzhen Stomatology Hospital (Pingshan) of Southern Medical University, Shenzhen, Guangdong, China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Xu W",
+              "lastName": "Xu",
+              "firstName": "Wenan",
+              "initials": "W",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Shenzhen Clinical College of Stomatology, School of Stomatology, Southern Medical University, Shenzhen, Guangdong, China."
+                  },
+                  {
+                    "affiliation": "Shenzhen Stomatology Hospital (Pingshan) of Southern Medical University, Shenzhen, Guangdong, China."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Wu B",
+              "lastName": "Wu",
+              "firstName": "Buling",
+              "initials": "B",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Shenzhen Clinical College of Stomatology, School of Stomatology, Southern Medical University, Shenzhen, Guangdong, China."
+                  },
+                  {
+                    "affiliation": "Shenzhen Stomatology Hospital (Pingshan) of Southern Medical University, Shenzhen, Guangdong, China."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "authorIdList": {
+          "authorId": [
+            {
+              "type": "ORCID",
+              "value": "0000-0002-7090-3788"
+            },
+            {
+              "type": "ORCID",
+              "value": "0009-0000-4660-3702"
+            }
+          ]
+        },
+        "dataLinksTagsList": {
+          "dataLinkstag": [
+            "supporting_data"
+          ]
+        },
+        "journalInfo": {
+          "volume": "13",
+          "journalIssueId": 3895028,
+          "dateOfPublication": "2025 ",
+          "monthOfPublication": 0,
+          "yearOfPublication": 2025,
+          "journal": {
+            "medlineAbbreviation": "Front Cell Dev Biol",
+            "title": "Frontiers in cell and developmental biology",
+            "essn": "2296-634X",
+            "issn": "2296-634X",
+            "isoabbreviation": "Front Cell Dev Biol",
+            "nlmid": "101630250"
+          },
+          "printPublicationDate": "2025-01-01"
+        },
+        "pubYear": "2025",
+        "pageInfo": "1712688",
+        "abstractText": "Abstract replaced in this fixture: abstracts are the copyright of their publishers.",
+        "affiliation": "Nanfang Hospital, Southern Medical University, Guangzhou, Guangdong, China.",
+        "publicationStatus": "epublish",
+        "language": "eng",
+        "pubModel": "Electronic-eCollection",
+        "pubTypeList": {
+          "pubType": [
+            "review-article",
+            "Review",
+            "Journal Article"
+          ]
+        },
+        "fullTextUrlList": {
+          "fullTextUrl": [
+            {
+              "availability": "Subscription required",
+              "availabilityCode": "S",
+              "documentStyle": "doi",
+              "site": "DOI",
+              "url": "https://doi.org/10.3389/fcell.2025.1712688"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "html",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/articles/PMC12723002"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "pdf",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/articles/PMC12723002?pdf=render"
+            }
+          ]
+        },
+        "isOpenAccess": "Y",
+        "inEPMC": "Y",
+        "inPMC": "Y",
+        "citedByCount": 0,
+        "hasReferences": "Y",
+        "hasTextMinedTerms": "Y",
+        "hasDbCrossReferences": "N",
+        "hasPDF": "Y",
+        "hasBook": "N",
+        "hasSuppl": "N",
+        "hasLabsLinks": "N",
+        "hasData": "Y",
+        "license": "cc by",
+        "authMan": "N",
+        "epmcAuthMan": "N",
+        "nihAuthMan": "N",
+        "hasTMAccessionNumbers": "Y",
+        "tmAccessionTypeList": {
+          "accessionType": [
+            "doi"
+          ]
+        },
+        "dateOfCompletion": "2025-12-25",
+        "dateOfCreation": "2025-12-25",
+        "dateOfRevision": "2026-09-19",
+        "electronicPublicationDate": "2025-12-09",
+        "firstPublicationDate": "2025-12-09",
+        "firstIndexDate": "2025-12-25",
+        "fullTextReceivedDate": "2025-12-24",
+        "hasEvaluations": "N"
+      },
+      {
+        "id": "41321054",
+        "source": "MED",
+        "pmid": "41321054",
+        "doi": "10.1111/prd.70024",
+        "title": "Late facial growth and continuous dentoalveolar eruption: Implications for optimal dental implant placement.",
+        "authorString": "Valente NA, D'Amato S, Farella M.",
+        "authorList": {
+          "author": [
+            {
+              "fullName": "Valente NA",
+              "lastName": "Valente",
+              "firstName": "Nicola Alberto",
+              "initials": "NA",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-1403-5274"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Discipline of Periodontics, Department of Surgical Sciences, University of Cagliari, Cagliari, Italy."
+                  },
+                  {
+                    "affiliation": "College of Dentistry, American University of Iraq Baghdad (AUIB), Baghdad, Iraq."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "D'Amato S",
+              "lastName": "D'Amato",
+              "firstName": "Salvatore",
+              "initials": "S",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Multidisciplinary Department of Medical-Surgical and Dental Specialties, University of Campania \"Luigi Vanvitelli\", Naples, Italy."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Farella M",
+              "lastName": "Farella",
+              "firstName": "Mauro",
+              "initials": "M",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-4516-647X"
+              },
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Discipline of Periodontics, Department of Surgical Sciences, University of Cagliari, Cagliari, Italy."
+                  },
+                  {
+                    "affiliation": "Discipline of Orthodontics, Department of Oral Sciences, University of Otago, Dunedin, New Zealand."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "authorIdList": {
+          "authorId": [
+            {
+              "type": "ORCID",
+              "value": "0000-0003-1403-5274"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-4516-647X"
+            }
+          ]
+        },
+        "journalInfo": {
+          "journalIssueId": 4042109,
+          "dateOfPublication": "2025 Nov",
+          "monthOfPublication": 11,
+          "yearOfPublication": 2025,
+          "journal": {
+            "medlineAbbreviation": "Periodontol 2000",
+            "title": "Periodontology 2000",
+            "essn": "1600-0757",
+            "issn": "0906-6713",
+            "isoabbreviation": "Periodontol 2000",
+            "nlmid": "9313276"
+          },
+          "printPublicationDate": "2025-11-01"
+        },
+        "pubYear": "2025",
+        "abstractText": "Abstract replaced in this fixture: abstracts are the copyright of their publishers.",
+        "affiliation": "Discipline of Periodontics, Department of Surgical Sciences, University of Cagliari, Cagliari, Italy.",
+        "publicationStatus": "aheadofprint",
+        "language": "eng",
+        "pubModel": "Print-Electronic",
+        "pubTypeList": {
+          "pubType": [
+            "Review",
+            "Journal Article"
+          ]
+        },
+        "subsetList": {
+          "subset": [
+            {
+              "code": "IM",
+              "name": "Index Medicus"
+            }
+          ]
+        },
+        "fullTextUrlList": {
+          "fullTextUrl": [
+            {
+              "availability": "Subscription required",
+              "availabilityCode": "S",
+              "documentStyle": "doi",
+              "site": "DOI",
+              "url": "https://doi.org/10.1111/prd.70024"
+            }
+          ]
+        },
+        "isOpenAccess": "N",
+        "inEPMC": "N",
+        "inPMC": "N",
+        "citedByCount": 0,
+        "hasReferences": "Y",
+        "hasTextMinedTerms": "N",
+        "hasDbCrossReferences": "N",
+        "hasPDF": "N",
+        "hasBook": "N",
+        "hasSuppl": "N",
+        "hasLabsLinks": "N",
+        "hasData": "N",
+        "authMan": "N",
+        "epmcAuthMan": "N",
+        "nihAuthMan": "N",
+        "hasTMAccessionNumbers": "N",
+        "dateOfCreation": "2025-12-01",
+        "dateOfRevision": "2025-12-01",
+        "electronicPublicationDate": "2025-11-30",
+        "firstPublicationDate": "2025-11-30",
+        "firstIndexDate": "2025-12-01",
+        "hasEvaluations": "N"
+      }
+    ]
+  }
+}

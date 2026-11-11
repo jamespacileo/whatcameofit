@@ -1,0 +1,66 @@
+{
+  "compiled_by": "AI assistant, from the primary sources linked below. Not reviewed by the operator.",
+  "checked_on": "2026-11-11",
+  "note": "Loaded as already reviewed so that a fresh checkout shows one claim page. Its decisions are recorded as made by the seed loader, never as a human's. Check it against the sources before any public launch.",
+  "trial_registration": {
+    "registry": "jRCT (Japan Registry of Clinical Trials)",
+    "id": "jRCT2051240154",
+    "url": "https://jrct.mhlw.go.jp/en-latest-detail/jRCT2051240154",
+    "on_clinicaltrials_gov": false,
+    "how_checked": "ClinicalTrials.gov API v2 searched on 2026-11-11 for TRG035, TRG-035 and Toregem: no trial. jRCT record read directly.",
+    "supplied_by": "The two trial events below, entered as manual events. No client reads jRCT yet."
+  },
+  "claim": {
+    "slug": "tooth-regrowth-usag1",
+    "headline": "Antibody against USAG-1 regrows teeth in mice",
+    "summary": "Researchers at Kyoto University and the University of Fukui reported that one dose of an antibody blocking the protein USAG-1 grew a whole new tooth in mice with congenital tooth agenesis, with similar results in ferrets. The paper appeared in Science Advances in February 2021.",
+    "vertical": "dental-regeneration",
+    "intervention": "Anti-USAG-1 antibody",
+    "synonyms": ["TRG035", "TRG-035", "USAG-1 neutralizing antibody"],
+    "indication": "congenital tooth agenesis",
+    "evidence_stage": "animal"
+  },
+  "articles": [
+    {
+      "url": "https://www.kyoto-u.ac.jp/en/research-news/2021-03-31",
+      "outlet": "Kyoto University",
+      "title": "New drug to regenerate lost teeth",
+      "published_date": "2021-03-31"
+    }
+  ],
+  "promises": [
+    {
+      "article_url": "https://www.kyoto-u.ac.jp/en/research-news/2021-03-31",
+      "description": "tests in other animals such as pigs and dogs next",
+      "parsed_date": null
+    }
+  ],
+  "origin_paper": {
+    "title": "Anti–USAG-1 therapy for tooth regeneration through enhanced BMP signaling",
+    "doi": "10.1126/sciadv.abf1798"
+  },
+  "events": [
+    {
+      "type": "trial_registered",
+      "event_date": "2024-10-08",
+      "date_basis": "registry date of registration",
+      "source_name": "jRCT",
+      "source_url": "https://jrct.mhlw.go.jp/en-latest-detail/jRCT2051240154",
+      "external_id": "jRCT2051240154",
+      "trial_phases": ["phase_1"],
+      "trial_state": null,
+      "summary": "Phase 1 trial jRCT2051240154 registered: a single dose of TRG035 in healthy adults."
+    },
+    {
+      "type": "trial_status_change",
+      "event_date": "2025-10-03",
+      "date_basis": "registry last modified; the registry shows the trial as complete and gives no completion date",
+      "source_name": "jRCT",
+      "source_url": "https://jrct.mhlw.go.jp/en-latest-detail/jRCT2051240154",
+      "external_id": "jRCT2051240154",
+      "trial_phases": ["phase_1"],
+      "trial_state": "completed",
+      "summary": "Trial jRCT2051240154 shown as complete in the registry."
+    }
+  ]
+}
