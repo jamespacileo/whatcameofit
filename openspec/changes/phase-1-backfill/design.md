@@ -155,6 +155,8 @@ Tests sit at two seams only: `derive` for rule logic and `refresh_status` agains
 
 `decide(step, state, options)` calls the configured backend and always writes one `decision_log` row. Backend A asks the language model for a choice and a probability per option through constrained output. These probabilities are self-reported, not calibrated; the log marks the backend so Phase 4 can calibrate against human labels. Backends B and C are not built. The interface carries nothing specific to any vendor.
 
+`decide` validates every backend answer (choice among the options, a probability for exactly each option, each within 0 to 1, summing to 1) and writes the log row whether the call succeeds or fails. Backend A rescales probabilities that miss a sum of 1 by up to 0.1, since models rarely sum exactly. When a candidate match cannot be scored, the candidates of that run are withdrawn and the logged failure is kept, so a candidate never carries an invented score. `resolve` also asks for the evidence stage suggestion once per claim; the suggestion lives in the decision log until an operator confirms it.
+
 ### D10. Language model budget
 
 Providers bill in US dollars, so the ceiling is `LLM_MONTHLY_BUDGET_USD` (example value 13, about £10). Cost per call is computed from token counts and two configured prices (`LLM_INPUT_USD_PER_MTOK`, `LLM_OUTPUT_USD_PER_MTOK`), because the model is not known to the code. The check runs before each call against the ledger sum for the calendar month, so overshoot is bounded by one call.

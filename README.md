@@ -57,6 +57,17 @@ thenwhat claim edit tooth-regrowth-usag1 --headline "Corrected headline"
 
 Model calls stop for the month once the recorded cost reaches `LLM_MONTHLY_BUDGET_USD`.
 
+### Entities and registry matches
+
+```sh
+thenwhat entity synonym tooth-regrowth-usag1 "USAG-1 antibody" "TRG-035"
+thenwhat entity add tooth-regrowth-usag1 --type paper --name "Paper title" --doi 10.1000/example
+thenwhat entity origin-paper tooth-regrowth-usag1 "Paper title"
+thenwhat resolve tooth-regrowth-usag1
+```
+
+`resolve` searches ClinicalTrials.gov for the intervention under every name it has, looks up each paper's DOI at Crossref, and stores every hit as a pending candidate match with a score. The score only orders the review queue: nothing is approved until you approve it. It also suggests the stage of evidence at announcement, which stays unset until you confirm it. Compound names change over time, so add synonyms before resolving.
+
 ### CSV import
 
 `thenwhat claim import-csv claims.csv` imports every row or none. Inside the container the file must be reachable, for example `docker compose run --rm -v "$PWD/data/seed:/seed" pipeline thenwhat claim import-csv /seed/claims.csv`.

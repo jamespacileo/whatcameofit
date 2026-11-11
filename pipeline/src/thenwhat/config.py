@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     llm_input_usd_per_mtok: Decimal | None = None
     llm_output_usd_per_mtok: Decimal | None = None
 
+    # Which backend answers bounded decisions. Only "llm" exists so far.
+    decision_backend: str = "llm"
+
     review_confidence_threshold: float = 0.95
     no_signal_years: int = 3
 

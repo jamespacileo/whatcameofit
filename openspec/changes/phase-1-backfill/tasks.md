@@ -51,11 +51,11 @@
 
 ## 7. Decisions and entity resolution
 
-- [ ] 7.1 Implement `decide()` with result validation, the decision log and Backend A (design D9); verify tests for a valid result, a choice outside the options, a failed call being logged, and a backend swap by configuration
-- [ ] 7.2 Implement entity commands (add, add synonym, set origin paper); verify tests for synonym use and origin paper replacement
-- [ ] 7.3 Implement `resolve` to search the trial registry by name and every synonym, look up paper DOIs, and store de-duplicated pending candidates; verify tests for every scenario in `specs/entity-resolution/spec.md`
-- [ ] 7.4 Score each new candidate through the entity match decision step; verify the candidate's score equals the logged probability of "match" and the candidate stays pending
-- [ ] 7.5 Suggest the evidence stage for a draft claim through the evidence stage decision step; verify the claim's stage stays empty until confirmed
+- [x] 7.1 Implement `decide()` with result validation, the decision log and Backend A (design D9); verify tests for a valid result, a choice outside the options, a failed call being logged, and a backend swap by configuration
+- [x] 7.2 Implement entity commands (add, add synonym, set origin paper); verify tests for synonym use and origin paper replacement
+- [x] 7.3 Implement `resolve` to search the trial registry by name and every synonym, look up paper DOIs, and store de-duplicated pending candidates; verify tests for every scenario in `specs/entity-resolution/spec.md`
+- [x] 7.4 Score each new candidate through the entity match decision step; verify the candidate's score equals the logged probability of "match" and the candidate stays pending
+- [x] 7.5 Suggest the evidence stage for a draft claim through the evidence stage decision step; verify the claim's stage stays empty until confirmed
 
 ## 8. Evidence events
 
