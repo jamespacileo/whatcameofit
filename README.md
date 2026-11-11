@@ -137,6 +137,8 @@ After changing what the export contains, regenerate its schema: `thenwhat export
 
 `thenwhat claim import-csv claims.csv` imports every row or none. Inside the container the file must be reachable, for example `docker compose run --rm -v "$PWD/data/seed:/seed" pipeline thenwhat claim import-csv /seed/claims.csv`.
 
+A candidate list for the backfill is in `data/seed/claims.csv`: 23 dental regeneration claims first reported from 2015 to 2020, each with one source article that was fetched and checked. `data/seed/claims-notes.md` says how each row was checked, which points deserve a second look, and which leads were dropped. Importing it creates pending drafts only.
+
 One row per source article. Rows that share a slug belong to one claim: the first defines it, later rows may leave the claim columns blank. Errors name the row, counting the header as row 1.
 
 | Column | Required | Notes |
