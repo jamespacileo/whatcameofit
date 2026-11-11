@@ -116,3 +116,12 @@ Possible overlap:
 - Stage unclear from the text read: prime editing for Wilson disease (The Independent, 2026-10-23); niclosamide-based drug for endometriosis (The Independent, 2026-10-02); liver drug in ageing rats (ScienceAlert, 2026-11-07, drug not named).
 - Not cure-shaped: late-window thrombectomy for stroke; AI exoskeleton for gait training; fetal tumour ablation (single case, no product to track).
 - Unreliable source: a blog post claiming a thought-controlled walking implant in "12,000+ patients".
+
+## What the first live run showed (2026-11-11)
+
+Five claims were imported, drafted and searched with `openai:gpt-6-luna`.
+
+- **Intervention names must be plain.** The registry search sends the whole name as the search term, so "Bepirovirsen (Hibsago)" and "VDPHL01 (oral minoxidil formulation, Veradermics)" found nothing. With "Bepirovirsen" and "VDPHL01" the same search found 13 and 4 trials. Twenty-three names in the CSV were shortened to the name alone; maker and mechanism stay in the summary.
+- **Descriptive synonyms add noise.** The model recorded phrases such as "one-time CRISPR treatment" as other names for CTX310, and the search for them returned 84 unrelated trials. Match scoring ranked them all near zero, so nothing wrong was suggested, but each cost a model call.
+- **Match scoring separated cleanly.** CTX310: 1 of 85 trial candidates scored above 0.5. Compound 991 (worms and flies only): 0 of 23, which is right.
+- **Cost.** 140 model calls for five claims came to about $0.014.
