@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Popup states</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 24px;
+        background: #e6ebf1;
+        font: 13px/1.4 "Helvetica Neue", Arial, sans-serif;
+        color: #172534;
+      }
+      .board {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        align-items: flex-start;
+      }
+      figure {
+        margin: 0;
+      }
+      figcaption {
+        margin-bottom: 6px;
+        font-weight: 700;
+      }
+      iframe {
+        display: block;
+        width: 360px;
+        border: 0;
+        border-radius: 10px;
+        box-shadow: 0 8px 24px -8px rgb(23 37 52 / 0.35);
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Every popup state at the popup's own width. Synthetic data. Not part of the extension. -->
+    <div class="board" id="board"></div>
+    <script type="module" src="states.js"></script>
+  </body>
+</html>

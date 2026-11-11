@@ -13,6 +13,10 @@ site/dist/
 site/.astro/
 site/data/export.json
 
+# extension: built output and the generated Safari project
+extension/dist/
+extension/safari/
+
 # os
 .DS_Store
 

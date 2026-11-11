@@ -1,0 +1,206 @@
+/* The popup follows DESIGN.md: white ground, ink text, one blue accent, pale amber
+   only for a promise, Figtree. Light only. Sizes are in px because a popup has no
+   reader-chosen root size to respect and must fit a fixed width. */
+
+@font-face {
+  font-family: "Figtree Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300 900;
+  src: url("figtree.woff2") format("woff2-variations");
+}
+
+:root {
+  --paper: #ffffff;
+  --ink: #172534;
+  --blue: #0b5cad;
+  --muted: #4d5d6e;
+  --panel: #f3f7fb;
+  --tag: #d9e8f7;
+  --rule: #dde5ee;
+  --promise: #fff7df;
+  --promise-rule: #d9c88a;
+  --footer: #0b2f57;
+  --face: "Figtree Variable", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+::selection {
+  background: var(--tag);
+}
+
+body {
+  width: 360px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 15px/1.5 var(--face);
+  font-variant-numeric: tabular-nums lining-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+.masthead {
+  padding: 12px 16px 11px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.name {
+  color: var(--blue);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+
+main {
+  padding: 16px;
+}
+
+h1 {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.unbroken {
+  white-space: nowrap;
+}
+
+/* --- A tracked claim ---------------------------------------------------- */
+
+.claim + .claim {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+}
+
+.digest {
+  margin-top: 12px;
+  padding: 12px 14px 13px;
+  border-radius: 13px;
+  background: var(--panel);
+}
+
+.digest dt,
+.facts dt {
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.status {
+  margin-top: 1px;
+  color: var(--blue);
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.no-signal {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 2px 9px;
+  border: 1px dashed var(--muted);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.meaning {
+  margin-top: 7px;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.facts {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.facts:empty {
+  display: none;
+}
+
+.facts dd {
+  font-size: 14px;
+}
+
+.facts .promise {
+  padding: 9px 14px 10px;
+  border-radius: 13px;
+  background: var(--promise);
+}
+
+.facts div:not(.promise) {
+  padding-inline: 14px;
+}
+
+/* --- Controls ----------------------------------------------------------- */
+
+.button {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--blue);
+  border-radius: 10px;
+  background: var(--blue);
+  color: #ffffff;
+  font: 700 15px/1.3 var(--face);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button:hover {
+  border-color: var(--footer);
+  background: var(--footer);
+}
+
+.button.quiet {
+  background: var(--paper);
+  color: var(--blue);
+}
+
+.button.quiet:hover {
+  border-color: var(--footer);
+  background: var(--panel);
+  color: var(--footer);
+}
+
+:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* --- Messages and notices ----------------------------------------------- */
+
+.message p {
+  margin-top: 8px;
+}
+
+.checking {
+  color: var(--muted);
+}
+
+.notices {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.notices p + p {
+  margin-top: 5px;
+}
+
+.notices .saved {
+  color: var(--ink);
+}
