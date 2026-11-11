@@ -27,9 +27,13 @@ def _prepare(plan: ClaimPlan) -> list[str]:
     started = time.monotonic()
     report: list[str] = []
     for step in steps_for(plan):
+        step_started = time.monotonic()
         succeeded, said = run_step(step)
         name = "read" if step[0] == "extract" else step[0]
-        report.append(f"  {name}: {said}" if succeeded else f"  {name} failed: {said}")
+        took = f"{time.monotonic() - step_started:.0f}s"
+        report.append(
+            f"  {name} ({took}): {said}" if succeeded else f"  {name} failed ({took}): {said}"
+        )
     return [f"{plan.slug} ({time.monotonic() - started:.0f}s)", *report]
 
 
