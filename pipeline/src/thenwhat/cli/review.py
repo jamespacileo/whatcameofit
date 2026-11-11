@@ -9,10 +9,24 @@ import typer
 from thenwhat.cli.console import out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
-from thenwhat.domain import EvidenceStage, ReviewState
+from thenwhat.domain import Decider, EvidenceStage, ReviewState
 from thenwhat.review.queue import confirm_stage, decide_item, flag_failure, pending_items
 
 review_app = typer.Typer(help="Approve or reject what awaits review.", no_args_is_help=True)
+
+
+AS_ASSISTANT = Annotated[
+    bool,
+    typer.Option(
+        "--as-assistant",
+        help="Record the decision as an AI assistant's, not yours. Anything decided this"
+        " way stays out of the export unless a preview is asked for.",
+    ),
+]
+
+
+def _decider(as_assistant: bool) -> Decider:
+    return Decider.ASSISTANT if as_assistant else Decider.HUMAN
 
 
 class ItemKind(StrEnum):
@@ -40,7 +54,7 @@ def review_list(
             out.print(f"  {item.source_url or 'no source link'}", markup=False)
 
 
-def _decide(kind: ItemKind, item_id: int, state: ReviewState) -> None:
+def _decide(kind: ItemKind, item_id: int, state: ReviewState, as_assistant: bool) -> None:
     settings = settings_or_exit()
     with entry_session() as session:
         decide_item(
@@ -50,27 +64,31 @@ def _decide(kind: ItemKind, item_id: int, state: ReviewState) -> None:
             state,
             now=datetime.now(UTC),
             no_signal_years=settings.no_signal_years,
+            by=_decider(as_assistant),
         )
-        out.print(f"{kind.value.capitalize()} {item_id} is now {state.value}.")
+        by = ", decided by the assistant" if as_assistant else ""
+        out.print(f"{kind.value.capitalize()} {item_id} is now {state.value}{by}.")
 
 
 @review_app.command("approve")
 def review_approve(
     kind: Annotated[ItemKind, typer.Argument(help="claim, match or event.")],
     item_id: Annotated[int, typer.Argument(help="The id shown by `review list`.")],
+    as_assistant: AS_ASSISTANT = False,
 ) -> None:
     """Approve an item. Also changes an earlier rejection."""
-    _decide(kind, item_id, ReviewState.APPROVED)
+    _decide(kind, item_id, ReviewState.APPROVED, as_assistant)
 
 
 @review_app.command("reject")
 def review_reject(
     kind: Annotated[ItemKind, typer.Argument(help="claim, match or event.")],
     item_id: Annotated[int, typer.Argument(help="The id shown by `review list`.")],
+    as_assistant: AS_ASSISTANT = False,
 ) -> None:
     """Reject an item. It is kept, not deleted. Also changes an earlier approval,
     including one made by rule."""
-    _decide(kind, item_id, ReviewState.REJECTED)
+    _decide(kind, item_id, ReviewState.REJECTED, as_assistant)
 
 
 @review_app.command("flag-failure")
@@ -101,8 +119,9 @@ def review_flag_failure(
 def review_stage(
     claim_slug: Annotated[str, typer.Argument(help="Slug of the claim.")],
     stage: Annotated[EvidenceStage, typer.Argument(help="Evidence at the time of announcement.")],
+    as_assistant: AS_ASSISTANT = False,
 ) -> None:
     """Confirm or correct the stage of evidence at announcement."""
     with entry_session() as session:
-        claim = confirm_stage(session, claim_slug, stage)
+        claim = confirm_stage(session, claim_slug, stage, by=_decider(as_assistant))
         out.print(f"Evidence stage of {claim.slug}: {stage.value}.")

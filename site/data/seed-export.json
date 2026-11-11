@@ -2,6 +2,7 @@
   "schema_version": 1,
   "generated_at": "2026-11-11T12:00:00Z",
   "last_checked_at": "2026-11-11T12:00:00Z",
+  "preview": false,
   "sources": [
     {
       "name": "ClinicalTrials.gov",
@@ -95,6 +96,7 @@
       "indication": "congenital tooth agenesis",
       "first_reported_date": "2021-03-31",
       "evidence_stage": "animal",
+      "checked_by_person": false,
       "status": {
         "code": "phase_1",
         "overlay_years": null,

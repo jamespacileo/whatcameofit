@@ -11,7 +11,14 @@ from typer.testing import CliRunner, Result
 from thenwhat.claims.entry import add_article, add_claim
 from thenwhat.cli import app
 from thenwhat.db.models import Claim, EvidenceEvent
-from thenwhat.domain import ClaimStatus, EventType, EvidenceStage, ReviewState, TrialPhase
+from thenwhat.domain import (
+    ClaimStatus,
+    Decider,
+    EventType,
+    EvidenceStage,
+    ReviewState,
+    TrialPhase,
+)
 from thenwhat.events.manual import add_manual_event
 
 NOW = datetime(2026, 11, 20, tzinfo=UTC)
@@ -93,6 +100,14 @@ def test_review_approve_approves_and_updates_status(run, claim: Claim, event: Ev
     assert result.exit_code == 0, result.output
     assert event.review_state is ReviewState.APPROVED
     assert claim.current_status is ClaimStatus.TRIAL_REGISTERED
+
+
+def test_review_approve_as_assistant_records_the_assistant(run, event: EvidenceEvent):
+    result = run("review", "approve", "event", str(event.id), "--as-assistant")
+
+    assert result.exit_code == 0
+    assert "decided by the assistant" in result.output
+    assert event.reviewed_by is Decider.ASSISTANT
 
 
 def test_review_reject_rejects(run, event: EvidenceEvent):

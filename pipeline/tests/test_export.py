@@ -12,7 +12,14 @@ from sqlalchemy.orm import Session
 from thenwhat.claims.entities import add_synonym
 from thenwhat.claims.entry import add_article, add_claim, add_promise
 from thenwhat.db.models import Claim, EvidenceEvent
-from thenwhat.domain import EventType, EvidenceStage, ReviewState, TrialPhase, TrialState
+from thenwhat.domain import (
+    Decider,
+    EventType,
+    EvidenceStage,
+    ReviewState,
+    TrialPhase,
+    TrialState,
+)
 from thenwhat.events.manual import add_manual_event
 from thenwhat.export.build import SCHEMA_VERSION, build_export, export_json_schema, write_export
 from thenwhat.review.queue import confirm_stage, decide_item
@@ -260,3 +267,54 @@ def test_written_export_validates_against_the_checked_in_schema(session: Session
 def test_checked_in_schema_matches_the_models():
     """Regenerate with `thenwhat export --write-schema site/export.schema.json` after a change."""
     assert json.loads(CHECKED_IN_SCHEMA.read_text()) == export_json_schema()
+
+
+# --- decisions made by the assistant ---------------------------------------------
+
+
+def preview(session: Session) -> dict[str, Any]:
+    return json.loads(build_export(session, now=NOW, preview=True).model_dump_json())
+
+
+def test_claim_approved_by_the_assistant_stays_out_of_the_export(session: Session):
+    """Scenario: Claim approved by the assistant"""
+    claim = new_claim(session, approved=False)
+    decide_item(session, "claim", claim.id, ReviewState.APPROVED, now=EARLIER, by=Decider.ASSISTANT)
+
+    export = exported(session)
+
+    assert export["claims"] == []
+    assert export["preview"] is False
+
+
+def test_preview_export_includes_it_and_says_no_person_checked_it(session: Session):
+    """Scenario: Preview export"""
+    claim = new_claim(session, approved=False)
+    decide_item(session, "claim", claim.id, ReviewState.APPROVED, now=EARLIER, by=Decider.ASSISTANT)
+
+    export = preview(session)
+
+    assert export["preview"] is True
+    assert claim_in(export)["checked_by_person"] is False
+
+
+def test_operator_approved_claim_is_marked_as_checked_by_a_person(session: Session):
+    new_claim(session)
+
+    assert claim_in(exported(session))["checked_by_person"] is True
+    # A preview with nothing of the assistant's in it is not marked as one.
+    assert preview(session)["preview"] is False
+
+
+def test_assistant_approved_event_keeps_an_operator_approved_claim_out(session: Session):
+    """Scenario: Operator's claim with an assistant's event"""
+    new_claim(session)
+    event = add_event(session, approve=False)
+    decide_item(session, "event", event.id, ReviewState.APPROVED, now=EARLIER, by=Decider.ASSISTANT)
+
+    assert exported(session)["claims"] == []
+    assert claim_in(preview(session))["checked_by_person"] is False
+
+    # Once the operator makes the decision their own, the claim is published.
+    decide_item(session, "event", event.id, ReviewState.APPROVED, now=EARLIER)
+    assert claim_in(exported(session))["checked_by_person"] is True

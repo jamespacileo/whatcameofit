@@ -148,6 +148,27 @@ def test_operator_approval_records_the_time_and_a_human_decider(session: Session
     )
 
 
+def test_assistant_decision_is_recorded_as_the_assistants_and_labels_nothing(session: Session):
+    """Scenario: Assistant approves a match"""
+    [match] = candidates(session, approved_claim(session), "NCT1")
+
+    decide_item(session, "match", match.id, ReviewState.APPROVED, now=NOW, by=Decider.ASSISTANT)
+
+    assert (match.review_state, match.reviewed_by) == (ReviewState.APPROVED, Decider.ASSISTANT)
+    # A human label is a person's answer; the assistant's decision must not become one.
+    labels = session.scalars(
+        select(DecisionLog.human_label).where(DecisionLog.input_ref == f"entity_match:{match.id}")
+    ).all()
+    assert labels and all(label is None for label in labels)
+
+
+def test_a_rule_cannot_be_named_as_the_decider_of_a_review(session: Session):
+    claim = new_claim(session)
+
+    with pytest.raises(ValueError, match="operator or the assistant"):
+        decide_item(session, "claim", claim.id, ReviewState.APPROVED, now=NOW, by=Decider.RULE)
+
+
 def test_rejected_event_is_kept(session: Session):
     """Scenario: Rejected event"""
     approved_claim(session)

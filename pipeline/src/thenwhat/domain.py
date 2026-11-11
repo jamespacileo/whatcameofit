@@ -18,6 +18,9 @@ class Decider(StrEnum):
     RULE = "rule"
     # Loaded as already reviewed from a checked-in seed file. Not an operator's decision.
     SEED = "seed"
+    # Decided by an AI assistant working through the review queue. Not an operator's
+    # decision: anything it touched is kept out of the export unless a preview is asked for.
+    ASSISTANT = "assistant"
 
 
 class EntityType(StrEnum):

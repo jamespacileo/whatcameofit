@@ -2,6 +2,7 @@
   "schema_version": 1,
   "generated_at": "2026-11-11T12:00:00Z",
   "last_checked_at": "2026-11-11T11:00:00Z",
+  "preview": false,
   "sources": [
     {
       "name": "ClinicalTrials.gov",
@@ -34,6 +35,7 @@
       "indication": "example condition",
       "first_reported_date": "2018-05-01",
       "evidence_stage": "animal",
+      "checked_by_person": true,
       "status": {
         "code": "preclinical_only",
         "overlay_years": 6,
@@ -92,6 +94,7 @@
       "indication": "example condition",
       "first_reported_date": "2019-05-03",
       "evidence_stage": "animal",
+      "checked_by_person": true,
       "status": {
         "code": "phase_2",
         "overlay_years": null,
@@ -185,6 +188,7 @@
       "indication": "example condition",
       "first_reported_date": "2017-05-04",
       "evidence_stage": "animal",
+      "checked_by_person": true,
       "status": {
         "code": "approved",
         "overlay_years": null,

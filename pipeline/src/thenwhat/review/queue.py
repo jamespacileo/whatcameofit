@@ -117,13 +117,17 @@ def decide_item(
     *,
     now: datetime,
     no_signal_years: int = 3,
+    by: Decider = Decider.HUMAN,
 ) -> None:
-    """Approve or reject an item, or change an earlier decision, as the operator.
+    """Approve or reject an item, or change an earlier decision.
 
-    A decision on an event re-derives the claim's status. A decision on a match is
-    recorded as the human label for the score it was given, and rejecting a match
-    also rejects the events that were read from it.
+    The decider is the operator unless the assistant is named. A decision on an event
+    re-derives the claim's status. The operator's decision on a match is recorded as
+    the human label for the score it was given; the assistant's is not, because a
+    label is a person's answer. Rejecting a match also rejects the events read from it.
     """
+    if by not in (Decider.HUMAN, Decider.ASSISTANT):
+        raise ValueError("A review decision is made by the operator or the assistant.")
     if kind == "claim":
         claim = session.get(Claim, item_id)
         if claim is None:
@@ -132,14 +136,15 @@ def decide_item(
             raise EntryError(
                 f"Claim '{claim.slug}' has no summary. Add one with `claim edit` before approving."
             )
-        record_decision(claim, state, by=Decider.HUMAN, now=now)
+        record_decision(claim, state, by=by, now=now)
     elif kind == "match":
         match = session.get(EntityMatch, item_id)
         if match is None:
             raise ItemNotFound(f"There is no match with id {item_id}.")
-        record_decision(match, state, by=Decider.HUMAN, now=now)
-        label = MATCH if state is ReviewState.APPROVED else NOT_A_MATCH
-        _label(session, ENTITY_MATCH, f"entity_match:{match.id}", label)
+        record_decision(match, state, by=by, now=now)
+        if by is Decider.HUMAN:
+            label = MATCH if state is ReviewState.APPROVED else NOT_A_MATCH
+            _label(session, ENTITY_MATCH, f"entity_match:{match.id}", label)
         entity = session.get(Entity, match.entity_id)
         assert entity is not None
         claim = session.get(Claim, entity.claim_id)
@@ -151,7 +156,7 @@ def decide_item(
                     EvidenceEvent.review_state != ReviewState.REJECTED,
                 )
             ):
-                record_decision(event, ReviewState.REJECTED, by=Decider.HUMAN, now=now)
+                record_decision(event, ReviewState.REJECTED, by=by, now=now)
             session.flush()
             refresh_status(
                 session, claim, as_of=now.date(), now=now, no_signal_years=no_signal_years
@@ -160,7 +165,7 @@ def decide_item(
         event = session.get(EvidenceEvent, item_id)
         if event is None:
             raise ItemNotFound(f"There is no event with id {item_id}.")
-        record_decision(event, state, by=Decider.HUMAN, now=now)
+        record_decision(event, state, by=by, now=now)
         session.flush()
         claim = session.get(Claim, event.claim_id)
         assert claim is not None
@@ -215,14 +220,17 @@ def flag_failure(
     return flag
 
 
-def confirm_stage(session: Session, claim_slug: str, stage: EvidenceStage) -> Claim:
+def confirm_stage(
+    session: Session, claim_slug: str, stage: EvidenceStage, *, by: Decider = Decider.HUMAN
+) -> Claim:
     """Set the stage of evidence at announcement. The operator's choice becomes the
-    human label for whatever was suggested."""
+    human label for whatever was suggested; the assistant's choice labels nothing."""
     claim = find_claim(session, claim_slug)
     if claim is None:
         raise ClaimNotFound(f"No claim has the slug '{claim_slug}'.")
     claim.evidence_stage = stage
-    _label(session, EVIDENCE_STAGE, f"claim:{claim.id}", stage.value)
+    if by is Decider.HUMAN:
+        _label(session, EVIDENCE_STAGE, f"claim:{claim.id}", stage.value)
     session.flush()
     return claim
 
