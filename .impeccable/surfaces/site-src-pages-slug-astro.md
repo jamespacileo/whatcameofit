@@ -17,12 +17,12 @@ History: a first direction (a printed timetable in yellow and black) was built u
 
 THESIS: Answer the reader's question in the first panel, then let them check it: what was promised beside what was recorded. Refused: grades, scores, meters and verdict badges, which the reference class often uses and this product must not.
 
-OWN-WORLD: White page, one indigo accent, a lavender summary panel, pale amber for anything promised, one friendly sans (Figtree), rounded frames, a small drawn mark per topic.
+OWN-WORLD: White page, one clinical blue accent (the operator asked for blue in the NHS-blue family; never the NHS identity), a pale blue summary panel, pale amber for anything promised, one friendly sans (Figtree), rounded frames, a small drawn mark per topic.
 
 STORY: The reader sees the topic, the headline, where it stands and the latest record date, reads two sentences, then runs down the years: promise on amber, record on white, gaps left as gaps. Each record has a footnote to its source.
 
 FIRST VIEWPORT: Quiet masthead. Topic chip. Headline. The digest panel with the status label at left and the summary at right. The facts row. The heading and top rows of the timetable.
 
-FORM: Category standard, chosen by the operator. seed: none (operator-pinned direction)
+FORM: Category standard, chosen by the operator. seed: seed:4e8bc7dce82955a8 (rolled for the first direction; the operator then pinned this one)
 
 SIGNATURE: The digest panel that answers first, and the pale amber that always and only means "promised".
