@@ -68,6 +68,23 @@ thenwhat resolve tooth-regrowth-usag1
 
 `resolve` searches ClinicalTrials.gov for the intervention under every name it has, looks up each paper's DOI at Crossref, and stores every hit as a pending candidate match with a score. The score only orders the review queue: nothing is approved until you approve it. It also suggests the stage of evidence at announcement, which stays unset until you confirm it. Compound names change over time, so add synonyms before resolving.
 
+### Evidence
+
+```sh
+thenwhat fetch tooth-regrowth-usag1
+thenwhat event add tooth-regrowth-usag1 --type trial_registered --date 2024-09-01 \
+  --source-url https://example.org/registry/ID123 --source-name "Registry name" \
+  --id ID123 --phase phase_1 --summary "Phase 1 trial registered."
+thenwhat event add tooth-regrowth-usag1 --type regulatory_decision --date 2026-03-01 \
+  --source-url https://example.org/notice --outcome approved --summary "Regulator approved it."
+```
+
+`fetch` reads the registries for the claim's approved matches only. Each trial gives up to four events from the dated fields of its current record: registered, started, a current end state, and results posted. Papers that cite the origin paper become follow-up events when they share an author with it or name the intervention. Retraction notices become retraction events. Fetching again records nothing twice.
+
+Trial events from a match you approved are approved by rule; follow-up papers and events entered by hand always wait for review. Set `REVIEW_CONFIDENCE_THRESHOLD` above 1 to review everything yourself.
+
+Use `event add` for what no client covers yet: approvals, company events, and trials in registries other than ClinicalTrials.gov. A trial event needs `--id` and `--phase`; a status change needs `--state` (and a `started` event is what moves a claim to its phase); a regulatory decision needs `--outcome`.
+
 ### CSV import
 
 `thenwhat claim import-csv claims.csv` imports every row or none. Inside the container the file must be reachable, for example `docker compose run --rm -v "$PWD/data/seed:/seed" pipeline thenwhat claim import-csv /seed/claims.csv`.

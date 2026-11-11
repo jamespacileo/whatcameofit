@@ -59,11 +59,11 @@
 
 ## 8. Evidence events
 
-- [ ] 8.1 Implement the trial record to events mapping in design D5 with `date_basis`, phase and state; verify tests for a completed trial with results, an unstarted trial, and a terminated trial without a completion date
-- [ ] 8.2 Implement the follow-up paper rule; verify the four scenarios in `specs/evidence-events/spec.md`
-- [ ] 8.3 Implement retraction events for the origin paper and follow-up papers; verify with the retracted-paper fixture
-- [ ] 8.4 Implement `fetch` for a claim: approved matches only, `dedupe_key` from design D6, initial review state from design D7, templated summaries from design D13; verify tests for a pending match, a second fetch, a previously rejected event, and rule approval
-- [ ] 8.5 Implement `event add` for manual events, with identifier, phase and state required for trial types; verify tests for a regulatory decision, a trial in another registry, and a trial event without an identifier
+- [x] 8.1 Implement the trial record to events mapping in design D5 with `date_basis`, phase and state; verify tests for a completed trial with results, an unstarted trial, and a terminated trial without a completion date
+- [x] 8.2 Implement the follow-up paper rule; verify the four scenarios in `specs/evidence-events/spec.md`
+- [x] 8.3 Implement retraction events for the origin paper and follow-up papers; verify with the retracted-paper fixture
+- [x] 8.4 Implement `fetch` for a claim: approved matches only, `dedupe_key` from design D6, initial review state from design D7, templated summaries from design D13; verify tests for a pending match, a second fetch, a previously rejected event, and rule approval
+- [x] 8.5 Implement `event add` for manual events, with identifier, phase and state required for trial types; verify tests for a regulatory decision, a trial in another registry, and a trial event without an identifier
 
 ## 9. Review
 

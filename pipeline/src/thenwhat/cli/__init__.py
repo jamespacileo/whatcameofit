@@ -6,6 +6,7 @@ from sqlalchemy.exc import OperationalError
 from thenwhat import __version__
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import article_app, claim_app, promise_app
+from thenwhat.cli.events import event_app, fetch_command
 from thenwhat.cli.extract import extract_app
 from thenwhat.cli.resolve import entity_app, resolve_command
 from thenwhat.cli.session import settings_or_exit
@@ -18,6 +19,8 @@ app.add_typer(promise_app, name="promise")
 app.add_typer(extract_app, name="extract")
 app.add_typer(entity_app, name="entity")
 app.command("resolve")(resolve_command)
+app.command("fetch")(fetch_command)
+app.add_typer(event_app, name="event")
 
 
 @app.callback()
