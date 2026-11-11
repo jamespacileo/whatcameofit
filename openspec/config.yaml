@@ -1,0 +1,52 @@
+schema: spec-driven
+
+context: |
+  Product: public tracker of what happened to reported medical breakthroughs.
+  The unit is a claim (one intervention for one indication), not an article.
+  SPEC.md is the origin document; OpenSpec holds current behavior.
+
+  Guardrails every artifact must respect:
+  - Accuracy is the brand. Nothing reaches the public site unless approved in review.
+  - Claim status is derived by deterministic rules from approved evidence events.
+    No model decides status. Every status must list the events that produced it.
+  - No editorial verdicts. "No signal" is never worded as "dead" or "abandoned".
+  - No medical advice. A registered trial is not presented as a treatment option.
+  - Store the raw API payload and fetch timestamp for every evidence event.
+  - Summarise and link to news articles. Never store or display article text.
+  - Subscriber emails are the only personal data (UK GDPR: double opt-in,
+    one-click unsubscribe, deletion on request). None is collected before Phase 2.
+  - Respect robots.txt and published rate limits. Send a contact User-Agent.
+  - Tests use recorded fixtures. No live network calls in CI.
+  - No model IDs hardcoded. Provider and model come from environment variables.
+  - Nothing public is served from the home network. Pipeline and database stay private.
+
+# Project context (optional)
+# Add only constraints that should guide OpenSpec artifacts and workflows.
+# Include constraints an agent cannot infer by reading the code.
+# Keep general project documentation and discoverable codebase facts out.
+# Example:
+#   context: |
+#     Designs and tasks must cover Windows, macOS, and Linux
+#     Write all artifacts in Spanish
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always state what is out of scope
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
