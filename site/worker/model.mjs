@@ -30,6 +30,7 @@ const BATCH_SIZE = 20;
 const MAX_QUESTIONS = 400;
 // Models often return probabilities that sum to 0.98 or 1.01; that much is rescaled.
 const RESCALE_WITHIN = 0.1;
+const SPEND_LIMIT_CODES = new Set(["project_spend_limit_exceeded", "organization_spend_limit_exceeded"]);
 
 const text = (description) => ({ type: "string", description });
 const names = (description) => ({ type: "array", items: { type: "string" }, description });
@@ -107,48 +108,63 @@ function decided(given) {
  *   are scored by OpenAI's Decisions API: every record in one request and no text written
  *   out, which is several times faster. Without it, by the general model, twenty to a call.
  */
-export function makeModel({ fetch, apiKey, model, baseUrl = "https://api.openai.com/v1", decisions = false, decisionsModel }) {
+export function makeModel({ fetch, apiKey, model, baseUrl = "https://api.openai.com/v1", decisions = false, decisionsModel, timeoutMs = 30_000 }) {
   // The pipeline names a model with its provider in front ("openai:name"); the provider's
   // own API wants the name alone.
   const modelName = String(model).replace(/^openai:/, "");
   const base = baseUrl.replace(/\/$/, "");
 
+  // Keep the deadline until the body has been read too. Never retry a paid call:
+  // a timeout does not tell us whether the provider has already billed it.
+  async function request(endpoint, body, label) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(`${base}/${endpoint}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) {
+        const code = (await response.json().catch(() => null))?.error?.code;
+        // The provider's message may quote the submitted text. Keep only a known code.
+        const error = new Error(`${label} ${response.status}`);
+        if (SPEND_LIMIT_CODES.has(code)) error.code = "budget_exhausted";
+        throw error;
+      }
+      return await response.json();
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
   async function decide(intro, items) {
-    const response = await fetch(`${base}/decisions`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: decisionsModel || modelName,
-        input: intro,
-        questions: items.map((item, at) => ({
-          type: "choice",
-          name: `item-${at + 1}`,
-          instructions: `${QUESTION}\n\n${item}`,
-          choices: CHOICES.map(([value, description]) => ({ value, description })),
-        })),
-      }),
-    });
-    // The reply may quote what was sent, so nothing of it goes into the error.
-    if (!response.ok) throw new Error(`decisions ${response.status}`);
-    const given = new Map(((await response.json()).answers ?? []).map((answer) => [answer.name, answer]));
+    const body = await request("decisions", {
+      model: decisionsModel || modelName,
+      input: intro,
+      questions: items.map((item, at) => ({
+        type: "choice",
+        name: `item-${at + 1}`,
+        instructions: `${QUESTION}\n\n${item}`,
+        choices: CHOICES.map(([value, description]) => ({ value, description })),
+      })),
+    }, "decisions");
+    const given = new Map((body.answers ?? []).map((answer) => [answer.name, answer]));
     return items.map((_, at) => decided(given.get(`item-${at + 1}`)));
   }
   async function ask(name, schema, instructions, prompt) {
-    const response = await fetch(`${base}/chat/completions`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: modelName,
-        messages: [
-          { role: "system", content: instructions },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_schema", json_schema: { name, strict: true, schema } },
-      }),
-    });
-    // The reply may quote what was sent, so nothing of it goes into the error.
-    if (!response.ok) throw new Error(`model ${response.status}`);
-    const body = await response.json();
+    const body = await request("chat/completions", {
+      model: modelName,
+      max_completion_tokens: name === "reading" ? 2048 : 4096,
+      store: false,
+      service_tier: "default",
+      messages: [
+        { role: "system", content: instructions },
+        { role: "user", content: prompt },
+      ],
+      response_format: { type: "json_schema", json_schema: { name, strict: true, schema } },
+    }, "model");
     return JSON.parse(body.choices[0].message.content);
   }
 

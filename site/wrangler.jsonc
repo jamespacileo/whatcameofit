@@ -22,7 +22,8 @@
     "run_worker_first": ["/api/*"]
   },
   // How many registry searches are answered per minute: by one reader, and in all.
-  // Each search costs up to four model calls, so the second number caps the spending.
+  // These counters apply per Cloudflare location, not globally. They slow bursts;
+  // the dedicated OpenAI project's enforced monthly limit controls model spending.
   "ratelimits": [
     { "name": "LOOKUP_PER_READER", "namespace_id": "4101", "simple": { "limit": 5, "period": 60 } },
     { "name": "LOOKUP_IN_ALL", "namespace_id": "4102", "simple": { "limit": 30, "period": 60 } }

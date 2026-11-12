@@ -12,10 +12,10 @@ const SHOWN_AT_MOST = 10;
 export const LIVE = {
   offer: "Search the trial registry for this article",
   disclosure:
-    "This sends the address to this site's server, which reads the article and asks a language model what it reports. The site keeps neither the address nor the article.",
+    "This sends the address to this site's server, which reads the article and asks OpenAI what it reports. The site keeps neither the address nor the article. OpenAI may retain the text for safety checks; see Privacy. Use public reports only.",
   postOffer: "Search the trial registry for this post",
   postDisclosure:
-    "This sends the address to this site's server, which reads the post and the article it links to, and asks a language model what they report. The site keeps none of it.",
+    "This sends the address to this site's server, which reads the post and the article it links to, and asks OpenAI what they report. The site keeps none of it. OpenAI may retain the text for safety checks; see Privacy. Use public posts only.",
   postTracked: "This post links to an article we track. Its page has been through our usual checks:",
   textLabel: "Or paste the headline and opening paragraphs",
   textOffer: "Search the trial registry for this text",
@@ -54,6 +54,7 @@ const REFUSALS = {
   address: "That does not look like the address of an article.",
   too_long: "That is too much text. Paste the headline and the first few paragraphs only.",
   busy: "Too many searches are being made right now. Try again in a minute.",
+  budget_exhausted: "Automatic search has used its monthly allowance. It will be available again next month. Reviewed claim pages remain available.",
   not_set_up: "The registry search is not available on this site at the moment.",
   failed: "The search could not be completed. Nothing was found or ruled out. Try again in a minute.",
 };

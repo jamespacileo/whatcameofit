@@ -175,8 +175,9 @@ export async function handle(request, env, tools) {
       page = linkSignals(links, text);
     }
     return answer({ ...(await lookUp({ text, model, registry, index, page, papers })), post });
-  } catch {
+  } catch (error) {
     // What failed may quote what was sent, so it is not written anywhere.
+    if (error?.code === "budget_exhausted") return refuse(503, "budget_exhausted");
     return refuse(502, "failed");
   }
 }
