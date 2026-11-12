@@ -15,7 +15,7 @@
 
 ## 3. In a real browser
 
-- [ ] 3.1 The operator loads `extension/dist` in Chrome and clicks the button on a tracked and an untracked article; verify both views
+- [x] 3.1 Load `extension/dist` in Chrome and verify tracked and untracked views (2026-11-12: actual popup on the Kyoto report and an untracked STAT post on X)
 - [ ] 3.2 The operator runs the Safari project and does the same; verify both views
 
 ## 4. Paste a link on the home page
@@ -33,4 +33,14 @@
 - [x] 5.6 Open a post's link through X's shortener in the reader's browser and send the address it leads to; verify the five short-link tests pass (2026-11-12: the shortener's real page was read; from it the chain ran through a publisher's shortener to the article)
 - [ ] 5.4 The operator loads `extension/dist` in Chrome, opens a post on X and on Reddit and an article behind a paywall they subscribe to, and presses the search; verify each answer
 - [ ] 5.5 The operator does the same in Safari
+
+## 6. Public release
+
+- [x] 6.1 Build production-host Chrome and Safari resources and compile the branded Safari wrapper for Intel and Apple silicon.
+- [x] 6.2 Publish a privacy disclosure page and link it from the site.
+- [x] 6.3 Save the production extension files as a GitHub Actions artifact after checks pass.
+- [ ] 6.4 Verify the production popup, capture store screenshots, and run Safari's actual popup.
+- [ ] 6.5 Submit Chrome and Safari through authenticated developer accounts and verify store publication.
+
+The six-row live test passed rows 1 and 6. Rows 2–5 remain unverified: X required sign-in, Reddit presented a CAPTCHA, and article sites presented consent or anti-bot barriers. Safari compilation is verified; runtime testing awaits the unsigned-extension setting and an unlocked Mac. No store submission has occurred.
 

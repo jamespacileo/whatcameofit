@@ -30,6 +30,13 @@ jobs:
           cache: npm
           cache-dependency-path: site/package-lock.json
       - run: make check
+      - name: Save production extension package
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: whatcameofit-extension
+          path: extension/dist/
+          if-no-files-found: error
+          retention-days: 14
       - name: Rehearse production build
         run: make deploy-ci-check
         env:

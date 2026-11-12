@@ -19,6 +19,7 @@ const origin = new URL(SITE.url).origin;
 
 fs.rmSync(dist, { recursive: true, force: true });
 fs.mkdirSync(path.join(dist, "icons"), { recursive: true });
+fs.copyFileSync(path.join(here, "..", "LICENSE"), path.join(dist, "LICENSE"));
 
 for (const name of fs.readdirSync(path.join(here, "src"))) {
   fs.copyFileSync(path.join(here, "src", name), path.join(dist, name));
