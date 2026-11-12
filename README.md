@@ -151,7 +151,7 @@ A deploy is refused if the export is a preview or any claim in it has not been c
 thenwhat lookup https://example.org/news/some-article
 ```
 
-Names the treatment and condition the article reports and lists the registry trials it is most likely about, likeliest first. Nothing is stored and nothing is reviewed: it is a list for you to check. See [docs/lookup.md](docs/lookup.md) for how well it does.
+Names the treatment and condition the article reports and lists the registry trials it is most likely about, likeliest first. The address of a post on Bluesky, Hacker News or a Mastodon server works too: the post and the article it links to are read together. Nothing is stored and nothing is reviewed: it is a list for you to check. See [docs/lookup.md](docs/lookup.md) for how well it does.
 
 ```sh
 thenwhat outlets --save docs/outlets.md --articles docs/outlets-articles.csv

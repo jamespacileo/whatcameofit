@@ -102,3 +102,21 @@ A reader may give the address of a post in place of an article's. A post is read
 - **Which addresses:** any host with a path shaped `/@name/<digits>` or `/users/name/statuses/<digits>`. A local or private address is never asked.
 - **Behavior (observed on one server):** the post's text is HTML in `content`; links to tags and people carry the class `mention` or `hashtag`; the link card is in `card` (`url`, `title`, `description`).
 
+### Platforms whose posts are not read
+
+Checked 2026-11-12 by reading each platform's own terms and documentation. No platform was asked for a post. The three robots.txt lines given below were read again directly; the rest is one reading of long legal pages, so re-read the page linked before acting on any line here.
+
+| Platform | Finding | What decides it | What would change it |
+| --- | --- | --- | --- |
+| X | Not read | Its embed interface (`publish.x.com/oembed`) needs no sign-in and returns the post's text, but its robots.txt says `Disallow: /oembed`, and the Developer Agreement (updated 27 April 2026) licenses analysis only "as explicitly approved by X". The Terms of Service (effective 9 October 2026) forbid scraping without written consent. | A developer account and the X API's post lookup, paid per post read ($0.005 at the date checked). The operator's step. |
+| Reddit | Not read | robots.txt is `Disallow: /` for every client. The Data API Terms (revised 20 July 2026) allow access only with the credentials Reddit issues. Its embed interface is licensed for embedding only. | A registered app with Reddit's approval. Whether a free one covers this use, and its rate limit, could not be confirmed: the help pages sit behind a bot check. The operator's step. |
+| Facebook, Instagram, Threads | Not read | Their embed interfaces need no token since 15 June 2026, but their documentation forbids any use other than showing the embed, "extracting" content included, and they return no text or links. | Nothing found. |
+| LinkedIn | Not read | The User Agreement (effective 3 November 2025) forbids automated access; robots.txt allows named search engines only. | Nothing found. |
+| Telegram | Not read | Its content-licensing terms forbid access to user content other than as a user, and its use with AI models. No robots.txt exists (404). | Nothing found. |
+| TikTok | Not read | The documented embed answer carries no caption, title or links, so there is nothing to read; the terms forbid automated extraction. | Nothing useful to gain. |
+| YouTube | Not read | The video's description, where a link would be, needs the Data API with a key. | A free API key (10,000 units a day at the date checked). The operator's step. Not built: a video is rarely how an article is shared. |
+
+Pages read: for X, `docs.x.com/x-for-websites/oembed-api`, `docs.x.com/developer-terms/agreement`, `x.com/en/tos`; for Reddit, `redditinc.com/policies/data-api-terms`, `/developer-terms`, `/embeds-terms`, `/user-agreement`; for Meta, `developers.facebook.com/docs/graph-api/reference/instagram-oembed`, `/documentation/threads/reference/oembed`, `/blog/post/2026/06/15/tokenless-access-to-meta-oembed-apis`; for LinkedIn, `linkedin.com/legal/user-agreement`, `/legal/crawling-terms`; for Telegram, `telegram.org/tos/content-licensing`; for TikTok, `developers.tiktok.com/doc/embed-videos` and its terms of service; for YouTube, `developers.google.com/youtube/terms/developer-policies`, `/youtube/v3/docs/videos/list`.
+
+For every platform in this table the site names the platform, asks nothing of it, and offers to take the post's text or the article's address.
+

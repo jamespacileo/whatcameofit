@@ -93,9 +93,25 @@ So what is left is the outlet's own speed (one site took a minute to answer afte
 
 The model now reads the article while the linked papers and any stated registry numbers are looked up. `thenwhat outlets` checks four outlets at a time (`--workers`), with one shared turn-taker per registry so the registry's rate is kept however many lookups run.
 
+## Posts on social media
+
+The address of a post works in place of an article's, on the platforms that offer posts to software without signing in: Bluesky, Hacker News and Mastodon servers. The post is read, the first article it links to is read as any article, and the two are looked up together. The answer says where it read from. If the article cannot be read, the lookup goes on from the post alone. On the site, a post that links to an article we track is answered with that claim's page, with no automatic search.
+
+Tried on 2026-11-12 through the site's engine, one real post each:
+
+| Platform | Linked article at | Result | Time |
+| --- | --- | --- | --- |
+| Bluesky | statnews.com | Read as gene therapy for Parkinson's disease; 54 records found, 10 likely | 20 s |
+| Hacker News | broadinstitute.org | Read as an siRNA for prion disease. The article gives two registry numbers; the trial it names came first, agreeing on the trial's name and who ran it | 13 s |
+| Mastodon server | doi.org | Read; not about a treatment, so the registry was not searched | 6 s |
+
+X, Reddit, Facebook, Instagram, Threads, LinkedIn, Telegram, TikTok and YouTube are not read: their terms forbid it or they need an account the operator has not registered. For those the site names the platform, asks nothing of it, and offers to take the post's text or the article's address. The findings and the pages they rest on are in `docs/sources.md`.
+
+Who wrote a post is never read out, and nothing of a post is stored.
+
 ## Before it can serve readers
 
 - **A reviewed test set.** The numbers above rest on the assistant's approvals. A few hundred article and trial pairs checked by a person, across many outlets, would make them trustworthy. Which outlets can be read is now recorded in [outlets.md](outlets.md), for the outlets that have a tracked article.
 - **Drug-name synonyms** from an open source, checked for its terms first.
-- **Reading social media posts by their address**, and following the article a post links to. Not built; tasks 4c in the change.
+- **Posts on X and Reddit.** Both need the operator to register: Reddit an approved app, X a paid developer account. Until then a reader pastes the post's text.
 - **The five decisions in `openspec/changes/live-lookup/design.md`:** whether an unreviewed answer may be shown publicly, where the lookup runs, how a blocked article is read, social posts by address, and the promise that a pasted link is not tracked.
