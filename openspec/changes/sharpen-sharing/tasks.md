@@ -15,6 +15,13 @@
 - [x] 3.3 List up to three other claims in the topic before "Pass it on"; verify a claim alone in its topic shows no such section
 - [x] 3.4 Make pills at least 44 pixels tall on a phone, give popover panels a role and say each record's kind in words; verify by measurement
 
+## 4. Second review
+
+- [x] 4.1 Keep a pasted article address out of the page's address, leaving typed words there; verify by pasting an address and by typing words
+- [x] 4.2 Show the latest dated promise in the digest on pale amber, linked to its year; verify on a claim with a dated promise and one without
+- [x] 4.3 Make every pressed thing at least 44 pixels tall on a phone; verify by measurement
+- [x] 4.4 Mark a report title that leaves the site, move the embed snippet above "Pass it on", enlarge the card and stop the heading being announced twice; verify the order of sections
+
 ## 2. Motion and dry wording
 
 - [x] 2.1 Confirm a copy with the blue dot in place of the icon and tell a screen reader; verify the status region says "Copied" and clears

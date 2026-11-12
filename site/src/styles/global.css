@@ -369,12 +369,62 @@ a.chip:hover {
   margin: 0.6rem 0 0;
 }
 
-/* A thumb needs more than a mouse does. */
+/* A thumb needs more than a mouse does: 44 pixels, wherever something is pressed. */
 @media (max-width: 40rem) {
   .share {
     min-height: 2.75rem;
     padding-inline: 1rem;
   }
+
+  .chip,
+  .digest .overlay {
+    min-height: 2.75rem;
+  }
+
+  .pop-trigger.info {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  .pop-trigger.more {
+    padding-block: 0.6rem;
+    margin-block: -0.6rem;
+  }
+
+  .masthead nav a {
+    padding-block: 0.7rem;
+  }
+
+  .colophon a {
+    display: inline-block;
+    padding-block: 0.6rem;
+  }
+}
+
+/* The promise beside the status, as on the card: amber, dashed, and a link to its year. */
+.digest .promised-by {
+  width: fit-content;
+  margin: 0.6rem 0 0;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.9rem;
+  background: var(--promise);
+  border: 1.5px dashed var(--promise-rule);
+  border-radius: 6px;
+}
+
+.digest .promised-by a {
+  font-weight: 700;
+}
+
+/* A report's title leads off the site; the small arrow says so. */
+.record .out {
+  display: inline;
+  vertical-align: -0.08em;
+  margin-left: 0.15em;
+}
+
+.colophon p {
+  text-wrap: pretty;
 }
 
 /* Copied: the icon gives way to the site's dot for as long as the label says so. */
@@ -425,13 +475,13 @@ a.chip:hover {
 
 .take-why {
   color: var(--muted);
-  margin: 0.15rem 0 0.8rem;
+  margin: 0.35rem 0 0.8rem;
 }
 
 /* The card beside the sentence that says the same thing. */
 .take-body {
   display: grid;
-  grid-template-columns: 9.5rem minmax(0, 1fr);
+  grid-template-columns: 13rem minmax(0, 1fr);
   gap: 0.9rem 1.1rem;
   align-items: start;
 }
@@ -450,7 +500,7 @@ a.chip:hover {
   }
 
   .take-card {
-    width: 9.5rem;
+    width: min(100%, 15rem);
   }
 }
 

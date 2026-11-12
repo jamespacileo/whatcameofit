@@ -19,3 +19,21 @@ The approved-claims page SHALL state how many tracked claims have an approval on
 #### Scenario: One approval among three claims
 - **WHEN** three claims are published and one has an approval on record
 - **THEN** the approved-claims page says "Approvals on record: 1 of 3 tracked claims."
+
+### Requirement: A pasted address stays out of the page's address
+The home page SHALL NOT write a pasted article address into its own address, so that reloading or sharing the page sends no article address to the site's host. Typed search words MAY be kept in the page's address.
+
+#### Scenario: Reader pastes an article address
+- **WHEN** a reader pastes an article's address into the main box and the answer is shown
+- **THEN** the page's address carries no part of the pasted address
+
+#### Scenario: Reader types search words
+- **WHEN** a reader searches for "tooth"
+- **THEN** the page's address carries the words, so the search can be reloaded
+
+### Requirement: The promise is beside the status on the claim page
+A claim page for a claim with a dated promise SHALL show the year promised by in the status panel, on the site's pale amber, linked to that year in the timetable. A claim with no dated promise SHALL show no such line.
+
+#### Scenario: Claim with a dated promise
+- **WHEN** a claim's latest promise names 2025
+- **THEN** the status panel shows "Promised by 2025" and the year leads to the 2025 row

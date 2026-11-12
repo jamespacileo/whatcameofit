@@ -2,6 +2,7 @@
 import Base from "../layouts/Base.astro";
 import Clock from "@lucide/astro/icons/clock";
 import Copy from "@lucide/astro/icons/copy";
+import ExternalLink from "@lucide/astro/icons/external-link";
 import ImageDown from "@lucide/astro/icons/image-down";
 import Info from "@lucide/astro/icons/info";
 import Share2 from "@lucide/astro/icons/share-2";
@@ -52,6 +53,8 @@ const latestMark =
   timetable.sources.find(({ event }) => event.event_date === latestRecord)?.mark ?? null;
 const hasDatedPromise = claim.promises.some((promise) => promise.parsed_date !== null);
 const hasPromise = claim.promises.length > 0;
+// The year the latest dated promise names, shown beside the status as it is on the card.
+const promised = latestPromise(claim)?.parsed_date?.slice(0, 4) ?? null;
 // The legend names only the kinds of record this page shows.
 const kinds: RecordKind[] = [
   ...(claim.articles.length > 0 ? (["report"] as const) : []),
@@ -175,6 +178,13 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
             </div>
           )
         }
+        {
+          promised && (
+            <p class="promised-by" data-pagefind-ignore>
+              Promised by <a href={`#year-${promised}`}>{promised}</a>
+            </p>
+          )
+        }
         <p class="changed" data-pagefind-ignore>
           {latestMark ? (
             <>
@@ -273,7 +283,7 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                 <td>{hasDatedPromise ? "No promise, no record" : "No record"}</td>
               </tr>
             ) : (
-              <tr>
+              <tr id={`year-${row.year}`}>
                 <th scope="row" class="year">
                   {row.year}
                   {row.current && <small>this year</small>}
@@ -327,7 +337,11 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                               <span class="visually-hidden">News report.</span>
                               <span class="entry-date">{dayAndMonth(line.date)}</span>
                               <span>
-                                <a href={line.url}>“{line.title}”</a>
+                                <a href={line.url}>
+                                  “{line.title}”
+                                  <ExternalLink class="out" size={13} stroke-width={1.9} aria-hidden="true" />
+                                  <span class="visually-hidden">(at {line.outlet ?? "the outlet"})</span>
+                                </a>
                               </span>
                               <span class="origin">
                                 <Outlet url={line.url} outlet={line.outlet} link={false} />
@@ -417,7 +431,7 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
       others.length > 0 && (
         <section data-pagefind-ignore>
           <h2 class="bar" id="others">Other claims in {topic.toLowerCase()}</h2>
-          <ClaimTable claims={others} caption={`Other claims in ${topic.toLowerCase()}`} />
+          <ClaimTable claims={others} caption="Each claim, when it was first reported and its status" />
           {inTopic.length > others.length && (
             <p class="about-page">
               <a href={`/topic/${claim.vertical}`}>
@@ -428,6 +442,21 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
         </section>
       )
     }
+
+    <div data-pagefind-ignore>
+      <details class="embed-how">
+        <summary>Show this status on another site</summary>
+        <p class="entry-note">
+          Paste this where the status should appear. It shows the current status and links back
+          here; it loads nothing else and stores nothing.
+        </p>
+        <pre id="snippet"><code>{snippet}</code></pre>
+        <button type="button" class="share" data-copy="snippet" hidden>
+          <Copy size={16} stroke-width={1.9} aria-hidden="true" />
+          <span data-copy-text>Copy code</span>
+        </button>
+      </details>
+    </div>
 
     <section class="take" data-pagefind-ignore>
       <h2 class="bar" id="pass-on">Pass it on</h2>
@@ -463,18 +492,6 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
       </div>
         </div>
       </div>
-      <details class="embed-how">
-        <summary>Show this status on another site</summary>
-        <p class="entry-note">
-          Paste this where the status should appear. It shows the current status and links back
-          here; it loads nothing else and stores nothing.
-        </p>
-        <pre id="snippet"><code>{snippet}</code></pre>
-        <button type="button" class="share" data-copy="snippet" hidden>
-          <Copy size={16} stroke-width={1.9} aria-hidden="true" />
-          <span data-copy-text>Copy code</span>
-        </button>
-      </details>
     </section>
   </article>
 </Base>

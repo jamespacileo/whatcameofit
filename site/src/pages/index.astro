@@ -541,7 +541,9 @@ const recent = data.claims
     event.preventDefault();
     const text = input.value.trim();
     const url = new URL(location.href);
-    if (text) url.searchParams.set("q", text);
+    // Only typed words go into the page's address. A pasted article address stays in
+    // the field: in the address it would reach the server on a reload or when shared.
+    if (text && readAddress(text).kind === "none") url.searchParams.set("q", text);
     else url.searchParams.delete("q");
     history.replaceState(null, "", url);
     answer(text);
