@@ -130,7 +130,7 @@ The approach is a closed set of codes in pipeline configuration:
 
 ## Risks / Trade-offs
 
-- **Migrating an existing database.** A local database may hold claims under old slugs. Migration `0006` maps every one-to-one rename. For claims under `dental-regeneration`, `diabetes-and-metabolism` and `transplants`, it uses the per-indication rules above. It aborts and lists any claim it cannot place, so the operator can fix it with `claim edit --vertical` and rerun.
+- **Migrating an existing database.** A local database may hold claims under old slugs. Migration `0006` maps every one-to-one rename. For claims under `dental-regeneration`, `diabetes-and-metabolism` and `transplants`, it uses the per-indication rules above. It aborts and lists any claim it cannot place, so the operator can fix it with `claim edit --vertical` and rerun. Checked 2026-11-12: the operator's database holds 84 claims, all of them in `data/seed/`, so the rules above place every one.
 - **HRCS licence.** Writing HRCS category names into private configuration is internal use, and nothing derived from them is published. The conditions of use are checked once before the anchors are committed.
 - **Too many thin groups.** Several groups start with one claim. The topics page lists only groups with published claims, so readers never see empty headings.
 - **The MeSH table is too coarse.** A trial for diabetic periodontitis maps to both `mouth-and-teeth` and `diabetes-and-hormones`. The spec shows both, and the operator chooses.

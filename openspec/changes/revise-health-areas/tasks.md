@@ -2,8 +2,8 @@
 
 ## 1. Before starting
 
-- [ ] 1.1 Read the HRCS conditions of use (hrcsonline.net/getting-started/conditions-of-use/) and confirm that keeping category names in private pipeline configuration is allowed; verify the finding and the date are noted in `docs/sources.md`
-- [ ] 1.2 Check which claims the operator's local database holds that are not in `data/seed/`, including any added by `backfill-dental-regeneration`; verify the list is in this change's design under the migration risk, or that the list is empty
+- [x] 1.1 Read the HRCS conditions of use (hrcsonline.net/getting-started/conditions-of-use/) and confirm that keeping category names in private pipeline configuration is allowed; verify the finding and the date are noted in `docs/sources.md`
+- [x] 1.2 Check which claims the operator's local database holds that are not in `data/seed/`, including any added by `backfill-dental-regeneration`; verify the list is in this change's design under the migration risk, or that the list is empty
 
 ## 2. The tree in configuration
 

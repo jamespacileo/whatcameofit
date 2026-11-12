@@ -58,6 +58,16 @@ Terms, authentication and rate limits for each external source. Check an entry a
 - **Terms that bind the site:** the icons are the outlets' own marks. The site shows one only beside the outlet's name and a link to its article, to say where a report came from. Remove an outlet's row from `outlet_icon` if it asks.
 - **Behavior (observed):** kyoto-u.ac.jp has no `/favicon.ico`; its home page names a 32-pixel ICO, which is the icon in the seed file. That one fetch was made with a generic client name.
 
+## UKCRC Health Research Classification System (HRCS)
+
+Not an API. A fixed list of 21 health categories, used to check that the site's groups cover every area of health.
+
+- **Checked:** 2026-11-12
+- **Terms:** <https://hrcsonline.net/getting-started/conditions-of-use/>. All content on the site is licensed CC BY-NC-ND 2.0 England & Wales. The system may be used and distributed, but not altered or used for commercial benefit.
+- **Categories:** <https://hrcsonline.net/health-categories/>
+- **How it is used:** the category names sit, unaltered and with attribution, in `pipeline/src/thenwhat/claims/verticals.py` as anchors for each group. A configuration check reads them. Neither the export nor the site carries HRCS codes or names, and the groups' titles are our own wording, not an adaptation of HRCS.
+- **What would change this:** any commercial use of the project. The non-commercial term then needs checking again with UKCRC before the anchors are kept.
+
 ## Not yet checked
 
 ISRCTN, EU CTIS, WHO ICTRP, PubMed E-utilities, OpenAlex, NIH RePORTER, UKRI Gateway to Research, Companies House, SEC EDGAR, openFDA, EMA and MHRA have no client. Add an entry here before writing one.
