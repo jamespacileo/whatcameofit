@@ -112,19 +112,25 @@ function answerBlock(shown, site, actions) {
       items.map((item) =>
         el("li", null, [
           link(item.title ?? item.headline, address(item), null, actions.open),
-          item.detail && el("span", "small", item.detail),
+          // Phase, state and registry number are told apart at a glance as separate tags.
+          item.detail &&
+            el(
+              "span",
+              "tags",
+              item.detail.split(" · ").map((part) => el("span", "tag", part)),
+            ),
           item.why && el("span", "small", item.why),
         ]),
       ),
     );
+  const context = [shown.source, shown.searchedAlso, shown.trialSaid].filter(Boolean);
   return [
     shown.marked && el("p", "unchecked", shown.marked),
-    el("p", "lead", shown.lead),
-    shown.source && el("p", "small", shown.source),
-    shown.searchedAlso && el("p", "small", shown.searchedAlso),
-    shown.trialSaid && el("p", "small", shown.trialSaid),
+    el("h1", "lead", shown.lead),
+    // What the search was given to work with, kept together and apart from its results.
+    context.length > 0 && el("div", "context", context.map((line) => el("p", null, line))),
     shown.tracked.length > 0 && records(shown.tracked, (claim) => site.url + claim.page),
-    shown.likely.length > 0 && el("p", "listed", shown.likelyLead),
+    shown.likely.length > 0 && el("h2", "listed", shown.likelyLead),
     shown.likely.length > 0 && records(shown.likely, (record) => record.url),
     shown.none && el("p", null, shown.none),
     shown.rest && el("p", "small", shown.rest),
