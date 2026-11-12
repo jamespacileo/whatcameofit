@@ -26,27 +26,34 @@ export function collectFromPage() {
   const linksToItself = (part) =>
     [...part.querySelectorAll("a[href]")].some((link) => link.getAttribute("href") === own || link.href === location.origin + own);
   const largest = [...articles].sort((a, b) => b.innerText.length - a.innerText.length)[0];
-  const focus =
+  let focus =
     articles.find(linksToItself) ??
     document.querySelector("shreddit-post") ??
     largest ??
     document.querySelector("main") ??
     document.body;
+  // Hacker News uses table rows, including one row for every reply. Its numeric
+  // item address identifies the story or comment we may read.
+  const itemId = location.hostname === "news.ycombinator.com" ? new URL(location.href).searchParams.get("id") : null;
+  if (itemId && /^\d+$/.test(itemId)) {
+    const item = document.getElementById(itemId);
+    focus = item?.matches("tr.athing") ? (item.querySelector(".commtext") ?? item) : null;
+  }
   return {
     // Used only to reject a navigation race before sending the composed request.
     address: location.href,
     title: document.title,
     selection: String(getSelection() ?? "").trim().slice(0, 20000),
     head: document.head.outerHTML.slice(0, CAP),
-    focusHtml: focus.outerHTML.slice(0, CAP),
-    focusText: (focus.innerText ?? "").slice(0, 20000),
-    links: [...focus.querySelectorAll("a[href]")].slice(0, 300).map((link) => ({
+    focusHtml: (focus?.outerHTML ?? "").slice(0, CAP),
+    focusText: (focus?.innerText ?? "").slice(0, 20000),
+    links: [...(focus?.querySelectorAll("a[href]") ?? [])].slice(0, 300).map((link) => ({
       href: link.href,
       text: (link.innerText ?? "").trim().slice(0, 200),
     })),
     // Some platforms state a post's title and the address it links to on the post itself.
-    postTitle: focus.getAttribute("post-title"),
-    contentHref: focus.getAttribute("content-href"),
+    postTitle: focus?.getAttribute("post-title"),
+    contentHref: focus?.getAttribute("content-href"),
   };
 }
 

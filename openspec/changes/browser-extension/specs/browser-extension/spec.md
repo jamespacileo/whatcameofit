@@ -65,6 +65,10 @@ Repeated actions while a lookup is running SHALL share that lookup. Closing the 
 - **WHEN** a Facebook or Reddit post wraps an external article address on its own host
 - **THEN** the outgoing address and the card's headline are retained while profile links are filtered
 
+#### Scenario: Hacker News story or comment
+- **WHEN** the popup opens on a Hacker News item
+- **THEN** only the requested story row or comment body is read, and a missing item does not cause unrelated discussion to be read
+
 A post on X links out only through X's own shortener, which does not let the site's server follow its links. For such a link, three at most per search, the extension SHALL ask the shortener for its page, without cookies and without a referrer, read from it the address the link leads to, and send that address in the link's place. It SHALL NOT go on to the article itself, and SHALL hold permission for that shortener's host and the site's own, and no other. A link it cannot resolve SHALL be sent as it was.
 
 #### Scenario: Post on X that links through its shortener
