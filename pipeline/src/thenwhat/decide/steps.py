@@ -19,6 +19,25 @@ NOT_A_MATCH = "not_a_match"
 OTHER_INDICATION = "other_indication"
 MAX_CANDIDATE_CHARACTERS = 1500
 
+# What is asked about a trial record: a claim is one intervention for one indication,
+# so the same intervention in another condition is its own answer.
+TRIAL_OPTIONS = [MATCH, OTHER_INDICATION, NOT_A_MATCH]
+TRIAL_QUESTION = (
+    "Is this record a trial of the claim's intervention for the claim's indication?\n"
+    f"- {MATCH}: it tests this intervention in the claim's indication, in a form of"
+    " that condition, or in patients who have it.\n"
+    f"- {OTHER_INDICATION}: it tests this intervention for a different condition,"
+    " or only in healthy volunteers.\n"
+    f"- {NOT_A_MATCH}: it is not a trial of this intervention."
+)
+
+
+def candidate_text(record: SourceRecord) -> str:
+    """A registry record as it is shown to the backend."""
+    return (
+        f"Candidate record from {record.source_name} ({record.external_id}):\n{_describe(record)}"
+    )
+
 
 def _claim_text(session: Session, claim: Claim) -> str:
     intervention = session.scalars(
@@ -87,15 +106,8 @@ def score_matches(
     for group in by_entity.values():
         entity = group[0][0]
         if entity.type is EntityType.INTERVENTION:
-            options = [MATCH, OTHER_INDICATION, NOT_A_MATCH]
-            question = (
-                "Is this record a trial of the claim's intervention for the claim's indication?\n"
-                f"- {MATCH}: it tests this intervention in the claim's indication, in a form of"
-                " that condition, or in patients who have it.\n"
-                f"- {OTHER_INDICATION}: it tests this intervention for a different condition,"
-                " or only in healthy volunteers.\n"
-                f"- {NOT_A_MATCH}: it is not a trial of this intervention."
-            )
+            options = TRIAL_OPTIONS
+            question = TRIAL_QUESTION
         else:
             options = [MATCH, NOT_A_MATCH]
             question = "Is this record about the same entity as the claim?"
@@ -108,12 +120,7 @@ def score_matches(
             ),
             question=question,
             items=[
-                (
-                    f"entity_match:{match.id}",
-                    f"Candidate record from {record.source_name} ({record.external_id}):\n"
-                    f"{_describe(record)}",
-                )
-                for _, match, record in group
+                (f"entity_match:{match.id}", candidate_text(record)) for _, match, record in group
             ],
             options=options,
             now=now,
