@@ -58,7 +58,7 @@ public-export:
 
 # Review locally, then commit this snapshot. GitHub never reads the private database.
 publish-data: public-export
-	node site/scripts/stage-public-export.mjs $(PUBLIC_EXPORT) site/data/published-export.json
+	node site/scripts/stage-public-export.mjs $(PUBLIC_EXPORT) site/data/published-export.json site/data/published-topics.json
 
 deploy-ci-check: site/node_modules
 	EXPORT_FILE=data/published-export.json node site/scripts/deploy.mjs --dry-run

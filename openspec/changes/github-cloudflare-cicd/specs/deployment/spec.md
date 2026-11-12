@@ -9,6 +9,11 @@ GitHub SHALL build from `site/data/published-export.json`. It SHALL NOT connect 
 - **WHEN** the input is malformed, preview, empty, or contains an unchecked claim
 - **THEN** staging fails and the previously staged file is unchanged
 
+#### Scenario: Topic publication history
+- **WHEN** reviewed data is staged for GitHub
+- **THEN** its topic slugs are added to the committed publication history without removing previous slugs
+- **AND** the already published dental-regeneration address redirects to mouth-and-teeth
+
 ### Requirement: Checks precede production deployment
 Pull requests and pushes to main SHALL run the existing project checks and a production dry run. Only a main push or main manual run with successful checks SHALL deploy. Pull requests SHALL NOT receive the Cloudflare secret or publish previews. Production deployments SHALL be serialized and checked with live HTTP requests.
 

@@ -109,7 +109,14 @@ VERTICAL_GROUPS: dict[str, str] = {
 }
 
 # A vertical slug renamed or retired after launch, to the vertical that replaces it.
-RETIRED_VERTICALS: dict[str, str] = {}
+RETIRED_VERTICALS: dict[str, str] = {
+    "allergies": "immune-system-and-allergies",
+    "dental-regeneration": "mouth-and-teeth",
+    "diabetes-and-metabolism": "diabetes-and-hormones",
+    "hair-loss": "skin-and-hair",
+    "pain": "bones-joints-and-muscles",
+    "sight-and-hearing": "eyes-and-ears",
+}
 
 # Approach code to a description for operators. The site owns the public wording.
 APPROACHES: dict[str, str] = {

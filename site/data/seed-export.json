@@ -167,7 +167,32 @@
       }
     }
   ],
-  "retired_verticals": [],
+  "retired_verticals": [
+    {
+      "slug": "allergies",
+      "successor": "immune-system-and-allergies"
+    },
+    {
+      "slug": "dental-regeneration",
+      "successor": "mouth-and-teeth"
+    },
+    {
+      "slug": "diabetes-and-metabolism",
+      "successor": "diabetes-and-hormones"
+    },
+    {
+      "slug": "hair-loss",
+      "successor": "skin-and-hair"
+    },
+    {
+      "slug": "pain",
+      "successor": "bones-joints-and-muscles"
+    },
+    {
+      "slug": "sight-and-hearing",
+      "successor": "eyes-and-ears"
+    }
+  ],
   "outlets": [
     {
       "domain": "kyoto-u.ac.jp",

@@ -46,3 +46,9 @@ test("before launch nothing is recorded and no redirect file is written", () => 
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.equal(redirects, null);
 });
+
+test("the previously published transplant topic leads to the health-area directory", () => {
+  const { result, redirects } = run({ published: ["transplants"] });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.equal(redirects, "/topic/transplants /topics 301\n");
+});

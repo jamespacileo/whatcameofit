@@ -13,13 +13,13 @@ make publish-data
 git diff -- site/data/published-export.json
 ```
 
-Commit `site/data/published-export.json` with the intended changes, then push to `main` (or merge a reviewed pull request). This snapshot is the only data GitHub publishes. It contains one human-reviewed claim at initial setup. Assistant decisions are not converted to human approvals by staging or deployment.
+Commit `site/data/published-export.json` and `site/data/published-topics.json` with the intended changes, then push to `main` (or merge a reviewed pull request). This snapshot is the only data GitHub publishes. It contains one human-reviewed claim at initial setup. Assistant decisions are not converted to human approvals by staging or deployment. Staging preserves the topic history so future builds cannot silently break a published topic address.
 
 Staging first asks the running pipeline for a normal export with preview mode disabled. It validates the export and replaces the snapshot atomically. Invalid JSON, a preview, an empty export, or an unchecked claim leaves the previous snapshot unchanged. GitHub cannot reach the local database; database changes alone therefore never publish anything.
 
 ## GitHub configuration
 
-The repository uses a `production` environment restricted to `main`. Production deployments are serialized. GitHub Actions are pinned to reviewed commit revisions; Wrangler is pinned in `site/package-lock.json` and installed with `npm ci`.
+The repository uses a `production` environment restricted to `main`. Production deployments are serialized; a superseded revision is skipped when it reaches the deployment queue. GitHub Actions are pinned to reviewed commit revisions; Wrangler is pinned in `site/package-lock.json` and installed with `npm ci`.
 
 Set these repository values in Settings → Secrets and variables → Actions:
 
@@ -67,9 +67,9 @@ A published topic address must keep working. To rename or retire a vertical:
 1. In `pipeline/src/thenwhat/claims/verticals.py`, change or remove the vertical, and add its old slug to `RETIRED_VERTICALS` with the vertical that replaces it, for example `{"eyes-and-ears": "sight-and-hearing"}`. `make check` refuses a retired slug that is still configured, or one whose successor does not exist.
 2. Move the claims filed under the old slug with `thenwhat claim edit SLUG --vertical NEW`.
 3. Export again and build (`npm --prefix site run build`). The build writes `site/dist/_redirects` with a permanent redirect from `/topic/OLD` to `/topic/NEW`. It fails, naming the slug, when `published-topics.json` lists a topic that is neither current nor retired.
-4. Deploy with `make deploy`.
+4. Run `make publish-data`, commit both publication files, and push to `main`.
 
-Before launch there is no `published-topics.json`, so slugs can change with no redirect.
+The initial publication history preserves all old topic addresses, including empty topics. `/topic/dental-regeneration` now redirects to `/topic/mouth-and-teeth`. The former transplant topic split across several organs, so its address redirects to the topic directory instead of one organ.
 
 
 ## Rollback

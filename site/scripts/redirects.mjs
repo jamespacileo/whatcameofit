@@ -22,7 +22,10 @@ const retired = new Map((data.retired_verticals ?? []).map((entry) => [entry.slu
 
 const recordFile = path.resolve(process.env.PUBLISHED_TOPICS_FILE ?? "data/published-topics.json");
 const published = fs.existsSync(recordFile) ? JSON.parse(fs.readFileSync(recordFile, "utf8")) : [];
-const lost = published.filter((slug) => !current.has(slug) && !retired.has(slug));
+// The old transplant topic split across organs, so no one health area replaces it.
+// Send its readers to the directory rather than choosing an unrelated organ.
+const directoryRedirects = published.filter(slug => slug === "transplants" && !current.has(slug) && !retired.has(slug));
+const lost = published.filter((slug) => !current.has(slug) && !retired.has(slug) && !directoryRedirects.includes(slug));
 if (lost.length > 0) {
   console.error(
     `Redirect check failed: these published topics are neither current nor retired: ${lost.join(", ")}.` +
@@ -32,6 +35,7 @@ if (lost.length > 0) {
 }
 
 const lines = [...retired].map(([slug, successor]) => `/topic/${slug} /topic/${successor} 301`);
+lines.push(...directoryRedirects.map(slug => `/topic/${slug} /topics 301`));
 const file = path.join(DIST, "_redirects");
 if (lines.length > 0) fs.writeFileSync(file, `${lines.join("\n")}\n`);
 else fs.rmSync(file, { force: true });
