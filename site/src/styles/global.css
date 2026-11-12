@@ -416,8 +416,8 @@ a.chip:hover {
     padding-block: 0.7rem;
   }
 
+  /* Inline padding: a larger target without a taller line where a link sits in a sentence. */
   .colophon a {
-    display: inline-block;
     padding-block: 0.6rem;
   }
 }
@@ -754,6 +754,45 @@ body.embed {
 
 .found .changed {
   margin-top: 0.5rem;
+}
+
+/* The method page's sections, as a short list of links under its lede. */
+.contents {
+  margin-top: 1.1rem;
+  max-width: var(--measure);
+}
+
+main nav.contents ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.3rem;
+}
+
+main nav.contents ul li,
+main nav.contents ul li + li {
+  margin: 0;
+  padding: 0;
+}
+
+@media (max-width: 40rem) {
+  /* One section to a line, so the list reads as a list. */
+  main nav.contents ul {
+    flex-direction: column;
+  }
+
+  /* The share pill lines up with the topic chip, whatever sits under the chip. */
+  .above-title {
+    align-items: flex-start;
+  }
+}
+
+.contents a {
+  display: inline-block;
+  padding-block: 0.35rem;
+  font-size: 0.95rem;
 }
 
 .next-up {

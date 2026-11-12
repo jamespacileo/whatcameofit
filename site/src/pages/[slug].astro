@@ -168,6 +168,9 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                 </>
               )
             }
+            <p class="pop-note">
+              <a href="/how-it-works#what-each-status-means">What each status means</a>
+            </p>
             {
               claim.status.updated_at && (
                 <p class="pop-note" data-pagefind-ignore>
@@ -189,6 +192,9 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                 <p>
                   No record on this page is more recent than that. It says nothing about work that
                   has not been published or registered.
+                </p>
+                <p class="pop-note">
+                  <a href="/how-it-works#no-signal">How "no signal" is counted</a>
                 </p>
               </Pop>
             </div>
