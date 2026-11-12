@@ -639,7 +639,7 @@ body.embed {
   margin-top: 0.7rem;
   padding-top: 0.6rem;
   border-top: 1px solid var(--rule-soft);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   line-height: 1.4;
   color: var(--muted);
 }
@@ -1217,6 +1217,23 @@ main nav.contents ul li + li {
   text-decoration: underline dotted var(--muted);
   text-decoration-thickness: 1.5px;
   text-underline-offset: 0.22em;
+}
+
+.pop-trigger.more .opens {
+  display: inline;
+  vertical-align: -0.12em;
+  margin-left: 0.1em;
+  color: var(--muted);
+}
+
+.pop-trigger.more:has(+ .pop:popover-open) .opens {
+  transform: rotate(180deg);
+}
+
+@media print {
+  .pop-trigger.more .opens {
+    display: none;
+  }
 }
 
 .pop-trigger.more:hover,
