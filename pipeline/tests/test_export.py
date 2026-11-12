@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import jsonschema
+import pytest
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entities import add_synonym
@@ -322,3 +323,13 @@ def test_assistant_approved_event_keeps_an_operator_approved_claim_out(session: 
     # Once the operator makes the decision their own, the claim is published.
     decide_item(session, "event", event.id, ReviewState.APPROVED, now=EARLIER)
     assert claim_in(exported(session))["checked_by_person"] is True
+
+
+def test_export_carries_retired_verticals_with_their_successors(
+    session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr("thenwhat.export.build.RETIRED_VERTICALS", {"teeth": "mouth-and-teeth"})
+
+    export = exported(session)
+
+    assert export["retired_verticals"] == [{"slug": "teeth", "successor": "mouth-and-teeth"}]

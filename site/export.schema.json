@@ -409,6 +409,26 @@
       "title": "ExportedPromise",
       "type": "object"
     },
+    "ExportedRetiredVertical": {
+      "additionalProperties": false,
+      "description": "A vertical slug renamed or retired after launch, and the vertical that replaces it.",
+      "properties": {
+        "slug": {
+          "title": "Slug",
+          "type": "string"
+        },
+        "successor": {
+          "title": "Successor",
+          "type": "string"
+        }
+      },
+      "required": [
+        "slug",
+        "successor"
+      ],
+      "title": "ExportedRetiredVertical",
+      "type": "object"
+    },
     "ExportedSource": {
       "additionalProperties": false,
       "properties": {
@@ -576,6 +596,14 @@
         "$ref": "#/$defs/ExportedVertical"
       },
       "title": "Verticals",
+      "type": "array"
+    },
+    "retired_verticals": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ExportedRetiredVertical"
+      },
+      "title": "Retired Verticals",
       "type": "array"
     },
     "outlets": {

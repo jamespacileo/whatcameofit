@@ -37,8 +37,8 @@
 
 ## 6. Redirects after launch
 
-- [ ] 6.1 Export `RETIRED_VERTICALS`, write a `_redirects` file at build time, and make `make deploy` record the topic slugs it publishes in `site/data/published-topics.json`. Verify that a build with a recorded slug that is neither current nor retired fails, and that a retired one produces a 301 line.
-- [ ] 6.2 Document the retire-a-slug steps in `docs/deploy.md`; verify the steps run as written against a scratch build.
+- [x] 6.1 Export `RETIRED_VERTICALS`, write a `_redirects` file at build time, and make `make deploy` record the topic slugs it publishes in `site/data/published-topics.json`. Verify that a build with a recorded slug that is neither current nor retired fails, and that a retired one produces a 301 line.
+- [x] 6.2 Document the retire-a-slug steps in `docs/deploy.md`; verify the steps run as written against a scratch build.
 
 ## 7. Integration
 

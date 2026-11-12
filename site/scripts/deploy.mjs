@@ -76,6 +76,14 @@ if (lookup) {
 console.log(lookup ? "With the registry search (/api/lookup)." : "Without the registry search: LLM_MODEL and CONTACT_EMAIL are not both set.");
 if (dryRun) args.push("--dry-run");
 run("wrangler", args);
+// Every topic address now public, so a later build can refuse to drop one without a redirect.
+if (!dryRun) {
+  const record = path.join(SITE_DIR, "data/published-topics.json");
+  const before = fs.existsSync(record) ? JSON.parse(fs.readFileSync(record, "utf8")) : [];
+  const topics = [...new Set([...before, ...data.verticals.map((vertical) => vertical.slug)])].sort();
+  fs.writeFileSync(record, `${JSON.stringify(topics, null, 2)}\n`);
+  console.log(`Recorded ${topics.length} published topics in data/published-topics.json; commit it.`);
+}
 console.log(
   dryRun
     ? `Dry run finished. Nothing was published. Without --dry-run this would go to ${domain}.`

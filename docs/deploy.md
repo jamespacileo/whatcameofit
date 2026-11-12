@@ -56,6 +56,18 @@ The command prints every reason at once and publishes nothing.
 - Open five claim pages at the public address and check each against its sources.
 - Build the browser extension for the same address: `SITE_URL=https://whatcameofit.com make extension`. The extension asks only that address for its data, and sends only that address what a reader asks it to search.
 - Put the address in `site/site.config.mjs` so that every build uses it without the variable.
+- Commit `site/data/published-topics.json`. Each real deploy (not a dry run) adds the topic slugs it published to that file.
+
+## Renaming or retiring a topic after launch
+
+A published topic address must keep working. To rename or retire a vertical:
+
+1. In `pipeline/src/thenwhat/claims/verticals.py`, change or remove the vertical, and add its old slug to `RETIRED_VERTICALS` with the vertical that replaces it, for example `{"eyes-and-ears": "sight-and-hearing"}`. `make check` refuses a retired slug that is still configured, or one whose successor does not exist.
+2. Move the claims filed under the old slug with `thenwhat claim edit SLUG --vertical NEW`.
+3. Export again and build (`npm --prefix site run build`). The build writes `site/dist/_redirects` with a permanent redirect from `/topic/OLD` to `/topic/NEW`. It fails, naming the slug, when `published-topics.json` lists a topic that is neither current nor retired.
+4. Deploy with `make deploy`.
+
+Before launch there is no `published-topics.json`, so slugs can change with no redirect.
 
 ## Undoing a deploy
 
