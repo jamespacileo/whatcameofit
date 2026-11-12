@@ -84,8 +84,12 @@ A post on X links out only through X's own shortener, which does not let the sit
 - **THEN** only the selected text is sent of the page's words
 
 #### Scenario: Too little to read
-- **WHEN** fewer than forty characters can be read from the page
+- **WHEN** fewer than forty characters can be read and there is no useful outgoing article or shortened link from a post
 - **THEN** nothing is sent and the reader is asked to select the text
+
+#### Scenario: Short or link-only post
+- **WHEN** a post has fewer than forty characters, including no body text, and links to an article
+- **THEN** its actual text and outgoing link are sent without invented post text so the service can read the linked article
 
 ### Requirement: Each potential match is one visual item
 Every displayed registry candidate SHALL occupy its own visual card, grouping the title and source link, phase, state, registry identifier, reasons for the match and match-confidence label. Confidence SHALL be taken from the shared answer's model score. Missing confidence SHALL be shown as unavailable. The explanation SHALL describe confidence as an estimate of the match to the report. It SHALL NOT imply treatment effectiveness or trial quality. Cards SHALL remain identifiable without colour. Reviewed-claim links SHALL use the same grouped presentation with reviewed provenance and no invented confidence score.

@@ -28,6 +28,7 @@ const text = {
     failed: "Nothing was found or ruled out. Try again in a minute.",
     budget_exhausted: "Automatic search has used its monthly allowance. It will be available again next month. Reviewed claim pages remain available.",
     page_changed: "The page changed while this lookup started. Reopen the extension on the page you want to check.",
+    post_unreadable: "The linked article could not be read and the post has too little text. Open the article in your browser and reopen the extension.",
   },
   again: "Search again",
   noPageTitle: "Open an article first",

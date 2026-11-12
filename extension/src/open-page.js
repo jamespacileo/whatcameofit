@@ -120,23 +120,30 @@ export function composeRequest(collected, address, { readAddress, readPage, page
     text = postText(collected, host, readAddress);
     // A platform's tab title is 'Name on Platform: "the post" / Platform': the writer's
     // name first and the platform's last, neither of which is the post.
-    if (text.length < ENOUGH) {
-      text = collected.title
-        .replace(/^[^:]{1,80}:\s*/, "")
-        .replace(/\s[/|]\s[^/|]{1,30}$/, "")
-        .replace(/^["“](.*)["”]$/s, "$1");
+    if (!text) {
+      text = collected.title.match(/^[^:]{1,80}:\s*["“]([\s\S]+)["”](?:\s[/|]\s[^/|]{1,30})?$/)?.[1] ?? "";
     }
   } else {
     text = pageAsText(readPage(`${collected.head}<body>${collected.focusHtml}</body>`));
   }
   text = text.trim().slice(0, MAX_TEXT);
-  if (text.length < ENOUGH) return null;
 
   const links = [collected.contentHref, ...collected.links.map((link) => link.href)]
     .filter((href) => typeof href === "string" && /^https?:\/\//i.test(href))
     .map((href) => destination(href, readAddress))
     .filter((href) => href.length <= MAX_LINK)
     .filter((href) => !sameSite(href, host));
-  const request = { text, links: [...new Set(links)].slice(0, MAX_LINKS) };
+  const outgoing = [...new Set(links)].slice(0, MAX_LINKS);
+  if (text.length < ENOUGH) {
+    const hasArticle = isPost && outgoing.some((href) => {
+      try {
+        return ["article", "short"].includes(readAddress(href).kind);
+      } catch {
+        return false;
+      }
+    });
+    if (!hasArticle) return null;
+  }
+  const request = { text, links: outgoing };
   return isPost ? { ...request, platform: read.platform } : request;
 }

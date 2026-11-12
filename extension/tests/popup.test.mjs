@@ -19,7 +19,7 @@ function deferred() {
   return { promise, resolve };
 }
 
-async function runPopup(navigate) {
+async function runPopup(navigate, words = "EX-1 is being studied as a treatment for missing teeth.") {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), "thenwhat-popup-"));
   const globals = ["browser", "document", "window", "fetch", "__popupTestCapture"];
   const saved = new Map(globals.map((name) => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
@@ -67,7 +67,7 @@ async function runPopup(navigate) {
           reads += 1;
           return [{ result: {
             address: postA, title: "Research post", selection: "", head: "", focusHtml: "",
-            focusText: "EX-1 is being studied as a treatment for missing teeth.",
+            focusText: words,
             links: [{ href: shortLink, text: "Read the article" }],
           } }];
         },
@@ -121,4 +121,11 @@ test("actual popup glue refuses navigation during a paused short-link resolution
   assert.deepEqual(result.posts, []);
   assert.deepEqual(result.states.at(-1), { kind: "refused", code: "page_changed" });
   assert.equal(result.confirmedTab, 7);
+});
+
+test("actual popup glue follows an article from a short post", { timeout: 5000 }, async () => {
+  const result = await runPopup(false, "Read this");
+  assert.equal(result.posts.length, 1);
+  assert.equal(result.posts[0].text, "Read this");
+  assert.deepEqual(result.posts[0].links, [article]);
 });

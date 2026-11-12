@@ -173,3 +173,24 @@ test("an unreadable outgoing address does not prevent useful article links", () 
   const request = composeRequest(post, "https://www.facebook.com/example/posts/123", shared);
   assert.ok(request.links.includes(ARTICLE));
 });
+
+test("short and link-only posts can search their outgoing article without invented text", () => {
+  for (const words of ["Read this", ""]) {
+    const post = collected({ title: "", focusText: words, links: [{ href: ARTICLE, text: "" }] });
+    const request = composeRequest(post, "https://x.com/research/status/123456789", shared);
+    assert.deepEqual(request, { text: words, links: [ARTICLE], platform: "X" });
+  }
+  const shortened = collected({ focusText: "Read this", links: [{ href: "https://t.co/AbCdEf", text: "" }] });
+  assert.ok(composeRequest(shortened, "https://x.com/research/status/123456789", shared));
+  const genericTitle = collected({ title: "Post by @someone.example — Bluesky", links: [{ href: ARTICLE, text: "" }] });
+  assert.equal(composeRequest(genericTitle, "https://bsky.app/profile/someone.example/post/3abc123", shared).text, "");
+});
+
+test("short text without an article link keeps the too-little refusal", () => {
+  for (const href of ["https://x.com/other/status/987654321", "https://www.linkedin.com/in/research"]) {
+    const post = collected({ focusText: "Read this", links: [{ href, text: "" }] });
+    assert.equal(composeRequest(post, "https://x.com/research/status/123456789", shared), null);
+  }
+  const page = collected({ focusHtml: "<main>Read this</main>", links: [{ href: ARTICLE, text: "" }] });
+  assert.equal(composeRequest(page, "https://news.example.org/short", shared), null);
+});

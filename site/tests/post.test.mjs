@@ -279,6 +279,37 @@ test("Scenario: Post read by the reader's browser", async () => {
   assert.equal(describeAnswer(found).source, "Read by your browser from the post on X you have open and the article it links to at news.example.org.");
 });
 
+test("a browser-read link-only post is looked up from its linked article", async () => {
+  const { send, shown } = service({ "https://news.example.org/robots.txt": 404, [ARTICLE]: ARTICLE_PAGE });
+  const response = await send({ text: "", links: [ARTICLE], platform: "X" });
+  const found = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(found.post.article_read, true);
+  assert.equal(found.post.read_in_browser, true);
+  assert.match(shown[0], /^A post on X says:\n\n\nThe article it links to:\nHeadline: Antibody regrows teeth/);
+  assert.deepEqual(found.candidates.map((candidate) => candidate.id), ["NCT00000001"]);
+});
+
+test("an unreadable link-only post is refused without asking the model", async () => {
+  const { send, shown } = service({ "https://news.example.org/robots.txt": "User-agent: *\nDisallow: /" });
+  const response = await send({ text: "", links: [ARTICLE], platform: "X" });
+  assert.equal(response.status, 422);
+  assert.deepEqual(await response.json(), { error: "post_unreadable", platform: "X" });
+  assert.deepEqual(shown, []);
+  const empty = await send({ text: "", links: [], platform: "X" });
+  assert.equal(empty.status, 400);
+});
+
+test("a link-only post pointing at a reviewed article keeps the no-model path", async () => {
+  const { send, shown, net } = service({});
+  const response = await send({ text: "", links: ["https://news.example.org/tracked-story"], platform: "X" });
+  const found = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(found.article_tracked, true);
+  assert.deepEqual(shown, []);
+  assert.deepEqual(net.addresses(), []);
+});
+
 test("a post whose only link is a shortened one is looked up from its own words, and the answer says why", async () => {
   const { send, net } = service(X_SHORTENER);
 
