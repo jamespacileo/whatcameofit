@@ -154,10 +154,10 @@ thenwhat lookup https://example.org/news/some-article
 Names the treatment and condition the article reports and lists the registry trials it is most likely about, likeliest first. Nothing is stored and nothing is reviewed: it is a list for you to check. See [docs/lookup.md](docs/lookup.md) for how well it does.
 
 ```sh
-thenwhat outlets --save docs/outlets.md
+thenwhat outlets --save docs/outlets.md --articles docs/outlets-articles.csv
 ```
 
-Asks for every tracked article once and records, per outlet, whether its site let the article be read and which signals its pages carry. Add `--with-lookup` to count how often a lookup finds an approved trial; that is slow and spends on the model. The last record is [docs/outlets.md](docs/outlets.md).
+Asks for every tracked article once and records, per outlet, whether its site let the article be read and which signals its pages carry. Add `--with-lookup` to count how often a lookup finds an approved trial; that is slow and spends on the model. The last record is [docs/outlets.md](docs/outlets.md), with one row per address in [docs/outlets-articles.csv](docs/outlets-articles.csv).
 
 ### The seed claim
 

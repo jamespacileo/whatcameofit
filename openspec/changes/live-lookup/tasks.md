@@ -30,7 +30,7 @@
 - [x] 4b.4 Do the same in the Worker; verify its tests pass
 - [x] 4b.5 Show a reader why a record is listed first, in the site's words and without a verdict
 - [x] 4b.6 Add `thenwhat outlets` to record which outlets can be read and which signals their pages carry; verify one success and one refusal
-- [ ] 4b.7 Run it on the tracked articles and keep the result in `docs/outlets.md`
+- [x] 4b.7 Run it on the tracked articles and keep the result in `docs/outlets.md`, with one row per address in `docs/outlets-articles.csv` (2026-11-12: 104 addresses at 57 outlets, 96 read, 4 refused by robots.txt, 4 failed)
 - [ ] 4b.8 Measure the lookup again and record the change in `docs/lookup.md`
 
 ## 4c. Posts on social media (asked for 2026-11-12: a post's address must work, and so must the article it links to)
