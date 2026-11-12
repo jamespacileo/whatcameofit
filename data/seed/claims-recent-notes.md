@@ -18,7 +18,7 @@ The operator asked for popular news articles from the last three months that rep
 
 ## Coverage
 
-46 claims, 53 articles, 13 topics.
+58 claims, 78 articles, 13 topics, after the second sweep on 2026-11-12 (below). The table and outlet list that follow describe the first sweep: 46 claims, 53 articles.
 
 | Topic | Claims |
 | --- | --- |
@@ -39,6 +39,48 @@ The operator asked for popular news articles from the last three months that rep
 Outlets (25): ScienceDaily, SciTechDaily, ScienceAlert, New Atlas, Medical Xpress, The Guardian, The Independent, CNN, Fox News, TIME, MIT Technology Review, VICE, LADbible, The US Sun, Daily Express, Futurism, ZME Science, Earth.com, Yahoo News, Medscape, Business Today, Courthouse News Service, Extra.ie, Inside Precision Medicine, American Friends of Tel Aviv University.
 
 Not covered: BBC News (its article pages could not be reached through search or feeds), The Telegraph and The Times (blocked or paywalled), The Mirror, Daily Star, Metro and New York Post (little beyond lifestyle stories, or no way to scan by date).
+
+## Second sweep (2026-11-12)
+
+Asked for: the outlets the first sweep missed, BBC News above all. Two sub-agents ran, one looking for more reports of claims already tracked, one for new claims.
+
+**More reports of tracked claims: 13 articles on 10 claims.** NBC News, STAT, Live Science, Euronews and regional Yahoo News pages (Canada, Singapore, Australia, New Zealand; most are syndicated copies of a story another outlet ran). One candidate was left out because its page could not be confirmed to be about the claim (a Yahoo copy for `biological-ageing-glp-1-drugs`).
+
+**New claims: 12**, each from one article: Daily Mail 6, The Mirror 5, BBC News 1. Every page was loaded again by the checking script and its title and date matched. One candidate was left out: a GP's opinion column about retatrutide, which reports no finding of its own.
+
+**Still not covered, and why:**
+
+- **BBC News: one claim only.** The search tool refuses the BBC's domain, its sitemaps carry no headlines and its feeds reach back only a few weeks. The one row is a video report (`tourette-syndrome-wrist-nerve-stimulation`), dated from the page, with no trial numbers in it. BBC articles are best added by hand: `thenwhat article add` for a tracked claim, or a CSV row for a new one.
+- **The Telegraph** answers 402 (payment required), **Reuters** 401, **Sky News** 403 on its pages and robots.txt. Nothing was taken from them.
+- **The Times** shows only headline and standfirst behind its paywall, so nothing could be checked. Leads seen there and not used: a non-surgical bowel cancer treatment (2026-08-23), a pancreatic cancer drug approval (2026-08-26), vitamin B6 and depression (2026-08-22), a common-cold vaccine trial (2026-08-26).
+- **The Daily Mail answered this time** (it refused on 2026-11-11). Its pages now sit on dailymail.com. The three rows in the next section were not retried.
+
+**Outcome of the 12 new claims** (prepared with `thenwhat prepare`, then decided by the assistant under the same rule as before: approve a trial scored 0.90 or more, reject one scored under 0.10, leave the rest):
+
+| Claim | Status | Stage | Trials approved | Left pending |
+| --- | --- | --- | --- | --- |
+| alcohol-use-disorder-kudzu-extract | Phase 2 | early human | 5 | 0 |
+| alzheimers-apoe4-base-editing | Preclinical only | in vitro | 0 | 0 |
+| alzheimers-prevention-trontinemab | Phase 3 | late human | 1 | 3 |
+| breast-cancer-trastuzumab-deruxtecan-her2-low | Phase 3 | late human | 6 | 8 |
+| heart-failure-myc-cyclin-t1-mrna | Preclinical only | animal | 0 | 0 |
+| obesity-survodutide | Phase 3 | late human | 14 | 5 |
+| obesity-tofa | Preclinical only | animal | 0 | 0 |
+| ovarian-cancer-salpingectomy | Trial registered | early human | 9 | 6 |
+| pancreatic-cancer-daraxonrasib | Phase 3 | early human | 4 | 5 |
+| sleep-apnoea-orforglipron | Phase 3 | late human | 1 | 0 |
+| tourette-syndrome-wrist-nerve-stimulation | No trial record found | early human | 0 | 0 |
+| type-2-diabetes-insulin-efsitora-alfa | Phase 3 | late human | 4 | 0 |
+
+**What you should check in these:**
+
+- **Two claims read "Phase 3" although their articles report an approval.** `type-2-diabetes-insulin-efsitora-alfa` (the Mail says regulators approved it) and `breast-cancer-trastuzumab-deruxtecan-her2-low` (NICE recommended it for NHS use; the licence is older). An approval is entered by hand from the regulator's own page (`thenwhat event add --type regulatory_decision --outcome approved`). The assistant could not open a regulator page for either, so entered nothing.
+- **Trontinemab.** The claim is prevention in people without symptoms. Only the trial in that group was approved (match 7505). Three trials in people who already have symptoms are left pending (7504, 7506, 7507): the same drug, a different use.
+- **Daraxonrasib and trastuzumab deruxtecan.** Trials of the drug together with another drug, basket trials across tumour types and first-in-human trials of other drugs were left pending.
+- **Salpingectomy** is surgery to lower risk, not a treatment of cancer. Its trials carry no phase, so the status is "Trial registered".
+- **`tourette-syndrome-wrist-nerve-stimulation`** has no name a registry search can use; the three candidates found were nausea and tremor wristbands, rejected by rule. Trials of this device probably exist under its maker's name.
+- **Evidence stages** were suggested by the model and confirmed by the assistant. `pancreatic-cancer-daraxonrasib` reads "early human" although the article cites a randomised trial; `ovarian-cancer-salpingectomy` reads "early human". Neither changes a status.
+- **A date to check, found on the way:** `alexander-disease-zilganersen` has 2026-10-30 as its first report, but STAT and Reuters reported the FDA approval on 2026-09-03.
 
 ## Daily Mail rows left out
 

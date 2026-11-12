@@ -9,4 +9,4 @@
 ## 2. Site
 
 - [x] 2.1 Word the new status and both no-trial meanings; say on the method page how the two differ; verify the site tests pass
-- [ ] 2.2 Rebuild the local preview; verify the five claims studied in people read "No trial record found"
+- [x] 2.2 Rebuild the local preview; verify the five claims studied in people read "No trial record found" (2026-11-12: migration 0005 moved the five; a sixth, new claim joined them; checked on the epilepsy gene therapy page)
