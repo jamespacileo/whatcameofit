@@ -35,7 +35,7 @@ site-build: site/node_modules
 
 # The browser extension: plain JavaScript, tested with Node's own runner, then built.
 extension-test: site/node_modules
-	node --test extension/tests/
+	node --test extension/tests/*.test.mjs
 	node extension/build.mjs
 
 # The extension as loaded in Chrome ("Load unpacked" on extension/dist).
