@@ -70,12 +70,27 @@ function headline(words) {
   return el("h1", null, parts);
 }
 
-function claimBlock(claim, site, actions) {
+// Where the status sits on the path from preclinical to approved: a row of places, one
+// marked. Drawn only when the lookup file gives the place; the status is beside it in words.
+function track(place, places) {
+  if (!place || !places) return null;
+  const steps = el(
+    "span",
+    "steps",
+    Array.from({ length: places }, (_, index) => el("span", index + 1 === place ? "step here" : "step")),
+  );
+  steps.setAttribute("role", "img");
+  steps.setAttribute("aria-label", `Place ${place} of ${places} on the path from preclinical to approved`);
+  return el("dd", "track", [steps]);
+}
+
+function claimBlock(claim, site, actions, places) {
   return el("article", "claim", [
     headline(claim.headline),
     el("dl", "digest", [
       el("dt", null, text.standing),
       el("dd", "status", claim.status),
+      track(claim.place, places),
       claim.no_signal && el("dd", "no-signal", claim.no_signal),
       el("dd", "meaning", claim.meaning),
     ]),
@@ -151,7 +166,7 @@ export function render(root, state, site, actions) {
     children = [el("p", "checking", text.checking)];
   } else if (state.kind === "tracked") {
     children = [
-      ...state.claims.map((claim) => claimBlock(claim, site, actions)),
+      ...state.claims.map((claim) => claimBlock(claim, site, actions, state.places)),
       el("footer", "notices", [
         ...state.notices.map((notice) => el("p", null, notice)),
         state.lastChecked && el("p", "checked", text.lastChecked(state.lastChecked)),

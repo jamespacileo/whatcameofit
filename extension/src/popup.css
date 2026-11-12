@@ -114,6 +114,69 @@ h1 {
   line-height: 1.2;
 }
 
+/* The path, as on the site: six places on a line, one marked, never filled. */
+.track {
+  margin-top: 9px;
+}
+
+.steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 150px;
+  height: 12px;
+  background: linear-gradient(var(--rule), var(--rule)) center / 100% 1.5px no-repeat;
+}
+
+.step {
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid #7f90a3;
+  border-radius: 50%;
+  background: var(--paper);
+}
+
+.step.here {
+  width: 12px;
+  height: 12px;
+  border-color: var(--blue);
+  background: var(--blue);
+}
+
+/* A wait of up to half a minute is marked as one: the site's dot, breathing. */
+.checking {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+
+.checking::before {
+  content: "";
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--blue);
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .checking::before {
+    animation: wait 1.4s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes wait {
+  from {
+    opacity: 0.25;
+    transform: translateY(-1px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-1px) scale(1);
+  }
+}
+
 .no-signal {
   display: inline-block;
   margin-top: 8px;

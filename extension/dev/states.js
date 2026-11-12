@@ -10,6 +10,7 @@ const claim = {
   headline: "Antibody against USAG-1 regrows teeth in mice",
   page: "/tooth-regrowth-usag1",
   status: "Phase 1 trial",
+  place: 3,
   meaning: "The furthest trial that has started is a Phase 1 trial.",
   no_signal: null,
   first_reported: "31 Mar 2021",
@@ -19,6 +20,7 @@ const quiet = {
   headline: "Tideglusib on a collagen sponge regrows dentine in mouse teeth",
   page: "/dentine-repair-tideglusib",
   status: "Preclinical only",
+  place: 1,
   meaning:
     "No clinical trial was found in the registries checked. The first reports are not recorded as describing a study in people.",
   no_signal: "No signal for 9 years",
@@ -30,6 +32,7 @@ const long = {
     "A personalised mRNA vaccine given with pembrolizumab was reported to cut the risk of melanoma returning or causing death by 42% in a Phase 3 trial",
   page: "/melanoma-mrna-vaccine-intismeran",
   status: "Trial missed its primary endpoint",
+  place: null,
   meaning:
     "A trial result was reported in which the primary endpoint was not met, and no other trial stands.",
   no_signal: null,
@@ -67,6 +70,7 @@ const answer = {
 const tracked = (claims, savedAt = null) => ({
   kind: "tracked",
   claims,
+  places: 6,
   notices,
   lastChecked: "11 Nov 2026",
   savedAt,
