@@ -6,6 +6,10 @@
 
 The engine takes text, not an address. Where the text comes from is the open part.
 
+Since 2026-11-12 the engine also takes what the article's page says of itself (`thenwhat.extract.page`, `site/worker/page.mjs`): the headline, summary and date from its tags, the article from its structured data, and the papers and registry records it links to. A linked paper's trial is looked up through Europe PMC, which the pipeline already uses; no new source was added. The model is also asked what the text says of the trial itself (its name, its size, who ran it), and each record is compared with that by rule (`thenwhat.lookup.details`, `site/worker/details.mjs`). Records the article points to by number, and records that agree with more of those details, are ranked first among the ones that read as trials of the treatment.
+
+`thenwhat outlets` records which outlets can be read and which of these signals their pages carry (`docs/outlets.md`).
+
 ## Decided
 
 - **An unreviewed lookup answer may be shown to readers, clearly marked** (operator, 2026-11-12). It is shown as an automatic search of a public registry, with what was searched for, never as a status, and with the two standing notices. Claim pages and statuses stay behind review as before.
@@ -16,6 +20,9 @@ The engine takes text, not an address. Where the text comes from is the open par
 - **Blocked articles:** the Worker obeys robots.txt and uses no page-to-text service. Where it cannot read an article it says so and asks for the headline or text. The extension, reading the page the reader has open, is the way round a block.
 - **Social media posts:** by pasted text only, until each platform's terms are checked.
 - **Privacy:** the Worker keeps no record of what is sent and logs nothing. A search is made only when the reader presses its button, and the words beside the button say that the address goes to the site's server and the article to a language model, and that the site keeps neither. The reader's network address is used only to count requests per minute.
+- **Paper lookups (2026-11-12):** at most three linked papers are asked about per search, through Europe PMC, with the contact address in the client name. A paper's abstract is read for its registry number and nothing of it is shown or kept. A paper that cannot be looked up is passed over.
+- **No archive, no cache copy, no paywall remover in the Worker.** The pipeline's own retriever, as before, falls back to an archived copy when a site allows reading but its page does not load; it never does so for a site whose robots.txt refuses. The outlet check tries no archive at all.
+- **Agreement is shown as a fact, not a verdict:** "Its registration agrees with the article on the number of participants." A record the article gives the number of is listed even when the model scores it low.
 - **Spending:** five searches a minute for one reader and thirty a minute in all. The operator should also set a monthly limit with the model's provider.
 
 ## Decisions for the operator
@@ -31,5 +38,7 @@ These change what readers see or what the project promises. The first is decided
 ## Risks
 
 - A wrong candidate shown as an answer is the failure this product exists to prevent. The score is a model's opinion; a score is never worded as a finding.
+- A page's links are not all about the article: a sidebar may link to another study. A record found that way is marked as coming from a linked paper, is still scored by the model, and is listed only if it reads as a trial of the treatment.
+- The details are the model's reading of the text. A wrong number of participants can lift the wrong sibling trial. The answer shows what was read ("Of the trial itself, the article says: ..."), so a reader can see it.
 - A treatment with no searchable name still finds little. Search phrases help; how much is measured in task 3.
 - Cost per lookup is small but unbounded if the endpoint is public and unprotected.

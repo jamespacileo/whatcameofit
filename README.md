@@ -153,6 +153,12 @@ thenwhat lookup https://example.org/news/some-article
 
 Names the treatment and condition the article reports and lists the registry trials it is most likely about, likeliest first. Nothing is stored and nothing is reviewed: it is a list for you to check. See [docs/lookup.md](docs/lookup.md) for how well it does.
 
+```sh
+thenwhat outlets --save docs/outlets.md
+```
+
+Asks for every tracked article once and records, per outlet, whether its site let the article be read and which signals its pages carry. Add `--with-lookup` to count how often a lookup finds an approved trial; that is slow and spends on the model. The last record is [docs/outlets.md](docs/outlets.md).
+
 ### The seed claim
 
 `docker compose up` loads `data/seed/tooth-regrowth-usag1.json` when its claim is not in the database yet, so a fresh checkout shows one real claim page. The seed was compiled from the primary sources it links and has not been reviewed by a person; its decisions are recorded as made by the seed loader, not by you. Check it before any public launch.

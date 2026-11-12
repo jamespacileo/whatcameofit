@@ -14,10 +14,12 @@ There are two copies of the engine, kept in step by hand: the pipeline's (`thenw
 
 ## How it works
 
-1. **Read.** One model call names the treatment, the other names the text gives it, the condition, and up to three search phrases for a treatment with no product name. The model may also add names it knows the treatment by; those are reported apart.
-2. **Find.** Any registry number in the text is looked up directly. Every name, every part of a combination ("A and B"), and every phrase is searched on ClinicalTrials.gov within the condition.
-3. **Rank.** Each record found (60 at most) is scored with the question used for a claim's candidates: is this a trial of this treatment for this condition? The same treatment for another condition is ranked below.
-4. **Recognise.** A claim already tracked under one of the names is named.
+1. **Read the page.** When the lookup starts from an address, the page is read for more than its visible text: the headline, summary and date from the tags it carries for other software, the article itself where the page carries it as structured data, and its links to papers (by DOI or PubMed number) and to registry records. The headline, summary and date are put before the article in what the model is shown.
+2. **Read the text.** One model call names the treatment, the other names the text gives it, the condition, and up to three search phrases for a treatment with no product name. It also says what the text gives away about the trial itself: its name, its number of participants, who ran it. The model may add names it knows the treatment by; those are reported apart.
+3. **Find.** Any registry number in the text or in a link is looked up directly. A linked paper (three at most) is looked up in Europe PMC, and the registry number in its abstract is looked up too. A trial the text names is searched for by that name. Every name of the treatment, every part of a combination ("A and B"), and every phrase is searched on ClinicalTrials.gov within the condition.
+4. **Score.** Each record found (60 at most) is scored with the question used for a claim's candidates: is this a trial of this treatment for this condition? The same treatment for another condition is ranked below.
+5. **Tell the trial from its siblings.** A treatment often has dozens of trials and the article is about one. Each record is compared by rule, not by the model, with what the text says of the trial: it carries the trial's name, its registered enrolment is within a tenth of the reported number of participants, its sponsor or a collaborator carries the named sponsor's words. A record the article gives the number of comes first. Then, among the records that read as trials of the treatment, those that agree with more come first. Each record lists why.
+6. **Recognise.** A claim already tracked under one of the names is named.
 
 ## How well it works (measured 2026-11-12)
 

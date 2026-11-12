@@ -33,6 +33,8 @@ SITE_URL=https://example.org LLM_MODEL=<model> CONTACT_EMAIL=<address> make depl
 
 With `LLM_MODEL` and `CONTACT_EMAIL` set, the build offers the search and the Worker answers at `/api/lookup`. Without them the button is not drawn and the address answers "not set up". Limits are in `site/wrangler.jsonc`: five searches a minute for one reader, thirty in all. Set a monthly spending limit with the model's provider as well.
 
+For each search the Worker reads the article's site, ClinicalTrials.gov, Europe PMC (for a paper the article links to) and the model's provider. A live try on 2026-11-12 made 12 to 20 outside requests per search; check that your Cloudflare plan allows that many for one page request.
+
 To try it on this machine first: `make lookup-dev`, then open <http://localhost:8787>. It reads the same settings from `.env`.
 
 ## What stops a deploy
