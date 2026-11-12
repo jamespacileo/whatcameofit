@@ -11,6 +11,7 @@ from thenwhat.cli.export import export_command
 from thenwhat.cli.extract import extract_app
 from thenwhat.cli.icons import icons_command
 from thenwhat.cli.lookup import lookup_command
+from thenwhat.cli.outlets import outlets_command
 from thenwhat.cli.prepare import prepare_command
 from thenwhat.cli.resolve import entity_app, resolve_command
 from thenwhat.cli.review import review_app
@@ -31,6 +32,7 @@ app.command("fetch")(fetch_command)
 app.add_typer(event_app, name="event")
 app.add_typer(review_app, name="review")
 app.command("icons")(icons_command)
+app.command("outlets")(outlets_command)
 app.command("export")(export_command)
 app.add_typer(seed_app, name="seed")
 

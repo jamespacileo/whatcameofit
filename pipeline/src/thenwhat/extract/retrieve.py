@@ -49,6 +49,8 @@ class ArticleRetriever:
     ) -> None:
         self._contact = (contact_email or "").strip()
         self._client = httpx.Client(transport=transport, timeout=30.0, follow_redirects=True)
+        # A site's rules are read once for as long as this retriever lives.
+        self._rules: dict[str, RobotFileParser | bool] = {}
 
     def retrieve(self, url: str) -> Retrieved:
         """The article as plain text: from the site if robots.txt allows it, else from
@@ -94,7 +96,15 @@ class ArticleRetriever:
 
     def _allowed(self, url: str) -> bool:
         parts = urlsplit(url)
-        response = self._get(f"{parts.scheme}://{parts.netloc}/robots.txt")
+        site = f"{parts.scheme}://{parts.netloc}"
+        if site not in self._rules:
+            self._rules[site] = self._rules_of(site)
+        rules = self._rules[site]
+        return rules if isinstance(rules, bool) else rules.can_fetch(ROBOTS_NAME, url)
+
+    def _rules_of(self, site: str) -> RobotFileParser | bool:
+        """A site's rules, or one answer for every address when it has none to parse."""
+        response = self._get(f"{site}/robots.txt")
         if response is None or response.status_code >= 500:
             return False  # rules unknown: do not fetch
         if response.status_code in (401, 403):
@@ -103,7 +113,7 @@ class ArticleRetriever:
             return True  # no robots.txt: nothing is disallowed
         rules = RobotFileParser()
         rules.parse(response.text.splitlines())
-        return rules.can_fetch(ROBOTS_NAME, url)
+        return rules
 
     def _page(self, url: str) -> str | None:
         response = self._get(url)
