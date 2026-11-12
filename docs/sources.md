@@ -61,3 +61,16 @@ Terms, authentication and rate limits for each external source. Check an entry a
 ## Not yet checked
 
 ISRCTN, EU CTIS, WHO ICTRP, PubMed E-utilities, OpenAlex, NIH RePORTER, UKRI Gateway to Research, Companies House, SEC EDGAR, openFDA, EMA and MHRA have no client. Add an entry here before writing one.
+
+
+## OpenAI Decisions API
+
+- **Checked:** 2026-11-12
+- **Guide:** <https://developers.openai.com/api/docs/guides/decisions>. **Reference:** <https://developers.openai.com/api/reference/resources/decisions/methods/create>
+- **What it is:** `POST /v1/decisions` takes shared evidence (`input`) and 1 to 400 questions, and returns typed answers without writing text. The guide says it answers about ten times faster than the Responses API. A `choice` question takes 2 to 255 options, each a value and a description, and returns the chosen value, a probability for every option and a separate `confidence`.
+- **Authentication:** the same key as other OpenAI calls (`OPENAI_API_KEY`).
+- **Model:** one model is supported at the date checked; its name comes from `DECISIONS_MODEL`, or from `LLM_MODEL` when that names an OpenAI model. No model is named in code.
+- **Price:** input tokens only, 0.10 US dollars per million at the date checked; output is not charged. Set it in `DECISIONS_INPUT_USD_PER_MTOK`; the pipeline refuses to call without it.
+- **Data:** the guide says Zero Data Retention is available to eligible customers. What a lookup sends is the same as before: the reading of the article in one line and registry records, never the article's text.
+- **Behavior (observed 2026-11-12):** three made-up trial records as three `choice` questions were answered in 1.96 seconds using 709 input tokens: the right option for each, probabilities summing to 1. A question the model declines comes back as `{"type": "refusal"}`; the pipeline treats it as no answer.
+- **How the pipeline uses it:** as the decision backend `openai-decisions` (`DECISION_BACKEND`), for scoring candidate records and any other bounded choice. The probabilities are the model's own estimate and are not calibrated, like the other backend's.

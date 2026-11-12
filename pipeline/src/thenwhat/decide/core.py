@@ -15,6 +15,7 @@ from thenwhat.llm.errors import LlmError
 
 if TYPE_CHECKING:
     from thenwhat.llm.client import Llm
+    from thenwhat.llm.decisions import Decisions
 
 SUM_TOLERANCE = 1e-6
 # How many items a backend is asked about in one call.
@@ -105,10 +106,10 @@ def decide_many(
 ) -> list[Decision]:
     """Make the same choice for each item, given as (input reference, text).
 
-    A backend that answers in batches is asked about up to BATCH_SIZE items per call;
-    any other backend is asked item by item. Every item gets its own log entry either
-    way. If any item of a batch has no usable answer, the batch fails once all of its
-    items are logged, and later batches are not asked.
+    A backend that answers in batches is asked about up to BATCH_SIZE items per call, or
+    as many as the backend says it takes; any other backend is asked item by item. Every
+    item gets its own log entry either way. If any item of a batch has no usable answer,
+    the batch fails once all of its items are logged, and later batches are not asked.
     """
     offered = list(options)
     answer_many = getattr(backend, "answer_many", None)
@@ -127,8 +128,9 @@ def decide_many(
         ]
 
     decisions: list[Decision] = []
-    for start in range(0, len(items), BATCH_SIZE):
-        batch = items[start : start + BATCH_SIZE]
+    size = getattr(backend, "batch_size", BATCH_SIZE)
+    for start in range(0, len(items), size):
+        batch = items[start : start + size]
         answers: Sequence[BackendAnswer | None] = []
         failure: str | None = None
         try:
@@ -194,10 +196,14 @@ def _problem(answer: BackendAnswer, options: list[str]) -> str | None:
     return None
 
 
-def backend_named(name: str, llm: "Llm") -> Backend:
-    """The backend the configuration names. Only the model-backed one exists so far."""
+def backend_named(name: str, llm: "Llm", decisions: "Decisions | None" = None) -> Backend:
+    """The backend the configuration names: a general model answering in text ("llm"),
+    or OpenAI's Decisions API ("openai-decisions")."""
+    from thenwhat.decide.decisions_backend import NAME, DecisionsBackend
     from thenwhat.decide.llm_backend import LlmBackend
 
     if name == "llm":
         return LlmBackend(llm)
-    raise UnknownBackend(f"Unknown decision backend '{name}'. Available: llm.")
+    if name == NAME and decisions is not None:
+        return DecisionsBackend(decisions)
+    raise UnknownBackend(f"Unknown decision backend '{name}'. Available: llm, {NAME}.")

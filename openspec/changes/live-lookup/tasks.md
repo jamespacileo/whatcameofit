@@ -41,6 +41,14 @@
 - [ ] 4c.4 Where a platform cannot be read, say so by name and ask for the post's text or the article's address
 - [ ] 4c.5 Add posts to the outlet record, so each platform shows what works
 
+## 4d. Speed (asked for 2026-11-12: a decision model, and work done in parallel)
+
+- [x] 4d.1 Check OpenAI's Decisions API terms, price and limits, try it once with made-up records, and note them in `docs/sources.md`
+- [x] 4d.2 Add the `openai-decisions` backend behind `DECISION_BACKEND`, counted in the usage ledger and stopped by the monthly ceiling; verify its tests pass on a recorded answer
+- [ ] 4d.3 Score with the Decisions API in the Worker when it is configured, and run its independent requests at the same time
+- [ ] 4d.4 Measure a lookup's time and answers with each backend on the same articles, and record both
+- [ ] 4d.5 Save an outlet run article by article and check several outlets at once, with one shared limit per registry
+
 ## 5. For readers (decided 2026-11-12: unreviewed answers may be shown, clearly marked)
 
 - [x] 5.1 Build the lookup service for the site's Worker in plain JavaScript, with the pipeline's search and scoring rules; verify its 21 tests pass

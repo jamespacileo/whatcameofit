@@ -1,0 +1,142 @@
+{
+  "request": {
+    "model": "example-model",
+    "input": "Claim: An antibody was reported to regrow missing teeth.\nIntervention: EX-1 (also known as: Toothgrow).\nIndication: tooth agenesis.\n\nEntity to match (intervention): EX-1",
+    "questions": [
+      {
+        "type": "choice",
+        "name": "item-1",
+        "instructions": "Is this record a trial of the claim's intervention for the claim's indication?\n\nCandidate record from clinicaltrials.gov (NCT00000001):\n{\"title\": \"EX-1 in tooth agenesis\", \"conditions\": [\"Tooth Agenesis\"], \"interventions\": [\"EX-1\"], \"phases\": [\"PHASE2\"]}",
+        "choices": [
+          {
+            "value": "match",
+            "description": "it tests this intervention in the claim's indication, in a form of that condition, or in patients who have it."
+          },
+          {
+            "value": "other_indication",
+            "description": "it tests this intervention for a different condition, or only in healthy volunteers."
+          },
+          {
+            "value": "not_a_match",
+            "description": "it is not a trial of this intervention."
+          }
+        ]
+      },
+      {
+        "type": "choice",
+        "name": "item-2",
+        "instructions": "Is this record a trial of the claim's intervention for the claim's indication?\n\nCandidate record from clinicaltrials.gov (NCT00000002):\n{\"title\": \"EX-1 in lung cancer\", \"conditions\": [\"Lung Cancer\"], \"interventions\": [\"EX-1\"], \"phases\": [\"PHASE1\"]}",
+        "choices": [
+          {
+            "value": "match",
+            "description": "it tests this intervention in the claim's indication, in a form of that condition, or in patients who have it."
+          },
+          {
+            "value": "other_indication",
+            "description": "it tests this intervention for a different condition, or only in healthy volunteers."
+          },
+          {
+            "value": "not_a_match",
+            "description": "it is not a trial of this intervention."
+          }
+        ]
+      },
+      {
+        "type": "choice",
+        "name": "item-3",
+        "instructions": "Is this record a trial of the claim's intervention for the claim's indication?\n\nCandidate record from clinicaltrials.gov (NCT00000003):\n{\"title\": \"Aspirin after surgery\", \"conditions\": [\"Pain\"], \"interventions\": [\"Aspirin\"], \"phases\": [\"PHASE4\"]}",
+        "choices": [
+          {
+            "value": "match",
+            "description": "it tests this intervention in the claim's indication, in a form of that condition, or in patients who have it."
+          },
+          {
+            "value": "other_indication",
+            "description": "it tests this intervention for a different condition, or only in healthy volunteers."
+          },
+          {
+            "value": "not_a_match",
+            "description": "it is not a trial of this intervention."
+          }
+        ]
+      }
+    ]
+  },
+  "response": {
+    "model": "example-model",
+    "answers": [
+      {
+        "type": "choice",
+        "name": "item-1",
+        "choice": "match",
+        "probabilities": [
+          {
+            "value": "match",
+            "probability": 1.0
+          },
+          {
+            "value": "other_indication",
+            "probability": 0.0
+          },
+          {
+            "value": "not_a_match",
+            "probability": 0.0
+          }
+        ],
+        "confidence": 1.0
+      },
+      {
+        "type": "choice",
+        "name": "item-2",
+        "choice": "other_indication",
+        "probabilities": [
+          {
+            "value": "match",
+            "probability": 0.1
+          },
+          {
+            "value": "other_indication",
+            "probability": 0.88
+          },
+          {
+            "value": "not_a_match",
+            "probability": 0.02
+          }
+        ],
+        "confidence": 0.82
+      },
+      {
+        "type": "choice",
+        "name": "item-3",
+        "choice": "not_a_match",
+        "probabilities": [
+          {
+            "value": "match",
+            "probability": 0.0
+          },
+          {
+            "value": "other_indication",
+            "probability": 0.0
+          },
+          {
+            "value": "not_a_match",
+            "probability": 1.0
+          }
+        ],
+        "confidence": 1.0
+      }
+    ],
+    "usage": {
+      "input_tokens": 709,
+      "input_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "output_tokens": 0,
+      "output_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "total_tokens": 709
+    }
+  }
+}

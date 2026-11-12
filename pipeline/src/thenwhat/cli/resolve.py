@@ -23,8 +23,21 @@ entity_app = typer.Typer(help="Add entities, synonyms and the origin paper.", no
 
 
 def make_backend(session: Session) -> Backend:
+    from thenwhat.llm.decisions import Decisions, DecisionsSettings
+
+    settings = settings_or_exit()
+    named = settings.llm_model or ""
+    decisions = Decisions(
+        session,
+        DecisionsSettings(
+            model=settings.decisions_model
+            or (named.removeprefix("openai:") if named.startswith("openai:") else None),
+            monthly_budget_usd=settings.llm_monthly_budget_usd,
+            input_usd_per_mtok=settings.decisions_input_usd_per_mtok,
+        ),
+    )
     try:
-        return backend_named(settings_or_exit().decision_backend, extract.make_llm(session))
+        return backend_named(settings.decision_backend, extract.make_llm(session), decisions)
     except UnknownBackend as unknown:
         raise EntryError(str(unknown)) from None
 

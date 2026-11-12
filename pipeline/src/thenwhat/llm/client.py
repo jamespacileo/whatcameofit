@@ -19,10 +19,8 @@ from pydantic_ai.exceptions import UnexpectedModelBehavior  # noqa: E402
 from pydantic_ai.messages import ModelMessage, ModelResponse, ToolCallPart  # noqa: E402
 from pydantic_ai.models import Model, infer_model  # noqa: E402
 from pydantic_ai.usage import RunUsage  # noqa: E402
-from sqlalchemy import func, select  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
-from thenwhat.db.models import LlmUsage  # noqa: E402
 from thenwhat.llm.errors import (  # noqa: E402
     BudgetExceeded,
     LlmCallFailed,
@@ -30,8 +28,7 @@ from thenwhat.llm.errors import (  # noqa: E402
     LlmNotConfigured,
     LlmOutputInvalid,
 )
-
-MICRO_DOLLAR = Decimal("0.000001")
+from thenwhat.llm.ledger import record_usage, spent_this_month  # noqa: E402
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,7 +81,7 @@ class Llm:
         ):
             if value is None:
                 raise LlmNotConfigured(f"{name} is not set, so no language model call was made.")
-        if self._spent_this_month() >= settings.monthly_budget_usd:
+        if spent_this_month(self._session, self._now()) >= settings.monthly_budget_usd:
             raise BudgetExceeded(
                 f"The monthly ceiling of ${settings.monthly_budget_usd} for language model"
                 " calls has been reached. No call was made."
@@ -111,15 +108,6 @@ class Llm:
             self._record(purpose, usage)
         return result.output
 
-    def _spent_this_month(self) -> Decimal:
-        month_start = self._now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        total = self._session.scalar(
-            select(func.coalesce(func.sum(LlmUsage.cost_usd), 0)).where(
-                LlmUsage.created_at >= month_start
-            )
-        )
-        return Decimal(total or 0)
-
     def _record(self, purpose: str, usage: RunUsage) -> None:
         settings = self._settings
         assert settings.model and settings.input_usd_per_mtok is not None
@@ -130,17 +118,15 @@ class Llm:
             Decimal(usage.input_tokens) * settings.input_usd_per_mtok
             + Decimal(usage.output_tokens) * settings.output_usd_per_mtok
         ) / 1_000_000
-        self._session.add(
-            LlmUsage(
-                purpose=purpose,
-                model=settings.model,
-                input_tokens=usage.input_tokens,
-                output_tokens=usage.output_tokens,
-                cost_usd=cost.quantize(MICRO_DOLLAR),
-                created_at=self._now(),
-            )
+        record_usage(
+            self._session,
+            purpose=purpose,
+            model=settings.model,
+            input_tokens=usage.input_tokens,
+            output_tokens=usage.output_tokens,
+            cost_usd=cost,
+            now=self._now(),
         )
-        self._session.flush()
 
 
 def _failing_fields(messages: list[ModelMessage], output_type: type[BaseModel]) -> list[str]:

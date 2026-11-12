@@ -19,8 +19,12 @@ class Settings(BaseSettings):
     llm_input_usd_per_mtok: Decimal | None = None
     llm_output_usd_per_mtok: Decimal | None = None
 
-    # Which backend answers bounded decisions. Only "llm" exists so far.
+    # Which backend answers bounded decisions: "llm" or "openai-decisions".
     decision_backend: str = "llm"
+    # For "openai-decisions": the model by the provider's own name (when empty, the
+    # model of LLM_MODEL if that is an OpenAI one) and its price per million input tokens.
+    decisions_model: str | None = None
+    decisions_input_usd_per_mtok: Decimal | None = None
 
     review_confidence_threshold: float = 0.95
     # A new candidate match scored under this is rejected by rule instead of waiting
