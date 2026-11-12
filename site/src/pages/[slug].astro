@@ -223,10 +223,9 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
         <dt>Intervention</dt>
         <dd>
           {claim.intervention.name}
-          {
-            claim.intervention.synonyms.length > 0 &&
-              ` (also known as ${claim.intervention.synonyms.join(", ")})`
-          }
+          {claim.intervention.synonyms.length > 0 && (
+            <span class="aka">also known as {claim.intervention.synonyms.join(", ")}</span>
+          )}
         </dd>
       </div>
       <div>
@@ -248,7 +247,7 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
       {
         claim.evidence_stage && (
           <div>
-            <dt>Evidence then</dt>
+            <dt>Evidence when first reported</dt>
             <dd>{EVIDENCE_STAGES[claim.evidence_stage] ?? claim.evidence_stage}</dd>
           </div>
         )
