@@ -147,6 +147,16 @@ The operator was away and asked the assistant to keep going until the proof of c
 - **Left pending for you:** matches scored between 0.10 and 0.90, combination trials (for example `hepatitis-b-bepirovirsen` match 144, `ptsd-personalised-magnetic-stimulation` matches 454 and 458), basket trials, and one trial in women on the male-pattern-baldness claim (146).
 - **Five articles were not read by the model.** The US Sun's robots.txt forbids automated reading and the pipeline respected it (three claims); two other pages would not load. Those claims have only what the CSV gave them.
 
+### Batch scoring checked against one-by-one scoring (2026-11-12)
+
+Candidates are scored several to a model call. To see whether that costs accuracy, 51 trial candidates were scored again one at a time and compared with their stored batch answer: 25 drawn at random from the 65 scored 0.5 or more, 25 from the 211 scored under 0.05, and the single one in between. Nothing stored was changed. Cost: half a cent.
+
+- **Scored under 0.05: 25 of 25 the same answer**, largest score difference 0.01. These are the ones the rule rejects, so the rule is not hiding matches in this sample.
+- **Scored 0.5 or more: 24 of 25 the same answer.** The one difference: `muscle-loss-atr-258`, NCT07421024. The batch said match (0.96); alone, the model said other indication, because the trial lists "overweight and obesity" and the claim is about muscle. The trial is the Copenhagen study the news reported, so the batch answer is the right one and the approval stands.
+- **The one in between:** `heart-failure-ipsc-heart-muscle-cells`, NCT07471698, a patch loaded with heart muscle cells grown from stem cells (HiCM-188). The batch said not a match (0.08) and the assistant rejected it; alone, the model said match (0.88). The claim is about cells grown from the patient's own cells and injected; the record is a patch of a named cell product. **This one is yours to decide:** `review approve match 7091` if it is the same treatment.
+
+A sample of 51 shows no sign that batches score worse. It is not proof for every claim.
+
 ### Not finished
 
 Eight claims with broad names were still being searched when this was written, or their search was cut off: `biological-ageing-glp-1-drugs`, `pre-leukaemia-vitamin-c`, `stiff-person-syndrome-car-t`, `heart-failure-ipsc-heart-muscle-cells`, `type-2-diabetes-glucose-catalyst-implant`, `kidney-failure-pig-kidney-transplant`, `knee-osteoarthritis-genicular-artery-embolisation`, `muscle-loss-atr-258`. A broad name returns hundreds of loosely related trials and each is scored by a model call, one at a time. They are imported and pending.
