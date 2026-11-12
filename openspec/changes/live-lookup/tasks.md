@@ -61,6 +61,7 @@
 - [x] 5.5 Try it end to end on this machine with `make lookup-dev`: an untracked article gave a marked answer with the treatment's trials (2026-11-12)
 - [x] 5.6 Have the browser extension read the open page and ask the same service, for sites that refuse automated reading (2026-11-12; tasks 5.1 to 5.5 of the browser-extension change; not yet pressed in a real Chrome or Safari)
 - [ ] 5.7 Measure the Worker against the same test as the pipeline's lookup
+- [x] 5.8 Keep marked main content ahead of large navigation menus in both page readers and verify the first-time UCLH article lookup (2026-11-12: baxdrostat identified, BaxHTN NCT06034743 first, 6.4 seconds locally)
 
 ## 6. For the operator
 

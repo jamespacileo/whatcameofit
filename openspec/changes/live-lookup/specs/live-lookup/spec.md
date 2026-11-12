@@ -39,6 +39,11 @@ When a lookup starts from an article's address, the reader of the page SHALL tak
 - **WHEN** the visible page is a teaser and its structured data holds the article
 - **THEN** the model is shown the article from the structured data and not the teaser
 
+#### Scenario: Article after a large navigation menu
+- **WHEN** a page marks its main content with a main element after navigation that exceeds the lookup text limit
+- **THEN** the visible text sent to the model comes from the main element, with the page's headline, summary and date retained and structured article data still taking precedence
+- **AND** registry numbers and paper links elsewhere in the page remain available as signals
+
 #### Scenario: Page that links to the paper it reports
 - **WHEN** the page links to a paper by DOI, and that paper's abstract gives a ClinicalTrials.gov number
 - **THEN** that trial is among the candidates, marked as given by a paper the page links to

@@ -36,7 +36,7 @@ DATE_TAGS = ("article:published_time", "date", "dc.date", "pubdate", "parsely-pu
 
 @dataclass(frozen=True, slots=True)
 class Page:
-    # Everything a reader sees, as plain text.
+    # The marked main content, or all visible text when no main content is marked.
     text: str
     headline: str | None = None
     summary: str | None = None
@@ -67,7 +67,8 @@ def read_page(html: str) -> Page:
     collector = _Collector()
     collector.feed(html)
     collector.close()
-    text = _tidy(" ".join(collector.pieces))
+    all_text = _tidy(" ".join(collector.pieces))
+    text = _tidy(" ".join(collector.main_pieces)) or all_text
     described = _structured(collector.structured)
     tags = collector.tags
     links = " ".join(collector.links)
@@ -78,7 +79,7 @@ def read_page(html: str) -> Page:
         published=_first(tags, DATE_TAGS) or described.get("datePublished"),
         body=described.get("articleBody"),
         registry_numbers=_unique(
-            number.upper() for number in REGISTRY_NUMBER.findall(f"{text} {links}")
+            number.upper() for number in REGISTRY_NUMBER.findall(f"{all_text} {links}")
         ),
         dois=_unique(_dois(links)),
         pubmed_ids=_unique(PUBMED.findall(links)),
@@ -89,6 +90,7 @@ class _Collector(HTMLParser):
     def __init__(self) -> None:
         super().__init__()
         self.pieces: list[str] = []
+        self.main_pieces: list[str] = []
         self.links: list[str] = []
         self.tags: dict[str, str] = {}
         self.structured: list[str] = []
@@ -96,9 +98,12 @@ class _Collector(HTMLParser):
         self._skipping = 0
         self._in_title = False
         self._in_structured = False
+        self._main_depth = 0
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         given = {name: value or "" for name, value in attrs}
+        if tag == "main":
+            self._main_depth += 1
         if tag == "a" and given.get("href"):
             self.links.append(unquote(given["href"]))
         elif tag == "meta":
@@ -114,6 +119,8 @@ class _Collector(HTMLParser):
             self._skipping += 1
 
     def handle_endtag(self, tag: str) -> None:
+        if tag == "main" and self._main_depth:
+            self._main_depth -= 1
         if tag == "title":
             self._in_title = False
         elif tag == "script":
@@ -126,6 +133,8 @@ class _Collector(HTMLParser):
             self.structured[-1] += data
         elif not self._skipping:
             self.pieces.append(data)
+            if self._main_depth:
+                self.main_pieces.append(data)
             if self._in_title and self.title is None and data.strip():
                 self.title = _tidy(data)
 
