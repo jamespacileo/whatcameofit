@@ -416,6 +416,78 @@ test("records are scored twenty to a call and probabilities that nearly sum to o
   assert.ok(Math.abs(scored[0].probabilities.match - 0.9 / 0.98) < 1e-9);
 });
 
+test("Scenario: Many items, one call", async () => {
+  const sent = [];
+  const fetch = async (address, options) => {
+    const body = JSON.parse(options.body);
+    sent.push({ address, headers: options.headers, body });
+    const answers = body.questions.map((question, at) =>
+      at === 1
+        ? { type: "refusal", name: question.name }
+        : {
+            type: "choice",
+            name: question.name,
+            choice: "match",
+            probabilities: [
+              { value: "match", probability: 0.88 },
+              { value: "other_indication", probability: 0.1 },
+              { value: "not_a_match", probability: 0.02 },
+            ],
+            confidence: 0.82,
+          },
+    );
+    // Answers need not come back in the order asked: they are matched by name.
+    return Response.json({ answers: answers.reverse(), usage: { input_tokens: 9000 } });
+  };
+  const model = makeModel({ fetch, apiKey: "test-key", model: "openai:example-model", baseUrl: "https://llm.example.test/v1/", decisions: true });
+
+  const scored = await model.score("Claim: …", Array.from({ length: 60 }, (_, n) => `record ${n}`));
+
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].address, "https://llm.example.test/v1/decisions");
+  assert.equal(sent[0].headers.Authorization, "Bearer test-key");
+  assert.deepEqual([sent[0].body.model, sent[0].body.input, sent[0].body.questions.length], ["example-model", "Claim: …", 60]);
+  const [first] = sent[0].body.questions;
+  assert.deepEqual([first.type, first.name], ["choice", "item-1"]);
+  assert.match(first.instructions, /^Is this record a trial[\s\S]*\n\nrecord 0$/);
+  assert.deepEqual(first.choices.map((choice) => choice.value), ["match", "other_indication", "not_a_match"]);
+  assert.match(first.choices[1].description, /different condition/);
+  assert.equal(scored.length, 60);
+  assert.deepEqual(scored[0], { answer: "match", probabilities: { match: 0.88, other_indication: 0.1, not_a_match: 0.02 } });
+  // A record the API declines has no score.
+  assert.equal(scored[1], null);
+});
+
+test("a decision call that fails says its status and nothing that was sent", async () => {
+  const fetch = async () => new Response(JSON.stringify({ error: "echo of record 0" }), { status: 429 });
+  const model = makeModel({ fetch, apiKey: "test-key", model: "example-model", decisions: true });
+
+  await assert.rejects(model.score("Claim: …", ["record 0"]), { message: "decisions 429" });
+});
+
+test("the model reads the text while linked papers and stated numbers are looked up", async () => {
+  const started = [];
+  let reading;
+  const model = {
+    read: () => (started.push("read"), new Promise((resolve) => (reading = resolve))),
+    score: fakeModel().score,
+  };
+  const registry = {
+    ...fakeRegistry({}, { NCT01234567: study("NCT01234567", "EX-1 in tooth agenesis") }),
+    fetch: async (id) => (started.push(`registry ${id}`), study(id, "EX-1 in tooth agenesis")),
+  };
+  const papers = { trialNumbers: async () => (started.push("papers"), []) };
+  const page = { registryNumbers: ["NCT01234567"], dois: ["10.1234/example.2026.0042"], pubmedIds: [] };
+
+  const looking = lookUp({ text: TEXT, model, registry, index: INDEX, page, papers });
+  await new Promise((resolve) => setTimeout(resolve, 5));
+
+  // The model has not answered yet, and the other two hosts have already been asked.
+  assert.deepEqual(started, ["read", "papers", "registry NCT01234567"]);
+  reading(READING);
+  assert.deepEqual((await looking).candidates.map((c) => c.id), ["NCT01234567"]);
+});
+
 test("a record the model leaves out, or answers unusably, has no score", async () => {
   const { model } = modelOver({ answers: [{ item: 2, choice: "match", probabilities: { match: 3, other_indication: 0, not_a_match: 0 } }] });
 

@@ -21,7 +21,15 @@ const refuse = (status, error) => answer({ error }, status);
 
 function realTools(env) {
   return {
-    model: makeModel({ fetch, apiKey: env.OPENAI_API_KEY, model: env.LLM_MODEL, baseUrl: env.LLM_BASE_URL || undefined }),
+    model: makeModel({
+      fetch,
+      apiKey: env.OPENAI_API_KEY,
+      model: env.LLM_MODEL,
+      baseUrl: env.LLM_BASE_URL || undefined,
+      // The same setting as the pipeline's: which backend scores the records.
+      decisions: env.DECISION_BACKEND === "openai-decisions",
+      decisionsModel: env.DECISIONS_MODEL || undefined,
+    }),
     registry: makeRegistry({ fetch, contact: env.CONTACT_EMAIL }),
     papers: makePapers({ fetch, contact: env.CONTACT_EMAIL }),
   };

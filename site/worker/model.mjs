@@ -15,12 +15,19 @@ give your probability for every option, as numbers from 0 to 1 that sum to 1.
 Judge each item on its own, only from the information given about it. Do not add
 outside knowledge about the subject.`;
 
-const OPTIONS = ["match", "other_indication", "not_a_match"];
-const QUESTION = `Is this record a trial of the claim's intervention for the claim's indication?
-- match: it tests this intervention in the claim's indication, in a form of that condition, or in patients who have it.
-- other_indication: it tests this intervention for a different condition, or only in healthy volunteers.
-- not_a_match: it is not a trial of this intervention.`;
+const ASKED = "Is this record a trial of the claim's intervention for the claim's indication?";
+// Each answer and when it applies.
+const CHOICES = [
+  ["match", "it tests this intervention in the claim's indication, in a form of that condition, or in patients who have it."],
+  ["other_indication", "it tests this intervention for a different condition, or only in healthy volunteers."],
+  ["not_a_match", "it is not a trial of this intervention."],
+];
+const OPTIONS = CHOICES.map(([option]) => option);
+const QUESTION = [ASKED, ...CHOICES.map(([option, when]) => `- ${option}: ${when}`)].join("\n");
+// A general model is asked about this many records per call.
 const BATCH_SIZE = 20;
+// The Decisions API takes this many questions in one request.
+const MAX_QUESTIONS = 400;
 // Models often return probabilities that sum to 0.98 or 1.01; that much is rescaled.
 const RESCALE_WITHIN = 0.1;
 
@@ -86,12 +93,48 @@ function usable(given) {
   };
 }
 
-export function makeModel({ fetch, apiKey, model, baseUrl = "https://api.openai.com/v1" }) {
+/** One answer of the Decisions API in the same form, or null for a refusal. */
+function decided(given) {
+  if (!given || given.type !== "choice" || !Array.isArray(given.probabilities)) return null;
+  return usable({
+    choice: given.choice,
+    probabilities: Object.fromEntries(given.probabilities.map((one) => [one.value, one.probability])),
+  });
+}
+
+/**
+ * @param {{ decisions?: boolean, decisionsModel?: string }} options With `decisions`, records
+ *   are scored by OpenAI's Decisions API: every record in one request and no text written
+ *   out, which is several times faster. Without it, by the general model, twenty to a call.
+ */
+export function makeModel({ fetch, apiKey, model, baseUrl = "https://api.openai.com/v1", decisions = false, decisionsModel }) {
   // The pipeline names a model with its provider in front ("openai:name"); the provider's
   // own API wants the name alone.
   const modelName = String(model).replace(/^openai:/, "");
+  const base = baseUrl.replace(/\/$/, "");
+
+  async function decide(intro, items) {
+    const response = await fetch(`${base}/decisions`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: decisionsModel || modelName,
+        input: intro,
+        questions: items.map((item, at) => ({
+          type: "choice",
+          name: `item-${at + 1}`,
+          instructions: `${QUESTION}\n\n${item}`,
+          choices: CHOICES.map(([value, description]) => ({ value, description })),
+        })),
+      }),
+    });
+    // The reply may quote what was sent, so nothing of it goes into the error.
+    if (!response.ok) throw new Error(`decisions ${response.status}`);
+    const given = new Map(((await response.json()).answers ?? []).map((answer) => [answer.name, answer]));
+    return items.map((_, at) => decided(given.get(`item-${at + 1}`)));
+  }
   async function ask(name, schema, instructions, prompt) {
-    const response = await fetch(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
+    const response = await fetch(`${base}/chat/completions`, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -115,16 +158,21 @@ export function makeModel({ fetch, apiKey, model, baseUrl = "https://api.openai.
 
     /** For each record, in order: the answer and its probabilities, or null when unusable. */
     async score(intro, items) {
-      const scored = [];
-      for (let start = 0; start < items.length; start += BATCH_SIZE) {
-        const batch = items.slice(start, start + BATCH_SIZE);
-        const numbered = batch.map((item, at) => `[${at + 1}] ${item}`).join("\n\n");
-        const prompt = `${intro}\n\n${QUESTION}\n\nOptions: ${OPTIONS.join(", ")}\n\nItems:\n\n${numbered}`;
-        const reply = await ask("answers", ANSWERS, SCORE_INSTRUCTIONS, prompt);
-        const given = new Map((reply.answers ?? []).map((answer) => [answer.item, answer]));
-        batch.forEach((_, at) => scored.push(usable(given.get(at + 1))));
-      }
-      return scored;
+      const size = decisions ? MAX_QUESTIONS : BATCH_SIZE;
+      const batches = [];
+      for (let start = 0; start < items.length; start += size) batches.push(items.slice(start, start + size));
+      // The calls do not depend on each other, so they are made at the same time.
+      const scored = await Promise.all(
+        batches.map(async (batch) => {
+          if (decisions) return decide(intro, batch);
+          const numbered = batch.map((item, at) => `[${at + 1}] ${item}`).join("\n\n");
+          const prompt = `${intro}\n\n${QUESTION}\n\nOptions: ${OPTIONS.join(", ")}\n\nItems:\n\n${numbered}`;
+          const reply = await ask("answers", ANSWERS, SCORE_INSTRUCTIONS, prompt);
+          const given = new Map((reply.answers ?? []).map((answer) => [answer.item, answer]));
+          return batch.map((_, at) => usable(given.get(at + 1)));
+        }),
+      );
+      return scored.flat();
     },
   };
 }

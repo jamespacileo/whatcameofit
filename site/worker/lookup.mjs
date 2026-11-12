@@ -53,6 +53,13 @@ function nothingFound(reading, numbers) {
   };
 }
 
+/** One request at a time to one host, in order. */
+async function inTurn(items, ask) {
+  const answers = [];
+  for (const item of items) answers.push(await ask(item));
+  return answers;
+}
+
 /** The registry numbers given by the papers the page links to. A paper that cannot be
  * looked up is passed over: the lookup goes on without it. */
 async function paperNumbers(page, papers) {
@@ -78,7 +85,13 @@ export async function lookUp({ text, model, registry, index, page, papers }) {
     ...(text.match(REGISTRY_NUMBER) ?? []).map((number) => number.toUpperCase()),
     ...(page?.registryNumbers ?? []),
   ]);
-  const reading = await model.read(text);
+  // Three hosts, none waiting on another: the model reads the text while the linked
+  // papers and the registry numbers the article gives are looked up.
+  const [reading, linked, stated] = await Promise.all([
+    model.read(text),
+    paperNumbers(page, papers),
+    inTurn(numbers, (number) => registry.fetch(number)),
+  ]);
   if (!reading.about_a_treatment || !reading.intervention) return nothingFound(reading, numbers);
 
   const names = unique([reading.intervention, ...(reading.other_names ?? []).filter(isAName)]);
@@ -91,11 +104,10 @@ export async function lookUp({ text, model, registry, index, page, papers }) {
     participants: reading.participants ?? null,
     sponsor: reading.sponsor ?? null,
   };
-  const fromPapers = (await paperNumbers(page, papers)).filter((number) => !numbers.includes(number));
+  const fromPapers = linked.filter((number) => !numbers.includes(number));
   // What is known by number or by the trial's name comes first, so it is never cut off.
   const records = new Map();
-  for (const number of [...numbers, ...fromPapers]) {
-    const given = await registry.fetch(number);
+  for (const given of [...stated, ...(await inTurn(fromPapers, (number) => registry.fetch(number)))]) {
     if (given) records.set(idOf(given), given);
   }
   if (details.trial_name) {

@@ -69,7 +69,9 @@ if (!fs.existsSync(path.join(SITE_DIR, "dist/sitemap.xml"))) {
 const args = ["deploy", "--domain", domain];
 if (lookup) {
   args.push("--var", `LLM_MODEL:${process.env.LLM_MODEL}`, "--var", `CONTACT_EMAIL:${process.env.CONTACT_EMAIL}`);
-  if (process.env.LLM_BASE_URL) args.push("--var", `LLM_BASE_URL:${process.env.LLM_BASE_URL}`);
+  for (const name of ["LLM_BASE_URL", "DECISION_BACKEND", "DECISIONS_MODEL"]) {
+    if (process.env[name]) args.push("--var", `${name}:${process.env[name]}`);
+  }
 }
 console.log(lookup ? "With the registry search (/api/lookup)." : "Without the registry search: LLM_MODEL and CONTACT_EMAIL are not both set.");
 if (dryRun) args.push("--dry-run");

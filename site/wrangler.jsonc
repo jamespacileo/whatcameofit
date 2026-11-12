@@ -29,6 +29,7 @@
   ]
   // Settings the lookup needs, given at deployment and never written here:
   //   LLM_MODEL, CONTACT_EMAIL, optionally LLM_BASE_URL   (plain values)
+  //   optionally DECISION_BACKEND=openai-decisions         (scores records in one fast call)
   //   OPENAI_API_KEY                                       (a secret: `wrangler secret put`)
   // Without them /api/lookup answers "not set up" and the rest of the site is unaffected.
 }
