@@ -38,7 +38,7 @@ Four articles could not be read at their address (robots.txt or no response).
 **Why it misses**, from the nine claims where no approved trial was found:
 
 - **The registry uses a name the article does not give** (solengepras, mebufotenin, CTX310): the article has the generic name, the registry the development code. Letting the model add names it knows made no difference with the present model. A drug-name source that maps one to the other is the real fix.
-- **A combination given as one name** ("cabamiquine and pyronaridine") found nothing. Each part is now searched as well; tested, not yet measured again.
+- **A combination given as one name** ("cabamiquine and pyronaridine") found nothing. Each part is now searched as well. Checked live once: the parts were searched and 44 records came back, all correctly ranked low (another combination with pyronaridine). The claim's own trials were still missed, because the registry lists cabamiquine under its development code: the first cause again.
 - **A broad name** (vitamin C, GLP-1 receptor agonists): hundreds of trials, and the condition as the article words it does not narrow them to the right ones.
 - **The article is about more than one drug.** A patient feature on pancreatic cancer was read as being about a different drug than the claim's.
 - **The model reads the condition strictly.** A trial in "overweight" was not counted for a claim about muscle loss, though it is the study the article reports.
