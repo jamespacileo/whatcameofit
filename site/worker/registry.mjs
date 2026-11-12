@@ -2,8 +2,13 @@
 // docs/sources.md. Keep the search rule in step with thenwhat.sources.clinicaltrials.
 
 const API = "https://clinicaltrials.gov/api/v2";
+// The acronym, the enrolment and the collaborators let a lookup tell which of a
+// treatment's trials an article reports.
 const SEARCH_FIELDS =
-  "NCTId,BriefTitle,OfficialTitle,InterventionName,LeadSponsorName,Phase,OverallStatus,Condition";
+  "NCTId,BriefTitle,OfficialTitle,InterventionName,LeadSponsorName,Phase,OverallStatus,Condition" +
+  ",Acronym,EnrollmentCount,CollaboratorName";
+// A trial's name that this many trials carry does not identify one.
+const MAX_NAMED_TRIALS = 20;
 // A name with more trials than this is a class or a common substance, not one product.
 const BROAD_NAME = 100;
 // A specific name's trials are read to this many pages of a hundred.
@@ -49,6 +54,23 @@ export function makeRegistry({ fetch, contact }) {
     /** The full record of one trial, or null when the registry has none by that number. */
     async fetch(number) {
       return /^NCT\d{8}$/.test(number) ? get(`/studies/${number}`) : null;
+    },
+
+    /**
+     * The trials that carry this name in their acronym or title, such as SURMOUNT-5.
+     * None when so many do that the name does not identify a trial.
+     */
+    async named(name) {
+      const phrase = String(name ?? "").replaceAll('"', " ").trim();
+      if (!phrase) return [];
+      const body = await get("/studies", {
+        "query.titles": `"${phrase}"`,
+        pageSize: String(MAX_NAMED_TRIALS),
+        fields: SEARCH_FIELDS,
+        countTotal: "true",
+      });
+      const studies = body?.studies ?? [];
+      return (body?.totalCount ?? studies.length) > MAX_NAMED_TRIALS ? [] : studies;
     },
 
     /**

@@ -24,7 +24,7 @@ from thenwhat.extract.page import Page
 from thenwhat.llm.client import Llm
 from thenwhat.lookup.details import PAPER, STATED, Details, agreeing
 from thenwhat.resolve.service import what_it_says
-from thenwhat.sources.base import SourceRecord
+from thenwhat.sources.base import SourceError, SourceRecord
 
 STEP = "lookup_match"
 REGISTRY_NUMBER = re.compile(r"\bNCT\d{8}\b", re.IGNORECASE)
@@ -33,6 +33,8 @@ COMBINED = re.compile(r"\s+(?:and|plus)\s+|\s*\+\s*", re.IGNORECASE)
 MAX_CANDIDATES = 60
 # From this score a record reads as a trial of the treatment for the condition.
 LIKELY_FROM = 0.5
+# The most linked papers one lookup asks about.
+MAX_PAPERS = 3
 
 ShortText = Annotated[str, Field(min_length=1, max_length=200)]
 
@@ -272,14 +274,20 @@ def look_up(
 
 
 def _paper_numbers(page: Page | None, papers: Papers | None) -> list[str]:
-    """The registry numbers given by the papers the page links to."""
+    """The registry numbers given by the papers the page links to. A paper that cannot
+    be looked up is passed over: the lookup goes on without it."""
     if page is None or papers is None:
         return []
+    linked: list[dict[str, str]] = [
+        *({"doi": doi} for doi in page.dois),
+        *({"pubmed_id": pubmed_id} for pubmed_id in page.pubmed_ids),
+    ]
     found: list[str] = []
-    for doi in page.dois:
-        found += papers.trial_numbers(doi=doi)
-    for pubmed_id in page.pubmed_ids:
-        found += papers.trial_numbers(pubmed_id=pubmed_id)
+    for paper in linked[:MAX_PAPERS]:
+        try:
+            found += papers.trial_numbers(**paper)
+        except SourceError:
+            continue
     return list(dict.fromkeys(found))
 
 

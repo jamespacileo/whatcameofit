@@ -8,6 +8,7 @@ import { readAddress } from "../src/lib/lookup-match.mjs";
 import { MAX_TEXT_CHARACTERS, readArticle } from "./article.mjs";
 import { lookUp } from "./lookup.mjs";
 import { makeModel } from "./model.mjs";
+import { makePapers } from "./papers.mjs";
 import { makeRegistry } from "./registry.mjs";
 
 const PATH = "/api/lookup";
@@ -22,10 +23,11 @@ function realTools(env) {
   return {
     model: makeModel({ fetch, apiKey: env.OPENAI_API_KEY, model: env.LLM_MODEL, baseUrl: env.LLM_BASE_URL || undefined }),
     registry: makeRegistry({ fetch, contact: env.CONTACT_EMAIL }),
+    papers: makePapers({ fetch, contact: env.CONTACT_EMAIL }),
   };
 }
 
-/** @param {{ model: object, registry: object } | undefined} tools stand-ins, for tests */
+/** @param {{ model: object, registry: object, papers?: object } | undefined} tools stand-ins, for tests */
 export async function handle(request, env, tools) {
   const here = new URL(request.url);
   if (here.pathname !== PATH) return env.ASSETS.fetch(request);
@@ -39,6 +41,7 @@ export async function handle(request, env, tools) {
   if (text.length > MAX_TEXT_CHARACTERS) return refuse(413, "too_long");
 
   let article = null;
+  let page;
   if (!text) {
     article = readAddress(address);
     if (article.kind === "none") return refuse(400, "address");
@@ -58,12 +61,13 @@ export async function handle(request, env, tools) {
       const read = await readArticle(article.address, { fetch, contact: env.CONTACT_EMAIL });
       if (read.refused) return refuse(422, UNREADABLE[read.refused]);
       text = read.text;
+      page = read.page;
     }
     const index = await env.ASSETS.fetch(new Request(new URL("/lookup.json", here)))
       .then((response) => (response.ok ? response.json() : { claims: {} }))
       .catch(() => ({ claims: {} }));
-    const { model, registry } = tools ?? realTools(env);
-    return answer(await lookUp({ text, model, registry, index }));
+    const { model, registry, papers } = tools ?? realTools(env);
+    return answer(await lookUp({ text, model, registry, index, page, papers }));
   } catch {
     // What failed may quote what was sent, so it is not written anywhere.
     return refuse(502, "failed");

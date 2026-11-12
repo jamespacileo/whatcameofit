@@ -29,7 +29,10 @@ const names = (description) => ({ type: "array", items: { type: "string" }, desc
 const READING = {
   type: "object",
   additionalProperties: false,
-  required: ["about_a_treatment", "gist", "intervention", "other_names", "known_names", "search_phrases", "indication"],
+  required: [
+    "about_a_treatment", "gist", "intervention", "other_names", "known_names", "search_phrases", "indication",
+    "trial_name", "participants", "sponsor",
+  ],
   properties: {
     about_a_treatment: { type: "boolean", description: "Whether the text reports a specific treatment for a specific condition." },
     gist: text("What was reported, in one neutral line of your own words."),
@@ -38,6 +41,9 @@ const READING = {
     known_names: names("From your own knowledge, not the text: other names this exact treatment goes by that the text does not give, such as a development code, a generic name or a brand name. For a combination, also the name of each part. Only names you are sure of. At most five. Empty if you know none."),
     search_phrases: names("Up to three short phrases a clinical trial registry would use for this treatment when it has no product name, most specific first, for example 'median nerve stimulation'. Empty when the names above are enough."),
     indication: { type: ["string", "null"], description: "The condition it is reported to treat, in medical words." },
+    trial_name: { type: ["string", "null"], description: "The name the text gives the trial itself, such as SURMOUNT-5 or RECOVERY. Not the treatment's name. Null if the text gives none." },
+    participants: { type: ["integer", "null"], description: "How many people took part in the trial the text reports, as the text says. Null if it does not say." },
+    sponsor: { type: ["string", "null"], description: "The company, university or hospital the text says ran or paid for the trial, by its name alone. Null if the text names none." },
   },
 };
 const probability = { type: "number" };

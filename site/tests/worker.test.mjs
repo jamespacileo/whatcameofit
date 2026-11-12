@@ -5,9 +5,12 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { readArticle } from "../worker/article.mjs";
+import { agreeing } from "../worker/details.mjs";
 import worker, { handle } from "../worker/index.mjs";
 import { lookUp } from "../worker/lookup.mjs";
 import { makeModel } from "../worker/model.mjs";
+import { pageAsText, readPage } from "../worker/page.mjs";
+import { makePapers } from "../worker/papers.mjs";
 import { makeRegistry } from "../worker/registry.mjs";
 
 const TEXT = "Scientists say EX-1, also called Toothgrow, regrew teeth in people born without them.";
@@ -21,24 +24,26 @@ const READING = {
   indication: "tooth agenesis",
 };
 
-function study(id, title, condition = "Tooth Agenesis") {
+function study(id, title, condition = "Tooth Agenesis", { acronym, enrolled, sponsor, collaborators = [] } = {}) {
   return {
     protocolSection: {
-      identificationModule: { nctId: id, briefTitle: title },
+      identificationModule: { nctId: id, briefTitle: title, acronym },
       conditionsModule: { conditions: [condition] },
       armsInterventionsModule: { interventions: [{ name: "EX-1" }] },
-      designModule: { phases: ["PHASE2"] },
+      designModule: { phases: ["PHASE2"], enrollmentInfo: { count: enrolled } },
       statusModule: { overallStatus: "RECRUITING" },
+      sponsorCollaboratorsModule: { leadSponsor: { name: sponsor }, collaborators: collaborators.map((name) => ({ name })) },
     },
   };
 }
 
-function fakeRegistry(byName, byId = {}) {
+function fakeRegistry(byName, byId = {}, byTrialName = {}) {
   const searched = [];
   return {
     searched,
     search: async (name, condition) => (searched.push([name, condition]), byName[name] ?? []),
     fetch: async (id) => byId[id] ?? null,
+    named: async (name) => byTrialName[name] ?? [],
   };
 }
 
@@ -111,6 +116,83 @@ test("Scenario: Text that states a registry number", async () => {
   assert.deepEqual(found.candidates.map((c) => c.id), ["NCT01234567"]);
 });
 
+test("Scenario: Page that links to the paper it reports", async () => {
+  const registry = fakeRegistry({}, { NCT07654321: study("NCT07654321", "EX-1 in tooth agenesis, second study") });
+  const asked = [];
+  const papers = {
+    trialNumbers: async (paper) => {
+      asked.push(paper);
+      if (paper.pubmedId) throw new Error("papers 503");
+      return paper.doi === "10.1234/example.2026.0042" ? ["NCT07654321"] : [];
+    },
+  };
+  const page = { registryNumbers: [], dois: ["10.1234/example.2026.0042"], pubmedIds: ["31234567"] };
+
+  const found = await lookUp({ text: TEXT, model: fakeModel(), registry, index: INDEX, page, papers });
+
+  // A paper that cannot be looked up is passed over.
+  assert.deepEqual(asked, [{ doi: "10.1234/example.2026.0042" }, { pubmedId: "31234567" }]);
+  assert.deepEqual(found.paper_numbers, ["NCT07654321"]);
+  assert.deepEqual(found.candidates.map((c) => [c.id, c.agrees]), [["NCT07654321", ["paper"]]]);
+});
+
+test("a registry number in a link on the page is first, whatever its score", async () => {
+  const registry = fakeRegistry(
+    { "EX-1": [study("NCT00000001", "EX-1 in tooth agenesis")] },
+    { NCT01234567: study("NCT01234567", "EX-1 first study in people", "Healthy Volunteers") },
+  );
+  const page = { registryNumbers: ["NCT01234567"], dois: [], pubmedIds: [] };
+
+  const found = await lookUp({ text: TEXT, model: fakeModel(), registry, index: INDEX, page });
+
+  assert.deepEqual(found.candidates.map((c) => [c.id, c.agrees]), [["NCT01234567", ["stated"]], ["NCT00000001", []]]);
+  assert.ok(found.candidates[0].score < 0.5);
+});
+
+test("Scenario: Text that names the trial", async () => {
+  const named = study("NCT00000009", "EX-1 in adults with tooth agenesis", "Tooth Agenesis", { acronym: "REGROW-2" });
+  const registry = fakeRegistry({ "EX-1": [study("NCT00000001", "EX-1 in tooth agenesis")] }, {}, { "REGROW-2": [named] });
+
+  const found = await lookUp({ text: TEXT, model: fakeModel({ ...READING, trial_name: "REGROW-2" }), registry, index: INDEX });
+
+  assert.equal(found.details.trial_name, "REGROW-2");
+  assert.deepEqual(found.candidates.map((c) => [c.id, c.agrees]), [["NCT00000009", ["trial_name"]], ["NCT00000001", []]]);
+});
+
+test("Scenario: Text that gives the trial's size and who ran it", async () => {
+  const registry = fakeRegistry({
+    "EX-1": [
+      study("NCT00000001", "EX-1 in tooth agenesis", "Tooth Agenesis", { enrolled: 40, sponsor: "Example Bio" }),
+      study("NCT00000002", "EX-1 in tooth agenesis", "Tooth Agenesis", { enrolled: 118, sponsor: "Kyoto University" }),
+      // Agreeing details never lift a record that is not a trial for the condition.
+      study("NCT00000003", "EX-1 in lung cancer", "Lung Cancer", { enrolled: 120, sponsor: "Kyoto University" }),
+    ],
+  });
+  const reading = { ...READING, participants: 120, sponsor: "Kyoto University" };
+
+  const found = await lookUp({ text: TEXT, model: fakeModel(reading), registry, index: INDEX });
+
+  assert.deepEqual(found.candidates.map((c) => [c.id, c.agrees]), [
+    ["NCT00000002", ["participants", "sponsor"]],
+    ["NCT00000001", []],
+    ["NCT00000003", ["participants", "sponsor"]],
+  ]);
+});
+
+test("a record agrees with a trial's name, size and sponsor by rule", () => {
+  const record = (more) => study("NCT00000001", "EX-1 in adults (REGROW-2)", "Tooth Agenesis", more);
+
+  assert.deepEqual(agreeing(record({ acronym: "REGROW-2" }), { trial_name: "regrow 2" }), ["trial_name"]);
+  assert.deepEqual(agreeing(record({ acronym: "REGROW-21" }), { trial_name: "REGROW-21" }), ["trial_name"]);
+  assert.deepEqual(agreeing(study("NCT00000001", "EX-1", "x", { acronym: "REGROW-21" }), { trial_name: "REGROW-2" }), []);
+  assert.deepEqual(agreeing(record({ enrolled: 2539 }), { participants: 2500 }), ["participants"]);
+  assert.deepEqual(agreeing(record({ enrolled: 751 }), { participants: 2500 }), []);
+  assert.deepEqual(agreeing(record({ sponsor: "University of Oxford" }), { sponsor: "Oxford University" }), ["sponsor"]);
+  assert.deepEqual(agreeing(record({ sponsor: "Example", collaborators: ["University of Oxford"] }), { sponsor: "Oxford University" }), ["sponsor"]);
+  assert.deepEqual(agreeing(record({ sponsor: "Oxford Immunotec Ltd" }), { sponsor: "Oxford University" }), []);
+  assert.deepEqual(agreeing(record({ enrolled: 100, sponsor: "Example" }), {}), []);
+});
+
 test("Scenario: Text that is not about a treatment", async () => {
   const registry = fakeRegistry({});
   const model = fakeModel({ about_a_treatment: false, gist: "A report on waiting times." });
@@ -141,7 +223,8 @@ function registryOver(pages) {
   const fetch = async (address, options) => {
     const url = new URL(address);
     asked.push({ url, agent: options.headers["User-Agent"] });
-    const key = `${url.searchParams.get("query.intr") ?? url.pathname.split("/").pop()}|${url.searchParams.get("query.cond") ?? ""}|${url.searchParams.get("pageToken") ?? ""}`;
+    const asked_for = url.searchParams.get("query.intr") ?? url.searchParams.get("query.titles") ?? url.pathname.split("/").pop();
+    const key = `${asked_for}|${url.searchParams.get("query.cond") ?? ""}|${url.searchParams.get("pageToken") ?? ""}`;
     const body = pages[key];
     return body ? Response.json(body) : new Response("", { status: 404 });
   };
@@ -186,6 +269,99 @@ test("a trial is fetched by its number, and an unknown number is none", async ()
 
   assert.equal((await registry.fetch("NCT00000001")).protocolSection.identificationModule.briefTitle, "one");
   assert.equal(await registry.fetch("NCT99999999"), null);
+});
+
+test("trials are found by a trial's name, and a name that many trials carry identifies none", async () => {
+  const { registry, asked } = registryOver({
+    '"REGROW-2"||': { studies: [study("NCT00000009", "nine")], totalCount: 1 },
+    '"study"||': { studies: [study("NCT00000001", "one")], totalCount: 4000 },
+  });
+
+  assert.deepEqual((await registry.named('REGROW-2"')).map((s) => s.protocolSection.identificationModule.nctId), ["NCT00000009"]);
+  assert.match(asked[0].url.searchParams.get("fields"), /Acronym,EnrollmentCount,CollaboratorName/);
+  assert.deepEqual(await registry.named("study"), []);
+  assert.deepEqual(await registry.named("  "), []);
+});
+
+// --- papers -------------------------------------------------------------------------
+
+function papersOver(byQuery) {
+  const asked = [];
+  const fetch = async (address, options) => {
+    const url = new URL(address);
+    asked.push({ query: url.searchParams.get("query"), agent: options.headers["User-Agent"] });
+    const abstractText = byQuery[url.searchParams.get("query")];
+    return Response.json({ resultList: { result: abstractText === undefined ? [] : [{ abstractText }] } });
+  };
+  return { papers: makePapers({ fetch, contact: "ops@example.org" }), asked };
+}
+
+test("a paper gives the registry number of its trial, by DOI or PubMed number", async () => {
+  const { papers, asked } = papersOver({
+    'DOI:"10.1234/example.2026.0042"': "A synthetic abstract. (ClinicalTrials.gov number, nct07654321.)",
+    "EXT_ID:31234567 AND SRC:MED": "Registered as NCT07654321 and NCT07654322.",
+    'DOI:"10.1/review"': "NCT00000001 NCT00000002 NCT00000003 NCT00000004",
+  });
+
+  assert.deepEqual(await papers.trialNumbers({ doi: "10.1234/example.2026.0042" }), ["NCT07654321"]);
+  assert.deepEqual(await papers.trialNumbers({ pubmedId: "31234567" }), ["NCT07654321", "NCT07654322"]);
+  // A paper that lists many trials is a review; an unknown paper gives none.
+  assert.deepEqual(await papers.trialNumbers({ doi: "10.1/review" }), []);
+  assert.deepEqual(await papers.trialNumbers({ doi: "10.1/unknown" }), []);
+  assert.deepEqual(await papers.trialNumbers({ pubmedId: "abc" }), []);
+  assert.equal(asked.length, 4);
+  assert.match(asked[0].agent, /^thenwhat-lookup\/\S+ \(mailto:ops@example\.org\)$/);
+});
+
+// --- page ---------------------------------------------------------------------------
+
+const BODY = "Researchers gave EX-1 to 120 people born without some teeth. ".repeat(12).trim();
+const RICH_PAGE = `<html><head>
+<title>Antibody regrows teeth | The Example</title>
+<meta property="og:title" content="Antibody regrows teeth in first human trial">
+<meta name="description" content="A drug called EX-1 restored missing teeth, a study says.">
+<meta content="2026-03-04T09:30:00Z" property="article:published_time">
+<script type="application/ld+json">${JSON.stringify({ "@graph": [{ "@type": "Organization", name: "The Example" }, { "@type": "NewsArticle", headline: "Antibody regrows teeth", articleBody: BODY }] })}</script>
+<script>var tracking = "not for readers";</script></head><body>
+<p>Subscribe to read the full story.</p>
+<p>The results were <a href="https://doi.org/10.1234/example.2026.0042">published</a> and the study is
+<a href='https://clinicaltrials.gov/study/NCT01234567'>registered</a>. An
+<a href="https://pubmed.ncbi.nlm.nih.gov/31234567/">earlier report</a> covered mice.</p></body></html>`;
+
+test("Scenario: Page that describes itself in its tags", () => {
+  const page = readPage(RICH_PAGE);
+
+  assert.deepEqual(
+    [page.headline, page.summary, page.published],
+    ["Antibody regrows teeth in first human trial", "A drug called EX-1 restored missing teeth, a study says.", "2026-03-04T09:30:00Z"],
+  );
+  const bare = readPage("<html><head><title>Teeth &amp; gums</title></head><body><p>Hi</p></body></html>");
+  assert.deepEqual([bare.headline, bare.summary, bare.published, bare.body], ["Teeth & gums", null, null, null]);
+});
+
+test("Scenario: Page that carries the article as structured data", () => {
+  const page = readPage(RICH_PAGE);
+  const text = pageAsText(page);
+
+  assert.equal(page.body, BODY);
+  assert.ok(text.startsWith("Headline: Antibody regrows teeth in first human trial\n"));
+  assert.match(text, /gave EX-1 to 120 people/);
+  assert.doesNotMatch(text, /Subscribe to read|tracking/);
+  const broken = readPage('<body><script type="application/ld+json">{not json</script><p>EX-1 regrew teeth.</p></body>');
+  assert.deepEqual([broken.body, pageAsText(broken)], [null, "EX-1 regrew teeth."]);
+});
+
+test("links to a paper and to the registry are found, also in a publisher's own address", () => {
+  const page = readPage(RICH_PAGE);
+  assert.deepEqual([page.dois, page.pubmedIds, page.registryNumbers], [["10.1234/example.2026.0042"], ["31234567"], ["NCT01234567"]]);
+
+  const links = [
+    "https://www.nejm.org/doi/full/10.1056/NEJMoa2206038?query=featured",
+    "https://www.nature.com/articles/s41591-023-02427-9",
+    "https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(23)01053-X/fulltext",
+  ];
+  const publishers = readPage(links.map((link) => `<a href="${link}">paper</a>`).join(""));
+  assert.deepEqual(publishers.dois, ["10.1056/nejmoa2206038", "10.1038/s41591-023-02427-9", "10.1016/s0140-6736(23)01053-x"]);
 });
 
 // --- model --------------------------------------------------------------------------
@@ -261,12 +437,13 @@ function web(pages) {
 const ARTICLE = "https://news.example.org/health/ex1";
 const PAGE = `<html><head><title>EX-1 regrows teeth</title><style>p{}</style><script>track()</script></head><body><h1>EX-1 regrows teeth</h1><p>Scientists say&nbsp;EX-1 worked.</p></body></html>`;
 
-test("an article that robots.txt allows is returned as plain text", async () => {
+test("an article that robots.txt allows is returned as text that opens with its headline", async () => {
   const { fetch } = web({ "https://news.example.org/robots.txt": "User-agent: *\nDisallow: /private/", [ARTICLE]: PAGE });
 
   const read = await readArticle(ARTICLE, { fetch, contact: "ops@example.org" });
 
-  assert.equal(read.text, "EX-1 regrows teeth EX-1 regrows teeth Scientists say EX-1 worked.");
+  assert.equal(read.text, "Headline: EX-1 regrows teeth\n\nEX-1 regrows teeth EX-1 regrows teeth Scientists say EX-1 worked.");
+  assert.equal(read.page.headline, "EX-1 regrows teeth");
 });
 
 test("Scenario: Article the site does not allow to be read", async () => {

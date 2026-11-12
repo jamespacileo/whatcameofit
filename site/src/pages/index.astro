@@ -276,6 +276,7 @@ const recent = data.claims
     const block = element("div", undefined, "live");
     block.append(element("p", shown.marked, "unchecked"), element("p", shown.lead));
     if (shown.searchedAlso) block.append(element("p", shown.searchedAlso, "entry-note"));
+    if (shown.trialSaid) block.append(element("p", shown.trialSaid, "entry-note"));
     if (shown.tracked.length > 0) {
       const list = element("ul", undefined, "plain");
       for (const claim of shown.tracked) {
@@ -295,6 +296,7 @@ const recent = data.claims
         link.rel = "noopener";
         const item = element("li");
         item.append(link, element("span", record.detail, "entry-note"));
+        if (record.why) item.append(element("span", record.why, "entry-note"));
         list.append(item);
       }
       block.append(element("p", LIVE.likelyLead), list);

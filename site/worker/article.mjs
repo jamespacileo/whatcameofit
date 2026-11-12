@@ -1,13 +1,14 @@
-// Getting the text of a news article, politely. The text is returned to the caller and
-// kept nowhere. The same manners as the pipeline's thenwhat.extract.retrieve: robots.txt
-// is obeyed, and when its rules cannot be read the article is not fetched.
+// Getting a news article, politely: its text and what its page says of itself. Both are
+// returned to the caller and kept nowhere. The same manners as the pipeline's
+// thenwhat.extract.retrieve: robots.txt is obeyed, and when its rules cannot be read the
+// article is not fetched.
+
+import { pageAsText, readPage } from "./page.mjs";
 
 const ROBOTS_NAME = "thenwhat";
 const VERSION = "1";
-const MAX_PAGE_CHARACTERS = 1_500_000;
 export const MAX_TEXT_CHARACTERS = 20_000;
 const NOT_PUBLIC = /^(localhost|.+\.localhost|.+\.local|.+\.internal|.+\.test|\d{1,3}(\.\d{1,3}){3}|\[.*\])$/i;
-const ENTITIES = { nbsp: " ", amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
 
 /** Whether robots.txt lets this client fetch the path: the longest matching rule decides. */
 function allowedBy(robots, path) {
@@ -41,21 +42,9 @@ function allowedBy(robots, path) {
   return deciding ? deciding.allow : true;
 }
 
-function plainText(html) {
-  return html
-    .slice(0, MAX_PAGE_CHARACTERS)
-    .replace(/<(script|style|noscript|template|svg)\b[\s\S]*?<\/\1\s*>/gi, " ")
-    .replace(/<!--[\s\S]*?-->/g, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
-    .replace(/&([a-z]+);/gi, (whole, name) => ENTITIES[name.toLowerCase()] ?? whole)
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, MAX_TEXT_CHARACTERS);
-}
-
 /**
- * @returns {Promise<{ text: string } | { refused: "address" | "robots" | "unreadable" }>}
+ * @returns {Promise<{ text: string, page: object } | { refused: "address" | "robots" | "unreadable" }>}
+ *   `text` opens with the page's headline, summary and date; `page` is worker/page.mjs's reading.
  */
 export async function readArticle(address, { fetch, contact }) {
   let url;
@@ -86,6 +75,7 @@ export async function readArticle(address, { fetch, contact }) {
 
   const page = await get(url.href);
   if (!page || page.status !== 200) return { refused: "unreadable" };
-  const text = plainText(await page.text());
-  return text ? { text } : { refused: "unreadable" };
+  const read = readPage(await page.text());
+  const text = pageAsText(read).slice(0, MAX_TEXT_CHARACTERS);
+  return text ? { text, page: read } : { refused: "unreadable" };
 }

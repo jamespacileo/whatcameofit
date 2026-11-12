@@ -21,6 +21,7 @@ export const LIVE = {
   notATreatment: "This does not appear to report a specific treatment for a specific condition, so the registry was not searched.",
   trackedLead: "We track this treatment. Its page has been through our usual checks:",
   likelyLead: "Registry records that read as trials of this treatment for this condition, likeliest first:",
+  trialSaid: "Of the trial itself, the article says:",
   none: "No matching trial record was found in ClinicalTrials.gov. That is not evidence that no trial exists: the registry may list the treatment under another name, or the trial may be registered elsewhere.",
   source: "Source of the records: ClinicalTrials.gov.",
 };
@@ -37,6 +38,42 @@ const REFUSALS = {
   not_set_up: "The registry search is not available on this site at the moment.",
   failed: "The search could not be completed. Nothing was found or ruled out. Try again in a minute.",
 };
+
+// Why a record is listed where it is. Each is a fact a reader can check on the record.
+const POINTED_TO = [
+  ["stated", "The article gives this record's number."],
+  ["paper", "A paper the article links to gives this record's number."],
+];
+const AGREES_ON = [
+  ["trial_name", "the trial's name"],
+  ["participants", "the number of participants"],
+  ["sponsor", "who ran it"],
+];
+
+function joined(parts) {
+  return parts.length < 3 ? parts.join(" and ") : `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}`;
+}
+
+/** Why a record is listed where it is, or null when only its score put it there. */
+function whyListed(agrees) {
+  const worded = (table) => table.filter(([code]) => agrees.includes(code)).map(([, words]) => words);
+  const details = worded(AGREES_ON);
+  const sentences = [
+    ...worded(POINTED_TO),
+    ...(details.length ? [`Its registration agrees with the article on ${joined(details)}.`] : []),
+  ];
+  return sentences.length ? sentences.join(" ") : null;
+}
+
+/** What the article says of its own trial, as the model read it, or null. */
+function trialSaid(details) {
+  const said = [
+    details?.trial_name ? `it is called ${details.trial_name}` : null,
+    details?.participants ? `${details.participants.toLocaleString("en-GB")} people took part` : null,
+    details?.sponsor ? `${details.sponsor} ran or paid for it` : null,
+  ].filter(Boolean);
+  return said.length ? `${LIVE.trialSaid} ${joined(said)}.` : null;
+}
 
 /** What to tell a reader when the service will not or cannot answer. */
 export function refusalMessage(code) {
@@ -64,18 +101,21 @@ function stateLabel(state) {
 
 /**
  * A lookup answer in the site's words.
- * @returns {{ marked: string, lead: string, searchedAlso: string | null,
+ * @returns {{ marked: string, lead: string, searchedAlso: string | null, trialSaid: string | null,
  *   tracked: { slug: string, headline: string, page: string }[],
- *   likely: { title: string, url: string, detail: string }[],
+ *   likely: { title: string, url: string, detail: string, why: string | null }[],
  *   rest: string | null, none: string | null, notices: string[] }}
  */
 export function describeAnswer(answer) {
   const notices = [NOTICES[1], LIVE.source];
   if (!answer.about_a_treatment || !answer.treatment) {
-    return { marked: LIVE.marked, lead: LIVE.notATreatment, searchedAlso: null, tracked: [], likely: [], rest: null, none: null, notices };
+    return { marked: LIVE.marked, lead: LIVE.notATreatment, searchedAlso: null, trialSaid: null, tracked: [], likely: [], rest: null, none: null, notices };
   }
   const candidates = answer.candidates ?? [];
-  const likely = candidates.filter((candidate) => candidate.score >= LIKELY_FROM);
+  // A record the article itself gives the number of is listed whatever its score.
+  const likely = candidates.filter(
+    (candidate) => candidate.score >= LIKELY_FROM || (candidate.agrees ?? []).includes("stated"),
+  );
   const others = candidates.length - likely.length;
   const known = answer.known_names ?? [];
   return {
@@ -84,11 +124,13 @@ export function describeAnswer(answer) {
     searchedAlso: known.length
       ? `Also searched under ${known.length === 1 ? "a name" : "names"} the article does not give: ${known.join(", ")}.`
       : null,
+    trialSaid: trialSaid(answer.details),
     tracked: answer.tracked ?? [],
     likely: likely.slice(0, SHOWN_AT_MOST).map((candidate) => ({
       title: candidate.title || candidate.id,
       url: candidate.url,
       detail: [phaseLabel(candidate.phases), stateLabel(candidate.state), candidate.id].filter(Boolean).join(" · "),
+      why: whyListed(candidate.agrees ?? []),
     })),
     rest:
       others > 0

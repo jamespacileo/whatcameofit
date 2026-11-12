@@ -27,9 +27,9 @@
 - [x] 4b.1 Read a page for its headline, summary, date, structured article, linked papers and registry numbers; verify the page tests pass
 - [x] 4b.2 Look up the trial of a linked paper through Europe PMC, and a trial the text names through the registry's title search; verify the client tests pass on recorded responses
 - [x] 4b.3 Ask the model for the trial's name, size and sponsor, compare them with each record by rule, and rank by agreement; verify the lookup tests pass
-- [ ] 4b.4 Do the same in the Worker; verify its tests pass
-- [ ] 4b.5 Show a reader why a record is listed first, in the site's words and without a verdict
-- [ ] 4b.6 Add `thenwhat outlets` to record which outlets can be read and which signals their pages carry; verify one success and one refusal
+- [x] 4b.4 Do the same in the Worker; verify its tests pass
+- [x] 4b.5 Show a reader why a record is listed first, in the site's words and without a verdict
+- [x] 4b.6 Add `thenwhat outlets` to record which outlets can be read and which signals their pages carry; verify one success and one refusal
 - [ ] 4b.7 Run it on the tracked articles and keep the result in `docs/outlets.md`
 - [ ] 4b.8 Measure the lookup again and record the change in `docs/lookup.md`
 

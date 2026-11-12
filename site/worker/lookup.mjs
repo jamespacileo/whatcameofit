@@ -3,12 +3,17 @@
 // The same steps as the pipeline's thenwhat.lookup.service; keep the two in step.
 //
 // The answer carries codes and registry fields only. The site words them.
+import { PAPER, STATED, agreeing } from "./details.mjs";
 import { isAName, nameKey, partsOf } from "./names.mjs";
 
 const REGISTRY_NUMBER = /\bNCT\d{8}\b/gi;
 // The most records one lookup will ask the model about.
 const MAX_CANDIDATES = 60;
 const MAX_RECORD_CHARACTERS = 1500;
+// From this score a record reads as a trial of the treatment for the condition.
+export const LIKELY_FROM = 0.5;
+// The most linked papers one lookup asks about.
+const MAX_PAPERS = 3;
 
 const unique = (items) => [...new Set(items)];
 const idOf = (study) => study.protocolSection.identificationModule.nctId;
@@ -40,17 +45,39 @@ function nothingFound(reading, numbers) {
     names: [],
     known_names: [],
     registry_numbers: numbers,
+    paper_numbers: [],
+    details: { trial_name: null, participants: null, sponsor: null },
     tracked: [],
     candidates: [],
     unscored: 0,
   };
 }
 
+/** The registry numbers given by the papers the page links to. A paper that cannot be
+ * looked up is passed over: the lookup goes on without it. */
+async function paperNumbers(page, papers) {
+  if (!page || !papers) return [];
+  const linked = [
+    ...(page.dois ?? []).map((doi) => ({ doi })),
+    ...(page.pubmedIds ?? []).map((pubmedId) => ({ pubmedId })),
+  ].slice(0, MAX_PAPERS);
+  const found = [];
+  for (const paper of linked) {
+    found.push(...(await papers.trialNumbers(paper).catch(() => [])));
+  }
+  return unique(found);
+}
+
 /**
- * @param {{ text: string, model: object, registry: object, index: { claims: object } }} given
+ * @param {{ text: string, model: object, registry: object, index: { claims: object },
+ *   page?: object, papers?: object }} given `page` is what the article's page says of
+ *   itself (worker/page.mjs) and `papers` looks up the trial of a linked paper.
  */
-export async function lookUp({ text, model, registry, index }) {
-  const numbers = unique((text.match(REGISTRY_NUMBER) ?? []).map((number) => number.toUpperCase()));
+export async function lookUp({ text, model, registry, index, page, papers }) {
+  const numbers = unique([
+    ...(text.match(REGISTRY_NUMBER) ?? []).map((number) => number.toUpperCase()),
+    ...(page?.registryNumbers ?? []),
+  ]);
   const reading = await model.read(text);
   if (!reading.about_a_treatment || !reading.intervention) return nothingFound(reading, numbers);
 
@@ -59,10 +86,22 @@ export async function lookUp({ text, model, registry, index }) {
   const known = unique((reading.known_names ?? []).filter(isAName)).filter((name) => !names.includes(name));
   const terms = unique([...names, ...names.flatMap(partsOf), ...known, ...(reading.search_phrases ?? [])]);
 
+  const details = {
+    trial_name: reading.trial_name ?? null,
+    participants: reading.participants ?? null,
+    sponsor: reading.sponsor ?? null,
+  };
+  const fromPapers = (await paperNumbers(page, papers)).filter((number) => !numbers.includes(number));
+  // What is known by number or by the trial's name comes first, so it is never cut off.
   const records = new Map();
-  for (const number of numbers) {
-    const stated = await registry.fetch(number);
-    if (stated) records.set(idOf(stated), stated);
+  for (const number of [...numbers, ...fromPapers]) {
+    const given = await registry.fetch(number);
+    if (given) records.set(idOf(given), given);
+  }
+  if (details.trial_name) {
+    for (const study of await registry.named(details.trial_name)) {
+      if (!records.has(idOf(study))) records.set(idOf(study), study);
+    }
   }
   for (const term of terms) {
     for (const study of await registry.search(term, reading.indication)) {
@@ -88,6 +127,12 @@ export async function lookUp({ text, model, registry, index }) {
         url: `https://clinicaltrials.gov/study/${idOf(study)}`,
         score: scored.probabilities.match,
         answer: scored.answer,
+        // Why it is ranked where it is, beyond the score: codes from worker/details.mjs.
+        agrees: [
+          ...(numbers.includes(idOf(study)) ? [STATED] : []),
+          ...(fromPapers.includes(idOf(study)) ? [PAPER] : []),
+          ...agreeing(study, details),
+        ],
         title: section.identificationModule?.briefTitle ?? "",
         conditions: section.conditionsModule?.conditions ?? [],
         interventions: (section.armsInterventionsModule?.interventions ?? []).map((one) => one.name),
@@ -95,7 +140,16 @@ export async function lookUp({ text, model, registry, index }) {
         state: section.statusModule?.overallStatus ?? null,
       };
     })
-    .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+    // A record the article itself names is first whatever its score. Then the records
+    // that read as trials of the treatment, those agreeing with more details first.
+    .sort(
+      (a, b) =>
+        Number(b.agrees.includes(STATED)) - Number(a.agrees.includes(STATED)) ||
+        Number(b.score >= LIKELY_FROM) - Number(a.score >= LIKELY_FROM) ||
+        b.agrees.length - a.agrees.length ||
+        b.score - a.score ||
+        a.id.localeCompare(b.id),
+    );
 
   const wanted = new Set([...names, ...known].map(nameKey));
   const tracked = Object.entries(index?.claims ?? {})
@@ -111,6 +165,8 @@ export async function lookUp({ text, model, registry, index }) {
     names,
     known_names: known,
     registry_numbers: numbers,
+    paper_numbers: fromPapers,
+    details,
     tracked,
     candidates,
     unscored: found.length - candidates.length,

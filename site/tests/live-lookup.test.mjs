@@ -44,6 +44,7 @@ test("Scenario: Reader sees an automatic answer", () => {
       title: "Study NCT00000001",
       url: "https://clinicaltrials.gov/study/NCT00000001",
       detail: "Phase 2/Phase 3 · active, not recruiting · NCT00000001",
+      why: null,
     },
   ]);
   assert.equal(shown.rest, "2 other records were found and read as not being trials of this treatment for this condition.");
@@ -58,6 +59,30 @@ test("a trial with no phase, and names the model added, are said plainly", () =>
 
   assert.equal(shown.likely[0].detail, "No phase · NCT00000001");
   assert.equal(shown.searchedAlso, "Also searched under a name the article does not give: TRG-035.");
+});
+
+test("a record is said to agree with the article only on what was compared", () => {
+  const shown = describeAnswer(
+    answer({
+      details: { trial_name: "REGROW-2", participants: 2539, sponsor: null },
+      candidates: [
+        candidate("NCT00000003", 0.2, { agrees: ["stated"] }),
+        candidate("NCT00000001", 0.9, { agrees: ["paper", "trial_name", "participants", "sponsor"] }),
+        candidate("NCT00000002", 0.8, { agrees: ["participants"] }),
+        candidate("NCT00000004", 0.1, { agrees: ["sponsor"] }),
+      ],
+    }),
+  );
+
+  assert.equal(shown.trialSaid, "Of the trial itself, the article says: it is called REGROW-2 and 2,539 people took part.");
+  // A record the article gives the number of is listed even when its score is low.
+  assert.deepEqual(shown.likely.map((record) => record.why), [
+    "The article gives this record's number.",
+    "A paper the article links to gives this record's number. Its registration agrees with the article on the trial's name, the number of participants and who ran it.",
+    "Its registration agrees with the article on the number of participants.",
+  ]);
+  assert.equal(shown.rest, "1 other record was found and read as not being trials of this treatment for this condition.");
+  assertNeutral([shown.trialSaid, ...shown.likely.map((record) => record.why)]);
 });
 
 test("no record found is not worded as no trial existing", () => {
