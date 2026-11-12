@@ -41,6 +41,7 @@
 - [x] 4c.4 Where a platform cannot be read, say so by name and ask for the post's text or the article's address
 - [x] 4c.5 Try a real post on each platform that is read, and show per platform what works (2026-11-12: one post each on Bluesky, Hacker News and a Mastodon server, through the site's engine)
 
+- [x] 4c.7 Follow a shortened link in a post to its article where the shortener's robots.txt allows; verify the tests for an allowed chain, a refusing shortener, a dead link and a circular one
 - [ ] 4c.6 For the operator: decide whether to register for the platforms that need it. Reddit needs an approved app, X charges per post read, YouTube needs a free key. None is built.
 
 ## 4d. Speed (asked for 2026-11-12: a decision model, and work done in parallel)

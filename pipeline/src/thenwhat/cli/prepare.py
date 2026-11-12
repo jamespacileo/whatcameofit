@@ -8,6 +8,8 @@ from typing import Annotated
 
 import typer
 
+from thenwhat.claims.entry import find_claim
+from thenwhat.claims.mesh_areas import suggestion_line
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
 from thenwhat.prepare import ClaimPlan, plan_claims, steps_for
@@ -34,6 +36,10 @@ def _prepare(plan: ClaimPlan) -> list[str]:
         report.append(
             f"  {name} ({took}): {said}" if succeeded else f"  {name} failed ({took}): {said}"
         )
+    with entry_session() as session:
+        claim = find_claim(session, plan.slug)
+        if claim is not None:
+            report.append(f"  {suggestion_line(session, claim)}")
     return [f"{plan.slug} ({time.monotonic() - started:.0f}s)", *report]
 
 

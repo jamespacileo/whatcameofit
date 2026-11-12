@@ -12,11 +12,14 @@ import { linkSignals } from "./page.mjs";
 import { makePapers } from "./papers.mjs";
 import { readPost } from "./post.mjs";
 import { makeRegistry } from "./registry.mjs";
+import { followShort } from "./short.mjs";
 
 const PATH = "/api/lookup";
 // What a reader's browser may send with text it read: this many links, each this long.
 const MAX_LINKS = 30;
 const MAX_LINK_CHARACTERS = 500;
+// The most shortened links followed for one post.
+const MAX_SHORT_LINKS = 3;
 const UNREADABLE = { robots: "unreadable_robots", unreadable: "unreadable", address: "address" };
 
 function answer(body, status = 200) {
@@ -65,7 +68,19 @@ async function readPostAndArticle(read, index, { fetch, contact }) {
  * @param {{ text: string, links: string[] }} post
  */
 async function withLinkedArticle(platform, post, index, { fetch, contact }) {
-  const read = post.links.map((link) => readAddress(link));
+  // A shortened link is followed to where it leads, where its shortener allows.
+  let followed = 0;
+  const read = [];
+  for (const link of post.links) {
+    let one = readAddress(link);
+    if (one.kind === "short" && followed < MAX_SHORT_LINKS) {
+      followed += 1;
+      const leadsTo = await followShort(link, { fetch, contact });
+      if (leadsTo) one = readAddress(leadsTo);
+    }
+    read.push(one);
+    if (one.kind === "article") break;
+  }
   const linked = read.find((one) => one.kind === "article");
   const source = {
     platform,
@@ -73,7 +88,7 @@ async function withLinkedArticle(platform, post, index, { fetch, contact }) {
     article_host: linked?.host ?? null,
     article_read: false,
   };
-  // A shortened link does not say where it leads, and is not followed to find out.
+  // What is left is a shortened link whose shortener does not let software follow it.
   if (!linked && read.some((one) => one.kind === "short")) source.only_short_links = true;
   const said = `A post on ${platform} says:\n${post.text}`;
   if (!linked) return { text: said, source };

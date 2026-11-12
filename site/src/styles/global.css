@@ -329,6 +329,19 @@ a.chip:hover {
   gap: 1rem;
 }
 
+/* The topic and, beside it, the kind of intervention: a plain word, not a chip. */
+.filed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+}
+
+.approach {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .share {
   display: inline-flex;
   align-items: center;

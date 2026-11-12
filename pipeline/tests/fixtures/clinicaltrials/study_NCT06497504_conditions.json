@@ -1,0 +1,120 @@
+{
+  "protocolSection": {
+    "conditionsModule": {
+      "keywords": [
+        "Antiretroviral treatment",
+        "Bepirovirsen",
+        "Human immunodeficiency virus",
+        "Hepatitis B virus",
+        "Placebo"
+      ],
+      "conditions": [
+        "Hepatitis B"
+      ]
+    },
+    "identificationModule": {
+      "nctId": "NCT06497504",
+      "briefTitle": "Study of Bepirovirsen in Participants Living With Human Immunodeficiency Virus and Chronic Hepatitis B Virus Infection (B-Focus)"
+    }
+  },
+  "derivedSection": {
+    "conditionBrowseModule": {
+      "meshes": [
+        {
+          "id": "D006509",
+          "term": "Hepatitis B"
+        },
+        {
+          "id": "D000163",
+          "term": "Acquired Immunodeficiency Syndrome"
+        }
+      ],
+      "ancestors": [
+        {
+          "id": "D000086982",
+          "term": "Blood-Borne Infections"
+        },
+        {
+          "id": "D003141",
+          "term": "Communicable Diseases"
+        },
+        {
+          "id": "D007239",
+          "term": "Infections"
+        },
+        {
+          "id": "D018347",
+          "term": "Hepadnaviridae Infections"
+        },
+        {
+          "id": "D004266",
+          "term": "DNA Virus Infections"
+        },
+        {
+          "id": "D014777",
+          "term": "Virus Diseases"
+        },
+        {
+          "id": "D006525",
+          "term": "Hepatitis, Viral, Human"
+        },
+        {
+          "id": "D006505",
+          "term": "Hepatitis"
+        },
+        {
+          "id": "D008107",
+          "term": "Liver Diseases"
+        },
+        {
+          "id": "D004066",
+          "term": "Digestive System Diseases"
+        },
+        {
+          "id": "D015658",
+          "term": "HIV Infections"
+        },
+        {
+          "id": "D015229",
+          "term": "Sexually Transmitted Diseases, Viral"
+        },
+        {
+          "id": "D012749",
+          "term": "Sexually Transmitted Diseases"
+        },
+        {
+          "id": "D016180",
+          "term": "Lentivirus Infections"
+        },
+        {
+          "id": "D012192",
+          "term": "Retroviridae Infections"
+        },
+        {
+          "id": "D012327",
+          "term": "RNA Virus Infections"
+        },
+        {
+          "id": "D012897",
+          "term": "Slow Virus Diseases"
+        },
+        {
+          "id": "D000091662",
+          "term": "Genital Diseases"
+        },
+        {
+          "id": "D000091642",
+          "term": "Urogenital Diseases"
+        },
+        {
+          "id": "D007153",
+          "term": "Immunologic Deficiency Syndromes"
+        },
+        {
+          "id": "D007154",
+          "term": "Immune System Diseases"
+        }
+      ]
+    }
+  }
+}

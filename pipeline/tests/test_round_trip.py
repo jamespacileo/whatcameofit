@@ -122,7 +122,7 @@ def test_seeded_example_round_trips_from_article_url_to_built_page(
         llm,
         text=SYNTHETIC_ARTICLE,
         slug=SLUG,
-        vertical="dental-regeneration",
+        vertical="mouth-and-teeth",
         url=article["url"],
         outlet=article["outlet"],
         title=article["title"],

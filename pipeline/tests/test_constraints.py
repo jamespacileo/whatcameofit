@@ -21,9 +21,7 @@ NOW = datetime(2026, 1, 1, tzinfo=UTC)
 
 
 def add_claim(session: Session, slug: str = "tooth-regrowth-usag1") -> Claim:
-    claim = Claim(
-        slug=slug, headline="h", summary="s", indication="i", vertical="dental-regeneration"
-    )
+    claim = Claim(slug=slug, headline="h", summary="s", indication="i", vertical="mouth-and-teeth")
     session.add(claim)
     session.flush()
     return claim

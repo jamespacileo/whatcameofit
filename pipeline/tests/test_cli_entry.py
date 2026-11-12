@@ -52,7 +52,7 @@ def claim_with_article(session: Session):
         session,
         slug="tooth-regrowth-usag1",
         headline="Antibody regrows teeth in mice",
-        vertical="dental-regeneration",
+        vertical="mouth-and-teeth",
         intervention="USAG-1 antibody",
         indication="tooth agenesis",
     )
@@ -81,7 +81,7 @@ CLAIM_ADD = [
 
 
 def test_claim_add_creates_the_claim(run, session: Session):
-    result = run(*CLAIM_ADD, "--vertical", "dental-regeneration")
+    result = run(*CLAIM_ADD, "--vertical", "mouth-and-teeth")
 
     assert result.exit_code == 0, result.output
     assert "enamel-gel" in result.output
@@ -92,8 +92,8 @@ def test_claim_add_refusal_explains_and_exits_1(run, session: Session):
     result = run(*CLAIM_ADD, "--vertical", "hair-regrowth-typo")
 
     assert result.exit_code == 1
-    assert "Valid verticals: ageing, allergies, brain-and-nerves" in result.output
-    assert "dental-regeneration" in result.output
+    assert "Valid verticals: ageing, bones-joints-and-muscles, brain-and-nerves" in result.output
+    assert "mouth-and-teeth" in result.output
     assert claim_count(session) == 0
 
 
@@ -186,7 +186,7 @@ def test_claim_import_csv_imports_the_file(run, session: Session, tmp_path: Path
     file = tmp_path / "claims.csv"
     file.write_text(
         f"{CSV_HEADER}\n"
-        "enamel-gel,Gel regrows enamel,dental-regeneration,Enamel gel,enamel loss,"
+        "enamel-gel,Gel regrows enamel,mouth-and-teeth,Enamel gel,enamel loss,"
         "https://news.example.org/gel,Example News,Gel regrows enamel,2019-08-30\n"
     )
 
@@ -201,7 +201,7 @@ def test_claim_import_csv_refusal_names_the_row_and_exits_1(run, session: Sessio
     file = tmp_path / "claims.csv"
     file.write_text(
         f"{CSV_HEADER}\n"
-        "enamel-gel,Gel regrows enamel,dental-regeneration,Enamel gel,enamel loss,"
+        "enamel-gel,Gel regrows enamel,mouth-and-teeth,Enamel gel,enamel loss,"
         ",Example News,Gel regrows enamel,2019-08-30\n"
     )
 
@@ -210,4 +210,77 @@ def test_claim_import_csv_refusal_names_the_row_and_exits_1(run, session: Sessio
     assert result.exit_code == 1
     assert "Nothing was imported" in result.output
     assert "row 2: article_url is missing" in result.output
+    assert claim_count(session) == 0
+
+
+# --- approach and vertical ------------------------------------------------------
+
+
+def test_claim_add_stores_the_approach(run, session: Session):
+    result = run(*CLAIM_ADD, "--vertical", "mouth-and-teeth", "--approach", "tissue-regeneration")
+
+    assert result.exit_code == 0, result.output
+    claim = find_claim(session, "enamel-gel")
+    assert claim is not None and claim.approach == "tissue-regeneration"
+
+
+def test_claim_add_refuses_an_unknown_approach(run, session: Session):
+    result = run(*CLAIM_ADD, "--vertical", "mouth-and-teeth", "--approach", "miracle")
+
+    assert result.exit_code == 1
+    assert "Unknown approach 'miracle'. Valid approaches: drug, vaccine" in result.output
+    assert claim_count(session) == 0
+
+
+def test_claim_edit_changes_vertical_and_clears_approach(run, session: Session, claim_with_article):
+    claim_with_article.approach = "drug"
+
+    result = run(
+        "claim", "edit", "tooth-regrowth-usag1", "--vertical", "gum-disease", "--approach", ""
+    )
+
+    assert result.exit_code == 0, result.output
+    assert claim_with_article.vertical == "gum-disease"
+    assert claim_with_article.approach is None
+
+
+def test_claim_edit_refuses_a_retired_vertical(run, session: Session, claim_with_article):
+    result = run("claim", "edit", "tooth-regrowth-usag1", "--vertical", "pain")
+
+    assert result.exit_code == 1
+    assert "Unknown vertical 'pain'" in result.output
+    assert claim_with_article.vertical == "mouth-and-teeth"
+
+
+def test_claim_import_csv_reads_the_approach(run, session: Session, tmp_path: Path):
+    file = tmp_path / "claims.csv"
+    file.write_text(
+        f"{CSV_HEADER},approach\n"
+        "enamel-gel,Gel regrows enamel,mouth-and-teeth,Enamel gel,enamel loss,"
+        "https://news.example.org/gel,Example News,Gel regrows enamel,2019-08-30,drug\n"
+        "kidney-gene,Gene fix for kidneys,kidneys-and-bladder,KX-1,kidney failure,"
+        "https://news.example.org/kx,Example News,Gene fix,2020-01-02,gene-therapy\n"
+    )
+
+    result = run("claim", "import-csv", str(file))
+
+    assert result.exit_code == 0, result.output
+    claims = [find_claim(session, slug) for slug in ("enamel-gel", "kidney-gene")]
+    assert [claim.approach if claim else None for claim in claims] == ["drug", "gene-therapy"]
+
+
+def test_claim_import_csv_refuses_an_unknown_approach(run, session: Session, tmp_path: Path):
+    file = tmp_path / "claims.csv"
+    file.write_text(
+        f"{CSV_HEADER},approach\n"
+        "enamel-gel,Gel regrows enamel,mouth-and-teeth,Enamel gel,enamel loss,"
+        "https://news.example.org/gel,Example News,Gel regrows enamel,2019-08-30,drug\n"
+        "kidney-gene,Gene fix for kidneys,kidneys-and-bladder,KX-1,kidney failure,"
+        "https://news.example.org/kx,Example News,Gene fix,2020-01-02,miracle\n"
+    )
+
+    result = run("claim", "import-csv", str(file))
+
+    assert result.exit_code == 1
+    assert "row 3: Unknown approach 'miracle'" in result.output
     assert claim_count(session) == 0

@@ -66,7 +66,7 @@ test("Scenario: Claim with two articles", () => {
 });
 
 test("Scenario: Vertical with claims", () => {
-  const html = page("topic/dental-regeneration/index.html");
+  const html = page("topic/gum-disease/index.html");
   for (const slug of ["quiet-claim", "phase-claim", "approved-claim"]) {
     assert.ok(html.includes(`href="/${slug}"`), `${slug} is not listed`);
   }
@@ -82,12 +82,12 @@ test("Scenario: Vertical with no published claims", () => {
     assert.ok(!page(file).includes("empty-topic"), `${file} links to an empty topic`);
   }
   // With one listed topic, the menu names it.
-  assert.match(page("index.html"), /<a href="\/topic\/dental-regeneration"[^>]*>Dental regeneration<\/a>/);
+  assert.match(page("index.html"), /<a href="\/topic\/gum-disease"[^>]*>Gum disease<\/a>/);
 });
 
 test("the topic directory lists every listed topic and no empty one", () => {
   const html = page("topics/index.html");
-  assert.match(html, /<a href="\/topic\/dental-regeneration">Dental regeneration<\/a>/);
+  assert.match(html, /<a href="\/topic\/gum-disease">Gum disease<\/a>/);
   assert.ok(!html.includes("empty-topic"));
   assert.match(html, /1 topic, 3\s+claims tracked/);
 });
@@ -97,9 +97,9 @@ test("Scenario: Topics with groups", () => {
   // The topic sits under its group's heading, and the jump row names the group.
   const section = html.slice(html.indexOf('<section class="letter" id="group-mouth-and-teeth"'));
   assert.match(section, /^<section[^>]*data-match="Mouth and teeth"[^>]*>\s*<h2[^>]*>Mouth and teeth<\/h2>/);
-  assert.ok(section.indexOf("/topic/dental-regeneration") < section.indexOf("</section>"));
+  assert.ok(section.indexOf("/topic/gum-disease") < section.indexOf("</section>"));
   assert.match(html, /aria-label="Jump to a group"[^>]*>\s*<a href="#group-mouth-and-teeth">Mouth and teeth<\/a>/);
-  assert.ok(!html.includes('id="letter-D"'));
+  assert.ok(!html.includes('id="letter-G"'));
 });
 
 test("Scenario: No topic has a group", () => {
@@ -111,13 +111,13 @@ test("Scenario: No topic has a group", () => {
   const result = build(file, out);
   assert.equal(result.status, 0, result.stdout + result.stderr);
   const html = fs.readFileSync(path.join(out, "topics/index.html"), "utf8");
-  assert.match(html, /aria-label="Jump to a letter"[^>]*>\s*<a href="#letter-D">D<\/a>/);
-  assert.match(html, /<section class="letter" id="letter-D"/);
+  assert.match(html, /aria-label="Jump to a letter"[^>]*>\s*<a href="#letter-G">G<\/a>/);
+  assert.match(html, /<section class="letter" id="letter-G"/);
   assert.ok(!html.includes('id="group-'));
 });
 
 test("a topic page marks each row with its status and keeps amber for promises", () => {
-  const html = page("topic/dental-regeneration/index.html");
+  const html = page("topic/gum-disease/index.html");
   // Each row names its status, so the filter can narrow the table. Three claims are
   // read at a glance, so the filter itself is left out of so short a list.
   assert.equal(count(html, 'class="place"'), 0);
@@ -208,7 +208,7 @@ test("Scenario: Preview build", () => {
   assert.equal(result.status, 0, result.stdout + result.stderr);
   const built = (file) => fs.readFileSync(path.join(directory, "dist", file), "utf8");
 
-  for (const file of ["index.html", "quiet-claim/index.html", "topic/dental-regeneration/index.html"]) {
+  for (const file of ["index.html", "quiet-claim/index.html", "topic/gum-disease/index.html"]) {
     assert.match(built(file), /class="preview-note"/, file);
     assert.match(built(file), /<meta name="robots" content="noindex"/, file);
   }
@@ -290,4 +290,32 @@ test("an export that does not match the schema stops the build", () => {
   const result = build(broken, fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-site-bad-")));
   assert.notEqual(result.status, 0);
   assert.match(result.stdout + result.stderr, /does not match export\.schema\.json/);
+});
+
+test("Scenario: Claim with an approach", () => {
+  const html = page("phase-claim/index.html");
+  assert.match(html, /<span class="approach"><span class="visually-hidden">Approach: <\/span>Gene therapy<\/span>/);
+});
+
+test("Scenario: Claim without an approach", () => {
+  assert.ok(!page("quiet-claim/index.html").includes('class="approach"'));
+});
+
+test("Scenario: Approach code without site wording", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.claims[1].approach = "miracle";
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-approach-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+
+  const result = build(file, path.join(directory, "dist"));
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout + result.stderr, /approaches the site has no words for: miracle/);
+});
+
+test("Scenario: Empty group", () => {
+  const html = page("topics/index.html");
+  assert.ok(html.includes("Mouth and teeth"));
+  assert.ok(!html.includes("Empty topic"));
 });

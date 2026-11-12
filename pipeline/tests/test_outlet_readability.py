@@ -59,7 +59,7 @@ def tracked(session: Session) -> Session:
         session,
         slug=SLUG,
         headline="Antibody regrows teeth",
-        vertical="dental-regeneration",
+        vertical="mouth-and-teeth",
         intervention="EX-1",
         indication="tooth agenesis",
     )

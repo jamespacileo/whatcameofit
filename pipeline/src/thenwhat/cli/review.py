@@ -6,7 +6,8 @@ from typing import Annotated
 
 import typer
 
-from thenwhat.claims.entry import EntryError
+from thenwhat.claims.entry import EntryError, find_claim
+from thenwhat.claims.mesh_areas import suggestion_line
 from thenwhat.cli.console import out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
@@ -75,6 +76,10 @@ def review_list(
             out.print(f"  {item.assertion}", markup=False)
             if item.detail:
                 out.print(f"  {item.detail}", markup=False)
+            if item.kind == ItemKind.CLAIM:
+                found = find_claim(session, item.claim_slug)
+                if found is not None:
+                    out.print(f"  {suggestion_line(session, found)}", markup=False)
             out.print(f"  {item.source_url or 'no source link'}", markup=False)
 
 

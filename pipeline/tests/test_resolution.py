@@ -114,7 +114,7 @@ def new_claim(session: Session, slug: str = "tooth-regrowth-ex1", **overrides) -
     values = {
         "slug": slug,
         "headline": "Antibody regrows teeth in mice",
-        "vertical": "dental-regeneration",
+        "vertical": "mouth-and-teeth",
         "intervention": "EX-1 antibody",
         "indication": "tooth agenesis",
     }

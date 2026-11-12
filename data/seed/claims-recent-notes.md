@@ -264,3 +264,13 @@ Columns: review state, status, evidence stage at announcement, approved matches,
 - Match scoring now asks about the treatment **and** the condition, and the search drops names that identify nothing. The assistant's word comparison is no longer needed for new searches. Candidates scored before the change are marked in the queue as scored without the indication.
 - Measured on the same data: 78 candidates scored in 77 s (was 198 s); a typical claim searched and scored in 10 to 25 s; five claims read, searched and fetched side by side in 68 s. The first run took over an hour for 46 claims and never finished eight of them.
 - Still the assistant's judgement, and worth your eye: which of several same-condition trials belong to a broad claim (`biological-ageing-glp-1-drugs`, `pre-leukaemia-vitamin-c`, `stiff-person-syndrome-car-t`, `knee-osteoarthritis-genicular-artery-embolisation`).
+
+## Health areas and approaches (2026-11-12)
+
+Refiled under the revised health areas (`openspec/changes/revise-health-areas`). Judgement calls, worth the operator's eye:
+
+- `mash-dt-109` moved to gut and liver; `sleep-apnoea-orforglipron` to lungs and breathing. Both drugs are weight-loss drugs, but the claim's indication decides the area.
+- `primary-aldosteronism-baxdrostat` stays in heart, blood and circulation: readers know the condition as a cause of high blood pressure, though HRCS files it under hormones.
+- `pre-leukaemia-vitamin-c` stays in cancer: HRCS files myelodysplastic syndromes as neoplasms.
+- `kidney-failure-pig-kidney-transplant` and `infertility-testicular-tissue-transplant` are filed by their condition, with the approach transplant.
+- Approaches that could reasonably be something else: `senescent-cells-senomune-0257` as vaccine (described as an immunotherapy against senescent cells), `peanut-allergy-microneedle-stamp` as drug (an allergen given through a skin stamp, not a device claim), `pre-leukaemia-vitamin-c`, `alcohol-use-disorder-kudzu-extract` and `type-2-diabetes-glp-1-secreting-bacteria` as drug, `spinal-cord-injury-engineered-implant` as tissue regeneration, and the mRNA heart therapies as gene therapy.

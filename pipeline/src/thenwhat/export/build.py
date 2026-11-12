@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import articles_of, promises_of
 from thenwhat.claims.status import refresh_status
-from thenwhat.claims.verticals import GROUPS, VERTICAL_GROUPS, VERTICALS
+from thenwhat.claims.verticals import GROUPS, RETIRED_VERTICALS, VERTICAL_GROUPS, VERTICALS
 from thenwhat.db.models import (
     Claim,
     Entity,
@@ -69,6 +69,13 @@ class ExportedVertical(Strict):
     title: str
     # The broader area the vertical is filed under, when it has one.
     group: ExportedGroup | None = None
+
+
+class ExportedRetiredVertical(Strict):
+    """A vertical slug renamed or retired after launch, and the vertical that replaces it."""
+
+    slug: str
+    successor: str
 
 
 class ExportedOutlet(Strict):
@@ -131,6 +138,8 @@ class ExportedClaim(Strict):
     headline: str
     summary: str
     vertical: str
+    # The kind of intervention, as a configured approach code. The site owns its wording.
+    approach: str | None
     intervention: ExportedIntervention
     indication: str
     first_reported_date: date | None
@@ -152,6 +161,8 @@ class Export(Strict):
     preview: bool
     sources: list[ExportedSource]
     verticals: list[ExportedVertical]
+    # Topic addresses that must keep working: each redirects to its successor's.
+    retired_verticals: list[ExportedRetiredVertical] = []
     # Icons of the outlets whose articles are exported. An outlet without one is absent.
     outlets: list[ExportedOutlet]
     claims: list[ExportedClaim]
@@ -256,6 +267,7 @@ def build_export(
                 headline=claim.headline,
                 summary=claim.summary,
                 vertical=claim.vertical,
+                approach=claim.approach,
                 intervention=ExportedIntervention(
                     name=intervention.name, synonyms=list(intervention.synonyms)
                 ),
@@ -333,6 +345,10 @@ def build_export(
         verticals=[
             ExportedVertical(slug=slug, title=title, group=_group_of(slug))
             for slug, title in VERTICALS.items()
+        ],
+        retired_verticals=[
+            ExportedRetiredVertical(slug=slug, successor=successor)
+            for slug, successor in RETIRED_VERTICALS.items()
         ],
         outlets=_outlets(session, claims),
         claims=claims,

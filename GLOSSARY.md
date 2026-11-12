@@ -9,8 +9,10 @@ Domain terms for thenwhat. Behavior is specified in `openspec/`; this file only 
 | **Indication** | The condition the intervention is claimed to treat. With the intervention it makes a claim's identity. |
 | **Source article** | A news article that reported a claim. Stored as URL, outlet, title and date. Its text is never stored. |
 | **Promise** | A timeline stated in a source article ("human trials by 2025"). A claim can have several, each tied to its article. |
-| **Vertical** | The topic area a claim belongs to, for example dental regeneration. |
-| **Group** | The broader area a vertical is filed under, such as a body system or disease area, for example mouth and teeth. Set in the pipeline's configuration; a vertical has at most one, and may have none. |
+| **Vertical** | The topic area a claim belongs to, for example gum disease. Each claim has exactly one. |
+| **Group** | The body system or disease area a vertical is filed under, for example mouth and teeth. Every vertical has exactly one group. Each group is anchored, in the pipeline's configuration only, to the HRCS health categories it covers. |
+| **General vertical** | The vertical that shares its group's slug and title. A claim that fits a group but none of its specific verticals goes here. |
+| **Approach** | The kind of intervention a claim reports, such as drug, gene therapy or transplant. Optional, at most one per claim, and never part of status. |
 | **Entity** | Something a claim names: an intervention, paper, person, institution or company. Has a name and synonyms. |
 | **Origin paper** | The publication the first news reports of a claim were about. At most one per claim. |
 | **Match** | A proposed link between an entity and a record in a public registry (a trial, a DOI). Always confirmed by a human. |

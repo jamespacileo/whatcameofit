@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && pagefind --site dist && node scripts/check-dist.mjs",
+    "build": "astro build && pagefind --site dist && node scripts/check-dist.mjs && node scripts/redirects.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "test": "node --test --test-concurrency=1 tests/"

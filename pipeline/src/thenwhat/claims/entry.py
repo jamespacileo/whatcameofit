@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.promises import parse_promise_date
-from thenwhat.claims.verticals import VERTICALS
+from thenwhat.claims.verticals import APPROACHES, VERTICALS
 from thenwhat.db.models import Claim, Entity, Promise, SourceArticle
 from thenwhat.domain import EntityType
 
@@ -29,6 +29,10 @@ class SlugTaken(EntryError):
 
 
 class UnknownVertical(EntryError):
+    pass
+
+
+class UnknownApproach(EntryError):
     pass
 
 
@@ -98,6 +102,23 @@ def _check_slug(slug: str) -> None:
         )
 
 
+def _check_vertical(vertical: str) -> None:
+    if vertical not in VERTICALS:
+        valid = ", ".join(sorted(VERTICALS))
+        raise UnknownVertical(f"Unknown vertical '{vertical}'. Valid verticals: {valid}.")
+
+
+def _approach(approach: str | None) -> str | None:
+    """The approach as stored: None for no approach. Refuses one outside the configured set."""
+    approach = (approach or "").strip()
+    if not approach:
+        return None
+    if approach not in APPROACHES:
+        valid = ", ".join(APPROACHES)
+        raise UnknownApproach(f"Unknown approach '{approach}'. Valid approaches: {valid}.")
+    return approach
+
+
 def find_claim(session: Session, slug: str) -> Claim | None:
     return session.scalars(select(Claim).where(Claim.slug == slug)).one_or_none()
 
@@ -137,15 +158,15 @@ def add_claim(
     intervention: str,
     indication: str,
     summary: str = "",
+    approach: str | None = None,
 ) -> Claim:
     """Create a claim and its intervention entity. One claim per intervention and indication."""
     _check_slug(slug)
     headline = _required("headline", headline)
     intervention = _required("intervention", intervention)
     indication = _required("indication", indication)
-    if vertical not in VERTICALS:
-        valid = ", ".join(sorted(VERTICALS))
-        raise UnknownVertical(f"Unknown vertical '{vertical}'. Valid verticals: {valid}.")
+    _check_vertical(vertical)
+    approach = _approach(approach)
     if find_claim(session, slug) is not None:
         raise SlugTaken(f"Slug '{slug}' is already taken.")
     existing = _slug_of_claim_covering(session, intervention, indication)
@@ -157,6 +178,7 @@ def add_claim(
         headline=headline,
         summary=_tidy(summary),
         vertical=vertical,
+        approach=approach,
         indication=indication,
     )
     session.add(claim)
@@ -208,9 +230,7 @@ slug_of_claim_covering = _slug_of_claim_covering
 def check_new_claim(session: Session, slug: str, vertical: str) -> None:
     """Refuse a slug or vertical that `add_claim` would refuse, before any costly work."""
     _check_slug(slug)
-    if vertical not in VERTICALS:
-        valid = ", ".join(sorted(VERTICALS))
-        raise UnknownVertical(f"Unknown vertical '{vertical}'. Valid verticals: {valid}.")
+    _check_vertical(vertical)
     if find_claim(session, slug) is not None:
         raise SlugTaken(f"Slug '{slug}' is already taken.")
 
@@ -223,13 +243,22 @@ def edit_claim(
     summary: str | None = None,
     indication: str | None = None,
     intervention: str | None = None,
+    vertical: str | None = None,
+    approach: str | None = None,
 ) -> Claim:
-    """Correct a claim's own fields. Changing its identity is checked against other claims."""
+    """Correct a claim's own fields. Changing its identity is checked against other claims.
+
+    An empty approach clears it."""
     claim = _claim(session, slug)
     entity = session.scalars(
         select(Entity).where(Entity.claim_id == claim.id, Entity.type == EntityType.INTERVENTION)
     ).first()
     assert entity is not None, "every claim is created with its intervention entity"
+    if vertical is not None:
+        _check_vertical(vertical)
+        claim.vertical = vertical
+    if approach is not None:
+        claim.approach = _approach(approach)
     if headline is not None:
         claim.headline = _required("headline", headline)
     if summary is not None:

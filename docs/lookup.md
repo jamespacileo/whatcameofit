@@ -115,7 +115,11 @@ The extension covers what the site cannot read. On a page that is not tracked it
 
 Tried on 2026-11-12 with the extension's page reader run on a real post on X: the post's words, its link card's headline and the outlet's name came through in three lines, without the writer's name, the time or the view count. The service answered in 8 seconds.
 
-Limits: X links out through its own shortened addresses, which are not followed, so a post on X is searched from its own words and its link card, not from the article. Reddit could not be opened in the browser used for this try, so its page is read by the general rule and has not been seen working. The popup has not yet been pressed in a real Chrome or Safari.
+**Shortened links.** A post often links through a shortener, sometimes through two. The service follows one where the shortener's robots.txt allows (bit.ly, trib.al, tinyurl.com and buff.ly did on 2026-11-12), asking only for the redirect. X's own shortener (`t.co`) refuses software, but answers a browser with a small page that names the address. So the extension opens that one link in the reader's browser, without cookies or a referrer, and sends the address it names. It has permission for that host and the site's, and no other.
+
+Tried on the same real post: X's shortener named a second, the publisher's; the service followed that to the article at statnews.com and read it. 21 seconds in all.
+
+Limits: Reddit could not be opened in the browser used for this try, so its page is read by the general rule and has not been seen working. The popup has not yet been pressed in a real Chrome or Safari. A post on X pasted into the site, without the extension, is still turned back: only a browser can open X's links.
 
 ## Before it can serve readers
 

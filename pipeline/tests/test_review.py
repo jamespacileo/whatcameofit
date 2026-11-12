@@ -77,7 +77,7 @@ def new_claim(session: Session, slug: str = SLUG, **overrides: Any) -> Claim:
     values: dict[str, Any] = {
         "slug": slug,
         "headline": "Antibody regrows teeth in mice",
-        "vertical": "dental-regeneration",
+        "vertical": "mouth-and-teeth",
         "intervention": f"EX-1 antibody {slug}",
         "indication": "tooth agenesis",
         "summary": "An antibody restored missing teeth in mice.",
