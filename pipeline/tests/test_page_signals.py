@@ -70,6 +70,20 @@ def test_malformed_structured_data_leaves_the_visible_text():
     assert (page.body, page.as_text()) == (None, "EX-1 regrew teeth.")
 
 
+def test_navigation_cannot_push_the_main_article_past_the_lookup_text_limit():
+    navigation = "Home Departments Patient information " * 2000
+    article = "Scientists say EX-1 regrew teeth in people born without them."
+    page = read_page(
+        "<html><head><title>New treatment</title>"
+        '<script>const example = "<main>Wrong text</main>";</script></head>'
+        f"<body><nav>{navigation}</nav><main><p>{article}</p></main>"
+        "<footer>NCT01234567</footer></body></html>"
+    )
+
+    assert page.as_text() == f"Headline: New treatment\n\n{article}"
+    assert page.registry_numbers == ("NCT01234567",)
+
+
 def test_links_to_a_paper_and_to_the_registry_are_found():
     """Scenario: Page that links to the paper it reports"""
     page = read_page(PAGE)

@@ -583,6 +583,18 @@ test("an article that robots.txt allows is returned as text that opens with its 
   assert.equal(read.page.headline, "EX-1 regrows teeth");
 });
 
+test("navigation cannot push the main article past the lookup text limit", async () => {
+  const navigation = "Home Departments Patient information ".repeat(2000);
+  const html = `<html><head><title>New treatment</title><script>const example = "<main>Wrong text</main>";</script></head>
+    <body><nav>${navigation}</nav><main><p>${TEXT}</p></main><footer>NCT01234567</footer></body></html>`;
+  const { fetch } = web({ "https://news.example.org/robots.txt": "", [ARTICLE]: html });
+
+  const read = await readArticle(ARTICLE, { fetch, contact: "ops@example.org" });
+
+  assert.equal(read.text, `Headline: New treatment\n\n${TEXT}`);
+  assert.deepEqual(read.page.registryNumbers, ["NCT01234567"]);
+});
+
 test("Scenario: Article the site does not allow to be read", async () => {
   for (const robots of ["User-agent: *\nDisallow: /", "User-agent: thenwhat\nDisallow: /health/\n\nUser-agent: *\nAllow: /", 403]) {
     const { fetch, asked } = web({ "https://news.example.org/robots.txt": robots, [ARTICLE]: PAGE });
