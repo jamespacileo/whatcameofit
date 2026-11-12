@@ -8,14 +8,14 @@ Deploy only with `make deploy`. Do not run `wrangler deploy` by itself: the make
 
 1. **Install Wrangler and sign in.** `wrangler login` opens a browser. Sign in to the Cloudflare account that holds the domain.
 2. **Have the domain in that account.** A domain registered through Cloudflare already is. On the first deploy Wrangler attaches the domain to the Worker and Cloudflare creates the DNS record and the certificate.
-3. **Decide the address.** It is given as `SITE_URL` on every command below, for example `https://example.org`. It is not stored in the repository until you put it in `site/site.config.mjs`.
+3. **Decide the address.** It is given as `SITE_URL` on every command below, which for this site is `https://whatcameofit.com`. It is not stored in the repository until you put it in `site/site.config.mjs`.
 4. **Check what Cloudflare counts.** The method page says "Nothing is counted." Cloudflare shows request counts for a Worker and a domain in its dashboard without any script on the page. Before the first deploy, read what your plan shows and make the "What is counted" section say exactly that. The `site-measurement` spec requires it.
 
 ## Each time
 
 ```sh
-SITE_URL=https://example.org make deploy-check   # the checks, a public build, Wrangler's dry run
-SITE_URL=https://example.org make deploy         # the same, then publish
+SITE_URL=https://whatcameofit.com make deploy-check   # the checks, a public build, Wrangler's dry run
+SITE_URL=https://whatcameofit.com make deploy         # the same, then publish
 ```
 
 Both first write a normal export from the running pipeline to `site/data/public-export.json` (reviewed claims only, whatever `EXPORT_PREVIEW` is set to locally), so the pipeline must be up (`docker compose up -d`).
@@ -28,7 +28,7 @@ The site can offer a registry search for an article it does not track (`docs/loo
 
 ```sh
 wrangler secret put OPENAI_API_KEY        # once, in site/; you paste the key, it is not kept in the repository
-SITE_URL=https://example.org LLM_MODEL=<model> CONTACT_EMAIL=<address> make deploy
+SITE_URL=https://whatcameofit.com LLM_MODEL=<model> CONTACT_EMAIL=<address> make deploy
 ```
 
 Add `DECISION_BACKEND=openai-decisions` to that line to score records with OpenAI's Decisions API: one request for all of a search's records in place of up to three slow ones. It uses the same key.
@@ -54,7 +54,7 @@ The command prints every reason at once and publishes nothing.
 ## After the first deploy
 
 - Open five claim pages at the public address and check each against its sources.
-- Build the browser extension for the same address: `SITE_URL=https://example.org make extension`. The extension asks only that address for its data.
+- Build the browser extension for the same address: `SITE_URL=https://whatcameofit.com make extension`. The extension asks only that address for its data.
 - Put the address in `site/site.config.mjs` so that every build uses it without the variable.
 
 ## Undoing a deploy

@@ -139,8 +139,8 @@ docker compose restart site
 To publish to the public address (Cloudflare), see [docs/deploy.md](docs/deploy.md):
 
 ```sh
-SITE_URL=https://example.org make deploy-check   # checks and builds, publishes nothing
-SITE_URL=https://example.org make deploy
+SITE_URL=https://whatcameofit.com make deploy-check   # checks and builds, publishes nothing
+SITE_URL=https://whatcameofit.com make deploy
 ```
 
 A deploy is refused if the export is a preview or any claim in it has not been checked by a person.
