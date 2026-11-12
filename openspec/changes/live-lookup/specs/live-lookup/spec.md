@@ -120,6 +120,13 @@ The service SHALL accept text together with the addresses that text links to (th
 - **WHEN** text is sent with links and no platform name
 - **THEN** the text is looked up as it is, and a link to a paper is used to find the paper's trial
 
+### Requirement: A shortened link in a post is followed where its shortener allows
+For a shortened link among a post's links, three at most per post, the service SHALL ask the shortener where the link leads, only if the shortener's robots.txt allows it, and SHALL read only the redirect, never a page. It SHALL take up to four steps when one shortened link leads to another, and stop at the first address that is not a shortened link. A shortener that refuses software, a link that leads nowhere and a link that leads back to itself SHALL be given up on, and when a post then has no article among its links the answer SHALL say it links through a shortened address the site may not follow.
+
+#### Scenario: Post that links through a shortened address
+- **WHEN** a post's link goes through a shortener that allows software, and that leads through a second one to an article
+- **THEN** each shortener is asked only for its redirect, and the article is read from its own site and looked up with the post
+
 ### Requirement: A tracked claim is named
 When a claim is already tracked under one of the names found, the lookup SHALL name that claim.
 

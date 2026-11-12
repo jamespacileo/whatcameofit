@@ -130,3 +130,10 @@ Pages read: for X, `docs.x.com/x-for-websites/oembed-api`, `docs.x.com/developer
 
 For every platform in this table the site names the platform, asks nothing of it, and offers to take the post's text or the article's address.
 
+### Link shorteners
+
+- **Checked:** 2026-11-12, by reading each one's robots.txt.
+- **Followed by the service:** a shortened link in a post, when the shortener's robots.txt allows it. `bit.ly`, `trib.al`, `tinyurl.com` and `buff.ly` allowed everything on that date; `redd.it` too. Only the redirect is read (`site/worker/short.mjs`), four steps at most, three links per post.
+- **Not followed by the service:** `t.co`, X's shortener, whose robots.txt says `Disallow: /` to every client but named search engines.
+- **Opened by the reader's browser instead:** the extension asks `t.co` for the link's page, as a click would, without cookies or a referrer, and reads the address the page names (observed: a 200 page that gives the address in a refresh tag, in its title and in a script). It does not go on to the article. One request per link, three links at most per search (`extension/src/short-links.js`).
+

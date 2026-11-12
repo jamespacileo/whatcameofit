@@ -36,12 +36,15 @@ function web(pages) {
     const page = pages[address];
     if (page === undefined) return new Response("", { status: 404 });
     if (typeof page === "number") return new Response("", { status: page });
+    if (page.leadsTo) return new Response("", { status: 301, headers: { Location: page.leadsTo } });
     return typeof page === "string" ? new Response(page) : Response.json(page);
   };
   return { fetch, asked, addresses: () => asked.map((one) => one.address) };
 }
 
 const post = (address) => readAddress(address).post;
+// X's shortener, which does not let software follow its links.
+const X_SHORTENER = { "https://t.co/robots.txt": "User-agent: *\nDisallow: /" };
 
 // --- which addresses are posts the service can read -----------------------------------
 
@@ -263,7 +266,7 @@ test("Scenario: Post on a platform that cannot be read", async () => {
 // --- a page the reader's own browser read ----------------------------------------------
 
 test("Scenario: Post read by the reader's browser", async () => {
-  const { send, shown, net } = service({ "https://news.example.org/robots.txt": 404, [ARTICLE]: ARTICLE_PAGE });
+  const { send, shown, net } = service({ ...X_SHORTENER, "https://news.example.org/robots.txt": 404, [ARTICLE]: ARTICLE_PAGE });
 
   const response = await send({ text: "EX-1 restored missing teeth in a first trial in people", links: ["https://t.co/AbCdEf", ARTICLE], platform: "X" });
   const found = await response.json();
@@ -271,21 +274,59 @@ test("Scenario: Post read by the reader's browser", async () => {
   assert.equal(response.status, 200);
   assert.deepEqual(found.post, { platform: "X", article: ARTICLE, article_host: "news.example.org", article_read: true, read_in_browser: true });
   assert.match(shown[0], /^A post on X says:\nEX-1 restored missing teeth[\s\S]*\n\nThe article it links to:\nHeadline: Antibody regrows teeth/);
-  // The shortened link is not followed, and nothing is asked of X.
-  assert.deepEqual(net.addresses(), ["https://news.example.org/robots.txt", ARTICLE]);
+  // X's shortener says software may not follow its links, so that link is not asked for.
+  assert.deepEqual(net.addresses(), ["https://t.co/robots.txt", "https://news.example.org/robots.txt", ARTICLE]);
   assert.equal(describeAnswer(found).source, "Read by your browser from the post on X you have open and the article it links to at news.example.org.");
 });
 
 test("a post whose only link is a shortened one is looked up from its own words, and the answer says why", async () => {
-  const { send, net } = service({});
+  const { send, net } = service(X_SHORTENER);
 
   const found = await (await send({ text: "EX-1 restored missing teeth in a first trial in people", links: ["https://t.co/AbCdEf"], platform: "X" })).json();
 
-  assert.deepEqual([found.post.article, found.post.only_short_links, net.addresses()], [null, true, []]);
+  assert.deepEqual([found.post.article, found.post.only_short_links, net.addresses()], [null, true, ["https://t.co/robots.txt"]]);
   assert.equal(
     describeAnswer(found).source,
-    "Read by your browser from the post on X you have open. It links through a shortened address, which this site does not follow, so only the post was used.",
+    "Read by your browser from the post on X you have open. It links through a shortened address that this site may not follow, so only the post was used.",
   );
+});
+
+test("Scenario: Post that links through a shortened address", async () => {
+  // One shortener leads to another, which leads to the article. Both allow software.
+  const { send, net } = service({
+    "https://bit.ly/robots.txt": "User-agent: *\nDisallow:",
+    "https://bit.ly/3abcDEF": { leadsTo: "https://trib.al/XyZ123" },
+    "https://trib.al/robots.txt": 404,
+    "https://trib.al/XyZ123": { leadsTo: `${ARTICLE}?utm_source=social` },
+    "https://news.example.org/robots.txt": 404,
+    [`${ARTICLE}?utm_source=social`]: ARTICLE_PAGE,
+  });
+
+  const found = await (await send({ text: "EX-1 restored missing teeth in a first trial in people", links: ["https://bit.ly/3abcDEF"], platform: "X" })).json();
+
+  assert.deepEqual([found.post.article, found.post.article_read, found.post.only_short_links], [`${ARTICLE}?utm_source=social`, true, undefined]);
+  // Only the redirects are asked of the shorteners; the article is asked of its own site.
+  assert.deepEqual(net.addresses(), [
+    "https://bit.ly/robots.txt",
+    "https://bit.ly/3abcDEF",
+    "https://trib.al/robots.txt",
+    "https://trib.al/XyZ123",
+    "https://news.example.org/robots.txt",
+    `${ARTICLE}?utm_source=social`,
+  ]);
+});
+
+test("a shortened link that leads nowhere, or round in a circle, is given up on", async () => {
+  const { send } = service({
+    "https://bit.ly/robots.txt": 404,
+    "https://bit.ly/dead": 404,
+    "https://bit.ly/loop": { leadsTo: "https://bit.ly/loop" },
+  });
+
+  for (const link of ["https://bit.ly/dead", "https://bit.ly/loop"]) {
+    const found = await (await send({ text: "EX-1 restored missing teeth in a first trial in people", links: [link], platform: "X" })).json();
+    assert.deepEqual([found.post.article, found.post.only_short_links], [null, true], link);
+  }
 });
 
 test("a post read by the browser that links to a tracked article is answered with the claim's page", async () => {

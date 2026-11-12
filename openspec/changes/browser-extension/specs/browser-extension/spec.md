@@ -38,6 +38,12 @@ The extension SHALL decide whether a page is tracked by comparing its address wi
 ### Requirement: A registry search of the open page, when the reader asks (decided 2026-11-12)
 For a page that is not tracked, and only where the site's lookup file says the site answers registry searches, the extension SHALL offer a search of the open page, with words beside the button that say what is read and sent. Nothing SHALL be read from the page until the reader presses it. The extension SHALL then read the page inside the browser and send the site's lookup service the text read, the addresses that text links to (thirty at most, none on the page's own site), and, for a post, the platform's name. It SHALL NOT send the page's address. For a post it SHALL send the post's own words and leave out the lines that are only links within the platform: the writer's name and handle, the time, the counts. For any other page it SHALL read the page as the site reads an article. When the reader has selected text on the page, only that text SHALL be sent of the page's words. When too little can be read, the extension SHALL say so and send nothing. The answer SHALL be shown in the site's own wording, marked first as an automatic search.
 
+A post on X links out only through X's own shortener, which does not let the site's server follow its links. For such a link, three at most per search, the extension SHALL ask the shortener for its page, without cookies and without a referrer, read from it the address the link leads to, and send that address in the link's place. It SHALL NOT go on to the article itself, and SHALL hold permission for that shortener's host and the site's own, and no other. A link it cannot resolve SHALL be sent as it was.
+
+#### Scenario: Post on X that links through its shortener
+- **WHEN** the reader asks for a search on a post whose link goes through X's shortener
+- **THEN** the browser opens that link, the address it leads to is sent in its place, and the article itself is not fetched by the extension
+
 #### Scenario: Post on a platform the site cannot read
 - **WHEN** the reader asks for a search on a post whose platform does not offer posts to software
 - **THEN** the post's words and its links are sent with the platform's name, and neither the writer's name nor the page's address is

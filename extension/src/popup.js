@@ -11,6 +11,7 @@ import { readAddress } from "./lookup-match.js";
 import { isFresh, stateFor } from "./lookup.js";
 import { collectFromPage, composeRequest } from "./open-page.js";
 import { pageAsText, readPage } from "./page.js";
+import { resolveShortLinks } from "./short-links.js";
 import { render } from "./view.js";
 
 const api = globalThis.browser ?? globalThis.chrome;
@@ -56,6 +57,9 @@ async function search() {
     const [tab] = await api.tabs.query({ active: true, currentWindow: true });
     const [{ result }] = await api.scripting.executeScript({ target: { tabId: tab.id }, func: collectFromPage });
     request = composeRequest(result, tab.url, { readAddress, readPage, pageAsText });
+    // A post on X links out only through X's shortener, which the site may not follow.
+    // The browser opens such a link here, as a click would, to learn where it leads.
+    if (request) request.links = await resolveShortLinks(request.links, fetch);
   } catch {
     request = null;
   }

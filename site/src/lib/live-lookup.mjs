@@ -39,7 +39,7 @@ function sourceOf(post) {
     : `Read from a post on ${post.platform}`;
   if (post.article_read) return `${from} and the article it links to at ${post.article_host}.`;
   if (post.article) return `${from}. The article it links to at ${post.article_host} could not be read, so only the post was used.`;
-  if (post.only_short_links) return `${from}. It links through a shortened address, which this site does not follow, so only the post was used.`;
+  if (post.only_short_links) return `${from}. It links through a shortened address that this site may not follow, so only the post was used.`;
   return `${from}. No article was found among its links, so only the post was used.`;
 }
 

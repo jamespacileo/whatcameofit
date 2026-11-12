@@ -14,6 +14,7 @@ const dist = path.join(here, "dist");
 const fromSite = createRequire(path.join(site, "package.json"));
 
 const { SITE } = await import(pathToFileURL(path.join(site, "site.config.mjs")).href);
+const { RESOLVABLE } = await import(pathToFileURL(path.join(here, "src/short-links.js")).href);
 const origin = new URL(SITE.url).origin;
 
 fs.rmSync(dist, { recursive: true, force: true });
@@ -79,7 +80,9 @@ const manifest = {
   // popup read that tab's page when the reader asks for a registry search. The site's
   // own address is the one place the extension may fetch from or send to.
   permissions: ["activeTab", "scripting", "storage"],
-  host_permissions: [`${origin}/*`],
+  // The site, and the shorteners whose links the popup opens to learn where they lead
+  // (src/short-links.js): X's, which answers a browser but not the site's server.
+  host_permissions: [`${origin}/*`, ...RESOLVABLE.map((host) => `https://${host}/*`)],
 };
 fs.writeFileSync(path.join(dist, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 

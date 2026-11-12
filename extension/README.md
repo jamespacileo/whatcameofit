@@ -6,6 +6,8 @@ It compares the page's address with the site's `lookup.json` inside the browser.
 
 For a page that is not tracked, and only where the site answers registry searches, the popup offers "Search the trial registry for this page". Pressing it reads the open page inside the browser and sends the site the text read and the links in it; for a post, also the platform's name. This is how a post on X or Reddit, or an article behind a paywall the reader subscribes to, can be searched: the reader's own browser reads the page, and the site asks the platform nothing. The page's address is not sent. Select words on the page first to send only those.
 
+A post on X links out only through X's shortener (`t.co`), which the site's server may not follow. The popup opens such a link in the browser, as a click would, to learn which article it leads to, and sends that address. That is why the extension has permission for `t.co` as well as for the site.
+
 ## Build
 
 ```sh
@@ -39,6 +41,7 @@ Distribution through the App Store needs an Apple developer account and a real b
 - `src/lookup.js`: decides what to show. Pure, tested in `tests/`.
 - `src/view.js`: draws a state. Status wording comes from `lookup.json`; the site owns it.
 - `src/open-page.js`: reads the open page (`collectFromPage`, which runs inside it) and chooses what a registry search needs (`composeRequest`, pure, tested in `tests/`).
+- `src/short-links.js`: learns where a link through X's shortener leads. Tested in `tests/`.
 - `src/popup.js`: the glue to the browser (current tab, saved copy, fetch, reading the page when asked).
 - `build.mjs`: copies the above with what is shared with the site (the address comparison, how an address is told from a post, the page reader, the wording of an answer and the notices), the site's face and icon, and writes the manifest.
 - `dev/`: a page showing every popup state side by side. `node extension/build.mjs --dev`, then serve `extension/dist` and open `states.html`.
