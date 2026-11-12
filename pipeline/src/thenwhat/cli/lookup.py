@@ -47,6 +47,45 @@ def make_papers(session: Session) -> "Papers":
     return EuropePmc(session, contact_email=settings_or_exit().contact_email)
 
 
+def _post_and_article(url: str) -> tuple[str, "Page | None"] | None:
+    """A post and the article it links to, read together; None when the address is not a
+    post that can be read by its address."""
+    from thenwhat.cli.extract import make_retriever
+    from thenwhat.extract.post import post_at, read_post
+
+    ref = post_at(url)
+    if ref is None:
+        return None
+    retriever = make_retriever()
+    post = read_post(ref, get_json=retriever.json, allowed=retriever.allowed)
+    if post is None:
+        raise EntryError(
+            f"That post on {ref.platform} could not be read. It may be private or deleted."
+            " Run the command again with --paste and pipe its text in."
+        )
+    said = f"A post on {ref.platform} says:\n{post.text}"
+    # The first link that is not itself a post is taken to be the article.
+    linked = next((link for link in post.links if post_at(link) is None), None)
+    if linked is None:
+        out.print(f"Read from a post on {ref.platform}. It links to no article.", markup=False)
+        return said, None
+    try:
+        retrieved = retriever.retrieve(linked)
+    except PasteNeeded:
+        out.print(
+            f"Read from a post on {ref.platform}. The article it links to could not be read:"
+            f" {linked}",
+            markup=False,
+        )
+        return said, None
+    out.print(
+        f"Read from a post on {ref.platform} and the article it links to: {linked}", markup=False
+    )
+    page = retrieved.page
+    article = page.as_text() if page else retrieved.text
+    return f"{said}\n\nThe article it links to:\n{article}", page
+
+
 def _text(url: str | None, paste: bool) -> tuple[str, "Page | None"]:
     """The text for this run only, and the page it came from. Neither is stored."""
     if paste:
@@ -58,6 +97,9 @@ def _text(url: str | None, paste: bool) -> tuple[str, "Page | None"]:
         raise EntryError("Give the address of an article, or use --paste and pipe the text in.")
     from thenwhat.cli.extract import make_retriever
 
+    from_post = _post_and_article(url)
+    if from_post is not None:
+        return from_post
     try:
         retrieved = make_retriever().retrieve(url)
     except PasteNeeded as needed:

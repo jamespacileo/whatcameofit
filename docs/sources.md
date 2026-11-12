@@ -74,3 +74,31 @@ ISRCTN, EU CTIS, WHO ICTRP, PubMed E-utilities, OpenAlex, NIH RePORTER, UKRI Gat
 - **Data:** the guide says Zero Data Retention is available to eligible customers. What a lookup sends is the same as before: the reading of the article in one line and registry records, never the article's text.
 - **Behavior (observed 2026-11-12):** three made-up trial records as three `choice` questions were answered in 1.96 seconds using 709 input tokens: the right option for each, probabilities summing to 1. A question the model declines comes back as `{"type": "refusal"}`; the pipeline treats it as no answer.
 - **How the pipeline uses it:** as the decision backend `openai-decisions` (`DECISION_BACKEND`), for scoring candidate records and any other bounded choice. The probabilities are the model's own estimate and are not calibrated, like the other backend's.
+
+## Social media posts
+
+A reader may give the address of a post in place of an article's. A post is read only on a platform that offers posts to software without signing in, and only that one post, once, when a reader asks. The text is shown to the model and dropped; who wrote the post is never read out. Code: `site/worker/post.mjs`, `thenwhat.extract.post`.
+
+### Bluesky public API
+
+- **Checked:** 2026-11-12
+- **Documentation:** <https://docs.bsky.app/docs/advanced-guides/rate-limits>, read from its source at <https://github.com/bluesky-social/bsky-docs>
+- **Authentication:** none. The documentation says the hosts `api.bsky.app` and `public.api.bsky.app` "do not support authentication", that the second is cached, and that developers are asked to use it for "public web" use.
+- **Rate limit:** by network address; the page read gives no number for this host. Responses carry rate-limit headers, and a 429 means stop. The lookup sends one request per post.
+- **Behavior (observed):** `GET public.api.bsky.app/xrpc/app.bsky.feed.getPostThread?uri=at://<handle>/app.bsky.feed.post/<id>&depth=0&parentHeight=0` returns the post with the handle as written, no separate step to resolve it. The text is in `thread.post.record.text`, links in `record.facets[].features[].uri`, and the link card (address, title, description) in `thread.post.embed.external`. An unknown post answers 400.
+
+### Hacker News API
+
+- **Checked:** 2026-11-12
+- **Documentation:** <https://github.com/HackerNews/API>
+- **Authentication:** none. **Rate limit:** the documentation says "There is currently no rate limit." The lookup sends one request per item.
+- **Behavior (observed):** `GET hacker-news.firebaseio.com/v0/item/<id>.json` returns a story with `title` and `url`, or a comment with `text` as HTML. An unknown item answers 200 with `null`. A removed item carries `deleted` or `dead`.
+
+### Mastodon servers
+
+- **Checked:** 2026-11-12
+- **Documentation:** <https://docs.joinmastodon.org/methods/statuses/>, which marks `GET /api/v1/statuses/:id` as "Public for public statuses".
+- **Terms:** each server has its own and they are not read one by one. The rule applied to all, as for outlets: the server's robots.txt decides, a server that refuses or whose rules cannot be read is sent nothing more, and only a post whose `visibility` is `public` is used. A server can also turn this interface off; then the post is refused like any unreadable one.
+- **Which addresses:** any host with a path shaped `/@name/<digits>` or `/users/name/statuses/<digits>`. A local or private address is never asked.
+- **Behavior (observed on one server):** the post's text is HTML in `content`; links to tags and people carry the class `mention` or `hashtag`; the link card is in `card` (`url`, `title`, `description`).
+

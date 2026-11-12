@@ -35,11 +35,11 @@
 
 ## 4c. Posts on social media (asked for 2026-11-12: a post's address must work, and so must the article it links to)
 
-- [ ] 4c.1 Check each platform's terms and what it serves to software without signing in (X, Reddit, Bluesky, Mastodon, Hacker News, Facebook, Instagram, Threads, LinkedIn, TikTok, YouTube, Telegram), and note them in `docs/sources.md`
-- [ ] 4c.2 Where the terms allow, read a post by its address: its text and the links in it
-- [ ] 4c.3 Follow the article a post links to, read it as any article, and look up the post's text and the article together
-- [ ] 4c.4 Where a platform cannot be read, say so by name and ask for the post's text or the article's address
-- [ ] 4c.5 Add posts to the outlet record, so each platform shows what works
+- [ ] 4c.1 Check each platform's terms and what it serves to software without signing in, and note them in `docs/sources.md` (done 2026-11-12 for Bluesky, Hacker News and Mastodon; the others are being checked)
+- [x] 4c.2 Where the terms allow, read a post by its address: its text and the links in it; verify the post tests pass in both engines
+- [x] 4c.3 Follow the article a post links to, read it as any article, and look up the post's text and the article together; answer with the claim's page when the article is tracked
+- [x] 4c.4 Where a platform cannot be read, say so by name and ask for the post's text or the article's address
+- [x] 4c.5 Try a real post on each platform that is read, and show per platform what works (2026-11-12: one post each on Bluesky, Hacker News and a Mastodon server, through the site's engine)
 
 ## 4d. Speed (asked for 2026-11-12: a decision model, and work done in parallel)
 

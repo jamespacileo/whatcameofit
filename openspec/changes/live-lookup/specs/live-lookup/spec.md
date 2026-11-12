@@ -72,6 +72,43 @@ A lookup SHALL read the text with the model while it looks up the papers the pag
 - **WHEN** another session caches a registry answer while this one is fetching the same request
 - **THEN** this session's answer replaces it and no error is raised
 
+### Requirement: A post is read by its address where its platform offers posts to software
+The lookup SHALL read a post by its address on the platforms noted in `docs/sources.md` as offering posts to software without signing in: Bluesky, Hacker News and Mastodon servers. It SHALL take the post's text, the headline and summary of the link card the post carries, and the links in the post, leaving out links to tags and to people. It SHALL NOT read out who wrote the post. A Mastodon server SHALL be asked only when its robots.txt allows it and only for a post that is public. A post that is private, deleted or not there SHALL be refused with a code that names the platform. Nothing read from a post SHALL be stored.
+
+#### Scenario: Post on Bluesky
+- **WHEN** the address is a post on Bluesky that carries a link card
+- **THEN** the post's text, the card's headline and summary, and the linked address are read, and the author's name and handle are not
+
+#### Scenario: Story on Hacker News
+- **WHEN** the address is a story or a comment on Hacker News
+- **THEN** its title or text and the address it links to are read, and a deleted item is refused
+
+#### Scenario: Post on a Mastodon server
+- **WHEN** the address has the shape of a post on a Mastodon server, on any host
+- **THEN** the server is asked only if its robots.txt allows it, a public post is read, and a post for followers only is refused
+
+### Requirement: The article a post links to is read with it
+The lookup SHALL follow the first link in a post that is the address of an article, read it as any article, and look up the post and the article together, the post first. A link to another post and a shortened link SHALL NOT be followed. When the linked article cannot be read, or the post links to none, the lookup SHALL go on from the post alone. The answer SHALL say which of the three happened. On the site, a post that links to an article the site tracks SHALL be answered with that claim's page: the article SHALL NOT be fetched and no automatic search SHALL be made.
+
+#### Scenario: Post that links to an article
+- **WHEN** a post links to an article that can be read
+- **THEN** the model is shown the post and then the article, and the answer says it was read from a post on that platform and the article it links to
+
+#### Scenario: Post whose article cannot be read
+- **WHEN** the linked article's site forbids reading
+- **THEN** the lookup is made from the post alone and the answer says the article could not be read
+
+#### Scenario: Post that links to a tracked article
+- **WHEN** a post links to an article a tracked claim cites
+- **THEN** the answer is that claim's page, the model is not asked, and the article is not fetched
+
+### Requirement: A post that cannot be read is turned back by name
+For a post on a platform the lookup does not read, the service SHALL ask nothing of that platform and SHALL answer with a code and the platform's name, and the site SHALL say that it cannot read posts there and offer to take the post's text or the article's address instead.
+
+#### Scenario: Post on a platform that cannot be read
+- **WHEN** the address is a post on a platform that is not read
+- **THEN** no request is sent to that platform and the reader is told, by the platform's name, to paste the post's text or the article's address
+
 ### Requirement: A tracked claim is named
 When a claim is already tracked under one of the names found, the lookup SHALL name that claim.
 

@@ -4,6 +4,7 @@ The text is returned to the caller and kept nowhere: not cached, not logged.
 """
 
 from dataclasses import dataclass
+from typing import Any
 from urllib.parse import urlsplit
 from urllib.robotparser import RobotFileParser
 
@@ -73,6 +74,25 @@ class ArticleRetriever:
                 " Supply the article text instead."
             )
         return _retrieved(html, archive_url=snapshot)
+
+    def allowed(self, url: str) -> bool:
+        """Whether the site's own rules let this client fetch the address."""
+        if not self._contact:
+            raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
+        return self._allowed(url)
+
+    def json(self, url: str) -> Any:
+        """The JSON a platform's own interface for software serves at this address, or
+        None when it does not answer with any."""
+        if not self._contact:
+            raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
+        response = self._get(url)
+        if response is None or response.status_code != 200:
+            return None
+        try:
+            return response.json()
+        except ValueError:
+            return None
 
     def probe(self, url: str) -> Probe:
         """Ask the site itself for one article and say how it answered. No archive is tried:
