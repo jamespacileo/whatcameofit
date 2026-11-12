@@ -395,9 +395,13 @@ a.chip:hover {
   }
 
   /* Links that sit alone on a record's line, and the fold that opens the embed. */
+  /* Padding on an inline link enlarges what a thumb can hit without moving the line. */
   .record .origin a,
   .record > span > a,
-  .index .claim a,
+  .index .claim a {
+    padding-block: 0.6rem;
+  }
+
   .embed-how summary {
     display: inline-block;
     padding-block: 0.6rem;
@@ -737,12 +741,23 @@ body.embed {
   margin: 0 0 0.3rem;
 }
 
+@media (max-width: 40rem) {
+  .digest.found {
+    row-gap: 0.8rem;
+  }
+}
+
 .found p {
   margin: 0;
   font-size: 0.95rem;
 }
 
 .found .changed {
+  margin-top: 0.5rem;
+}
+
+.next-up {
+  color: var(--muted);
   margin-top: 0.5rem;
 }
 
@@ -781,8 +796,8 @@ body.embed {
   /* On a phone the sentence that says what the status means comes straight after
      the status, ahead of the path and the dates. The order a keyboard moves in
      is unchanged: nothing in the sentence can be pressed. */
-  .digest .standing,
-  .digest .says {
+  .digest:not(.found) .standing,
+  .digest:not(.found) .says {
     display: contents;
   }
 
@@ -812,7 +827,7 @@ body.embed {
    on a phone, so the four are read as four and not as one run of words. */
 .facts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
   gap: 0.9rem 1.5rem;
   margin: 1.2rem 0.15rem 0;
 }
@@ -1111,9 +1126,9 @@ body.embed {
 }
 
 .track .ends {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.72rem;
+  display: block;
+  white-space: nowrap;
+  font-size: 0.75rem;
   color: var(--muted);
   margin-top: 0.15rem;
 }
@@ -1223,7 +1238,8 @@ body.embed {
 }
 
 .pop p + p,
-.pop ul + p {
+.pop ul + p,
+.pop ol + p {
   margin-top: 0.5rem;
 }
 

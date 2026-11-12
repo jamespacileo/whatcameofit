@@ -158,7 +158,7 @@ function brand(layout: Layout): Node {
       box({ fontWeight: 700, marginLeft: size * 0.27 }, SITE.wordmark[1]),
       ask(size * 0.92),
     ]),
-    box({ fontSize: size * 0.72, color: MUTED }, CARD_NOTICE),
+    box({ fontSize: size * (layout.factsBelow ? 0.86 : 0.72), color: MUTED }, CARD_NOTICE),
   ]);
 }
 

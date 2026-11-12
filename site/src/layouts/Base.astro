@@ -107,7 +107,7 @@ const topicLink =
                 <li>
                   <a
                     href={topicLink.href}
-                    aria-current={current === "topics" ? topicLink.here : undefined}
+                    aria-current={current === "topics" && Astro.url.pathname.replace(/\/$/, "") === topicLink.href ? topicLink.here : undefined}
                   >
                     {topicLink.label}
                   </a>

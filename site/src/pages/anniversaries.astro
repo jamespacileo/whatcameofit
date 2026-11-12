@@ -22,6 +22,8 @@ const months = calendarByMonth(data.claims);
     Each claim is listed on the day of the year it was first reported, with the year and where it
     stands now.
   </p>
+  {/* Filled in by the script: which day is next, counted from the reader's own today. */}
+  <p class="next-up" data-next hidden></p>
 
   {
     months.map((month) => (
@@ -29,7 +31,7 @@ const months = calendarByMonth(data.claims);
         <h2 class="bar">{MONTH_NAMES[month.month - 1]}</h2>
         <ul class="calendar">
           {month.days.map((day) => (
-            <li class="day" data-day={day.id}>
+            <li class="day" id={`day-${day.id}`} data-day={day.id} data-label={`${day.day} ${MONTH_NAMES[month.month - 1]}`}>
               <strong class="when">
                 {day.day} {MONTH_NAMES[month.month - 1].slice(0, 3)}
               </strong>
@@ -59,5 +61,17 @@ const months = calendarByMonth(data.claims);
   if (element) {
     element.classList.add("today");
     element.scrollIntoView({ block: "center" });
+  } else {
+    // No entry today: say which day comes next, so the calendar has a place to start.
+    const days = [...document.querySelectorAll<HTMLElement>("[data-day]")];
+    const next = days.find((day) => day.dataset.day! > today) ?? days[0];
+    const line = document.querySelector<HTMLElement>("[data-next]");
+    if (next && line) {
+      const link = document.createElement("a");
+      link.href = `#${next.id}`;
+      link.textContent = next.dataset.label!;
+      line.append("Nothing was first reported on today's date. Next on the calendar: ", link, ".");
+      line.hidden = false;
+    }
   }
 </script>

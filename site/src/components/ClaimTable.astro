@@ -2,6 +2,7 @@
 import type { ExportedClaim, StatusCode } from "../lib/export";
 import { STAGE_PATH, STATUS_LABELS, latestPromise } from "../lib/status";
 import { formatDate } from "../lib/timetable";
+import PromiseText from "./PromiseText.astro";
 import StatusCell from "./StatusCell.astro";
 
 interface Props {
@@ -90,7 +91,7 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
             <td role="cell" class:list={["promise", { none: !promise }]} data-column="Latest promise">
               {promise ? (
                 <>
-                  <strong>{promise.parsed_date!.slice(0, 4)}</strong> {promise.description}
+                  <PromiseText promise={promise} />
                 </>
               ) : (
                 <span class="visually-hidden">None with a date</span>

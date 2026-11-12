@@ -367,7 +367,7 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                                 {line.archiveUrl && (
                                   <>
                                     {" "}
-                                    (<a href={line.archiveUrl}>archived copy</a>)
+                                    <span class="unbroken">(<a href={line.archiveUrl}>archived copy</a>)</span>
                                   </>
                                 )}
                               </span>
@@ -462,21 +462,6 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
       )
     }
 
-    <div data-pagefind-ignore>
-      <details class="embed-how">
-        <summary>Show this status on another site</summary>
-        <p class="entry-note">
-          Paste this where the status should appear. It shows the current status and links back
-          here; it loads nothing else and stores nothing.
-        </p>
-        <pre id="snippet"><code>{snippet}</code></pre>
-        <button type="button" class="share" data-copy="snippet" hidden>
-          <Copy size={16} stroke-width={1.9} aria-hidden="true" />
-          <span data-copy-text>Copy code</span>
-        </button>
-      </details>
-    </div>
-
     <section class="take" data-pagefind-ignore>
       <h2 class="bar" id="pass-on">Pass it on</h2>
       {/* Says "Copied" to a screen reader; the button's own label changes for the eye. */}
@@ -511,6 +496,18 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
       </div>
         </div>
       </div>
+      <details class="embed-how">
+        <summary>Show this status on another site</summary>
+        <p class="entry-note">
+          Paste this where the status should appear. It shows the current status and links back
+          here; it loads nothing else and stores nothing.
+        </p>
+        <pre id="snippet"><code>{snippet}</code></pre>
+        <button type="button" class="share" data-copy="snippet" hidden>
+          <Copy size={16} stroke-width={1.9} aria-hidden="true" />
+          <span data-copy-text>Copy code</span>
+        </button>
+      </details>
     </section>
   </article>
 </Base>

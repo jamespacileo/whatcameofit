@@ -1,6 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import Outlet from "../components/Outlet.astro";
+import PromiseText from "../components/PromiseText.astro";
 import StatusCell from "../components/StatusCell.astro";
 import TopicChip from "../components/TopicChip.astro";
 import { SITE } from "../../site.config.mjs";
@@ -134,8 +135,7 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
                 >
                   {latestPromise(report.claim) ? (
                     <>
-                      <strong>{latestPromise(report.claim)!.parsed_date!.slice(0, 4)}</strong>{" "}
-                      {latestPromise(report.claim)!.description}
+                      <PromiseText promise={latestPromise(report.claim)} />
                     </>
                   ) : (
                     <span class="visually-hidden">None with a date</span>
