@@ -1,6 +1,6 @@
 // Reading the page the reader has open, inside their own browser, and choosing what of
-// it a registry search needs. This happens only when the reader presses the search
-// button. What is sent to the site is the text read, the addresses that text links to,
+// it a registry search needs. This happens when the reader opens the popup on an
+// untracked page. What is sent to the site is the text read, the addresses that text links to,
 // and, for a post, the platform's name. The page's own address is not sent.
 
 const MAX_TEXT = 20000;
@@ -22,7 +22,7 @@ const ENOUGH = 40;
 export function collectFromPage() {
   const CAP = 300000;
   const own = location.pathname;
-  const articles = [...document.querySelectorAll("article")];
+  const articles = [...document.querySelectorAll('article, [role="article"]')];
   const linksToItself = (part) =>
     [...part.querySelectorAll("a[href]")].some((link) => link.getAttribute("href") === own || link.href === location.origin + own);
   const largest = [...articles].sort((a, b) => b.innerText.length - a.innerText.length)[0];
@@ -33,6 +33,8 @@ export function collectFromPage() {
     document.querySelector("main") ??
     document.body;
   return {
+    // Used only to reject a navigation race before sending the composed request.
+    address: location.href,
     title: document.title,
     selection: String(getSelection() ?? "").trim().slice(0, 20000),
     head: document.head.outerHTML.slice(0, CAP),
@@ -57,14 +59,24 @@ function sameSite(href, host) {
   }
 }
 
+function destination(href, readAddress) {
+  // Social sites wrap outgoing article links on their own host.
+  try {
+    const linked = readAddress(href);
+    return linked.kind === "article" ? linked.address : href;
+  } catch {
+    return href;
+  }
+}
+
 /**
  * A post's own words. A line that is only a link within the platform is left out: the
  * writer's name and handle, the time, the counts. So is a line with no letter or digit.
  */
-function postText(collected, host) {
+function postText(collected, host, readAddress) {
   const chrome = new Set(
     collected.links
-      .filter((link) => sameSite(link.href, host))
+      .filter((link) => sameSite(destination(link.href, readAddress), host))
       .flatMap((link) => link.text.split("\n"))
       .map((line) => line.trim())
       .filter(Boolean),
@@ -98,7 +110,7 @@ export function composeRequest(collected, address, { readAddress, readPage, page
     // The reader chose the words themselves: only those are sent.
     text = collected.selection;
   } else if (isPost) {
-    text = postText(collected, host);
+    text = postText(collected, host, readAddress);
     // A platform's tab title is 'Name on Platform: "the post" / Platform': the writer's
     // name first and the platform's last, neither of which is the post.
     if (text.length < ENOUGH) {
@@ -114,7 +126,9 @@ export function composeRequest(collected, address, { readAddress, readPage, page
   if (text.length < ENOUGH) return null;
 
   const links = [collected.contentHref, ...collected.links.map((link) => link.href)]
-    .filter((href) => typeof href === "string" && /^https?:\/\//i.test(href) && href.length <= MAX_LINK)
+    .filter((href) => typeof href === "string" && /^https?:\/\//i.test(href))
+    .map((href) => destination(href, readAddress))
+    .filter((href) => href.length <= MAX_LINK)
     .filter((href) => !sameSite(href, host));
   const request = { text, links: [...new Set(links)].slice(0, MAX_LINKS) };
   return isPost ? { ...request, platform: read.platform } : request;

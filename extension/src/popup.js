@@ -1,107 +1,57 @@
-// The popup: reads the current tab's address when opened, compares it with the site's
-// lookup file inside the browser, and shows the result. The address is never sent anywhere,
-// and opening the popup makes one request: for the lookup file itself.
-//
-// For a page that is not tracked, the reader may ask for a registry search. Only then is
-// the page read, here in the browser, and its text and the links in it sent to the site.
+// Opening the popup checks the current tab locally, then automatically searches an
+// untracked page where live lookup is enabled. No page is read in the background.
 import { articleKey } from "./article-key.js";
 import { SITE } from "./config.js";
+import { createPopupController } from "./controller.js";
 import { LIVE, describeAnswer } from "./live-lookup.js";
 import { readAddress } from "./lookup-match.js";
-import { isFresh, stateFor } from "./lookup.js";
 import { collectFromPage, composeRequest } from "./open-page.js";
-import { pageAsText, readPage } from "./page.js";
+import { pageAsText, readPage as readHtmlPage } from "./page.js";
 import { resolveShortLinks } from "./short-links.js";
 import { render } from "./view.js";
 
 const api = globalThis.browser ?? globalThis.chrome;
-const SIX_HOURS = 6 * 60 * 60 * 1000;
 const root = document.querySelector("#view");
 
 document.querySelector("#name").textContent = SITE.name;
 
-async function currentAddress() {
-  try {
+const controller = createPopupController({
+  storage: api.storage.local,
+  fetch,
+  site: SITE,
+  async readTab() {
     const [tab] = await api.tabs.query({ active: true, currentWindow: true });
-    return tab?.url ?? null;
-  } catch {
-    return null;
-  }
-}
-
-/** The lookup file: the saved copy while fresh, else a new one, else the saved copy with its date. */
-async function loadIndex() {
-  const { lookup: saved = null } = await api.storage.local.get("lookup");
-  if (saved && isFresh(saved.savedAt, Date.now(), SIX_HOURS)) {
-    return { index: saved.index, savedAt: null };
-  }
-  try {
-    const response = await fetch(`${SITE.url}/lookup.json`, { cache: "no-store" });
-    if (!response.ok) throw new Error(`status ${response.status}`);
-    const index = await response.json();
-    await api.storage.local.set({ lookup: { index, savedAt: Date.now() } });
-    return { index, savedAt: null };
-  } catch {
-    return saved ? { index: saved.index, savedAt: saved.savedAt } : { index: null, savedAt: null };
-  }
-}
-
-// Where the site answers a registry search; set once the lookup file is read.
-let live = null;
-
-/** Read the open page in the browser and ask the site which trial records it reports. */
-async function search() {
-  render(root, { kind: "searching" }, SITE, actions);
-  let request = null;
-  try {
-    const [tab] = await api.tabs.query({ active: true, currentWindow: true });
+    return tab ? { ...tab, key: articleKey(tab.url) } : null;
+  },
+  async readPage(tab, signal) {
     const [{ result }] = await api.scripting.executeScript({ target: { tabId: tab.id }, func: collectFromPage });
-    request = composeRequest(result, tab.url, { readAddress, readPage, pageAsText });
-    // A post on X links out only through X's shortener, which the site may not follow.
-    // The browser opens such a link here, as a click would, to learn where it leads.
-    if (request) request.links = await resolveShortLinks(request.links, fetch);
-  } catch {
-    request = null;
-  }
-  if (request === null) {
-    render(root, { kind: "too-little" }, SITE, actions);
-    return;
-  }
-  try {
-    const response = await fetch(SITE.url + live, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
-    });
-    const found = await response.json();
-    if (!response.ok) {
-      render(root, { kind: "refused", code: found?.error ?? "failed" }, SITE, actions);
-      return;
+    if (articleKey(result.address) !== tab.key) {
+      const error = new Error("The open page changed during lookup.");
+      error.code = "page_changed";
+      throw error;
     }
-    const shown = { ...describeAnswer(found), likelyLead: LIVE.likelyLead };
-    render(root, { kind: "answer", shown }, SITE, actions);
-  } catch {
-    render(root, { kind: "refused", code: "failed" }, SITE, actions);
-  }
-}
+    const request = composeRequest(result, tab.url, { readAddress, readPage: readHtmlPage, pageAsText });
+    if (request) {
+      request.links = await resolveShortLinks(request.links, (url, options) => fetch(url, { ...options, signal }));
+    }
+    return request;
+  },
+  describeAnswer(found) {
+    return { ...describeAnswer(found), likelyLead: LIVE.likelyLead, confidenceMeaning: LIVE.confidenceMeaning };
+  },
+  present(state) {
+    render(root, state, SITE, actions);
+  },
+});
 
 const actions = {
   open(address) {
     api.tabs.create({ url: address });
     window.close();
   },
-  retry: run,
-  search,
+  retry: controller.open,
+  search: controller.search,
 };
 
-async function run() {
-  render(root, { kind: "checking" }, SITE, actions);
-  const address = await currentAddress();
-  const key = address ? articleKey(address) : null;
-  const loaded = key === null ? { index: null, savedAt: null } : await loadIndex();
-  const state = stateFor(key, loaded);
-  live = state.live ?? null;
-  render(root, state, SITE, actions);
-}
-
-run();
+window.addEventListener("pagehide", controller.close, { once: true });
+controller.open();
