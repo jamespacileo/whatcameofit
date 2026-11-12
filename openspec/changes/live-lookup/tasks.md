@@ -75,3 +75,8 @@
 - [x] 7.2 Set the dedicated provider project's $13 hard limit, 80% alert and model restriction
 - [x] 7.3 Update site and extension provider disclosures and CI settings
 - [x] 7.4 Store the dedicated production key, confirm data sharing is off, deploy and verify a public lookup (2026-11-12: production CI passed; a synthetic non-medical input returned no treatment, and a synthetic semaglutide lookup ranked the stated STEP 1 record NCT03548935 first)
+
+## 8. Extension result confidence (requested 2026-11-12)
+
+- [x] 8.1 Give each displayed trial record its own match-confidence percentage and unavailable state, with wording distinguishing it from effectiveness and trial quality; verify score boundaries and missing values through the shared answer seam
+- [x] 8.2 Update the public privacy and method copy for automatic lookup when the extension opens, with no background browsing collection; extension implementation and browser checks are tracked in the browser-extension change

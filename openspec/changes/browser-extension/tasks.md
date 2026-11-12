@@ -44,3 +44,12 @@
 
 The six-row live test passed rows 1 and 6. Rows 2–5 remain unverified: X required sign-in, Reddit presented a CAPTCHA, and article sites presented consent or anti-bot barriers. Safari compilation is verified; runtime testing awaits the unsigned-extension setting and an unlocked Mac. No store submission has occurred.
 
+## 7. Automatic popup lookup and match cards (updated 2026-11-12)
+
+- [x] 7.1 Start one automatic lookup when an enabled popup opens on an untracked page; preserve reviewed and non-web fast paths and the current permission scope.
+- [x] 7.2 Add controller regression tests for one-request behavior, cached indices, cancellation, failures and explicit retry.
+- [x] 7.3 Group each potential record and its shared confidence label in an accessible visual card with the registry identifier and source link.
+- [x] 7.4 Retain wrapped Facebook/Reddit article addresses and card headlines; cover common social-platform inputs without real-network unit tests.
+- [ ] 7.5 Verify the combined shared-confidence build visually and through actual automatic popup searches on varied public articles and social posts.
+- [ ] 7.6 Rebuild version 0.2.0 packages after integration. Store submission remains paused pending acceptance of this changed behavior.
+

@@ -109,3 +109,88 @@ test("no more than thirty links are sent, none of them long", () => {
   assert.equal(request.links.length, 30);
   assert.equal(request.links[0], "https://other.example.org/0");
 });
+
+test("Facebook and Reddit outgoing wrappers retain the linked article", () => {
+  for (const [page, wrapper] of [
+    ["https://www.facebook.com/example/posts/123", `https://l.facebook.com/l.php?u=${encodeURIComponent(ARTICLE)}`],
+    ["https://www.reddit.com/r/science/comments/abc123/report/", `https://out.reddit.com/?url=${encodeURIComponent(ARTICLE)}`],
+  ]) {
+    const post = collected({
+      focusText: "EX-1 is being studied as a treatment for missing teeth.",
+      links: [{ href: wrapper, text: "Read the article" }],
+    });
+    assert.deepEqual(composeRequest(post, page, shared).links, [ARTICLE]);
+  }
+});
+
+test("a wrapped article card's headline stays in the post text", () => {
+  const headline = "EX-1 is being studied as a treatment for missing teeth.";
+  const post = collected({
+    focusText: `Research Account\n${headline}`,
+    links: [
+      { href: "https://www.facebook.com/example", text: "Research Account" },
+      { href: `https://l.facebook.com/l.php?u=${encodeURIComponent(ARTICLE)}`, text: headline },
+    ],
+  });
+  const request = composeRequest(post, "https://www.facebook.com/example/posts/123", shared);
+  assert.equal(request.text, headline);
+  assert.deepEqual(request.links, [ARTICLE]);
+});
+
+test("common social web apps preserve public post text and outgoing articles", () => {
+  const pages = [
+    ["https://bsky.app/profile/science.example/post/3abc123", "Bluesky"],
+    ["https://news.ycombinator.com/item?id=12345678", "Hacker News"],
+    ["https://science.social/@research/123456789", "Mastodon"],
+    ["https://www.linkedin.com/posts/science_trial-123", "LinkedIn"],
+    ["https://www.threads.com/@science/post/ABC123", "Threads"],
+    ["https://www.instagram.com/p/ABC123/", "Instagram"],
+  ];
+  for (const [page, platform] of pages) {
+    const post = collected({
+      focusText: "Research Account\nEX-1 is being studied as a treatment for missing teeth.",
+      links: [
+        { href: new URL("/profile", page).href, text: "Research Account" },
+        { href: ARTICLE, text: "Read the article" },
+      ],
+    });
+    const request = composeRequest(post, page, shared);
+    assert.equal(request.platform, platform);
+    assert.doesNotMatch(request.text, /Research Account/);
+    assert.deepEqual(request.links, [ARTICLE]);
+    assert.equal(Object.hasOwn(request, "address"), false);
+  }
+});
+
+test("an unreadable outgoing address does not prevent useful article links", () => {
+  const post = collected({
+    focusText: "EX-1 is being studied as a treatment for missing teeth.",
+    links: [
+      { href: "https://bsky.app/profile/%/post/abc123", text: "Malformed profile" },
+      { href: ARTICLE, text: "Read the article" },
+    ],
+  });
+  const request = composeRequest(post, "https://www.facebook.com/example/posts/123", shared);
+  assert.ok(request.links.includes(ARTICLE));
+});
+
+test("short and link-only posts can search their outgoing article without invented text", () => {
+  for (const words of ["Read this", ""]) {
+    const post = collected({ title: "", focusText: words, links: [{ href: ARTICLE, text: "" }] });
+    const request = composeRequest(post, "https://x.com/research/status/123456789", shared);
+    assert.deepEqual(request, { text: words, links: [ARTICLE], platform: "X" });
+  }
+  const shortened = collected({ focusText: "Read this", links: [{ href: "https://t.co/AbCdEf", text: "" }] });
+  assert.ok(composeRequest(shortened, "https://x.com/research/status/123456789", shared));
+  const genericTitle = collected({ title: "Post by @someone.example — Bluesky", links: [{ href: ARTICLE, text: "" }] });
+  assert.equal(composeRequest(genericTitle, "https://bsky.app/profile/someone.example/post/3abc123", shared).text, "");
+});
+
+test("short text without an article link keeps the too-little refusal", () => {
+  for (const href of ["https://x.com/other/status/987654321", "https://www.linkedin.com/in/research"]) {
+    const post = collected({ focusText: "Read this", links: [{ href, text: "" }] });
+    assert.equal(composeRequest(post, "https://x.com/research/status/123456789", shared), null);
+  }
+  const page = collected({ focusHtml: "<main>Read this</main>", links: [{ href: ARTICLE, text: "" }] });
+  assert.equal(composeRequest(page, "https://news.example.org/short", shared), null);
+});

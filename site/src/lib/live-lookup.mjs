@@ -25,6 +25,8 @@ export const LIVE = {
   notATreatment: "This does not appear to report a specific treatment for a specific condition, so the registry was not searched.",
   trackedLead: "We track this treatment. Its page has been through our usual checks:",
   likelyLead: "Registry records that read as trials of this treatment for this condition, likeliest first:",
+  confidenceMeaning:
+    "Match confidence is the model's estimate that this record concerns the reported treatment and condition. It is not a verified probability or a rating of treatment effectiveness or trial quality.",
   trialSaid: "Of the trial itself, the article says:",
   none: "No matching trial record was found in ClinicalTrials.gov. That is not evidence that no trial exists: the registry may list the treatment under another name, or the trial may be registered elsewhere.",
   source: "Source of the records: ClinicalTrials.gov.",
@@ -128,11 +130,20 @@ function stateLabel(state) {
   return words[0] === "active" && words.length > 1 ? `active, ${words.slice(1).join(" ")}` : words.join(" ");
 }
 
+/** A model's match score, never an estimate of treatment effectiveness. */
+function matchConfidence(score) {
+  const confidence = Number.isFinite(score) && score >= 0 && score <= 1 ? Math.round(score * 100) : null;
+  return {
+    confidence,
+    confidenceLabel: confidence === null ? "Match confidence unavailable" : `${confidence}% match confidence`,
+  };
+}
+
 /**
  * A lookup answer in the site's words.
  * @returns {{ marked: string | null, lead: string, source: string | null, searchedAlso: string | null, trialSaid: string | null,
  *   tracked: { slug: string, headline: string, page: string }[],
- *   likely: { title: string, url: string, detail: string, why: string | null }[],
+ *   likely: { title: string, url: string, detail: string, why: string | null, confidence: number | null, confidenceLabel: string }[],
  *   rest: string | null, none: string | null, notices: string[] }}
  */
 export function describeAnswer(answer) {
@@ -168,6 +179,7 @@ export function describeAnswer(answer) {
       url: candidate.url,
       detail: [phaseLabel(candidate.phases), stateLabel(candidate.state), candidate.id].filter(Boolean).join(" · "),
       why: whyListed(candidate.agrees ?? []),
+      ...matchConfidence(candidate.score),
     })),
     rest:
       others > 0

@@ -45,11 +45,32 @@ test("Scenario: Reader sees an automatic answer", () => {
       url: "https://clinicaltrials.gov/study/NCT00000001",
       detail: "Phase 2/Phase 3 · active, not recruiting · NCT00000001",
       why: null,
+      confidence: 97,
+      confidenceLabel: "97% match confidence",
     },
   ]);
   assert.equal(shown.rest, "2 other records were found and read as not being trials of this treatment for this condition.");
   // The standing notice about trials is part of every answer.
   assert.ok(shown.notices.some((notice) => /not a treatment option/.test(notice)));
+});
+
+test("match confidence belongs to each record and is not a treatment rating", () => {
+  const shown = describeAnswer(answer({ candidates: [
+    candidate("NCT00000001", 0.946),
+    candidate("NCT00000002", 0, { agrees: ["stated"] }),
+    candidate("NCT00000003", 1),
+    candidate("NCT00000004", null, { agrees: ["stated"] }),
+    candidate("NCT00000005", 1.5, { agrees: ["stated"] }),
+  ] }));
+  assert.deepEqual(shown.likely.map(({ confidence, confidenceLabel }) => [confidence, confidenceLabel]), [
+    [95, "95% match confidence"],
+    [0, "0% match confidence"],
+    [100, "100% match confidence"],
+    [null, "Match confidence unavailable"],
+    [null, "Match confidence unavailable"],
+  ]);
+  assert.match(LIVE.confidenceMeaning, /not a verified probability/);
+  assert.match(LIVE.confidenceMeaning, /treatment effectiveness or trial quality/);
 });
 
 test("a trial with no phase, and names the model added, are said plainly", () => {

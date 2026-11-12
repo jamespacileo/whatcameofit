@@ -36,7 +36,7 @@ test("an article no claim cites is untracked", () => {
   assert.equal(stateFor("news.example.org/gone", loaded).kind, "untracked");
 });
 
-test("an untracked page is offered a registry search only where the site answers one", () => {
+test("an untracked page carries a registry endpoint only where the site answers one", () => {
   assert.equal(stateFor("news.example.org/other", loaded).live, null);
   const offering = { index: { ...index, live: "/api/lookup" }, savedAt: null };
   assert.equal(stateFor("news.example.org/other", offering).live, "/api/lookup");

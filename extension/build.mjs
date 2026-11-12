@@ -69,7 +69,7 @@ const icons = Object.fromEntries(sizes.map((size) => [size, `icons/${size}.png`]
 const manifest = {
   manifest_version: 3,
   name: SITE.name,
-  version: "0.1.0",
+  version: "0.2.0",
   description: "See what happened to the medical breakthrough in the article you are reading.",
   icons,
   action: {
@@ -77,8 +77,8 @@ const manifest = {
     default_popup: "popup.html",
     default_icon: icons,
   },
-  // The current tab only, and only when the button is pressed. "scripting" lets the
-  // popup read that tab's page when the reader asks for a registry search. The site's
+  // The current tab only, and only when the popup is opened. "scripting" lets the
+  // popup read an untracked page for its automatic registry search. The site's
   // own address is the one place the extension may fetch from or send to.
   permissions: ["activeTab", "scripting", "storage"],
   // The site, and the shorteners whose links the popup opens to learn where they lead

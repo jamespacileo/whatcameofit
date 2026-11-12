@@ -115,7 +115,6 @@ export async function handle(request, env, tools) {
   const sent = await request.json().catch(() => null);
   const address = typeof sent?.url === "string" ? sent.url.trim() : "";
   let text = typeof sent?.text === "string" ? sent.text.trim() : "";
-  if (!address && !text) return refuse(400, "nothing_given");
   if (text.length > MAX_TEXT_CHARACTERS) return refuse(413, "too_long");
   // Text may come with the links that stood in it, and with the name of the platform it
   // was a post on: what a reader's own browser read from the page they had open. The
@@ -124,9 +123,11 @@ export async function handle(request, env, tools) {
     .filter((link) => typeof link === "string" && link.length <= MAX_LINK_CHARACTERS && /^https?:\/\//i.test(link))
     .slice(0, MAX_LINKS);
   const platform = PLATFORM_NAMES.includes(sent?.platform) ? sent.platform : null;
+  const linkedBrowserPost = !address && platform !== null && links.length > 0;
+  if (!address && !text && !linkedBrowserPost) return refuse(400, "nothing_given");
 
   let read = null;
-  if (!text) {
+  if (!text && !linkedBrowserPost) {
     read = readAddress(address);
     if (read.kind === "none") return refuse(400, "address");
     // A shortened link does not say which article it is; the reader opens it first.
@@ -168,6 +169,7 @@ export async function handle(request, env, tools) {
       const both = await withLinkedArticle(platform, { text, links }, index, { fetch: get, contact: env.CONTACT_EMAIL });
       post = { ...both.source, read_in_browser: true };
       if (both.tracked) return answer({ article_tracked: true, post, tracked: both.tracked, candidates: [] });
+      if (!text && !both.source.article_read) return refuse(422, "post_unreadable", { platform });
       text = both.text;
       page = both.page;
     } else if (links.length) {
