@@ -47,7 +47,7 @@ If you can only act inside web pages and cannot click the browser's toolbar, sto
 3. In Chrome, go to `chrome://extensions`.
 4. Turn on "Developer mode", the switch at the top right.
 5. Click "Load unpacked" and choose the folder `/Users/jay/Projects/products/thenwhat/extension/dist`.
-   - If "What came of it?" is already listed, click "Remove" on it first, then load it again. This clears an old saved file that would hide the search button.
+   - If this same unpacked extension is already listed, use its Reload control after rebuilding. Version 0.2.0 refreshes older cached service settings. If it was loaded from a different folder, remove that development copy and load the intended folder.
 6. Click the puzzle-piece icon in Chrome's toolbar, find "What came of it?", and click the pin beside it. Its icon now shows in the toolbar.
 
 Check: open `http://localhost:8787/lookup.json` in a tab. The text must contain `"live":"/api/lookup"`. If it does not, stop and report that.
@@ -92,7 +92,7 @@ Other things the popup may say, which are results to report, not errors of yours
 
 ## If automatic search does not start on rows 1 to 5
 
-Check that `lookup.json` still says `"live":"/api/lookup"`. Go back to `chrome://extensions`, remove the extension, load it again (Part A, step 5), and try the row once more. If search still does not start, report the visible state and stop.
+Check that `lookup.json` still says `"live":"/api/lookup"`. Go back to `chrome://extensions`, check that version 0.2.0 is loaded from the intended folder, reload it, and try the row once more. If search still does not start, report the visible state and stop.
 
 ## If something fails and you want to see why
 
