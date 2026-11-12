@@ -5,6 +5,8 @@ per outlet: read, refused, failed, and which of the signals a lookup uses were o
 Counts and codes only: no article text is kept, here or in the report.
 """
 
+import csv
+import io
 from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -37,6 +39,18 @@ class Measured:
     first: bool
 
 
+@dataclass(frozen=True, slots=True)
+class Checked:
+    """How one article's address answered. Codes only."""
+
+    url: str
+    # "read", "thin", "refused", or how it failed: an HTTP status or "no answer".
+    outcome: str
+    signals: tuple[str, ...] = ()
+    # With a lookup measured: "found first", "found" or "not found". Empty when none was.
+    lookup: str = ""
+
+
 @dataclass(slots=True)
 class Outlet:
     domain: str
@@ -53,6 +67,7 @@ class Outlet:
     measured: int = 0
     found: int = 0
     first: int = 0
+    checked: list[Checked] = field(default_factory=list)
 
 
 def check_outlets(
@@ -88,23 +103,33 @@ def check_outlets(
 
         if probe.robots == REFUSED_BY_ROBOTS:
             outlet.refused += 1
+            outlet.checked.append(Checked(url, "refused"))
             continue
         page = probe.page
         if page is None:
-            outlet.failed[str(probe.status) if probe.status else "no answer"] += 1
+            failure = str(probe.status) if probe.status else "no answer"
+            outlet.failed[failure] += 1
+            outlet.checked.append(Checked(url, failure))
             continue
-        if len(page.as_text()) < BODY_FROM:
+        thin = len(page.as_text()) < BODY_FROM
+        if thin:
             outlet.thin += 1
         else:
             outlet.read += 1
-        outlet.signals.update(_signals(page))
+        signals = _signals(page)
+        outlet.signals.update(signals)
         trials = approved.get(slug, [])
+        lookup = ""
         if measure is not None and trials:
             measured = measure(page, trials)
             if measured is not None:
                 outlet.measured += 1
                 outlet.found += measured.found
                 outlet.first += measured.first
+                lookup = (
+                    "found first" if measured.first else "found" if measured.found else "not found"
+                )
+        outlet.checked.append(Checked(url, "thin" if thin else "read", tuple(signals), lookup))
     return sorted(outlets.values(), key=lambda outlet: (-outlet.articles, outlet.domain))
 
 
@@ -162,6 +187,26 @@ def report(outlets: list[Outlet], *, checked: date) -> str:
         "",
     ]
     return "\n".join(lines)
+
+
+def articles_csv(outlets: list[Outlet]) -> str:
+    """One row per article address: how it answered, what its page carried, and how a
+    lookup did when one was measured."""
+    out = io.StringIO()
+    writer = csv.writer(out, lineterminator="\n")
+    writer.writerow(["outlet", "url", "outcome", "signals", "lookup"])
+    for outlet in sorted(outlets, key=lambda outlet: outlet.domain):
+        for checked in outlet.checked:
+            writer.writerow(
+                [
+                    outlet.domain,
+                    checked.url,
+                    checked.outcome,
+                    "; ".join(checked.signals),
+                    checked.lookup,
+                ]
+            )
+    return out.getvalue()
 
 
 def _signals(page: Page) -> list[str]:

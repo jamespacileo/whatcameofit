@@ -106,6 +106,11 @@ def test_each_outlet_is_counted_by_how_its_site_answered(tracked: Session, fake_
     assert "https://closed.example.org/story" not in web.urls
     paid = outlets["paid.example.org"]
     assert (paid.articles, paid.read, dict(paid.failed)) == (1, 0, {"402": 1})
+    assert [(c.url, c.outcome, c.signals) for c in opened.checked] == [
+        ("https://open.example.org/first", "read", ("headline", "summary", "paper link")),
+        ("https://open.example.org/second", "thin", ("headline",)),
+    ]
+    assert [c.outcome for c in (*closed.checked, *paid.checked)] == ["refused", "402"]
     # The second article of the same outlet waits its turn.
     assert fake_time.slept == [1.0]
 
@@ -123,6 +128,7 @@ def test_a_lookup_is_measured_on_articles_that_were_read(tracked: Session, fake_
     assert seen == [("Antibody regrows teeth", ["NCT00000001"]), ("News", ["NCT00000001"])]
     # A lookup that could not be made is not counted as a miss.
     assert (opened.measured, opened.found, opened.first) == (1, 1, 0)
+    assert [c.lookup for c in opened.checked] == ["found", ""]
 
 
 def test_the_record_is_a_table_with_a_total_and_no_article_text():
@@ -158,12 +164,19 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
 def test_outlets_prints_and_saves_the_record(tracked: Session, run, tmp_path: Path):
     saved = tmp_path / "outlets.md"
 
-    result = run("outlets", "--save", str(saved))
+    rows = tmp_path / "articles.csv"
+
+    result = run("outlets", "--save", str(saved), "--articles", str(rows))
 
     assert result.exit_code == 0, result.output
     assert "| closed.example.org | 1 | 0 | 0 | 1 |" in result.output
     assert "| open.example.org | 2 | 1 | 1 | 0 |" in saved.read_text()
-    assert "EX-1 regrew teeth" not in saved.read_text()
+    assert "EX-1 regrew teeth" not in saved.read_text() + rows.read_text()
+    assert rows.read_text().splitlines()[:3] == [
+        "outlet,url,outcome,signals,lookup",
+        "closed.example.org,https://closed.example.org/story,refused,,",
+        "open.example.org,https://open.example.org/first,read,headline; summary; paper link,",
+    ]
 
 
 def test_outlets_with_no_article_tracked_explains_and_exits_1(run):

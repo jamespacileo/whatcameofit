@@ -11,7 +11,7 @@ from thenwhat.claims.entry import EntryError
 from thenwhat.cli.console import out
 from thenwhat.cli.entry import entry_session
 from thenwhat.extract.page import Page
-from thenwhat.outlets.readability import Measured, check_outlets, report
+from thenwhat.outlets.readability import Measured, articles_csv, check_outlets, report
 
 
 def make_measure(session: Session):
@@ -65,6 +65,10 @@ def outlets_command(
         Path | None,
         typer.Option("--save", help="Write the record to this file as well as printing it."),
     ] = None,
+    articles: Annotated[
+        Path | None,
+        typer.Option("--articles", help="Write one row per article address to this CSV file."),
+    ] = None,
 ) -> None:
     """Ask for every tracked article once and record, per outlet, whether its site let the
     article be read and which signals its pages carry. No article text is kept."""
@@ -81,3 +85,6 @@ def outlets_command(
     if save is not None:
         save.write_text(page)
         out.print(f"Saved to {save}.", markup=False)
+    if articles is not None:
+        articles.write_text(articles_csv(outlets))
+        out.print(f"Wrote one row per article to {articles}.", markup=False)
