@@ -6,6 +6,13 @@ Shows, for a news article open in the browser, the tracked claim it reports and 
 
 ## ADDED Requirements
 
+### Requirement: Public privacy disclosure
+The site SHALL publish a linked `/privacy` page explaining local address matching, cached public data, hosting, contact messages and the separately requested registry search. It SHALL distinguish the disabled public search from the optional capability. Production search SHALL NOT be enabled without updating the provider and processing disclosures.
+
+#### Scenario: Reader checks extension privacy
+- **WHEN** the reader opens the public privacy address
+- **THEN** the page explains what opening the popup sends, what stays in the browser, and how to contact the operator
+
 ### Requirement: Status of the current article
 When the reader activates the extension on a page whose address is a source article of a published claim, the extension SHALL show the claim's headline, its status in the site's wording, the no-signal note when present, the first-reported date, the latest dated promise when present, and a control that opens the claim page.
 

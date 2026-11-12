@@ -19,6 +19,7 @@ function publicPages(): string[] {
     ...data.claims.map((claim) => `/${claim.slug}`),
     "/it-happened",
     "/how-it-works",
+    "/privacy",
     "/anniversaries",
     "/data",
     ...[...years].sort().map((year) => `/year/${year}`),

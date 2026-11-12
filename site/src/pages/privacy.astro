@@ -1,0 +1,63 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Privacy" description="What the website and browser extension read, send and keep.">
+  <h1 class="title">Privacy</h1>
+  <p class="lede">What the website and browser extension read, send and keep.</p>
+  <p>Updated 12 November 2026. What came of it? is operated by James Pacileo.</p>
+
+  <h2 class="bar">Reading the site</h2>
+  <p>
+    No account is needed. We do not add analytics, set tracking cookies, keep reader profiles,
+    or sell information about readers. Searching the published claims happens in your browser.
+    A marker in your browser's session storage stops the wordmark animation repeating in the
+    same tab; it is not sent to us.
+  </p>
+  <p>
+    Cloudflare hosts and protects the site. Requests for pages and files pass through its network,
+    which receives information such as your IP address and browser request details and counts
+    requests and errors. Our application's request logging is disabled. Cloudflare's processing
+    is described in its <a href="https://www.cloudflare.com/privacypolicy/">privacy policy</a>.
+  </p>
+
+  <h2 class="bar">Opening the extension</h2>
+  <p>
+    When you open the extension, it reads the current tab's address and compares it with a public
+    lookup file inside your browser. It does not send that page address to our service. It downloads
+    the lookup file from whatcameofit.com and saves the file and its retrieval time in the browser,
+    refreshing it after six hours. If the site cannot be reached, the saved copy can still be used.
+    Removing the extension removes this local cache.
+  </p>
+
+  <h2 class="bar">Optional registry searches</h2>
+  <p>
+    Automatic registry search is currently disabled on the public service. Opening the production
+    extension therefore does not send an article's text or selected words to a model provider.
+  </p>
+  <p>
+    The extension also supports a separately requested search when connected to a service that
+    enables it. Only after you press its search button does it read the page or your selected words
+    and send the text and outgoing links to that service. A selection limits the text sent; outgoing
+    links can still be included. A post also identifies its platform. Up to three X short links may
+    be opened through t.co without cookies or a referrer. The current page's address is not added
+    to the search request, but the text you choose may itself contain personal information.
+  </p>
+  <p>
+    That service can retrieve linked articles and query research sources and a model provider.
+    Our application does not store submitted text or search answers. Before enabling this feature
+    publicly, we will update this page to name the provider and explain its data handling.
+  </p>
+
+  <h2 class="bar">Writing to us</h2>
+  <p>
+    Suggestion and correction links open your mail application. Nothing is sent until you send the
+    email. Cloudflare forwards it to our Google Workspace inbox. Your address and message are used
+    to handle your request, not to subscribe you to a mailing list. Please avoid including private
+    medical records or other information that is unnecessary for the request.
+  </p>
+  <p>
+    For privacy questions, or to ask about access, correction or deletion of a message you sent,
+    write to <a href="mailto:corrections@whatcameofit.com">corrections@whatcameofit.com</a>.
+  </p>
+</Base>
