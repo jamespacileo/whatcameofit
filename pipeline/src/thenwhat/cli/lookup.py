@@ -83,6 +83,11 @@ def lookup_command(
         return
     also = f" (also: {', '.join(found.names[1:])})" if found.names[1:] else ""
     out.print(f"Treatment: {found.intervention}{also}", markup=False)
+    if found.known_names:
+        out.print(
+            f"Also searched under names the text does not give: {', '.join(found.known_names)}",
+            markup=False,
+        )
     out.print(f"Condition: {found.indication}", markup=False)
     for slug in found.tracked:
         out.print(f"Already tracked as claim {slug}.", markup=False)

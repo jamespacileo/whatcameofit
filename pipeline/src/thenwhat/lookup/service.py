@@ -34,6 +34,7 @@ ShortText = Annotated[str, Field(min_length=1, max_length=200)]
 INSTRUCTIONS = """\
 You read one news article or social media post and say which medical treatment it is about.
 Report only what the text says. Do not add facts, and do not judge the claim.
+The one exception is the field for names you know: there, and only there, use your own knowledge.
 If the text is not about a specific treatment for a specific condition, say so and leave
 the other fields empty.
 """
@@ -59,6 +60,16 @@ class Reading(BaseModel):
         description=(
             "Other names the text gives it: a brand name, a code such as ABC-123, or a generic"
             " name. Never a description such as 'the drug'. Empty if there is none."
+        ),
+    )
+    known_names: list[ShortText] = Field(
+        default_factory=list,
+        max_length=5,
+        description=(
+            "From your own knowledge, not the text: other names this exact treatment goes by"
+            " that the text does not give, such as a development code, a generic name or a"
+            " brand name. For a combination, also the name of each part. Only names you are"
+            " sure of. Empty if you know none."
         ),
     )
     search_phrases: list[ShortText] = Field(
@@ -98,7 +109,10 @@ class Lookup:
     gist: str
     intervention: str | None
     indication: str | None
+    # Names the text gives.
     names: list[str] = field(default_factory=list)
+    # Names the model knows the treatment by. They widen the search; they are not from the text.
+    known_names: list[str] = field(default_factory=list)
     registry_numbers: list[str] = field(default_factory=list)
     # Slugs of claims already tracked under one of the names.
     tracked: list[str] = field(default_factory=list)
@@ -110,8 +124,9 @@ def look_up(
 ) -> Lookup:
     """Read the text, search the registry for what it reports, and rank what is found.
 
-    Registry numbers stated in the text are looked up directly. Each name and search
-    phrase is searched within the reported condition. Every record found is scored by
+    Registry numbers stated in the text are looked up directly. Each name the text gives,
+    each name the model knows the treatment by, and each search phrase is searched within
+    the reported condition. Every record found is scored by
     the backend with the question used for a claim's candidates. Nothing found is stored.
     """
     numbers = list(dict.fromkeys(number.upper() for number in REGISTRY_NUMBER.findall(text)))
@@ -126,17 +141,22 @@ def look_up(
         if is_a_name(name) and not REGISTRY_NUMBER.fullmatch(name.strip())
     ]
     names = list(dict.fromkeys([reading.intervention, *other]))
+    known = [
+        name
+        for name in dict.fromkeys(reading.known_names)
+        if is_a_name(name) and not REGISTRY_NUMBER.fullmatch(name.strip()) and name not in names
+    ]
     records: dict[str, SourceRecord] = {}
     for number in numbers:
         stated = trials.fetch_trial(number)
         if stated is not None:
             records.setdefault(stated.external_id, stated)
-    for term in dict.fromkeys([*names, *reading.search_phrases]):
+    for term in dict.fromkeys([*names, *known, *reading.search_phrases]):
         for record in trials.search_trials(term, reading.indication):
             records.setdefault(record.external_id, record)
     found = list(records.values())[:MAX_CANDIDATES]
 
-    also = f" (also known as: {', '.join(names[1:])})" if names[1:] else ""
+    also = f" (also known as: {', '.join([*names[1:], *known])})" if [*names[1:], *known] else ""
     decisions = decide_many(
         session,
         backend,
@@ -168,6 +188,7 @@ def look_up(
         names[0],
         reading.indication,
         names=names,
+        known_names=known,
         registry_numbers=numbers,
         tracked=_tracked(session, names),
         candidates=candidates,

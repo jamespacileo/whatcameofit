@@ -137,6 +137,19 @@ def test_every_name_and_search_phrase_is_searched_within_the_condition(session: 
     assert [c.external_id for c in found.candidates] == ["NCT00000003"]
 
 
+def test_names_the_model_knows_widen_the_search_and_are_reported_apart(session: Session):
+    """Scenario: Registry lists the treatment under a name the text does not give"""
+    by_code = trial("NCT00000004", "TRG-035 in tooth agenesis")
+    trials = FakeTrials({"TRG-035": [by_code]})
+    reading = {**READING, "search_phrases": [], "known_names": ["TRG-035", "the antibody"]}
+
+    found = find(session, trials, reading=reading)
+
+    assert [name for name, _ in trials.searched] == ["EX-1", "Toothgrow", "TRG-035"]
+    assert (found.names, found.known_names) == (["EX-1", "Toothgrow"], ["TRG-035"])
+    assert [c.external_id for c in found.candidates] == ["NCT00000004"]
+
+
 def test_a_registry_number_in_the_text_is_looked_up_directly(session: Session):
     """Scenario: Text that states a registry number"""
     stated = trial("NCT01234567", "EX-1 first study in people")
