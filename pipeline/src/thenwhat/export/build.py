@@ -131,6 +131,8 @@ class ExportedClaim(Strict):
     headline: str
     summary: str
     vertical: str
+    # The kind of intervention, as a configured approach code. The site owns its wording.
+    approach: str | None
     intervention: ExportedIntervention
     indication: str
     first_reported_date: date | None
@@ -256,6 +258,7 @@ def build_export(
                 headline=claim.headline,
                 summary=claim.summary,
                 vertical=claim.vertical,
+                approach=claim.approach,
                 intervention=ExportedIntervention(
                     name=intervention.name, synonyms=list(intervention.synonyms)
                 ),

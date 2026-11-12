@@ -97,6 +97,8 @@ class Claim(Reviewed, Base):
     headline: Mapped[str] = mapped_column(Text)
     summary: Mapped[str] = mapped_column(Text)
     vertical: Mapped[str] = mapped_column(Text)
+    # One of the configured approaches, or none. Never part of status.
+    approach: Mapped[str | None] = mapped_column(Text)
     # The intervention half of a claim's identity is its intervention entity.
     indication: Mapped[str] = mapped_column(Text)
     first_reported_date: Mapped[date | None]

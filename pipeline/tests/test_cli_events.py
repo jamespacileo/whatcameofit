@@ -58,7 +58,7 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch, fixture_json):
         session,
         slug=SLUG,
         headline="Antibody regrows teeth in mice",
-        vertical="dental-regeneration",
+        vertical="mouth-and-teeth",
         intervention="EX-1 antibody",
         indication="tooth agenesis",
     )

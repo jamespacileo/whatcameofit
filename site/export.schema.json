@@ -101,6 +101,17 @@
           "title": "Vertical",
           "type": "string"
         },
+        "approach": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Approach"
+        },
         "intervention": {
           "$ref": "#/$defs/ExportedIntervention"
         },
@@ -171,6 +182,7 @@
         "headline",
         "summary",
         "vertical",
+        "approach",
         "intervention",
         "indication",
         "first_reported_date",

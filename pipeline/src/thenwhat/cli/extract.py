@@ -60,7 +60,7 @@ def _article_text(url: str, paste: bool) -> Retrieved:
 def extract_new(
     url: Annotated[str, typer.Argument(help="Address of the news article.")],
     slug: Annotated[str, typer.Option(help="Short, guessable page address for the claim.")],
-    vertical: Annotated[str, typer.Option(help="Topic area, for example dental-regeneration.")],
+    vertical: Annotated[str, typer.Option(help="Topic area, for example mouth-and-teeth.")],
     outlet: Annotated[str, typer.Option(help="Publication that ran the article.")],
     title: Annotated[str, typer.Option(help="Article title.")],
     published: Annotated[

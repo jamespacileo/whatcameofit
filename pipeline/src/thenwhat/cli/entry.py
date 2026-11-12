@@ -45,10 +45,13 @@ def entry_session() -> Generator[Session]:
 def claim_add(
     slug: Annotated[str, typer.Argument(help="Short, guessable page address.")],
     headline: Annotated[str, typer.Option(help="What was claimed, in one line.")],
-    vertical: Annotated[str, typer.Option(help="Topic area, for example dental-regeneration.")],
+    vertical: Annotated[str, typer.Option(help="Topic area, for example mouth-and-teeth.")],
     intervention: Annotated[str, typer.Option(help="The drug, device or method.")],
     indication: Annotated[str, typer.Option(help="The condition it is claimed to treat.")],
     summary: Annotated[str, typer.Option(help="Summary in your own words.")] = "",
+    approach: Annotated[
+        str, typer.Option(help="Kind of intervention, for example drug or gene-therapy.")
+    ] = "",
 ) -> None:
     """Add a claim: one intervention for one indication."""
     with entry_session() as session:
@@ -60,6 +63,7 @@ def claim_add(
             intervention=intervention,
             indication=indication,
             summary=summary,
+            approach=approach,
         )
         out.print(f"Added claim {claim.slug}.", markup=False)
 
@@ -71,8 +75,12 @@ def claim_edit(
     summary: Annotated[str | None, typer.Option(help="New summary, in your own words.")] = None,
     intervention: Annotated[str | None, typer.Option(help="New intervention name.")] = None,
     indication: Annotated[str | None, typer.Option(help="New indication.")] = None,
+    vertical: Annotated[str | None, typer.Option(help="New vertical.")] = None,
+    approach: Annotated[
+        str | None, typer.Option(help="New approach; an empty value clears it.")
+    ] = None,
 ) -> None:
-    """Correct a claim's headline, summary, intervention or indication."""
+    """Correct a claim's headline, summary, intervention, indication, vertical or approach."""
     with entry_session() as session:
         claim = edit_claim(
             session,
@@ -81,6 +89,8 @@ def claim_edit(
             summary=summary,
             intervention=intervention,
             indication=indication,
+            vertical=vertical,
+            approach=approach,
         )
         out.print(f"Updated claim {claim.slug}.", markup=False)
 

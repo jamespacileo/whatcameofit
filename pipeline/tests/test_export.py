@@ -36,7 +36,7 @@ def new_claim(session: Session, slug: str = SLUG, approved: bool = True) -> Clai
         session,
         slug=slug,
         headline="Antibody regrows teeth in mice",
-        vertical="dental-regeneration",
+        vertical="mouth-and-teeth",
         intervention=f"EX-1 antibody {slug}",
         indication="tooth agenesis",
         summary="An antibody restored missing teeth in mice.",
@@ -159,7 +159,7 @@ def test_exported_claim_carries_what_its_page_shows(session: Session):
     out = claim_in(exported(session))
 
     assert out["headline"] == claim.headline and out["summary"] == claim.summary
-    assert out["vertical"] == "dental-regeneration" and out["indication"] == "tooth agenesis"
+    assert out["vertical"] == "mouth-and-teeth" and out["indication"] == "tooth agenesis"
     assert out["intervention"] == {"name": f"EX-1 antibody {SLUG}", "synonyms": ["TRG-999"]}
     assert out["first_reported_date"] == "2018-03-10" and out["evidence_stage"] == "animal"
     assert out["status"] == {
@@ -214,8 +214,8 @@ def test_export_states_when_it_was_made_and_when_data_was_last_checked(session: 
     assert export["generated_at"] == "2026-11-20T10:00:00Z"
     assert export["last_checked_at"] == "2026-11-19T09:00:00Z"
     assert {
-        "slug": "dental-regeneration",
-        "title": "Dental regeneration",
+        "slug": "mouth-and-teeth",
+        "title": "Mouth and teeth",
         "group": {"slug": "mouth-and-teeth", "title": "Mouth and teeth"},
     } in export["verticals"]
     assert any(source["name"] == "ClinicalTrials.gov" for source in export["sources"])

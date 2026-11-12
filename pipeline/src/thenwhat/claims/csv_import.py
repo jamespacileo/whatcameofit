@@ -17,7 +17,7 @@ from thenwhat.claims.entry import EntryError, add_article, add_claim, add_promis
 CLAIM_COLUMNS = ("headline", "vertical", "intervention", "indication")
 ARTICLE_COLUMNS = ("article_url", "outlet", "article_title", "published_date")
 REQUIRED_COLUMNS = ("slug", *CLAIM_COLUMNS, *ARTICLE_COLUMNS)
-OPTIONAL_COLUMNS = ("summary", "promise", "promise_date")
+OPTIONAL_COLUMNS = ("summary", "approach", "promise", "promise_date")
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,6 +68,7 @@ def import_csv(session: Session, lines: Iterable[str]) -> ImportResult:
                         intervention=values["intervention"],
                         indication=values["indication"],
                         summary=values.get("summary", ""),
+                        approach=values.get("approach", ""),
                     )
                     claims.add(values["slug"])
                 add_article(
@@ -121,7 +122,7 @@ def _read(lines: Iterable[str]) -> list[_Record]:
         elif first is not None:
             problems += [
                 f"{column} differs from row {first.row}, which has the same slug"
-                for column in (*CLAIM_COLUMNS, "summary")
+                for column in (*CLAIM_COLUMNS, "summary", "approach")
                 if values.get(column) and values[column] != first.values.get(column, "")
             ]
             values = values | {column: first.values[column] for column in CLAIM_COLUMNS}

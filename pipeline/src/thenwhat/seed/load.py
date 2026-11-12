@@ -40,6 +40,7 @@ class SeedClaim(Strict):
     headline: str
     summary: str
     vertical: str
+    approach: str | None = None
     intervention: str
     synonyms: list[str] = []
     indication: str
@@ -118,6 +119,7 @@ def load_seed(session: Session, content: dict[str, Any], *, now: datetime) -> Cl
         intervention=seed.claim.intervention,
         indication=seed.claim.indication,
         summary=seed.claim.summary,
+        approach=seed.claim.approach,
     )
     for synonym in seed.claim.synonyms:
         add_synonym(session, slug, seed.claim.intervention, synonym)

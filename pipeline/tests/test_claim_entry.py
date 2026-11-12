@@ -38,7 +38,7 @@ def new_claim(session: Session, **overrides) -> Claim:
     values = {
         "slug": "tooth-regrowth-usag1",
         "headline": "Antibody regrows teeth in mice",
-        "vertical": "dental-regeneration",
+        "vertical": "mouth-and-teeth",
         "intervention": "USAG-1 antibody",
         "indication": "tooth agenesis",
     }
@@ -78,7 +78,7 @@ def test_malformed_slug_is_refused(session: Session, slug: str):
 
 def test_unknown_vertical_is_refused_and_valid_ones_are_listed(session: Session):
     """Scenario: Unknown vertical"""
-    with pytest.raises(UnknownVertical, match="dental-regeneration"):
+    with pytest.raises(UnknownVertical, match="mouth-and-teeth"):
         new_claim(session, vertical="hair-regrowth-typo")
 
     assert claim_count(session) == 0

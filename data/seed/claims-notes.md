@@ -140,3 +140,7 @@ Outcome per claim. Columns: status, evidence stage at announcement, approved mat
 | whole-tooth-germ-splitting | preclinical_only | animal | 1 | 0 | 3 |
 | whole-tooth-pulp-cell-tooth-germ | preclinical_only | in_vitro | 0 | 0 | 0 |
 | pulp-regeneration-baby-tooth-stem-cells | trial_registered | early_human | 2 | 0 | 57 |
+
+## Health areas and approaches (2026-11-12)
+
+The vertical `dental-regeneration` is retired. The eight periodontal claims (`periodontal-*`) are filed under gum disease, the rest under mouth and teeth. Approaches: stem-cell claims are cell therapy; scaffolds, membranes, peptides, gels, bioprinted tissue and tooth germs are tissue regeneration; tideglusib, aspirin, AdipoRon, maresin and resolvin, and the USAG-1 antibody are drugs. `dentine-repair-dlk1` (a signal that wakes stem cells) is filed as tissue regeneration, and could be argued as a drug.

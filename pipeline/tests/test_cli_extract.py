@@ -36,7 +36,7 @@ NEW = [
     "--slug",
     "tooth-regrowth-ex1",
     "--vertical",
-    "dental-regeneration",
+    "mouth-and-teeth",
     "--outlet",
     "Example News",
     "--title",

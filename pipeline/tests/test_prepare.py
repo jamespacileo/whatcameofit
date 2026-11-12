@@ -29,7 +29,7 @@ def claim_with_articles(session: Session, slug: str, *urls: str) -> None:
         session,
         slug=slug,
         headline="Antibody regrows teeth in mice",
-        vertical="dental-regeneration",
+        vertical="mouth-and-teeth",
         intervention=f"EX-1 antibody {slug}",
         indication="tooth agenesis",
         summary="An antibody restored missing teeth in mice.",

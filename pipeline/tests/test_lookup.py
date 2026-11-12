@@ -312,7 +312,7 @@ def test_a_claim_already_tracked_under_one_of_the_names_is_named(session: Sessio
         session,
         slug="tooth-regrowth-ex1",
         headline="Antibody regrows teeth",
-        vertical="dental-regeneration",
+        vertical="mouth-and-teeth",
         intervention="Anti-USAG-1 antibody",
         indication="tooth agenesis",
         summary="An antibody restored missing teeth.",

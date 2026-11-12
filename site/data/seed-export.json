@@ -26,24 +26,24 @@
       "slug": "ageing",
       "title": "Ageing",
       "group": {
-        "slug": "ageing-and-longevity",
-        "title": "Ageing and longevity"
+        "slug": "ageing",
+        "title": "Ageing"
       }
     },
     {
-      "slug": "allergies",
-      "title": "Allergies",
+      "slug": "bones-joints-and-muscles",
+      "title": "Bones, joints and muscles",
       "group": {
-        "slug": "immune-system-and-infections",
-        "title": "Immune system and infections"
+        "slug": "bones-joints-and-muscles",
+        "title": "Bones, joints and muscles"
       }
     },
     {
       "slug": "brain-and-nerves",
       "title": "Brain and nerves",
       "group": {
-        "slug": "brain-and-mind",
-        "title": "Brain and mind"
+        "slug": "brain-and-nerves",
+        "title": "Brain and nerves"
       }
     },
     {
@@ -55,83 +55,115 @@
       }
     },
     {
-      "slug": "dementia",
-      "title": "Dementia",
+      "slug": "diabetes-and-hormones",
+      "title": "Diabetes, weight and hormones",
       "group": {
-        "slug": "brain-and-mind",
-        "title": "Brain and mind"
+        "slug": "diabetes-and-hormones",
+        "title": "Diabetes, weight and hormones"
       }
     },
     {
-      "slug": "dental-regeneration",
-      "title": "Dental regeneration",
+      "slug": "eyes-and-ears",
+      "title": "Eyes and ears",
       "group": {
-        "slug": "mouth-and-teeth",
-        "title": "Mouth and teeth"
+        "slug": "eyes-and-ears",
+        "title": "Eyes and ears"
       }
     },
     {
-      "slug": "diabetes-and-metabolism",
-      "title": "Diabetes and metabolism",
+      "slug": "gut-and-liver",
+      "title": "Gut and liver",
       "group": {
-        "slug": "heart-and-metabolism",
-        "title": "Heart and metabolism"
-      }
-    },
-    {
-      "slug": "hair-loss",
-      "title": "Hair loss",
-      "group": {
-        "slug": "skin-and-hair",
-        "title": "Skin and hair"
+        "slug": "gut-and-liver",
+        "title": "Gut and liver"
       }
     },
     {
       "slug": "heart-and-circulation",
-      "title": "Heart and circulation",
+      "title": "Heart, blood and circulation",
       "group": {
-        "slug": "heart-and-metabolism",
-        "title": "Heart and metabolism"
+        "slug": "heart-and-circulation",
+        "title": "Heart, blood and circulation"
+      }
+    },
+    {
+      "slug": "immune-system-and-allergies",
+      "title": "Immune system and allergies",
+      "group": {
+        "slug": "immune-system-and-allergies",
+        "title": "Immune system and allergies"
       }
     },
     {
       "slug": "infections",
       "title": "Infections",
       "group": {
-        "slug": "immune-system-and-infections",
-        "title": "Immune system and infections"
+        "slug": "infections",
+        "title": "Infections"
+      }
+    },
+    {
+      "slug": "kidneys-and-bladder",
+      "title": "Kidneys and bladder",
+      "group": {
+        "slug": "kidneys-and-bladder",
+        "title": "Kidneys and bladder"
+      }
+    },
+    {
+      "slug": "lungs-and-breathing",
+      "title": "Lungs and breathing",
+      "group": {
+        "slug": "lungs-and-breathing",
+        "title": "Lungs and breathing"
       }
     },
     {
       "slug": "mental-health",
       "title": "Mental health",
       "group": {
-        "slug": "brain-and-mind",
-        "title": "Brain and mind"
+        "slug": "mental-health",
+        "title": "Mental health"
       }
     },
     {
-      "slug": "pain",
-      "title": "Pain",
+      "slug": "mouth-and-teeth",
+      "title": "Mouth and teeth",
       "group": {
-        "slug": "brain-and-mind",
-        "title": "Brain and mind"
+        "slug": "mouth-and-teeth",
+        "title": "Mouth and teeth"
       }
     },
     {
-      "slug": "sight-and-hearing",
-      "title": "Sight and hearing",
+      "slug": "pregnancy-and-fertility",
+      "title": "Pregnancy and fertility",
       "group": {
-        "slug": "senses",
-        "title": "Senses"
+        "slug": "pregnancy-and-fertility",
+        "title": "Pregnancy and fertility"
       }
     },
     {
-      "slug": "transplants",
-      "title": "Transplants",
+      "slug": "skin-and-hair",
+      "title": "Skin and hair",
       "group": {
-        "slug": "immune-system-and-infections",
-        "title": "Immune system and infections"
+        "slug": "skin-and-hair",
+        "title": "Skin and hair"
+      }
+    },
+    {
+      "slug": "dementia",
+      "title": "Dementia",
+      "group": {
+        "slug": "brain-and-nerves",
+        "title": "Brain and nerves"
+      }
+    },
+    {
+      "slug": "gum-disease",
+      "title": "Gum disease",
+      "group": {
+        "slug": "mouth-and-teeth",
+        "title": "Mouth and teeth"
       }
     }
   ],
@@ -147,7 +179,8 @@
       "slug": "tooth-regrowth-usag1",
       "headline": "Antibody against USAG-1 regrows teeth in mice",
       "summary": "Researchers at Kyoto University and the University of Fukui reported that one dose of an antibody blocking the protein USAG-1 grew a whole new tooth in mice with congenital tooth agenesis, with similar results in ferrets. The paper appeared in Science Advances in February 2021.",
-      "vertical": "dental-regeneration",
+      "vertical": "mouth-and-teeth",
+      "approach": "drug",
       "intervention": {
         "name": "Anti-USAG-1 antibody",
         "synonyms": [

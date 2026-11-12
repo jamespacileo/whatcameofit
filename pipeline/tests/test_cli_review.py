@@ -49,7 +49,7 @@ def claim(session: Session) -> Claim:
         session,
         slug=SLUG,
         headline="Antibody regrows teeth in mice",
-        vertical="dental-regeneration",
+        vertical="mouth-and-teeth",
         intervention="EX-1 antibody",
         indication="tooth agenesis",
         summary="An antibody restored missing teeth in mice.",

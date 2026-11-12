@@ -28,7 +28,7 @@ def add_claim(session: Session) -> Claim:
         headline="h",
         summary="s",
         indication="i",
-        vertical="dental-regeneration",
+        vertical="mouth-and-teeth",
         first_reported_date=date(2019, 1, 1),
     )
     session.add(claim)

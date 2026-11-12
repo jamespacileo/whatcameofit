@@ -34,7 +34,7 @@ def row(number: int, **overrides: str) -> dict[str, str]:
     values = {
         "slug": f"claim-{number}",
         "headline": f"Headline {number}",
-        "vertical": "dental-regeneration",
+        "vertical": "mouth-and-teeth",
         "intervention": f"Intervention {number}",
         "indication": "tooth loss",
         "summary": "",
@@ -145,7 +145,7 @@ def test_slug_that_already_exists_is_refused(session: Session):
         session,
         slug="claim-1",
         headline="Existing",
-        vertical="dental-regeneration",
+        vertical="mouth-and-teeth",
         intervention="Something else",
         indication="enamel loss",
     )

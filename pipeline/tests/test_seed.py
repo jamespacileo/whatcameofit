@@ -9,6 +9,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from thenwhat.claims.csv_import import import_csv
 from thenwhat.claims.entry import claim_count
 from thenwhat.db.models import DecisionLog, EntityMatch
 from thenwhat.domain import ClaimStatus, Decider, EvidenceStage, ReviewState
@@ -84,3 +85,11 @@ def test_checked_in_site_export_is_the_export_of_the_seed(session: Session, seed
     # The seed carries its outlet's icon, so a fresh checkout shows it with no fetch.
     assert [outlet["domain"] for outlet in fresh["outlets"]] == ["kyoto-u.ac.jp"]
     assert checked_in["outlets"] == fresh["outlets"]
+
+
+@pytest.mark.parametrize("name", ["claims.csv", "claims-recent.csv"])
+def test_seed_csv_imports_under_the_configured_verticals(session: Session, name: str):
+    with (REPOSITORY / "data" / "seed" / name).open(encoding="utf-8-sig", newline="") as lines:
+        result = import_csv(session, lines)
+
+    assert result.claims > 0
