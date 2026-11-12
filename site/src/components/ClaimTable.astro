@@ -60,26 +60,26 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
   )
 }
 <div class="table-frame">
-<table class="index">
+<table role="table" class="index">
   <caption class="visually-hidden">{caption}</caption>
-  <thead>
-    <tr>
-      <th scope="col">Claim</th>
-      <th scope="col">First reported</th>
-      {anyPromise && <th scope="col" class="promise">Latest promise</th>}
-      <th scope="col">Status</th>
+  <thead role="rowgroup">
+    <tr role="row">
+      <th role="columnheader" scope="col">Claim</th>
+      <th role="columnheader" scope="col">First reported</th>
+      {anyPromise && <th role="columnheader" scope="col" class="promise">Latest promise</th>}
+      <th role="columnheader" scope="col">Status</th>
     </tr>
   </thead>
-  <tbody>
+  <tbody role="rowgroup">
     {
       claims.map((claim) => {
         const promise = latestPromise(claim);
         return (
-          <tr data-status={claim.status.code}>
-            <td class="claim">
+          <tr data-status={claim.status.code} role="row">
+            <td role="cell" class="claim">
               <a href={`/${claim.slug}`}>{claim.headline}</a>
             </td>
-            <td class="when" data-column="First reported">
+            <td role="cell" class="when" data-column="First reported">
               {claim.first_reported_date ? (
                 formatDate(claim.first_reported_date)
               ) : (
@@ -87,7 +87,7 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
               )}
             </td>
             {anyPromise && (
-            <td class:list={["promise", { none: !promise }]} data-column="Latest promise">
+            <td role="cell" class:list={["promise", { none: !promise }]} data-column="Latest promise">
               {promise ? (
                 <>
                   <strong>{promise.parsed_date!.slice(0, 4)}</strong> {promise.description}
@@ -97,7 +97,7 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
               )}
             </td>
             )}
-            <td class="status" data-column="Status">
+            <td role="cell" class="status" data-column="Status">
               <StatusCell claim={claim} />
             </td>
           </tr>

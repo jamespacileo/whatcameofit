@@ -65,6 +65,8 @@ Figures are tabular and lining throughout. Reading measure is 66 characters. A n
 - **What this is.** Under a claim's headline, one grey line for a reader who arrived from a shared link: "A record of what followed this reported breakthrough." and the link to the method page.
 - **Other claims.** Before "Pass it on": up to three other claims in the same topic, newest report first, in the index table, and a link to the topic when there are more.
 - **Digest panel.** The status label with an info button, the stage track, the no-signal note in a dashed outline when present, "Promised by <year>" on pale amber with a dashed rule when the claim has a dated promise (the year leads to its row in the timetable), and "Latest record <date>", where the date leads to that record in the timetable, beside what the status means, in one semibold sentence, and the summary under it. The status is explained in the open, so no reader has to find the info button to learn what "Preclinical only" says. The info button opens a panel with the records it rests on (each linking to its line in the timetable) and the date the status was set. The no-signal note opens a panel saying what it does and does not mean. The date a status was computed is never presented as the date something happened.
+- **Reading order on a phone.** In the digest the sentence that says what the status means comes straight after the status label, ahead of the path and the dates; in "Pass it on" the sentence and its buttons come before the card. Only the drawn order changes, never the order a keyboard moves in.
+- **The path, named.** The status label's info panel lists the six places on the path by name, the claim's own in bold with the marker beside it, so the unnamed dots of the track are explained where a reader presses to understand.
 - **Stage track.** Six places on a line, from preclinical to approved, with one larger solid blue dot at the status's place. It marks a position, not progress, and is never filled up to the dot. It always sits beside the status in words. Failed, terminated and retracted have no track. The operator approved it on 2026-11-11 as the one exception to "no meters".
 - **Facts row.** Intervention with its other names, what it is claimed for, first reported, evidence then.
 - **Key.** Beside the timetable heading: the amber swatch for "Promised", one drawing for each kind of record on the page, and the blue diamond for "Basis of status".
@@ -137,6 +139,7 @@ Weight, measured on the preview build: a claim page with 29 records is 5 KB of H
 - Footer notices on every page: no medical advice; a registered trial is not a treatment option; data sources; last-checked date. A build check fails without them.
 - No verdict wording in any status label; a build check fails on words such as "abandoned".
 - Status never by colour alone.
+- Tables carry their table, row and cell roles in the markup, because on a phone they are drawn as blocks and a browser would otherwise stop reporting them as tables.
 - Source articles are linked by outlet, title and date. Their text is never shown.
 - No stock photography. Topic imagery is a drawn mark in the accent colour.
 - Everything pressed is at least 44 pixels tall on a phone: pills, the topic chip, the info button, the no-signal note, record details, the menu and the footer links.

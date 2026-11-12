@@ -19,6 +19,7 @@ import { UNCHECKED_NOTE } from "../lib/notices";
 import {
   EVIDENCE_STAGES,
   KIND_NAMES,
+  STAGE_PATH,
   STATUS_LABELS,
   STATUS_MEANINGS,
   eventKind,
@@ -51,6 +52,7 @@ const latestRecord = claim.events.map((event) => event.event_date).sort().at(-1)
 // The latest record is at the foot of a long timetable, so the date leads to it.
 const latestMark =
   timetable.sources.find(({ event }) => event.event_date === latestRecord)?.mark ?? null;
+const onPath = STAGE_PATH.includes(claim.status.code);
 const hasDatedPromise = claim.promises.some((promise) => promise.parsed_date !== null);
 const hasPromise = claim.promises.length > 0;
 // The year the latest dated promise names, shown beside the status as it is on the card.
@@ -149,6 +151,21 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                 </>
               ) : (
                 <p>No trial, approval or retraction record is attached to this claim.</p>
+              )
+            }
+            {
+              /* The dots on the path are named here, so a reader need not guess them. */
+              onPath && (
+                <>
+                  <p class="pop-head">The six places on the path</p>
+                  <ol class="pop-path">
+                    {STAGE_PATH.map((code) => (
+                      <li aria-current={code === claim.status.code ? "true" : undefined}>
+                        {STATUS_LABELS[code]}
+                      </li>
+                    ))}
+                  </ol>
+                </>
               )
             }
             {
@@ -266,34 +283,34 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
     </div>
     {!hasDatedPromise && <p class="absent">No dated promise on record.</p>}
     <div class="table-frame">
-    <table class="timetable" aria-labelledby="timetable">
-      <thead>
-        <tr>
-          <th scope="col">Year</th>
-          {hasDatedPromise && <th scope="col" class="promised">Promised</th>}
-          <th scope="col">Recorded</th>
+    <table role="table" class="timetable" aria-labelledby="timetable">
+      <thead role="rowgroup">
+        <tr role="row">
+          <th role="columnheader" scope="col">Year</th>
+          {hasDatedPromise && <th role="columnheader" scope="col" class="promised">Promised</th>}
+          <th role="columnheader" scope="col">Recorded</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody role="rowgroup">
         {
           timetable.rows.map((row) =>
             row.kind === "quiet" ? (
-              <tr class="quiet">
-                <th scope="row" class="year">
+              <tr role="row" class="quiet">
+                <th role="rowheader" scope="row" class="year">
                   {row.from === row.to ? row.from : `${row.from} to ${row.to}`}
                 </th>
-                {hasDatedPromise && <td class="promised empty" />}
-                <td>{hasDatedPromise ? "No promise, no record" : "No record"}</td>
+                {hasDatedPromise && <td role="cell" class="promised empty" />}
+                <td role="cell">{hasDatedPromise ? "No promise, no record" : "No record"}</td>
               </tr>
             ) : (
-              <tr id={`year-${row.year}`}>
-                <th scope="row" class="year">
+              <tr role="row" id={`year-${row.year}`}>
+                <th role="rowheader" scope="row" class="year">
                   {row.year}
                   {row.current && <small>this year</small>}
                 </th>
                 {
                   hasDatedPromise && (
-                    <td
+                    <td role="cell"
                       class:list={["promised", { none: row.promised.length === 0 }]}
                       data-column="Promised"
                     >
@@ -315,7 +332,7 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                     </td>
                   )
                 }
-                <td data-column="Recorded">
+                <td role="cell" data-column="Recorded">
                   {
                     row.recorded.length === 0 ? (
                       <span

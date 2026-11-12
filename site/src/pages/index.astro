@@ -80,30 +80,30 @@ const recent = data.claims
       <p>No news report is on record yet.</p>
     ) : (
       <div class="table-frame">
-      <table class="index">
+      <table role="table" class="index">
         <caption class="visually-hidden">
           News reports about tracked claims, newest first. Each headline is the outlet's own wording.
         </caption>
-        <thead>
-          <tr>
-            <th scope="col">Headline</th>
-            <th scope="col">Reported</th>
-            <th scope="col">Status now</th>
+        <thead role="rowgroup">
+          <tr role="row">
+            <th role="columnheader" scope="col">Headline</th>
+            <th role="columnheader" scope="col">Reported</th>
+            <th role="columnheader" scope="col">Status now</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody role="rowgroup">
           {reports.map((report) => (
-            <tr>
-              <td class="claim">
+            <tr role="row">
+              <td role="cell" class="claim">
                 <a href={`/${report.claim.slug}`}>“{report.title}”</a>
                 <span class="entry-note">
                   <Outlet url={report.url} outlet={report.outlet} />
                 </span>
               </td>
-              <td class="when" data-column="Reported">
+              <td role="cell" class="when" data-column="Reported">
                 {formatDate(report.publishedDate)}
               </td>
-              <td class="status" data-column="Status now">
+              <td role="cell" class="status" data-column="Status now">
                 <StatusCell claim={report.claim} />
               </td>
             </tr>
@@ -120,24 +120,24 @@ const recent = data.claims
       <p>No status has changed yet.</p>
     ) : (
       <div class="table-frame">
-      <table class="index">
-        <thead>
-          <tr>
-            <th scope="col">Claim</th>
-            <th scope="col">Status</th>
-            <th scope="col">Status set</th>
+      <table role="table" class="index">
+        <thead role="rowgroup">
+          <tr role="row">
+            <th role="columnheader" scope="col">Claim</th>
+            <th role="columnheader" scope="col">Status</th>
+            <th role="columnheader" scope="col">Status set</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody role="rowgroup">
           {recent.map((claim) => (
-            <tr>
-              <td class="claim">
+            <tr role="row">
+              <td role="cell" class="claim">
                 <a href={`/${claim.slug}`}>{claim.headline}</a>
               </td>
-              <td class="status" data-column="Status">
+              <td role="cell" class="status" data-column="Status">
                 <StatusCell claim={claim} />
               </td>
-              <td class="when" data-column="Status set">
+              <td role="cell" class="when" data-column="Status set">
                 {formatDate(claim.status.updated_at)}
               </td>
             </tr>

@@ -516,8 +516,10 @@ a.chip:hover {
     grid-template-columns: 1fr;
   }
 
+  /* The sentence and its buttons first; the card they describe after. */
   .take-card {
     width: min(100%, 15rem);
+    order: 2;
   }
 }
 
@@ -766,6 +768,36 @@ body.embed {
 @media (max-width: 40rem) {
   .digest {
     grid-template-columns: 1fr;
+    row-gap: 0;
+  }
+
+  /* On a phone the sentence that says what the status means comes straight after
+     the status, ahead of the path and the dates. The order a keyboard moves in
+     is unchanged: nothing in the sentence can be pressed. */
+  .digest .standing,
+  .digest .says {
+    display: contents;
+  }
+
+  .digest .label-row {
+    order: 1;
+  }
+
+  .digest .means {
+    order: 2;
+    margin: 0.4rem 0 0.2rem;
+  }
+
+  .digest .track,
+  .digest .standing > div:not(.label-row),
+  .digest .promised-by,
+  .digest .changed {
+    order: 3;
+  }
+
+  .digest .lede {
+    order: 4;
+    margin-top: 0.7rem;
   }
 }
 
@@ -1196,6 +1228,43 @@ body.embed {
   margin: 0.2rem 0 0;
   padding: 0;
   list-style: none;
+}
+
+/* The path's six names, the claim's own place in bold with the marker beside it. */
+.pop .pop-path {
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+}
+
+.pop .pop-path li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pop .pop-path li::before {
+  content: "";
+  flex: none;
+  width: 0.4rem;
+  height: 0.4rem;
+  margin-inline: 0.15rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--ring);
+}
+
+.pop .pop-path li[aria-current] {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.pop .pop-path li[aria-current]::before {
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-inline: 0;
+  background: var(--blue);
+  border-color: var(--blue);
 }
 
 .pop .pop-note {
