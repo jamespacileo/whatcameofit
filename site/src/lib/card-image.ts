@@ -16,14 +16,16 @@ import {
 import { data, type ExportedClaim } from "./export";
 import { STATUS_LABELS, latestPromise, overlayText } from "./status";
 
-const INK = "#172534";
-const BLUE = "#0b5cad";
-const MUTED = "#4d5d6e";
-const PANEL = "#f3f7fb";
+const INK = "#0f1f38";
+const BLUE = "#14427f";
+const MUTED = "#46566b";
+const PANEL = "#f1f5fb";
 const PAPER = "#ffffff";
-const TINT = "#eaf2fa";
-const RING = "#7f90a3";
-const RULE = "#dde5ee";
+const TINT = "#e6eef8";
+const RULE = "#d9e2ee";
+// The icon's own two: its outline, and the amber of the capsule's promised half.
+const DEEP = "#0b2545";
+const CAPSULE_PROMISE = "#f4c95d";
 // Pale amber: everything promised, here as on the pages.
 const PROMISE = "#fff7df";
 const PROMISE_RULE = "#d9c88a";
@@ -106,7 +108,7 @@ const box = (style: Record<string, unknown>, children: unknown): Node => ({
 });
 const shape = (type: string, props: Record<string, unknown>): Node => ({ type, props });
 
-// The site's icon: a magnifying glass over lines of print, one dot picked out.
+// The site's icon: a magnifying glass over a capsule in two halves.
 // The same drawing as public/favicon.svg.
 function stamp(size: number): Node {
   return shape("svg", {
@@ -115,11 +117,12 @@ function stamp(size: number): Node {
     viewBox: "0 0 64 64",
     children: [
       shape("rect", { width: 64, height: 64, rx: 14, fill: TINT }),
-      shape("circle", { cx: 27, cy: 27, r: 17, fill: PAPER, stroke: INK, "stroke-width": 5 }),
-      shape("path", { d: "M40 40l13 13", stroke: INK, "stroke-width": 6.5, "stroke-linecap": "round" }),
-      shape("rect", { x: 16.5, y: 19.5, width: 21, height: 5, rx: 2.5, fill: INK }),
-      shape("rect", { x: 16.5, y: 28.5, width: 11, height: 4, rx: 2, fill: RING }),
-      shape("circle", { cx: 33.5, cy: 30.5, r: 3.6, fill: BLUE }),
+      shape("circle", { cx: 27, cy: 27, r: 17, fill: PAPER, stroke: DEEP, "stroke-width": 5 }),
+      shape("path", { d: "M40 40l13 13", stroke: DEEP, "stroke-width": 6.5, "stroke-linecap": "round" }),
+      // The capsule under the lens: the promised half in amber, the recorded half in blue.
+      shape("rect", { x: 14, y: 21, width: 26, height: 12, rx: 6, fill: BLUE }),
+      shape("path", { d: "M27 21h-7a6 6 0 0 0 0 12h7z", fill: CAPSULE_PROMISE }),
+      shape("path", { d: "M27 21v12", stroke: PAPER, "stroke-width": 2.2 }),
     ],
   });
 }

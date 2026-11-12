@@ -12,15 +12,15 @@
 
 :root {
   --paper: #ffffff;
-  --ink: #172534;
-  --blue: #0b5cad;
-  --muted: #4d5d6e;
-  --panel: #f3f7fb;
-  --tag: #d9e8f7;
-  --rule: #dde5ee;
+  --ink: #0f1f38;
+  --blue: #14427f;
+  --muted: #46566b;
+  --panel: #f1f5fb;
+  --tag: #d6e2f2;
+  --rule: #d9e2ee;
   --promise: #fff7df;
   --promise-rule: #d9c88a;
-  --footer: #0b2f57;
+  --footer: #0b2545;
   --face: "Figtree Variable", "Helvetica Neue", Arial, sans-serif;
   color-scheme: light;
 }

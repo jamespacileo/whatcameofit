@@ -49,8 +49,8 @@ The unit is the claim, not the article, and the status is derived by fixed rules
 
 - Name: `thenwhat` is a working codename; the final name and domain are undecided. Brand strings live in one config file.
 - Voice: plain, exact, unexcited. States what a record shows and when.
-- Look: the operator chose a calm "evidence digest" direction on 2026-11-11: familiar to readers of research-summary sites, relevant to the topic, simple. The accent is a clinical blue, asked for by the operator to read as health and trust. It must never borrow those sites' grades or scores, and never look like an NHS or other official service. See `DESIGN.md`.
-- No logo has been chosen.
+- Look: the operator chose a calm "evidence digest" direction on 2026-11-11: familiar to readers of research-summary sites, relevant to the topic, simple. The accent is a dark navy blue on a light page (the operator moved it from a brighter clinical blue on 2026-11-12), asked for to read as health and trust. It must never borrow those sites' grades or scores, and never look like an NHS or other official service. See `DESIGN.md`.
+- Icon: a magnifying glass over a two-coloured capsule, chosen by the operator on 2026-11-12. See `DESIGN.md`.
 
 ## Evidence on Hand
 

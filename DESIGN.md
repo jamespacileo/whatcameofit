@@ -17,16 +17,16 @@ The visual system of the thenwhat site as built. Product context is in `PRODUCT.
 | Token | Value | Used for |
 |---|---|---|
 | `--paper` | `#ffffff` | Page ground |
-| `--ink` | `#172534` | Text |
-| `--blue` | `#0b5cad` | The accent: site name, links, status label, focus ring, buttons |
-| `--muted` | `#4d5d6e` | Secondary text, labels |
-| `--panel` | `#f3f7fb` | The digest panel |
-| `--tint` | `#eaf2fa` | Topic chip |
-| `--tag` | `#d9e8f7` | "basis of status" tag, text selection |
-| `--rule`, `--rule-soft` | `#dde5ee`, `#e9eff5` | Borders and row rules |
+| `--ink` | `#0f1f38` | Text |
+| `--blue` | `#14427f` | The accent: site name, links, status label, focus ring, buttons |
+| `--muted` | `#46566b` | Secondary text, labels |
+| `--panel` | `#f1f5fb` | The digest panel |
+| `--tint` | `#e6eef8` | Topic chip |
+| `--tag` | `#d6e2f2` | "basis of status" tag, text selection |
+| `--rule`, `--rule-soft` | `#d9e2ee`, `#e9eff5` | Borders and row rules |
 | `--promise` | `#fff7df` | Everything promised: the Promised column, undated promises, the "latest promise" cell in index tables |
 | `--promise-rule` | `#d9c88a` | Dashed rules between promises |
-| `--footer` | `#0b2f57` | Footer ground, button hover |
+| `--footer` | `#0b2545` | Footer ground, button hover |
 
 Rules:
 
@@ -87,7 +87,7 @@ Figures are tabular and lining throughout. Reading measure is 66 characters. A n
 - **Anniversaries.** `/anniversaries`: months as section headings, then each day with its claims: the year first reported in grey, the headline, the status with its track. Opened on a day that has entries, that day is tinted and marked "today". A feed at `/anniversaries.xml` carries the last thirty days.
 - **Year and data pages.** `/year/<yyyy>` is a topic-style page: the count, then the claim table with its stage filter. `/data` links the downloadable file and states its licence.
 - **Extension popup.** 360px wide, same tokens and face. The site name in blue over a hairline; the claim headline; the status in the digest panel's treatment ("Where it stands", blue label, no-signal note in a dashed outline, one sentence of meaning); first reported; the latest promise on pale amber; one full-width blue button, "See the evidence". The two notices and the last-checked date sit under a hairline in muted small text. Messages (not tracked, not a web page, unreachable) are a heading, one or two sentences and at most one outlined button. Light only.
-- **Icon.** A pale blue rounded square holding a magnifying glass over two lines of print, a dark headline and a grey line that ends in the blue dot: a news claim, looked at closely. It has to say that with no words beside it. Chosen by the operator on 2026-11-11 from `.impeccable/mocks/brand/pictorial.html` (mark 1), replacing the headline-and-reply icon tried first. Used as the favicon, the browser extension's icon and the stamp on the link-preview card. No tick, cross or grade is ever drawn into it. Never a solid block of the accent blue with white lettering, which is the shape of an official health mark.
+- **Icon.** A pale blue rounded square holding a magnifying glass over a capsule in two halves: amber for what was promised, the accent blue for what is on record. The outline is the deep navy `#0b2545`; the amber half is `#f4c95d`, a stronger amber used only here so it holds at 16 pixels. Chosen by the operator on 2026-11-12 from the canvas of name and logo directions (round 3, the "level" setting), replacing the glass over two lines of print, which looked like any search icon at toolbar size. Drawn once in `site/public/favicon.svg`; the extension's icons are rendered from that file and the card's stamp repeats it. Used as the favicon, the browser extension's icon and the stamp on the link-preview card. A capsule can read as a pharmacy: the icon never appears without the site's name or "Not medical advice" beside it on anything that leaves the site. No tick, cross or grade is ever drawn into it. Never a solid block of the accent blue with white lettering, which is the shape of an official health mark.
 
 ## Motion
 
@@ -149,9 +149,11 @@ Weight, measured on the preview build: a claim page with 29 records is 5 KB of H
 
 ## Why blue
 
+On 2026-11-12 the operator asked for dark blues on the light theme, chosen from the canvas of logo directions. The accent became the navy `#14427f`, with ink, tints and the footer moved to match. The reasons below are why the site is blue at all; they are unchanged.
+
 The operator asked on 2026-11-11 for blue in place of the first indigo, to read as health, trust and clinical care, giving NHS blue as the example. The accent is a blue of that family, not the NHS palette: this site is not an NHS service and must never look like one. No NHS logo, lozenge, name or typeface, and no wording that suggests an affiliation.
 
-Contrast, measured: text on white 15.6:1, blue on white 6.7:1, blue on the panel 6.2:1, blue on the tag 5.4:1, secondary text on white 6.8:1 and on amber 6.3:1, white on the footer 13.5:1.
+Contrast, measured on 2026-11-12: text on white 16.5:1, blue on white 9.9:1, blue on the panel 9.1:1, blue on the tag 7.6:1, secondary text on white 7.5:1 and on amber 7.0:1, white on the footer 15.4:1.
 
 ## Review
 
@@ -160,5 +162,5 @@ The design reviewer judged this look on 2026-11-11 from captures of the claim, h
 Not yet judged:
 
 - The reviewer judged the blue version in a second pass, found the eight fixes in place, and asked for three more that are now in: the icon is navy, years and footnote letters are in ink so blue text that is not the status label is always a link, and this note. Those three were checked by eye, not by a third review.
-- The accent sits close to NHS Blue in hue. The distance comes from how it is used: text and small marks on white, no blue header band, no solid blue block with white lettering. Keep it that way.
+- The first accent (`#0b5cad`) sat close to NHS Blue in hue. The navy that replaced it on 2026-11-12 is darker and further from it; the rule on use still holds: text and small marks on white, no blue header band, no solid blue block with white lettering.
 - Lists and tables have only been seen with one claim.

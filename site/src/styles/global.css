@@ -2,17 +2,17 @@
 
 :root {
   --paper: #ffffff;
-  --ink: #172534;
-  --blue: #0b5cad;
-  --muted: #4d5d6e;
-  --panel: #f3f7fb;
-  --tint: #eaf2fa;
-  --tag: #d9e8f7;
-  --rule: #dde5ee;
+  --ink: #0f1f38;
+  --blue: #14427f;
+  --muted: #46566b;
+  --panel: #f1f5fb;
+  --tint: #e6eef8;
+  --tag: #d6e2f2;
+  --rule: #d9e2ee;
   --rule-soft: #e9eff5;
   --promise: #fff7df;
   --promise-rule: #d9c88a;
-  --footer: #0b2f57;
+  --footer: #0b2545;
 
   --face: "Figtree Variable", "Helvetica Neue", Arial, sans-serif;
   --measure: 66ch;
