@@ -18,6 +18,8 @@ export interface CardContent {
   /** The no-signal note in the site's wording, when it applies. */
   note: string | null;
   facts: CardFact[];
+  /** The status's place on the path, counted from 1, or null when it is off the path. */
+  place?: number | null;
 }
 
 /** Carried by everything that leaves the site, where the footer notices cannot follow. */

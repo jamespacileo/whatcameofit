@@ -14,7 +14,7 @@ import {
   type CardFact,
 } from "./card";
 import { data, type ExportedClaim } from "./export";
-import { STATUS_LABELS, latestPromise, overlayText } from "./status";
+import { STAGE_PATH, STATUS_LABELS, latestPromise, overlayText } from "./status";
 
 const INK = "#0f1f38";
 const BLUE = "#14427f";
@@ -23,6 +23,7 @@ const PANEL = "#f1f5fb";
 const PAPER = "#ffffff";
 const TINT = "#e6eef8";
 const RULE = "#d9e2ee";
+const RING = "#7f90a3";
 // The icon's own two: its outline, and the amber of the capsule's promised half.
 const DEEP = "#0b2545";
 const CAPSULE_PROMISE = "#f4c95d";
@@ -203,12 +204,49 @@ function fact({ label, value }: CardFact, layout: Layout): Node {
   );
 }
 
+// The status's place on the path from preclinical to approved: six places on a line,
+// one marked. A position, never a bar that fills, and always under the status in words.
+function stagePath(place: number, layout: Layout): Node {
+  const dot = Math.round(layout.status * 0.17);
+  const here = Math.round(dot * 1.9);
+  const line = Math.max(3, Math.round(dot * 0.22));
+  const places = STAGE_PATH.map((_, index) => {
+    const marked = index + 1 === place;
+    const size = marked ? here : dot;
+    return box(
+      {
+        width: size,
+        height: size,
+        borderRadius: size,
+        background: marked ? BLUE : PAPER,
+        border: `${line}px solid ${marked ? BLUE : RING}`,
+        boxSizing: "border-box",
+      },
+      [],
+    );
+  });
+  const drawn: Node[] = [];
+  places.forEach((spot, index) => {
+    if (index > 0) drawn.push(box({ flexGrow: 1, height: line, background: RULE }, []));
+    drawn.push(spot);
+  });
+  return box(
+    {
+      alignItems: "center",
+      width: layout.factsBelow ? "100%" : layout.status * 6.4,
+      marginTop: layout.status * 0.32,
+    },
+    drawn,
+  );
+}
+
 // What the records show: the status in the site's wording, and the dates that keep
 // the card true after it has been saved and passed on.
 function recorded(card: CardContent, layout: Layout): Node {
   const status = box({ flexDirection: "column" }, [
     box({ fontSize: layout.factLabel, color: MUTED }, "Status now"),
     box({ fontSize: layout.status, fontWeight: 700, lineHeight: 1.1, color: BLUE }, card.status),
+    card.place ? stagePath(card.place, layout) : null,
     card.note &&
       box(
         {
@@ -273,6 +311,10 @@ function draw(card: CardContent, layout: Layout): Node {
 }
 
 export function cardFor(claim: ExportedClaim): CardContent {
+  return { ...content(claim), place: STAGE_PATH.indexOf(claim.status.code) + 1 || null };
+}
+
+function content(claim: ExportedClaim): CardContent {
   return cardContent(
     claim,
     STATUS_LABELS[claim.status.code],
