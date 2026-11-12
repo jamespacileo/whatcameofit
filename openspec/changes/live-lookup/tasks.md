@@ -33,6 +33,14 @@
 - [ ] 4b.7 Run it on the tracked articles and keep the result in `docs/outlets.md`
 - [ ] 4b.8 Measure the lookup again and record the change in `docs/lookup.md`
 
+## 4c. Posts on social media (asked for 2026-11-12: a post's address must work, and so must the article it links to)
+
+- [ ] 4c.1 Check each platform's terms and what it serves to software without signing in (X, Reddit, Bluesky, Mastodon, Hacker News, Facebook, Instagram, Threads, LinkedIn, TikTok, YouTube, Telegram), and note them in `docs/sources.md`
+- [ ] 4c.2 Where the terms allow, read a post by its address: its text and the links in it
+- [ ] 4c.3 Follow the article a post links to, read it as any article, and look up the post's text and the article together
+- [ ] 4c.4 Where a platform cannot be read, say so by name and ask for the post's text or the article's address
+- [ ] 4c.5 Add posts to the outlet record, so each platform shows what works
+
 ## 5. For readers (decided 2026-11-12: unreviewed answers may be shown, clearly marked)
 
 - [x] 5.1 Build the lookup service for the site's Worker in plain JavaScript, with the pipeline's search and scoring rules; verify its 21 tests pass
