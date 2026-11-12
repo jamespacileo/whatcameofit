@@ -181,7 +181,7 @@ test("every page states its own canonical address", () => {
   const expected = {
     "index.html": `${ORIGIN}/`,
     "phase-claim/index.html": `${ORIGIN}/phase-claim`,
-    "topic/dental-regeneration/index.html": `${ORIGIN}/topic/dental-regeneration`,
+    "topic/gum-disease/index.html": `${ORIGIN}/topic/gum-disease`,
   };
   for (const [file, address] of Object.entries(expected)) {
     assert.ok(page(file).includes(`<link rel="canonical" href="${address}">`), file);
@@ -237,7 +237,7 @@ test(
 
 test("the sitemap lists every public page and no embed", () => {
   const listed = [...page("sitemap.xml").matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
-  for (const address of ["/", "/phase-claim", "/quiet-claim", "/approved-claim", "/topics", "/topic/dental-regeneration", "/it-happened"]) {
+  for (const address of ["/", "/phase-claim", "/quiet-claim", "/approved-claim", "/topics", "/topic/gum-disease", "/it-happened"]) {
     assert.ok(listed.includes(canonicalAddress(address)), `${address} is not listed`);
   }
   assert.ok(listed.every((address) => address.startsWith(`${ORIGIN}/`)));

@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
+import { unlabelledApproaches } from "./approach";
 
 export type StatusCode =
   | "preclinical_only"
@@ -35,6 +36,8 @@ export interface ExportedClaim {
   headline: string;
   summary: string;
   vertical: string;
+  /** The kind of intervention, as a code the site words; null when none is recorded. */
+  approach: string | null;
   intervention: { name: string; synonyms: string[] };
   indication: string;
   first_reported_date: string | null;
@@ -106,6 +109,14 @@ function load(): Export {
   if (content.schema_version !== SUPPORTED_SCHEMA_VERSION) {
     throw new Error(
       `The export at ${file} has schema version ${content.schema_version}; this site reads version ${SUPPORTED_SCHEMA_VERSION}.`,
+    );
+  }
+  const unlabelled = unlabelledApproaches(
+    (content as Export).claims.map((claim) => claim.approach),
+  );
+  if (unlabelled.length > 0) {
+    throw new Error(
+      `The export at ${file} has approaches the site has no words for: ${unlabelled.join(", ")}. Add them to src/lib/approach.ts.`,
     );
   }
   return content as Export;

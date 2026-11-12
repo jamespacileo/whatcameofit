@@ -11,6 +11,7 @@ import KindIcon from "../components/KindIcon.astro";
 import Pop from "../components/Pop.astro";
 import StageTrack from "../components/StageTrack.astro";
 import TopicChip from "../components/TopicChip.astro";
+import { APPROACH_LABELS } from "../lib/approach";
 import { data, type ExportedClaim } from "../lib/export";
 import { UNCHECKED_NOTE } from "../lib/notices";
 import {
@@ -79,7 +80,17 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
 >
   <article data-pagefind-body>
     <div class="above-title">
-      <TopicChip vertical={claim.vertical} />
+      <div class="filed">
+        <TopicChip vertical={claim.vertical} />
+        {
+          claim.approach && (
+            <span class="approach">
+              <span class="visually-hidden">Approach: </span>
+              {APPROACH_LABELS[claim.approach]}
+            </span>
+          )
+        }
+      </div>
       <button type="button" class="share" data-share hidden data-pagefind-ignore>
         <Share2 size={16} stroke-width={1.9} aria-hidden="true" />
         <span data-share-text>Share</span>

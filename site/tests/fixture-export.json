@@ -11,8 +11,8 @@
   ],
   "verticals": [
     {
-      "slug": "dental-regeneration",
-      "title": "Dental regeneration",
+      "slug": "gum-disease",
+      "title": "Gum disease",
       "group": {
         "slug": "mouth-and-teeth",
         "title": "Mouth and teeth"
@@ -35,7 +35,8 @@
       "slug": "quiet-claim",
       "headline": "Synthetic claim that went quiet",
       "summary": "Synthetic test data for quiet-claim. It describes no real treatment.",
-      "vertical": "dental-regeneration",
+      "vertical": "gum-disease",
+      "approach": null,
       "intervention": {
         "name": "quiet-claim agent",
         "synonyms": [
@@ -97,7 +98,8 @@
       "slug": "phase-claim",
       "headline": "Synthetic claim with a started trial",
       "summary": "Synthetic test data for phase-claim. It describes no real treatment.",
-      "vertical": "dental-regeneration",
+      "vertical": "gum-disease",
+      "approach": "gene-therapy",
       "intervention": {
         "name": "phase-claim agent",
         "synonyms": []
@@ -191,7 +193,8 @@
       "slug": "approved-claim",
       "headline": "Synthetic claim that was approved",
       "summary": "Synthetic test data for approved-claim. It describes no real treatment.",
-      "vertical": "dental-regeneration",
+      "vertical": "gum-disease",
+      "approach": "drug",
       "intervention": {
         "name": "approved-claim agent",
         "synonyms": []
