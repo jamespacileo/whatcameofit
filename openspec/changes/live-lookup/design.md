@@ -6,9 +6,20 @@
 
 The engine takes text, not an address. Where the text comes from is the open part.
 
+## Decided
+
+- **An unreviewed lookup answer may be shown to readers, clearly marked** (operator, 2026-11-12). It is shown as an automatic search of a public registry, with what was searched for, never as a status, and with the two standing notices. Claim pages and statuses stay behind review as before.
+
+## Working choices, taken to keep building; the operator can overturn any of them
+
+- **Where it runs:** a Cloudflare Worker beside the static site, written in plain JavaScript like the extension. The pipeline and database stay private, as the project rule requires. The Python lookup stays as the operator's tool and the yardstick the Worker is measured against.
+- **Blocked articles:** the Worker obeys robots.txt and uses no page-to-text service. Where it cannot read an article it says so and asks for the headline or text. The extension, reading the page the reader has open, is the way round a block.
+- **Social media posts:** by pasted text only, until each platform's terms are checked.
+- **Privacy:** the Worker keeps no record of what is sent. The site says plainly that a lookup sends the address or text to the site's server and to a language model, and that neither is kept by the site.
+
 ## Decisions for the operator
 
-These change what readers see or what the project promises. None is taken here.
+These change what readers see or what the project promises. The first is decided above; the working choices above stand in for the rest until the operator says otherwise.
 
 1. **May an unreviewed answer be shown publicly?** The project rule is that nothing reaches the public site unless approved in review. A live lookup is by nature unreviewed. Options: (a) show it, clearly marked as an automatic search result and never as a status; (b) show only a pointer to a tracked claim when there is one, and otherwise offer to suggest the article; (c) keep lookup as the operator's tool for adding claims fast. The answer decides whether this is a reader feature or an intake tool.
 2. **Where it runs.** The public site is static files and the pipeline stays private. A reader-facing lookup needs a public endpoint holding a model key: a Cloudflare Worker (the search and scoring would be ported to JavaScript, or the Worker would call a hosted copy of this code), with rate limits and a spending cap.
