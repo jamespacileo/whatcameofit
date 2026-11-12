@@ -10,6 +10,8 @@ docker compose exec pipeline thenwhat lookup --json https://example.org/news/som
 
 The answer is a list of candidates for a person to check. It is not a status and nothing in it has been reviewed. No claim, match, article or text is stored.
 
+There are two copies of the engine, kept in step by hand: the pipeline's (`thenwhat lookup`, Python, the operator's tool and the one measured below) and the site's (`site/worker/`, JavaScript, the one readers reach). The site's copy answers at `/api/lookup`, shows its answer on the home page marked as an automatic search, and stores nothing. Try it locally with `make lookup-dev`.
+
 ## How it works
 
 1. **Read.** One model call names the treatment, the other names the text gives it, the condition, and up to three search phrases for a treatment with no product name. The model may also add names it knows the treatment by; those are reported apart.

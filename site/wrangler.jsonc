@@ -1,17 +1,34 @@
-// Cloudflare Workers, static files only: no Worker code runs. Deploy with
-// `make deploy` (see docs/deploy.md), never with `wrangler deploy` alone: the
-// make target refuses a preview export and unreviewed claims first.
+// Cloudflare Workers. Every address is a file of the built site except /api/lookup,
+// which runs worker/index.mjs: the registry search for an article the site does not
+// track. Deploy with `make deploy` (see docs/deploy.md), never with `wrangler deploy`
+// alone: the make target refuses a preview export and unreviewed claims first.
 {
   "name": "thenwhat",
-  "compatibility_date": "2026-11-01",
+  // Not newer than the installed Wrangler supports, or `wrangler dev` will not start.
+  "compatibility_date": "2026-10-01",
+  "main": "./worker/index.mjs",
   // The site is served only at its own domain, which the deploy command takes from
   // SITE_URL. No workers.dev address and no per-version preview addresses.
   "workers_dev": false,
   "preview_urls": false,
+  // Nothing a reader sends is logged; see worker/index.mjs.
+  "observability": { "enabled": false },
   "assets": {
     "directory": "./dist",
+    "binding": "ASSETS",
     "not_found_handling": "404-page",
     // Page addresses carry no trailing slash, as the canonical links and sitemap write them.
-    "html_handling": "drop-trailing-slash"
-  }
+    "html_handling": "drop-trailing-slash",
+    "run_worker_first": ["/api/*"]
+  },
+  // How many registry searches are answered per minute: by one reader, and in all.
+  // Each search costs up to four model calls, so the second number caps the spending.
+  "ratelimits": [
+    { "name": "LOOKUP_PER_READER", "namespace_id": "4101", "simple": { "limit": 5, "period": 60 } },
+    { "name": "LOOKUP_IN_ALL", "namespace_id": "4102", "simple": { "limit": 30, "period": 60 } }
+  ]
+  // Settings the lookup needs, given at deployment and never written here:
+  //   LLM_MODEL, CONTACT_EMAIL, optionally LLM_BASE_URL   (plain values)
+  //   OPENAI_API_KEY                                       (a secret: `wrangler secret put`)
+  // Without them /api/lookup answers "not set up" and the rest of the site is unaffected.
 }

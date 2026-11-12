@@ -22,6 +22,17 @@
 - [ ] 4.4 Write registry cache entries with an upsert so two lookups at once cannot collide
 - [ ] 4.5 Build a reviewed test set of article and trial pairs across many outlets
 
-## 5. For the operator
+## 5. For readers (decided 2026-11-12: unreviewed answers may be shown, clearly marked)
 
-- [ ] 5.1 Decide the five points in design.md
+- [x] 5.1 Build the lookup service for the site's Worker in plain JavaScript, with the pipeline's search and scoring rules; verify its 21 tests pass
+- [x] 5.2 Word a live answer in one tested module: the marking first, records with phase, state and number, no verdict; verify the six wording tests pass
+- [x] 5.3 Offer the search on the home page for an untracked article, only where a lookup address is configured; nothing is sent until the reader asks
+- [x] 5.4 Add the Worker script, the two limits and the lookup settings to the deploy configuration; verify a dry run lists them
+- [x] 5.5 Try it end to end on this machine with `make lookup-dev`: an untracked article gave a marked answer with the treatment's trials (2026-11-12)
+- [ ] 5.6 Have the browser extension read the open page and ask the same service, for sites that refuse automated reading
+- [ ] 5.7 Measure the Worker against the same test as the pipeline's lookup
+
+## 6. For the operator
+
+- [ ] 6.1 Confirm or overturn the working choices in design.md
+- [ ] 6.2 Store the model's key with `wrangler secret put OPENAI_API_KEY`, set a monthly limit with the provider, and say on the method page what a registry search sends

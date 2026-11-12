@@ -81,12 +81,15 @@ function usable(given) {
 }
 
 export function makeModel({ fetch, apiKey, model, baseUrl = "https://api.openai.com/v1" }) {
+  // The pipeline names a model with its provider in front ("openai:name"); the provider's
+  // own API wants the name alone.
+  const modelName = String(model).replace(/^openai:/, "");
   async function ask(name, schema, instructions, prompt) {
     const response = await fetch(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model,
+        model: modelName,
         messages: [
           { role: "system", content: instructions },
           { role: "user", content: prompt },

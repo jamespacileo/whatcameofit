@@ -214,6 +214,18 @@ test("the model is shown the text and asked for a strict shape, with the configu
   assert.deepEqual([body.response_format.type, body.response_format.json_schema.strict], ["json_schema", true]);
 });
 
+test("a model named with its provider, as the pipeline's settings name it, is asked for by its own name", async () => {
+  const sent = [];
+  const fetch = async (_address, options) => {
+    sent.push(JSON.parse(options.body));
+    return Response.json({ choices: [{ message: { content: JSON.stringify(READING) } }] });
+  };
+
+  await makeModel({ fetch, apiKey: "test-key", model: "openai:example-model" }).read(TEXT);
+
+  assert.equal(sent[0].model, "example-model");
+});
+
 test("records are scored twenty to a call and probabilities that nearly sum to one are rescaled", async () => {
   const answer = (item) => ({ item, choice: "match", probabilities: { match: 0.9, other_indication: 0.06, not_a_match: 0.02 } });
   const first = { answers: Array.from({ length: 20 }, (_, n) => answer(n + 1)) };

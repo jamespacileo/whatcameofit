@@ -41,3 +41,25 @@ A lookup SHALL NOT store a claim, an entity, a match, an article or any of the t
 #### Scenario: Nothing is kept
 - **WHEN** a lookup finds a trial
 - **THEN** the numbers of claims, entities, matches and articles stored are unchanged
+
+### Requirement: A reader may ask for a lookup, and its answer is marked
+Where the site is built with a lookup address, an answer of "not tracked" for a pasted article address SHALL offer a registry search. Nothing SHALL be sent until the reader asks. The words beside the offer SHALL say what is sent and that the site keeps none of it. The answer SHALL begin by saying that it is an automatic search, made by software, not checked by a person and not a status. It SHALL carry the notice that a registered trial is not a treatment option. A record SHALL be shown with its title, phase, state, registry number and a link to the registry, and never with a verdict. Finding no record SHALL NOT be worded as there being no trial. Where the site is built without a lookup address, no search SHALL be offered.
+
+#### Scenario: Reader sees an automatic answer
+- **WHEN** a reader asks for a registry search and one record reads as a trial of the treatment for the condition and two do not
+- **THEN** the marking comes first, the one record is listed with its phase, state and number, the other two are counted, and the trial notice is shown
+
+#### Scenario: Reader asks about pasted text
+- **WHEN** a reader sends the text of an article or post instead of an address
+- **THEN** the answer is made from that text
+
+### Requirement: The lookup service reads politely and keeps nothing
+The service SHALL obey a site's robots.txt and SHALL NOT fetch an article when the rules forbid it or cannot be read. It SHALL NOT fetch a local or private address. It SHALL say why it cannot answer with a code the site words. It SHALL limit how many searches one reader and all readers together can make per minute. It SHALL NOT store or log an address, a text or an answer.
+
+#### Scenario: Article the site does not allow to be read
+- **WHEN** the article's site forbids automated reading in robots.txt, or refuses robots.txt itself
+- **THEN** the article is not fetched and the reader is asked to paste its headline and opening paragraphs
+
+#### Scenario: Nothing a reader sends is written down
+- **WHEN** a lookup succeeds or fails
+- **THEN** nothing of the text sent appears in any log

@@ -1,6 +1,6 @@
 # Deploying the site
 
-The public site is static files on Cloudflare Workers. No Worker code runs: Cloudflare serves the files that `npm run build` writes to `site/dist`. The pipeline and the database are never deployed; they stay on the private machine.
+The public site is static files on Cloudflare Workers: Cloudflare serves the files that `npm run build` writes to `site/dist`. The one address that runs code is `/api/lookup`, the optional registry search. The pipeline and the database are never deployed; they stay on the private machine.
 
 Deploy only with `make deploy`. Do not run `wrangler deploy` by itself: the make target checks the export first, and Wrangler alone would upload whatever is in `site/dist`, including a preview build.
 
@@ -21,6 +21,19 @@ SITE_URL=https://example.org make deploy         # the same, then publish
 Both first write a normal export from the running pipeline to `site/data/public-export.json` (reviewed claims only, whatever `EXPORT_PREVIEW` is set to locally), so the pipeline must be up (`docker compose up -d`).
 
 `SUGGEST_URL` and `CORRECTIONS_URL` are read by the same build; see `docs/launch.md`.
+
+## The registry search (optional)
+
+The site can offer a registry search for an article it does not track (`docs/lookup.md`). It is off unless you give its settings:
+
+```sh
+wrangler secret put OPENAI_API_KEY        # once, in site/; you paste the key, it is not kept in the repository
+SITE_URL=https://example.org LLM_MODEL=<model> CONTACT_EMAIL=<address> make deploy
+```
+
+With `LLM_MODEL` and `CONTACT_EMAIL` set, the build offers the search and the Worker answers at `/api/lookup`. Without them the button is not drawn and the address answers "not set up". Limits are in `site/wrangler.jsonc`: five searches a minute for one reader, thirty in all. Set a monthly spending limit with the model's provider as well.
+
+To try it on this machine first: `make lookup-dev`, then open <http://localhost:8787>. It reads the same settings from `.env`.
 
 ## What stops a deploy
 

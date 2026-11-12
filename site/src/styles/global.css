@@ -2079,6 +2079,56 @@ main ul:not([class]) li + li {
   margin-top: 0.75rem;
 }
 
+/* A registry search for an article the site does not track: offered, never automatic. */
+.results .live-offer,
+.results .live-text button {
+  margin-top: 0.9rem;
+  padding: 0.6rem 1rem;
+  border: 1.5px solid var(--blue);
+  border-radius: 0.65rem;
+  background: none;
+  color: var(--blue);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.results .live-offer:hover,
+.results .live-text button:hover {
+  background: var(--blue);
+  color: var(--paper);
+}
+
+.results .live .unchecked {
+  margin-top: 0;
+  margin-bottom: 0.9rem;
+}
+
+.results .live > p + p {
+  margin-top: 0.5rem;
+}
+
+.results .live-text {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 46rem;
+  margin-top: 0.9rem;
+}
+
+.results .live-text textarea {
+  padding: 0.7rem 0.85rem;
+  border: 1.5px solid var(--ring);
+  border-radius: 0.65rem;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+.results .live-text button {
+  justify-self: start;
+  margin-top: 0;
+}
+
 @media (max-width: 40rem) {
   .search.lookup .row {
     flex-direction: column;

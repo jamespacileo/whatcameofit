@@ -15,7 +15,8 @@ The engine takes text, not an address. Where the text comes from is the open par
 - **Where it runs:** a Cloudflare Worker beside the static site, written in plain JavaScript like the extension. The pipeline and database stay private, as the project rule requires. The Python lookup stays as the operator's tool and the yardstick the Worker is measured against.
 - **Blocked articles:** the Worker obeys robots.txt and uses no page-to-text service. Where it cannot read an article it says so and asks for the headline or text. The extension, reading the page the reader has open, is the way round a block.
 - **Social media posts:** by pasted text only, until each platform's terms are checked.
-- **Privacy:** the Worker keeps no record of what is sent. The site says plainly that a lookup sends the address or text to the site's server and to a language model, and that neither is kept by the site.
+- **Privacy:** the Worker keeps no record of what is sent and logs nothing. A search is made only when the reader presses its button, and the words beside the button say that the address goes to the site's server and the article to a language model, and that the site keeps neither. The reader's network address is used only to count requests per minute.
+- **Spending:** five searches a minute for one reader and thirty a minute in all. The operator should also set a monthly limit with the model's provider.
 
 ## Decisions for the operator
 
@@ -25,7 +26,7 @@ These change what readers see or what the project promises. The first is decided
 2. **Where it runs.** The public site is static files and the pipeline stays private. A reader-facing lookup needs a public endpoint holding a model key: a Cloudflare Worker (the search and scoring would be ported to JavaScript, or the Worker would call a hosted copy of this code), with rate limits and a spending cap.
 3. **How a blocked article is read.** Measured on 2026-11-12: The Telegraph, Reuters, Sky News and The Times refuse or paywall automated reading; the Daily Mail varies. Options: (a) the browser extension reads the page the reader already has open and sends its title and text to the lookup; (b) a page-to-text service, which reaches more sites, sees every address, and may ignore a site's robots.txt; (c) accept the gap and ask the reader to paste the headline. The project rule today is to respect robots.txt.
 4. **Social media posts by address.** X, Reddit, Facebook and others do not serve a post to an automated reader, and their terms restrict it. The engine already accepts a post's text. Reading a post by its address needs each platform's terms checked first.
-5. **The promise that a pasted link is not tracked.** The `site-measurement` spec says so. Sending a pasted address to a server changes what that sentence can claim.
+5. **What the site says it sends.** Until now a pasted link never left the reader's browser. A registry search sends it to the site's server, and the article's text to the model's provider. The words beside the button say so; the method page's "What is counted" section should say it too. (An earlier draft of this point misread the scenario "Pasted link is not tracked" as a privacy promise. It means a link the site does not track.)
 
 ## Risks
 

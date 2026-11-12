@@ -1,4 +1,4 @@
-.PHONY: check lint types db-up test site-test site-build extension-test extension extension-safari public-export deploy-check deploy
+.PHONY: check lint types db-up test site-test site-build extension-test extension extension-safari public-export deploy-check deploy lookup-dev
 
 DB_PORT ?= 5433
 # Tests drop and recreate this database, so its name must end in _test.
@@ -64,3 +64,10 @@ deploy-check: site/node_modules public-export
 # checked by a person, and a local address.
 deploy: site/node_modules public-export
 	EXPORT_FILE=data/public-export.json node site/scripts/deploy.mjs
+
+# The site with its registry search, on this machine only: http://localhost:8787
+# Reads the model settings from .env and builds from site/data/export.json if there is one.
+lookup-dev: site/node_modules
+	node site/scripts/dev-vars.mjs
+	LOOKUP_URL=/api/lookup ASTRO_TELEMETRY_DISABLED=1 npm --prefix site run build
+	cd site && wrangler dev --port 8787

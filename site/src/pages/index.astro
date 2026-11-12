@@ -64,7 +64,7 @@ const recent = data.claims
     </p>
   </noscript>
   {/* No space inside: an empty answer area is hidden by ":empty". */}
-  <div class="results" id="results" aria-live="polite" data-suggest={SITE.suggestUrl ?? undefined}></div>
+  <div class="results" id="results" aria-live="polite" data-suggest={SITE.suggestUrl ?? undefined} data-live={SITE.lookupUrl ?? undefined}></div>
   {
     suggest && (
       <p class="suggest">
@@ -188,16 +188,19 @@ const recent = data.claims
 </Base>
 
 <script>
-  // A pasted link is compared with the site's lookup file here in the browser; the
-  // link is never sent anywhere. Other text is searched in an index built with the
-  // site. Without JavaScript the topic pages list every claim.
+  // A pasted link is compared with the site's lookup file here in the browser. It is
+  // sent to the site's server only if the reader then asks for a registry search, and
+  // only where the site is built with one. Other text is searched in an index built
+  // with the site. Without JavaScript the topic pages list every claim.
   import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
+  import { LIVE, describeAnswer, refusalMessage, textWouldHelp } from "../lib/live-lookup.mjs";
   import { closestClaims, readAddress } from "../lib/lookup-match.mjs";
 
   const form = document.querySelector<HTMLFormElement>("#search")!;
   const input = document.querySelector<HTMLInputElement>("#query")!;
   const results = document.querySelector<HTMLDivElement>("#results")!;
   const suggestAddress = results.dataset.suggest ?? null;
+  const liveAddress = results.dataset.live ?? null;
 
   interface Hit {
     url: string;
@@ -264,6 +267,100 @@ const recent = data.claims
     return [paragraph];
   }
 
+  // --- a registry search for an article the site does not track ---------------------
+  // Nothing is sent until the reader presses the button. The answer is an automatic
+  // search and is marked as one before anything else is shown.
+
+  function liveAnswer(found: Parameters<typeof describeAnswer>[0]) {
+    const shown = describeAnswer(found);
+    const block = element("div", undefined, "live");
+    block.append(element("p", shown.marked, "unchecked"), element("p", shown.lead));
+    if (shown.searchedAlso) block.append(element("p", shown.searchedAlso, "entry-note"));
+    if (shown.tracked.length > 0) {
+      const list = element("ul", undefined, "plain");
+      for (const claim of shown.tracked) {
+        const link = element("a", claim.headline) as HTMLAnchorElement;
+        link.href = claim.page;
+        const item = element("li");
+        item.append(link);
+        list.append(item);
+      }
+      block.append(element("p", LIVE.trackedLead), list);
+    }
+    if (shown.likely.length > 0) {
+      const list = element("ul", undefined, "plain");
+      for (const record of shown.likely) {
+        const link = element("a", record.title) as HTMLAnchorElement;
+        link.href = record.url;
+        link.rel = "noopener";
+        const item = element("li");
+        item.append(link, element("span", record.detail, "entry-note"));
+        list.append(item);
+      }
+      block.append(element("p", LIVE.likelyLead), list);
+    }
+    if (shown.none) block.append(element("p", shown.none));
+    if (shown.rest) block.append(element("p", shown.rest, "entry-note"));
+    for (const notice of shown.notices) block.append(element("p", notice, "entry-note"));
+    return block;
+  }
+
+  function textForm() {
+    const form = element("form", undefined, "live-text") as HTMLFormElement;
+    const label = element("label", LIVE.textLabel) as HTMLLabelElement;
+    const area = element("textarea") as HTMLTextAreaElement;
+    area.id = "live-text";
+    area.rows = 5;
+    area.maxLength = 20000;
+    label.htmlFor = area.id;
+    const button = element("button", LIVE.textOffer) as HTMLButtonElement;
+    button.type = "submit";
+    form.append(label, area, button);
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const text = area.value.trim();
+      if (text) void askLive({ text });
+    });
+    return form;
+  }
+
+  async function askLive(body: { url: string } | { text: string }) {
+    latest += 1;
+    const asked = latest;
+    show(LIVE.working);
+    let status = 0;
+    let found: any = null;
+    try {
+      const response = await fetch(liveAddress!, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      status = response.status;
+      found = await response.json();
+    } catch {
+      found = null;
+    }
+    if (asked !== latest) return;
+    if (status === 200 && found) {
+      results.replaceChildren(liveAnswer(found));
+      return;
+    }
+    const code = found?.error ?? "failed";
+    results.replaceChildren(
+      element("p", refusalMessage(code)),
+      ...(textWouldHelp(code) ? [textForm()] : []),
+    );
+  }
+
+  function liveOffer(address: string) {
+    if (!liveAddress) return [];
+    const button = element("button", LIVE.offer, "live-offer") as HTMLButtonElement;
+    button.type = "button";
+    button.addEventListener("click", () => void askLive({ url: address }));
+    return [button, element("p", LIVE.disclosure, "entry-note")];
+  }
+
   let lookup: Promise<Lookup> | undefined;
   const loadLookup = () => (lookup ??= fetch("/lookup.json").then((response) => response.json()));
 
@@ -309,6 +406,7 @@ const recent = data.claims
           "We do not track this exact article. These tracked claims share words with its address. That is a guess: check it is the same treatment for the same condition.",
         ),
         claimList(close),
+        ...liveOffer(address),
         ...suggestion(address),
       );
       return;
@@ -318,6 +416,7 @@ const recent = data.claims
         "p",
         "This article is not one we track, and no tracked claim looks close. That says nothing about the story itself.",
       ),
+      ...liveOffer(address),
       ...suggestion(address),
     );
   }

@@ -47,12 +47,16 @@ const problems = deployProblems({ data, siteUrl });
 if (problems.length > 0) stop(problems);
 
 const domain = new URL(siteUrl).hostname;
+// The registry search is offered only when its settings are given. The model's key is
+// a secret the operator stores once with `wrangler secret put OPENAI_API_KEY`.
+const lookup = Boolean(process.env.LLM_MODEL && process.env.CONTACT_EMAIL);
 console.log(`Building ${data.claims.length} claims for ${siteUrl}.`);
 run("npm", ["run", "build"], {
   PUBLIC_BUILD: "1",
   SITE_URL: siteUrl,
   EXPORT_FILE: exportFile,
   ASTRO_TELEMETRY_DISABLED: "1",
+  LOOKUP_URL: lookup ? "/api/lookup" : "",
 });
 
 // The built files are checked too: what is uploaded is what was just built from that export.
@@ -63,6 +67,11 @@ if (!fs.existsSync(path.join(SITE_DIR, "dist/sitemap.xml"))) {
 }
 
 const args = ["deploy", "--domain", domain];
+if (lookup) {
+  args.push("--var", `LLM_MODEL:${process.env.LLM_MODEL}`, "--var", `CONTACT_EMAIL:${process.env.CONTACT_EMAIL}`);
+  if (process.env.LLM_BASE_URL) args.push("--var", `LLM_BASE_URL:${process.env.LLM_BASE_URL}`);
+}
+console.log(lookup ? "With the registry search (/api/lookup)." : "Without the registry search: LLM_MODEL and CONTACT_EMAIL are not both set.");
 if (dryRun) args.push("--dry-run");
 run("wrangler", args);
 console.log(
