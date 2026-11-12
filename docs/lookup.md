@@ -48,9 +48,51 @@ Four articles could not be read at their address (robots.txt or no response).
 - **The model reads the condition strictly.** A trial in "overweight" was not counted for a claim about muscle loss, though it is the study the article reports.
 - The two runs disagree on some claims: the model does not answer the same way twice.
 
+## With the page's own signals (measured 2026-11-12, later the same day)
+
+`thenwhat outlets --with-lookup` now makes this measurement and keeps it: [outlets.md](outlets.md) per outlet, [outlets-articles.csv](outlets-articles.csv) per address. It runs a lookup on every article that could be read and whose claim has approved trials, not only on each claim's earliest article, so its numbers are per article and are not the same count as the table above.
+
+| | Per article |
+| --- | --- |
+| Addresses asked for | 104, at 57 outlets |
+| Read | 96 (4 refused by robots.txt, 3 answered 403, 1 answered 429) |
+| Lookups run | 43 |
+| An approved trial among the likely records | 32 (74%) |
+| The first record listed is an approved trial | 29 (67%) |
+
+What the pages carried, of the 96 read: a headline 96, a summary 93, a date 74, a link to a paper 41, the article as structured data 11, a registry number 3.
+
+The eleven misses are the same kinds as before: the registry lists the drug under a code the article does not give (solengepras, cabamiquine), a broad name (GLP-1 drugs), a treatment with no product name (stem cell therapy for heart failure).
+
+## How long a lookup takes, and where the time goes
+
+Measured on 2026-11-12 with the site's engine, the same articles each way:
+
+| Article | Records scored | General model | Decisions API |
+| --- | --- | --- | --- |
+| Cancer vaccine (CNN) | 17 | 54 s | 37 s |
+| GLP-1 drugs and ageing (CNN) | 60 | 60 s | 26 s |
+| Parkinson's pill (Independent) | 5 | 10 s | 13 s |
+| Stem cells for heart failure (Independent) | 2 | 11 s | 13 s |
+
+Scoring is what the Decisions API speeds up (`DECISION_BACKEND=openai-decisions`, see `docs/sources.md`): sixty records took 3.2 seconds in one request, where the general model takes three calls of ten to twenty seconds each. A lookup with few records gains nothing, because scoring was never its slow part.
+
+With scoring out of the way, one lookup's seconds went, in a run split by host:
+
+| Step | 12 records | 60 records | 5 records |
+| --- | --- | --- | --- |
+| The article's own site | 64.1 | 8.8 | 1.3 |
+| The model reading the article | 7.1 | 10.9 | 4.4 |
+| ClinicalTrials.gov searches | 6.0 | 11.3 | 0.8 |
+| Scoring (Decisions API) | 1.0 | 3.2 | 0.4 |
+
+So what is left is the outlet's own speed (one site took a minute to answer after being asked several times that day), the one model call that reads the article, and the registry searches, which are kept to one at a time on purpose.
+
+The model now reads the article while the linked papers and any stated registry numbers are looked up. `thenwhat outlets` checks four outlets at a time (`--workers`), with one shared turn-taker per registry so the registry's rate is kept however many lookups run.
+
 ## Before it can serve readers
 
-- **A reviewed test set.** The numbers above rest on the assistant's approvals. A few hundred article and trial pairs checked by a person, across many outlets, would make them trustworthy and show which outlets can be read at all.
+- **A reviewed test set.** The numbers above rest on the assistant's approvals. A few hundred article and trial pairs checked by a person, across many outlets, would make them trustworthy. Which outlets can be read is now recorded in [outlets.md](outlets.md), for the outlets that have a tracked article.
 - **Drug-name synonyms** from an open source, checked for its terms first.
-- **Two lookups at once can collide** when both fetch the same registry page for the first time: one fails with a duplicate-key error (seen once in 168 lookups run four at a time). The registry cache needs to write with an upsert.
+- **Reading social media posts by their address**, and following the article a post links to. Not built; tasks 4c in the change.
 - **The five decisions in `openspec/changes/live-lookup/design.md`:** whether an unreviewed answer may be shown publicly, where the lookup runs, how a blocked article is read, social posts by address, and the promise that a pasted link is not tracked.

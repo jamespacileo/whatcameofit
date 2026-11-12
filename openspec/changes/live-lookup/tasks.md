@@ -19,7 +19,7 @@
 - [x] 4.1 Search also under names the model knows the treatment by, reported apart; verify the test passes (measured: no gain with the present model)
 - [x] 4.2 Search each part of a combination; verify the test passes
 - [ ] 4.3 Map generic names to development codes from an open drug-name source, after checking its terms
-- [ ] 4.4 Write registry cache entries with an upsert so two lookups at once cannot collide
+- [x] 4.4 Write registry cache entries with an upsert so two lookups at once cannot collide; verify the test passes
 - [ ] 4.5 Build a reviewed test set of article and trial pairs across many outlets
 
 ## 4b. Signals beyond the text (asked for 2026-11-12)
@@ -31,7 +31,7 @@
 - [x] 4b.5 Show a reader why a record is listed first, in the site's words and without a verdict
 - [x] 4b.6 Add `thenwhat outlets` to record which outlets can be read and which signals their pages carry; verify one success and one refusal
 - [x] 4b.7 Run it on the tracked articles and keep the result in `docs/outlets.md`, with one row per address in `docs/outlets-articles.csv` (2026-11-12: 104 addresses at 57 outlets, 96 read, 4 refused by robots.txt, 4 failed)
-- [ ] 4b.8 Measure the lookup again and record the change in `docs/lookup.md`
+- [x] 4b.8 Measure the lookup again and record the change in `docs/lookup.md` (2026-11-12: 43 lookups, an approved trial among the likely records for 32, listed first for 29)
 
 ## 4c. Posts on social media (asked for 2026-11-12: a post's address must work, and so must the article it links to)
 
@@ -45,9 +45,9 @@
 
 - [x] 4d.1 Check OpenAI's Decisions API terms, price and limits, try it once with made-up records, and note them in `docs/sources.md`
 - [x] 4d.2 Add the `openai-decisions` backend behind `DECISION_BACKEND`, counted in the usage ledger and stopped by the monthly ceiling; verify its tests pass on a recorded answer
-- [ ] 4d.3 Score with the Decisions API in the Worker when it is configured, and run its independent requests at the same time
+- [x] 4d.3 Score with the Decisions API in the Worker when it is configured, and run its independent requests at the same time; verify its tests pass
 - [ ] 4d.4 Measure a lookup's time and answers with each backend on the same articles, and record both
-- [ ] 4d.5 Save an outlet run article by article and check several outlets at once, with one shared limit per registry
+- [x] 4d.5 Save an outlet run article by article and check several outlets at once, with one shared limit per registry; verify the tests pass
 
 ## 5. For readers (decided 2026-11-12: unreviewed answers may be shown, clearly marked)
 

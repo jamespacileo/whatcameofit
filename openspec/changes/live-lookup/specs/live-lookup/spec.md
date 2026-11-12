@@ -61,6 +61,17 @@ The pipeline SHALL be able to check every tracked article's address and report, 
 - **WHEN** one outlet serves its article, a second forbids reading in robots.txt and a third answers with a payment-required status
 - **THEN** the record shows the first as read with its signals, the second as refused without its article being asked for, and the third as failed with that status
 
+### Requirement: Work that does not wait on other work is done at the same time
+A lookup SHALL read the text with the model while it looks up the papers the page links to and the registry numbers the article gives. One host SHALL still be asked one request at a time. The outlet check SHALL be able to check several outlets at the same time; one outlet SHALL still be asked one article at a time, a second apart, and all lookups running together SHALL keep, between them, to each registry's rate. Each lookup of an outlet check SHALL be saved when it ends, so a run that is stopped keeps what it fetched and what it spent. The registry cache SHALL accept two sessions writing the same request without failing.
+
+#### Scenario: Several outlets checked at the same time
+- **WHEN** the outlet check runs with three workers
+- **THEN** its record is the same as when it runs one outlet at a time, and each article is reported as it is finished
+
+#### Scenario: Two lookups fetch the same page at once
+- **WHEN** another session caches a registry answer while this one is fetching the same request
+- **THEN** this session's answer replaces it and no error is raised
+
 ### Requirement: A tracked claim is named
 When a claim is already tracked under one of the names found, the lookup SHALL name that claim.
 

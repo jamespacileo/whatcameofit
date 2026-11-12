@@ -31,6 +31,8 @@ wrangler secret put OPENAI_API_KEY        # once, in site/; you paste the key, i
 SITE_URL=https://example.org LLM_MODEL=<model> CONTACT_EMAIL=<address> make deploy
 ```
 
+Add `DECISION_BACKEND=openai-decisions` to that line to score records with OpenAI's Decisions API: one request for all of a search's records in place of up to three slow ones. It uses the same key.
+
 With `LLM_MODEL` and `CONTACT_EMAIL` set, the build offers the search and the Worker answers at `/api/lookup`. Without them the button is not drawn and the address answers "not set up". Limits are in `site/wrangler.jsonc`: five searches a minute for one reader, thirty in all. Set a monthly spending limit with the model's provider as well.
 
 For each search the Worker reads the article's site, ClinicalTrials.gov, Europe PMC (for a paper the article links to) and the model's provider. A live try on 2026-11-12 made 12 to 20 outside requests per search; check that your Cloudflare plan allows that many for one page request.
