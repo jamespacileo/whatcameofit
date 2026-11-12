@@ -42,6 +42,9 @@ jobs:
         env:
           SUGGEST_URL: ${{ vars.SUGGEST_URL }}
           CORRECTIONS_URL: ${{ vars.CORRECTIONS_URL }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
+          DECISION_BACKEND: ${{ vars.DECISION_BACKEND }}
 
   deploy:
     name: Deploy production
@@ -89,6 +92,9 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           SUGGEST_URL: ${{ vars.SUGGEST_URL }}
           CORRECTIONS_URL: ${{ vars.CORRECTIONS_URL }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
+          DECISION_BACKEND: ${{ vars.DECISION_BACKEND }}
       - name: Check live site
         if: steps.current.outputs.deploy == 'true'
         run: node site/scripts/smoke-live.mjs

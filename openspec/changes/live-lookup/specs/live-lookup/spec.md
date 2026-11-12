@@ -162,3 +162,21 @@ The service SHALL obey a site's robots.txt and SHALL NOT fetch an article when t
 #### Scenario: Nothing a reader sends is written down
 - **WHEN** a lookup succeeds or fails
 - **THEN** nothing of the text sent appears in any log
+
+
+### Requirement: Public searches have bounded paid usage
+The public service SHALL use a separate provider project with an enforced monthly spending limit of USD 13 and an alert at 80 percent. It SHALL restrict that project to the configured model and prohibit premium service tiers. Provider enforcement can lag; this limitation SHALL be documented. Per-minute application limits SHALL NOT be represented as a global monthly money cap. The private pipeline's local ledger SHALL remain separate.
+
+The model adapter SHALL bound completion output, cancel stalled calls, and make no automatic retries. A provider project or organization spend-limit error SHALL produce a monthly-allowance refusal without exposing provider messages or reader text. Reviewed pages SHALL remain available. The privacy page and search offers SHALL identify OpenAI and explain what data is sent and possible provider retention before public enablement.
+
+#### Scenario: Monthly allowance exhausted
+- **WHEN** either model endpoint returns a project or organization spend-limit error
+- **THEN** the service returns a budget-exhausted refusal without retrying, and reviewed pages remain available
+
+#### Scenario: Ordinary rate limit
+- **WHEN** the provider returns an ordinary request rate-limit error
+- **THEN** it is not described as the monthly allowance being exhausted
+
+#### Scenario: Provider stalls
+- **WHEN** the provider stalls while sending headers or the response body
+- **THEN** the request is cancelled at its deadline and is not automatically retried
