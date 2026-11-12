@@ -9,8 +9,6 @@
 
 - [x] 2.1 Give the match-scoring step the claim's indication and the record's conditions; verify the two spec scenarios with a fake backend
 - [x] 2.2 Label a same-intervention, other-indication candidate in the review queue; verify `review list` shows the label
-- [ ] 2.3 Score a claim's candidates concurrently within the provider's limits; verify the usage ledger still records every call
-  - Not built on 2026-11-11. Searching within the condition cut the candidates per claim enough that one-at-a-time scoring finishes in minutes. Needs the model client to separate the call from its ledger writes first.
 
 ## 3. Existing data
 
@@ -26,3 +24,7 @@
 - [x] 4.6 Add `thenwhat prepare` for many claims side by side with per-step timings; verify its planning and command tests pass
 - [x] 4.7 Time the new flow live; result: five claims prepared in 68 seconds side by side, 134 candidates scored in 14 model calls
 - [x] 4.8 Reject by rule a new candidate scored under `MATCH_REJECT_BELOW` (default 0.05), list them with `review list --by-rule`, and let the operator approve any; verify the rule, listing and command tests pass
+
+## Dropped
+
+- Scoring one claim's candidates concurrently (was 2.3). Dropped on 2026-11-12: searching within the indication and scoring several candidates per model call (4.1, 4.2) brought a claim's scoring down to a handful of calls, and `prepare` already runs claims side by side. It would also need the model client to separate a call from its ledger write.

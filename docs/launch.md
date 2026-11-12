@@ -1,6 +1,6 @@
 # Launch
 
-How the site goes public and how it is passed on. Behaviour is specified in `openspec/changes/reach-and-sharing/`; this file is the operator's checklist and the reasoning behind its order.
+How the site goes public and how it is passed on. Behaviour is specified in `openspec/specs/` (the `site-publishing`, `sharing`, `open-data`, `anniversaries`, `reader-contact` and `site-measurement` capabilities); this file is the operator's checklist and the reasoning behind its order.
 
 No growth notes existed in the repository when this was written (2026-11-11). The lists of places and people below are starting points drawn from the product's own audience in `PRODUCT.md`, not from research. Replace them as real experience comes in, and record what was passed on at the end of this file.
 

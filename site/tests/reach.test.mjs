@@ -1,4 +1,4 @@
-// Reach and sharing, checked against openspec/changes/reach-and-sharing: the contact
+// Reach and sharing, checked against openspec/specs (reader-contact, site-publishing, site-measurement): the contact
 // links (reader-contact), canonical addresses, structured data, the sitemap and the
 // public-build check (site-publishing), and what a page may ask of other hosts
 // (site-measurement). Builds tests/fixture-export.json (synthetic data) into temporary

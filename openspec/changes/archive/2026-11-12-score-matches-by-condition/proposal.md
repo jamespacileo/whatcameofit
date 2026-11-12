@@ -11,7 +11,7 @@ Broad intervention names are a second cost of the same design: "CAR-T cell thera
 - The registry search also sends the claim's indication, so a broad name returns trials for that condition first and far fewer of them.
 - Match scoring is given the claim's indication and the record's conditions, and scores "this record is a trial of this intervention for this indication".
 - A record for the same intervention in another condition is kept as a lower-scored candidate, labelled as another indication, so the reviewer still sees it.
-- Scoring calls for one claim run concurrently, within the provider's limits.
+- A claim's candidates are scored several to a model call. (Concurrent calls within one claim were planned and dropped: see the tasks.)
 
 ## Capabilities
 
