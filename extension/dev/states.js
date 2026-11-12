@@ -36,6 +36,34 @@ const long = {
   first_reported: "22 Oct 2026",
   latest_promise: null,
 };
+// A registry search's answer, as the site's own wording module returns it.
+const answer = {
+  marked:
+    "Automatic search. This list was made by software just now from a public registry. It has not been checked by a person and is not a status.",
+  lead: "This appears to report divalent small interfering RNA for Prion disease.",
+  source: "Read by your browser from the post on X you have open, and the article it links to at example.org.",
+  searchedAlso: null,
+  trialSaid: "Of the trial itself, the article says: it is called PRiSM and 30 people took part.",
+  tracked: [],
+  likelyLead: "Registry records that read as trials of this treatment for this condition, likeliest first:",
+  likely: [
+    {
+      title: "PrP-targeting siRNA Safety & Mechanism Study",
+      url: "https://clinicaltrials.gov/study/NCT07444580",
+      detail: "Phase 1 · recruiting · NCT07444580",
+      why: "The article gives this record's number.",
+    },
+    {
+      title: "A Study to Assess the Safety, Tolerability, Pharmacokinetics and Pharmacodynamics of ION717",
+      url: "https://clinicaltrials.gov/study/NCT06153966",
+      detail: "Phase 1/Phase 2 · active, not recruiting · NCT06153966",
+      why: null,
+    },
+  ],
+  rest: "3 other records were found and read as not being trials of this treatment for this condition.",
+  none: null,
+  notices: [notices[1], "Source of the records: ClinicalTrials.gov."],
+};
 const tracked = (claims, savedAt = null) => ({
   kind: "tracked",
   claims,
@@ -51,13 +79,22 @@ const states = [
   ["Two claims in one article", tracked([claim, quiet])],
   ["Tracked, from the saved copy", tracked([claim], Date.UTC(2026, 10, 10, 9))],
   ["Not a tracked report", { kind: "untracked", savedAt: null }],
+  ["Not tracked, search offered", { kind: "untracked", savedAt: null, live: "/api/lookup" }],
+  ["Searching", { kind: "searching" }],
+  ["Answer from a post", { kind: "answer", shown: answer }],
+  ["Too little read", { kind: "too-little" }],
+  ["Search refused", { kind: "refused", code: "busy" }],
   ["Not a web page", { kind: "no-page" }],
   ["Site unreachable", { kind: "unreachable" }],
   ["Checking", { kind: "checking" }],
 ];
 
 const board = document.querySelector("#board");
-const actions = { open: (address) => console.log("open", address), retry: () => console.log("retry") };
+const actions = {
+  open: (address) => console.log("open", address),
+  retry: () => console.log("retry"),
+  search: () => console.log("search"),
+};
 
 for (const [label, state] of states) {
   const figure = document.createElement("figure");

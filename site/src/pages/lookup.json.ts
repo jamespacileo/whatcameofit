@@ -6,6 +6,7 @@ import { articleKey } from "../lib/article-key.mjs";
 import { data } from "../lib/export";
 import { NOTICES, UNCHECKED_NOTE } from "../lib/notices";
 import { STATUS_LABELS, STATUS_MEANINGS, latestPromise, overlayText } from "../lib/status";
+import { SITE } from "../../site.config.mjs";
 import { formatDate } from "../lib/timetable";
 
 export const GET: APIRoute = () => {
@@ -44,6 +45,9 @@ export const GET: APIRoute = () => {
     last_checked: data.last_checked_at ? formatDate(data.last_checked_at) : null,
     preview: data.preview,
     notices: NOTICES,
+    // Where a registry search may be asked for, or null when this site offers none.
+    // The browser extension reads it here, so it need not be rebuilt when that changes.
+    live: SITE.lookupUrl,
     articles,
     claims,
   };

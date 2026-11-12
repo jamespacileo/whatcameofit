@@ -24,6 +24,27 @@ for (const name of fs.readdirSync(path.join(here, "src"))) {
 }
 // One comparison function for the site and the extension.
 fs.copyFileSync(path.join(site, "src/lib/article-key.mjs"), path.join(dist, "article-key.js"));
+// And the site's own readers and wording for a registry search of the open page: how an
+// address is told from a post, how a page is read, and how an answer is worded. Each is
+// copied with the names of the files it imports changed to the copies beside it.
+const shared = [
+  ["src/lib/lookup-match.mjs", "lookup-match.js", [["./article-key.mjs", "./article-key.js"]]],
+  ["src/lib/live-lookup.mjs", "live-lookup.js", [["./notices.ts", "./notices.js"]]],
+  ["worker/page.mjs", "page.js", []],
+];
+for (const [from, to, imports] of shared) {
+  let source = fs.readFileSync(path.join(site, from), "utf8");
+  for (const [theirs, ours] of imports) {
+    if (!source.includes(`"${theirs}"`)) throw new Error(`${from} no longer imports ${theirs}`);
+    source = source.replaceAll(`"${theirs}"`, `"${ours}"`);
+  }
+  fs.writeFileSync(path.join(dist, to), source);
+}
+const { NOTICES } = await import(pathToFileURL(path.join(site, "src/lib/notices.ts")).href);
+fs.writeFileSync(
+  path.join(dist, "notices.js"),
+  `// Written by build.mjs from site/src/lib/notices.ts.\nexport const NOTICES = ${JSON.stringify(NOTICES)};\n`,
+);
 
 const face = path.dirname(fromSite.resolve("@fontsource-variable/figtree/package.json"));
 fs.copyFileSync(path.join(face, "files/figtree-latin-wght-normal.woff2"), path.join(dist, "figtree.woff2"));
@@ -54,9 +75,10 @@ const manifest = {
     default_popup: "popup.html",
     default_icon: icons,
   },
-  // The current tab only, and only when the button is pressed. The site's own
-  // address is the one place the extension may fetch from.
-  permissions: ["activeTab", "storage"],
+  // The current tab only, and only when the button is pressed. "scripting" lets the
+  // popup read that tab's page when the reader asks for a registry search. The site's
+  // own address is the one place the extension may fetch from or send to.
+  permissions: ["activeTab", "scripting", "storage"],
   host_permissions: [`${origin}/*`],
 };
 fs.writeFileSync(path.join(dist, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);

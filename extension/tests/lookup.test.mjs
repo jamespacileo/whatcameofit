@@ -36,6 +36,14 @@ test("an article no claim cites is untracked", () => {
   assert.equal(stateFor("news.example.org/gone", loaded).kind, "untracked");
 });
 
+test("an untracked page is offered a registry search only where the site answers one", () => {
+  assert.equal(stateFor("news.example.org/other", loaded).live, null);
+  const offering = { index: { ...index, live: "/api/lookup" }, savedAt: null };
+  assert.equal(stateFor("news.example.org/other", offering).live, "/api/lookup");
+  // A tracked article has its reviewed page: no search is offered in its place.
+  assert.equal(stateFor("news.example.org/1", offering).live, undefined);
+});
+
 test("a tab that is not a web page asks for an article", () => {
   assert.equal(stateFor(null, loaded).kind, "no-page");
 });

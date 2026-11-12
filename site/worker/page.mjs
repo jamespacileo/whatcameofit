@@ -97,21 +97,31 @@ export function readPage(html) {
     .join(" ");
   const text = tidy(decoded(visible.replace(/<[^>]+>/g, " ")));
 
-  const dois = [
-    ...DOI_LINKS.flatMap((pattern) => captured(links, pattern)).map((doi) => doi.replace(/[.,;]+$/, "")),
-    ...captured(links, NATURE).map((name) => `10.1038/${name}`),
-    ...captured(links, ELSEVIER_PII).map((pii) => `10.1016/${pii}`),
-  ].map((doi) => doi.toLowerCase());
-
   return {
     text,
     headline: first(HEADLINE_TAGS) ?? described.headline ?? (title ? tidy(decoded(title[1])) || null : null),
     summary: first(SUMMARY_TAGS) ?? described.description ?? null,
     published: first(DATE_TAGS) ?? described.datePublished ?? null,
     body: described.articleBody ?? null,
-    registryNumbers: unique((`${text} ${links}`.match(REGISTRY_NUMBER) ?? []).map((number) => number.toUpperCase())),
+    ...linkSignals(links, text),
+  };
+}
+
+/**
+ * The registry numbers in a text and its links, and the papers the links point to.
+ * @param {string | string[]} links the addresses a page links to
+ */
+export function linkSignals(links, text = "") {
+  const joined = Array.isArray(links) ? links.map(unescaped).join(" ") : links;
+  const dois = [
+    ...DOI_LINKS.flatMap((pattern) => captured(joined, pattern)).map((doi) => doi.replace(/[.,;]+$/, "")),
+    ...captured(joined, NATURE).map((name) => `10.1038/${name}`),
+    ...captured(joined, ELSEVIER_PII).map((pii) => `10.1016/${pii}`),
+  ].map((doi) => doi.toLowerCase());
+  return {
+    registryNumbers: unique((`${text} ${joined}`.match(REGISTRY_NUMBER) ?? []).map((number) => number.toUpperCase())),
     dois: unique(dois),
-    pubmedIds: unique(captured(links, PUBMED)),
+    pubmedIds: unique(captured(joined, PUBMED)),
   };
 }
 

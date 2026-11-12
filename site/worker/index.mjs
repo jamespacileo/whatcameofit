@@ -4,15 +4,19 @@
 //
 // Nothing a reader sends is stored or logged here: not the address, not the text, not
 // the answer. The reader's network address is used once, to count requests per minute.
-import { readAddress } from "../src/lib/lookup-match.mjs";
+import { PLATFORM_NAMES, readAddress } from "../src/lib/lookup-match.mjs";
 import { MAX_TEXT_CHARACTERS, readArticle } from "./article.mjs";
 import { lookUp } from "./lookup.mjs";
 import { makeModel } from "./model.mjs";
+import { linkSignals } from "./page.mjs";
 import { makePapers } from "./papers.mjs";
 import { readPost } from "./post.mjs";
 import { makeRegistry } from "./registry.mjs";
 
 const PATH = "/api/lookup";
+// What a reader's browser may send with text it read: this many links, each this long.
+const MAX_LINKS = 30;
+const MAX_LINK_CHARACTERS = 500;
 const UNREADABLE = { robots: "unreadable_robots", unreadable: "unreadable", address: "address" };
 
 function answer(body, status = 200) {
@@ -53,14 +57,25 @@ function trackedBy(index, articleKey) {
 async function readPostAndArticle(read, index, { fetch, contact }) {
   const post = await readPost(read.post, { fetch, contact });
   if (post.refused) return { refused: post.refused };
-  const linked = post.links.map((link) => readAddress(link)).find((one) => one.kind === "article");
+  return withLinkedArticle(read.platform, post, index, { fetch, contact });
+}
+
+/**
+ * A post's text and links, however they were read, and the article the post links to.
+ * @param {{ text: string, links: string[] }} post
+ */
+async function withLinkedArticle(platform, post, index, { fetch, contact }) {
+  const read = post.links.map((link) => readAddress(link));
+  const linked = read.find((one) => one.kind === "article");
   const source = {
-    platform: read.platform,
+    platform,
     article: linked?.address ?? null,
     article_host: linked?.host ?? null,
     article_read: false,
   };
-  const said = `A post on ${read.platform} says:\n${post.text}`;
+  // A shortened link does not say where it leads, and is not followed to find out.
+  if (!linked && read.some((one) => one.kind === "short")) source.only_short_links = true;
+  const said = `A post on ${platform} says:\n${post.text}`;
   if (!linked) return { text: said, source };
   // An article the site tracks has a reviewed page: that is the answer. The article is
   // not fetched and no automatic search is made in its place.
@@ -87,6 +102,13 @@ export async function handle(request, env, tools) {
   let text = typeof sent?.text === "string" ? sent.text.trim() : "";
   if (!address && !text) return refuse(400, "nothing_given");
   if (text.length > MAX_TEXT_CHARACTERS) return refuse(413, "too_long");
+  // Text may come with the links that stood in it, and with the name of the platform it
+  // was a post on: what a reader's own browser read from the page they had open. The
+  // page's address is not asked for and is not sent.
+  const links = (Array.isArray(sent?.links) ? sent.links : [])
+    .filter((link) => typeof link === "string" && link.length <= MAX_LINK_CHARACTERS && /^https?:\/\//i.test(link))
+    .slice(0, MAX_LINKS);
+  const platform = PLATFORM_NAMES.includes(sent?.platform) ? sent.platform : null;
 
   let read = null;
   if (!text) {
@@ -125,6 +147,17 @@ export async function handle(request, env, tools) {
       if (both.tracked) return answer({ article_tracked: true, post, tracked: both.tracked, candidates: [] });
       text = both.text;
       page = both.page;
+    } else if (platform) {
+      // A post the reader's browser read: the article it links to is read here, as for
+      // a post this service read itself.
+      const both = await withLinkedArticle(platform, { text, links }, index, { fetch: get, contact: env.CONTACT_EMAIL });
+      post = { ...both.source, read_in_browser: true };
+      if (both.tracked) return answer({ article_tracked: true, post, tracked: both.tracked, candidates: [] });
+      text = both.text;
+      page = both.page;
+    } else if (links.length) {
+      // An article the reader's browser read: its links still say which paper it reports.
+      page = linkSignals(links, text);
     }
     return answer({ ...(await lookUp({ text, model, registry, index, page, papers })), post });
   } catch {

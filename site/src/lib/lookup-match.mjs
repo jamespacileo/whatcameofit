@@ -30,6 +30,9 @@ const PLATFORMS = [
   ["Hacker News", ["news.ycombinator.com"]],
 ];
 
+/** The names of the platforms a post can be on. */
+export const PLATFORM_NAMES = PLATFORMS.map(([name]) => name);
+
 /**
  * Which post an address is, on the platforms whose posts the lookup service can read:
  * each offers them to software without signing in (docs/sources.md). Null for any other

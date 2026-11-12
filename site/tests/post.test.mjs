@@ -183,8 +183,9 @@ function service(pages) {
     LLM_MODEL: "example-model",
     CONTACT_EMAIL: CONTACT,
   };
-  const ask = (url) => handle(new Request("https://tracker.example.org/api/lookup", { method: "POST", body: JSON.stringify({ url }) }), env, tools);
-  return { ask, shown, net };
+  const send = (body) => handle(new Request("https://tracker.example.org/api/lookup", { method: "POST", body: JSON.stringify(body) }), env, tools);
+  const ask = (url) => send({ url });
+  return { ask, send, shown, net };
 }
 
 test("Scenario: Post that links to an article", async () => {
@@ -258,3 +259,64 @@ test("Scenario: Post on a platform that cannot be read", async () => {
   assert.match(refusalMessage("post_unreadable", { platform: "Bluesky" }), /^That post on Bluesky could not be read\. It may be private or deleted\./);
   assert.ok(textWouldHelp("post") && textWouldHelp("post_unreadable"));
 });
+
+// --- a page the reader's own browser read ----------------------------------------------
+
+test("Scenario: Post read by the reader's browser", async () => {
+  const { send, shown, net } = service({ "https://news.example.org/robots.txt": 404, [ARTICLE]: ARTICLE_PAGE });
+
+  const response = await send({ text: "EX-1 restored missing teeth in a first trial in people", links: ["https://t.co/AbCdEf", ARTICLE], platform: "X" });
+  const found = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(found.post, { platform: "X", article: ARTICLE, article_host: "news.example.org", article_read: true, read_in_browser: true });
+  assert.match(shown[0], /^A post on X says:\nEX-1 restored missing teeth[\s\S]*\n\nThe article it links to:\nHeadline: Antibody regrows teeth/);
+  // The shortened link is not followed, and nothing is asked of X.
+  assert.deepEqual(net.addresses(), ["https://news.example.org/robots.txt", ARTICLE]);
+  assert.equal(describeAnswer(found).source, "Read by your browser from the post on X you have open and the article it links to at news.example.org.");
+});
+
+test("a post whose only link is a shortened one is looked up from its own words, and the answer says why", async () => {
+  const { send, net } = service({});
+
+  const found = await (await send({ text: "EX-1 restored missing teeth in a first trial in people", links: ["https://t.co/AbCdEf"], platform: "X" })).json();
+
+  assert.deepEqual([found.post.article, found.post.only_short_links, net.addresses()], [null, true, []]);
+  assert.equal(
+    describeAnswer(found).source,
+    "Read by your browser from the post on X you have open. It links through a shortened address, which this site does not follow, so only the post was used.",
+  );
+});
+
+test("a post read by the browser that links to a tracked article is answered with the claim's page", async () => {
+  const { send, shown, net } = service({});
+
+  const found = await (await send({ text: "Teeth regrown, says this story", links: ["https://news.example.org/tracked-story"], platform: "Reddit" })).json();
+
+  assert.deepEqual([found.article_tracked, found.tracked[0].slug, found.post.read_in_browser], [true, "tooth-regrowth-ex1", true]);
+  assert.deepEqual([shown, net.addresses()], [[], []]);
+});
+
+test("Scenario: Article read by the reader's browser", async () => {
+  const { send, shown, net } = service({});
+
+  const response = await send({
+    text: "Headline: Antibody regrows teeth\n\nEX-1 regrew teeth in people born without them.",
+    links: ["https://doi.org/10.1234/example.2026.0042", "javascript:alert(1)", 7, `https://other.example.org/${"x".repeat(600)}`],
+  });
+  const found = await response.json();
+
+  // An article has no platform: it is looked up as text, and its links say which paper it reports.
+  assert.deepEqual([response.status, found.post, found.candidates.length], [200, null, 1]);
+  assert.match(shown[0], /^Headline: Antibody regrows teeth/);
+  assert.deepEqual(net.addresses(), []);
+});
+
+test("a platform name the service does not know is not repeated back", async () => {
+  const { send } = service({});
+
+  const found = await (await send({ text: "EX-1 restored missing teeth in a first trial in people", links: [], platform: "<b>Not a platform</b>" })).json();
+
+  assert.equal(found.post, null);
+});
+

@@ -1,5 +1,6 @@
-// Draws one popup state. Status wording comes from the lookup file; the few sentences
-// here are the extension's own and never describe a claim.
+// Draws one popup state. Status wording comes from the lookup file, and the wording of a
+// registry search's answer from the site's own module; the few sentences here are the
+// extension's own and never describe a claim.
 
 const text = {
   checking: "Checking this page…",
@@ -11,6 +12,19 @@ const text = {
   untrackedBody: (name) =>
     `${name} follows particular news reports of medical breakthroughs, and this page is not one of them. That says nothing about the story itself.`,
   search: "Search tracked claims",
+  offer: "Search the trial registry for this page",
+  disclosure: (name) =>
+    `This reads the page you have open, here in your browser, and sends its text and the links in it to ${name}, which asks a language model what it reports. The page's address is not sent, and ${name} keeps none of it. To send only some of the page, select those words first.`,
+  searching: "Reading this page and searching the registry. This can take half a minute.",
+  tooLittleTitle: "Too little of this page could be read",
+  tooLittleBody: "Select the words of the post or the article, then press the button again.",
+  refusedTitle: "The search could not be made",
+  refused: {
+    busy: "Too many searches are being made right now. Try again in a minute.",
+    not_set_up: (name) => `${name} is not offering the registry search at the moment.`,
+    failed: "Nothing was found or ruled out. Try again in a minute.",
+  },
+  again: "Search again",
   noPageTitle: "Open an article first",
   noPageBody: (name) =>
     `Go to a news article about a medical breakthrough, then press the ${name} button again.`,
@@ -82,11 +96,48 @@ function message(title, body, action) {
   return el("section", "message", [el("h1", null, title), el("p", null, body), action]);
 }
 
+function press(label, className, onPress) {
+  const node = el("button", className, label);
+  node.type = "button";
+  node.addEventListener("click", onPress);
+  return node;
+}
+
+/** A registry search's answer, in the words the site's own module gave it. */
+function answerBlock(shown, site, actions) {
+  const records = (items, address) =>
+    el(
+      "ul",
+      "records",
+      items.map((item) =>
+        el("li", null, [
+          link(item.title ?? item.headline, address(item), null, actions.open),
+          item.detail && el("span", "small", item.detail),
+          item.why && el("span", "small", item.why),
+        ]),
+      ),
+    );
+  return [
+    shown.marked && el("p", "unchecked", shown.marked),
+    el("p", "lead", shown.lead),
+    shown.source && el("p", "small", shown.source),
+    shown.searchedAlso && el("p", "small", shown.searchedAlso),
+    shown.trialSaid && el("p", "small", shown.trialSaid),
+    shown.tracked.length > 0 && records(shown.tracked, (claim) => site.url + claim.page),
+    shown.likely.length > 0 && el("p", "listed", shown.likelyLead),
+    shown.likely.length > 0 && records(shown.likely, (record) => record.url),
+    shown.none && el("p", null, shown.none),
+    shown.rest && el("p", "small", shown.rest),
+    shown.notices.length > 0 && el("footer", "notices", shown.notices.map((notice) => el("p", null, notice))),
+  ];
+}
+
 /**
  * @param {HTMLElement} root
- * @param {object} state from stateFor(), or { kind: "checking" }
+ * @param {object} state from stateFor(), or { kind: "checking" | "searching" | "too-little" },
+ *   { kind: "refused", code }, or { kind: "answer", shown } with the site's wording of an answer
  * @param {{ name: string, url: string }} site
- * @param {{ open: (address: string) => void, retry: () => void }} actions
+ * @param {{ open: (address: string) => void, retry: () => void, search: () => void }} actions
  */
 export function render(root, state, site, actions) {
   let children;
@@ -108,8 +159,21 @@ export function render(root, state, site, actions) {
         text.untrackedBody(site.name),
         link(text.search, `${site.url}/`, "button quiet", actions.open),
       ),
+      // Offered only where the site answers such a search. Nothing is read until pressed.
+      state.live && el("section", "offer", [press(text.offer, "button", actions.search), el("p", "small", text.disclosure(site.name))]),
       savedNote(state, site) && el("footer", "notices", [savedNote(state, site)]),
     ];
+  } else if (state.kind === "searching") {
+    children = [el("p", "checking", text.searching)];
+  } else if (state.kind === "too-little") {
+    children = [message(text.tooLittleTitle, text.tooLittleBody, press(text.again, "button quiet", actions.search))];
+  } else if (state.kind === "refused") {
+    const why = text.refused[state.code] ?? text.refused.failed;
+    children = [
+      message(text.refusedTitle, typeof why === "function" ? why(site.name) : why, press(text.again, "button quiet", actions.search)),
+    ];
+  } else if (state.kind === "answer") {
+    children = answerBlock(state.shown, site, actions);
   } else if (state.kind === "no-page") {
     children = [message(text.noPageTitle, text.noPageBody(site.name))];
   } else {

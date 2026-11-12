@@ -4,6 +4,8 @@ One click on the toolbar button shows what happened to the breakthrough in the a
 
 It compares the page's address with the site's `lookup.json` inside the browser. The address is never sent anywhere. It can see a tab only when its button is pressed.
 
+For a page that is not tracked, and only where the site answers registry searches, the popup offers "Search the trial registry for this page". Pressing it reads the open page inside the browser and sends the site the text read and the links in it; for a post, also the platform's name. This is how a post on X or Reddit, or an article behind a paywall the reader subscribes to, can be searched: the reader's own browser reads the page, and the site asks the platform nothing. The page's address is not sent. Select words on the page first to send only those.
+
 ## Build
 
 ```sh
@@ -36,8 +38,9 @@ Distribution through the App Store needs an Apple developer account and a real b
 
 - `src/lookup.js`: decides what to show. Pure, tested in `tests/`.
 - `src/view.js`: draws a state. Status wording comes from `lookup.json`; the site owns it.
-- `src/popup.js`: the glue to the browser (current tab, saved copy, fetch).
-- `build.mjs`: copies the above with the address comparison shared with the site (`site/src/lib/article-key.mjs`), the site's face and icon, and writes the manifest.
+- `src/open-page.js`: reads the open page (`collectFromPage`, which runs inside it) and chooses what a registry search needs (`composeRequest`, pure, tested in `tests/`).
+- `src/popup.js`: the glue to the browser (current tab, saved copy, fetch, reading the page when asked).
+- `build.mjs`: copies the above with what is shared with the site (the address comparison, how an address is told from a post, the page reader, the wording of an answer and the notices), the site's face and icon, and writes the manifest.
 - `dev/`: a page showing every popup state side by side. `node extension/build.mjs --dev`, then serve `extension/dist` and open `states.html`.
 
 Tests: `node --test extension/tests/` (also part of `make check`).

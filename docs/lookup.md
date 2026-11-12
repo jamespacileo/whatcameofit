@@ -109,6 +109,14 @@ X, Reddit, Facebook, Instagram, Threads, LinkedIn, Telegram, TikTok and YouTube 
 
 Who wrote a post is never read out, and nothing of a post is stored.
 
+### Through the browser extension
+
+The extension covers what the site cannot read. On a page that is not tracked it offers a registry search of the open page: the reader's own browser reads the page, and the text and the links in it go to the same service. The site asks the platform nothing, and the page's address is not sent. This works for a post on any platform and for an article behind a paywall the reader subscribes to. Text the reader selects first is all that is sent of the page's words.
+
+Tried on 2026-11-12 with the extension's page reader run on a real post on X: the post's words, its link card's headline and the outlet's name came through in three lines, without the writer's name, the time or the view count. The service answered in 8 seconds.
+
+Limits: X links out through its own shortened addresses, which are not followed, so a post on X is searched from its own words and its link card, not from the article. Reddit could not be opened in the browser used for this try, so its page is read by the general rule and has not been seen working. The popup has not yet been pressed in a real Chrome or Safari.
+
 ## Before it can serve readers
 
 - **A reviewed test set.** The numbers above rest on the assistant's approvals. A few hundred article and trial pairs checked by a person, across many outlets, would make them trustworthy. Which outlets can be read is now recorded in [outlets.md](outlets.md), for the outlets that have a tracked article.

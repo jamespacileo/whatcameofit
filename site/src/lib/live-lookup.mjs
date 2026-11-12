@@ -33,9 +33,13 @@ export const LIVE = {
 // Where the text came from when the reader gave a post's address.
 function sourceOf(post) {
   if (!post) return null;
-  const from = `Read from a post on ${post.platform}`;
+  // A post the reader had open was read by their own browser, not by this site.
+  const from = post.read_in_browser
+    ? `Read by your browser from the post on ${post.platform} you have open`
+    : `Read from a post on ${post.platform}`;
   if (post.article_read) return `${from} and the article it links to at ${post.article_host}.`;
   if (post.article) return `${from}. The article it links to at ${post.article_host} could not be read, so only the post was used.`;
+  if (post.only_short_links) return `${from}. It links through a shortened address, which this site does not follow, so only the post was used.`;
   return `${from}. No article was found among its links, so only the post was used.`;
 }
 

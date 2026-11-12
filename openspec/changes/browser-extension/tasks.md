@@ -24,3 +24,12 @@
 - [x] 4.2 Offer the closest tracked claims for an untracked address; verify the three closest-match tests pass
 - [x] 4.3 Make the home page's main field take a link or search words; verify the site builds and the search scenario still passes
 - [x] 4.4 Try the field in a browser with a tracked link, an untracked one and a shortened one; verify each answer
+
+## 5. A registry search of the open page (decided 2026-11-12)
+
+- [x] 5.1 Read the open page inside the browser and choose what a search needs: a post's own words, an article as the site reads one, or the reader's selection; verify the seven open-page tests pass
+- [x] 5.2 Offer the search in the popup for an untracked page where the site answers one, send what was read, and show the answer in the site's wording; verify every new state on the states page
+- [x] 5.3 Run the page reader on one real post in a browser and put what it read through the service (2026-11-12: a post on X; its words came through without the writer's name, the time or the counts, and X was asked nothing)
+- [ ] 5.4 The operator loads `extension/dist` in Chrome, opens a post on X and on Reddit and an article behind a paywall they subscribe to, and presses the search; verify each answer
+- [ ] 5.5 The operator does the same in Safari
+

@@ -109,6 +109,17 @@ For a post on a platform the lookup does not read, the service SHALL ask nothing
 - **WHEN** the address is a post on a platform that is not read
 - **THEN** no request is sent to that platform and the reader is told, by the platform's name, to paste the post's text or the article's address
 
+### Requirement: The service takes what a reader's own browser read
+The service SHALL accept text together with the addresses that text links to (thirty at most, each at most 500 characters, web addresses only) and the name of the platform the text was a post on. It SHALL NOT ask for the address of the page the text came from. A platform name it does not know SHALL be ignored and SHALL NOT be repeated in the answer. With a platform name, the text SHALL be treated as a post: the first link that is an article is read and looked up with it, a tracked article is answered with its claim's page, and the answer SHALL say the post was read by the reader's browser. A shortened link SHALL NOT be followed, and when a post links only through one the answer SHALL say so. Without a platform name, the links SHALL be used for the papers and registry numbers they point to.
+
+#### Scenario: Post read by the reader's browser
+- **WHEN** text is sent with the platform name of a platform the service does not read, and a link to an article
+- **THEN** that platform is asked nothing, the article is read, and the answer says the post was read by the reader's browser
+
+#### Scenario: Article read by the reader's browser
+- **WHEN** text is sent with links and no platform name
+- **THEN** the text is looked up as it is, and a link to a paper is used to find the paper's trial
+
 ### Requirement: A tracked claim is named
 When a claim is already tracked under one of the names found, the lookup SHALL name that claim.
 

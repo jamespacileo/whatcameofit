@@ -18,7 +18,8 @@ export function stateFor(key, loaded) {
   if (index === null) return { kind: "unreachable" };
 
   const claims = (index.articles[key] ?? []).map((slug) => index.claims[slug]).filter(Boolean);
-  if (claims.length === 0) return { kind: "untracked", savedAt };
+  // `live` is where the site answers a registry search, when it offers one.
+  if (claims.length === 0) return { kind: "untracked", savedAt, live: index.live ?? null };
   return {
     kind: "tracked",
     claims,

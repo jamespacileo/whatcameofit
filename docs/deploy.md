@@ -54,7 +54,7 @@ The command prints every reason at once and publishes nothing.
 ## After the first deploy
 
 - Open five claim pages at the public address and check each against its sources.
-- Build the browser extension for the same address: `SITE_URL=https://whatcameofit.com make extension`. The extension asks only that address for its data.
+- Build the browser extension for the same address: `SITE_URL=https://whatcameofit.com make extension`. The extension asks only that address for its data, and sends only that address what a reader asks it to search.
 - Put the address in `site/site.config.mjs` so that every build uses it without the variable.
 
 ## Undoing a deploy
