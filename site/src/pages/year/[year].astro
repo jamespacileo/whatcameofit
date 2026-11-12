@@ -16,6 +16,7 @@ const { year } = Astro.params;
 const claims = data.claims
   .filter((claim) => claim.first_reported_date?.slice(0, 4) === year)
   .sort((a, b) => (a.first_reported_date! < b.first_reported_date! ? 1 : -1));
+const approved = claims.filter((claim) => claim.status.code === "approved").length;
 ---
 
 <Base
@@ -25,7 +26,8 @@ const claims = data.claims
   <h1 class="title">First reported in {year}</h1>
   <p class="lede">
     {claims.length}{" "}
-    {claims.length === 1 ? "reported breakthrough" : "reported breakthroughs"} tracked.
+    {claims.length === 1 ? "reported breakthrough" : "reported breakthroughs"} tracked. Approvals on record:{" "}
+    {approved} of {claims.length}.
   </p>
 
   <ClaimTable claims={claims} caption={`Claims first reported in ${year}`} filter />

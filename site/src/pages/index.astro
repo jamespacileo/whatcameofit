@@ -211,6 +211,7 @@ const recent = data.claims
     page: string;
     status: string;
     meaning: string;
+    place: number | null;
     no_signal: string | null;
     first_reported: string | null;
     unchecked: string | null;
@@ -218,6 +219,7 @@ const recent = data.claims
   interface Lookup {
     articles: Record<string, string[]>;
     claims: Record<string, LookupClaim>;
+    places: number;
   }
 
   function element(tag: string, text?: string, className?: string) {
@@ -252,6 +254,43 @@ const recent = data.claims
       list.append(item);
     }
     return list;
+  }
+
+  // An article we track is answered the way its claim page answers: the status in
+  // words, its place on the path, the no-signal note, then what the status means.
+  function standing(claim: LookupClaim, places: number) {
+    const card = element("div", undefined, "digest found");
+    const stands = element("div", undefined, "standing");
+    stands.append(element("span", claim.status, "label"));
+    if (claim.place) {
+      const track = element("span", undefined, "track");
+      const steps = element("span", undefined, "steps");
+      steps.setAttribute("role", "img");
+      steps.setAttribute(
+        "aria-label",
+        `Place ${claim.place} of ${places} on the path from preclinical to approved`,
+      );
+      for (let place = 1; place <= places; place += 1) {
+        steps.append(element("span", undefined, place === claim.place ? "step here" : "step"));
+      }
+      track.append(steps);
+      stands.append(track);
+    }
+    if (claim.no_signal) stands.append(element("span", claim.no_signal, "note"));
+
+    const about = element("div", undefined, "about");
+    about.append(element("h2", claim.headline));
+    if (claim.unchecked) about.append(element("p", claim.unchecked, "unchecked"));
+    about.append(element("p", claim.meaning));
+    const more = element("p", undefined, "changed");
+    if (claim.first_reported) more.append(`First reported ${claim.first_reported}. `);
+    const link = element("a", "See the records") as HTMLAnchorElement;
+    link.href = claim.page;
+    more.append(link);
+    about.append(more);
+
+    card.append(stands, about);
+    return card;
   }
 
   // An article we do not track can be suggested, when a suggestion address is set. The
@@ -415,8 +454,10 @@ const recent = data.claims
           "p",
           tracked.length === 1 ? "This article is one we track." : "This article reports claims we track.",
         ),
-        claimList(tracked),
+        ...tracked.map((claim) => standing(claim, index.places)),
       );
+      // On a phone the answer can land below the keyboard or the fold.
+      results.scrollIntoView({ block: "nearest" });
       return;
     }
     const close = closestClaims(index, address).map((match: { claim: LookupClaim }) => match.claim);
@@ -464,7 +505,10 @@ const recent = data.claims
     }
     if (asked !== latest) return;
     if (hits.length === 0) {
-      show(`Nothing found for “${query}”. This site only covers claims it has tracked so far.`);
+      show(
+        `No record found for “${query}”. We say that a lot.`,
+        "This site only covers claims it has tracked so far.",
+      );
       return;
     }
     const list = document.createElement("ul");

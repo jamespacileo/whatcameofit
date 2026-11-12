@@ -144,7 +144,7 @@ test("Scenario: Search with no result", () => {
     .filter((name) => name.endsWith(".js"))
     .map((name) => page(path.join("_astro", name)))
     .join("\n");
-  assert.match(scripts + page("index.html"), /Nothing found for/);
+  assert.match(scripts + page("index.html"), /No record found for/);
 });
 
 test("Scenario: Home lists the newest reports", () => {

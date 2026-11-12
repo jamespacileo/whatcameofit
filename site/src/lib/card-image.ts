@@ -5,7 +5,14 @@ import path from "node:path";
 import { Resvg } from "@resvg/resvg-js";
 import satori from "satori";
 import { SITE } from "../../site.config.mjs";
-import { CARD_NOTICE, cardContent, clip, type CardContent } from "./card";
+import {
+  CARD_NOTICE,
+  PROMISED_LABEL,
+  cardContent,
+  clip,
+  type CardContent,
+  type CardFact,
+} from "./card";
 import { data, type ExportedClaim } from "./export";
 import { STATUS_LABELS, latestPromise, overlayText } from "./status";
 
@@ -17,6 +24,9 @@ const PAPER = "#ffffff";
 const TINT = "#eaf2fa";
 const RING = "#7f90a3";
 const RULE = "#dde5ee";
+// Pale amber: everything promised, here as on the pages.
+const PROMISE = "#fff7df";
+const PROMISE_RULE = "#d9c88a";
 
 export type Shape = "wide" | "square" | "tall";
 
@@ -163,11 +173,31 @@ function announced(card: CardContent, layout: Layout): Node {
   ]);
 }
 
-function fact(label: string, value: string, layout: Layout): Node {
-  return box({ flexDirection: "column", marginLeft: layout.factsBelow ? 0 : 48, marginRight: layout.factsBelow ? 56 : 0 }, [
-    box({ fontSize: layout.factLabel, color: MUTED }, label),
-    box({ fontSize: layout.factValue, fontWeight: 700, lineHeight: 1.15, color: INK }, value),
-  ]);
+function fact({ label, value }: CardFact, layout: Layout): Node {
+  // A promise sits on pale amber with a dashed rule, as it does in the timetable, so
+  // the promised year and the status are told apart before either is read.
+  const promised = label === PROMISED_LABEL;
+  const inset = layout.factLabel * 0.5;
+  return box(
+    {
+      flexDirection: "column",
+      marginLeft: layout.factsBelow ? 0 : 48 - (promised ? inset : 0),
+      marginRight: layout.factsBelow ? 56 - (promised ? inset : 0) : 0,
+      ...(promised && {
+        background: PROMISE,
+        border: `2px dashed ${PROMISE_RULE}`,
+        borderRadius: 12,
+        padding: `${inset * 0.5}px ${inset}px`,
+        // The amber box is taller than a bare fact; it grows up and down equally.
+        marginTop: -inset * 0.5 - 2,
+        marginBottom: -inset * 0.5 - 2,
+      }),
+    },
+    [
+      box({ fontSize: layout.factLabel, color: MUTED }, label),
+      box({ fontSize: layout.factValue, fontWeight: 700, lineHeight: 1.15, color: INK }, value),
+    ],
+  );
 }
 
 // What the records show: the status in the site's wording, and the dates that keep
@@ -193,7 +223,7 @@ function recorded(card: CardContent, layout: Layout): Node {
   ]);
   const others = card.facts
     .filter(({ label }) => label !== "Status now")
-    .map(({ label, value }) => fact(label, value, layout));
+    .map((entry) => fact(entry, layout));
   const padding = `${layout.pad * 0.5}px ${layout.pad * 0.62}px ${layout.pad * 0.56}px`;
 
   return layout.factsBelow
