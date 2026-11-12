@@ -244,6 +244,14 @@ p {
   }
 }
 
+.masthead .name .mark {
+  width: 1.3em;
+  height: 1.3em;
+  margin-right: 0.45em;
+  align-self: center;
+  flex: none;
+}
+
 .masthead nav ul {
   display: flex;
   flex-wrap: wrap;
@@ -384,6 +392,15 @@ a.chip:hover {
   .pop-trigger.info {
     min-width: 2.75rem;
     min-height: 2.75rem;
+  }
+
+  /* Links that sit alone on a record's line, and the fold that opens the embed. */
+  .record .origin a,
+  .record > span > a,
+  .index .claim a,
+  .embed-how summary {
+    display: inline-block;
+    padding-block: 0.6rem;
   }
 
   .pop-trigger.more {
@@ -548,6 +565,8 @@ body.embed {
 }
 
 .embed article {
+  /* Made for a narrow frame; in a wide one it stays a card, not a strip. */
+  max-width: 30rem;
   border: 1px solid var(--rule);
   border-radius: var(--radius);
   background: var(--paper);

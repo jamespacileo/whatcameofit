@@ -229,6 +229,15 @@ const recent = data.claims
     return node;
   }
 
+  // Where to go when the box has no answer: never a full stop.
+  function next() {
+    const line = element("p", "Every tracked claim is listed by ", "entry-note");
+    const topics = element("a", "topic") as HTMLAnchorElement;
+    topics.href = "/topics";
+    line.append(topics, ". A treatment's name can also be typed in the box above.");
+    return line;
+  }
+
   function show(...messages: string[]) {
     results.replaceChildren(...messages.map((message) => element("p", message)));
   }
@@ -443,7 +452,7 @@ const recent = data.claims
       index = await loadLookup();
     } catch {
       lookup = undefined;
-      show("The lookup is not available right now. The topic pages list every claim.");
+      results.replaceChildren(element("p", "The lookup is not available right now."), next());
       return;
     }
     const slugs = index.articles[read["key"]] ?? [];
@@ -480,6 +489,7 @@ const recent = data.claims
       ),
       ...liveOffer(address),
       ...suggestion(address),
+      next(),
     );
   }
 
@@ -499,7 +509,7 @@ const recent = data.claims
       );
     } catch {
       if (asked === latest) {
-        show("Search is not available right now. The topic pages list every claim.");
+        results.replaceChildren(element("p", "Search is not available right now."), next());
       }
       return;
     }

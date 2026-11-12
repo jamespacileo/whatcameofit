@@ -55,6 +55,7 @@ const topicLink =
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preload" as="font" type="font/woff2" href={faceUrl} crossorigin />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
@@ -87,6 +88,7 @@ const topicLink =
     <header class="masthead">
       <div class="wrap">
         <a class="name" href="/" aria-label={SITE.name}>
+          <img class="mark" src="/favicon.svg" alt="" width="26" height="26" />
           <span class="lead" aria-hidden="true">{SITE.wordmark[0]}</span>
           <span class="tail" aria-hidden="true">{SITE.wordmark[1]}</span>
           <svg class="ask" viewBox="0 0 20 30" aria-hidden="true">
@@ -99,7 +101,7 @@ const topicLink =
         </a>
         <nav aria-label="Site">
           <ul>
-            <li><a href="/" aria-current={current === "home" ? "page" : undefined}>Search</a></li>
+            <li><a href="/" aria-current={current === "home" ? "page" : undefined}>Look up</a></li>
             {
               topicLink && (
                 <li>
