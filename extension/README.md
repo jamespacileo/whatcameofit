@@ -22,6 +22,27 @@ This writes `extension/dist`. The site's address comes from `site/site.config.mj
 2. Press "Load unpacked" and choose `extension/dist`.
 3. Open a tracked article and press the extension's button.
 
+## Try the registry search on this machine
+
+The search needs the site's lookup service, which the local preview does not run. Start it, and build the extension for its address:
+
+```sh
+make lookup-dev                                  # the site with its lookup service, at http://localhost:8787
+SITE_URL=http://localhost:8787 make extension    # in a second terminal
+```
+
+Load `extension/dist` in Chrome as above. If it was loaded before, press its reload arrow on `chrome://extensions`; if no search button appears, remove it and load it again, which clears its saved copy of the lookup file.
+
+Then open each of these and press the extension's button, then "Search the trial registry for this page":
+
+1. A post on X that links to a news story. The answer should say it was read by your browser from the post and the article it links to, naming the outlet.
+2. A post on Reddit that links to a study or a story.
+3. An article on a site that refuses software, such as the-sun.com or medicalxpress.com.
+4. Any of the above with a sentence selected first: only the selection is searched.
+5. A tracked article. No search is offered: the claim is shown.
+
+To see what went wrong when something does, right-click inside the popup, choose "Inspect" and read the Console.
+
 ## Safari
 
 ```sh
