@@ -13,6 +13,10 @@ export const LIVE = {
   offer: "Search the trial registry for this article",
   disclosure:
     "This sends the address to this site's server, which reads the article and asks a language model what it reports. The site keeps neither the address nor the article.",
+  postOffer: "Search the trial registry for this post",
+  postDisclosure:
+    "This sends the address to this site's server, which reads the post and the article it links to, and asks a language model what they report. The site keeps none of it.",
+  postTracked: "This post links to an article we track. Its page has been through our usual checks:",
   textLabel: "Or paste the headline and opening paragraphs",
   textOffer: "Search the trial registry for this text",
   working: "Reading the article and searching the registry. This can take half a minute.",
@@ -25,6 +29,17 @@ export const LIVE = {
   none: "No matching trial record was found in ClinicalTrials.gov. That is not evidence that no trial exists: the registry may list the treatment under another name, or the trial may be registered elsewhere.",
   source: "Source of the records: ClinicalTrials.gov.",
 };
+
+// Where the text came from when the reader gave a post's address.
+function sourceOf(post) {
+  if (!post) return null;
+  const from = `Read from a post on ${post.platform}`;
+  if (post.article_read) return `${from} and the article it links to at ${post.article_host}.`;
+  if (post.article) return `${from}. The article it links to at ${post.article_host} could not be read, so only the post was used.`;
+  return `${from}. No article was found among its links, so only the post was used.`;
+}
+
+const PASTE_INSTEAD = "Paste its text below, or put the address of the article it links to in the box above.";
 
 const REFUSALS = {
   unreadable_robots:
@@ -75,14 +90,23 @@ function trialSaid(details) {
   return said.length ? `${LIVE.trialSaid} ${joined(said)}.` : null;
 }
 
-/** What to tell a reader when the service will not or cannot answer. */
-export function refusalMessage(code) {
+/**
+ * What to tell a reader when the service will not or cannot answer.
+ * @param {{ platform?: string }} about what the service said of the refusal, beyond its code
+ */
+export function refusalMessage(code, about = {}) {
+  if (code === "post" && about.platform) {
+    return `This site cannot read posts on ${about.platform}. ${PASTE_INSTEAD}`;
+  }
+  if (code === "post_unreadable") {
+    return `That post${about.platform ? ` on ${about.platform}` : ""} could not be read. It may be private or deleted. ${PASTE_INSTEAD}`;
+  }
   return REFUSALS[code] ?? REFUSALS.failed;
 }
 
 /** Whether pasting the text is the way forward after this refusal. */
 export function textWouldHelp(code) {
-  return ["unreadable_robots", "unreadable", "post"].includes(code);
+  return ["unreadable_robots", "unreadable", "post", "post_unreadable"].includes(code);
 }
 
 function phaseLabel(phases) {
@@ -101,15 +125,22 @@ function stateLabel(state) {
 
 /**
  * A lookup answer in the site's words.
- * @returns {{ marked: string, lead: string, searchedAlso: string | null, trialSaid: string | null,
+ * @returns {{ marked: string | null, lead: string, source: string | null, searchedAlso: string | null, trialSaid: string | null,
  *   tracked: { slug: string, headline: string, page: string }[],
  *   likely: { title: string, url: string, detail: string, why: string | null }[],
  *   rest: string | null, none: string | null, notices: string[] }}
  */
 export function describeAnswer(answer) {
   const notices = [NOTICES[1], LIVE.source];
+  const source = sourceOf(answer.post);
+  const nothing = { searchedAlso: null, trialSaid: null, tracked: [], likely: [], rest: null, none: null };
+  // A post that links to an article the site tracks: its reviewed page is the answer,
+  // and no automatic search was made, so nothing is marked as one.
+  if (answer.article_tracked) {
+    return { ...nothing, marked: null, lead: LIVE.postTracked, source, tracked: answer.tracked ?? [], notices: [] };
+  }
   if (!answer.about_a_treatment || !answer.treatment) {
-    return { marked: LIVE.marked, lead: LIVE.notATreatment, searchedAlso: null, trialSaid: null, tracked: [], likely: [], rest: null, none: null, notices };
+    return { ...nothing, marked: LIVE.marked, lead: LIVE.notATreatment, source, notices };
   }
   const candidates = answer.candidates ?? [];
   // A record the article itself gives the number of is listed whatever its score.
@@ -121,6 +152,7 @@ export function describeAnswer(answer) {
   return {
     marked: LIVE.marked,
     lead: `This appears to report ${answer.treatment}${answer.condition ? ` for ${answer.condition}` : ""}.`,
+    source,
     searchedAlso: known.length
       ? `Also searched under ${known.length === 1 ? "a name" : "names"} the article does not give: ${known.join(", ")}.`
       : null,

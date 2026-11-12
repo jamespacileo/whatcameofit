@@ -11,12 +11,45 @@ const SHORTENERS = new Set([
   "econ.st", "n.pr", "gu.com", "on.ft.com", "fxn.ws", "nyp.st", "thesun.uk", "mirror.co",
 ]);
 
-// Sites where an address is a post or a video, not a news article.
-const POST_SITES = [
-  "x.com", "twitter.com", "facebook.com", "fb.com", "fb.watch", "instagram.com", "threads.net",
-  "threads.com", "reddit.com", "linkedin.com", "tiktok.com", "youtube.com", "bsky.app", "t.me",
-  "pinterest.com", "whatsapp.com", "mastodon.social",
+// Platforms where an address is a post or a video, not a news article: the name a reader
+// knows it by, and its hosts.
+const PLATFORMS = [
+  ["X", ["x.com", "twitter.com"]],
+  ["Facebook", ["facebook.com", "fb.com", "fb.watch"]],
+  ["Instagram", ["instagram.com"]],
+  ["Threads", ["threads.net", "threads.com"]],
+  ["Reddit", ["reddit.com"]],
+  ["LinkedIn", ["linkedin.com"]],
+  ["TikTok", ["tiktok.com"]],
+  ["YouTube", ["youtube.com"]],
+  ["Bluesky", ["bsky.app"]],
+  ["Telegram", ["t.me"]],
+  ["Pinterest", ["pinterest.com"]],
+  ["WhatsApp", ["whatsapp.com"]],
+  ["Mastodon", ["mastodon.social"]],
+  ["Hacker News", ["news.ycombinator.com"]],
 ];
+
+/**
+ * Which post an address is, on the platforms whose posts the lookup service can read:
+ * each offers them to software without signing in (docs/sources.md). Null for any other
+ * address, including a platform's pages that are not one post.
+ * @returns {{ platform: string, how: "bluesky" | "hackernews" | "mastodon", host: string,
+ *   actor?: string, id: string } | null}
+ */
+function readablePost(url, host) {
+  if (host === "bsky.app") {
+    const post = url.pathname.match(/^\/profile\/([^/]+)\/post\/([a-z0-9]+)\/?$/i);
+    return post ? { platform: "Bluesky", how: "bluesky", host, actor: decodeURIComponent(post[1]), id: post[2] } : null;
+  }
+  if (host === "news.ycombinator.com") {
+    const id = url.pathname === "/item" ? url.searchParams.get("id") : null;
+    return id && /^\d+$/.test(id) ? { platform: "Hacker News", how: "hackernews", host, id } : null;
+  }
+  // A post on any Mastodon server has this shape, whatever the server is called.
+  const toot = url.pathname.match(/^\/(?:@[^/]+|users\/[^/]+\/statuses)\/(\d{6,})\/?$/);
+  return toot ? { platform: "Mastodon", how: "mastodon", host: url.hostname.toLowerCase(), id: toot[1] } : null;
+}
 
 // Redirect pages that carry the real address in a parameter: host (and path) to parameter names.
 const WRAPPERS = [
@@ -91,7 +124,10 @@ function unwrap(url) {
  * What a pasted piece of text is.
  * @param {string} input
  * @returns {{ kind: "article", key: string, address: string, host: string }
- *   | { kind: "short" | "post", host: string } | { kind: "none" }}
+ *   | { kind: "post", host: string, platform: string, readable: boolean, address?: string, post?: object }
+ *   | { kind: "short", host: string } | { kind: "none" }}
+ *   A post is `readable` when the lookup service can read it by its address; `post` then
+ *   says which post it is.
  */
 export function readAddress(input) {
   let url = parse(input);
@@ -105,9 +141,10 @@ export function readAddress(input) {
   if (SHORTENERS.has(host) || (ARCHIVES.test(host) && url.pathname.split("/").length <= 2)) {
     return { kind: "short", host };
   }
-  if (POST_SITES.some((site) => host === site || host.endsWith(`.${site}`))) {
-    return { kind: "post", host };
-  }
+  const post = readablePost(url, host);
+  if (post) return { kind: "post", host, platform: post.platform, readable: true, address: url.href, post };
+  const platform = PLATFORMS.find(([, sites]) => sites.some((site) => host === site || host.endsWith(`.${site}`)));
+  if (platform) return { kind: "post", host, platform: platform[0], readable: false };
   const key = articleKey(url.href);
   return key === null ? { kind: "none" } : { kind: "article", key, address: url.href, host };
 }

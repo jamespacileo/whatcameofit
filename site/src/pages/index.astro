@@ -274,7 +274,9 @@ const recent = data.claims
   function liveAnswer(found: Parameters<typeof describeAnswer>[0]) {
     const shown = describeAnswer(found);
     const block = element("div", undefined, "live");
-    block.append(element("p", shown.marked, "unchecked"), element("p", shown.lead));
+    if (shown.marked) block.append(element("p", shown.marked, "unchecked"));
+    block.append(element("p", shown.lead));
+    if (shown.source) block.append(element("p", shown.source, "entry-note"));
     if (shown.searchedAlso) block.append(element("p", shown.searchedAlso, "entry-note"));
     if (shown.trialSaid) block.append(element("p", shown.trialSaid, "entry-note"));
     if (shown.tracked.length > 0) {
@@ -286,7 +288,9 @@ const recent = data.claims
         item.append(link);
         list.append(item);
       }
-      block.append(element("p", LIVE.trackedLead), list);
+      // After a post that links to a tracked article, the lead above already says so.
+      if (shown.marked) block.append(element("p", LIVE.trackedLead));
+      block.append(list);
     }
     if (shown.likely.length > 0) {
       const list = element("ul", undefined, "plain");
@@ -350,17 +354,17 @@ const recent = data.claims
     }
     const code = found?.error ?? "failed";
     results.replaceChildren(
-      element("p", refusalMessage(code)),
+      element("p", refusalMessage(code, { platform: found?.platform })),
       ...(textWouldHelp(code) ? [textForm()] : []),
     );
   }
 
-  function liveOffer(address: string) {
+  function liveOffer(address: string, post = false) {
     if (!liveAddress) return [];
-    const button = element("button", LIVE.offer, "live-offer") as HTMLButtonElement;
+    const button = element("button", post ? LIVE.postOffer : LIVE.offer, "live-offer") as HTMLButtonElement;
     button.type = "button";
     button.addEventListener("click", () => void askLive({ url: address }));
-    return [button, element("p", LIVE.disclosure, "entry-note")];
+    return [button, element("p", post ? LIVE.postDisclosure : LIVE.disclosure, "entry-note")];
   }
 
   let lookup: Promise<Lookup> | undefined;
@@ -374,8 +378,23 @@ const recent = data.claims
       return;
     }
     if (read.kind === "post") {
-      show(
-        `That is a post on ${read.host}, not the article itself. Open the article it links to, then paste that address.`,
+      // A post the service can read is offered a search of the post and its article.
+      // Any other post is turned back here, before anything is sent.
+      if (read.readable && liveAddress) {
+        results.replaceChildren(
+          element("p", `That is a post on ${read.platform}. This site can read it and the article it links to.`),
+          ...liveOffer(address, true),
+        );
+        return;
+      }
+      results.replaceChildren(
+        element(
+          "p",
+          liveAddress
+            ? refusalMessage("post", { platform: read.platform })
+            : `That is a post on ${read.platform}, not the article itself. Open the article it links to, then paste that address.`,
+        ),
+        ...(liveAddress ? [textForm()] : []),
       );
       return;
     }

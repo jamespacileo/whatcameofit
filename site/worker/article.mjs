@@ -42,6 +42,31 @@ function allowedBy(robots, path) {
   return deciding ? deciding.allow : true;
 }
 
+/** How this client names itself to every site it reads. */
+export function client(contact) {
+  return { "User-Agent": `${ROBOTS_NAME}/${VERSION} (mailto:${contact})` };
+}
+
+/** Whether the address is a public web address, not one on a local or private network. */
+export function isPublic(url) {
+  return /^https?:$/.test(url.protocol) && !NOT_PUBLIC.test(url.hostname);
+}
+
+/**
+ * Whether the site's robots.txt lets this client fetch the address. Rules that cannot be
+ * read, or that are themselves refused, mean no.
+ */
+export async function allowedByRobots(url, { fetch, contact }) {
+  let robots;
+  try {
+    robots = await fetch(`${url.origin}/robots.txt`, { headers: client(contact), redirect: "follow" });
+  } catch {
+    return false;
+  }
+  if (robots.status >= 500 || robots.status === 401 || robots.status === 403) return false;
+  return robots.status !== 200 || allowedBy(await robots.text(), url.pathname + url.search);
+}
+
 /**
  * @returns {Promise<{ text: string, page: object } | { refused: "address" | "robots" | "unreadable" }>}
  *   `text` opens with the page's headline, summary and date; `page` is worker/page.mjs's reading.
@@ -53,26 +78,16 @@ export async function readArticle(address, { fetch, contact }) {
   } catch {
     return { refused: "address" };
   }
-  if (!/^https?:$/.test(url.protocol) || NOT_PUBLIC.test(url.hostname)) return { refused: "address" };
+  if (!isPublic(url)) return { refused: "address" };
+  if (!(await allowedByRobots(url, { fetch, contact }))) return { refused: "robots" };
 
-  const headers = { "User-Agent": `${ROBOTS_NAME}/${VERSION} (mailto:${contact})` };
   const get = async (target) => {
     try {
-      return await fetch(target, { headers, redirect: "follow" });
+      return await fetch(target, { headers: client(contact), redirect: "follow" });
     } catch {
       return null;
     }
   };
-
-  const robots = await get(`${url.origin}/robots.txt`);
-  // Rules that cannot be read, or that are themselves refused, mean: do not fetch.
-  if (!robots || robots.status >= 500 || robots.status === 401 || robots.status === 403) {
-    return { refused: "robots" };
-  }
-  if (robots.status === 200 && !allowedBy(await robots.text(), url.pathname + url.search)) {
-    return { refused: "robots" };
-  }
-
   const page = await get(url.href);
   if (!page || page.status !== 200) return { refused: "unreadable" };
   const read = readPage(await page.text());
