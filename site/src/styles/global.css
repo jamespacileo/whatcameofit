@@ -751,6 +751,13 @@ body.embed {
   margin-top: 0.5rem;
 }
 
+/* On the home page the tally closes the lookup and opens the lists. */
+.results + .tally,
+.suggest + .tally {
+  margin-top: 1.4rem;
+  font-size: 0.95rem;
+}
+
 .digest .says {
   align-self: center;
 }
@@ -899,7 +906,8 @@ body.embed {
 /* Amber is kept for a promise that exists: a year with none is left white, so the
    years that were promised something are found at a glance. */
 .timetable td.promised.none,
-.timetable td.promised.empty {
+.timetable td.promised.empty,
+.index td.promise.none {
   background: none;
 }
 

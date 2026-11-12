@@ -7,6 +7,7 @@ import { SITE } from "../../site.config.mjs";
 import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
 import { data, listedTopics } from "../lib/export";
 import { recentReports } from "../lib/reports";
+import { latestPromise } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 
 const reports = recentReports(data.claims, 10);
@@ -32,10 +33,19 @@ for (const claim of data.claims) {
 }
 const years = Array.from(perYear).sort((a, b) => b[0].localeCompare(a[0]));
 
+// The headlines table sets the promise beside the status, as a claim page does. With no
+// dated promise among the reports there is no amber column.
+const anyPromise = reports.some((report) => latestPromise(report.claim) !== null);
+const approvals = data.claims.filter((claim) => claim.status.code === "approved").length;
+
 const recent = data.claims
   .filter((claim) => claim.status.updated_at !== null)
   .sort((a, b) => (a.status.updated_at! < b.status.updated_at! ? 1 : -1))
   .slice(0, 10);
+// Statuses are often set in one batch. One shared date is said once, in the heading,
+// in place of a column that repeats it on every row.
+const setOn = new Set(recent.map((claim) => claim.status.updated_at!.slice(0, 10)));
+const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null;
 ---
 
 <Base current="home">
@@ -74,6 +84,18 @@ const recent = data.claims
     )
   }
 
+  {
+    data.claims.length > 0 && (
+      <p class="tally">
+        {data.claims.length} {data.claims.length === 1 ? "claim" : "claims"} tracked in{" "}
+        <a href="/topics">
+          {listedTopics.length} {listedTopics.length === 1 ? "topic" : "topics"}
+        </a>
+        . <a href="/it-happened">Approvals on record</a>: {approvals} of {data.claims.length}.
+      </p>
+    )
+  }
+
   <h2 class="bar">Headlines reported most recently</h2>
   {
     reports.length === 0 ? (
@@ -88,6 +110,7 @@ const recent = data.claims
           <tr role="row">
             <th role="columnheader" scope="col">Headline</th>
             <th role="columnheader" scope="col">Reported</th>
+            {anyPromise && <th role="columnheader" scope="col" class="promise">Promised</th>}
             <th role="columnheader" scope="col">Status now</th>
           </tr>
         </thead>
@@ -103,6 +126,22 @@ const recent = data.claims
               <td role="cell" class="when" data-column="Reported">
                 {formatDate(report.publishedDate)}
               </td>
+              {anyPromise && (
+                <td
+                  role="cell"
+                  class:list={["promise", { none: !latestPromise(report.claim) }]}
+                  data-column="Promised"
+                >
+                  {latestPromise(report.claim) ? (
+                    <>
+                      <strong>{latestPromise(report.claim)!.parsed_date!.slice(0, 4)}</strong>{" "}
+                      {latestPromise(report.claim)!.description}
+                    </>
+                  ) : (
+                    <span class="visually-hidden">None with a date</span>
+                  )}
+                </td>
+              )}
               <td role="cell" class="status" data-column="Status now">
                 <StatusCell claim={report.claim} />
               </td>
@@ -114,7 +153,7 @@ const recent = data.claims
     )
   }
 
-  <h2 class="bar">Statuses set most recently</h2>
+  <h2 class="bar">{oneDay ? `Statuses set on ${oneDay}` : "Statuses set most recently"}</h2>
   {
     recent.length === 0 ? (
       <p>No status has changed yet.</p>
@@ -125,7 +164,7 @@ const recent = data.claims
           <tr role="row">
             <th role="columnheader" scope="col">Claim</th>
             <th role="columnheader" scope="col">Status</th>
-            <th role="columnheader" scope="col">Status set</th>
+            {!oneDay && <th role="columnheader" scope="col">Status set</th>}
           </tr>
         </thead>
         <tbody role="rowgroup">
@@ -137,9 +176,11 @@ const recent = data.claims
               <td role="cell" class="status" data-column="Status">
                 <StatusCell claim={claim} />
               </td>
-              <td role="cell" class="when" data-column="Status set">
-                {formatDate(claim.status.updated_at)}
-              </td>
+              {!oneDay && (
+                <td role="cell" class="when" data-column="Status set">
+                  {formatDate(claim.status.updated_at)}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
