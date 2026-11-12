@@ -33,7 +33,7 @@ test("the method page names every status and carries the footer notice", () => {
 });
 
 test("the method page says what is counted", () => {
-  assert.ok(page("how-it-works/index.html").includes("Nothing is counted."));
+  assert.ok(page("how-it-works/index.html").includes("counts requests and errors"));
 });
 
 test("a year page lists the claims first reported that year", () => {

@@ -13,7 +13,7 @@ import { CORRECTION_SUBJECT, SUGGEST_SUBJECT, contactLink } from "../src/lib/con
 import { canonicalAddress, claimPageData } from "../src/lib/structured.ts";
 
 const FIXTURE = "tests/fixture-export.json";
-const ORIGIN = "http://localhost:4321";
+const ORIGIN = process.env.SITE_URL || "https://whatcameofit.com";
 const SUGGEST_URL = "mailto:tips@example.org";
 const CORRECTIONS_URL = "https://issues.example.org/new?template=correction";
 
@@ -256,7 +256,7 @@ test("the sitemap lists every public page and no embed", () => {
 });
 
 test("Scenario: Public address not configured", () => {
-  const result = build(FIXTURE, temporary("public"), { PUBLIC_BUILD: "1" });
+  const result = build(FIXTURE, temporary("public"), { PUBLIC_BUILD: "1", SITE_URL: "http://localhost:4321" });
   assert.notEqual(result.status, 0);
   assert.match(result.stdout + result.stderr, /public address must be set as SITE\.url in site\/site\.config\.mjs/);
 });
@@ -271,7 +271,7 @@ test("Scenario: Preview build publishes no sitemap", () => {
   assert.ok(fs.existsSync(path.join(dist, "sitemap.xml")));
   for (const file of ["index.html", "phase-claim/index.html"]) {
     assert.match(page(file, out), /<meta name="robots" content="noindex"/, file);
-    assert.match(page(file, out), /<link rel="canonical" href="http:\/\/localhost:4321\//, file);
+    assert.ok(page(file, out).includes(`<link rel="canonical" href="${ORIGIN}/`), file);
   }
 });
 

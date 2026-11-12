@@ -1,6 +1,7 @@
-.PHONY: check lint types db-up test site-test site-build extension-test extension extension-safari public-export deploy-check deploy lookup-dev
+.PHONY: check lint types db-up test site-test site-build extension-test extension extension-safari public-export publish-data deploy-check deploy deploy-ci-check deploy-ci lookup-dev
 
 DB_PORT ?= 5433
+export SITE_URL ?= https://whatcameofit.com
 # Tests drop and recreate this database, so its name must end in _test.
 export TEST_DATABASE_URL ?= postgresql+psycopg://thenwhat:thenwhat@127.0.0.1:$(DB_PORT)/thenwhat_test
 
@@ -54,6 +55,16 @@ PUBLIC_EXPORT := site/data/public-export.json
 public-export:
 	docker compose exec -T pipeline sh -c 'EXPORT_PREVIEW=0 thenwhat export --out /tmp/public-export.json >&2 && cat /tmp/public-export.json' > $(PUBLIC_EXPORT).tmp
 	mv $(PUBLIC_EXPORT).tmp $(PUBLIC_EXPORT)
+
+# Review locally, then commit this snapshot. GitHub never reads the private database.
+publish-data: public-export
+	node site/scripts/stage-public-export.mjs $(PUBLIC_EXPORT) site/data/published-export.json
+
+deploy-ci-check: site/node_modules
+	EXPORT_FILE=data/published-export.json node site/scripts/deploy.mjs --dry-run
+
+deploy-ci: site/node_modules
+	EXPORT_FILE=data/published-export.json node site/scripts/deploy.mjs
 
 # Everything a deployment does except publishing: the checks, a public build, and
 # Wrangler's own dry run.

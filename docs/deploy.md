@@ -1,67 +1,65 @@
-# Deploying the site
+# Deploying What came of it?
 
-The public site is static files on Cloudflare Workers: Cloudflare serves the files that `npm run build` writes to `site/dist`. The one address that runs code is `/api/lookup`, the optional registry search. The pipeline and the database are never deployed; they stay on the private machine.
+The public site is https://whatcameofit.com, served by the `thenwhat` Cloudflare Worker in the Palladio account. Source code is public at https://github.com/jamespacileo/whatcameofit. The pipeline, review database, local preview and provider keys stay on the private machine.
 
-Deploy only with `make deploy`. Do not run `wrangler deploy` by itself: the make target checks the export first, and Wrangler alone would upload whatever is in `site/dist`, including a preview build.
+## Normal publishing workflow
 
-## Once
+Changes to `main` run the complete test suite and a public deployment rehearsal in GitHub Actions. Only after those pass does GitHub deploy production and check the live home, method, sitemap and claim pages. Pull requests run the checks without deployment credentials and do not create public previews. The Actions page also offers a manual run for `main`.
 
-1. **Install Wrangler and sign in.** `wrangler login` opens a browser. Sign in to the Cloudflare account that holds the domain.
-2. **Have the domain in that account.** A domain registered through Cloudflare already is. On the first deploy Wrangler attaches the domain to the Worker and Cloudflare creates the DNS record and the certificate.
-3. **Decide the address.** It is given as `SITE_URL` on every command below, which for this site is `https://whatcameofit.com`. It is not stored in the repository until you put it in `site/site.config.mjs`.
-4. **Check what Cloudflare counts.** The method page says "Nothing is counted." Cloudflare shows request counts for a Worker and a domain in its dashboard without any script on the page. Before the first deploy, read what your plan shows and make the "What is counted" section say exactly that. The `site-measurement` spec requires it.
-
-## Each time
+To publish newly reviewed claims, finish the human review locally and run:
 
 ```sh
-SITE_URL=https://whatcameofit.com make deploy-check   # the checks, a public build, Wrangler's dry run
-SITE_URL=https://whatcameofit.com make deploy         # the same, then publish
+make publish-data
+git diff -- site/data/published-export.json
 ```
 
-Both first write a normal export from the running pipeline to `site/data/public-export.json` (reviewed claims only, whatever `EXPORT_PREVIEW` is set to locally), so the pipeline must be up (`docker compose up -d`).
+Commit `site/data/published-export.json` with the intended changes, then push to `main` (or merge a reviewed pull request). This snapshot is the only data GitHub publishes. It contains one human-reviewed claim at initial setup. Assistant decisions are not converted to human approvals by staging or deployment.
 
-`SUGGEST_URL` and `CORRECTIONS_URL` are read by the same build; see `docs/launch.md`.
+Staging first asks the running pipeline for a normal export with preview mode disabled. It validates the export and replaces the snapshot atomically. Invalid JSON, a preview, an empty export, or an unchecked claim leaves the previous snapshot unchanged. GitHub cannot reach the local database; database changes alone therefore never publish anything.
 
-## The registry search (optional)
+## GitHub configuration
 
-The site can offer a registry search for an article it does not track (`docs/lookup.md`). It is off unless you give its settings:
+The repository uses a `production` environment restricted to `main`. Production deployments are serialized. GitHub Actions are pinned to reviewed commit revisions; Wrangler is pinned in `site/package-lock.json` and installed with `npm ci`.
+
+Set these repository values in Settings → Secrets and variables → Actions:
+
+| Kind | Name | Value |
+| --- | --- | --- |
+| Secret | `CLOUDFLARE_API_TOKEN` | The dedicated production deployment token; never commit it |
+| Variable | `CLOUDFLARE_ACCOUNT_ID` | `ee6dc8763af66b85cf2333e1ea5a4d9f` |
+| Variable | `SUGGEST_URL` | `mailto:suggest@whatcameofit.com` once forwarding is active |
+| Variable | `CORRECTIONS_URL` | `mailto:corrections@whatcameofit.com` once forwarding is active |
+
+The token permits Workers Scripts editing in Palladio, Workers Routes editing for `whatcameofit.com`, and Zone read for that domain. It expires on 12 November 2027; replace the encrypted GitHub secret before then. It has no billing, database, model-provider, or email permissions.
+
+Cloudflare's [GitHub Actions guide](https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/) documents deployment credentials. Keep deployment credentials out of pull requests and workflow logs.
+
+## Local checks and emergency deployment
+
+Wrangler is a project dependency; a global install is unnecessary.
 
 ```sh
-wrangler secret put OPENAI_API_KEY        # once, in site/; you paste the key, it is not kept in the repository
-SITE_URL=https://whatcameofit.com LLM_MODEL=<model> CONTACT_EMAIL=<address> make deploy
+make check
+make deploy-ci-check # rehearses the committed snapshot; needs no private database
+make deploy-ci       # publishes that snapshot; needs Cloudflare authentication
 ```
 
-Add `DECISION_BACKEND=openai-decisions` to that line to score records with OpenAI's Decisions API: one request for all of a search's records in place of up to three slow ones. It uses the same key.
+For local authentication, run `npx --prefix site wrangler login` and verify with `npx --prefix site wrangler whoami` before deployment. `make deploy-check` and `make deploy` remain available: both first export directly from the running local pipeline. `SITE_URL` defaults to https://whatcameofit.com and can be overridden explicitly.
 
-With `LLM_MODEL` and `CONTACT_EMAIL` set, the build offers the search and the Worker answers at `/api/lookup`. Without them the button is not drawn and the address answers "not set up". Limits are in `site/wrangler.jsonc`: five searches a minute for one reader, thirty in all. Set a monthly spending limit with the model's provider as well.
+Never run raw `wrangler deploy`: it bypasses the public-data checks and could publish an old preview build. All supported deploy targets validate the export, build it afresh as a public site, and check its sitemap and preview flag before invoking Wrangler.
 
-For each search the Worker reads the article's site, ClinicalTrials.gov, Europe PMC (for a paper the article links to) and the model's provider. A live try on 2026-11-12 made 12 to 20 outside requests per search; check that your Cloudflare plan allows that many for one page request.
+## Domain and contact settings
 
-To try it on this machine first: `make lookup-dev`, then open <http://localhost:8787>. It reads the same settings from `.env`.
+Cloudflare owns the apex custom-domain attachment and certificate. Enable Always Use HTTPS. Configure `www` as a proxied DNS record with a permanent redirect to `https://whatcameofit.com`, preserving paths and query strings. Do not enable an additional Cloudflare Git build pipeline alongside GitHub Actions, which would cause competing deployments.
 
-## What stops a deploy
+`suggest@whatcameofit.com` and `corrections@whatcameofit.com` forward to the verified operator inbox. Configure their GitHub variables only after Email Routing reports active rules. Forwarding receives mail; it does not provide an outgoing mailbox.
 
-The command prints every reason at once and publishes nothing.
+No added reader analytics are installed. Cloudflare retains operational request/error counts independently of Worker logging; [Cloudflare metrics documentation](https://developers.cloudflare.com/workers/observability/metrics-and-analytics/) explains those counts. The method page states this, and Worker observability remains disabled.
 
-| Reason | What to do |
-| --- | --- |
-| The export is a preview | It never should be: `make deploy` writes its own export. If you set `EXPORT_FILE` yourself, point it at a normal export. |
-| A claim has not been checked by a person | Approve it yourself, without `--as-assistant`: `thenwhat review approve claim ID`. This includes the seeded sample claim. |
-| The export holds no claims | Review and approve claims first. |
-| `SITE_URL` is missing, local, not `https://`, or has a path | Set it to the site's address alone. |
-| The built site is a preview or has no sitemap | The build did not run as a public build. Report it; do not work around it. |
+## Optional registry search
 
-## After the first deploy
+Automatic deployments currently leave paid model search disabled. It needs an explicit choice of model and budget before enabling. Store `OPENAI_API_KEY` only as a Cloudflare Worker secret; never put it in source or public GitHub variables. The existing local deploy script accepts `LLM_MODEL`, `CONTACT_EMAIL`, and optional `LLM_BASE_URL`, `DECISION_BACKEND` and `DECISIONS_MODEL`. Configure the same settings deliberately in the production workflow before relying on them; otherwise the next CI deployment disables the search UI again.
 
-- Open five claim pages at the public address and check each against its sources.
-- Build the browser extension for the same address: `SITE_URL=https://whatcameofit.com make extension`. The extension asks only that address for its data, and sends only that address what a reader asks it to search.
-- Put the address in `site/site.config.mjs` so that every build uses it without the variable.
+## Rollback
 
-## Undoing a deploy
-
-`wrangler rollback` (run in `site/`) returns to the version before. `wrangler delete` removes the Worker and its domain attachment; the domain itself is untouched.
-
-## What is in the repository
-
-- `site/wrangler.jsonc`: the Worker's name, the files directory, the 404 page, and addresses without a trailing slash (as the canonical links and sitemap write them). No `workers.dev` address and no per-version preview addresses are created.
-- `site/scripts/deploy.mjs` and `deploy-checks.mjs`: the checks and the two commands.
+Revert the faulty source/data commit on `main` and push. GitHub tests and republishes the reverted version. For an immediate rollback, run `npx wrangler rollback` from `site/` after signing in, then revert the source commit so the next automatic deployment preserves the fix. Keep the previous committed public snapshot for data rollbacks. Do not delete the Worker to roll back.

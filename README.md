@@ -2,7 +2,7 @@
 
 News reports medical "breakthroughs" that are rarely mentioned again. thenwhat tracks what happened afterwards: each claim gets a status derived from dated, sourced evidence in public registries, reviewed by a human before it is published.
 
-`thenwhat` is a working codename. The project is in Phase 1 (hand-curated backfill of dental regeneration claims) and runs locally only.
+`thenwhat` is the repository codename for [What came of it?](https://whatcameofit.com). The public site runs on Cloudflare; the curation pipeline and database stay local. GitHub tests each proposed change and deploys reviewed content from `main`.
 
 ## Setup
 

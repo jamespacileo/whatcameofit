@@ -5,7 +5,7 @@
 //   SITE_URL=https://example.org node scripts/deploy.mjs            deploy
 //   SITE_URL=https://example.org node scripts/deploy.mjs --dry-run  check and build only
 //
-// Needs Wrangler on the PATH, signed in to the Cloudflare account that holds the domain.
+// Uses the locked project dependency; authenticate with OAuth locally or a CI token.
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -75,7 +75,7 @@ if (lookup) {
 }
 console.log(lookup ? "With the registry search (/api/lookup)." : "Without the registry search: LLM_MODEL and CONTACT_EMAIL are not both set.");
 if (dryRun) args.push("--dry-run");
-run("wrangler", args);
+run(process.execPath, [path.join(SITE_DIR, "node_modules/wrangler/bin/wrangler.js"), ...args]);
 console.log(
   dryRun
     ? `Dry run finished. Nothing was published. Without --dry-run this would go to ${domain}.`

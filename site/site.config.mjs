@@ -8,9 +8,8 @@ export const SITE = {
   // mark, which the wordmark draws itself so that its dot can be the blue marker.
   wordmark: ["What came", "of it"],
   // Where the built site is served: the one source for canonical addresses, the
-  // sitemap, link previews and the browser extension's lookup. The local preview
-  // until a domain is chosen; SITE_URL sets it at deployment.
-  url: env.SITE_URL || "http://localhost:4321",
+  // sitemap, link previews and the browser extension's lookup.
+  url: env.SITE_URL || "https://whatcameofit.com",
   tagline: "What happened to reported medical breakthroughs",
   description:
     "Each reported breakthrough gets a page showing where it stands now and the dated, sourced records that say so.",
