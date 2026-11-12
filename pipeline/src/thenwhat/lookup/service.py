@@ -26,6 +26,7 @@ from thenwhat.sources.base import SourceRecord
 
 STEP = "lookup_match"
 REGISTRY_NUMBER = re.compile(r"\bNCT\d{8}\b", re.IGNORECASE)
+COMBINED = re.compile(r"\s+(?:and|plus)\s+|\s*\+\s*", re.IGNORECASE)
 # The most records one lookup will ask the backend about.
 MAX_CANDIDATES = 60
 
@@ -151,7 +152,9 @@ def look_up(
         stated = trials.fetch_trial(number)
         if stated is not None:
             records.setdefault(stated.external_id, stated)
-    for term in dict.fromkeys([*names, *known, *reading.search_phrases]):
+    # A combination is registered under its parts as often as under the pair.
+    parts = [part for name in names for part in _parts(name)]
+    for term in dict.fromkeys([*names, *parts, *known, *reading.search_phrases]):
         for record in trials.search_trials(term, reading.indication):
             records.setdefault(record.external_id, record)
     found = list(records.values())[:MAX_CANDIDATES]
@@ -193,6 +196,12 @@ def look_up(
         tracked=_tracked(session, names),
         candidates=candidates,
     )
+
+
+def _parts(name: str) -> list[str]:
+    """The treatments joined in a name such as 'A and B' or 'A plus B'; none for one treatment."""
+    pieces = [piece.strip() for piece in COMBINED.split(name)]
+    return [piece for piece in pieces if piece] if len(pieces) > 1 else []
 
 
 def _tracked(session: Session, names: list[str]) -> list[str]:

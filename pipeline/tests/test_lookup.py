@@ -150,6 +150,18 @@ def test_names_the_model_knows_widen_the_search_and_are_reported_apart(session: 
     assert [c.external_id for c in found.candidates] == ["NCT00000004"]
 
 
+def test_each_part_of_a_combination_is_searched(session: Session):
+    """Scenario: Combination of two treatments"""
+    trials = FakeTrials({"EX-2": [trial("NCT00000005", "EX-1 with EX-2 in tooth agenesis")]})
+    reading = {**READING, "intervention": "EX-1 and EX-2", "other_names": [], "search_phrases": []}
+
+    found = find(session, trials, reading=reading)
+
+    assert [name for name, _ in trials.searched] == ["EX-1 and EX-2", "EX-1", "EX-2"]
+    assert found.names == ["EX-1 and EX-2"]
+    assert [c.external_id for c in found.candidates] == ["NCT00000005"]
+
+
 def test_a_registry_number_in_the_text_is_looked_up_directly(session: Session):
     """Scenario: Text that states a registry number"""
     stated = trial("NCT01234567", "EX-1 first study in people")

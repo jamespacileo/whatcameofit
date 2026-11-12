@@ -11,9 +11,17 @@
 
 ## 3. Measurement
 
-- [ ] 3.1 Run the lookup on the articles of claims that have reviewer-approved trials and report how often an approved trial is among the likely candidates and at the top
-- [ ] 3.2 Record the result and its limits in `docs/lookup.md`
+- [x] 3.1 Run the lookup on the articles of claims that have reviewer-approved trials and report how often an approved trial is among the likely candidates and at the top (2026-11-12, twice: 23 of 32 claims, 72%; top candidate approved for 17 then 19)
+- [x] 3.2 Record the result and its limits in `docs/lookup.md`
 
-## 4. For the operator
+## 4. After the first measurement
 
-- [ ] 4.1 Decide the five points in design.md
+- [x] 4.1 Search also under names the model knows the treatment by, reported apart; verify the test passes (measured: no gain with the present model)
+- [x] 4.2 Search each part of a combination; verify the test passes
+- [ ] 4.3 Map generic names to development codes from an open drug-name source, after checking its terms
+- [ ] 4.4 Write registry cache entries with an upsert so two lookups at once cannot collide
+- [ ] 4.5 Build a reviewed test set of article and trial pairs across many outlets
+
+## 5. For the operator
+
+- [ ] 5.1 Decide the five points in design.md
