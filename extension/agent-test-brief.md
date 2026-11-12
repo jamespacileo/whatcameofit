@@ -4,7 +4,7 @@ Hand this whole file to the agent. It is written to be followed without other co
 
 ## What you are testing
 
-A Chrome extension called "What came of it?". On a web page that the project does not track, its popup offers a button, "Search the trial registry for this page". Pressing it reads the open page inside the browser, sends the page's text and links to a local server, and shows a list of clinical trial records. You will press that button on six pages and write down exactly what the popup shows.
+A Chrome extension called "What came of it?". Opening its popup on a web page that the project does not track starts a lookup automatically. It reads the open page inside the browser, sends the page's text and links to a local server, and shows clinical trial records in individual cards with match confidence. You will open it on six pages and record exactly what the popup shows.
 
 Nothing here is public. The server runs on this machine at `http://localhost:8787`.
 
@@ -47,7 +47,7 @@ If you can only act inside web pages and cannot click the browser's toolbar, sto
 3. In Chrome, go to `chrome://extensions`.
 4. Turn on "Developer mode", the switch at the top right.
 5. Click "Load unpacked" and choose the folder `/Users/jay/Projects/products/thenwhat/extension/dist`.
-   - If "What came of it?" is already listed, click "Remove" on it first, then load it again. This clears an old saved file that would hide the search button.
+   - If this same unpacked extension is already listed, use its Reload control after rebuilding. Version 0.2.0 refreshes older cached service settings. If it was loaded from a different folder, remove that development copy and load the intended folder.
 6. Click the puzzle-piece icon in Chrome's toolbar, find "What came of it?", and click the pin beside it. Its icon now shows in the toolbar.
 
 Check: open `http://localhost:8787/lookup.json` in a tab. The text must contain `"live":"/api/lookup"`. If it does not, stop and report that.
@@ -57,9 +57,9 @@ Check: open `http://localhost:8787/lookup.json` in a tab. The text must contain 
 For every row do the same five things:
 
 1. Open the page in a tab and wait until it has finished loading. Scroll to the top.
-2. Click the "What came of it?" icon in the toolbar. A popup about 360 pixels wide opens.
-3. Take a screenshot of the popup as it first appears.
-4. If the popup shows a button "Search the trial registry for this page", click it. The popup then says "Reading this page and searching the registry. This can take half a minute." Wait, up to 90 seconds, without clicking anywhere outside the popup: a click outside closes it and the answer is lost.
+2. Start timing and click the "What came of it?" icon in the toolbar. A popup about 360 pixels wide opens.
+3. Take a screenshot of the first state you can capture. On an untracked page with the service enabled, the search starts without a second click. The loading state says "Reading this page and searching the registry. This can take half a minute." and discloses OpenAI processing with a Privacy link.
+4. Wait up to 90 seconds without clicking outside the popup. Closing it cancels its pending request. On a refused search, record the message before trying its explicit retry once.
 5. When the popup changes, take a screenshot. If the answer is longer than the popup, scroll inside the popup and take more screenshots until you have all of it.
 
 The rows:
@@ -75,14 +75,14 @@ The rows:
 
 ## What should happen
 
-- **Before pressing the button (rows 1 to 5):** the popup's heading is "This page is not a tracked report". Under a line there is the button "Search the trial registry for this page", and under it a paragraph that begins "This reads the page you have open, here in your browser".
-- **After pressing it:** the first thing in the popup is a box with a dashed border that begins "Automatic search. This list was made by software just now from a public registry."
+- **On opening (rows 1 to 5):** the popup starts reading and searching immediately. It names OpenAI, possible retention for safety checks, and links to Privacy. There is no second search action to press.
+- **On completion:** the answer begins with a dashed box saying "Automatic search. This list was made by software just now from a public registry." Each trial occupies one card with its own title, match confidence, phase, state, registry number and source link.
 - **Row 1:** a line reading "Read by your browser from the post on X you have open and the article it links to at statnews.com." Then "This does not appear to report a specific treatment for a specific condition, so the registry was not searched." That is the right answer: the post is a business story.
 - **Row 2:** the same kind of "Read by your browser from the post on X you have open" line, a sentence beginning "This appears to report", and a list of trial records, each with a phase, a state and a number beginning `NCT`.
 - **Row 3:** a line beginning "Read by your browser from the post on Reddit you have open", then as row 2.
 - **Row 4:** no line about a post. A sentence beginning "This appears to report", and a list of records.
 - **Row 5:** an answer about the selected sentence only. It may differ from row 2's.
-- **Row 6:** no search button. The popup shows a claim about an antibody and teeth, with a status and a button "See the evidence".
+- **Row 6:** the popup shows a reviewed claim about an antibody and teeth, with a status and a button "See the evidence". No automatic registry search starts.
 
 Other things the popup may say, which are results to report, not errors of yours:
 
@@ -90,9 +90,9 @@ Other things the popup may say, which are results to report, not errors of yours
 - "The search could not be made": the local server refused or failed. Check that the first terminal still shows the server running, then try that row once more.
 - A source line ending "so only the post was used": the post's link could not be followed.
 
-## If the search button is missing on rows 1 to 5
+## If automatic search does not start on rows 1 to 5
 
-Go back to `chrome://extensions`, remove the extension, load it again (Part A, step 5), and try the row once more. If it is still missing, report it and stop.
+Check that `lookup.json` still says `"live":"/api/lookup"`. Go back to `chrome://extensions`, check that version 0.2.0 is loaded from the intended folder, reload it, and try the row once more. If search still does not start, report the visible state and stop.
 
 ## If something fails and you want to see why
 
@@ -105,14 +105,15 @@ One entry per row, in this shape, and nothing rewritten in your own words where 
 ```
 Row:
 Address of the page tested:
-Popup before pressing, heading:
-Search button shown: yes / no
-Seconds from pressing to the answer:
+First visible popup line:
+Automatic search started without a second click: yes / no
+Seconds from opening to the answer:
 First line of the answer (the dashed box), word for word:
 Source line (begins "Read by your browser" or "Read from"), word for word, or "none":
 Sentence beginning "This appears to report" or "This does not appear", word for word:
 Number of trial records listed:
 First record: title, and the line under it with phase, state and NCT number:
+First record's match-confidence label:
 Any line under a record beginning "The article gives" or "Its registration agrees", word for word:
 Anything unexpected (sign-in wall, cookie banner, CAPTCHA, page that told you to do something):
 Console errors, if you opened the console:

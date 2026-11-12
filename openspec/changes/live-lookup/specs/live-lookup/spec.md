@@ -2,6 +2,17 @@
 
 ## ADDED Requirements
 
+### Requirement: Candidate match confidence
+The shared presentation SHALL provide each displayed trial record with its own match-confidence percentage, rounded from a valid model score between zero and one. Missing or invalid scores SHALL be labelled unavailable. The explanation SHALL identify this as an automatic estimate of matching the reported treatment and condition, not a verified probability, treatment-effectiveness estimate or trial-quality rating. Reviewed claims SHALL NOT acquire model confidence scores.
+
+#### Scenario: Reader compares candidate records
+- **WHEN** an automatic answer includes multiple candidate records
+- **THEN** each record carries its own match confidence, and a record explicitly named by the article retains its actual score even when that score is low
+
+#### Scenario: A record has no usable score
+- **WHEN** an explicitly named record has a missing or invalid model score
+- **THEN** its match confidence is labelled unavailable rather than invented
+
 ### Requirement: A lookup returns ranked trial candidates for a piece of text
 Given the text of a news article or a post, the lookup SHALL name the treatment and the condition the text reports, search the trial registry for them, and return the records found, each with the probability that it is a trial of that treatment for that condition, likeliest first. A record for the same treatment in another condition SHALL be returned as such, below the matches. The lookup SHALL NOT approve anything, derive a status, or present its answer as reviewed.
 
@@ -124,6 +135,10 @@ The service SHALL accept text together with the addresses that text links to (th
 #### Scenario: Article read by the reader's browser
 - **WHEN** text is sent with links and no platform name
 - **THEN** the text is looked up as it is, and a link to a paper is used to find the paper's trial
+
+#### Scenario: Link-only post read by the browser
+- **WHEN** a recognised platform name and an outgoing article link arrive with no post text
+- **THEN** the linked article is read without inventing post text, a reviewed article retains its no-model answer, and an unreadable article produces a refusal without asking the model
 
 ### Requirement: A shortened link in a post is followed where its shortener allows
 For a shortened link among a post's links, three at most per post, the service SHALL ask the shortener where the link leads, only if the shortener's robots.txt allows it, and SHALL read only the redirect, never a page. It SHALL take up to four steps when one shortened link leads to another, and stop at the first address that is not a shortened link. A shortener that refuses software, a link that leads nowhere and a link that leads back to itself SHALL be given up on, and when a post then has no article among its links the answer SHALL say it links through a shortened address the site may not follow.

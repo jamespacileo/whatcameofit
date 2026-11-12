@@ -293,16 +293,6 @@ h1 {
 
 /* --- A registry search of the open page --------------------------------- */
 
-.offer {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--rule);
-}
-
-.offer .button {
-  margin-top: 0;
-}
-
 .small {
   display: block;
   margin-top: 8px;
@@ -340,30 +330,28 @@ h1 {
 
 .records {
   display: grid;
-  gap: 8px;
+  gap: 12px;
   margin-top: 8px;
   padding: 0;
   list-style: none;
 }
 
-/* One registry record: its title, what kind of record it is, and why it is listed. */
-.records li {
-  padding: 10px 12px 11px;
+.result-card {
+  min-width: 0;
+  padding: 14px;
   border: 1px solid var(--rule);
   border-radius: 12px;
+  overflow-wrap: anywhere;
 }
 
-.records a {
-  display: block;
-  color: var(--blue);
-  font-size: 14.5px;
-  font-weight: 600;
+.result-title {
+  font-size: 15px;
   line-height: 1.35;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
 }
 
-.records a:hover {
+.result-title a:hover {
   text-decoration-thickness: 2px;
 }
 
@@ -383,8 +371,30 @@ h1 {
   white-space: nowrap;
 }
 
-.records .small {
+.result-title a,
+.privacy-note a {
+  color: var(--blue);
+  text-underline-offset: 2px;
+}
+
+.result-title a {
+  font-weight: 600;
+}
+
+.result-confidence {
+  margin-top: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.result-detail,
+.result-reason {
   margin-top: 6px;
+}
+
+.result-reason {
+  padding-top: 8px;
+  border-top: 1px solid var(--rule);
 }
 
 /* With a forced palette the marks that carry meaning take the system's text colour. */

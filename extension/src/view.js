@@ -12,17 +12,23 @@ const text = {
   untrackedBody: (name) =>
     `${name} follows particular news reports of medical breakthroughs, and this page is not one of them. That says nothing about the story itself.`,
   search: "Search tracked claims",
-  offer: "Search the trial registry for this page",
   disclosure: (name) =>
-    `This reads the page you have open, here in your browser, and sends its text and the links in it to ${name}, which asks OpenAI what it reports. OpenAI may retain the text for safety checks; see Privacy. Use public reports only. The page's address is not sent, and ${name} keeps none of it. If a post links through X's shortened address, your browser opens that link, as a click would, to learn which article it leads to. To send only some of the page, select those words first.`,
+    `This page’s text and links go to ${name} for the lookup. OpenAI reads the text and may retain it for safety checks. Use public reports only.`,
+  privacy: "Privacy",
+  confidenceUnavailable: "Match confidence unavailable",
+  confidenceMeaning: "Confidence estimates how closely each registry record matches this report.",
+  reviewed: "Reviewed claim",
   searching: "Reading this page and searching the registry. This can take half a minute.",
   tooLittleTitle: "Too little of this page could be read",
-  tooLittleBody: "Select the words of the post or the article, then press the button again.",
+  tooLittleBody: "Select the words of the post or article, then choose Search again. Nothing was sent.",
   refusedTitle: "The search could not be made",
   refused: {
     busy: "Too many searches are being made right now. Try again in a minute.",
     not_set_up: (name) => `${name} is not offering the registry search at the moment.`,
     failed: "Nothing was found or ruled out. Try again in a minute.",
+    budget_exhausted: "Automatic search has used its monthly allowance. It will be available again next month. Reviewed claim pages remain available.",
+    page_changed: "The page changed while this lookup started. Reopen the extension on the page you want to check.",
+    post_unreadable: "The linked article could not be read and the post has too little text. Open the article in your browser and reopen the extension.",
   },
   again: "Search again",
   noPageTitle: "Open an article first",
@@ -118,23 +124,32 @@ function press(label, className, onPress) {
   return node;
 }
 
+function privacyNote(site, actions) {
+  return el("p", "small privacy-note", [
+    text.disclosure(site.name),
+    " ",
+    link(text.privacy, `${site.url}/privacy`, null, actions.open),
+  ]);
+}
+
 /** A registry search's answer, in the words the site's own module gave it. */
 function answerBlock(shown, site, actions) {
-  const records = (items, address) =>
+  const records = (items, address, automatic = false) =>
     el(
       "ul",
       "records",
       items.map((item) =>
-        el("li", null, [
-          link(item.title ?? item.headline, address(item), null, actions.open),
+        el("li", "result-card", [
+          el("h2", "result-title", [link(item.title ?? item.headline, address(item), null, actions.open)]),
+          el("p", "result-confidence", automatic ? (item.confidenceLabel ?? text.confidenceUnavailable) : text.reviewed),
           // Phase, state and registry number are told apart at a glance as separate tags.
           item.detail &&
             el(
-              "span",
-              "tags",
+              "p",
+              "tags result-detail",
               item.detail.split(" · ").map((part) => el("span", "tag", part)),
             ),
-          item.why && el("span", "small", item.why),
+          item.why && el("p", "small result-reason", item.why),
         ]),
       ),
     );
@@ -142,11 +157,13 @@ function answerBlock(shown, site, actions) {
   return [
     shown.marked && el("p", "unchecked", shown.marked),
     el("h1", "lead", shown.lead),
+    shown.marked && privacyNote(site, actions),
     // What the search was given to work with, kept together and apart from its results.
     context.length > 0 && el("div", "context", context.map((line) => el("p", null, line))),
     shown.tracked.length > 0 && records(shown.tracked, (claim) => site.url + claim.page),
-    shown.likely.length > 0 && el("h2", "listed", shown.likelyLead),
-    shown.likely.length > 0 && records(shown.likely, (record) => record.url),
+    shown.likely.length > 0 && el("p", "listed", shown.likelyLead),
+    shown.likely.length > 0 && el("p", "small", shown.confidenceMeaning ?? text.confidenceMeaning),
+    shown.likely.length > 0 && records(shown.likely, (record) => record.url, true),
     shown.none && el("p", null, shown.none),
     shown.rest && el("p", "small", shown.rest),
     shown.notices.length > 0 && el("footer", "notices", shown.notices.map((notice) => el("p", null, notice))),
@@ -180,18 +197,21 @@ export function render(root, state, site, actions) {
         text.untrackedBody(site.name),
         link(text.search, `${site.url}/`, "button quiet", actions.open),
       ),
-      // Offered only where the site answers such a search. Nothing is read until pressed.
-      state.live && el("section", "offer", [press(text.offer, "button", actions.search), el("p", "small", text.disclosure(site.name))]),
       savedNote(state, site) && el("footer", "notices", [savedNote(state, site)]),
     ];
   } else if (state.kind === "searching") {
-    children = [el("p", "checking", text.searching)];
+    children = [el("p", "checking", text.searching), privacyNote(site, actions)];
   } else if (state.kind === "too-little") {
     children = [message(text.tooLittleTitle, text.tooLittleBody, press(text.again, "button quiet", actions.search))];
   } else if (state.kind === "refused") {
     const why = text.refused[state.code] ?? text.refused.failed;
     children = [
-      message(text.refusedTitle, typeof why === "function" ? why(site.name) : why, press(text.again, "button quiet", actions.search)),
+      message(
+        text.refusedTitle,
+        typeof why === "function" ? why(site.name) : why,
+        press(text.again, "button quiet", state.code === "page_changed" ? actions.retry : actions.search),
+      ),
+      privacyNote(site, actions),
     ];
   } else if (state.kind === "answer") {
     children = answerBlock(state.shown, site, actions);
@@ -205,4 +225,5 @@ export function render(root, state, site, actions) {
   }
   root.replaceChildren(...children.filter(Boolean));
   root.dataset.state = state.kind;
+  root.setAttribute("aria-busy", String(state.kind === "checking" || state.kind === "searching"));
 }
