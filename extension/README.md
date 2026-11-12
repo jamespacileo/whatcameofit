@@ -43,6 +43,8 @@ Then open each of these and press the extension's button, then "Search the trial
 
 To see what went wrong when something does, right-click inside the popup, choose "Inspect" and read the Console.
 
+To have an agent with computer use do this in your place, hand it [agent-test-brief.md](agent-test-brief.md).
+
 ## Safari
 
 ```sh
