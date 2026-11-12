@@ -2169,6 +2169,8 @@ main ul:not([class]) li + li {
    system's text colour, and the promise areas keep an outline. */
 @media (forced-colors: active) {
   .track .step.here,
+  .pop .pop-path li[aria-current]::before,
+  .share.done::before,
   .stage-filter .place[aria-pressed="true"] .dot {
     background: CanvasText;
     border-color: CanvasText;
@@ -2183,8 +2185,12 @@ main ul:not([class]) li + li {
     fill: CanvasText;
   }
 
-  .timetable .promised,
-  .index .promise,
+  /* Only a cell that holds a promise is outlined, as only it is amber elsewhere. */
+  .timetable thead .promised,
+  .timetable td.promised:not(.none):not(.empty),
+  .index thead .promise,
+  .index td.promise:not(.none),
+  .digest .promised-by,
   .plain.undated,
   .digest,
   .pop {
@@ -2202,6 +2208,7 @@ main ul:not([class]) li + li {
   .colophon .more,
   .share,
   .take,
+  .others,
   .search,
   .skip {
     display: none;

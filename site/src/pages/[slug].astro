@@ -448,7 +448,7 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
 
     {
       others.length > 0 && (
-        <section data-pagefind-ignore>
+        <section class="others" data-pagefind-ignore>
           <h2 class="bar" id="others">Other claims in {topic.toLowerCase()}</h2>
           <ClaimTable claims={others} caption="Each claim, when it was first reported and its status" />
           {inTopic.length > others.length && (

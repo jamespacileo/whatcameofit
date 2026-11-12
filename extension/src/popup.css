@@ -386,3 +386,20 @@ h1 {
 .records .small {
   margin-top: 6px;
 }
+
+/* With a forced palette the marks that carry meaning take the system's text colour. */
+@media (forced-colors: active) {
+  .step.here,
+  .checking::before {
+    background: CanvasText;
+    border-color: CanvasText;
+    forced-color-adjust: none;
+  }
+
+  .digest,
+  .context,
+  .facts .promise {
+    outline: 1px solid CanvasText;
+    outline-offset: -1px;
+  }
+}
