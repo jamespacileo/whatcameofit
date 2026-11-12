@@ -107,6 +107,16 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
     }
   </ul>
 
+  <h2 class="bar">An optional search of a new report</h2>
+  <p>
+    When you ask for a registry search, OpenAI reads the report's text to identify its treatment
+    and condition. We search ClinicalTrials.gov and linked research through Europe PMC, then
+    use OpenAI to compare the trial records. This is a live search of those research sources,
+    not a general search of the web. Its answer is marked as automatic and unreviewed; it cannot
+    create a claim page or change a status. The service keeps neither the report nor the answer.
+    Read <a href="/privacy">what is sent and how the providers handle it</a> before searching.
+  </p>
+
   <h2 class="bar">What is counted</h2>
   <p class="plain">Cloudflare, which hosts this site, counts requests and errors to operate the service. We do not add analytics, set tracking cookies, or keep reader profiles. Request logging for our Worker is disabled.</p>
 

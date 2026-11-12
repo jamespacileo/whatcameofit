@@ -14,7 +14,7 @@ const text = {
   search: "Search tracked claims",
   offer: "Search the trial registry for this page",
   disclosure: (name) =>
-    `This reads the page you have open, here in your browser, and sends its text and the links in it to ${name}, which asks a language model what it reports. The page's address is not sent, and ${name} keeps none of it. If a post links through X's shortened address, your browser opens that link, as a click would, to learn which article it leads to. To send only some of the page, select those words first.`,
+    `This reads the page you have open, here in your browser, and sends its text and the links in it to ${name}, which asks OpenAI what it reports. OpenAI may retain the text for safety checks; see Privacy. Use public reports only. The page's address is not sent, and ${name} keeps none of it. If a post links through X's shortened address, your browser opens that link, as a click would, to learn which article it leads to. To send only some of the page, select those words first.`,
   searching: "Reading this page and searching the registry. This can take half a minute.",
   tooLittleTitle: "Too little of this page could be read",
   tooLittleBody: "Select the words of the post or the article, then press the button again.",

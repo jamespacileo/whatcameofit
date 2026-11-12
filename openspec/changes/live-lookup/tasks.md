@@ -61,8 +61,17 @@
 - [x] 5.5 Try it end to end on this machine with `make lookup-dev`: an untracked article gave a marked answer with the treatment's trials (2026-11-12)
 - [x] 5.6 Have the browser extension read the open page and ask the same service, for sites that refuse automated reading (2026-11-12; tasks 5.1 to 5.5 of the browser-extension change; not yet pressed in a real Chrome or Safari)
 - [ ] 5.7 Measure the Worker against the same test as the pipeline's lookup
+- [x] 5.8 Keep marked main content ahead of large navigation menus in both page readers and verify the first-time UCLH article lookup (2026-11-12: baxdrostat identified, BaxHTN NCT06034743 first, 6.4 seconds locally)
 
 ## 6. For the operator
 
 - [ ] 6.1 Confirm or overturn the working choices in design.md
-- [ ] 6.2 Store the model's key with `wrangler secret put OPENAI_API_KEY`, set a monthly limit with the provider, and say on the method page what a registry search sends
+- [x] 6.2 Store the model's key with `wrangler secret put OPENAI_API_KEY`, set a monthly limit with the provider, and say on the method page what a registry search sends (2026-11-12)
+
+
+## 7. Public search budget (authorized 2026-11-12)
+
+- [x] 7.1 Add bounded model output, request deadlines, no retries and sanitized budget refusals; verify with network-free tests
+- [x] 7.2 Set the dedicated provider project's $13 hard limit, 80% alert and model restriction
+- [x] 7.3 Update site and extension provider disclosures and CI settings
+- [x] 7.4 Store the dedicated production key, confirm data sharing is off, deploy and verify a public lookup (2026-11-12: production CI passed; a synthetic non-medical input returned no treatment, and a synthetic semaglutide lookup ranked the stated STEP 1 record NCT03548935 first)

@@ -95,7 +95,11 @@ export function readPage(html) {
     .filter(Boolean)
     .map(unescaped)
     .join(" ");
-  const text = tidy(decoded(visible.replace(/<[^>]+>/g, " ")));
+  const allText = tidy(decoded(visible.replace(/<[^>]+>/g, " ")));
+  const main = [...visible.matchAll(/<main\b[^>]*>([\s\S]*?)<\/main\s*>/gi)]
+    .map((match) => match[1]).join(" ");
+  const mainText = tidy(decoded(main.replace(/<[^>]+>/g, " ")));
+  const text = mainText || allText;
 
   return {
     text,
@@ -103,7 +107,7 @@ export function readPage(html) {
     summary: first(SUMMARY_TAGS) ?? described.description ?? null,
     published: first(DATE_TAGS) ?? described.datePublished ?? null,
     body: described.articleBody ?? null,
-    ...linkSignals(links, text),
+    ...linkSignals(links, allText),
   };
 }
 

@@ -465,6 +465,71 @@ test("a decision call that fails says its status and nothing that was sent", asy
   await assert.rejects(model.score("Claim: …", ["record 0"]), { message: "decisions 429" });
 });
 
+test("both model endpoints stop on spend limits without retrying or exposing provider text", async () => {
+  for (const decisions of [false, true]) {
+    for (const code of ["project_spend_limit_exceeded", "organization_spend_limit_exceeded", "rate_limit_exceeded"]) {
+      let calls = 0;
+      const model = makeModel({ apiKey: "test-key", model: "example-model", decisions,
+        fetch: async () => {
+          calls++;
+          return Response.json({ error: { code, message: "synthetic article echo" } }, { status: 429 });
+        },
+      });
+      await assert.rejects(decisions ? model.score("Synthetic claim", ["record"]) : model.read(TEXT), (error) => {
+        assert.equal(error.code, code === "rate_limit_exceeded" ? undefined : "budget_exhausted");
+        assert.doesNotMatch(error.message, /article echo/);
+        return true;
+      });
+      assert.equal(calls, 1);
+    }
+  }
+});
+
+test("generated answers have bounded output, standard pricing and storage disabled", async () => {
+  const { model, sent } = modelOver(READING, { answers: [] });
+  await model.read(TEXT);
+  await model.score("Synthetic claim", ["record"]);
+  assert.deepEqual(sent.map(({ body }) => body.max_completion_tokens), [2048, 4096]);
+  for (const { body } of sent) {
+    assert.equal(body.store, false);
+    assert.equal(body.service_tier, "default");
+  }
+});
+
+test("both model endpoints abort stalled requests and response bodies without retrying", async () => {
+  for (const decisions of [false, true]) {
+    for (const stallBody of [false, true]) {
+      let calls = 0;
+      const model = makeModel({ apiKey: "test-key", model: "example-model", decisions, timeoutMs: 10,
+        fetch: async (_address, { signal }) => {
+          calls++;
+          const stalled = () => new Promise((_resolve, reject) => signal.addEventListener("abort", () => reject(signal.reason), { once: true }));
+          return stallBody ? { ok: true, json: stalled } : stalled();
+        },
+      });
+      await assert.rejects(decisions ? model.score("Synthetic claim", ["record"]) : model.read(TEXT), { name: "AbortError" });
+      assert.equal(calls, 1);
+    }
+  }
+});
+
+test("the public endpoint explains exhausted budgets and leaves static pages available", async () => {
+  const env = {
+    OPENAI_API_KEY: "test-key", LLM_MODEL: "example-model", CONTACT_EMAIL: "ops@example.test",
+    LOOKUP_PER_READER: { limit: async () => ({ success: true }) },
+    LOOKUP_IN_ALL: { limit: async () => ({ success: true }) },
+    ASSETS: { fetch: async (request) => new URL(request.url).pathname === "/lookup.json"
+      ? Response.json({ claims: {} }) : new Response("Reviewed claim") },
+  };
+  const response = await handle(new Request("https://example.test/api/lookup", { method: "POST", body: JSON.stringify({ text: TEXT }) }), env, {
+    model: { read: async () => { throw Object.assign(new Error("synthetic echo"), { code: "budget_exhausted" }); } }, registry: {},
+  });
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { error: "budget_exhausted" });
+  assert.equal(response.headers.get("Cache-Control"), "no-store");
+  assert.equal(await (await handle(new Request("https://example.test/claim"), env)).text(), "Reviewed claim");
+});
+
 test("the model reads the text while linked papers and stated numbers are looked up", async () => {
   const started = [];
   let reading;
@@ -516,6 +581,18 @@ test("an article that robots.txt allows is returned as text that opens with its 
 
   assert.equal(read.text, "Headline: EX-1 regrows teeth\n\nEX-1 regrows teeth EX-1 regrows teeth Scientists say EX-1 worked.");
   assert.equal(read.page.headline, "EX-1 regrows teeth");
+});
+
+test("navigation cannot push the main article past the lookup text limit", async () => {
+  const navigation = "Home Departments Patient information ".repeat(2000);
+  const html = `<html><head><title>New treatment</title><script>const example = "<main>Wrong text</main>";</script></head>
+    <body><nav>${navigation}</nav><main><p>${TEXT}</p></main><footer>NCT01234567</footer></body></html>`;
+  const { fetch } = web({ "https://news.example.org/robots.txt": "", [ARTICLE]: html });
+
+  const read = await readArticle(ARTICLE, { fetch, contact: "ops@example.org" });
+
+  assert.equal(read.text, `Headline: New treatment\n\n${TEXT}`);
+  assert.deepEqual(read.page.registryNumbers, ["NCT01234567"]);
 });
 
 test("Scenario: Article the site does not allow to be read", async () => {

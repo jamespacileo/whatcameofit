@@ -32,21 +32,33 @@ import Base from "../layouts/Base.astro";
 
   <h2 class="bar">Optional registry searches</h2>
   <p>
-    Automatic registry search is currently disabled on the public service. Opening the production
-    extension therefore does not send an article's text or selected words to a model provider.
+    A registry search runs only when you press its search button. On the website, it sends the
+    address or text you supply to our Cloudflare service. The service may read the article, a
+    public post and its linked article, and sends the text to OpenAI to identify the treatment
+    and condition being reported. It searches ClinicalTrials.gov and Europe PMC using treatment
+    names, the reported condition and research identifiers, then uses OpenAI to compare the
+    trial records. The result is marked as an automatic, unreviewed search.
   </p>
   <p>
-    The extension also supports a separately requested search when connected to a service that
-    enables it. Only after you press its search button does it read the page or your selected words
-    and send the text and outgoing links to that service. A selection limits the text sent; outgoing
-    links can still be included. A post also identifies its platform. Up to three X short links may
+    In the extension, pressing the search button reads the page or your selected words and sends
+    that text and outgoing links to our service. A selection limits the text sent; outgoing links
+    can still be included. A post also identifies its platform. Up to three X short links may
     be opened through t.co without cookies or a referrer. The current page's address is not added
     to the search request, but the text you choose may itself contain personal information.
+    Please use public reports and avoid sending private medical or other sensitive information.
   </p>
   <p>
-    That service can retrieve linked articles and query research sources and a model provider.
-    Our application does not store submitted text or search answers. Before enabling this feature
-    publicly, we will update this page to name the provider and explain its data handling.
+    Our application does not store or log submitted addresses, text or search answers. Your IP
+    address is used by Cloudflare to limit the number of searches. We request that OpenAI does not
+    save chat completions for later retrieval. This does not mean zero retention: OpenAI may keep
+    prompts and responses in abuse-monitoring logs for up to 30 days, or longer for legal or safety
+    reasons, and may temporarily cache model inputs. API data is not used to train models by
+    default. Processing may take place outside your country. See
+    <a href="https://developers.openai.com/api/docs/guides/your-data">OpenAI's data controls</a>.
+  </p>
+  <p>
+    Automatic search has a limited monthly allowance. When it is used, reviewed claim pages
+    remain available. A search never creates a reviewed claim or changes a claim's status.
   </p>
 
   <h2 class="bar">Writing to us</h2>
