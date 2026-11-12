@@ -115,6 +115,13 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
     create a claim page or change a status. The service keeps neither the report nor the answer.
     Read <a href="/privacy">what is sent and how the providers handle it</a> before searching.
   </p>
+  <p>
+    Opening the browser extension checks the current page automatically. A tracked article shows
+    its reviewed claim; an untracked page starts a live registry search when the service is available.
+    Each candidate's match confidence is the model's estimate that the record concerns the reported
+    treatment and condition. It is not a verified probability or a rating of treatment effectiveness
+    or trial quality. Pages are not searched in the background while the extension is closed.
+  </p>
 
   <h2 class="bar">What is counted</h2>
   <p class="plain">Cloudflare, which hosts this site, counts requests and errors to operate the service. We do not add analytics, set tracking cookies, or keep reader profiles. Request logging for our Worker is disabled.</p>

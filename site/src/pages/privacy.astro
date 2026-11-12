@@ -29,10 +29,17 @@ import Base from "../layouts/Base.astro";
     refreshing it after six hours. If the site cannot be reached, the saved copy can still be used.
     Removing the extension removes this local cache.
   </p>
+  <p>
+    If the page is not tracked and live search is available, opening the extension also starts
+    the registry search described below. No second search click is needed. The extension does
+    not monitor other tabs or automatically search pages while you browse with it closed.
+    Open it only on public reports you want to check. Select words before opening it to limit
+    the text sent.
+  </p>
 
   <h2 class="bar">Optional registry searches</h2>
   <p>
-    A registry search runs only when you press its search button. On the website, it sends the
+    On the website, a registry search runs when you press its search button. It sends the
     address or text you supply to our Cloudflare service. The service may read the article, a
     public post and its linked article, and sends the text to OpenAI to identify the treatment
     and condition being reported. It searches ClinicalTrials.gov and Europe PMC using treatment
@@ -40,7 +47,7 @@ import Base from "../layouts/Base.astro";
     trial records. The result is marked as an automatic, unreviewed search.
   </p>
   <p>
-    In the extension, pressing the search button reads the page or your selected words and sends
+    In the extension, opening the popup on an untracked page reads the page or your selected words and sends
     that text and outgoing links to our service. A selection limits the text sent; outgoing links
     can still be included. A post also identifies its platform. Up to three X short links may
     be opened through t.co without cookies or a referrer. The current page's address is not added

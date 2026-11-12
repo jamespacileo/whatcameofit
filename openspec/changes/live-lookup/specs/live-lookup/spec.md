@@ -2,6 +2,17 @@
 
 ## ADDED Requirements
 
+### Requirement: Candidate match confidence
+The shared presentation SHALL provide each displayed trial record with its own match-confidence percentage, rounded from a valid model score between zero and one. Missing or invalid scores SHALL be labelled unavailable. The explanation SHALL identify this as an automatic estimate of matching the reported treatment and condition, not a verified probability, treatment-effectiveness estimate or trial-quality rating. Reviewed claims SHALL NOT acquire model confidence scores.
+
+#### Scenario: Reader compares candidate records
+- **WHEN** an automatic answer includes multiple candidate records
+- **THEN** each record carries its own match confidence, and a record explicitly named by the article retains its actual score even when that score is low
+
+#### Scenario: A record has no usable score
+- **WHEN** an explicitly named record has a missing or invalid model score
+- **THEN** its match confidence is labelled unavailable rather than invented
+
 ### Requirement: A lookup returns ranked trial candidates for a piece of text
 Given the text of a news article or a post, the lookup SHALL name the treatment and the condition the text reports, search the trial registry for them, and return the records found, each with the probability that it is a trial of that treatment for that condition, likeliest first. A record for the same treatment in another condition SHALL be returned as such, below the matches. The lookup SHALL NOT approve anything, derive a status, or present its answer as reviewed.
 
