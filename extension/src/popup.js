@@ -36,6 +36,10 @@ const controller = createPopupController({
     }
     return request;
   },
+  async isCurrentPage(tab) {
+    const current = await api.tabs.get(tab.id);
+    return articleKey(current.url) === tab.key;
+  },
   describeAnswer(found) {
     return { ...describeAnswer(found), likelyLead: LIVE.likelyLead, confidenceMeaning: LIVE.confidenceMeaning };
   },

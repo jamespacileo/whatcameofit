@@ -20,6 +20,7 @@ function setup(overrides = {}) {
     site: { url: "https://whatcameofit.example" },
     readTab: async () => tab,
     readPage: async (current) => { calls.read.push(current); return request; },
+    isCurrentPage: async () => true,
     fetch: async (url, options) => {
       calls.fetch.push({ url, options });
       return { ok: true, json: async () => options.method === "POST" ? answer : index };
@@ -123,6 +124,32 @@ test("a delayed index does not switch the lookup to a newly active tab", async (
   await opening;
   assert.equal(tabReads, 1);
   assert.deepEqual(read, [tab]);
+});
+
+test("navigation while resolving page links refuses the request before it is sent", async () => {
+  const reading = deferred();
+  const started = deferred();
+  let currentPage = true;
+  const { controller, calls } = setup({
+    readPage: async () => { started.resolve(); return reading.promise; },
+    isCurrentPage: async () => currentPage,
+  });
+  const opening = controller.open();
+  await started.promise;
+  currentPage = false;
+  reading.resolve(request);
+  await opening;
+  assert.equal(calls.fetch.filter((call) => call.options.method === "POST").length, 0);
+  assert.deepEqual(calls.states.at(-1), { kind: "refused", code: "page_changed" });
+});
+
+test("a tab that closes before final confirmation sends nothing", async () => {
+  const { controller, calls } = setup({
+    isCurrentPage: async () => { throw new Error("Tab closed"); },
+  });
+  await controller.open();
+  assert.equal(calls.fetch.filter((call) => call.options.method === "POST").length, 0);
+  assert.deepEqual(calls.states.at(-1), { kind: "refused", code: "page_changed" });
 });
 
 test("a failed search offers recovery and an explicit retry can succeed", async () => {

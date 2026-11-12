@@ -13,7 +13,7 @@ const text = {
     `${name} follows particular news reports of medical breakthroughs, and this page is not one of them. That says nothing about the story itself.`,
   search: "Search tracked claims",
   disclosure: (name) =>
-    `For automatic matches, this page’s text and links are sent to ${name} and OpenAI. OpenAI may retain text for safety checks. Use public reports only.`,
+    `This page’s text and links go to ${name} for the lookup. OpenAI reads the text and may retain it for safety checks. Use public reports only.`,
   privacy: "Privacy",
   confidenceUnavailable: "Match confidence unavailable",
   confidenceMeaning: "Confidence estimates how closely each registry record matches this report.",

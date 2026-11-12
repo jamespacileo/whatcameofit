@@ -6,7 +6,7 @@ const SIX_HOURS = 6 * 60 * 60 * 1000;
 // Refresh pre-automatic-lookup caches once so an upgrade sees current service settings.
 const CACHE_VERSION = 2;
 
-export function createPopupController({ storage, fetch, site, readTab, readPage, describeAnswer, present }) {
+export function createPopupController({ storage, fetch, site, readTab, readPage, isCurrentPage, describeAnswer, present }) {
   const abort = new AbortController();
   let tab = null;
   let live = null;
@@ -47,6 +47,12 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     if (closed) return;
     if (!request) {
       show({ kind: "too-little" });
+      return;
+    }
+    const current = await isCurrentPage(tab).catch(() => false);
+    if (closed) return;
+    if (!current) {
+      show({ kind: "refused", code: "page_changed" });
       return;
     }
     try {

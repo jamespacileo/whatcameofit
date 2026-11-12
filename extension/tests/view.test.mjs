@@ -78,7 +78,7 @@ test("automatic loading announces busy state and keeps OpenAI and privacy visibl
   render(root, { kind: "searching" }, site, actions);
   assert.equal(root.attributes["aria-busy"], "true");
   assert.match(root.textContent, /Reading this page/);
-  assert.match(root.textContent, /OpenAI.*retain text for safety checks/);
+  assert.match(root.textContent, /OpenAI.*retain it for safety checks/);
   assert.equal(elements(root, "a")[0].href, "https://whatcameofit.example/privacy");
   assert.equal(elements(root, "button").length, 0);
 });
