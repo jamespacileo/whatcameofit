@@ -1,4 +1,4 @@
-.PHONY: check lint types db-up test site-test site-build extension-test extension extension-safari
+.PHONY: check lint types db-up test site-test site-build extension-test extension extension-safari public-export deploy-check deploy
 
 DB_PORT ?= 5433
 # Tests drop and recreate this database, so its name must end in _test.
@@ -44,3 +44,23 @@ extension: site/node_modules
 # Safari needs an app around the extension; see extension/safari.sh. Needs Xcode.
 extension-safari: extension
 	sh extension/safari.sh
+
+# Publishing. See docs/deploy.md. SITE_URL must be the public address:
+#   SITE_URL=https://example.org make deploy-check
+PUBLIC_EXPORT := site/data/public-export.json
+
+# A normal export from the running pipeline: reviewed claims only, never a preview,
+# whatever EXPORT_PREVIEW is set to locally.
+public-export:
+	docker compose exec -T pipeline sh -c 'EXPORT_PREVIEW=0 thenwhat export --out /tmp/public-export.json >&2 && cat /tmp/public-export.json' > $(PUBLIC_EXPORT).tmp
+	mv $(PUBLIC_EXPORT).tmp $(PUBLIC_EXPORT)
+
+# Everything a deployment does except publishing: the checks, a public build, and
+# Wrangler's own dry run.
+deploy-check: site/node_modules public-export
+	EXPORT_FILE=data/public-export.json node site/scripts/deploy.mjs --dry-run
+
+# Publish to Cloudflare at SITE_URL's domain. Refuses a preview export, a claim not
+# checked by a person, and a local address.
+deploy: site/node_modules public-export
+	EXPORT_FILE=data/public-export.json node site/scripts/deploy.mjs

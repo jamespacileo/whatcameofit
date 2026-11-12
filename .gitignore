@@ -12,6 +12,9 @@ node_modules/
 site/dist/
 site/.astro/
 site/data/export.json
+site/data/public-export.json
+site/data/public-export.json.tmp
+site/.wrangler/
 
 # extension: built output and the generated Safari project
 extension/dist/

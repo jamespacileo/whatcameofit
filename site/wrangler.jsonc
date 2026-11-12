@@ -1,0 +1,17 @@
+// Cloudflare Workers, static files only: no Worker code runs. Deploy with
+// `make deploy` (see docs/deploy.md), never with `wrangler deploy` alone: the
+// make target refuses a preview export and unreviewed claims first.
+{
+  "name": "thenwhat",
+  "compatibility_date": "2026-11-01",
+  // The site is served only at its own domain, which the deploy command takes from
+  // SITE_URL. No workers.dev address and no per-version preview addresses.
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page",
+    // Page addresses carry no trailing slash, as the canonical links and sitemap write them.
+    "html_handling": "drop-trailing-slash"
+  }
+}

@@ -10,7 +10,7 @@ Nothing below is worth doing until all of these are true.
 
 1. **Every published claim has been reviewed by a person.** A page marked "not checked by a person" must not be the first thing a stranger sees. One wrong status, widely shared, costs more than any announcement gains.
 2. **The famous claims are in.** People share what they recognise. Aim for thirty to fifty claims whose headlines a general reader would remember, across several topics, before launch.
-3. **The site is deployed at its final address**, and `site/site.config.mjs` holds that address. Build with `PUBLIC_BUILD=1`: the build stops if the address is still local.
+3. **The site is deployed at its final address**, and `site/site.config.mjs` holds that address. Deploy with `make deploy` (see `docs/deploy.md`): it refuses a preview export, a claim not checked by a person, and a local address.
 4. **The name is settled** in the site, the extension and the domain.
 5. **The two contact addresses are set** (`suggestUrl`, `correctionsUrl`), each either a mail address or a public issue form.
 6. **What the host can count is known**, and the "What is counted" section of the method page says exactly that.

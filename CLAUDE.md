@@ -49,6 +49,6 @@ worktrees via `wt`, archive via quarantine).
 ## Layout
 
 - `pipeline/`: Python 3.12, managed with `uv`. Typer CLI in `src/thenwhat/cli`, one package per pipeline step. `status/` is pure: no database, network or clock.
-- `site/`: Astro static site. Its only input is the pipeline's JSON export at `site/data/export.json`.
+- `site/`: Astro static site. Its only input is the pipeline's JSON export at `site/data/export.json`. Published to Cloudflare only through `make deploy` (`docs/deploy.md`), never `wrangler deploy` alone.
 - `extension/`: browser extension for Chrome and Safari, plain JavaScript. Its only input is the site's `lookup.json`; it shares `site/src/lib/article-key.mjs` with the site and holds no status wording of its own.
 - `data/seed/`: claims CSV and the seeded example claim.
