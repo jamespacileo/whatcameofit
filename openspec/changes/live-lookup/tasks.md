@@ -46,7 +46,7 @@
 - [x] 4d.1 Check OpenAI's Decisions API terms, price and limits, try it once with made-up records, and note them in `docs/sources.md`
 - [x] 4d.2 Add the `openai-decisions` backend behind `DECISION_BACKEND`, counted in the usage ledger and stopped by the monthly ceiling; verify its tests pass on a recorded answer
 - [x] 4d.3 Score with the Decisions API in the Worker when it is configured, and run its independent requests at the same time; verify its tests pass
-- [ ] 4d.4 Measure a lookup's time and answers with each backend on the same articles, and record both
+- [x] 4d.4 Measure a lookup's time and answers with each backend on the same articles, and record both (2026-11-12: 43 lookups each; found 32 then 35, first 29 then 30; the whole run 21 minutes then 10)
 - [x] 4d.5 Save an outlet run article by article and check several outlets at once, with one shared limit per registry; verify the tests pass
 
 ## 5. For readers (decided 2026-11-12: unreviewed answers may be shown, clearly marked)

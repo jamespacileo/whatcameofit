@@ -6,7 +6,7 @@ businesstoday.in,https://www.businesstoday.in/science/story/anti-ageing-breakthr
 ca.news.yahoo.com,https://ca.news.yahoo.com/frozen-testicular-tissue-transplanted-bid-093937775.html,read,headline; summary; date,found first
 ca.news.yahoo.com,https://ca.news.yahoo.com/man-given-genetically-modified-pig-223925163.html,read,headline; summary; date,found first
 ca.news.yahoo.com,https://ca.news.yahoo.com/world-first-personalised-cancer-vaccine-115024195.html,read,headline; summary; date,found first
-cnn.com,https://www.cnn.com/2026/10/13/health/glp-1-drugs-anti-aging,read,headline; summary; date; structured article; paper link,not found
+cnn.com,https://www.cnn.com/2026/10/13/health/glp-1-drugs-anti-aging,read,headline; summary; date; structured article; paper link,found first
 cnn.com,https://www.cnn.com/2026/10/22/health/mnra-cancer-vaccine-moderna,read,headline; summary; date; structured article; registry number,found first
 courthousenews.com,https://www.courthousenews.com/nanoparticle-shots-helped-alzheimers-mice-think-more-clearly/,read,headline; summary; date; paper link,
 dailymail.com,https://www.dailymail.com/health/article-16055081/new-ovarian-cancer-treatment-cut-risk-MEIKE-LEONARD.html,read,headline; summary; date,found
@@ -42,7 +42,7 @@ kcl.ac.uk,https://www.kcl.ac.uk/news/natural-tooth-repair-method-using-alzheimer
 koreabiomed.com,https://www.koreabiomed.com/news/articleView.html?idxno=6365,read,headline; summary; date,
 kyoto-u.ac.jp,https://www.kyoto-u.ac.jp/en/research-news/2021-03-31,read,headline; summary; paper link,
 ladbible.com,https://www.ladbible.com/news/science/anti-aging-breakthrough-drug-extend-life-by-25-770203-20261001,read,headline; summary; date; paper link,
-ladbible.com,https://www.ladbible.com/news/world-news/pill-builds-muscle-as-good-as-gym-939712-20261002,read,headline; summary; date,not found
+ladbible.com,https://www.ladbible.com/news/world-news/pill-builds-muscle-as-good-as-gym-939712-20261002,read,headline; summary; date,found first
 livescience.com,https://www.livescience.com/health/neuroscience/scientists-invent-a-gel-that-creates-neurons-from-other-cells-which-could-help-treat-alzheimers,read,headline; summary; date; paper link,
 livescience.com,https://www.livescience.com/health/scientists-invent-implant-that-can-transform-sugar-in-the-blood-to-treat-type-2-diabetes,read,headline; summary; date; paper link,
 medicalxpress.com,https://medicalxpress.com/news/2026-10-dose-fast-psychedelic-nasal-spray.html,403,,
@@ -50,7 +50,7 @@ medicalxpress.com,https://medicalxpress.com/news/2026-10-optogenetic-therapy-ear
 medicalxpress.com,https://medicalxpress.com/news/2026-11-experimental-electric-baldness.html,403,,
 medscape.com,https://www.medscape.com/viewarticle/how-old-antibiotic-can-now-kill-drug-resistant-superbug-2026a1000x1u,read,headline; summary; date; paper link,
 mirror.co.uk,https://www.mirror.co.uk/news/health/alzheimers-drug-cure-symptoms-dementia-37631556,read,headline; summary; date; structured article,found first
-mirror.co.uk,https://www.mirror.co.uk/news/health/breast-cancer-drug-enhertu-nhs-37670578,read,headline; summary; date; structured article,not found
+mirror.co.uk,https://www.mirror.co.uk/news/health/breast-cancer-drug-enhertu-nhs-37670578,read,headline; summary; date; structured article,found
 mirror.co.uk,https://www.mirror.co.uk/news/health/new-heart-attack-experimental-treatment-37857632,read,headline; summary; date; structured article,
 mirror.co.uk,https://www.mirror.co.uk/news/health/new-weight-loss-jab-could-37758470,read,headline; summary; date; structured article,found first
 nbcnews.com,https://www.nbcnews.com/health/cancer/personalized-mrna-vaccine-melanoma-cut-risk-cancers-return-late-stage-rcna605208,read,headline; summary; date; structured article,found first
@@ -99,7 +99,7 @@ theguardian.com,https://www.theguardian.com/society/2026/oct/08/teenager-first-p
 time.com,https://time.com/article/2026/08/28/one-time-treatment-high-cholesterol-crispr-results/,read,headline; summary; date; paper link,found first
 today.usc.edu,https://today.usc.edu/one-step-closer-to-natural-tooth-restorations/,read,headline; summary; date,
 tohoku.ac.jp,https://www.tohoku.ac.jp/en/press/periodontitis_gum_regeneration.html,read,headline; summary,
-vice.com,https://www.vice.com/en/article/scientists-tested-an-experimental-baldness-pill-on-536-men-heres-what-happened/,read,headline; summary; date,found first
+vice.com,https://www.vice.com/en/article/scientists-tested-an-experimental-baldness-pill-on-536-men-heres-what-happened/,read,headline; summary; date,found
 washington.edu,https://www.washington.edu/news/2018/04/12/peptide-based-biogenic-dental-product-may-cure-cavities/,read,headline; summary; date; paper link,
 yahoo.com,https://www.yahoo.com/news/science/articles/drug-could-reduce-death-risk-122310256.html,429,,
 zmescience.com,https://www.zmescience.com/science/news-science/electric-comb-regrows-nearly-all-lost-hair-in-balding-mice-in-just-30-days/,read,headline; summary; date; paper link,

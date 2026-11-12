@@ -52,17 +52,20 @@ Four articles could not be read at their address (robots.txt or no response).
 
 `thenwhat outlets --with-lookup` now makes this measurement and keeps it: [outlets.md](outlets.md) per outlet, [outlets-articles.csv](outlets-articles.csv) per address. It runs a lookup on every article that could be read and whose claim has approved trials, not only on each claim's earliest article, so its numbers are per article and are not the same count as the table above.
 
-| | Per article |
-| --- | --- |
-| Addresses asked for | 104, at 57 outlets |
-| Read | 96 (4 refused by robots.txt, 3 answered 403, 1 answered 429) |
-| Lookups run | 43 |
-| An approved trial among the likely records | 32 (74%) |
-| The first record listed is an approved trial | 29 (67%) |
+| | General model, one at a time | Decisions API, four outlets at a time |
+| --- | --- | --- |
+| Addresses asked for | 104, at 57 outlets | the same |
+| Read | 96 (4 refused by robots.txt, 3 answered 403, 1 answered 429) | the same |
+| Lookups run | 43 | 43 |
+| An approved trial among the likely records | 32 (74%) | 35 (81%) |
+| The first record listed is an approved trial | 29 (67%) | 30 (70%) |
+| Time for the whole run | 21 minutes | 10 minutes 26 seconds |
+
+The two runs gave the same found-or-not answer for 40 of the 43 articles. The second found three that the first missed and lost none; on one article an approved trial moved from first place to lower in the list. One run each way: the model does not answer the same way twice, so three articles is within what two runs of the same setup can differ by. The second run also had the registry's answers cached from the first, which is part of why it was faster. The files kept are from the second run.
 
 What the pages carried, of the 96 read: a headline 96, a summary 93, a date 74, a link to a paper 41, the article as structured data 11, a registry number 3.
 
-The eleven misses are the same kinds as before: the registry lists the drug under a code the article does not give (solengepras, cabamiquine), a broad name (GLP-1 drugs), a treatment with no product name (stem cell therapy for heart failure).
+The misses (eleven in the first run, eight in the second) are the same kinds as before: the registry lists the drug under a code the article does not give (solengepras, cabamiquine), a broad name (GLP-1 drugs), a treatment with no product name (stem cell therapy for heart failure).
 
 ## How long a lookup takes, and where the time goes
 
