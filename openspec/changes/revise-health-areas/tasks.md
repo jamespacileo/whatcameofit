@@ -42,7 +42,7 @@
 
 ## 7. Integration
 
-- [ ] 7.1 Run `make check` and build the site from the refiled seed export; verify every claim page shows its topic, and that the topics page lists 16 or fewer groups with no "Other topics" section.
+- [x] 7.1 Run `make check` and build the site from the refiled seed export; verify every claim page shows its topic, and that the topics page lists 16 or fewer groups with no "Other topics" section.
 
 ## Workflow follow-up
 
