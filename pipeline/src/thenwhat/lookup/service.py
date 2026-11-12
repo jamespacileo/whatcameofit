@@ -119,7 +119,13 @@ def look_up(
     if not reading.about_a_treatment or not reading.intervention:
         return Lookup(reading.gist, None, None, registry_numbers=numbers)
 
-    names = list(dict.fromkeys([reading.intervention, *filter(is_a_name, reading.other_names)]))
+    # A registry number is looked up as a record, never searched for as a name.
+    other = [
+        name
+        for name in reading.other_names
+        if is_a_name(name) and not REGISTRY_NUMBER.fullmatch(name.strip())
+    ]
+    names = list(dict.fromkeys([reading.intervention, *other]))
     records: dict[str, SourceRecord] = {}
     for number in numbers:
         stated = trials.fetch_trial(number)

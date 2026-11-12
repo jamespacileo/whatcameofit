@@ -142,10 +142,17 @@ def test_a_registry_number_in_the_text_is_looked_up_directly(session: Session):
     stated = trial("NCT01234567", "EX-1 first study in people")
     trials = FakeTrials({}, {"NCT01234567": stated})
 
-    found = find(session, trials, text=f"{TEXT} The study is registered as nct01234567.")
+    # A model may hand the number back as if it were another name of the treatment.
+    reading = {**READING, "other_names": ["Toothgrow", "NCT01234567"], "search_phrases": []}
+
+    found = find(
+        session, trials, text=f"{TEXT} The study is registered as nct01234567.", reading=reading
+    )
 
     assert [c.external_id for c in found.candidates] == ["NCT01234567"]
     assert found.registry_numbers == ["NCT01234567"]
+    assert found.names == ["EX-1", "Toothgrow"]
+    assert "NCT01234567" not in [name for name, _ in trials.searched]
 
 
 def test_text_that_is_not_about_a_treatment_is_not_searched(session: Session):
