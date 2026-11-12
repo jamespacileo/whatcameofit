@@ -4,18 +4,20 @@ The text is returned to the caller and kept nowhere: not cached, not logged.
 """
 
 from dataclasses import dataclass
-from html.parser import HTMLParser
 from urllib.parse import urlsplit
 from urllib.robotparser import RobotFileParser
 
 import httpx
 
 from thenwhat import __version__
+from thenwhat.extract.page import Page, read_page
 from thenwhat.sources.base import MissingContact
 
 ROBOTS_NAME = "thenwhat"
 WAYBACK_AVAILABLE = "https://archive.org/wayback/available"
-SKIPPED_ELEMENTS = {"script", "style", "noscript", "template", "svg"}
+# How a site answered when asked for one article.
+ALLOWED = "allowed"
+REFUSED_BY_ROBOTS = "robots"
 
 
 class PasteNeeded(Exception):
@@ -26,6 +28,19 @@ class PasteNeeded(Exception):
 class Retrieved:
     text: str
     archive_url: str | None = None
+    # The same page with what it says about itself: headline, date, the papers it links to.
+    page: Page | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class Probe:
+    """How one article address answered, for the record of which outlets can be read."""
+
+    # ALLOWED, or REFUSED_BY_ROBOTS when the site's rules forbid the fetch or cannot be read.
+    robots: str
+    # The page's HTTP status; None when it was not asked for or did not answer.
+    status: int | None = None
+    page: Page | None = None
 
 
 class ArticleRetriever:
@@ -45,17 +60,30 @@ class ArticleRetriever:
                 f"The robots.txt of {urlsplit(url).netloc} does not allow fetching {url}."
                 " Supply the article text instead."
             )
-        page = self._page(url)
-        if page is not None:
-            return Retrieved(_plain_text(page))
+        html = self._page(url)
+        if html is not None:
+            return _retrieved(html)
         snapshot = self._snapshot(url)
-        page = self._page(snapshot) if snapshot else None
-        if page is None:
+        html = self._page(snapshot) if snapshot else None
+        if html is None:
             raise PasteNeeded(
                 f"{url} could not be retrieved and no archived snapshot was found."
                 " Supply the article text instead."
             )
-        return Retrieved(_plain_text(page), archive_url=snapshot)
+        return _retrieved(html, archive_url=snapshot)
+
+    def probe(self, url: str) -> Probe:
+        """Ask the site itself for one article and say how it answered. No archive is tried:
+        the question is whether this outlet can be read."""
+        if not self._contact:
+            raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
+        if not self._allowed(url):
+            return Probe(REFUSED_BY_ROBOTS)
+        response = self._get(url)
+        if response is None:
+            return Probe(ALLOWED)
+        page = read_page(response.text) if response.status_code == 200 else None
+        return Probe(ALLOWED, response.status_code, page)
 
     def _get(self, url: str, params: dict[str, str] | None = None) -> httpx.Response | None:
         headers = {"User-Agent": f"{ROBOTS_NAME}/{__version__} (mailto:{self._contact})"}
@@ -89,26 +117,6 @@ class ArticleRetriever:
         return closest.get("url") if closest.get("available") else None
 
 
-class _TextCollector(HTMLParser):
-    def __init__(self) -> None:
-        super().__init__()
-        self.pieces: list[str] = []
-        self._skipping = 0
-
-    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        if tag in SKIPPED_ELEMENTS:
-            self._skipping += 1
-
-    def handle_endtag(self, tag: str) -> None:
-        if tag in SKIPPED_ELEMENTS and self._skipping:
-            self._skipping -= 1
-
-    def handle_data(self, data: str) -> None:
-        if not self._skipping:
-            self.pieces.append(data)
-
-
-def _plain_text(html: str) -> str:
-    collector = _TextCollector()
-    collector.feed(html)
-    return " ".join(" ".join(collector.pieces).split())
+def _retrieved(html: str, archive_url: str | None = None) -> Retrieved:
+    page = read_page(html)
+    return Retrieved(page.text, archive_url=archive_url, page=page)

@@ -15,6 +15,8 @@ Terms, authentication and rate limits for each external source. Check an entry a
 - **Behavior (observed):** an unknown but well-formed identifier returns 404; a malformed one returns 400, so the client checks the format first. Searches page with `nextPageToken`; the last page has no token and may be empty. Dates can be `YYYY-MM-DD` or `YYYY-MM`, each with a type of `ACTUAL` or `ESTIMATED`.
 - **Search within a condition (observed 2026-11-11):** `countTotal=true` adds `totalCount` to the first page. `query.cond` narrows a search by condition and accepts `OR` between words. A condition worded the registry's way narrows well ("CAR-T cell therapy" has 2,071 trials, 2 with `query.cond=Stiff person syndrome`). A lay or long wording can return nothing ("Vitamin C" with "Pre-leukaemia blood disorders (CCUS and low-risk MDS)": 0; with "myelodysplastic syndrome": 16). The client therefore narrows only names with more than 100 trials, and tries the condition as worded and then its telling words joined with `OR`. A name that still has more than 100 trials within the condition, or none, contributes no candidates: the first live run met "the drug" recorded as another name for a treatment.
 
+- **Search by a trial's name (observed 2026-11-12):** `query.titles="SURMOUNT-5"` searches titles and acronyms and returned that one trial. The lookup asks for at most 20 and treats a name that more trials carry as identifying none. The search fields now also ask for `Acronym`, `EnrollmentCount` and `CollaboratorName`, which the lookup compares with what an article says of its trial.
+
 ## Europe PMC RESTful web service
 
 - **Checked:** 2026-11-11
@@ -24,6 +26,8 @@ Terms, authentication and rate limits for each external source. Check an entry a
 - **Rate limit:** not found on the pages read. The client defaults to 2 requests per second.
 - **Terms that bind the site:** almost all material is copyright of publishers or authors, including abstracts. Crawling the website to download batches of articles is prohibited. The pipeline uses the web service only, stores abstracts in raw payloads for matching, and never publishes them. The site shows a paper's title and a link.
 - **Behavior (observed):** a DOI is looked up with `query=DOI:"…"`; an unknown DOI returns `hitCount` 0, not an error. Citing papers come from `query=CITES:<id>_<source>` with `resultType=core` and are paged with `cursorMark`.
+
+- **A paper's own trial (observed 2026-11-12):** a PubMed number is looked up with `query=EXT_ID:<number> AND SRC:MED`. The core record of a trial's report carries its ClinicalTrials.gov number in `abstractText` ("ClinicalTrials.gov number, NCT…"); `dbCrossReferenceList` was empty for the paper tried. The lookup reads the number from the abstract, shows no part of the abstract, and treats a paper that gives more than three numbers as a review. The Worker asks the same question from Cloudflare with the same contact address, and keeps no answer.
 
 ## Crossref REST API
 

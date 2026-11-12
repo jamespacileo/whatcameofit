@@ -38,6 +38,9 @@ class Trials:
     def fetch_trial(self, nct_id: str) -> SourceRecord | None:
         return None
 
+    def named_trials(self, name: str) -> list[SourceRecord]:
+        return []
+
 
 class Backend:
     name = "fake"

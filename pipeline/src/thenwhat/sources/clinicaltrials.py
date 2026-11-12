@@ -9,9 +9,14 @@ from thenwhat.sources.base import Source, SourceRecord
 API = "https://clinicaltrials.gov/api/v2"
 NCT_ID = re.compile(r"NCT\d{8}")
 # A search only has to show enough to judge a match; the full record is fetched by identifier.
+# The acronym, the enrolment and the collaborators let a lookup tell which of a treatment's
+# trials an article reports.
 SEARCH_FIELDS = (
     "NCTId,BriefTitle,OfficialTitle,InterventionName,LeadSponsorName,Phase,OverallStatus,Condition"
+    ",Acronym,EnrollmentCount,CollaboratorName"
 )
+# A trial's name that this many trials carry does not identify one.
+MAX_NAMED_TRIALS = 20
 # A name with more trials than this is a class or a common substance, not one product.
 # Such a name is searched within the claim's condition.
 BROAD_NAME = 100
@@ -110,6 +115,26 @@ class ClinicalTrials(Source):
             more, _, next_token = self._page(intervention, None, next_token)
             records += more
         return records
+
+    def named_trials(self, name: str) -> list[SourceRecord]:
+        """The trials that carry this name in their acronym or title, such as SURMOUNT-5.
+        None when so many do that the name does not identify a trial."""
+        phrase = name.replace('"', " ").strip()
+        if not phrase:
+            return []
+        params = {
+            "query.titles": f'"{phrase}"',
+            "pageSize": str(MAX_NAMED_TRIALS),
+            "fields": SEARCH_FIELDS,
+            "countTotal": "true",
+        }
+        fetched = self._get(f"{API}/studies", params)
+        if fetched is None:
+            return []
+        studies = fetched.payload.get("studies", [])
+        if fetched.payload.get("totalCount", len(studies)) > MAX_NAMED_TRIALS:
+            return []
+        return [self._record(study, fetched.fetched_at) for study in studies]
 
     def _page(
         self, intervention: str, condition: str | None, page_token: str | None

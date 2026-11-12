@@ -6,7 +6,7 @@ Scenario names are from openspec claim-extraction. Article text here is syntheti
 import httpx
 import pytest
 
-from thenwhat.extract.retrieve import ArticleRetriever, PasteNeeded
+from thenwhat.extract.retrieve import ArticleRetriever, PasteNeeded, Probe
 from thenwhat.sources.base import MissingContact
 
 ARTICLE_URL = "https://news.example.org/2018/teeth"
@@ -179,3 +179,30 @@ def test_missing_contact_address_sends_nothing():
         retriever(web, contact=None).retrieve(ARTICLE_URL)
 
     assert web.requests == []
+
+
+def test_a_probe_says_how_the_site_itself_answered():
+    """Scenario: Outlet that can be read, outlet that refuses, outlet that fails"""
+    refusing = "https://refusing.example.org/story"
+    failing = "https://failing.example.org/story"
+    web = Web(
+        {
+            "https://news.example.org/robots.txt": ALLOW_ALL,
+            ARTICLE_URL: httpx.Response(200, text=PAGE),
+            "https://refusing.example.org/robots.txt": httpx.Response(
+                200, text="User-agent: *\nDisallow: /\n"
+            ),
+            "https://failing.example.org/robots.txt": ALLOW_ALL,
+            failing: httpx.Response(402),
+        }
+    )
+    probing = retriever(web)
+
+    read = probing.probe(ARTICLE_URL)
+    assert (read.robots, read.status) == ("allowed", 200)
+    assert read.page is not None and read.page.headline == "Teeth"
+    assert probing.probe(refusing) == Probe("robots")
+    assert probing.probe(failing) == Probe("allowed", 402)
+    # No archive is asked: the question is whether the outlet itself can be read.
+    assert not any("archive.org" in url for url in web.urls)
+    assert refusing not in web.urls

@@ -28,6 +28,39 @@ The lookup SHALL look up directly any registry number the text states. It SHALL 
 - **WHEN** the text reports "A and B" as one treatment and the registry lists a trial under B
 - **THEN** that trial is among the candidates
 
+### Requirement: A page is read for what it says about itself
+When a lookup starts from an article's address, the reader of the page SHALL take the headline, the summary and the publication date from the tags the page carries for other software, and SHALL put them before the article in the text the model is shown. When the page carries the article itself as structured data of at least 500 characters, that article SHALL be used in place of the visible text. Structured data that cannot be parsed SHALL be ignored without failing the lookup. The reader SHALL collect the ClinicalTrials.gov numbers in the page's text and links, and the papers its links point to, by DOI or PubMed number, at most five of each. Nothing read from the page SHALL be stored.
+
+#### Scenario: Page that describes itself in its tags
+- **WHEN** a page gives its title, description and publication time in its tags
+- **THEN** the text the model is shown begins with that headline, summary and date
+
+#### Scenario: Page that carries the article as structured data
+- **WHEN** the visible page is a teaser and its structured data holds the article
+- **THEN** the model is shown the article from the structured data and not the teaser
+
+#### Scenario: Page that links to the paper it reports
+- **WHEN** the page links to a paper by DOI, and that paper's abstract gives a ClinicalTrials.gov number
+- **THEN** that trial is among the candidates, marked as given by a paper the page links to
+
+### Requirement: The trial an article reports is told from its siblings by rule
+The lookup SHALL ask the model for what the text says of the trial itself: its name, its number of participants, and who ran it. A trial the text names SHALL be searched for by that name. Each candidate SHALL carry the reasons it agrees with the article, as codes: its number is stated in the text or the page, its number is given by a linked paper, it carries the trial's name, its registered enrolment is within a tenth of the reported number of participants, or its sponsor or a collaborator carries every telling word of the named sponsor. These agreements SHALL be decided by rule and not by the model. A candidate whose number the article states SHALL be ranked first. Among the candidates that read as trials of the treatment for the condition, those agreeing with more details SHALL come first; agreement SHALL NOT lift a candidate that does not read as such a trial above one that does. A paper that gives more than three registry numbers SHALL be treated as identifying no trial, and so SHALL a trial name carried by more than twenty trials.
+
+#### Scenario: Text that names the trial
+- **WHEN** the text names its trial and the registry has a trial with that acronym
+- **THEN** that trial is among the candidates and is ranked above the treatment's other trials
+
+#### Scenario: Text that gives the trial's size and who ran it
+- **WHEN** two trials of the treatment for the condition are found and one agrees with the reported number of participants and the named sponsor
+- **THEN** that one is ranked first, and a trial for another condition that agrees with both stays below them
+
+### Requirement: Which outlets can be read is recorded
+The pipeline SHALL be able to check every tracked article's address and report, per outlet, how many articles its site let the pipeline read, how many it refused by robots.txt, how many failed and with which status, and how many pages carried each signal: headline, summary, date, structured article, a link to a paper, a registry number. The check SHALL obey robots.txt, SHALL ask one outlet at most once a second, SHALL NOT try an archive, and SHALL store counts and codes only, never an article's text.
+
+#### Scenario: Outlet that can be read, outlet that refuses, outlet that fails
+- **WHEN** one outlet serves its article, a second forbids reading in robots.txt and a third answers with a payment-required status
+- **THEN** the record shows the first as read with its signals, the second as refused without its article being asked for, and the third as failed with that status
+
 ### Requirement: A tracked claim is named
 When a claim is already tracked under one of the names found, the lookup SHALL name that claim.
 

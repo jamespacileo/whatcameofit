@@ -20,7 +20,9 @@ from thenwhat.decide.core import Backend, decide_many
 from thenwhat.decide.steps import MATCH, TRIAL_OPTIONS, TRIAL_QUESTION, candidate_text
 from thenwhat.domain import EntityType
 from thenwhat.extract.names import is_a_name
+from thenwhat.extract.page import Page
 from thenwhat.llm.client import Llm
+from thenwhat.lookup.details import PAPER, STATED, Details, agreeing
 from thenwhat.resolve.service import what_it_says
 from thenwhat.sources.base import SourceRecord
 
@@ -29,6 +31,8 @@ REGISTRY_NUMBER = re.compile(r"\bNCT\d{8}\b", re.IGNORECASE)
 COMBINED = re.compile(r"\s+(?:and|plus)\s+|\s*\+\s*", re.IGNORECASE)
 # The most records one lookup will ask the backend about.
 MAX_CANDIDATES = 60
+# From this score a record reads as a trial of the treatment for the condition.
+LIKELY_FROM = 0.5
 
 ShortText = Annotated[str, Field(min_length=1, max_length=200)]
 
@@ -85,6 +89,28 @@ class Reading(BaseModel):
     indication: ShortText | None = Field(
         default=None, description="The condition it is reported to treat, in medical words."
     )
+    trial_name: ShortText | None = Field(
+        default=None,
+        description=(
+            "The name the text gives the trial itself, such as SURMOUNT-5 or RECOVERY."
+            " Not the treatment's name. Null if the text gives none."
+        ),
+    )
+    participants: int | None = Field(
+        default=None,
+        ge=1,
+        description=(
+            "How many people took part in the trial the text reports, as the text says."
+            " Null if it does not say."
+        ),
+    )
+    sponsor: ShortText | None = Field(
+        default=None,
+        description=(
+            "The company, university or hospital the text says ran or paid for the trial,"
+            " by its name alone. Null if the text names none."
+        ),
+    )
 
 
 class Trials(Protocol):
@@ -93,6 +119,14 @@ class Trials(Protocol):
     ) -> list[SourceRecord]: ...
 
     def fetch_trial(self, nct_id: str) -> SourceRecord | None: ...
+
+    def named_trials(self, name: str) -> list[SourceRecord]: ...
+
+
+class Papers(Protocol):
+    def trial_numbers(
+        self, *, doi: str | None = None, pubmed_id: str | None = None
+    ) -> list[str]: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -103,6 +137,8 @@ class Candidate:
     score: float
     answer: str
     summary: str
+    # Why it is ranked where it is, beyond the score: codes from thenwhat.lookup.details.
+    agrees: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,22 +151,38 @@ class Lookup:
     # Names the model knows the treatment by. They widen the search; they are not from the text.
     known_names: list[str] = field(default_factory=list)
     registry_numbers: list[str] = field(default_factory=list)
+    # Registry numbers given by a paper the page links to.
+    paper_numbers: list[str] = field(default_factory=list)
+    # What the text says about the trial itself.
+    details: Details = field(default_factory=Details)
     # Slugs of claims already tracked under one of the names.
     tracked: list[str] = field(default_factory=list)
     candidates: list[Candidate] = field(default_factory=list)
 
 
 def look_up(
-    session: Session, llm: Llm, backend: Backend, trials: Trials, *, text: str, now: datetime
+    session: Session,
+    llm: Llm,
+    backend: Backend,
+    trials: Trials,
+    *,
+    text: str,
+    now: datetime,
+    page: Page | None = None,
+    papers: Papers | None = None,
 ) -> Lookup:
     """Read the text, search the registry for what it reports, and rank what is found.
 
-    Registry numbers stated in the text are looked up directly. Each name the text gives,
-    each name the model knows the treatment by, and each search phrase is searched within
-    the reported condition. Every record found is scored by
-    the backend with the question used for a claim's candidates. Nothing found is stored.
+    Registry numbers stated in the text, or in a link on the page, are looked up directly;
+    so are the numbers given by a paper the page links to. Each name the text gives, each
+    name the model knows the treatment by, and each search phrase is searched within the
+    reported condition, and a trial the text names is searched for by that name. Every
+    record found is scored by the backend with the question used for a claim's candidates.
+    Among the records that read as trials of the treatment, those that agree with what the
+    text says of the trial (its name, its size, who ran it) come first. Nothing is stored.
     """
-    numbers = list(dict.fromkeys(number.upper() for number in REGISTRY_NUMBER.findall(text)))
+    stated = [number.upper() for number in REGISTRY_NUMBER.findall(text)]
+    numbers = list(dict.fromkeys([*stated, *(page.registry_numbers if page else ())]))
     reading = llm.run("lookup", instructions=INSTRUCTIONS, prompt=text, output_type=Reading)
     if not reading.about_a_treatment or not reading.intervention:
         return Lookup(reading.gist, None, None, registry_numbers=numbers)
@@ -147,11 +199,17 @@ def look_up(
         for name in dict.fromkeys(reading.known_names)
         if is_a_name(name) and not REGISTRY_NUMBER.fullmatch(name.strip()) and name not in names
     ]
+    details = Details(reading.trial_name, reading.participants, reading.sponsor)
+    from_papers = [number for number in _paper_numbers(page, papers) if number not in numbers]
+    # What is known by number or by the trial's name comes first, so it is never cut off.
     records: dict[str, SourceRecord] = {}
-    for number in numbers:
-        stated = trials.fetch_trial(number)
-        if stated is not None:
-            records.setdefault(stated.external_id, stated)
+    for number in [*numbers, *from_papers]:
+        given = trials.fetch_trial(number)
+        if given is not None:
+            records.setdefault(given.external_id, given)
+    if details.trial_name:
+        for record in trials.named_trials(details.trial_name):
+            records.setdefault(record.external_id, record)
     # A combination is registered under its parts as often as under the pair.
     parts = [part for name in names for part in _parts(name)]
     for term in dict.fromkeys([*names, *parts, *known, *reading.search_phrases]):
@@ -181,10 +239,23 @@ def look_up(
                 decision.probabilities[MATCH],
                 decision.choice,
                 what_it_says(record) or "",
+                [
+                    *([STATED] if record.external_id in numbers else []),
+                    *([PAPER] if record.external_id in from_papers else []),
+                    *agreeing(record.payload, details),
+                ],
             )
             for record, decision in zip(found, decisions, strict=True)
         ),
-        key=lambda candidate: (-candidate.score, candidate.external_id),
+        # A record the article itself names is first whatever its score. Then the records
+        # that read as trials of the treatment, those agreeing with more details first.
+        key=lambda candidate: (
+            STATED not in candidate.agrees,
+            candidate.score < LIKELY_FROM,
+            -len(candidate.agrees),
+            -candidate.score,
+            candidate.external_id,
+        ),
     )
     return Lookup(
         reading.gist,
@@ -193,9 +264,23 @@ def look_up(
         names=names,
         known_names=known,
         registry_numbers=numbers,
+        paper_numbers=from_papers,
+        details=details,
         tracked=_tracked(session, names),
         candidates=candidates,
     )
+
+
+def _paper_numbers(page: Page | None, papers: Papers | None) -> list[str]:
+    """The registry numbers given by the papers the page links to."""
+    if page is None or papers is None:
+        return []
+    found: list[str] = []
+    for doi in page.dois:
+        found += papers.trial_numbers(doi=doi)
+    for pubmed_id in page.pubmed_ids:
+        found += papers.trial_numbers(pubmed_id=pubmed_id)
+    return list(dict.fromkeys(found))
 
 
 def _parts(name: str) -> list[str]:

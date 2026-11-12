@@ -16,12 +16,18 @@ from thenwhat.extract.retrieve import PasteNeeded
 
 if TYPE_CHECKING:
     from thenwhat.decide.core import Backend
+    from thenwhat.extract.page import Page
     from thenwhat.llm.client import Llm
-    from thenwhat.lookup.service import Trials
+    from thenwhat.lookup.service import Papers, Trials
 
-# Under this, a candidate is listed apart: the backend did not read it as a trial of
-# this treatment for this condition.
-LIKELY_FROM = 0.5
+# Why a record is ranked where it is, in the operator's words.
+WHY = {
+    "stated": "the article gives this number",
+    "paper": "a paper the article links to gives this number",
+    "trial_name": "same trial name",
+    "participants": "same number of participants",
+    "sponsor": "same sponsor",
+}
 
 
 def make_tools(session: Session) -> tuple["Llm", "Backend", "Trials"]:
@@ -34,21 +40,30 @@ def make_tools(session: Session) -> tuple["Llm", "Backend", "Trials"]:
     return make_llm(session), make_backend(session), trials
 
 
-def _text(url: str | None, paste: bool) -> str:
-    """The text for this run only. It is never stored."""
+def make_papers(session: Session) -> "Papers":
+    from thenwhat.cli.session import settings_or_exit
+    from thenwhat.sources.europepmc import EuropePmc
+
+    return EuropePmc(session, contact_email=settings_or_exit().contact_email)
+
+
+def _text(url: str | None, paste: bool) -> tuple[str, "Page | None"]:
+    """The text for this run only, and the page it came from. Neither is stored."""
     if paste:
         text = sys.stdin.read().strip()
         if not text:
             raise EntryError("No text arrived on standard input.")
-        return text
+        return text, None
     if url is None:
         raise EntryError("Give the address of an article, or use --paste and pipe the text in.")
     from thenwhat.cli.extract import make_retriever
 
     try:
-        return make_retriever().retrieve(url).text
+        retrieved = make_retriever().retrieve(url)
     except PasteNeeded as needed:
         raise EntryError(f"{needed} Run the command again with --paste.") from None
+    page = retrieved.page
+    return (page.as_text() if page else retrieved.text), page
 
 
 def lookup_command(
@@ -66,12 +81,22 @@ def lookup_command(
 ) -> None:
     """Find the registry trials behind an article or a post. The answer is a ranked list
     of candidates for you to check, not a reviewed status. No claim is stored."""
-    from thenwhat.lookup.service import look_up
+    from thenwhat.lookup.details import STATED
+    from thenwhat.lookup.service import LIKELY_FROM, look_up
 
     with entry_session() as session:
-        text = _text(url, paste)
+        text, page = _text(url, paste)
         llm, backend, trials = make_tools(session)
-        found = look_up(session, llm, backend, trials, text=text, now=datetime.now(UTC))
+        found = look_up(
+            session,
+            llm,
+            backend,
+            trials,
+            text=text,
+            now=datetime.now(UTC),
+            page=page,
+            papers=make_papers(session) if page else None,
+        )
 
     if as_json:
         out.print(json.dumps(asdict(found), ensure_ascii=False, indent=2), markup=False)
@@ -89,10 +114,21 @@ def lookup_command(
             markup=False,
         )
     out.print(f"Condition: {found.indication}", markup=False)
+    said = [
+        f"trial name {found.details.trial_name}" if found.details.trial_name else "",
+        f"{found.details.participants} participants" if found.details.participants else "",
+        f"run by {found.details.sponsor}" if found.details.sponsor else "",
+    ]
+    if any(said):
+        out.print(f"Of the trial, the text says: {', '.join(s for s in said if s)}", markup=False)
+    if found.paper_numbers:
+        out.print(
+            f"A paper the article links to gives: {', '.join(found.paper_numbers)}", markup=False
+        )
     for slug in found.tracked:
         out.print(f"Already tracked as claim {slug}.", markup=False)
-    likely = [c for c in found.candidates if c.score >= LIKELY_FROM]
-    other = [c for c in found.candidates if c.score < LIKELY_FROM]
+    likely = [c for c in found.candidates if c.score >= LIKELY_FROM or STATED in c.agrees]
+    other = [c for c in found.candidates if c not in likely]
     if not found.candidates:
         out.print("No trial record was found in the registry searched.")
         return
@@ -105,3 +141,6 @@ def lookup_command(
             f"  {candidate.score:.2f}  {candidate.external_id}  {candidate.url}", markup=False
         )
         out.print(f"        {candidate.summary}", markup=False)
+        if candidate.agrees:
+            why = "; ".join(WHY[reason] for reason in candidate.agrees)
+            out.print(f"        Agrees: {why}", markup=False)

@@ -1,0 +1,47 @@
+{
+  "totalCount": 1,
+  "studies": [
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT05822830",
+          "briefTitle": "A Study of Tirzepatide (LY3298176) in Participants With Obesity or Overweight With Weight Related Comorbidities",
+          "officialTitle": "A Phase 3b, Randomized Controlled Study to Evaluate the Efficacy and Safety of Tirzepatide Compared to Semaglutide in Adults Who Have Obesity or Overweight With Weight Related Comorbidities",
+          "acronym": "SURMOUNT-5"
+        },
+        "statusModule": {
+          "overallStatus": "COMPLETED"
+        },
+        "sponsorCollaboratorsModule": {
+          "leadSponsor": {
+            "name": "Eli Lilly and Company"
+          }
+        },
+        "conditionsModule": {
+          "conditions": [
+            "Obesity",
+            "Overweight"
+          ]
+        },
+        "designModule": {
+          "phases": [
+            "PHASE3"
+          ],
+          "enrollmentInfo": {
+            "count": 751
+          }
+        },
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "name": "Tirzepatide"
+            },
+            {
+              "name": "Semaglutide"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

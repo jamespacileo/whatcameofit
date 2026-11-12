@@ -185,6 +185,28 @@ def test_name_still_broad_within_the_condition_gives_no_candidates(
     assert len(replay.requests) == 2
 
 
+def test_trials_that_carry_a_trial_name_are_found(session: Session, fake_time, fixture_json):
+    """Scenario: Search by a trial's name"""
+    named = fixture_json("clinicaltrials/titles_surmount5.json")
+    source, replay = trials(session, fake_time, lambda request: named)
+
+    records = source.named_trials('SURMOUNT-5"')
+
+    assert [record.external_id for record in records] == ["NCT05822830"]
+    assert replay.requests[0].url.params["query.titles"] == '"SURMOUNT-5"'
+    design = records[0].payload["protocolSection"]["designModule"]
+    assert design["enrollmentInfo"]["count"] == 751
+
+
+def test_a_trial_name_that_many_trials_carry_identifies_none(
+    session: Session, fake_time, fixture_json
+):
+    named = fixture_json("clinicaltrials/titles_surmount5.json") | {"totalCount": 4000}
+    source, _ = trials(session, fake_time, lambda request: named)
+
+    assert source.named_trials("study") == []
+
+
 # --- Europe PMC ------------------------------------------------------------------
 
 
@@ -197,6 +219,35 @@ def literature(session: Session, fake_time, route) -> tuple[EuropePmc, Replay]:
 
 
 EMPTY_SEARCH = {"hitCount": 0, "resultList": {"result": []}}
+
+
+def test_a_paper_gives_the_registry_number_of_its_trial(session: Session, fake_time, fixture_json):
+    """Scenario: Registry number of a paper's trial"""
+    paper = fixture_json("europepmc/paper_nejmoa2206038.json")
+    source, replay = literature(session, fake_time, lambda request: paper)
+
+    assert source.trial_numbers(doi="10.1056/nejmoa2206038") == ["NCT04184622"]
+    assert source.trial_numbers(pubmed_id="35658024") == ["NCT04184622"]
+    asked = [request.url.params["query"] for request in replay.requests]
+    assert asked == ['DOI:"10.1056/nejmoa2206038"', "EXT_ID:35658024 AND SRC:MED"]
+
+
+def test_a_paper_that_lists_many_trials_or_is_unknown_identifies_none(
+    session: Session, fake_time, fixture_json
+):
+    review = fixture_json("europepmc/paper_nejmoa2206038.json")
+    review["resultList"]["result"][0]["abstractText"] = " ".join(
+        f"NCT0000000{n}" for n in range(1, 6)
+    )
+    answers = {'DOI:"10.1/review"': review}
+    source, replay = literature(
+        session, fake_time, lambda request: answers.get(request.url.params["query"], EMPTY_SEARCH)
+    )
+
+    assert source.trial_numbers(doi="10.1/review") == []
+    assert source.trial_numbers(doi="10.1/unknown") == []
+    assert source.trial_numbers(pubmed_id="not-a-number") == []
+    assert len(replay.requests) == 2
 
 
 def test_paper_is_found_by_its_doi(session: Session, fake_time, fixture_json):
