@@ -32,8 +32,8 @@
 
 ## 5. Suggesting a group from MeSH
 
-- [ ] 5.1 Write the pure MeSH-to-group function and its fixed table, ignoring broad headings. Verify tests against the recorded autism fixture (Mental Disorders → `mental-health`), against one new recorded fixture that maps to two groups, and against one with no usable term.
-- [ ] 5.2 Show the suggestion, with its MeSH term, in `thenwhat prepare` output and in the review queue's claim line; verify one CLI test shows it and confirms the claim's vertical is unchanged.
+- [x] 5.1 Write the pure MeSH-to-group function and its fixed table, ignoring broad headings. Verify tests against the recorded autism fixture (Mental Disorders → `mental-health`), against one new recorded fixture that maps to two groups, and against one with no usable term.
+- [x] 5.2 Show the suggestion, with its MeSH term, in `thenwhat prepare` output and in the review queue's claim line; verify one CLI test shows it and confirms the claim's vertical is unchanged.
 
 ## 6. Redirects after launch
 
