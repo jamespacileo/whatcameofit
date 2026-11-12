@@ -9,7 +9,8 @@ import httpx
 import pytest
 from sqlalchemy.orm import Session
 
-from thenwhat.sources.base import MissingContact, Source, SourceError, SourceUnavailable
+from thenwhat.db.models import HttpCache
+from thenwhat.sources.base import MissingContact, Pacer, Source, SourceError, SourceUnavailable
 
 
 class Demo(Source):
@@ -108,6 +109,53 @@ def test_burst_of_requests_is_spread_out(session: Session, fake_time):
         demo.get(f"thing-{number}")
 
     assert fake_time.elapsed >= 3.0 - 1e-9  # nine gaps of a third of a second
+
+
+def test_clients_that_share_a_pacer_take_turns(session: Session, fake_time):
+    """Scenario: Several clients of one registry at once"""
+    shared = Pacer()
+    first = client(session, fake_time, Server(ok()), pacer=shared)
+    second = client(session, fake_time, Server(ok()), pacer=shared)
+
+    first.get("a")
+    second.get("b")
+    first.get("c")
+
+    # Together they keep to the registry's rate: three a second here.
+    assert fake_time.slept == pytest.approx([1 / 3, 1 / 3])
+
+
+def test_an_entry_another_session_wrote_meanwhile_is_replaced_not_collided_with(
+    session: Session, fake_time
+):
+    """Scenario: Two lookups fetch the same page at once"""
+
+    def answer_after_someone_else_cached_it(request: httpx.Request) -> httpx.Response:
+        session.add(
+            HttpCache(
+                request_key=f"demo GET {request.url}",
+                source_name="demo",
+                payload={"n": "theirs"},
+                fetched_at=fake_time.now(),
+                expires_at=fake_time.now() + timedelta(hours=24),
+            )
+        )
+        session.flush()
+        session.expunge_all()
+        return ok({"n": "ours"})
+
+    demo = Demo(
+        session,
+        contact_email="ops@thenwhat.test",
+        transport=httpx.MockTransport(answer_after_someone_else_cached_it),
+        time=fake_time,
+    )
+
+    fetched = demo.get("thing")
+
+    assert fetched is not None and fetched.payload == {"n": "ours"}
+    kept = session.get(HttpCache, "demo GET https://demo.test/thing")
+    assert kept is not None and kept.payload == {"n": "ours"}
 
 
 def test_cached_answers_do_not_wait(session: Session, fake_time):

@@ -131,6 +131,27 @@ def test_a_lookup_is_measured_on_articles_that_were_read(tracked: Session, fake_
     assert [c.lookup for c in opened.checked] == ["found", ""]
 
 
+def test_several_outlets_at_once_give_the_same_record(tracked: Session, fake_time):
+    """Scenario: Several outlets checked at the same time"""
+    told: list[str] = []
+
+    def measure(page: Page, approved: list[str]) -> Measured | None:
+        return Measured(found=True, first=True)
+
+    one_by_one = check_outlets(tracked, retriever(Web()), time=fake_time, measure=measure)
+    together = check_outlets(
+        tracked,
+        retriever(Web()),
+        time=fake_time,
+        measure=measure,
+        workers=3,
+        on_article=lambda checked: told.append(checked.url),
+    )
+
+    assert together == one_by_one
+    assert sorted(told) == sorted(c.url for outlet in together for c in outlet.checked)
+
+
 def test_the_record_is_a_table_with_a_total_and_no_article_text():
     opened = Outlet("open.example.org", articles=2, read=1, thin=1, measured=1, found=1)
     opened.signals.update({"headline": 2, "paper link": 1})

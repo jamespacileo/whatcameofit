@@ -7,8 +7,10 @@ Counts and codes only: no article text is kept, here or in the report.
 
 import csv
 import io
+import threading
 from collections import Counter
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import date
 
@@ -76,41 +78,70 @@ def check_outlets(
     *,
     time: Time | None = None,
     measure: Callable[[Page, list[str]], Measured | None] | None = None,
+    workers: int = 1,
+    on_article: Callable[[Checked], None] | None = None,
 ) -> list[Outlet]:
     """Ask for every tracked article once and count, per outlet, how its site answered.
 
     With `measure`, each article that was read and whose claim has approved trials is also
     put through a lookup, and the outlet's row counts how often an approved trial was found.
+
+    With more than one worker, several outlets are checked at the same time. One outlet is
+    still asked one article at a time, a second apart, and `measure` is then called from
+    several threads at once. `on_article` is told of each article as it is finished.
     """
     clock = time or SystemTime()
     approved = _approved_trials(session)
-    outlets: dict[str, Outlet] = {}
-    asked_at: dict[str, float] = {}
+    by_outlet: dict[str, list[tuple[str, list[str]]]] = {}
     articles = session.execute(
         select(SourceArticle.url, Claim.slug)
         .join(Claim, Claim.id == SourceArticle.claim_id)
         .order_by(SourceArticle.url)
     ).all()
     for url, slug in articles:
-        domain = outlet_domain(url)
-        outlet = outlets.setdefault(domain, Outlet(domain))
-        outlet.articles += 1
-        last = asked_at.get(domain)
-        if last is not None and clock.monotonic() - last < SECONDS_BETWEEN_REQUESTS:
-            clock.sleep(SECONDS_BETWEEN_REQUESTS - (clock.monotonic() - last))
-        probe = retriever.probe(url)
-        asked_at[domain] = clock.monotonic()
+        by_outlet.setdefault(outlet_domain(url), []).append((url, approved.get(slug, [])))
+    telling = threading.Lock()
 
-        if probe.robots == REFUSED_BY_ROBOTS:
-            outlet.refused += 1
-            outlet.checked.append(Checked(url, "refused"))
-            continue
-        page = probe.page
-        if page is None:
-            failure = str(probe.status) if probe.status else "no answer"
-            outlet.failed[failure] += 1
-            outlet.checked.append(Checked(url, failure))
-            continue
+    def one_outlet(domain: str) -> Outlet:
+        outlet = Outlet(domain)
+        asked_at: float | None = None
+        for url, trials in by_outlet[domain]:
+            if asked_at is not None and clock.monotonic() - asked_at < SECONDS_BETWEEN_REQUESTS:
+                clock.sleep(SECONDS_BETWEEN_REQUESTS - (clock.monotonic() - asked_at))
+            checked = _check_article(outlet, retriever, url, trials, measure)
+            asked_at = clock.monotonic()
+            if on_article is not None:
+                with telling:
+                    on_article(checked)
+        return outlet
+
+    if workers <= 1:
+        outlets = [one_outlet(domain) for domain in by_outlet]
+    else:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            outlets = list(pool.map(one_outlet, by_outlet))
+    return sorted(outlets, key=lambda outlet: (-outlet.articles, outlet.domain))
+
+
+def _check_article(
+    outlet: Outlet,
+    retriever: ArticleRetriever,
+    url: str,
+    trials: list[str],
+    measure: Callable[[Page, list[str]], Measured | None] | None,
+) -> Checked:
+    """Ask for one article, count the answer in its outlet's row, and return its own row."""
+    outlet.articles += 1
+    probe = retriever.probe(url)
+    page = probe.page
+    if probe.robots == REFUSED_BY_ROBOTS:
+        outlet.refused += 1
+        checked = Checked(url, "refused")
+    elif page is None:
+        failure = str(probe.status) if probe.status else "no answer"
+        outlet.failed[failure] += 1
+        checked = Checked(url, failure)
+    else:
         thin = len(page.as_text()) < BODY_FROM
         if thin:
             outlet.thin += 1
@@ -118,19 +149,16 @@ def check_outlets(
             outlet.read += 1
         signals = _signals(page)
         outlet.signals.update(signals)
-        trials = approved.get(slug, [])
         lookup = ""
-        if measure is not None and trials:
-            measured = measure(page, trials)
-            if measured is not None:
-                outlet.measured += 1
-                outlet.found += measured.found
-                outlet.first += measured.first
-                lookup = (
-                    "found first" if measured.first else "found" if measured.found else "not found"
-                )
-        outlet.checked.append(Checked(url, "thin" if thin else "read", tuple(signals), lookup))
-    return sorted(outlets.values(), key=lambda outlet: (-outlet.articles, outlet.domain))
+        measured = measure(page, trials) if measure is not None and trials else None
+        if measured is not None:
+            outlet.measured += 1
+            outlet.found += measured.found
+            outlet.first += measured.first
+            lookup = "found first" if measured.first else "found" if measured.found else "not found"
+        checked = Checked(url, "thin" if thin else "read", tuple(signals), lookup)
+    outlet.checked.append(checked)
+    return checked
 
 
 def report(outlets: list[Outlet], *, checked: date) -> str:

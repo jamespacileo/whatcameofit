@@ -1,12 +1,14 @@
 """What every registry client shares: the record contract, cache, rate limit,
 client identification and retry. Behavior: openspec source-clients."""
 
+import threading
 import time as system_time
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
 
 import httpx
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from thenwhat import __version__
@@ -53,6 +55,23 @@ class SystemTime:
         system_time.sleep(seconds)
 
 
+class Pacer:
+    """Whose turn it is to ask a registry. One pacer shared by several clients of the same
+    registry keeps them, together, to that registry's rate, whatever thread each is on."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._next_request_at: float | None = None
+
+    def wait(self, time: Time, interval: float) -> None:
+        with self._lock:
+            now = time.monotonic()
+            if self._next_request_at is not None and now < self._next_request_at:
+                time.sleep(self._next_request_at - now)
+                now = time.monotonic()
+            self._next_request_at = now + interval
+
+
 @dataclass(frozen=True, slots=True)
 class Fetched:
     payload: dict[str, Any]
@@ -76,6 +95,7 @@ class Source:
         cache_ttl: timedelta = timedelta(hours=24),
         max_attempts: int = 4,
         time: Time | None = None,
+        pacer: Pacer | None = None,
     ) -> None:
         self._session = session
         self._contact = (contact_email or "").strip()
@@ -83,7 +103,8 @@ class Source:
         self._interval = 1.0 / (rate_per_second or self.default_rate_per_second)
         self._cache_ttl = cache_ttl
         self._max_attempts = max_attempts
-        self._next_request_at: float | None = None
+        # Its own pacer unless one is shared with other clients of the same registry.
+        self._pacer = pacer or Pacer()
         self._client = httpx.Client(transport=transport, timeout=30.0, follow_redirects=True)
 
     def _get(
@@ -106,12 +127,21 @@ class Source:
             return None
 
         fetched = Fetched(response.json(), self._time.now())
-        entry = cached or HttpCache(request_key=key, source_name=self.name)
-        entry.payload = fetched.payload
-        entry.fetched_at = fetched.fetched_at
-        entry.expires_at = fetched.fetched_at + self._cache_ttl
-        self._session.add(entry)
-        self._session.flush()
+        kept = {
+            "source_name": self.name,
+            "payload": fetched.payload,
+            "fetched_at": fetched.fetched_at,
+            "expires_at": fetched.fetched_at + self._cache_ttl,
+        }
+        # Written in one statement that also replaces an entry another session wrote in
+        # the meantime, so two lookups at once cannot collide on the same request.
+        self._session.execute(
+            insert(HttpCache)
+            .values(request_key=key, **kept)
+            .on_conflict_do_update(index_elements=[HttpCache.request_key], set_=kept)
+        )
+        if cached is not None:
+            self._session.refresh(cached)
         return fetched
 
     def _request(self, url: str, params: dict[str, str] | None) -> httpx.Response | None:
@@ -139,11 +169,7 @@ class Source:
         raise SourceUnavailable(f"{self.name} did not answer after {self._max_attempts} attempts.")
 
     def _wait_for_turn(self) -> None:
-        now = self._time.monotonic()
-        if self._next_request_at is not None and now < self._next_request_at:
-            self._time.sleep(self._next_request_at - now)
-            now = self._time.monotonic()
-        self._next_request_at = now + self._interval
+        self._pacer.wait(self._time, self._interval)
 
 
 def _retry_after(response: httpx.Response) -> float:
