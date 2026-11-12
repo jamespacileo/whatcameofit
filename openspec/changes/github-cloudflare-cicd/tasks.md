@@ -9,5 +9,7 @@
 - [x] Verify contact destination and enable both forwarding rules.
 - [x] Configure and verify www redirect.
 - [x] Store scoped deployment credential and production variables in GitHub.
-- [ ] Push main, observe a successful GitHub production deployment, and verify the live site.
-- [ ] Integrate setup changes into the working checkout without changing concurrent work.
+- [x] Push main, observe a successful GitHub production deployment, and verify the live site.
+- [x] Integrate setup changes into the working checkout without changing concurrent work.
+
+Verified on 12 November 2026: [production run 43305145870](https://github.com/jamespacileo/whatcameofit/actions/runs/43305145870), 577 pipeline tests, 151 site tests, 24 extension tests, production rehearsal, deployment and live checks. HTTPS, www path/query preservation, retired topics and contact links also checked externally. Dependency audit: zero known vulnerabilities. Browser UI tests and store publication are owned by the parallel extension chat.
