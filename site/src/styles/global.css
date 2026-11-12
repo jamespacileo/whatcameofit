@@ -389,6 +389,37 @@ a.chip:hover {
   user-select: all;
 }
 
+.take-why {
+  color: var(--muted);
+  margin: -0.2rem 0 0.8rem;
+}
+
+/* The card beside the sentence that says the same thing. */
+.take-body {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
+  gap: 0.9rem 1.1rem;
+  align-items: start;
+}
+
+.take-card {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--rule);
+  border-radius: 0.65rem;
+}
+
+@media (max-width: 40rem) {
+  .take-body {
+    grid-template-columns: 1fr;
+  }
+
+  .take-card {
+    width: 9.5rem;
+  }
+}
+
 .take-actions {
   display: flex;
   flex-wrap: wrap;
@@ -562,6 +593,7 @@ body.embed {
   margin-top: 0.6rem;
 }
 
+.digest .note,
 .digest .overlay {
   display: inline-flex;
   align-items: center;
@@ -582,6 +614,36 @@ body.embed {
   font-size: 0.88rem;
   color: var(--muted);
   margin: 0.5rem 0 0;
+}
+
+/* The lookup's answer for an article we track: the same panel, drawn by script. */
+.digest.found {
+  margin-top: 0.8rem;
+  max-width: 46rem;
+}
+
+.found .note {
+  width: fit-content;
+}
+
+.found h2 {
+  font-size: 1.05rem;
+  line-height: 1.3;
+  margin: 0 0 0.3rem;
+}
+
+.found p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.found .changed {
+  margin-top: 0.5rem;
+}
+
+.tally {
+  color: var(--muted);
+  margin-top: 0.5rem;
 }
 
 .digest .lede {

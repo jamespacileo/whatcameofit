@@ -16,6 +16,14 @@ const approved = data.claims.filter((claim) => claim.status.code === "approved")
     Reported breakthroughs for which a regulator has recorded an approval. An approval says what a
     regulator decided; it is not advice about any one person's care.
   </p>
+  {
+    data.claims.length > 0 && (
+      <p class="tally">
+        Approvals on record: {approved.length} of {data.claims.length} tracked{" "}
+        {data.claims.length === 1 ? "claim" : "claims"}.
+      </p>
+    )
+  }
 
   {
     approved.length === 0 ? (

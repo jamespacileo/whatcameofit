@@ -397,6 +397,19 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
 
     <section class="take" data-pagefind-ignore>
       <h2 class="bar" id="pass-on">Pass it on</h2>
+      <p class="take-why">Seen this headline shared again? Reply with the record.</p>
+      <div class="take-body">
+        {/* The card the pills download, so a reader sees what they would be passing on. */}
+        <img
+          class="take-card"
+          src={`/og/square/${claim.slug}.png`}
+          width="1080"
+          height="1080"
+          alt={imageAlt}
+          loading="lazy"
+          decoding="async"
+        />
+        <div>
       <p class="sentence" id="sentence">{sentence}</p>
       <div class="take-actions">
         <button type="button" class="share" data-copy="sentence" hidden>
@@ -412,7 +425,8 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
           Tall image
         </a>
       </div>
-      <p class="entry-note">Each image says: {imageAlt}</p>
+        </div>
+      </div>
       <details class="embed-how">
         <summary>Show this status on another site</summary>
         <p class="entry-note">

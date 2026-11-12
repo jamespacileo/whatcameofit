@@ -32,6 +32,9 @@ const LABELS = {
 
 // The card's own words are held to the same rule as status labels: a build fails
 // rather than publish a verdict.
+/** The card draws this one fact on pale amber, so it is found by its label. */
+export const PROMISED_LABEL = LABELS.promised;
+
 assertNeutral([CARD_NOTICE, ...Object.values(LABELS)]);
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

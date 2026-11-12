@@ -5,7 +5,13 @@ import type { APIRoute } from "astro";
 import { articleKey } from "../lib/article-key.mjs";
 import { data } from "../lib/export";
 import { NOTICES, UNCHECKED_NOTE } from "../lib/notices";
-import { STATUS_LABELS, STATUS_MEANINGS, latestPromise, overlayText } from "../lib/status";
+import {
+  STAGE_PATH,
+  STATUS_LABELS,
+  STATUS_MEANINGS,
+  latestPromise,
+  overlayText,
+} from "../lib/status";
 import { SITE } from "../../site.config.mjs";
 import { formatDate } from "../lib/timetable";
 
@@ -20,6 +26,9 @@ export const GET: APIRoute = () => {
       page: `/${claim.slug}`,
       status: STATUS_LABELS[claim.status.code],
       meaning: STATUS_MEANINGS[claim.status.code],
+      // The status's place on the path from preclinical to approved, counted from 1, or
+      // null for a status that is off the path. A position, never a score.
+      place: STAGE_PATH.indexOf(claim.status.code) + 1 || null,
       no_signal: overlayText(claim.status.overlay_years),
       first_reported: claim.first_reported_date ? formatDate(claim.first_reported_date) : null,
       latest_promise: promise
@@ -48,6 +57,7 @@ export const GET: APIRoute = () => {
     // Where a registry search may be asked for, or null when this site offers none.
     // The browser extension reads it here, so it need not be rebuilt when that changes.
     live: SITE.lookupUrl,
+    places: STAGE_PATH.length,
     articles,
     claims,
   };
