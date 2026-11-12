@@ -51,6 +51,7 @@ const topicLink =
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- Checking the source? Same. Every record on this page links to its own. -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -163,7 +164,7 @@ const topicLink =
                 ? `Registries last checked ${formatDate(data.last_checked_at)}.`
                 : "Registries not yet checked."
             }
-            {` Pages built ${formatDate(data.generated_at)}.`}
+            {` Pages built ${formatDate(data.generated_at)}. We will check again.`}
           </p>
         </div>
       </div>

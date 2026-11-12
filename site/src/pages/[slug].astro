@@ -397,6 +397,8 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
 
     <section class="take" data-pagefind-ignore>
       <h2 class="bar" id="pass-on">Pass it on</h2>
+      {/* Says "Copied" to a screen reader; the button's own label changes for the eye. */}
+      <p class="visually-hidden" role="status" data-said></p>
       <p class="take-why">Seen this headline shared again? Reply with the record.</p>
       <div class="take-body">
         {/* The card the pills download, so a reader sees what they would be passing on. */}
@@ -448,6 +450,18 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
   // page address where there is not. The button only appears when it can work.
   // Copying: the button appears only where the clipboard can be written, says so when
   // it has copied, and otherwise leaves the text selected for the reader to copy.
+  // A copy is confirmed three ways: the label changes, the site's blue dot lands in
+  // place of the icon, and a screen reader is told.
+  const said = document.querySelector<HTMLElement>("[data-said]");
+  function confirm(control: HTMLElement, words: string) {
+    control.classList.add("done");
+    if (said) said.textContent = words;
+    setTimeout(() => {
+      control.classList.remove("done");
+      if (said) said.textContent = "";
+    }, 2000);
+  }
+
   if (navigator.clipboard) {
     for (const copier of document.querySelectorAll<HTMLButtonElement>("[data-copy]")) {
       const source = document.getElementById(copier.dataset.copy!)!;
@@ -458,6 +472,7 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
         try {
           await navigator.clipboard.writeText(source.textContent!.trim());
           label.textContent = "Copied";
+          confirm(copier, "Copied");
           setTimeout(() => (label.textContent = idle), 2000);
         } catch {
           getSelection()?.selectAllChildren(source);
@@ -478,6 +493,7 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
         } else {
           await navigator.clipboard.writeText(url);
           text.textContent = "Link copied";
+          confirm(button, "Link copied");
           setTimeout(() => (text.textContent = "Share"), 2000);
         }
       } catch {

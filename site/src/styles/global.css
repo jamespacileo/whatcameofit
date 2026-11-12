@@ -362,6 +362,25 @@ a.chip:hover {
   border-color: var(--tint);
 }
 
+/* Copied: the icon gives way to the site's dot for as long as the label says so. */
+.share.done svg {
+  display: none;
+}
+
+.share.done::before {
+  content: "";
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-inline: 0.22rem;
+  border-radius: 50%;
+  background: var(--blue);
+}
+
+/* The not-found page: the path with no place marked. */
+.track.nowhere {
+  margin-top: 0.9rem;
+}
+
 /* Under the records: how a status is set, and how to say one is wrong. */
 .about-page,
 .report {
@@ -1908,6 +1927,10 @@ main ul:not([class]) li + li {
     border-radius: 50%;
     border: 1.5px solid var(--blue);
     animation: mark-ring 0.9s var(--ease-out) 0.3s both;
+  }
+
+  .share.done::before {
+    animation: mark-land 0.4s var(--ease-out) both;
   }
 
   /* A record reached from the status panel shows itself, then settles. */

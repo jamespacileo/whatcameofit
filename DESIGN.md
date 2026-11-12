@@ -98,9 +98,22 @@ Two authored moments tell the site's story; the rest is feedback. Nothing loops,
 | Popover | Fades in and rises 4 px beside its trigger; leaves faster. | 170 ms in, 90 ms out |
 | Record reached by a link | The page scrolls to it, it shows in the tag blue, then settles to the tint. A link inside a popover closes the popover first. | 2.2 s |
 | Between pages, and when a table is filtered | A cross-fade; the masthead holds still. | 170 ms |
+| Lookup answer for a tracked article | The marker lands on the place, as on a claim page. | 0.6 s, once |
+| Copied | The button's icon gives way to the blue dot, which lands; the label says "Copied" and a screen reader is told. | 0.4 s, then 2 s held |
 | Chips, buttons, filter places | Colour changes ease; a pressed button drops 1 px. | 120 ms |
 
 Easing is `cubic-bezier(0.16, 1, 0.3, 1)` for arrivals. With reduced motion asked for: no dots, no landing, no scrolling, no cross-fade, no movement; popovers still fade and a reached record is tinted without the change. Popover fades apply only where the browser has popovers, so elsewhere a panel is plain visible content. On paper nothing is hidden by a motion style.
+
+## Dry wording
+
+The voice is plain, exact and unexcited, and that is the only joke the site makes: its own way of reporting, turned on itself. It is allowed on the site's own furniture and nowhere else.
+
+- Not-found page: "No page record found", the path with no place marked, and "Last checked: just now."
+- A search with no result: "No record found for … We say that a lot."
+- Footer: "We will check again." This is a promise; it stays only while the registries are in fact re-checked.
+- Page source: one comment for a reader who checks it.
+
+Never on a claim page, a card, an embed or the extension, never about a condition, a treatment, an outlet or the people behind a claim, and never a pun on a topic's name.
 
 ## Resilience
 

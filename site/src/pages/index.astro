@@ -505,7 +505,10 @@ const recent = data.claims
     }
     if (asked !== latest) return;
     if (hits.length === 0) {
-      show(`Nothing found for “${query}”. This site only covers claims it has tracked so far.`);
+      show(
+        `No record found for “${query}”. We say that a lot.`,
+        "This site only covers claims it has tracked so far.",
+      );
       return;
     }
     const list = document.createElement("ul");
