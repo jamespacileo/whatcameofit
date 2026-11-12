@@ -14,6 +14,7 @@ import pytest
 from thenwhat.domain import (
     ClaimStatus,
     EventType,
+    EvidenceStage,
     RegulatoryOutcome,
     ReviewState,
     TrialPhase,
@@ -215,6 +216,29 @@ def test_no_trials_is_preclinical_only():
     assert result([paper(), paper(doi="10.1000/second")]).status is ClaimStatus.PRECLINICAL_ONLY
 
 
+@pytest.mark.parametrize("stage", [EvidenceStage.EARLY_HUMAN, EvidenceStage.LATE_HUMAN])
+def test_study_in_people_with_no_trial_is_no_trial_found(stage: EvidenceStage):
+    """Scenario: Studied in people, no trial found"""
+    outcome = result([paper()], evidence_stage=stage)
+
+    assert (outcome.status, outcome.explaining_event_ids) == (ClaimStatus.NO_TRIAL_FOUND, ())
+
+
+@pytest.mark.parametrize("stage", [EvidenceStage.IN_VITRO, EvidenceStage.ANIMAL, None])
+def test_laboratory_or_animal_work_with_no_trial_is_preclinical_only(
+    stage: EvidenceStage | None,
+):
+    """Scenario: Laboratory or animal work, no trial found"""
+    assert result([paper()], evidence_stage=stage).status is ClaimStatus.PRECLINICAL_ONLY
+
+
+def test_a_trial_decides_the_status_whatever_the_evidence_stage():
+    """Scenario: Trial found for a claim first reported from animal work"""
+    events = trial("NCT1", PHASE_2, STARTED)
+
+    assert result(events, evidence_stage=EvidenceStage.ANIMAL).status is ClaimStatus.PHASE_2
+
+
 def test_failed_trial_and_later_standing_trial_is_the_standing_stage():
     """Scenario: Failed trial and a later standing trial"""
     failed = trial("NCT1", PHASE_2, STARTED, TrialState.COMPLETED)
@@ -308,6 +332,17 @@ def test_quiet_preclinical_claim_carries_the_overlay():
     outcome = result([paper(on=date(2020, 3, 1))], as_of=date(2024, 5, 1))
 
     assert (outcome.status, outcome.overlay_years) == (ClaimStatus.PRECLINICAL_ONLY, 4)
+
+
+def test_quiet_claim_with_no_trial_found_carries_the_overlay():
+    """Scenario: Quiet claim studied in people"""
+    outcome = result(
+        [paper(on=date(2020, 3, 1))],
+        as_of=date(2024, 5, 1),
+        evidence_stage=EvidenceStage.EARLY_HUMAN,
+    )
+
+    assert (outcome.status, outcome.overlay_years) == (ClaimStatus.NO_TRIAL_FOUND, 4)
 
 
 def test_quiet_period_starts_at_the_report_when_the_records_are_older():

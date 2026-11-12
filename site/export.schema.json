@@ -3,6 +3,7 @@
     "ClaimStatus": {
       "enum": [
         "preclinical_only",
+        "no_trial_found",
         "trial_registered",
         "phase_1",
         "phase_2",

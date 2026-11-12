@@ -134,7 +134,7 @@ def test_seeded_example_round_trips_from_article_url_to_built_page(
     decide_item(session, "claim", claim.id, ReviewState.APPROVED, now=NOW)
     for synonym in ("TRG035", "USAG-1"):
         add_synonym(session, SLUG, SEED["claim"]["intervention"], synonym)
-    confirm_stage(session, SLUG, EvidenceStage.ANIMAL)
+    confirm_stage(session, SLUG, EvidenceStage.ANIMAL, now=NOW)
 
     # 3. Resolve: no trial on ClinicalTrials.gov, and the paper's DOI is found.
     candidates = resolve_claim(

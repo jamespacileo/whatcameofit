@@ -580,7 +580,7 @@ def test_operator_correcting_the_suggested_stage_sets_stage_and_label(session: S
     suggestion = suggest_evidence_stage(session, Backend(), claim, now=EARLIER)
     assert suggestion.choice == "early_human" and claim.evidence_stage is None
 
-    confirm_stage(session, SLUG, EvidenceStage.ANIMAL)
+    confirm_stage(session, SLUG, EvidenceStage.ANIMAL, now=NOW)
 
     assert claim.evidence_stage is EvidenceStage.ANIMAL
     assert labels(session, "evidence_stage") == ["animal"]
@@ -589,7 +589,18 @@ def test_operator_correcting_the_suggested_stage_sets_stage_and_label(session: S
 def test_stage_can_be_set_when_nothing_was_suggested(session: Session):
     claim = approved_claim(session)
 
-    confirm_stage(session, SLUG, EvidenceStage.IN_VITRO)
+    confirm_stage(session, SLUG, EvidenceStage.IN_VITRO, now=NOW)
 
     assert claim.evidence_stage is EvidenceStage.IN_VITRO
     assert entities_of(session, claim)  # the claim is otherwise untouched
+
+
+def test_confirming_a_stage_brings_the_status_up_to_date(session: Session):
+    """Scenario: Stage confirmed on a claim with no trial"""
+    claim = approved_claim(session)
+
+    confirm_stage(session, SLUG, EvidenceStage.EARLY_HUMAN, now=NOW)
+    assert claim.current_status is ClaimStatus.NO_TRIAL_FOUND
+
+    confirm_stage(session, SLUG, EvidenceStage.ANIMAL, now=NOW)
+    assert claim.current_status is ClaimStatus.PRECLINICAL_ONLY

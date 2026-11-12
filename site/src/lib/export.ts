@@ -6,6 +6,7 @@ import addFormats from "ajv-formats";
 
 export type StatusCode =
   | "preclinical_only"
+  | "no_trial_found"
   | "trial_registered"
   | "phase_1"
   | "phase_2"

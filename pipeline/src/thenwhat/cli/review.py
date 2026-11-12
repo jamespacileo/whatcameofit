@@ -195,6 +195,14 @@ def review_stage(
     as_assistant: AS_ASSISTANT = False,
 ) -> None:
     """Confirm or correct the stage of evidence at announcement."""
+    settings = settings_or_exit()
     with entry_session() as session:
-        claim = confirm_stage(session, claim_slug, stage, by=_decider(as_assistant))
+        claim = confirm_stage(
+            session,
+            claim_slug,
+            stage,
+            now=datetime.now(UTC),
+            no_signal_years=settings.no_signal_years,
+            by=_decider(as_assistant),
+        )
         out.print(f"Evidence stage of {claim.slug}: {stage.value}.")

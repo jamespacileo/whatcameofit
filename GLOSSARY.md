@@ -14,10 +14,10 @@ Domain terms for thenwhat. Behavior is specified in `openspec/`; this file only 
 | **Entity** | Something a claim names: an intervention, paper, person, institution or company. Has a name and synonyms. |
 | **Origin paper** | The publication the first news reports of a claim were about. At most one per claim. |
 | **Match** | A proposed link between an entity and a record in a public registry (a trial, a DOI). Always confirmed by a human. |
-| **Evidence event** | A dated, sourced fact about a claim, such as a trial being registered or a follow-up paper appearing. The only input to status. |
+| **Evidence event** | A dated, sourced fact about a claim, such as a trial being registered or a follow-up paper appearing. Status comes from approved evidence events; the evidence stage matters only when no trial is found. |
 | **Follow-up paper** | A paper that cites the origin paper and either shares an author with it or names the intervention. |
 | **Review state** | Pending, approved or rejected. Applies to draft claims, matches and evidence events. |
-| **Status** | Where a claim stands, derived by fixed rules from its approved evidence events: preclinical only, trial registered, Phase 1 to 3, approved, failed, terminated or retracted. |
+| **Status** | Where a claim stands, derived by fixed rules from its approved evidence events: preclinical only, no trial record found, trial registered, Phase 1 to 3, approved, failed, terminated or retracted. With no trial found, the confirmed evidence stage decides between the first two: a study in people is "no trial record found", laboratory or animal work is "preclinical only". |
 | **Standing trial** | A trial that is neither terminated nor withdrawn and carries no failure flag. Status comes from the furthest standing trial that has started. |
 | **Failure flag** | A human-set marker that a trial missed its primary endpoint, with a source link. The only way a claim becomes "failed". |
 | **Overlay** | Extra text on a status, not a status itself. The no-signal overlay says how many years have passed without a new evidence event. |

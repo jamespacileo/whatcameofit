@@ -19,7 +19,8 @@ const quiet = {
   headline: "Tideglusib on a collagen sponge regrows dentine in mouse teeth",
   page: "/dentine-repair-tideglusib",
   status: "Preclinical only",
-  meaning: "No clinical trial was found in the registries checked.",
+  meaning:
+    "No clinical trial was found in the registries checked. The first reports are not recorded as describing a study in people.",
   no_signal: "No signal for 9 years",
   first_reported: "9 Jan 2017",
   latest_promise: null,

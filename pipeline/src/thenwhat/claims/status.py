@@ -18,7 +18,8 @@ def refresh_status(
     now: datetime,
     no_signal_years: int = 3,
 ) -> Derivation:
-    """Derive the claim's status from its approved events and store it.
+    """Derive the claim's status from its approved events and confirmed evidence stage,
+    and store it.
 
     The stored status and its updated-at time change only when the derived status
     or overlay differs from what is stored. `as_of` and `now` are passed in so that
@@ -31,6 +32,7 @@ def refresh_status(
         as_of=as_of,
         origin_paper_ids=_origin_paper_ids(session, claim),
         no_signal_years=no_signal_years,
+        evidence_stage=claim.evidence_stage,
     )
 
     stored = (claim.current_status, claim.overlay_years)

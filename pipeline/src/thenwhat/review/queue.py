@@ -314,10 +314,17 @@ def flag_failure(
 
 
 def confirm_stage(
-    session: Session, claim_slug: str, stage: EvidenceStage, *, by: Decider = Decider.HUMAN
+    session: Session,
+    claim_slug: str,
+    stage: EvidenceStage,
+    *,
+    now: datetime,
+    no_signal_years: int = 3,
+    by: Decider = Decider.HUMAN,
 ) -> Claim:
-    """Set the stage of evidence at announcement. The operator's choice becomes the
-    human label for whatever was suggested; the assistant's choice labels nothing."""
+    """Set the stage of evidence at announcement and bring the status up to date: with
+    no trial found, the stage decides between two statuses. The operator's choice becomes
+    the human label for whatever was suggested; the assistant's choice labels nothing."""
     claim = find_claim(session, claim_slug)
     if claim is None:
         raise ClaimNotFound(f"No claim has the slug '{claim_slug}'.")
@@ -325,6 +332,7 @@ def confirm_stage(
     if by is Decider.HUMAN:
         _label(session, EVIDENCE_STAGE, f"claim:{claim.id}", stage.value)
     session.flush()
+    refresh_status(session, claim, as_of=now.date(), now=now, no_signal_years=no_signal_years)
     return claim
 
 

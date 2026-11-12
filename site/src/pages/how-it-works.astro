@@ -20,6 +20,7 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
   <h2 class="bar">How a status is set</h2>
   <p>
     A status is derived by fixed rules from the approved evidence events listed on the claim page.
+    Where no trial is found, the rules also use the kind of study the first reports described.
     No model and no editor decides a status. Every status lists the events that produced it.
   </p>
   <p>The rules are applied in this order, and the first one that fits sets the status.</p>
@@ -43,11 +44,16 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
       If no trial remains and every registered trial was terminated or withdrawn, the status is
       “{STATUS_LABELS.terminated}”.
     </li>
-    <li>With no trial registered at all, the status is “{STATUS_LABELS.preclinical_only}”.</li>
+    <li>
+      With no trial found at all, the status depends on what the first reports described. If it was
+      a study in people, the status is “{STATUS_LABELS.no_trial_found}”. If it was laboratory or
+      animal work, the status is “{STATUS_LABELS.preclinical_only}”.
+    </li>
   </ol>
   <p>
     A claim that is still at a stage open to further evidence (“{STATUS_LABELS.preclinical_only}”
-    through “{STATUS_LABELS.phase_3}”) can also carry the no-signal note, described below.
+    through “{STATUS_LABELS.phase_3}”, and “{STATUS_LABELS.no_trial_found}”) can also carry the
+    no-signal note, described below.
   </p>
 
   <h2 class="bar">What each status means</h2>

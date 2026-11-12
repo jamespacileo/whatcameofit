@@ -35,7 +35,7 @@ The unit is the claim, not the article, and the status is derived by fixed rules
 ## Capabilities and Constraints
 
 - Pages: one per claim at `/{slug}`, an index per topic, a list of claims that reached approval, and a home page with search, the most recent news reports and recent status changes. Also: a page that explains the method, a page per year of first report, a calendar of first-report anniversaries, the published claims as a downloadable file, and an embed of each claim's status for other sites.
-- Statuses: preclinical only, trial registered, Phase 1, Phase 2, Phase 3, approved, failed, terminated, retracted. A "no signal for N years" note can accompany the first five.
+- Statuses: preclinical only, no trial record found, trial registered, Phase 1, Phase 2, Phase 3, approved, failed, terminated, retracted. A "no signal for N years" note can accompany the first six.
 - Never: medical advice, treatment recommendations, editorial verdicts. "No signal" is never worded as dead or abandoned. A registered trial is never presented as a treatment option.
 - Never: article text. News articles are linked by outlet, title and date only.
 - Every page carries a footer: not medical advice; a registered trial is not a treatment option; data sources; last-checked date.

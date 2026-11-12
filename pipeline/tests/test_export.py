@@ -146,7 +146,7 @@ def test_rejected_claim_is_not_exported(session: Session):
 def test_exported_claim_carries_what_its_page_shows(session: Session):
     claim = new_claim(session)
     add_synonym(session, SLUG, f"EX-1 antibody {SLUG}", "TRG-999")
-    confirm_stage(session, SLUG, EvidenceStage.ANIMAL)
+    confirm_stage(session, SLUG, EvidenceStage.ANIMAL, now=NOW)
     registered = add_event(session)
     started = add_event(
         session,

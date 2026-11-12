@@ -1,7 +1,8 @@
 """Pure status rules.
 
 Status is a function of a claim's approved evidence events, its failure flags,
-its first reported date and an as-of date. Nothing here may touch a database,
+its first reported date, its confirmed evidence stage and an as-of date. The stage
+matters only when no trial is found. Nothing here may touch a database,
 the network or the clock. Behavior: openspec status-derivation.
 """
 
@@ -12,6 +13,7 @@ from datetime import date
 from thenwhat.domain import (
     ClaimStatus,
     EventType,
+    EvidenceStage,
     RegulatoryOutcome,
     ReviewState,
     TrialPhase,
@@ -90,12 +92,17 @@ STAGE_STATUS = {
 OVERLAY_STATUSES = frozenset(
     {
         ClaimStatus.PRECLINICAL_ONLY,
+        ClaimStatus.NO_TRIAL_FOUND,
         ClaimStatus.TRIAL_REGISTERED,
         ClaimStatus.PHASE_1,
         ClaimStatus.PHASE_2,
         ClaimStatus.PHASE_3,
     }
 )
+
+# Stages of evidence at announcement that mean the work was done in people. With no
+# trial found, such a claim is not "preclinical only": the registries simply hold no record.
+STUDIED_IN_PEOPLE = frozenset({EvidenceStage.EARLY_HUMAN, EvidenceStage.LATE_HUMAN})
 
 
 def _whole_years(start: date, end: date) -> int:
@@ -148,6 +155,7 @@ def derive(
     as_of: date,
     origin_paper_ids: frozenset[str] = frozenset(),
     no_signal_years: int = 3,
+    evidence_stage: EvidenceStage | None = None,
 ) -> Derivation:
     approved = sorted(
         (event for event in events if event.review_state is ReviewState.APPROVED),
@@ -209,7 +217,11 @@ def derive(
         status = ClaimStatus.TERMINATED
         explaining = [event for trial in trials.values() for event in trial]
     else:
-        status = ClaimStatus.PRECLINICAL_ONLY
+        status = (
+            ClaimStatus.NO_TRIAL_FOUND
+            if evidence_stage in STUDIED_IN_PEOPLE
+            else ClaimStatus.PRECLINICAL_ONLY
+        )
         explaining = []
 
     # The quiet period runs from the latest thing known: the last approved event or the

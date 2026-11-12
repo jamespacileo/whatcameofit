@@ -19,7 +19,7 @@ worktrees via `wt`, archive via quarantine).
 ## Conventions and guardrails
 
 - Accuracy is the brand. Nothing reaches the public site unless it is approved in review.
-- Claim status is derived by deterministic rules from approved evidence events. No model decides status, and every status lists the events that produced it.
+- Claim status is derived by deterministic rules from approved evidence events. With no trial found, the reviewed evidence stage decides between "preclinical only" and "no trial record found". No model decides status, and every status lists the events that produced it.
 - No editorial verdicts. "No signal" is never worded as "dead" or "abandoned".
 - No medical advice. A registered trial is never presented as a treatment option.
 - Store the raw API payload and fetch timestamp for every evidence event.

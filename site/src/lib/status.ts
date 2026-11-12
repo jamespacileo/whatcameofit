@@ -3,6 +3,7 @@ import type { ExportedClaim, ExportedEvent, StatusCode } from "./export";
 
 export const STATUS_LABELS: Record<StatusCode, string> = {
   preclinical_only: "Preclinical only",
+  no_trial_found: "No trial record found",
   trial_registered: "Trial registered",
   phase_1: "Phase 1 trial",
   phase_2: "Phase 2 trial",
@@ -14,7 +15,10 @@ export const STATUS_LABELS: Record<StatusCode, string> = {
 };
 
 export const STATUS_MEANINGS: Record<StatusCode, string> = {
-  preclinical_only: "No clinical trial was found in the registries checked.",
+  preclinical_only:
+    "No clinical trial was found in the registries checked. The first reports are not recorded as describing a study in people.",
+  no_trial_found:
+    "The first reports described a study in people. No clinical trial was found in the registries checked.",
   trial_registered: "A clinical trial is registered. No trial with a phase has started.",
   phase_1: "The furthest trial that has started is a Phase 1 trial.",
   phase_2: "The furthest trial that has started is a Phase 2 trial.",
@@ -107,8 +111,8 @@ assertNeutral([
   overlayText(6)!,
 ]);
 
-// The path a claim can move along. A status off the path (failed, terminated,
-// retracted) is shown in words only.
+// The path a claim can move along. A status off the path (no trial record found,
+// failed, terminated, retracted) is shown in words only.
 export const STAGE_PATH: StatusCode[] = [
   "preclinical_only",
   "trial_registered",

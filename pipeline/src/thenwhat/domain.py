@@ -68,6 +68,8 @@ class RegulatoryOutcome(StrEnum):
 
 class ClaimStatus(StrEnum):
     PRECLINICAL_ONLY = "preclinical_only"
+    # First reported from a study in people, with no trial found in the registries checked.
+    NO_TRIAL_FOUND = "no_trial_found"
     TRIAL_REGISTERED = "trial_registered"
     PHASE_1 = "phase_1"
     PHASE_2 = "phase_2"
