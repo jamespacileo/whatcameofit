@@ -14,7 +14,7 @@ A post on X links out only through X's shortener (`t.co`), which the site's serv
 make extension
 ```
 
-This writes `extension/dist`. The site's address comes from `site/site.config.mjs`; until a domain is chosen that is the local preview, so the site must be running (`docker compose up -d`).
+This writes `extension/dist`. The site's address comes from `site/site.config.mjs` and defaults to `https://whatcameofit.com`. Set `SITE_URL` to build for a local service, as below. The public site's optional registry search is currently disabled.
 
 ## Chrome
 
@@ -51,13 +51,17 @@ To have an agent with computer use do this in your place, hand it [agent-test-br
 make extension-safari
 ```
 
-Apple's converter writes an Xcode project to `extension/safari` and the script compiles it without signing. To run it:
+Apple's converter writes `extension/safari/WhatCameOfIt/WhatCameOfIt.xcodeproj`. The script sets both display names to the built manifest's name, currently **What came of it?**, and both release versions to its version. The app and extension target macOS 12.0. It compiles an unsigned Release build for Intel and Apple silicon and prints the app's path. This verifies compilation. Safari runtime testing is a separate step.
+
+The app identifier defaults to `com.whatcameofit.WhatCameOfIt`; the extension identifier adds `.Extension`. Set `SAFARI_BUNDLE_ID` when building for another registered app identifier.
+
+For the local registry-search service, use `SITE_URL=http://localhost:8787 make extension-safari` while `make lookup-dev` is running. To run the unsigned app:
 
 1. In Safari, turn on "Show features for web developers" (Settings, Advanced), then "Allow unsigned extensions" (Settings, Developer). Safari asks for this again after each restart.
 2. Open the app the script names at the end of its output, once.
 3. Turn the extension on in Safari's Settings, Extensions.
 
-Distribution through the App Store needs an Apple developer account and a real bundle identifier (`SAFARI_BUNDLE_ID`).
+App Store distribution needs Apple Developer Program access, a registered bundle identifier and distribution signing. The script's unsigned build is for local testing. The production `extension/dist` resources can also be zipped for Apple's Safari Web Extension Packager in App Store Connect. Store submission and production screenshots remain separate release steps.
 
 ## Layout
 
@@ -69,4 +73,4 @@ Distribution through the App Store needs an Apple developer account and a real b
 - `build.mjs`: copies the above with what is shared with the site (the address comparison, how an address is told from a post, the page reader, the wording of an answer and the notices), the site's face and icon, and writes the manifest.
 - `dev/`: a page showing every popup state side by side. `node extension/build.mjs --dev`, then serve `extension/dist` and open `states.html`.
 
-Tests: `node --test extension/tests/` (also part of `make check`).
+Tests run with `node --test extension/tests/*.test.mjs` (also part of `make check`). The explicit glob discovers the test files on Node 24.
