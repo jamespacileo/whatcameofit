@@ -8,6 +8,13 @@
 - [x] 1.4 State the count of approvals on the approved-claims page and each year page; verify the wording on both
 - [x] 1.5 Verify the site tests pass and the site builds
 
+## 3. Review fixes
+
+- [x] 3.1 Say what a claim page is under its headline, with the link to the method page; verify it shows at phone width above the status panel
+- [x] 3.2 Keep amber for years that have a promise and set "No record" beside a past promise in ink; verify on a claim with one dated promise
+- [x] 3.3 List up to three other claims in the topic before "Pass it on"; verify a claim alone in its topic shows no such section
+- [x] 3.4 Make pills at least 44 pixels tall on a phone, give popover panels a role and say each record's kind in words; verify by measurement
+
 ## 2. Motion and dry wording
 
 - [x] 2.1 Confirm a copy with the blue dot in place of the icon and tell a screen reader; verify the status region says "Copied" and clears

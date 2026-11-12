@@ -31,7 +31,7 @@ The visual system of the thenwhat site as built. Product context is in `PRODUCT.
 Rules:
 
 - Pale amber means "promised" and nothing else. A promise is always on it, with dashed rules, wherever it appears.
-- An empty Promised cell is plain amber, with "Nothing promised for this year." for screen readers. A claim with no dated promise has no Promised column, and says "No dated promise on record." above the table.
+- Amber is kept for a promise that exists. An empty Promised cell is white, with "Nothing promised for this year." for screen readers; the column heading stays amber. Where a past year has a promise and no record, "No record" is in ink at body size, not in grey: the same words, easier to find. A claim with no dated promise has no Promised column, and says "No dated promise on record." above the table.
 - There is no colour for any status. No red, no green.
 - Light only. No dark theme.
 
@@ -62,6 +62,8 @@ Figures are tabular and lining throughout. Reading measure is 66 characters. A n
 - **Topic chip.** A pill with a small line drawing for the topic (a tooth for dental regeneration; a plain ring for a topic without a drawing) and the topic's name. It links to the topic page, from the claim page and from the home page's topic list.
 - **Wordmark.** The name in sentence case and ink, with a light lead and a heavy tail, closed by a question mark: "What came **of it**?". The question mark is drawn, not typed, so that its dot can be the solid blue marker that also shows where a claim stands. On a first visit the hook is drawn and the dot lands; a hover plays it again. The operator added the question mark to the name on 2026-11-11, replacing the three waiting dots tried first (`.impeccable/mocks/brand/directions.html`).
 - **Share.** On a claim page, a quiet pill opposite the topic chip. It opens the device's share sheet, or copies the page address and says "Link copied". Hidden when neither is possible, and on paper.
+- **What this is.** Under a claim's headline, one grey line for a reader who arrived from a shared link: "A record of what followed this reported breakthrough." and the link to the method page.
+- **Other claims.** Before "Pass it on": up to three other claims in the same topic, newest report first, in the index table, and a link to the topic when there are more.
 - **Digest panel.** The status label with an info button, the stage track, the no-signal note in a dashed outline when present, and "Latest record <date>", where the date leads to that record in the timetable, beside the summary. The info button opens a panel with what the status means, the records it rests on (each linking to its line in the timetable) and the date the status was set. The no-signal note opens a panel saying what it does and does not mean. The date a status was computed is never presented as the date something happened.
 - **Stage track.** Six places on a line, from preclinical to approved, with one larger solid blue dot at the status's place. It marks a position, not progress, and is never filled up to the dot. It always sits beside the status in words. Failed, terminated and retracted have no track. The operator approved it on 2026-11-11 as the one exception to "no meters".
 - **Facts row.** Intervention with its other names, what it is claimed for, first reported, evidence then.
@@ -137,6 +139,8 @@ Weight, measured on the preview build: a claim page with 29 records is 5 KB of H
 - Status never by colour alone.
 - Source articles are linked by outlet, title and date. Their text is never shown.
 - No stock photography. Topic imagery is a drawn mark in the accent colour.
+- Pills are at least 44 pixels tall on a phone.
+- A popover panel is a note to a screen reader, and every record line says its kind in words, not by its drawing alone.
 - Focus is a 3px blue outline (white on the footer). Selection is the tag blue, inverted on the footer. Hover thickens a link's underline, darkens the chip and the button.
 - A date never breaks across two lines.
 - Print hides navigation and search, drops the footer's fill and the table frame, never splits a record across sheets, and prints each source address after its link.

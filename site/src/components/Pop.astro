@@ -18,6 +18,6 @@ const { id, label, class: className } = Astro.props;
   aria-label={label}
   style={`anchor-name: --${id}`}><slot name="trigger" /></button
 >
-<div popover id={id} class="pop" style={`position-anchor: --${id}`}>
+<div popover id={id} class="pop" role="note" style={`position-anchor: --${id}`}>
   <slot />
 </div>

@@ -6,13 +6,14 @@ import ImageDown from "@lucide/astro/icons/image-down";
 import Info from "@lucide/astro/icons/info";
 import Share2 from "@lucide/astro/icons/share-2";
 import BasisMark from "../components/BasisMark.astro";
+import ClaimTable from "../components/ClaimTable.astro";
 import Outlet from "../components/Outlet.astro";
 import KindIcon from "../components/KindIcon.astro";
 import Pop from "../components/Pop.astro";
 import StageTrack from "../components/StageTrack.astro";
 import TopicChip from "../components/TopicChip.astro";
 import { APPROACH_LABELS } from "../lib/approach";
-import { data, type ExportedClaim } from "../lib/export";
+import { data, verticalTitle, type ExportedClaim } from "../lib/export";
 import { UNCHECKED_NOTE } from "../lib/notices";
 import {
   EVIDENCE_STAGES,
@@ -64,6 +65,12 @@ const imageAlt = cardAlt(cardFor(claim));
 // In a browser tab and a search result there is room for what and for what, not for
 // a whole headline: about sixty characters with the site's name.
 const tabTitle = clip(`${claim.intervention.name} for ${claim.indication}`, 41);
+// Where to go next: the claims filed with this one, newest report first.
+const topic = verticalTitle(claim.vertical);
+const inTopic = data.claims
+  .filter((other) => other.vertical === claim.vertical && other.slug !== claim.slug)
+  .sort((a, b) => ((a.first_reported_date ?? "") < (b.first_reported_date ?? "") ? 1 : -1));
+const others = inTopic.slice(0, 3);
 const address = `${SITE.url}/${claim.slug}`;
 const sentence = shareSentence(claim, STATUS_LABELS[claim.status.code], data.last_checked_at, address);
 // The whole of what another site needs to show this claim's status.
@@ -107,6 +114,11 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
         ))
       }
     </h1>
+
+    {/* A reader arriving from a shared link has not seen the home page. */}
+    <p class="what-this-is" data-pagefind-ignore>
+      A record of what followed this reported breakthrough. <a href="/how-it-works">How a status is set</a>
+    </p>
 
     {!claim.checked_by_person && <p class="unchecked">{UNCHECKED_NOTE}</p>}
 
@@ -293,7 +305,13 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                 <td data-column="Recorded">
                   {
                     row.recorded.length === 0 ? (
-                      <span class="entry-note">
+                      <span
+                        class:list={[
+                          "entry-note",
+                          // The same words, in ink, where a promise names this year.
+                          { beside: row.promised.length > 0 && row.year < thisYear },
+                        ]}
+                      >
                         {row.year < thisYear
                           ? "No record"
                           : row.current
@@ -324,6 +342,9 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                           ) : (
                             <li class="record">
                               <KindIcon kind={eventKind(line.steps[0].event)} />
+                              <span class="visually-hidden">
+                                {KIND_NAMES[eventKind(line.steps[0].event)]}.
+                              </span>
                               {line.steps.map((entry) => (
                                 <>
                                   <span class="entry-date">{dayAndMonth(entry.date)}</span>
@@ -390,10 +411,23 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
       )
     }
 
-    <p class="about-page" data-pagefind-ignore>
-      <a href="/how-it-works">How a status is set</a>
-    </p>
     <ReportError page={`/${claim.slug}`} />
+
+    {
+      others.length > 0 && (
+        <section data-pagefind-ignore>
+          <h2 class="bar" id="others">Other claims in {topic.toLowerCase()}</h2>
+          <ClaimTable claims={others} caption={`Other claims in ${topic.toLowerCase()}`} />
+          {inTopic.length > others.length && (
+            <p class="about-page">
+              <a href={`/topic/${claim.vertical}`}>
+                All {inTopic.length + 1} claims in {topic.toLowerCase()}
+              </a>
+            </p>
+          )}
+        </section>
+      )
+    }
 
     <section class="take" data-pagefind-ignore>
       <h2 class="bar" id="pass-on">Pass it on</h2>

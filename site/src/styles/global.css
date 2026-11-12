@@ -362,6 +362,21 @@ a.chip:hover {
   border-color: var(--tint);
 }
 
+/* Under the headline: what kind of page this is, for a reader who arrived cold. */
+.what-this-is {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin: 0.6rem 0 0;
+}
+
+/* A thumb needs more than a mouse does. */
+@media (max-width: 40rem) {
+  .share {
+    min-height: 2.75rem;
+    padding-inline: 1rem;
+  }
+}
+
 /* Copied: the icon gives way to the site's dot for as long as the label says so. */
 .share.done svg {
   display: none;
@@ -410,7 +425,7 @@ a.chip:hover {
 
 .take-why {
   color: var(--muted);
-  margin: -0.2rem 0 0.8rem;
+  margin: 0.15rem 0 0.8rem;
 }
 
 /* The card beside the sentence that says the same thing. */
@@ -770,6 +785,20 @@ body.embed {
 
 .timetable .promised {
   width: 33%;
+}
+
+/* Amber is kept for a promise that exists: a year with none is left white, so the
+   years that were promised something are found at a glance. */
+.timetable td.promised.none,
+.timetable td.promised.empty {
+  background: none;
+}
+
+/* "No record" beside a promise for that year: the same words, in ink. */
+.entry-note.beside {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 1rem;
 }
 
 .timetable thead .promised,
