@@ -132,7 +132,6 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
           <span class="label" data-pagefind-meta="status">{STATUS_LABELS[claim.status.code]}</span>
           <Pop id="why" label="Why this status" class="info">
             <Info slot="trigger" size={20} stroke-width={1.9} aria-hidden="true" />
-            <p>{STATUS_MEANINGS[claim.status.code]}</p>
             {
               explaining.length > 0 ? (
                 <>
@@ -195,7 +194,11 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
           )}
         </p>
       </div>
-      <p class="lede" data-pagefind-meta="summary">{claim.summary}</p>
+      <div class="says">
+        {/* What the status means, in a sentence, beside the label it explains. */}
+        <p class="means">{STATUS_MEANINGS[claim.status.code]}</p>
+        <p class="lede" data-pagefind-meta="summary">{claim.summary}</p>
+      </div>
     </div>
 
     <dl class="facts">

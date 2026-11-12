@@ -22,6 +22,13 @@
 - [x] 4.3 Make every pressed thing at least 44 pixels tall on a phone; verify by measurement
 - [x] 4.4 Mark a report title that leaves the site, move the embed snippet above "Pass it on", enlarge the card and stop the heading being announced twice; verify the order of sections
 
+## 5. Leftovers from the second review
+
+- [x] 5.1 Say what the status means in the digest itself and keep the info panel for the records it rests on; verify at desktop and phone widths
+- [x] 5.2 Set `aria-expanded` on a popover's button when its panel opens and closes; verify by opening and closing one
+- [x] 5.3 Show "Report an error" on the method page only when a corrections address is set; verify it is absent without one
+- [x] 5.4 Run `make check`
+
 ## 2. Motion and dry wording
 
 - [x] 2.1 Confirm a copy with the blue dot in place of the icon and tell a screen reader; verify the status region says "Copied" and clears

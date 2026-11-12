@@ -730,10 +730,18 @@ body.embed {
   margin-top: 0.5rem;
 }
 
+.digest .says {
+  align-self: center;
+}
+
+.digest .means {
+  margin: 0 0 0.45rem;
+  font-weight: 600;
+}
+
 .digest .lede {
   margin: 0;
   font-size: 1.02rem;
-  align-self: center;
 }
 
 @media (max-width: 40rem) {

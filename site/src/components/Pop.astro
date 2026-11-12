@@ -21,3 +21,18 @@ const { id, label, class: className } = Astro.props;
 <div popover id={id} class="pop" role="note" style={`position-anchor: --${id}`}>
   <slot />
 </div>
+
+<script>
+  // Say whether a panel is open on the button that opens it, for a screen reader
+  // whose browser does not report it for a popover on its own.
+  document.addEventListener(
+    "toggle",
+    (event) => {
+      const panel = event.target;
+      if (!(panel instanceof HTMLElement) || !panel.matches(".pop")) return;
+      const trigger = document.querySelector(`[popovertarget="${panel.id}"]`);
+      trigger?.setAttribute("aria-expanded", String(panel.matches(":popover-open")));
+    },
+    true,
+  );
+</script>
