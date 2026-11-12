@@ -795,6 +795,16 @@ main nav.contents ul li + li {
   font-size: 0.95rem;
 }
 
+/* Search matches: the headline at reading size, the status in ink before the summary. */
+.results .hits a {
+  font-weight: 600;
+  font-size: 1.02rem;
+}
+
+.results .hits .entry-note strong {
+  color: var(--ink);
+}
+
 .next-up {
   color: var(--muted);
   margin-top: 0.5rem;

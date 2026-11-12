@@ -560,22 +560,27 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
         `No record found for “${query}”. We say that a lot.`,
         "This site only covers claims it has tracked so far.",
       );
+      results.append(next());
       return;
     }
-    const list = document.createElement("ul");
-    list.className = "plain";
+    // Each match: the headline, then its status in words ahead of the summary.
+    const list = element("ul", undefined, "plain hits");
     for (const hit of hits) {
-      const item = document.createElement("li");
-      const link = document.createElement("a");
+      const item = element("li");
+      const link = element("a", hit.meta.title ?? hit.url) as HTMLAnchorElement;
       link.href = hit.url;
-      link.textContent = hit.meta.title ?? hit.url;
-      const note = document.createElement("span");
-      note.className = "entry-note";
-      note.textContent = [hit.meta.status, hit.meta.summary].filter(Boolean).join(". ");
+      const note = element("span", undefined, "entry-note");
+      if (hit.meta.status) note.append(element("strong", hit.meta.status), " ");
+      if (hit.meta.summary) note.append(hit.meta.summary);
       item.append(link, note);
       list.append(item);
     }
-    results.replaceChildren(list);
+    const count = element(
+      "p",
+      `${hits.length} tracked ${hits.length === 1 ? "claim matches" : "claims match"} “${query}”.`,
+      "entry-note",
+    );
+    results.replaceChildren(count, list);
   }
 
   function answer(text: string) {
