@@ -3,6 +3,7 @@ import { publicWebUrl, sourceUrl } from "../../site/src/lib/source-url.mjs";
 import { collectFromPage } from "./open-page.js";
 export { publicWebUrl, sourceUrl as publicPageUrl };
 export function inspectVisible(scope = null) {
+  const youtube = /^(?:www\.|m\.)?youtube\.com$/.test(location.hostname);
   const roots = [document];
   for (let i = 0; i < roots.length && i < 40; i++) {
     for (const node of [...roots[i].querySelectorAll("*")].slice(0, 3000)) {
@@ -16,9 +17,10 @@ export function inspectVisible(scope = null) {
   };
   const sensitive = roots.some(root => [...root.querySelectorAll('input, textarea, [contenteditable]')]
     .some(node => visible(node) && (node.type === "password" ||
-      !["checkbox", "radio", "range", "button", "submit", "reset", "search", "hidden"].includes(node.type) && node.value ||
+      !["checkbox", "radio", "range", "button", "submit", "reset", "search", "hidden"].includes(node.type) &&
+        // YouTube's public search field is type=text, unlike a native search input.
+        !(youtube && node.matches('input[type="text"][name="search_query"][role="combobox"]')) && node.value ||
       node.isContentEditable && (node.innerText.trim() || node.matches(":focus-within")))));
-  const youtube = /^(?:www\.|m\.)?youtube\.com$/.test(location.hostname);
   const focus = scope ? (scope.address === location.href && scope.selector ? document.querySelector(scope.selector) : null)
     : youtube ? null : document.querySelector('shreddit-post, article, [role="article"], main') ?? document.body;
   // A video ad is unrelated to the report. Missing/stale video context must not

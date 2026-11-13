@@ -127,6 +127,19 @@ test("selected words remain the only submitted text, without description links",
   }, selection);
 });
 
+test("YouTube's public search box behaves like a search input; comment drafts and passwords still prevent capture", async () => {
+  const search = '<input type="text" name="search_query" role="combobox" value="synthetic research" data-box="20,0,200,20" />';
+  await onPage(watch + search, address, document => {
+    const scope = collectFromPage().mediaScope;
+    assert.equal(inspectVisible(scope).sensitive, false);
+    document.querySelector('input').setAttribute("name", "comment");
+    assert.equal(inspectVisible(scope).sensitive, true);
+    document.querySelector('input').setAttribute("name", "search_query");
+    document.querySelector('input').setAttribute("type", "password");
+    assert.equal(inspectVisible(scope).sensitive, true);
+  });
+});
+
 test("an ad or offscreen player cannot fall back to an unrelated full-page screenshot", async () => {
   for (const html of [watch.replace('id="movie_player"', 'id="movie_player" class="ad-showing"'), watch.replace('data-box="20,20,640,360"', 'data-box="20,900,640,360"')]) {
     await onPage(html, address, () => {
