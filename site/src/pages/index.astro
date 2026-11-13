@@ -3,6 +3,7 @@ import CalendarPlus from "@lucide/astro/icons/calendar-plus";
 import Base from "../layouts/Base.astro";
 import ClaimName from "../components/ClaimName.astro";
 import Outlet from "../components/Outlet.astro";
+import Pager from "../components/Pager.astro";
 import PromiseText from "../components/PromiseText.astro";
 import StatusCell from "../components/StatusCell.astro";
 import TopicChip from "../components/TopicChip.astro";
@@ -14,7 +15,9 @@ import { siteData } from "../lib/structured";
 import { latestPromise } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 
-const reports = recentReports(data.claims, 10);
+// Every report and every status is on the page, read ten at a time.
+const PAGE_SIZE = 10;
+const reports = recentReports(data.claims, Infinity);
 // Drawn only when a suggestion address is configured. Nothing is carried from here;
 // the lookup's own answers carry a pasted article address.
 const suggest = contactLink(SITE.suggestUrl, "", SUGGEST_SUBJECT);
@@ -44,8 +47,7 @@ const approvals = data.claims.filter((claim) => claim.status.code === "approved"
 
 const recent = data.claims
   .filter((claim) => claim.status.updated_at !== null)
-  .sort((a, b) => (a.status.updated_at! < b.status.updated_at! ? 1 : -1))
-  .slice(0, 10);
+  .sort((a, b) => (a.status.updated_at! < b.status.updated_at! ? 1 : -1));
 // Statuses are often set in one batch. One shared date is said once, in the heading,
 // in place of a column that repeats it on every row.
 const setOn = new Set(recent.map((claim) => claim.status.updated_at!.slice(0, 10)));
@@ -125,8 +127,8 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
           </tr>
         </thead>
         <tbody role="rowgroup">
-          {reports.map((report) => (
-            <tr role="row">
+          {reports.map((report, index) => (
+            <tr role="row" data-later={index >= PAGE_SIZE ? "" : undefined}>
               <td role="cell" class="claim">
                 <a href={`/${report.claim.slug}`}>“{report.title}”</a>
                 <span class="entry-note">
@@ -159,6 +161,7 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
         </tbody>
       </table>
       </div>
+      <Pager name="headlines" total={reports.length} size={PAGE_SIZE} one="headline" many="headlines" />
     )
   }
 
@@ -177,8 +180,8 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
           </tr>
         </thead>
         <tbody role="rowgroup">
-          {recent.map((claim) => (
-            <tr role="row">
+          {recent.map((claim, index) => (
+            <tr role="row" data-later={index >= PAGE_SIZE ? "" : undefined}>
               <td role="cell" class="claim">
                 <ClaimName claim={claim} />
               </td>
@@ -195,6 +198,7 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
         </tbody>
       </table>
       </div>
+      <Pager name="statuses" total={recent.length} size={PAGE_SIZE} one="claim" many="claims" />
     )
   }
 

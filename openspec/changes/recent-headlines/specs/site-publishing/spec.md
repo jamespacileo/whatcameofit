@@ -3,7 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: Recent reports on the home page
-The home page SHALL list the most recently published source articles of published claims, newest first, at most ten. Each entry SHALL show the article's title as the outlet wrote it, marked as a quotation, with the outlet, the publication date and the claim's current status. The title SHALL link to the claim page and the outlet SHALL link to the article.
+The home page SHALL list the most recently published source articles of published claims, newest first (ten at a time: see change `browse-lists`). Each entry SHALL show the article's title as the outlet wrote it, marked as a quotation, with the outlet, the publication date and the claim's current status. The title SHALL link to the claim page and the outlet SHALL link to the article.
 
 #### Scenario: Reports from several claims
 - **WHEN** three published claims have four source articles between them

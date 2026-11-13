@@ -1781,6 +1781,57 @@ main nav.contents ul li + li {
   text-decoration-thickness: 2px;
 }
 
+/* Under a long table: step through it a page at a time. Rows after the first page
+   are in the document; where scripts run they are out of sight until asked for. */
+@media (scripting: enabled) {
+  tr[data-later] {
+    display: none;
+  }
+}
+
+.table-frame {
+  scroll-margin-top: 1rem;
+}
+
+.pager {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.pager-at {
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.pager button {
+  font: inherit;
+  font-weight: 600;
+  color: var(--blue);
+  background: none;
+  border: 0;
+  padding: 0.55rem 0.2rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.pager button:hover {
+  text-decoration-thickness: 2px;
+}
+
+.pager button[aria-disabled="true"] {
+  color: var(--muted);
+  text-decoration: none;
+  cursor: default;
+  opacity: 0.6;
+}
+
 /* The topic directory: dense, lettered, narrowed by typing. */
 .directory {
   margin-top: 1.5rem;

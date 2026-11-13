@@ -159,6 +159,16 @@ test("Scenario: Home lists the newest reports", () => {
   assert.match(html, /<a href="https:\/\/uk\.news\.example\.org\/3">Example Outlet 3<\/a>/);
 });
 
+test("Scenario: A list that fits one page", () => {
+  // Four reports and three claims: every row is on the first page, with a pager that
+  // stays out of sight under each list.
+  const html = page("index.html");
+  assert.doesNotMatch(html, /<tr[^>]*data-later/);
+  assert.match(html, /<nav class="pager"[^>]*data-pager="headlines"[^>]*hidden/);
+  assert.match(html, /<nav class="pager"[^>]*data-pager="statuses"[^>]*hidden/);
+  assert.match(page("topic/gum-disease/index.html"), /data-pager="claims"/);
+});
+
 test("Scenario: Article of a published claim", () => {
   const lookup = JSON.parse(page("lookup.json"));
   // Each article address, in comparison form, names its claim.

@@ -3,6 +3,7 @@ import type { ExportedClaim, StatusCode } from "../lib/export";
 import { STAGE_PATH, STATUS_LABELS, latestPromise } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 import ClaimName from "./ClaimName.astro";
+import Pager from "./Pager.astro";
 import PromiseText from "./PromiseText.astro";
 import StatusCell from "./StatusCell.astro";
 
@@ -11,9 +12,13 @@ interface Props {
   caption: string;
   /** Show how the claims are spread across statuses, and let a reader pick one. */
   filter?: boolean;
+  /** Names the list in the page's address; give one when a page has two lists. */
+  name?: string;
 }
 
-const { claims, caption, filter = false } = Astro.props;
+const { claims, caption, filter = false, name = "claims" } = Astro.props;
+// A longer list is read a page at a time.
+const PAGE_SIZE = 25;
 // A handful of claims is read at a glance; the filter earns its place on a longer list.
 const FILTER_FROM = 6;
 const counts = new Map<StatusCode, number>();
@@ -74,10 +79,10 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
   </thead>
   <tbody role="rowgroup">
     {
-      claims.map((claim) => {
+      claims.map((claim, index) => {
         const promise = latestPromise(claim);
         return (
-          <tr data-status={claim.status.code} role="row">
+          <tr data-status={claim.status.code} data-later={index >= PAGE_SIZE ? "" : undefined} role="row">
             <td role="cell" class="claim">
               <ClaimName claim={claim} />
             </td>
@@ -109,14 +114,14 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
   </tbody>
 </table>
 </div>
+<Pager name={name} total={claims.length} size={PAGE_SIZE} one="claim" many="claims" />
 
 <script>
   // Picking a place on the path shows only the claims there; picking it again shows all.
   for (const filter of document.querySelectorAll<HTMLElement>("[data-stage-filter]")) {
     const buttons = [...filter.querySelectorAll<HTMLButtonElement>("button[data-status]")];
-    const rows = [
-      ...filter.nextElementSibling!.querySelectorAll<HTMLTableRowElement>("tbody tr[data-status]"),
-    ];
+    const table = filter.nextElementSibling!.querySelector("table")!;
+    const rows = [...table.querySelectorAll<HTMLTableRowElement>("tbody tr[data-status]")];
     const shown = filter.querySelector<HTMLElement>("[data-shown]")!;
     const shownText = filter.querySelector<HTMLElement>("[data-shown-text]")!;
     // Where the browser can, the table cross-fades to its narrowed self.
@@ -129,11 +134,14 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
       for (const button of buttons) {
         button.setAttribute("aria-pressed", String(button.dataset.status === picked));
       }
+      // The pager under the table shows the rows left in, a page at a time.
       let visible = 0;
       for (const row of rows) {
-        row.hidden = picked !== null && row.dataset.status !== picked;
-        if (!row.hidden) visible += 1;
+        const out = picked !== null && row.dataset.status !== picked;
+        row.toggleAttribute("data-out", out);
+        if (!out) visible += 1;
       }
+      table.dispatchEvent(new Event("paged:refresh"));
       shown.hidden = picked === null;
       shownText.textContent = `Showing ${visible} of ${rows.length} claims.`;
     };
