@@ -74,7 +74,7 @@ const icons = Object.fromEntries(sizes.map((size) => [size, `icons/${size}.png`]
 const manifest = {
   manifest_version: 3,
   name: SITE.name,
-  version: "0.6.1",
+  version: "0.7.0",
   description: "See what happened to the medical breakthrough in the article you are reading.",
   icons,
   action: {
@@ -85,7 +85,10 @@ const manifest = {
   // The current tab only, and only when the popup is opened. "scripting" lets the
   // popup read an untracked page for its automatic registry search. The site's
   // own address is the one place the extension may fetch from or send to.
-  permissions: ["activeTab", "scripting", "storage"],
+  // "alarms" and "notifications" let the background check refresh the lookup file twice
+  // a day and tell the reader when a followed claim moves or a reminder is due.
+  permissions: ["activeTab", "scripting", "storage", "alarms", "notifications"],
+  background: { service_worker: "background.js", type: "module" },
   // The site, and the shorteners whose links the popup opens to learn where they lead
   // (src/short-links.js): X's, which answers a browser but not the site's server.
   host_permissions: [`${origin}/*`, ...RESOLVABLE.map((host) => `https://${host}/*`)],

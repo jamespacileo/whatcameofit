@@ -42,6 +42,14 @@ import Base from "../layouts/Base.astro";
     from the second, and removing the extension removes both.
   </p>
   <p>
+    While the extension is installed, twice a day it fetches the same public lookup file, so it
+    can tell you with a notification when a claim you follow has moved. That request carries no
+    page address, nothing you checked and nothing about you. A reminder you set ("remind me in
+    six months") is kept in the browser with the claim's name and the day, shows one
+    notification on that day, and is then removed. The browser may ask you to allow
+    notifications; without them, the popup still marks a claim that has moved.
+  </p>
+  <p>
     Before the first untracked lookup, the extension asks you to allow sharing page content and screenshot fallback with our service and OpenAI. If you allow it, opening an untracked page starts
     the registry search described below automatically. You can turn this off in Automatic search settings and keep using reviewed claim matching. The extension does
     not monitor other tabs or automatically search pages while you browse with it closed.

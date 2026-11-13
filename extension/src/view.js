@@ -58,6 +58,11 @@ const text = {
   openPage: "Open the page",
   clear: "Clear this list",
   follow: "Follow this claim",
+  remindMe: "Remind me to look again:",
+  inSixMonths: "in six months",
+  inAYear: "in a year",
+  remindOn: (date) => `Reminder set for ${date}.`,
+  removeReminder: "Remove",
   followingThis: "You follow this claim.",
   stop: "Stop following",
   followingEmpty: "You follow no claims yet. Open a tracked report and choose Follow.",
@@ -129,6 +134,32 @@ function followControl(claim, kept, actions) {
   return press(text.follow, "button quiet", () => actions.follow(claim));
 }
 
+/** A day to look at this claim again, shown as a notification on that day. */
+function reminderControl(claim, kept, actions) {
+  if (!kept || !actions.remindLater) return null;
+  const set = kept.reminders?.[claim.page];
+  if (set) {
+    return el("p", "small followed", [
+      text.remindOn(spokenDay(set)),
+      " ",
+      press(text.removeReminder, "text-button", () => actions.forget(claim.page)),
+    ]);
+  }
+  return el("p", "small followed", [
+    text.remindMe,
+    " ",
+    press(text.inSixMonths, "text-button", () => actions.remindLater(claim, "six-months")),
+    " · ",
+    press(text.inAYear, "text-button", () => actions.remindLater(claim, "year")),
+  ]);
+}
+
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+function spokenDay(iso) {
+  const [year, month, day] = iso.split("-").map(Number);
+  return `${day} ${MONTHS[month - 1]} ${year}`;
+}
+
 function claimBlock(claim, site, actions, places, kept) {
   const was = kept?.was?.[claim.page];
   return el("article", "claim", [
@@ -148,6 +179,7 @@ function claimBlock(claim, site, actions, places, kept) {
     ]),
     link(text.open, site.url + claim.page, "button", actions.open),
     followControl(claim, kept, actions),
+    reminderControl(claim, kept, actions),
   ]);
 }
 

@@ -41,6 +41,7 @@ async function runPopup(navigate, words = "EX-1 is being studied as a treatment 
       "source-url.js": "site/src/lib/source-url.mjs",
       "lookup.js": "extension/src/lookup.js",
       "kept.js": "extension/src/kept.js",
+      "watch.js": "extension/src/watch.js",
       "open-page.js": "extension/src/open-page.js",
       "short-links.js": "extension/src/short-links.js",
       "article-key.js": "site/src/lib/article-key.mjs",

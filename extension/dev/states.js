@@ -120,7 +120,7 @@ const states = [
   [
     "Tracked, followed and changed",
     tracked([claim]),
-    { recent: 3, following: 1, changed: 0, followed: [claim.page], was: { [claim.page]: "Trial registered" } },
+    { recent: 3, following: 1, changed: 0, followed: [claim.page], was: { [claim.page]: "Trial registered" }, reminders: { [claim.page]: "2027-05-13" } },
   ],
   [
     "Recently checked",
@@ -206,6 +206,8 @@ const actions = {
   back: log("back"),
   follow: log("follow"),
   unfollow: log("unfollow"),
+  remindLater: log("remindLater"),
+  forget: log("forget"),
   openFollowed: log("openFollowed"),
 };
 
