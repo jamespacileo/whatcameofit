@@ -2,8 +2,8 @@
 // answers a reader's question about an article the site does not track, or about a post
 // that links to one: which trial records is this about? Behaviour: openspec live-lookup.
 //
-// Nothing a reader sends is stored or logged here: not the address, not the text, not
-// the answer. The reader's network address is used once, to count requests per minute.
+// Raw requests are never stored or logged. Independently public structured answers
+// may be cached briefly under a URL digest. Network addresses only count request rates.
 import { PLATFORM_NAMES, readAddress } from "../src/lib/lookup-match.mjs";
 import { MAX_TEXT_CHARACTERS, readArticle } from "./article.mjs";
 import { lookUp } from "./lookup.mjs";
@@ -13,6 +13,8 @@ import { makePapers } from "./papers.mjs";
 import { readPost } from "./post.mjs";
 import { makeRegistry } from "./registry.mjs";
 import { followShort } from "./short.mjs";
+import { readBody, sourceUrl, validateImage } from "./visual.mjs";
+import { previousResult, storeResult } from "./results.mjs";
 
 const PATH = "/api/lookup";
 // What a reader's browser may send with text it read: this many links, each this long.
@@ -112,22 +114,31 @@ export async function handle(request, env, tools) {
   if (request.method !== "POST") return refuse(405, "method");
   if (!env.OPENAI_API_KEY || !env.LLM_MODEL || !env.CONTACT_EMAIL) return refuse(503, "not_set_up");
 
-  const sent = await request.json().catch(() => null);
+  let sent, image;
+  try { sent = await readBody(request); image = validateImage(sent?.image); }
+  catch (error) { return refuse(error.status ?? 400, error.code ?? "image_invalid"); }
+  const pageUrl = sourceUrl(sent?.pageUrl);
+  if (sent?.cacheOnly === true) {
+    const reader = request.headers.get("CF-Connecting-IP") ?? "unknown";
+    const limits = await Promise.all([env.LOOKUP_PER_READER.limit({ key: reader }), env.LOOKUP_IN_ALL.limit({ key: "all" })]);
+    if (limits.some(limit => !limit.success)) return refuse(429, "busy");
+    return answer(await previousResult(env.LOOKUP_RESULTS, pageUrl) ?? { cacheMiss: true });
+  }
   const address = typeof sent?.url === "string" ? sent.url.trim() : "";
   let text = typeof sent?.text === "string" ? sent.text.trim() : "";
   if (text.length > MAX_TEXT_CHARACTERS) return refuse(413, "too_long");
   // Text may come with the links that stood in it, and with the name of the platform it
   // was a post on: what a reader's own browser read from the page they had open. The
-  // page's address is not asked for and is not sent.
+  // cleaned page address is optional and identifies an earlier public result.
   const links = (Array.isArray(sent?.links) ? sent.links : [])
     .filter((link) => typeof link === "string" && link.length <= MAX_LINK_CHARACTERS && /^https?:\/\//i.test(link))
     .slice(0, MAX_LINKS);
   const platform = PLATFORM_NAMES.includes(sent?.platform) ? sent.platform : null;
   const linkedBrowserPost = !address && platform !== null && links.length > 0;
-  if (!address && !text && !linkedBrowserPost) return refuse(400, "nothing_given");
+  if (!address && !text && !linkedBrowserPost && !image) return refuse(400, "nothing_given");
 
   let read = null;
-  if (!text && !linkedBrowserPost) {
+  if (!text && !linkedBrowserPost && !image) {
     read = readAddress(address);
     if (read.kind === "none") return refuse(400, "address");
     // A shortened link does not say which article it is; the reader opens it first.
@@ -143,6 +154,13 @@ export async function handle(request, env, tools) {
   ]);
   if (limits.some((limit) => !limit.success)) return refuse(429, "busy");
 
+  // A caller's context URL must never relabel a different independently fetched URL.
+  const cacheUrl = address ? sourceUrl(address) : pageUrl;
+  if (!image && sent?.refresh !== true && cacheUrl) {
+    const cached = await previousResult(env.LOOKUP_RESULTS, cacheUrl);
+    if (cached) return answer(cached);
+  }
+
   try {
     const { model, registry, papers, fetch: get = fetch } = tools ?? realTools(env);
     const index = await env.ASSETS.fetch(new Request(new URL("/lookup.json", here)))
@@ -151,11 +169,13 @@ export async function handle(request, env, tools) {
 
     let page;
     let post = null;
+    let publicVerified = false;
     if (read?.kind === "article") {
       const article = await readArticle(read.address, { fetch: get, contact: env.CONTACT_EMAIL });
       if (article.refused) return refuse(422, UNREADABLE[article.refused]);
       text = article.text;
       page = article.page;
+      publicVerified = true;
     } else if (read?.kind === "post") {
       const both = await readPostAndArticle(read, index, { fetch: get, contact: env.CONTACT_EMAIL });
       if (both.refused) return refuse(422, both.refused, { platform: read.platform });
@@ -163,7 +183,8 @@ export async function handle(request, env, tools) {
       if (both.tracked) return answer({ article_tracked: true, post, tracked: both.tracked, candidates: [] });
       text = both.text;
       page = both.page;
-    } else if (platform) {
+      publicVerified = true;
+    } else if (platform && !image) {
       // A post the reader's browser read: the article it links to is read here, as for
       // a post this service read itself.
       const both = await withLinkedArticle(platform, { text, links }, index, { fetch: get, contact: env.CONTACT_EMAIL });
@@ -176,7 +197,28 @@ export async function handle(request, env, tools) {
       // An article the reader's browser read: its links still say which paper it reports.
       page = linkSignals(links, text);
     }
-    return answer({ ...(await lookUp({ text, model, registry, index, page, papers })), post });
+    // Browser-supplied content is never proof that a page is public. For a readable
+    // source, obtain independent anonymous evidence before making its result shared.
+    // Platforms which disallow server reading (including Reddit) stay browser-local.
+    if (!publicVerified && !image && cacheUrl && env.LOOKUP_RESULTS) {
+      const context = readAddress(cacheUrl);
+      if (context.kind === "article") {
+        const proof = await readArticle(context.address, { fetch: get, contact: env.CONTACT_EMAIL });
+        if (!proof.refused && !image && !platform) {
+          // Use the independently public article itself, rather than publishing a
+          // client's private/personalised additions under an otherwise public URL.
+          text = proof.text;
+          page = proof.page;
+          publicVerified = true;
+        }
+      }
+      // Visual contents can differ from what an anonymous reader sees. They are not
+      // published merely because the surrounding article is accessible.
+    }
+    const found = { ...(await lookUp({ text, model, registry, index, page, papers, image, pageUrl })), post,
+      ...(image ? { source: { kind: "screenshot", host: pageUrl ? new URL(pageUrl).hostname : null } } : {}) };
+    await storeResult(env.LOOKUP_RESULTS, cacheUrl, found, publicVerified);
+    return answer(found);
   } catch (error) {
     // What failed may quote what was sent, so it is not written anywhere.
     if (error?.code === "budget_exhausted") return refuse(503, "budget_exhausted");

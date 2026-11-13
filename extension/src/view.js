@@ -13,7 +13,7 @@ const text = {
     `${name} follows particular news reports of medical breakthroughs, and this page is not one of them. That says nothing about the story itself.`,
   search: "Search tracked claims",
   disclosure: (name) =>
-    `This page’s text and links go to ${name} for the lookup. OpenAI reads the text and may retain it for safety checks. Use public reports only.`,
+    `This page’s text and links go to ${name} for the lookup. If text misses visible media, a screenshot is sent automatically with the page address. OpenAI reads the text and image and may retain it for safety checks. Use public reports only.`,
   privacy: "Privacy",
   confidenceUnavailable: "Match confidence unavailable",
   confidenceMeaning: "Confidence estimates how closely each registry record matches this report.",
@@ -29,6 +29,11 @@ const text = {
     budget_exhausted: "Automatic search has used its monthly allowance. It will be available again next month. Reviewed claim pages remain available.",
     page_changed: "The page changed while this lookup started. Reopen the extension on the page you want to check.",
     post_unreadable: "The linked article could not be read and the post has too little text. Open the article in your browser and reopen the extension.",
+    capture_unavailable: "This browser could not capture the visible page. Open the image or article in a normal browser tab, or select its text and search again.",
+    capture_sensitive: "A password or editing field is visible, so no screenshot was sent. Close it or open the public report in a separate tab.",
+    capture_embedded: "The screenshot would include an embedded page whose private fields cannot be checked. Open that content in its own tab and try again.",
+    image_too_large: "The visible image is too large to send. Zoom in on the claim or select its words and search again.",
+    image_invalid: "The screenshot could not be read. Reopen the extension to try again.",
   },
   again: "Search again",
   noPageTitle: "Open an article first",
@@ -301,7 +306,7 @@ function followingView(state, site, actions) {
 
 const LISTS = new Set(["recent", "entry", "following"]);
 // While the page is being read there is nothing to go back to, so the lists wait.
-const BUSY = new Set(["checking", "searching"]);
+const BUSY = new Set(["checking", "searching", "capturing"]);
 
 /**
  * @param {HTMLElement} root
@@ -341,8 +346,29 @@ export function render(root, state, site, actions, kept = null) {
       ),
       savedNote(state, site) && el("footer", "notices", [savedNote(state, site)]),
     ];
+  } else if (state.kind === "sharing-error") {
+    children = [el("h1", null, "Your choice could not be saved"),
+      el("p", null, state.cleared ? "The earlier permission was removed. Automatic search stays off until you allow it again." : "Automatic search is paused for this opening. Retry to save your choice. If you were turning it off, disable the extension in your browser settings until this choice can be saved."),
+      press("Retry saving choice", "button quiet", state.requested ? actions.enableSharing : actions.disableSharing)];
+  } else if (state.kind === "sharing") {
+    children = [state.enabled && press(text.back, "text-button back", actions.back),
+      el("h1", null, state.enabled ? "Automatic search is on" : "Allow automatic search?"),
+      el("p", null, `When you open this extension on an untracked page, its text, links and cleaned address go to ${site.name} and OpenAI to identify the reported treatment. If text is insufficient, visible image content is sent as a screenshot automatically.`),
+      el("p", "small", "Screenshots can include usernames or other visible personal information. Use public reports only. Nothing is read in the background. OpenAI may retain inputs for safety checks. We store no screenshots or article text; public search results may be reused for 24 hours."),
+      link(text.privacy, `${site.url}/privacy`, "text-button", actions.open),
+      state.enabled ? press("Turn off automatic search", "button quiet", actions.disableSharing) : press("Allow and search", "button", actions.enableSharing),
+      !state.enabled && press("Use reviewed claims only", "button quiet", actions.disableSharing)];
+  } else if (state.kind === "capturing") {
+    children = [el("p", "checking", "Reading the visible image…"), privacyNote(site, actions)];
+  } else if (state.kind === "visual-preview") {
+    const preview = el("img", "visual-preview");
+    preview.src = state.image.dataUrl;
+    preview.alt = "The visible content that will be sent for lookup";
+    children = [el("h1", null, "Search this visible image"), preview,
+      el("p", "small", "This image and the page address go to What came of it? and OpenAI. Check for private messages or other personal information. A video contributes only this frame, not its audio."),
+      press("Search this image", "button", actions.sendVisual), press("Cancel", "button quiet", actions.cancelVisual)];
   } else if (state.kind === "searching") {
-    children = [el("p", "checking", text.searching), privacyNote(site, actions)];
+    children = [el("p", "checking", state.visual ? "Reading the screenshot and searching the registry…" : text.searching), privacyNote(site, actions)];
   } else if (state.kind === "too-little") {
     children = [message(text.tooLittleTitle, text.tooLittleBody, press(text.again, "button quiet", actions.search))];
   } else if (state.kind === "refused") {
@@ -357,6 +383,8 @@ export function render(root, state, site, actions, kept = null) {
     ];
   } else if (state.kind === "answer") {
     children = answerBlock(state.shown, site, actions);
+    if (state.cachedAt) children.unshift(el("p", "small", `Previous result · checked ${new Date(state.cachedAt).toLocaleString("en-GB")}. Search again for a fresh lookup.`));
+    if (actions.search) children.push(press(text.again, "button quiet", actions.search));
   } else if (state.kind === "no-page") {
     children = [message(text.noPageTitle, text.noPageBody(site.name))];
   } else {
@@ -365,8 +393,10 @@ export function render(root, state, site, actions, kept = null) {
     retry.addEventListener("click", actions.retry);
     children = [message(text.unreachableTitle(site.name), text.unreachableBody, retry)];
   }
-  if (!LISTS.has(state.kind) && !BUSY.has(state.kind)) children.push(keptNav(kept, actions));
+  if (state.canVisual && actions.previewVisual) children.push(press("Preview a screenshot instead", "text-button", actions.previewVisual));
+  if (!BUSY.has(state.kind) && !["sharing", "sharing-error", "visual-preview"].includes(state.kind) && actions.sharingView) children.push(press("Automatic search settings", "text-button", actions.sharingView));
+  if (!LISTS.has(state.kind) && !BUSY.has(state.kind) && state.kind !== "visual-preview") children.push(keptNav(kept, actions));
   root.replaceChildren(...children.filter(Boolean));
   root.dataset.state = state.kind;
-  root.setAttribute("aria-busy", String(state.kind === "checking" || state.kind === "searching"));
+  root.setAttribute("aria-busy", String(BUSY.has(state.kind)));
 }

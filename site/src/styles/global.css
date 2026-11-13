@@ -395,6 +395,11 @@ a.chip:hover {
     height: 2.75rem;
   }
 
+  /* A search box as wide as the column, as on the home page. */
+  .directory .directory-tools input {
+    width: 100%;
+  }
+
   /* The name is the way home. Padding, not a set height, keeps its baseline. */
   .masthead .name {
     padding-block: 0.4rem;
@@ -2083,10 +2088,11 @@ main ul:not([class]) li + li {
   margin-bottom: 0;
 }
 
+/* The four links fit one row at 375px; a lone link on a second row reads as an orphan. */
 .colophon .more {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.2rem 1.5rem;
+  gap: 0.2rem clamp(1rem, 4vw, 1.5rem);
   margin-top: 1.25rem;
   font-weight: 600;
 }
