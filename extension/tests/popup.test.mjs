@@ -91,7 +91,7 @@ async function runPopup(navigate, words = "EX-1 is being studied as a treatment 
       if (url.endsWith("/lookup.json")) return Response.json({ articles: {}, claims: {}, live: "/api/lookup" });
       if (url === shortLink) {
         shortStarted.resolve();
-        return shortResponse.promise;
+        return (await shortResponse.promise).clone();
       }
       assert.equal(url, "https://whatcameofit.example/api/lookup");
       if (JSON.parse(options.body).cacheOnly) return Response.json({ cacheMiss: true });
