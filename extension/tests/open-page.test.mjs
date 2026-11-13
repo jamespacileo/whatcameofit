@@ -91,7 +91,7 @@ test("text the reader selected is all that is sent of the page's words", () => {
 
   const request = composeRequest(page, "https://x.com/alab/status/1234567890", shared);
 
-  assert.deepEqual([request.text, request.links, request.platform], [chosen, [ARTICLE], "X"]);
+  assert.deepEqual([request.text, request.links, request.platform], [chosen, [], "X"]);
 });
 
 test("a page with too little to read, or a tab that is not a web page, gives nothing to send", () => {
@@ -193,4 +193,11 @@ test("short text without an article link keeps the too-little refusal", () => {
   }
   const page = collected({ focusHtml: "<main>Read this</main>", links: [{ href: ARTICLE, text: "" }] });
   assert.equal(composeRequest(page, "https://news.example.org/short", shared), null);
+});
+
+test("a short deliberate selection is preserved instead of a post title or image", () => {
+ const chosen = "EX-1 for missing teeth";
+ const request = composeRequest(collected({selection: chosen, postTitle: "Unrelated title"}), "https://x.com/lab/status/1234567890", shared);
+ assert.equal(request.text, chosen);
+ assert.deepEqual(request.links, []);
 });

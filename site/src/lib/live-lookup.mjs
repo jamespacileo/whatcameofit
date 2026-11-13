@@ -12,17 +12,17 @@ const SHOWN_AT_MOST = 10;
 export const LIVE = {
   offer: "Search the trial registry for this article",
   disclosure:
-    "This sends the address to this site's server, which reads the article and asks OpenAI what it reports. The site keeps neither the address nor the article. OpenAI may retain the text for safety checks; see Privacy. Use public reports only.",
+    "This sends the address to this site's server, which reads the article and asks OpenAI what it reports. Public search results may be reused for 24 hours; article text is not stored. OpenAI may retain the text for safety checks; see Privacy. Use public reports only.",
   postOffer: "Search the trial registry for this post",
   postDisclosure:
-    "This sends the address to this site's server, which reads the post and the article it links to, and asks OpenAI what they report. The site keeps none of it. OpenAI may retain the text for safety checks; see Privacy. Use public posts only.",
+    "This sends the address to this site's server, which reads the post and the article it links to, and asks OpenAI what they report. Public search results may be reused for 24 hours; post text is not stored. OpenAI may retain the text for safety checks; see Privacy. Use public posts only.",
   postTracked: "This post links to an article we track. Its page has been through our usual checks:",
   textLabel: "Or paste the headline and opening paragraphs",
   textOffer: "Search the trial registry for this text",
   working: "Reading the article and searching the registry. This can take half a minute.",
   marked:
     "Automatic search. This list was made by software just now from a public registry. It has not been checked by a person and is not a status.",
-  notATreatment: "This does not appear to report a specific treatment for a specific condition, so the registry was not searched.",
+  notATreatment: "A specific treatment and condition could not be identified from the content that could be read. The registry was not searched; nothing has been ruled out.",
   trackedLead: "We track this treatment. Its page has been through our usual checks:",
   likelyLead: "Registry records that read as trials of this treatment for this condition, likeliest first:",
   confidenceMeaning:
@@ -147,8 +147,13 @@ function matchConfidence(score) {
  *   rest: string | null, none: string | null, notices: string[] }}
  */
 export function describeAnswer(answer) {
+  const marked = answer.cache?.checkedAt
+    ? `Automatic search from ${new Date(answer.cache.checkedAt).toLocaleString("en-GB")}. It has not been checked by a person and is not a status.`
+    : LIVE.marked;
   const notices = [NOTICES[1], LIVE.source];
-  const source = sourceOf(answer.post);
+  const source = answer.source?.kind === "screenshot"
+    ? "Read from the visible screenshot and caption. A video contributes only its current frame, not its audio. This identifies what the post claims; it does not establish that the claim is true."
+    : sourceOf(answer.post);
   const nothing = { searchedAlso: null, trialSaid: null, tracked: [], likely: [], rest: null, none: null };
   // A post that links to an article the site tracks: its reviewed page is the answer,
   // and no automatic search was made, so nothing is marked as one.
@@ -156,7 +161,7 @@ export function describeAnswer(answer) {
     return { ...nothing, marked: null, lead: LIVE.postTracked, source, tracked: answer.tracked ?? [], notices: [] };
   }
   if (!answer.about_a_treatment || !answer.treatment) {
-    return { ...nothing, marked: LIVE.marked, lead: LIVE.notATreatment, source, notices };
+    return { ...nothing, marked, lead: LIVE.notATreatment, source, notices };
   }
   const candidates = answer.candidates ?? [];
   // A record the article itself gives the number of is listed whatever its score.
@@ -166,7 +171,7 @@ export function describeAnswer(answer) {
   const others = candidates.length - likely.length;
   const known = answer.known_names ?? [];
   return {
-    marked: LIVE.marked,
+    marked,
     lead: `This appears to report ${answer.treatment}${answer.condition ? ` for ${answer.condition}` : ""}.`,
     source,
     searchedAlso: known.length
