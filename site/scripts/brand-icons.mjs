@@ -56,6 +56,15 @@ fs.writeFileSync(path.join(pub, "favicon.ico"), Buffer.concat([header, ...frames
 fs.writeFileSync(path.join(pub, "mark-square.svg"), square);
 const symbol = mark.replace(/  <rect id="tile"[^>]+\/>\n/, "");
 fs.writeFileSync(path.join(pub, "mark-symbol.svg"), symbol);
+// For the navy masthead: no tile, the glass in white with the navy showing through the
+// lens, the capsule in its own colours. Cropped to the drawing, so it sits at the size
+// the tile did.
+const reverse = symbol
+  .replace('viewBox="0 0 64 64"', 'viewBox="8 9 48 48"')
+  .replaceAll("#16477d", "#ffffff")
+  .replace('fill="#ffffff" stroke="#ffffff"', 'fill="none" stroke="#ffffff"');
+if (!reverse.includes('fill="none" stroke="#ffffff" stroke-width="5.7"')) throw new Error("mark.svg's lens no longer has the white fill this script clears");
+fs.writeFileSync(path.join(pub, "mark-reverse.svg"), reverse);
 fs.writeFileSync(path.join(pub, "mark-monochrome.svg"), symbol.replaceAll("#16477d", "#152d49").replaceAll("#f28a62", "#152d49").replaceAll("#1687da", "#152d49"));
 
 // Satori embeds the Figtree lettering as vector paths, so exported logos need no fonts.

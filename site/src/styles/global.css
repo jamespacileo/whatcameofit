@@ -258,9 +258,10 @@ p {
   }
 }
 
+/* The reverse mark: no tile, the glass in white, the navy showing through the lens. */
 .masthead .name .mark {
-  width: 1.55em;
-  height: 1.55em;
+  width: 1.4em;
+  height: 1.4em;
   margin-right: 0.45em;
   align-self: center;
   flex: none;
@@ -2749,6 +2750,14 @@ main ul:not([class]) li + li {
     fill: CanvasText;
   }
 
+  /* The white glass keeps a navy tile of its own, whatever ground the system gives. */
+  .masthead .name .mark {
+    background: #0b2545;
+    border-radius: 22%;
+    padding: 0.12em;
+    forced-color-adjust: none;
+  }
+
   .basis-mark svg {
     fill: CanvasText;
   }
@@ -2783,6 +2792,11 @@ main ul:not([class]) li + li {
 
   .masthead .name .ask .dot {
     fill: var(--blue);
+  }
+
+  /* On paper the white glass would vanish: the mark is printed in one dark colour. */
+  .masthead .name .mark {
+    filter: brightness(0);
   }
 
   .masthead nav,
