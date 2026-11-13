@@ -43,8 +43,8 @@ const controller = createPopupController({
   describeAnswer(found) {
     return { ...describeAnswer(found), likelyLead: LIVE.likelyLead, confidenceMeaning: LIVE.confidenceMeaning };
   },
-  present(state) {
-    render(root, state, SITE, actions);
+  present(state, kept) {
+    render(root, state, SITE, actions, kept);
   },
 });
 
@@ -55,6 +55,18 @@ const actions = {
   },
   retry: controller.open,
   search: controller.search,
+  // The reader's own lists, kept in this browser's storage and nowhere else.
+  showRecent: controller.showRecent,
+  showEntry: controller.showEntry,
+  clearRecent: controller.clearRecent,
+  showFollowing: controller.showFollowing,
+  back: controller.back,
+  follow: controller.follow,
+  unfollow: controller.unfollow,
+  async openFollowed(page) {
+    await controller.seen(page);
+    actions.open(SITE.url + page);
+  },
 };
 
 window.addEventListener("pagehide", controller.close, { once: true });

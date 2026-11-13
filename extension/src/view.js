@@ -39,6 +39,26 @@ const text = {
   retry: "Try again",
   lastChecked: (date) => `Registries last checked ${date}.`,
   saved: (date, name) => `Shown from the copy saved on ${date}. ${name} could not be reached just now.`,
+  // The reader's own lists. These sentences are the extension's and describe no claim.
+  recent: "Recently checked",
+  following: "Following",
+  changedCount: (count) => `${count} changed`,
+  back: "Back",
+  keptHere: "Kept in this browser only. Never sent anywhere.",
+  recentEmpty: "Nothing checked yet.",
+  checkedOn: (outlet, date) => (outlet ? `${outlet} · checked ${date}` : `Checked ${date}`),
+  possible: (count) => `${count} possible records`,
+  noneThen: "No record was found when this was checked. Open the page and press the button to check it again.",
+  openPage: "Open the page",
+  clear: "Clear this list",
+  follow: "Follow this claim",
+  followingThis: "You follow this claim.",
+  stop: "Stop following",
+  followingEmpty: "You follow no claims yet. Open a tracked report and choose Follow.",
+  changed: "Changed",
+  wasNow: (was, now) => `Was: ${was}. Now: ${now}.`,
+  wasSince: (was) => `Changed since you last looked. Was: ${was}.`,
+  gone: "This claim is no longer published.",
 };
 
 const day = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -90,9 +110,24 @@ function track(place, places) {
   return el("dd", "track", [steps]);
 }
 
-function claimBlock(claim, site, actions, places) {
+// Following a claim, or stopping: one control under the way to its evidence.
+function followControl(claim, kept, actions) {
+  if (!kept || !actions.follow) return null;
+  if (kept.followed.includes(claim.page)) {
+    return el("p", "small followed", [
+      text.followingThis,
+      " ",
+      press(text.stop, "text-button", () => actions.unfollow(claim.page)),
+    ]);
+  }
+  return press(text.follow, "button quiet", () => actions.follow(claim));
+}
+
+function claimBlock(claim, site, actions, places, kept) {
+  const was = kept?.was?.[claim.page];
   return el("article", "claim", [
     headline(claim.headline),
+    was && el("p", "moved", [el("span", "tag changed", text.changed), " ", text.wasSince(was)]),
     el("dl", "digest", [
       el("dt", null, text.standing),
       el("dd", "status", claim.status),
@@ -106,6 +141,7 @@ function claimBlock(claim, site, actions, places) {
       claim.latest_promise && fact(text.latestPromise, claim.latest_promise, "promise"),
     ]),
     link(text.open, site.url + claim.page, "button", actions.open),
+    followControl(claim, kept, actions),
   ]);
 }
 
@@ -170,20 +206,126 @@ function answerBlock(shown, site, actions) {
   ];
 }
 
+// The way to the reader's two lists, under whatever the page's own answer is. A list
+// that has moved says so in words, never by a mark alone.
+function keptNav(kept, actions) {
+  if (!kept || !actions.showRecent) return null;
+  return el("nav", "kept", [
+    press(text.recent, "text-button", actions.showRecent),
+    press(
+      [text.following, kept.changed > 0 && el("span", "tag changed", text.changedCount(kept.changed))],
+      "text-button",
+      actions.showFollowing,
+    ),
+  ]);
+}
+
+function listHead(title, actions) {
+  return [press(text.back, "text-button back", actions.back), el("h1", null, title)];
+}
+
+// One checked page: its title leads back to the page, and what the check found leads on.
+function recentCard(entry, actions) {
+  const { candidates } = entry;
+  const [only] = candidates;
+  return el("li", "result-card", [
+    el("h2", "result-title", [link(entry.title, entry.url, null, actions.open)]),
+    el("p", "small", text.checkedOn(entry.outlet, day.format(new Date(entry.at)))),
+    entry.answer.unreviewed && el("p", "small", entry.answer.unreviewed),
+    candidates.length === 1 && only.status && el("p", "kept-status", only.status),
+    candidates.length === 1 && link(only.status ? text.open : only.title, only.url, "button quiet", actions.open),
+    candidates.length > 1 && press(text.possible(candidates.length), "button quiet", () => actions.showEntry(entry.key)),
+    candidates.length === 0 && el("p", "small", text.noneThen),
+  ]);
+}
+
+function recentView(state, actions) {
+  return [
+    ...listHead(text.recent, actions),
+    state.entries.length === 0
+      ? el("p", null, text.recentEmpty)
+      : el("ul", "records", state.entries.map((entry) => recentCard(entry, actions))),
+    el("footer", "notices", [
+      el("p", null, text.keptHere),
+      state.entries.length > 0 && press(text.clear, "text-button", actions.clearRecent),
+    ]),
+  ];
+}
+
+function entryView(state, actions) {
+  const { entry } = state;
+  return [
+    press(text.back, "text-button back", actions.showRecent),
+    el("h1", null, entry.title),
+    el("p", "small", text.checkedOn(entry.outlet, day.format(new Date(entry.at)))),
+    entry.answer.unreviewed && el("p", "unchecked", entry.answer.unreviewed),
+    el(
+      "ul",
+      "records",
+      entry.candidates.map((candidate) =>
+        el("li", "result-card", [
+          el("h2", "result-title", [link(candidate.title, candidate.url, null, actions.open)]),
+          candidate.status && el("p", "kept-status", candidate.status),
+        ]),
+      ),
+    ),
+    link(text.openPage, entry.url, "button quiet", actions.open),
+  ];
+}
+
+function followingView(state, site, actions) {
+  return [
+    ...listHead(text.following, actions),
+    state.claims.length === 0
+      ? el("p", null, text.followingEmpty)
+      : el(
+          "ul",
+          "records",
+          state.claims.map((claim) =>
+            el("li", "result-card", [
+              el("h2", "result-title", [
+                claim.gone
+                  ? claim.headline
+                  : link(claim.headline, site.url + claim.page, null, () => actions.openFollowed(claim.page)),
+              ]),
+              claim.gone ? el("p", "small", text.gone) : el("p", "kept-status", claim.status),
+              claim.changed &&
+                el("p", "moved", [el("span", "tag changed", text.changed), " ", text.wasNow(claim.was, claim.status)]),
+              press(text.stop, "text-button", () => actions.unfollow(claim.page, { fromList: true })),
+            ]),
+          ),
+        ),
+    el("footer", "notices", [el("p", null, text.keptHere)]),
+  ];
+}
+
+const LISTS = new Set(["recent", "entry", "following"]);
+// While the page is being read there is nothing to go back to, so the lists wait.
+const BUSY = new Set(["checking", "searching"]);
+
 /**
  * @param {HTMLElement} root
  * @param {object} state from stateFor(), or { kind: "checking" | "searching" | "too-little" },
- *   { kind: "refused", code }, or { kind: "answer", shown } with the site's wording of an answer
+ *   { kind: "refused", code }, { kind: "answer", shown } with the site's wording of an answer,
+ *   or one of the reader's lists: { kind: "recent", entries }, { kind: "entry", entry },
+ *   { kind: "following", claims }
  * @param {{ name: string, url: string }} site
  * @param {{ open: (address: string) => void, retry: () => void, search: () => void }} actions
+ * @param {object} [kept] what the reader's lists hold; without it no list is offered
  */
-export function render(root, state, site, actions) {
+export function render(root, state, site, actions, kept = null) {
   let children;
   if (state.kind === "checking") {
     children = [el("p", "checking", text.checking)];
+  } else if (state.kind === "recent") {
+    children = recentView(state, actions);
+  } else if (state.kind === "entry") {
+    children = entryView(state, actions);
+  } else if (state.kind === "following") {
+    children = followingView(state, site, actions);
   } else if (state.kind === "tracked") {
     children = [
-      ...state.claims.map((claim) => claimBlock(claim, site, actions, state.places)),
+      ...state.claims.map((claim) => claimBlock(claim, site, actions, state.places, kept)),
       el("footer", "notices", [
         ...state.notices.map((notice) => el("p", null, notice)),
         state.lastChecked && el("p", "checked", text.lastChecked(state.lastChecked)),
@@ -223,6 +365,7 @@ export function render(root, state, site, actions) {
     retry.addEventListener("click", actions.retry);
     children = [message(text.unreachableTitle(site.name), text.unreachableBody, retry)];
   }
+  if (!LISTS.has(state.kind) && !BUSY.has(state.kind)) children.push(keptNav(kept, actions));
   root.replaceChildren(...children.filter(Boolean));
   root.dataset.state = state.kind;
   root.setAttribute("aria-busy", String(state.kind === "checking" || state.kind === "searching"));

@@ -1,6 +1,6 @@
 # Proposal
 
-Status: accepted by the operator on 2026-11-13. Built so far: the calendar reminder on the claim page. See `tasks.md`.
+Status: accepted by the operator on 2026-11-13. Built so far: the calendar reminder on the claim page, and in the extension's popup the recently checked list and following with a changed marker. Notifications and reminders in the extension need new permissions and are not built. See `tasks.md`.
 
 ## Why
 

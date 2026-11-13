@@ -92,3 +92,76 @@ test("page-change recovery opens a fresh attempt and budget exhaustion is explai
   render(root, { kind: "refused", code: "budget_exhausted" }, site, actions);
   assert.match(root.textContent, /monthly allowance/);
 });
+
+const kept = { recent: 2, following: 1, changed: 1, followed: [], was: {} };
+const listActions = {
+  ...actions,
+  showRecent() {}, showEntry() {}, clearRecent() {}, showFollowing() {}, back() {},
+  follow() {}, unfollow() {}, openFollowed() {},
+};
+const claim = { headline: "Reviewed claim", page: "/reviewed", status: "Phase 1 trial", place: 3, meaning: "Meaning." };
+const trackedState = { kind: "tracked", claims: [claim], places: 6, notices: [], lastChecked: null, savedAt: null };
+
+test("the lists are offered under an answer, and not while the page is being read", () => {
+  const root = new Element("main");
+  render(root, trackedState, site, listActions, kept);
+  assert.match(root.textContent, /Recently checked.*Following.*1 changed/);
+  assert.match(root.textContent, /Follow this claim/);
+
+  render(root, { kind: "searching" }, site, listActions, kept);
+  assert.doesNotMatch(root.textContent, /Recently checked/);
+
+  render(root, trackedState, site, actions);
+  assert.doesNotMatch(root.textContent, /Recently checked|Follow this claim/);
+});
+
+test("a followed claim that moved says what it was, in words", () => {
+  const root = new Element("main");
+  render(root, trackedState, site, listActions, { ...kept, followed: ["/reviewed"], was: { "/reviewed": "Trial registered" } });
+  assert.match(root.textContent, /Changed since you last looked\. Was: Trial registered\./);
+  assert.match(root.textContent, /You follow this claim\..*Stop following/);
+  assert.doesNotMatch(root.textContent, /Follow this claim/);
+});
+
+test("a checked page leads to its one claim, its candidates, or back to the page", () => {
+  const root = new Element("main");
+  const entry = (candidates, answer = { kind: "none" }) => ({
+    key: "news.example.org/a", url: "https://news.example.org/a", title: "A report",
+    outlet: "news.example.org", at: Date.UTC(2026, 10, 13), answer, candidates,
+  });
+  let asked = null;
+  render(root, { kind: "recent", entries: [
+    entry([{ title: "Reviewed claim", url: "https://whatcameofit.example/reviewed", status: "Phase 1 trial" }]),
+    entry([{ title: "One", url: "https://r.example/1", status: null }, { title: "Two", url: "https://r.example/2", status: null }],
+      { kind: "searched", unreviewed: "Automatic search. Not checked by a person." }),
+    entry([]),
+  ] }, site, { ...listActions, showEntry: (key) => { asked = key; } }, kept);
+
+  const cards = elements(root, "li");
+  assert.equal(cards.length, 3);
+  assert.equal(elements(cards[0], "a")[0].href, "https://news.example.org/a");
+  assert.match(cards[0].textContent, /news\.example\.org · checked 13 Nov 2026.*Phase 1 trial.*See the evidence/);
+  assert.equal(elements(cards[0], "a")[1].href, "https://whatcameofit.example/reviewed");
+  assert.match(cards[1].textContent, /Not checked by a person.*2 possible records/);
+  elements(cards[1], "button")[0].listeners.click();
+  assert.equal(asked, "news.example.org/a");
+  assert.match(cards[2].textContent, /No record was found when this was checked/);
+  assert.match(root.textContent, /Kept in this browser only.*Clear this list/);
+
+  render(root, { kind: "recent", entries: [] }, site, listActions, kept);
+  assert.match(root.textContent, /Nothing checked yet\./);
+  assert.doesNotMatch(root.textContent, /Clear this list/);
+});
+
+test("the following list says what changed and what is no longer published", () => {
+  const root = new Element("main");
+  render(root, { kind: "following", claims: [
+    { ...claim, gone: false, changed: true, was: "Trial registered" },
+    { headline: "Withdrawn claim", page: "/withdrawn", status: "Phase 2 trial", gone: true, changed: false, was: null },
+  ] }, site, listActions, kept);
+  const cards = elements(root, "li");
+  assert.match(cards[0].textContent, /Phase 1 trial.*Changed.*Was: Trial registered\. Now: Phase 1 trial\..*Stop following/);
+  assert.match(cards[1].textContent, /This claim is no longer published\./);
+  assert.doesNotMatch(cards[1].textContent, /Phase 2 trial/);
+  assert.equal(elements(cards[1], "a").length, 0);
+});
