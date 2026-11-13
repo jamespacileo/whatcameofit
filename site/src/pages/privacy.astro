@@ -86,9 +86,18 @@ import Base from "../layouts/Base.astro";
     On the website, a registry search runs when you press its search button. It sends the
     address or text you supply to our Cloudflare service. The service may read the article, a
     public post and its linked article, and sends the text to OpenAI to identify the treatment
-    and condition being reported. It searches ClinicalTrials.gov and Europe PMC using treatment
+    and condition being reported. It searches ClinicalTrials.gov, Europe PMC and OpenAlex using treatment
     names, the reported condition and research identifiers, then uses OpenAI to compare the
     trial records. The result is marked as an automatic, unreviewed search.
+  </p>
+  <p>
+    Organisation names explicitly mentioned in the report are sent to
+    <a href="https://ror.org/privacy/">ROR</a> to find their public registry records.
+    OpenAlex receives only treatment and condition search terms, and ROR receives only
+    organisation names; neither receives your screenshot, page address or full article text.
+    Public paper and organisation metadata, including empty search results, may be cached
+    for seven days under a hash of the search terms. No abstracts are stored or shown.
+    See <a href="https://openalex.org/privacy">OpenAlex's privacy policy</a>.
   </p>
   <p>
     In the extension, opening the popup on an untracked page reads the page or your selected words and sends

@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && pagefind --site dist && node scripts/check-dist.mjs && node scripts/redirects.mjs",
+    "build": "node scripts/brand-icons.mjs && astro build && pagefind --site dist && node scripts/check-dist.mjs && node scripts/redirects.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "test": "node --test --test-concurrency=1 tests/*.test.mjs"
@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "linkedom": "^0.18.15",
+    "miniflare": "5.20261110.2-beta",
     "pagefind": "^1.6.0",
     "wrangler": "4.161.0"
   },

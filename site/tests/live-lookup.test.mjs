@@ -118,6 +118,20 @@ test("no record found is not worded as no trial existing", () => {
   assert.match(shown.none, /not evidence that no trial exists/);
 });
 
+test("papers and organisation identities have no clinical confidence or status", () => {
+  const result=describeAnswer(answer({research:{
+    papers:[{title:"Synthetic research",year:2024,kind:"article",journal:"Example Journal",url:"https://doi.org/10.1234/example"}],
+    organisations:[{name:"Example University",country:"UK",url:"https://ror.org/02kpeqv85",score:1}],
+    availability:{openalex:"ok",ror:"ok"},
+  }}));
+  assert.equal(result.research.papers[0].detail,"2024 · article · Example Journal");
+  assert.match(result.research.paperNote,/Unreviewed/);
+  assert.equal(result.research.organisations[0].title,"Example University");
+  assert(!JSON.stringify(result.research).includes("confidence"));
+  assert.equal(result.none,LIVE.none);
+  assert.equal(describeAnswer(answer()).research,null);
+});
+
 test("a tracked claim is offered first, and text about no treatment is said to be so", () => {
   const tracked = [{ slug: "tooth-regrowth-ex1", headline: "Antibody regrows teeth", page: "/tooth-regrowth-ex1" }];
 

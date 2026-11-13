@@ -46,9 +46,9 @@ Observed 2026-11-13, with a generic client name and no key:
 
 **One decision step, four options.** `paper_match` with the options in the spec, sent through `decide_many`, so twenty papers are one Decisions call. The record text is title, year, kind, journal and abstract. Alternative considered: two questions per paper (a predicate and a relation). Rejected: the `decide` interface is one choice per item, and four options carry both answers.
 
-**The origin paper suggestion is a second step, `origin_paper`**, asked once per claim after papers are approved: the item is the claim, the options are its approved papers dated on or before the first report plus "none". It is skipped when no paper qualifies. The suggestion is a queue row; `set_origin_paper` stays an operator or assistant action.
+**The origin paper is a second step, `origin_paper`**, asked once per claim after papers are approved: the item is the claim, the options are its approved papers dated on or before the first report plus "none". It is skipped when no paper qualifies. A choice at or above the accept threshold sets the origin paper by rule.
 
-**Approval by rule needs a reason as well as a score.** `PAPER_ACCEPT_ABOVE`, empty by default. The existing `MATCH_REJECT_BELOW` applies unchanged. This follows the working rule that nothing is approved by score alone when the score could be about the wrong thing.
+**Approval is by rule, with no person.** The operator said on 2026-11-13 that approval needs no human and that shown scores make an imperfect match acceptable. Papers use the threshold trial matches use (`MATCH_ACCEPT_ABOVE`, 0.8 by default) and `MATCH_REJECT_BELOW`. Every paper at or above it is approved and listed, most confident first. Reasons are shown with the score and do not gate approval. A person rejects or archives afterwards. Alternative considered: require a model-free reason before approval. Rejected by that decision: a paper with no reason would wait for a reviewer who is not there.
 
 **Approved papers are exported as `related_research` on the claim**, not as evidence events. `status/` is not touched and the status explanation is unchanged.
 
@@ -60,7 +60,7 @@ Observed 2026-11-13, with a generic client name and no key:
 
 - [OpenAlex changes its allowance or requires payment] → the client reads the allowance headers, stops for the run when it is used up, and the search function can be pointed at Europe PMC.
 - [A search phrase pulls in trials of a related but different intervention] → every candidate is still scored for the claim's indication, and the phrase rule drops phrases with more than a hundred hits.
-- [The model's score is high for a paper that only mentions the intervention] → approval by rule needs a reason computed without the model; the page shows both.
+- [The model's score is high for a paper that only mentions the intervention] → the page shows the score and the reasons found without the model, a paper with none shows none, and the operator can reject it.
 - [Abstracts are copyrighted] → used in memory and in the HTTP cache for scoring, never exported; fixtures have abstracts replaced, as registry fixtures do.
 - [A reader takes a listed paper as proof] → the section's wording says what a paper is and is not, and the reasons describe what was found.
 - [Deleting person entities removes one a later feature wanted] → the names remain in the article; extraction can be run again under the new rule.
@@ -76,3 +76,11 @@ Observed 2026-11-13, with a generic client name and no key:
 
 - Should an approved report of a study in people move a claim off "No trial record found"? Not needed for this change, which leaves status alone; it would be its own change to `status-derivation`.
 - Pages per institution or company, and whether a list of a group's claims with their statuses reads as a verdict. A later change, after the operator decides the wording.
+
+## Public lookup delivery (2026-11-13)
+
+The operator requested working OpenAlex/ROR integrations in the deployed app. The first public delivery enriches the existing on-demand Worker lookup; it does not wait for editorial pipeline paper approval. These are explicitly unreviewed bibliographic search results in collapsed sections, separate from scored trial candidates. No paper is promoted to an evidence event or claim status. The existing pipeline candidate scoring, approval, origin-paper suggestion and export tasks remain separate unfinished work.
+
+After the existing extraction call identifies a treatment and condition, search at most two OpenAlex term/condition combinations, ten results each, and at most three explicitly named organisations through ROR affiliation matching. This adds no model calls. Only ROR chosen matches are displayed. Both providers run alongside the clinical search and fail independently. The site and next extension build share the wording; deployed 0.8 extensions ignore the optional response field safely.
+
+Store only normalized public metadata for seven days under hashed search keys. Do not retain article text, abstracts, screenshots or API keys. Every charged OpenAlex request requires a successful free allowance check, <=$1/day free budget, >=$0.01 reserve after its reported search price, and zero prepaid balance. The provider's free account cap enforces the global ceiling; KV is not an atomic counter. Unknown limits, paid credit, 402 or exhausted allowance fail closed, with no anonymous fallback. ROR is free; bound calls and pause on 429. Existing OpenAI $13/month controls are unchanged.

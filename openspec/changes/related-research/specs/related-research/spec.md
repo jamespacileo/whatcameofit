@@ -44,15 +44,19 @@ A paper candidate SHALL carry the reasons found by rule, as codes: the intervent
 - **THEN** it carries no reasons and keeps its score
 
 ### Requirement: Paper candidates are decided like other matches
-A paper candidate SHALL start as pending and follow the review states, the queue and the rules for rejecting by threshold that apply to trial candidates. A paper candidate SHALL be approved by rule only when its score is at or above a configured threshold and it carries at least one reason. An empty threshold SHALL turn that rule off.
+A paper candidate SHALL follow the review states and the rule for rejecting by threshold that apply to trial candidates. A paper candidate scored at or above the accept threshold for matches SHALL be approved by rule, with no person involved, whether or not it carries a reason. Every paper so approved SHALL be listed. An operator SHALL be able to reject one afterwards. A threshold of zero SHALL turn the rule off.
+
+#### Scenario: Several confident papers
+- **WHEN** three candidates score 0.97, 0.9 and 0.85 and the threshold is 0.8
+- **THEN** all three are approved, recorded as decided by a rule
 
 #### Scenario: High score and no reason
-- **WHEN** a candidate scores 0.97, the threshold is 0.9 and it carries no reason
-- **THEN** it stays pending
+- **WHEN** a candidate scores 0.97, the threshold is 0.8 and it carries no reason
+- **THEN** it is approved and is published with its score and no reasons
 
-#### Scenario: High score with a reason
-- **WHEN** a candidate scores 0.97, the threshold is 0.9 and its title names the intervention
-- **THEN** it is approved, recorded as decided by a rule
+#### Scenario: Below the threshold
+- **WHEN** a candidate scores 0.5 and the threshold is 0.8
+- **THEN** it stays pending and is not published
 
 ### Requirement: Approved papers do not change the status
 An approved paper candidate SHALL NOT be an evidence event and SHALL NOT enter status derivation.
@@ -72,16 +76,24 @@ When a paper candidate is approved, each trial registry number its record states
 - **WHEN** an approved paper states five registry numbers
 - **THEN** no trial candidate is created from it
 
-### Requirement: An origin paper is suggested
-For a claim with approved paper candidates and no origin paper, the system SHALL suggest which approved paper published on or before the first reported date is the one first reported on, or none. The suggestion SHALL come from a decision, SHALL be shown in the review queue, and SHALL NOT designate the origin paper by itself.
+### Requirement: The origin paper is chosen by rule
+For a claim with approved paper candidates and no origin paper, the system SHALL ask a decision which approved paper published on or before the first reported date is the one first reported on, or none. A paper chosen with a probability at or above the accept threshold SHALL become the origin paper, recorded as decided by a rule. An operator SHALL be able to replace or remove it.
 
 #### Scenario: One paper predates the report
 - **WHEN** a claim has two approved papers, one published a week before the first report and one a year after
 - **THEN** only the earlier paper is offered, together with the option of none
 
+#### Scenario: Confident choice
+- **WHEN** the decision chooses a paper with a probability of 0.9 and the threshold is 0.8
+- **THEN** that paper becomes the claim's origin paper
+
+#### Scenario: Unsure choice
+- **WHEN** the decision's highest probability is 0.5
+- **THEN** the claim keeps no origin paper
+
 #### Scenario: Claim that has an origin paper
 - **WHEN** a claim already has an origin paper
-- **THEN** no suggestion is made
+- **THEN** no decision is asked
 
 ### Requirement: Paper text is not published
 The system SHALL use a paper's abstract only to score and to find reasons and registry numbers. The export and the site SHALL carry a paper's title, year, kind, identifier and link, and no part of its abstract.
@@ -89,3 +101,22 @@ The system SHALL use a paper's abstract only to score and to find reasons and re
 #### Scenario: Export of a claim with approved papers
 - **WHEN** a claim with an approved paper is exported
 - **THEN** the export holds the paper's title and link and no abstract text
+
+### Requirement: Public on-demand research context
+The public lookup SHALL return bibliographic search results and identifiers for organisations explicitly named in the report, in addition to trial candidates. These SHALL be labelled unreviewed search results, separate from claim status and match confidence. The interface SHALL collapse secondary context initially. Missing keys, provider limits and failures SHALL leave trial results available. Old cached results and older extensions SHALL remain compatible.
+
+#### Scenario: A report has related papers and names a university
+- **WHEN** OpenAlex finds papers and ROR selects the university's identity
+- **THEN** paper titles, metadata and source links and the ROR organisation link are available in collapsed sections, with no status change
+
+#### Scenario: The free allowance cannot be established
+- **WHEN** OpenAlex's allowance is exhausted, unknown, exceeds the free budget or has prepaid credit
+- **THEN** no charged literature search is sent, a temporary unavailability is shown, and trial lookup and ROR continue
+
+#### Scenario: Repeated research query
+- **WHEN** a normalized metadata result is less than seven days old
+- **THEN** it is reused without a provider request, including an empty result
+
+#### Scenario: A provider times out or limits access
+- **WHEN** an API call or its body takes more than five seconds, or a source responds with a quota error
+- **THEN** the optional source stops without retries or alternative accounts and the remaining results are returned

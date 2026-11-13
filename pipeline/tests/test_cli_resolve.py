@@ -6,8 +6,11 @@ The rules are tested in test_resolution.py and test_decide.py.
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
+from decimal import Decimal
 
 import pytest
+from pydantic_ai.messages import ModelResponse, ToolCallPart
+from pydantic_ai.models.function import FunctionModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner, Result
@@ -18,6 +21,7 @@ from thenwhat.cli import app
 from thenwhat.db.models import DecisionLog, EntityMatch
 from thenwhat.decide.core import BackendAnswer
 from thenwhat.domain import Decider
+from thenwhat.llm.client import Llm, LlmSettings
 from thenwhat.sources.base import SourceRecord
 
 NOW = datetime(2026, 11, 20, tzinfo=UTC)
@@ -49,6 +53,14 @@ class Backend:
             raise RuntimeError("no model")
         rest = 0.2 / (len(options) - 1)
         return BackendAnswer(options[0], {o: 0.8 if o == options[0] else rest for o in options})
+
+
+@pytest.fixture(autouse=True)
+def rules_off(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Approval by rule is on by default. These tests are about what happens without it,
+    unless one turns it on."""
+    monkeypatch.setenv("MATCH_ACCEPT_ABOVE", "0")
+    monkeypatch.setenv("APPROVE_DRAFTS_BY_RULE", "false")
 
 
 @pytest.fixture
@@ -127,6 +139,33 @@ def test_entity_phrase_refuses_a_generic_word(run, session: Session):
     assert "what kind of thing" in result.output
 
 
+def test_entity_phrases_gives_a_claim_search_phrases(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    def respond(messages, info) -> ModelResponse:
+        return ModelResponse(
+            parts=[ToolCallPart(info.output_tools[0].name, {"search_phrases": ["tooth regrowth"]})]
+        )
+
+    settings = LlmSettings("test:scripted", Decimal("10"), Decimal("3"), Decimal("15"))
+    monkeypatch.setattr(
+        "thenwhat.cli.extract.make_llm",
+        lambda s: Llm(s, settings, model=FunctionModel(respond), now=lambda: NOW),
+    )
+
+    result = run("entity", "phrases", SLUG)
+
+    assert result.exit_code == 0, result.output
+    assert "tooth regrowth" in result.output and "1 of 1" in result.output
+
+
+def test_entity_phrases_refuses_without_claims_or_missing(run, session: Session):
+    result = run("entity", "phrases")
+
+    assert result.exit_code == 1
+    assert "--missing" in result.output
+
+
 def test_entity_origin_paper_marks_the_paper(run, session: Session):
     run("entity", "add", SLUG, "--type", "paper", "--name", "A paper")
 
@@ -143,6 +182,19 @@ def test_resolve_stores_pending_candidates_and_suggests_a_stage(run, session: Se
     assert "1 new candidate match" in result.output and "NCT00000001" in result.output
     assert "Suggested evidence stage: in_vitro" in result.output
     assert len(session.scalars(select(EntityMatch)).all()) == 1
+
+
+def test_resolve_approves_a_confident_candidate_by_rule_by_default(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.delenv("MATCH_ACCEPT_ABOVE")
+
+    result = run("resolve", SLUG)
+
+    assert result.exit_code == 0, result.output
+    assert "1 approved by rule" in result.output
+    [match] = session.scalars(select(EntityMatch)).all()
+    assert match.reviewed_by is Decider.RULE
 
 
 def test_resolve_rescore_scores_the_pending_candidates_again(run, session: Session):
