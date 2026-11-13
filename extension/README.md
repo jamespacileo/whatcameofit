@@ -2,21 +2,31 @@
 
 Open the toolbar popup to see what happened to the breakthrough in the article you are reading. A tracked report shows its reviewed claim and a link to the evidence. An untracked page starts a registry lookup automatically when the service is available.
 
-It compares the page's address with the site's `lookup.json` inside the browser. The address is never sent anywhere. It can see a tab only when its button is pressed.
+It compares the page's address with the site's `lookup.json` inside the browser. This initial check sends no page address. It can see a tab only when its button is pressed.
 
-For a page that is not tracked, and only where the site answers registry searches, opening the popup reads the current page inside the browser and sends the site the text and its outgoing links; for a post, also the platform's name. The service uses OpenAI, which may retain text for safety checks. The popup displays this disclosure while searching and with its automatic result. Use public reports only. The page's address is not sent. Select words on the page first to send only those.
+For a page that is not tracked, and only after the reader enables automatic search, opening the popup reads the current page inside the browser and sends the site the text and its outgoing links; for a post, also the platform's name. A cleaned page address supports result reuse. When text misses visible media, one bounded screenshot can be sent. The service uses OpenAI, which may retain content for safety checks. The popup discloses this before permission and in its details. Use public reports only. Select words on the page first to send only those, without a screenshot or source address.
 
 The extension reads nothing as you browse with the popup closed. A reviewed match and a non-web tab start no model request. Repeated actions share an in-flight lookup, and closing the popup cancels its pending fetch. Each candidate is grouped in a card with its registry link, phase, state, identifier and model-estimated match confidence. Confidence concerns the match to the report.
 
+Following and recent checks work in Safari. Background notifications and extension reminder choices are offered only when the browser provides its notifications API; Safari currently does not. Its background refresh still updates followed claims for the next popup opening. Claim pages also offer calendar reminders.
+
 A post on X links out only through X's shortener (`t.co`), which the site's server may not follow. The popup opens such a link in the browser, as a click would, to learn which article it leads to, and sends that address. That is why the extension has permission for `t.co` as well as for the site.
 
+On a YouTube video or Short, the reader uses the current video's title, loaded description, source links and any captions/transcript already loaded into its page. Comments, recommendations and inactive Shorts are excluded. Open **Show transcript** yourself when the spoken claim is missing from the title and description, then reopen the extension. If text is insufficient, the existing screenshot fallback can read the current visible video frame; it does not listen to audio, download the video or transcribe the whole recording. Missing or changing video context and advertisements cannot fall back to a screenshot of the whole YouTube page. The service does not fetch YouTube; browser-derived answers are not published to the shared cache. A layout the reader cannot identify can still be searched by selecting the relevant words.
+
 ## Build
+
+Brand artwork comes from `site/public/mark.svg` and its small-size variant,
+`site/public/favicon.svg`. After editing them, run `node site/scripts/brand-icons.mjs`
+and rebuild the extension. To refresh artwork in an existing generated Safari project
+without changing its signing, version or project settings, run
+`node extension/sync-brand-icons.mjs`. The normal Safari build also does this after conversion.
 
 ```sh
 make extension
 ```
 
-This writes `extension/dist`, version 0.4.0. The site's address comes from `site/site.config.mjs` and defaults to `https://whatcameofit.com`. Set `SITE_URL` to build for a local service, as below. The public site's registry search is enabled with a monthly usage allowance.
+This writes `extension/dist` using the version in `build.mjs`. The site's address comes from `site/site.config.mjs` and defaults to `https://whatcameofit.com`. Set `SITE_URL` to build for a local service, as below. The public site's registry search is enabled with a monthly usage allowance.
 
 ## Chrome
 
@@ -76,7 +86,7 @@ App Store distribution needs Apple Developer Program access, a registered bundle
 - `build.mjs`: copies the above with what is shared with the site (the address comparison, how an address is told from a post, the page reader, the wording of an answer and the notices), the site's face and icon, and writes the manifest.
 - `dev/`: a page showing every popup state side by side. `node extension/build.mjs --dev`, then serve `extension/dist` and open `states.html`.
 
-Tests run with `node --test extension/tests/*.test.mjs` (also part of `make check`). The explicit glob discovers the test files on Node 24.
+Tests run with `node --test extension/tests/*.test.mjs` after `npm --prefix site ci` (also part of `make check`). Synthetic YouTube fixtures use LinkeDOM to exercise real selectors without live network calls. The explicit glob discovers the test files on Node 24.
 
 ### Popup sizing regression
 

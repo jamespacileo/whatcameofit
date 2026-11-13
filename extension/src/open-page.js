@@ -21,6 +21,60 @@ const ENOUGH = 40;
  */
 export function collectFromPage() {
   const CAP = 300000;
+  // YouTube keeps recommendations and inactive Shorts in the same document. Read
+  // only the renderer bound to this URL's video, never the surrounding page.
+  if (/^(?:www\.|m\.)?youtube\.com$/.test(location.hostname)) {
+    const url = new URL(location.href);
+    const id = url.pathname === "/watch" && url.searchParams.getAll("v").length === 1
+      ? url.searchParams.get("v")
+      : url.pathname.match(/^\/(?:shorts|live)\/([\w-]{11})\/?$/)?.[1];
+    const empty = {
+      address: location.href, title: "", selection: String(getSelection() ?? "").trim().slice(0, 20000),
+      head: "", focusHtml: "", focusText: "", links: [], postTitle: null, contentHref: null,
+      mediaScope: { address: location.href, selector: null, videoOnly: true },
+    };
+    if (!id || !/^[\w-]{11}$/.test(id)) return empty;
+    const short = url.pathname.startsWith("/shorts/");
+    const renderers = short
+      ? ["ytd-reel-video-renderer[is-active]", "ytm-reel-video-renderer[is-active]"]
+      : ["ytd-watch-flexy", "ytm-watch"];
+    // IDs are deliberately restricted above, so they are safe in a CSS selector.
+    const selectors = renderers.flatMap(tag => [
+      `${tag}[video-id="${id}"]`, `${tag}[data-video-id="${id}"]`,
+    ]);
+    // Current desktop Shorts has no is-active/video-id attributes. Its player's
+    // title link names the playing video. A recommendation link cannot bind it.
+    if (short) selectors.push(...["ytd-reel-video-renderer", "ytm-reel-video-renderer"].flatMap(tag =>
+      [`/shorts/${id}`, `https://www.youtube.com/shorts/${id}`].map(href =>
+        `${tag}:not([video-id]):not([data-video-id]):has(#shorts-player .ytp-title-link[href="${href}"])`)));
+    const selector = selectors.find(value => document.querySelector(value));
+    const focus = selector && document.querySelector(selector);
+    if (!focus || focus.hidden || focus.hasAttribute("hidden")) return empty;
+    const text = node => (node?.innerText ?? "").trim();
+    const title = text(focus.querySelector(short
+      ? "h1, h2, .reel-player-header-title, .title"
+      : "#title h1, h1.ytd-watch-metadata, h1, .slim-video-information-title"));
+    const description = focus.querySelector(short
+      ? "#description, .reel-player-header-description"
+      : "ytd-watch-metadata #description, #description, .slim-video-metadata-description");
+    // Read only captions/transcript already loaded into the page. No hidden player
+    // state, authenticated caption API, audio capture or automatic transcript click.
+    const captions = [...focus.querySelectorAll(
+      'ytd-transcript-segment-renderer .segment-text, transcript-segment-view-model [role="text"], .ytp-caption-segment')]
+      .map(text).filter(Boolean).join("\n").slice(0, 12000);
+    const descriptionText = text(description).slice(0, 8000);
+    return {
+      ...empty, title, postTitle: title,
+      focusText: [descriptionText, captions].filter(Boolean).join("\n").slice(0, 20000),
+      links: [...(description?.querySelectorAll("a[href]") ?? [])].slice(0, 300)
+        // YouTube adds help links for features such as automatic dubbing inside
+        // the description container. They are not the creator's article sources.
+        .filter(link => !/^https:\/\/support\.google\.com\/youtube(?:\/|$)/.test(link.href))
+        .map(link => ({ href: link.href, text: text(link).slice(0, 200) })),
+      mediaScope: { address: location.href, selector, videoOnly: true,
+        mediaSelector: short ? "video" : "#movie_player video, #player video" },
+    };
+  }
   const own = location.pathname;
   const articles = [...document.querySelectorAll('article, [role="article"]')];
   const linksToItself = (part) =>
