@@ -10,9 +10,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entities import entities_of
-from thenwhat.db.models import Claim, Entity, EntityMatch
+from thenwhat.db.models import Claim, DecisionLog, Entity, EntityMatch
 from thenwhat.decide.core import Backend, DecisionFailed
-from thenwhat.decide.steps import score_matches
+from thenwhat.decide.steps import ENTITY_MATCH, OTHER_INDICATION, score_matches
 from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord
@@ -82,6 +82,7 @@ def resolve_claim(
     now: datetime,
     rescore: bool = False,
     reject_below: float = 0.0,
+    accept_above: float = 0.0,
 ) -> list[EntityMatch]:
     """Search the registries for the claim's interventions and papers and store each new
     hit as a scored, pending candidate. Returns the candidates this run added.
@@ -92,7 +93,8 @@ def resolve_claim(
     cannot be scored, none of this run's candidates are kept.
 
     A candidate scored under `reject_below` is rejected by rule: kept, out of the review
-    queue, and open to the operator to approve. Nothing is ever approved here.
+    queue, and open to the operator to approve. A trial candidate scored for the claim's
+    indication at or above `accept_above` is approved by rule; 0 turns that rule off.
     """
     entities = entities_of(session, claim)
     seen = {
@@ -149,6 +151,7 @@ def resolve_claim(
         session.flush()
         raise
     _reject_near_zero(added, reject_below, now)
+    _approve_confident(session, added, accept_above, now)
     session.flush()
     if rescore:
         rescore_claim(
@@ -159,6 +162,7 @@ def resolve_claim(
             now=now,
             skip=added,
             reject_below=reject_below,
+            accept_above=accept_above,
         )
     return added
 
@@ -167,6 +171,42 @@ def _reject_near_zero(scored: list[EntityMatch], reject_below: float, now: datet
     for match in scored:
         if match.review_state is ReviewState.PENDING and match.score < reject_below:
             record_decision(match, ReviewState.REJECTED, by=Decider.RULE, now=now)
+
+
+def _scored_for_the_indication(session: Session, match: EntityMatch) -> bool:
+    """True when the latest scoring asked about the claim's indication and did not read
+    the record as the same intervention for another indication."""
+    scored = session.scalars(
+        select(DecisionLog)
+        .where(
+            DecisionLog.step == ENTITY_MATCH,
+            DecisionLog.input_ref == f"entity_match:{match.id}",
+            DecisionLog.error.is_(None),
+        )
+        .order_by(DecisionLog.id.desc())
+    ).first()
+    if scored is None or scored.output is None:
+        return False
+    return OTHER_INDICATION in scored.options and scored.output.get("choice") != OTHER_INDICATION
+
+
+def _approve_confident(
+    session: Session, scored: list[EntityMatch], accept_above: float, now: datetime
+) -> None:
+    """Approve by rule the trial candidates scored for the indication at or above the
+    threshold. Openspec auto-publish: "Confident candidates are approved by rule"."""
+    if accept_above <= 0:
+        return
+    for match in scored:
+        entity = session.get(Entity, match.entity_id)
+        if (
+            match.review_state is ReviewState.PENDING
+            and match.score >= accept_above
+            and entity is not None
+            and entity.type is EntityType.INTERVENTION
+            and _scored_for_the_indication(session, match)
+        ):
+            record_decision(match, ReviewState.APPROVED, by=Decider.RULE, now=now)
 
 
 def rescore_claim(
@@ -178,6 +218,7 @@ def rescore_claim(
     now: datetime,
     skip: list[EntityMatch] | None = None,
     reject_below: float = 0.0,
+    accept_above: float = 0.0,
 ) -> list[EntityMatch]:
     """Score again the pending trial candidates that the search still returns, and return
     them. For candidates scored before the indication was part of the question.
@@ -210,5 +251,6 @@ def rescore_claim(
     score_matches(session, backend, claim=claim, candidates=again, now=now)
     rescored = [match for _, match, _ in again]
     _reject_near_zero(rescored, reject_below, now)
+    _approve_confident(session, rescored, accept_above, now)
     session.flush()
     return rescored

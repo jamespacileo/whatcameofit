@@ -16,9 +16,9 @@
 
 Approval stays a review state, so the status rules, the export and the history keep working unchanged. What changes is who decides:
 
-- **Draft claim:** approved by rule when extraction output passes validation and the claim is not a duplicate. A draft that fails validation is rejected by rule, kept, and listed for the operator.
+- **Draft claim:** with `APPROVE_DRAFTS_BY_RULE` on, approved by rule when extraction output passes validation, the claim is not a duplicate and the intervention it names is a name. A draft naming a description is rejected by rule and kept. Output that never validates saves nothing, as before. Off by default.
 - **Candidate match:** approved by rule when it was scored with the claim's indication and its score is at or above `MATCH_ACCEPT_ABOVE`. Candidates scored without the indication are never approved by rule. Under `MATCH_REJECT_BELOW` it is rejected by rule as today. Between the two it stays pending: it does not count toward the status, and the claim page and its source page show it as a candidate with its score.
-- **Event:** the existing confidence threshold now applies to follow-up paper events too. Manually entered events are a person's own entry and are approved as entered.
+- **Event:** the existing confidence threshold (`REVIEW_CONFIDENCE_THRESHOLD`, 0.95) now applies to follow-up paper events too. A follow-up showing both signs scores 0.9, so it is approved by rule only once the threshold is lowered to 0.9. Manually entered events are a person's own entry and are approved as entered.
 - **Failure flag:** still only a person, with a source URL.
 
 `MATCH_ACCEPT_ABOVE` has no default in code. It is set in `.env` from the lookup's measured agreement with the reviewer's past approvals (`live-lookup`'s measurement), and `0` or unset turns approval by rule off, so nothing is approved by score until the operator sets it.
@@ -40,6 +40,8 @@ A claim or source carries `archived_at` and `archive_reason`. The export leaves 
 Assistant decisions no longer hold a claim back, since rules now publish. `checked_by_person` stays in the export and the data file. The preview mode loses its purpose; `export --preview` and the preview band are removed in this change.
 
 ## Open questions
+
+0. **Evidence stage.** A claim with no trial takes its status from the confirmed evidence stage, which today only a person confirms. Until the suggested stage is confirmed by rule too, a rule-approved claim with no trial has no stage. Proposed: confirm the suggestion by rule when its probability is at or above the event threshold.
 
 1. **Reader lookups.** Should an address a reader looks up become a source page? It would grow the site fastest, but the privacy page promises that a pasted link is not tracked. Not in this change; it needs the operator's decision and a privacy page change.
 2. **The threshold's first value.** Proposed: the lowest score at which the lookup's past answers agreed with the reviewer at 95% or better.

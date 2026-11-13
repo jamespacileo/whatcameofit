@@ -281,7 +281,7 @@ def test_origin_paper_with_only_a_pending_match_gets_no_follow_ups(session: Sess
     assert events(session) == []
 
 
-def test_follow_up_paper_is_pending_whatever_its_confidence(session: Session):
+def test_follow_up_paper_below_the_threshold_is_pending(session: Session):
     """Scenario: Follow-up paper"""
     both = paper("10.1000/both", "EX-1 antibody in dogs", ["Sample B"])
     one = paper("10.1000/one", "Further tooth results", ["Sample B"])
@@ -291,6 +291,23 @@ def test_follow_up_paper_is_pending_whatever_its_confidence(session: Session):
     assert {event.review_state for event in created} == {ReviewState.PENDING}
     by_id = {event.external_id: event.confidence for event in created}
     assert by_id["10.1000/both"] > by_id["10.1000/one"]
+
+
+def test_follow_up_paper_at_the_threshold_is_approved_by_rule(session: Session):
+    """Scenario: Confident follow-up paper (openspec auto-publish)"""
+    both = paper("10.1000/both", "EX-1 antibody in dogs", ["Sample B"])
+    one = paper("10.1000/one", "Further tooth results", ["Sample B"])
+    claim = new_claim(session)
+    with_origin_paper(session, claim)
+
+    fetch(session, claim, literature=Literature([both, one]), threshold=0.9)
+
+    states = {
+        event.external_id: (event.review_state, event.reviewed_by)
+        for event in events(session, EventType.FOLLOWUP_PAPER)
+    }
+    assert states["10.1000/both"] == (ReviewState.APPROVED, Decider.RULE)
+    assert states["10.1000/one"][0] is ReviewState.PENDING
 
 
 def test_rejected_event_found_again_stays_rejected(session: Session):

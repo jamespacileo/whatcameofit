@@ -59,6 +59,7 @@ class FakeRetriever:
 @pytest.fixture
 def run(session: Session, monkeypatch: pytest.MonkeyPatch):
     """Invoke the CLI on the test session with a scripted model and a fake web."""
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://unused/unused")
 
     @contextmanager
     def test_session() -> Generator[Session]:
@@ -151,3 +152,14 @@ def test_claim_edit_refusal_explains_and_exits_1(run):
 
     assert result.exit_code == 1
     assert "No claim has the slug" in result.output
+
+
+def test_extract_new_with_the_rule_on_says_the_draft_is_published(
+    run, monkeypatch: pytest.MonkeyPatch, session: Session
+):
+    monkeypatch.setenv("APPROVE_DRAFTS_BY_RULE", "true")
+
+    result = run(*NEW)
+
+    assert result.exit_code == 0, result.output
+    assert "Approved by rule" in result.output
