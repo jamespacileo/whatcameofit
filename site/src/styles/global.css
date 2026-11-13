@@ -245,8 +245,8 @@ p {
 }
 
 .masthead .name .mark {
-  width: 1.3em;
-  height: 1.3em;
+  width: 1.55em;
+  height: 1.55em;
   margin-right: 0.45em;
   align-self: center;
   flex: none;
@@ -2157,9 +2157,27 @@ main ul:not([class]) li + li {
 }
 
 /* Where a web article comes from: the outlet's icon or a letter tile, outlet, short domain. */
-.outlet .domain {
-  margin-left: 0.15rem;
-  white-space: nowrap;
+.outlet {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.45rem;
+}
+
+.outlet-name {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.outlet-icon {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 1.05rem;
+  height: 1.05rem;
+  align-self: center;
 }
 
 .outlet .tile {
@@ -2169,7 +2187,6 @@ main ul:not([class]) li + li {
      are, so it hangs a little below the baseline. In rem, because the letter tile
      and the image have different font sizes. */
   vertical-align: -0.21rem;
-  margin-right: 0.35rem;
   width: 1.05rem;
   height: 1.05rem;
   border-radius: 4px;
@@ -2182,15 +2199,20 @@ main ul:not([class]) li + li {
 
 /* An outlet's own icon fills the tile's box and brings its own colours. */
 .outlet img.tile {
-  display: inline-block;
+  position: absolute;
+  inset: 0;
   object-fit: contain;
   background: none;
+}
+
+.outlet-icon:has(img) > span {
+  visibility: hidden;
 }
 
 /* Beside a promise the outlet has its own line, and the date the next. */
 .promised .outlet,
 .undated .outlet {
-  display: block;
+  display: flex;
 }
 
 .promised .outlet span.tile,
@@ -2201,6 +2223,7 @@ main ul:not([class]) li + li {
 .outlet .domain {
   font-size: 0.8rem;
   color: var(--muted);
+  overflow-wrap: anywhere;
 }
 
 .index .when {
