@@ -27,3 +27,7 @@ Pull requests and pushes to main SHALL run the existing project checks and a pro
 
 ### Requirement: Public addresses and contact links work
 The production canonical origin SHALL be https://whatcameofit.com. HTTP SHALL redirect to HTTPS, and www SHALL redirect to the apex while preserving path and query. Suggestion and correction addresses SHALL forward to the operator's verified destination before their links are enabled in production.
+
+#### Scenario: A reader arrives by an alternative address
+- **WHEN** a reader requests a page over HTTP or on the www host
+- **THEN** they are redirected to the same path and query on https://whatcameofit.com
