@@ -32,6 +32,18 @@ test("the method page names every status and carries the footer notice", () => {
   assert.ok(html.includes("This site gives no medical advice"));
 });
 
+test("the method page's video waits to be played, is dated, and has its words beside it", () => {
+  const html = page("how-it-works/index.html");
+  const video = html.match(/<video[^>]*>/)?.[0] ?? "";
+  assert.ok(video.includes("controls"), "the video has no controls");
+  assert.ok(video.includes('preload="none"'), "the video is fetched before it is played");
+  assert.ok(!video.includes("autoplay"), "the video plays on its own");
+  assert.match(html, /<source src="\/video\/explainer\.mp4/, "the video is not a file of this site");
+  assert.ok(exists("video/explainer.mp4") && exists("video/explainer-poster.jpg"));
+  assert.ok(html.includes("as the registries showed them in November 2026"), "the video is not dated");
+  assert.ok(html.includes("What the video says"), "the video's words are not on the page");
+});
+
 test("the method page says what is counted", () => {
   assert.ok(page("how-it-works/index.html").includes("counts requests and errors"));
 });
