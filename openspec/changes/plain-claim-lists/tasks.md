@@ -12,7 +12,7 @@
 - [x] 2.1 Change the claim cell in `ClaimTable.astro` so the link text is `intervention.name` and the headline is plain text beneath it, with the link stretched over the cell; verify on the built topic page that the link reads the name and the headline is present
 - [x] 2.2 Style the name and the two-line clamped headline in `global.css` for desktop and phone widths, and verify in the browser preview at both widths that no row overflows (the site has no dark theme)
 - [x] 2.3 Add tests "Scenario: Row for a named intervention" and "Scenario: Two claims for one intervention", update "a topic page marks each row with its status and keeps amber for promises" if its selectors changed, and verify the suite passes
-- [ ] 2.4 List the intervention names of all seeded claims, report any over 40 characters or worded as a description to the operator, and verify the list is in the change's PR description
+- [x] 2.4 List the intervention names of all seeded claims, report any over 40 characters or worded as a description to the operator, and verify the list is in the change's PR description
 
 ## 3. Topic summary sentence
 
