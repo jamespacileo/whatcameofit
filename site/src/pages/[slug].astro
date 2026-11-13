@@ -32,6 +32,7 @@ import {
   type RecordKind,
 } from "../lib/status";
 import { cardAlt, clip, shareSentence } from "../lib/card";
+import { embedSnippet, shareLinks } from "../lib/share";
 import { confidenceLabel, readingOf } from "../lib/confidence";
 import { claimPageData } from "../lib/structured";
 import ReportError from "../components/ReportError.astro";
@@ -86,13 +87,22 @@ const sentence = shareSentence(claim, STATUS_LABELS[claim.status.code], data.las
 // Reminders: the dates a reader can save, which the browser turns into a calendar file.
 const promiseDue = latestPromise(claim)?.parsed_date ?? null;
 // The whole of what another site needs to show this claim's status.
-const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.headline.replaceAll('"', "&quot;")}" width="440" height="420" style="border:0;max-width:100%" loading="lazy"></iframe>`;
+const snippet = embedSnippet(SITE.url, claim.slug, claim.headline);
+// Prefilled posts carry the sentence and the address, and nothing of our own.
+const postText = shareSentence(claim, STATUS_LABELS[claim.status.code], data.last_checked_at, "").trim();
+const posts = shareLinks(postText, address, claim.headline);
 ---
 
 <Base
   title={claim.headline}
   tabTitle={tabTitle}
-  structured={claimPageData(claim, data.last_checked_at)}
+  structured={claimPageData(claim, data.last_checked_at, description)}
+  breadcrumbs={[
+    { name: topic, path: `/topic/${claim.vertical}` },
+    { name: claim.headline, path: `/${claim.slug}` },
+  ]}
+  article={{ published: claim.first_reported_date, modified: data.last_checked_at }}
+  oembed={`/oembed/${claim.slug}.json`}
   description={description}
   image={`/og/${claim.slug}.png`}
   imageAlt={imageAlt}
@@ -571,6 +581,71 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
           Tall image
         </a>
       </div>
+      <div class="post-to">
+        <h3 class="post-label" id="post-to">Post it</h3>
+        <ul class="post-links" aria-labelledby="post-to">
+          {
+            posts.map((post) => (
+              <li>
+                <a
+                  class="share"
+                  href={post.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-network={post.network}
+                >
+                  {post.label}
+                </a>
+              </li>
+            ))
+          }
+          <li>
+            {/* Mastodon has no one address: the reader names their server. */}
+            <button
+              type="button"
+              class="share"
+              data-mastodon
+              data-text={postText}
+              data-url={address}
+              hidden
+            >
+              Mastodon
+            </button>
+          </li>
+          <li>
+            <button type="button" class="share" data-copy="page-address" hidden>
+              <Copy size={16} stroke-width={1.9} aria-hidden="true" />
+              <span data-copy-text>Copy link</span>
+            </button>
+            <span id="page-address" hidden>{address}</span>
+          </li>
+        </ul>
+      </div>
+      <dialog class="mastodon" data-mastodon-dialog aria-labelledby="mastodon-title">
+        <form method="dialog">
+          <h3 id="mastodon-title">Post to Mastodon</h3>
+          <label for="mastodon-server">Your server</label>
+          <input
+            id="mastodon-server"
+            name="server"
+            type="text"
+            inputmode="url"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            placeholder="mastodon.social"
+            aria-describedby="mastodon-note"
+            required
+          />
+          <p class="entry-note" id="mastodon-note" data-mastodon-note aria-live="polite">
+            Kept in this browser only, so you are not asked again.
+          </p>
+          <div class="mastodon-actions">
+            <button type="submit" class="share" value="post">Open Mastodon</button>
+            <button type="submit" class="share quiet" value="cancel" formnovalidate>Cancel</button>
+          </div>
+        </form>
+      </dialog>
         </div>
       </div>
       <details class="embed-how">
@@ -645,6 +720,46 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
 
 <script>
   import { calendarFile, reminderDate, type ReminderChoice } from "../lib/calendar";
+  import { mastodonShare } from "../lib/share";
+
+  // Mastodon: the reader names their server once; it is kept in this browser only.
+  const mastodon = document.querySelector<HTMLButtonElement>("[data-mastodon]");
+  const dialog = document.querySelector<HTMLDialogElement>("[data-mastodon-dialog]");
+  if (mastodon && dialog && typeof dialog.showModal === "function") {
+    const KEY = "mastodon-server";
+    const input = dialog.querySelector<HTMLInputElement>("input")!;
+    const note = dialog.querySelector<HTMLElement>("[data-mastodon-note]")!;
+    const idleNote = note.textContent;
+    const { text, url } = mastodon.dataset as { text: string; url: string };
+    const open = (server: string) => {
+      const href = mastodonShare(server, text, url);
+      if (href) window.open(href, "_blank", "noopener,noreferrer");
+      return href;
+    };
+    mastodon.hidden = false;
+    // A remembered server is filled in, so posting is one more press and changing it is easy.
+    mastodon.addEventListener("click", () => {
+      let saved: string | null = null;
+      try {
+        saved = localStorage.getItem(KEY);
+      } catch {}
+      input.value = saved ?? "";
+      note.textContent = idleNote;
+      dialog.showModal();
+    });
+    dialog.querySelector("form")!.addEventListener("submit", (event) => {
+      if (event.submitter?.getAttribute("value") !== "post") return;
+      if (!open(input.value)) {
+        event.preventDefault();
+        note.textContent = "That is not a server's name. Try one like mastodon.social.";
+        input.focus();
+        return;
+      }
+      try {
+        localStorage.setItem(KEY, input.value.trim());
+      } catch {}
+    });
+  }
 
   // Sharing uses the device's own share sheet where there is one, and copies the
   // page address where there is not. The button only appears when it can work.

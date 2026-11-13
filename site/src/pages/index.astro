@@ -9,6 +9,7 @@ import { SITE } from "../../site.config.mjs";
 import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
 import { data, listedTopics } from "../lib/export";
 import { recentReports } from "../lib/reports";
+import { siteData } from "../lib/structured";
 import { latestPromise } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 
@@ -50,7 +51,7 @@ const setOn = new Set(recent.map((claim) => claim.status.updated_at!.slice(0, 10
 const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null;
 ---
 
-<Base current="home">
+<Base current="home" structured={siteData()}>
   <h1 class="title">What happened to that breakthrough?</h1>
   <p class="lede">{SITE.description}</p>
 
