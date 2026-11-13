@@ -18,7 +18,10 @@ Domain terms for thenwhat. Behavior is specified in `openspec/`; this file only 
 | **Match** | A proposed link between an entity and a record in a public registry (a trial, a DOI). Always confirmed by a human. |
 | **Evidence event** | A dated, sourced fact about a claim, such as a trial being registered or a follow-up paper appearing. Status comes from approved evidence events; the evidence stage matters only when no trial is found. |
 | **Follow-up paper** | A paper that cites the origin paper and either shares an author with it or names the intervention. |
-| **Review state** | Pending, approved or rejected. Applies to draft claims, matches and evidence events. |
+| **Review state** | Pending, approved or rejected. Applies to draft claims, matches and evidence events. A decision is made by a rule, a human, the seed loader or an assistant; approval by rule publishes. |
+| **Archived** | Taken off the public site by the operator. The address answers 410; the database keeps the record. Not a review state. |
+| **Confidence** | A match's score shown as a word and a percentage, such as "High match · 92%", with its reasons. An automatic estimate of matching the reported treatment and condition, never a verdict on the treatment. |
+| **Source** | An article or post the pipeline read: its address, outlet, title and date, never its text. Has a page listing its claim or up to five candidates. |
 | **Status** | Where a claim stands, derived by fixed rules from its approved evidence events: preclinical only, no trial record found, trial registered, Phase 1 to 3, approved, failed, terminated or retracted. With no trial found, the confirmed evidence stage decides between the first two: a study in people is "no trial record found", laboratory or animal work is "preclinical only". |
 | **Standing trial** | A trial that is neither terminated nor withdrawn and carries no failure flag. Status comes from the furthest standing trial that has started. |
 | **Failure flag** | A human-set marker that a trial missed its primary endpoint, with a source link. The only way a claim becomes "failed". |
@@ -27,4 +30,4 @@ Domain terms for thenwhat. Behavior is specified in `openspec/`; this file only 
 | **Human label** | The operator's review decision recorded against a decision step's suggestion. Used later to evaluate and calibrate. |
 | **Export** | The JSON file of approved data that the site is built from. |
 | **Seed** | A checked-in claim loaded as already reviewed so a fresh checkout has a page. Its decisions are marked as the seed loader's, not an operator's. |
-| **Operator** | The person who enters claims and reviews matches and events. |
+| **Operator** | The person who runs the pipeline, corrects decisions and archives wrong items. |

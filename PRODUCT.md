@@ -24,7 +24,7 @@ News reports medical breakthroughs that are rarely followed up. thenwhat keeps a
 
 ## Positioning
 
-The unit is the claim, not the article, and the status is derived by fixed rules from public registry records that a human has reviewed. No model and no editor decides the status, and every status lists the events that produced it.
+The unit is the claim, not the article, and the status is derived by fixed rules from public registry records matched by the pipeline, each match shown with how confident the pipeline is. Publishing is automatic (decided 2026-11-13, ADR 0001); the operator takes wrong items down. No model and no editor decides the status, and every status lists the events that produced it.
 
 ## Operating Context
 
