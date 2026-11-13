@@ -231,7 +231,18 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
         <dd>
           {claim.intervention.name}
           {claim.intervention.synonyms.length > 0 && (
-            <span class="aka">also known as {claim.intervention.synonyms.join(", ")}</span>
+            <span class="aka">
+              also known as{" "}
+              {
+                /* A name such as "TRG-035" must not break at its hyphen. */
+                claim.intervention.synonyms.map((name, index) => (
+                  <>
+                    {index > 0 && ", "}
+                    {name.includes("-") && name.length <= 16 ? <span class="unbroken">{name}</span> : name}
+                  </>
+                ))
+              }
+            </span>
           )}
         </dd>
       </div>
@@ -338,7 +349,7 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                     </td>
                   )
                 }
-                <td role="cell" data-column="Recorded">
+                <td role="cell" data-column={hasDatedPromise ? "Recorded" : undefined}>
                   {
                     row.recorded.length === 0 ? (
                       <span

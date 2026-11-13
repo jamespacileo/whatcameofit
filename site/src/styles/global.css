@@ -389,6 +389,17 @@ a.chip:hover {
     min-height: 2.75rem;
   }
 
+  /* The jumps on the topics page are pressed, so they get the same room. */
+  .directory-tools .letters a {
+    min-width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  /* The name is the way home. Padding, not a set height, keeps its baseline. */
+  .masthead .name {
+    padding-block: 0.4rem;
+  }
+
   .pop-trigger.info {
     min-width: 2.75rem;
     min-height: 2.75rem;
