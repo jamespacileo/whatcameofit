@@ -26,7 +26,7 @@ const RULE = "#d9e2ee";
 const RING = "#7f90a3";
 // The icon's own two: its outline, and the amber of the capsule's promised half.
 const DEEP = "#0b2545";
-const CAPSULE_PROMISE = "#f4c95d";
+const CAPSULE_PROMISE = "#eeb53a";
 // Pale amber: everything promised, here as on the pages.
 const PROMISE = "#fff7df";
 const PROMISE_RULE = "#d9c88a";
@@ -118,12 +118,12 @@ function stamp(size: number): Node {
     viewBox: "0 0 64 64",
     children: [
       shape("rect", { width: 64, height: 64, rx: 14, fill: TINT }),
-      shape("circle", { cx: 27, cy: 27, r: 17, fill: PAPER, stroke: DEEP, "stroke-width": 5 }),
-      shape("path", { d: "M40 40l13 13", stroke: DEEP, "stroke-width": 6.5, "stroke-linecap": "round" }),
+      shape("circle", { cx: 28, cy: 28, r: 18.5, fill: PAPER, stroke: DEEP, "stroke-width": 5.5 }),
+      shape("path", { d: "M42.5 42.5l11.5 11.5", stroke: DEEP, "stroke-width": 7.5, "stroke-linecap": "round" }),
       // The capsule under the lens: the promised half in amber, the recorded half in blue.
-      shape("rect", { x: 14, y: 21, width: 26, height: 12, rx: 6, fill: BLUE }),
-      shape("path", { d: "M27 21h-7a6 6 0 0 0 0 12h7z", fill: CAPSULE_PROMISE }),
-      shape("path", { d: "M27 21v12", stroke: PAPER, "stroke-width": 2.2 }),
+      shape("rect", { x: 14.5, y: 21, width: 27, height: 14, rx: 7, fill: BLUE }),
+      shape("path", { d: "M28 21h-6.5a7 7 0 0 0 0 14h6.5z", fill: CAPSULE_PROMISE }),
+      shape("path", { d: "M28 21v14", stroke: PAPER, "stroke-width": 2.4 }),
     ],
   });
 }
@@ -340,6 +340,45 @@ export async function cardPng(claim: ExportedClaim, which: Shape): Promise<Uint8
   return new Uint8Array(
     new Resvg(svg, { fitTo: { mode: "width", value: layout.width } }).render().asPng(),
   );
+}
+
+/**
+ * The site's own card, for a page that has no claim to show: the mark, the name, what
+ * the site is, and the notice that goes wherever the mark goes.
+ */
+export async function sitePng(): Promise<Uint8Array> {
+  const { width, height } = LAYOUTS.wide;
+  const name = 96;
+  const card = box(
+    {
+      boxSizing: "border-box",
+      width,
+      height,
+      flexDirection: "column",
+      justifyContent: "space-between",
+      background: PAPER,
+      color: INK,
+      fontFamily: "Figtree",
+      padding: 72,
+    },
+    [
+      stamp(176),
+      box({ flexDirection: "column" }, [
+        box({ alignItems: "center", fontSize: name, letterSpacing: -name / 48 }, [
+          box({ fontWeight: 400 }, SITE.wordmark[0]),
+          box({ fontWeight: 700, marginLeft: name * 0.27 }, SITE.wordmark[1]),
+          ask(name * 0.92),
+        ]),
+        box({ fontSize: 40, color: MUTED, marginTop: 14 }, SITE.tagline),
+      ]),
+      box({ justifyContent: "space-between", fontSize: 26, color: MUTED }, [
+        box({}, new URL(SITE.url).host),
+        box({}, CARD_NOTICE),
+      ]),
+    ],
+  );
+  const svg = await satori(card as never, { width, height, fonts });
+  return new Uint8Array(new Resvg(svg, { fitTo: { mode: "width", value: width } }).render().asPng());
 }
 
 export function cardPaths() {

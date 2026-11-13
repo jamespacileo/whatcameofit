@@ -3,6 +3,7 @@ import "../styles/global.css";
 // Preloaded so the first paint is already in the site's face and headings do not reflow.
 import faceUrl from "@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2?url";
 import { SITE } from "../../site.config.mjs";
+import { CARD_NOTICE } from "../lib/card";
 import { data, listedTopics } from "../lib/export";
 import { NOTICES, PREVIEW_NOTE } from "../lib/notices";
 // Stops a public build whose configured address is a local one.
@@ -37,7 +38,10 @@ const structuredJson = structured ? JSON.stringify(structured).replace(/</g, "\\
 // The name ends in its own punctuation, so the tagline follows it with a space.
 const pageTitle =
   (tabTitle ?? title) ? `${tabTitle ?? title} | ${SITE.name}` : `${SITE.name} ${SITE.tagline}`;
-const imageUrl = image ? new URL(image, Astro.site).href : null;
+// A page with no card of its own shares the site's: the mark, the name and the notice.
+const imageUrl = new URL(image ?? "/brand-card.png", Astro.site).href;
+// What the site's own card says, for a reader who cannot see it.
+const imageText = image ? imageAlt : `${SITE.name} ${SITE.tagline}. ${CARD_NOTICE}.`;
 // One topic is linked by name. With several, the item leads to the list of them all.
 const topics = listedTopics;
 const topicLink =
@@ -55,7 +59,10 @@ const topicLink =
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {/* For a browser or a search result that does not draw the vector icon. */}
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="preload" as="font" type="font/woff2" href={faceUrl} crossorigin />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
@@ -71,9 +78,9 @@ const topicLink =
     <meta property="og:description" content={description} />
     <meta property="og:site_name" content={SITE.name} />
     <meta property="og:type" content="article" />
-    {imageUrl && <meta property="og:image" content={imageUrl} />}
-    {imageUrl && imageAlt && <meta property="og:image:alt" content={imageAlt} />}
-    {imageUrl && <meta name="twitter:card" content="summary_large_image" />}
+    <meta property="og:image" content={imageUrl} />
+    {imageText && <meta property="og:image:alt" content={imageText} />}
+    <meta name="twitter:card" content="summary_large_image" />
     {data.preview && <meta name="robots" content="noindex" />}
     {/* The name's animation plays on the first page of a visit only. */}
     <script is:inline>
