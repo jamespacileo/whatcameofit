@@ -19,11 +19,18 @@ import { STAGE_PATH } from "../lib/status";
   <ul class="plain">
     <li><a href="/">Search the tracked claims</a></li>
     {
-      listedTopics.map((vertical) => (
+      // A handful of topics are named here; more than that are a list of their own.
+      listedTopics.length > 6 ? (
         <li>
-          <a href={`/topic/${vertical.slug}`}>All claims in {vertical.title.toLowerCase()}</a>
+          <a href="/topics">All {listedTopics.length} topics</a>
         </li>
-      ))
+      ) : (
+        listedTopics.map((vertical) => (
+          <li>
+            <a href={`/topic/${vertical.slug}`}>All claims in {vertical.title.toLowerCase()}</a>
+          </li>
+        ))
+      )
     }
   </ul>
 </Base>
