@@ -1,6 +1,9 @@
 // Lucide 1.72.0 icon nodes, copied from the site's @lucide/astro package.
 // See lucide-LICENSE.txt. Adjacent labels always carry each icon's meaning.
 const nodes = {
+  "external": [["path", { "d": "M15 3h6v6" }], ["path", { "d": "M10 14 21 3" }], ["path", { "d": "M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" }]],
+  "bell": [["path", { "d": "M10.268 21a2 2 0 0 0 3.464 0" }], ["path", { "d": "M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" }]],
+  "check": [["path", { "d": "M20 6 9 17l-5-5" }]],
   "search": [
     [
       "path",
