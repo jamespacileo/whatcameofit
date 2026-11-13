@@ -1,5 +1,12 @@
 ## ADDED Requirements
 
+### Requirement: Safari startup without optional notifications
+The extension SHALL start and refresh its lookup index when the browser does not provide notifications. It SHALL NOT mark undelivered notifications as sent or discard saved reminders. It SHALL offer extension reminder choices only when notifications are supported; following and recent checks SHALL remain available.
+
+#### Scenario: Safari lacks the notifications API
+- **WHEN** Safari loads the extension's background script
+- **THEN** startup succeeds, the lookup refresh can run, and unsupported notification controls are omitted
+
 ### Requirement: Current YouTube video lookup
 Opening the extension on a YouTube watch page or Short SHALL read only the current video's title, loaded description, source links and any loaded captions/transcript. It SHALL exclude comments, recommendations and inactive videos. A missing or stale video renderer SHALL NOT fall back to the surrounding page. Explicit selected text SHALL retain precedence and suppress links and automatic screenshot capture.
 

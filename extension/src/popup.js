@@ -86,11 +86,11 @@ const actions = {
   back: controller.back,
   follow: controller.follow,
   unfollow: controller.unfollow,
-  remindLater: (claim, choice) => {
+  remindLater: typeof api.notifications?.create === "function" ? (claim, choice) => {
     const now = new Date();
     const pad = (value) => String(value).padStart(2, "0");
     controller.remindLater(claim, choice, `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`);
-  },
+  } : undefined,
   forget: controller.forget,
   async openFollowed(page) {
     await controller.seen(page);

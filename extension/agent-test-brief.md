@@ -12,7 +12,7 @@ Nothing here is public. The server runs on this machine at `http://localhost:878
 
 ### YouTube acceptance for the next extension update
 
-Use a development build from the `feat/youtube-lookup` worktree; do not replace the installed Safari release or the Apple submission waiting for review. Use public videos and remain signed out. This check is additional to the six-page baseline below; old wording examples below predate the compact popup.
+Use the 0.8.0 development build from the `feat/youtube-lookup` worktree. The operator has authorised replacing the local Safari app for this acceptance test; keep the Apple submission waiting for review unchanged. Use public videos without signing in to a new account. This check is additional to the six-page baseline below; old wording examples below predate the compact popup.
 
 1. Open a public medical-claim video. Open the extension and confirm automatic lookup uses the video's title/description and identifies YouTube. No comment, recommendation or account-menu text should enter the request.
 2. Open **Show transcript** on a captioned video, then reopen the extension. Confirm the already-loaded transcript can supply a claim missing from the title. No caption endpoint, audio recording or video download should be requested.
