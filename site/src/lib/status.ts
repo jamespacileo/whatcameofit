@@ -30,6 +30,44 @@ export const STATUS_MEANINGS: Record<StatusCode, string> = {
   retracted: "The paper the first news reports were about has been retracted.",
 };
 
+// A status in plain words, for a reader who does not know trial phases. A gloss never
+// claims more than the meaning above it: "no trial on record" is not "never tested".
+export const STATUS_GLOSSES: Record<StatusCode, string> = {
+  preclinical_only: "No trial in people on record",
+  no_trial_found: "Studied in people, no registered trial found",
+  trial_registered: "A trial in people is registered",
+  phase_1: "Early trial in people, checking safety",
+  phase_2: "Mid-stage trial in people",
+  phase_3: "Large late-stage trial in people",
+  approved: "Approved by a regulator",
+  failed: "A trial did not meet its main goal",
+  terminated: "Its trials were stopped early",
+  retracted: "The original paper was retracted",
+};
+
+// How a count of claims with one status is said in a sentence: for one claim, for several.
+const STATUS_CLAUSES: Record<StatusCode, [one: string, many: string]> = {
+  preclinical_only: ["has no trial in people on record", "have no trial in people on record"],
+  no_trial_found: [
+    "was studied in people with no registered trial found",
+    "were studied in people with no registered trial found",
+  ],
+  trial_registered: ["has a trial in people registered", "have a trial in people registered"],
+  phase_1: ["has reached an early trial in people", "have reached early trials in people"],
+  phase_2: ["has reached a mid-stage trial in people", "have reached mid-stage trials in people"],
+  phase_3: [
+    "has reached a large late-stage trial in people",
+    "have reached large late-stage trials in people",
+  ],
+  approved: ["has been approved by a regulator", "have been approved by a regulator"],
+  failed: [
+    "had a trial that did not meet its main goal",
+    "had a trial that did not meet its main goal",
+  ],
+  terminated: ["had its trials stopped early", "had their trials stopped early"],
+  retracted: ["had its original paper retracted", "had their original papers retracted"],
+};
+
 export function overlayText(years: number | null): string | null {
   return years === null ? null : `No signal for ${years} ${years === 1 ? "year" : "years"}`;
 }
@@ -97,7 +135,7 @@ export function assertNeutral(texts: string[]): void {
     const found = text.match(VERDICT_WORDS);
     if (found) {
       throw new Error(
-        `Verdict wording "${found[0]}" in a status label: "${text}". Statuses describe records only.`,
+        `Verdict wording "${found[0]}" in status wording: "${text}". Statuses describe records only.`,
       );
     }
   }
@@ -106,6 +144,8 @@ export function assertNeutral(texts: string[]): void {
 assertNeutral([
   ...Object.values(STATUS_LABELS),
   ...Object.values(STATUS_MEANINGS),
+  ...Object.values(STATUS_GLOSSES),
+  ...Object.values(STATUS_CLAUSES).flat(),
   ...Object.values(TRIAL_STATES),
   overlayText(1)!,
   overlayText(6)!,
@@ -121,6 +161,40 @@ export const STAGE_PATH: StatusCode[] = [
   "phase_3",
   "approved",
 ];
+
+// The most statuses a summary names; the claims at any others are counted together.
+const SUMMARY_NAMES = 4;
+
+/**
+ * One sentence on where a list's claims stand, from the count at each status alone.
+ * Statuses are named in path order, then those off the path. Null for an empty list.
+ */
+export function topicSummary(counts: ReadonlyMap<StatusCode, number>): string | null {
+  const offPath = (Object.entries(STATUS_LABELS) as [StatusCode, string][])
+    .map(([code]) => code)
+    .filter((code) => !STAGE_PATH.includes(code));
+  const present = [...STAGE_PATH, ...offPath].filter((code) => (counts.get(code) ?? 0) > 0);
+  const total = present.reduce((sum, code) => sum + counts.get(code)!, 0);
+  if (total === 0) return null;
+  if (total === 1) {
+    return `1 reported breakthrough tracked: it ${STATUS_CLAUSES[present[0]][0]}.`;
+  }
+  // The sort is stable, so statuses with equal counts keep their path order.
+  const named = [...present]
+    .sort((a, b) => counts.get(b)! - counts.get(a)!)
+    .slice(0, SUMMARY_NAMES);
+  const parts = present
+    .filter((code) => named.includes(code))
+    .map((code) => {
+      const count = counts.get(code)!;
+      return `${count} ${STATUS_CLAUSES[code][count === 1 ? 0 : 1]}`;
+    });
+  const rest = total - named.reduce((sum, code) => sum + counts.get(code)!, 0);
+  if (rest > 0) parts.push(`${rest} ${rest === 1 ? "is" : "are"} at other statuses`);
+  const said =
+    parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}`;
+  return `Of ${total} reported breakthroughs tracked, ${said}.`;
+}
 
 // What kind of record an entry is. Each kind has one drawing, named once in a legend.
 export type RecordKind =

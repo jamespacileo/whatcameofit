@@ -2144,6 +2144,51 @@ main ul:not([class]) li + li {
   font-weight: 700;
 }
 
+/* A claim is listed by its intervention's name; the reported headline sits under it,
+   in full for a reader who wants it and quiet enough to scan past. */
+.index td.claim .claim-headline {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+/* The link reaches over its cell, so the headline is part of the target but not of
+   the link's name. */
+.index td.claim:has(.claim-name) {
+  position: relative;
+}
+
+.index td.claim .claim-name::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+@media (min-width: 40.01rem) {
+  .index td.claim .claim-headline {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+}
+
+/* A status in plain words, under its label. */
+.gloss {
+  display: block;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.digest .gloss {
+  margin: 0.2rem 0 0.5rem;
+  font-size: 1rem;
+}
+
 /* The outlet under a headline: quieter than the headline, still a full-size target. */
 .index td.claim .entry-note a {
   display: inline-block;

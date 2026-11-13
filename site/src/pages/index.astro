@@ -1,6 +1,7 @@
 ---
 import CalendarPlus from "@lucide/astro/icons/calendar-plus";
 import Base from "../layouts/Base.astro";
+import ClaimName from "../components/ClaimName.astro";
 import Outlet from "../components/Outlet.astro";
 import PromiseText from "../components/PromiseText.astro";
 import StatusCell from "../components/StatusCell.astro";
@@ -179,7 +180,7 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
           {recent.map((claim) => (
             <tr role="row">
               <td role="cell" class="claim">
-                <a href={`/${claim.slug}`}>{claim.headline}</a>
+                <ClaimName claim={claim} />
               </td>
               <td role="cell" class="status" data-column="Status">
                 <StatusCell claim={claim} />

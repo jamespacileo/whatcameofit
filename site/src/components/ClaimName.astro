@@ -1,0 +1,14 @@
+---
+// A claim in a list: the intervention's name is the link, so a list is scanned by
+// name; the headline that was reported sits under it, in full but quieter.
+import type { ExportedClaim } from "../lib/export";
+
+interface Props {
+  claim: ExportedClaim;
+}
+
+const { claim } = Astro.props;
+---
+
+<a class="claim-name" href={`/${claim.slug}`}>{claim.intervention.name}</a>
+<span class="claim-headline">{claim.headline}</span>
