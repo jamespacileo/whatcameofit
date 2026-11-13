@@ -39,7 +39,17 @@ make lookup-dev
 LOOKUPS=1 sh extension/test-corpus/sync.sh
 ```
 
-Each search is a paid model call, capped by the service's monthly budget, and the service allows five a minute, so new rows take about 13 seconds each. Answers are kept in `.work/results.json` and never asked again.
+Each search is a paid model call, capped by the service's monthly budget, and the service allows five a minute, so new rows take about 13 seconds each. Cached answers are reused by page URL and reading mode.
+
+## Durable cache
+
+URL checks and full lookup responses are stored outside the worktree in `~/Library/Application Support/WhatCameOfIt/extension-test-corpus/cache.json` on macOS. Linux uses `${XDG_DATA_HOME:-~/.local/share}/WhatCameOfIt/extension-test-corpus/cache.json`. Set `CORPUS_CACHE_DIR` to choose another persistent directory.
+
+The check, assembly and lookup scripts automatically import surviving `.work/checked.json` and `.work/results.json` files, preserving existing durable entries. Legacy result IDs are associated with URLs from that worktree's `urls.csv`. Run a sync before deleting a worktree that still has legacy results.
+
+Deleting a worktree or `.work/` leaves this cache available to the next checkout. Updates are locked and atomic so concurrent worktrees retain each other's answers. Generated CSV and workbook files stay in `.work/`. A normal sync reuses the cache with paid lookups disabled by default.
+
+Run the cache regression tests with `uv run --with openpyxl python -I extension/test-corpus/test_cache.py`.
 
 ## Posts and refused pages
 
