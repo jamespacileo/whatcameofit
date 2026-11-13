@@ -1,5 +1,7 @@
-// Draws the site's raster icons from the one drawing in public/favicon.svg, so a
-// change to the mark reaches every size. Run after editing the mark:
+// Draws the site's raster icons from the mark, so a change to it reaches every size.
+// public/mark.svg is the mark; public/favicon.svg is the same mark drawn for a browser
+// tab, where it is 16 to 32 pixels: the glass runs to the tile's edges and the capsule
+// has no gap between its halves. Run after editing either:
 //   node site/scripts/brand-icons.mjs
 import fs from "node:fs";
 import path from "node:path";
@@ -8,11 +10,11 @@ import { Resvg } from "@resvg/resvg-js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const pub = path.join(here, "..", "public");
-const mark = fs.readFileSync(path.join(pub, "favicon.svg"), "utf8");
+const mark = fs.readFileSync(path.join(pub, "mark.svg"), "utf8");
 // A phone or a launcher cuts its own corners, so it is given the tile with none cut:
 // the same drawing on a square of the tile's colour.
 const square = mark.replace('rx="14"', 'rx="0"');
-if (square === mark) throw new Error("favicon.svg no longer has the rounded tile this script squares off");
+if (square === mark) throw new Error("mark.svg no longer has the rounded tile this script squares off");
 
 const png = (svg, size) => new Resvg(svg, { fitTo: { mode: "width", value: size } }).render().asPng();
 const files = {

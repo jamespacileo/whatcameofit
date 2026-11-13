@@ -1,6 +1,6 @@
 # thenwhat
 
-<img src="site/public/favicon.svg" width="56" height="56" alt="The site's mark: a magnifying glass over a capsule in two halves">
+<img src="site/public/mark.svg" width="56" height="56" alt="The site's mark: a magnifying glass over a capsule in two halves">
 
 News reports medical "breakthroughs" that are rarely mentioned again. thenwhat tracks what happened afterwards: each claim gets a status derived from dated, sourced evidence in public registries, reviewed by a human before it is published.
 

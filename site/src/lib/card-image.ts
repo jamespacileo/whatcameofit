@@ -110,7 +110,7 @@ const box = (style: Record<string, unknown>, children: unknown): Node => ({
 const shape = (type: string, props: Record<string, unknown>): Node => ({ type, props });
 
 // The site's icon: a magnifying glass over a capsule in two halves.
-// The same drawing as public/favicon.svg.
+// The same drawing as public/mark.svg.
 function stamp(size: number): Node {
   return shape("svg", {
     width: size,
