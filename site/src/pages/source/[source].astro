@@ -1,0 +1,42 @@
+---
+// One tracked article or post: what it reported, and the claim or claims it reports,
+// each with where it stands now. Never any text from the article: its title, outlet
+// and date, and a link to it. Openspec auto-publish, source-pages.
+import Base from "../../layouts/Base.astro";
+import ClaimTable from "../../components/ClaimTable.astro";
+import Outlet from "../../components/Outlet.astro";
+import { data } from "../../lib/export";
+import { sourcesOf, type Source } from "../../lib/sources";
+import { formatDate } from "../../lib/timetable";
+
+export function getStaticPaths() {
+  return sourcesOf(data.claims).map((source) => ({ params: { source: source.slug }, props: { source } }));
+}
+
+const { source } = Astro.props as { source: Source };
+const one = source.claims.length === 1;
+---
+
+<Base
+  title={`“${source.title}”`}
+  description={`What came of “${source.title}” (${source.outlet}): the ${one ? "claim it reports and where it stands" : "claims it reports and where each stands"} now.`}
+>
+  <h1 class="title">“{source.title}”</h1>
+  <p class="entry-note source-meta">
+    <Outlet url={source.url} outlet={source.outlet} /> {formatDate(source.published_date)}
+  </p>
+  <p class="lede">
+    {
+      one
+        ? "This report is tracked as one claim. Where it stands now:"
+        : `This report is tracked as ${source.claims.length} claims. Where each stands now:`
+    }
+  </p>
+
+  <ClaimTable claims={source.claims} caption={`Claims reported in “${source.title}”`} />
+
+  <p class="entry-note source-foot">
+    <a href={source.url} rel="noopener">Read the report at {source.outlet}</a>. The site shows its
+    title and links to it; it keeps none of its text.
+  </p>
+</Base>

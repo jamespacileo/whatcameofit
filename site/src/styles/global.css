@@ -1929,6 +1929,15 @@ main ul:not([class]) li + li {
   border-bottom: 0;
 }
 
+/* A source page: who ran the report and when, a breath under its title. */
+.source-meta {
+  margin: 0.5rem 0 1.25rem;
+}
+
+.source-foot {
+  margin-top: 1rem;
+}
+
 /* Matched records: the record on the left, how sure the match is on the right, the
    reason one press away. Openspec auto-publish. */
 .matched {
