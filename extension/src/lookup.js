@@ -1,5 +1,9 @@
 // Decides what the popup shows. Pure: no browser, network or clock in here.
 
+// The saved lookup file's format. Refresh pre-automatic-lookup caches once so an
+// upgrade sees current service settings. The background check writes the same shape.
+export const CACHE_VERSION = 2;
+
 /** Whether a copy saved at `savedAt` may still be used without asking the site again. */
 export function isFresh(savedAt, now, maxAge) {
   return typeof savedAt === "number" && now - savedAt < maxAge;
