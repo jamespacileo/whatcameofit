@@ -538,3 +538,51 @@ def test_status_package_reaches_no_database_network_or_clock():
         }
         assert imported <= allowed | {"thenwhat.status.rules"}, source_file.name
         assert "today(" not in source and "now(" not in source, source_file.name
+
+
+# --- history -------------------------------------------------------------
+
+
+def test_history_starts_at_the_first_report_and_gains_an_entry_per_change():
+    events = trial("NCT1", PHASE_1, STARTED)
+
+    changes = rules.history(events, first_reported_date=FIRST_REPORTED)
+
+    assert [(change.on, change.status) for change in changes] == [
+        (FIRST_REPORTED, ClaimStatus.PRECLINICAL_ONLY),
+        (REGISTERED_ON, ClaimStatus.TRIAL_REGISTERED),
+        (REGISTERED_ON + timedelta(days=90), ClaimStatus.PHASE_1),
+    ]
+
+
+def test_history_has_no_entry_for_an_event_that_leaves_the_status_as_it_was():
+    events = [*trial("NCT1", PHASE_1, STARTED), paper(on=date(2020, 9, 1))]
+
+    changes = rules.history(events, first_reported_date=FIRST_REPORTED)
+
+    assert [change.status for change in changes] == [
+        ClaimStatus.PRECLINICAL_ONLY,
+        ClaimStatus.TRIAL_REGISTERED,
+        ClaimStatus.PHASE_1,
+    ]
+
+
+def test_history_ends_at_the_status_derived_today():
+    events = [*trial("NCT1", PHASE_1, STARTED), *trial("NCT2", PHASE_2, STARTED)]
+    failed = trial("NCT3", PHASE_3, STARTED, registered_on=date(2020, 6, 1))
+    flags = (flag_on(failed),)
+
+    changes = rules.history([*events, *failed], flags, first_reported_date=FIRST_REPORTED)
+
+    today = result([*events, *failed], flags)
+    assert changes[-1].status is today.status
+    assert [change.on for change in changes] == sorted(change.on for change in changes)
+
+
+def test_history_of_an_undated_report_starts_at_its_first_event():
+    changes = rules.history(trial("NCT1", PHASE_1), first_reported_date=None)
+
+    assert [(change.on, change.status) for change in changes] == [
+        (REGISTERED_ON, ClaimStatus.TRIAL_REGISTERED)
+    ]
+    assert rules.history([], first_reported_date=None) == []

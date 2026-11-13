@@ -226,6 +226,20 @@
         "explained_by": [
           1,
           2
+        ],
+        "history": [
+          {
+            "on": "2021-03-31",
+            "code": "preclinical_only"
+          },
+          {
+            "on": "2024-10-08",
+            "code": "trial_registered"
+          },
+          {
+            "on": "2025-10-03",
+            "code": "phase_1"
+          }
         ]
       },
       "articles": [

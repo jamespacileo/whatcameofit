@@ -115,6 +115,11 @@
         "explained_by": [
           2,
           3
+        ],
+        "history": [
+          { "on": "2019-05-03", "code": "preclinical_only" },
+          { "on": "2022-01-10", "code": "trial_registered" },
+          { "on": "2023-02-01", "code": "phase_2" }
         ]
       },
       "articles": [

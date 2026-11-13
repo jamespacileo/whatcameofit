@@ -483,6 +483,14 @@
           },
           "title": "Explained By",
           "type": "array"
+        },
+        "history": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedStatusChange"
+          },
+          "title": "History",
+          "type": "array"
         }
       },
       "required": [
@@ -492,6 +500,26 @@
         "explained_by"
       ],
       "title": "ExportedStatus",
+      "type": "object"
+    },
+    "ExportedStatusChange": {
+      "additionalProperties": false,
+      "description": "The day the status became `code`, by the rules run on what was dated up to then.",
+      "properties": {
+        "on": {
+          "format": "date",
+          "title": "On",
+          "type": "string"
+        },
+        "code": {
+          "$ref": "#/$defs/ClaimStatus"
+        }
+      },
+      "required": [
+        "on",
+        "code"
+      ],
+      "title": "ExportedStatusChange",
       "type": "object"
     },
     "ExportedVertical": {

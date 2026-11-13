@@ -242,3 +242,50 @@ def derive(
         overlay_years=overlay_years,
         explaining_event_ids=tuple(event.id for event in sorted(explaining, key=_chronological)),
     )
+
+
+@dataclass(frozen=True, slots=True)
+class StatusChange:
+    """The day a claim's status became what it then was."""
+
+    on: date
+    status: ClaimStatus
+
+
+def history(
+    events: Iterable[Evidence],
+    flags: Iterable[Flag] = (),
+    *,
+    first_reported_date: date | None,
+    origin_paper_ids: frozenset[str] = frozenset(),
+    evidence_stage: EvidenceStage | None = None,
+) -> list[StatusChange]:
+    """The claim's status over time: the same rules, run on what was dated up to each day.
+
+    The first entry is dated to the first report, or to the earliest approved event when
+    that is earlier or the report is undated. An entry follows for each later day on
+    which the derived status differs from the one before. The last entry's status is the
+    status `derive` gives today, because the status never depends on today's date.
+    """
+    approved = sorted(
+        (event for event in events if event.review_state is ReviewState.APPROVED),
+        key=_chronological,
+    )
+    kept_flags = list(flags)
+    days = {event.event_date for event in approved}
+    if first_reported_date is not None:
+        days.add(first_reported_date)
+
+    changes: list[StatusChange] = []
+    for day in sorted(days):
+        status = derive(
+            [event for event in approved if event.event_date <= day],
+            kept_flags,
+            first_reported_date=first_reported_date,
+            as_of=day,
+            origin_paper_ids=origin_paper_ids,
+            evidence_stage=evidence_stage,
+        ).status
+        if not changes or changes[-1].status is not status:
+            changes.append(StatusChange(on=day, status=status))
+    return changes

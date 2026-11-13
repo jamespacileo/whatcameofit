@@ -577,6 +577,14 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
           )
         }
       </div>
+      {
+        (claim.status.history?.length ?? 0) > 0 && (
+          <p class="entry-note">
+            For a feed reader: <a href={`/changes/${claim.slug}.xml`}>this claim's status changes</a>,
+            or <a href="/changes.xml">every claim's</a>.
+          </p>
+        )
+      }
     </section>
   </article>
 </Base>
