@@ -33,7 +33,7 @@ const shared = [
   ["src/lib/lookup-match.mjs", "lookup-match.js", [["./article-key.mjs", "./article-key.js"]]],
   ["src/lib/live-lookup.mjs", "live-lookup.js", [["./notices.ts", "./notices.js"]]],
   ["worker/page.mjs", "page.js", []],
-  ["src/lib/source-url.mjs", "source-url.js", []],
+  ["src/lib/source-url.mjs", "source-url.js", [["./article-key.mjs", "./article-key.js"]]],
 ];
 for (const [from, to, imports] of shared) {
   let source = fs.readFileSync(path.join(site, from), "utf8");
@@ -74,7 +74,7 @@ const icons = Object.fromEntries(sizes.map((size) => [size, `icons/${size}.png`]
 const manifest = {
   manifest_version: 3,
   name: SITE.name,
-  version: "0.7.0",
+  version: "0.8.0",
   description: "See what happened to the medical breakthrough in the article you are reading.",
   icons,
   action: {

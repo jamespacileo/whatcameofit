@@ -10,6 +10,7 @@ import os from "node:os";
 import path from "node:path";
 import { before, test } from "node:test";
 import { CORRECTION_SUBJECT, SUGGEST_SUBJECT, contactLink } from "../src/lib/contact.mjs";
+import { mastodonShare, shareLinks } from "../src/lib/share.ts";
 import { canonicalAddress, claimPageData } from "../src/lib/structured.ts";
 
 const FIXTURE = "tests/fixture-export.json";
@@ -206,7 +207,10 @@ test("a claim page's structured data describes and never rates", () => {
   assert.equal(structured.url, `${ORIGIN}/phase-claim`);
   assert.equal(structured.datePublished, "2019-05-03");
   assert.equal(structured.dateModified, "2026-11-11T11:00:00Z");
-  assert.deepEqual(structured.publisher, { "@type": "Organization", name: "What came of it?", url: `${ORIGIN}/` });
+  assert.equal(structured.publisher["@type"], "Organization");
+  assert.equal(structured.publisher.name, "What came of it?");
+  assert.equal(structured.publisher.url, `${ORIGIN}/`);
+  assert.equal(structured.publisher.logo.url, `${ORIGIN}/icon-512.png`);
   // Without the dates, the fields are left out rather than empty.
   const undated = claimPageData({ ...claim, first_reported_date: null }, null);
   assert.equal("datePublished" in undated || "dateModified" in undated, false);
@@ -226,14 +230,142 @@ test(
     const html = page("phase-claim/index.html");
     const block = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1];
     assert.ok(block, "the claim page has no structured data");
-    const structured = JSON.parse(block);
-    assert.equal(structured["@type"], "WebPage");
+    const graph = [JSON.parse(block)].flat();
+    const structured = graph.find((entry) => entry["@type"] === "WebPage");
+    assert.ok(structured, "the claim page's data has no WebPage");
     assert.equal(structured.url, `${ORIGIN}/phase-claim`);
     assert.equal(structured.datePublished, "2019-05-03");
     assert.equal(structured.dateModified, "2026-11-11T11:00:00Z");
     assert.ok(html.includes(`<link rel="canonical" href="${ORIGIN}/phase-claim">`));
+    // The trail runs from the home page through the claim's topic to the claim.
+    const trail = graph.find((entry) => entry["@type"] === "BreadcrumbList");
+    assert.deepEqual(
+      trail.itemListElement.map((crumb) => crumb.item),
+      [`${ORIGIN}/`, `${ORIGIN}/topic/gum-disease`, `${ORIGIN}/phase-claim`],
+    );
   },
 );
+
+const structuredOf = (html) =>
+  [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].flatMap(
+    ([, block]) => [JSON.parse(block)].flat(),
+  );
+
+test("the home page names the site and its publisher; the data page describes the dataset", () => {
+  const home = structuredOf(page("index.html"));
+  assert.equal(home.find((entry) => entry["@type"] === "WebSite").url, `${ORIGIN}/`);
+  assert.equal(home.find((entry) => entry["@type"] === "Organization").logo.url, `${ORIGIN}/icon-512.png`);
+  const dataset = structuredOf(page("data/index.html")).find((entry) => entry["@type"] === "Dataset");
+  assert.equal(dataset.distribution.contentUrl, `${ORIGIN}/data/claims.json`);
+  assert.match(dataset.license, /creativecommons\.org/);
+  for (const file of ["topic/gum-disease/index.html", "year/2019/index.html"]) {
+    assert.ok(structuredOf(page(file)).some((entry) => entry["@type"] === "BreadcrumbList"), file);
+  }
+});
+
+// site-publishing: Every page has a complete link preview
+
+const meta = (html, name) =>
+  html.match(new RegExp(`<meta (?:property|name)="${name}" content="([^"]*)"`))?.[1] ?? null;
+
+test("Scenario: Claim link pasted into a chat", () => {
+  const html = page("phase-claim/index.html");
+  assert.equal(meta(html, "og:type"), "article");
+  assert.equal(meta(html, "og:url"), `${ORIGIN}/phase-claim`);
+  assert.equal(meta(html, "og:image"), `${ORIGIN}/og/phase-claim.png`);
+  assert.equal(meta(html, "og:image:width"), "1200");
+  assert.equal(meta(html, "og:image:height"), "630");
+  assert.equal(meta(html, "og:image:type"), "image/png");
+  assert.equal(meta(html, "article:published_time"), "2019-05-03");
+  assert.equal(meta(html, "article:modified_time"), "2026-11-11T11:00:00Z");
+  assert.equal(meta(html, "twitter:image:alt"), meta(html, "og:image:alt"));
+});
+
+test("Scenario: Home page shared", () => {
+  const html = page("index.html");
+  assert.equal(meta(html, "og:type"), "website");
+  assert.equal(meta(html, "og:image"), `${ORIGIN}/brand-card.png`);
+  assert.equal(meta(html, "article:published_time"), null);
+});
+
+test("every page states the whole link preview and announces both feeds", () => {
+  for (const file of htmlFiles(dist)) {
+    const relative = path.relative(dist, file);
+    if (relative.startsWith(`embed${path.sep}`)) continue;
+    const html = fs.readFileSync(file, "utf8");
+    for (const name of ["og:title", "og:description", "og:url", "og:site_name", "og:image", "og:image:alt", "twitter:card", "twitter:image:alt", "theme-color"]) {
+      assert.ok(meta(html, name), `${relative} lacks ${name}`);
+    }
+    assert.equal(meta(html, "og:locale"), "en_GB", relative);
+    assert.ok(html.includes('href="/changes.xml"'), relative);
+    assert.ok(html.includes('href="/anniversaries.xml"'), relative);
+  }
+});
+
+test("Scenario: Crawler arrives", () => {
+  const robots = page("robots.txt");
+  assert.match(robots, /^User-agent: \*$/m);
+  assert.match(robots, /^Allow: \/$/m);
+  assert.ok(robots.includes(`Sitemap: ${ORIGIN}/sitemap.xml`));
+});
+
+// sharing: A claim can be posted to a network
+
+test("share links carry the sentence and address and nothing else", () => {
+  const url = `${ORIGIN}/phase-claim`;
+  const text = "A synthetic claim. First reported May 2019. Status: Phase 2 trial. Not medical advice.";
+  const links = shareLinks(text, url, "A synthetic claim");
+  assert.deepEqual(
+    links.map((link) => link.network),
+    ["bluesky", "threads", "x", "linkedin", "reddit", "whatsapp", "telegram", "email"],
+  );
+  for (const link of links) {
+    assert.doesNotMatch(link.href, /utm_|[?&]ref=|fbclid/i, link.network);
+    assert.ok(decodeURIComponent(link.href).includes(url), link.network);
+  }
+  const bluesky = new URL(links[0].href).searchParams.get("text");
+  assert.equal(bluesky, `${text} ${url}`);
+  // A long sentence is cut at a word to fit Bluesky's 300, the address kept whole.
+  const long = new URL(shareLinks("word ".repeat(80).trim(), url, "t")[0].href).searchParams.get("text");
+  assert.ok([...long].length <= 300);
+  assert.ok(long.endsWith(` ${url}`));
+  // A mail program may show "+" as it is, so the email link uses %20.
+  assert.doesNotMatch(links.at(-1).href, /\+/);
+});
+
+test("Scenario: Reader posts to Mastodon for the first time", () => {
+  const url = `${ORIGIN}/phase-claim`;
+  for (const typed of ["mastodon.social", " https://Mastodon.Social/about ", "@me@mastodon.social"]) {
+    const href = new URL(mastodonShare(typed, "Status: Phase 2 trial.", url));
+    assert.equal(href.origin + href.pathname, "https://mastodon.social/share", typed);
+    assert.equal(href.searchParams.get("text"), `Status: Phase 2 trial. ${url}`);
+  }
+  for (const typed of ["", "mastodon", "javascript:alert(1)", "a b.social"]) {
+    assert.equal(mastodonShare(typed, "x", url), null, typed);
+  }
+});
+
+test("Scenario: Reader posts to Bluesky", () => {
+  const html = page("phase-claim/index.html");
+  assert.match(html, /href="https:\/\/bsky\.app\/intent\/compose\?text=[^"]+"/);
+  assert.match(html, /data-mastodon\b/);
+  assert.ok(html.includes('rel="noopener noreferrer"'));
+});
+
+// sharing: An embed can be found from the claim's address
+
+test("Scenario: Claim address pasted into a site that reads oEmbed", () => {
+  const html = page("phase-claim/index.html");
+  assert.ok(
+    html.includes(`<link rel="alternate" type="application/json+oembed" href="${ORIGIN}/oembed/phase-claim.json"`),
+  );
+  const oembed = JSON.parse(page("oembed/phase-claim.json"));
+  assert.equal(oembed.type, "rich");
+  assert.equal(oembed.version, "1.0");
+  assert.ok(oembed.html.includes(`${ORIGIN}/embed/phase-claim`));
+  assert.equal(oembed.width, 440);
+  assert.equal(oembed.thumbnail_url, `${ORIGIN}/og/phase-claim.png`);
+});
 
 test("the sitemap lists every public page and no embed", () => {
   const listed = [...page("sitemap.xml").matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
@@ -268,6 +400,8 @@ test("Scenario: Preview build publishes no sitemap", () => {
   const result = build(previewExport(), out, { PUBLIC_BUILD: "1" });
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.equal(fs.existsSync(path.join(out, "sitemap.xml")), false);
+  assert.match(page("robots.txt", out), /^Disallow: \/$/m);
+  assert.doesNotMatch(page("robots.txt", out), /Sitemap:/);
   assert.ok(fs.existsSync(path.join(dist, "sitemap.xml")));
   for (const file of ["index.html", "phase-claim/index.html"]) {
     assert.match(page(file, out), /<meta name="robots" content="noindex"/, file);

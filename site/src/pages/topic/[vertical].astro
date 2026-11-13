@@ -20,6 +20,10 @@ const claims = data.claims
   title={vertical.title}
   description={`Reported breakthroughs in ${vertical.title.toLowerCase()} and where each stands now.`}
   current="topics"
+  breadcrumbs={[
+    { name: "Topics", path: "/topics" },
+    { name: vertical.title, path: `/topic/${vertical.slug}` },
+  ]}
 >
   <h1 class="title">{vertical.title}</h1>
   <p class="lede">

@@ -23,6 +23,7 @@
     "satori": "^0.63.2"
   },
   "devDependencies": {
+    "linkedom": "^0.18.15",
     "pagefind": "^1.6.0",
     "wrangler": "4.161.0"
   },

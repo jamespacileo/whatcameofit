@@ -10,7 +10,7 @@ export const SITE = {
   // Where the built site is served: the one source for canonical addresses, the
   // sitemap, link previews and the browser extension's lookup.
   url: env.SITE_URL || "https://whatcameofit.com",
-  tagline: "What happened to reported medical breakthroughs",
+  tagline: "What happened after the headline?",
   description:
     "Each reported breakthrough gets a page showing where it stands now and the dated, sourced records that say so.",
   // Where a reader suggests a headline to track, and where they report an error on a

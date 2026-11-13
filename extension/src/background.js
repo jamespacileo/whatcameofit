@@ -11,6 +11,8 @@ import { alarmsFor, changeMessage, changesToTell, REFRESH_MINUTES, reminderMessa
 const api = globalThis.browser ?? globalThis.chrome;
 const REFRESH = "refresh";
 const ICON = "icons/128.png";
+// Safari has alarms and local storage but no WebExtensions notifications API.
+const canNotify = typeof api.notifications?.create === "function";
 
 function notify(id, { title, message }) {
   return api.notifications.create(id, { type: "basic", iconUrl: ICON, title, message });
@@ -21,6 +23,7 @@ async function refresh() {
   if (!response.ok) return;
   const index = await response.json();
   await api.storage.local.set({ lookup: { version: CACHE_VERSION, index, savedAt: Date.now() } });
+  if (!canNotify) return;
   const { follows = [], told = {} } = await api.storage.local.get(["follows", "told"]);
   const { tell, told: nowTold } = changesToTell(follows, index, told);
   for (const claim of tell) await notify(`change:${claim.page}`, changeMessage(claim));
@@ -28,6 +31,7 @@ async function refresh() {
 }
 
 async function syncReminders() {
+  if (!canNotify) return;
   const { reminders = [] } = await api.storage.local.get("reminders");
   const existing = (await api.alarms.getAll()).map((alarm) => alarm.name);
   const { add, clear } = alarmsFor(reminders, existing);
@@ -36,6 +40,7 @@ async function syncReminders() {
 }
 
 async function remindNow(name) {
+  if (!canNotify) return;
   const { reminders = [], lookup = null } = await api.storage.local.get(["reminders", "lookup"]);
   const reminder = reminderOf(name, reminders);
   if (!reminder) return;
@@ -46,23 +51,23 @@ async function remindNow(name) {
 
 function setUp() {
   api.alarms.create(REFRESH, { periodInMinutes: REFRESH_MINUTES, delayInMinutes: 1 });
-  void syncReminders();
+  return syncReminders().catch(() => {});
 }
 
 api.runtime.onInstalled.addListener(setUp);
 api.runtime.onStartup.addListener(setUp);
 
 api.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === REFRESH) void refresh().catch(() => {});
-  else void remindNow(alarm.name).catch(() => {});
+  if (alarm.name === REFRESH) return refresh().catch(() => {});
+  return remindNow(alarm.name).catch(() => {});
 });
 
 api.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes.reminders) void syncReminders();
+  if (area === "local" && changes.reminders) return syncReminders().catch(() => {});
 });
 
 // Pressing a notification opens the claim page it names.
-api.notifications.onClicked.addListener((id) => {
+api.notifications?.onClicked?.addListener((id) => {
   const page = id.replace(/^(change|remind):/, "");
   if (page.startsWith("/")) api.tabs.create({ url: `${SITE.url}${page}` });
   api.notifications.clear(id);
