@@ -1,6 +1,7 @@
 // Draws one popup state. Status wording comes from the lookup file, and the wording of a
 // registry search's answer from the site's own module; the few sentences here are the
 // extension's own and never describe a claim.
+import { icon } from "./icons.js";
 
 const text = {
   checking: "Checking this page…",
@@ -174,41 +175,70 @@ function privacyNote(site, actions) {
 }
 
 /** A registry search's answer, in the words the site's own module gave it. */
-function answerBlock(shown, site, actions) {
-  const records = (items, address, automatic = false) =>
-    el(
-      "ul",
-      "records",
-      items.map((item) =>
-        el("li", "result-card", [
-          el("h2", "result-title", [link(item.title ?? item.headline, address(item), null, actions.open)]),
-          el("p", "result-confidence", automatic ? (item.confidenceLabel ?? text.confidenceUnavailable) : text.reviewed),
-          // Phase, state and registry number are told apart at a glance as separate tags.
-          item.detail &&
-            el(
-              "p",
-              "tags result-detail",
-              item.detail.split(" · ").map((part) => el("span", "tag", part)),
-            ),
-          item.why && el("p", "small result-reason", item.why),
-        ]),
-      ),
-    );
+function disclosure(label, children, className = "") {
+  return el("details", `disclosure ${className}`.trim(), [
+    el("summary", null, [
+      ...(Array.isArray(label) ? label : [el("span", null, label)]),
+      el("span", "disclosure-arrow", [icon("chevron")]),
+    ]),
+    el("div", "disclosure-body", children),
+  ]);
+}
+
+function recordCard(item, address, automatic, actions, confidenceMeaning) {
+  // New answers carry separate fields; older cached wording remains usable.
+  const metadata = item.registryId
+    ? [["phase", item.phase], ["people", item.state]]
+    : (item.detail ?? "").split(" · ").filter(Boolean).map((value) => [null, value]);
+  const confidence = item.confidenceLabel ?? text.confidenceUnavailable;
+  return el("li", "result-card", [
+    el("h2", "result-title", [link(item.title ?? item.headline, address, null, actions.open)]),
+    metadata.some(([, value]) => value) && el("p", "tags result-detail", metadata.filter(([, value]) => value).map(([name, value]) =>
+      el("span", "tag", [name && icon(name), value]))),
+    automatic ? disclosure([
+      el("span", "match-badge", [icon("target"), confidence]),
+    ], [
+      item.registryId && el("p", "registry-id", item.registryId),
+      item.why && el("p", null, item.why),
+      el("p", null, confidenceMeaning ?? text.confidenceMeaning),
+    ], "match-details") : el("p", "reviewed-label", [icon("book"), text.reviewed]),
+  ]);
+}
+
+function answerBlock(state, site, actions) {
+  const { shown } = state;
+  const records = (items, address, automatic = false) => el("ul", "records", items.map((item) =>
+    recordCard(item, address(item), automatic, actions, shown.confidenceMeaning)));
   const context = [shown.source, shown.searchedAlso, shown.trialSaid].filter(Boolean);
   return [
-    shown.marked && el("p", "unchecked", shown.marked),
-    el("h1", "lead", shown.lead),
-    shown.marked && privacyNote(site, actions),
-    // What the search was given to work with, kept together and apart from its results.
-    context.length > 0 && el("div", "context", context.map((line) => el("p", null, line))),
+    shown.marked && disclosure([icon("search"), el("span", null, "Automatic · Unreviewed")], [el("p", null, shown.marked)], "provenance"),
+    state.cachedAt && el("p", "cache-note", [icon("clock"), `Previous result · ${day.format(new Date(state.cachedAt))}`]),
+    el("h1", "lead", shown.subject?.treatment ?? shown.lead),
+    shown.subject?.condition && el("p", "indication", shown.subject.condition),
     shown.tracked.length > 0 && records(shown.tracked, (claim) => site.url + claim.page),
-    shown.likely.length > 0 && el("p", "listed", shown.likelyLead),
-    shown.likely.length > 0 && el("p", "small", shown.confidenceMeaning ?? text.confidenceMeaning),
+    shown.likely.length > 0 && el("p", "listed", `${shown.likely.length} possible ${shown.likely.length === 1 ? "match" : "matches"}`),
     shown.likely.length > 0 && records(shown.likely, (record) => record.url, true),
-    shown.none && el("p", null, shown.none),
-    shown.rest && el("p", "small", shown.rest),
-    shown.notices.length > 0 && el("footer", "notices", shown.notices.map((notice) => el("p", null, notice))),
+    shown.none && el("p", "empty-result", shown.none),
+    el("footer", "answer-notes", [
+      (shown.marked || context.length > 0 || shown.notices.length > 0) && disclosure([icon("info"), el("span", null, "Sources & privacy")], [
+        ...context.map((line) => el("p", null, line)),
+        shown.likely.length > 0 && el("p", null, shown.likelyLead),
+        shown.rest && el("p", null, shown.rest),
+        ...shown.notices.map((notice) => el("p", null, notice)),
+        state.cachedAt && el("p", null, `Checked ${new Date(state.cachedAt).toLocaleString("en-GB")}. Search again for a fresh lookup.`),
+        shown.marked && privacyNote(site, actions),
+      ]),
+      shown.marked && el("p", "medical-note", "Not medical advice. A trial is not a treatment option."),
+    ]),
   ];
+}
+
+function answerActions(state, actions) {
+  return el("div", "answer-actions", [
+    actions.search && press([icon("refresh"), text.again], "text-button", actions.search),
+    state.canVisual && actions.previewVisual && press([icon("image"), "Screenshot"], "text-button", actions.previewVisual),
+    actions.sharingView && press([icon("settings"), "Settings"], "text-button", actions.sharingView),
+  ]);
 }
 
 // The way to the reader's two lists, under whatever the page's own answer is. A list
@@ -381,9 +411,7 @@ export function render(root, state, site, actions, kept = null) {
       privacyNote(site, actions),
     ];
   } else if (state.kind === "answer") {
-    children = answerBlock(state.shown, site, actions);
-    if (state.cachedAt) children.unshift(el("p", "small", `Previous result · checked ${new Date(state.cachedAt).toLocaleString("en-GB")}. Search again for a fresh lookup.`));
-    if (actions.search) children.push(press(text.again, "button quiet", actions.search));
+    children = [...answerBlock(state, site, actions), answerActions(state, actions)];
   } else if (state.kind === "no-page") {
     children = [message(text.noPageTitle, text.noPageBody(site.name))];
   } else {
@@ -392,8 +420,8 @@ export function render(root, state, site, actions, kept = null) {
     retry.addEventListener("click", actions.retry);
     children = [message(text.unreachableTitle(site.name), text.unreachableBody, retry)];
   }
-  if (state.canVisual && actions.previewVisual) children.push(press("Preview a screenshot instead", "text-button", actions.previewVisual));
-  if (!BUSY.has(state.kind) && !["sharing", "sharing-error", "visual-preview"].includes(state.kind) && actions.sharingView) children.push(press("Automatic search settings", "text-button", actions.sharingView));
+  if (state.kind !== "answer" && state.canVisual && actions.previewVisual) children.push(press("Preview a screenshot instead", "text-button", actions.previewVisual));
+  if (!BUSY.has(state.kind) && !["answer", "sharing", "sharing-error", "visual-preview"].includes(state.kind) && actions.sharingView) children.push(press("Automatic search settings", "text-button", actions.sharingView));
   if (!LISTS.has(state.kind) && !BUSY.has(state.kind) && state.kind !== "visual-preview") children.push(keptNav(kept, actions));
   root.replaceChildren(...children.filter(Boolean));
   root.dataset.state = state.kind;

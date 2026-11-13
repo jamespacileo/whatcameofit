@@ -28,7 +28,7 @@ function elements(root, tagName) {
 }
 
 const originalDocument = globalThis.document;
-beforeEach(() => { globalThis.document = { createElement: (tag) => new Element(tag) }; });
+beforeEach(() => { globalThis.document = { createElement: (tag) => new Element(tag), createElementNS: (_, tag) => new Element(tag) }; });
 afterEach(() => { globalThis.document = originalDocument; });
 
 const site = { name: "What came of it?", url: "https://whatcameofit.example" };
@@ -53,9 +53,9 @@ test("each candidate card owns its title, confidence, record details and source 
   const cards = elements(root, "li");
   assert.equal(cards.length, 2);
   assert.ok(cards.every((card) => card.className === "result-card"));
-  assert.match(cards[0].textContent, /Study one.*94% match confidence.*NCT00000001.*article gives/);
+  assert.match(cards[0].textContent, /Study one.*NCT00000001.*94% match confidence.*article gives/);
   assert.doesNotMatch(cards[0].textContent, /Study two|61%|NCT00000002/);
-  assert.match(cards[1].textContent, /Study two.*61% match confidence.*NCT00000002/);
+  assert.match(cards[1].textContent, /Study two.*NCT00000002.*61% match confidence/);
   assert.equal(elements(cards[0], "a")[0].href, "https://clinicaltrials.gov/study/NCT00000001");
   assert.equal(elements(cards[0], "h2").length, 1);
   assert.equal(root.attributes["aria-busy"], "false");
@@ -71,6 +71,52 @@ test("older candidates show unavailable confidence and reviewed claims get no in
   assert.match(cards[0].textContent, /Reviewed claim/);
   assert.doesNotMatch(cards[0].textContent, /confidence|100%/);
   assert.match(cards[1].textContent, /Match confidence unavailable/);
+});
+
+function visibleText(node) {
+  if (typeof node === "string") return node;
+  const children = node.tagName === "details" ? node.children.slice(0, 1) : node.children;
+  return children.map(visibleText).join(" ");
+}
+
+test("candidates lead the compact view while disclosures retain provenance and confidence limits", () => {
+  const root = new Element("main");
+  render(root, { kind: "answer", cachedAt: Date.UTC(2026, 10, 13), shown: { ...shown,
+    subject: { treatment: "EX-1", condition: "Tooth agenesis" },
+    source: "Read from a visible screenshot.", trialSaid: "The article names trial ONE.",
+    confidenceMeaning: "A model estimate, not a treatment effectiveness rating.",
+    likely: [{ title: "A complete candidate title", url: "https://clinicaltrials.gov/study/NCT00000001",
+      confidenceLabel: "61% match confidence", phase: "Phase 1", state: "recruiting", registryId: "NCT00000001", why: "The article names this trial." }],
+  } }, site, actions);
+  const visible = visibleText(root);
+  assert.match(visible, /Automatic · Unreviewed.*Previous result · 13 Nov 2026.*EX-1.*Tooth agenesis.*1 possible match.*A complete candidate title.*Phase 1.*recruiting.*61% match confidence/s);
+  assert.match(visible, /Sources & privacy.*Not medical advice.*not a treatment option/s);
+  assert.doesNotMatch(visible, /OpenAI reads|The article names|NCT00000001|model estimate/);
+  const card = elements(root, "li")[0];
+  const detail = elements(card, "details")[0];
+  assert.match(detail.textContent, /NCT00000001.*The article names.*not a treatment effectiveness/);
+  assert.match(root.textContent, /Read from a visible screenshot.*OpenAI reads.*safety checks/);
+  assert.ok(elements(root, "details").every((node) => !node.attributes.open));
+  assert.ok(elements(root, "svg").every((node) => node.attributes["aria-hidden"] === "true"));
+});
+
+test("compact answer actions retain retry, screenshot preview and sharing settings", () => {
+  const root = new Element("main");
+  const called = [];
+  render(root, { kind: "answer", canVisual: true, shown }, site, { ...actions,
+    search: () => called.push("search"), previewVisual: () => called.push("preview"), sharingView: () => called.push("settings"),
+  });
+  for (const button of elements(root, "button")) button.listeners.click();
+  assert.deepEqual(called, ["search", "preview", "settings"]);
+});
+
+test("no-match uncertainty and explicit first-use sharing stay visible", () => {
+  const root = new Element("main");
+  render(root, { kind: "answer", shown: { ...shown, none: "No matching record found. This does not rule out a trial." } }, site, actions);
+  assert.match(visibleText(root), /No matching record found.*does not rule out/);
+  render(root, { kind: "sharing", enabled: false }, site, { ...actions, enableSharing() {}, disableSharing() {} });
+  assert.match(visibleText(root), /text, links and cleaned address.*OpenAI.*screenshot automatically.*Allow and search.*Use reviewed claims only/s);
+  assert.equal(elements(root, "details").length, 0);
 });
 
 test("automatic loading announces busy state and keeps OpenAI and privacy visible", () => {
