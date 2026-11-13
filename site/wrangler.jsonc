@@ -37,5 +37,7 @@
   //   LLM_MODEL, CONTACT_EMAIL, optionally LLM_BASE_URL   (plain values)
   //   optionally DECISION_BACKEND=openai-decisions         (scores records in one fast call)
   //   OPENAI_API_KEY                                       (a secret: `wrangler secret put`)
+  //   OPENALEX_API_KEY                                     (optional secret: free literature search)
+  // ROR is a public API and needs no key. Both use LOOKUP_RESULTS for metadata caching.
   // Without them /api/lookup answers "not set up" and the rest of the site is unaffected.
 }

@@ -24,7 +24,7 @@ export async function storeResult(store, address, found, publicVerified, now = D
   const key = await keyFor(address);
   if (!key) return;
   // Explicit fields only. Never persist an uploaded request, copied text or model gist.
-  const { treatment, condition, names, known_names, registry_numbers, paper_numbers, details, tracked, candidates, unscored, post, source } = found;
-  const kept = { about_a_treatment: true, treatment, condition, names, known_names, registry_numbers, paper_numbers, details, tracked, candidates, unscored, post, source };
+  const { treatment, condition, names, known_names, registry_numbers, paper_numbers, details, tracked, candidates, unscored, post, source, research } = found;
+  const kept = { about_a_treatment: true, treatment, condition, names, known_names, registry_numbers, paper_numbers, details, tracked, candidates, unscored, post, source, research };
   try { await store.put(key, JSON.stringify({ version: 1, publicVerified: true, at: now, found: kept }), { expirationTtl: TTL }); } catch { /* Lookup still works without caching. */ }
 }

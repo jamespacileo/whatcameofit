@@ -101,3 +101,22 @@ The system SHALL use a paper's abstract only to score and to find reasons and re
 #### Scenario: Export of a claim with approved papers
 - **WHEN** a claim with an approved paper is exported
 - **THEN** the export holds the paper's title and link and no abstract text
+
+### Requirement: Public on-demand research context
+The public lookup SHALL return bibliographic search results and identifiers for organisations explicitly named in the report, in addition to trial candidates. These SHALL be labelled unreviewed search results, separate from claim status and match confidence. The interface SHALL collapse secondary context initially. Missing keys, provider limits and failures SHALL leave trial results available. Old cached results and older extensions SHALL remain compatible.
+
+#### Scenario: A report has related papers and names a university
+- **WHEN** OpenAlex finds papers and ROR selects the university's identity
+- **THEN** paper titles, metadata and source links and the ROR organisation link are available in collapsed sections, with no status change
+
+#### Scenario: The free allowance cannot be established
+- **WHEN** OpenAlex's allowance is exhausted, unknown, exceeds the free budget or has prepaid credit
+- **THEN** no charged literature search is sent, a temporary unavailability is shown, and trial lookup and ROR continue
+
+#### Scenario: Repeated research query
+- **WHEN** a normalized metadata result is less than seven days old
+- **THEN** it is reused without a provider request, including an empty result
+
+#### Scenario: A provider times out or limits access
+- **WHEN** an API call or its body takes more than five seconds, or a source responds with a quota error
+- **THEN** the optional source stops without retries or alternative accounts and the remaining results are returned

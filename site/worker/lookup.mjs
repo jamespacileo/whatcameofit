@@ -80,7 +80,7 @@ async function paperNumbers(page, papers) {
  *   page?: object, papers?: object }} given `page` is what the article's page says of
  *   itself (worker/page.mjs) and `papers` looks up the trial of a linked paper.
  */
-export async function lookUp({ text, model, registry, index, page, papers, image, pageUrl }) {
+export async function lookUp({ text, model, registry, index, page, papers, research, image, pageUrl }) {
   const numbers = unique([
     ...(text.match(REGISTRY_NUMBER) ?? []).map((number) => number.toUpperCase()),
     ...(page?.registryNumbers ?? []),
@@ -93,6 +93,15 @@ export async function lookUp({ text, model, registry, index, page, papers, image
     inTurn(numbers, (number) => registry.fetch(number)),
   ]);
   if (!reading.about_a_treatment || !reading.intervention) return nothingFound(reading, numbers);
+
+  // Metadata enrichment runs alongside trial lookup. It adds no model calls and
+  // cannot change clinical candidates, their scores, or a tracked claim's status.
+  const related = research ? Promise.resolve().then(() => research.search({
+    intervention: reading.intervention,
+    indication: reading.indication,
+    searchPhrases: reading.search_phrases ?? [],
+    organisations: [...(Array.isArray(reading.organisations) ? reading.organisations : []), reading.sponsor].filter(Boolean),
+  })).catch(() => ({ papers: [], organisations: [], availability: { openalex: "unavailable", ror: "unavailable" } })) : null;
 
   const names = unique([reading.intervention, ...(reading.other_names ?? []).filter(isAName)]);
   // Names the model knows the treatment by. They widen the search; they are not from the text.
@@ -182,5 +191,6 @@ export async function lookUp({ text, model, registry, index, page, papers, image
     tracked,
     candidates,
     unscored: found.length - candidates.length,
+    ...(related ? { research: await related } : {}),
   };
 }
