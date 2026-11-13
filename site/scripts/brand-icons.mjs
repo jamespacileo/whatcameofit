@@ -1,7 +1,7 @@
 // Draws the site's raster icons from the mark, so a change to it reaches every size.
 // public/mark.svg is the mark; public/favicon.svg is the same mark drawn for a browser
 // tab, where it is 16 to 32 pixels: the glass runs to the tile's edges and the capsule
-// keeps a visible seam between its halves. favicon.ico carries both. Run after editing either:
+// keeps a visible seam between its halves. Run after editing either:
 //   node site/scripts/brand-icons.mjs
 import fs from "node:fs";
 import path from "node:path";
@@ -13,44 +13,44 @@ import { SITE } from "../site.config.mjs";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const pub = path.join(here, "..", "public");
 const mark = fs.readFileSync(path.join(pub, "mark.svg"), "utf8");
+const small = fs.readFileSync(path.join(pub, "favicon.svg"), "utf8");
 // A phone or a launcher cuts its own corners, so it is given the tile with none cut:
 // the same drawing on a square of the tile's colour.
 const square = mark.replace('rx="16"', 'rx="0"');
 if (square === mark) throw new Error("mark.svg no longer has the rounded tile this script squares off");
 
 const png = (svg, size) => new Resvg(svg, { fitTo: { mode: "width", value: size } }).render().asPng();
+// Keep the entire symbol inside a launcher's central 80% safe circle.
+const maskable = square.replace('<g id="symbol">', '<g id="symbol" transform="translate(7.68 7.68) scale(0.76)">');
 const files = {
-  "favicon-48.png": png(mark, 48),
+  "favicon-48.png": png(small, 48),
   "icon-192.png": png(mark, 192),
   "icon-512.png": png(mark, 512),
-  "icon-maskable-512.png": png(square, 512),
+  "icon-maskable-512.png": png(maskable, 512),
   "apple-touch-icon.png": png(square, 180),
 };
-
-// favicon.ico holds PNG images, which every browser since Windows Vista's reads. The two
-// smallest are the tab drawing; 48 pixels is the mark itself, as in favicon-48.png.
-const small = fs.readFileSync(path.join(pub, "favicon.svg"), "utf8");
-const icoImages = [[16, png(small, 16)], [32, png(small, 32)], [48, files["favicon-48.png"]]];
-const icoHeader = Buffer.alloc(6 + 16 * icoImages.length);
-icoHeader.writeUInt16LE(1, 2);
-icoHeader.writeUInt16LE(icoImages.length, 4);
-let icoOffset = icoHeader.length;
-icoImages.forEach(([size, bytes], index) => {
-  const entry = 6 + 16 * index;
-  icoHeader.writeUInt8(size, entry);
-  icoHeader.writeUInt8(size, entry + 1);
-  icoHeader.writeUInt16LE(1, entry + 4);
-  icoHeader.writeUInt16LE(32, entry + 6);
-  icoHeader.writeUInt32LE(bytes.length, entry + 8);
-  icoHeader.writeUInt32LE(icoOffset, entry + 12);
-  icoOffset += bytes.length;
-});
-files["favicon.ico"] = Buffer.concat([icoHeader, ...icoImages.map(([, bytes]) => bytes)]);
-
 for (const [name, bytes] of Object.entries(files)) {
   fs.writeFileSync(path.join(pub, name), bytes);
   console.log(`${name} ${bytes.length} bytes`);
 }
+
+// Conventional browser/bookmark fallback, with a crisp image at each tab size.
+const sizes = [16, 32, 48];
+const frames = sizes.map((size) => png(small, size));
+const header = Buffer.alloc(6 + sizes.length * 16);
+header.writeUInt16LE(1, 2);
+header.writeUInt16LE(sizes.length, 4);
+let offset = header.length;
+frames.forEach((frame, i) => {
+  const entry = 6 + i * 16;
+  header[entry] = header[entry + 1] = sizes[i];
+  header.writeUInt16LE(1, entry + 4);
+  header.writeUInt16LE(32, entry + 6);
+  header.writeUInt32LE(frame.length, entry + 8);
+  header.writeUInt32LE(offset, entry + 12);
+  offset += frame.length;
+});
+fs.writeFileSync(path.join(pub, "favicon.ico"), Buffer.concat([header, ...frames]));
 
 // Vector variants for print, external branding and operating-system masking.
 fs.writeFileSync(path.join(pub, "mark-square.svg"), square);

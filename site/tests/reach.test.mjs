@@ -272,7 +272,9 @@ test("Scenario: Claim link pasted into a chat", () => {
   const html = page("phase-claim/index.html");
   assert.equal(meta(html, "og:type"), "article");
   assert.equal(meta(html, "og:url"), `${ORIGIN}/phase-claim`);
-  assert.equal(meta(html, "og:image"), `${ORIGIN}/og/phase-claim.png`);
+  const image = new URL(meta(html, "og:image"));
+  assert.equal(image.origin + image.pathname, `${ORIGIN}/og/phase-claim.png`);
+  assert.match(image.searchParams.get("v"), /^[a-f0-9]{12}$/);
   assert.equal(meta(html, "og:image:width"), "1200");
   assert.equal(meta(html, "og:image:height"), "630");
   assert.equal(meta(html, "og:image:type"), "image/png");
@@ -284,7 +286,9 @@ test("Scenario: Claim link pasted into a chat", () => {
 test("Scenario: Home page shared", () => {
   const html = page("index.html");
   assert.equal(meta(html, "og:type"), "website");
-  assert.equal(meta(html, "og:image"), `${ORIGIN}/brand-card.png`);
+  const image = new URL(meta(html, "og:image"));
+  assert.equal(image.origin + image.pathname, `${ORIGIN}/brand-card.png`);
+  assert.match(image.searchParams.get("v"), /^[a-f0-9]{12}$/);
   assert.equal(meta(html, "article:published_time"), null);
 });
 

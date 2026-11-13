@@ -79,6 +79,21 @@ function visibleText(node) {
   return children.map(visibleText).join(" ");
 }
 
+test("research titles remain behind collapsed, source-labelled sections with usable links", () => {
+  const root = new Element("main"); const opened=[];
+  render(root,{kind:"answer",shown:{...shown,research:{
+    papers:[{title:"A synthetic paper",url:"https://doi.org/10.1234/example",detail:"2025 · article"}],
+    organisations:[{title:"Example University",url:"https://ror.org/02kpeqv85",detail:"Japan"}],
+    paperNote:"OpenAlex · Unreviewed",organisationNote:"ROR identity, not endorsement",
+  }}},site,{...actions,open:url=>opened.push(url)});
+  assert.match(visibleText(root),/Related papers · 1.*Organisations · 1/);
+  assert.doesNotMatch(visibleText(root),/synthetic paper|Example University/);
+  assert.match(root.textContent,/OpenAlex · Unreviewed.*A synthetic paper.*ROR identity/);
+  const links=elements(root,"a");
+  links[0].listeners.click({preventDefault(){}});
+  assert.equal(opened[0],"https://doi.org/10.1234/example");
+});
+
 test("candidates lead the compact view while disclosures retain provenance and confidence limits", () => {
   const root = new Element("main");
   render(root, { kind: "answer", cachedAt: Date.UTC(2026, 10, 13), shown: { ...shown,

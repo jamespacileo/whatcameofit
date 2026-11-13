@@ -17,6 +17,7 @@ import { makeRegistry } from "./registry.mjs";
 import { followShort } from "./short.mjs";
 import { readBody, sourceUrl, validateImage } from "./visual.mjs";
 import { previousResult, storeResult } from "./results.mjs";
+import { makeResearch } from "./research.mjs";
 
 const PATH = "/api/lookup";
 // What a reader's browser may send with text it read: this many links, each this long.
@@ -44,6 +45,7 @@ function realTools(env) {
     }),
     registry: makeRegistry({ fetch, contact: env.CONTACT_EMAIL }),
     papers: makePapers({ fetch, contact: env.CONTACT_EMAIL }),
+    research: makeResearch({ fetch, apiKey: env.OPENALEX_API_KEY, contact: env.CONTACT_EMAIL, cache: env.LOOKUP_RESULTS }),
     fetch,
   };
 }
@@ -177,7 +179,7 @@ export async function handle(request, env, tools) {
   }
 
   try {
-    const { model, registry, papers, fetch: get = fetch } = tools ?? realTools(env);
+    const { model, registry, papers, research, fetch: get = fetch } = tools ?? realTools(env);
     const index = await env.ASSETS.fetch(new Request(new URL("/lookup.json", here)))
       .then((response) => (response.ok ? response.json() : { claims: {} }))
       .catch(() => ({ claims: {} }));
@@ -230,7 +232,7 @@ export async function handle(request, env, tools) {
       // Visual contents can differ from what an anonymous reader sees. They are not
       // published merely because the surrounding article is accessible.
     }
-    const found = { ...(await lookUp({ text, model, registry, index, page, papers, image, pageUrl })), post,
+    const found = { ...(await lookUp({ text, model, registry, index, page, papers, research, image, pageUrl })), post,
       ...(image ? { source: { kind: "screenshot", host: pageUrl ? new URL(pageUrl).hostname : null } } : {}) };
     await storeResult(env.LOOKUP_RESULTS, cacheUrl, found, publicVerified);
     return answer(found);

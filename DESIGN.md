@@ -130,6 +130,9 @@ Never on a claim page, a card, an embed or the extension, never about a conditio
 
 ## Resilience
 
+- Browser icons include SVG, PNG and a 16/32/48px ICO fallback. Brand asset URLs carry an artwork revision; launcher artwork stays inside the maskable safe area.
+- Outlet names and domains wrap as separate groups with a clear gap. A missing or failed publisher image retains its letter tile without shifting the row.
+
 - Nothing widens the page: long names, identifiers and addresses break. Checked at 320 pixels on every page type.
 - A hyphenated name stays unbroken only up to 16 characters.
 - A popover taller than the screen scrolls inside itself.

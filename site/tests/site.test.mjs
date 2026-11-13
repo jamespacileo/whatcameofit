@@ -265,15 +265,42 @@ test("Scenario: Outlet with a stored icon", () => {
 test("Scenario: Outlet on a subdomain", () => {
   // uk.news.example.org has no icon of its own in the export; its parent domain has.
   const html = page("phase-claim/index.html");
-  assert.match(html, /<img class="tile" src="\/outlet-icons\/news\.example\.org\.png" alt=""[^>]*><span>Example Outlet 3<\/span><span class="domain">uk\.news\.example\.org<\/span>/);
+  assert.match(html, /<img class="tile" src="\/outlet-icons\/news\.example\.org\.png" alt=""[^>]*>\s*<\/span>\s*<span>Example Outlet 3<\/span>\s*<\/span>\s*<span class="domain">uk\.news\.example\.org<\/span>/);
 });
 
 test("Scenario: Outlet with no stored icon", () => {
   // The fourth report's outlet has no icon in the export, so its letter tile is drawn.
   const html = page("approved-claim/index.html");
-  assert.match(html, /<span class="tile" aria-hidden="true">\s*O\s*<\/span>/);
+  assert.match(html, /<span class="outlet-icon" aria-hidden="true">\s*<span class="tile">O<\/span>/);
   assert.doesNotMatch(html, /<img class="tile"/);
   assert.ok(!fs.existsSync(path.join(dist, "outlet-icons/other.example.net.png")));
+});
+
+test("browser and launcher icons resolve to the current brand assets", () => {
+  const html = page("index.html");
+  for (const file of ["favicon.ico", "favicon.svg", "favicon-48.png", "apple-touch-icon.png", "manifest.webmanifest"]) {
+    assert.match(html, new RegExp(`href="/${file.replaceAll(".", "\\.")}\\?v=[a-f0-9]{12}"`));
+    assert.ok(fs.existsSync(path.join(dist, file)));
+  }
+  const manifest = JSON.parse(page("manifest.webmanifest"));
+  for (const icon of manifest.icons) {
+    const url = new URL(icon.src, "https://whatcameofit.com");
+    assert.match(url.searchParams.get("v"), /^[a-f0-9]{12}$/);
+    assert.ok(fs.existsSync(path.join(dist, url.pathname)));
+  }
+  const ico = fs.readFileSync(path.join(dist, "favicon.ico"));
+  assert.equal(ico.readUInt16LE(2), 1);
+  assert.equal(ico.readUInt16LE(4), 3);
+  for (const [i, size] of [16, 32, 48].entries()) {
+    const entry = 6 + i * 16;
+    assert.equal(ico[entry], size);
+    assert.equal(ico[entry + 1], size);
+    const start = ico.readUInt32LE(entry + 12);
+    const length = ico.readUInt32LE(entry + 8);
+    assert.ok(start + length <= ico.length);
+    assert.equal(ico.readUInt32BE(start + 16), size, "PNG width matches the ICO frame");
+    assert.equal(ico.readUInt32BE(start + 20), size, "PNG height matches the ICO frame");
+  }
 });
 
 test("Scenario: Offline build", () => {

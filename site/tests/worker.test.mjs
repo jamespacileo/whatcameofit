@@ -71,6 +71,27 @@ const INDEX = {
 
 // --- lookup -------------------------------------------------------------------------
 
+test("optional research gets named entities only and cannot affect clinical results", async () => {
+  const calls = [];
+  const base = {text:TEXT,model:fakeModel({...READING, organisations:["Example University"]}), registry:fakeRegistry({}), index:INDEX};
+  const plain = await lookUp(base);
+  const result = await lookUp({...base, research:{ search:async input => {
+    calls.push(input); return {papers:[{title:"Example paper"}],organisations:[],availability:{openalex:"ok",ror:"ok"}};
+  }}});
+  const {research,...clinical} = result;
+  assert.deepEqual(clinical,plain);
+  assert.equal(research.papers.length,1);
+  assert.deepEqual(calls,[{intervention:"EX-1",indication:"tooth agenesis",searchPhrases:[],organisations:["Example University"]}]);
+  const outage = await lookUp({...base,research:{search:async()=>{throw new Error("provider failure")}}});
+  assert.deepEqual(outage.candidates,plain.candidates);
+  assert.equal(outage.research.availability.openalex,"unavailable");
+});
+
+test("non-treatment content makes no research request", async () => {
+  await lookUp({text:TEXT,model:fakeModel({about_a_treatment:false}),registry:fakeRegistry({}),index:INDEX,
+    research:{search:async()=>{assert.fail("No extraction means no API enrichment")}}});
+});
+
 test("Scenario: Article about a treatment with registered trials", async () => {
   const registry = fakeRegistry({
     "EX-1": [study("NCT00000002", "EX-1 in lung cancer", "Lung Cancer"), study("NCT00000001", "EX-1 in tooth agenesis")],

@@ -4,6 +4,7 @@ import "../styles/global.css";
 import faceUrl from "@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2?url";
 import { SITE } from "../../site.config.mjs";
 import { CARD_NOTICE } from "../lib/card";
+import { brandAsset } from "../lib/brand";
 import { data, listedTopics } from "../lib/export";
 import { NOTICES, PREVIEW_NOTE } from "../lib/notices";
 // Stops a public build whose configured address is a local one.
@@ -62,7 +63,7 @@ const IMAGE_SIZE = { width: 1200, height: 630 };
 const pageTitle =
   (tabTitle ?? title) ? `${tabTitle ?? title} | ${SITE.name}` : `${SITE.name} ${SITE.tagline}`;
 // A page with no card of its own shares the site's: the mark, the name and the notice.
-const imageUrl = new URL(image ?? "/brand-card.png", Astro.site).href;
+const imageUrl = new URL(brandAsset(image ?? "/brand-card.png"), Astro.site).href;
 // What the site's own card says, for a reader who cannot see it.
 const imageText = image ? imageAlt : `${SITE.name} ${SITE.tagline}. ${CARD_NOTICE}.`;
 // One topic is linked by name. With several, the item leads to the list of them all.
@@ -81,13 +82,12 @@ const topicLink =
     <!-- Checking the source? Same. Every record on this page links to its own. -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    {/* /favicon.ico is what a feed reader, a link preview or an old browser asks for unprompted. */}
-    <link rel="icon" href="/favicon.ico" sizes="32x32" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/x-icon" sizes="16x16 32x32 48x48" href={brandAsset("/favicon.ico")} />
     {/* For a browser or a search result that does not draw the vector icon. */}
-    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="48x48" href={brandAsset("/favicon-48.png")} />
+    <link rel="icon" type="image/svg+xml" sizes="any" href={brandAsset("/favicon.svg")} />
+    <link rel="apple-touch-icon" sizes="180x180" href={brandAsset("/apple-touch-icon.png")} />
+    <link rel="manifest" href={brandAsset("/manifest.webmanifest")} />
     <meta name="theme-color" content="#0b2545" />
     <link rel="preload" as="font" type="font/woff2" href={faceUrl} crossorigin />
     <title>{pageTitle}</title>
@@ -145,7 +145,7 @@ const topicLink =
     <header class="masthead">
       <div class="wrap">
         <a class="name" href="/" aria-label={SITE.name}>
-          <img class="mark" src="/favicon.svg" alt="" width="26" height="26" />
+          <img class="mark" src={brandAsset("/mark.svg")} alt="" width="32" height="32" />
           <span class="lead" aria-hidden="true">{SITE.wordmark[0]}</span>
           <span class="tail" aria-hidden="true">{SITE.wordmark[1]}</span>
           <svg class="ask" viewBox="0 0 20 30" aria-hidden="true">

@@ -29,6 +29,7 @@ from thenwhat.claims.entry import (
 from thenwhat.db.models import Base, Claim, Entity
 from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.extract.names import is_a_name
+from thenwhat.extract.phrases import backfill_search_phrases
 from thenwhat.extract.service import (
     ClaimNotPending,
     draft_claim_from_article,
@@ -448,3 +449,48 @@ def test_draft_naming_a_description_is_rejected_by_rule_and_kept(session: Sessio
 
 def test_without_the_rule_a_draft_stays_pending(session: Session):
     assert draft(session).review_state is ReviewState.PENDING
+
+
+# --- search phrases for a decided claim ---------------------------------------------
+
+
+def described_claim(session: Session) -> Claim:
+    return add_claim(
+        session,
+        slug="tics-wrist-stimulation",
+        headline="A wrist device was reported to reduce tics",
+        vertical="mouth-and-teeth",
+        intervention="Wrist-worn median nerve stimulation device",
+        indication="Tourette syndrome",
+        summary="A small wrist device sends pulses to a nerve.",
+    )
+
+
+def test_decided_claim_is_given_phrases_from_what_it_says_of_itself(session: Session):
+    claim = described_claim(session)
+    record_decision(claim, ReviewState.APPROVED, by=Decider.RULE, now=NOW)
+    client, prompts = llm(
+        session, {"search_phrases": ["median nerve stimulation", "the device", "Tourette syndrome"]}
+    )
+
+    kept = backfill_search_phrases(session, client, claim)
+
+    [intervention] = entities(session, claim, EntityType.INTERVENTION)
+    assert kept == intervention.search_phrases == ["median nerve stimulation"]
+    assert "Wrist-worn median nerve stimulation device" in prompts[0]
+
+
+def test_claim_that_has_a_phrase_is_not_asked_about_again(session: Session):
+    claim = described_claim(session)
+    client, prompts = llm(session, {"search_phrases": ["median nerve stimulation"]})
+    backfill_search_phrases(session, client, claim)
+
+    assert backfill_search_phrases(session, client, claim) == []
+    assert len(prompts) == 1
+
+
+def test_named_drug_given_no_phrase_keeps_none(session: Session):
+    claim = described_claim(session)
+    client, _ = llm(session, {"search_phrases": []})
+
+    assert backfill_search_phrases(session, client, claim) == []
