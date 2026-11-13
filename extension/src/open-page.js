@@ -41,14 +41,18 @@ export function collectFromPage() {
     // IDs are deliberately restricted above, so they are safe in a CSS selector.
     const selectors = renderers.flatMap(tag => [
       `${tag}[video-id="${id}"]`, `${tag}[data-video-id="${id}"]`,
-      `${tag}:not([video-id]):not([data-video-id]):has(a[href="/shorts/${id}"])`,
     ]);
+    // Current desktop Shorts has no is-active/video-id attributes. Its player's
+    // title link names the playing video. A recommendation link cannot bind it.
+    if (short) selectors.push(...["ytd-reel-video-renderer", "ytm-reel-video-renderer"].flatMap(tag =>
+      [`/shorts/${id}`, `https://www.youtube.com/shorts/${id}`].map(href =>
+        `${tag}:not([video-id]):not([data-video-id]):has(#shorts-player .ytp-title-link[href="${href}"])`)));
     const selector = selectors.find(value => document.querySelector(value));
     const focus = selector && document.querySelector(selector);
     if (!focus || focus.hidden || focus.hasAttribute("hidden")) return empty;
     const text = node => (node?.innerText ?? "").trim();
     const title = text(focus.querySelector(short
-      ? "h2, .reel-player-header-title, .title"
+      ? "h1, h2, .reel-player-header-title, .title"
       : "#title h1, h1.ytd-watch-metadata, h1, .slim-video-information-title"));
     const description = focus.querySelector(short
       ? "#description, .reel-player-header-description"

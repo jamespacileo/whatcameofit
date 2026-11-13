@@ -82,13 +82,23 @@ test("Shorts reads only the active video even when the next video is preloaded",
   });
 });
 
-test("a Short renderer can identify its video through its own permalink", async () => {
+test("current desktop Shorts identifies its video through the player's title link without an active marker", async () => {
   const url = `https://www.youtube.com/shorts/${video}`;
-  await onPage(`<ytd-reel-video-renderer is-active><h2>EX-patch studied for missing teeth in a synthetic trial</h2><a href="/shorts/${video}">Permalink</a><video data-box="10,10,300,600"></video></ytd-reel-video-renderer>`, url, () => {
+  await onPage(`<ytd-reel-video-renderer><h1 class="ytShortsVideoTitleViewModelShortsVideoTitle">EX-patch studied for missing teeth in a synthetic trial</h1><div id="shorts-player"><a class="ytp-title-link" href="https://www.youtube.com/shorts/${video}">Player title</a><video data-box="10,10,300,600"></video></div></ytd-reel-video-renderer>`, url, () => {
     const collected = collectFromPage();
     assert.match(composeRequest(collected, url, shared).text, /EX-patch/);
     assert.equal(inspectVisible(collected.mediaScope).media.length, 1);
   });
+});
+
+test("a recommendation permalink cannot bind an ID-less watch page or Short to the current video", async () => {
+  for (const [tag, url] of [["ytd-watch-flexy", address], ["ytd-reel-video-renderer", `https://www.youtube.com/shorts/${video}`]]) {
+    await onPage(`<${tag} is-active><h1>STALE OTHER VIDEO</h1><div id="related"><a href="/shorts/${video}">Recommendation</a></div><video data-box="10,10,640,360"></video></${tag}>`, url, () => {
+      const collected = collectFromPage();
+      assert.equal(composeRequest(collected, url, shared), null);
+      assert.equal(inspectVisible(collected.mediaScope).unavailable, true);
+    });
+  }
 });
 
 test("a changed video URL, missing renderer or non-video page never reads stale content or thumbnails", async () => {
@@ -123,6 +133,19 @@ test("an ad or offscreen player cannot fall back to an unrelated full-page scree
       const collected = collectFromPage();
       assert.equal(inspectVisible(collected.mediaScope).unavailable, true);
       assert.equal(inspectVisible(collected.mediaScope).crop, null);
+    });
+  }
+});
+
+test("visible end-screen and recommendation overlays refuse capture; a finished video is ineligible", async () => {
+  for (const classes of ["ytp-endscreen-content", "ytp-ce-element-show", "ytp-pause-overlay"]) {
+    await onPage(watch.replace('<div id="movie_player">', `<div id="movie_player"><div class="${classes}" data-box="20,20,640,360"><img data-box="20,20,200,150" /></div>`), address, document => {
+      const scope = collectFromPage().mediaScope;
+      assert.equal(inspectVisible(scope).unavailable, true);
+      document.querySelector(`.${classes}`).hidden = true;
+      assert.equal(inspectVisible(scope).unavailable, false);
+      Object.defineProperty(document.querySelector("#movie_player video"), "ended", { value: true });
+      assert.equal(inspectVisible(scope).unavailable, true);
     });
   }
 });

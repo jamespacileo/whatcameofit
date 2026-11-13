@@ -23,10 +23,13 @@ export function inspectVisible(scope = null) {
     : youtube ? null : document.querySelector('shreddit-post, article, [role="article"], main') ?? document.body;
   // A video ad is unrelated to the report. Missing/stale video context must not
   // turn into a screenshot of the entire personalised YouTube page.
-  const unavailable = !focus || Boolean(youtube && focus.querySelector(".ad-showing, .ad-interrupting"));
+  const overlays = ".ytp-endscreen-content, .ytp-ce-element-show, .ytp-pause-overlay";
+  const unavailable = !focus || Boolean(youtube && (focus.querySelector(".ad-showing, .ad-interrupting") ||
+    [...focus.querySelectorAll(overlays)].some(visible)));
   const media = roots.flatMap(root => [...root.querySelectorAll("img, video, canvas")])
     .filter(node => !unavailable && visible(node) &&
       (!scope?.videoOnly || node.tagName.toLowerCase() === "video") &&
+      (!youtube || !node.ended) &&
       (!scope?.mediaSelector || node.matches(scope.mediaSelector)) &&
       (focus.contains(node) || !scope && node.getRootNode() !== document))
     .map(node => {
