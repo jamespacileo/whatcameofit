@@ -83,6 +83,8 @@ export interface Export {
   /** Icons of the outlets whose articles are exported, each as a data URI. */
   outlets: { domain: string; icon: string; fetched_at: string }[];
   claims: ExportedClaim[];
+  /** Claims the operator took down. Each address answers 410; the reason is never exported. */
+  archived?: { slug: string; on: string }[];
 }
 
 const SUPPORTED_SCHEMA_VERSION = 1;

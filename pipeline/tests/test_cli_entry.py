@@ -284,3 +284,18 @@ def test_claim_import_csv_refuses_an_unknown_approach(run, session: Session, tmp
     assert result.exit_code == 1
     assert "row 3: Unknown approach 'miracle'" in result.output
     assert claim_count(session) == 0
+
+
+def test_archive_takes_a_claim_down(run, session: Session, claim_with_article):
+    result = run("archive", "tooth-regrowth-usag1", "--reason", "wrong trial")
+
+    assert result.exit_code == 0, result.output
+    claim = find_claim(session, "tooth-regrowth-usag1")
+    assert claim is not None and claim.archived_at is not None
+
+
+def test_unarchive_refusal_explains_and_exits_1(run, claim_with_article):
+    result = run("unarchive", "tooth-regrowth-usag1")
+
+    assert result.exit_code == 1
+    assert "is not archived" in result.output

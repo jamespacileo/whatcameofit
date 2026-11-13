@@ -6,6 +6,7 @@ import { test } from "node:test";
 
 import { readArticle } from "../worker/article.mjs";
 import { agreeing } from "../worker/details.mjs";
+import { forgetGoneList, spokenDate } from "../worker/gone.mjs";
 import worker, { handle } from "../worker/index.mjs";
 import { lookUp } from "../worker/lookup.mjs";
 import { makeModel } from "../worker/model.mjs";
@@ -674,4 +675,48 @@ test("Scenario: Nothing a reader sends is written down", async () => {
     Object.assign(console, original);
   }
   assert.ok(!written.join("\n").includes("Toothgrow"), "the text was logged");
+});
+
+
+// --- archived claims (openspec auto-publish) ---------------------------------------
+
+function assetsWithGone(list) {
+  return {
+    fetch: async (request) => {
+      const where = new URL(request.url).pathname;
+      if (where === "/gone.json") return Response.json(list);
+      return new Response(`file ${where}`, { status: where === "/missing" ? 404 : 200 });
+    },
+  };
+}
+
+test("an archived claim's address answers 410 with the date it was taken down", async () => {
+  forgetGoneList();
+  const env = { ASSETS: assetsWithGone([{ slug: "tooth-regrowth", on: "2026-11-14" }]) };
+  const response = await handle(new Request("https://example.org/tooth-regrowth"), env);
+  assert.equal(response.status, 410);
+  const page = await response.text();
+  assert.match(page, /taken down on 14 November 2026/);
+  assert.doesNotMatch(page, /reason/i);
+});
+
+test("every other page is handed to the files unchanged", async () => {
+  forgetGoneList();
+  const env = { ASSETS: assetsWithGone([{ slug: "tooth-regrowth", on: "2026-11-14" }]) };
+  const page = await handle(new Request("https://example.org/enamel-gel"), env);
+  assert.equal(page.status, 200);
+  assert.equal(await page.text(), "file /enamel-gel");
+  const missing = await handle(new Request("https://example.org/missing"), env);
+  assert.equal(missing.status, 404);
+});
+
+test("with no list of archived claims every page is served", async () => {
+  forgetGoneList();
+  const env = { ASSETS: { fetch: async (request) => new Response(new URL(request.url).pathname === "/gone.json" ? "" : "ok", { status: new URL(request.url).pathname === "/gone.json" ? 404 : 200 }) } };
+  const response = await handle(new Request("https://example.org/tooth-regrowth"), env);
+  assert.equal(response.status, 200);
+});
+
+test("a date is spoken the way the site writes dates", () => {
+  assert.equal(spokenDate("2026-01-02"), "2 January 2026");
 });

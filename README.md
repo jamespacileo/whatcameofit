@@ -175,6 +175,10 @@ docker compose run --rm -v "$PWD/site/data:/out" pipeline thenwhat export --out 
 
 After changing what the export contains, regenerate its schema: `thenwhat export --write-schema site/export.schema.json`.
 
+### Taking a claim down
+
+`thenwhat archive <slug> --reason "why"` takes a published claim off the site from the next export: its address answers 410 with the date, and it leaves every feed, the sitemap, the lookup file and the data file. The reason stays in the database. `thenwhat unarchive <slug>` puts it back.
+
 ### CSV import
 
 `thenwhat claim import-csv claims.csv` imports every row or none. Inside the container the file must be reachable, for example `docker compose run --rm -v "$PWD/data/seed:/seed" pipeline thenwhat claim import-csv /seed/claims.csv`.

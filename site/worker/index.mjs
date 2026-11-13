@@ -7,6 +7,8 @@
 import { PLATFORM_NAMES, readAddress } from "../src/lib/lookup-match.mjs";
 import { MAX_TEXT_CHARACTERS, readArticle } from "./article.mjs";
 import { lookUp } from "./lookup.mjs";
+import { SITE } from "../site.config.mjs";
+import { goneList, gonePage } from "./gone.mjs";
 import { makeModel } from "./model.mjs";
 import { linkSignals } from "./page.mjs";
 import { makePapers } from "./papers.mjs";
@@ -110,7 +112,20 @@ async function withLinkedArticle(platform, post, index, { fetch, contact }) {
 /** @param {{ model: object, registry: object, papers?: object, fetch?: Function } | undefined} tools stand-ins, for tests */
 export async function handle(request, env, tools) {
   const here = new URL(request.url);
-  if (here.pathname !== PATH) return env.ASSETS.fetch(request);
+  if (here.pathname !== PATH) {
+    // A page the operator archived answers 410; everything else is a file of the site.
+    const slug = here.pathname.replace(/^\/+|\/+$/g, "");
+    if (slug && !slug.includes("/") && !slug.includes(".")) {
+      const on = (await goneList(env.ASSETS, here.origin)).get(slug);
+      if (on) {
+        return new Response(gonePage(on, SITE.name), {
+          status: 410,
+          headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=3600" },
+        });
+      }
+    }
+    return env.ASSETS.fetch(request);
+  }
   if (request.method !== "POST") return refuse(405, "method");
   if (!env.OPENAI_API_KEY || !env.LLM_MODEL || !env.CONTACT_EMAIL) return refuse(503, "not_set_up");
 
