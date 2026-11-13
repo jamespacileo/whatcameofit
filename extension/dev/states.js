@@ -44,17 +44,19 @@ const answer = {
   marked:
     "Automatic search. This list was made by software just now from a public registry. It has not been checked by a person and is not a status.",
   lead: "This appears to report divalent small interfering RNA for Prion disease.",
+  subject: { treatment: "Divalent small interfering RNA", condition: "Prion disease" },
   source: "Read by your browser from the post on X you have open, and the article it links to at example.org.",
   searchedAlso: null,
   trialSaid: "Of the trial itself, the article says: it is called PRiSM and 30 people took part.",
   tracked: [],
   likelyLead: "Registry records that read as trials of this treatment for this condition, likeliest first:",
-  confidenceMeaning: "Confidence estimates how closely each registry record matches this report.",
+  confidenceMeaning: "Match confidence is the model's estimate that this record concerns the reported treatment and condition. It is not a verified probability or a rating of treatment effectiveness or trial quality.",
   likely: [
     {
       title: "PrP-targeting siRNA Safety & Mechanism Study",
       url: "https://clinicaltrials.gov/study/NCT07444580",
       detail: "Phase 1 · recruiting · NCT07444580",
+      phase: "Phase 1", state: "recruiting", registryId: "NCT07444580",
       why: "The article gives this record's number.",
       confidence: 97,
       confidenceLabel: "97% match confidence",
@@ -63,6 +65,7 @@ const answer = {
       title: "A Study to Assess the Safety, Tolerability, Pharmacokinetics and Pharmacodynamics of ION717",
       url: "https://clinicaltrials.gov/study/NCT06153966",
       detail: "Phase 1/Phase 2 · active, not recruiting · NCT06153966",
+      phase: "Phase 1/Phase 2", state: "active, not recruiting", registryId: "NCT06153966",
       why: null,
       confidence: 72,
       confidenceLabel: "72% match confidence",
@@ -97,6 +100,14 @@ const states = [
   ["Sensitive content", { kind: "refused", code: "capture_sensitive" }],
   ["Searching", { kind: "searching" }],
   ["Answer from a post", { kind: "answer", shown: answer }],
+  ["Image post, long candidate", { kind: "answer", canVisual: true, shown: { ...answer,
+    subject: { treatment: "Tooth-regenerating patch", condition: "Dental caries (cavities)" },
+    source: "Read from the visible screenshot and caption. This identifies what the post claims; it does not establish that the claim is true.",
+    trialSaid: null, rest: null,
+    likely: [{ ...answer.likely[0], title: "A Study to Evaluate Physiologic Dentin Regeneration and Safety of EX-1 in the Treatment of Dental Caries", confidence: 62, confidenceLabel: "62% match confidence", why: null }],
+  } }],
+  ["No matching record", { kind: "answer", shown: { ...answer, likely: [], rest: null, none: "No matching trial record was found in ClinicalTrials.gov. That is not evidence that no trial exists: it may use another name or registry." } }],
+  ["Not identifiable", { kind: "answer", shown: { ...answer, subject: null, lead: "A specific treatment and condition could not be identified from the content that could be read. The registry was not searched; nothing has been ruled out.", likely: [], trialSaid: null, rest: null } }],
   ["Too little read", { kind: "too-little" }],
   ["Search refused", { kind: "refused", code: "busy" }],
   ["Monthly allowance used", { kind: "refused", code: "budget_exhausted" }],
@@ -215,6 +226,7 @@ for (const [label, state, kept = null] of states) {
     };
     fit();
     frame.contentDocument.fonts.ready.then(fit);
+    frame.contentDocument.addEventListener("toggle", fit, true);
   });
   figure.append(caption, frame);
   board.append(figure);
