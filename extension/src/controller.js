@@ -39,6 +39,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
   let lastRead = null;
   let visualGeneration = 0;
   let sharing = !requiresSharingConsent;
+  let sharingWriteFailed = false;
   const sharingView = () => show({ kind: "sharing", enabled: sharing });
 
   const save = (values) => Promise.resolve().then(() => storage.set(values)).catch(() => {});
@@ -229,7 +230,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     recent = saved?.recent ?? [];
     follows = saved?.follows ?? [];
     results = saved?.results ?? [];
-    sharing = !requiresSharingConsent || saved?.sharing?.version === 1 && saved.sharing.enabled === true;
+    sharing = !sharingWriteFailed && (!requiresSharingConsent || saved?.sharing?.version === 1 && saved.sharing.enabled === true);
     const state = stateFor(tab?.key ?? null, loaded);
     live = state.live ?? null;
     if (state.kind === "untracked" && live) {
@@ -306,16 +307,33 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
   }
 
   async function enableSharing() {
-    sharing = true;
-    await save({ sharing: { version: 1, enabled: true } });
+    if (!await saveSharing(true)) return;
     if (pageState?.kind === "tracked") show(pageState);
     else await search({ reuse: true });
   }
 
   async function disableSharing() {
-    sharing = false;
-    await save({ sharing: { version: 1, enabled: false } });
+    if (!await saveSharing(false)) return;
     showPage(pageState?.kind === "tracked" ? pageState : { kind: "untracked" });
+  }
+
+  async function saveSharing(enabled) {
+    sharing = false;
+    try {
+      await storage.set({ sharing: { version: 1, enabled } });
+      sharingWriteFailed = false;
+      sharing = enabled;
+      return true;
+    } catch {
+      sharingWriteFailed = true;
+      // Removing a previous opt-in is a fail-closed fallback when updating fails.
+      let cleared = false;
+      if (!enabled && storage.remove) {
+        try { await storage.remove("sharing"); cleared = true; } catch { /* Explain the unsaved choice. */ }
+      }
+      show({ kind: "sharing-error", requested: enabled, cleared });
+      return false;
+    }
   }
 
   return { open, search, previewVisual, sendVisual, cancelVisual, close, showRecent, showEntry, clearRecent, showFollowing, back, follow, unfollow, seen, sharingView, enableSharing, disableSharing };

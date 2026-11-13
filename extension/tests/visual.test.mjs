@@ -114,3 +114,12 @@ test("first use asks before reading or sending; permission persists and can be w
  await controller.disableSharing();await controller.open();assert.equal(reads,1);assert.equal(saved.sharing.enabled,false);
  await controller.previewVisual();assert.equal(calls.capture,1);
 });
+
+test("failed permission writes never silently enable or claim a durable withdrawal",async()=>{
+ const saved={sharing:{version:1,enabled:true}};
+ const {controller,calls}=setup({requiresSharingConsent:true,storage:{get:async key=>typeof key==="string"?{}:saved,set:async value=>{if(value.sharing)throw Error("disk full");}}});
+ await controller.open();assert.equal(calls.paid.length,1);
+ await controller.disableSharing();assert.equal(calls.states.at(-1).kind,"sharing-error");
+ await controller.open();assert.equal(calls.paid.length,1);
+ await controller.enableSharing();assert.equal(calls.states.at(-1).kind,"sharing-error");assert.equal(calls.paid.length,1);
+});

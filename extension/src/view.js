@@ -346,6 +346,10 @@ export function render(root, state, site, actions, kept = null) {
       ),
       savedNote(state, site) && el("footer", "notices", [savedNote(state, site)]),
     ];
+  } else if (state.kind === "sharing-error") {
+    children = [el("h1", null, "Your choice could not be saved"),
+      el("p", null, state.cleared ? "The earlier permission was removed. Automatic search stays off until you allow it again." : "Automatic search is paused for this opening. Retry to save your choice. If you were turning it off, disable the extension in your browser settings until this choice can be saved."),
+      press("Retry saving choice", "button quiet", state.requested ? actions.enableSharing : actions.disableSharing)];
   } else if (state.kind === "sharing") {
     children = [el("h1", null, state.enabled ? "Automatic search is on" : "Allow automatic search?"),
       el("p", null, `When you open this extension on an untracked page, its text, links and cleaned address go to ${site.name} and OpenAI to identify the reported treatment. If text is insufficient, visible image content is sent as a screenshot automatically.`),
@@ -389,7 +393,7 @@ export function render(root, state, site, actions, kept = null) {
     children = [message(text.unreachableTitle(site.name), text.unreachableBody, retry)];
   }
   if (state.canVisual && actions.previewVisual) children.push(press("Preview a screenshot instead", "text-button", actions.previewVisual));
-  if (!BUSY.has(state.kind) && !["sharing", "visual-preview"].includes(state.kind) && actions.sharingView) children.push(press("Automatic search settings", "text-button", actions.sharingView));
+  if (!BUSY.has(state.kind) && !["sharing", "sharing-error", "visual-preview"].includes(state.kind) && actions.sharingView) children.push(press("Automatic search settings", "text-button", actions.sharingView));
   if (!LISTS.has(state.kind) && !BUSY.has(state.kind) && state.kind !== "visual-preview") children.push(keptNav(kept, actions));
   root.replaceChildren(...children.filter(Boolean));
   root.dataset.state = state.kind;
