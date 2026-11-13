@@ -11,6 +11,15 @@
       "port": 4331
     },
     {
+      "name": "site-published",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd site && EXPORT_FILE=data/published-export.json npx astro dev --port 4334"
+      ],
+      "port": 4334
+    },
+    {
       "name": "site-built",
       "runtimeExecutable": "sh",
       "runtimeArgs": [
@@ -22,7 +31,9 @@
     {
       "name": "lookup-dev",
       "runtimeExecutable": "make",
-      "runtimeArgs": ["lookup-dev"],
+      "runtimeArgs": [
+        "lookup-dev"
+      ],
       "port": 8787
     },
     {

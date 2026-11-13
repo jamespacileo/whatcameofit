@@ -353,3 +353,92 @@ test("Scenario: Empty group", () => {
   assert.ok(html.includes("Mouth and teeth"));
   assert.ok(!html.includes("Empty topic"));
 });
+
+// Change plain-claim-lists: name-led rows, a plain gloss per status, a topic summary.
+const { STATUS_GLOSSES, assertNeutral, topicSummary } = await import("../src/lib/status.ts");
+
+test("Scenario: Row for a named intervention", () => {
+  const html = page("topic/gum-disease/index.html");
+  assert.match(html, /<a class="claim-name" href="\/phase-claim"[^>]*>phase-claim agent<\/a>/);
+  assert.match(html, /<span class="claim-headline"[^>]*>Synthetic claim with a started trial<\/span>/);
+  // The home page's list of claims is led by the name too.
+  assert.match(page("index.html"), /<a class="claim-name" href="\/[^"]+"[^>]*>[^<]+ agent<\/a>/);
+});
+
+test("Scenario: Two claims for one intervention", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  for (const claim of fixture.claims) claim.intervention.name = "Shared agent";
+  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-shared-")), "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-site-shared-"));
+  const result = build(file, out);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const html = fs.readFileSync(path.join(out, "topic/gum-disease/index.html"), "utf8");
+  assert.equal(count(html, ">Shared agent</a>"), 3);
+  for (const headline of ["that went quiet", "with a started trial", "that was approved"]) {
+    assert.ok(html.includes(`>Synthetic claim ${headline}</span>`), headline);
+  }
+});
+
+test("Scenario: Gloss in a list", () => {
+  const html = page("topic/gum-disease/index.html");
+  assert.match(html, /Phase 2 trial<\/strong>\s*<\/span>\s*<span class="gloss"[^>]*>Mid-stage trial in people</);
+});
+
+test("Scenario: Gloss on the claim page", () => {
+  const html = page("quiet-claim/index.html");
+  assert.match(html, /Preclinical only/);
+  assert.match(html, /<p class="gloss"[^>]*>No trial in people on record<\/p>/);
+  assert.match(html, /No clinical trial was found in the registries checked/);
+});
+
+test("Scenario: Status code without a gloss", () => {
+  const schema = JSON.parse(fs.readFileSync("export.schema.json", "utf8"));
+  for (const code of schema.$defs.ClaimStatus.enum) {
+    assert.ok(STATUS_GLOSSES[code], `${code} has no gloss`);
+    // A gloss is for a reader who does not know the phases, so it does not name one.
+    assert.doesNotMatch(STATUS_GLOSSES[code], /phase|preclinical|endpoint/i, code);
+  }
+});
+
+test("Scenario: Gloss with verdict wording", () => {
+  assert.throws(() => assertNeutral(["Its trials were abandoned"]), /"Its trials were abandoned"/);
+});
+
+const tally = (pairs) => new Map(Object.entries(pairs));
+
+test("Scenario: Topic with two statuses", () => {
+  assert.equal(
+    topicSummary(tally({ phase_3: 2, preclinical_only: 5 })),
+    "Of 7 reported breakthroughs tracked, 5 have no trial in people on record and 2 have reached large late-stage trials in people.",
+  );
+  // The built page opens with the sentence for its own three claims.
+  assert.match(
+    page("topic/gum-disease/index.html"),
+    /Of 3 reported breakthroughs tracked, 1 has no trial in people on record, 1 has reached a mid-stage trial in people and 1 has been approved by a regulator\./,
+  );
+});
+
+test("Scenario: Topic with one claim", () => {
+  assert.equal(
+    topicSummary(tally({ phase_1: 1 })),
+    "1 reported breakthrough tracked: it has reached an early trial in people.",
+  );
+});
+
+test("Scenario: Topic with more than four statuses", () => {
+  const said = topicSummary(
+    tally({ retracted: 1, approved: 2, phase_3: 3, phase_1: 1, trial_registered: 4, preclinical_only: 6 }),
+  );
+  assert.equal(
+    said,
+    "Of 17 reported breakthroughs tracked, 6 have no trial in people on record, 4 have a trial in people registered, 3 have reached large late-stage trials in people, 2 have been approved by a regulator and 2 are at other statuses.",
+  );
+});
+
+test("Scenario: Summary of a topic with ended trials", () => {
+  const said = topicSummary(tally({ terminated: 1, preclinical_only: 2 }));
+  assert.match(said, /1 had its trials stopped early\.$/);
+  assert.doesNotThrow(() => assertNeutral([said]));
+  assert.equal(topicSummary(new Map()), null);
+});
