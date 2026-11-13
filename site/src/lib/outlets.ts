@@ -1,6 +1,7 @@
 // Outlet icons. The pipeline fetched each one from the outlet's own site and the
 // export carries the image itself, so the build writes it as a file of this site
 // and no page asks another host for anything.
+import { createHash } from "node:crypto";
 import { data } from "./export";
 
 const EXTENSIONS: Record<string, string> = {
@@ -28,17 +29,28 @@ for (const outlet of data.outlets) {
   const [, mediaType, encoded] = outlet.icon.match(/^data:([^;]+);base64,(.+)$/) ?? [];
   const extension = EXTENSIONS[mediaType ?? ""];
   if (!extension || !encoded) continue;
+  const bytes = Buffer.from(encoded, "base64");
+  const revision = createHash("sha256").update(bytes).digest("hex").slice(0, 12);
   icons.set(outlet.domain, {
-    file: `${outlet.domain}.${extension}`,
+    // A corrected image must not reuse a returning reader's cached icon.
+    file: `${outlet.domain}.${revision}.${extension}`,
     mediaType,
-    bytes: Buffer.from(encoded, "base64"),
+    bytes,
   });
 }
 
 export const outletIcons = [...icons.values()];
 
-/** This site's own address of an outlet's icon, when the export has one. */
+/**
+ * This site's own address of an outlet's icon, when the export has one. A subdomain
+ * with none of its own shows its nearest parent's: ca.news.example.com falls back
+ * to news.example.com, then example.com.
+ */
 export function outletIconPath(domain: string): string | undefined {
-  const icon = icons.get(domain);
-  return icon && `/outlet-icons/${icon.file}`;
+  const labels = domain.split(".");
+  for (let start = 0; labels.length - start >= 2; start++) {
+    const icon = icons.get(labels.slice(start).join("."));
+    if (icon) return `/outlet-icons/${icon.file}`;
+  }
+  return undefined;
 }

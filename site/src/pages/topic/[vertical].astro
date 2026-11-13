@@ -1,7 +1,8 @@
 ---
 import Base from "../../layouts/Base.astro";
 import ClaimTable from "../../components/ClaimTable.astro";
-import { data } from "../../lib/export";
+import { data, type StatusCode } from "../../lib/export";
+import { topicSummary } from "../../lib/status";
 
 export function getStaticPaths() {
   return data.verticals.map((vertical) => ({
@@ -14,6 +15,10 @@ const { vertical } = Astro.props;
 const claims = data.claims
   .filter((claim) => claim.vertical === vertical.slug)
   .sort((a, b) => ((a.first_reported_date ?? "") < (b.first_reported_date ?? "") ? 1 : -1));
+// Where the topic's claims stand, said once in plain words before the list.
+const counts = new Map<StatusCode, number>();
+for (const claim of claims) counts.set(claim.status.code, (counts.get(claim.status.code) ?? 0) + 1);
+const summary = topicSummary(counts);
 ---
 
 <Base
@@ -27,8 +32,8 @@ const claims = data.claims
 >
   <h1 class="title">{vertical.title}</h1>
   <p class="lede">
-    {claims.length}{" "}
-    {claims.length === 1 ? "reported breakthrough" : "reported breakthroughs"} tracked, newest first.
+    {summary ?? "0 reported breakthroughs tracked."}
+    {claims.length > 1 && " Newest first."}
   </p>
 
   {

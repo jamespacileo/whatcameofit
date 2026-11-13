@@ -997,6 +997,11 @@ main nav.contents ul li + li {
     order: 1;
   }
 
+  /* The plain words stay directly under the label they explain. */
+  .digest .gloss {
+    order: 1;
+  }
+
   .digest .means {
     order: 2;
     margin: 0.4rem 0 0.2rem;
@@ -1840,10 +1845,13 @@ main nav.contents ul li + li {
   color: var(--muted);
 }
 
-.letter ul {
+/* Named with the directory so the prose pages' list rule, which comes later,
+   does not indent these lists or hold them to the reading measure. */
+.directory .letter ul {
   list-style: none;
   margin: 0;
   padding: 0;
+  max-width: none;
   columns: 3 14rem;
   column-gap: 2rem;
 }
@@ -1888,10 +1896,62 @@ main nav.contents ul li + li {
   columns: 2 14rem;
 }
 
+/* A group that is its one topic: the link takes the heading's column and its
+   count the start of the next, so the name is read once. */
+.directory.grouped .letter.solo ul {
+  grid-column: 1 / -1;
+  columns: auto;
+}
+
+.directory.grouped .letter.solo li {
+  display: grid;
+  grid-template-columns: 13rem auto;
+  justify-content: start;
+  column-gap: 1.5rem;
+}
+
+.directory.grouped .letter.solo a {
+  font-weight: 700;
+}
+
 @media (max-width: 40rem) {
   .directory.grouped .letter {
     grid-template-columns: 1fr;
     row-gap: 0.25rem;
+  }
+
+  .directory.grouped .letter.solo li {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* The group names are one line that scrolls sideways, out to the screen's
+     edges, so the list itself starts on the first screen. Both ends fade where
+     more names wait. */
+  .directory.grouped .letters {
+    flex-wrap: nowrap;
+    width: calc(100% + 2 * var(--gutter));
+    margin-inline: calc(-1 * var(--gutter));
+    padding: 3px var(--gutter);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 var(--gutter),
+      #000 calc(100% - 2.5rem),
+      transparent
+    );
+  }
+
+  .directory.grouped .letters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .directory.grouped .letters a {
+    flex: none;
+    white-space: nowrap;
   }
 }
 
@@ -2144,6 +2204,51 @@ main ul:not([class]) li + li {
   font-weight: 700;
 }
 
+/* A claim is listed by its intervention's name; the reported headline sits under it,
+   in full for a reader who wants it and quiet enough to scan past. */
+.index td.claim .claim-headline {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+/* The link reaches over its cell, so the headline is part of the target but not of
+   the link's name. */
+.index td.claim:has(.claim-name) {
+  position: relative;
+}
+
+.index td.claim .claim-name::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+@media (min-width: 40.01rem) {
+  .index td.claim .claim-headline {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+}
+
+/* A status in plain words, under its label. */
+.gloss {
+  display: block;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.digest .gloss {
+  margin: 0.2rem 0 0.5rem;
+  font-size: 1rem;
+}
+
 /* The outlet under a headline: quieter than the headline, still a full-size target. */
 .index td.claim .entry-note a {
   display: inline-block;
@@ -2197,12 +2302,14 @@ main ul:not([class]) li + li {
   line-height: 1;
 }
 
-/* An outlet's own icon fills the tile's box and brings its own colours. */
+/* Keep transparent publisher marks legible even on a dark reading surface.
+   This is the artwork's paper, so it does not follow the site's theme tokens. */
 .outlet img.tile {
   position: absolute;
   inset: 0;
   object-fit: contain;
-  background: none;
+  background: #fff;
+  color-scheme: only light;
 }
 
 .outlet-icon:has(img) > span {

@@ -36,6 +36,21 @@ SITE = "https://www.news.example.org"
 ARTICLE = f"{SITE}/2018/teeth"
 PNG = b"\x89PNG\r\n\x1a\n" + b"synthetic icon"
 ICO = b"\x00\x00\x01\x00" + b"synthetic icon"
+
+
+def bitmap_ico(mask_row: bytes) -> bytes:
+    """A one-image, 16-pixel, two-colour ICO whose transparency mask repeats `mask_row`."""
+    header = (40).to_bytes(4, "little") + (16).to_bytes(4, "little") + (32).to_bytes(4, "little")
+    header += (1).to_bytes(2, "little") + (1).to_bytes(2, "little") + bytes(24)
+    image = header + bytes(8) + bytes(4 * 16) + mask_row * 16
+    entry = bytes([16, 16, 2, 0]) + (1).to_bytes(2, "little") + (1).to_bytes(2, "little")
+    entry += len(image).to_bytes(4, "little") + (22).to_bytes(4, "little")
+    return b"\x00\x00\x01\x00\x01\x00" + entry + image
+
+
+# Every pixel masked out, as some sites serve at /favicon.ico; and one with pixels drawn.
+BLANK_ICO = bitmap_ico(b"\xff\xff\x00\x00")
+DRAWN_ICO = bitmap_ico(b"\xff\x0f\x00\x00")
 ALLOW_ALL = httpx.Response(200, text="User-agent: *\nDisallow:\n")
 CHECKED_IN_SCHEMA = Path(__file__).resolve().parents[2] / "site" / "export.schema.json"
 
@@ -107,6 +122,34 @@ def test_icon_named_by_the_home_page_is_used_when_there_is_no_favicon_file(fake_
     # The other host's robots.txt was read before its file was asked for.
     assert web.urls.index("https://static.example.net/robots.txt") < web.urls.index(declared)
     assert f"{SITE}/icon.svg" not in web.urls
+
+
+def test_blank_placeholder_is_passed_over_for_the_icon_the_home_page_names(fake_time):
+    """Scenario: Blank placeholder icon"""
+    page = '<html><head><link rel="icon" sizes="32x32" href="/icon-32.png"></head></html>'
+    web = Web(
+        {
+            f"{SITE}/robots.txt": ALLOW_ALL,
+            f"{SITE}/favicon.ico": httpx.Response(200, content=BLANK_ICO),
+            f"{SITE}/": httpx.Response(200, text=page),
+            f"{SITE}/icon-32.png": httpx.Response(200, content=PNG),
+        }
+    )
+
+    icon = fetcher(web, fake_time).fetch(SITE)
+
+    assert (icon.url, icon.content) == (f"{SITE}/icon-32.png", PNG)
+
+
+def test_ico_with_pixels_drawn_is_kept(fake_time):
+    web = Web(
+        {
+            f"{SITE}/robots.txt": ALLOW_ALL,
+            f"{SITE}/favicon.ico": httpx.Response(200, content=DRAWN_ICO),
+        }
+    )
+
+    assert fetcher(web, fake_time).fetch(SITE).content == DRAWN_ICO
 
 
 def test_robots_refusal_means_nothing_else_is_asked(fake_time):
@@ -257,6 +300,38 @@ def test_retry_asks_again_only_the_outlets_that_had_no_icon(session: Session, fa
 
     assert (run.stored, run.already_asked) == (["quiet.example.com"], 1)
     assert all("quiet.example.com" in url for url in web.urls)
+
+
+def test_blank_placeholder_stored_earlier_is_asked_again_on_retry_and_not_exported(
+    session: Session, fake_time
+):
+    """Scenario: Blank placeholder stored earlier"""
+    new_claim(session)
+    session.add(
+        OutletIcon(
+            domain="news.example.org",
+            icon_url=f"{SITE}/favicon.ico",
+            media_type="image/x-icon",
+            content=BLANK_ICO,
+            fetched_at=NOW,
+        )
+    )
+    session.flush()
+    web = Web(
+        {
+            f"{SITE}/robots.txt": ALLOW_ALL,
+            f"{SITE}/favicon.ico": httpx.Response(200, content=PNG),
+        }
+    )
+
+    assert exported(session)["outlets"] == []
+    untouched = fetch_outlet_icons(session, fetcher(web, fake_time))
+    run = fetch_outlet_icons(session, fetcher(web, fake_time), retry_missing=True)
+
+    assert (untouched.stored, untouched.already_asked) == ([], 1)
+    assert run.stored == ["news.example.org"]
+    kept = session.get(OutletIcon, "news.example.org")
+    assert kept is not None and kept.content == PNG
 
 
 # --- export ------------------------------------------------------------------------

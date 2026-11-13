@@ -93,9 +93,14 @@ const claimCount = topics.reduce((sum, topic) => sum + topic.count, 0);
       No topic matches. The <a href="/">search on the home page</a> also looks inside claims.
     </p>
     {
-      sections.map(({ id, heading, match, topics }) => (
-        <section class="letter" id={id} aria-labelledby={`heading-${id}`} data-match={match}>
-          <h2 id={`heading-${id}`}>{heading}</h2>
+      sections.map(({ id, heading, match, topics }) => {
+        // A group whose one topic carries the group's own name is said once: the
+        // topic's link stands where the heading would, and the heading is kept for
+        // a screen reader and the jump row.
+        const solo = grouped && topics.length === 1 && topics[0].title === heading;
+        return (
+        <section class:list={["letter", { solo }]} id={id} aria-labelledby={`heading-${id}`} data-match={match}>
+          <h2 id={`heading-${id}`} class:list={{ "visually-hidden": solo }}>{heading}</h2>
           <ul>
             {topics.map((topic) => (
               <li>
@@ -108,7 +113,8 @@ const claimCount = topics.reduce((sum, topic) => sum + topic.count, 0);
             ))}
           </ul>
         </section>
-      ))
+        );
+      })
     }
   </div>
 </Base>
