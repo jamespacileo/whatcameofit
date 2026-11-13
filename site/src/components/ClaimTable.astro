@@ -2,6 +2,7 @@
 import type { ExportedClaim, StatusCode } from "../lib/export";
 import { STAGE_PATH, STATUS_LABELS, latestPromise } from "../lib/status";
 import { formatDate } from "../lib/timetable";
+import ClaimName from "./ClaimName.astro";
 import PromiseText from "./PromiseText.astro";
 import StatusCell from "./StatusCell.astro";
 
@@ -78,7 +79,7 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
         return (
           <tr data-status={claim.status.code} role="row">
             <td role="cell" class="claim">
-              <a href={`/${claim.slug}`}>{claim.headline}</a>
+              <ClaimName claim={claim} />
             </td>
             <td role="cell" class="when" data-column="First reported">
               {claim.first_reported_date ? (

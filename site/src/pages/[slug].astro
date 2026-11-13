@@ -23,6 +23,7 @@ import {
   KIND_NAMES,
   STAGE_PATH,
   STATUS_LABELS,
+  STATUS_GLOSSES,
   STATUS_MEANINGS,
   eventKind,
   eventLabel,
@@ -197,6 +198,7 @@ const posts = shareLinks(postText, address, claim.headline);
             }
           </Pop>
         </div>
+        <p class="gloss">{STATUS_GLOSSES[claim.status.code]}</p>
         <StageTrack code={claim.status.code} ends />
         {
           overlay && (
