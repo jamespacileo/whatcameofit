@@ -12,9 +12,9 @@ The same claim also holds two person entities who are not researchers: the repor
 ## What Changes
 
 - Extraction gives up to three search phrases for an intervention that has no product name, and resolution searches the registry with them, within the claim's indication.
-- Resolution searches the literature for papers about the claim's intervention and indication, and stores each as a candidate match with a score and the reasons for it.
+- Resolution searches the literature for papers about the claim's intervention and indication, and stores each as a candidate match with a score and the reasons for it. Every paper in the high band is approved by rule, with no person involved.
 - A registry number stated in an approved paper becomes a trial candidate.
-- The paper most likely to be the one first reported on is suggested as the origin paper, which lets the existing follow-up and retraction checks run for claims whose article gave no DOI.
+- The paper most likely to be the one first reported on is chosen by rule as the origin paper when the choice is confident, which lets the existing follow-up and retraction checks run for claims whose article gave no DOI.
 - Institutions and companies an article names are looked up in open organisation registries and stored as candidate matches.
 - The claim page lists approved papers under their own heading, each with its score and reasons. They are not evidence events and do not change the status.
 - Extraction records as people only those named as doing the research. Stored person entities that are anyone else are removed.

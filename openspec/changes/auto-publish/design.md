@@ -21,7 +21,7 @@ Approval stays a review state, so the status rules, the export and the history k
 - **Event:** the existing confidence threshold (`REVIEW_CONFIDENCE_THRESHOLD`, 0.95) now applies to follow-up paper events too. A follow-up showing both signs scores 0.9, so it is approved by rule only once the threshold is lowered to 0.9. Manually entered events are a person's own entry and are approved as entered.
 - **Failure flag:** still only a person, with a source URL.
 
-`MATCH_ACCEPT_ABOVE` has no default in code. It is set in `.env` from the lookup's measured agreement with the reviewer's past approvals (`live-lookup`'s measurement), and `0` or unset turns approval by rule off, so nothing is approved by score until the operator sets it.
+`MATCH_ACCEPT_ABOVE` defaults to 0.8, where the site's "High match" band starts, and `APPROVE_DRAFTS_BY_RULE` defaults to on. The operator said on 2026-11-13 that approval needs no person and that shown scores make an imperfect match acceptable; a person archives or rejects afterwards. `0` turns approval by rule off. When several candidates score at or above the threshold, all are approved and the claim page lists each with its score.
 
 ## Confidence words
 

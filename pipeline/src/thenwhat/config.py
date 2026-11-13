@@ -31,11 +31,13 @@ class Settings(BaseSettings):
     # for review. It is kept and can be listed and approved. 0 turns the rule off.
     match_reject_below: float = 0.05
     # A new trial candidate scored for the claim's indication at or above this is
-    # approved by rule and published. Unset or 0 turns the rule off (openspec auto-publish).
-    match_accept_above: float = 0.0
+    # approved by rule and published. The default is where the site's "High match" band
+    # starts. 0 turns the rule off (openspec auto-publish).
+    match_accept_above: float = 0.8
     # Decide new drafts by rule: approved, and published, when the intervention is a
-    # name; rejected and kept otherwise. Off by default (openspec auto-publish).
-    approve_drafts_by_rule: bool = False
+    # name; rejected and kept otherwise. On by default: approval needs no person
+    # (openspec auto-publish).
+    approve_drafts_by_rule: bool = True
     no_signal_years: int = 3
 
 
