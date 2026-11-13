@@ -186,12 +186,23 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
     and condition. We search ClinicalTrials.gov and linked research through Europe PMC, then
     use OpenAI to compare the trial records. This is a live search of those research sources,
     not a general search of the web. Its answer is marked as automatic and unreviewed; it cannot
-    create a claim page or change a status. The service keeps neither the report nor the answer.
+    create a claim page or change a status. We do not store submitted article text or screenshots.
+    Structured answers for independently public reports may be reused for 24 hours; answers
+    based only on browser content stay in that browser.
     Read <a href="/privacy">what is sent and how the providers handle it</a> before searching.
   </p>
   <p>
+    Related papers come from OpenAlex searches for the treatment and condition. ROR identifies
+    organisations explicitly named in the report. These sections open when you need them.
+    A paper result does not establish that a treatment works, and an organisation record does
+    not verify involvement or endorsement. Neither provider receives the article text, page
+    address or screenshot. Public paper and organisation metadata may be cached for seven days.
+  </p>
+  <p>
     Opening the browser extension checks the current page automatically. A tracked article shows
-    its reviewed claim; an untracked page starts a live registry search when the service is available.
+    its saved claim. After you enable automatic search, an untracked page starts a live registry
+    search when the service is available. If its text is insufficient, a screenshot of visible
+    content can be sent. Select words first to search only those words, without links or a screenshot.
     Each candidate's match confidence is the model's estimate that the record concerns the reported
     treatment and condition. It is not a verified probability or a rating of treatment effectiveness
     or trial quality. Pages are not searched in the background while the extension is closed.

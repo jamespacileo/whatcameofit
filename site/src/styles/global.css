@@ -97,8 +97,9 @@ p {
   position: absolute;
   left: -100vw;
   top: 0;
-  background: var(--blue);
-  color: var(--paper);
+  /* It lands over the navy masthead, so it is the page's white with blue on it. */
+  background: var(--paper);
+  color: var(--blue);
   padding: 0.6rem 1rem;
   z-index: 2;
 }
@@ -120,10 +121,23 @@ p {
   white-space: nowrap;
 }
 
-/* Masthead: quiet, the name and three plain links. */
+/* Masthead: the name and three plain links, light on the footer's deep navy.
+   The navy is the darkest blue the site has, not the accent. */
 
 .masthead {
-  border-bottom: 1px solid var(--rule);
+  /* The name's dot and the links' underline: the accent, lifted to read on navy. */
+  --on-navy: #8ec1f5;
+  background: var(--footer);
+  color: var(--paper);
+}
+
+.masthead :focus-visible {
+  outline-color: var(--paper);
+}
+
+.masthead ::selection {
+  background: var(--paper);
+  color: var(--footer);
 }
 
 .masthead .wrap {
@@ -141,7 +155,7 @@ p {
   gap: 0.26em;
   font-size: 1.25rem;
   letter-spacing: -0.01em;
-  color: var(--ink);
+  color: var(--paper);
   text-decoration: none;
 }
 
@@ -184,7 +198,7 @@ p {
 }
 
 .masthead .name .ask .dot {
-  fill: var(--blue);
+  fill: var(--on-navy);
   transform-box: fill-box;
   transform-origin: center;
 }
@@ -262,7 +276,7 @@ p {
 }
 
 .masthead nav a {
-  color: var(--blue);
+  color: var(--paper);
   font-weight: 600;
   font-size: 0.95rem;
   text-decoration: none;
@@ -275,6 +289,7 @@ p {
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 0.35em;
+  text-decoration-color: var(--on-navy);
 }
 
 main {
@@ -287,7 +302,7 @@ main > .wrap {
 }
 
 /* The opening band: a page's main task on the panel blue, full width, between the
-   white masthead and the white page. Pale, with ink on it; never a solid block of
+   navy masthead and the white page. Pale, with ink on it; never a solid block of
    the accent. */
 .band {
   background: var(--panel);
@@ -440,6 +455,29 @@ a.chip:hover {
   margin: 0.6rem 0 0;
 }
 
+/* The headline a reader followed here, named before anything is said about it. */
+.reported {
+  margin-top: 0.7rem;
+}
+
+.reported-title {
+  display: block;
+  width: fit-content;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+.reported .entry-note {
+  display: block;
+  margin-top: 0.2rem;
+}
+
+.reported > .entry-note {
+  margin-top: 0.5rem;
+}
+
 /* A thumb needs more than a mouse does: 44 pixels, wherever something is pressed. */
 @media (max-width: 40rem) {
   .share {
@@ -479,6 +517,18 @@ a.chip:hover {
   .record > span > a,
   .index .claim a {
     padding-block: 0.6rem;
+  }
+
+  /* A headline is a box of its own, so its padding is taken back out of the page. */
+  .index td.claim a.followed,
+  .reported-title {
+    padding-block: 0.6rem;
+    margin-block: -0.6rem;
+  }
+
+  .digest .changed a,
+  .reported > .entry-note a {
+    padding-block: 0.8rem;
   }
 
   .embed-how summary {
@@ -1244,10 +1294,21 @@ main nav.contents ul li + li {
   grid-column: 2;
 }
 
-.record .what:target {
+.record .what:target,
+.bar:target {
   background: var(--tint);
   outline: 0.3rem solid var(--tint);
   border-radius: 2px;
+}
+
+/* A heading reached by a link is marked along its words, not across the page,
+   and keeps clear of the window's edge. */
+.bar {
+  scroll-margin-top: 1.25rem;
+}
+
+.bar:target {
+  width: fit-content;
 }
 
 .record .origin {
@@ -2252,6 +2313,12 @@ main ul:not([class]) li + li {
   font-weight: 700;
 }
 
+/* A headline is one box, so the browser can carry it to its claim page. */
+.index td.claim a.followed {
+  display: block;
+  width: fit-content;
+}
+
 /* A claim is listed by its intervention's name; the reported headline sits under it,
    in full for a reader who wants it and quiet enough to scan past. */
 .index td.claim .claim-headline {
@@ -2350,12 +2417,14 @@ main ul:not([class]) li + li {
   line-height: 1;
 }
 
-/* An outlet's own icon fills the tile's box and brings its own colours. */
+/* Keep transparent publisher marks legible even on a dark reading surface.
+   This is the artwork's paper, so it does not follow the site's theme tokens. */
 .outlet img.tile {
   position: absolute;
   inset: 0;
   object-fit: contain;
-  background: none;
+  background: #fff;
+  color-scheme: only light;
 }
 
 .outlet-icon:has(img) > span {
@@ -2611,9 +2680,50 @@ main ul:not([class]) li + li {
     animation: mark-land 0.4s var(--ease-out) both;
   }
 
-  /* A record reached from the status panel shows itself, then settles. */
-  .record .what:target {
+  /* A record reached from the status panel shows itself, then settles. So does a
+     section reached from there. */
+  .record .what:target,
+  .bar:target {
     animation: record-found 2.2s ease-out both;
+  }
+
+  /* A headline pressed on the home page is carried to its place on the claim page,
+     and back. It keeps its own size on the way, so its letters are never stretched. */
+  .followed {
+    view-transition-class: followed;
+  }
+
+  ::view-transition-group(.followed) {
+    animation-duration: 380ms;
+    animation-timing-function: var(--ease-out);
+  }
+
+  /* Only the headline as the next page sets it is drawn, uncovered as its box
+     opens, so two settings of one line are never seen over each other. */
+  ::view-transition-old(.followed) {
+    display: none;
+  }
+
+  ::view-transition-new(.followed) {
+    height: 100%;
+    object-fit: none;
+    object-position: left top;
+    overflow: clip;
+    animation: none;
+  }
+
+  /* A headline with no place on the other page leaves, or arrives, with the rest. */
+  ::view-transition-old(.followed):only-child {
+    display: block;
+    animation-duration: 170ms;
+  }
+
+  ::view-transition-new(.followed):only-child {
+    animation: -ua-view-transition-fade-in 170ms both;
+  }
+
+  .match-why summary svg {
+    transition: transform 120ms var(--ease-out);
   }
 
   /* The name's story is told once a visit; a hover tells it again. */
@@ -2695,6 +2805,19 @@ main ul:not([class]) li + li {
 }
 
 @media print {
+  .masthead {
+    background: none;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .masthead .name {
+    color: var(--ink);
+  }
+
+  .masthead .name .ask .dot {
+    fill: var(--blue);
+  }
+
   .masthead nav,
   .colophon .more,
   .share,

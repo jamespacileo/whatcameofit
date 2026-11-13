@@ -155,7 +155,7 @@ test("Scenario: Home lists the newest reports", () => {
   assert.ok(order.every((position) => position > -1), "a report is missing from the home page");
   assert.deepEqual([...order].sort((a, b) => a - b), order);
   // The headline opens the claim; the outlet opens the report itself.
-  assert.match(html, /<a href="\/phase-claim">“Example report 3”<\/a>/);
+  assert.match(html, /<a class="followed" href="\/phase-claim"[^>]*>“Example report 3”<\/a>/);
   assert.match(html, /<a href="https:\/\/uk\.news\.example\.org\/3">Example Outlet 3<\/a>/);
 });
 
@@ -257,15 +257,16 @@ test("Scenario: Long-quiet claim", () => {
 test("Scenario: Outlet with a stored icon", () => {
   // The icon is a file of this site, written from the export; the page names no other host.
   const html = page("quiet-claim/index.html");
-  assert.match(html, /<img class="tile" src="\/outlet-icons\/news\.example\.org\.png" alt=""/);
-  const icon = fs.readFileSync(path.join(dist, "outlet-icons/news.example.org.png"));
+  const source = html.match(/<img class="tile" src="(\/outlet-icons\/news\.example\.org\.[a-f0-9]{12}\.png)" alt=""/)?.[1];
+  assert.ok(source, "publisher icons carry a content revision to refresh corrected artwork");
+  const icon = fs.readFileSync(path.join(dist, source));
   assert.deepEqual([...icon.subarray(0, 4)], [0x89, 0x50, 0x4e, 0x47]);
 });
 
 test("Scenario: Outlet on a subdomain", () => {
   // uk.news.example.org has no icon of its own in the export; its parent domain has.
   const html = page("phase-claim/index.html");
-  assert.match(html, /<img class="tile" src="\/outlet-icons\/news\.example\.org\.png" alt=""[^>]*>\s*<\/span>\s*<span>Example Outlet 3<\/span>\s*<\/span>\s*<span class="domain">uk\.news\.example\.org<\/span>/);
+  assert.match(html, /<img class="tile" src="\/outlet-icons\/news\.example\.org\.[a-f0-9]{12}\.png" alt=""[^>]*>\s*<\/span>\s*<span>Example Outlet 3<\/span>\s*<\/span>\s*<span class="domain">uk\.news\.example\.org<\/span>/);
 });
 
 test("Scenario: Outlet with no stored icon", () => {
@@ -441,4 +442,19 @@ test("Scenario: Summary of a topic with ended trials", () => {
   assert.match(said, /1 had its trials stopped early\.$/);
   assert.doesNotThrow(() => assertNeutral([said]));
   assert.equal(topicSummary(new Map()), null);
+});
+
+test("Scenario: Reader follows a headline from the home page", () => {
+  const home = page("index.html");
+  // Each headline on the home page is named, and its claim page gives the same name
+  // to the same headline, shown before the status.
+  const named = [...home.matchAll(/class="followed" href="\/([^"]+)" style="view-transition-name: ([^";]+)/g)];
+  assert.ok(named.length > 0, "no headline on the home page is named");
+  assert.equal(new Set(named.map(([, , name]) => name)).size, named.length, "a name is used twice");
+  for (const [, slug, name] of named) {
+    const html = page(`${slug}/index.html`);
+    const at = html.indexOf(`view-transition-name: ${name}`);
+    assert.ok(at > 0, `${slug} does not name its report ${name}`);
+    assert.ok(at < html.indexOf('class="digest"'), `${slug} names its report after the status`);
+  }
 });
