@@ -1929,6 +1929,86 @@ main ul:not([class]) li + li {
   border-bottom: 0;
 }
 
+/* Matched records: the record on the left, how sure the match is on the right, the
+   reason one press away. Openspec auto-publish. */
+.matched {
+  margin-top: 2rem;
+}
+
+.matched-group {
+  margin: 1.4rem 0 0.4rem;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.match-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.2rem 1rem;
+}
+
+.match-why {
+  justify-self: end;
+  text-align: right;
+}
+
+.match-record {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.match-record .entry-note {
+  overflow-wrap: anywhere;
+}
+
+.match-why summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  list-style: none;
+  color: var(--blue);
+  white-space: nowrap;
+}
+
+.match-why summary::-webkit-details-marker {
+  display: none;
+}
+
+.match-why[open] summary svg {
+  transform: rotate(180deg);
+}
+
+.match-why p {
+  margin: 0.3rem 0 0 auto;
+  color: var(--muted);
+  max-width: 22ch;
+  font-size: 0.9rem;
+}
+
+/* On a phone the record keeps the width; how sure the match is goes under it. */
+@media (max-width: 40rem) {
+  .match-list li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .match-why {
+    justify-self: start;
+    text-align: left;
+  }
+
+  .match-why summary {
+    min-height: 2.75rem;
+  }
+
+  .match-why p {
+    margin-left: 0;
+    max-width: none;
+  }
+}
+
 .index td.claim a {
   font-weight: 700;
 }

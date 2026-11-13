@@ -77,6 +77,16 @@ export function openData(
         trial_state: event.trial_state,
         regulatory_outcome: event.regulatory_outcome,
       })),
+      // What the claim page shows of each match: the record, its score and how it was read.
+      matches: (claim.matches ?? []).map((match) => ({
+        source_name: match.source_name,
+        external_id: match.external_id,
+        url: match.url,
+        score: match.score,
+        state: match.state,
+        reading: match.reading,
+        summary: match.summary,
+      })),
       checked_by_person: claim.checked_by_person,
     })),
   };

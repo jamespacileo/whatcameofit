@@ -31,6 +31,19 @@ export interface ExportedEvent {
   regulatory_outcome: string | null;
 }
 
+export interface ExportedMatch {
+  source_name: string;
+  external_id: string;
+  url: string | null;
+  /** 0 to 1: how likely the record is evidence for the claim. */
+  score: number;
+  /** "approved" counts toward the status; "candidate" does not. */
+  state: "approved" | "candidate";
+  reading: string | null;
+  decided_by: string | null;
+  summary: string | null;
+}
+
 export interface ExportedClaim {
   slug: string;
   headline: string;
@@ -62,6 +75,9 @@ export interface ExportedClaim {
   }[];
   promises: { description: string; parsed_date: string | null; article_url: string }[];
   events: ExportedEvent[];
+  /** Registry records matched to the claim, approved first, each with its score. Absent
+   * from an export made before openspec auto-publish. */
+  matches?: ExportedMatch[];
   failure_flags: { trial_id: string; source_url: string }[];
 }
 

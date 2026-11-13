@@ -25,7 +25,7 @@ Approval stays a review state, so the status rules, the export and the history k
 
 ## Confidence words
 
-The site owns the words. The export carries the score and its reasons. Bands, from the score: high at 0.8 and over, medium from 0.5, low under 0.5, configured in `site/site.config.mjs` beside the brand strings. A reviewed match keeps its score; a person's approval does not raise it. This replaces the live-lookup line "Reviewed claims SHALL NOT acquire model confidence scores"; that change is not archived yet and is corrected when it is.
+The site owns the words. The export carries the score and its reasons. Bands, from the score: high at 0.8 and over, medium from 0.5, low under 0.5, set in `site/src/lib/confidence.ts` with the rest of the site's confidence wording. A reviewed match keeps its score; a person's approval does not raise it. This replaces the live-lookup line "Reviewed claims SHALL NOT acquire model confidence scores"; that change is not archived yet and is corrected when it is.
 
 ## Source pages
 
@@ -37,7 +37,7 @@ A claim or source carries `archived_at` and `archive_reason`. The export leaves 
 
 ## The assistant decider
 
-Assistant decisions no longer hold a claim back, since rules now publish. `checked_by_person` stays in the export and the data file. The preview mode loses its purpose; `export --preview` and the preview band are removed in this change.
+Assistant decisions no longer hold a claim back, since rules now publish. `checked_by_person` stays in the export and the data file. The preview mode loses its purpose: `export --preview` is removed and the export's `preview` is always false. The site's preview band stays in code for exports made before the change, and never shows on a current one.
 
 ## Open questions
 

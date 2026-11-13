@@ -195,6 +195,14 @@
           },
           "title": "Failure Flags",
           "type": "array"
+        },
+        "matches": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedMatch"
+          },
+          "title": "Matches",
+          "type": "array"
         }
       },
       "required": [
@@ -368,6 +376,83 @@
         "synonyms"
       ],
       "title": "ExportedIntervention",
+      "type": "object"
+    },
+    "ExportedMatch": {
+      "additionalProperties": false,
+      "properties": {
+        "source_name": {
+          "title": "Source Name",
+          "type": "string"
+        },
+        "external_id": {
+          "title": "External Id",
+          "type": "string"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Url"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "state": {
+          "title": "State",
+          "type": "string"
+        },
+        "reading": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reading"
+        },
+        "decided_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Decided By"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Summary"
+        }
+      },
+      "required": [
+        "source_name",
+        "external_id",
+        "url",
+        "score",
+        "state",
+        "reading",
+        "decided_by",
+        "summary"
+      ],
+      "title": "ExportedMatch",
       "type": "object"
     },
     "ExportedOutlet": {
@@ -629,6 +714,7 @@
       "title": "Last Checked At"
     },
     "preview": {
+      "default": false,
       "title": "Preview",
       "type": "boolean"
     },
@@ -681,7 +767,6 @@
     "schema_version",
     "generated_at",
     "last_checked_at",
-    "preview",
     "sources",
     "verticals",
     "outlets",

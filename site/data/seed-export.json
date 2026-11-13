@@ -290,7 +290,19 @@
           "regulatory_outcome": null
         }
       ],
-      "failure_flags": []
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "crossref",
+          "external_id": "10.1126/sciadv.abf1798",
+          "url": "https://doi.org/10.1126/sciadv.abf1798",
+          "score": 1.0,
+          "state": "approved",
+          "reading": null,
+          "decided_by": "seed",
+          "summary": null
+        }
+      ]
     }
   ],
   "archived": []
