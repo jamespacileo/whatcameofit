@@ -1793,6 +1793,66 @@ main nav.contents ul li + li {
   scroll-margin-top: 1rem;
 }
 
+/* The home page's lists: one shown at a time, picked by a tab. Where scripts run,
+   only the first is in sight until the tabs take over. */
+@media (scripting: enabled) {
+  .feed:not(.tabbed) .feed-panel ~ .feed-panel {
+    display: none;
+  }
+}
+
+.feed-tabs {
+  display: flex;
+  gap: 0.25rem 1.4rem;
+  margin-top: clamp(1.5rem, 5vw, 2.25rem);
+  border-bottom: 1px solid var(--rule);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.feed-tabs [role="tab"] {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  padding: 0.65rem 0.1rem 0.5rem;
+  cursor: pointer;
+}
+
+.feed-tabs [role="tab"]:hover {
+  color: var(--blue);
+}
+
+.feed-tabs [role="tab"][aria-selected="true"] {
+  color: var(--ink);
+  border-bottom-color: var(--blue);
+}
+
+.feed-tabs .count {
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  background: var(--tint);
+  border-radius: 999px;
+  padding: 0 0.45rem;
+}
+
+.feed.tabbed .feed-panel > .bar {
+  margin-top: 1.1rem;
+  font-size: 1rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
 .pager {
   display: flex;
   align-items: baseline;

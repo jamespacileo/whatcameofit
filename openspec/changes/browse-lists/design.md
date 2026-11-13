@@ -22,3 +22,13 @@ the home page's HTML passes about 500 KB or 1,000 reports.
 
 Ten on the home page, where two lists share the page with the lookup. Twenty-five on
 claim lists, which have the page to themselves.
+
+## The front page is orders over the record, not a ranking
+
+Reddit ranks by votes. This site collects nothing about readers, so each list's order
+is a fact of the record: a publication date, a change date, a promised date, a count of
+years. No order depends on the day the page is read, so a built page stays true: the
+Promises list is in date order and never says "overdue".
+
+Tabs, not four stacked tables: one list above the fold, the others one press away, and
+without scripting the four simply follow one another under their headings.

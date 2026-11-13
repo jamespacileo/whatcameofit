@@ -160,13 +160,29 @@ test("Scenario: Home lists the newest reports", () => {
 });
 
 test("Scenario: A list that fits one page", () => {
-  // Four reports and three claims: every row is on the first page, with a pager that
+  // Four reports and two status changes: every row is on the first page, with a pager that
   // stays out of sight under each list.
   const html = page("index.html");
   assert.doesNotMatch(html, /<tr[^>]*data-later/);
   assert.match(html, /<nav class="pager"[^>]*data-pager="headlines"[^>]*hidden/);
-  assert.match(html, /<nav class="pager"[^>]*data-pager="statuses"[^>]*hidden/);
+  assert.match(html, /<nav class="pager"[^>]*data-pager="moved"[^>]*hidden/);
   assert.match(page("topic/gum-disease/index.html"), /data-pager="claims"/);
+});
+
+test("Scenario: Lists on the home page", () => {
+  const html = page("index.html");
+  // One tab per list that has rows, in a fixed order.
+  const tabs = [...html.matchAll(/role="tab"[^>]*data-view="(\w+)"/g)].map((match) => match[1]);
+  assert.deepEqual(tabs, ["headlines", "moved", "promised", "quiet"]);
+  // A change names the status from that day and the one before, in the site's wording.
+  const moved = html.slice(html.indexOf('id="feed-moved"'), html.indexOf('id="feed-promised"'));
+  assert.equal(count(moved, "<tr role=\"row\""), 3, "two changes under one header row");
+  assert.ok(moved.indexOf("Was: Trial registered") < moved.indexOf("Was: Preclinical only"));
+  // A dated promise sits beside the status now; the no-signal list holds the quiet claim.
+  const promised = html.slice(html.indexOf('id="feed-promised"'), html.indexOf('id="feed-quiet"'));
+  assert.match(promised, /human trials by <strong>2025<\/strong>/);
+  assert.match(promised, /Preclinical only/);
+  assert.match(html.slice(html.indexOf('id="feed-quiet"')), /No signal for 6 years/);
 });
 
 test("Scenario: Article of a published claim", () => {

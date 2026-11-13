@@ -5,3 +5,10 @@
 - [x] 1.3 Make the status filter narrow the whole list and reset the pager to its first page
 - [x] 1.4 Look at the home page and a year page at desktop and phone widths with the published export; verify Next and Previous step through every row and the address keeps the page
 - [x] 1.5 Verify `make check` passes
+
+## 2. Front page
+
+- [x] 2.1 Put status changes, dated promises and no-signal claims in order with pure functions; verify the site tests "Status changes, newest first", "Promises in order of their date" and "Longest without a new record" pass
+- [x] 2.2 Show the four lists on the home page behind tabs, each with its count and pager; verify the site test "Lists on the home page" passes
+- [x] 2.3 Look at each list at desktop and phone widths with the published export; verify the tab is kept in the address and nothing overflows
+- [x] 2.4 Verify `make check` passes
