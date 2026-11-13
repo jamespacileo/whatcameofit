@@ -84,6 +84,11 @@ h1 {
   white-space: nowrap;
 }
 
+/* A heading's own paragraph follows it at a breath, not flush against it. */
+h1 + p {
+  margin-top: 8px;
+}
+
 /* --- A tracked claim ---------------------------------------------------- */
 
 .claim + .claim {
