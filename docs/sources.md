@@ -144,3 +144,17 @@ For every platform in this table the site names the platform, asks nothing of it
 - **Not followed by the service:** `t.co`, X's shortener, whose robots.txt says `Disallow: /` to every client but named search engines.
 - **Opened by the reader's browser instead:** the extension asks `t.co` for the link's page, as a click would, without cookies or a referrer, and reads the address the page names (observed: a 200 page that gives the address in a refresh tag, in its title and in a script). It does not go on to the article. One request per link, three links at most per search (`extension/src/short-links.js`).
 
+
+## OpenAlex literature search
+
+- **Checked:** 2026-11-13. [Authentication](https://help.openalex.org/api/authentication/), [pricing](https://help.openalex.org/access/pricing/), [licensing](https://help.openalex.org/hc/en-us/articles/24397285563671-OpenAlex-data-license). Metadata is CC0.
+- **Access:** activated free API key for the service contact, sent only in the Authorization header. Never included in a URL, cache key, client bundle, fixture or log.
+- **Free limits:** the account reports $1/day, $0 prepaid; a basic search costs $0.001. No top-ups or paid plan. Before each uncached search the service verifies the current allowance and absence of prepaid credit; unknown limits fail closed. OpenAlex enforces the free account ceiling across concurrent requests. No anonymous fallback, paid endpoints, full-text downloads or automatic retries.
+- **Use:** up to two keyword queries per lookup, ten results each, no pagination. Seven-day cache of public bibliographic metadata. 402/budget exhaustion pauses further searches until the UTC reset; 429 respects Retry-After. Papers are unreviewed search results, never clinical evidence events or status changes. Abstracts are not requested, stored or published.
+
+## Research Organization Registry (ROR) v2
+
+- **Checked:** 2026-11-13. [REST API](https://ror.readme.io/docs/rest-api), [client IDs](https://ror.readme.io/docs/client-id), [terms](https://ror.org/terms/). ROR metadata is CC0.
+- **Access:** public API, no key or account required. Client-ID registration is paused; no identifier is invented.
+- **Free limits:** 2,000 requests per five minutes per IP. At most three explicit organisation names per lookup, modest request pacing, seven-day metadata cache and shared 429 cooldown. No automatic retries.
+- **Use:** affiliation matching returns an organisation only when ROR marks it chosen. Names come from the supplied report, not from paper affiliations; the ROR identifier establishes organisation identity, not involvement in a study or an endorsement.

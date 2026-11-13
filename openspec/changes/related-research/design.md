@@ -76,3 +76,11 @@ Observed 2026-11-13, with a generic client name and no key:
 
 - Should an approved report of a study in people move a claim off "No trial record found"? Not needed for this change, which leaves status alone; it would be its own change to `status-derivation`.
 - Pages per institution or company, and whether a list of a group's claims with their statuses reads as a verdict. A later change, after the operator decides the wording.
+
+## Public lookup delivery (2026-11-13)
+
+The operator requested working OpenAlex/ROR integrations in the deployed app. The first public delivery enriches the existing on-demand Worker lookup; it does not wait for editorial pipeline paper approval. These are explicitly unreviewed bibliographic search results in collapsed sections, separate from scored trial candidates. No paper is promoted to an evidence event or claim status. The existing pipeline candidate scoring, approval, origin-paper suggestion and export tasks remain separate unfinished work.
+
+After the existing extraction call identifies a treatment and condition, search at most two OpenAlex term/condition combinations, ten results each, and at most three explicitly named organisations through ROR affiliation matching. This adds no model calls. Only ROR chosen matches are displayed. Both providers run alongside the clinical search and fail independently. The site and next extension build share the wording; deployed 0.8 extensions ignore the optional response field safely.
+
+Store only normalized public metadata for seven days under hashed search keys. Do not retain article text, abstracts, screenshots or API keys. Every charged OpenAlex request requires a successful free allowance check, <=$1/day free budget, >=$0.01 reserve after its reported search price, and zero prepaid balance. The provider's free account cap enforces the global ceiling; KV is not an atomic counter. Unknown limits, paid credit, 402 or exhausted allowance fail closed, with no anonymous fallback. ROR is free; bound calls and pause on 429. Existing OpenAI $13/month controls are unchanged.
