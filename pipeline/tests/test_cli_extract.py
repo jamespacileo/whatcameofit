@@ -56,6 +56,14 @@ class FakeRetriever:
         return self.outcome
 
 
+@pytest.fixture(autouse=True)
+def rules_off(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Approval by rule is on by default. These tests are about what happens without it,
+    unless one turns it on."""
+    monkeypatch.setenv("MATCH_ACCEPT_ABOVE", "0")
+    monkeypatch.setenv("APPROVE_DRAFTS_BY_RULE", "false")
+
+
 @pytest.fixture
 def run(session: Session, monkeypatch: pytest.MonkeyPatch):
     """Invoke the CLI on the test session with a scripted model and a fake web."""
