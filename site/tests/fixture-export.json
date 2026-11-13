@@ -117,9 +117,18 @@
           3
         ],
         "history": [
-          { "on": "2019-05-03", "code": "preclinical_only" },
-          { "on": "2022-01-10", "code": "trial_registered" },
-          { "on": "2023-02-01", "code": "phase_2" }
+          {
+            "on": "2019-05-03",
+            "code": "preclinical_only"
+          },
+          {
+            "on": "2022-01-10",
+            "code": "trial_registered"
+          },
+          {
+            "on": "2023-02-01",
+            "code": "phase_2"
+          }
         ]
       },
       "articles": [
@@ -192,7 +201,29 @@
           "regulatory_outcome": null
         }
       ],
-      "failure_flags": []
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT00000002",
+          "url": "https://clinicaltrials.gov/study/NCT00000002",
+          "score": 0.94,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "NCT00000002: Synthetic trial of phase-claim agent in example condition. Phase 2. Completed."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT00000077",
+          "url": "https://clinicaltrials.gov/study/NCT00000077",
+          "score": 0.31,
+          "state": "candidate",
+          "reading": "other_indication",
+          "decided_by": null,
+          "summary": "NCT00000077: Synthetic trial of phase-claim agent in another condition. Phase 1. Recruiting."
+        }
+      ]
     },
     {
       "slug": "approved-claim",

@@ -28,8 +28,8 @@ AS_ASSISTANT = Annotated[
     bool,
     typer.Option(
         "--as-assistant",
-        help="Record the decision as an AI assistant's, not yours. Anything decided this"
-        " way stays out of the export unless a preview is asked for.",
+        help="Record the decision as an AI assistant's, not yours. The claim is published,"
+        " and the data file says no person checked it.",
     ),
 ]
 

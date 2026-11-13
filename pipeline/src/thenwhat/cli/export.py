@@ -20,17 +20,8 @@ def export_command(
         Path | None,
         typer.Option("--write-schema", help="Also write the export's JSON Schema to this file."),
     ] = None,
-    preview: Annotated[
-        bool,
-        typer.Option(
-            "--preview",
-            envvar="EXPORT_PREVIEW",
-            help="Also include claims an AI assistant decided, marked as not checked by a"
-            " person. For a local preview only, never for the public site.",
-        ),
-    ] = False,
 ) -> None:
-    """Write the JSON file the site is built from: approved claims and events only."""
+    """Write the JSON file the site is built from: approved, unarchived claims and events."""
     if schema_path is not None:
         write_schema(schema_path)
         out.print(f"Wrote schema to {schema_path}.", markup=False)
@@ -41,13 +32,9 @@ def export_command(
             out_path,
             now=datetime.now(UTC),
             no_signal_years=settings.no_signal_years,
-            preview=preview,
         )
         noun = "claim" if len(export.claims) == 1 else "claims"
         out.print(f"Exported {len(export.claims)} {noun} to {out_path}.", markup=False)
-        if export.preview:
-            unchecked = sum(1 for claim in export.claims if not claim.checked_by_person)
-            out.print(
-                f"This is a preview: {unchecked} of them have not been checked by a person.",
-                markup=False,
-            )
+        unchecked = sum(1 for claim in export.claims if not claim.checked_by_person)
+        if unchecked:
+            out.print(f"{unchecked} of them have not been checked by a person.", markup=False)

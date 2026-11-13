@@ -19,8 +19,8 @@
 - [x] 3.1 `MATCH_ACCEPT_ABOVE` in config and `.env.example`; rule approval for matches scored with the indication
 - [x] 3.2 Rule decision for new drafts behind `APPROVE_DRAFTS_BY_RULE`: approved when the intervention is a name, else rejected and kept
 - [x] 3.3 Follow-up paper events use the confidence threshold
-- [ ] 3.4 Export: drop the assistant-decision exclusion and the preview mode; carry match scores and reasons
-- [ ] 3.5 Claim page: confidence word and percentage on every match, reasons on demand, pending candidates listed
+- [x] 3.4 Export: drop the assistant-decision exclusion and the preview mode; carry match scores and reasons
+- [x] 3.5 Claim page: confidence word and percentage on every match, reasons on demand, pending candidates listed
 - [ ] 3.6 Correct the live-lookup confidence requirement when that change is archived
 
 ## 4. Source pages (PR C)

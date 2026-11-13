@@ -19,12 +19,14 @@ from thenwhat.claims.status import refresh_status, status_history
 from thenwhat.claims.verticals import GROUPS, RETIRED_VERTICALS, VERTICAL_GROUPS, VERTICALS
 from thenwhat.db.models import (
     Claim,
+    DecisionLog,
     Entity,
     EntityMatch,
     EvidenceEvent,
     FailureFlag,
     OutletIcon,
 )
+from thenwhat.decide.steps import ENTITY_MATCH
 from thenwhat.domain import (
     ClaimStatus,
     Decider,
@@ -143,6 +145,24 @@ class ExportedFailureFlag(Strict):
     source_url: str
 
 
+class ExportedMatch(Strict):
+    # A registry record matched to the claim, with how sure the pipeline is. The site owns
+    # the words: it turns `score` into "High match · 92%" and `reading` into a reason.
+    source_name: str
+    external_id: str
+    url: str | None
+    # The probability, 0 to 1, that the record is evidence for the claim.
+    score: float
+    # "approved" counts toward the status; "candidate" is shown apart and does not.
+    state: str
+    # How the record was read: "match", "other_indication", "not_a_match", or None.
+    reading: str | None
+    # Who approved it: "human", "rule", "seed" or "assistant". None for a candidate.
+    decided_by: str | None
+    # What the record says, in one line: title, conditions, phase, state.
+    summary: str | None
+
+
 class ExportedClaim(Strict):
     slug: str
     headline: str
@@ -161,6 +181,8 @@ class ExportedClaim(Strict):
     promises: list[ExportedPromise]
     events: list[ExportedEvent]
     failure_flags: list[ExportedFailureFlag]
+    # Approved matches first, then up to five candidates, each with its confidence.
+    matches: list[ExportedMatch] = []
 
 
 class ExportedArchived(Strict):
@@ -173,8 +195,10 @@ class Export(Strict):
     schema_version: int
     generated_at: datetime
     last_checked_at: datetime | None
-    # True when the export holds claims the assistant decided and no person has checked.
-    preview: bool
+    # Always false since openspec auto-publish: every approved claim is published, and
+    # `checked_by_person` on each claim says whether a person checked it. Kept so a site
+    # built from an older export still reads it.
+    preview: bool = False
     sources: list[ExportedSource]
     verticals: list[ExportedVertical]
     # Topic addresses that must keep working: each redirects to its successor's.
@@ -215,6 +239,68 @@ def _decided_by_assistant(session: Session, claim: Claim) -> bool:
     )
 
 
+CANDIDATES_SHOWN = 5
+RECORD_URLS = {
+    "clinicaltrials.gov": "https://clinicaltrials.gov/study/{}",
+    "crossref": "https://doi.org/{}",
+}
+
+
+def _reading(session: Session, match: EntityMatch) -> str | None:
+    scored = session.scalars(
+        select(DecisionLog)
+        .where(
+            DecisionLog.step == ENTITY_MATCH,
+            DecisionLog.input_ref == f"entity_match:{match.id}",
+            DecisionLog.error.is_(None),
+        )
+        .order_by(DecisionLog.id.desc())
+    ).first()
+    if scored is None or scored.output is None:
+        return None
+    choice = scored.output.get("choice")
+    return choice if isinstance(choice, str) else None
+
+
+def _matches(session: Session, claim: Claim) -> list[ExportedMatch]:
+    """The claim's approved matches, then its best pending candidates. Rejected ones are
+    never exported. Openspec auto-publish: "Confidence is shown with every match"."""
+    found = list(
+        session.scalars(
+            select(EntityMatch)
+            .join(Entity)
+            .where(
+                Entity.claim_id == claim.id,
+                EntityMatch.review_state.in_([ReviewState.APPROVED, ReviewState.PENDING]),
+            )
+            .order_by(EntityMatch.score.desc(), EntityMatch.id)
+        )
+    )
+    approved = [m for m in found if m.review_state is ReviewState.APPROVED]
+    pending = [m for m in found if m.review_state is ReviewState.PENDING][:CANDIDATES_SHOWN]
+    return [
+        ExportedMatch(
+            source_name=match.source_name,
+            external_id=match.external_id,
+            url=(
+                RECORD_URLS[match.source_name].format(match.external_id)
+                if match.source_name in RECORD_URLS
+                else None
+            ),
+            score=round(match.score, 4),
+            state="approved" if match.review_state is ReviewState.APPROVED else "candidate",
+            reading=_reading(session, match),
+            decided_by=(
+                match.reviewed_by.value
+                if match.review_state is ReviewState.APPROVED and match.reviewed_by
+                else None
+            ),
+            summary=match.record_summary,
+        )
+        for match in [*approved, *pending]
+    ]
+
+
 def _outlets(session: Session, claims: list[ExportedClaim]) -> list[ExportedOutlet]:
     domains = {outlet_domain(article.url) for claim in claims for article in claim.articles}
     return [
@@ -230,30 +316,25 @@ def _outlets(session: Session, claims: list[ExportedClaim]) -> list[ExportedOutl
     ]
 
 
-def build_export(
-    session: Session, *, now: datetime, no_signal_years: int = 3, preview: bool = False
-) -> Export:
+def build_export(session: Session, *, now: datetime, no_signal_years: int = 3) -> Export:
     """Everything the site may show, as of now.
 
     Each claim's status is derived again first, because the no-signal overlay depends
     on today's date. A claim exported for the first time gets its published time.
 
-    A claim on which the assistant made any decision is left out, unless `preview` is
-    asked for; then it is included and marked as not checked by a person.
+    Every approved, unarchived claim is included, whoever decided it; a claim the
+    assistant decided says it was not checked by a person.
     """
     claims: list[ExportedClaim] = []
-    assistant_slugs: set[str] = set()
     last_checked: datetime | None = None
     for claim in session.scalars(
         select(Claim)
         .where(Claim.review_state == ReviewState.APPROVED, Claim.archived_at.is_(None))
         .order_by(Claim.slug)
     ):
+        # Every approved claim is published, whoever decided it (openspec auto-publish).
+        # Whether a person checked it is still said, in `checked_by_person`.
         assistant = _decided_by_assistant(session, claim)
-        if assistant and not preview:
-            continue
-        if assistant:
-            assistant_slugs.add(claim.slug)
         derivation = refresh_status(
             session, claim, as_of=now.date(), now=now, no_signal_years=no_signal_years
         )
@@ -338,6 +419,7 @@ def build_export(
                     )
                     for event in events
                 ],
+                matches=_matches(session, claim),
                 failure_flags=[
                     ExportedFailureFlag(trial_id=flag.trial_external_id, source_url=flag.source_url)
                     for flag in session.scalars(
@@ -353,7 +435,6 @@ def build_export(
         schema_version=SCHEMA_VERSION,
         generated_at=now,
         last_checked_at=last_checked,
-        preview=bool(assistant_slugs),
         sources=[
             ExportedSource(name=name, url=url)
             for name, url in [
@@ -393,10 +474,9 @@ def write_export(
     *,
     now: datetime,
     no_signal_years: int = 3,
-    preview: bool = False,
 ) -> Export:
     """Write the export to `path`, replacing any earlier file only once it is complete."""
-    export = build_export(session, now=now, no_signal_years=no_signal_years, preview=preview)
+    export = build_export(session, now=now, no_signal_years=no_signal_years)
     path.parent.mkdir(parents=True, exist_ok=True)
     partial = path.with_suffix(path.suffix + ".partial")
     partial.write_text(export.model_dump_json(indent=2) + "\n")

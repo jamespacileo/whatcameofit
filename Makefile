@@ -50,10 +50,9 @@ extension-safari: extension
 #   SITE_URL=https://example.org make deploy-check
 PUBLIC_EXPORT := site/data/public-export.json
 
-# A normal export from the running pipeline: reviewed claims only, never a preview,
-# whatever EXPORT_PREVIEW is set to locally.
+# A normal export from the running pipeline: every approved, unarchived claim.
 public-export:
-	docker compose exec -T pipeline sh -c 'EXPORT_PREVIEW=0 thenwhat export --out /tmp/public-export.json >&2 && cat /tmp/public-export.json' > $(PUBLIC_EXPORT).tmp
+	docker compose exec -T pipeline sh -c 'thenwhat export --out /tmp/public-export.json >&2 && cat /tmp/public-export.json' > $(PUBLIC_EXPORT).tmp
 	mv $(PUBLIC_EXPORT).tmp $(PUBLIC_EXPORT)
 
 # Review locally, then commit this snapshot. GitHub never reads the private database.

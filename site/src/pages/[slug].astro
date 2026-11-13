@@ -32,6 +32,7 @@ import {
   type RecordKind,
 } from "../lib/status";
 import { cardAlt, clip, shareSentence } from "../lib/card";
+import { confidenceLabel, readingOf } from "../lib/confidence";
 import { claimPageData } from "../lib/structured";
 import ReportError from "../components/ReportError.astro";
 import { SITE } from "../../site.config.mjs";
@@ -78,6 +79,8 @@ const inTopic = data.claims
   .filter((other) => other.vertical === claim.vertical && other.slug !== claim.slug)
   .sort((a, b) => ((a.first_reported_date ?? "") < (b.first_reported_date ?? "") ? 1 : -1));
 const others = inTopic.slice(0, 3);
+// Matched registry records, approved first, each with how sure the match is.
+const matched = claim.matches ?? [];
 const address = `${SITE.url}/${claim.slug}`;
 const sentence = shareSentence(claim, STATUS_LABELS[claim.status.code], data.last_checked_at, address);
 // Reminders: the dates a reader can save, which the browser turns into a calendar file.
@@ -464,6 +467,57 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
             ))}
           </ul>
         </>
+      )
+    }
+
+    {
+      matched.length > 0 && (
+        <section class="matched" data-pagefind-ignore>
+          <h2 class="bar" id="matched">Matched records</h2>
+          <p class="take-why">
+            Each record found for this treatment and condition, with how sure the match is. A
+            score is about the match, not about the treatment.
+          </p>
+          {[
+            { title: null, list: matched.filter((match) => match.state === "approved") },
+            {
+              title: "Possible records, not counted in the status",
+              list: matched.filter((match) => match.state === "candidate"),
+            },
+          ].map(
+            (group) =>
+              group.list.length > 0 && (
+                <>
+                  {group.title && <h3 class="matched-group">{group.title}</h3>}
+                  <ul class="plain match-list">
+                    {group.list.map((match) => (
+                      <li>
+                        <span class="match-record">
+                          {match.url ? (
+                            <a href={match.url} rel="noopener">
+                              {match.external_id}
+                            </a>
+                          ) : (
+                            match.external_id
+                          )}
+                          {match.summary && (
+                            <span class="entry-note">{match.summary.replace(`${match.external_id}: `, "")}</span>
+                          )}
+                        </span>
+                        <details class="match-why">
+                          <summary>
+                            <strong>{confidenceLabel(match.score)}</strong>
+                            <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+                          </summary>
+                          <p>{readingOf(match.reading)}</p>
+                        </details>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ),
+          )}
+        </section>
       )
     }
 

@@ -8,13 +8,15 @@ from typing import Any
 
 import jsonschema
 import pytest
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entities import add_synonym
 from thenwhat.claims.entry import add_article, add_claim, add_promise, archive_claim
-from thenwhat.db.models import Claim, EvidenceEvent
+from thenwhat.db.models import Claim, Entity, EntityMatch, EvidenceEvent
 from thenwhat.domain import (
     Decider,
+    EntityType,
     EventType,
     EvidenceStage,
     ReviewState,
@@ -299,55 +301,87 @@ def test_checked_in_schema_matches_the_models():
     assert json.loads(CHECKED_IN_SCHEMA.read_text()) == export_json_schema()
 
 
-# --- decisions made by the assistant ---------------------------------------------
+# --- decisions made by the assistant (openspec auto-publish) ---------------------------
 
 
-def preview(session: Session) -> dict[str, Any]:
-    return json.loads(build_export(session, now=NOW, preview=True).model_dump_json())
-
-
-def test_claim_approved_by_the_assistant_stays_out_of_the_export(session: Session):
-    """Scenario: Claim approved by the assistant"""
+def test_claim_approved_by_the_assistant_is_published_and_says_no_person_checked_it(
+    session: Session,
+):
     claim = new_claim(session, approved=False)
     decide_item(session, "claim", claim.id, ReviewState.APPROVED, now=EARLIER, by=Decider.ASSISTANT)
 
     export = exported(session)
 
-    assert export["claims"] == []
-    assert export["preview"] is False
-
-
-def test_preview_export_includes_it_and_says_no_person_checked_it(session: Session):
-    """Scenario: Preview export"""
-    claim = new_claim(session, approved=False)
-    decide_item(session, "claim", claim.id, ReviewState.APPROVED, now=EARLIER, by=Decider.ASSISTANT)
-
-    export = preview(session)
-
-    assert export["preview"] is True
     assert claim_in(export)["checked_by_person"] is False
+    assert export["preview"] is False
 
 
 def test_operator_approved_claim_is_marked_as_checked_by_a_person(session: Session):
     new_claim(session)
 
     assert claim_in(exported(session))["checked_by_person"] is True
-    # A preview with nothing of the assistant's in it is not marked as one.
-    assert preview(session)["preview"] is False
 
 
-def test_assistant_approved_event_keeps_an_operator_approved_claim_out(session: Session):
-    """Scenario: Operator's claim with an assistant's event"""
+def test_assistant_approved_event_marks_an_operator_claim_unchecked(session: Session):
     new_claim(session)
     event = add_event(session, approve=False)
     decide_item(session, "event", event.id, ReviewState.APPROVED, now=EARLIER, by=Decider.ASSISTANT)
 
-    assert exported(session)["claims"] == []
-    assert claim_in(preview(session))["checked_by_person"] is False
+    assert claim_in(exported(session))["checked_by_person"] is False
 
-    # Once the operator makes the decision their own, the claim is published.
+    # Once the operator makes the decision their own, the claim is marked as checked.
     decide_item(session, "event", event.id, ReviewState.APPROVED, now=EARLIER)
     assert claim_in(exported(session))["checked_by_person"] is True
+
+
+# --- matches and their confidence (openspec auto-publish) ---------------------------
+
+
+def add_match(session: Session, claim: Claim, external_id: str, score: float, state: ReviewState):
+    intervention = session.scalars(
+        select(Entity).where(Entity.claim_id == claim.id, Entity.type == EntityType.INTERVENTION)
+    ).one()
+    match = EntityMatch(
+        entity_id=intervention.id,
+        source_name="clinicaltrials.gov",
+        external_id=external_id,
+        score=score,
+        record_summary=f"{external_id}: a trial",
+    )
+    session.add(match)
+    session.flush()
+    if state is not ReviewState.PENDING:
+        decide_item(session, "match", match.id, state, now=EARLIER)
+    return match
+
+
+def test_matches_carry_their_confidence_approved_first(session: Session):
+    """Scenario: Claim with one rule-approved trial and one pending candidate"""
+    claim = new_claim(session)
+    add_match(session, claim, "NCT00000009", 0.3, ReviewState.PENDING)
+    add_match(session, claim, "NCT00000001", 0.92, ReviewState.APPROVED)
+    add_match(session, claim, "NCT00000005", 0.01, ReviewState.REJECTED)
+
+    matches = claim_in(exported(session))["matches"]
+
+    assert [(m["external_id"], m["state"], m["score"]) for m in matches] == [
+        ("NCT00000001", "approved", 0.92),
+        ("NCT00000009", "candidate", 0.3),
+    ]
+    assert matches[0]["url"] == "https://clinicaltrials.gov/study/NCT00000001"
+    assert matches[0]["decided_by"] == "human"
+    assert matches[1]["decided_by"] is None
+
+
+def test_at_most_five_candidates_are_exported(session: Session):
+    claim = new_claim(session)
+    for number in range(7):
+        add_match(session, claim, f"NCT0000001{number}", 0.1 + number / 100, ReviewState.PENDING)
+
+    matches = claim_in(exported(session))["matches"]
+
+    assert len(matches) == 5
+    assert matches[0]["external_id"] == "NCT00000016"
 
 
 def test_export_carries_retired_verticals_with_their_successors(
