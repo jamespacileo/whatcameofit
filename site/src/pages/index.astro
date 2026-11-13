@@ -240,7 +240,7 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
     <section class="again" data-pagefind-ignore>
       <h2 class="bar">Check again later</h2>
       <p class="take-why">
-        Nothing is on record for this report yet. Save a date to your calendar to look again.
+        Save a date to your calendar to check this report again.
         The file is made on this device; nothing is sent to us, not even the link.
       </p>
       <div class="take-actions">
@@ -415,14 +415,19 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
       block.append(list);
     }
     if (shown.likely.length > 0) {
-      const list = element("ul", undefined, "plain");
+      const list = element("ul", undefined, "plain match-list live-matches");
       for (const record of shown.likely) {
         const link = element("a", record.title) as HTMLAnchorElement;
         link.href = record.url;
         link.rel = "noopener";
         const item = element("li");
-        item.append(link, element("span", record.detail, "entry-note"));
-        if (record.why) item.append(element("span", record.why, "entry-note"));
+        const about = element("div", undefined, "match-record");
+        about.append(link, element("span", record.detail, "entry-note"));
+        const confidence = element("details", undefined, "match-why");
+        confidence.append(element("summary", record.confidenceLabel));
+        if (record.why) confidence.append(element("p", record.why));
+        confidence.append(element("p", LIVE.confidenceMeaning));
+        item.append(about, confidence);
         list.append(item);
       }
       block.append(element("p", LIVE.likelyLead), list);
@@ -561,6 +566,7 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
   const loadLookup = () => (lookup ??= fetch("/lookup.json").then((response) => response.json()));
 
   async function lookUp(address: string, read: ReturnType<typeof readAddress>) {
+    const asked = latest;
     if (read.kind === "short") {
       show(
         `That is a shortened link (${read.host}). Open it, then paste the address of the article it leads to.`,
@@ -594,9 +600,11 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
       index = await loadLookup();
     } catch {
       lookup = undefined;
+      if (asked !== latest) return;
       results.replaceChildren(element("p", "The lookup is not available right now."), next());
       return;
     }
+    if (asked !== latest) return;
     const slugs = index.articles[read["key"]] ?? [];
     const tracked = slugs.map((slug) => index.claims[slug]).filter(Boolean);
     if (tracked.length > 0) {
@@ -732,5 +740,20 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
 
   .results .suggest {
     margin-top: 0.6rem;
+  }
+
+  /* The live answer uses the same record/confidence layout as a claim page.
+     Keep the native disclosure marker when no static Astro icon is present. */
+  .live-matches .match-why summary {
+    display: list-item;
+    list-style: disclosure-closed inside;
+  }
+
+  .live-matches .match-why[open] summary {
+    list-style-type: disclosure-open;
+  }
+
+  .live-matches .match-why summary::-webkit-details-marker {
+    display: inline;
   }
 </style>

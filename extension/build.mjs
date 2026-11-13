@@ -74,7 +74,7 @@ const icons = Object.fromEntries(sizes.map((size) => [size, `icons/${size}.png`]
 const manifest = {
   manifest_version: 3,
   name: SITE.name,
-  version: "0.9.0",
+  version: "0.9.1",
   description: "See what happened to the medical breakthrough in the article you are reading.",
   icons,
   action: {
