@@ -14,6 +14,7 @@ Domain terms for thenwhat. Behavior is specified in `openspec/`; this file only 
 | **General vertical** | The vertical that shares its group's slug and title. A claim that fits a group but none of its specific verticals goes here. |
 | **Approach** | The kind of intervention a claim reports, such as drug, gene therapy or transplant. Optional, at most one per claim, and never part of status. |
 | **Entity** | Something a claim names: an intervention, paper, person, institution or company. Has a name and synonyms. |
+| **Search phrase** | Words a registry or a paper would use for an intervention that has no product name, such as "median nerve stimulation". Searched for within the claim's indication only. Not a name, and never shown as one. |
 | **Origin paper** | The publication the first news reports of a claim were about. At most one per claim. |
 | **Match** | A proposed link between an entity and a record in a public registry (a trial, a DOI). Always confirmed by a human. |
 | **Evidence event** | A dated, sourced fact about a claim, such as a trial being registered or a follow-up paper appearing. Status comes from approved evidence events; the evidence stage matters only when no trial is found. |

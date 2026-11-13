@@ -29,6 +29,9 @@ class Trials:
         payload = {"protocolSection": {"identificationModule": {"nctId": "NCT00000001"}}}
         return [SourceRecord("clinicaltrials.gov", "NCT00000001", "https://x.test", payload, NOW)]
 
+    def search_phrase(self, phrase: str, condition: str | None) -> list[SourceRecord]:
+        return []
+
 
 class Dois:
     def work(self, doi: str) -> SourceRecord | None:
@@ -108,6 +111,20 @@ def test_entity_synonym_records_the_name(run, session: Session):
 
     assert result.exit_code == 0, result.output
     assert "TRG-999" in result.output
+
+
+def test_entity_phrase_records_the_search_phrase(run, session: Session):
+    result = run("entity", "phrase", SLUG, "EX-1 antibody", "tooth regrowth antibody")
+
+    assert result.exit_code == 0, result.output
+    assert "tooth regrowth antibody" in result.output
+
+
+def test_entity_phrase_refuses_a_generic_word(run, session: Session):
+    result = run("entity", "phrase", SLUG, "EX-1 antibody", "the device")
+
+    assert result.exit_code == 1
+    assert "what kind of thing" in result.output
 
 
 def test_entity_origin_paper_marks_the_paper(run, session: Session):

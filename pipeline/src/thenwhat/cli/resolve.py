@@ -6,7 +6,12 @@ from typing import Annotated
 import typer
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.entities import add_entity, add_synonym, set_origin_paper
+from thenwhat.claims.entities import (
+    add_entity,
+    add_search_phrase,
+    add_synonym,
+    set_origin_paper,
+)
 from thenwhat.claims.entry import ClaimNotFound, EntryError, find_claim
 from thenwhat.cli import extract
 from thenwhat.cli.console import err, out
@@ -74,6 +79,20 @@ def entity_synonym(
         entity = add_synonym(session, claim_slug, entity_name, synonym)
         names = ", ".join(entity.synonyms)
         out.print(f"{entity.name} is also known as: {names}.", markup=False)
+
+
+@entity_app.command("phrase")
+def entity_phrase(
+    claim_slug: Annotated[str, typer.Argument(help="Slug of the claim.")],
+    entity_name: Annotated[str, typer.Argument(help="Name of the intervention.")],
+    phrase: Annotated[str, typer.Argument(help="Words a registry would use for it.")],
+) -> None:
+    """Record a search phrase for an intervention that has no product name. The registry
+    is searched for it within the claim's indication. It is never shown as a name."""
+    with entry_session() as session:
+        entity = add_search_phrase(session, claim_slug, entity_name, phrase)
+        phrases = ", ".join(entity.search_phrases)
+        out.print(f"{entity.name} is searched for as: {phrases}.", markup=False)
 
 
 @entity_app.command("origin-paper")

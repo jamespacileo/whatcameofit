@@ -25,7 +25,7 @@ from thenwhat.claims.entry import (
 )
 from thenwhat.db.models import Claim, Entity, SourceArticle
 from thenwhat.domain import Decider, EntityType, ReviewState
-from thenwhat.extract.names import is_a_name
+from thenwhat.extract.names import is_a_name, is_a_search_phrase
 from thenwhat.extract.schema import Draft
 from thenwhat.llm.client import Llm
 from thenwhat.review.decisions import record_decision
@@ -35,8 +35,12 @@ You read one news article about a medical research claim and return structured f
 Report only what the article says. Do not add facts, and do not judge the claim.
 Write the headline and summary in your own neutral words; never copy sentences from the article.
 Keep the summary under 500 characters.
+When the article gives the treatment no product name, give up to three search phrases:
+the words a trial registry or a paper would use for it.
 Give a DOI only if the article states it. List a promised timeline only if the article states one.
 """
+
+MAX_SEARCH_PHRASES = 3
 
 
 class ClaimNotPending(EntryError):
@@ -145,6 +149,14 @@ def _apply(
     ]
     if new_synonyms:
         intervention.synonyms = [*intervention.synonyms, *new_synonyms]
+    # A phrase is kept apart from the names: it is searched for, never shown as one.
+    phrases = list(intervention.search_phrases)
+    for phrase in draft.intervention_search_phrases:
+        taken = names | {name_key(p) for p in phrases}
+        if is_a_search_phrase(phrase) and name_key(phrase) not in taken:
+            phrases.append(phrase)
+    if phrases != intervention.search_phrases:
+        intervention.search_phrases = phrases[:MAX_SEARCH_PHRASES]
 
     paper_name = draft.paper_title or draft.paper_doi
     known_dois = {entity.doi.lower() for entity in existing if entity.doi}

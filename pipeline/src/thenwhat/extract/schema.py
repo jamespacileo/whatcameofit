@@ -30,6 +30,16 @@ class Draft(BaseModel):
             " 'a one-time treatment'. Empty if the article gives no other name."
         ),
     )
+    intervention_search_phrases: list[ShortText] = Field(
+        default_factory=list,
+        max_length=3,
+        description=(
+            "Up to three short phrases a clinical trial registry or a paper would use for"
+            " this treatment when the article gives it no product name, most specific first,"
+            " for example 'median nerve stimulation'. Never a bare word such as 'the device'."
+            " Empty when the names above are enough."
+        ),
+    )
     indication: ShortText = Field(description="The condition it is claimed to treat.")
     paper_title: ShortText | None = Field(
         default=None, description="Title of the scientific paper reported on, if named."

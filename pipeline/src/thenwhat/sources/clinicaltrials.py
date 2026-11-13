@@ -116,6 +116,26 @@ class ClinicalTrials(Source):
             records += more
         return records
 
+    def search_phrase(self, phrase: str, condition: str | None) -> list[SourceRecord]:
+        """The trials a search phrase finds within the condition.
+
+        A phrase is the registry's words for a treatment with no product name, so it is
+        broader than a name and is never searched alone. It is tried within the condition
+        as worded, then by the condition's telling words. A phrase with more than
+        BROAD_NAME trials there, or none, identifies nothing and returns nothing.
+        """
+        if not condition:
+            return []
+        for wording in (condition, _telling_words(condition)):
+            if not wording:
+                continue
+            narrowed, within, _ = self._page(phrase, wording, None)
+            if within > BROAD_NAME:
+                return []
+            if narrowed:
+                return narrowed
+        return []
+
     def named_trials(self, name: str) -> list[SourceRecord]:
         """The trials that carry this name in their acronym or title, such as SURMOUNT-5.
         None when so many do that the name does not identify a trial."""

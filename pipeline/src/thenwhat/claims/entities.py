@@ -16,6 +16,7 @@ from thenwhat.claims.entry import (
 )
 from thenwhat.db.models import Claim, Entity
 from thenwhat.domain import EntityType
+from thenwhat.extract.names import is_a_search_phrase
 
 
 class EntityNotFound(EntryError):
@@ -89,6 +90,31 @@ def add_synonym(session: Session, claim_slug: str, entity_name: str, synonym: st
             raise DuplicateClaim(other)
     entity.synonyms = [*entity.synonyms, synonym]
     session.flush()
+    return entity
+
+
+def add_search_phrase(session: Session, claim_slug: str, entity_name: str, phrase: str) -> Entity:
+    """Record words a registry would use for an intervention that has no product name.
+    They are searched for within the claim's indication and never shown as a name."""
+    claim = _claim(session, claim_slug)
+    entity = _find(session, claim, entity_name)
+    if entity.type is not EntityType.INTERVENTION:
+        raise InvalidField("Only an intervention has search phrases.")
+    phrase = " ".join(phrase.split())
+    if not phrase:
+        raise MissingField("phrase is required.")
+    if not is_a_search_phrase(phrase):
+        raise InvalidField(
+            f"'{phrase}' says what kind of thing it is, not which. Give the words a"
+            " registry would file it under."
+        )
+    known = {
+        name_key(entity.name),
+        *(name_key(existing) for existing in [*entity.synonyms, *entity.search_phrases]),
+    }
+    if name_key(phrase) not in known:
+        entity.search_phrases = [*entity.search_phrases, phrase]
+        session.flush()
     return entity
 
 
