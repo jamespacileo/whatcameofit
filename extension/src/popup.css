@@ -1,5 +1,5 @@
-/* The popup follows DESIGN.md: white ground, ink text, one blue accent, pale amber
-   only for a promise, Figtree. Light only. Sizes are in px because a popup has no
+/* The popup follows DESIGN.md: a deep navy masthead, white ground, ink text, one blue
+   accent, pale amber only for a promise, Figtree. Light only. Sizes are in px because a popup has no
    reader-chosen root size to respect and must fit a fixed width. */
 
 @font-face {
@@ -38,7 +38,6 @@ html {
 
 .mark {
   flex: none;
-  border-radius: 5px;
 }
 
 ::selection {
@@ -60,12 +59,17 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 16px 11px;
-  border-bottom: 1px solid var(--rule);
+  padding: 12px 16px;
+  background: var(--footer);
+}
+
+.masthead ::selection {
+  background: var(--paper);
+  color: var(--footer);
 }
 
 .name {
-  color: var(--blue);
+  color: var(--paper);
   font-weight: 700;
   font-size: 16px;
   letter-spacing: -0.01em;

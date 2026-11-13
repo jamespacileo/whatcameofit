@@ -224,7 +224,7 @@ for (const [label, state, kept = null] of states) {
   const frame = document.createElement("iframe");
   frame.title = label;
   frame.scrolling = "no";
-  frame.srcdoc = `<!doctype html><html lang="en"><head><base href="${location.href}"><link rel="stylesheet" href="popup.css"></head><body><header class="masthead"><img class="mark" src="icons/32.png" width="20" height="20" alt=""><span class="name">${SITE.name}</span></header><main id="view"></main></body></html>`;
+  frame.srcdoc = `<!doctype html><html lang="en"><head><base href="${location.href}"><link rel="stylesheet" href="popup.css"></head><body><header class="masthead"><img class="mark" src="icons/mark-reverse.svg" width="20" height="20" alt=""><span class="name">${SITE.name}</span></header><main id="view"></main></body></html>`;
   frame.addEventListener("load", () => {
     // Nodes are made with this page's document and adopted by the frame when inserted,
     // so the frame's own stylesheet applies to them.
