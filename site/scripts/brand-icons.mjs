@@ -1,7 +1,7 @@
 // Draws the site's raster icons from the mark, so a change to it reaches every size.
 // public/mark.svg is the mark; public/favicon.svg is the same mark drawn for a browser
 // tab, where it is 16 to 32 pixels: the glass runs to the tile's edges and the capsule
-// keeps a visible seam between its halves. Run after editing either:
+// keeps a visible seam between its halves. favicon.ico carries both. Run after editing either:
 //   node site/scripts/brand-icons.mjs
 import fs from "node:fs";
 import path from "node:path";
@@ -26,6 +26,27 @@ const files = {
   "icon-maskable-512.png": png(square, 512),
   "apple-touch-icon.png": png(square, 180),
 };
+
+// favicon.ico holds PNG images, which every browser since Windows Vista's reads. The two
+// smallest are the tab drawing; 48 pixels is the mark itself, as in favicon-48.png.
+const small = fs.readFileSync(path.join(pub, "favicon.svg"), "utf8");
+const icoImages = [[16, png(small, 16)], [32, png(small, 32)], [48, files["favicon-48.png"]]];
+const icoHeader = Buffer.alloc(6 + 16 * icoImages.length);
+icoHeader.writeUInt16LE(1, 2);
+icoHeader.writeUInt16LE(icoImages.length, 4);
+let icoOffset = icoHeader.length;
+icoImages.forEach(([size, bytes], index) => {
+  const entry = 6 + 16 * index;
+  icoHeader.writeUInt8(size, entry);
+  icoHeader.writeUInt8(size, entry + 1);
+  icoHeader.writeUInt16LE(1, entry + 4);
+  icoHeader.writeUInt16LE(32, entry + 6);
+  icoHeader.writeUInt32LE(bytes.length, entry + 8);
+  icoHeader.writeUInt32LE(icoOffset, entry + 12);
+  icoOffset += bytes.length;
+});
+files["favicon.ico"] = Buffer.concat([icoHeader, ...icoImages.map(([, bytes]) => bytes)]);
+
 for (const [name, bytes] of Object.entries(files)) {
   fs.writeFileSync(path.join(pub, name), bytes);
   console.log(`${name} ${bytes.length} bytes`);
