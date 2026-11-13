@@ -60,5 +60,5 @@
 - [x] 9.2 Add bounded, cached OpenAlex/ROR Worker clients with independent failure and free-only allowance checks.
 - [x] 9.3 Enrich live lookups with paper metadata and explicitly named organisations; preserve trial scoring/status.
 - [x] 9.4 Add collapsed source-attributed sections on the site and next extension build, and update privacy text.
-- [ ] 9.5 Verify offline behavior, real-provider end-to-end lookups, quota/caching and responsive UI.
+- [x] 9.5 Verify offline behavior, real-provider end-to-end lookups, quota/caching and responsive UI.
 - [ ] 9.6 Deploy through checked CI and verify the production result.

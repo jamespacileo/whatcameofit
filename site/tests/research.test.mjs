@@ -1,10 +1,12 @@
-// Synthetic provider fixtures; never calls a live API.
+// Recorded public API responses plus synthetic failure cases; never calls a live API.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { makeResearch } from "../worker/research.mjs";
-const budget={daily_budget_usd:1,daily_remaining_usd:0.95,prepaid_balance_usd:0,prepaid_remaining_usd:0,endpoint_costs_usd:{search:0.001}};
-const work={id:"https://openalex.org/W1234567890",doi:"https://doi.org/10.1234/example",title:"EX-1 for tooth agenesis",publication_year:2025,type:"article",primary_location:{source:{display_name:"Example Journal"}},abstract_inverted_index:{PRIVATE:[0]}};
-const org={id:"https://ror.org/02kpeqv85",names:[{value:"Kyoto University",types:["ror_display"]}],locations:[{geonames_details:{country_name:"Japan"}}],links:[{type:"website",value:"https://www.kyoto-u.ac.jp"}]};
+import { readFileSync } from "node:fs";
+const recorded = name => JSON.parse(readFileSync(new URL(`./fixtures/research/${name}.json`, import.meta.url), "utf8")).body;
+const budget = recorded("openalex-allowance").rate_limit;
+const work = recorded("openalex-works").results[0];
+const org = recorded("ror-affiliation").items.find(item => item.chosen).organization;
 const input={intervention:"EX-1",indication:"tooth agenesis",searchPhrases:["tooth repair"],organisations:["Kyoto University"]};
 function setup(overrides={}) {
  const calls=[], entries=new Map(); const cache={get:async k=>JSON.parse(entries.get(k)??"null"),put:async(k,v)=>{entries.set(k,v)}};
@@ -80,4 +82,28 @@ test("malformed metadata, script links and raw abstracts never enter the answer"
   const result = await s.research.search(input);
   assert.equal(result.papers.length,1); assert.equal(result.papers[0].url,work.id);
   assert.deepEqual(result.organisations,[]); assert(!JSON.stringify(result).includes("PRIVATE"));
+});
+
+
+test("malformed organisation fields leave valid paper results available", async () => {
+ const s=setup({fetch:async url=>Response.json(String(url).includes("rate-limit") ? {rate_limit:budget} : String(url).includes("ror.org") ?
+ {items:[{chosen:true,organization:{...org,names:{}}}]} : {results:[work]})});
+ const result=await s.research.search(input);
+ assert.equal(result.papers.length,1);assert.equal(result.availability.openalex,"ok");assert.equal(result.availability.ror,"unavailable");
+});
+
+test("stalled metadata cache cannot stall a completed trial answer", async () => {
+ const s=setup({cache:{get:()=>new Promise(()=>{}),put:()=>new Promise(()=>{})}});
+ const start=Date.now();const result=await s.research.search({...input,searchPhrases:[]});
+ assert.equal(result.papers.length,1);assert.equal(result.organisations.length,1);
+ assert(Date.now()-start<2000);
+});
+
+test("recorded provider responses run through the same normalization used in production", async () => {
+ const s=setup({fetch:async url=>Response.json(recorded(String(url).includes("rate-limit") ? "openalex-allowance" : String(url).includes("ror.org") ? "ror-affiliation" : "openalex-works"))});
+ const result=await s.research.search(input);
+ assert.equal(result.papers.length,10);assert.equal(result.organisations[0].name,"Kyoto University");
+ assert.equal(result.availability.openalex,"ok");assert.equal(result.availability.ror,"ok");
+ assert(result.papers.every(p=>p.title&&p.url.startsWith("https://")));
+ assert(!JSON.stringify(result).includes("abstract_inverted_index"));
 });

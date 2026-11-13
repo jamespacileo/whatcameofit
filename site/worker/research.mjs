@@ -6,6 +6,15 @@ const VERSION = 1;
 const clean = (value, limit = 200) => typeof value === "string" ? value.trim().slice(0, limit) : "";
 const distinct = (values) => [...new Map(values.map(v => [v.toLowerCase(), v])).values()];
 const finite = (n) => typeof n === "number" && Number.isFinite(n);
+const array = value => Array.isArray(value) ? value : [];
+
+async function boundedCache(operation) {
+  let timer;
+  try {
+    return await Promise.race([operation(), new Promise(resolve => { timer = setTimeout(() => resolve(null), 200); })]);
+  } catch { return null; }
+  finally { clearTimeout(timer); }
+}
 
 function recordUrl(value, host, pattern) {
   try {
@@ -35,12 +44,12 @@ function organisation(item) {
   if (item?.chosen !== true) return null;
   const org = item.organization;
   const id = recordUrl(org?.id, "ror.org", /^\/0[0-9a-z]{6}\d{2}$/);
-  const name = clean(org?.names?.find(n => n.types?.includes("ror_display"))?.value, 300);
+  const name = clean(array(org?.names).find(n => array(n?.types).includes("ror_display"))?.value, 300);
   if (!id || !name) return null;
   return {
     id, name, url: id,
-    country: clean(org.locations?.[0]?.geonames_details?.country_name, 100),
-    website: website(org.links?.find(link => link.type === "website")?.value),
+    country: clean(array(org.locations)[0]?.geonames_details?.country_name, 100),
+    website: website(array(org.links).find(link => link?.type === "website")?.value),
     score: finite(item.score) && item.score >= 0 && item.score <= 1 ? item.score : null,
   };
 }
@@ -69,12 +78,12 @@ export function makeResearch({ fetch, apiKey, contact, cache, now = Date.now, ti
   const headers = { "User-Agent": `whatcameofit/1 (mailto:${clean(contact)})`, Accept: "application/json" };
   async function get(key) {
     try {
-      const entry = await cache?.get(key, "json");
+      const entry = await boundedCache(() => cache?.get(key, "json"));
       return entry?.version === VERSION && finite(entry.until) && entry.until > now() ? entry.value : null;
     } catch { return null; }
   }
   async function put(key, value, seconds) {
-    try { await cache?.put(key, JSON.stringify({ version: VERSION, until: now() + seconds * 1000, value }), { expirationTtl: Math.max(60, seconds) }); }
+    try { await boundedCache(() => cache?.put(key, JSON.stringify({ version: VERSION, until: now() + seconds * 1000, value }), { expirationTtl: Math.max(60, seconds) })); }
     catch { /* A cache outage cannot turn an optional search into a failed lookup. */ }
   }
   async function paused(source) {
@@ -152,7 +161,9 @@ export function makeResearch({ fetch, apiKey, contact, cache, now = Date.now, ti
     const reply = await request(url.href, "ror");
     if (reply.error) return reply;
     if (!Array.isArray(reply.body?.items)) return { error: "unavailable" };
-    const items = reply.body.items.slice(0, 20).map(organisation).filter(Boolean).slice(0, 1);
+    const candidates = reply.body.items.slice(0, 20);
+    if (candidates.some(item => item?.chosen === true && !organisation(item))) return { error: "unavailable" };
+    const items = candidates.map(organisation).filter(Boolean).slice(0, 1);
     await put(key, items, TTL);
     return { items };
   }
@@ -174,7 +185,7 @@ export function makeResearch({ fetch, apiKey, contact, cache, now = Date.now, ti
             result.papers.push(...found.items);
           }
           result.papers = [...new Map(result.papers.map(p => [p.url.toLowerCase(), p])).values()].slice(0, 20);
-        })(),
+        })().catch(() => { result.availability.openalex = "unavailable"; }),
         (async () => {
           if (!names.length) return;
           result.availability.ror = "ok";
@@ -184,7 +195,7 @@ export function makeResearch({ fetch, apiKey, contact, cache, now = Date.now, ti
             result.organisations.push(...found.items.map(item => ({ ...item, matchedName: name })));
           }
           result.organisations = [...new Map(result.organisations.map(o => [o.id, o])).values()];
-        })(),
+        })().catch(() => { result.availability.ror = "unavailable"; }),
       ]);
       return result;
     },
