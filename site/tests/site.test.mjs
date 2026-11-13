@@ -257,8 +257,9 @@ test("Scenario: Long-quiet claim", () => {
 test("Scenario: Outlet with a stored icon", () => {
   // The icon is a file of this site, written from the export; the page names no other host.
   const html = page("phase-claim/index.html");
-  assert.match(html, /<img class="tile" src="\/outlet-icons\/news\.example\.org\.png" alt=""/);
-  const icon = fs.readFileSync(path.join(dist, "outlet-icons/news.example.org.png"));
+  const source = html.match(/<img class="tile" src="(\/outlet-icons\/news\.example\.org\.[a-f0-9]{12}\.png)" alt=""/)?.[1];
+  assert.ok(source, "publisher icons carry a content revision to refresh corrected artwork");
+  const icon = fs.readFileSync(path.join(dist, source));
   assert.deepEqual([...icon.subarray(0, 4)], [0x89, 0x50, 0x4e, 0x47]);
 });
 

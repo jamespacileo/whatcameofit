@@ -3,3 +3,6 @@
 - [x] Generate and version browser/launcher assets from the selected logo.
 - [x] Improve source spacing and retain fallback tiles for failed images.
 - [x] Validate tests, rendered layouts and deployment rehearsal.
+- [x] Check all publisher assets at small sizes on light and dark surfaces; replace incorrect or faint artwork and preserve readable fallbacks.
+- [x] Version publisher image URLs by content so cached files cannot hide corrections.
+- [ ] Confirm the full publisher set in native Safari and deploy the follow-up corrections.
