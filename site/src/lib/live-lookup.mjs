@@ -141,9 +141,9 @@ function matchConfidence(score) {
 
 /**
  * A lookup answer in the site's words.
- * @returns {{ marked: string | null, lead: string, source: string | null, searchedAlso: string | null, trialSaid: string | null,
+ * @returns {{ marked: string | null, lead: string, subject: { treatment: string, condition: string | null } | null, source: string | null, searchedAlso: string | null, trialSaid: string | null,
  *   tracked: { slug: string, headline: string, page: string }[],
- *   likely: { title: string, url: string, detail: string, why: string | null, confidence: number | null, confidenceLabel: string }[],
+ *   likely: { title: string, url: string, detail: string, phase: string, state: string, registryId: string, why: string | null, confidence: number | null, confidenceLabel: string }[],
  *   rest: string | null, none: string | null, notices: string[] }}
  */
 export function describeAnswer(answer) {
@@ -154,7 +154,7 @@ export function describeAnswer(answer) {
   const source = answer.source?.kind === "screenshot"
     ? "Read from the visible screenshot and caption. A video contributes only its current frame, not its audio. This identifies what the post claims; it does not establish that the claim is true."
     : sourceOf(answer.post);
-  const nothing = { searchedAlso: null, trialSaid: null, tracked: [], likely: [], rest: null, none: null };
+  const nothing = { subject: null, searchedAlso: null, trialSaid: null, tracked: [], likely: [], rest: null, none: null };
   // A post that links to an article the site tracks: its reviewed page is the answer,
   // and no automatic search was made, so nothing is marked as one.
   if (answer.article_tracked) {
@@ -172,6 +172,7 @@ export function describeAnswer(answer) {
   const known = answer.known_names ?? [];
   return {
     marked,
+    subject: { treatment: answer.treatment, condition: answer.condition || null },
     lead: `This appears to report ${answer.treatment}${answer.condition ? ` for ${answer.condition}` : ""}.`,
     source,
     searchedAlso: known.length
@@ -183,6 +184,9 @@ export function describeAnswer(answer) {
       title: candidate.title || candidate.id,
       url: candidate.url,
       detail: [phaseLabel(candidate.phases), stateLabel(candidate.state), candidate.id].filter(Boolean).join(" · "),
+      phase: phaseLabel(candidate.phases),
+      state: stateLabel(candidate.state),
+      registryId: candidate.id,
       why: whyListed(candidate.agrees ?? []),
       ...matchConfidence(candidate.score),
     })),

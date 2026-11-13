@@ -47,6 +47,7 @@ html {
 
 body {
   width: 360px;
+  max-width: 100vw;
   background: var(--paper);
   color: var(--ink);
   font: 400 15px/1.5 var(--face);
@@ -78,6 +79,7 @@ h1 {
   font-weight: 700;
   line-height: 1.3;
   text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 
 .unbroken {
@@ -321,23 +323,18 @@ h1 + p {
   margin-top: 0;
 }
 
-.lead {
-  margin-top: 14px;
-}
+.lead { margin-top: 12px; }
+.lead:first-child { margin-top: 0; }
 
-.context {
-  display: grid;
-  gap: 6px;
-  margin-top: 10px;
-  padding: 10px 14px 11px;
-  border-radius: 13px;
-  background: var(--panel);
+.indication {
+  margin-top: 3px;
+  color: var(--muted);
   font-size: 13px;
-  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .listed {
-  margin-top: 18px;
+  margin-top: 16px;
   color: var(--muted);
   font-size: 13px;
   font-weight: 600;
@@ -379,12 +376,15 @@ h1 + p {
 }
 
 .tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 1px 8px;
   border-radius: 999px;
   background: var(--panel);
   font-size: 11.5px;
   font-weight: 600;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .result-title a,
@@ -397,20 +397,86 @@ h1 + p {
   font-weight: 600;
 }
 
-.result-confidence {
-  margin-top: 10px;
-  font-size: 12.5px;
+.icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.tag .icon { width: 13px; height: 13px; }
+.result-detail { margin-top: 10px; }
+
+.disclosure { font-size: 12.5px; }
+
+.disclosure > summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  color: var(--muted);
   font-weight: 600;
+  list-style: none;
+  cursor: pointer;
 }
 
-.result-detail,
-.result-reason {
-  margin-top: 6px;
-}
+.disclosure > summary::-webkit-details-marker { display: none; }
+.disclosure > summary:hover { color: var(--blue); }
+.disclosure-arrow { display: inline-flex; margin-left: auto; }
+.disclosure[open] > summary .disclosure-arrow { transform: rotate(180deg); }
 
-.result-reason {
-  padding-top: 8px;
-  border-top: 1px solid var(--rule);
+.disclosure-body {
+  padding: 5px 0 10px;
+  color: var(--muted);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.disclosure-body p + p { margin-top: 8px; }
+.disclosure-body .small { margin-top: 8px; }
+
+.provenance > summary {
+  min-height: 32px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--ink);
+}
+.provenance .disclosure-body { padding: 8px; }
+
+.match-details { margin-top: 10px; }
+.match-details > summary { gap: 4px; }
+.match-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 7px;
+  border-radius: 5px;
+  background: var(--tag);
+  color: var(--blue);
+}
+.registry-id { color: var(--ink); font-weight: 600; }
+.reviewed-label, .cache-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.reviewed-label { color: var(--blue); font-weight: 600; }
+.empty-result { margin-top: 12px; font-size: 13px; }
+.answer-notes { margin-top: 12px; }
+.medical-note { color: var(--muted); font-size: 12px; line-height: 1.4; }
+.answer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 8px;
+}
+.answer-actions .text-button { font-size: 12px; }
+.answer-actions + .kept { margin-top: 8px; }
+
+@media (pointer: coarse) {
+  .disclosure > summary, .answer-actions .text-button { min-height: 44px; }
 }
 
 /* --- The reader's own lists: recently checked, and following ------------- */
@@ -519,8 +585,9 @@ h1 + p {
   }
 
   .digest,
-  .context,
-  .facts .promise {
+  .facts .promise,
+  .match-badge,
+  .provenance > summary {
     outline: 1px solid CanvasText;
     outline-offset: -1px;
   }

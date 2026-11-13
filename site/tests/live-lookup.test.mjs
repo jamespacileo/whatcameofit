@@ -39,11 +39,15 @@ test("Scenario: Reader sees an automatic answer", () => {
   assert.match(shown.marked, /automatic/i);
   assert.match(shown.marked, /not been checked by a person/i);
   assert.equal(shown.lead, "This appears to report EX-1 for tooth agenesis.");
+  assert.deepEqual(shown.subject, { treatment: "EX-1", condition: "tooth agenesis" });
   assert.deepEqual(shown.likely, [
     {
       title: "Study NCT00000001",
       url: "https://clinicaltrials.gov/study/NCT00000001",
       detail: "Phase 2/Phase 3 · active, not recruiting · NCT00000001",
+      phase: "Phase 2/Phase 3",
+      state: "active, not recruiting",
+      registryId: "NCT00000001",
       why: null,
       confidence: 97,
       confidenceLabel: "97% match confidence",
