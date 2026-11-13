@@ -2789,6 +2789,22 @@ main ul:not([class]) li + li {
   margin-top: 0.5rem;
 }
 
+.results .research-results {
+  margin-block: 1rem;
+  border-block-start: 1px solid var(--ring);
+}
+
+.results .research-results summary {
+  padding-block: 0.8rem;
+  color: var(--blue);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.results .research-results a {
+  overflow-wrap: anywhere;
+}
+
 .results .live-text {
   display: grid;
   gap: 0.5rem;

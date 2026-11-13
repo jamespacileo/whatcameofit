@@ -429,6 +429,30 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
     }
     if (shown.none) block.append(element("p", shown.none));
     if (shown.rest) block.append(element("p", shown.rest, "entry-note"));
+    if (shown.research) {
+      const research = shown.research;
+      for (const group of [
+        { label: "Related papers", items: research.papers, note: research.paperNote, status: research.paperStatus },
+        { label: "Organisations", items: research.organisations, note: research.organisationNote, status: research.organisationStatus },
+      ]) {
+        if (!group.items.length && !group.status) continue;
+        const panel = element("details", undefined, "research-results");
+        panel.append(element("summary", `${group.label}${group.items.length ? ` · ${group.items.length}` : ""}`));
+        panel.append(element("p", group.note, "entry-note"));
+        if (group.status) panel.append(element("p", group.status, "entry-note"));
+        const list = element("ul", undefined, "plain");
+        for (const record of group.items) {
+          const link = element("a", record.title) as HTMLAnchorElement;
+          link.href = record.url;
+          link.rel = "noopener noreferrer";
+          const item = element("li");
+          item.append(link, element("span", record.detail, "entry-note"));
+          list.append(item);
+        }
+        if (group.items.length) panel.append(list);
+        block.append(panel);
+      }
+    }
     for (const notice of shown.notices) block.append(element("p", notice, "entry-note"));
     return block;
   }

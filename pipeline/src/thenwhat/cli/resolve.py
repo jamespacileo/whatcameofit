@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 import typer
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entities import (
@@ -17,6 +18,7 @@ from thenwhat.cli import extract
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
+from thenwhat.db.models import Claim
 from thenwhat.decide.core import Backend, DecisionFailed, UnknownBackend, backend_named
 from thenwhat.decide.steps import has_stage_suggestion, suggest_evidence_stage
 from thenwhat.domain import Decider, EntityType, ReviewState
@@ -93,6 +95,46 @@ def entity_phrase(
         entity = add_search_phrase(session, claim_slug, entity_name, phrase)
         phrases = ", ".join(entity.search_phrases)
         out.print(f"{entity.name} is searched for as: {phrases}.", markup=False)
+
+
+@entity_app.command("phrases")
+def entity_phrases(
+    slugs: Annotated[list[str] | None, typer.Argument(help="Slugs of the claims.")] = None,
+    missing: Annotated[
+        bool, typer.Option("--missing", help="Every claim whose intervention has none.")
+    ] = False,
+) -> None:
+    """Have the model give search phrases to claims whose intervention has none.
+
+    It reads what the claim says of itself, not the article. A claim that already has
+    a phrase is left alone. Search the registry afterwards with `resolve`.
+    """
+    # Imported here: the model library is slow to load and most commands never need it.
+    from thenwhat.extract.phrases import backfill_search_phrases, needs_phrases
+
+    if not slugs and not missing:
+        err.print("Name the claims, or use --missing for every claim without a phrase.")
+        raise typer.Exit(code=1)
+    with entry_session() as session:
+        if slugs:
+            claims = []
+            for slug in slugs:
+                claim = find_claim(session, slug)
+                if claim is None:
+                    raise ClaimNotFound(f"No claim has the slug '{slug}'.")
+                claims.append(claim)
+        else:
+            claims = list(session.scalars(select(Claim).order_by(Claim.slug)))
+        llm = extract.make_llm(session)
+        given = 0
+        for claim in claims:
+            if needs_phrases(session, claim) is None:
+                continue
+            phrases = backfill_search_phrases(session, llm, claim)
+            if phrases:
+                given += 1
+                out.print(f"{claim.slug}: {', '.join(phrases)}", markup=False)
+        out.print(f"{given} of {len(claims)} claims were given search phrases.")
 
 
 @entity_app.command("origin-paper")

@@ -9,6 +9,8 @@
 - [x] 1.5 Add "Search phrase" to `GLOSSARY.md` and regenerate `site/export.schema.json` if the export shape changed; verify `make check`
 - [x] 1.6 Add `thenwhat entity phrase` so an operator can give a decided claim a search phrase, since a decided claim's article is never read again; verify one success and one refusal
 - [x] 1.7 On the real database: apply migration 0008, give `tourette-syndrome-wrist-nerve-stimulation` the phrase "median nerve stimulation", run `thenwhat resolve` on it, and record in `docs/lookup.md` whether NCT05269953 is now a candidate (the registry returned it for that phrase within "Tourette syndrome" when asked directly on 2026-11-13) (2026-11-13: done; NCT05269953 scored 0.98 and is pending, with two Washington University trials)
+- [x] 1.8 Add `thenwhat entity phrases` to have the model give search phrases to decided claims from what each claim says of itself; verify one success and one refusal
+- [x] 1.9 Run it for every claim without a phrase, resolve those claims again, and record in `docs/lookup.md` how many gained a trial (2026-11-13: 50 of 83 claims given phrases, 15 gained candidates, 3 approved by rule on 2 claims, no status changed)
 
 ## 2. People
 
@@ -53,3 +55,12 @@
 ## Workflow follow-up
 
 - Archive the change after the operator has reviewed the first measured run.
+
+## 9. Public on-demand integration
+
+- [x] 9.1 Record current API terms, free quotas and secret setup.
+- [x] 9.2 Add bounded, cached OpenAlex/ROR Worker clients with independent failure and free-only allowance checks.
+- [x] 9.3 Enrich live lookups with paper metadata and explicitly named organisations; preserve trial scoring/status.
+- [x] 9.4 Add collapsed source-attributed sections on the site and next extension build, and update privacy text.
+- [x] 9.5 Verify offline behavior, real-provider end-to-end lookups, quota/caching and responsive UI.
+- [x] 9.6 Deploy through checked CI and verify the production result (2026-11-13: live website returned papers and the named organisation; free allowance and collapsed UI verified).

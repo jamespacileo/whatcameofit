@@ -593,3 +593,9 @@ h1 + p {
     outline-offset: -1px;
   }
 }
+/* Bibliographic titles, deliberately outside the clinical candidate cards. */
+.research-results { margin-block: 0.75rem; }
+.research-list { list-style: none; padding: 0; margin: 0; }
+.research-list li + li { margin-top: 1rem; }
+.research-list a { font-weight: 650; overflow-wrap: anywhere; }
+.research-list .small { margin-top: 0.25rem; }

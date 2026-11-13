@@ -139,6 +139,34 @@ function matchConfidence(score) {
   };
 }
 
+/** Bibliographic relevance and organisation identity are different from trial-match
+ * confidence. Keep them separate, with no invented percentages or clinical status. */
+function describeResearch(research) {
+  if (!research) return null; // Old shared/browser caches remain readable.
+  const unavailable = (source, status) => {
+    if (status === "limit") return `${source} is paused at its free usage limit. Try again later.`;
+    if (status === "not_configured") return `${source} is not configured.`;
+    if (status === "unavailable") return `${source} could not be reached. Try again later.`;
+    return null;
+  };
+  const papers = (research.papers ?? []).slice(0, 5).map(paper => ({
+    title: paper.title, url: paper.url,
+    detail: [paper.year, paper.kind?.replaceAll("-", " "), paper.journal].filter(Boolean).join(" · "),
+  }));
+  const organisations = (research.organisations ?? []).slice(0, 3).map(org => ({
+    title: org.name, url: org.url, detail: org.country || "ROR record",
+  }));
+  return {
+    papers, organisations,
+    paperNote: "OpenAlex search results · Unreviewed. Relevance is not evidence that a treatment works.",
+    organisationNote: "ROR identifies organisations named in the report. It does not verify their involvement or endorsement.",
+    paperStatus: unavailable("OpenAlex", research.availability?.openalex) ??
+      (research.availability?.openalex === "ok" && !papers.length ? "No related papers were returned by this search." : null),
+    organisationStatus: unavailable("ROR", research.availability?.ror) ??
+      (research.availability?.ror === "ok" && !organisations.length ? "No confident organisation match was returned." : null),
+  };
+}
+
 /**
  * A lookup answer in the site's words.
  * @returns {{ marked: string | null, lead: string, subject: { treatment: string, condition: string | null } | null, source: string | null, searchedAlso: string | null, trialSaid: string | null,
@@ -154,7 +182,7 @@ export function describeAnswer(answer) {
   const source = answer.source?.kind === "screenshot"
     ? "Read from the visible screenshot and caption. A video contributes only its current frame, not its audio. This identifies what the post claims; it does not establish that the claim is true."
     : sourceOf(answer.post);
-  const nothing = { subject: null, searchedAlso: null, trialSaid: null, tracked: [], likely: [], rest: null, none: null };
+  const nothing = { subject: null, searchedAlso: null, trialSaid: null, tracked: [], likely: [], rest: null, none: null, research: null };
   // A post that links to an article the site tracks: its reviewed page is the answer,
   // and no automatic search was made, so nothing is marked as one.
   if (answer.article_tracked) {
@@ -196,5 +224,6 @@ export function describeAnswer(answer) {
         : null,
     none: likely.length === 0 ? LIVE.none : null,
     notices,
+    research: describeResearch(answer.research),
   };
 }
