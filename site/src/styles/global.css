@@ -961,6 +961,54 @@ body.embed {
   max-width: var(--measure);
 }
 
+/* The method page's video: a framed player that waits to be played, its note, and its words. */
+.explainer {
+  margin: 1.5rem 0 0;
+  max-width: 46rem;
+}
+
+.explainer video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+
+.explainer figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.explainer details {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.explainer summary {
+  width: fit-content;
+  color: var(--blue);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 40rem) {
+  /* Pressed with a thumb, so it gets the room every pressed thing has. */
+  .explainer summary {
+    padding-block: 0.6rem;
+  }
+}
+
+@media print {
+  /* A video cannot be printed. Its words can: the fold is opened by the reader or not at all. */
+  .explainer video {
+    display: none;
+  }
+}
+
 main nav.contents ul {
   list-style: none;
   margin: 0;

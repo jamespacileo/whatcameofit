@@ -1,6 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import StageTrack from "../components/StageTrack.astro";
+import { brandAsset } from "../lib/brand";
 import { data } from "../lib/export";
 import { SITE } from "../../site.config.mjs";
 import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS } from "../lib/status";
@@ -17,6 +18,64 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
     Each page tracks one reported breakthrough and shows the records found since it was reported.
     This page explains how the status on a claim page is set and what it does not tell you.
   </p>
+
+  {/*
+    The explainer, made in video/. It never plays on its own and nothing of it is fetched
+    until the reader presses play. Its records are dated, because a video cannot be
+    rebuilt with the site; the pages under it are the current word.
+  */}
+  <figure class="explainer">
+    <video
+      controls
+      preload="none"
+      playsinline
+      width="1920"
+      height="1080"
+      poster={brandAsset("/video/explainer-poster.jpg")}
+      aria-describedby="explainer-note"
+    >
+      <source src={brandAsset("/video/explainer.mp4")} type="video/mp4" />
+      <a href="/video/explainer.mp4">Download the video</a>
+    </video>
+    <figcaption id="explainer-note">
+      A video of 1 minute 52 seconds, with sound and captions, on how this site works. The records
+      in it are as the registries showed them in November 2026; the claim pages are kept current.
+    </figcaption>
+    <details>
+      <summary>What the video says</summary>
+      <p>
+        “New drug to regenerate lost teeth” (Kyoto University, 2021). “Multiplying teeth” (RIKEN,
+        2015). “Regrowing Teeth” (Technische Universität Berlin, 2019). Headlines like these travel
+        fast. The follow-up rarely does. So, years later: what came of it?
+      </p>
+      <p>
+        {SITE.name} is a public record of what followed reported medical breakthroughs. Each claim
+        gets one page: one treatment, for one condition. At the top is where it stands now. The
+        video shows one claim, first reported in 2021, as it stood in November 2026.
+      </p>
+      <p>
+        Underneath are the dated records that say so. Every record links to the registry that holds
+        it, so you can check it yourself. And what was promised sits beside what was recorded.
+      </p>
+      <p>
+        The status is set by fixed rules, from public registry records. No editor decides it, and no
+        AI model does either. When nothing new has been recorded for years, the page says exactly
+        that. That describes the records. It is not a verdict on the treatment.
+      </p>
+      <p>
+        Seen a headline shared again? Paste the article's link into the box on the home page. If the
+        claim is tracked, the answer comes back at once. The link is compared inside your browser,
+        and sent nowhere.
+      </p>
+      <p>
+        There is also a browser extension, for Chrome and Safari. Open it on an article, and it
+        shows the tracked claim's status right there. If the article is not tracked, it can search
+        the trial registries live. Those results are marked automatic and unreviewed, and every
+        match shows its confidence score.
+      </p>
+      <p>No medical advice. No verdicts. Only what the records show, and when.</p>
+    </details>
+  </figure>
 
   {/* A long page on a phone: its sections, one tap away. */}
   <nav class="contents" aria-label="On this page">
