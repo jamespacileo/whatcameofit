@@ -93,6 +93,8 @@ Archive the Release scheme for a generic Mac, validate its signatures and bundle
 
 For 0.9.0 (9), Apple rejected an archive made with Xcode 27.2 beta (27B5019j), then accepted the same release built with stable Xcode 27.2 (27B52). The stable archive's extension resources matched the installed 0.9.0 build. A live Safari check of the University of Nottingham's `clinical-trial-tourettes` article returned five OpenAlex papers and two ROR identities; reopening reused the previous result. No new App Privacy category was needed for the derived searches, which are covered by the existing Search History disclosure.
 
+As of 13 November 2026, 0.9.0 (9) is Waiting for Review. The [0.9.1 preview](https://github.com/jamespacileo/whatcameofit/releases/tag/v0.9.1-preview.1) adds the saved-check wording correction and was installed and tested locally in Safari. It does not replace the submitted App Store build. The release provides extension resources and an Xcode project requiring your own signing; Chrome registration remains parked. See the [release verification](../openspec/changes/release-polish/verification.md) for test and deployment evidence.
+
 ## Layout
 
 - `src/lookup.js`: decides what to show. Pure, tested in `tests/`.

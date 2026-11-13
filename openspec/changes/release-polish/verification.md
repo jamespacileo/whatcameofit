@@ -24,4 +24,14 @@ A later Safari check on the Nottingham article reused the previous result and di
 
 The computer-use connection intermittently stalled, and mouse automation inside native popup disclosures was unreliable. Keyboard operation succeeded; this was not treated as an application defect. A read-only crawl of the live site checked 117 pages and 2,386 internal links/anchors, with no broken targets, duplicate IDs, missing page titles or missing image alt attributes found.
 
-The submitted Safari 0.9.0 (9) remains Waiting for Review; 0.9.1 is the local patch and GitHub extension package. No permissions, privacy destinations, provider configuration or spending limits changed. Chrome registration remains parked. Web deployment is verified after merge through the normal GitHub pipeline.
+The submitted Safari 0.9.0 (9) remains Waiting for Review; 0.9.1 is the local patch and GitHub extension package. No permissions, privacy destinations, provider configuration or spending limits changed. Chrome registration remains parked.
+
+## Merged release and live verification
+
+[PR #51](https://github.com/jamespacileo/whatcameofit/pull/51) merged as `7b3e89a5724f5ea4931135c9ed01b8ee17572e65`. The final PR run 43512056325 passed. [Main run 43512392326](https://github.com/jamespacileo/whatcameofit/actions/runs/43512392326) passed all 973 tests, both builds, Cloudflare deployment and the live-site smoke checks; deployment completed at 21:40 UTC on 13 November 2026.
+
+Post-deployment browser checks covered the claim page, home search, Topics and It happened at 320 pixels, plus the approval page at 768 pixels. No horizontal overflow was found. Searching for baxdrostat returned the tracked claim. The six-month reminder downloaded an all-day calendar event for 13 May 2027, with the correct claim URL and exclusive end date of 14 May. It was inspected without importing it into a calendar.
+
+The in-app browser logged two native cross-document transition aborts during navigation; normal page content and keyboard navigation worked. An automated pointer click needed a keyboard retry. This is recorded as a browser-control limitation, not evidence that every browser interaction is flawless.
+
+[Preview 0.9.1](https://github.com/jamespacileo/whatcameofit/releases/tag/v0.9.1-preview.1) contains the Chrome ZIP for local testing, Safari extension resources, generated Safari Xcode project and SHA-256 checksums. All four assets were confirmed uploaded. The ZIPs contain version 0.9.1, no development preview states and no credentials. The Safari project still requires the recipient's own signing; it is not an App Store installation package.
