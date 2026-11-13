@@ -4,6 +4,7 @@ import typer
 from sqlalchemy.exc import OperationalError
 
 from thenwhat import __version__
+from thenwhat.cli.archive import archive_command, unarchive_command
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import article_app, claim_app, promise_app
 from thenwhat.cli.events import event_app, fetch_command
@@ -34,6 +35,8 @@ app.add_typer(review_app, name="review")
 app.command("icons")(icons_command)
 app.command("outlets")(outlets_command)
 app.command("export")(export_command)
+app.command("archive")(archive_command)
+app.command("unarchive")(unarchive_command)
 app.add_typer(seed_app, name="seed")
 
 

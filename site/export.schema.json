@@ -40,6 +40,26 @@
       "title": "EvidenceStage",
       "type": "string"
     },
+    "ExportedArchived": {
+      "additionalProperties": false,
+      "properties": {
+        "slug": {
+          "title": "Slug",
+          "type": "string"
+        },
+        "on": {
+          "format": "date",
+          "title": "On",
+          "type": "string"
+        }
+      },
+      "required": [
+        "slug",
+        "on"
+      ],
+      "title": "ExportedArchived",
+      "type": "object"
+    },
     "ExportedArticle": {
       "additionalProperties": false,
       "properties": {
@@ -646,6 +666,14 @@
         "$ref": "#/$defs/ExportedClaim"
       },
       "title": "Claims",
+      "type": "array"
+    },
+    "archived": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ExportedArchived"
+      },
+      "title": "Archived",
       "type": "array"
     }
   },

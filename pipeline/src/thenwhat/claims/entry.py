@@ -1,7 +1,7 @@
 """Manual entry of claims, source articles and promises. Behavior: openspec claims."""
 
 import re
-from datetime import date
+from datetime import date, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -61,6 +61,10 @@ class ArticleNotFound(EntryError):
 
 
 class SlugLocked(EntryError):
+    pass
+
+
+class ArchiveRefused(EntryError):
     pass
 
 
@@ -348,3 +352,27 @@ def articles_of(session: Session, claim: Claim) -> list[SourceArticle]:
 
 def claim_count(session: Session) -> int:
     return session.scalar(select(func.count()).select_from(Claim)) or 0
+
+
+def archive_claim(session: Session, slug: str, *, reason: str, now: datetime) -> Claim:
+    """Take a claim off the public site from the next export on. Nothing is deleted."""
+    claim = _claim(session, slug)
+    if claim.archived_at is not None:
+        raise ArchiveRefused(f"Claim '{slug}' is already archived.")
+    if not reason.strip():
+        raise ArchiveRefused("Give a reason for archiving. It is kept, and never published.")
+    claim.archived_at = now
+    claim.archive_reason = reason.strip()
+    session.flush()
+    return claim
+
+
+def unarchive_claim(session: Session, slug: str) -> Claim:
+    """Put an archived claim back on the public site from the next export on."""
+    claim = _claim(session, slug)
+    if claim.archived_at is None:
+        raise ArchiveRefused(f"Claim '{slug}' is not archived.")
+    claim.archived_at = None
+    claim.archive_reason = None
+    session.flush()
+    return claim

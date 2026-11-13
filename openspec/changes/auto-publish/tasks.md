@@ -8,11 +8,11 @@
 
 ## 2. Archive (PR B)
 
-- [ ] 2.1 Migration: `archived_at`, `archive_reason` on claims
-- [ ] 2.2 `thenwhat archive <slug> --reason` and `thenwhat unarchive <slug>`, one success and one refusal each
-- [ ] 2.3 Export leaves archived claims out and lists archived slugs; regenerate schema, seed export, fixture
-- [ ] 2.4 Build writes the archived list; Worker answers those addresses 410 with the short page
-- [ ] 2.5 Feeds, sitemap, `lookup.json` and the data file drop archived claims
+- [x] 2.1 Migration: `archived_at`, `archive_reason` on claims
+- [x] 2.2 `thenwhat archive <slug> --reason` and `thenwhat unarchive <slug>`, one success and one refusal each
+- [x] 2.3 Export leaves archived claims out and lists archived slugs; regenerate schema, seed export, fixture
+- [x] 2.4 Build writes the archived list (`dist/gone.json`); Worker answers those addresses 410 with the short page. Page paths now run the Worker first (`site/wrangler.jsonc`); it hands every other request to the files
+- [x] 2.5 Feeds, sitemap, `lookup.json` and the data file drop archived claims
 
 ## 3. Publish by rule (PR C)
 

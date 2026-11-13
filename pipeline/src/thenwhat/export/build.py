@@ -163,6 +163,12 @@ class ExportedClaim(Strict):
     failure_flags: list[ExportedFailureFlag]
 
 
+class ExportedArchived(Strict):
+    # A claim the operator took down. Its address answers 410; the reason stays private.
+    slug: str
+    on: date
+
+
 class Export(Strict):
     schema_version: int
     generated_at: datetime
@@ -176,6 +182,7 @@ class Export(Strict):
     # Icons of the outlets whose articles are exported. An outlet without one is absent.
     outlets: list[ExportedOutlet]
     claims: list[ExportedClaim]
+    archived: list[ExportedArchived] = []
 
 
 def _group_of(vertical: str) -> ExportedGroup | None:
@@ -238,7 +245,9 @@ def build_export(
     assistant_slugs: set[str] = set()
     last_checked: datetime | None = None
     for claim in session.scalars(
-        select(Claim).where(Claim.review_state == ReviewState.APPROVED).order_by(Claim.slug)
+        select(Claim)
+        .where(Claim.review_state == ReviewState.APPROVED, Claim.archived_at.is_(None))
+        .order_by(Claim.slug)
     ):
         assistant = _decided_by_assistant(session, claim)
         if assistant and not preview:
@@ -366,6 +375,15 @@ def build_export(
         ],
         outlets=_outlets(session, claims),
         claims=claims,
+        archived=[
+            ExportedArchived(slug=claim.slug, on=claim.archived_at.date())
+            for claim in session.scalars(
+                select(Claim)
+                .where(Claim.archived_at.is_not(None), Claim.published_at.is_not(None))
+                .order_by(Claim.slug)
+            )
+            if claim.archived_at is not None
+        ],
     )
 
 

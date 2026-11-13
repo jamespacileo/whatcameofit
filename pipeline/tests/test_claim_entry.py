@@ -29,6 +29,9 @@ from thenwhat.claims.entry import (
     find_claim,
     promises_of,
     rename_slug,
+    archive_claim,
+    unarchive_claim,
+    ArchiveRefused,
 )
 from thenwhat.db.models import Claim, Entity
 from thenwhat.domain import EntityType
@@ -362,3 +365,42 @@ def test_rename_to_a_taken_slug_is_refused(session: Session):
 def test_rename_of_an_unknown_claim_is_refused(session: Session):
     with pytest.raises(ClaimNotFound):
         rename_slug(session, "no-such-claim", "new-name")
+
+
+# --- archiving ---------------------------------------------------------------
+
+
+def test_archiving_keeps_the_claim_and_records_why(session: Session):
+    """Scenario: Operator takes a claim down"""
+    now = datetime(2026, 11, 14, tzinfo=UTC)
+    new_claim(session)
+
+    claim = archive_claim(session, "tooth-regrowth-usag1", reason="wrong trial", now=now)
+
+    assert claim.archived_at == now
+    assert claim.archive_reason == "wrong trial"
+    assert find_claim(session, "tooth-regrowth-usag1") is claim
+
+
+def test_archiving_an_unknown_slug_is_refused(session: Session):
+    """Scenario: Unknown slug"""
+    with pytest.raises(ClaimNotFound, match="no-such-claim"):
+        archive_claim(session, "no-such-claim", reason="x", now=datetime(2026, 11, 14, tzinfo=UTC))
+
+
+def test_archiving_needs_a_reason(session: Session):
+    new_claim(session)
+
+    with pytest.raises(ArchiveRefused):
+        archive_claim(session, "tooth-regrowth-usag1", reason="  ", now=datetime.now(UTC))
+
+
+def test_unarchiving_puts_it_back(session: Session):
+    """Scenario: Putting it back"""
+    new_claim(session)
+    archive_claim(session, "tooth-regrowth-usag1", reason="wrong trial", now=datetime.now(UTC))
+
+    claim = unarchive_claim(session, "tooth-regrowth-usag1")
+
+    assert claim.archived_at is None
+    assert claim.archive_reason is None

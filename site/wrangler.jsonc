@@ -19,7 +19,9 @@
     "not_found_handling": "404-page",
     // Page addresses carry no trailing slash, as the canonical links and sitemap write them.
     "html_handling": "drop-trailing-slash",
-    "run_worker_first": ["/api/*"]
+    // Pages go through the Worker so an archived claim's address can answer 410; the
+    // Worker hands every other request straight to the files. Built assets skip it.
+    "run_worker_first": ["/api/*", "/*", "!/_astro/*", "!/pagefind/*"]
   },
   // How many registry searches are answered per minute: by one reader, and in all.
   // These counters apply per Cloudflare location, not globally. They slow bursts;

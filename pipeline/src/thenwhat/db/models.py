@@ -90,6 +90,10 @@ class Claim(Reviewed, Base):
             name="slug_format",
         ),
         _review_decision_recorded(),
+        CheckConstraint(
+            "(archived_at IS NULL) = (archive_reason IS NULL)",
+            name="archive_has_reason",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -113,6 +117,9 @@ class Claim(Reviewed, Base):
     overlay_years: Mapped[int | None]
     status_updated_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
     published_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
+    # Taken off the public site by the operator. The record stays; the reason is never exported.
+    archived_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
+    archive_reason: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
 
 
