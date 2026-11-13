@@ -8,10 +8,11 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-function run({ retired = [], published = null }) {
+function run({ retired = [], published = null, archived = undefined }) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-redirects-"));
   const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
   fixture.retired_verticals = retired;
+  if (archived) fixture.archived = archived;
   const exportFile = path.join(directory, "export.json");
   fs.writeFileSync(exportFile, JSON.stringify(fixture));
   const record = path.join(directory, "published-topics.json");
@@ -23,7 +24,9 @@ function run({ retired = [], published = null }) {
     encoding: "utf8",
   });
   const file = path.join(dist, "_redirects");
-  return { result, redirects: fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null };
+  const goneFile = path.join(dist, "gone.json");
+  const gone = fs.existsSync(goneFile) ? JSON.parse(fs.readFileSync(goneFile, "utf8")) : null;
+  return { result, redirects: fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null, gone };
 }
 
 test("Scenario: Vertical renamed after launch", () => {
@@ -51,4 +54,11 @@ test("the previously published transplant topic leads to the health-area directo
   const { result, redirects } = run({ published: ["transplants"] });
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.equal(redirects, "/topic/transplants /topics 301\n");
+});
+
+test("archived claims are listed for the Worker, and the list is written even when empty", () => {
+  const archived = run({ archived: [{ slug: "quiet-claim", on: "2026-11-14" }] });
+  assert.equal(archived.result.status, 0, archived.result.stdout + archived.result.stderr);
+  assert.deepEqual(archived.gone, [{ slug: "quiet-claim", on: "2026-11-14" }]);
+  assert.deepEqual(run({}).gone, []);
 });

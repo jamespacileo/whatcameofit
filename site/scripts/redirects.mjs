@@ -39,4 +39,9 @@ lines.push(...directoryRedirects.map(slug => `/topic/${slug} /topics 301`));
 const file = path.join(DIST, "_redirects");
 if (lines.length > 0) fs.writeFileSync(file, `${lines.join("\n")}\n`);
 else fs.rmSync(file, { force: true });
+// Archived claims, for the Worker: each address answers 410 (worker/gone.mjs). Written
+// even when empty, so a claim put back is served again after the next deploy.
+const gone = (data.archived ?? []).map(({ slug, on }) => ({ slug, on }));
+fs.writeFileSync(path.join(DIST, "gone.json"), `${JSON.stringify(gone)}\n`);
+
 console.log(`Redirect check passed: ${lines.length} retired topic ${lines.length === 1 ? "address" : "addresses"}.`);
