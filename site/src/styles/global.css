@@ -302,7 +302,7 @@ main > .wrap {
 }
 
 /* The opening band: a page's main task on the panel blue, full width, between the
-   white masthead and the white page. Pale, with ink on it; never a solid block of
+   navy masthead and the white page. Pale, with ink on it; never a solid block of
    the accent. */
 .band {
   background: var(--panel);
