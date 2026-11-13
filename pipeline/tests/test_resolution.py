@@ -13,11 +13,12 @@ from sqlalchemy.orm import Session
 from thenwhat.claims.entities import (
     EntityNotFound,
     add_entity,
+    add_search_phrase,
     add_synonym,
     entities_of,
     set_origin_paper,
 )
-from thenwhat.claims.entry import DuplicateClaim, add_claim
+from thenwhat.claims.entry import DuplicateClaim, InvalidField, add_claim
 from thenwhat.db.models import Claim, DecisionLog, EntityMatch
 from thenwhat.decide.core import BackendAnswer, DecisionFailed
 from thenwhat.decide.steps import suggest_evidence_stage
@@ -55,6 +56,11 @@ class FakeTrials:
         self.searched.append(intervention)
         self.conditions.append(condition)
         return self.results.get(intervention, [])
+
+    def search_phrase(self, phrase: str, condition: str | None) -> list[SourceRecord]:
+        self.searched.append(phrase)
+        self.conditions.append(condition)
+        return self.results.get(phrase, []) if condition else []
 
 
 class FakeDois:
@@ -590,3 +596,43 @@ def test_without_an_accept_threshold_nothing_is_approved_by_rule(session: Sessio
     resolve(session, claim, trials=found, backend=Scoring(0.99))
 
     assert matches(session)[0].review_state is ReviewState.PENDING
+
+
+# --- search phrases --------------------------------------------------------------
+
+
+def test_trial_found_only_by_a_search_phrase_becomes_a_candidate(session: Session):
+    """Scenario: Trial found only by a search phrase"""
+    device = "Wrist-worn median nerve stimulation device"
+    claim = new_claim(
+        session, slug="tics-wrist-stimulation", intervention=device, indication="Tourette syndrome"
+    )
+    add_search_phrase(session, claim.slug, device, "median nerve stimulation")
+    trials = FakeTrials(
+        {
+            device: [trial("NCT00000011", "A nausea band")],
+            "median nerve stimulation": [trial("NCT00000012", "Stimulation for tics")],
+        }
+    )
+
+    resolve(session, claim, trials=trials)
+
+    assert [match.external_id for match in matches(session)] == ["NCT00000011", "NCT00000012"]
+    assert trials.searched == [device, "median nerve stimulation"]
+
+
+def test_a_search_phrase_is_kept_apart_from_the_names(session: Session):
+    claim = new_claim(session)
+
+    entity = add_search_phrase(session, claim.slug, "EX-1 antibody", "tooth regrowth antibody")
+    add_search_phrase(session, claim.slug, "EX-1 antibody", "Tooth  regrowth antibody")
+
+    assert entity.search_phrases == ["tooth regrowth antibody"]
+    assert entity.synonyms == []
+
+
+def test_a_generic_word_is_refused_as_a_search_phrase(session: Session):
+    claim = new_claim(session)
+
+    with pytest.raises(InvalidField):
+        add_search_phrase(session, claim.slug, "EX-1 antibody", "the device")
