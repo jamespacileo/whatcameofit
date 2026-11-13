@@ -38,7 +38,6 @@ html {
 
 .mark {
   flex: none;
-  border-radius: 5px;
 }
 
 ::selection {

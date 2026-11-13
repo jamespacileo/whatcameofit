@@ -110,10 +110,11 @@ const box = (style: Record<string, unknown>, children: unknown): Node => ({
 });
 const shape = (type: string, props: Record<string, unknown>): Node => ({ type, props });
 
-// Use the canonical vector artwork rather than maintaining another drawing.
-const markData = `data:image/svg+xml;base64,${fs.readFileSync(path.resolve("public/mark.svg")).toString("base64")}`;
+// The mark on navy is the reverse one: no tile, the glass in white. It is generated
+// from the canonical vector artwork, so there is no second drawing to maintain.
+const reverseData = `data:image/svg+xml;base64,${fs.readFileSync(path.resolve("public/mark-reverse.svg")).toString("base64")}`;
 function stamp(size: number): Node {
-  return shape("img", { src: markData, width: size, height: size });
+  return shape("img", { src: reverseData, width: size, height: size });
 }
 
 // The wordmark's question mark, whose dot is the blue marker. The same drawing as
@@ -150,7 +151,7 @@ function brand(layout: Layout): Node {
     },
     [
     box({ alignItems: "center", fontSize: size, color: PAPER }, [
-      stamp(size * 1.4),
+      stamp(size * 1.3),
       box({ fontWeight: 400, marginLeft: size * 0.5 }, SITE.wordmark[0]),
       box({ fontWeight: 700, marginLeft: size * 0.27 }, SITE.wordmark[1]),
       ask(size * 0.92),
@@ -370,7 +371,7 @@ export async function sitePng(): Promise<Uint8Array> {
       padding: 72,
     },
     [
-      stamp(176),
+      stamp(168),
       box({ flexDirection: "column" }, [
         box({ alignItems: "center", fontSize: name, letterSpacing: -name / 48 }, [
           box({ fontWeight: 400 }, SITE.wordmark[0]),
