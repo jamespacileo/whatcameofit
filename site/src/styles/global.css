@@ -1875,6 +1875,16 @@ main nav.contents ul li + li {
   max-width: 100%;
 }
 
+/* Today's anniversaries of first reports, or the next day with one. */
+.on-this-day .calendar {
+  margin-top: 0.3rem;
+}
+
+.on-this-day .calendar .day:first-child,
+.on-this-day .calendar .day {
+  border-top: 0;
+}
+
 .feed-panel .none {
   margin-top: 0.7rem;
   color: var(--muted);

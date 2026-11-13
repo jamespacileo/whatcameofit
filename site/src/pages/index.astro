@@ -11,6 +11,7 @@ import StatusCell from "../components/StatusCell.astro";
 import TopicChip from "../components/TopicChip.astro";
 import { SITE } from "../../site.config.mjs";
 import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
+import { calendarByMonth } from "../lib/anniversaries";
 import { data, listedTopics } from "../lib/export";
 import {
   longestWithoutSignal,
@@ -72,6 +73,13 @@ const topicChoices = listedTopics
   }))
   .sort((a, b) => a.title.localeCompare(b.title));
 const topicCounts = statusCountsByTopic(data.claims);
+// Every day of the calendar that has a first report. The reader's own today picks
+// which is shown, so the page is true whenever it is read.
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days);
 ---
 
 <Base current="home" structured={siteData()}>
@@ -366,6 +374,39 @@ const topicCounts = statusCountsByTopic(data.claims);
   }
   </div>
 
+  {/* Shown by the script, which knows the reader's date: today's anniversaries of first
+      reports, or the next day that has one. */}
+  {
+    calendarDays.length > 0 && (
+      <section class="on-this-day" hidden data-on-this-day>
+        <div class="bar-row">
+          <h2 class="bar" data-title>On this day</h2>
+          <a href="/anniversaries">All anniversaries</a>
+        </div>
+        <ul class="calendar">
+          {calendarDays.map((day) => (
+            <li class="day" hidden data-day={day.id} data-label={`${day.day} ${MONTH_NAMES[day.month - 1]}`}>
+              <strong class="when">
+                {day.day} {MONTH_NAMES[day.month - 1].slice(0, 3)}
+              </strong>
+              <ul>
+                {day.entries.map((entry) => (
+                  <li data-year={entry.year}>
+                    <span class="year"><span class="visually-hidden">First reported </span>{entry.year}</span>
+                    <a href={`/${entry.claim.slug}`}>{entry.claim.headline}</a>
+                    <span class="status">
+                      <StatusCell claim={entry.claim} />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+
   <h2 class="bar" id="topics">Topics</h2>
   <ul class="chips">
     {
@@ -437,6 +478,7 @@ const topicCounts = statusCountsByTopic(data.claims);
   import { SITE as BRAND } from "../../site.config.mjs";
   const SITE_NAME = BRAND.name;
   import { closestClaims, readAddress } from "../lib/lookup-match.mjs";
+  import { nextAnniversaryDay } from "../lib/anniversaries";
 
   const form = document.querySelector<HTMLFormElement>("#search")!;
   const input = document.querySelector<HTMLInputElement>("#query")!;
@@ -985,6 +1027,34 @@ const topicCounts = statusCountsByTopic(data.claims);
         choice.value = asked;
         narrow(asked);
       }
+    }
+  }
+
+  // Anniversaries of first reports, counted from the reader's own today: the ones that
+  // fall today, or else the next day that has one. A report from this year has none yet.
+  const onThisDay = document.querySelector<HTMLElement>("[data-on-this-day]");
+  if (onThisDay) {
+    const now = new Date();
+    const two = (value: number) => String(value).padStart(2, "0");
+    const today = `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`;
+    const days = [...onThisDay.querySelectorAll<HTMLElement>("[data-day]")];
+    const reports = days.flatMap((day) =>
+      [...day.querySelectorAll<HTMLElement>("[data-year]")].map((entry) => ({
+        entry,
+        id: day.dataset.day!,
+        year: Number(entry.dataset.year),
+      })),
+    );
+    const found = nextAnniversaryDay(reports, today);
+    if (found) {
+      const year = Number(found.date.slice(0, 4));
+      for (const day of days) day.hidden = !found.ids.includes(day.dataset.day!);
+      for (const report of reports) report.entry.hidden = report.year >= year;
+      if (!found.today) {
+        const label = days.find((day) => !day.hidden)!.dataset.label!;
+        onThisDay.querySelector("[data-title]")!.textContent = `Next anniversary: ${label}`;
+      }
+      onThisDay.hidden = false;
     }
   }
 

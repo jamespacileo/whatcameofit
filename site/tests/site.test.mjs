@@ -200,6 +200,16 @@ test("Scenario: Counts on the path", () => {
   assert.match(html, /<tr[^>]*data-status="phase_2"[^>]*data-topic="gum-disease"/);
 });
 
+test("Scenario: Anniversaries on the home page", () => {
+  const html = page("index.html");
+  const block = html.slice(html.indexOf("data-on-this-day"), html.indexOf('id="topics"'));
+  // Out of sight until the reader's date picks a day; every day with a report is there.
+  assert.match(html, /<section class="on-this-day"[^>]*hidden/);
+  for (const day of ["05-01", "05-03", "05-04"]) assert.ok(block.includes(`data-day="${day}"`), day);
+  assert.match(block, /data-year="2019"/);
+  assert.match(block, /href="\/anniversaries"/);
+});
+
 test("Scenario: One topic", () => {
   // With a single listed topic there is nothing to choose between.
   assert.doesNotMatch(page("index.html"), /data-topic-filter/);

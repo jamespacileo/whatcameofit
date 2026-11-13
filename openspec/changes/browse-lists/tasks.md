@@ -20,3 +20,10 @@
 - [x] 3.3 Add the topic choice, with the path's counts following it; verify the site tests "Narrowing to a topic" and "One topic" pass
 - [x] 3.4 Look at the home page at desktop and phone widths with a status, a topic and both picked; verify counts, the empty-list line and the address
 - [x] 3.5 Verify `make check` passes
+
+## 4. Anniversaries on the front page
+
+- [x] 4.1 Find the first day from a given date with an anniversary, in a pure function; verify the site tests "An anniversary today", "No anniversary today" and "A leap-day report in a common year" pass
+- [x] 4.2 Show that day's claims on the home page from the reader's own date; verify the site test "Anniversaries on the home page" passes
+- [x] 4.3 Look at the block at desktop and phone widths with the published export; verify the date named and the claims listed match the anniversaries page
+- [x] 4.4 Verify `make check` passes
