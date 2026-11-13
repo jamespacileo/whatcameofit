@@ -58,6 +58,8 @@ for (const [key, value] of Object.entries(settings)) {
 fs.writeFileSync(file, source);
 NODE
 
+node extension/sync-brand-icons.mjs "extension/safari/$app_name"
+
 xcodebuild -project "extension/safari/$app_name/$app_name.xcodeproj" \
   -scheme "$app_name" -configuration Release -destination 'generic/platform=macOS' \
   -derivedDataPath "$build_dir" \

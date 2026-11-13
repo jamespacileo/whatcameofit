@@ -16,6 +16,12 @@ On a YouTube video or Short, the reader uses the current video's title, loaded d
 
 ## Build
 
+Brand artwork comes from `site/public/mark.svg` and its small-size variant,
+`site/public/favicon.svg`. After editing them, run `node site/scripts/brand-icons.mjs`
+and rebuild the extension. To refresh artwork in an existing generated Safari project
+without changing its signing, version or project settings, run
+`node extension/sync-brand-icons.mjs`. The normal Safari build also does this after conversion.
+
 ```sh
 make extension
 ```
