@@ -101,6 +101,15 @@ class CacheTests(unittest.TestCase):
         self.assertEqual(restored["results"][self.url]["browser"], self.response)
         self.assertEqual(restored["checked"][self.url]["http_status"], 403)
 
+    def test_unchanged_legacy_result_is_not_reassigned_after_id_reuse(self):
+        self.seed_legacy()
+        load_cache(self.here)
+        replacement = "https://example.com/different"
+        self.write_rows(replacement)
+        restored = load_cache(self.here)
+        self.assertNotIn(replacement, restored["results"])
+        self.assertEqual(restored["results"][self.url]["address"], self.response)
+
     def test_concurrent_process_updates_are_merged(self):
         def write(index):
             subprocess.run(

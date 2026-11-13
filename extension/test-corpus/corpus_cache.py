@@ -3,6 +3,7 @@
 import argparse
 import csv
 import fcntl
+import hashlib
 import json
 import os
 import sys
@@ -71,8 +72,15 @@ def load_cache(here):
             row_id, _, suffix = key.partition(":")
             if row_id not in urls:
                 continue
+            imported = state.setdefault("legacy_results", {}).setdefault(
+                str(results_file.resolve()), {}
+            )
+            fingerprint = hashlib.sha256(json.dumps(result, sort_keys=True).encode()).hexdigest()
+            if imported.get(key) == fingerprint:
+                continue
             mode = "browser" if suffix == "browser" else "address"
             state["results"].setdefault(urls[row_id], {}).setdefault(mode, result)
+            imported[key] = fingerprint
         return state
 
 
