@@ -381,3 +381,34 @@ def test_work_and_notices_for_one_doi_cost_one_request(session: Session, fake_ti
     source.notices(RETRACTED_DOI)
 
     assert len(replay.requests) == 1
+
+
+def test_search_phrase_is_searched_only_within_the_condition(
+    session: Session, fake_time, fixture_json
+):
+    source, replay = trials(session, fake_time, broad_search(fixture_json))
+
+    records = source.search_phrase("cell therapy", "Stiff person syndrome")
+
+    assert [record.external_id for record in records] == ["NCT07341828", "NCT06588491"]
+    assert [request.url.params.get("query.cond") for request in replay.requests] == [
+        "Stiff person syndrome"
+    ]
+
+
+def test_search_phrase_without_a_condition_sends_nothing(session: Session, fake_time, fixture_json):
+    source, replay = trials(session, fake_time, broad_search(fixture_json))
+
+    assert source.search_phrase("cell therapy", None) == []
+    assert replay.requests == []
+
+
+def test_search_phrase_that_is_broad_within_the_condition_finds_nothing(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Search phrase that identifies nothing"""
+    source, _ = trials(
+        session, fake_time, lambda request: fixture_json("clinicaltrials/search_broad_count.json")
+    )
+
+    assert source.search_phrase("cell therapy", "Cancer") == []

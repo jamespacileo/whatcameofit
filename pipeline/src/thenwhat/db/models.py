@@ -165,6 +165,11 @@ class Entity(Base):
     type: Mapped[EntityType] = mapped_column(_enum(EntityType, "type"))
     name: Mapped[str] = mapped_column(Text)
     synonyms: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, server_default="{}")
+    # Words a registry or a paper would use for an intervention that has no product
+    # name. Searched for, within the claim's indication only, and never shown as a name.
+    search_phrases: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), default=list, server_default="{}"
+    )
     is_origin_paper: Mapped[bool] = mapped_column(default=False, server_default="false")
     # A DOI the article or operator gave for a paper. It is a lead for resolution,
     # not a confirmed identifier: confirmation is an approved match.
@@ -188,6 +193,9 @@ class EntityMatch(Reviewed, Base):
     score: Mapped[float]
     # What the registry record says, in one line, so a reviewer need not open every link.
     record_summary: Mapped[str | None] = mapped_column(Text)
+    # Why the record is a candidate, as codes found by rule and without a model. The
+    # site owns their wording.
+    reasons: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, server_default="{}")
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
 
 
