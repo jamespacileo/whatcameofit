@@ -1,23 +1,276 @@
-// Small line icons; the adjacent label always carries their meaning.
-const paths = {
-  search: "M21 21l-5-5 M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0",
-  target: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M12 2v3 M12 19v3 M2 12h3 M19 12h3 M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16",
-  phase: "M9 3h6 M10 3v6L4 19q-1 2 2 2h12q3 0 2-2L14 9V3 M7 15h10",
-  people: "M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M2 21v-3a6 6 0 0 1 12 0v3 M17 4a4 4 0 0 1 0 8 M17 15a5 5 0 0 1 5 5v1",
-  info: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20 M12 11v6 M12 7v.1",
-  chevron: "M6 9l6 6 6-6",
-  refresh: "M20 7a9 9 0 1 0 1 8 M20 2v5h-5",
-  image: "M4 3h16q1 0 1 1v16q0 1-1 1H4q-1 0-1-1V4q0-1 1-1 M3 17l6-6 5 5 3-3 4 4 M16 7h.1",
-  settings: "M4 7h16 M4 17h16 M8 4v6 M16 14v6",
-  clock: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20 M12 6v6l4 2",
-  book: "M4 3h12q3 0 3 3v15H6a3 3 0 0 1 0-6h13 M4 3v15 M8 7h7 M8 11h7",
+// Lucide 1.72.0 icon nodes, copied from the site's @lucide/astro package.
+// See lucide-LICENSE.txt. Adjacent labels always carry each icon's meaning.
+const nodes = {
+  "search": [
+    [
+      "path",
+      {
+        "d": "m21 21-4.34-4.34"
+      }
+    ],
+    [
+      "circle",
+      {
+        "cx": "11",
+        "cy": "11",
+        "r": "8"
+      }
+    ]
+  ],
+  "target": [
+    [
+      "circle",
+      {
+        "cx": "12",
+        "cy": "12",
+        "r": "10"
+      }
+    ],
+    [
+      "line",
+      {
+        "x1": "22",
+        "x2": "18",
+        "y1": "12",
+        "y2": "12"
+      }
+    ],
+    [
+      "line",
+      {
+        "x1": "6",
+        "x2": "2",
+        "y1": "12",
+        "y2": "12"
+      }
+    ],
+    [
+      "line",
+      {
+        "x1": "12",
+        "x2": "12",
+        "y1": "6",
+        "y2": "2"
+      }
+    ],
+    [
+      "line",
+      {
+        "x1": "12",
+        "x2": "12",
+        "y1": "22",
+        "y2": "18"
+      }
+    ]
+  ],
+  "phase": [
+    [
+      "path",
+      {
+        "d": "M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"
+      }
+    ],
+    [
+      "path",
+      {
+        "d": "M6.453 15h11.094"
+      }
+    ],
+    [
+      "path",
+      {
+        "d": "M8.5 2h7"
+      }
+    ]
+  ],
+  "people": [
+    [
+      "path",
+      {
+        "d": "M18 21a8 8 0 0 0-16 0"
+      }
+    ],
+    [
+      "circle",
+      {
+        "cx": "10",
+        "cy": "8",
+        "r": "5"
+      }
+    ],
+    [
+      "path",
+      {
+        "d": "M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3"
+      }
+    ]
+  ],
+  "info": [
+    [
+      "circle",
+      {
+        "cx": "12",
+        "cy": "12",
+        "r": "10"
+      }
+    ],
+    [
+      "path",
+      {
+        "d": "M12 16v-4"
+      }
+    ],
+    [
+      "path",
+      {
+        "d": "M12 8h.01"
+      }
+    ]
+  ],
+  "chevron": [
+    [
+      "path",
+      {
+        "d": "m6 9 6 6 6-6"
+      }
+    ]
+  ],
+  "refresh": [
+    [
+      "path",
+      {
+        "d": "M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"
+      }
+    ],
+    [
+      "path",
+      {
+        "d": "M21 3v5h-5"
+      }
+    ]
+  ],
+  "image": [
+    [
+      "rect",
+      {
+        "width": "18",
+        "height": "18",
+        "x": "3",
+        "y": "3",
+        "rx": "2",
+        "ry": "2"
+      }
+    ],
+    [
+      "circle",
+      {
+        "cx": "9",
+        "cy": "9",
+        "r": "2"
+      }
+    ],
+    [
+      "path",
+      {
+        "d": "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"
+      }
+    ]
+  ],
+  "settings": [
+    [
+      "path",
+      {
+        "d": "M10 5H3"
+      }
+    ],
+    [
+      "path",
+      {
+        "d": "M12 19H3"
+      }
+    ],
+    [
+      "path",
+      {
+        "d": "M14 3v4"
+      }
+    ],
+    [
+      "path",
+      {
+        "d": "M16 17v4"
+      }
+    ],
+    [
+      "path",
+      {
+        "d": "M21 12h-9"
+      }
+    ],
+    [
+      "path",
+      {
+        "d": "M21 19h-5"
+      }
+    ],
+    [
+      "path",
+      {
+        "d": "M21 5h-7"
+      }
+    ],
+    [
+      "path",
+      {
+        "d": "M8 10v4"
+      }
+    ],
+    [
+      "path",
+      {
+        "d": "M8 12H3"
+      }
+    ]
+  ],
+  "clock": [
+    [
+      "circle",
+      {
+        "cx": "12",
+        "cy": "12",
+        "r": "10"
+      }
+    ],
+    [
+      "path",
+      {
+        "d": "M12 6v6l4 2"
+      }
+    ]
+  ],
+  "book": [
+    [
+      "path",
+      {
+        "d": "M12 5v16"
+      }
+    ],
+    [
+      "path",
+      {
+        "d": "M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z"
+      }
+    ]
+  ]
 };
 
 export function icon(name) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   for (const [key, value] of Object.entries({ viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true", focusable: "false", class: "icon" })) svg.setAttribute(key, value);
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("d", paths[name]);
-  svg.append(path);
+  for (const [tag, attributes] of nodes[name]) {
+    const child = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const [key, value] of Object.entries(attributes)) child.setAttribute(key, value);
+    svg.append(child);
+  }
   return svg;
 }
