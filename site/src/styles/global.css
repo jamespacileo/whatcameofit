@@ -1845,10 +1845,13 @@ main nav.contents ul li + li {
   color: var(--muted);
 }
 
-.letter ul {
+/* Named with the directory so the prose pages' list rule, which comes later,
+   does not indent these lists or hold them to the reading measure. */
+.directory .letter ul {
   list-style: none;
   margin: 0;
   padding: 0;
+  max-width: none;
   columns: 3 14rem;
   column-gap: 2rem;
 }
@@ -1893,10 +1896,62 @@ main nav.contents ul li + li {
   columns: 2 14rem;
 }
 
+/* A group that is its one topic: the link takes the heading's column and its
+   count the start of the next, so the name is read once. */
+.directory.grouped .letter.solo ul {
+  grid-column: 1 / -1;
+  columns: auto;
+}
+
+.directory.grouped .letter.solo li {
+  display: grid;
+  grid-template-columns: 13rem auto;
+  justify-content: start;
+  column-gap: 1.5rem;
+}
+
+.directory.grouped .letter.solo a {
+  font-weight: 700;
+}
+
 @media (max-width: 40rem) {
   .directory.grouped .letter {
     grid-template-columns: 1fr;
     row-gap: 0.25rem;
+  }
+
+  .directory.grouped .letter.solo li {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* The group names are one line that scrolls sideways, out to the screen's
+     edges, so the list itself starts on the first screen. Both ends fade where
+     more names wait. */
+  .directory.grouped .letters {
+    flex-wrap: nowrap;
+    width: calc(100% + 2 * var(--gutter));
+    margin-inline: calc(-1 * var(--gutter));
+    padding: 3px var(--gutter);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 var(--gutter),
+      #000 calc(100% - 2.5rem),
+      transparent
+    );
+  }
+
+  .directory.grouped .letters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .directory.grouped .letters a {
+    flex: none;
+    white-space: nowrap;
   }
 }
 

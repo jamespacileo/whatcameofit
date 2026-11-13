@@ -156,13 +156,13 @@ test("Scenario: Home lists the newest reports", () => {
   assert.deepEqual([...order].sort((a, b) => a - b), order);
   // The headline opens the claim; the outlet opens the report itself.
   assert.match(html, /<a href="\/phase-claim">“Example report 3”<\/a>/);
-  assert.match(html, /<a href="https:\/\/news\.example\.org\/3">Example Outlet 3<\/a>/);
+  assert.match(html, /<a href="https:\/\/uk\.news\.example\.org\/3">Example Outlet 3<\/a>/);
 });
 
 test("Scenario: Article of a published claim", () => {
   const lookup = JSON.parse(page("lookup.json"));
   // Each article address, in comparison form, names its claim.
-  assert.deepEqual(lookup.articles["news.example.org/3"], ["phase-claim"]);
+  assert.deepEqual(lookup.articles["uk.news.example.org/3"], ["phase-claim"]);
   assert.deepEqual(lookup.articles["news.example.org/1"], ["quiet-claim"]);
   assert.deepEqual(lookup.articles["news.example.org/2"], ["quiet-claim"]);
   // Only published claims, each with the site's own wording and its page address.
@@ -256,10 +256,16 @@ test("Scenario: Long-quiet claim", () => {
 
 test("Scenario: Outlet with a stored icon", () => {
   // The icon is a file of this site, written from the export; the page names no other host.
-  const html = page("phase-claim/index.html");
+  const html = page("quiet-claim/index.html");
   assert.match(html, /<img class="tile" src="\/outlet-icons\/news\.example\.org\.png" alt=""/);
   const icon = fs.readFileSync(path.join(dist, "outlet-icons/news.example.org.png"));
   assert.deepEqual([...icon.subarray(0, 4)], [0x89, 0x50, 0x4e, 0x47]);
+});
+
+test("Scenario: Outlet on a subdomain", () => {
+  // uk.news.example.org has no icon of its own in the export; its parent domain has.
+  const html = page("phase-claim/index.html");
+  assert.match(html, /<img class="tile" src="\/outlet-icons\/news\.example\.org\.png" alt=""[^>]*>\s*<\/span>\s*<span>Example Outlet 3<\/span>\s*<\/span>\s*<span class="domain">uk\.news\.example\.org<\/span>/);
 });
 
 test("Scenario: Outlet with no stored icon", () => {
