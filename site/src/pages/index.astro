@@ -88,20 +88,21 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
           </p>
         )
       }
-
-      {
-        data.claims.length > 0 && (
-          <p class="tally">
-            {data.claims.length} {data.claims.length === 1 ? "claim" : "claims"} tracked in{" "}
-            <a href="/topics">
-              {listedTopics.length} {listedTopics.length === 1 ? "topic" : "topics"}
-            </a>
-            . <a href="/it-happened">Approvals on record</a>: {approvals} of {data.claims.length}.
-          </p>
-        )
-      }
     </div>
   </section>
+
+  {/* The tally opens the lists, under the band: the band holds only the lookup. */}
+  {
+    data.claims.length > 0 && (
+      <p class="tally">
+        {data.claims.length} {data.claims.length === 1 ? "claim" : "claims"} tracked in{" "}
+        <a href="/topics">
+          {listedTopics.length} {listedTopics.length === 1 ? "topic" : "topics"}
+        </a>
+        . <a href="/it-happened">Approvals on record</a>: {approvals} of {data.claims.length}.
+      </p>
+    )
+  }
 
   <h2 class="bar">Headlines reported most recently</h2>
   {

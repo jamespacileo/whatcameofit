@@ -304,6 +304,28 @@ main > .wrap {
   margin-top: 0;
 }
 
+/* Title, lede, box and suggestion share one right edge. */
+.band .lede,
+.band .suggest {
+  max-width: 46rem;
+}
+
+/* The band's last line closes the band; the band's padding is its only space. */
+.band .wrap > :last-child {
+  margin-bottom: 0;
+}
+
+/* Under the band, the tally opens the lists. */
+.band + .wrap > .tally {
+  margin: clamp(1.25rem, 4vw, 1.75rem) 0 0;
+  font-size: 0.95rem;
+}
+
+/* The tally belongs to the lists, so the first heading follows it closely. */
+.band + .wrap > .tally + .bar {
+  margin-top: clamp(1.25rem, 4vw, 1.75rem);
+}
+
 /* A panel on the band would be blue on blue: there the answer is drawn on white,
    in a hairline frame. */
 .band .digest {
@@ -877,12 +899,6 @@ main nav.contents ul li + li {
   margin-top: 0.5rem;
 }
 
-/* On the home page the tally closes the lookup and opens the lists. */
-.results + .tally,
-.suggest + .tally {
-  margin-top: 1.4rem;
-  font-size: 0.95rem;
-}
 
 .digest .says {
   align-self: center;
