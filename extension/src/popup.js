@@ -20,6 +20,7 @@ const controller = createPopupController({
   storage: api.storage.local,
   fetch,
   site: SITE,
+  requiresSharingConsent: true,
   async readTab() {
     const [tab] = await api.tabs.query({ active: true, currentWindow: true });
     return tab ? { ...tab, key: articleKey(tab.url) } : null;
@@ -71,6 +72,9 @@ const actions = {
   previewVisual: controller.previewVisual,
   sendVisual: controller.sendVisual,
   cancelVisual: controller.cancelVisual,
+  sharingView: controller.sharingView,
+  enableSharing: controller.enableSharing,
+  disableSharing: controller.disableSharing,
   // The reader's own lists, kept in this browser's storage and nowhere else.
   showRecent: controller.showRecent,
   showEntry: controller.showEntry,

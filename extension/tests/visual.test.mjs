@@ -100,3 +100,17 @@ test("a short social caption with an article link keeps the reviewed-article pat
  const {controller,calls}=setup({readPage:async()=>({text:"Read this",links:["https://example.org/report"],platform:"Reddit",visualCandidate:true})});
  await controller.open();assert.equal(calls.capture,0);assert.equal(calls.paid[0].image,undefined);assert.deepEqual(calls.paid[0].links,["https://example.org/report"]);
 });
+
+test("an embedded document intersecting capture is refused before pixels are taken",async()=>{
+ const api={tabs:{query:async()=>[tab],captureVisibleTab:async()=>{throw new Error("must not capture");}},scripting:{executeScript:async()=>[{result:{address:tab.url,sensitive:false,embedded:true,hidden:false}}]}};
+ await assert.rejects(capturePage(api,tab,null),e=>e.code==="capture_embedded");
+});
+
+test("first use asks before reading or sending; permission persists and can be withdrawn",async()=>{
+ let reads=0;
+ const {controller,calls,saved}=setup({requiresSharingConsent:true,readPage:async()=>{reads++;return {text:"Dental revolution",links:[],visualCandidate:true};}});
+ await controller.open();assert.equal(reads,0);assert.equal(calls.capture,0);assert.equal(calls.paid.length,0);assert.equal(calls.states.at(-1).kind,"sharing");
+ await controller.enableSharing();assert.equal(reads,1);assert.equal(calls.paid.length,1);assert.equal(saved.sharing.enabled,true);
+ await controller.disableSharing();await controller.open();assert.equal(reads,1);assert.equal(saved.sharing.enabled,false);
+ await controller.previewVisual();assert.equal(calls.capture,1);
+});

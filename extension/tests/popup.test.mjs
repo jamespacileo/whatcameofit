@@ -61,7 +61,7 @@ async function runPopup(navigate, words = "EX-1 is being studied as a treatment 
     globalThis.document = { querySelector: () => ({ textContent: "" }) };
     globalThis.window = { addEventListener: (name, callback) => { events[name] = callback; }, close() {} };
     globalThis.browser = {
-      storage: { local: { get: async () => ({}), set: async () => {} } },
+      storage: { local: { get: async () => ({ sharing: { version: 1, enabled: true } }), set: async () => {} } },
       tabs: {
         query: async () => { confirmedTab = current.id; return [current]; },
         get: async (id) => { confirmedTab = id; return current; },

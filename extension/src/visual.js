@@ -18,7 +18,7 @@ export function inspectVisible() {
       !["checkbox", "radio", "range", "button", "submit", "reset", "search", "hidden"].includes(node.type) && node.value ||
       node.isContentEditable && (node.innerText.trim() || node.matches(":focus-within")))));
   const focus = document.querySelector('shreddit-post, article, [role="article"], main') ?? document.body;
-  const media = roots.flatMap(root => [...root.querySelectorAll("img, video, canvas, iframe")])
+  const media = roots.flatMap(root => [...root.querySelectorAll("img, video, canvas")])
     .filter(node => visible(node) && (focus.contains(node) || node.getRootNode() !== document))
     .map(node => {
       const r = node.getBoundingClientRect();
@@ -26,7 +26,15 @@ export function inspectVisible() {
       return { left, top, width: Math.min(innerWidth, r.right) - left, height: Math.min(innerHeight, r.bottom) - top,
         kind: node.tagName.toLowerCase(), identity: node.currentSrc || node.src || "", time: node.currentTime ?? null };
     }).filter(r => r.width >= 120 && r.height >= 80).sort((a, b) => b.width * b.height - a.width * a.height);
-  return { address: location.href, sensitive, hidden: document.hidden,
+  // An embedded document may contain credentials that this document cannot inspect.
+  // Refuse only frames overlapping the pixels we would send, not unrelated adverts.
+  const crop = media[0] ?? { left: 0, top: 0, width: innerWidth, height: innerHeight };
+  const embedded = roots.some(root => [...root.querySelectorAll("iframe")].some(frame => {
+    if (!visible(frame)) return false;
+    const r = frame.getBoundingClientRect();
+    return r.left < crop.left + crop.width && r.right > crop.left && r.top < crop.top + crop.height && r.bottom > crop.top;
+  }));
+  return { address: location.href, sensitive, embedded, hidden: document.hidden,
     width: innerWidth, height: innerHeight, crop: media[0] ?? null,
     media: media.slice(0, 5), selectionOnly: String(getSelection() ?? "").trim().length >= 20 };
 }
@@ -50,6 +58,7 @@ export async function capturePage(api, tab, signal, encode = resizeCapture) {
     const [{ result }] = await api.scripting.executeScript({ target: { tabId: tab.id }, func: inspectVisible });
     if (result.address !== tab.url || result.hidden) throw failure("page_changed");
     if (result.sensitive) throw failure("capture_sensitive");
+    if (result.embedded) throw failure("capture_embedded");
     return result;
   }
   try {

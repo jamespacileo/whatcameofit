@@ -42,8 +42,8 @@ import Base from "../layouts/Base.astro";
     from the second, and removing the extension removes both.
   </p>
   <p>
-    If the page is not tracked and live search is available, opening the extension also starts
-    the registry search described below. No second search click is needed. The extension does
+    Before the first untracked lookup, the extension asks you to allow sharing page content and screenshot fallback with our service and OpenAI. If you allow it, opening an untracked page starts
+    the registry search described below automatically. You can turn this off in Automatic search settings and keep using reviewed claim matching. The extension does
     not monitor other tabs or automatically search pages while you browse with it closed.
     Open it only on public reports you want to check. Select words before opening it to limit
     the text sent.
@@ -56,13 +56,13 @@ import Base from "../layouts/Base.astro";
     and the cleaned page address through our service to OpenAI. A video contributes only its
     current frame, not its audio. Screenshots may include personal information visible on the
     page: open the extension only on public reports. Private browser windows and visible password
-    or editing fields disable screenshot capture. Selecting words prevents automatic screenshots.
+    or editing fields, and embedded documents overlapping the capture area, disable screenshot capture. Selecting words prevents automatic screenshots.
     Nothing is captured while the extension is closed.
   </p>
   <p>
     The extension keeps up to ten successful automatic results in this browser for 24 hours,
     alongside a fingerprint of the content, so reopening a report need not make another paid
-    lookup. It does not save screenshot pixels or submitted page text. Previous results show their
+    lookup. A visual cache check may take a fresh local screenshot to compare its pixels, without sending it when the result matches. It does not save screenshot pixels or submitted page text. Previous results show their
     checked-at time. Search again requests a fresh lookup; Clear this list in Recently checked
     also clears these saved results. Removing the extension removes them.
   </p>
@@ -78,9 +78,8 @@ import Base from "../layouts/Base.astro";
   </p>
   <p>
     In the extension, opening the popup on an untracked page reads the page or your selected words and sends
-    that text and outgoing links to our service. A selection limits the text sent; outgoing links
-    can still be included. A post also identifies its platform. Up to three X short links may
-    be opened through t.co without cookies or a referrer. When no words are selected, a cleaned page address is included to check for an earlier result. Query parameters and fragments are removed. The text you choose may itself contain personal information.
+    that text and outgoing links to our service. A selection sends only your selected words, without other page links or a page address. A post also identifies its platform. Up to three X short links may
+    be opened through t.co without cookies or a referrer. When no words are selected, a cleaned page address is included to check for an earlier result. Tracking parameters and fragments are removed; numeric article identifiers are preserved. Addresses with other query parameters are omitted. The text you choose may itself contain personal information.
     Please use public reports and avoid sending private medical or other sensitive information.
   </p>
   <p>

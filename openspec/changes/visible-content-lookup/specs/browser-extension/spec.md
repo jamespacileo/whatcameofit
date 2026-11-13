@@ -17,3 +17,10 @@ The extension SHALL reuse successful results for unchanged content for at most 2
 #### Scenario: Opening a previously checked report
 - **WHEN** a fresh result matches the current page and content fingerprint
 - **THEN** it is shown as an earlier result without a new model call; visual results compare a fresh local capture digest before reuse, and no pixels are retained or transmitted on a cache hit
+
+### Requirement: Informed automatic-search choice
+Before reading or transmitting untracked page content, the extension SHALL ask once for explicit permission identifying OpenAI, the cleaned page address, page text and screenshot fallback. Declining SHALL retain reviewed-claim lookup. Automatic search settings SHALL allow withdrawal; accepted permission SHALL permit automatic lookup on subsequent popup openings without another click.
+
+#### Scenario: First opening before permission
+- **WHEN** the reader opens an untracked page without having enabled automatic search
+- **THEN** no page content is read or sent, and the reader can allow automatic search or use reviewed claims only

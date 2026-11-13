@@ -21,7 +21,7 @@ const SIX_HOURS = 6 * 60 * 60 * 1000;
 // Refresh pre-automatic-lookup caches once so an upgrade sees current service settings.
 const CACHE_VERSION = 2;
 
-export function createPopupController({ storage, fetch, site, readTab, readPage, isCurrentPage, capturePage, describeAnswer, present }) {
+export function createPopupController({ storage, fetch, site, readTab, readPage, isCurrentPage, capturePage, describeAnswer, present, requiresSharingConsent = false }) {
   const abort = new AbortController();
   let tab = null;
   let live = null;
@@ -38,6 +38,8 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
   let visual = null;
   let lastRead = null;
   let visualGeneration = 0;
+  let sharing = !requiresSharingConsent;
+  const sharingView = () => show({ kind: "sharing", enabled: sharing });
 
   const save = (values) => Promise.resolve().then(() => storage.set(values)).catch(() => {});
 
@@ -103,7 +105,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     const { visualCandidate, selectionOnly, contentFingerprint, ...sent } = request;
     return sent;
   };
-  const eligible = () => Boolean(capturePage && tab && live && !tab.incognito && publicWebUrl(tab.url));
+  const eligible = () => Boolean(sharing && capturePage && tab && live && !tab.incognito && publicWebUrl(tab.url));
   async function current() {
     return !closed && await isCurrentPage(tab).catch(() => false) && !closed;
   }
@@ -151,6 +153,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
   }
   async function performSearch({ reuse = false } = {}) {
     if (closed || !tab || !live) return;
+    if (!sharing) { sharingView(); return; }
     visual = null;
     show({ kind: "searching" });
     let request;
@@ -219,16 +222,22 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     if (closed) return;
     const [loaded, saved] = await Promise.all([
       tab?.key ? loadIndex() : { index: null, savedAt: null },
-      storage.get(["recent", "follows", "results"]).catch(() => ({})),
+      storage.get(["recent", "follows", "results", "sharing"]).catch(() => ({})),
     ]);
     if (closed) return;
     index = loaded.index;
     recent = saved?.recent ?? [];
     follows = saved?.follows ?? [];
     results = saved?.results ?? [];
+    sharing = !requiresSharingConsent || saved?.sharing?.version === 1 && saved.sharing.enabled === true;
     const state = stateFor(tab?.key ?? null, loaded);
     live = state.live ?? null;
     if (state.kind === "untracked" && live) {
+      if (!sharing) {
+        if (saved?.sharing?.enabled === false) showPage({ ...state, live: null });
+        else sharingView();
+        return;
+      }
       await search({ reuse: true });
       return;
     }
@@ -296,5 +305,18 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     abort.abort();
   }
 
-  return { open, search, previewVisual, sendVisual, cancelVisual, close, showRecent, showEntry, clearRecent, showFollowing, back, follow, unfollow, seen };
+  async function enableSharing() {
+    sharing = true;
+    await save({ sharing: { version: 1, enabled: true } });
+    if (pageState?.kind === "tracked") show(pageState);
+    else await search({ reuse: true });
+  }
+
+  async function disableSharing() {
+    sharing = false;
+    await save({ sharing: { version: 1, enabled: false } });
+    showPage(pageState?.kind === "tracked" ? pageState : { kind: "untracked" });
+  }
+
+  return { open, search, previewVisual, sendVisual, cancelVisual, close, showRecent, showEntry, clearRecent, showFollowing, back, follow, unfollow, seen, sharingView, enableSharing, disableSharing };
 }

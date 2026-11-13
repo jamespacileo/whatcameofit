@@ -82,6 +82,8 @@ const tracked = (claims, savedAt = null) => ({
 });
 
 const states = [
+  ["First use", { kind: "sharing", enabled: false }],
+  ["Automatic search settings", { kind: "sharing", enabled: true }],
   ["Tracked, with a promise", tracked([claim])],
   ["Tracked, no signal, no promise", tracked([quiet])],
   ["Longest wording", tracked([long])],
@@ -180,6 +182,9 @@ const actions = {
   open: (address) => console.log("open", address),
   retry: () => console.log("retry"),
   search: () => console.log("search"),
+  enableSharing: log("enableSharing"),
+  disableSharing: log("disableSharing"),
+  sharingView: log("sharingView"),
   previewVisual: log("previewVisual"),
   sendVisual: log("sendVisual"),
   cancelVisual: log("cancelVisual"),
