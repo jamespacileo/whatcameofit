@@ -2,4 +2,4 @@
 - [x] Refresh available publisher icons without changing published claims.
 - [x] Generate and version browser/launcher assets from the selected logo.
 - [x] Improve source spacing and retain fallback tiles for failed images.
-- [ ] Validate tests, rendered layouts and public deployment.
+- [x] Validate tests, rendered layouts and deployment rehearsal.

@@ -596,7 +596,7 @@ a.chip:hover {
 
 @media (max-width: 40rem) {
   .take-body {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   /* The sentence and its buttons first; the card they describe after. */
