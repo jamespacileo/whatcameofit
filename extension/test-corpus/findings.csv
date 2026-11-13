@@ -1,0 +1,12 @@
+finding,rows,what_happened
+Business and legal stories read as treatment reports,"N003, N004, N005","Earnings, supply and lawsuit stories that name a drug were searched as if they reported a treatment result. Expected: no specific treatment."
+Threads post text not read,S021,"The reader sent only the page footer. The post was only in the tab title, which the title fallback does not match for Threads."
+Platform clutter sent with posts,"S010, S011, S022, S024, S025","LinkedIn and Facebook comments, Threads 'Related threads', and Facebook's login form and cookie banner were sent along with the post."
+TikTok reads the wrong video,S014,"The player showed a different CNN video, and the reader read that caption."
+Video pages give almost no text,"S012, S013, S023","YouTube gave only the player time and a signed-out Facebook post gave nothing, so the popup would need its screenshot fallback (not automated here)."
+Mixed-script treatment name,A047,"The model returned 'bეპirovirsen' with Georgian letters. The registry search still found records."
+Encyclopedia pages read as reports,"N008, N009",Wikipedia drug pages produced a registry search. Decide whether that is wanted.
+"Server refused, browser could read","A021, A023, A024, N002","Sites that block the service by robots.txt or bot checks were readable in a browser, as the extension reads them."
+Blocked even in a browser,"A017, A022, A025","Bot checks (Medical Xpress, Business Wire) and a reCAPTCHA (PubMed) blocked the test browser. A person's browser may pass."
+Shortened links refused,"A034, N010",Google News story pages and youtu.be links are treated as shortened links.
+Not run,"S004, S005, S009",The test browser cannot open reddit.com or nytimes.com. Run these by hand with the extension.
