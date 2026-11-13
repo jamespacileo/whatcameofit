@@ -12,6 +12,25 @@ const SAME_SITE_LABELS = /^(www|m|mobile|amp|edition)\./;
 // Hosts that serve one site under two names.
 const HOST_ALIASES = { "bbc.co.uk": "bbc.com" };
 
+/** A single YouTube video, regardless of share, Shorts, live or watch URL form. */
+export function youtubeVideoUrl(value) {
+  let url;
+  try { url = new URL(value); } catch { return null; }
+  if (!/^https?:$/.test(url.protocol) || url.username || url.password || url.port) return null;
+  const host = url.hostname;
+  let id;
+  if (host === "youtu.be") id = url.pathname.match(/^\/([\w-]{11})\/?$/)?.[1];
+  else if (["youtube.com", "www.youtube.com", "m.youtube.com"].includes(host)) {
+    id = url.pathname === "/watch" && url.searchParams.getAll("v").length === 1
+      ? url.searchParams.get("v")
+      : url.pathname.match(/^\/(?:shorts|live|embed)\/([\w-]{11})\/?$/)?.[1];
+  }
+  if (!id || !/^[\w-]{11}$/.test(id)) return null;
+  // A path ID and a different query ID are ambiguous, even on a known host.
+  if (url.pathname !== "/watch" && url.searchParams.has("v")) return null;
+  return `https://www.youtube.com/watch?v=${id}`;
+}
+
 /**
  * @param {string} address
  * @returns {string | null} host and path in comparison form, or null when the
@@ -25,6 +44,9 @@ export function articleKey(address) {
     return null;
   }
   if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+
+  const video = youtubeVideoUrl(address);
+  if (video) return video.slice("https://www.".length);
 
   let host = url.hostname.toLowerCase();
   while (SAME_SITE_LABELS.test(host)) host = host.replace(SAME_SITE_LABELS, "");

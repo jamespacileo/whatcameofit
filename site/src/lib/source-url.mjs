@@ -1,4 +1,5 @@
 // A source address is context, not permission to fetch or publish browser content.
+import { youtubeVideoUrl } from "./article-key.mjs";
 export function publicWebUrl(value) {
   try {
     const url = new URL(value);
@@ -12,6 +13,14 @@ export function publicWebUrl(value) {
 export function sourceUrl(value) {
   const url = publicWebUrl(value);
   if (!url) return null;
+  const video = youtubeVideoUrl(url.href);
+  if (video) {
+    // Keep the video ID; playback position, playlist context and sharing tokens are
+    // not sent. Unknown parameters still disqualify the URL, just as for articles.
+    const playback = /^(v|t|start|end|si|feature|app|pp|list|index|ab_channel|autoplay|loop|rel)$/;
+    if ([...url.searchParams.keys()].some(key => !playback.test(key) && !/^utm_.+$/i.test(key))) return null;
+    return video;
+  }
   // Do not collapse distinct query-addressed pages into the same cached answer.
   // Unknown parameters may also be private tokens: omit this URL entirely.
   for (const [key, value] of [...url.searchParams]) {
