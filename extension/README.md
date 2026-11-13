@@ -8,6 +8,8 @@ For a page that is not tracked, and only after the reader enables automatic sear
 
 The extension reads nothing as you browse with the popup closed. A reviewed match and a non-web tab start no model request. Repeated actions share an in-flight lookup, and closing the popup cancels its pending fetch. Each candidate is grouped in a card with its registry link, phase, state, identifier and model-estimated match confidence. Confidence concerns the match to the report.
 
+Live answers can also include related paper metadata from OpenAlex and organisation identities from ROR, in collapsed sections. These are unreviewed search results, not evidence of effectiveness or an organisation's involvement. Only derived treatment/condition terms and explicitly named organisations go to these providers; page addresses, screenshots and article text do not. Public metadata is cached for seven days. Both integrations stay within their free allowances and can be unavailable without blocking the trial result.
+
 Following and recent checks work in Safari. Background notifications and extension reminder choices are offered only when the browser provides its notifications API; Safari currently does not. Its background refresh still updates followed claims for the next popup opening. Claim pages also offer calendar reminders.
 
 A post on X links out only through X's shortener (`t.co`), which the site's server may not follow. The popup opens such a link in the browser, as a click would, to learn which article it leads to, and sends that address. That is why the extension has permission for `t.co` as well as for the site.
@@ -76,6 +78,20 @@ For the local registry-search service, use `SITE_URL=http://localhost:8787 make 
 3. Turn the extension on in Safari's Settings, Extensions.
 
 App Store distribution needs Apple Developer Program access, a registered bundle identifier and distribution signing. The script's unsigned build is for local testing. The production `extension/dist` resources can also be zipped for Apple's Safari Web Extension Packager in App Store Connect. Store submission and production screenshots remain separate release steps.
+
+### App Store release checks
+
+Use a stable Xcode release that App Store Connect accepts. A local build succeeding with a beta SDK does not mean Apple will accept its upload. On a machine with both installations, select the stable toolchain for **both conversion and archiving**, without changing the machine's global selection:
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer make extension-safari
+```
+
+Open the generated project with that same stable Xcode. Set the development team on the containing app and extension, select automatic signing, and use a new build number for both targets. Verify that their release versions match the extension manifest and their deployment targets remain macOS 12.0. Set the containing app's category to Reference and declare `ITSAppUsesNonExemptEncryption = NO` in both targets' Info.plist while the app uses only the existing HTTPS networking. Reassess the encryption declaration if that changes. The converter regenerates these files, so apply release settings after conversion.
+
+Archive the Release scheme for a generic Mac, validate its signatures and bundled extension resources, then distribute through App Store Connect. Wait for processing and explicitly select the new build in the store version; uploading does not replace an already selected build. Update the description and review instructions, inspect the privacy disclosures against actual data flows, and use screenshots of the installed release. Verify **Waiting for Review** after submitting.
+
+For 0.9.0 (9), Apple rejected an archive made with Xcode 27.2 beta (27B5019j), then accepted the same release built with stable Xcode 27.2 (27B52). The stable archive's extension resources matched the installed 0.9.0 build. A live Safari check of the University of Nottingham's `clinical-trial-tourettes` article returned five OpenAlex papers and two ROR identities; reopening reused the previous result. No new App Privacy category was needed for the derived searches, which are covered by the existing Search History disclosure.
 
 ## Layout
 
