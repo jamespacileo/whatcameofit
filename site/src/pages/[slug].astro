@@ -1,5 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
+import CalendarPlus from "@lucide/astro/icons/calendar-plus";
 import ChevronDown from "@lucide/astro/icons/chevron-down";
 import Clock from "@lucide/astro/icons/clock";
 import Copy from "@lucide/astro/icons/copy";
@@ -79,6 +80,8 @@ const inTopic = data.claims
 const others = inTopic.slice(0, 3);
 const address = `${SITE.url}/${claim.slug}`;
 const sentence = shareSentence(claim, STATUS_LABELS[claim.status.code], data.last_checked_at, address);
+// Reminders: the dates a reader can save, which the browser turns into a calendar file.
+const promiseDue = latestPromise(claim)?.parsed_date ?? null;
 // The whole of what another site needs to show this claim's status.
 const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.headline.replaceAll('"', "&quot;")}" width="440" height="420" style="border:0;max-width:100%" loading="lazy"></iframe>`;
 ---
@@ -529,10 +532,58 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
         </button>
       </details>
     </section>
+
+    {/* Shown only where the browser can make and save the file. */}
+    <section
+      class="again"
+      data-pagefind-ignore
+      data-remind
+      data-site={SITE.name}
+      data-headline={claim.headline}
+      data-slug={claim.slug}
+      data-url={address}
+      data-promise={promiseDue}
+      data-first={claim.first_reported_date}
+      hidden
+    >
+      <h2 class="bar" id="check-again">Check again later</h2>
+      <p class="take-why">
+        Save a date to your calendar to look at this record again. The file is made on this
+        device; nothing is sent to us.
+      </p>
+      <div class="take-actions">
+        {
+          promiseDue && (
+            <button type="button" class="share" data-when="promise">
+              <CalendarPlus size={16} stroke-width={1.9} aria-hidden="true" />
+              On the promised date, {formatDate(promiseDue)}
+            </button>
+          )
+        }
+        <button type="button" class="share" data-when="six-months">
+          <CalendarPlus size={16} stroke-width={1.9} aria-hidden="true" />
+          In six months
+        </button>
+        <button type="button" class="share" data-when="year">
+          <CalendarPlus size={16} stroke-width={1.9} aria-hidden="true" />
+          In a year
+        </button>
+        {
+          claim.first_reported_date && (
+            <button type="button" class="share" data-when="anniversary">
+              <CalendarPlus size={16} stroke-width={1.9} aria-hidden="true" />
+              On the anniversary, {dayAndMonth(claim.first_reported_date)}
+            </button>
+          )
+        }
+      </div>
+    </section>
   </article>
 </Base>
 
 <script>
+  import { calendarFile, reminderDate, type ReminderChoice } from "../lib/calendar";
+
   // Sharing uses the device's own share sheet where there is one, and copies the
   // page address where there is not. The button only appears when it can work.
   // Copying: the button appears only where the clipboard can be written, says so when
@@ -566,6 +617,43 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
         }
       });
     }
+  }
+
+  // A reminder is a calendar file made here, in the browser, from a date the reader
+  // picks. A choice that cannot be offered (a promised date already past) is removed.
+  const remind = document.querySelector<HTMLElement>("[data-remind]");
+  if (remind && typeof Blob !== "undefined" && typeof URL.createObjectURL === "function") {
+    const now = new Date();
+    const pad = (value: number) => String(value).padStart(2, "0");
+    const dates = {
+      today: `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`,
+      promiseDue: remind.dataset.promise || null,
+      firstReported: remind.dataset.first || null,
+    };
+    for (const choice of remind.querySelectorAll<HTMLButtonElement>("[data-when]")) {
+      const date = reminderDate(choice.dataset.when as ReminderChoice, dates);
+      if (!date) {
+        choice.remove();
+        continue;
+      }
+      choice.addEventListener("click", () => {
+        const file = calendarFile({
+          site: remind.dataset.site!,
+          headline: remind.dataset.headline!,
+          url: remind.dataset.url!,
+          slug: remind.dataset.slug!,
+          date,
+          madeAt: new Date().toISOString(),
+        });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(new Blob([file], { type: "text/calendar" }));
+        link.download = `${remind.dataset.slug}-${date}.ics`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+        confirm(choice, "Calendar file saved");
+      });
+    }
+    remind.hidden = false;
   }
 
   const button = document.querySelector<HTMLButtonElement>("[data-share]");
