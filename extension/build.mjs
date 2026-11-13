@@ -58,10 +58,12 @@ fs.writeFileSync(
 );
 
 const { Resvg } = fromSite("@resvg/resvg-js");
-const mark = fs.readFileSync(path.join(site, "public/favicon.svg"));
+// The mark, and the same mark drawn for toolbar sizes, where a finer drawing blurs.
+const mark = fs.readFileSync(path.join(site, "public/mark.svg"));
+const small = fs.readFileSync(path.join(site, "public/favicon.svg"));
 const sizes = [16, 32, 48, 96, 128, 256];
 for (const size of sizes) {
-  const image = new Resvg(mark, { fitTo: { mode: "width", value: size } }).render();
+  const image = new Resvg(size <= 32 ? small : mark, { fitTo: { mode: "width", value: size } }).render();
   fs.writeFileSync(path.join(dist, "icons", `${size}.png`), image.asPng());
 }
 const icons = Object.fromEntries(sizes.map((size) => [size, `icons/${size}.png`]));

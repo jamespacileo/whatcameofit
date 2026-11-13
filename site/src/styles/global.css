@@ -1302,8 +1302,8 @@ main nav.contents ul li + li {
   font-weight: 400;
   line-height: 1.45;
   box-shadow:
-    0 10px 28px -8px rgb(23 37 52 / 0.2),
-    0 2px 6px -2px rgb(23 37 52 / 0.1);
+    0 10px 28px -8px rgb(15 31 56 / 0.2),
+    0 2px 6px -2px rgb(15 31 56 / 0.1);
 }
 
 /* Without anchor positioning the panel sits at the foot of the screen. */
