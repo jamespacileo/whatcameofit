@@ -54,7 +54,7 @@ const text = {
   recentEmpty: "Nothing checked yet.",
   checkedOn: (outlet, date) => (outlet ? `${outlet} · checked ${date}` : `Checked ${date}`),
   possible: (count) => `${count} possible records`,
-  noneThen: "No record was found when this was checked. Open the page and press the button to check it again.",
+  noneThen: "No saved trial match. Open the page to check again.",
   openPage: "Open the page",
   clear: "Clear this list",
   follow: "Follow this claim",
@@ -320,7 +320,7 @@ function recentCard(entry, actions) {
     candidates.length === 1 && only.status && el("p", "kept-status", only.status),
     candidates.length === 1 && link(only.status ? text.open : only.title, only.url, "button quiet", actions.open),
     candidates.length > 1 && press(text.possible(candidates.length), "button quiet", () => actions.showEntry(entry.key)),
-    candidates.length === 0 && el("p", "small", text.noneThen),
+    candidates.length === 0 && el("p", "small", entry.answer.limitation || text.noneThen),
   ]);
 }
 

@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, test } from "node:test";
 import { render } from "../src/view.js";
+import { answerOf, candidatesOf } from "../src/kept.js";
+import { describeAnswer, LIVE } from "../../site/src/lib/live-lookup.mjs";
 
 // Record the standard DOM operations the renderer emits. Layout is checked in Chrome.
 class Element {
@@ -206,7 +208,7 @@ test("a checked page leads to its one claim, its candidates, or back to the page
   assert.match(cards[1].textContent, /Not checked by a person.*2 possible records/);
   elements(cards[1], "button")[0].listeners.click();
   assert.equal(asked, "news.example.org/a");
-  assert.match(cards[2].textContent, /No record was found when this was checked/);
+  assert.match(cards[2].textContent, /No saved trial match/);
   assert.match(root.textContent, /Kept in this browser only.*Clear this list/);
 
   render(root, { kind: "recent", entries: [] }, site, listActions, kept);
@@ -226,3 +228,18 @@ test("the following list says what changed and what is no longer published", () 
   assert.doesNotMatch(cards[1].textContent, /Phase 2 trial/);
   assert.equal(elements(cards[1], "a").length, 0);
 });
+
+for (const identified of [false, true]) {
+  test(`recent checks preserve whether the registry was searched (${identified})`, () => {
+    const answer = answerOf({ kind: "answer", shown: describeAnswer({
+      about_a_treatment: identified, treatment: identified ? "EX-1" : null,
+      condition: "tooth agenesis", candidates: [], tracked: [],
+    }) });
+    const entry = { key: "news.example.org/check", url: "https://news.example.org/check",
+      title: "Synthetic report", outlet: "news.example.org", at: Date.UTC(2026, 10, 13), answer };
+    const root = new Element("main");
+    render(root, { kind: "recent", entries: [{ ...entry, candidates: candidatesOf(entry, site) }] }, site, listActions, kept);
+    assert.ok(root.textContent.includes(identified ? LIVE.none : LIVE.notATreatment));
+    assert.doesNotMatch(root.textContent, /No record was found when this was checked/);
+  });
+}
