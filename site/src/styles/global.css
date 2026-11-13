@@ -997,6 +997,11 @@ main nav.contents ul li + li {
     order: 1;
   }
 
+  /* The plain words stay directly under the label they explain. */
+  .digest .gloss {
+    order: 1;
+  }
+
   .digest .means {
     order: 2;
     margin: 0.4rem 0 0.2rem;

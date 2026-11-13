@@ -32,7 +32,7 @@ Add `STATUS_GLOSSES: Record<StatusCode, string>` beside the labels and meanings.
 
 Rewriting `STATUS_MEANINGS` in plain words was considered and rejected: the meanings are the accurate statement of the rule ("in the registries checked", "furthest trial that has started") and `lookup.json` serves them to the extension.
 
-A gloss must not claim more than the status rule knows. "Not yet tested in people" would be wrong for `preclinical_only`, because the rule knows only that no trial was found and the first reports were not recorded as a study in people. Proposed glosses, to be confirmed by the operator during apply:
+A gloss must not claim more than the status rule knows. "Not yet tested in people" would be wrong for `preclinical_only`, because the rule knows only that no trial was found and the first reports were not recorded as a study in people. Glosses, confirmed by the operator on 2026-11-13 ("Apply it" with the wording as proposed):
 
 | Code | Gloss |
 | --- | --- |
@@ -49,21 +49,23 @@ A gloss must not claim more than the status rule knows. "Not yet tested in peopl
 
 ### The summary sentence is a pure function over counts
 
-`topicSummary(counts: Map<StatusCode, number>): string | null` in `status.ts`, with a fourth table of clause forms per code, singular and plural (for example `preclinical_only`: "has no trial in people on record" / "have no trial in people on record"). It takes no claims, dates or clock, so it is tested directly and at the built page.
+`topicSummary(counts: Map<StatusCode, number>): string | null` in `status.ts`, with a fourth table of clause forms per code, singular and plural (for example `preclinical_only`: "has no trial in people on record" / "have no trial in people on record"). A phase clause says "has reached", not "is in": the status is the furthest trial that has started, and that trial may have ended. It takes no claims, dates or clock, so it is tested directly and at the built page.
 
 Rules:
 
-1. Zero claims: `null`, and the page keeps its existing empty message.
+1. Zero claims: `null`. The page keeps its count line ("0 reported breakthroughs tracked.") and its existing empty message, and shows no summary.
 2. Opening: "Of N reported breakthroughs tracked," then one clause per status present, as "K clause". One claim: "1 reported breakthrough tracked: it clause."
 3. Order: `STAGE_PATH` order, then off-path codes in the order of `STATUS_LABELS`.
-4. More than four statuses present: name the four with the most claims (ties broken by the order in rule 3), still printed in rule 3 order, then "and M at other statuses".
-5. The lede keeps "newest first" as a separate short sentence, since the table order is unchanged.
+4. More than four statuses present: name the four with the most claims (ties broken by the order in rule 3), still printed in rule 3 order, then "and M are at other statuses".
+5. The lede keeps "Newest first." as a separate short sentence when there is more than one claim, since the table order is unchanged.
 
 Deriving clauses from the glosses by string surgery was rejected: verb agreement would need per-code exceptions, and a table of fixed clauses can be read and checked whole. Every clause, both forms, goes through `assertNeutral`.
 
 ### The row link is the name; the headline is plain text under it
 
 The link text becomes `claim.intervention.name`; the headline is a `<span>` below it in the muted text colour at body size, not bold, not underlined. The link is stretched over the cell so the whole row cell stays a tap target on a phone.
+
+The same row is used by the home page's "Statuses set most recently" list, which lists claims. Its "Headlines reported most recently" list is a list of news reports and keeps the outlet's headline as the link.
 
 Putting both name and headline inside the link was rejected: a screen reader's link list would again read twenty words per claim, which is the problem being removed.
 
@@ -73,7 +75,7 @@ Putting both name and headline inside the link was rejected: a screen reader's l
 
 ## Risks / Trade-offs
 
-- [An intervention name is long or reads as a description for some claims] → The headline is still in the row. During apply, list the names of all seeded claims and report any over 40 characters to the operator; fixing a name is a data change outside this change.
+- [An intervention name is long or reads as a description for some claims] → The headline is still in the row. Found during apply: 31 of the 84 published claims have a name over 40 characters, the longest 97, mostly descriptions of interventions that have no product name. They still read shorter than their headlines. Shortening a name is a data change outside this change.
 - [A gloss overstates what the rule knows] → Glosses are worded against `STATUS_MEANINGS` one by one and confirmed by the operator before merge.
 - [The row gets taller with name, headline and gloss] → The headline is clamped to two lines in lists at desktop width; the full headline is one click away on the claim page.
 - [The verdict word list is short, so a gloss could carry a soft verdict it does not catch] → Same exposure as labels today; the wording is fixed text reviewed in the diff.

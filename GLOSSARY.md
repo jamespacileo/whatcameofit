@@ -26,6 +26,7 @@ Domain terms for thenwhat. Behavior is specified in `openspec/`; this file only 
 | **Status** | Where a claim stands, derived by fixed rules from its approved evidence events: preclinical only, no trial record found, trial registered, Phase 1 to 3, approved, failed, terminated or retracted. With no trial found, the confirmed evidence stage decides between the first two: a study in people is "no trial record found", laboratory or animal work is "preclinical only". |
 | **Standing trial** | A trial that is neither terminated nor withdrawn and carries no failure flag. Status comes from the furthest standing trial that has started. |
 | **Failure flag** | A human-set marker that a trial missed its primary endpoint, with a source link. The only way a claim becomes "failed". |
+| **Gloss** | A status in plain words, for a reader who does not know trial phases: one fixed phrase per status, worded by the site. It claims no more than the status rule knows and is never a status itself. |
 | **Overlay** | Extra text on a status, not a status itself. The no-signal overlay says how many years have passed without a new evidence event. |
 | **Decision step** | A bounded classification made through the `decide` interface, such as scoring a match. Always advisory. |
 | **Human label** | The operator's review decision recorded against a decision step's suggestion. Used later to evaluate and calibrate. |
