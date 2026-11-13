@@ -17,4 +17,4 @@ The account's disabled Shorts recommendations prevented an ordinary next-recomme
 
 The final build includes the YouTube help-link fix and the newly merged branding. All 113 extension tests and 195 site tests passed, followed by production site and extension builds and an Xcode universal Safari build. The installed bundle was ad-hoc signed and strictly verified; every installed extension resource was compared with the build output. Only one extension identifier was registered.
 
-Final enabled-build smoke check is pending the Safari checkbox being enabled.
+The final reinstalled build was enabled in Safari and completed a fresh automatic lookup of `tLesHyxwxs8`, again identifying elastin-like polypeptides with no matching trial record. Safari's enabled checkbox and the single registered 0.8.0 plugin were verified. Stage Manager, temporarily disabled for reliable UI inspection, was restored to its original enabled setting.

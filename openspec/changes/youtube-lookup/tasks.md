@@ -11,4 +11,4 @@
 - [x] Verify the installed extension on a regular video, loaded transcript, Shorts navigation and frame fallback in Safari; see verification.md for observed results and the disabled-recommendations limit.
 - [x] Fix the Safari startup failure when the optional notifications API is absent; preserve undelivered reminders and hide unsupported reminder controls.
 - [x] Exclude YouTube's generated help link from article sources; reproduce with a failing synthetic test, then pass it.
-- [ ] Verify the final reinstalled build is enabled and opens normally before merging.
+- [x] Verify the final reinstalled build is enabled and opens normally before merging.
