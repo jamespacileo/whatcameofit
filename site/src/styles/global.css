@@ -775,30 +775,45 @@ body.embed {
   border: 1px solid var(--rule);
   border-radius: var(--radius);
   background: var(--paper);
-  padding: 0.9rem 1.1rem 1rem;
+  padding: 0 1.1rem 1rem;
+  /* The navy head reaches the frame's edges and takes its corners. */
+  overflow: hidden;
 }
 
+/* The head is the site's masthead in small: the name in white on deep navy. */
 .embed-name {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: 1rem;
-  margin: 0;
+  margin: 0 -1.1rem;
+  padding: 0.5rem 1.1rem;
   max-width: none;
   font-size: 0.8rem;
-  color: var(--muted);
+  background: var(--footer);
+  /* The quieter line on navy: a pale blue, not a grey. */
+  color: #c9d9ee;
 }
 
 .embed-name a {
   font-weight: 700;
-  color: var(--ink);
+  color: var(--paper);
   text-decoration: none;
+}
+
+.embed-name a:focus-visible {
+  outline-color: var(--paper);
+}
+
+.embed-name ::selection {
+  background: var(--paper);
+  color: var(--footer);
 }
 
 .embed h1 {
   font-size: 1.05rem;
   line-height: 1.3;
-  margin: 0.5rem 0 0.7rem;
+  margin: 0.7rem 0 0.7rem;
   text-wrap: pretty;
   /* Three lines at most, so the status stays inside the frame the snippet asks for. */
   display: -webkit-box;
