@@ -195,6 +195,30 @@ def test_descriptions_the_model_returns_are_not_recorded_as_names(session: Sessi
     assert intervention.synonyms == ["EX-1"]
 
 
+def test_device_with_no_name_gets_search_phrases_and_no_other_name(session: Session):
+    """Scenario: Device with no product name"""
+    output = DRAFT | {
+        "intervention": "Wrist-worn median nerve stimulation device",
+        "intervention_synonyms": [],
+        "intervention_search_phrases": ["median nerve stimulation", "the device"],
+        "indication": "Tourette syndrome",
+    }
+
+    claim = draft(session, output)
+
+    [intervention] = entities(session, claim, EntityType.INTERVENTION)
+    assert intervention.search_phrases == ["median nerve stimulation"]
+    assert intervention.synonyms == []
+
+
+def test_named_drug_may_have_no_search_phrase(session: Session):
+    """Scenario: Named drug"""
+    claim = draft(session)
+
+    [intervention] = entities(session, claim, EntityType.INTERVENTION)
+    assert intervention.search_phrases == []
+
+
 def test_article_with_no_promise_gives_a_draft_without_promises(session: Session):
     """Scenario: Article with no promise"""
     claim = draft(session, DRAFT | {"promises": []})

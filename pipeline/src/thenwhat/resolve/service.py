@@ -67,6 +67,21 @@ class TrialSearch(Protocol):
         self, intervention: str, condition: str | None = None
     ) -> list[SourceRecord]: ...
 
+    def search_phrase(self, phrase: str, condition: str | None) -> list[SourceRecord]: ...
+
+
+def trials_of(trials: TrialSearch, entity: Entity, indication: str | None) -> list[SourceRecord]:
+    """Every trial the registry holds under the intervention's name, its other names and
+    its search phrases. A phrase is searched within the indication only."""
+    records = [
+        record
+        for term in [entity.name, *entity.synonyms]
+        for record in trials.search_trials(term, indication)
+    ]
+    for phrase in entity.search_phrases:
+        records += trials.search_phrase(phrase, indication)
+    return records
+
 
 class DoiLookup(Protocol):
     def work(self, doi: str) -> SourceRecord | None: ...
@@ -113,9 +128,8 @@ def resolve_claim(
 
     for entity in entities:
         if entity.type is EntityType.INTERVENTION:
-            for term in [entity.name, *entity.synonyms]:
-                for record in trials.search_trials(term, claim.indication):
-                    consider(entity, record)
+            for record in trials_of(trials, entity, claim.indication):
+                consider(entity, record)
         elif entity.type is EntityType.PAPER and entity.doi:
             record = dois.work(entity.doi)
             if record is not None:
@@ -242,12 +256,11 @@ def rescore_claim(
             )
             if match.id not in just_scored
         }
-        for term in [entity.name, *entity.synonyms]:
-            for record in trials.search_trials(term, claim.indication):
-                match = pending.pop((record.source_name, record.external_id), None)
-                if match is not None:
-                    match.record_summary = what_it_says(record)
-                    again.append((entity, match, record))
+        for record in trials_of(trials, entity, claim.indication):
+            match = pending.pop((record.source_name, record.external_id), None)
+            if match is not None:
+                match.record_summary = what_it_says(record)
+                again.append((entity, match, record))
     score_matches(session, backend, claim=claim, candidates=again, now=now)
     rescored = [match for _, match, _ in again]
     _reject_near_zero(rescored, reject_below, now)

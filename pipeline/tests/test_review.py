@@ -67,6 +67,9 @@ class Trials:
             for i in self.nct_ids
         ]
 
+    def search_phrase(self, phrase: str, condition: str | None) -> list[SourceRecord]:
+        return []
+
 
 class NoDois:
     def work(self, doi: str) -> None:
