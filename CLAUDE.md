@@ -18,7 +18,7 @@ worktrees via `wt`, archive via quarantine).
 
 ## Conventions and guardrails
 
-- Accuracy is the brand. No claim page and no status reaches the public site unless it is approved in review. The one exception, decided by the operator on 2026-11-12: a live lookup may show a reader its automatic search results, always marked as unreviewed and never worded as a status.
+- Accuracy is the brand, and it is shown, not gated. Decided by the operator on 2026-11-13 (`docs/adr/0001-publish-by-rule-archive-to-remove.md`, change `auto-publish`): items are approved by deterministic rules and published without waiting for a person, every match the site shows carries its confidence score and reasons, and the operator removes a wrong item by archiving it. Until that change is built, the export still publishes only approved claims. Live lookup answers are shown to the reader who asked, with scores, and are never worded as a status.
 - Claim status is derived by deterministic rules from approved evidence events. With no trial found, the reviewed evidence stage decides between "preclinical only" and "no trial record found". No model decides status, and every status lists the events that produced it.
 - No editorial verdicts. "No signal" is never worded as "dead" or "abandoned".
 - No medical advice. A registered trial is never presented as a treatment option.
@@ -42,9 +42,9 @@ worktrees via `wt`, archive via quarantine).
 - Registry fixtures are recorded with a generic client name and have abstracts replaced. Article fixtures are always synthetic.
 - Seed decisions use the `seed` decider. Never record a model's or a script's decision as `human`.
 - An intervention is entered by its name alone: no maker, mechanism or brackets. The registry search sends the name as written, and a description ("the drug") is not a name.
-- A trial matches a claim only when it tests the intervention for the claim's indication. Never approve by score alone on candidates marked as scored without the indication.
+- A trial matches a claim only when it tests the intervention for the claim's indication. Never approve by score alone, by hand or by rule, a candidate marked as scored without the indication.
 - Prepare many claims with `thenwhat prepare`, not one command per step per claim.
-- A review decision you make yourself is recorded with `--as-assistant`. It stays out of the export unless a preview is asked for (`export --preview` or `EXPORT_PREVIEW=1`), and a preview is never for the public site.
+- A review decision you make yourself is recorded with `--as-assistant`. It stays out of the export unless a preview is asked for (`export --preview` or `EXPORT_PREVIEW=1`), and a preview is never for the public site. The `auto-publish` change removes this exclusion and the preview mode.
 
 ## Layout
 
