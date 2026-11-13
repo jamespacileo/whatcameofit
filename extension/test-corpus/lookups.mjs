@@ -1,5 +1,5 @@
 // Send each untracked address to the lookup service, as the site's address box does, and
-// keep every answer in .work/results.json. Rows already answered are skipped, so a run can
+// keep every answer outside the worktree. Rows already answered are skipped, so a run can
 // be stopped and started again. Posts the service cannot read by address (X, Reddit, ...)
 // need the browser pass in README.md.
 //
@@ -8,13 +8,16 @@
 //
 // LOOKUP_API overrides the service (default: make lookup-dev on this machine). Each search
 // is a paid model call, capped by LLM_MONTHLY_BUDGET_USD in the service's settings.
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { readRows } from "./rows.mjs";
 
-const here = new URL(".", import.meta.url).pathname;
+const here = fileURLToPath(new URL(".", import.meta.url));
 const API = process.env.LOOKUP_API ?? "http://localhost:8787/api/lookup";
-const resultsFile = `${here}.work/results.json`;
-const results = existsSync(resultsFile) ? JSON.parse(readFileSync(resultsFile, "utf8")) : {};
+const cacheScript = `${here}corpus_cache.py`;
+const cache = JSON.parse(execFileSync("python3", ["-I", cacheScript, "read", here], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }));
+const results = cache.results;
 const match = JSON.parse(readFileSync(`${here}.work/match.json`, "utf8"));
 const browserFile = process.argv[2] === "--browser" ? process.argv[3] : null;
 const browserInputs = browserFile ? JSON.parse(readFileSync(browserFile, "utf8")) : null;
@@ -45,23 +48,26 @@ async function unshorten(links) {
 let asked = 0;
 for (const row of readRows(`${here}urls.csv`)) {
   const m = match[row.url] ?? {};
-  const key = browserInputs ? `${row.id}:browser` : row.id;
-  if (results[key]) continue;
+  const mode = browserInputs ? "browser" : "address";
+  if (results[row.url]?.[mode]) continue;
+  let result;
   if (browserInputs) {
     const input = browserInputs[row.id];
     if (!input) continue;
     const links = await unshorten(input.links ?? []);
-    results[key] = { mode: "browser text", sent_links: links, ...(await ask({ ...input, links })) };
+    result = { mode: "browser text", sent_links: links, ...(await ask({ ...input, links })) };
   } else {
     if (m.tracked_slug) continue; // the popup shows the reviewed claim, no search
     if (m.address_kind === "post" && !m.server_can_read_post) continue;
-    results[key] = { mode: "address", ...(await ask({ url: row.url })) };
+    result = { mode: "address", ...(await ask({ url: row.url })) };
   }
+  execFileSync("python3", ["-I", cacheScript, "put-result", row.url, mode], { input: JSON.stringify(result) });
+  (results[row.url] ??= {})[mode] = result;
   asked += 1;
-  const b = results[key].body;
-  console.log(row.id, results[key].http, `${results[key].ms}ms`,
+  const b = result.body;
+  console.log(row.id, result.http, `${result.ms}ms`,
     b.error ?? (b.about_a_treatment === false ? "no treatment" : `${b.treatment ?? ""} / ${b.condition ?? ""} / ${(b.candidates ?? []).length} records`));
-  writeFileSync(resultsFile, JSON.stringify(results, null, 1));
   await sleep(13000); // the service allows 5 searches a minute per reader
 }
-console.log(`asked ${asked}; ${Object.keys(results).length} answers on record`);
+const total = Object.values(results).reduce((count, modes) => count + Object.keys(modes).length, 0);
+console.log(`asked ${asked}; ${total} answers on record`);

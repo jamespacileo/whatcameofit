@@ -251,6 +251,7 @@ function answerBlock(state, site, actions) {
     shown.likely.length > 0 && el("p", "listed", `${shown.likely.length} possible ${shown.likely.length === 1 ? "match" : "matches"}`),
     shown.likely.length > 0 && records(shown.likely, (record) => record.url, true),
     shown.none && el("p", "empty-result", shown.none),
+    ...researchPanels(shown.research, actions),
     el("footer", "answer-notes", [
       (shown.marked || context.length > 0 || shown.notices.length > 0) && disclosure([icon("info"), el("span", null, "Sources & privacy")], [
         ...context.map((line) => el("p", null, line)),
@@ -263,6 +264,23 @@ function answerBlock(state, site, actions) {
       shown.marked && el("p", "medical-note", "Not medical advice. A trial is not a treatment option."),
     ]),
   ];
+}
+
+function researchPanels(research, actions) {
+  if (!research) return [];
+  return [
+    { label: "Related papers", icon: "book", items: research.papers, note: research.paperNote, status: research.paperStatus },
+    { label: "Organisations", icon: "people", items: research.organisations, note: research.organisationNote, status: research.organisationStatus },
+  ].filter(group => group.items.length || group.status).map(group => disclosure([
+    icon(group.icon), el("span", null, `${group.label}${group.items.length ? ` · ${group.items.length}` : ""}`),
+  ], [
+    el("p", "small", group.note),
+    group.status && el("p", "small", group.status),
+    group.items.length > 0 && el("ul", "research-list", group.items.map(item => el("li", null, [
+      link(item.title, item.url, null, actions.open),
+      el("p", "small", item.detail),
+    ]))),
+  ], "research-results"));
 }
 
 function answerActions(state, actions) {

@@ -55,3 +55,12 @@
 ## Workflow follow-up
 
 - Archive the change after the operator has reviewed the first measured run.
+
+## 9. Public on-demand integration
+
+- [x] 9.1 Record current API terms, free quotas and secret setup.
+- [x] 9.2 Add bounded, cached OpenAlex/ROR Worker clients with independent failure and free-only allowance checks.
+- [x] 9.3 Enrich live lookups with paper metadata and explicitly named organisations; preserve trial scoring/status.
+- [x] 9.4 Add collapsed source-attributed sections on the site and next extension build, and update privacy text.
+- [x] 9.5 Verify offline behavior, real-provider end-to-end lookups, quota/caching and responsive UI.
+- [ ] 9.6 Deploy through checked CI and verify the production result.
