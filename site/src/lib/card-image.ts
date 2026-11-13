@@ -21,12 +21,8 @@ const BLUE = "#14427f";
 const MUTED = "#46566b";
 const PANEL = "#f1f5fb";
 const PAPER = "#ffffff";
-const TINT = "#e6eef8";
 const RULE = "#d9e2ee";
 const RING = "#7f90a3";
-// The icon's own two: its outline, and the amber of the capsule's promised half.
-const DEEP = "#0b2545";
-const CAPSULE_PROMISE = "#eeb53a";
 // Pale amber: everything promised, here as on the pages.
 const PROMISE = "#fff7df";
 const PROMISE_RULE = "#d9c88a";
@@ -109,23 +105,10 @@ const box = (style: Record<string, unknown>, children: unknown): Node => ({
 });
 const shape = (type: string, props: Record<string, unknown>): Node => ({ type, props });
 
-// The site's icon: a magnifying glass over a capsule in two halves.
-// The same drawing as public/mark.svg.
+// Use the canonical vector artwork rather than maintaining another drawing.
+const markData = `data:image/svg+xml;base64,${fs.readFileSync(path.resolve("public/mark.svg")).toString("base64")}`;
 function stamp(size: number): Node {
-  return shape("svg", {
-    width: size,
-    height: size,
-    viewBox: "0 0 64 64",
-    children: [
-      shape("rect", { width: 64, height: 64, rx: 14, fill: TINT }),
-      shape("circle", { cx: 28, cy: 28, r: 18.5, fill: PAPER, stroke: DEEP, "stroke-width": 5.5 }),
-      shape("path", { d: "M42.5 42.5l11.5 11.5", stroke: DEEP, "stroke-width": 7.5, "stroke-linecap": "round" }),
-      // The capsule under the lens: the promised half in amber, the recorded half in blue.
-      shape("rect", { x: 14.5, y: 21, width: 27, height: 14, rx: 7, fill: BLUE }),
-      shape("path", { d: "M28 21h-6.5a7 7 0 0 0 0 14h6.5z", fill: CAPSULE_PROMISE }),
-      shape("path", { d: "M28 21v14", stroke: PAPER, "stroke-width": 2.4 }),
-    ],
-  });
+  return shape("img", { src: markData, width: size, height: size });
 }
 
 // The wordmark's question mark, whose dot is the blue marker. The same drawing as
