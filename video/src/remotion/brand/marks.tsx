@@ -5,6 +5,16 @@ import { useCurrentFrame } from "remotion";
 import { arrive } from "./motion";
 import { C } from "./tokens";
 
+/** site/public/mark-reverse.svg: for navy ground. No tile, the glass in white, the capsule in its own colours. */
+export const MarkReverse: FC<{ size: number }> = ({ size }) => (
+  <svg viewBox="8 9 48 48" width={size} height={size} style={{ flex: "none" }}>
+    <path d="M44.5 45.5 51.5 52.5" fill="none" stroke="#ffffff" strokeWidth="8" strokeLinecap="round" />
+    <circle cx="31" cy="32" r="19.5" fill="none" stroke="#ffffff" strokeWidth="5.7" />
+    <path d="M30.4 25h-6.9a7 7 0 0 0 0 14h6.9z" fill="#f28a62" />
+    <path d="M31.6 25h6.9a7 7 0 0 1 0 14h-6.9z" fill="#1687da" />
+  </svg>
+);
+
 /** site/public/mark.svg: the magnifier over the capsule. */
 export const Mark: FC<{ size: number }> = ({ size }) => (
   <svg viewBox="0 0 64 64" width={size} height={size} style={{ flex: "none" }}>
@@ -20,10 +30,11 @@ export const Mark: FC<{ size: number }> = ({ size }) => (
  * "What came of it?": a light lead, a heavy tail, and a question mark that is drawn so
  * its dot can be the blue marker. With `drawAt`, the hook is drawn and the dot lands.
  */
-export const Wordmark: FC<{ size: number; drawAt?: number; color?: string }> = ({
+export const Wordmark: FC<{ size: number; drawAt?: number; color?: string; dotColor?: string }> = ({
   size,
   drawAt,
   color = C.ink,
+  dotColor = C.blue,
 }) => {
   const frame = useCurrentFrame();
   const hook = drawAt === undefined ? 1 : arrive(frame, drawAt, 21);
@@ -68,7 +79,7 @@ export const Wordmark: FC<{ size: number; drawAt?: number; color?: string }> = (
           cx={10}
           cy={26}
           r={3.6}
-          fill={C.blue}
+          fill={dotColor}
           style={{ transformBox: "fill-box", transformOrigin: "center", transform: `scale(${dot})` }}
         />
       </svg>
@@ -76,11 +87,11 @@ export const Wordmark: FC<{ size: number; drawAt?: number; color?: string }> = (
   );
 };
 
-/** The masthead's name: the icon, then the wordmark. */
-export const Lockup: FC<{ size: number }> = ({ size }) => (
-  <span style={{ display: "inline-flex", alignItems: "center", gap: size * 0.4 }}>
-    <Mark size={size * 1.45} />
-    <Wordmark size={size} />
+/** The name with its icon. `reverse` is the masthead's: white on navy, the dot in the lifted blue. */
+export const Lockup: FC<{ size: number; reverse?: boolean }> = ({ size, reverse = false }) => (
+  <span style={{ display: "inline-flex", alignItems: "center", gap: size * 0.45 }}>
+    {reverse ? <MarkReverse size={size * 1.4} /> : <Mark size={size * 1.45} />}
+    <Wordmark size={size} color={reverse ? C.paper : C.ink} dotColor={reverse ? C.onNavy : C.blue} />
   </span>
 );
 
