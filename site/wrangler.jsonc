@@ -13,6 +13,9 @@
   "preview_urls": false,
   // Nothing a reader sends is logged; see worker/index.mjs.
   "observability": { "enabled": false },
+  "kv_namespaces": [
+    { "binding": "LOOKUP_RESULTS", "id": "8ae51d6a7c8341a0be0cedea61dd397f" }
+  ],
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",

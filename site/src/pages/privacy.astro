@@ -29,7 +29,7 @@ import Base from "../layouts/Base.astro";
   <h2 class="bar">Opening the extension</h2>
   <p>
     When you open the extension, it reads the current tab's address and compares it with a public
-    lookup file inside your browser. It does not send that page address to our service. It downloads
+    lookup file inside your browser. A reviewed match is answered without sending that page address. An untracked public report may send a cleaned page address to check for a previous automatic result. It downloads
     the lookup file from whatcameofit.com and saves the file and its retrieval time in the browser,
     refreshing it after six hours. If the site cannot be reached, the saved copy can still be used.
     Removing the extension removes this local cache.
@@ -42,11 +42,29 @@ import Base from "../layouts/Base.astro";
     from the second, and removing the extension removes both.
   </p>
   <p>
-    If the page is not tracked and live search is available, opening the extension also starts
-    the registry search described below. No second search click is needed. The extension does
+    Before the first untracked lookup, the extension asks you to allow sharing page content and screenshot fallback with our service and OpenAI. If you allow it, opening an untracked page starts
+    the registry search described below automatically. You can turn this off in Automatic search settings and keep using reviewed claim matching. The extension does
     not monitor other tabs or automatically search pages while you browse with it closed.
     Open it only on public reports you want to check. Select words before opening it to limit
     the text sent.
+  </p>
+
+  <p>
+    If a page contains visible images, video or a canvas and its text is insufficient to identify
+    the report, opening the extension automatically captures the visible content. It prefers the
+    largest visible media area, otherwise the viewport. It sends one reduced image, the caption
+    and the cleaned page address through our service to OpenAI. A video contributes only its
+    current frame, not its audio. Screenshots may include personal information visible on the
+    page: open the extension only on public reports. Private browser windows and visible password
+    or editing fields, and embedded documents overlapping the capture area, disable screenshot capture. Selecting words prevents automatic screenshots.
+    Nothing is captured while the extension is closed.
+  </p>
+  <p>
+    The extension keeps up to ten successful automatic results in this browser for 24 hours,
+    alongside a fingerprint of the content, so reopening a report need not make another paid
+    lookup. A visual cache check may take a fresh local screenshot to compare its pixels, without sending it when the result matches. It does not save screenshot pixels or submitted page text. Previous results show their
+    checked-at time. Search again requests a fresh lookup; Clear this list in Recently checked
+    also clears these saved results. Removing the extension removes them.
   </p>
 
   <h2 class="bar">Optional registry searches</h2>
@@ -60,14 +78,12 @@ import Base from "../layouts/Base.astro";
   </p>
   <p>
     In the extension, opening the popup on an untracked page reads the page or your selected words and sends
-    that text and outgoing links to our service. A selection limits the text sent; outgoing links
-    can still be included. A post also identifies its platform. Up to three X short links may
-    be opened through t.co without cookies or a referrer. The current page's address is not added
-    to the search request, but the text you choose may itself contain personal information.
+    that text and outgoing links to our service. A selection sends only your selected words, without other page links or a page address. A post also identifies its platform. Up to three X short links may
+    be opened through t.co without cookies or a referrer. When no words are selected, a cleaned page address is included to check for an earlier result. Tracking parameters and fragments are removed; numeric article identifiers are preserved. Addresses with other query parameters are omitted. The text you choose may itself contain personal information.
     Please use public reports and avoid sending private medical or other sensitive information.
   </p>
   <p>
-    Our application does not store or log submitted addresses, text or search answers. Your IP
+    Our application does not log submitted content or store submitted text or screenshots. For a report the service can independently read publicly, it may retain the structured automatic findings for 24 hours, indexed by a hash of the cleaned address, and reuse them for other readers. These findings remain unreviewed and show when they were checked. Browser-only content, selected text and screenshots are not published to this shared cache. Your IP
     address is used by Cloudflare to limit the number of searches. We request that OpenAI does not
     save chat completions for later retrieval. This does not mean zero retention: OpenAI may keep
     prompts and responses in abuse-monitoring logs for up to 30 days, or longer for legal or safety

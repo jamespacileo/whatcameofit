@@ -80,7 +80,7 @@ async function paperNumbers(page, papers) {
  *   page?: object, papers?: object }} given `page` is what the article's page says of
  *   itself (worker/page.mjs) and `papers` looks up the trial of a linked paper.
  */
-export async function lookUp({ text, model, registry, index, page, papers }) {
+export async function lookUp({ text, model, registry, index, page, papers, image, pageUrl }) {
   const numbers = unique([
     ...(text.match(REGISTRY_NUMBER) ?? []).map((number) => number.toUpperCase()),
     ...(page?.registryNumbers ?? []),
@@ -88,7 +88,7 @@ export async function lookUp({ text, model, registry, index, page, papers }) {
   // Three hosts, none waiting on another: the model reads the text while the linked
   // papers and the registry numbers the article gives are looked up.
   const [reading, linked, stated] = await Promise.all([
-    model.read(text),
+    model.read(text, image ? { image, pageUrl } : undefined),
     paperNumbers(page, papers),
     inTurn(numbers, (number) => registry.fetch(number)),
   ]);

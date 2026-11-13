@@ -11,6 +11,8 @@ import {
   unfollow as withoutFollowed,
 } from "./kept.js";
 import { isFresh, stateFor } from "./lookup.js";
+import { remember, reusable } from "./results.js";
+import { fingerprint, publicWebUrl } from "./visual.js";
 
 // A check that ended in one of these is worth finding again in the reader's own list.
 const KEPT_KINDS = new Set(["tracked", "answer", "untracked"]);
@@ -19,7 +21,7 @@ const SIX_HOURS = 6 * 60 * 60 * 1000;
 // Refresh pre-automatic-lookup caches once so an upgrade sees current service settings.
 const CACHE_VERSION = 2;
 
-export function createPopupController({ storage, fetch, site, readTab, readPage, isCurrentPage, describeAnswer, present }) {
+export function createPopupController({ storage, fetch, site, readTab, readPage, isCurrentPage, capturePage, describeAnswer, present, requiresSharingConsent = false }) {
   const abort = new AbortController();
   let tab = null;
   let live = null;
@@ -32,6 +34,13 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
   let recent = [];
   let follows = [];
   let pageState = null;
+  let results = [];
+  let visual = null;
+  let lastRead = null;
+  let visualGeneration = 0;
+  let sharing = !requiresSharingConsent;
+  let sharingWriteFailed = false;
+  const sharingView = () => show({ kind: "sharing", enabled: sharing });
 
   const save = (values) => Promise.resolve().then(() => storage.set(values)).catch(() => {});
 
@@ -56,7 +65,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
   // A followed claim seen here has been seen, so its change is not announced twice.
   function showPage(state) {
     pageState = state;
-    if (tab?.key && KEPT_KINDS.has(state.kind)) {
+    if (tab?.key && !tab.incognito && KEPT_KINDS.has(state.kind)) {
       recent = addRecent(recent, {
         key: tab.key,
         url: tab.url,
@@ -93,50 +102,117 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     }
   }
 
-  async function performSearch() {
-    if (closed || !tab || !live) return;
-    show({ kind: "searching" });
-    let request;
+  const serviceRequest = request => {
+    const { visualCandidate, selectionOnly, contentFingerprint, ...sent } = request;
+    return sent;
+  };
+  const eligible = () => Boolean(sharing && capturePage && tab && live && !tab.incognito && publicWebUrl(tab.url));
+  async function current() {
+    return !closed && await isCurrentPage(tab).catch(() => false) && !closed;
+  }
+  function resultState(found, cachedAt = null) {
+    const shown = describeAnswer(found);
+    if (cachedAt && shown.marked) shown.marked = "Automatic search from an earlier check. It has not been checked by a person and is not a status.";
+    return { kind: "answer", shown, cachedAt, canVisual: eligible() };
+  }
+  async function send(request, { reuse = false, key = null } = {}) {
+    if (!await current()) { showPage({ kind: "refused", code: "page_changed" }); return null; }
+    if (reuse && key) {
+      const saved = reusable(results, tab.key, key, Date.now());
+      if (saved) { showPage(resultState(saved.found, saved.at)); return saved.found; }
+    }
+    const response = await fetch(site.url + live, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...serviceRequest(request), ...(request.pageUrl ? { refresh: !reuse } : {}) }), signal: abort.signal,
+    });
+    const found = await response.json();
+    if (!await current()) { showPage({ kind: "refused", code: "page_changed" }); return null; }
+    if (!response.ok) { showPage({ kind: "refused", code: found?.error ?? "failed", ...(eligible() && found?.error !== "budget_exhausted" ? { canVisual: true } : {}) }); return null; }
+    if (key) {
+      results = remember(results, tab.key, key, found, found.cache?.checkedAt ?? Date.now());
+      save({ results });
+    }
+    showPage(resultState(found, found.cache?.checkedAt ?? null));
+    return found;
+  }
+  async function visualSearch({ preview = false, reuse = true } = {}) {
+    if (!eligible() || closed) return;
+    const generation = ++visualGeneration;
+    show({ kind: "capturing" });
     try {
-      request = await readPage(tab, abort.signal);
+      const captured = await capturePage(tab, abort.signal);
+      if (closed || generation !== visualGeneration) return;
+      const request = { ...serviceRequest(lastRead ?? { text: "", links: [] }), ...captured };
+      // Image bytes enter only a one-way digest, never browser storage.
+      const key = lastRead?.selectionOnly ? null : await fingerprint(request);
+      if (preview) { visual = { request, key }; show({ kind: "visual-preview", image: captured.image }); return; }
+      show({ kind: "searching", visual: true });
+      await send(request, { reuse, key });
     } catch (error) {
-      showPage(error?.code === "page_changed" ? { kind: "refused", code: "page_changed" } : { kind: "too-little" });
-      return;
-    }
-    if (closed) return;
-    if (!request) {
-      showPage({ kind: "too-little" });
-      return;
-    }
-    const current = await isCurrentPage(tab).catch(() => false);
-    if (closed) return;
-    if (!current) {
-      showPage({ kind: "refused", code: "page_changed" });
-      return;
-    }
-    try {
-      const response = await fetch(site.url + live, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(request),
-        signal: abort.signal,
-      });
-      const found = await response.json();
-      if (!response.ok) {
-        showPage({ kind: "refused", code: found?.error ?? "failed" });
-        return;
-      }
-      showPage({ kind: "answer", shown: describeAnswer(found) });
-    } catch {
-      showPage({ kind: "refused", code: "failed" });
+      if (generation === visualGeneration) showPage({ kind: "refused", code: error?.code ?? "capture_unavailable", canVisual: false });
     }
   }
-
-  function search() {
-    // Repeated activation while reading or waiting must not buy another lookup.
-    if (!searching) {
-      searching = performSearch().finally(() => { searching = null; });
+  async function performSearch({ reuse = false } = {}) {
+    if (closed || !tab || !live) return;
+    if (!sharing) { sharingView(); return; }
+    visual = null;
+    show({ kind: "searching" });
+    let request;
+    try { request = await readPage(tab, abort.signal); }
+    catch (error) {
+      showPage(error?.code === "page_changed" ? { kind: "refused", code: "page_changed" } : { kind: "too-little", canVisual: eligible() });
+      return;
     }
+    if (closed) return;
+    lastRead = request;
+    if (!request) { showPage({ kind: "too-little", canVisual: eligible() }); return; }
+    if (!await current()) { showPage({ kind: "refused", code: "page_changed" }); return; }
+    try {
+      if (reuse && !request.selectionOnly && request.contentFingerprint) {
+        const saved = reusable(results, tab.key, request.contentFingerprint, Date.now());
+        if (saved) { showPage(resultState(saved.found, saved.at)); return; }
+      }
+      if (reuse && request.pageUrl) {
+        try {
+          const response = await fetch(site.url + live, { method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ cacheOnly: true, pageUrl: request.pageUrl }), signal: abort.signal });
+          const saved = await response.json();
+          if (!await current()) { showPage({ kind: "refused", code: "page_changed" }); return; }
+          if (response.ok && saved.cache?.shared && saved.about_a_treatment === true) {
+            showPage(resultState(saved, saved.cache.checkedAt)); return;
+          }
+        } catch { if (closed) return; }
+      }
+      // A media-only post does not buy a fruitless caption-only model call first.
+      const earlierVisual = reuse && results.some(entry => entry.key === tab.key && entry.found?.source?.kind === "screenshot");
+      if (request.visualCandidate && !request.selectionOnly && !request.links?.length && (request.text.length < 240 || earlierVisual)) {
+        await visualSearch({ reuse }); return;
+      }
+      const key = !request.selectionOnly && request.contentFingerprint ? request.contentFingerprint : null;
+      const found = await send(request, { reuse, key });
+      if (found?.about_a_treatment === false && request.visualCandidate && !request.selectionOnly) await visualSearch({ reuse });
+    } catch { showPage({ kind: "refused", code: "failed", canVisual: eligible() }); }
+  }
+  function search(options) {
+    if (!searching) searching = performSearch(options).finally(() => { searching = null; });
+    return searching;
+  }
+  function previewVisual() {
+    if (!searching) searching = visualSearch({ preview: true }).finally(() => { searching = null; });
+    return searching;
+  }
+  function cancelVisual() {
+    visualGeneration++;
+    visual = null;
+    if (pageState) show(pageState);
+    else showPage({ kind: "too-little", canVisual: eligible() });
+  }
+  function sendVisual() {
+    if (!visual || searching) return searching;
+    const selected = visual; visual = null;
+    show({ kind: "searching", visual: true });
+    searching = send(selected.request, { reuse: true, key: selected.key })
+      .catch(() => showPage({ kind: "refused", code: "failed" })).finally(() => { searching = null; });
     return searching;
   }
 
@@ -147,16 +223,23 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     if (closed) return;
     const [loaded, saved] = await Promise.all([
       tab?.key ? loadIndex() : { index: null, savedAt: null },
-      storage.get(["recent", "follows"]).catch(() => ({})),
+      storage.get(["recent", "follows", "results", "sharing"]).catch(() => ({})),
     ]);
     if (closed) return;
     index = loaded.index;
     recent = saved?.recent ?? [];
     follows = saved?.follows ?? [];
+    results = saved?.results ?? [];
+    sharing = !sharingWriteFailed && (!requiresSharingConsent || saved?.sharing?.version === 1 && saved.sharing.enabled === true);
     const state = stateFor(tab?.key ?? null, loaded);
     live = state.live ?? null;
     if (state.kind === "untracked" && live) {
-      await search();
+      if (!sharing) {
+        if (saved?.sharing?.enabled === false) showPage({ ...state, live: null });
+        else sharingView();
+        return;
+      }
+      await search({ reuse: true });
       return;
     }
     showPage(state);
@@ -174,8 +257,10 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
 
   function clearRecent() {
     recent = [];
-    save({ recent });
+    results = [];
+    const saving = save({ recent, results });
     showRecent();
+    return saving;
   }
 
   function showFollowing() {
@@ -215,8 +300,41 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
 
   function close() {
     closed = true;
+    visual = null;
+    lastRead = null;
+    visualGeneration++;
     abort.abort();
   }
 
-  return { open, search, close, showRecent, showEntry, clearRecent, showFollowing, back, follow, unfollow, seen };
+  async function enableSharing() {
+    if (!await saveSharing(true)) return;
+    if (pageState?.kind === "tracked") show(pageState);
+    else await search({ reuse: true });
+  }
+
+  async function disableSharing() {
+    if (!await saveSharing(false)) return;
+    showPage(pageState?.kind === "tracked" ? pageState : { kind: "untracked" });
+  }
+
+  async function saveSharing(enabled) {
+    sharing = false;
+    try {
+      await storage.set({ sharing: { version: 1, enabled } });
+      sharingWriteFailed = false;
+      sharing = enabled;
+      return true;
+    } catch {
+      sharingWriteFailed = true;
+      // Removing a previous opt-in is a fail-closed fallback when updating fails.
+      let cleared = false;
+      if (!enabled && storage.remove) {
+        try { await storage.remove("sharing"); cleared = true; } catch { /* Explain the unsaved choice. */ }
+      }
+      show({ kind: "sharing-error", requested: enabled, cleared });
+      return false;
+    }
+  }
+
+  return { open, search, previewVisual, sendVisual, cancelVisual, close, showRecent, showEntry, clearRecent, showFollowing, back, follow, unfollow, seen, sharingView, enableSharing, disableSharing };
 }

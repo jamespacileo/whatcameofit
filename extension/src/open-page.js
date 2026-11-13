@@ -1,7 +1,7 @@
 // Reading the page the reader has open, inside their own browser, and choosing what of
 // it a registry search needs. This happens when the reader opens the popup on an
 // untracked page. What is sent to the site is the text read, the addresses that text links to,
-// and, for a post, the platform's name. The page's own address is not sent.
+// and, for a post, the platform's name. The popup adds a cleaned source URL for caching.
 
 const MAX_TEXT = 20000;
 const MAX_LINKS = 30;
@@ -76,6 +76,13 @@ function destination(href, readAddress) {
   }
 }
 
+function articleLink(href) {
+  try {
+    return !/\.(?:png|jpe?g|gif|webp|avif|mp4|webm)(?:[?#]|$)/i.test(href) &&
+      !/^(?:preview|external-preview|i|v)\.redd\.it$/.test(new URL(href).hostname);
+  } catch { return false; }
+}
+
 /**
  * A post's own words. A line that is only a link within the platform is left out: the
  * writer's name and handle, the time, the counts. So is a line with no letter or digit.
@@ -131,10 +138,12 @@ export function composeRequest(collected, address, { readAddress, readPage, page
   const links = [collected.contentHref, ...collected.links.map((link) => link.href)]
     .filter((href) => typeof href === "string" && /^https?:\/\//i.test(href))
     .map((href) => destination(href, readAddress))
+    // A media file carries pixels, not an article the service can read as HTML.
+    .filter(articleLink)
     .filter((href) => href.length <= MAX_LINK)
     .filter((href) => !sameSite(href, host));
-  const outgoing = [...new Set(links)].slice(0, MAX_LINKS);
-  if (text.length < ENOUGH) {
+  const outgoing = collected.selection.length >= CHOSEN_FROM ? [] : [...new Set(links)].slice(0, MAX_LINKS);
+  if (text.length < ENOUGH && collected.selection.length < CHOSEN_FROM) {
     const hasArticle = isPost && outgoing.some((href) => {
       try {
         return ["article", "short"].includes(readAddress(href).kind);
