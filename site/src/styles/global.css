@@ -440,6 +440,36 @@ a.chip:hover {
   margin: 0.6rem 0 0;
 }
 
+/* The headline a reader followed here, named before anything is said about it. */
+.reported {
+  max-width: 66ch;
+  margin-top: 1rem;
+  padding-left: 0.85rem;
+  border-left: 3px solid var(--tint);
+}
+
+.reported-head {
+  margin: 0 0 0.3rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.reported li + li {
+  margin-top: 0.6rem;
+}
+
+.reported-title {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.reported .entry-note {
+  display: block;
+  margin-top: 0.15rem;
+}
+
 /* A thumb needs more than a mouse does: 44 pixels, wherever something is pressed. */
 @media (max-width: 40rem) {
   .share {
