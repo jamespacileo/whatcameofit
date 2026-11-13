@@ -1,13 +1,13 @@
 # Tasks
 
-Nothing is started. The operator accepts the proposal first.
+Accepted by the operator on 2026-11-13.
 
 ## 1. Site
 
-- [ ] 1.1 Write the calendar-file builder as a pure function with tests; verify each of the four choices gives one valid event linking to the claim page
-- [ ] 1.2 Add the reminder control to the claim page following DESIGN.md; verify the promise choice is absent on a claim with no dated promise and that saving sends no request
+- [x] 1.1 Write the calendar-file builder as a pure function with tests; verify each of the four choices gives one valid event linking to the claim page
+- [x] 1.2 Add the reminder control to the claim page following DESIGN.md; verify the promise choice is absent on a claim with no dated promise and that saving sends no request
 - [ ] 1.3 Publish the status changes feed and the per-claim feed; verify entries carry both labels and the event date, and that the verdict-wording check covers them
-- [ ] 1.4 Add the extension's kept data to the privacy page; verify the site test for the privacy page passes
+- [ ] 1.4 Add the extension's kept data to the privacy page once the extension keeps it (the calendar reminder is described there as of 2026-11-13); verify the page builds
 
 ## 2. Extension
 

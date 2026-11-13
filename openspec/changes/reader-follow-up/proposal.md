@@ -1,6 +1,6 @@
 # Proposal
 
-Status: draft for the operator to accept, change or drop. Nothing here is built.
+Status: accepted by the operator on 2026-11-13. Built so far: the calendar reminder on the claim page. See `tasks.md`.
 
 ## Why
 

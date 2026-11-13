@@ -538,6 +538,11 @@ a.chip:hover {
   }
 }
 
+/* Saving a date to come back on: the same pills, under their own heading. */
+.again {
+  margin-top: 2rem;
+}
+
 .take-actions {
   display: flex;
   flex-wrap: wrap;
@@ -2301,6 +2306,7 @@ main ul:not([class]) li + li {
   .colophon .more,
   .share,
   .take,
+  .again,
   .others,
   .search,
   .skip {
