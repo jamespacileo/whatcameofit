@@ -143,3 +143,21 @@ Local results expire after 24 hours and are capped at ten. Content changes/selec
 The installed store build must be updated after these changes. Apple privacy disclosures must mention screenshot content before submission.
 
 Before the first untracked lookup, the extension asks the reader to allow text, cleaned URLs and automatic screenshot fallback to be sent through the service to OpenAI. This choice is stored locally and can be withdrawn in Automatic search settings; reviewed claim matching remains available without it. Apple review guideline 5.1.2(i) requires explicit permission before third-party AI data sharing: https://developer.apple.com/app-store/review/guidelines/#data-use-and-sharing .
+
+## Search phrases in resolution (13 November 2026)
+
+Resolution, not the lookup. Until this date `thenwhat resolve` searched the registry only for an intervention's name and other names. A treatment that an article describes and does not name was searched for as described.
+
+The claim `tourette-syndrome-wrist-nerve-stimulation` was the case that showed it. Its intervention is "Wrist-worn median nerve stimulation device". That search found three trials, none of them of the treatment (two nausea bands and a tremor device, scored 0.01 to 0.03 and rejected by rule), and the page said "No trial record found".
+
+After the claim was given the search phrase "median nerve stimulation" with `thenwhat entity phrase`, one run of `thenwhat resolve` found three more trials within "Tourette syndrome":
+
+| Trial | Sponsor | Score |
+| --- | --- | --- |
+| NCT05269953 | Nottingham University Hospitals NHS Trust | 0.98 |
+| NCT05016765 | Washington University School of Medicine | 0.98 |
+| NCT04731714 | Washington University School of Medicine | 0.80 |
+
+All three are pending review; none is approved, so the page is unchanged. The report was of the Nottingham device. The two Washington University trials test the same kind of stimulation for the same condition with other equipment, and whether they belong to this claim is the reviewer's decision.
+
+Limits: one claim, one run. A claim that is already decided is never read again, so it has a search phrase only when an operator gives it one. On this date no other decided claim had been given one.
