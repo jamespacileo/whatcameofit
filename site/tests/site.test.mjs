@@ -155,7 +155,7 @@ test("Scenario: Home lists the newest reports", () => {
   assert.ok(order.every((position) => position > -1), "a report is missing from the home page");
   assert.deepEqual([...order].sort((a, b) => a - b), order);
   // The headline opens the claim; the outlet opens the report itself.
-  assert.match(html, /<a href="\/phase-claim">“Example report 3”<\/a>/);
+  assert.match(html, /<a class="followed" href="\/phase-claim"[^>]*>“Example report 3”<\/a>/);
   assert.match(html, /<a href="https:\/\/uk\.news\.example\.org\/3">Example Outlet 3<\/a>/);
 });
 
@@ -441,4 +441,19 @@ test("Scenario: Summary of a topic with ended trials", () => {
   assert.match(said, /1 had its trials stopped early\.$/);
   assert.doesNotThrow(() => assertNeutral([said]));
   assert.equal(topicSummary(new Map()), null);
+});
+
+test("Scenario: Reader follows a headline from the home page", () => {
+  const home = page("index.html");
+  // Each headline on the home page is named, and its claim page gives the same name
+  // to the same headline, shown before the status.
+  const named = [...home.matchAll(/class="followed" href="\/([^"]+)" style="view-transition-name: ([^";]+)/g)];
+  assert.ok(named.length > 0, "no headline on the home page is named");
+  assert.equal(new Set(named.map(([, , name]) => name)).size, named.length, "a name is used twice");
+  for (const [, slug, name] of named) {
+    const html = page(`${slug}/index.html`);
+    const at = html.indexOf(`view-transition-name: ${name}`);
+    assert.ok(at > 0, `${slug} does not name its report ${name}`);
+    assert.ok(at < html.indexOf('class="digest"'), `${slug} names its report after the status`);
+  }
 });

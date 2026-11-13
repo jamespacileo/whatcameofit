@@ -35,6 +35,7 @@ import {
 import { cardAlt, clip, shareSentence } from "../lib/card";
 import { embedSnippet, shareLinks } from "../lib/share";
 import { confidenceLabel, readingOf } from "../lib/confidence";
+import { FOLLOWED_SHOWN, followedName, followedReports } from "../lib/reports";
 import { claimPageData } from "../lib/structured";
 import ReportError from "../components/ReportError.astro";
 import { SITE } from "../../site.config.mjs";
@@ -86,8 +87,8 @@ const matched = claim.matches ?? [];
 const counted = matched.filter((match) => match.state === "approved").length;
 const possible = matched.length - counted;
 // A reader arrives from a headline, so the page names the reports it is about, newest first.
-const reports = [...claim.articles].sort((a, b) => (a.published_date < b.published_date ? 1 : -1));
-const shownReports = reports.slice(0, 3);
+const reports = followedReports(claim);
+const shownReports = reports.slice(0, FOLLOWED_SHOWN);
 const address = `${SITE.url}/${claim.slug}`;
 const sentence = shareSentence(claim, STATUS_LABELS[claim.status.code], data.last_checked_at, address);
 // Reminders: the dates a reader can save, which the browser turns into a calendar file.
@@ -145,26 +146,37 @@ const posts = shareLinks(postText, address, claim.headline);
 
     {/* A reader arriving from a shared link has not seen the home page. */}
     <p class="what-this-is" data-pagefind-ignore>
-      A record of what followed this reported breakthrough. <a href="/how-it-works">How a status is set</a>
+      A record of what followed{" "}
+      {reports.length === 0
+        ? "this reported breakthrough"
+        : reports.length === 1
+          ? "this news report"
+          : "these news reports"}. <a href="/how-it-works">How a status is set</a>
     </p>
 
     {
       shownReports.length > 0 && (
         <section class="reported" data-pagefind-ignore>
-          <h2 class="reported-head">
+          <h2 class="visually-hidden">
             {reports.length === 1 ? "The news report this page follows" : "The news reports this page follows"}
           </h2>
           <ul class="plain">
-            {shownReports.map((report) => (
+            {shownReports.map((report, index) => (
               <li>
-                <a class="reported-title" href={report.url}>
+                {/* The same name as the headline on the home page, so a reader who
+                    pressed it there sees it carried to this place. */}
+                <a
+                  class="reported-title followed"
+                  href={report.url}
+                  style={`view-transition-name: ${followedName(claim.slug, index)}`}
+                >
                   “{report.title}”
                   <ExternalLink class="out" size={14} stroke-width={1.9} aria-hidden="true" />
                   <span class="visually-hidden">(at {report.outlet || "the outlet"})</span>
                 </a>
                 <span class="entry-note">
                   <Outlet url={report.url} outlet={report.outlet} link={false} />{" "}
-                  {formatDate(report.published_date)}
+                  <span class="unbroken">{formatDate(report.published_date)}</span>
                 </span>
               </li>
             ))}
