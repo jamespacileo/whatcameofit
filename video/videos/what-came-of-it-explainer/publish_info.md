@@ -36,10 +36,14 @@ medical research, clinical trials, science news, breakthrough, evidence, fact ch
 
 ## Files
 
-- `output.mp4`: 16:9, for YouTube and the docs page.
-- `output_vertical.mp4`: 9:16, for social posts.
+- `final_video.mp4`: 16:9 at 3840 × 2160 with music, for YouTube and the docs page.
+- `final_video_vertical.mp4`: 9:16 at 2160 × 3840 with music, for social posts.
 - `podcast_audio.srt`: captions, for players that take a caption file.
 - `thumbnail_remotion_16x9.png`, `thumbnail_remotion_4x3.png`, `thumbnail_remotion_9x16.png`: covers.
+
+## Music
+
+Original, synthesised by `scripts/music.py`. No third-party recording or sample: nothing to credit or clear.
 
 ## Before publishing
 

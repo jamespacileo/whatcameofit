@@ -18,6 +18,7 @@ Remotion project for explainer videos about the site and its browser extension. 
 cd video
 npm ci
 uv run --with edge-tts python3 scripts/narrate.py videos/what-came-of-it-explainer   # narration audio, not committed
+uv run --with numpy python3 scripts/music.py videos/what-came-of-it-explainer        # background track, not committed
 npm run studio                                                                        # preview at http://localhost:3123
 ```
 
@@ -30,12 +31,19 @@ npx remotion render src/remotion/index.ts WhatCameOfItExplainerVertical $V/outpu
 npx remotion still src/remotion/index.ts Thumbnail16x9 $V/thumbnail_remotion_16x9.png --public-dir $V/
 ```
 
+The render carries narration only. Lay the music under it afterwards:
+
+```sh
+ffmpeg -i $V/output.mp4 -i $V/bgm.wav -filter_complex "[0:a]volume=1.5[a1];[1:a]volume=0.11[a2];[a1][a2]amix=inputs=2:duration=first:normalize=0[aout]" -map 0:v -map "[aout]" -c:v copy -c:a aac -b:a 192k $V/final_video.mp4
+```
+
 Captions are drawn into the picture. To leave them out and upload `podcast_audio.srt` beside the video instead, add `--props='{"showCaptions":false}'`.
 
 ## How it is put together
 
 - `videos/<name>/podcast.txt` is the script. `[SECTION:name]` starts a scene; `{spoken|shown}` says one thing and captions another.
 - `scripts/narrate.py` speaks it with Edge TTS and writes `podcast_audio.wav`, `timing.json`, `captions.json` and `podcast_audio.srt`. The script's text is sent to Microsoft's speech service; it holds nothing private.
+- `scripts/music.py` writes `bgm.wav`. The track is synthesised note by note in that script: no recording, sample or library is behind it, so it has no licence to check and belongs to the project.
 - Scenes time themselves by the words: `at("a trial registered")` is the frame where the narrator says it. A changed script needs a new narration and no new numbers; a phrase that is no longer spoken fails the render by name.
 - `src/remotion/brand/` restates the site's visual system (`DESIGN.md`): tokens, the wordmark, the stage track, motion. `src/remotion/scenes/` holds one file per scene.
 
