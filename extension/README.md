@@ -77,3 +77,7 @@ App Store distribution needs Apple Developer Program access, a registered bundle
 - `dev/`: a page showing every popup state side by side. `node extension/build.mjs --dev`, then serve `extension/dist` and open `states.html`.
 
 Tests run with `node --test extension/tests/*.test.mjs` (also part of `make check`). The explicit glob discovers the test files on Node 24.
+
+### Popup sizing regression
+
+After `node extension/build.mjs --dev`, serve `extension/dist` locally and open `sizing.html`. Both checks must report PASS: the real popup renderer and stylesheet must measure 360px of content even when its host initially gives it only 100px. A viewport-relative body cap can prevent Safari from discovering the intended width. This checks the sizing contract; still verify the installed Safari popup visually after repeated openings and disclosure toggles.

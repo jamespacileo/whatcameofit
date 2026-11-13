@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Popup intrinsic sizing regression</title>
+    <style>
+      body { font: 16px/1.5 system-ui; margin: 24px; }
+      section { display: inline-block; vertical-align: top; margin: 0 24px 24px 0; }
+      iframe { height: 160px; border: 1px solid #46566b; }
+    </style>
+  </head>
+  <body>
+    <h1>Popup intrinsic sizing regression</h1>
+    <p>The popup must report a 360px content width before its host expands to fit it.</p>
+    <div id="checks"></div>
+    <script type="module">
+      import { render } from './view.js';
+      import { SITE } from './config.js';
+      for (const initialWidth of [100, 360]) {
+        const section = document.createElement('section');
+        const result = document.createElement('p');
+        result.textContent = `Checking initial width ${initialWidth}px…`;
+        const frame = document.createElement('iframe');
+        frame.title = `Initial width ${initialWidth}px`;
+        frame.width = initialWidth;
+        frame.srcdoc = `<!doctype html><html lang="en"><head><meta charset="utf-8"><base href="${location.href}"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="popup.css"></head><body><header class="masthead"><span class="name">${SITE.name}</span></header><main></main></body></html>`;
+        frame.addEventListener('load', async () => {
+          const doc = frame.contentDocument;
+          render(doc.querySelector('main'), { kind: 'checking' }, SITE, {});
+          await doc.fonts.ready;
+          const intrinsic = doc.body.scrollWidth;
+          // Model the content measurement used by an automatically sized host.
+          frame.width = intrinsic;
+          requestAnimationFrame(() => {
+            const actual = doc.body.getBoundingClientRect().width;
+            const passed = intrinsic === 360 && actual === 360;
+            result.dataset.result = passed ? 'pass' : 'fail';
+            result.textContent = `${passed ? 'PASS' : 'FAIL'}: initial ${initialWidth}px → content ${intrinsic}px → final ${actual}px (expected 360px)`;
+          });
+        });
+        section.append(result, frame);
+        document.querySelector('#checks').append(section);
+      }
+    </script>
+  </body>
+</html>

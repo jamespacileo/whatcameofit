@@ -1,0 +1,6 @@
+- [x] Reproduce the blank native popup on a reviewed page
+- [x] Demonstrate the 100px intrinsic sizing regression before changing CSS
+- [x] Restore the fixed body width and add the browser regression page
+- [x] Verify the regression passes and run extension checks
+- [ ] Install 0.6.1 and verify repeated native Safari openings
+- [ ] Merge the fix and upload the corrected Apple build
