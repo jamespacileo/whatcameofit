@@ -1,0 +1,36 @@
+# Design
+
+## Decisions
+
+**No server and no account.** Email follow is Phase 2 and needs polling that does not exist yet. A calendar file, local alarms and a comparison against the lookup file the extension already fetches give the reader the same result today with no personal data.
+
+**The lookup file is the only signal.** The extension already refreshes `lookup.json`, which carries each claim's status code and `place`. Follow compares those two fields with the pair last seen. No new endpoint, and nothing tells the site which claims a reader follows.
+
+**Calendar file over web push.** A push subscription is an identifier held by the site. A calendar file is held by the reader and works in every browser, with no extension.
+
+**Recently checked stays private.** The lookup service stores nothing a reader sends, and the extension never sends a page's address. A public list of other readers' checks would break both rules and would publish unreviewed search results. The list is therefore the reader's own, capped at ten, with a clear control.
+
+**The payoff is the card.** A reminder or a change notification opens the claim page, where the card image and the sentence to copy already sit. Bringing the reader back at a moment worth sharing is what this change adds to sharing; it adds no new share surface.
+
+## Wording
+
+- Reminder choices: "When the promise falls due (2027)", "In six months", "In a year", "On the anniversary (31 March)".
+- Reminder notification: "You asked us to remind you." then the claim headline and status label.
+- Change notification: claim headline, then "Was: Trial registered. Now: Phase 1 trial."
+- Empty list: "Nothing checked yet."
+
+Dry wording is allowed in the extension's own chrome only, never beside a status and never about a condition, as `DESIGN.md` already rules.
+
+## Open questions for the operator
+
+1. Should a notification fire when only the no-signal note changes, or only on a status change?
+2. Ten entries in the list, or more?
+3. Should the calendar file also be offered in the lookup answer on the home page, for a headline with no record yet ("check again in six months")?
+
+4. The status changes feed needs a claim's earlier statuses. If the export does not carry them, the pipeline must add a status history (derived by the same rules) and the export schema changes. If that is too much for this change, the feed moves to its own change.
+
+## Risks
+
+- New extension permissions (`alarms`, `notifications`) show a new prompt on update and need store review.
+- A status change is noticed on the next lookup refresh, which can be up to a day after publication.
+- Safari limits background alarms; the Safari build may need to check due reminders when the popup opens.
