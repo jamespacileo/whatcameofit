@@ -8,7 +8,7 @@
 - [x] 1.4 Search the registry by each phrase within the indication in `resolve`, under the more-than-a-hundred-or-none rule; verify on a recorded fixture that a trial found only by a phrase becomes a candidate
 - [x] 1.5 Add "Search phrase" to `GLOSSARY.md` and regenerate `site/export.schema.json` if the export shape changed; verify `make check`
 - [x] 1.6 Add `thenwhat entity phrase` so an operator can give a decided claim a search phrase, since a decided claim's article is never read again; verify one success and one refusal
-- [ ] 1.7 On the real database: apply migration 0008, give `tourette-syndrome-wrist-nerve-stimulation` the phrase "median nerve stimulation", run `thenwhat resolve` on it, and record in `docs/lookup.md` whether NCT05269953 is now a candidate (the registry returned it for that phrase within "Tourette syndrome" when asked directly on 2026-11-13)
+- [x] 1.7 On the real database: apply migration 0008, give `tourette-syndrome-wrist-nerve-stimulation` the phrase "median nerve stimulation", run `thenwhat resolve` on it, and record in `docs/lookup.md` whether NCT05269953 is now a candidate (the registry returned it for that phrase within "Tourette syndrome" when asked directly on 2026-11-13) (2026-11-13: done; NCT05269953 scored 0.98 and is pending, with two Washington University trials)
 
 ## 2. People
 
@@ -25,14 +25,14 @@
 
 - [ ] 4.1 Add the `paper_match` step with its four options through `decide_many`; verify one backend call and one log entry per paper
 - [ ] 4.2 Write the pure function that gives a candidate's reason codes; verify each code and the no-reason case
-- [ ] 4.3 Apply `MATCH_REJECT_BELOW` to paper candidates and add `PAPER_ACCEPT_ABOVE`, which needs a reason; verify a high score with no reason stays pending
+- [ ] 4.3 Apply `MATCH_REJECT_BELOW` and `MATCH_ACCEPT_ABOVE` to paper candidates, approving every one at or above the threshold; verify three confident papers are all approved by rule and one below stays pending
 - [ ] 4.4 Show paper candidates in the review queue with kind, year, reasons and an another-indication label; verify the queue test
-- [ ] 4.5 Add "Related paper" to `GLOSSARY.md` and the two settings to `.env.example`
+- [ ] 4.5 Add "Related paper" to `GLOSSARY.md`
 
 ## 5. Papers to trials and origin paper
 
 - [ ] 5.1 On approval of a paper, look its registry numbers up through Europe PMC and add trial candidates, none when it states more than three; verify both cases on fixtures
-- [ ] 5.2 Add the `origin_paper` step over approved papers dated on or before the first report, shown as a queue suggestion; verify it is skipped when the claim has an origin paper or no paper qualifies
+- [ ] 5.2 Add the `origin_paper` step over approved papers dated on or before the first report, setting the origin paper by rule at or above the threshold; verify a confident choice, an unsure one, and that it is skipped when the claim has an origin paper or no paper qualifies
 
 ## 6. Organisations
 
@@ -48,7 +48,7 @@
 ## 8. Measurement
 
 - [ ] 8.1 Run paper search on every claim whose status is "No trial record found" or "preclinical only", and record in `docs/lookup.md` how many gained an approved paper, how many gained a trial candidate, and the spend
-- [ ] 8.2 Choose `PAPER_ACCEPT_ABOVE` from the operator's decisions on that run, or leave it empty, and note the choice
+- [ ] 8.2 Record how many papers the rule approved on that run and how many the operator rejected afterwards
 
 ## Workflow follow-up
 
