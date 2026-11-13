@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import (
+    ArchiveRefused,
     ArticleNotFound,
     ClaimNotFound,
     DuplicateArticle,
@@ -24,14 +25,13 @@ from thenwhat.claims.entry import (
     add_article,
     add_claim,
     add_promise,
+    archive_claim,
     articles_of,
     claim_count,
     find_claim,
     promises_of,
     rename_slug,
-    archive_claim,
     unarchive_claim,
-    ArchiveRefused,
 )
 from thenwhat.db.models import Claim, Entity
 from thenwhat.domain import EntityType

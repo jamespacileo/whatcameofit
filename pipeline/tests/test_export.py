@@ -141,7 +141,6 @@ def test_rejected_claim_is_not_exported(session: Session):
     assert exported(session)["claims"] == []
 
 
-
 def test_archived_claim_leaves_the_export_and_is_listed(session: Session):
     """Scenario: Archived claim"""
     new_claim(session)
@@ -160,6 +159,7 @@ def test_claim_archived_before_it_was_published_is_not_listed(session: Session):
     archive_claim(session, SLUG, reason="never right", now=NOW)
 
     assert exported(session, now=NOW)["archived"] == []
+
 
 # --- what a claim carries ----------------------------------------------------------
 

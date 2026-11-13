@@ -18,7 +18,8 @@ def upgrade() -> None:
     op.add_column("claim", Column("archive_reason", Text, nullable=True))
     op.create_check_constraint(
         op.f("ck_claim_archive_has_reason"),
-        "claim", "(archived_at IS NULL) = (archive_reason IS NULL)"
+        "claim",
+        "(archived_at IS NULL) = (archive_reason IS NULL)",
     )
 
 
