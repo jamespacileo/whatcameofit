@@ -3,10 +3,10 @@
 ## ADDED Requirements
 
 ### Requirement: Only a reviewed export is deployed
-The deploy command SHALL refuse to publish when the export is a preview, when it holds no claims, or when any claim in it has not been checked by a person. It SHALL name the claims that are not checked. It SHALL write its own normal export from the pipeline before checking, so that a local preview setting does not decide what is published.
+The deploy command SHALL refuse to publish when the export is a preview or when it holds no claims. Since the operator's decision of 2026-11-13 (change `auto-publish`), a claim decided by a rule or an assistant SHALL be published; the export says which claims a person checked. It SHALL write its own normal export from the pipeline before checking, so that a local setting does not decide what is published.
 
 #### Scenario: Reviewed export and a public address
-- **WHEN** every claim in a non-preview export is checked by a person and the address is a public HTTPS address
+- **WHEN** a non-preview export holds claims and the address is a public HTTPS address
 - **THEN** no reason to stop is reported
 
 #### Scenario: Preview export
@@ -14,8 +14,8 @@ The deploy command SHALL refuse to publish when the export is a preview, when it
 - **THEN** the command stops, says that a preview is never deployed, and publishes nothing
 
 #### Scenario: Claim not checked by a person
-- **WHEN** one claim in the export was loaded from a seed file and never approved by the operator
-- **THEN** the command stops and names that claim
+- **WHEN** one claim in the export was approved by a rule and never by the operator
+- **THEN** the command does not stop for it, and the claim is published marked as not checked by a person
 
 ### Requirement: The site is deployed only to its public address
 The deploy command SHALL refuse an address that is missing, local, not HTTPS, or that carries a path. It SHALL build a public build for that address and publish to that address's domain only. The deployment SHALL NOT create any other public address for the site.

@@ -2,7 +2,6 @@
 // Behaviour: openspec deployment.
 
 const LOCAL_HOST = /^(localhost|.+\.localhost|.+\.test|127(\.\d{1,3}){3}|0\.0\.0\.0|\[::1\])$/i;
-const NAMED_AT_MOST = 5;
 
 function addressProblem(siteUrl) {
   if (!siteUrl) {
@@ -47,15 +46,8 @@ export function deployProblems({ data, siteUrl }) {
     problems.push("The export holds no claims. There is nothing to publish.");
   }
 
-  const unchecked = claims.filter((claim) => !claim.checked_by_person).map((claim) => claim.slug);
-  if (unchecked.length > 0) {
-    const named = unchecked.slice(0, NAMED_AT_MOST).join(", ");
-    const more =
-      unchecked.length > NAMED_AT_MOST ? ` and ${unchecked.length - NAMED_AT_MOST} more` : "";
-    problems.push(
-      `${unchecked.length} of ${claims.length} ${unchecked.length === 1 ? "claim has" : "claims have"} not been checked by a person: ${named}${more}. Approve each yourself (thenwhat review approve claim ID), then export again.`,
-    );
-  }
+  // A claim no person checked is published: openspec auto-publish, decided 2026-11-13.
+  // The export says which claims a person checked.
 
   return problems;
 }

@@ -24,13 +24,9 @@ test("Scenario: Preview export", () => {
 });
 
 test("Scenario: Claim not checked by a person", () => {
-  const data = exported([claim("quiet-claim"), claim("seeded-claim", false)]);
+  const data = exported([claim("quiet-claim"), claim("rule-approved-claim", false)]);
 
-  const problems = deployProblems({ data, siteUrl: PUBLIC });
-
-  assert.equal(problems.length, 1);
-  assert.match(problems[0], /seeded-claim/);
-  assert.doesNotMatch(problems[0], /quiet-claim/);
+  assert.deepEqual(deployProblems({ data, siteUrl: PUBLIC }), []);
 });
 
 test("an export with no claims is refused", () => {
@@ -53,7 +49,8 @@ for (const [name, siteUrl] of [
 }
 
 test("every problem is reported at once", () => {
-  const data = exported([claim("seeded-claim", false)], true);
+  const data = exported([], true);
 
+  // No address, a preview, and no claims.
   assert.equal(deployProblems({ data, siteUrl: undefined }).length, 3);
 });
