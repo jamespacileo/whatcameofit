@@ -33,15 +33,26 @@ The extension SHALL offer the same reminder choices for a claim it shows, SHALL 
 - **THEN** no notification is shown for it
 
 ### Requirement: Follow a claim
-The extension SHALL let the reader follow and unfollow a published claim and SHALL keep the followed list in the browser only. When a refreshed lookup file gives a followed claim a status or place different from the one last seen, the extension SHALL show one notification naming the claim, the earlier status label and the new one, and SHALL mark the claim as changed in the popup until the reader opens it.
+The extension SHALL let the reader follow and unfollow a published claim and SHALL keep the followed list in the browser only. When the lookup file gives a followed claim a status or place different from the one last seen, the popup SHALL say how many followed claims have changed and SHALL mark the claim as changed, naming the earlier status label and the new one, until the reader opens it.
 
 #### Scenario: Followed claim changes status
-- **WHEN** the lookup file is refreshed and a followed claim has moved from "Trial registered" to "Phase 1 trial"
-- **THEN** one notification names the claim and both labels, and the popup marks the claim as changed
+- **WHEN** the reader opens the popup and a followed claim has moved from "Trial registered" to "Phase 1 trial"
+- **THEN** the popup says one followed claim has changed, and the following list names the claim and both labels
 
 #### Scenario: Followed claim is unchanged
-- **WHEN** the lookup file is refreshed and no followed claim has changed
-- **THEN** no notification is shown
+- **WHEN** the reader opens the popup and no followed claim has changed
+- **THEN** nothing is marked as changed
+
+#### Scenario: Reader sees the change
+- **WHEN** the reader opens a changed claim from the list, or opens the popup on one of its tracked reports
+- **THEN** the change is shown once and the claim is no longer marked
+
+### Requirement: Notification of a change
+When a followed claim's status or place changes while the popup is closed, the extension SHALL show one notification naming the claim, the earlier status label and the new one.
+
+#### Scenario: Change while the popup is closed
+- **WHEN** the extension refreshes the lookup file in the background and a followed claim has changed
+- **THEN** one notification names the claim and both labels
 
 #### Scenario: Followed claim leaves the lookup file
 - **WHEN** a followed claim is no longer in the lookup file
@@ -59,8 +70,8 @@ The extension SHALL keep, in the browser only, the ten pages the reader most rec
 - **THEN** the three candidates are listed, each with its own control
 
 #### Scenario: Entry with no record
-- **WHEN** the reader presses an entry whose check found no record
-- **THEN** the entry offers to check again and to open the original page
+- **WHEN** the list shows an entry whose check found no record
+- **THEN** the entry says so and leads to the original page, where the reader can check it again
 
 #### Scenario: Reader clears the list
 - **WHEN** the reader presses the clear control

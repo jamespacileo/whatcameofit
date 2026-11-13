@@ -97,16 +97,95 @@ const states = [
   ["Not a web page", { kind: "no-page" }],
   ["Site unreachable", { kind: "unreachable" }],
   ["Checking", { kind: "checking" }],
+  // The reader's own lists. The third item is what those lists hold.
+  ["Tracked, lists offered", tracked([claim]), { recent: 3, following: 1, changed: 1, followed: [], was: {} }],
+  [
+    "Tracked, followed and changed",
+    tracked([claim]),
+    { recent: 3, following: 1, changed: 0, followed: [claim.page], was: { [claim.page]: "Trial registered" } },
+  ],
+  [
+    "Recently checked",
+    {
+      kind: "recent",
+      entries: [
+        {
+          key: "news.example.org/teeth",
+          url: "https://news.example.org/teeth",
+          title: "New drug to regenerate lost teeth",
+          outlet: "news.example.org",
+          at: Date.UTC(2026, 10, 13, 9),
+          answer: { kind: "tracked" },
+          candidates: [{ title: claim.headline, url: SITE.url + claim.page, status: claim.status }],
+        },
+        {
+          key: "x.com/example/status/1",
+          url: "https://x.com/example/status/1",
+          title: "A post about a prion disease treatment entering trials",
+          outlet: "x.com",
+          at: Date.UTC(2026, 10, 12, 9),
+          answer: { kind: "searched", unreviewed: "Automatic search. Not checked by a person and not a status." },
+          candidates: answer.likely.map(({ title, url }) => ({ title, url, status: null })),
+        },
+        {
+          key: "daily.example.com/miracle",
+          url: "https://daily.example.com/miracle",
+          title: "Scientists hail breakthrough that could end hair loss",
+          outlet: "daily.example.com",
+          at: Date.UTC(2026, 10, 11, 9),
+          answer: { kind: "none" },
+          candidates: [],
+        },
+      ],
+    },
+  ],
+  ["Recently checked, empty", { kind: "recent", entries: [] }],
+  [
+    "One check's candidates",
+    {
+      kind: "entry",
+      entry: {
+        key: "x.com/example/status/1",
+        url: "https://x.com/example/status/1",
+        title: "A post about a prion disease treatment entering trials",
+        outlet: "x.com",
+        at: Date.UTC(2026, 10, 12, 9),
+        answer: { kind: "searched", unreviewed: "Automatic search. Not checked by a person and not a status." },
+        candidates: answer.likely.map(({ title, url }) => ({ title, url, status: null })),
+      },
+    },
+  ],
+  [
+    "Following",
+    {
+      kind: "following",
+      claims: [
+        { ...claim, gone: false, changed: true, was: "Trial registered" },
+        { ...quiet, gone: false, changed: false, was: null },
+        { headline: long.headline, page: long.page, status: long.status, gone: true, changed: false, was: null },
+      ],
+    },
+  ],
+  ["Following, empty", { kind: "following", claims: [] }],
 ];
 
 const board = document.querySelector("#board");
+const log = (name) => (...args) => console.log(name, ...args);
 const actions = {
   open: (address) => console.log("open", address),
   retry: () => console.log("retry"),
   search: () => console.log("search"),
+  showRecent: log("showRecent"),
+  showEntry: log("showEntry"),
+  clearRecent: log("clearRecent"),
+  showFollowing: log("showFollowing"),
+  back: log("back"),
+  follow: log("follow"),
+  unfollow: log("unfollow"),
+  openFollowed: log("openFollowed"),
 };
 
-for (const [label, state] of states) {
+for (const [label, state, kept = null] of states) {
   const figure = document.createElement("figure");
   const caption = document.createElement("figcaption");
   caption.textContent = label;
@@ -117,7 +196,7 @@ for (const [label, state] of states) {
   frame.addEventListener("load", () => {
     // Nodes are made with this page's document and adopted by the frame when inserted,
     // so the frame's own stylesheet applies to them.
-    render(frame.contentDocument.querySelector("#view"), state, SITE, actions);
+    render(frame.contentDocument.querySelector("#view"), state, SITE, actions, kept);
     const fit = () => {
       frame.style.height = `${frame.contentDocument.body.scrollHeight}px`;
     };
