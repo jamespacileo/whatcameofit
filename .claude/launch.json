@@ -4,14 +4,34 @@
     {
       "name": "site-fixture",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "cd site && EXPORT_FILE=tests/fixture-export.json npx astro dev --port 4331"],
+      "runtimeArgs": [
+        "-c",
+        "cd site && EXPORT_FILE=tests/fixture-export.json npx astro dev --port 4331"
+      ],
       "port": 4331
     },
     {
       "name": "site-built",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "cd site && npx astro preview --port 4332"],
+      "runtimeArgs": [
+        "-c",
+        "cd site && npx astro preview --port 4332"
+      ],
       "port": 4332
+    },
+    {
+      "name": "extension-states",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4333",
+        "--directory",
+        "extension",
+        "--bind",
+        "127.0.0.1"
+      ],
+      "port": 4333
     }
   ]
 }

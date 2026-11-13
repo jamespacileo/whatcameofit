@@ -24,9 +24,9 @@ const place = STAGE_PATH.indexOf(code);
         {STAGE_PATH.map((_, index) => <span class:list={["step", { here: index === place }]} />)}
       </span>
       {ends && (
+        /* The same words a screen reader is given for the dots above. */
         <span class="ends" aria-hidden="true">
-          <span>{STATUS_LABELS[STAGE_PATH[0]]}</span>
-          <span>{STATUS_LABELS[STAGE_PATH[STAGE_PATH.length - 1]]}</span>
+          Place {place + 1} of {STAGE_PATH.length}, from preclinical to approved
         </span>
       )}
     </span>

@@ -1,22 +1,26 @@
 ---
 import Base from "../layouts/Base.astro";
+import ChevronDown from "@lucide/astro/icons/chevron-down";
 import Clock from "@lucide/astro/icons/clock";
 import Copy from "@lucide/astro/icons/copy";
+import ExternalLink from "@lucide/astro/icons/external-link";
 import ImageDown from "@lucide/astro/icons/image-down";
 import Info from "@lucide/astro/icons/info";
 import Share2 from "@lucide/astro/icons/share-2";
 import BasisMark from "../components/BasisMark.astro";
+import ClaimTable from "../components/ClaimTable.astro";
 import Outlet from "../components/Outlet.astro";
 import KindIcon from "../components/KindIcon.astro";
 import Pop from "../components/Pop.astro";
 import StageTrack from "../components/StageTrack.astro";
 import TopicChip from "../components/TopicChip.astro";
 import { APPROACH_LABELS } from "../lib/approach";
-import { data, type ExportedClaim } from "../lib/export";
+import { data, verticalTitle, type ExportedClaim } from "../lib/export";
 import { UNCHECKED_NOTE } from "../lib/notices";
 import {
   EVIDENCE_STAGES,
   KIND_NAMES,
+  STAGE_PATH,
   STATUS_LABELS,
   STATUS_MEANINGS,
   eventKind,
@@ -49,8 +53,11 @@ const latestRecord = claim.events.map((event) => event.event_date).sort().at(-1)
 // The latest record is at the foot of a long timetable, so the date leads to it.
 const latestMark =
   timetable.sources.find(({ event }) => event.event_date === latestRecord)?.mark ?? null;
+const onPath = STAGE_PATH.includes(claim.status.code);
 const hasDatedPromise = claim.promises.some((promise) => promise.parsed_date !== null);
 const hasPromise = claim.promises.length > 0;
+// The year the latest dated promise names, shown beside the status as it is on the card.
+const promised = latestPromise(claim)?.parsed_date?.slice(0, 4) ?? null;
 // The legend names only the kinds of record this page shows.
 const kinds: RecordKind[] = [
   ...(claim.articles.length > 0 ? (["report"] as const) : []),
@@ -64,6 +71,12 @@ const imageAlt = cardAlt(cardFor(claim));
 // In a browser tab and a search result there is room for what and for what, not for
 // a whole headline: about sixty characters with the site's name.
 const tabTitle = clip(`${claim.intervention.name} for ${claim.indication}`, 41);
+// Where to go next: the claims filed with this one, newest report first.
+const topic = verticalTitle(claim.vertical);
+const inTopic = data.claims
+  .filter((other) => other.vertical === claim.vertical && other.slug !== claim.slug)
+  .sort((a, b) => ((a.first_reported_date ?? "") < (b.first_reported_date ?? "") ? 1 : -1));
+const others = inTopic.slice(0, 3);
 const address = `${SITE.url}/${claim.slug}`;
 const sentence = shareSentence(claim, STATUS_LABELS[claim.status.code], data.last_checked_at, address);
 // The whole of what another site needs to show this claim's status.
@@ -108,6 +121,11 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
       }
     </h1>
 
+    {/* A reader arriving from a shared link has not seen the home page. */}
+    <p class="what-this-is" data-pagefind-ignore>
+      A record of what followed this reported breakthrough. <a href="/how-it-works">How a status is set</a>
+    </p>
+
     {!claim.checked_by_person && <p class="unchecked">{UNCHECKED_NOTE}</p>}
 
     <div class="digest">
@@ -117,7 +135,6 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
           <span class="label" data-pagefind-meta="status">{STATUS_LABELS[claim.status.code]}</span>
           <Pop id="why" label="Why this status" class="info">
             <Info slot="trigger" size={20} stroke-width={1.9} aria-hidden="true" />
-            <p>{STATUS_MEANINGS[claim.status.code]}</p>
             {
               explaining.length > 0 ? (
                 <>
@@ -138,6 +155,24 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
               )
             }
             {
+              /* The dots on the path are named here, so a reader need not guess them. */
+              onPath && (
+                <>
+                  <p class="pop-head">The six places on the path</p>
+                  <ol class="pop-path">
+                    {STAGE_PATH.map((code) => (
+                      <li aria-current={code === claim.status.code ? "true" : undefined}>
+                        {STATUS_LABELS[code]}
+                      </li>
+                    ))}
+                  </ol>
+                </>
+              )
+            }
+            <p class="pop-note">
+              <a href="/how-it-works#what-each-status-means">What each status means</a>
+            </p>
+            {
               claim.status.updated_at && (
                 <p class="pop-note" data-pagefind-ignore>
                   Status set {formatDate(claim.status.updated_at)}.
@@ -156,11 +191,21 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                   {overlay}
                 </Fragment>
                 <p>
-                  The most recent record on this page is that old. It says nothing about work that
+                  No record on this page is more recent than that. It says nothing about work that
                   has not been published or registered.
+                </p>
+                <p class="pop-note">
+                  <a href="/how-it-works#no-signal">How "no signal" is counted</a>
                 </p>
               </Pop>
             </div>
+          )
+        }
+        {
+          promised && (
+            <p class="promised-by" data-pagefind-ignore>
+              Promised by <a href={`#year-${promised}`}>{promised}</a>
+            </p>
           )
         }
         <p class="changed" data-pagefind-ignore>
@@ -173,7 +218,11 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
           )}
         </p>
       </div>
-      <p class="lede" data-pagefind-meta="summary">{claim.summary}</p>
+      <div class="says">
+        {/* What the status means, in a sentence, beside the label it explains. */}
+        <p class="means">{STATUS_MEANINGS[claim.status.code]}</p>
+        <p class="lede" data-pagefind-meta="summary">{claim.summary}</p>
+      </div>
     </div>
 
     <dl class="facts">
@@ -181,10 +230,9 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
         <dt>Intervention</dt>
         <dd>
           {claim.intervention.name}
-          {
-            claim.intervention.synonyms.length > 0 &&
-              ` (also known as ${claim.intervention.synonyms.join(", ")})`
-          }
+          {claim.intervention.synonyms.length > 0 && (
+            <span class="aka">also known as {claim.intervention.synonyms.join(", ")}</span>
+          )}
         </dd>
       </div>
       <div>
@@ -206,7 +254,7 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
       {
         claim.evidence_stage && (
           <div>
-            <dt>Evidence then</dt>
+            <dt>Evidence when first reported</dt>
             <dd>{EVIDENCE_STAGES[claim.evidence_stage] ?? claim.evidence_stage}</dd>
           </div>
         )
@@ -241,34 +289,34 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
     </div>
     {!hasDatedPromise && <p class="absent">No dated promise on record.</p>}
     <div class="table-frame">
-    <table class="timetable" aria-labelledby="timetable">
-      <thead>
-        <tr>
-          <th scope="col">Year</th>
-          {hasDatedPromise && <th scope="col" class="promised">Promised</th>}
-          <th scope="col">Recorded</th>
+    <table role="table" class="timetable" aria-labelledby="timetable">
+      <thead role="rowgroup">
+        <tr role="row">
+          <th role="columnheader" scope="col">Year</th>
+          {hasDatedPromise && <th role="columnheader" scope="col" class="promised">Promised</th>}
+          <th role="columnheader" scope="col">Recorded</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody role="rowgroup">
         {
           timetable.rows.map((row) =>
             row.kind === "quiet" ? (
-              <tr class="quiet">
-                <th scope="row" class="year">
+              <tr role="row" class="quiet">
+                <th role="rowheader" scope="row" class="year">
                   {row.from === row.to ? row.from : `${row.from} to ${row.to}`}
                 </th>
-                {hasDatedPromise && <td class="promised empty" />}
-                <td>{hasDatedPromise ? "No promise, no record" : "No record"}</td>
+                {hasDatedPromise && <td role="cell" class="promised empty" />}
+                <td role="cell">{hasDatedPromise ? "No promise, no record" : "No record"}</td>
               </tr>
             ) : (
-              <tr>
-                <th scope="row" class="year">
+              <tr role="row" id={`year-${row.year}`}>
+                <th role="rowheader" scope="row" class="year">
                   {row.year}
                   {row.current && <small>this year</small>}
                 </th>
                 {
                   hasDatedPromise && (
-                    <td
+                    <td role="cell"
                       class:list={["promised", { none: row.promised.length === 0 }]}
                       data-column="Promised"
                     >
@@ -290,10 +338,16 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                     </td>
                   )
                 }
-                <td data-column="Recorded">
+                <td role="cell" data-column="Recorded">
                   {
                     row.recorded.length === 0 ? (
-                      <span class="entry-note">
+                      <span
+                        class:list={[
+                          "entry-note",
+                          // The same words, in ink, where a promise names this year.
+                          { beside: row.promised.length > 0 && row.year < thisYear },
+                        ]}
+                      >
                         {row.year < thisYear
                           ? "No record"
                           : row.current
@@ -309,14 +363,18 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                               <span class="visually-hidden">News report.</span>
                               <span class="entry-date">{dayAndMonth(line.date)}</span>
                               <span>
-                                <a href={line.url}>“{line.title}”</a>
+                                <a href={line.url}>
+                                  “{line.title}”
+                                  <ExternalLink class="out" size={13} stroke-width={1.9} aria-hidden="true" />
+                                  <span class="visually-hidden">(at {line.outlet ?? "the outlet"})</span>
+                                </a>
                               </span>
                               <span class="origin">
                                 <Outlet url={line.url} outlet={line.outlet} link={false} />
                                 {line.archiveUrl && (
                                   <>
                                     {" "}
-                                    (<a href={line.archiveUrl}>archived copy</a>)
+                                    <span class="unbroken">(<a href={line.archiveUrl}>archived copy</a>)</span>
                                   </>
                                 )}
                               </span>
@@ -324,6 +382,9 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                           ) : (
                             <li class="record">
                               <KindIcon kind={eventKind(line.steps[0].event)} />
+                              <span class="visually-hidden">
+                                {KIND_NAMES[eventKind(line.steps[0].event)]}.
+                              </span>
                               {line.steps.map((entry) => (
                                 <>
                                   <span class="entry-date">{dayAndMonth(entry.date)}</span>
@@ -332,6 +393,8 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                                       <Fragment slot="trigger">
                                         {eventLabel(entry.event)}
                                         {entry.explains && <BasisMark />}
+                                        {/* Says this opens something, where a link's arrow says it leaves. */}
+                                        <ChevronDown class="opens" size={14} stroke-width={2.2} aria-hidden="true" />
                                       </Fragment>
                                       <p>{entry.event.summary}</p>
                                       {entry.explains && (
@@ -390,10 +453,23 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
       )
     }
 
-    <p class="about-page" data-pagefind-ignore>
-      <a href="/how-it-works">How a status is set</a>
-    </p>
     <ReportError page={`/${claim.slug}`} />
+
+    {
+      others.length > 0 && (
+        <section class="others" data-pagefind-ignore>
+          <h2 class="bar" id="others">Other claims in {topic.toLowerCase()}</h2>
+          <ClaimTable claims={others} caption="Each claim, when it was first reported and its status" />
+          {inTopic.length > others.length && (
+            <p class="about-page">
+              <a href={`/topic/${claim.vertical}`}>
+                All {inTopic.length + 1} claims in {topic.toLowerCase()}
+              </a>
+            </p>
+          )}
+        </section>
+      )
+    }
 
     <section class="take" data-pagefind-ignore>
       <h2 class="bar" id="pass-on">Pass it on</h2>

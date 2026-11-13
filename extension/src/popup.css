@@ -12,15 +12,15 @@
 
 :root {
   --paper: #ffffff;
-  --ink: #172534;
-  --blue: #0b5cad;
-  --muted: #4d5d6e;
-  --panel: #f3f7fb;
-  --tag: #d9e8f7;
-  --rule: #dde5ee;
+  --ink: #0f1f38;
+  --blue: #14427f;
+  --muted: #46566b;
+  --panel: #f1f5fb;
+  --tag: #d6e2f2;
+  --rule: #d9e2ee;
   --promise: #fff7df;
   --promise-rule: #d9c88a;
-  --footer: #0b2f57;
+  --footer: #0b2545;
   --face: "Figtree Variable", "Helvetica Neue", Arial, sans-serif;
   color-scheme: light;
 }
@@ -28,6 +28,17 @@
 * {
   box-sizing: border-box;
   margin: 0;
+}
+
+/* A long answer scrolls; the bar is drawn in the site's own tint, not the system's grey. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--tag) transparent;
+}
+
+.mark {
+  flex: none;
+  border-radius: 5px;
 }
 
 ::selection {
@@ -44,6 +55,9 @@ body {
 }
 
 .masthead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 12px 16px 11px;
   border-bottom: 1px solid var(--rule);
 }
@@ -98,6 +112,69 @@ h1 {
   font-size: 23px;
   font-weight: 700;
   line-height: 1.2;
+}
+
+/* The path, as on the site: six places on a line, one marked, never filled. */
+.track {
+  margin-top: 9px;
+}
+
+.steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 150px;
+  height: 12px;
+  background: linear-gradient(var(--rule), var(--rule)) center / 100% 1.5px no-repeat;
+}
+
+.step {
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid #7f90a3;
+  border-radius: 50%;
+  background: var(--paper);
+}
+
+.step.here {
+  width: 12px;
+  height: 12px;
+  border-color: var(--blue);
+  background: var(--blue);
+}
+
+/* A wait of up to half a minute is marked as one: the site's dot, breathing. */
+.checking {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+
+.checking::before {
+  content: "";
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--blue);
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .checking::before {
+    animation: wait 1.4s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes wait {
+  from {
+    opacity: 0.25;
+    transform: translateY(-1px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-1px) scale(1);
+  }
 }
 
 .no-signal {
@@ -229,12 +306,26 @@ h1 {
 }
 
 .lead {
-  margin-top: 12px;
-  font-weight: 600;
+  margin-top: 14px;
+}
+
+.context {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 10px 14px 11px;
+  border-radius: 13px;
+  background: var(--panel);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .listed {
-  margin-top: 12px;
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .records {
@@ -256,6 +347,28 @@ h1 {
 .result-title {
   font-size: 15px;
   line-height: 1.35;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.result-title a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.tag {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--panel);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .result-title a,
@@ -284,3 +397,19 @@ h1 {
   border-top: 1px solid var(--rule);
 }
 
+/* With a forced palette the marks that carry meaning take the system's text colour. */
+@media (forced-colors: active) {
+  .step.here,
+  .checking::before {
+    background: CanvasText;
+    border-color: CanvasText;
+    forced-color-adjust: none;
+  }
+
+  .digest,
+  .context,
+  .facts .promise {
+    outline: 1px solid CanvasText;
+    outline-offset: -1px;
+  }
+}

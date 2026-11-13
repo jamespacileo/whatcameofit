@@ -14,16 +14,19 @@ import {
   type CardFact,
 } from "./card";
 import { data, type ExportedClaim } from "./export";
-import { STATUS_LABELS, latestPromise, overlayText } from "./status";
+import { STAGE_PATH, STATUS_LABELS, latestPromise, overlayText } from "./status";
 
-const INK = "#172534";
-const BLUE = "#0b5cad";
-const MUTED = "#4d5d6e";
-const PANEL = "#f3f7fb";
+const INK = "#0f1f38";
+const BLUE = "#14427f";
+const MUTED = "#46566b";
+const PANEL = "#f1f5fb";
 const PAPER = "#ffffff";
-const TINT = "#eaf2fa";
+const TINT = "#e6eef8";
+const RULE = "#d9e2ee";
 const RING = "#7f90a3";
-const RULE = "#dde5ee";
+// The icon's own two: its outline, and the amber of the capsule's promised half.
+const DEEP = "#0b2545";
+const CAPSULE_PROMISE = "#f4c95d";
 // Pale amber: everything promised, here as on the pages.
 const PROMISE = "#fff7df";
 const PROMISE_RULE = "#d9c88a";
@@ -106,7 +109,7 @@ const box = (style: Record<string, unknown>, children: unknown): Node => ({
 });
 const shape = (type: string, props: Record<string, unknown>): Node => ({ type, props });
 
-// The site's icon: a magnifying glass over lines of print, one dot picked out.
+// The site's icon: a magnifying glass over a capsule in two halves.
 // The same drawing as public/favicon.svg.
 function stamp(size: number): Node {
   return shape("svg", {
@@ -115,11 +118,12 @@ function stamp(size: number): Node {
     viewBox: "0 0 64 64",
     children: [
       shape("rect", { width: 64, height: 64, rx: 14, fill: TINT }),
-      shape("circle", { cx: 27, cy: 27, r: 17, fill: PAPER, stroke: INK, "stroke-width": 5 }),
-      shape("path", { d: "M40 40l13 13", stroke: INK, "stroke-width": 6.5, "stroke-linecap": "round" }),
-      shape("rect", { x: 16.5, y: 19.5, width: 21, height: 5, rx: 2.5, fill: INK }),
-      shape("rect", { x: 16.5, y: 28.5, width: 11, height: 4, rx: 2, fill: RING }),
-      shape("circle", { cx: 33.5, cy: 30.5, r: 3.6, fill: BLUE }),
+      shape("circle", { cx: 27, cy: 27, r: 17, fill: PAPER, stroke: DEEP, "stroke-width": 5 }),
+      shape("path", { d: "M40 40l13 13", stroke: DEEP, "stroke-width": 6.5, "stroke-linecap": "round" }),
+      // The capsule under the lens: the promised half in amber, the recorded half in blue.
+      shape("rect", { x: 14, y: 21, width: 26, height: 12, rx: 6, fill: BLUE }),
+      shape("path", { d: "M27 21h-7a6 6 0 0 0 0 12h7z", fill: CAPSULE_PROMISE }),
+      shape("path", { d: "M27 21v12", stroke: PAPER, "stroke-width": 2.2 }),
     ],
   });
 }
@@ -154,7 +158,7 @@ function brand(layout: Layout): Node {
       box({ fontWeight: 700, marginLeft: size * 0.27 }, SITE.wordmark[1]),
       ask(size * 0.92),
     ]),
-    box({ fontSize: size * 0.72, color: MUTED }, CARD_NOTICE),
+    box({ fontSize: size * (layout.factsBelow ? 0.86 : 0.72), color: MUTED }, CARD_NOTICE),
   ]);
 }
 
@@ -200,12 +204,49 @@ function fact({ label, value }: CardFact, layout: Layout): Node {
   );
 }
 
+// The status's place on the path from preclinical to approved: six places on a line,
+// one marked. A position, never a bar that fills, and always under the status in words.
+function stagePath(place: number, layout: Layout): Node {
+  const dot = Math.round(layout.status * 0.17);
+  const here = Math.round(dot * 1.9);
+  const line = Math.max(3, Math.round(dot * 0.22));
+  const places = STAGE_PATH.map((_, index) => {
+    const marked = index + 1 === place;
+    const size = marked ? here : dot;
+    return box(
+      {
+        width: size,
+        height: size,
+        borderRadius: size,
+        background: marked ? BLUE : PAPER,
+        border: `${line}px solid ${marked ? BLUE : RING}`,
+        boxSizing: "border-box",
+      },
+      [],
+    );
+  });
+  const drawn: Node[] = [];
+  places.forEach((spot, index) => {
+    if (index > 0) drawn.push(box({ flexGrow: 1, height: line, background: RULE }, []));
+    drawn.push(spot);
+  });
+  return box(
+    {
+      alignItems: "center",
+      width: layout.factsBelow ? "100%" : layout.status * 6.4,
+      marginTop: layout.status * 0.32,
+    },
+    drawn,
+  );
+}
+
 // What the records show: the status in the site's wording, and the dates that keep
 // the card true after it has been saved and passed on.
 function recorded(card: CardContent, layout: Layout): Node {
   const status = box({ flexDirection: "column" }, [
     box({ fontSize: layout.factLabel, color: MUTED }, "Status now"),
     box({ fontSize: layout.status, fontWeight: 700, lineHeight: 1.1, color: BLUE }, card.status),
+    card.place ? stagePath(card.place, layout) : null,
     card.note &&
       box(
         {
@@ -270,6 +311,10 @@ function draw(card: CardContent, layout: Layout): Node {
 }
 
 export function cardFor(claim: ExportedClaim): CardContent {
+  return { ...content(claim), place: STAGE_PATH.indexOf(claim.status.code) + 1 || null };
+}
+
+function content(claim: ExportedClaim): CardContent {
   return cardContent(
     claim,
     STATUS_LABELS[claim.status.code],

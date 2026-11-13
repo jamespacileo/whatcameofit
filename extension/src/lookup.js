@@ -23,6 +23,8 @@ export function stateFor(key, loaded) {
   return {
     kind: "tracked",
     claims,
+    // How many places the path has; each claim carries its own place on it.
+    places: index.places ?? null,
     notices: index.notices ?? [],
     lastChecked: index.last_checked ?? null,
     savedAt,

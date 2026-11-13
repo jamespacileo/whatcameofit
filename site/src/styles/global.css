@@ -2,17 +2,17 @@
 
 :root {
   --paper: #ffffff;
-  --ink: #172534;
-  --blue: #0b5cad;
-  --muted: #4d5d6e;
-  --panel: #f3f7fb;
-  --tint: #eaf2fa;
-  --tag: #d9e8f7;
-  --rule: #dde5ee;
+  --ink: #0f1f38;
+  --blue: #14427f;
+  --muted: #46566b;
+  --panel: #f1f5fb;
+  --tint: #e6eef8;
+  --tag: #d6e2f2;
+  --rule: #d9e2ee;
   --rule-soft: #e9eff5;
   --promise: #fff7df;
   --promise-rule: #d9c88a;
-  --footer: #0b2f57;
+  --footer: #0b2545;
 
   --face: "Figtree Variable", "Helvetica Neue", Arial, sans-serif;
   --measure: 66ch;
@@ -244,6 +244,14 @@ p {
   }
 }
 
+.masthead .name .mark {
+  width: 1.3em;
+  height: 1.3em;
+  margin-right: 0.45em;
+  align-self: center;
+  flex: none;
+}
+
 .masthead nav ul {
   display: flex;
   flex-wrap: wrap;
@@ -362,6 +370,84 @@ a.chip:hover {
   border-color: var(--tint);
 }
 
+/* Under the headline: what kind of page this is, for a reader who arrived cold. */
+.what-this-is {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin: 0.6rem 0 0;
+}
+
+/* A thumb needs more than a mouse does: 44 pixels, wherever something is pressed. */
+@media (max-width: 40rem) {
+  .share {
+    min-height: 2.75rem;
+    padding-inline: 1rem;
+  }
+
+  .chip,
+  .digest .overlay {
+    min-height: 2.75rem;
+  }
+
+  .pop-trigger.info {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  /* Links that sit alone on a record's line, and the fold that opens the embed. */
+  /* Padding on an inline link enlarges what a thumb can hit without moving the line. */
+  .record .origin a,
+  .record > span > a,
+  .index .claim a {
+    padding-block: 0.6rem;
+  }
+
+  .embed-how summary {
+    display: inline-block;
+    padding-block: 0.6rem;
+  }
+
+  .pop-trigger.more {
+    padding-block: 0.6rem;
+    margin-block: -0.6rem;
+  }
+
+  .masthead nav a {
+    padding-block: 0.7rem;
+  }
+
+  /* Inline padding: a larger target without a taller line where a link sits in a sentence. */
+  .colophon a {
+    padding-block: 0.6rem;
+  }
+}
+
+/* The promise beside the status, as on the card: amber, dashed, and a link to its year. */
+.digest .promised-by {
+  width: fit-content;
+  margin: 0.6rem 0 0;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.9rem;
+  background: var(--promise);
+  border: 1.5px dashed var(--promise-rule);
+  border-radius: 6px;
+}
+
+.digest .promised-by a {
+  font-weight: 700;
+}
+
+/* A report's title leads off the site; the small arrow says so. */
+.record .out {
+  display: inline;
+  vertical-align: -0.08em;
+  margin-left: 0.15em;
+}
+
+.colophon p {
+  text-wrap: pretty;
+}
+
 /* Copied: the icon gives way to the site's dot for as long as the label says so. */
 .share.done svg {
   display: none;
@@ -410,13 +496,13 @@ a.chip:hover {
 
 .take-why {
   color: var(--muted);
-  margin: -0.2rem 0 0.8rem;
+  margin: 0.35rem 0 0.8rem;
 }
 
 /* The card beside the sentence that says the same thing. */
 .take-body {
   display: grid;
-  grid-template-columns: 9.5rem minmax(0, 1fr);
+  grid-template-columns: 13rem minmax(0, 1fr);
   gap: 0.9rem 1.1rem;
   align-items: start;
 }
@@ -434,8 +520,10 @@ a.chip:hover {
     grid-template-columns: 1fr;
   }
 
+  /* The sentence and its buttons first; the card they describe after. */
   .take-card {
-    width: 9.5rem;
+    width: min(100%, 15rem);
+    order: 2;
   }
 }
 
@@ -483,6 +571,8 @@ body.embed {
 }
 
 .embed article {
+  /* Made for a narrow frame; in a wide one it stays a card, not a strip. */
+  max-width: 30rem;
   border: 1px solid var(--rule);
   border-radius: var(--radius);
   background: var(--paper);
@@ -549,7 +639,7 @@ body.embed {
   margin-top: 0.7rem;
   padding-top: 0.6rem;
   border-top: 1px solid var(--rule-soft);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   line-height: 1.4;
   color: var(--muted);
 }
@@ -651,6 +741,12 @@ body.embed {
   margin: 0 0 0.3rem;
 }
 
+@media (max-width: 40rem) {
+  .digest.found {
+    row-gap: 0.8rem;
+  }
+}
+
 .found p {
   margin: 0;
   font-size: 0.95rem;
@@ -660,45 +756,148 @@ body.embed {
   margin-top: 0.5rem;
 }
 
+/* The method page's sections, as a short list of links under its lede. */
+.contents {
+  margin-top: 1.1rem;
+  max-width: var(--measure);
+}
+
+main nav.contents ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.3rem;
+}
+
+main nav.contents ul li,
+main nav.contents ul li + li {
+  margin: 0;
+  padding: 0;
+}
+
+@media (max-width: 40rem) {
+  /* One section to a line, so the list reads as a list. */
+  main nav.contents ul {
+    flex-direction: column;
+  }
+
+  /* The share pill lines up with the topic chip, whatever sits under the chip. */
+  .above-title {
+    align-items: flex-start;
+  }
+}
+
+.contents a {
+  display: inline-block;
+  padding-block: 0.35rem;
+  font-size: 0.95rem;
+}
+
+/* Search matches: the headline at reading size, the status in ink before the summary. */
+.results .hits a {
+  font-weight: 600;
+  font-size: 1.02rem;
+}
+
+.results .hits .entry-note strong {
+  color: var(--ink);
+}
+
+.next-up {
+  color: var(--muted);
+  margin-top: 0.5rem;
+}
+
 .tally {
   color: var(--muted);
   margin-top: 0.5rem;
 }
 
+/* On the home page the tally closes the lookup and opens the lists. */
+.results + .tally,
+.suggest + .tally {
+  margin-top: 1.4rem;
+  font-size: 0.95rem;
+}
+
+.digest .says {
+  align-self: center;
+}
+
+.digest .means {
+  margin: 0 0 0.45rem;
+  font-weight: 600;
+}
+
 .digest .lede {
   margin: 0;
   font-size: 1.02rem;
-  align-self: center;
 }
 
 @media (max-width: 40rem) {
   .digest {
     grid-template-columns: 1fr;
+    row-gap: 0;
+  }
+
+  /* On a phone the sentence that says what the status means comes straight after
+     the status, ahead of the path and the dates. The order a keyboard moves in
+     is unchanged: nothing in the sentence can be pressed. */
+  .digest:not(.found) .standing,
+  .digest:not(.found) .says {
+    display: contents;
+  }
+
+  .digest .label-row {
+    order: 1;
+  }
+
+  .digest .means {
+    order: 2;
+    margin: 0.4rem 0 0.2rem;
+  }
+
+  .digest .track,
+  .digest .standing > div:not(.label-row),
+  .digest .promised-by,
+  .digest .changed {
+    order: 3;
+  }
+
+  .digest .lede {
+    order: 4;
+    margin-top: 0.7rem;
   }
 }
 
+/* The facts: each a small grey label over its value, in columns that fold to two
+   on a phone, so the four are read as four and not as one run of words. */
 .facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem 1.5rem;
-  margin: 0.9rem 0.15rem 0;
-  font-size: 0.88rem;
-  color: var(--muted);
-}
-
-.facts div {
-  display: flex;
-  gap: 0.35rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.9rem 1.5rem;
+  margin: 1.2rem 0.15rem 0;
 }
 
 .facts dt {
-  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--muted);
 }
 
 .facts dd {
-  margin: 0;
+  margin: 0.1rem 0 0;
   font-weight: 600;
-  color: var(--ink);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.facts .aka {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--muted);
 }
 
 /* Section headings. */
@@ -770,6 +969,21 @@ body.embed {
 
 .timetable .promised {
   width: 33%;
+}
+
+/* Amber is kept for a promise that exists: a year with none is left white, so the
+   years that were promised something are found at a glance. */
+.timetable td.promised.none,
+.timetable td.promised.empty,
+.index td.promise.none {
+  background: none;
+}
+
+/* "No record" beside a promise for that year: the same words, in ink. */
+.entry-note.beside {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 1rem;
 }
 
 .timetable thead .promised,
@@ -961,9 +1175,9 @@ body.embed {
 }
 
 .track .ends {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.72rem;
+  display: block;
+  white-space: nowrap;
+  font-size: 0.75rem;
   color: var(--muted);
   margin-top: 0.15rem;
 }
@@ -1013,6 +1227,23 @@ body.embed {
   text-decoration: underline dotted var(--muted);
   text-decoration-thickness: 1.5px;
   text-underline-offset: 0.22em;
+}
+
+.pop-trigger.more .opens {
+  display: inline;
+  vertical-align: -0.12em;
+  margin-left: 0.1em;
+  color: var(--muted);
+}
+
+.pop-trigger.more:has(+ .pop:popover-open) .opens {
+  transform: rotate(180deg);
+}
+
+@media print {
+  .pop-trigger.more .opens {
+    display: none;
+  }
 }
 
 .pop-trigger.more:hover,
@@ -1073,7 +1304,8 @@ body.embed {
 }
 
 .pop p + p,
-.pop ul + p {
+.pop ul + p,
+.pop ol + p {
   margin-top: 0.5rem;
 }
 
@@ -1090,6 +1322,43 @@ body.embed {
   margin: 0.2rem 0 0;
   padding: 0;
   list-style: none;
+}
+
+/* The path's six names, the claim's own place in bold with the marker beside it. */
+.pop .pop-path {
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+}
+
+.pop .pop-path li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pop .pop-path li::before {
+  content: "";
+  flex: none;
+  width: 0.4rem;
+  height: 0.4rem;
+  margin-inline: 0.15rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--ring);
+}
+
+.pop .pop-path li[aria-current] {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.pop .pop-path li[aria-current]::before {
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-inline: 0;
+  background: var(--blue);
+  border-color: var(--blue);
 }
 
 .pop .pop-note {
@@ -1982,6 +2251,8 @@ main ul:not([class]) li + li {
    system's text colour, and the promise areas keep an outline. */
 @media (forced-colors: active) {
   .track .step.here,
+  .pop .pop-path li[aria-current]::before,
+  .share.done::before,
   .stage-filter .place[aria-pressed="true"] .dot {
     background: CanvasText;
     border-color: CanvasText;
@@ -1996,8 +2267,12 @@ main ul:not([class]) li + li {
     fill: CanvasText;
   }
 
-  .timetable .promised,
-  .index .promise,
+  /* Only a cell that holds a promise is outlined, as only it is amber elsewhere. */
+  .timetable thead .promised,
+  .timetable td.promised:not(.none):not(.empty),
+  .index thead .promise,
+  .index td.promise:not(.none),
+  .digest .promised-by,
   .plain.undated,
   .digest,
   .pop {
@@ -2015,6 +2290,7 @@ main ul:not([class]) li + li {
   .colophon .more,
   .share,
   .take,
+  .others,
   .search,
   .skip {
     display: none;

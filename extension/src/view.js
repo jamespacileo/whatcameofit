@@ -76,12 +76,27 @@ function headline(words) {
   return el("h1", null, parts);
 }
 
-function claimBlock(claim, site, actions) {
+// Where the status sits on the path from preclinical to approved: a row of places, one
+// marked. Drawn only when the lookup file gives the place; the status is beside it in words.
+function track(place, places) {
+  if (!place || !places) return null;
+  const steps = el(
+    "span",
+    "steps",
+    Array.from({ length: places }, (_, index) => el("span", index + 1 === place ? "step here" : "step")),
+  );
+  steps.setAttribute("role", "img");
+  steps.setAttribute("aria-label", `Place ${place} of ${places} on the path from preclinical to approved`);
+  return el("dd", "track", [steps]);
+}
+
+function claimBlock(claim, site, actions, places) {
   return el("article", "claim", [
     headline(claim.headline),
     el("dl", "digest", [
       el("dt", null, text.standing),
       el("dd", "status", claim.status),
+      track(claim.place, places),
       claim.no_signal && el("dd", "no-signal", claim.no_signal),
       el("dd", "meaning", claim.meaning),
     ]),
@@ -127,18 +142,24 @@ function answerBlock(shown, site, actions) {
         el("li", "result-card", [
           el("h2", "result-title", [link(item.title ?? item.headline, address(item), null, actions.open)]),
           el("p", "result-confidence", automatic ? (item.confidenceLabel ?? text.confidenceUnavailable) : text.reviewed),
-          item.detail && el("p", "small result-detail", item.detail),
+          // Phase, state and registry number are told apart at a glance as separate tags.
+          item.detail &&
+            el(
+              "p",
+              "tags result-detail",
+              item.detail.split(" · ").map((part) => el("span", "tag", part)),
+            ),
           item.why && el("p", "small result-reason", item.why),
         ]),
       ),
     );
+  const context = [shown.source, shown.searchedAlso, shown.trialSaid].filter(Boolean);
   return [
     shown.marked && el("p", "unchecked", shown.marked),
-    el("p", "lead", shown.lead),
+    el("h1", "lead", shown.lead),
     shown.marked && privacyNote(site, actions),
-    shown.source && el("p", "small", shown.source),
-    shown.searchedAlso && el("p", "small", shown.searchedAlso),
-    shown.trialSaid && el("p", "small", shown.trialSaid),
+    // What the search was given to work with, kept together and apart from its results.
+    context.length > 0 && el("div", "context", context.map((line) => el("p", null, line))),
     shown.tracked.length > 0 && records(shown.tracked, (claim) => site.url + claim.page),
     shown.likely.length > 0 && el("p", "listed", shown.likelyLead),
     shown.likely.length > 0 && el("p", "small", shown.confidenceMeaning ?? text.confidenceMeaning),
@@ -162,7 +183,7 @@ export function render(root, state, site, actions) {
     children = [el("p", "checking", text.checking)];
   } else if (state.kind === "tracked") {
     children = [
-      ...state.claims.map((claim) => claimBlock(claim, site, actions)),
+      ...state.claims.map((claim) => claimBlock(claim, site, actions, state.places)),
       el("footer", "notices", [
         ...state.notices.map((notice) => el("p", null, notice)),
         state.lastChecked && el("p", "checked", text.lastChecked(state.lastChecked)),

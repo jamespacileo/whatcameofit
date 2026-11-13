@@ -1,12 +1,14 @@
 ---
 import Base from "../layouts/Base.astro";
 import Outlet from "../components/Outlet.astro";
+import PromiseText from "../components/PromiseText.astro";
 import StatusCell from "../components/StatusCell.astro";
 import TopicChip from "../components/TopicChip.astro";
 import { SITE } from "../../site.config.mjs";
 import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
 import { data, listedTopics } from "../lib/export";
 import { recentReports } from "../lib/reports";
+import { latestPromise } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 
 const reports = recentReports(data.claims, 10);
@@ -32,10 +34,19 @@ for (const claim of data.claims) {
 }
 const years = Array.from(perYear).sort((a, b) => b[0].localeCompare(a[0]));
 
+// The headlines table sets the promise beside the status, as a claim page does. With no
+// dated promise among the reports there is no amber column.
+const anyPromise = reports.some((report) => latestPromise(report.claim) !== null);
+const approvals = data.claims.filter((claim) => claim.status.code === "approved").length;
+
 const recent = data.claims
   .filter((claim) => claim.status.updated_at !== null)
   .sort((a, b) => (a.status.updated_at! < b.status.updated_at! ? 1 : -1))
   .slice(0, 10);
+// Statuses are often set in one batch. One shared date is said once, in the heading,
+// in place of a column that repeats it on every row.
+const setOn = new Set(recent.map((claim) => claim.status.updated_at!.slice(0, 10)));
+const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null;
 ---
 
 <Base current="home">
@@ -74,36 +85,64 @@ const recent = data.claims
     )
   }
 
+  {
+    data.claims.length > 0 && (
+      <p class="tally">
+        {data.claims.length} {data.claims.length === 1 ? "claim" : "claims"} tracked in{" "}
+        <a href="/topics">
+          {listedTopics.length} {listedTopics.length === 1 ? "topic" : "topics"}
+        </a>
+        . <a href="/it-happened">Approvals on record</a>: {approvals} of {data.claims.length}.
+      </p>
+    )
+  }
+
   <h2 class="bar">Headlines reported most recently</h2>
   {
     reports.length === 0 ? (
       <p>No news report is on record yet.</p>
     ) : (
       <div class="table-frame">
-      <table class="index">
+      <table role="table" class="index">
         <caption class="visually-hidden">
           News reports about tracked claims, newest first. Each headline is the outlet's own wording.
         </caption>
-        <thead>
-          <tr>
-            <th scope="col">Headline</th>
-            <th scope="col">Reported</th>
-            <th scope="col">Status now</th>
+        <thead role="rowgroup">
+          <tr role="row">
+            <th role="columnheader" scope="col">Headline</th>
+            <th role="columnheader" scope="col">Reported</th>
+            {anyPromise && <th role="columnheader" scope="col" class="promise">Promised</th>}
+            <th role="columnheader" scope="col">Status now</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody role="rowgroup">
           {reports.map((report) => (
-            <tr>
-              <td class="claim">
+            <tr role="row">
+              <td role="cell" class="claim">
                 <a href={`/${report.claim.slug}`}>“{report.title}”</a>
                 <span class="entry-note">
                   <Outlet url={report.url} outlet={report.outlet} />
                 </span>
               </td>
-              <td class="when" data-column="Reported">
+              <td role="cell" class="when" data-column="Reported">
                 {formatDate(report.publishedDate)}
               </td>
-              <td class="status" data-column="Status now">
+              {anyPromise && (
+                <td
+                  role="cell"
+                  class:list={["promise", { none: !latestPromise(report.claim) }]}
+                  data-column="Promised"
+                >
+                  {latestPromise(report.claim) ? (
+                    <>
+                      <PromiseText promise={latestPromise(report.claim)} />
+                    </>
+                  ) : (
+                    <span class="visually-hidden">None with a date</span>
+                  )}
+                </td>
+              )}
+              <td role="cell" class="status" data-column="Status now">
                 <StatusCell claim={report.claim} />
               </td>
             </tr>
@@ -114,32 +153,34 @@ const recent = data.claims
     )
   }
 
-  <h2 class="bar">Statuses set most recently</h2>
+  <h2 class="bar">{oneDay ? `Statuses set on ${oneDay}` : "Statuses set most recently"}</h2>
   {
     recent.length === 0 ? (
       <p>No status has changed yet.</p>
     ) : (
       <div class="table-frame">
-      <table class="index">
-        <thead>
-          <tr>
-            <th scope="col">Claim</th>
-            <th scope="col">Status</th>
-            <th scope="col">Status set</th>
+      <table role="table" class="index">
+        <thead role="rowgroup">
+          <tr role="row">
+            <th role="columnheader" scope="col">Claim</th>
+            <th role="columnheader" scope="col">Status</th>
+            {!oneDay && <th role="columnheader" scope="col">Status set</th>}
           </tr>
         </thead>
-        <tbody>
+        <tbody role="rowgroup">
           {recent.map((claim) => (
-            <tr>
-              <td class="claim">
+            <tr role="row">
+              <td role="cell" class="claim">
                 <a href={`/${claim.slug}`}>{claim.headline}</a>
               </td>
-              <td class="status" data-column="Status">
+              <td role="cell" class="status" data-column="Status">
                 <StatusCell claim={claim} />
               </td>
-              <td class="when" data-column="Status set">
-                {formatDate(claim.status.updated_at)}
-              </td>
+              {!oneDay && (
+                <td role="cell" class="when" data-column="Status set">
+                  {formatDate(claim.status.updated_at)}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -227,6 +268,15 @@ const recent = data.claims
     if (text) node.textContent = text;
     if (className) node.className = className;
     return node;
+  }
+
+  // Where to go when the box has no answer: never a full stop.
+  function next() {
+    const line = element("p", "Every tracked claim is listed by ", "entry-note");
+    const topics = element("a", "topic") as HTMLAnchorElement;
+    topics.href = "/topics";
+    line.append(topics, ". A treatment's name can also be typed in the box above.");
+    return line;
   }
 
   function show(...messages: string[]) {
@@ -443,7 +493,7 @@ const recent = data.claims
       index = await loadLookup();
     } catch {
       lookup = undefined;
-      show("The lookup is not available right now. The topic pages list every claim.");
+      results.replaceChildren(element("p", "The lookup is not available right now."), next());
       return;
     }
     const slugs = index.articles[read["key"]] ?? [];
@@ -480,6 +530,7 @@ const recent = data.claims
       ),
       ...liveOffer(address),
       ...suggestion(address),
+      next(),
     );
   }
 
@@ -499,7 +550,7 @@ const recent = data.claims
       );
     } catch {
       if (asked === latest) {
-        show("Search is not available right now. The topic pages list every claim.");
+        results.replaceChildren(element("p", "Search is not available right now."), next());
       }
       return;
     }
@@ -509,22 +560,27 @@ const recent = data.claims
         `No record found for “${query}”. We say that a lot.`,
         "This site only covers claims it has tracked so far.",
       );
+      results.append(next());
       return;
     }
-    const list = document.createElement("ul");
-    list.className = "plain";
+    // Each match: the headline, then its status in words ahead of the summary.
+    const list = element("ul", undefined, "plain hits");
     for (const hit of hits) {
-      const item = document.createElement("li");
-      const link = document.createElement("a");
+      const item = element("li");
+      const link = element("a", hit.meta.title ?? hit.url) as HTMLAnchorElement;
       link.href = hit.url;
-      link.textContent = hit.meta.title ?? hit.url;
-      const note = document.createElement("span");
-      note.className = "entry-note";
-      note.textContent = [hit.meta.status, hit.meta.summary].filter(Boolean).join(". ");
+      const note = element("span", undefined, "entry-note");
+      if (hit.meta.status) note.append(element("strong", hit.meta.status), " ");
+      if (hit.meta.summary) note.append(hit.meta.summary);
       item.append(link, note);
       list.append(item);
     }
-    results.replaceChildren(list);
+    const count = element(
+      "p",
+      `${hits.length} tracked ${hits.length === 1 ? "claim matches" : "claims match"} “${query}”.`,
+      "entry-note",
+    );
+    results.replaceChildren(count, list);
   }
 
   function answer(text: string) {
@@ -541,7 +597,9 @@ const recent = data.claims
     event.preventDefault();
     const text = input.value.trim();
     const url = new URL(location.href);
-    if (text) url.searchParams.set("q", text);
+    // Only typed words go into the page's address. A pasted article address stays in
+    // the field: in the address it would reach the server on a reload or when shared.
+    if (text && readAddress(text).kind === "none") url.searchParams.set("q", text);
     else url.searchParams.delete("q");
     history.replaceState(null, "", url);
     answer(text);

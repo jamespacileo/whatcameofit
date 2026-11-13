@@ -1,0 +1,27 @@
+---
+// A dated promise in a list: the year in bold, then what was promised. When the promise's
+// own words already name the year, the year is made bold where it stands, not said twice.
+interface Props {
+  promise: { parsed_date: string | null; description: string } | null;
+}
+
+const { promise } = Astro.props;
+const year = promise?.parsed_date?.slice(0, 4) ?? "";
+const parts = promise && year && promise.description.includes(year) ? promise.description.split(year) : null;
+---
+
+{
+  promise &&
+    (parts ? (
+      parts.map((part, index) => (
+        <>
+          {index > 0 && <strong>{year}</strong>}
+          {part}
+        </>
+      ))
+    ) : (
+      <>
+        <strong>{year}</strong> {promise.description}
+      </>
+    ))
+}
