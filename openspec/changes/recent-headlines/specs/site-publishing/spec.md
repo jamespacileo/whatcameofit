@@ -17,6 +17,21 @@ The home page SHALL list the most recently published source articles of publishe
 - **WHEN** a claim has not been approved in review
 - **THEN** none of its articles appears on the home page
 
+### Requirement: A claim page names the reports it follows
+A claim page SHALL show, directly under its title and above the status, the claim's source articles, newest first, at most three: each article's title as the outlet wrote it, marked as a quotation and linked to the article, with the outlet and the publication date. When the claim has more than three, the page SHALL link to the dated record of all of them. Where the export carries the claim's matches, the status panel SHALL state how many registry records count toward the status and how many are possible, linked to the list of matched records, and that list SHALL be present, saying that no record matched, when there is none.
+
+#### Scenario: Reader follows a headline from the home page
+- **WHEN** a reader opens a claim page from a headline on the home page
+- **THEN** the same headline, its outlet and its date are shown under the page's title, before the status
+
+#### Scenario: Claim with matched records
+- **WHEN** a claim has three approved matches and two pending candidates
+- **THEN** the status panel says three registry records matched and two are possible, and links to the list
+
+#### Scenario: Claim with no matched record
+- **WHEN** the export carries an empty list of matches for a claim
+- **THEN** the status panel says no registry record matched, and the list of matched records says the registries were searched and none matched
+
 ### Requirement: Topics are filed under groups
 The export SHALL carry, for each vertical, the group it is configured under, or none. When any listed topic has a group, the topic directory SHALL list topics under their groups' names, groups in alphabetical order and topics in alphabetical order within each, with topics that have no group last; its jump links SHALL lead to the groups, and its filter SHALL match a group's name as well as a topic's. When no listed topic has a group, the directory SHALL list topics under their first letters. The site SHALL NOT assign a topic to a group itself.
 

@@ -71,7 +71,7 @@ Not an API. A fixed list of 21 health categories, used to check that the site's 
 
 ## Not yet checked
 
-ISRCTN, EU CTIS, WHO ICTRP, PubMed E-utilities, OpenAlex, NIH RePORTER, UKRI Gateway to Research, Companies House, SEC EDGAR, openFDA, EMA and MHRA have no client. Add an entry here before writing one.
+ISRCTN, EU CTIS, WHO ICTRP, PubMed E-utilities, NIH RePORTER, UKRI Gateway to Research, Companies House, SEC EDGAR, openFDA, EMA and MHRA have no client. Add an entry here before writing one. OpenAlex and ROR are implemented for live lookup enrichment; their entries are below.
 
 
 ## OpenAI Decisions API

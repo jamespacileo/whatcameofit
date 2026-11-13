@@ -12,7 +12,7 @@ import { SITE } from "../../site.config.mjs";
 import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
 import { data, listedTopics } from "../lib/export";
 import { longestWithoutSignal, promisesByDate, statusMoves } from "../lib/feed";
-import { recentReports } from "../lib/reports";
+import { followedNameFor, recentReports } from "../lib/reports";
 import { siteData } from "../lib/structured";
 import { STATUS_LABELS, latestPromise } from "../lib/status";
 import { formatDate } from "../lib/timetable";
@@ -156,7 +156,19 @@ const views = [
           {reports.map((report, index) => (
             <tr role="row" data-later={index >= PAGE_SIZE ? "" : undefined}>
               <td role="cell" class="claim">
-                <a href={`/${report.claim.slug}`}>“{report.title}”</a>
+                {/* Named as on the claim page, so the headline pressed here is
+                    carried to its place there. */}
+                <a
+                  class="followed"
+                  href={`/${report.claim.slug}`}
+                  style={
+                    followedNameFor(report.claim, report.url)
+                      ? `view-transition-name: ${followedNameFor(report.claim, report.url)}`
+                      : undefined
+                  }
+                >
+                  “{report.title}”
+                </a>
                 <span class="entry-note">
                   <Outlet url={report.url} outlet={report.outlet} />
                 </span>
