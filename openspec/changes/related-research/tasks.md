@@ -9,6 +9,8 @@
 - [x] 1.5 Add "Search phrase" to `GLOSSARY.md` and regenerate `site/export.schema.json` if the export shape changed; verify `make check`
 - [x] 1.6 Add `thenwhat entity phrase` so an operator can give a decided claim a search phrase, since a decided claim's article is never read again; verify one success and one refusal
 - [x] 1.7 On the real database: apply migration 0008, give `tourette-syndrome-wrist-nerve-stimulation` the phrase "median nerve stimulation", run `thenwhat resolve` on it, and record in `docs/lookup.md` whether NCT05269953 is now a candidate (the registry returned it for that phrase within "Tourette syndrome" when asked directly on 2026-11-13) (2026-11-13: done; NCT05269953 scored 0.98 and is pending, with two Washington University trials)
+- [x] 1.8 Add `thenwhat entity phrases` to have the model give search phrases to decided claims from what each claim says of itself; verify one success and one refusal
+- [ ] 1.9 Run it for every claim without a phrase, resolve those claims again, and record in `docs/lookup.md` how many gained a trial
 
 ## 2. People
 
