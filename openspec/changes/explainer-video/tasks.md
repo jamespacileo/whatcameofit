@@ -1,0 +1,6 @@
+- [x] Build the explainer in `video/`, timed by the narration's words
+- [x] Render 16:9 and 9:16 at 4K with an original synthesised music bed
+- [x] Add the 1080p file and its poster to the site, and the player to the method page
+- [x] Test that the player waits to be played, is dated and carries its words
+- [ ] Listen to the narration and music on the published page
+- [ ] Re-render when a claim shown in the video changes status

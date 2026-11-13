@@ -37,6 +37,15 @@
       "port": 8787
     },
     {
+      "name": "video-studio",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd video && npx remotion studio src/remotion/index.ts --public-dir videos/what-came-of-it-explainer/ --port 3123 --no-open"
+      ],
+      "port": 3123
+    },
+    {
       "name": "extension-states",
       "runtimeExecutable": "python3",
       "runtimeArgs": [

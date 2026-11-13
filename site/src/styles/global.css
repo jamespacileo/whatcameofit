@@ -258,9 +258,10 @@ p {
   }
 }
 
+/* The reverse mark: no tile, the glass in white, the navy showing through the lens. */
 .masthead .name .mark {
-  width: 1.55em;
-  height: 1.55em;
+  width: 1.4em;
+  height: 1.4em;
   margin-right: 0.45em;
   align-self: center;
   flex: none;
@@ -775,30 +776,45 @@ body.embed {
   border: 1px solid var(--rule);
   border-radius: var(--radius);
   background: var(--paper);
-  padding: 0.9rem 1.1rem 1rem;
+  padding: 0 1.1rem 1rem;
+  /* The navy head reaches the frame's edges and takes its corners. */
+  overflow: hidden;
 }
 
+/* The head is the site's masthead in small: the name in white on deep navy. */
 .embed-name {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: 1rem;
-  margin: 0;
+  margin: 0 -1.1rem;
+  padding: 0.5rem 1.1rem;
   max-width: none;
   font-size: 0.8rem;
-  color: var(--muted);
+  background: var(--footer);
+  /* The quieter line on navy: a pale blue, not a grey. */
+  color: #c9d9ee;
 }
 
 .embed-name a {
   font-weight: 700;
-  color: var(--ink);
+  color: var(--paper);
   text-decoration: none;
+}
+
+.embed-name a:focus-visible {
+  outline-color: var(--paper);
+}
+
+.embed-name ::selection {
+  background: var(--paper);
+  color: var(--footer);
 }
 
 .embed h1 {
   font-size: 1.05rem;
   line-height: 1.3;
-  margin: 0.5rem 0 0.7rem;
+  margin: 0.7rem 0 0.7rem;
   text-wrap: pretty;
   /* Three lines at most, so the status stays inside the frame the snippet asks for. */
   display: -webkit-box;
@@ -959,6 +975,54 @@ body.embed {
 .contents {
   margin-top: 1.1rem;
   max-width: var(--measure);
+}
+
+/* The method page's video: a framed player that waits to be played, its note, and its words. */
+.explainer {
+  margin: 1.5rem 0 0;
+  max-width: 46rem;
+}
+
+.explainer video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+
+.explainer figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.explainer details {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.explainer summary {
+  width: fit-content;
+  color: var(--blue);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 40rem) {
+  /* Pressed with a thumb, so it gets the room every pressed thing has. */
+  .explainer summary {
+    padding-block: 0.6rem;
+  }
+}
+
+@media print {
+  /* A video cannot be printed. Its words can: the fold is opened by the reader or not at all. */
+  .explainer video {
+    display: none;
+  }
 }
 
 main nav.contents ul {
@@ -2888,6 +2952,14 @@ main ul:not([class]) li + li {
     fill: CanvasText;
   }
 
+  /* The white glass keeps a navy tile of its own, whatever ground the system gives. */
+  .masthead .name .mark {
+    background: #0b2545;
+    border-radius: 22%;
+    padding: 0.12em;
+    forced-color-adjust: none;
+  }
+
   .basis-mark svg {
     fill: CanvasText;
   }
@@ -2922,6 +2994,11 @@ main ul:not([class]) li + li {
 
   .masthead .name .ask .dot {
     fill: var(--blue);
+  }
+
+  /* On paper the white glass would vanish: the mark is printed in one dark colour. */
+  .masthead .name .mark {
+    filter: brightness(0);
   }
 
   .masthead nav,

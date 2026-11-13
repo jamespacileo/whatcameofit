@@ -1,0 +1,6 @@
+node_modules/
+out/
+# Rendered video and narration audio are rebuilt, not committed (see README).
+videos/*/*.mp4
+videos/*/*.wav
+videos/*/shorts/
