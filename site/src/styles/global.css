@@ -97,8 +97,9 @@ p {
   position: absolute;
   left: -100vw;
   top: 0;
-  background: var(--blue);
-  color: var(--paper);
+  /* It lands over the navy masthead, so it is the page's white with blue on it. */
+  background: var(--paper);
+  color: var(--blue);
   padding: 0.6rem 1rem;
   z-index: 2;
 }
@@ -120,10 +121,23 @@ p {
   white-space: nowrap;
 }
 
-/* Masthead: quiet, the name and three plain links. */
+/* Masthead: the name and three plain links, light on the footer's deep navy.
+   The navy is the darkest blue the site has, not the accent. */
 
 .masthead {
-  border-bottom: 1px solid var(--rule);
+  /* The name's dot and the links' underline: the accent, lifted to read on navy. */
+  --on-navy: #8ec1f5;
+  background: var(--footer);
+  color: var(--paper);
+}
+
+.masthead :focus-visible {
+  outline-color: var(--paper);
+}
+
+.masthead ::selection {
+  background: var(--paper);
+  color: var(--footer);
 }
 
 .masthead .wrap {
@@ -141,7 +155,7 @@ p {
   gap: 0.26em;
   font-size: 1.25rem;
   letter-spacing: -0.01em;
-  color: var(--ink);
+  color: var(--paper);
   text-decoration: none;
 }
 
@@ -184,7 +198,7 @@ p {
 }
 
 .masthead .name .ask .dot {
-  fill: var(--blue);
+  fill: var(--on-navy);
   transform-box: fill-box;
   transform-origin: center;
 }
@@ -262,7 +276,7 @@ p {
 }
 
 .masthead nav a {
-  color: var(--blue);
+  color: var(--paper);
   font-weight: 600;
   font-size: 0.95rem;
   text-decoration: none;
@@ -275,6 +289,7 @@ p {
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 0.35em;
+  text-decoration-color: var(--on-navy);
 }
 
 main {
@@ -2649,6 +2664,19 @@ main ul:not([class]) li + li {
 }
 
 @media print {
+  .masthead {
+    background: none;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .masthead .name {
+    color: var(--ink);
+  }
+
+  .masthead .name .ask .dot {
+    fill: var(--blue);
+  }
+
   .masthead nav,
   .colophon .more,
   .share,
