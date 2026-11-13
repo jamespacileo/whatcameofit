@@ -4,6 +4,7 @@
 import type { APIRoute } from "astro";
 import { data, listedTopics } from "../lib/export";
 import "../lib/public-build";
+import { sourcesOf } from "../lib/sources";
 import { canonicalAddress } from "../lib/structured";
 
 function publicPages(): string[] {
@@ -17,6 +18,7 @@ function publicPages(): string[] {
     "/topics",
     ...listedTopics.map((topic) => `/topic/${topic.slug}`),
     ...data.claims.map((claim) => `/${claim.slug}`),
+    ...sourcesOf(data.claims).map((source) => `/source/${source.slug}`),
     "/it-happened",
     "/how-it-works",
     "/privacy",
