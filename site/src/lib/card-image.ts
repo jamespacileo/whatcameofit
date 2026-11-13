@@ -26,6 +26,11 @@ const RING = "#7f90a3";
 // Pale amber: everything promised, here as on the pages.
 const PROMISE = "#fff7df";
 const PROMISE_RULE = "#d9c88a";
+// The masthead's deep navy, and what is set on it: white, a pale blue for the
+// quieter line, and the lifted blue of the name's dot.
+const NAVY = "#0b2545";
+const ON_NAVY_QUIET = "#c9d9ee";
+const ON_NAVY_DOT = "#8ec1f5";
 
 export type Shape = "wide" | "square" | "tall";
 
@@ -105,14 +110,15 @@ const box = (style: Record<string, unknown>, children: unknown): Node => ({
 });
 const shape = (type: string, props: Record<string, unknown>): Node => ({ type, props });
 
-// Use the canonical vector artwork rather than maintaining another drawing.
-const markData = `data:image/svg+xml;base64,${fs.readFileSync(path.resolve("public/mark.svg")).toString("base64")}`;
+// The mark on navy is the reverse one: no tile, the glass in white. It is generated
+// from the canonical vector artwork, so there is no second drawing to maintain.
+const reverseData = `data:image/svg+xml;base64,${fs.readFileSync(path.resolve("public/mark-reverse.svg")).toString("base64")}`;
 function stamp(size: number): Node {
-  return shape("img", { src: markData, width: size, height: size });
+  return shape("img", { src: reverseData, width: size, height: size });
 }
 
 // The wordmark's question mark, whose dot is the blue marker. The same drawing as
-// the masthead's.
+// the masthead's, and on navy the same colours as the masthead's.
 function ask(height: number): Node {
   return shape("svg", {
     width: (height * 20) / 30,
@@ -123,26 +129,36 @@ function ask(height: number): Node {
       shape("path", {
         d: "M4.2 8.8a5.9 5.9 0 1 1 9 5c-2.1 1.3-3.2 2.4-3.2 4.7",
         fill: "none",
-        stroke: INK,
+        stroke: PAPER,
         "stroke-width": 4.8,
         "stroke-linecap": "round",
       }),
-      shape("circle", { cx: 10, cy: 26, r: 3.6, fill: BLUE }),
+      shape("circle", { cx: 10, cy: 26, r: 3.6, fill: ON_NAVY_DOT }),
     ],
   });
 }
 
+// The head of the card is the site's masthead: the name in white on deep navy, from
+// edge to edge, with the notice opposite.
 function brand(layout: Layout): Node {
   const size = layout.brand;
-  return box({ alignItems: "center", justifyContent: "space-between" }, [
-    box({ alignItems: "center", fontSize: size, color: INK }, [
-      stamp(size * 1.4),
+  return box(
+    {
+      alignItems: "center",
+      justifyContent: "space-between",
+      background: NAVY,
+      padding: `${layout.pad * 0.42}px ${layout.pad}px`,
+    },
+    [
+    box({ alignItems: "center", fontSize: size, color: PAPER }, [
+      stamp(size * 1.3),
       box({ fontWeight: 400, marginLeft: size * 0.5 }, SITE.wordmark[0]),
       box({ fontWeight: 700, marginLeft: size * 0.27 }, SITE.wordmark[1]),
       ask(size * 0.92),
     ]),
-    box({ fontSize: size * (layout.factsBelow ? 0.86 : 0.72), color: MUTED }, CARD_NOTICE),
-  ]);
+    box({ fontSize: size * (layout.factsBelow ? 0.86 : 0.72), color: ON_NAVY_QUIET }, CARD_NOTICE),
+    ],
+  );
 }
 
 // What was announced: the outlet's own words, marked as a quotation and attributed.
@@ -277,19 +293,28 @@ function recorded(card: CardContent, layout: Layout): Node {
 function draw(card: CardContent, layout: Layout): Node {
   return box(
     {
-      // The padding is counted inside the card's size. Without this the card is laid
-      // out wider and taller than the image, and its right and bottom edges are cut off.
-      boxSizing: "border-box",
       width: layout.width,
       height: layout.height,
       flexDirection: "column",
-      justifyContent: "space-between",
       background: PAPER,
       color: INK,
       fontFamily: "Figtree",
-      padding: layout.pad,
     },
-    [brand(layout), announced(card, layout), recorded(card, layout)],
+    [
+      brand(layout),
+      box(
+        {
+          // The padding is counted inside the body's size. Without this it is laid out
+          // wider and taller than the image, and its right and bottom edges are cut off.
+          boxSizing: "border-box",
+          flexGrow: 1,
+          flexDirection: "column",
+          justifyContent: "space-between",
+          padding: `${layout.pad * 0.8}px ${layout.pad}px ${layout.pad}px`,
+        },
+        [announced(card, layout), recorded(card, layout)],
+      ),
+    ],
   );
 }
 
@@ -339,22 +364,23 @@ export async function sitePng(): Promise<Uint8Array> {
       height,
       flexDirection: "column",
       justifyContent: "space-between",
-      background: PAPER,
-      color: INK,
+      // The site's own card is its masthead at full size: white on deep navy.
+      background: NAVY,
+      color: PAPER,
       fontFamily: "Figtree",
       padding: 72,
     },
     [
-      stamp(176),
+      stamp(168),
       box({ flexDirection: "column" }, [
         box({ alignItems: "center", fontSize: name, letterSpacing: -name / 48 }, [
           box({ fontWeight: 400 }, SITE.wordmark[0]),
           box({ fontWeight: 700, marginLeft: name * 0.27 }, SITE.wordmark[1]),
           ask(name * 0.92),
         ]),
-        box({ fontSize: 40, color: MUTED, marginTop: 14 }, SITE.tagline),
+        box({ fontSize: 40, color: ON_NAVY_QUIET, marginTop: 14 }, SITE.tagline),
       ]),
-      box({ justifyContent: "space-between", fontSize: 26, color: MUTED }, [
+      box({ justifyContent: "space-between", fontSize: 26, color: ON_NAVY_QUIET }, [
         box({}, new URL(SITE.url).host),
         box({}, CARD_NOTICE),
       ]),
