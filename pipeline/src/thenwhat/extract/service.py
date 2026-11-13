@@ -5,7 +5,7 @@ stores, caches or logs it.
 """
 
 import hashlib
-from datetime import date
+from datetime import date, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -24,10 +24,11 @@ from thenwhat.claims.entry import (
     promises_of,
 )
 from thenwhat.db.models import Claim, Entity, SourceArticle
-from thenwhat.domain import EntityType, ReviewState
+from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.extract.names import is_a_name
 from thenwhat.extract.schema import Draft
 from thenwhat.llm.client import Llm
+from thenwhat.review.decisions import record_decision
 
 INSTRUCTIONS = """\
 You read one news article about a medical research claim and return structured fields.
@@ -54,10 +55,14 @@ def draft_claim_from_article(
     title: str,
     published_date: date,
     archive_url: str | None = None,
+    decide_by_rule_at: datetime | None = None,
 ) -> Claim:
     """Create a pending claim, with its article, entities and promises, from article text.
 
     Nothing is saved if the model's output never validates or an entry rule refuses it.
+    With `decide_by_rule_at`, the draft is decided by rule at that time (openspec
+    auto-publish): approved when the intervention it names is a name, else rejected and
+    kept for the operator, since a description would be searched for as if it were one.
     """
     check_new_claim(session, slug, vertical)
     draft = _extract(llm, text)
@@ -75,6 +80,9 @@ def draft_claim_from_article(
             session, slug, url=url, outlet=outlet, title=title, published_date=published_date
         )
         _apply(session, claim, article, draft, text, archive_url)
+        if decide_by_rule_at is not None:
+            state = ReviewState.APPROVED if is_a_name(draft.intervention) else ReviewState.REJECTED
+            record_decision(claim, state, by=Decider.RULE, now=decide_by_rule_at)
     return claim
 
 

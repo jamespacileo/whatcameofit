@@ -14,7 +14,7 @@ from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.decide.core import Backend, DecisionFailed, UnknownBackend, backend_named
 from thenwhat.decide.steps import has_stage_suggestion, suggest_evidence_stage
-from thenwhat.domain import Decider, EntityType
+from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.resolve.service import DoiLookup, TrialSearch, rescore_claim, resolve_claim
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref
@@ -109,7 +109,9 @@ def resolve_command(
         backend = make_backend(session)
         trials, dois = make_registries(session)
         now = datetime.now(UTC)
-        reject_below = settings_or_exit().match_reject_below
+        settings = settings_or_exit()
+        reject_below = settings.match_reject_below
+        accept_above = settings.match_accept_above
         try:
             added = resolve_claim(
                 session,
@@ -119,6 +121,7 @@ def resolve_command(
                 backend=backend,
                 now=now,
                 reject_below=reject_below,
+                accept_above=accept_above,
             )
             again = (
                 rescore_claim(
@@ -129,6 +132,7 @@ def resolve_command(
                     now=now,
                     skip=added,
                     reject_below=reject_below,
+                    accept_above=accept_above,
                 )
                 if rescore
                 else []
@@ -143,14 +147,22 @@ def resolve_command(
             raise typer.Exit(code=1) from None
         noun = "candidate match" if len(added) == 1 else "candidate matches"
         by_rule = [m for m in [*added, *again] if m.reviewed_by is Decider.RULE]
+        rejected = [m for m in by_rule if m.review_state is ReviewState.REJECTED]
+        approved = [m for m in by_rule if m.review_state is ReviewState.APPROVED]
         waiting = "All are pending review." if not by_rule else "The rest are pending review."
         out.print(f"Found {len(added)} new {noun} for {claim.slug}. {waiting}")
         if rescore:
             candidates = "candidate" if len(again) == 1 else "candidates"
             out.print(f"Scored {len(again)} pending {candidates} again.")
-        if by_rule:
+        if approved:
             out.print(
-                f"{len(by_rule)} rejected by rule for scoring under {reject_below:g}."
+                f"{len(approved)} approved by rule for scoring {accept_above:g} or more"
+                " for the claim's indication. They are published with the next export.",
+                markup=False,
+            )
+        if rejected:
+            out.print(
+                f"{len(rejected)} rejected by rule for scoring under {reject_below:g}."
                 " See them with `review list --by-rule`.",
                 markup=False,
             )

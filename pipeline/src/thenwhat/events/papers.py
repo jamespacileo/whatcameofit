@@ -50,7 +50,6 @@ def follow_up_event(citing: SourceRecord, confidence: float) -> EventDraft | Non
         confidence=confidence,
         raw_payload=citing.payload,
         fetched_at=citing.fetched_at,
-        always_review=True,
     )
 
 

@@ -550,3 +550,43 @@ def test_suggested_stage_is_logged_and_the_claims_stage_stays_empty(session: Ses
     )
     assert entry.options == ["in_vitro", "animal", "early_human", "late_human"]
     assert claim.evidence_stage is None
+
+
+# --- approval by rule (openspec auto-publish) ---------------------------------------
+
+
+def test_confident_candidate_is_approved_by_rule(session: Session):
+    """Scenario: Confident candidate"""
+    claim = new_claim(session)
+
+    resolve(session, claim, trials=two_trials(), backend=ByCondition(), accept_above=0.8)
+
+    for_the_claim, for_another = matches(session)
+    assert (for_the_claim.review_state, for_the_claim.reviewed_by) == (
+        ReviewState.APPROVED,
+        Decider.RULE,
+    )
+    # Read as another indication: never approved by rule, whatever its score.
+    assert for_another.review_state is ReviewState.PENDING
+    labels = session.scalars(select(DecisionLog.human_label)).all()
+    assert all(label is None for label in labels)
+
+
+def test_candidate_between_the_thresholds_stays_pending(session: Session):
+    """Scenario: Between the thresholds"""
+    claim = new_claim(session)
+    found = FakeTrials({"EX-1 antibody": [trial("NCT00000001")]})
+
+    resolve(session, claim, trials=found, backend=Scoring(0.4), reject_below=0.05, accept_above=0.8)
+
+    assert matches(session)[0].review_state is ReviewState.PENDING
+
+
+def test_without_an_accept_threshold_nothing_is_approved_by_rule(session: Session):
+    """Scenario: High-scoring match"""
+    claim = new_claim(session)
+    found = FakeTrials({"EX-1 antibody": [trial("NCT00000001")]})
+
+    resolve(session, claim, trials=found, backend=Scoring(0.99))
+
+    assert matches(session)[0].review_state is ReviewState.PENDING

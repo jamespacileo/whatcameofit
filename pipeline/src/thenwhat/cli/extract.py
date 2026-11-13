@@ -1,7 +1,7 @@
 """Commands that draft claims from news articles."""
 
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Annotated
 
 import typer
@@ -11,6 +11,7 @@ from thenwhat.claims.entry import EntryError
 from thenwhat.cli.console import out
 from thenwhat.cli.entry import DATE_FORMATS, entry_session
 from thenwhat.cli.session import settings_or_exit
+from thenwhat.domain import ReviewState
 from thenwhat.extract.retrieve import ArticleRetriever, PasteNeeded, Retrieved
 
 if TYPE_CHECKING:
@@ -71,6 +72,7 @@ def extract_new(
     """Draft a new claim from an article. The draft stays pending until you approve it."""
     from thenwhat.extract.service import draft_claim_from_article
 
+    by_rule = settings_or_exit().approve_drafts_by_rule
     with entry_session() as session:
         article = _article_text(url, paste)
         claim = draft_claim_from_article(
@@ -84,9 +86,18 @@ def extract_new(
             outlet=outlet,
             title=title,
             published_date=published.date(),
+            decide_by_rule_at=datetime.now(UTC) if by_rule else None,
         )
         out.print(f"Drafted claim {claim.slug}: {claim.headline}", markup=False)
-        out.print("It is pending. Correct it with `claim edit`, then approve it in review.")
+        if claim.review_state is ReviewState.APPROVED:
+            out.print("Approved by rule: it is published with the next export.")
+        elif claim.review_state is ReviewState.REJECTED:
+            out.print(
+                "Rejected by rule: the intervention it names is not a name. Correct it with"
+                " `claim edit`, then approve it in review."
+            )
+        else:
+            out.print("It is pending. Correct it with `claim edit`, then approve it in review.")
 
 
 @extract_app.command("article")

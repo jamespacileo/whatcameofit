@@ -398,3 +398,29 @@ def test_extraction_into_an_approved_claim_is_refused(session: Session):
         extract_into_claim(
             session, client, claim_slug=claim.slug, article_url=ARTICLE_URL, text=ARTICLE_TEXT
         )
+
+
+# --- deciding drafts by rule (openspec auto-publish) -----------------------------------
+
+
+def test_valid_draft_is_approved_by_rule_when_asked(session: Session):
+    """Scenario: Valid draft"""
+    claim = draft(session, decide_by_rule_at=NOW)
+
+    assert (claim.review_state, claim.reviewed_by, claim.reviewed_at) == (
+        ReviewState.APPROVED,
+        Decider.RULE,
+        NOW,
+    )
+
+
+def test_draft_naming_a_description_is_rejected_by_rule_and_kept(session: Session):
+    """Scenario: Unapproved draft"""
+    claim = draft(session, DRAFT | {"intervention": "the new drug"}, decide_by_rule_at=NOW)
+
+    assert (claim.review_state, claim.reviewed_by) == (ReviewState.REJECTED, Decider.RULE)
+    assert find_claim(session, claim.slug) is claim
+
+
+def test_without_the_rule_a_draft_stays_pending(session: Session):
+    assert draft(session).review_state is ReviewState.PENDING
