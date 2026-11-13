@@ -351,12 +351,13 @@ export function render(root, state, site, actions, kept = null) {
       el("p", null, state.cleared ? "The earlier permission was removed. Automatic search stays off until you allow it again." : "Automatic search is paused for this opening. Retry to save your choice. If you were turning it off, disable the extension in your browser settings until this choice can be saved."),
       press("Retry saving choice", "button quiet", state.requested ? actions.enableSharing : actions.disableSharing)];
   } else if (state.kind === "sharing") {
-    children = [el("h1", null, state.enabled ? "Automatic search is on" : "Allow automatic search?"),
+    children = [state.enabled && press(text.back, "text-button back", actions.back),
+      el("h1", null, state.enabled ? "Automatic search is on" : "Allow automatic search?"),
       el("p", null, `When you open this extension on an untracked page, its text, links and cleaned address go to ${site.name} and OpenAI to identify the reported treatment. If text is insufficient, visible image content is sent as a screenshot automatically.`),
       el("p", "small", "Screenshots can include usernames or other visible personal information. Use public reports only. Nothing is read in the background. OpenAI may retain inputs for safety checks. We store no screenshots or article text; public search results may be reused for 24 hours."),
       link(text.privacy, `${site.url}/privacy`, "text-button", actions.open),
       state.enabled ? press("Turn off automatic search", "button quiet", actions.disableSharing) : press("Allow and search", "button", actions.enableSharing),
-      state.enabled ? press("Back", "text-button", actions.back) : press("Use reviewed claims only", "button quiet", actions.disableSharing)];
+      !state.enabled && press("Use reviewed claims only", "button quiet", actions.disableSharing)];
   } else if (state.kind === "capturing") {
     children = [el("p", "checking", "Reading the visible image…"), privacyNote(site, actions)];
   } else if (state.kind === "visual-preview") {
