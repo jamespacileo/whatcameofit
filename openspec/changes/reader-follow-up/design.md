@@ -27,7 +27,7 @@ Dry wording is allowed in the extension's own chrome only, never beside a status
 2. Ten entries in the list, or more?
 3. Should the calendar file also be offered in the lookup answer on the home page, for a headline with no record yet ("check again in six months")?
 
-4. The status changes feed needs a claim's earlier statuses. If the export does not carry them, the pipeline must add a status history (derived by the same rules) and the export schema changes. If that is too much for this change, the feed moves to its own change.
+4. Answered 2026-11-13: the export carries a claim's current status only (`ExportedStatus`: code, no-signal years, the events that explain it). The feed therefore needs a status history from the pipeline: `status/rules.py` is pure, so the history is the same derivation run on the approved events up to each event's date, keeping the dates where the status changes. That adds a field to the export, so `site/export.schema.json` and `site/data/seed-export.json` are regenerated. Still to decide: build it inside this change or as its own.
 
 ## Risks
 
