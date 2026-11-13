@@ -1,6 +1,7 @@
 // Draws every popup state in its own frame, using the real stylesheet and view code.
 import { SITE } from "./config.js";
 import { render } from "./view.js";
+import { LIVE } from "./live-lookup.js";
 
 const notices = [
   "This site gives no medical advice and recommends no treatment.",
@@ -157,6 +158,11 @@ const states = [
       ],
     },
   ],
+  ["Recently checked, registry not searched", { kind: "recent", entries: [{
+    key: "news.example.org/image-post", url: "https://news.example.org/image-post",
+    title: "An image post without enough readable detail", outlet: "news.example.org", at: Date.UTC(2026, 10, 13),
+    answer: { kind: "searched", limitation: LIVE.notATreatment }, candidates: [],
+  }] }],
   ["Recently checked, empty", { kind: "recent", entries: [] }],
   [
     "One check's candidates",
