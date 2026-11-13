@@ -39,7 +39,7 @@ from thenwhat.domain import (
     TrialState,
 )
 from thenwhat.events.manual import TRIAL_TYPES
-from thenwhat.outlets.icons import outlet_domain
+from thenwhat.outlets.icons import is_blank_icon, outlet_domain
 
 SCHEMA_VERSION = 1
 # Registries the clients read. Always listed, as their terms ask for attribution.
@@ -312,7 +312,7 @@ def _outlets(session: Session, claims: list[ExportedClaim]) -> list[ExportedOutl
         for icon in session.scalars(
             select(OutletIcon).where(OutletIcon.domain.in_(domains)).order_by(OutletIcon.domain)
         )
-        if icon.content is not None
+        if icon.content is not None and not is_blank_icon(icon.content)
     ]
 
 

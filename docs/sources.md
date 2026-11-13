@@ -50,13 +50,13 @@ Terms, authentication and rate limits for each external source. Check an entry a
 ## Outlet sites (icons)
 
 - **Checked:** 2026-11-11
-- **What is read:** per outlet domain, `robots.txt`, then `/favicon.ico`, and when that is not an image the home page and at most two icons it names with `<link rel="icon">` or `apple-touch-icon`. Another host an icon lives on has its own robots.txt read first. The home page is read to find the icon's address and is kept nowhere.
+- **What is read:** per outlet domain, `robots.txt`, then `/favicon.ico`, and when that is not an image, or is a blank placeholder (an ICO with every pixel transparent), the home page and at most two icons it names with `<link rel="icon">` or `apple-touch-icon`. Another host an icon lives on has its own robots.txt read first. The home page is read to find the icon's address and is kept nowhere.
 - **Authentication:** none.
 - **Terms:** each outlet has its own and they are not read one by one. The rule applied to all: robots.txt decides. A host whose rules refuse the client, or cannot be read, is sent nothing more.
-- **Rate limit:** none published for this. The client sends one request per second at most and asks each domain once; `thenwhat icons --retry-missing` asks again only the domains that had no usable icon.
+- **Rate limit:** none published for this. The client sends one request per second at most and asks each domain once; `thenwhat icons --retry-missing` asks again only the domains that had no usable icon. `make public-export` runs `thenwhat icons` first, so outlets added since the last run are asked.
 - **What is kept:** one raster image (PNG, ICO, GIF, JPEG or WebP, told from its bytes) of at most 100,000 bytes, with its address and fetch time. SVG is not kept: it can carry script and the site would serve it from its own address.
 - **Terms that bind the site:** the icons are the outlets' own marks. The site shows one only beside the outlet's name and a link to its article, to say where a report came from. Remove an outlet's row from `outlet_icon` if it asks.
-- **Behavior (observed):** kyoto-u.ac.jp has no `/favicon.ico`; its home page names a 32-pixel ICO, which is the icon in the seed file. That one fetch was made with a generic client name.
+- **Behavior (observed):** extra.ie, futurism.com and vice.com answer `/favicon.ico` with a 198-byte, fully transparent 16-pixel ICO (seen 2026-11-11, found blank 2026-11-13). kyoto-u.ac.jp has no `/favicon.ico`; its home page names a 32-pixel ICO, which is the icon in the seed file. That one fetch was made with a generic client name.
 
 ## UKCRC Health Research Classification System (HRCS)
 
