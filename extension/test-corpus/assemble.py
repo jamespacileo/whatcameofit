@@ -8,6 +8,7 @@ Gives any row without an id the next one in its group and writes urls.csv back. 
 import csv
 import json
 import re
+import sys
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
@@ -19,6 +20,9 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
 HERE = Path(__file__).parent
+sys.path.insert(0, str(HERE))  # Also support the sync script's isolated Python mode.
+from corpus_cache import load_cache  # noqa: E402
+
 WORK = HERE / ".work"
 LIKELY = 0.5
 PREFIX = {"Social": "S", "Article": "A", "Negative": "N", "Tracked": "T"}
@@ -117,9 +121,10 @@ def main():
             writer = csv.DictWriter(fh, fieldnames=FIELDS, extrasaction="ignore")
             writer.writeheader()
             writer.writerows(rows)
-    checked = load("checked.json", {})
+    cache = load_cache(HERE)
+    checked = cache["checked"]
     match = load("match.json", {})
-    results = load("results.json", {})
+    results = cache["results"]
     notes = load("notes.json", {})
     overrides = load("verdicts.json", {})
 
@@ -127,7 +132,8 @@ def main():
     for row in rows:
         rid, url = row["id"], row["url"]
         m, c = match.get(url, {}), checked.get(url, {})
-        address, browser, note = results.get(rid), results.get(f"{rid}:browser"), notes.get(rid, "")
+        saved = results.get(url, {})
+        address, browser, note = saved.get("address"), saved.get("browser"), notes.get(rid, "")
         tracked_slug = m.get("tracked_slug", "")
         if tracked_slug:
             path, (answer, tracked, n, likely, top) = "tracked on site", ("reviewed claim shown (no live search)", tracked_slug, "", "", "")

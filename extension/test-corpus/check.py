@@ -1,6 +1,7 @@
 """Check each address in urls.csv once: status, final address, page title, access.
 
-Writes .work/checked.json. Addresses already checked are skipped unless --recheck.
+Keeps checks outside the worktree and exports .work/checked.json for inspection.
+Addresses already checked are skipped unless --recheck.
 Reads at most 400 KB of each page and keeps only its title: no article text is stored.
 """
 
@@ -17,6 +18,9 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 HERE = Path(__file__).parent
+sys.path.insert(0, str(HERE))  # Also support the sync script's isolated Python mode.
+from corpus_cache import cache_directory, load_cache, store_checks  # noqa: E402
+
 WORK = HERE / ".work"
 OUT = WORK / "checked.json"
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36 url-check"
@@ -75,13 +79,16 @@ def main():
     WORK.mkdir(exist_ok=True)
     recheck = "--recheck" in sys.argv
     rows = list(csv.DictReader((HERE / "urls.csv").open()))
-    checked = json.loads(OUT.read_text()) if OUT.exists() else {}
+    checked = load_cache(HERE)["checked"]
     todo = [r for r in rows if recheck or r["url"] not in checked]
+    fresh = {}
     with ThreadPoolExecutor(max_workers=6) as pool:
         for row, found in zip(todo, pool.map(lambda r: fetch(r["url"]), todo)):
-            checked[row["url"]] = describe(row["url"], found, row["expected_answer"])
+            fresh[row["url"]] = describe(row["url"], found, row["expected_answer"])
+    checked = store_checks(fresh)
     OUT.write_text(json.dumps(checked, indent=1, ensure_ascii=False))
     print(f"checked {len(todo)} address(es); {len(checked)} on record")
+    print(f"Cache preserved in {cache_directory()}")
 
 
 main()
