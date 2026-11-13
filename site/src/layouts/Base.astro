@@ -140,6 +140,8 @@ const topicLink =
     }
 
     <main id="content">
+      {/* A page's opening band runs the full width, straight under the masthead. */}
+      <slot name="band" />
       <div class="wrap">
         <slot />
       </div>
