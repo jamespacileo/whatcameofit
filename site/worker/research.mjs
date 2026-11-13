@@ -102,7 +102,9 @@ export function makeResearch({ fetch, apiKey, contact, cache, now = Date.now, ti
         (async () => {
           const response = await fetch(url, {
             headers: source === "openalex" ? { ...headers, Authorization: `Bearer ${apiKey}` } : headers,
-            redirect: "error", signal: controller.signal,
+            // Workers supports manual/follow only. A 3xx is refused below, so the
+            // Authorization header can never follow a redirect to another host.
+            redirect: "manual", signal: controller.signal,
           });
           if (!response.ok) {
             if ([401, 402, 403, 429].includes(response.status)) {

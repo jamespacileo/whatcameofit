@@ -12,3 +12,9 @@
 - Review fixes: per-provider error boundaries preserve sibling data; metadata cache operations time out after 200ms; nested ROR fields are validated; recorded public source fixtures replace synthetic success fixtures.
 
 Production deployment and smoke results are recorded after publication.
+
+## Cloudflare runtime follow-up
+
+The first production-model check returned clinical candidates but both research sources were unavailable. Cloudflare Workers does not implement Fetch's `redirect: "error"` mode. Use `manual` and refuse the returned 3xx, preserving the rule that an authenticated request never follows a redirect. Node mocks did not catch the runtime difference.
+
+Two new offline tests run the actual workerd runtime through pinned Miniflare, using recorded outbound responses: both providers return results, real KV prevents repeat requests, and redirects are refused without forwarding the key. All 14 focused research tests pass after the fix. [Cloudflare Request documentation](https://developers.cloudflare.com/workers/runtime-apis/request/) documents the supported redirect modes.
