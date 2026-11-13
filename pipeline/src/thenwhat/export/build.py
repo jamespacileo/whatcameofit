@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import articles_of, promises_of
-from thenwhat.claims.status import refresh_status
+from thenwhat.claims.status import refresh_status, status_history
 from thenwhat.claims.verticals import GROUPS, RETIRED_VERTICALS, VERTICAL_GROUPS, VERTICALS
 from thenwhat.db.models import (
     Claim,
@@ -93,11 +93,21 @@ class ExportedIntervention(Strict):
     synonyms: list[str]
 
 
+class ExportedStatusChange(Strict):
+    """The day the status became `code`, by the rules run on what was dated up to then."""
+
+    on: date
+    code: ClaimStatus
+
+
 class ExportedStatus(Strict):
     code: ClaimStatus
     overlay_years: int | None
     updated_at: datetime | None
     explained_by: list[int]
+    # Oldest first; the last entry's code is `code`. Absent from exports made before
+    # the history was added, so the site treats a missing history as none.
+    history: list[ExportedStatusChange] = []
 
 
 class ExportedArticle(Strict):
@@ -280,6 +290,10 @@ def build_export(
                     overlay_years=derivation.overlay_years,
                     updated_at=claim.status_updated_at,
                     explained_by=list(derivation.explaining_event_ids),
+                    history=[
+                        ExportedStatusChange(on=change.on, code=change.status)
+                        for change in status_history(session, claim)
+                    ],
                 ),
                 articles=[
                     ExportedArticle(

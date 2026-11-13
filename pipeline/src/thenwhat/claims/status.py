@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from thenwhat.db.models import Claim, Entity, EntityMatch, EvidenceEvent, FailureFlag
 from thenwhat.domain import ReviewState, TrialPhase
-from thenwhat.status.rules import Derivation, Evidence, Flag, derive
+from thenwhat.status.rules import Derivation, Evidence, Flag, StatusChange, derive, history
 
 
 def refresh_status(
@@ -41,6 +41,17 @@ def refresh_status(
         claim.overlay_years = derivation.overlay_years
         claim.status_updated_at = now
     return derivation
+
+
+def status_history(session: Session, claim: Claim) -> list[StatusChange]:
+    """The claim's status over time, by the same rules and the same approved events."""
+    return history(
+        _approved_evidence(session, claim),
+        _flags(session, claim),
+        first_reported_date=claim.first_reported_date,
+        origin_paper_ids=_origin_paper_ids(session, claim),
+        evidence_stage=claim.evidence_stage,
+    )
 
 
 def _approved_evidence(session: Session, claim: Claim) -> list[Evidence]:

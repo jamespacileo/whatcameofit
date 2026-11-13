@@ -88,6 +88,10 @@ The site SHALL publish a feed of status changes across all published claims and 
 - **WHEN** a published claim's status changes in a new export
 - **THEN** both feeds gain one entry dated by the evidence event, naming both labels and linking to the claim page
 
+#### Scenario: Export made before the history existed
+- **WHEN** the site is built from an export whose claims carry no status history
+- **THEN** both feeds are valid and have no entries, and the claim page does not link to them
+
 #### Scenario: Claim with one status so far
 - **WHEN** a published claim has had one status only
 - **THEN** its own feed has one entry for that first status

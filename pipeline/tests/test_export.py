@@ -168,6 +168,11 @@ def test_exported_claim_carries_what_its_page_shows(session: Session):
         "overlay_years": None,
         "updated_at": EARLIER.isoformat().replace("+00:00", "Z"),
         "explained_by": [registered.id, started.id],
+        "history": [
+            {"on": "2018-03-10", "code": "preclinical_only"},
+            {"on": "2024-09-01", "code": "trial_registered"},
+            {"on": "2024-10-01", "code": "phase_1"},
+        ],
     }
     assert out["articles"] == [
         {

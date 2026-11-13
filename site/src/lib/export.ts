@@ -49,6 +49,9 @@ export interface ExportedClaim {
     overlay_years: number | null;
     updated_at: string | null;
     explained_by: number[];
+    // The days the status changed, oldest first. Absent from an export made before
+    // the pipeline added it.
+    history?: { on: string; code: StatusCode }[];
   };
   articles: {
     url: string;

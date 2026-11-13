@@ -6,8 +6,11 @@ Accepted by the operator on 2026-11-13.
 
 - [x] 1.1 Write the calendar-file builder as a pure function with tests; verify each of the four choices gives one valid event linking to the claim page
 - [x] 1.2 Add the reminder control to the claim page following DESIGN.md; verify the promise choice is absent on a claim with no dated promise and that saving sends no request
-- [ ] 1.3 Publish the status changes feed and the per-claim feed; verify entries carry both labels and the event date, and that the verdict-wording check covers them
+- [x] 1.3 Add a status history to the export (the pure derivation run up to each event's date); regenerate the schema and the seed export; verify the history's last entry equals the current status
+- [x] 1.5 Publish the status changes feed and the per-claim feed from that history; verify entries carry both labels and the event date, and that the verdict-wording check covers them
 - [x] 1.4 Say on the privacy page what a calendar reminder does; verify the page builds
+
+- [ ] 1.6 The operator regenerates `site/data/published-export.json` so the public feeds carry entries; until then they are valid and empty
 
 ## 2. Extension, in the popup (no new permission)
 

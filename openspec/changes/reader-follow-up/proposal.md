@@ -1,6 +1,6 @@
 # Proposal
 
-Status: accepted by the operator on 2026-11-13. Built so far: the calendar reminder on the claim page, and in the extension's popup the recently checked list and following with a changed marker. Notifications and reminders in the extension need new permissions and are not built. See `tasks.md`.
+Status: accepted by the operator on 2026-11-13. Built so far: the calendar reminder on the claim page, and in the extension's popup the recently checked list and following with a changed marker. The status changes feeds are built from a status history the pipeline now exports. Notifications and reminders in the extension need new permissions and are not built. See `tasks.md`.
 
 ## Why
 
