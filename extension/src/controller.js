@@ -10,16 +10,15 @@ import {
   outletOf,
   unfollow as withoutFollowed,
 } from "./kept.js";
-import { isFresh, stateFor } from "./lookup.js";
+import { CACHE_VERSION, isFresh, stateFor } from "./lookup.js";
 import { remember, reusable } from "./results.js";
 import { fingerprint, publicWebUrl } from "./visual.js";
+import { remind as withReminder, reminderDay, unremind as withoutReminder } from "./watch.js";
 
 // A check that ended in one of these is worth finding again in the reader's own list.
 const KEPT_KINDS = new Set(["tracked", "answer", "untracked"]);
 
 const SIX_HOURS = 6 * 60 * 60 * 1000;
-// Refresh pre-automatic-lookup caches once so an upgrade sees current service settings.
-const CACHE_VERSION = 2;
 
 export function createPopupController({ storage, fetch, site, readTab, readPage, isCurrentPage, capturePage, describeAnswer, present, requiresSharingConsent = false }) {
   const abort = new AbortController();
@@ -32,6 +31,8 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
   // which "Back" returns to without checking or searching again.
   let index = null;
   let recent = [];
+  // One reminder per claim, each a day to look again; the background check shows it.
+  let reminders = [];
   let follows = [];
   let pageState = null;
   let results = [];
@@ -54,6 +55,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
       changed: now.filter((claim) => claim.changed).length,
       followed: follows.map((claim) => claim.page),
       was: Object.fromEntries(now.filter((claim) => claim.changed).map((claim) => [claim.page, claim.was])),
+      reminders: Object.fromEntries(reminders.map((reminder) => [reminder.page, reminder.date])),
     };
   }
 
@@ -223,12 +225,13 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     if (closed) return;
     const [loaded, saved] = await Promise.all([
       tab?.key ? loadIndex() : { index: null, savedAt: null },
-      storage.get(["recent", "follows", "results", "sharing"]).catch(() => ({})),
+      storage.get(["recent", "follows", "results", "sharing", "reminders"]).catch(() => ({})),
     ]);
     if (closed) return;
     index = loaded.index;
     recent = saved?.recent ?? [];
     follows = saved?.follows ?? [];
+    reminders = saved?.reminders ?? [];
     results = saved?.results ?? [];
     sharing = !sharingWriteFailed && (!requiresSharingConsent || saved?.sharing?.version === 1 && saved.sharing.enabled === true);
     const state = stateFor(tab?.key ?? null, loaded);
@@ -285,6 +288,19 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     else if (pageState) show(pageState);
   }
 
+  /** A reminder in six months or a year; `today` is the reader's own date. */
+  function remindLater(claim, choice, today) {
+    reminders = withReminder(reminders, claim, reminderDay(choice, today));
+    save({ reminders });
+    if (pageState) show(pageState);
+  }
+
+  function forget(page) {
+    reminders = withoutReminder(reminders, page);
+    save({ reminders });
+    if (pageState) show(pageState);
+  }
+
   /** The reader opened a followed claim: it has been seen as it now stands. */
   function seen(page) {
     follows = acknowledged(follows, index, page);
@@ -336,5 +352,5 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     }
   }
 
-  return { open, search, previewVisual, sendVisual, cancelVisual, close, showRecent, showEntry, clearRecent, showFollowing, back, follow, unfollow, seen, sharingView, enableSharing, disableSharing };
+  return { open, search, previewVisual, sendVisual, cancelVisual, close, showRecent, showEntry, clearRecent, showFollowing, back, follow, unfollow, seen, remindLater, forget, sharingView, enableSharing, disableSharing };
 }
