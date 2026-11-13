@@ -68,7 +68,7 @@ Observed 2026-11-13, with a generic client name and no key:
 ## Migration Plan
 
 1. One Alembic migration adds `entity.search_phrases` and `entity_match.reasons`, both arrays with an empty default. Reversible by dropping the columns.
-2. Existing claims get phrases by reading their articles again with `thenwhat prepare`; claims without phrases behave as today.
+2. A claim still awaiting review gets phrases when `thenwhat prepare` reads its articles. A decided claim is never read again, so the operator gives it phrases with `thenwhat entity phrase`. Claims without phrases behave as today.
 3. The export gains `related_research`; the site ships the section in the same deploy as the schema, so an older export still builds.
 4. Rollback: leave `OPENALEX_API_KEY` empty. Paper search then refuses and nothing else changes.
 

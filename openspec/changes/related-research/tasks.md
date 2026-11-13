@@ -2,12 +2,13 @@
 
 ## 1. Search phrases
 
-- [ ] 1.1 Add `intervention_search_phrases` (at most three) to the extraction schema and prompt, dropping generic words; verify the extraction tests cover a device with no name and a named drug
-- [ ] 1.2 Add a migration for `entity.search_phrases` and `entity_match.reasons`; verify it applies and reverses against the test database
-- [ ] 1.3 Store phrases on the intervention entity when a draft is saved, apart from synonyms; verify the entry test
-- [ ] 1.4 Search the registry by each phrase within the indication in `resolve`, under the more-than-a-hundred-or-none rule; verify on a recorded fixture that a trial found only by a phrase becomes a candidate
-- [ ] 1.5 Add "Search phrase" to `GLOSSARY.md` and regenerate `site/export.schema.json` if the export shape changed; verify `make check`
-- [ ] 1.6 Run `thenwhat prepare` on `tourette-syndrome-wrist-nerve-stimulation` and record in `docs/lookup.md` whether NCT05269953 is now a candidate
+- [x] 1.1 Add `intervention_search_phrases` (at most three) to the extraction schema and prompt, dropping generic words; verify the extraction tests cover a device with no name and a named drug
+- [x] 1.2 Add a migration for `entity.search_phrases` and `entity_match.reasons`; verify it applies and reverses against the test database
+- [x] 1.3 Store phrases on the intervention entity when a draft is saved, apart from synonyms; verify the entry test
+- [x] 1.4 Search the registry by each phrase within the indication in `resolve`, under the more-than-a-hundred-or-none rule; verify on a recorded fixture that a trial found only by a phrase becomes a candidate
+- [x] 1.5 Add "Search phrase" to `GLOSSARY.md` and regenerate `site/export.schema.json` if the export shape changed; verify `make check`
+- [x] 1.6 Add `thenwhat entity phrase` so an operator can give a decided claim a search phrase, since a decided claim's article is never read again; verify one success and one refusal
+- [ ] 1.7 On the real database: apply migration 0008, give `tourette-syndrome-wrist-nerve-stimulation` the phrase "median nerve stimulation", run `thenwhat resolve` on it, and record in `docs/lookup.md` whether NCT05269953 is now a candidate (the registry returned it for that phrase within "Tourette syndrome" when asked directly on 2026-11-13)
 
 ## 2. People
 
