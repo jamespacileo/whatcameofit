@@ -60,7 +60,7 @@ export function collectFromPage() {
     // Read only captions/transcript already loaded into the page. No hidden player
     // state, authenticated caption API, audio capture or automatic transcript click.
     const captions = [...focus.querySelectorAll(
-      "ytd-transcript-segment-renderer .segment-text, .ytp-caption-segment")]
+      'ytd-transcript-segment-renderer .segment-text, transcript-segment-view-model [role="text"], .ytp-caption-segment')]
       .map(text).filter(Boolean).join("\n").slice(0, 12000);
     const descriptionText = text(description).slice(0, 8000);
     return {

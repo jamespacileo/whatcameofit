@@ -69,6 +69,16 @@ test("watch lookup reads the current title, description, loaded captions and sou
   });
 });
 
+test("current transcript components provide spoken text without timestamps", async () => {
+  const html = watch.replace('<ytd-transcript-segment-renderer><span class="segment-text">A loaded transcript describes the synthetic study.</span></ytd-transcript-segment-renderer>',
+    '<transcript-segment-view-model><div class="ytwTranscriptSegmentViewModelTimestamp">0:42</div><div class="ytwTranscriptSegmentViewModelTimestampA11yLabel">42 seconds</div><span role="text" class="ytAttributedStringHost">The spoken claim concerns EX-spoken for a synthetic indication.</span></transcript-segment-view-model>');
+  await onPage(html, address, () => {
+    const request = composeRequest(collectFromPage(), address, shared);
+    assert.match(request.text, /EX-spoken for a synthetic indication/);
+    assert.doesNotMatch(request.text, /0:42|42 seconds/);
+  });
+});
+
 test("Shorts reads only the active video even when the next video is preloaded", async () => {
   const html = `<ytd-reel-video-renderer video-id="${other}"><h2>UNRELATED NEXT VIDEO</h2><video data-box="0,0,900,700"></video></ytd-reel-video-renderer>
     <ytd-reel-video-renderer is-active video-id="${video}"><h2>EX-patch studied for missing teeth in a synthetic trial</h2>
