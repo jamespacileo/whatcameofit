@@ -83,6 +83,12 @@ const actions = {
   back: controller.back,
   follow: controller.follow,
   unfollow: controller.unfollow,
+  remindLater: (claim, choice) => {
+    const now = new Date();
+    const pad = (value) => String(value).padStart(2, "0");
+    controller.remindLater(claim, choice, `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`);
+  },
+  forget: controller.forget,
   async openFollowed(page) {
     await controller.seen(page);
     actions.open(SITE.url + page);

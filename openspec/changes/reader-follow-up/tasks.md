@@ -24,9 +24,9 @@ Accepted by the operator on 2026-11-13.
 
 ## 3. Extension, in the background (new permissions: `alarms`, `notifications`)
 
-- [ ] 3.1 Add the permissions and a background handler that refreshes the lookup file; verify one notification per changed claim
-- [ ] 3.2 Reminders in the extension: the four choices, kept in the browser, one notification when due; verify due, removed and Safari-on-open cases
-- [ ] 3.3 Popup controls for reminders; verify on the states page
+- [x] 3.1 Add the permissions and a background handler that refreshes the lookup file; verify one notification per changed claim (`src/watch.js`, `src/background.js`, version 0.7.0, every 12 hours)
+- [x] 3.2 Reminders in the extension: six months and a year (the promise and anniversary choices need dates the lookup file does not carry), kept in the browser, one notification when due; verify due and removed cases. Safari-on-open is not built: Safari's background alarms are untested
+- [x] 3.3 Popup controls for reminders; verify on the states page
 
 ## 4. In a real browser
 
