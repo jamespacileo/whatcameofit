@@ -20,6 +20,8 @@ A loaded Mac caused one existing five-second popup test to time out during concu
 
 ## Limits and release state
 
-Native window capture remained unreliable under Stage Manager, and the computer-use connection later dropped during an additional Nottingham article check. That extra check is not claimed as complete. Stage Manager was restored after the earlier rendering check and no further desktop preference changes were made.
+A later Safari check on the Nottingham article reused the previous result and displayed five OpenAlex papers and two ROR identities. Tab/Space opened and closed the papers and organisation disclosures correctly, including source caveats and links. A clear screenshot was saved after temporarily disabling Stage Manager; Stage Manager was restored to on.
+
+The computer-use connection intermittently stalled, and mouse automation inside native popup disclosures was unreliable. Keyboard operation succeeded; this was not treated as an application defect. A read-only crawl of the live site checked 117 pages and 2,386 internal links/anchors, with no broken targets, duplicate IDs, missing page titles or missing image alt attributes found.
 
 The submitted Safari 0.9.0 (9) remains Waiting for Review; 0.9.1 is the local patch and GitHub extension package. No permissions, privacy destinations, provider configuration or spending limits changed. Chrome registration remains parked. Web deployment is verified after merge through the normal GitHub pipeline.
