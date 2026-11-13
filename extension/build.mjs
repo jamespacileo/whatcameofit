@@ -33,7 +33,7 @@ const shared = [
   ["src/lib/lookup-match.mjs", "lookup-match.js", [["./article-key.mjs", "./article-key.js"]]],
   ["src/lib/live-lookup.mjs", "live-lookup.js", [["./notices.ts", "./notices.js"]]],
   ["worker/page.mjs", "page.js", []],
-  ["src/lib/source-url.mjs", "source-url.js", []],
+  ["src/lib/source-url.mjs", "source-url.js", [["./article-key.mjs", "./article-key.js"]]],
 ];
 for (const [from, to, imports] of shared) {
   let source = fs.readFileSync(path.join(site, from), "utf8");

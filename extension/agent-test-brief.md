@@ -10,6 +10,21 @@ Nothing here is public. The server runs on this machine at `http://localhost:878
 
 ## What you need to be able to do
 
+### YouTube acceptance for the next extension update
+
+Use a development build from the `feat/youtube-lookup` worktree; do not replace the installed Safari release or the Apple submission waiting for review. Use public videos and remain signed out. This check is additional to the six-page baseline below; old wording examples below predate the compact popup.
+
+1. Open a public medical-claim video. Open the extension and confirm automatic lookup uses the video's title/description and identifies YouTube. No comment, recommendation or account-menu text should enter the request.
+2. Open **Show transcript** on a captioned video, then reopen the extension. Confirm the already-loaded transcript can supply a claim missing from the title. No caption endpoint, audio recording or video download should be requested.
+3. On a Short, navigate to the next Short without a page reload, then open the extension. Confirm only the active Short contributes. During loading it should refuse rather than use the previous video.
+4. On a video with a claim in its frame but insufficient text, pause at that frame and open the extension. Confirm the automatic fallback crops to the player. A video ad, offscreen player, home page or search page must not produce a full-page screenshot.
+5. Select a sentence first. Confirm only that text is sent, with no description links, screenshot or page URL. Reopen a long-description video after playback advances: a text-only cached answer should remain reusable, while a changed visual frame must not reuse the old visual answer.
+6. Compare the same video's `watch?v=`, `youtu.be/` and `/shorts/` addresses with timestamp/share parameters. They must identify the same video and send only a clean watch URL. Browser-derived answers must not become shared public results.
+
+Record browser version, extension build, tested URLs, exact popup result and any console errors. If YouTube's markup differs from the supported renderer, report that as a release blocker; fixture tests are not proof of live browser support.
+
+### Baseline tools
+
 - Run two shell commands in the repository at `/Users/jay/Projects/products/thenwhat`.
 - Click Chrome's own toolbar (the extension's button sits there, outside any web page), and click inside the small popup window that opens under it.
 - Take screenshots.

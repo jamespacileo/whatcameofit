@@ -1,6 +1,6 @@
 // Reading an address a reader pastes, and finding tracked claims close to it.
 // Plain JavaScript, pure: no network and no page. Shared with the browser extension.
-import { articleKey } from "./article-key.mjs";
+import { articleKey, youtubeVideoUrl } from "./article-key.mjs";
 
 // Links that only reveal their article when opened.
 const SHORTENERS = new Set([
@@ -141,6 +141,7 @@ export function readAddress(input) {
     url = inner;
   }
   const host = bare(url.hostname);
+  if (youtubeVideoUrl(url.href)) return { kind: "post", host, platform: "YouTube", readable: false };
   if (SHORTENERS.has(host) || (ARCHIVES.test(host) && url.pathname.split("/").length <= 2)) {
     return { kind: "short", host };
   }

@@ -1,7 +1,8 @@
 // Capture runs only while the popup is open. Images remain in memory.
 import { publicWebUrl, sourceUrl } from "../../site/src/lib/source-url.mjs";
+import { collectFromPage } from "./open-page.js";
 export { publicWebUrl, sourceUrl as publicPageUrl };
-export function inspectVisible() {
+export function inspectVisible(scope = null) {
   const roots = [document];
   for (let i = 0; i < roots.length && i < 40; i++) {
     for (const node of [...roots[i].querySelectorAll("*")].slice(0, 3000)) {
@@ -17,9 +18,17 @@ export function inspectVisible() {
     .some(node => visible(node) && (node.type === "password" ||
       !["checkbox", "radio", "range", "button", "submit", "reset", "search", "hidden"].includes(node.type) && node.value ||
       node.isContentEditable && (node.innerText.trim() || node.matches(":focus-within")))));
-  const focus = document.querySelector('shreddit-post, article, [role="article"], main') ?? document.body;
+  const youtube = /^(?:www\.|m\.)?youtube\.com$/.test(location.hostname);
+  const focus = scope ? (scope.address === location.href && scope.selector ? document.querySelector(scope.selector) : null)
+    : youtube ? null : document.querySelector('shreddit-post, article, [role="article"], main') ?? document.body;
+  // A video ad is unrelated to the report. Missing/stale video context must not
+  // turn into a screenshot of the entire personalised YouTube page.
+  const unavailable = !focus || Boolean(youtube && focus.querySelector(".ad-showing, .ad-interrupting"));
   const media = roots.flatMap(root => [...root.querySelectorAll("img, video, canvas")])
-    .filter(node => visible(node) && (focus.contains(node) || node.getRootNode() !== document))
+    .filter(node => !unavailable && visible(node) &&
+      (!scope?.videoOnly || node.tagName.toLowerCase() === "video") &&
+      (!scope?.mediaSelector || node.matches(scope.mediaSelector)) &&
+      (focus.contains(node) || !scope && node.getRootNode() !== document))
     .map(node => {
       const r = node.getBoundingClientRect();
       const left = Math.max(0, r.left), top = Math.max(0, r.top);
@@ -34,7 +43,7 @@ export function inspectVisible() {
     const r = frame.getBoundingClientRect();
     return r.left < crop.left + crop.width && r.right > crop.left && r.top < crop.top + crop.height && r.bottom > crop.top;
   }));
-  return { address: location.href, sensitive, embedded, hidden: document.hidden,
+  return { address: location.href, sensitive, embedded, hidden: document.hidden, unavailable: unavailable || youtube && !media.length,
     width: innerWidth, height: innerHeight, crop: media[0] ?? null,
     media: media.slice(0, 5), selectionOnly: String(getSelection() ?? "").trim().length >= 20 };
 }
@@ -55,10 +64,16 @@ export async function capturePage(api, tab, signal, encode = resizeCapture) {
     if (!active || active.id !== tab.id || active.windowId !== tab.windowId || active.url !== tab.url || active.incognito) throw failure("page_changed");
   }
   async function inspect() {
-    const [{ result }] = await api.scripting.executeScript({ target: { tabId: tab.id }, func: inspectVisible });
+    let scope = null;
+    if (/^(?:www\.|m\.)?youtube\.com$/.test(new URL(tab.url).hostname)) {
+      const [{ result: page }] = await api.scripting.executeScript({ target: { tabId: tab.id }, func: collectFromPage });
+      scope = page.mediaScope;
+    }
+    const [{ result }] = await api.scripting.executeScript({ target: { tabId: tab.id }, func: inspectVisible, args: [scope] });
     if (result.address !== tab.url || result.hidden) throw failure("page_changed");
     if (result.sensitive) throw failure("capture_sensitive");
     if (result.embedded) throw failure("capture_embedded");
+    if (result.unavailable) throw failure("capture_unavailable");
     return result;
   }
   try {

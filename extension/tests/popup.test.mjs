@@ -19,7 +19,7 @@ function deferred() {
   return { promise, resolve };
 }
 
-async function runPopup(navigate, words = "EX-1 is being studied as a treatment for missing teeth.") {
+async function runPopup(navigate, words = "EX-1 is being studied as a treatment for missing teeth.", reopenVideo = false) {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), "thenwhat-popup-"));
   const globals = ["browser", "document", "window", "fetch", "__popupTestCapture"];
   const saved = new Map(globals.map((name) => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
@@ -29,7 +29,11 @@ async function runPopup(navigate, words = "EX-1 is being studied as a treatment 
   const posts = [];
   const states = [];
   const events = {};
-  let current = { id: 7, url: postA };
+  const pageUrl = reopenVideo ? "https://www.youtube.com/watch?v=EX_test0001&t=30" : postA;
+  const scope = reopenVideo ? { address: pageUrl, selector: 'ytd-watch-flexy[video-id="EX_test0001"]', videoOnly: true } : null;
+  let current = { id: 7, url: pageUrl };
+  const stored = { sharing: { version: 1, enabled: true } };
+  let playback = 30, popupActions;
   let confirmedTab = null;
   let reads = 0;
   try {
@@ -57,23 +61,26 @@ async function runPopup(navigate, words = "EX-1 is being studied as a treatment 
     }
     await fs.writeFile(path.join(directory, "package.json"), '{"type":"module"}');
     await fs.writeFile(path.join(directory, "config.js"), 'export const SITE = {name:"Test",url:"https://whatcameofit.example"};');
-    await fs.writeFile(path.join(directory, "view.js"), 'export function render(root,state){globalThis.__popupTestCapture(state);}');
+    await fs.writeFile(path.join(directory, "view.js"), 'export function render(root,state,site,actions){globalThis.__popupTestCapture(state,actions);}');
 
     globalThis.document = { querySelector: () => ({ textContent: "" }) };
     globalThis.window = { addEventListener: (name, callback) => { events[name] = callback; }, close() {} };
     globalThis.browser = {
-      storage: { local: { get: async () => ({ sharing: { version: 1, enabled: true } }), set: async () => {} } },
+      storage: { local: { get: async () => stored, set: async values => Object.assign(stored, values) } },
       tabs: {
         query: async () => { confirmedTab = current.id; return [current]; },
         get: async (id) => { confirmedTab = id; return current; },
       },
       scripting: {
-        executeScript: async ({ target, func }) => {
+        executeScript: async ({ target, func, args }) => {
           assert.equal(target.tabId, 7);
-          if (func.name === "inspectVisible") return [{ result: { address: postA, media: [], sensitive: false, selectionOnly: false } }];
+          if (func.name === "inspectVisible") {
+            assert.deepEqual(args, [scope]);
+            return [{ result: { address: pageUrl, media: reopenVideo ? [{ kind: "video", identity: `blob:temporary-${playback}`, time: playback }] : [], sensitive: false, selectionOnly: false } }];
+          }
           reads += 1;
           return [{ result: {
-            address: postA, title: "Research post", selection: "", head: "", focusHtml: "",
+            address: pageUrl, title: "Research post", selection: "", head: "", focusHtml: "", mediaScope: scope,
             focusText: words,
             links: [{ href: shortLink, text: "Read the article" }],
           } }];
@@ -89,10 +96,11 @@ async function runPopup(navigate, words = "EX-1 is being studied as a treatment 
       assert.equal(url, "https://whatcameofit.example/api/lookup");
       if (JSON.parse(options.body).cacheOnly) return Response.json({ cacheMiss: true });
       posts.push(JSON.parse(options.body));
-      return Response.json({ about_a_treatment: false, candidates: [] });
+      return Response.json({ about_a_treatment: reopenVideo, treatment: "EX-1", condition: "missing teeth", candidates: [] });
     };
-    globalThis.__popupTestCapture = (state) => {
+    globalThis.__popupTestCapture = (state, actions) => {
       states.push(state);
+      popupActions = actions;
       if (state.kind === "answer" || state.kind === "refused") complete.resolve();
     };
 
@@ -101,6 +109,13 @@ async function runPopup(navigate, words = "EX-1 is being studied as a treatment 
     if (navigate) current = { ...current, url: postB };
     shortResponse.resolve(new Response(`<title>${article}</title>`));
     await complete.promise;
+    if (reopenVideo) {
+      // The visible answer is rendered before the in-flight operation's finally.
+      // Reopening is a later user event, after that operation has settled.
+      await new Promise(resolve => setImmediate(resolve));
+      playback = 60;
+      await popupActions.retry();
+    }
     return { posts, states, reads, confirmedTab };
   } finally {
     events.pagehide?.();
@@ -136,4 +151,13 @@ test("actual popup glue follows an article from a short post", { timeout: 5000 }
   assert.equal(result.posts.length, 1);
   assert.equal(result.posts[0].text, "Read this");
   assert.deepEqual(result.posts[0].links, [article]);
+});
+
+test("YouTube popup passes its video scope and reuses a text answer after playback advances", { timeout: 5000 }, async () => {
+  const result = await runPopup(false, "A synthetic video report describes EX-1 for missing teeth. ".repeat(8), true);
+  assert.equal(result.reads, 2);
+  assert.equal(result.posts.length, 1);
+  assert.equal(result.posts[0].platform, "YouTube");
+  assert.equal(result.posts[0].pageUrl, "https://www.youtube.com/watch?v=EX_test0001");
+  assert.ok(result.states.at(-1).cachedAt);
 });

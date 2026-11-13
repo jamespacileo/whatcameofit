@@ -33,7 +33,7 @@ const controller = createPopupController({
       throw error;
     }
     // A browser that cannot inspect media can still search readable text.
-    const [{ result: visible }] = await api.scripting.executeScript({ target: { tabId: tab.id }, func: inspectVisible })
+    const [{ result: visible }] = await api.scripting.executeScript({ target: { tabId: tab.id }, func: inspectVisible, args: [result.mediaScope ?? null] })
       .catch(() => [{ result: { address: result.address, media: [], sensitive: true, selectionOnly: result.selection.length >= 20 } }]);
     if (visible.address !== tab.url) throw Object.assign(new Error("Page changed"), { code: "page_changed" });
     const request = composeRequest(result, tab.url, { readAddress, readPage: readHtmlPage, pageAsText }) ??
@@ -44,7 +44,10 @@ const controller = createPopupController({
       request.selectionOnly = visible.selectionOnly;
       if (!visible.selectionOnly && !tab.incognito) {
         request.pageUrl = publicPageUrl(tab.url);
-        request.contentFingerprint = await fingerprint({ text: request.text, links: request.links, media: visible.media });
+        // Text-only video answers concern this video's words, not its advancing
+        // playback clock or temporary media URL. Visual answers still use pixels.
+        request.contentFingerprint = await fingerprint({ text: request.text, links: request.links,
+          media: result.mediaScope?.videoOnly ? null : visible.media });
       }
     }
     return request;
