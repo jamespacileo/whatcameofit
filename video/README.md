@@ -37,6 +37,12 @@ The render carries narration only. Lay the music under it afterwards:
 ffmpeg -i $V/output.mp4 -i $V/bgm.wav -filter_complex "[0:a]volume=1.5[a1];[1:a]volume=0.11[a2];[a1][a2]amix=inputs=2:duration=first:normalize=0[aout]" -map 0:v -map "[aout]" -c:v copy -c:a aac -b:a 192k $V/final_video.mp4
 ```
 
+The method page shows a 1080p copy, which is committed. After a new final render, replace it:
+
+```sh
+ffmpeg -i $V/final_video.mp4 -vf scale=1920:1080:flags=lanczos -c:v libx264 -preset slow -crf 25 -pix_fmt yuv420p -c:a aac -b:a 128k -movflags +faststart ../site/public/video/explainer.mp4
+```
+
 Captions are drawn into the picture. To leave them out and upload `podcast_audio.srt` beside the video instead, add `--props='{"showCaptions":false}'`.
 
 ## How it is put together
