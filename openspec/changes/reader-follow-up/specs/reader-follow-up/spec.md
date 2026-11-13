@@ -21,6 +21,17 @@ A claim page SHALL offer a calendar file for a moment the reader chooses from: t
 - **WHEN** the reader saves a calendar file
 - **THEN** no request leaves the browser
 
+### Requirement: Reminder for a report with no record
+When the home page's lookup answers a linked report the site does not track, it SHALL offer a calendar file for six months or one year from today. The event SHALL link to the report and say where to paste it to look again. The file SHALL be made in the reader's browser and SHALL send nothing to the site.
+
+#### Scenario: Untracked report
+- **WHEN** a reader looks up a link the site does not track and the answer arrives
+- **THEN** "Check again later" offers six months and a year, and choosing one saves a file with one event linking to the report
+
+#### Scenario: Tracked report
+- **WHEN** the lookup finds the report already tracked
+- **THEN** no reminder is offered beside the answer; the claim page offers its own
+
 ### Requirement: Reminder in the extension
 The extension SHALL offer the same reminder choices for a claim it shows, SHALL keep the reminder in the browser, and SHALL show one notification when the moment comes. The notification SHALL name the claim and its current status label, and SHALL open the claim page when pressed.
 

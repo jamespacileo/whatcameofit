@@ -1,4 +1,5 @@
 ---
+import CalendarPlus from "@lucide/astro/icons/calendar-plus";
 import Base from "../layouts/Base.astro";
 import Outlet from "../components/Outlet.astro";
 import PromiseText from "../components/PromiseText.astro";
@@ -226,6 +227,27 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
       </>
     )
   }
+  {/* For a report with no record yet: a calendar file made in the reader's browser. */}
+  <template id="remind-later">
+    <section class="again" data-pagefind-ignore>
+      <h2 class="bar">Check again later</h2>
+      <p class="take-why">
+        Nothing is on record for this report yet. Save a date to your calendar to look again.
+        The file is made on this device; nothing is sent to us, not even the link.
+      </p>
+      <div class="take-actions">
+        <button type="button" class="share" data-when="six-months">
+          <CalendarPlus size={16} stroke-width={1.9} aria-hidden="true" />
+          In six months
+        </button>
+        <button type="button" class="share" data-when="year">
+          <CalendarPlus size={16} stroke-width={1.9} aria-hidden="true" />
+          In a year
+        </button>
+      </div>
+      <p class="visually-hidden" aria-live="polite" data-said></p>
+    </section>
+  </template>
 </Base>
 
 <script>
@@ -235,6 +257,9 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
   // with the site. Without JavaScript the topic pages list every claim.
   import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
   import { LIVE, describeAnswer, refusalMessage, textWouldHelp } from "../lib/live-lookup.mjs";
+  import { calendarFile, reminderDate, type ReminderChoice } from "../lib/calendar";
+  import { SITE as BRAND } from "../../site.config.mjs";
+  const SITE_NAME = BRAND.name;
   import { closestClaims, readAddress } from "../lib/lookup-match.mjs";
 
   const form = document.querySelector<HTMLFormElement>("#search")!;
@@ -400,6 +425,45 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
     return block;
   }
 
+  // Openspec reader-follow-up, open question 3: a calendar file for a report with no
+  // record yet. The event links to the report itself and says where to paste it.
+  function remindLater(address: string) {
+    const template = document.querySelector<HTMLTemplateElement>("#remind-later");
+    if (!template || typeof Blob === "undefined" || typeof URL.createObjectURL !== "function") return null;
+    const section = template.content.firstElementChild!.cloneNode(true) as HTMLElement;
+    const said = section.querySelector<HTMLElement>("[data-said]");
+    const now = new Date();
+    const pad = (value: number) => String(value).padStart(2, "0");
+    const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    for (const choice of section.querySelectorAll<HTMLButtonElement>("[data-when]")) {
+      const date = reminderDate(choice.dataset.when as ReminderChoice, { today, promiseDue: null, firstReported: null });
+      if (!date) continue;
+      choice.addEventListener("click", () => {
+        const file = calendarFile({
+          site: SITE_NAME,
+          headline: "Check this report again",
+          url: address,
+          slug: `report-${today}`,
+          date,
+          madeAt: new Date().toISOString(),
+          description: `Paste this link into ${SITE_NAME} at ${location.origin} to see what is on record now: ${address}`,
+        });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(new Blob([file], { type: "text/calendar" }));
+        link.download = `check-again-${date}.ics`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+        choice.classList.add("done");
+        if (said) said.textContent = "Calendar file saved";
+        setTimeout(() => {
+          choice.classList.remove("done");
+          if (said) said.textContent = "";
+        }, 2000);
+      });
+    }
+    return section;
+  }
+
   function textForm() {
     const form = element("form", undefined, "live-text") as HTMLFormElement;
     const label = element("label", LIVE.textLabel) as HTMLLabelElement;
@@ -439,6 +503,11 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
     if (asked !== latest) return;
     if (status === 200 && found) {
       results.replaceChildren(liveAnswer(found));
+      // A linked report the site does not track yet: offer to come back to it.
+      if ("url" in body && !found.article_tracked && !(found.tracked?.length > 0)) {
+        const later = remindLater(body.url);
+        if (later) results.append(later);
+      }
       return;
     }
     const code = found?.error ?? "failed";
