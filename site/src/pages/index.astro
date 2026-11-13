@@ -52,41 +52,47 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
 ---
 
 <Base current="home" structured={siteData()}>
-  <h1 class="title">What happened to that breakthrough?</h1>
-  <p class="lede">{SITE.description}</p>
+  {/* The lookup is what the site is for: it gets a band of its own under the masthead. */}
+  <section class="band" slot="band" aria-labelledby="lookup-title">
+    <div class="wrap">
+      <h1 class="title" id="lookup-title">What happened to that breakthrough?</h1>
+      <p class="lede">{SITE.description}</p>
 
-  <form class="search lookup" role="search" id="search">
-    <label for="query">Paste a link to an article, or search by treatment or condition</label>
-    <div class="row">
-      <input
-        id="query"
-        name="q"
-        type="search"
-        autocomplete="off"
-        autocapitalize="off"
-        spellcheck="false"
-        placeholder="https://… or tooth regrowth"
-      />
-      <button type="submit">Look up</button>
+      <form class="search lookup" role="search" id="search">
+        <label for="query">Paste a link to an article, or search by treatment or condition</label>
+        <div class="row">
+          <input
+            id="query"
+            name="q"
+            type="search"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            placeholder="https://… or tooth regrowth"
+          />
+          <button type="submit">Look up</button>
+        </div>
+      </form>
+      <noscript>
+        <p class="results">
+          Looking up needs JavaScript. Without it, <a href="/topics">the list of topics</a> leads to
+          every claim.
+        </p>
+      </noscript>
+      {/* No space inside: an empty answer area is hidden by ":empty". */}
+      <div class="results" id="results" aria-live="polite" data-suggest={SITE.suggestUrl ?? undefined} data-live={SITE.lookupUrl ?? undefined}></div>
+      {
+        suggest && (
+          <p class="suggest">
+            Seen a reported breakthrough we do not track? Send the address of the news article:{" "}
+            <a href={suggest.href}>Suggest a headline (opens {suggest.opens})</a>
+          </p>
+        )
+      }
     </div>
-  </form>
-  <noscript>
-    <p class="results">
-      Looking up needs JavaScript. Without it, <a href="/topics">the list of topics</a> leads to
-      every claim.
-    </p>
-  </noscript>
-  {/* No space inside: an empty answer area is hidden by ":empty". */}
-  <div class="results" id="results" aria-live="polite" data-suggest={SITE.suggestUrl ?? undefined} data-live={SITE.lookupUrl ?? undefined}></div>
-  {
-    suggest && (
-      <p class="suggest">
-        Seen a reported breakthrough we do not track? Send the address of the news article:{" "}
-        <a href={suggest.href}>Suggest a headline (opens {suggest.opens})</a>
-      </p>
-    )
-  }
+  </section>
 
+  {/* The tally opens the lists, under the band: the band holds only the lookup. */}
   {
     data.claims.length > 0 && (
       <p class="tally">

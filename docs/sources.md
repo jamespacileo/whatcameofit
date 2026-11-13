@@ -124,11 +124,18 @@ Checked 2026-11-12 by reading each platform's own terms and documentation. No pl
 | LinkedIn | Not read | The User Agreement (effective 3 November 2025) forbids automated access; robots.txt allows named search engines only. | Nothing found. |
 | Telegram | Not read | Its content-licensing terms forbid access to user content other than as a user, and its use with AI models. No robots.txt exists (404). | Nothing found. |
 | TikTok | Not read | The documented embed answer carries no caption, title or links, so there is nothing to read; the terms forbid automated extraction. | Nothing useful to gain. |
-| YouTube | Not read | The video's description, where a link would be, needs the Data API with a key. | A free API key (10,000 units a day at the date checked). The operator's step. Not built: a video is rarely how an article is shared. |
+| YouTube | Not fetched by the service | A video URL alone is not used to fetch video, description or captions. The extension can read the current video's loaded page content when opened. | A separate authorised API client would need its own terms, permissions and quota review. |
 
 Pages read: for X, `docs.x.com/x-for-websites/oembed-api`, `docs.x.com/developer-terms/agreement`, `x.com/en/tos`; for Reddit, `redditinc.com/policies/data-api-terms`, `/developer-terms`, `/embeds-terms`, `/user-agreement`; for Meta, `developers.facebook.com/docs/graph-api/reference/instagram-oembed`, `/documentation/threads/reference/oembed`, `/blog/post/2026/06/15/tokenless-access-to-meta-oembed-apis`; for LinkedIn, `linkedin.com/legal/user-agreement`, `/legal/crawling-terms`; for Telegram, `telegram.org/tos/content-licensing`; for TikTok, `developers.tiktok.com/doc/embed-videos` and its terms of service; for YouTube, `developers.google.com/youtube/terms/developer-policies`, `/youtube/v3/docs/videos/list`.
 
 For every platform in this table the site names the platform, asks nothing of it, and offers to take the post's text or the article's address.
+
+### YouTube in the reader's browser
+
+- **Checked:** 2026-11-13. [YouTube transcript help](https://support.google.com/youtube/answer/15930243?co=GENIE.Platform%3DDesktop&hl=en) explains that videos with captions offer **Show transcript** from the description. [Captions download API](https://developers.google.com/youtube/v3/docs/captions/download) requires OAuth and permission to edit the video; it is not a general transcript service for arbitrary videos.
+- **Implementation:** no new network client, API credentials or caption endpoint. On popup opening, the extension reads the current video's title, loaded description and captions/transcript from the DOM. It does not open the transcript automatically, access hidden player state, capture audio or download media. It can send one cropped visible frame under the existing capture guards and spending controls. No extra host permissions.
+- **Reuse:** watch, share, Shorts and live URLs identify the same video. Playback, playlist and sharing parameters are dropped from the source URL; unknown parameters disqualify that URL. Browser-only answers remain private to that reader's local result cache; they do not establish independently public evidence for a shared result.
+- **Verification:** live Chrome DOM inspection on this date confirmed the watch renderer's `video-id`, title/description/player selectors, current `transcript-segment-view-model [role="text"]` segments after opening Show transcript, and current Shorts' player-title permalink plus `h1` title. Shorts navigation briefly exposed a new renderer before the URL updated; identity matching rejects that intermediate state. Synthetic fixtures cover these layouts, recommendation/ad/overlay rejection and navigation. Installed-extension end-to-end acceptance in Safari/Chrome remains a release check in `extension/agent-test-brief.md`.
 
 ### Link shorteners
 

@@ -13,6 +13,20 @@ test("image-only Reddit claim is read visually without asking Reddit or treating
  {model:{read:async(text,options)=>{read++;assert.deepEqual(options.image,image);assert.equal(options.pageUrl,null);return {...found,intervention:"EX-patch",indication:"missing teeth"};},score:async()=>[]},registry,fetch:async()=>{throw new Error("must not fetch Reddit");}});
  assert.equal(response.status,200);const answer=await response.json();assert.equal(answer.treatment,"EX-patch");assert.equal(answer.source.kind,"screenshot");assert.equal(read,1);
 });
+test("YouTube browser text and frames stay local to the reader and never trigger a video fetch or shared-cache write", async () => {
+ const pageUrl = "https://www.youtube.com/watch?v=EX_test0001";
+ for (const withImage of [false, true]) {
+  let reads = 0;
+  const settings = {...env, LOOKUP_RESULTS: {get:async()=>null, put:async()=>{throw Error("browser content must not enter shared cache");}}};
+  const response = await handle(new Request("https://whatcameofit.example/api/lookup", {method:"POST",body:JSON.stringify({
+   text:"A synthetic YouTube report describes EX-patch for missing teeth.",platform:"YouTube",links:[],pageUrl,
+   ...(withImage ? {image} : {}),
+  })}),settings,{registry,model:{read:async(text,options)=>{reads++;if(withImage)assert.equal(options.pageUrl,pageUrl);return {...found,intervention:"EX-patch",indication:"missing teeth"};},score:async()=>[]},fetch:async()=>{throw Error("must not fetch YouTube");}});
+  assert.equal(response.status,200);
+  assert.equal(reads,1);
+  assert.equal((await response.json()).treatment,"EX-patch");
+ }
+});
 test("provider receives the image once, only for reading, with storage disabled and bounded output",async()=>{
  const calls=[];const model=makeModel({apiKey:"test",model:"configured",fetch:async(url,options)=>{calls.push(JSON.parse(options.body));return Response.json({choices:[{message:{content:JSON.stringify(found)}}]});}});
  await model.read("caption",{image,pageUrl:"https://example.org/story"});

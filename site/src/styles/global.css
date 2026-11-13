@@ -279,7 +279,70 @@ p {
 
 main {
   flex: 1;
-  padding-block: clamp(1.25rem, 4vw, 2.25rem) clamp(3rem, 8vw, 5rem);
+  padding-bottom: clamp(3rem, 8vw, 5rem);
+}
+
+main > .wrap {
+  padding-top: clamp(1.25rem, 4vw, 2.25rem);
+}
+
+/* The opening band: a page's main task on the panel blue, full width, between the
+   white masthead and the white page. Pale, with ink on it; never a solid block of
+   the accent. */
+.band {
+  background: var(--panel);
+  border-bottom: 1px solid var(--rule);
+  padding-block: clamp(1.75rem, 6vw, 3.25rem) clamp(1.75rem, 5.5vw, 3rem);
+}
+
+/* The first section heading under a band brings its own space. */
+.band + .wrap {
+  padding-top: 0;
+}
+
+.band .title {
+  margin-top: 0;
+}
+
+/* Title, lede, box and suggestion share one right edge. */
+.band .lede,
+.band .suggest {
+  max-width: 46rem;
+}
+
+/* The band's last line closes the band; the band's padding is its only space. */
+.band .wrap > :last-child {
+  margin-bottom: 0;
+}
+
+/* Under the band, the tally opens the lists. */
+.band + .wrap > .tally {
+  margin: clamp(1.25rem, 4vw, 1.75rem) 0 0;
+  font-size: 0.95rem;
+}
+
+/* The tally belongs to the lists, so the first heading follows it closely. */
+.band + .wrap > .tally + .bar {
+  margin-top: clamp(1.25rem, 4vw, 1.75rem);
+}
+
+/* A panel on the band would be blue on blue: there the answer is drawn on white,
+   in a hairline frame. */
+.band .digest {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+}
+
+.band textarea {
+  background: var(--paper);
+}
+
+@media print {
+  .band {
+    background: none;
+    border-bottom: 0;
+    padding-block: 0;
+  }
 }
 
 /* Topic chip: a small mark for the topic a page belongs to. */
@@ -901,12 +964,6 @@ main nav.contents ul li + li {
   margin-top: 0.5rem;
 }
 
-/* On the home page the tally closes the lookup and opens the lists. */
-.results + .tally,
-.suggest + .tally {
-  margin-top: 1.4rem;
-  font-size: 0.95rem;
-}
 
 .digest .says {
   align-self: center;
