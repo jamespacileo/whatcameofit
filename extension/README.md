@@ -16,7 +16,7 @@ A post on X links out only through X's shortener (`t.co`), which the site's serv
 make extension
 ```
 
-This writes `extension/dist`, version 0.2.0. The site's address comes from `site/site.config.mjs` and defaults to `https://whatcameofit.com`. Set `SITE_URL` to build for a local service, as below. The public site's registry search is enabled with a monthly usage allowance.
+This writes `extension/dist`, version 0.3.0. The site's address comes from `site/site.config.mjs` and defaults to `https://whatcameofit.com`. Set `SITE_URL` to build for a local service, as below. The public site's registry search is enabled with a monthly usage allowance.
 
 ## Chrome
 
