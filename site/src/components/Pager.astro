@@ -49,8 +49,11 @@ const first = pageOf(total, size, 1);
     let page = Number(new URL(location.href).searchParams.get(name) ?? 1);
     let printing = false;
 
-    // A filter marks the rows it leaves out with "data-out"; the pager pages the rest.
-    const listed = () => rows.filter((row) => !row.hasAttribute("data-out"));
+    // Each filter marks the rows it leaves out ("data-out", "data-out-topic"); the pager
+    // pages the rows no filter has marked.
+    const out = (row: HTMLTableRowElement) =>
+      row.getAttributeNames().some((name) => name.startsWith("data-out"));
+    const listed = () => rows.filter((row) => !out(row));
 
     const draw = () => {
       const list = listed();

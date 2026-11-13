@@ -1,7 +1,12 @@
 // The home page's lists, each an order over the same claims (openspec browse-lists).
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { longestWithoutSignal, promisesByDate, statusMoves } from "../src/lib/feed.ts";
+import {
+  longestWithoutSignal,
+  promisesByDate,
+  statusCountsByTopic,
+  statusMoves,
+} from "../src/lib/feed.ts";
 
 const claim = (slug, extra = {}) => ({
   slug,
@@ -44,4 +49,18 @@ test("Scenario: Longest without a new record", () => {
     claim("ten-earlier", { quiet: 10, first: "2015-01-01" }),
   ]);
   assert.deepEqual(listed.map((item) => item.slug), ["ten-earlier", "ten-later", "three"]);
+});
+
+test("Scenario: Narrowing to a topic", () => {
+  const at = (slug, vertical, code) => ({ ...claim(slug), vertical, status: { code } });
+  const counts = statusCountsByTopic([
+    at("a", "cancer", "phase_3"),
+    at("b", "cancer", "phase_3"),
+    at("c", "cancer", "approved"),
+    at("d", "dementia", "phase_3"),
+  ]);
+  // Under "" every claim; under a topic only its own.
+  assert.deepEqual(counts[""], { phase_3: 3, approved: 1 });
+  assert.deepEqual(counts.cancer, { phase_3: 2, approved: 1 });
+  assert.deepEqual(counts.dementia, { phase_3: 1 });
 });

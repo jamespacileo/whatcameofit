@@ -32,3 +32,14 @@ Promises list is in date order and never says "overdue".
 
 Tabs, not four stacked tables: one list above the fold, the others one press away, and
 without scripting the four simply follow one another under their headings.
+
+## One stage filter, two scopes
+
+The status filter that sat inside `ClaimTable.astro` is now `StageFilter.astro`. On a
+topic or year page it narrows the table after it, as before. On the home page it is
+given a scope and narrows every table in the feed. Each filter leaves its own mark on
+a row (`data-out` for status, `data-out-topic` for topic); the pager shows the rows
+with no mark, so filters combine without knowing of each other.
+
+A feed row is not always a claim (a claim can have several reports or changes), so
+the home page names the picked status and does not say "N of M claims".

@@ -1,9 +1,10 @@
 ---
-import type { ExportedClaim, StatusCode } from "../lib/export";
-import { STAGE_PATH, STATUS_LABELS, latestPromise } from "../lib/status";
+import type { ExportedClaim } from "../lib/export";
+import { latestPromise } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 import ClaimName from "./ClaimName.astro";
 import Pager from "./Pager.astro";
+import StageFilter from "./StageFilter.astro";
 import PromiseText from "./PromiseText.astro";
 import StatusCell from "./StatusCell.astro";
 
@@ -21,51 +22,11 @@ const { claims, caption, filter = false, name = "claims" } = Astro.props;
 const PAGE_SIZE = 25;
 // A handful of claims is read at a glance; the filter earns its place on a longer list.
 const FILTER_FROM = 6;
-const counts = new Map<StatusCode, number>();
-for (const claim of claims) counts.set(claim.status.code, (counts.get(claim.status.code) ?? 0) + 1);
 // Amber is kept for a promise that exists: with none in the list, there is no column.
 const anyPromise = claims.some((claim) => latestPromise(claim) !== null);
-const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PATH.includes(code));
 ---
 
-{
-  filter && claims.length >= FILTER_FROM && (
-    <div class="stage-filter" data-stage-filter>
-      <div class="places" role="group" aria-label="Show claims by status">
-        {STAGE_PATH.map((code) => {
-          const count = counts.get(code) ?? 0;
-          return (
-            <button
-              type="button"
-              class="place"
-              data-status={code}
-              aria-pressed="false"
-              disabled={count === 0}
-            >
-              <span class="dot" aria-hidden="true" />
-              <strong>{count}</strong>
-              <span class="place-name">{STATUS_LABELS[code]}</span>
-            </button>
-          );
-        })}
-      </div>
-      {offPath.length > 0 && (
-        <div class="off-path" role="group" aria-label="Statuses off the path">
-          {offPath.map((code) => (
-            <button type="button" class="place off" data-status={code} aria-pressed="false">
-              <strong>{counts.get(code)}</strong>
-              <span class="place-name">{STATUS_LABELS[code]}</span>
-            </button>
-          ))}
-        </div>
-      )}
-      <p class="shown" hidden data-shown>
-        <span aria-live="polite" data-shown-text />
-        <button type="button" data-show-all>Show all</button>
-      </p>
-    </div>
-  )
-}
+{filter && claims.length >= FILTER_FROM && <StageFilter claims={claims} />}
 <div class="table-frame">
 <table role="table" class="index">
   <caption class="visually-hidden">{caption}</caption>
@@ -116,40 +77,3 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
 </div>
 <Pager name={name} total={claims.length} size={PAGE_SIZE} one="claim" many="claims" />
 
-<script>
-  // Picking a place on the path shows only the claims there; picking it again shows all.
-  for (const filter of document.querySelectorAll<HTMLElement>("[data-stage-filter]")) {
-    const buttons = [...filter.querySelectorAll<HTMLButtonElement>("button[data-status]")];
-    const table = filter.nextElementSibling!.querySelector("table")!;
-    const rows = [...table.querySelectorAll<HTMLTableRowElement>("tbody tr[data-status]")];
-    const shown = filter.querySelector<HTMLElement>("[data-shown]")!;
-    const shownText = filter.querySelector<HTMLElement>("[data-shown-text]")!;
-    // Where the browser can, the table cross-fades to its narrowed self.
-    const pick = (picked: string | null) => {
-      const moving = matchMedia("(prefers-reduced-motion: no-preference)").matches;
-      if (moving && document.startViewTransition) document.startViewTransition(() => apply(picked));
-      else apply(picked);
-    };
-    const apply = (picked: string | null) => {
-      for (const button of buttons) {
-        button.setAttribute("aria-pressed", String(button.dataset.status === picked));
-      }
-      // The pager under the table shows the rows left in, a page at a time.
-      let visible = 0;
-      for (const row of rows) {
-        const out = picked !== null && row.dataset.status !== picked;
-        row.toggleAttribute("data-out", out);
-        if (!out) visible += 1;
-      }
-      table.dispatchEvent(new Event("paged:refresh"));
-      shown.hidden = picked === null;
-      shownText.textContent = `Showing ${visible} of ${rows.length} claims.`;
-    };
-    for (const button of buttons) {
-      button.addEventListener("click", () =>
-        pick(button.getAttribute("aria-pressed") === "true" ? null : button.dataset.status!),
-      );
-    }
-    filter.querySelector("[data-show-all]")!.addEventListener("click", () => pick(null));
-  }
-</script>

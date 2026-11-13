@@ -1,0 +1,143 @@
+---
+// The path as a filter: how many claims sit at each place, and a way to pick one. It
+// doubles as the legend for the small tracks in the tables it narrows. By default it
+// narrows the table just after it; given a scope, every table inside that element.
+import type { ExportedClaim, StatusCode } from "../lib/export";
+import { STAGE_PATH, STATUS_LABELS } from "../lib/status";
+
+interface Props {
+  claims: ExportedClaim[];
+  /** A selector: narrow every table inside it, not the one that follows. */
+  scope?: string;
+  /** Keep the picked status in the page's address under this name. */
+  param?: string;
+}
+
+const { claims, scope, param } = Astro.props;
+const counts = new Map<StatusCode, number>();
+for (const claim of claims) counts.set(claim.status.code, (counts.get(claim.status.code) ?? 0) + 1);
+const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PATH.includes(code));
+---
+
+<div class="stage-filter" data-stage-filter data-scope={scope} data-param={param}>
+  <div class="places" role="group" aria-label="Show claims by status">
+    {
+      STAGE_PATH.map((code) => {
+        const count = counts.get(code) ?? 0;
+        return (
+          <button
+            type="button"
+            class="place"
+            data-status={code}
+            data-label={STATUS_LABELS[code]}
+            aria-pressed="false"
+            disabled={count === 0}
+          >
+            <span class="dot" aria-hidden="true" />
+            <strong>{count}</strong>
+            <span class="place-name">{STATUS_LABELS[code]}</span>
+          </button>
+        );
+      })
+    }
+  </div>
+  {
+    offPath.length > 0 && (
+      <div class="off-path" role="group" aria-label="Statuses off the path">
+        {offPath.map((code) => (
+          <button
+            type="button"
+            class="place off"
+            data-status={code}
+            data-label={STATUS_LABELS[code]}
+            aria-pressed="false"
+          >
+            <strong>{counts.get(code)}</strong>
+            <span class="place-name">{STATUS_LABELS[code]}</span>
+          </button>
+        ))}
+      </div>
+    )
+  }
+  <p class="shown" hidden data-shown>
+    <span aria-live="polite" data-shown-text></span>
+    <button type="button" data-show-all>Show all</button>
+  </p>
+</div>
+
+<script>
+  // Picking a place on the path shows only the claims there; picking it again shows all.
+  // Rows left out are marked "data-out"; the pager under each table shows the rest.
+  for (const filter of document.querySelectorAll<HTMLElement>("[data-stage-filter]")) {
+    const { scope, param } = filter.dataset;
+    // With no scope: the first table after the filter. This component's own script
+    // tag can sit between the two, so the next element is not always the table's frame.
+    const following = () => {
+      let next = filter.nextElementSibling;
+      while (next && !next.querySelector("table")) next = next.nextElementSibling;
+      return next?.querySelector("table") ?? null;
+    };
+    const tables = scope
+      ? [...document.querySelectorAll<HTMLTableElement>(`${scope} table`)]
+      : [following()].filter((table) => table !== null);
+    const rows = tables.flatMap((table) => [
+      ...table.querySelectorAll<HTMLTableRowElement>("tbody tr[data-status]"),
+    ]);
+    const buttons = [...filter.querySelectorAll<HTMLButtonElement>("button[data-status]")];
+    const shown = filter.querySelector<HTMLElement>("[data-shown]")!;
+    const shownText = filter.querySelector<HTMLElement>("[data-shown-text]")!;
+
+    const apply = (picked: string | null) => {
+      let label = "";
+      for (const button of buttons) {
+        const on = button.dataset.status === picked;
+        button.setAttribute("aria-pressed", String(on));
+        if (on) label = button.dataset.label!;
+      }
+      let visible = 0;
+      for (const row of rows) {
+        const out = picked !== null && row.dataset.status !== picked;
+        row.toggleAttribute("data-out", out);
+        if (!out) visible += 1;
+      }
+      shown.hidden = picked === null;
+      // Over several lists a row is not a claim, so the status is named, not counted.
+      shownText.textContent = scope
+        ? `Showing only: ${label}.`
+        : `Showing ${visible} of ${rows.length} claims.`;
+      for (const table of tables) table.dispatchEvent(new Event("paged:refresh"));
+      if (param) {
+        const url = new URL(location.href);
+        if (picked) url.searchParams.set(param, picked);
+        else url.searchParams.delete(param);
+        history.replaceState(history.state, "", url);
+      }
+    };
+    // Where the browser can, the table cross-fades to its narrowed self.
+    const pick = (picked: string | null) => {
+      const moving = matchMedia("(prefers-reduced-motion: no-preference)").matches;
+      if (moving && document.startViewTransition) document.startViewTransition(() => apply(picked));
+      else apply(picked);
+    };
+    for (const button of buttons) {
+      button.addEventListener("click", () =>
+        pick(button.getAttribute("aria-pressed") === "true" ? null : button.dataset.status!),
+      );
+    }
+    filter.querySelector("[data-show-all]")!.addEventListener("click", () => pick(null));
+
+    // Another filter can change how many claims are at each place.
+    filter.addEventListener("stage:counts", (event) => {
+      const counts = (event as CustomEvent<Record<string, number>>).detail;
+      for (const button of buttons) {
+        const count = counts[button.dataset.status!] ?? 0;
+        button.querySelector("strong")!.textContent = String(count);
+        // The picked place stays pressable, so it can always be let go.
+        button.disabled = count === 0 && button.getAttribute("aria-pressed") !== "true";
+      }
+    });
+
+    const asked = param ? new URL(location.href).searchParams.get(param) : null;
+    if (asked && buttons.some((button) => button.dataset.status === asked)) apply(asked);
+  }
+</script>

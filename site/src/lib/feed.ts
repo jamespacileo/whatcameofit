@@ -29,3 +29,15 @@ export function longestWithoutSignal(claims: ExportedClaim[]): ExportedClaim[] {
         a.headline.localeCompare(b.headline),
     );
 }
+
+/** How many claims are at each status, for every topic and, under "", for all of them. */
+export function statusCountsByTopic(claims: ExportedClaim[]): Record<string, Record<string, number>> {
+  const counts: Record<string, Record<string, number>> = { "": {} };
+  for (const claim of claims) {
+    for (const topic of ["", claim.vertical]) {
+      const at = (counts[topic] ??= {});
+      at[claim.status.code] = (at[claim.status.code] ?? 0) + 1;
+    }
+  }
+  return counts;
+}

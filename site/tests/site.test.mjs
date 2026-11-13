@@ -185,6 +185,26 @@ test("Scenario: Lists on the home page", () => {
   assert.match(html.slice(html.indexOf('id="feed-quiet"')), /No signal for 6 years/);
 });
 
+test("Scenario: Counts on the path", () => {
+  const html = page("index.html");
+  const strip = html.slice(html.indexOf("data-stage-filter"), html.indexOf('class="feed"'));
+  // Three claims: one preclinical, one in phase 2, one approved. The strip narrows
+  // every list under it and keeps the pick in the address.
+  assert.match(strip, /data-scope="\[data-feed\]"/);
+  assert.match(strip, /data-param="status"/);
+  for (const [code, number] of [["preclinical_only", 1], ["phase_2", 1], ["approved", 1]]) {
+    assert.match(strip, new RegExp(`data-status="${code}"[^>]*>.*?<strong>${number}</strong>`, "s"));
+  }
+  assert.match(strip, /data-status="phase_1"[^>]*disabled/);
+  // Each row carries what the strip and the topic choice narrow by.
+  assert.match(html, /<tr[^>]*data-status="phase_2"[^>]*data-topic="gum-disease"/);
+});
+
+test("Scenario: One topic", () => {
+  // With a single listed topic there is nothing to choose between.
+  assert.doesNotMatch(page("index.html"), /data-topic-filter/);
+});
+
 test("Scenario: Article of a published claim", () => {
   const lookup = JSON.parse(page("lookup.json"));
   // Each article address, in comparison form, names its claim.

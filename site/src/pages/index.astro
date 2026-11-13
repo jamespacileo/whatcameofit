@@ -5,13 +5,19 @@ import ClaimName from "../components/ClaimName.astro";
 import Outlet from "../components/Outlet.astro";
 import Pager from "../components/Pager.astro";
 import PromiseText from "../components/PromiseText.astro";
+import StageFilter from "../components/StageFilter.astro";
 import StageTrack from "../components/StageTrack.astro";
 import StatusCell from "../components/StatusCell.astro";
 import TopicChip from "../components/TopicChip.astro";
 import { SITE } from "../../site.config.mjs";
 import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
 import { data, listedTopics } from "../lib/export";
-import { longestWithoutSignal, promisesByDate, statusMoves } from "../lib/feed";
+import {
+  longestWithoutSignal,
+  promisesByDate,
+  statusCountsByTopic,
+  statusMoves,
+} from "../lib/feed";
 import { followedNameFor, recentReports } from "../lib/reports";
 import { siteData } from "../lib/structured";
 import { STATUS_LABELS, latestPromise } from "../lib/status";
@@ -58,6 +64,14 @@ const views = [
   { id: "promised", tab: "Promises", count: promised.length },
   { id: "quiet", tab: "No signal", count: quiet.length },
 ].filter((view) => view.id === "headlines" || view.count > 0);
+// The lists can be narrowed to one topic; the counts on the path follow the topic.
+const topicChoices = listedTopics
+  .map((topic) => ({
+    ...topic,
+    count: data.claims.filter((claim) => claim.vertical === topic.slug).length,
+  }))
+  .sort((a, b) => a.title.localeCompare(b.title));
+const topicCounts = statusCountsByTopic(data.claims);
 ---
 
 <Base current="home" structured={siteData()}>
@@ -114,6 +128,27 @@ const views = [
     )
   }
 
+  {
+    data.claims.length > 0 && (
+      <div class="scoreboard">
+        <StageFilter claims={data.claims} scope="[data-feed]" param="status" />
+        {topicChoices.length > 1 && (
+          <p class="topic-filter" hidden data-topic-filter>
+            <label for="feed-topic">Topic</label>
+            <select id="feed-topic" data-counts={JSON.stringify(topicCounts)}>
+              <option value="">All topics ({data.claims.length})</option>
+              {topicChoices.map((topic) => (
+                <option value={topic.slug}>
+                  {topic.title} ({topic.count})
+                </option>
+              ))}
+            </select>
+          </p>
+        )}
+      </div>
+    )
+  }
+
   <div class="feed" data-feed>
     {/* Shown by the script: without it the lists follow one another, each under its heading. */}
     <div class="feed-tabs" role="tablist" aria-label="Lists of tracked claims" hidden>
@@ -154,7 +189,7 @@ const views = [
         </thead>
         <tbody role="rowgroup">
           {reports.map((report, index) => (
-            <tr role="row" data-later={index >= PAGE_SIZE ? "" : undefined}>
+            <tr role="row" data-status={report.claim.status.code} data-topic={report.claim.vertical} data-later={index >= PAGE_SIZE ? "" : undefined}>
               <td role="cell" class="claim">
                 {/* Named as on the claim page, so the headline pressed here is
                     carried to its place there. */}
@@ -200,6 +235,7 @@ const views = [
       </table>
       </div>
       <Pager name="headlines" total={reports.length} size={PAGE_SIZE} one="headline" many="headlines" />
+      <p class="none" data-none hidden>Nothing in this list for that choice.</p>
     )
   }
   </section>
@@ -222,7 +258,7 @@ const views = [
         </thead>
         <tbody role="rowgroup">
           {moves.map((move, index) => (
-            <tr role="row" data-later={index >= PAGE_SIZE ? "" : undefined}>
+            <tr role="row" data-status={move.claim.status.code} data-topic={move.claim.vertical} data-later={index >= PAGE_SIZE ? "" : undefined}>
               <td role="cell" class="claim">
                 <ClaimName claim={move.claim} />
               </td>
@@ -242,6 +278,7 @@ const views = [
       </table>
       </div>
       <Pager name="moved" total={moves.length} size={PAGE_SIZE} one="change" many="changes" />
+      <p class="none" data-none hidden>Nothing in this list for that choice.</p>
       </section>
     )
   }
@@ -264,7 +301,7 @@ const views = [
         </thead>
         <tbody role="rowgroup">
           {promised.map((claim, index) => (
-            <tr role="row" data-later={index >= PAGE_SIZE ? "" : undefined}>
+            <tr role="row" data-status={claim.status.code} data-topic={claim.vertical} data-later={index >= PAGE_SIZE ? "" : undefined}>
               <td role="cell" class="claim">
                 <ClaimName claim={claim} />
               </td>
@@ -280,6 +317,7 @@ const views = [
       </table>
       </div>
       <Pager name="promised" total={promised.length} size={PAGE_SIZE} one="claim" many="claims" />
+      <p class="none" data-none hidden>Nothing in this list for that choice.</p>
       </section>
     )
   }
@@ -302,7 +340,7 @@ const views = [
         </thead>
         <tbody role="rowgroup">
           {quiet.map((claim, index) => (
-            <tr role="row" data-later={index >= PAGE_SIZE ? "" : undefined}>
+            <tr role="row" data-status={claim.status.code} data-topic={claim.vertical} data-later={index >= PAGE_SIZE ? "" : undefined}>
               <td role="cell" class="claim">
                 <ClaimName claim={claim} />
               </td>
@@ -322,6 +360,7 @@ const views = [
       </table>
       </div>
       <Pager name="quiet" total={quiet.length} size={PAGE_SIZE} one="claim" many="claims" />
+      <p class="none" data-none hidden>Nothing in this list for that choice.</p>
       </section>
     )
   }
@@ -891,6 +930,62 @@ const views = [
     feed.classList.add("tabbed");
     list.hidden = false;
     select(wanted.dataset.view!);
+  }
+
+  // Narrowing: each list keeps the rows no filter has left out. The tab says how many
+  // are left, and a list with none says so in place of an empty table.
+  if (feed) {
+    const lists = [...feed.querySelectorAll<HTMLElement>(".feed-panel")].map((panel) => ({
+      table: panel.querySelector("table"),
+      frame: panel.querySelector<HTMLElement>(".table-frame"),
+      none: panel.querySelector<HTMLElement>("[data-none]"),
+      count: feed.querySelector<HTMLElement>(`#tab-${panel.dataset.view} .count`),
+    }));
+    const left = (row: HTMLTableRowElement) =>
+      !row.getAttributeNames().some((name) => name.startsWith("data-out"));
+    for (const list of lists) {
+      if (!list.table) continue;
+      const rows = [...list.table.tBodies[0].rows];
+      const recount = () => {
+        const total = rows.filter(left).length;
+        if (list.count) list.count.textContent = String(total);
+        if (list.frame) list.frame.hidden = total === 0;
+        if (list.none) list.none.hidden = total > 0;
+      };
+      list.table.addEventListener("paged:refresh", recount);
+      // A status named in the address may have narrowed the lists already.
+      recount();
+    }
+
+    const line = document.querySelector<HTMLElement>("[data-topic-filter]");
+    const choice = line?.querySelector("select");
+    const strip = document.querySelector<HTMLElement>("[data-stage-filter]");
+    if (line && choice) {
+      const counts: Record<string, Record<string, number>> = JSON.parse(choice.dataset.counts!);
+      const narrow = (topic: string) => {
+        for (const list of lists) {
+          if (!list.table) continue;
+          for (const row of list.table.tBodies[0].rows) {
+            row.toggleAttribute("data-out-topic", topic !== "" && row.dataset.topic !== topic);
+          }
+          list.table.dispatchEvent(new Event("paged:refresh"));
+        }
+        strip?.dispatchEvent(new CustomEvent("stage:counts", { detail: counts[topic] ?? {} }));
+      };
+      choice.addEventListener("change", () => {
+        narrow(choice.value);
+        const url = new URL(location.href);
+        if (choice.value) url.searchParams.set("topic", choice.value);
+        else url.searchParams.delete("topic");
+        history.replaceState(history.state, "", url);
+      });
+      line.hidden = false;
+      const asked = new URL(location.href).searchParams.get("topic") ?? "";
+      if (asked && asked in counts) {
+        choice.value = asked;
+        narrow(asked);
+      }
+    }
   }
 
   const initial = new URL(location.href).searchParams.get("q");

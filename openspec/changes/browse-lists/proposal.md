@@ -13,6 +13,9 @@ long table.
   time behind tabs. Headlines (newest report first), Status changes (newest change
   first, with the status before), Promises (earliest promised date first) and No signal
   (most years first). Each is read ten rows at a time.
+- Above the lists, the path shows how many claims are at each status and a reader can
+  pick one; a topic choice sits under it. Both narrow all four lists at once, and the
+  path's counts follow the topic.
 - "Statuses set most recently" is replaced by Status changes: a batch of statuses set
   on one day said nothing about what had moved.
 - Every claim list (topic, year, source, approvals, a claim's related claims) shows 25
@@ -27,6 +30,5 @@ This replaces "at most ten" in `recent-headlines` (Recent reports on the home pa
 
 ## Not in scope
 
-- A count of claims at each place on the path, an anniversary row and a topic filter on
-  the home page. Proposed separately.
+- An anniversary row on the home page. Proposed separately.
 - Separate addresses per page (`/headlines/2`). See `design.md`.

@@ -54,3 +54,26 @@ A list with no rows SHALL NOT be offered, except Headlines. Each list SHALL show
 #### Scenario: A list named in the address
 - **WHEN** the home page is opened at an address naming the Status changes list
 - **THEN** that list is the one shown
+
+### Requirement: The home page's lists can be narrowed by status and by topic
+Above its lists, the home page SHALL show how many published claims are at each status, on the same path a topic page shows, and SHALL let a reader pick one status. Where more than one topic is listed, it SHALL also let a reader choose one topic. A pick SHALL narrow all four lists at once to rows whose claim has that status now and is filed under that topic; both picks together SHALL narrow to rows that meet both. Each list's count SHALL be the rows left, and a list left with none SHALL say so in place of an empty table. With a topic chosen, the counts on the path SHALL be that topic's. The picks SHALL be recorded in the page's address. The counts SHALL be stated as numbers only: the page SHALL NOT rank topics or characterise the spread.
+
+#### Scenario: Counts on the path
+- **WHEN** three published claims stand at preclinical only, phase 2 and approved
+- **THEN** the home page shows one at each of those places and none at the others, and a place with none cannot be picked
+
+#### Scenario: Picking a status
+- **WHEN** a reader picks phase 3
+- **THEN** each list shows only rows of claims now in phase 3, and each list's count is the number of those rows
+
+#### Scenario: Narrowing to a topic
+- **WHEN** a reader chooses a topic with seven claims
+- **THEN** every list shows only that topic's rows and the path shows where those seven stand
+
+#### Scenario: A list left empty
+- **WHEN** no claim in the chosen topic carries the no-signal overlay
+- **THEN** the No signal list shows a count of none and says nothing is in the list for that choice
+
+#### Scenario: One topic
+- **WHEN** only one topic is listed
+- **THEN** no topic choice is shown

@@ -12,3 +12,11 @@
 - [x] 2.2 Show the four lists on the home page behind tabs, each with its count and pager; verify the site test "Lists on the home page" passes
 - [x] 2.3 Look at each list at desktop and phone widths with the published export; verify the tab is kept in the address and nothing overflows
 - [x] 2.4 Verify `make check` passes
+
+## 3. Narrowing the front page
+
+- [x] 3.1 Move the status filter into its own component, usable over one table or every table in a scope; verify the year page still narrows and pages as before
+- [x] 3.2 Show the path with counts above the home page's lists and narrow all four by the picked status; verify the site test "Counts on the path" passes
+- [x] 3.3 Add the topic choice, with the path's counts following it; verify the site tests "Narrowing to a topic" and "One topic" pass
+- [x] 3.4 Look at the home page at desktop and phone widths with a status, a topic and both picked; verify counts, the empty-list line and the address
+- [x] 3.5 Verify `make check` passes
