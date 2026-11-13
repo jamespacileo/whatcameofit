@@ -1,4 +1,4 @@
-// Freeze an explicitly reviewed export for GitHub, without giving CI database access.
+// Freeze a publishable export for GitHub, without giving CI database access.
 import fs from "node:fs";
 import path from "node:path";
 import { deployProblems } from "./deploy-checks.mjs";
@@ -27,7 +27,8 @@ try {
   temporary = `${destination}.${process.pid}.tmp`;
   fs.writeFileSync(temporary, `${JSON.stringify(data, null, 2)}\n`, { flag: "wx" });
   fs.renameSync(temporary, destination);
-  console.log(`Staged ${data.claims.length} reviewed claims in ${destination}. Commit this file to publish them.`);
+  const unchecked = data.claims.filter((claim) => !claim.checked_by_person).length;
+  console.log(`Staged ${data.claims.length} claims (${unchecked} not checked by a person) in ${destination}. Commit this file to publish them.`);
 } catch (error) {
   if (temporary && fs.existsSync(temporary)) fs.unlinkSync(temporary);
   console.error(`Public snapshot unchanged: ${error.message}`);

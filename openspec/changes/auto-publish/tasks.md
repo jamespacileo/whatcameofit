@@ -32,4 +32,4 @@
 
 ## 5. Publish (PR D)
 
-- [ ] 5.1 Regenerate `site/data/published-export.json`; list what it adds for the operator before the PR
+- [x] 5.1 Regenerate `site/data/published-export.json`: 84 claims (83 not checked by a person), 119 status changes in the feeds. The deploy and staging checks no longer refuse unchecked claims

@@ -12,7 +12,7 @@ Accepted by the operator on 2026-11-13.
 
 - [x] 1.7 Offer a calendar file in the home lookup answer for a report with no record (open question 3); verify the file's text and that a tracked answer offers none
 
-- [ ] 1.6 The operator regenerates `site/data/published-export.json` so the public feeds carry entries; until then they are valid and empty
+- [x] 1.6 Regenerate `site/data/published-export.json` so the public feeds carry entries (119 on 2026-11-13)
 
 ## 2. Extension, in the popup (no new permission)
 

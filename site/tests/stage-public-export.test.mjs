@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-test("only reviewed data replaces the public snapshot; failures preserve its previous contents", () => {
+test("only a publishable export replaces the public snapshot; failures preserve its previous contents", () => {
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-stage-"));
   try {
     const source = path.join(temporary, "source.json");
@@ -15,7 +15,6 @@ test("only reviewed data replaces the public snapshot; failures preserve its pre
     const run = () => spawnSync(process.execPath, ["scripts/stage-public-export.mjs", source, target, history], { encoding: "utf8" });
     for (const data of [
       { preview: true, claims: [{ slug: "unreviewed", checked_by_person: true }] },
-      { preview: false, claims: [{ slug: "unreviewed", checked_by_person: false }] },
       { preview: false, claims: [] },
       null,
     ]) {
@@ -28,7 +27,8 @@ test("only reviewed data replaces the public snapshot; failures preserve its pre
     fs.writeFileSync(source, "invalid JSON");
     assert.notEqual(run().status, 0);
     assert.equal(fs.readFileSync(target, "utf8"), "previous snapshot");
-    const good = { schema_version: 1, preview: false, claims: [{ slug: "reviewed", checked_by_person: true }], verticals: [{ slug: "new-topic" }] };
+    // A claim no person checked is published, marked as such (openspec auto-publish).
+    const good = { schema_version: 1, preview: false, claims: [{ slug: "reviewed", checked_by_person: true }, { slug: "by-rule", checked_by_person: false }], verticals: [{ slug: "new-topic" }] };
     fs.writeFileSync(source, JSON.stringify(good));
     const result = run();
     assert.equal(result.status, 0, result.stderr);

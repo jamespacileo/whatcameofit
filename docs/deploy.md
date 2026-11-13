@@ -13,7 +13,7 @@ make publish-data
 git diff -- site/data/published-export.json
 ```
 
-Commit `site/data/published-export.json` and `site/data/published-topics.json` with the intended changes, then push to `main` (or merge a reviewed pull request). This snapshot is the only data GitHub publishes. It contains one human-reviewed claim at initial setup. Assistant decisions are not converted to human approvals by staging or deployment. Staging preserves the topic history so future builds cannot silently break a published topic address.
+Commit `site/data/published-export.json` and `site/data/published-topics.json` with the intended changes, then push to `main` (or merge a reviewed pull request). This snapshot is the only data GitHub publishes. Since the auto-publish decision (ADR 0001, 13 November 2026) it holds every approved, unarchived claim, whoever decided it; each says whether a person checked it. Assistant decisions are never converted to human approvals. Take a claim down with `thenwhat archive <slug> --reason`, then run `make publish-data` again. Staging preserves the topic history so future builds cannot silently break a published topic address.
 
 Staging first asks the running pipeline for a normal export with preview mode disabled. It validates the export and replaces the snapshot atomically. Invalid JSON, a preview, an empty export, or an unchecked claim leaves the previous snapshot unchanged. GitHub cannot reach the local database; database changes alone therefore never publish anything.
 
