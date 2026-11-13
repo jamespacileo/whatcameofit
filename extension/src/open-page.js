@@ -66,9 +66,11 @@ export function collectFromPage() {
     return {
       ...empty, title, postTitle: title,
       focusText: [descriptionText, captions].filter(Boolean).join("\n").slice(0, 20000),
-      links: [...(description?.querySelectorAll("a[href]") ?? [])].slice(0, 300).map(link => ({
-        href: link.href, text: text(link).slice(0, 200),
-      })),
+      links: [...(description?.querySelectorAll("a[href]") ?? [])].slice(0, 300)
+        // YouTube adds help links for features such as automatic dubbing inside
+        // the description container. They are not the creator's article sources.
+        .filter(link => !/^https:\/\/support\.google\.com\/youtube(?:\/|$)/.test(link.href))
+        .map(link => ({ href: link.href, text: text(link).slice(0, 200) })),
       mediaScope: { address: location.href, selector, videoOnly: true,
         mediaSelector: short ? "video" : "#movie_player video, #player video" },
     };

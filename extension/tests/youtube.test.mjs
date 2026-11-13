@@ -79,6 +79,15 @@ test("current transcript components provide spoken text without timestamps", asy
   });
 });
 
+test("YouTube's generated description help links are not article sources", async () => {
+  const html = watch.replace('</div></ytd-watch-metadata>',
+    '<a href="https://support.google.com/youtube/answer/15569972">Learn more</a></div></ytd-watch-metadata>');
+  await onPage(html, address, () => {
+    const request = composeRequest(collectFromPage(), address, shared);
+    assert.deepEqual(request.links, ["https://research.example.org/report"]);
+  });
+});
+
 test("Shorts reads only the active video even when the next video is preloaded", async () => {
   const html = `<ytd-reel-video-renderer video-id="${other}"><h2>UNRELATED NEXT VIDEO</h2><video data-box="0,0,900,700"></video></ytd-reel-video-renderer>
     <ytd-reel-video-renderer is-active video-id="${video}"><h2>EX-patch studied for missing teeth in a synthetic trial</h2>
