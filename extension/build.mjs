@@ -74,7 +74,7 @@ const icons = Object.fromEntries(sizes.map((size) => [size, `icons/${size}.png`]
 const manifest = {
   manifest_version: 3,
   name: SITE.name,
-  version: "0.6.0",
+  version: "0.6.1",
   description: "See what happened to the medical breakthrough in the article you are reading.",
   icons,
   action: {
@@ -95,6 +95,7 @@ fs.writeFileSync(path.join(dist, "manifest.json"), `${JSON.stringify(manifest, n
 if (process.argv.includes("--dev")) {
   fs.copyFileSync(path.join(here, "dev/states.html"), path.join(dist, "states.html"));
   fs.copyFileSync(path.join(here, "dev/states.js"), path.join(dist, "states.js"));
+  fs.copyFileSync(path.join(here, "dev/sizing.html"), path.join(dist, "sizing.html"));
 }
 
 console.log(`Wrote ${path.relative(process.cwd(), dist)} for ${origin}.`);
