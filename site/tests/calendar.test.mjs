@@ -67,3 +67,18 @@ test("no line is longer than the format allows", () => {
   const encoder = new TextEncoder();
   for (const line of lines) assert.ok(encoder.encode(line).length <= 75, line);
 });
+
+test("a reminder for a report with no record carries its own text", () => {
+  const file = calendarFile({
+    site: "Site",
+    headline: "Check this report again",
+    url: "https://news.example.org/story",
+    slug: "report-2026-11-13",
+    date: "2027-05-13",
+    madeAt: "2026-11-13T10:00:00Z",
+    description: "Paste this link into Site to see what is on record now: https://news.example.org/story",
+  });
+  const unfolded = file.replaceAll("\r\n ", "");
+  assert.match(unfolded, /DESCRIPTION:Paste this link into Site/);
+  assert.doesNotMatch(unfolded, /Look at the record again/);
+});

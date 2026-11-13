@@ -23,9 +23,9 @@ Dry wording is allowed in the extension's own chrome only, never beside a status
 
 ## Open questions for the operator
 
-1. Should a notification fire when only the no-signal note changes, or only on a status change?
-2. Ten entries in the list, or more?
-3. Should the calendar file also be offered in the lookup answer on the home page, for a headline with no record yet ("check again in six months")?
+1. Answered 2026-11-13: a change into no signal notifies too, worded plainly ("Now: no signal"), never as dead or abandoned.
+2. Answered 2026-11-13: keep ten recently checked entries, and no cap on followed claims.
+3. Answered 2026-11-13: yes. A linked report the site does not track gets "Check again later" with six months and a year. The event links to the report and says where to paste it; the file is made in the browser and the link is sent nowhere.
 
 4. Answered 2026-11-13: the export carries a claim's current status only (`ExportedStatus`: code, no-signal years, the events that explain it). The feed therefore needs a status history from the pipeline: `status/rules.py` is pure, so the history is the same derivation run on the approved events up to each event's date, keeping the dates where the status changes. That adds a field to the export, so `site/export.schema.json` and `site/data/seed-export.json` are regenerated. Still to decide: build it inside this change or as its own.
 

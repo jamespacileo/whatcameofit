@@ -102,11 +102,14 @@ interface Reminder {
   date: string;
   /** The moment the file is made, as an ISO timestamp. */
   madeAt: string;
+  /** The event's text, when it is not a claim page to look at again. */
+  description?: string;
 }
 
 /** One all-day event that names the claim and links to its page. */
 export function calendarFile(reminder: Reminder): string {
   const { site, headline, url, slug, date, madeAt } = reminder;
+  const description = reminder.description ?? `Look at the record again: ${url}`;
   const compact = (isoDate: string) => isoDate.slice(0, 10).replaceAll("-", "");
   const [year, month, day] = parts(date);
   const next = new Date(Date.UTC(year, month - 1, day + 1)).toISOString();
@@ -122,7 +125,7 @@ export function calendarFile(reminder: Reminder): string {
     `DTSTART;VALUE=DATE:${compact(date)}`,
     `DTEND;VALUE=DATE:${compact(next)}`,
     `SUMMARY:${escape(`${site} ${headline}`)}`,
-    `DESCRIPTION:${escape(`Look at the record again: ${url}`)}`,
+    `DESCRIPTION:${escape(description)}`,
     `URL:${url}`,
     "END:VEVENT",
     "END:VCALENDAR",
