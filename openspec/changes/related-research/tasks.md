@@ -63,4 +63,4 @@
 - [x] 9.3 Enrich live lookups with paper metadata and explicitly named organisations; preserve trial scoring/status.
 - [x] 9.4 Add collapsed source-attributed sections on the site and next extension build, and update privacy text.
 - [x] 9.5 Verify offline behavior, real-provider end-to-end lookups, quota/caching and responsive UI.
-- [ ] 9.6 Deploy through checked CI and verify the production result.
+- [x] 9.6 Deploy through checked CI and verify the production result (2026-11-13: live website returned papers and the named organisation; free allowance and collapsed UI verified).
