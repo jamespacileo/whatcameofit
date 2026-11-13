@@ -154,8 +154,9 @@ export async function handle(request, env, tools) {
   ]);
   if (limits.some((limit) => !limit.success)) return refuse(429, "busy");
 
-  const cacheUrl = pageUrl || sourceUrl(address);
-  if (sent?.refresh !== true && cacheUrl) {
+  // A caller's context URL must never relabel a different independently fetched URL.
+  const cacheUrl = address ? sourceUrl(address) : pageUrl;
+  if (!image && sent?.refresh !== true && cacheUrl) {
     const cached = await previousResult(env.LOOKUP_RESULTS, cacheUrl);
     if (cached) return answer(cached);
   }

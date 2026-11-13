@@ -194,3 +194,10 @@ test("short text without an article link keeps the too-little refusal", () => {
   const page = collected({ focusHtml: "<main>Read this</main>", links: [{ href: ARTICLE, text: "" }] });
   assert.equal(composeRequest(page, "https://news.example.org/short", shared), null);
 });
+
+test("a short deliberate selection is preserved instead of a post title or image", () => {
+ const chosen = "EX-1 for missing teeth";
+ const request = composeRequest(collected({selection: chosen, postTitle: "Unrelated title"}), "https://x.com/lab/status/1234567890", shared);
+ assert.equal(request.text, chosen);
+ assert.deepEqual(request.links, []);
+});

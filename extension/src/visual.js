@@ -13,8 +13,10 @@ export function inspectVisible() {
     const style = getComputedStyle(node);
     return r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth && style.visibility !== "hidden" && style.display !== "none";
   };
-  const sensitive = roots.some(root => [...root.querySelectorAll('input[type="password"], textarea, input:not([type="search"]), [contenteditable="true"]')]
-    .some(node => visible(node) && (node.type === "password" || node.value || node.isContentEditable && node === document.activeElement)));
+  const sensitive = roots.some(root => [...root.querySelectorAll('input, textarea, [contenteditable]')]
+    .some(node => visible(node) && (node.type === "password" ||
+      !["checkbox", "radio", "range", "button", "submit", "reset", "search", "hidden"].includes(node.type) && node.value ||
+      node.isContentEditable && (node.innerText.trim() || node.matches(":focus-within")))));
   const focus = document.querySelector('shreddit-post, article, [role="article"], main') ?? document.body;
   const media = roots.flatMap(root => [...root.querySelectorAll("img, video, canvas, iframe")])
     .filter(node => visible(node) && (focus.contains(node) || node.getRootNode() !== document))

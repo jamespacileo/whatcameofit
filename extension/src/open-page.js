@@ -143,7 +143,7 @@ export function composeRequest(collected, address, { readAddress, readPage, page
     .filter((href) => href.length <= MAX_LINK)
     .filter((href) => !sameSite(href, host));
   const outgoing = collected.selection.length >= CHOSEN_FROM ? [] : [...new Set(links)].slice(0, MAX_LINKS);
-  if (text.length < ENOUGH) {
+  if (text.length < ENOUGH && collected.selection.length < CHOSEN_FROM) {
     const hasArticle = isPost && outgoing.some((href) => {
       try {
         return ["article", "short"].includes(readAddress(href).kind);

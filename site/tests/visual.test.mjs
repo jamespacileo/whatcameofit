@@ -52,3 +52,20 @@ test("an on-demand public URL result is shared with the next reader without mode
  const visual=await handle(request({pageUrl:"https://www.reddit.com/r/test/comments/abc/",text:"Dental revolution",image}),settings,tools);
  assert.equal(visual.status,200);assert.equal(values.size,1);
 });
+
+test("a caller cannot publish one public article's result under another URL", async () => {
+ const values = new Map();
+ const settings = {...env, LOOKUP_RESULTS: {get: async k => values.has(k) ? JSON.parse(values.get(k)) : null, put: async (k,v) => values.set(k,v)}};
+ const tools = {registry, model:{read:async()=>({...found,intervention:"EX-patch",indication:"missing teeth"}),score:async()=>[]}, fetch:async url => new Response(String(url).endsWith("robots.txt") ? "User-agent: *\nAllow: /" : "<main><p>A synthetic public report of EX-patch for missing teeth.</p></main>")};
+ const response = await handle(new Request("https://example.org/api/lookup", {method:"POST",body:JSON.stringify({url:"https://example.org/real",pageUrl:"https://example.org/unrelated"})}),settings,tools);
+ assert.equal(response.status,200);
+ assert.ok(await previousResult(settings.LOOKUP_RESULTS,"https://example.org/real"));
+ assert.equal(await previousResult(settings.LOOKUP_RESULTS,"https://example.org/unrelated"),null);
+});
+
+test("an explicit visual lookup cannot be replaced by an earlier shared text result",async()=>{
+ let calls=0;
+ const settings={...env,LOOKUP_RESULTS:{get:async()=>({version:1,publicVerified:true,at:Date.now(),found}),put:async()=>{throw new Error("visual data must not enter shared storage");}}};
+ const response=await handle(new Request("https://example.org/api/lookup",{method:"POST",body:JSON.stringify({pageUrl:"https://example.org/story",text:"Read the image",image})}),settings,{registry,model:{read:async()=>{calls++;return {about_a_treatment:false};},score:async()=>[]}});
+ assert.equal(response.status,200);assert.equal(calls,1);assert.equal((await response.json()).about_a_treatment,false);
+});

@@ -16,4 +16,4 @@ The extension SHALL reuse successful results for unchanged content for at most 2
 
 #### Scenario: Opening a previously checked report
 - **WHEN** a fresh result matches the current page and content fingerprint
-- **THEN** it is shown as an earlier result without a new capture or model call
+- **THEN** it is shown as an earlier result without a new model call; visual results compare a fresh local capture digest before reuse, and no pixels are retained or transmitted on a cache hit

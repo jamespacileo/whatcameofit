@@ -141,7 +141,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
       if (closed || generation !== visualGeneration) return;
       const request = { ...serviceRequest(lastRead ?? { text: "", links: [] }), ...captured };
       // Image bytes enter only a one-way digest, never browser storage.
-      const key = lastRead?.selectionOnly ? null : lastRead?.contentFingerprint || await fingerprint(request);
+      const key = lastRead?.selectionOnly ? null : await fingerprint(request);
       if (preview) { visual = { request, key }; show({ kind: "visual-preview", image: captured.image }); return; }
       show({ kind: "searching", visual: true });
       await send(request, { reuse, key });
@@ -180,7 +180,8 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
         } catch { if (closed) return; }
       }
       // A media-only post does not buy a fruitless caption-only model call first.
-      if (request.visualCandidate && !request.selectionOnly && request.text.length < 240) {
+      const earlierVisual = reuse && results.some(entry => entry.key === tab.key && entry.found?.source?.kind === "screenshot");
+      if (request.visualCandidate && !request.selectionOnly && !request.links?.length && (request.text.length < 240 || earlierVisual)) {
         await visualSearch({ reuse }); return;
       }
       const key = !request.selectionOnly && request.contentFingerprint ? request.contentFingerprint : null;

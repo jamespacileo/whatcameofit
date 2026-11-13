@@ -20,7 +20,7 @@ test("image-only post automatically sends one bounded image lookup; another open
  assert.equal(calls.capture,1);assert.equal(calls.paid.length,1);assert.deepEqual(calls.paid[0].image,image);
  assert.equal(calls.paid[0].visualCandidate,undefined);assert.equal(calls.paid[0].contentFingerprint,undefined);
  assert.doesNotMatch(JSON.stringify(saved),/data:image|Dental revolution/);
- await controller.open();assert.equal(calls.capture,1);assert.equal(calls.paid.length,1);
+ await controller.open();assert.equal(calls.capture,2);assert.equal(calls.paid.length,1);
  assert.ok(calls.states.at(-1).cachedAt);assert.doesNotMatch(calls.states.at(-1).shown.marked,/just now/);
  await controller.search();assert.equal(calls.paid.length,2);
  await controller.clearRecent();assert.deepEqual(saved.results,[]);
@@ -86,4 +86,17 @@ test("capture refuses private windows, password forms and non-web or local addre
  for(const address of ["file:///tmp/x","https://127.0.0.1/x","https://user:secret@example.org/x","chrome://extensions","http://box.local/x"])assert.equal(publicPageUrl(address),null);
  assert.equal(publicPageUrl("https://www.reddit.com/r/science/comments/abc/title/?token=secret#private"),null);
  assert.notEqual(publicPageUrl("https://example.org/?p=1"), publicPageUrl("https://example.org/?p=2"));
+});
+
+test("changed pixels at an unchanged canvas or image URL do not reuse the prior visual answer", async () => {
+ let pixels = "first frame";
+ const {controller,calls} = setup({capturePage:async()=>({image:{...image,dataUrl:pixels},pageUrl:tab.url})});
+ await controller.open();assert.equal(calls.paid.length,1);
+ pixels = "second frame";
+ await controller.open();assert.equal(calls.paid.length,2);
+});
+
+test("a short social caption with an article link keeps the reviewed-article path before screenshots",async()=>{
+ const {controller,calls}=setup({readPage:async()=>({text:"Read this",links:["https://example.org/report"],platform:"Reddit",visualCandidate:true})});
+ await controller.open();assert.equal(calls.capture,0);assert.equal(calls.paid[0].image,undefined);assert.deepEqual(calls.paid[0].links,["https://example.org/report"]);
 });
