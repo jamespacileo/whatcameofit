@@ -10,7 +10,7 @@ docker compose exec pipeline thenwhat lookup --json https://example.org/news/som
 
 The answer is a list of candidates for a person to check. It is not a status and nothing in it has been reviewed. No claim, match, article or text is stored.
 
-There are two copies of the engine, kept in step by hand: the pipeline's (`thenwhat lookup`, Python, the operator's tool and the one measured below) and the site's (`site/worker/`, JavaScript, the one readers reach). The site's copy answers at `/api/lookup`, shows its answer on the home page marked as an automatic search, and stores nothing. Try it locally with `make lookup-dev`.
+There are two copies of the engine, kept in step by hand: the pipeline's (`thenwhat lookup`, Python, the operator's tool and the one measured below) and the site's (`site/worker/`, JavaScript, the one readers reach). The site's copy answers at `/api/lookup` and marks its answer as an automatic search. The visible-content change adds bounded image input and expiring structured results; see the current section below. Try it locally with `make lookup-dev`.
 
 ## How it works
 
@@ -127,3 +127,19 @@ Limits: Reddit could not be opened in the browser used for this try, so its page
 - **Drug-name synonyms** from an open source, checked for its terms first.
 - **Posts on X and Reddit.** Both need the operator to register: Reddit an approved app, X a paid developer account. Until then a reader pastes the post's text.
 - **The five decisions in `openspec/changes/live-lookup/design.md`:** whether an unreviewed answer may be shown publicly, where the lookup runs, how a blocked article is read, social posts by address, and the promise that a pasted link is not tracked.
+
+## Visible content and on-demand results (13 November 2026)
+
+Opening the extension still checks reviewed claims first. For untracked pages it checks a browser-local result and the shared service cache before a paid lookup. Visible media with too little useful text, or media accompanying a text reading that identifies no treatment, triggers one screenshot lookup automatically. This follows the operator's explicit preference. Selected text suppresses automatic capture.
+
+The browser captures only the active tab and checks its identity before and after capture. It prefers the largest visible image/video/canvas, crops within the viewport, preserves aspect ratio, and reduces to at most 1600 pixels on either side and one megapixel. JPEG output is capped at 750,000 bytes. A video supplies one frame, not audio. Visible password/editing fields, overlapping embedded documents, private windows, internal/local addresses, tab switches and closing the popup prevent capture or sending. Browser restrictions still apply; this is not a guarantee of reading every app or protected video.
+
+The Worker validates bounded PNG/JPEG input and passes it through the existing configured model's Chat Completions image input with high detail for embedded text. It neither fetches Reddit to obtain pixels nor follows raw image files as articles. Reading remains a bounded identification of what a report claims, never proof it works; a patch is not silently identified as a different antibody treatment for the same condition.
+
+Local results expire after 24 hours and are capped at ten. Content changes/selection invalidate reuse; results display the earlier check time, and Search again bypasses reuse. Images and submitted text are never saved. Clear recently checked also clears the result cache.
+
+`LOOKUP_RESULTS` is an optional Cloudflare KV binding. Shared entries expire after 24 hours and contain structured findings/source links, never copied report text, images, model gist or reader identity. Keys hash cleaned report addresses. Only content independently read anonymously by the service may seed the shared cache. Browser-only content, including Reddit screenshots that the service cannot independently verify as public, remains local. Website URL lookups populate the shared library on demand; no crawler or automatic human approval is introduced. A cache outage falls back to normal lookup. `/api/lookup` accepts `{pageUrl, cacheOnly:true}` to check without calling a model. Rate limits and the existing dedicated $13 project allowance apply; images use the same configured model and there are no paid retries.
+
+The installed store build must be updated after these changes. Apple privacy disclosures must mention screenshot content before submission.
+
+Before the first untracked lookup, the extension asks the reader to allow text, cleaned URLs and automatic screenshot fallback to be sent through the service to OpenAI. This choice is stored locally and can be withdrawn in Automatic search settings; reviewed claim matching remains available without it. Apple review guideline 5.1.2(i) requires explicit permission before third-party AI data sharing: https://developer.apple.com/app-store/review/guidelines/#data-use-and-sharing .
