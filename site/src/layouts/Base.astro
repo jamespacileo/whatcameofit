@@ -8,7 +8,12 @@ import { data, listedTopics } from "../lib/export";
 import { NOTICES, PREVIEW_NOTE } from "../lib/notices";
 // Stops a public build whose configured address is a local one.
 import "../lib/public-build";
-import { canonicalAddress } from "../lib/structured";
+import {
+  breadcrumbData,
+  canonicalAddress,
+  type Crumb,
+  type Structured,
+} from "../lib/structured";
 import { formatDate } from "../lib/timetable";
 
 interface Props {
@@ -20,7 +25,13 @@ interface Props {
   imageAlt?: string;
   current?: "home" | "topics" | "approved";
   /** Structured data for search engines, written into the page as JSON-LD. */
-  structured?: Record<string, unknown>;
+  structured?: Structured | Structured[];
+  /** The pages above this one, below the home page, for search results' trail. */
+  breadcrumbs?: Crumb[];
+  /** A claim page is an article, dated by when it was first reported and last checked. */
+  article?: { published: string | null; modified: string | null };
+  /** Where a site that reads oEmbed finds this page's embed. */
+  oembed?: string;
 }
 
 const {
@@ -31,10 +42,22 @@ const {
   imageAlt,
   current,
   structured,
+  breadcrumbs,
+  article,
+  oembed,
 } = Astro.props;
 const canonical = canonicalAddress(Astro.url.pathname);
+const graph = [
+  ...(Array.isArray(structured) ? structured : structured ? [structured] : []),
+  ...(breadcrumbs ? [breadcrumbData(breadcrumbs)] : []),
+];
 // "<" is escaped so that no text in the data can close the script element.
-const structuredJson = structured ? JSON.stringify(structured).replace(/</g, "\\u003c") : null;
+const structuredJson =
+  graph.length > 0
+    ? JSON.stringify(graph.length === 1 ? graph[0] : graph).replace(/</g, "\\u003c")
+    : null;
+// Every card the site draws for a link preview is the wide shape.
+const IMAGE_SIZE = { width: 1200, height: 630 };
 // The name ends in its own punctuation, so the tagline follows it with a space.
 const pageTitle =
   (tabTitle ?? title) ? `${tabTitle ?? title} | ${SITE.name}` : `${SITE.name} ${SITE.tagline}`;
@@ -63,6 +86,7 @@ const topicLink =
     <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0b2545" />
     <link rel="preload" as="font" type="font/woff2" href={faceUrl} crossorigin />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
@@ -70,17 +94,41 @@ const topicLink =
     <link
       rel="alternate"
       type="application/atom+xml"
+      title={`${SITE.name} Status changes`}
+      href="/changes.xml"
+    />
+    <link
+      rel="alternate"
+      type="application/atom+xml"
       title={`${SITE.name} Anniversaries`}
       href="/anniversaries.xml"
     />
+    {
+      oembed && (
+        <link
+          rel="alternate"
+          type="application/json+oembed"
+          href={new URL(oembed, Astro.site).href}
+          title={title}
+        />
+      )
+    }
     {structuredJson && <script type="application/ld+json" is:inline set:html={structuredJson} />}
     <meta property="og:title" content={title ?? SITE.name} />
     <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content={SITE.name} />
-    <meta property="og:type" content="article" />
+    <meta property="og:locale" content="en_GB" />
+    <meta property="og:type" content={article ? "article" : "website"} />
+    {article?.published && <meta property="article:published_time" content={article.published} />}
+    {article?.modified && <meta property="article:modified_time" content={article.modified} />}
     <meta property="og:image" content={imageUrl} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content={String(IMAGE_SIZE.width)} />
+    <meta property="og:image:height" content={String(IMAGE_SIZE.height)} />
     {imageText && <meta property="og:image:alt" content={imageText} />}
     <meta name="twitter:card" content="summary_large_image" />
+    {imageText && <meta name="twitter:image:alt" content={imageText} />}
     {data.preview && <meta name="robots" content="noindex" />}
     {/* The name's animation plays on the first page of a visit only. */}
     <script is:inline>
@@ -140,6 +188,8 @@ const topicLink =
     }
 
     <main id="content">
+      {/* A page's opening band runs the full width, straight under the masthead. */}
+      <slot name="band" />
       <div class="wrap">
         <slot />
       </div>

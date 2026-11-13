@@ -20,6 +20,12 @@
       "port": 4332
     },
     {
+      "name": "lookup-dev",
+      "runtimeExecutable": "make",
+      "runtimeArgs": ["lookup-dev"],
+      "port": 8787
+    },
+    {
       "name": "extension-states",
       "runtimeExecutable": "python3",
       "runtimeArgs": [
