@@ -17,6 +17,8 @@ Append rows to `urls.csv`. Leave `id` empty: the next sync gives the row the nex
 | `source_of_row` | `web research, page opened`, `web research, not opened`, or `repo seed / test brief` |
 | `notes` | Anything a tester should know |
 
+Multiple plausible trial candidates with confidence scores and reasons are a valid registry-search result.
+
 Never paste article text into any file here. A per-row observation goes in `notes.json`, keyed by id. A verdict a person decided goes in `verdicts.json` as `[result, reason]`.
 
 ## Sync
