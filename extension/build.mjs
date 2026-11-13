@@ -33,6 +33,7 @@ const shared = [
   ["src/lib/lookup-match.mjs", "lookup-match.js", [["./article-key.mjs", "./article-key.js"]]],
   ["src/lib/live-lookup.mjs", "live-lookup.js", [["./notices.ts", "./notices.js"]]],
   ["worker/page.mjs", "page.js", []],
+  ["src/lib/source-url.mjs", "source-url.js", []],
 ];
 for (const [from, to, imports] of shared) {
   let source = fs.readFileSync(path.join(site, from), "utf8");
@@ -42,6 +43,8 @@ for (const [from, to, imports] of shared) {
   }
   fs.writeFileSync(path.join(dist, to), source);
 }
+const visualPath = path.join(dist, "visual.js");
+fs.writeFileSync(visualPath, fs.readFileSync(visualPath, "utf8").replace("../../site/src/lib/source-url.mjs", "./source-url.js"));
 const { NOTICES } = await import(pathToFileURL(path.join(site, "src/lib/notices.ts")).href);
 fs.writeFileSync(
   path.join(dist, "notices.js"),
@@ -71,7 +74,7 @@ const icons = Object.fromEntries(sizes.map((size) => [size, `icons/${size}.png`]
 const manifest = {
   manifest_version: 3,
   name: SITE.name,
-  version: "0.4.0",
+  version: "0.5.0",
   description: "See what happened to the medical breakthrough in the article you are reading.",
   icons,
   action: {

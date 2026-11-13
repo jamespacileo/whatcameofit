@@ -29,7 +29,7 @@ import Base from "../layouts/Base.astro";
   <h2 class="bar">Opening the extension</h2>
   <p>
     When you open the extension, it reads the current tab's address and compares it with a public
-    lookup file inside your browser. It does not send that page address to our service. It downloads
+    lookup file inside your browser. A reviewed match is answered without sending that page address. An untracked public report may send a cleaned page address to check for a previous automatic result. It downloads
     the lookup file from whatcameofit.com and saves the file and its retrieval time in the browser,
     refreshing it after six hours. If the site cannot be reached, the saved copy can still be used.
     Removing the extension removes this local cache.
@@ -49,6 +49,24 @@ import Base from "../layouts/Base.astro";
     the text sent.
   </p>
 
+  <p>
+    If a page contains visible images, video or a canvas and its text is insufficient to identify
+    the report, opening the extension automatically captures the visible content. It prefers the
+    largest visible media area, otherwise the viewport. It sends one reduced image, the caption
+    and the cleaned page address through our service to OpenAI. A video contributes only its
+    current frame, not its audio. Screenshots may include personal information visible on the
+    page: open the extension only on public reports. Private browser windows and visible password
+    or editing fields disable screenshot capture. Selecting words prevents automatic screenshots.
+    Nothing is captured while the extension is closed.
+  </p>
+  <p>
+    The extension keeps up to ten successful automatic results in this browser for 24 hours,
+    alongside a fingerprint of the content, so reopening a report need not make another paid
+    lookup. It does not save screenshot pixels or submitted page text. Previous results show their
+    checked-at time. Search again requests a fresh lookup; Clear this list in Recently checked
+    also clears these saved results. Removing the extension removes them.
+  </p>
+
   <h2 class="bar">Optional registry searches</h2>
   <p>
     On the website, a registry search runs when you press its search button. It sends the
@@ -62,12 +80,11 @@ import Base from "../layouts/Base.astro";
     In the extension, opening the popup on an untracked page reads the page or your selected words and sends
     that text and outgoing links to our service. A selection limits the text sent; outgoing links
     can still be included. A post also identifies its platform. Up to three X short links may
-    be opened through t.co without cookies or a referrer. The current page's address is not added
-    to the search request, but the text you choose may itself contain personal information.
+    be opened through t.co without cookies or a referrer. When no words are selected, a cleaned page address is included to check for an earlier result. Query parameters and fragments are removed. The text you choose may itself contain personal information.
     Please use public reports and avoid sending private medical or other sensitive information.
   </p>
   <p>
-    Our application does not store or log submitted addresses, text or search answers. Your IP
+    Our application does not log submitted content or store submitted text or screenshots. For a report the service can independently read publicly, it may retain the structured automatic findings for 24 hours, indexed by a hash of the cleaned address, and reuse them for other readers. These findings remain unreviewed and show when they were checked. Browser-only content, selected text and screenshots are not published to this shared cache. Your IP
     address is used by Cloudflare to limit the number of searches. We request that OpenAI does not
     save chat completions for later retrieval. This does not mean zero retention: OpenAI may keep
     prompts and responses in abuse-monitoring logs for up to 30 days, or longer for legal or safety

@@ -91,7 +91,7 @@ test("text the reader selected is all that is sent of the page's words", () => {
 
   const request = composeRequest(page, "https://x.com/alab/status/1234567890", shared);
 
-  assert.deepEqual([request.text, request.links, request.platform], [chosen, [ARTICLE], "X"]);
+  assert.deepEqual([request.text, request.links, request.platform], [chosen, [], "X"]);
 });
 
 test("a page with too little to read, or a tab that is not a web page, gives nothing to send", () => {

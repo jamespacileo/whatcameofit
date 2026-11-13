@@ -301,6 +301,17 @@ h1 {
   line-height: 1.45;
 }
 
+.visual-preview {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 280px;
+  object-fit: contain;
+  margin-top: 12px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+}
+
 .unchecked:first-child {
   margin-top: 0;
 }

@@ -36,6 +36,9 @@ async function runPopup(navigate, words = "EX-1 is being studied as a treatment 
     const files = {
       "popup.js": "extension/src/popup.js",
       "controller.js": "extension/src/controller.js",
+      "results.js": "extension/src/results.js",
+      "visual.js": "extension/src/visual.js",
+      "source-url.js": "site/src/lib/source-url.mjs",
       "lookup.js": "extension/src/lookup.js",
       "kept.js": "extension/src/kept.js",
       "open-page.js": "extension/src/open-page.js",
@@ -47,7 +50,8 @@ async function runPopup(navigate, words = "EX-1 is being studied as a treatment 
       "notices.ts": "site/src/lib/notices.ts",
     };
     for (const [name, source] of Object.entries(files)) {
-      const content = (await fs.readFile(path.join(root, source), "utf8")).replaceAll("./article-key.mjs", "./article-key.js");
+      const content = (await fs.readFile(path.join(root, source), "utf8")).replaceAll("./article-key.mjs", "./article-key.js")
+        .replace("../../site/src/lib/source-url.mjs", "./source-url.js");
       await fs.writeFile(path.join(directory, name), content);
     }
     await fs.writeFile(path.join(directory, "package.json"), '{"type":"module"}');
@@ -59,12 +63,13 @@ async function runPopup(navigate, words = "EX-1 is being studied as a treatment 
     globalThis.browser = {
       storage: { local: { get: async () => ({}), set: async () => {} } },
       tabs: {
-        query: async () => [current],
+        query: async () => { confirmedTab = current.id; return [current]; },
         get: async (id) => { confirmedTab = id; return current; },
       },
       scripting: {
-        executeScript: async ({ target }) => {
+        executeScript: async ({ target, func }) => {
           assert.equal(target.tabId, 7);
+          if (func.name === "inspectVisible") return [{ result: { address: postA, media: [], sensitive: false, selectionOnly: false } }];
           reads += 1;
           return [{ result: {
             address: postA, title: "Research post", selection: "", head: "", focusHtml: "",
@@ -81,6 +86,7 @@ async function runPopup(navigate, words = "EX-1 is being studied as a treatment 
         return shortResponse.promise;
       }
       assert.equal(url, "https://whatcameofit.example/api/lookup");
+      if (JSON.parse(options.body).cacheOnly) return Response.json({ cacheMiss: true });
       posts.push(JSON.parse(options.body));
       return Response.json({ about_a_treatment: false, candidates: [] });
     };
@@ -112,7 +118,7 @@ test("actual popup glue automatically reads once, resolves the link and sends on
   assert.equal(result.posts.length, 1);
   assert.deepEqual(result.posts[0].links, [article]);
   assert.equal(result.posts[0].platform, "X");
-  assert.doesNotMatch(JSON.stringify(result.posts[0]), /x\.com|status\/123456789/);
+  assert.equal(result.posts[0].pageUrl, postA);
   assert.deepEqual(result.states.map((state) => state.kind), ["checking", "searching", "answer"]);
 });
 
