@@ -8,4 +8,4 @@
 - [x] Reproduce and correct saved checks implying an unperformed registry search.
 - [x] Run site/extension suites, production build and UI detector.
 - [x] Build and install Safari 0.9.1; verify the installed popup.
-- [ ] Merge after CI and verify the Cloudflare deployment.
+- [x] Merge after CI and verify the Cloudflare deployment.
