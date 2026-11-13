@@ -51,6 +51,14 @@ class Backend:
         return BackendAnswer(options[0], {o: 0.8 if o == options[0] else rest for o in options})
 
 
+@pytest.fixture(autouse=True)
+def rules_off(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Approval by rule is on by default. These tests are about what happens without it,
+    unless one turns it on."""
+    monkeypatch.setenv("MATCH_ACCEPT_ABOVE", "0")
+    monkeypatch.setenv("APPROVE_DRAFTS_BY_RULE", "false")
+
+
 @pytest.fixture
 def run(session: Session, monkeypatch: pytest.MonkeyPatch):
     @contextmanager
@@ -143,6 +151,19 @@ def test_resolve_stores_pending_candidates_and_suggests_a_stage(run, session: Se
     assert "1 new candidate match" in result.output and "NCT00000001" in result.output
     assert "Suggested evidence stage: in_vitro" in result.output
     assert len(session.scalars(select(EntityMatch)).all()) == 1
+
+
+def test_resolve_approves_a_confident_candidate_by_rule_by_default(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.delenv("MATCH_ACCEPT_ABOVE")
+
+    result = run("resolve", SLUG)
+
+    assert result.exit_code == 0, result.output
+    assert "1 approved by rule" in result.output
+    [match] = session.scalars(select(EntityMatch)).all()
+    assert match.reviewed_by is Decider.RULE
 
 
 def test_resolve_rescore_scores_the_pending_candidates_again(run, session: Session):

@@ -16,7 +16,7 @@ Domain terms for thenwhat. Behavior is specified in `openspec/`; this file only 
 | **Entity** | Something a claim names: an intervention, paper, person, institution or company. Has a name and synonyms. |
 | **Search phrase** | Words a registry or a paper would use for an intervention that has no product name, such as "median nerve stimulation". Searched for within the claim's indication only. Not a name, and never shown as one. |
 | **Origin paper** | The publication the first news reports of a claim were about. At most one per claim. |
-| **Match** | A proposed link between an entity and a record in a public registry (a trial, a DOI). Always confirmed by a human. |
+| **Match** | A proposed link between an entity and a record in a public registry (a trial, a DOI). Approved by rule when its score is in the high band; a person can reject it afterwards. |
 | **Evidence event** | A dated, sourced fact about a claim, such as a trial being registered or a follow-up paper appearing. Status comes from approved evidence events; the evidence stage matters only when no trial is found. |
 | **Follow-up paper** | A paper that cites the origin paper and either shares an author with it or names the intervention. |
 | **Review state** | Pending, approved or rejected. Applies to draft claims, matches and evidence events. A decision is made by a rule, a human, the seed loader or an assistant; approval by rule publishes. |
