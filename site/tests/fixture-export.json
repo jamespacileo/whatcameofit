@@ -133,7 +133,7 @@
       },
       "articles": [
         {
-          "url": "https://news.example.org/3",
+          "url": "https://uk.news.example.org/3",
           "outlet": "Example Outlet 3",
           "title": "Example report 3",
           "published_date": "2019-05-03",

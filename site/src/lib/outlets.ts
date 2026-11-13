@@ -41,8 +41,16 @@ for (const outlet of data.outlets) {
 
 export const outletIcons = [...icons.values()];
 
-/** This site's own address of an outlet's icon, when the export has one. */
+/**
+ * This site's own address of an outlet's icon, when the export has one. A subdomain
+ * with none of its own shows its nearest parent's: ca.news.example.com falls back
+ * to news.example.com, then example.com.
+ */
 export function outletIconPath(domain: string): string | undefined {
-  const icon = icons.get(domain);
-  return icon && `/outlet-icons/${icon.file}`;
+  const labels = domain.split(".");
+  for (let start = 0; labels.length - start >= 2; start++) {
+    const icon = icons.get(labels.slice(start).join("."));
+    if (icon) return `/outlet-icons/${icon.file}`;
+  }
+  return undefined;
 }

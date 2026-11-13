@@ -1,7 +1,21 @@
 ---
-// A small mark for the topic a page belongs to. Each topic gets its own drawing;
-// a topic without one gets a plain ring.
-import { verticalTitle } from "../lib/export";
+// A small mark for the topic a page belongs to. A topic takes the drawing of its
+// group (dementia is drawn as brain and nerves), or its own when it has no group;
+// one with no drawing gets a plain ring. A drawing says what part of the body or
+// what kind of illness the topic is about, never how a claim in it is doing.
+import Baby from "@lucide/astro/icons/baby";
+import Bean from "@lucide/astro/icons/bean";
+import Bone from "@lucide/astro/icons/bone";
+import Brain from "@lucide/astro/icons/brain";
+import Droplet from "@lucide/astro/icons/droplet";
+import Eye from "@lucide/astro/icons/eye";
+import HeartPulse from "@lucide/astro/icons/heart-pulse";
+import Hourglass from "@lucide/astro/icons/hourglass";
+import Microscope from "@lucide/astro/icons/microscope";
+import Ribbon from "@lucide/astro/icons/ribbon";
+import ShieldPlus from "@lucide/astro/icons/shield-plus";
+import Wind from "@lucide/astro/icons/wind";
+import { data, verticalTitle } from "../lib/export";
 
 interface Props {
   vertical: string;
@@ -12,26 +26,71 @@ interface Props {
 
 const { vertical, link = true, count } = Astro.props;
 const Tag = link ? "a" : "span";
+
+// From the icon set the rest of the site draws with.
+const LIBRARY = {
+  ageing: Hourglass,
+  "bones-joints-and-muscles": Bone,
+  "brain-and-nerves": Brain,
+  cancer: Ribbon,
+  "diabetes-and-hormones": Droplet,
+  "eyes-and-ears": Eye,
+  "heart-and-circulation": HeartPulse,
+  "immune-system-and-allergies": ShieldPlus,
+  infections: Microscope,
+  "kidneys-and-bladder": Bean,
+  "lungs-and-breathing": Wind,
+  "pregnancy-and-fertility": Baby,
+} as const;
+
+// Drawn for this site where the set has nothing that fits, on the same 24-unit
+// grid with the same round line.
+const DRAWN: Record<string, string[]> = {
+  // A tooth.
+  "mouth-and-teeth": [
+    "M7.5 3.5c-2.4 0-4 1.8-4 4.3 0 2.2.9 3.6 1.5 5.4.7 2.1.6 7.3 2.6 7.3 1.8 0 1.4-5 4.4-5s2.6 5 4.4 5c2 0 1.9-5.2 2.6-7.3.6-1.8 1.5-3.2 1.5-5.4 0-2.5-1.6-4.3-4-4.3-1.9 0-2.8 1-4.5 1s-2.6-1-4.5-1z",
+  ],
+  // A stomach: the gullet in at the top, the pouch, the way out at the lower left.
+  "gut-and-liver": [
+    "M10 3v4.5c0 1.6-.9 2.6-2.3 3.2C5.3 11.7 4 13.6 4 16v4.5",
+    "M14 3v1.5c0 1.3.8 2.2 2 2.7 2.6 1.1 4.5 3.6 4.5 6.6A6.7 6.7 0 0 1 13.8 20.5c-2.2 0-3.8-.9-4.8-2.3-.4-.6-.7-.9-1-.7v3",
+  ],
+  // A head in profile.
+  "mental-health": [
+    "M9 21v-3.3A7.5 7.5 0 1 1 19.5 10.8l1.4 2.5a.6.6 0 0 1-.4.9l-1.5.3V17a2 2 0 0 1-2 2h-2v2",
+  ],
+  // A face under a fringe of hair.
+  "skin-and-hair": [
+    "M5 12.5a7 7 0 0 0 14 0",
+    "M5 12.5V11a7 7 0 0 1 14 0v1.5",
+    "M5.2 10.5c3.2.3 6-1.2 7.3-3.8 1.1 2.2 3.4 3.6 6.3 3.8",
+  ],
+};
+
+const group = data.verticals.find((entry) => entry.slug === vertical)?.group?.slug ?? vertical;
+const drawing = [group, vertical].find((slug) => slug in LIBRARY || slug in DRAWN);
+const Library = drawing && drawing in LIBRARY ? LIBRARY[drawing as keyof typeof LIBRARY] : undefined;
+const paths = drawing ? DRAWN[drawing] : undefined;
 ---
 
 <Tag class="chip" href={link ? `/topic/${vertical}` : undefined}>
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.7"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    aria-hidden="true"
-  >
-    {
-      vertical === "mouth-and-teeth" || vertical === "gum-disease" ? (
-        <path d="M7.5 3.5c-2.4 0-4 1.8-4 4.3 0 2.2.9 3.6 1.5 5.4.7 2.1.6 7.3 2.6 7.3 1.8 0 1.4-5 4.4-5s2.6 5 4.4 5c2 0 1.9-5.2 2.6-7.3.6-1.8 1.5-3.2 1.5-5.4 0-2.5-1.6-4.3-4-4.3-1.9 0-2.8 1-4.5 1s-2.6-1-4.5-1z" />
-      ) : (
-        <circle cx="12" cy="12" r="7.5" />
-      )
-    }
-  </svg>
+  {
+    Library ? (
+      <Library stroke-width={1.7} aria-hidden="true" />
+    ) : (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        {paths ? paths.map((d) => <path d={d} />) : <circle cx="12" cy="12" r="7.5" />}
+      </svg>
+    )
+  }
   {verticalTitle(vertical)}
   {
     count !== undefined && (
