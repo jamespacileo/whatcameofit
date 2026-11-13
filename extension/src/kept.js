@@ -42,6 +42,8 @@ export function answerOf(state) {
       // An automatic search stays marked as unreviewed wherever it is shown again.
       unreviewed: shown.marked ?? null,
       lead: shown.lead ?? null,
+      // Retain the generated limitation, never article text or a screenshot.
+      limitation: shown.none ?? (!shown.subject ? shown.lead ?? null : null),
       claims: (shown.tracked ?? []).map(({ headline, page }) => ({ headline, page })),
       records: (shown.likely ?? []).map(({ title, url }) => ({ title, url })),
     };
