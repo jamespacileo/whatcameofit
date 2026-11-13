@@ -22,6 +22,7 @@ const approved = claims.filter((claim) => claim.status.code === "approved").leng
 <Base
   title={`First reported in ${year}`}
   description={`Reported breakthroughs first reported in ${year} and where each stands now.`}
+  breadcrumbs={[{ name: `First reported in ${year}`, path: `/year/${year}` }]}
 >
   <h1 class="title">First reported in {year}</h1>
   <p class="lede">

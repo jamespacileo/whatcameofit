@@ -275,10 +275,11 @@ test("Scenario: Offline build", () => {
   // nothing but the links a reader chooses to follow.
   for (const file of htmlFiles(dist)) {
     const html = fs.readFileSync(file, "utf8");
-    // A page's own canonical address is the one absolute address it may state.
+    // A page's own canonical address and its alternates (the oEmbed description, which
+    // another site fetches, not the reader's browser) are the absolute addresses it may state.
     assert.doesNotMatch(
       html,
-      /<(script|link|img)(?![^>]*\brel="canonical")[^>]+(src|href)="https?:\/\//,
+      /<(script|link|img)(?![^>]*\brel="(canonical|alternate)")[^>]+(src|href)="https?:\/\//,
       file,
     );
   }

@@ -57,6 +57,8 @@ To see what went wrong when something does, right-click inside the popup, choose
 
 To have an agent with computer use do this in your place, hand it [agent-test-brief.md](agent-test-brief.md).
 
+For a wider set of real pages (posts on each platform, paywalled, refused and non-English articles, pages that should not be read as treatment reports), with what the lookup service answered on each, see [test-corpus](test-corpus/README.md).
+
 ## Safari
 
 ```sh
