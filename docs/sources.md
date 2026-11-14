@@ -304,6 +304,25 @@ Read on 2026-11-14 for the change `backfill-work-ledger`, to choose where the ne
 
 Read on 2026-11-14 for a proposed backfill that starts from article addresses people shared, not from registry trials. No loader exists yet. Before one is written, re-read the primary pages named here: most of what follows about Reddit's own rules comes from secondary reports, because Reddit's pages sit behind a bot check.
 
+### Hacker News monthly parquet archive (chosen)
+
+- **Checked:** 2026-11-14. [Dataset card](https://huggingface.co/datasets/open-index/hacker-news), read from its `README.md` and the hub's own record of the dataset. [Hacker News API repository](https://github.com/HackerNews/API), whose licence is MIT.
+- **What it is:** every Hacker News item, one parquet file per calendar month from 2006-10 (`data/YYYY/YYYY-MM.parquet`), about 25.8 GB in all. It is an independent mirror, not endorsed by Y Combinator: its history comes from ClickHouse's public copy of the official API, and new items from the official API itself.
+- **Terms:** released under the Open Data Commons Attribution License (ODC-By) v1.0; the card says the original content is subject to the rights of its authors. Public, not gated, no account needed. **Attribution** is owed when the data is used publicly; nothing from it reaches the export, so none is shown on the site.
+- **Freshness:** the hub's record showed the last change on 2026-08-23, so months after that may be missing. Check the file list before relying on a recent month.
+- **Fields read:** `id`, `type` (1 is a story), `url`, `title`, `time`, `score`, `dead`, `deleted`. The loader asks the file for these columns only, so `by` (the author's username) and `text` are never read from disk.
+- **How the operator obtains it:** download the monthly files wanted from the dataset's `data/` folder. No request is sent by the pipeline.
+- **Rate limit and authentication:** none for the pipeline; the hub's own limits apply to the download.
+
+### Hacker News on BigQuery (not read)
+
+- **Checked:** not read on 2026-11-14. It needs a Google Cloud project of the operator's, and offers nothing the parquet archive lacks. Read its terms before using it.
+
+### Hacker News search interface (not used)
+
+- **Checked:** 2026-11-14. `hn.algolia.com/api/v1/search` answered counts of stories by address on that date without a key. Its documentation page did not give its rate limit to a plain fetch, so the limit is unconfirmed.
+- **Why not:** it returns at most a page of results for a query, so a full list means many requests by domain and date, and it can only be asked about domains already listed. The archive shows which unlisted domains are shared most, which is how the outlet list grows.
+
 ### Reddit submission dumps (operator's decision: use, links only)
 
 - **Checked:** 2026-11-14. [Arctic Shift download links](https://github.com/ArthurHeitmann/arctic_shift/blob/master/download_links.md), read directly. Reddit's Data API Terms and Public Content Policy were not re-read on this date; the reading of 2026-11-12 is in the table under "Platforms whose posts are not read".
@@ -311,7 +330,7 @@ Read on 2026-11-14 for a proposed backfill that starts from article addresses pe
 - **Reported, not confirmed:** that the 2005 to 2025 archive was removed from Academic Torrents at Reddit's request from 30 July 2026; that Reddit stopped taking new public API requests on 31 October 2026 and ends public access in March 2027. Both come from third-party posts. The struck-through listing is consistent with the first.
 - **Terms:** the dumps are published by third parties, not by Reddit, and carry no licence from Reddit. Reddit's Public Content Policy (May 2024) says use of its public content needs an agreement with Reddit and must respect deletions. A dump cannot respect a deletion made after it was taken. The supply may end without notice.
 - **Operator's decision (2026-11-14):** asked whether to skip Reddit, use the dumps for links only, or wait. Answer: "the information is public domain and fair use, especially for educational and academic content like this app". Reddit dumps are used.
-- **Limits applied to that decision (proposed by the assistant, not yet confirmed line by line):** what is kept from a submission is the address of the article it links to, the subreddit, the date and the score. The submission's title is shown to the triage decision and dropped, as a post's text is in a live lookup. The author, the post's id and address, its text and its comments are never read out of the file or kept. Nothing in the export says an article was found through Reddit. Only link submissions are read; comment files are not downloaded.
+- **Limits applied to that decision (proposed by the assistant, not yet confirmed line by line):** what is kept from a submission is the address of the article it links to, the subreddit, the time, the score and the title it was shared under. The title is kept with the link lead, privately: the operator labels a sample of leads from their titles, and a reworded triage has to score the same title again (change `social-link-backfill`, design decision 4). It never reaches the export or the site. An earlier wording of this entry said the title would be dropped after triage; that could not be done. The author, the post's id and address, its text and its comments are never read out of the file or kept. Nothing in the export says an article was found through Reddit. Only link submissions are read; comment files are not downloaded.
 - **Not a legal reading:** the decision rests on the operator's own view. Two points for whoever revisits it: the question Reddit raises is its terms of access, not copyright, and "fair use" is a United States doctrine while the operator is in the United Kingdom. Addresses and dates are facts, which is why only they are kept.
 - **Rate limit and authentication:** none; the files are downloaded once by torrent and read locally.
 - **Crossref Event Data's Reddit events:** allowed under the same decision and the same limits, if that archive is used.
