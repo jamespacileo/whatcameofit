@@ -46,6 +46,8 @@ test("chunked bodies are bounded even without a content-length header",async()=>
 test("only independently public structured results enter the shared cache and remain dated",async()=>{
  const values=new Map();const store={get:async k=>values.has(k)?JSON.parse(values.get(k)):null,put:async(k,v,options)=>{assert.equal(options.expirationTtl,86400);values.set(k,v);}};
  await storeResult(store,"https://example.org/report",found,false,1000);assert.equal(values.size,0);
+ // An answer missing a linked paper is not kept for the next reader.
+ await storeResult(store,"https://example.org/report",{...found,papers_unchecked:1},true,1000);assert.equal(values.size,0);
  await storeResult(store,"https://example.org/report?utm_source=x",found,true,1000);assert.equal(values.size,1);
  assert.doesNotMatch([...values.values()][0],/Do not cache|data:image|gist/);
  const cached=await previousResult(store,"https://example.org/report",1001);assert.equal(cached.treatment,"EX-patch");assert.equal(cached.cache.checkedAt,1000);

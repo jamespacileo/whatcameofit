@@ -309,6 +309,9 @@ test("Scenario: Card from a public-domain source", () => {
       external_id: "T1",
       version: "2026",
       score: 0.9,
+      molecule_kind: null,
+      mechanisms: [],
+      facts_source: null,
       reasons: [{ code: "filed_by_registry", trials: 5, of: 6, name: null }],
       read_at: "2026-11-14T09:00:00Z",
     },
@@ -376,6 +379,55 @@ test("Scenario: Target card from a named gene", () => {
   assert.equal(without.claims[0].background[0].definition_source, null);
   assert.ok(!everyString(without).includes("What the gene's product does"));
   assert.deepEqual(without.left_out.map((left) => left.source), ["Source proteins"]);
+});
+
+test("a drug card and the target its record names are left out, and their source is named", () => {
+  const data = exported();
+  data.card_sources = [
+    cardSource("genes", true, "CC0 1.0"),
+    cardSource("alike", false, "CC BY-SA 3.0 Unported"),
+    cardSource("proteins", true, "CC BY 4.0"),
+  ];
+  const drug = {
+    ...card("genes", "EXAMPLUTIDE"),
+    kind: "drug",
+    definition: null,
+    version: null,
+    score: null,
+    molecule_kind: "protein",
+    mechanisms: [{ action: "agonist", target: "Example receptor" }],
+    facts_source: "alike",
+    reasons: [{ code: "drug_name_equals_name", name: "Examplutide" }],
+  };
+  const itsTarget = {
+    ...card("genes", "EXR1"),
+    kind: "target",
+    name: "example receptor 1",
+    definition: "What the receptor does, as its source says.",
+    definition_source: "proteins",
+    version: null,
+    score: null,
+    facts_source: "alike",
+    reasons: [{ code: "drug_record_names_target", name: "EXAMPLUTIDE" }],
+  };
+  data.claims[0].background = [card("genes", "A term"), drug, itsTarget];
+
+  const out = openData(data, LICENCE, CREDIT, METHOD);
+
+  assert.deepEqual(out.claims[0].background.map((held) => held.label), ["A term"]);
+  const strings = everyString(out);
+  for (const kept of ["EXAMPLUTIDE", "agonist", "Example receptor", "EXR1", "What the receptor does"]) {
+    assert.ok(!strings.includes(kept), kept);
+  }
+  assert.deepEqual(out.left_out, [
+    {
+      source: "Source alike",
+      licence: "CC BY-SA 3.0 Unported",
+      reason:
+        "Its licence (CC BY-SA 3.0 Unported) does not allow its material to be offered under this file’s licence.",
+    },
+  ]);
+  assert.ok(!out.card_sources.some((source) => source.name === "alike"));
 });
 
 test("an export made before background cards gives a file with none", () => {

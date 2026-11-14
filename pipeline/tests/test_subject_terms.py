@@ -43,10 +43,17 @@ from thenwhat.terms.candidates import (
     LabelMatch,
     gather_candidates,
 )
+from thenwhat.terms.drugs import DRUG_NAME_EQUALS_NAME
 from thenwhat.terms.genes import WORD_EQUALS_SYMBOL, WORD_EQUALS_SYNONYM, gene_like_words
 from thenwhat.terms.kinds import KIND_CHOSEN, KINDS, REGISTRY_LISTS_TYPE, Kind, registry_types
 from thenwhat.terms.records import read_record
-from thenwhat.terms.service import KindTermMissing, link_kind, link_targets, link_terms
+from thenwhat.terms.service import (
+    KindTermMissing,
+    link_drug,
+    link_kind,
+    link_targets,
+    link_terms,
+)
 
 NOW = datetime(2026, 11, 20, tzinfo=UTC)
 SLUG = "knee-pain-ex1"
@@ -302,6 +309,39 @@ class Genes:
                         payload,
                         NOW,
                     )
+        return None
+
+
+class Drugs:
+    """A drug source that holds the drugs it is given, by its own name for each, and
+    counts what it is asked."""
+
+    name = "opentargets"
+
+    def __init__(self, by_name: dict[str, dict[str, Any]] | None = None) -> None:
+        self.by_name = {name.casefold(): drug for name, drug in (by_name or {}).items()}
+        self.searched: list[str] = []
+        self.fetched: list[str] = []
+
+    def _record(self, drug: dict[str, Any]) -> SourceRecord:
+        return SourceRecord(
+            "opentargets",
+            drug["id"],
+            f"https://platform.opentargets.org/drug/{drug['id']}",
+            drug,
+            NOW,
+        )
+
+    def drugs_named(self, name: str) -> list[SourceRecord]:
+        self.searched.append(name)
+        drug = self.by_name.get(name.casefold())
+        return [self._record(drug)] if drug else []
+
+    def drug(self, identifier: str, *, force: bool = False) -> SourceRecord | None:
+        self.fetched.append(identifier)
+        for drug in self.by_name.values():
+            if drug["id"] == identifier:
+                return self._record(drug)
         return None
 
 
@@ -630,6 +670,7 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
         lambda s: Vocabulary({"D010455": "Compounds of AMINO ACIDS joined by peptide bonds."}),
     )
     monkeypatch.setattr("thenwhat.cli.terms.make_genes", lambda s: Genes())
+    monkeypatch.setattr("thenwhat.cli.terms.make_drugs", lambda s: Drugs())
     monkeypatch.setattr(
         "thenwhat.cli.resolve.make_backend",
         lambda s: Reader(
@@ -1414,5 +1455,111 @@ def test_terms_help_names_the_three_runs_and_all(run):
     result = run("terms", "--help")
 
     assert result.exit_code == 0
-    for words in ("Subject terms", "Intervention kind", "Named genes", "--all", "--missing"):
+    for words in (
+        "Subject terms",
+        "Intervention kind",
+        "Named genes",
+        "Drug record",
+        "--all",
+        "--missing",
+    ):
         assert words in result.output
+
+
+# --- the drug source's record of the intervention ----------------------------------
+
+TIRZEPATIDE = {"id": "CHEMBL4297839", "name": "TIRZEPATIDE", "drugType": "Protein"}
+SEMAGLUTIDE = {"id": "CHEMBL2108724", "name": "SEMAGLUTIDE", "drugType": "Protein"}
+
+
+def test_drug_whose_own_name_equals_the_interventions_is_linked_by_rule_without_a_score(
+    session: Session,
+):
+    claim = new_claim(session, slug="obesity-ex7", intervention="Tirzepatide")
+    drugs = Drugs({"tirzepatide": TIRZEPATIDE})
+
+    run = link_drug(session, claim, drugs=drugs, now=NOW)
+
+    assert run.added and run.link is not None and run.several == ()
+    [link] = links(session, claim).values()
+    assert (link.role, link.source_name, link.external_id, link.label) == (
+        TermRole.DRUG,
+        "opentargets",
+        "CHEMBL4297839",
+        "TIRZEPATIDE",
+    )
+    assert (link.score, link.fit) == (None, TermFit.EXACT)
+    assert (link.review_state, link.reviewed_by) == (ReviewState.APPROVED, Decider.RULE)
+    assert link.reasons == [{"code": DRUG_NAME_EQUALS_NAME, "name": "Tirzepatide"}]
+    record = session.get(TermRecord, ("opentargets", "CHEMBL4297839"))
+    assert record is not None and record.payload["name"] == "TIRZEPATIDE"
+    assert record.url == "https://platform.opentargets.org/drug/CHEMBL4297839"
+
+    # A second run keeps the link and the record as they are.
+    again = link_drug(session, claim, drugs=drugs, now=NOW + timedelta(days=1))
+    assert again.link is link and not again.added
+    assert drugs.fetched == ["CHEMBL4297839"]
+
+
+def test_drug_found_under_another_of_the_interventions_names(session: Session):
+    claim = new_claim(session, slug="obesity-ex8", intervention="LY3298176")
+    add_synonym(session, claim.slug, "LY3298176", "tirzepatide")
+
+    run = link_drug(session, claim, drugs=Drugs({"tirzepatide": TIRZEPATIDE}), now=NOW)
+
+    assert run.link is not None
+    assert run.link.reasons == [{"code": DRUG_NAME_EQUALS_NAME, "name": "tirzepatide"}]
+
+
+def test_procedure_no_drug_is_named_after_gets_no_drug_link(session: Session):
+    """Scenario: Procedure"""
+    claim = new_claim(session, slug="ovary-ex9", intervention="Opportunistic salpingectomy")
+    drugs = Drugs({"tirzepatide": TIRZEPATIDE})
+
+    run = link_drug(session, claim, drugs=drugs, now=NOW)
+
+    assert run.link is None and run.several == ()
+    assert links(session, claim) == {} and drugs.fetched == []
+
+
+def test_class_of_drugs_whose_other_names_are_its_members_gets_no_drug_link(session: Session):
+    claim = new_claim(session, slug="ageing-ex10", intervention="GLP-1 receptor agonists")
+    for member in ("semaglutide", "tirzepatide"):
+        add_synonym(session, claim.slug, "GLP-1 receptor agonists", member)
+    drugs = Drugs({"tirzepatide": TIRZEPATIDE, "semaglutide": SEMAGLUTIDE})
+
+    run = link_drug(session, claim, drugs=drugs, now=NOW)
+
+    assert run.link is None and run.several == ("SEMAGLUTIDE", "TIRZEPATIDE")
+    assert links(session, claim) == {}
+
+
+def test_drug_link_the_operator_rejected_stays_rejected(session: Session):
+    claim = new_claim(session, slug="obesity-ex11", intervention="Tirzepatide")
+    drugs = Drugs({"tirzepatide": TIRZEPATIDE})
+    first = link_drug(session, claim, drugs=drugs, now=NOW)
+    assert first.link is not None
+
+    decide_item(session, "term", first.link.id, ReviewState.REJECTED, now=NOW + timedelta(hours=1))
+    again = link_drug(session, claim, drugs=drugs, now=NOW + timedelta(days=1))
+
+    assert again.link is first.link and not again.added
+    assert (first.link.review_state, first.link.reviewed_by) == (
+        ReviewState.REJECTED,
+        Decider.HUMAN,
+    )
+    assert len(links(session, claim)) == 1
+
+
+def test_terms_names_the_drug_record_it_tied_or_why_it_tied_none(
+    run, session: Session, knee_claim: Claim, monkeypatch: pytest.MonkeyPatch
+):
+    assert "Drug record: none found by name." in run("terms", SLUG).output
+
+    monkeypatch.setattr(
+        "thenwhat.cli.terms.make_drugs", lambda s: Drugs({"ex-1": TIRZEPATIDE | {"name": "EX-1"}})
+    )
+    result = run("terms", SLUG)
+
+    assert result.exit_code == 0, result.output
+    assert "Drug record: EX-1 (CHEMBL4297839), found by its name, new, approved." in result.output

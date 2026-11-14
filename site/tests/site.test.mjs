@@ -635,11 +635,21 @@ test("Scenario: Claim with one completed Phase 2 trial", () => {
   const html = page("phase-claim/index.html");
   assert.equal(count(html, 'id="trial-NCT00000002"'), 1);
   const trials = sectionOf(html, "trials");
-  assert.match(trials, /Phase 2 · Completed · 83 participants enrolled/);
-  assert.match(trials, /Randomised, double-blind, compared with placebo/);
+  const entry = wordsOf(trials.slice(trials.indexOf('id="trial-NCT00000002"'))).replace(/\u00a0|&nbsp;/g, " ");
+  // In plain words first: how many people and what it was compared with, what it
+  // measured, then the design and state said plainly.
+  assert.match(entry, /83 people, compared with a placebo/);
+  assert.match(entry, /It measured the change in a symptom score over 12 weeks\./);
+  assert.match(entry, /Assigned at random\s+Blinded\s+Finished\s+Results posted 1 Sep 2025\s+Phase 2/);
+  assert.match(entry, /What it measured was read by a model and checked against the record/);
+  // The registry's own terms are inside the fold.
+  assert.match(entry, /Design, in the registry's terms\s+Randomised, double-blind, compared with placebo/);
   assert.match(trials, /Change in synthetic score/);
-  assert.match(trials, /3\.4 \(Standard Deviation 1\.1\)/);
-  assert.match(trials, /41 analysed/);
+  // Posted results are a table: a row for each group, the registry's numbers.
+  const table = trials.match(/<table class="result-table"[\s\S]*?<\/table>/)[0];
+  assert.match(wordsOf(table), /Group\s+Mean\s+Standard Deviation\s+People analysed/);
+  assert.match(wordsOf(table), /3\.4\s+Standard Deviation 1\.1\s+1\.1\s+41/);
+  assert.match(trials, /The registry record says what this measure runs from and to/);
   assert.match(trials, /High match · 94%/);
   // Three of five planned measures are shown, and the page says where the rest are.
   assert.match(trials, /2 more in the ClinicalTrials\.gov record/);
@@ -673,11 +683,97 @@ test("Scenario: Claim with thirty-three trials", () => {
   assert.match(rest, /The other 2 of 7 trials/);
 });
 
+// Openspec site-publishing (change claim-at-a-glance): "The record in brief". The rules
+// are tested in record-brief.test.mjs; these read the built page.
+const briefOf = (slug) => wordsOf(sectionOf(page(`${slug}/index.html`), "brief")).replace(/\u00a0|&nbsp;/g, " ");
+
 test("Scenario: Three trials, the largest of 1,200", () => {
   const html = page("phase-claim/index.html");
-  assert.match(html, /Trials in people/);
-  assert.match(html, /7 on record/);
-  assert.match(html, /The largest, 1,200 participants planned/);
+  // Said once, in the section: the facts under the digest no longer count the trials.
+  assert.match(briefOf("phase-claim"), /Tested in people\? In 7 trials\. 1,200 people in the largest/);
+  assert.match(briefOf("phase-claim"), /The largest number is a planned size, not people who took part\./);
+  assert.doesNotMatch(html, /Trials in people/);
+  assert.doesNotMatch(html, /7 on record/);
+});
+
+test("Scenario: Claim with trials", () => {
+  const brief = briefOf("phase-claim");
+  assert.match(brief, /The record in brief/);
+  assert.match(brief, /describe the records, not the treatment, and are not advice/);
+  assert.ok(brief.indexOf("How it was tested") < brief.indexOf("Where the records stand now"));
+  assert.match(brief, /Compared with a placebo\? One record names a placebo/);
+  assert.match(brief, /Results posted to the registry\? By 1 of 7 trials\. Posted on 1 Sep 2025/);
+  assert.match(brief, /A trial under way\? One under way/);
+  assert.match(brief, /Approved by a regulator\? None on record/);
+  // The largest trial states no main measure, so that question has nothing to ask.
+  assert.doesNotMatch(brief, /What did the largest trial measure/);
+});
+
+test("Scenario: Every answer opens to something", () => {
+  for (const slug of ["phase-claim", "quiet-claim", "approved-claim"]) {
+    const section = sectionOf(page(`${slug}/index.html`), "brief");
+    const answers = count(section, "<details");
+    assert.ok(answers >= 3, `${slug} has ${answers} answers`);
+    assert.equal(count(section, 'class="brief-source"'), answers);
+    // Closed until opened, and opened by the browser alone.
+    assert.equal(count(section, "<details open"), 0);
+    assert.doesNotMatch(section, /<script|<button/);
+  }
+});
+
+test("Scenario: Results posted", () => {
+  const section = sectionOf(page("phase-claim/index.html"), "brief");
+  // Outside the disclosure, so it shows without opening the answer.
+  assert.match(section, /<\/details>\s*<p class="brief-link brief-shown">\s*<a href="#trials">\s*See the posted results/);
+});
+
+test("Scenario: Largest trial with posted values", () => {
+  const brief = briefOf("phase-claim");
+  // The trial entries below carry "p = 0.03"; the section carries no result value.
+  assert.doesNotMatch(brief, /p\s*[=<]|\d\.\d/);
+});
+
+test("Scenario: Claim with no trial on record", () => {
+  const brief = briefOf("quiet-claim");
+  assert.match(brief, /Tested in people\? None on record/);
+  assert.match(brief, /What was the first report about\? A study in animals/);
+  assert.match(brief, /Approved by a regulator\? None on record/);
+  assert.doesNotMatch(brief, /Compared with|Results posted|A trial under way/);
+  assert.match(brief, /Three answers read from the records on this page/);
+});
+
+test("Scenario: Approved claim", () => {
+  const brief = briefOf("approved-claim");
+  assert.match(brief, /Approved by a regulator\? On 1 Apr 2024\. An approval is not advice to take a treatment/);
+});
+
+test("Scenario: Status with a phase", () => {
+  assert.doesNotMatch(page("phase-claim/index.html"), /class="bridge"/);
+});
+
+test("Scenario: Narrow screen", () => {
+  const styles = fs
+    .readdirSync(path.join(dist, "_astro"))
+    .filter((name) => name.endsWith(".css"))
+    .map((name) => fs.readFileSync(path.join(dist, "_astro", name), "utf8"))
+    .join("");
+  // Under 40rem a row, and a link on a line of its own, is 44 pixels tall at least.
+  assert.match(styles, /\.brief summary\{[^}]*min-height:2\.75rem/);
+  assert.match(styles, /\.brief-link a\{[^}]*min-height:2\.75rem/);
+});
+
+test("Scenario: Narrow screen, a trial's results", () => {
+  const styles = fs
+    .readdirSync(path.join(dist, "_astro"))
+    .filter((name) => name.endsWith(".css"))
+    .map((name) => fs.readFileSync(path.join(dist, "_astro", name), "utf8"))
+    .join("");
+  // Under 40rem the spread leaves its column and sits under its value, so the table
+  // keeps three columns; the links on lines of their own are 44 pixels tall.
+  assert.match(styles, /\.result-table \.spread\{display:none\}/);
+  assert.match(styles, /\.result-table \.spread-inline\{[^}]*display:block/);
+  assert.match(styles, /\.trial-name a\{[^}]*min-height:2\.75rem/);
+  assert.match(styles, /\.result-scale a\{[^}]*min-height:2\.75rem/);
 });
 
 test("Scenario: Posted comparison with a p value", () => {
@@ -695,7 +791,8 @@ test("Scenario: Outcome reported at four time points", () => {
 
 test("Scenario: Trial the registry shows as recruiting", () => {
   const trials = wordsOf(sectionOf(page("phase-claim/index.html"), "trials"));
-  assert.match(trials, /Phase 3 · Under way · 1,200 participants planned/);
+  assert.match(trials, /1,200 people planned/);
+  assert.match(trials, /Under way\s+Phase 3/);
   assert.doesNotMatch(trials, /recruit|eligib|contact|location|take part|join/i);
 });
 
@@ -1021,6 +1118,49 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
     { name: "Example Targets", url: "https://targets.example/" },
     { name: "Example Proteins", url: "https://proteins.example/" },
   );
+  // And, on another claim, a drug card with the target its record names.
+  const named = fixture.claims.find((claim) => claim.slug === "phase-claim");
+  named.background.push(
+    {
+      kind: "drug",
+      fit: "exact",
+      label: "EXAMPLUMAB",
+      definition: null,
+      url: "https://targets.example/drug/CHEMBL0000001",
+      source: "opentargets",
+      external_id: "CHEMBL0000001",
+      version: null,
+      score: null,
+      molecule_kind: "antibody",
+      mechanisms: [{ action: "inhibitor", target: "Example receptor 1" }],
+      facts_source: "chembl",
+      reasons: [{ code: "drug_name_equals_name", name: "examplumab" }],
+      decided_by: "rule",
+      read_at: "2026-11-14T09:00:00Z",
+    },
+    {
+      kind: "target",
+      fit: "exact",
+      label: "EXR1",
+      name: "example receptor 1",
+      definition: "A synthetic description of the receptor.",
+      definition_source: "uniprot",
+      url: "https://targets.example/target/ENSG00000000002",
+      source: "opentargets",
+      external_id: "ENSG00000000002",
+      version: null,
+      score: null,
+      facts_source: "chembl",
+      reasons: [{ code: "drug_record_names_target", name: "EXAMPLUMAB" }],
+      decided_by: "rule",
+      read_at: "2026-11-14T09:00:00Z",
+    },
+  );
+  fixture.card_sources.push({
+    ...source("chembl", "Example Drugs", "Example Drugs, An Institute", "CC BY-SA 3.0 Unported", "https://drugs.example/"),
+    in_data_file: false,
+  });
+  fixture.sources.push({ name: "Example Drugs", url: "https://drugs.example/" });
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-kind-"));
   const file = path.join(directory, "export.json");
   fs.writeFileSync(file, JSON.stringify(fixture));
@@ -1053,6 +1193,27 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   assert.match(footer, /href="https:\/\/proteins\.example\/"[^>]*>Example Proteins</);
   // A page with no target card does not carry the sentence about genes.
   assert.ok(!page("phase-claim/index.html").includes("known to work through that gene"));
+
+  // The drug card and the target its record names (openspec knowledge-cards, group 6).
+  const drugPage = fs.readFileSync(path.join(dist, "phase-claim/index.html"), "utf8");
+  const drugs = backgroundOf(drugPage);
+  assert.equal(count(drugs, 'class="card-kind"'), 4);
+  assert.match(drugs, /The drug, as a drug database records it/);
+  assert.match(drugs, /href="https:\/\/targets\.example\/drug\/CHEMBL0000001"[^>]*>\s*EXAMPLUMAB\s*</);
+  assert.match(drugs, /<div class="card-facts">\s*<p>Antibody<\/p>\s*<ul>\s*<li>Inhibitor of Example receptor 1<\/li>\s*<\/ul>/);
+  // No percentage: the rule stands where a score would, and opens to its sentence.
+  assert.match(drugs, /<strong>Matched by exact name<\/strong>/);
+  assert.match(drugs, /is the same as “examplumab”, a name this claim uses\. Matched by that rule, so there is no percentage\./);
+  assert.match(drugs, /href="https:\/\/drugs\.example\/"[^>]*>\s*Kind of molecule and what it acts on: Example Drugs, An Institute, CC BY-SA 3\.0 Unported\s*</);
+  // Its record's one target, worded as the record's and not as a gene the name mentions.
+  assert.match(drugs, /What the drug acts on, as its record says/);
+  assert.match(drugs, /<strong>From the drug’s record<\/strong>/);
+  assert.match(drugs, /That the drug acts on it: Example Drugs, An Institute, CC BY-SA 3\.0 Unported/);
+  assert.match(drugs, /nothing here is a reason to start or stop a medicine\./);
+  assert.ok(!drugs.includes("known to work through that gene"));
+  // Nothing about how far the drug has got.
+  assert.doesNotMatch(drugs.split('class="card-facts"')[1].split("</div>")[0], /phase|approved|indication/i);
+  assert.match(drugPage.split("Data sources:")[1].split("</p>")[0], />Example Drugs</);
   assert.match(section, /The kind of treatment this is, not the treatment itself/);
   assert.match(section, /href="https:\/\/vocabulary\.example\/D900009"[^>]*>\s*Example Stimulation Therapy\s*</);
   assert.match(section, /High match · 90%/);
@@ -1070,6 +1231,22 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   ]);
   assert.equal(cards[2].definition_source, "uniprot");
   assert.ok(data.card_sources.some((held) => held.name === "uniprot" && held.licence === "CC BY 4.0"));
+  // The share-alike drug facts are not in the file, and the file names the source left out.
+  const kept = data.claims.find((claim) => claim.slug === "phase-claim").background;
+  assert.deepEqual(kept.map((card) => card.kind), ["condition", "intervention"]);
+  assert.ok(!JSON.stringify(data.claims).includes("EXAMPLUMAB"));
+  assert.ok(!JSON.stringify(data.claims).includes("Example receptor 1"));
+  assert.deepEqual(data.left_out.map((left) => [left.source, left.licence]), [
+    ["Example Drugs", "CC BY-SA 3.0 Unported"],
+  ]);
+
+  // Scenario: Code without site wording. An unworded molecule kind fails the build.
+  const unworded = structuredClone(fixture);
+  unworded.claims.find((claim) => claim.slug === "phase-claim").background[2].molecule_kind = "nanobot";
+  fs.writeFileSync(file, JSON.stringify(unworded));
+  const stopped = build(file, path.join(directory, "unworded"));
+  assert.notEqual(stopped.status, 0);
+  assert.match(stopped.stdout + stopped.stderr, /card molecule kind: nanobot/);
   assert.deepEqual(cards[1].reasons[1], { code: "registry_lists_type", type: "DEVICE", trials: 3 });
 
   // An unknown fit, reason or registry type fails the build and is named.
@@ -1098,6 +1275,10 @@ test("the method page explains kind cards", () => {
   // And what a card for a named gene means.
   assert.match(part, /The card\s+means the report names the gene\. It does not mean the treatment is known to work through it,\s+and the site states no mechanism\./);
   assert.match(part, /in UniProt’s words as Open Targets Platform gives them/);
+  // And what a drug card is, where it comes from and what it leaves out.
+  assert.match(part, /the card shows the rule and no percentage/);
+  assert.match(part, /The card never says how far a drug has\s+got, what it is approved for or what it is used for/);
+  assert.match(part, /left out of the data download, which says so/);
 });
 
 // --- organisations (openspec site-publishing: "Organisations on the claim page") ---

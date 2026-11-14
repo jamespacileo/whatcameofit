@@ -33,6 +33,7 @@ from thenwhat.review.decisions import record_decision
 from thenwhat.sources import mesh, opentargets
 from thenwhat.sources.base import SourceRecord
 from thenwhat.terms.candidates import LabelMatch, gather_candidates
+from thenwhat.terms.drugs import DRUG_NAME_EQUALS_NAME
 from thenwhat.terms.genes import WORD_EQUALS_SYMBOL, WORD_EQUALS_SYNONYM, gene_like_words
 from thenwhat.terms.kinds import KIND_CHOSEN, KINDS, Kind, registry_types
 from thenwhat.terms.records import read_record
@@ -60,6 +61,14 @@ class Genes(Protocol):
     def targets_named(self, word: str) -> list[opentargets.NamedTarget]: ...
 
     def target(self, identifier: str, *, force: bool = False) -> SourceRecord | None: ...
+
+
+class Drugs(Protocol):
+    name: str
+
+    def drugs_named(self, name: str) -> list[SourceRecord]: ...
+
+    def drug(self, identifier: str, *, force: bool = False) -> SourceRecord | None: ...
 
 
 class KindTermMissing(Exception):
@@ -104,6 +113,19 @@ class KindRun:
     link: ClaimTerm | None = None
     # The backend gave no usable answer. The claim is asked again on the next run.
     failed: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class DrugRun:
+    """What one run did about the drug source's record of the claim's intervention."""
+
+    # The claim's drug link, new or kept. None when no drug, or more than one, was found.
+    link: ClaimTerm | None = None
+    # Whether this run stored the link.
+    added: bool = False
+    # The names of the drugs found when the claim's names equal more than one drug's.
+    # They make no link: a claim is about one intervention.
+    several: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -446,6 +468,55 @@ def link_targets(
             _kept_record(session, genes.name, genes.target, term.external_id, now=now)
     session.flush()
     return TargetsRun(len(candidates), added, scored, unscored)
+
+
+def link_drug(session: Session, claim: Claim, *, drugs: Drugs, now: datetime) -> DrugRun:
+    """Tie the claim's intervention to the drug source's record of it, by exact name.
+
+    A drug is found only when its own name in the source equals the intervention's name
+    or one of its other names, whatever the case. The link is made by that rule alone:
+    it has no score, it is approved by rule, and the operator can reject it. When the
+    claim's names equal the names of several different drugs, as they do when a class
+    of drugs lists its members among its other names, no link is made.
+    A link that already exists is left as it is, so a rejected one stays rejected.
+    """
+    found: dict[str, tuple[str, SourceRecord]] = {}
+    for name in intervention_names(session, claim):
+        for record in drugs.drugs_named(name):
+            found.setdefault(record.external_id, (name, record))
+    if len(found) != 1:
+        labels = sorted(opentargets.describe_drug(record).name for _, record in found.values())
+        return DrugRun(several=tuple(labels))
+    [(identifier, (name, record))] = found.items()
+
+    link = next(
+        (
+            term
+            for term in terms_of(session, claim)
+            if term.role is TermRole.DRUG
+            and term.source_name == drugs.name
+            and term.external_id == identifier
+        ),
+        None,
+    )
+    added = link is None
+    if link is None:
+        link = ClaimTerm(
+            claim_id=claim.id,
+            role=TermRole.DRUG,
+            source_name=drugs.name,
+            external_id=identifier,
+            label=opentargets.describe_drug(record).name,
+            fit=TermFit.EXACT,
+            reasons=[{"code": DRUG_NAME_EQUALS_NAME, "name": name}],
+        )
+        session.add(link)
+        session.flush()
+        record_decision(link, ReviewState.APPROVED, by=Decider.RULE, now=now)
+    if link.review_state is ReviewState.APPROVED:
+        _kept_record(session, drugs.name, drugs.drug, identifier, now=now)
+    session.flush()
+    return DrugRun(link=link, added=added)
 
 
 def _as_source_record(record: TermRecord) -> SourceRecord:

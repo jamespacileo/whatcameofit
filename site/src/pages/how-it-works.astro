@@ -292,6 +292,18 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
     and the site states no mechanism.
   </p>
   <p>
+    A named drug can also have a card saying what kind of molecule it is and what it acts on.
+    These come from the drug database ChEMBL, as Open Targets Platform gives them, and only when
+    the database’s own name for a drug is the same as a name the claim uses. That is a rule
+    anyone can check, so the card shows the rule and no percentage. If a claim’s names match
+    several different drugs, as a class of drugs does, there is no drug card. When a drug’s
+    record names exactly one protein as its target, the target card is for that protein and
+    comes before any gene the treatment’s name mentions. The card never says how far a drug has
+    got, what it is approved for or what it is used for: the records on the page are the source
+    for that. ChEMBL’s material is offered under a share-alike licence, so it is shown on the
+    page with its credit and is left out of the data download, which says so.
+  </p>
+  <p>
     A card describes a term. It is not about a claim’s evidence, it never changes a status, and it
     is not medical advice. A claim whose terms are in no vocabulary has no Background section.
   </p>

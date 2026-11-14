@@ -1,0 +1,76 @@
+---
+// "The record in brief": six fixed questions about a claim's records, in two groups,
+// each answer read without opening anything and each opening to the record it came from
+// (openspec site-publishing: "A claim page answers fixed questions from its records").
+// Native disclosures, so every answer opens without scripting and prints open.
+import type { ExportedClaim } from "../lib/export";
+import { BRIEF_TITLE, briefNote, recordBrief, sourceWords } from "../lib/record-brief";
+
+interface Props {
+  claim: ExportedClaim;
+  lastChecked: string | null;
+}
+
+const { claim, lastChecked } = Astro.props;
+const groups = recordBrief(claim, lastChecked);
+---
+
+{
+  groups.length > 0 && (
+    <section class="brief" data-pagefind-ignore>
+      <h2 class="bar" id="brief">
+        {BRIEF_TITLE}
+      </h2>
+      <p class="take-why">
+        {briefNote(groups)} <a href="/how-it-works">How an answer is made</a>
+      </p>
+      {groups.map((group) => (
+        <div class="brief-group">
+          <h3>{group.name}</h3>
+          <ul>
+            {group.rows.map((row) => {
+              const words = sourceWords(row.source);
+              return (
+                <li>
+                  <details>
+                    <summary>
+                      <span class="brief-q">{row.question}</span>
+                      <span class="brief-a">{row.answer}</span>
+                    </summary>
+                    <div class="brief-open">
+                      {row.opened.map((sentence) => (
+                        <p>{sentence}</p>
+                      ))}
+                      <p class="brief-source">
+                        {words.before}
+                        {row.source.records.map((record, index) => (
+                          <>
+                            {index > 0 && ", "}
+                            <a class="unbroken" href={record.url} rel="noopener">
+                              {record.label}
+                            </a>
+                          </>
+                        ))}
+                        {words.after}
+                      </p>
+                      {row.link && (
+                        <p class="brief-link">
+                          <a href={row.link.href}>{row.link.text}</a>
+                        </p>
+                      )}
+                    </div>
+                  </details>
+                  {row.shown && (
+                    <p class="brief-link brief-shown">
+                      <a href={row.shown.href}>{row.shown.text}</a>
+                    </p>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </section>
+  )
+}

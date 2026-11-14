@@ -93,6 +93,16 @@ So what is left is the outlet's own speed (one site took a minute to answer afte
 
 The model now reads the article while the linked papers and any stated registry numbers are looked up. `thenwhat outlets` checks four outlets at a time (`--workers`), with one shared turn-taker per registry so the registry's rate is kept however many lookups run.
 
+### Slow linked-paper lookups (14 November 2026)
+
+A lookup of ScienceAlert's [tinnitus biomarker report](https://www.sciencealert.com/scientists-identified-a-biological-signature-of-tinnitus-and-its-in-your-blood) exposed an unnecessary wait: the model identified no specific treatment, but the service waited for all linked-paper requests before returning that identification. Timed production probes using the same article text took 32.8 seconds with public-page verification, 31.9 seconds with paper links but no publisher verification, and 2.7 seconds with text alone. These are single diagnostic runs, not a performance benchmark. Europe PMC returned HTTP 500 in separate local probes.
+
+The correction in `openspec/changes/visible-content-lookup` returns a non-treatment identification without waiting for paper or stated-record requests. Publisher, paper and registry calls have deadlines covering headers and bodies. Independent public verification has a shorter deadline; if it fails, browser text can still be read, but its result stays private to that reader. The popup has a 45-second overall lookup deadline and an explicit retry, including page reading and automatic screenshot fallback. Timeout means an incomplete search, never that no research exists.
+
+A linked paper that passes its deadline, or fails, is not dropped in silence. The answer counts the papers not looked up, the site and the popup say beside the list that a trial such a paper reports may be missing, and that answer is kept out of the shared results library and the popup's saved results, so the next lookup asks again. Europe PMC answered the same papers in under 0.3 seconds a minute after taking 17 to 25 seconds over them.
+
+The diagnostic tests use stalled synthetic sources, including sources that ignore cancellation, and check that late completions cannot update the popup or its saved results. The fix must be deployed with an updated Safari extension before installed users receive all of these protections.
+
 ## Posts on social media
 
 The address of a post works in place of an article's, on the platforms that offer posts to software without signing in: Bluesky, Hacker News and Mastodon servers. The post is read, the first article it links to is read as any article, and the two are looked up together. The answer says where it read from. If the article cannot be read, the lookup goes on from the post alone. On the site, a post that links to an article we track is answered with that claim's page, with no automatic search.
@@ -572,6 +582,60 @@ The other 8 read as right: "Bacterial Infections", "Dentin Sensitivity" for "Den
 
 No name equalled an entry term whose record the vocabulary did not give, on either run.
 
+## Entry terms, kinds and named genes on the real database (14 November 2026)
+
+Openspec `knowledge-cards`, tasks 5a.10 to 5a.13, repeated on the real database after #90 merged. A backup was taken first. The database was migrated from 0012 to 0015 with `main` at b81728b. `thenwhat terms` was then run for each published claim on its own, between 20:50 and 21:00 UTC.
+
+`thenwhat terms --all` was tried twice first. Both runs stopped when MeSH did not answer after four attempts, and both kept nothing, because the command writes every claim in one transaction. Run claim by claim, 22 of 84 claims met the same MeSH failure on the first pass. All 22 succeeded on the second pass, two minutes later. The same request was repeated each time, and nothing was looked up another way. DNS for `id.nlm.nih.gov` also failed intermittently on the machine that day.
+
+| | Count |
+| --- | --- |
+| New links stored | 92 |
+| Condition links: approved by rule (exact), rejected by rule | 4, 1 |
+| Intervention links from entry terms: approved (exact), pending (exact), pending (broader), rejected by rule | 4, 4, 1, 1 |
+| Kind decisions, of which "none of these" | 75, 17 |
+| Kind links: approved by rule (one rejected on reading), pending | 47, 11 |
+| Named-gene candidates: approved by rule, pending, rejected by rule | 6, 2, 11 |
+| Claims with an intervention card after the reading below: exact, broader, kind, none | 9, 1, 46, 28 |
+| Claims with any card | 70 of 84 (36 before) |
+| Model decisions and cost | 109 decisions (75 kind, 19 target, 15 term), $0.0064 |
+
+HTTP requests to MeSH and Open Targets were not counted on this run.
+
+Kind cards exported, by kind: Tissue Engineering 7, Peptides 6, Cell- and Tissue-Based Therapy 5, Antibodies, Monoclonal 4, Biocompatible Materials 4, Electric Stimulation Therapy 2, Gene Editing 2, Genetic Therapy 2, Oligonucleotides 2, Prostheses and Implants 2, RNA, Messenger 2, Surgical Procedures, Operative 2, Dietary Supplements 1, Equipment and Supplies 1, Phage Therapy 1, Probiotics 1, Transplantation 1, Vaccines 1.
+
+### Every approved link read once (tasks 5a.11 to 5a.13)
+
+All 61 links approved by rule were read beside their claim's intervention, indication and summary. One was rejected, recorded as the assistant's decision:
+
+| Claim | Link | Why it is wrong |
+| --- | --- | --- |
+| knee-osteoarthritis-genicular-artery-embolisation | kind "Surgical Procedures, Operative" (term 140) | Embolisation is a catheter procedure. MeSH files "Embolization, Therapeutic" (D004621) under Therapeutics (E02.520.360, E02.926.500), not under Surgical Procedures, Operative (E04). The claim keeps its condition card and has no intervention card. |
+
+- **Kind cards (5a.11):** 47 approved, 1 wrong and rejected. Two are true but say little:
+  - "Equipment and Supplies" for the peanut-protein microneedle stamp. The treatment is allergen immunotherapy delivered by a device.
+  - "Antibodies, Monoclonal" for sacituzumab tirumotecan, an antibody–drug conjugate.
+  No kind's cards mostly say nothing, so none is removed from the list.
+- **Named genes (5a.12):** 6 approved: GFAP, APOE, CPNE7, DLK1, CXCR3 and SOSTDC1 (USAG-1). None is a coincidence, so none is rejected. CPNE7 and DLK1 are genes the treatment is made from, not genes it acts on. The spec counts "made from it", and the card says only that the treatment's name names the gene. 0 of 6 wrong is within the one-in-twenty bar.
+- **Entry terms (5a.13):** 4 condition links and 4 intervention links, all exact and all right. pexidartinib is the drug listed for "Temporary removal of microglia" (PLX3397). The others are tideglusib, AdipoRon, and TOFA as 5-(tetradecyloxy)-2-furancarboxylic acid. None is rejected.
+
+## Drug cards on the real database (14 November 2026)
+
+Openspec `knowledge-cards`, task 6.5, under ADR 0002 (ChEMBL-derived facts on pages, not in the data file). A backup was taken first. The database was migrated from 0015 to 0016 with `main` at 2cc9bf9. `thenwhat terms` was then run for each published claim on its own: 220 seconds, with no source failure.
+
+- **Drug links:** 16 approved by rule, none pending or rejected. Each is the claim's own drug under its exact name, or a name the claim lists (pexidartinib for "Temporary removal of microglia"). All 16 were read beside their claims, and none is rejected.
+- **Molecule kinds (ChEMBL's words):** small molecule 7, oligonucleotide 3, antibody–drug conjugate 2, protein 2, antibody 1, cell 1. ChEMBL calls intismeran autogene, an mRNA vaccine, an oligonucleotide. The card states the source's classification.
+- **Mechanisms:** given for 5 of the 16:
+  - aspirin: cyclooxygenase inhibitor
+  - tideglusib: GSK-3β inhibitor
+  - pexidartinib: CSF1R, FLT3 and KIT inhibitor
+  - survodutide: GLP-1 and glucagon receptor agonist
+  - trastuzumab deruxtecan: binds HER2 and inhibits topoisomerase 1
+
+  The other 11 have no mechanism in the record, and their cards say none.
+- **Target cards:** one new, GSK3B for tideglusib. It is the single protein the drug's record names, and it is shown in place of no named gene. Drugs with two or more targets, and aspirin's enzyme family, get no target card. Zilganersen keeps its named-gene card for GFAP. That makes 7 target cards on pages.
+- **The data file:** built from the snapshot, `data/claims.json` holds no drug card, no molecule kind, no mechanism, and not the GSK3B card, because that the record names a target is a ChEMBL fact. It keeps the 6 named-gene target cards. `left_out` names "ChEMBL, through Open Targets Platform" with its licence, CC BY-SA 3.0 Unported. The claim page shows the drug card with ChEMBL's credit and licence.
+
 ## Development codes from GSRS (14 November 2026)
 
 Task 4.3 of `live-lookup`. A report names a drug by its generic or brand name; the registry often files its trials under a company's code. The intervention is now looked up in the Global Substance Registration System (terms in `docs/sources.md`), and the names GSRS marks as codes for that one substance are searched within the claim's indication. Only an exact name counts, and no model supplies a code.
@@ -618,3 +682,32 @@ Limits:
 - A GSRS "Code" is any code, not only a development code. Vitamin C's six include "E-300" and "FEMA NO. 2109", and aspirin's include two National Service Center numbers. They are searched within the indication and found nothing here.
 - A combination, a class and a method are not substances, so 61 of 84 claims are untouched. That is the empty state, said in the command's output, and nothing looser is tried.
 - The lookup (`thenwhat lookup`) now asks GSRS about the names an article gives, and searches the codes too. It was not measured again here: that waits for the reviewed test set (task 4.5). The site's Worker does not ask GSRS; that is decision 6 in the change's design.
+
+## The registry-first backfill: the full news search (started 14 November 2026)
+
+The operator decided on 2026-11-14 to run the news search over every phase 3 trial in scope (openspec `backfill-work-ledger`, task 7.5). This is what was set going and how to follow it.
+
+What was done before the first search:
+
+- **Backup:** `pg_dump` of the real database to `~/Library/Caches/devcache.noindex/thenwhat/db-backups/thenwhat-before-backfill-20261114T2130Z.dump` (14.6 MB), at migration `0015`.
+- **Trial load:** `thenwhat backfill load-trials` stored 43,320 trials in 44 requests to ClinicalTrials.gov, in 1 minute 40 seconds. 40,006 have a usable name and indication and are in the news search's scope.
+- **What is searched:** Media Cloud's United States and United Kingdom national collections (`34412234`, `34412476`) and twenty clinical trade outlets by id, in one search per trial, as in the limited run.
+- **Allowance:** 3,750 searches in 168 hours, 30 seconds apart. Media Cloud publishes 4,000 a week; the job is held below that because searches made by hand in the same week (its directory, the limited run) are not in this database's count. At that rate the 40,006 trials take eleven weekly allowances: into the last week of January 2027.
+
+How it keeps going: `scripts/backfill-job.sh` is installed as the launchd agent `com.thenwhat.backfill`. It starts `thenwhat backfill run news_search` every half hour from the worktree `~/Projects/worktrees/thenwhat/ops-backfill-run`. A run ends on its own when the week's allowance is used, when Media Cloud answers "too many requests" (it then waits an hour), or when nothing is due. The next start that finds allowance carries on from the ledger. It runs only while the operator is logged in and the Mac is awake.
+
+To follow, stop and resume it:
+
+- `sh scripts/backfill-job.sh status` prints the ledger's counts (`backfill plan`) and the log's last lines. `thenwhat backfill leads` prints the share of searched trials with a lead, by outlet kind.
+- `sh scripts/backfill-job.sh pause` ends the run in hand and stops new ones; `resume` lets it start again. Each record is committed on its own, so ending a run loses at most the search in hand, and that record stays due.
+- The log is `~/Library/Logs/thenwhat/backfill.log`. It holds times, counts and reasons, never a title or an address.
+
+What it writes: `registry_trial`, `registry_load`, `work_entry`, `source_allowance_use` and `article_lead`, one short transaction per record. No claim, match or evidence event is written, nothing reaches the export, and no other source is asked when Media Cloud finds nothing: that trial's entry says nothing was found.
+
+Limits known before it started, from the limited run on the sample's trials:
+
+- A lead is any story that holds the intervention's name and one word of the indication. Nobody has judged whether it reports the intervention for the indication: 82% of the sample's trials got a lead, 24% one from a news or trade outlet with the intervention's name in its title.
+- About one search in twelve got no answer within 60 seconds. Such a record is tried again on a later run, three times in all, and is then listed by `backfill plan` as needing attention.
+- Media Cloud no longer collects several of the trade titles that reported most trials in the sample (healio.com, onclive.com, fiercepharma.com, endpts.com).
+
+The first allowance's figures are added here when it has been used.

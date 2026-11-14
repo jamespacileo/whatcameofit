@@ -1218,3 +1218,120 @@ def test_a_name_the_registry_does_not_list_finds_no_substance(
 
     assert source.substances_named("faecal microbiota transplant") == []
     assert len(replay.requests) == 1
+
+
+# --- Open Targets: a drug by its own name -------------------------------------------
+
+
+def test_named_drug_is_returned_with_its_kind_of_molecule_and_two_mechanisms(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Named drug"""
+    found = fixture_json("opentargets/drugs_tirzepatide.json")
+    source, replay = targets(session, fake_time, lambda request: found)
+
+    [record] = source.drugs_named("Tirzepatide")
+
+    assert (record.source_name, record.external_id) == ("opentargets", "CHEMBL4297839")
+    assert record.url == "https://platform.opentargets.org/drug/CHEMBL4297839"
+    assert record.payload == found["data"]["search"]["hits"][0]["object"]
+    drug = opentargets.describe_drug(record)
+    assert (drug.name, drug.molecule_kind) == ("TIRZEPATIDE", "protein")
+    assert [(m.action, m.target_name) for m in drug.mechanisms] == [
+        ("agonist", "Gastric inhibitory polypeptide receptor"),
+        ("agonist", "Glucagon-like peptide 1 receptor"),
+    ]
+    # Two targets: no one target card comes from this drug's record.
+    assert opentargets.single_protein_target(drug) is None
+    sent = json.loads(replay.requests[0].content)
+    assert sent["variables"] == {"name": "Tirzepatide"}
+    assert 'entityNames: ["drug"]' in sent["query"]
+    # Nothing about how far the drug has got, or its other names, is asked for.
+    for field in (
+        "maximumClinicalTrialPhase",
+        "isApproved",
+        "yearOfFirstApproval",
+        "indications",
+        "synonyms",
+        "tradeNames",
+    ):
+        assert field not in sent["query"]
+
+
+def test_drug_with_no_mechanism_and_a_salt_of_it_that_is_not_the_drug(
+    session: Session, fake_time, fixture_json
+):
+    found = fixture_json("opentargets/drugs_orforglipron.json")
+    source, _ = targets(session, fake_time, lambda request: found)
+
+    assert [hit["object"]["name"] for hit in found["data"]["search"]["hits"]] == [
+        "ORFORGLIPRON",
+        "ORFORGLIPRON CALCIUM",
+    ]
+    [record] = source.drugs_named("orforglipron")
+    drug = opentargets.describe_drug(record)
+
+    assert (drug.identifier, drug.molecule_kind, drug.mechanisms) == (
+        "CHEMBL4446782",
+        "small_molecule",
+        (),
+    )
+    assert opentargets.single_protein_target(drug) is None
+
+
+def test_procedures_name_and_a_name_that_only_resembles_a_drugs_return_nothing(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Name that only resembles a drug's"""
+    nothing = fixture_json("opentargets/drugs_salpingectomy.json")
+    source, _ = targets(session, fake_time, lambda request: nothing)
+
+    assert source.drugs_named("Salpingectomy") == []
+
+    # The search for one drug also answers another of its class; only the equal name is it.
+    class_mates = fixture_json("opentargets/drugs_semaglutide.json")
+    loose, _ = targets(session, fake_time, lambda request: class_mates)
+
+    assert len(class_mates["data"]["search"]["hits"]) == 2
+    assert loose.drugs_named("Liraglutide injection") == []
+    [record] = loose.drugs_named("semaglutide")
+    target = opentargets.single_protein_target(opentargets.describe_drug(record))
+    assert target is not None
+    assert (target.symbol, target.name) == ("GLP1R", "glucagon like peptide 1 receptor")
+    assert target.definition is not None and target.definition == target.descriptions[0]
+
+
+def test_target_that_is_not_one_human_protein_gives_no_single_target(
+    session: Session, fake_time, fixture_json
+):
+    found = fixture_json("opentargets/drugs_trastuzumab_deruxtecan.json")
+    source, _ = targets(session, fake_time, lambda request: found)
+
+    [record] = source.drugs_named("trastuzumab  deruxtecan")
+    drug = opentargets.describe_drug(record)
+
+    assert drug.molecule_kind == "antibody_drug_conjugate"
+    assert [(m.action, len(m.targets)) for m in drug.mechanisms] == [
+        ("binding_agent", 1),
+        ("inhibitor", 0),
+    ]
+    assert opentargets.single_protein_target(drug) is None
+
+
+def test_drug_record_by_identifier_and_an_unknown_identifier(
+    session: Session, fake_time, fixture_json
+):
+    answered = fixture_json("opentargets/drug_tirzepatide.json")
+    source, replay = targets(session, fake_time, lambda request: answered)
+
+    record = source.drug("CHEMBL4297839")
+
+    assert record is not None and record.payload == answered["data"]["drug"]
+    assert json.loads(replay.requests[0].content)["variables"] == {"id": "CHEMBL4297839"}
+
+    unknown = fixture_json("opentargets/drug_unknown.json")
+    none, asked = targets(session, fake_time, lambda request: unknown)
+
+    assert unknown == {"data": {"drug": None}}
+    assert none.drug("CHEMBL0000000") is None and none.drug("tirzepatide") is None
+    assert len(asked.requests) == 1

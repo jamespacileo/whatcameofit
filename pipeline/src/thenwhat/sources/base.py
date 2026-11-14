@@ -49,6 +49,8 @@ def record_url(source_name: str, external_id: str) -> str | None:
             "https://doi.org/{}" if external_id.startswith("10.") else "https://openalex.org/{}"
         )
         return template.format(external_id)
+    if source_name == "opentargets" and external_id.startswith("CHEMBL"):
+        return f"https://platform.opentargets.org/drug/{external_id}"
     template = RECORD_URLS.get(source_name)
     return template.format(external_id) if template else None
 

@@ -1,7 +1,11 @@
 // ClinicalTrials.gov API v2, as the pipeline's client searches it. Terms and limits:
 // docs/sources.md. Keep the search rule in step with thenwhat.sources.clinicaltrials.
 
+import { withDeadline } from "./deadline.mjs";
+
 const API = "https://clinicaltrials.gov/api/v2";
+// One request, its body included.
+const TIMEOUT_MS = 10_000;
 // The acronym, the enrolment and the collaborators let a lookup tell which of a
 // treatment's trials an article reports.
 const SEARCH_FIELDS =
@@ -29,16 +33,19 @@ function tellingWords(condition) {
   return kept.length ? kept.join(" OR ") : null;
 }
 
-export function makeRegistry({ fetch, contact }) {
+export function makeRegistry({ fetch, contact, timeoutMs = TIMEOUT_MS }) {
   const headers = { "User-Agent": `thenwhat-lookup/${VERSION} (mailto:${contact})`, Accept: "application/json" };
 
   async function get(path, params) {
     const url = new URL(`${API}${path}`);
     for (const [name, value] of Object.entries(params ?? {})) url.searchParams.set(name, value);
-    const response = await fetch(url.href, { headers });
-    if (response.status === 404) return null;
-    if (!response.ok) throw new Error(`registry ${response.status}`);
-    return response.json();
+    // A registry that does not answer in time is an error, never an empty search.
+    return withDeadline(timeoutMs, async (signal) => {
+      const response = await fetch(url.href, { headers, signal });
+      if (response.status === 404) return null;
+      if (!response.ok) throw new Error(`registry ${response.status}`);
+      return response.json();
+    }, { label: "registry" });
   }
 
   async function page(intervention, condition, pageToken) {
