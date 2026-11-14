@@ -1,0 +1,92 @@
+---
+// The one template for the pages made for one kind of reader (openspec
+// landing-pages-and-guide): a title that names their situation, one sentence, the tool
+// made for them and already working, three short items, the limits that matter to
+// them, and where to write.
+import { SITE } from "../../site.config.mjs";
+import { AUDIENCES, type Audience } from "../lib/audiences";
+import { CORRECTION_SUBJECT, SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
+import Base from "./Base.astro";
+
+interface Props {
+  audience: Audience;
+  title: string;
+  lede: string;
+  description: string;
+}
+
+const { audience, title, lede, description } = Astro.props;
+const corrections = contactLink(SITE.correctionsUrl, "", CORRECTION_SUBJECT);
+const suggest = contactLink(SITE.suggestUrl, "", SUGGEST_SUBJECT);
+const others = AUDIENCES.filter((other) => other !== audience);
+---
+
+<Base
+  title={title}
+  tabTitle={`For ${audience}`}
+  description={description}
+  breadcrumbs={[{ name: `For ${audience}`, path: `/for/${audience}` }]}
+>
+  <section class="band audience" slot="band" aria-labelledby="audience-title">
+    <div class="wrap">
+      <h1 class="title" id="audience-title">{title}</h1>
+      <p class="lede">{lede}</p>
+      <slot name="tool" />
+    </div>
+  </section>
+
+  <div class="audience-body">
+    <slot />
+
+    <h2 class="bar" id="limits">What this site does not do</h2>
+    <slot name="limits" />
+
+    <h2 class="bar" id="write">Where to write</h2>
+    {
+      corrections || suggest ? (
+        <ul class="plain">
+          {corrections && (
+            <li>
+              <a href={corrections.href}>Report something wrong (opens {corrections.opens})</a>
+              <span class="entry-note">
+                Say what, and the source that shows it. No reply time is promised.
+              </span>
+            </li>
+          )}
+          {suggest && (
+            <li>
+              <a href={suggest.href}>Suggest a headline to track (opens {suggest.opens})</a>
+              <span class="entry-note">Send the address of the news article.</span>
+            </li>
+          )}
+        </ul>
+      ) : (
+        <p>
+          <a href="/privacy">The privacy page</a> names who operates this site.
+        </p>
+      )
+    }
+    <p class="entry-note others">
+      Also:{" "}
+      {
+        others.map((other) => (
+          <>
+            <a href={`/for/${other}`}>for {other}</a>,{" "}
+          </>
+        ))
+      }
+      <a href="/about">about this site</a>.
+    </p>
+  </div>
+</Base>
+
+<style>
+  .audience-body :global(p),
+  .audience-body :global(ul.plain) {
+    max-width: var(--measure);
+  }
+
+  .others {
+    margin-top: 1.5rem;
+  }
+</style>

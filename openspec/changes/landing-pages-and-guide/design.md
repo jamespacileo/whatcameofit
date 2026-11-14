@@ -96,6 +96,8 @@ entry does not exist, or the text holds verdict or advice wording. The check reu
 not checked by a person. The page carries the same notice a claim page does, under the
 answer. The operator reading an entry and setting it checked is the review.
 
+**As built (2026-11-14).** Entries are in `site/src/guide`, one file each, named for the address. A status entry's file gives no title or answer: both come from `status.ts`. Each entry names the method page section that holds its rule, and "Sources" lists that rule first, so every entry cites the rule it rests on; the nine research entries add one to four outside sources, each read on 2026-11-14. An entry runs from 150 to 500 words, checked at build. The export does not mark a claim's origin paper, so that entry lists no claims and says nothing in their place. The home page's two tab lines named under "Wiring" were not added: the task and the requirement list the claim page and the method page only.
+
 ## Extension page
 
 **Job and audience.** Two arrivals. A reader who has just used the site and reads health
@@ -186,6 +188,8 @@ stated from the paper itself, not from a news summary of it), and the site's own
 **Anti-goals.** No mission-statement language, no founder story, no timeline of the
 project, no numbers the export cannot produce. Short: under two screens on a laptop.
 
+**As built (2026-11-14).** The first viewport is the lead above: see `.impeccable/surfaces/site-src-pages-about-astro.md` for the three directions; the operator has not chosen between them. The example claim's years run from its earliest record or report to the later of the checked year and the promised year, because the rule can pick a claim whose trials began before its first report. The cited finding is stated in words, with no figures, so the page holds no number the export lacks; the paper is about risk-factor studies, and the page says so. "Who runs it" names the operator and says nothing on funding until the operator sets the sentence. At 1280 by 900 the page runs to about 2.2 screens before the footer, over the brief's two.
+
 ## Audience pages
 
 **Job.** A link to put in a message to one kind of person. Each page is the tool made for
@@ -205,6 +209,8 @@ real 440 by 420 and the snippet under it.
 
 **States.** Search with no result offers "suggest a headline". A claim page not yet
 checked by a person says so in the embed already; the picker shows the embed as it is.
+
+**As built (2026-11-14).** The lookup box left the home page's file for a component, so the clinicians' and about pages use the very same one. The journalists' search runs in the page over the claims written into it at build, and the box is drawn on arrival for the example claim, so the tool is seen working before anything is typed.
 
 ## Topic pages for communities
 

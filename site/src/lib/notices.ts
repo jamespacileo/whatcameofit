@@ -13,3 +13,7 @@ export const PREVIEW_NOTE =
 // decided by an AI assistant.
 export const UNCHECKED_NOTE =
   "This page has not yet been checked by a person. It was put together by software from the public records it links to.";
+
+// Shown under the answer of a guide entry the operator has not yet read.
+export const GUIDE_UNCHECKED_NOTE =
+  "This entry has not yet been checked by a person. It was written by software from the sources it lists.";
