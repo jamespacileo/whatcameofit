@@ -4,8 +4,8 @@ Events are created only from registry records that an approved match points to.
 Fetching again records nothing twice and never changes an existing event's review state.
 """
 
-from datetime import datetime
-from typing import Protocol
+from datetime import datetime, timedelta
+from typing import Any, Protocol
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -15,13 +15,16 @@ from thenwhat.claims.status import refresh_status
 from thenwhat.db.models import Claim, EntityMatch, EvidenceEvent
 from thenwhat.domain import Decider, EntityType, EventType, ReviewState
 from thenwhat.events.draft import EventDraft
+from thenwhat.events.paper_records import keep_paper, note_paper, paper_reference
 from thenwhat.events.papers import follow_up_confidence, follow_up_event, retraction_event
 from thenwhat.events.trial import trial_events
+from thenwhat.events.trial_facts import read_trial
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Notice
 from thenwhat.sources.europepmc import describe
+from thenwhat.sources.openalex import OpenAlex
 
 
 class TrialRegistry(Protocol):
@@ -30,6 +33,7 @@ class TrialRegistry(Protocol):
 
 class LiteratureIndex(Protocol):
     def paper(self, doi: str) -> SourceRecord | None: ...
+    def paper_by_pubmed_id(self, pubmed_id: str) -> SourceRecord | None: ...
     def citing_papers(self, paper: SourceRecord) -> list[SourceRecord]: ...
 
 
@@ -47,9 +51,16 @@ def fetch_claim(
     threshold: float,
     now: datetime,
     no_signal_years: int = 3,
+    paper_max_age: timedelta = timedelta(days=30),
 ) -> list[EvidenceEvent]:
     """Create the claim's new evidence events and re-derive its status. Returns the
-    events this run created."""
+    events this run created.
+
+    The index record of each paper the claim lists is stored too, for its paper facts
+    (openspec paper-facts): the origin paper, each approved follow-up and related
+    paper, and each results paper of an approved trial. A stored record younger than
+    `paper_max_age` causes no request.
+    """
     entities = entities_of(session, claim)
     approved: dict[int, list[EntityMatch]] = {}
     for match in session.scalars(
@@ -63,6 +74,9 @@ def fetch_claim(
         approved.setdefault(match.entity_id, []).append(match)
 
     created: list[EvidenceEvent] = []
+
+    def keep(**paper: Any) -> None:
+        keep_paper(session, literature, now=now, max_age=paper_max_age, **paper)
 
     def store(draft: EventDraft, match: EntityMatch | None) -> None:
         event = _store(session, claim, draft, match, threshold, now)
@@ -78,6 +92,11 @@ def fetch_claim(
             record = trials.fetch_trial(match.external_id)
             for draft in trial_events(record) if record else []:
                 store(draft, match)
+            for results_paper in read_trial(record.payload).results_papers if record else []:
+                keep(pubmed_id=results_paper.pubmed_id)
+        for match in approved.get(entity.id, []):
+            if match.source_name == OpenAlex.name and match.external_id.startswith("10."):
+                keep(doi=match.external_id)
 
     origin_entity = next((entity for entity in entities if entity.is_origin_paper), None)
     origin_match = next(iter(approved.get(origin_entity.id, [])), None) if origin_entity else None
@@ -90,6 +109,8 @@ def fetch_claim(
             if entity.type is EntityType.INTERVENTION
             for name in (entity.name, *entity.synonyms)
         ]
+        if origin_doi.startswith("10."):
+            note_paper(session, doi=origin_doi, record=origin, now=now, max_age=paper_max_age)
         if origin is not None:
             for citing in literature.citing_papers(origin):
                 confidence = follow_up_confidence(describe(citing), describe(origin), names)
@@ -112,8 +133,29 @@ def fetch_claim(
                 if notice.type == "retraction":
                     store(retraction_event(doi, title, notice, now), origin_match)
 
+    for event in session.scalars(
+        select(EvidenceEvent).where(
+            EvidenceEvent.claim_id == claim.id,
+            EvidenceEvent.type == EventType.FOLLOWUP_PAPER,
+            EvidenceEvent.review_state == ReviewState.APPROVED,
+        )
+    ):
+        doi, pubmed_id = paper_reference(event.external_id)
+        keep(doi=doi, pubmed_id=pubmed_id, identifier=event.external_id, held=_index_record(event))
+
     refresh_status(session, claim, as_of=now.date(), now=now, no_signal_years=no_signal_years)
     return created
+
+
+def _index_record(event: EvidenceEvent) -> SourceRecord | None:
+    """The index record a follow-up event keeps as its payload, if it is one. An event
+    entered by hand keeps the operator's details instead."""
+    payload = event.raw_payload
+    if not (isinstance(payload.get("source"), str) and isinstance(payload.get("id"), str)):
+        return None
+    return SourceRecord(
+        event.source_name, event.external_id, event.source_url, payload, event.fetched_at
+    )
 
 
 def _store(

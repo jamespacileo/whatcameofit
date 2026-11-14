@@ -1,0 +1,91 @@
+---
+// One paper, once: what it is called, what kind of publication its index record says it
+// is and where it appeared, and how it came to be listed. Openspec paper-facts: every
+// fact is the index's, and no word here says what the paper concluded or how good it is.
+import ExternalLink from "@lucide/astro/icons/external-link";
+import { confidenceLabel } from "../lib/confidence";
+import type { ExportedPaper } from "../lib/export";
+import {
+  ALSO_WORDS,
+  LISTED_WORDS,
+  OPEN_ACCESS_WORDS,
+  PAPER_INDEX,
+  PAPER_REASON_WORDS,
+  RETRACTED_WORDS,
+  paperAnchor,
+  paperName,
+  paperStanding,
+  studiedInText,
+  trialRoles,
+} from "../lib/paper-facts";
+import { formatDate } from "../lib/timetable";
+
+interface Props {
+  paper: ExportedPaper;
+  /** The trials that have an entry on this page, so that a trial is linked only then. */
+  trialIds: Set<string>;
+}
+
+const { paper, trialIds } = Astro.props;
+const facts = paper.facts;
+const standing = paperStanding(paper);
+const studied = studiedInText(paper);
+const first = paper.roles[0]?.role;
+const related = paper.roles.find((role) => role.role === "related");
+const also = [...new Set(paper.roles.slice(1).map((role) => role.role))]
+  .filter((role) => role !== first && role in ALSO_WORDS)
+  .map((role) => ALSO_WORDS[role]);
+const reasons = (related?.reasons ?? []).map((code) => PAPER_REASON_WORDS[code] ?? code);
+---
+
+<li class="paper" id={paperAnchor(paper.identifier)}>
+  <p class="paper-name">
+    <a href={paper.url} rel="noopener">
+      {paperName(paper)}
+      <ExternalLink class="out" size={13} stroke-width={1.9} aria-hidden="true" />
+    </a>
+  </p>
+  {standing && <p class="paper-standing">{standing}</p>}
+  {facts?.retracted && <p class="paper-retracted">{RETRACTED_WORDS}.</p>}
+  {
+    trialRoles(paper).map((role) => (
+      <p class="paper-role">
+        {LISTED_WORDS[role.listed ?? ""] ?? "Named by the registry record of"}{" "}
+        {trialIds.has(role.trial_id!) ? (
+          <a href={`#trial-${role.trial_id}`}>{role.trial_id}</a>
+        ) : (
+          role.trial_id
+        )}
+      </p>
+    ))
+  }
+  {studied && <p class="paper-role">{studied}.</p>}
+  {!facts && related?.summary && <p class="entry-note">{related.summary}</p>}
+  {
+    related && typeof related.score === "number" && (
+      <p class="paper-role">
+        <strong>{confidenceLabel(related.score)}</strong>
+        {reasons.length > 0 && <span class="entry-note">{reasons.join(" · ")}</span>}
+      </p>
+    )
+  }
+  <p class="entry-note paper-meta">
+    {also.map((words) => <span class="unbroken">{words}</span>)}
+    {facts?.open_access && <span class="unbroken">{OPEN_ACCESS_WORDS}</span>}
+    {
+      paper.facts_as_of && (
+        <span>
+          {paper.record_url ? (
+            <a href={paper.record_url} rel="noopener">
+              {PAPER_INDEX} record
+            </a>
+          ) : (
+            `${PAPER_INDEX} record`
+          )}{" "}
+          read <span class="unbroken">{formatDate(paper.facts_as_of)}</span>
+        </span>
+      )
+    }
+    {!facts && <span>{PAPER_INDEX} holds no record of it to read</span>}
+  </p>
+</li>

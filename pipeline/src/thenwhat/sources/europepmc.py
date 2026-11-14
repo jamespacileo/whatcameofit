@@ -53,6 +53,18 @@ class EuropePmc(Source):
             return None
         return self._record(results[0], fetched.fetched_at)
 
+    def paper_by_pubmed_id(self, pubmed_id: str, *, force: bool = False) -> SourceRecord | None:
+        """The paper with this PubMed number, or None if Europe PMC does not have it.
+        A number that is not all digits sends no request."""
+        if not pubmed_id.isdigit():
+            return None
+        query = f"EXT_ID:{pubmed_id} AND SRC:MED"
+        fetched = self._get(f"{API}/search", self._search(query), force=force)
+        results = fetched.payload["resultList"]["result"] if fetched else []
+        if not results or fetched is None:
+            return None
+        return self._record(results[0], fetched.fetched_at)
+
     def trial_numbers(self, *, doi: str | None = None, pubmed_id: str | None = None) -> list[str]:
         """The ClinicalTrials.gov numbers a paper's abstract gives for its own trial.
 

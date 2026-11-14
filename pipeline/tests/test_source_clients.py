@@ -283,6 +283,36 @@ def test_unknown_doi_is_not_found(session: Session, fake_time):
     assert source.paper("10.9999/does-not-exist") is None
 
 
+def test_paper_is_found_by_its_pubmed_number(session: Session, fake_time, fixture_json):
+    """Scenario: Known PubMed number"""
+    paper = fixture_json("europepmc/pmid_35658024_trial_report.json")
+    source, replay = literature(session, fake_time, lambda request: paper)
+
+    record = source.paper_by_pubmed_id("35658024")
+
+    assert record is not None
+    assert (record.source_name, record.external_id) == ("europepmc", "10.1056/nejmoa2206038")
+    assert record.url == "https://europepmc.org/article/MED/35658024"
+    assert record.fetched_at == fake_time.now()
+    assert replay.requests[0].url.params["query"] == "EXT_ID:35658024 AND SRC:MED"
+
+
+def test_unknown_pubmed_number_is_not_found(session: Session, fake_time, fixture_json):
+    unknown = fixture_json("europepmc/pmid_unknown.json")
+    source, replay = literature(session, fake_time, lambda request: unknown)
+
+    assert source.paper_by_pubmed_id("99999999999") is None
+    assert len(replay.requests) == 1
+
+
+def test_malformed_pubmed_number_sends_no_request(session: Session, fake_time):
+    """Scenario: Malformed number"""
+    source, replay = literature(session, fake_time, lambda request: EMPTY_SEARCH)
+
+    assert source.paper_by_pubmed_id("PMC12345") is None
+    assert replay.requests == []
+
+
 def citing_route(fixture_json):
     paper = fixture_json("europepmc/paper_srep39654.json")
     first_page = fixture_json("europepmc/citing_srep39654_page1.json")
