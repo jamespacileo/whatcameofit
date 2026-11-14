@@ -4,7 +4,7 @@
 
 - [ ] 1.1 Write `docs/adr/0002` from design decision 8 and show it to the operator; verify it states that a model never decides a status and never writes a sentence a reader sees
 - [ ] 1.2 Show the question table and the measure-kind list in design.md to the operator, record any change there, and verify no question or answer judges, predicts, advises or says a trial is open to participants
-- [ ] 1.3 In `openspec/changes/plain-claim-page`, remove the requirement "A claim page answers three fixed questions by rule", its design section and task group 3; verify `openspec validate plain-claim-page` passes
+- [x] 1.3 In `openspec/changes/plain-claim-page`, remove the requirement "A claim page answers three fixed questions by rule", its design section and task group 3; verify `openspec validate plain-claim-page` passes
 
 ## 2. Readings in the pipeline
 

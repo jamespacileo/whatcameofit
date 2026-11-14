@@ -10,10 +10,8 @@ Evidence sites such as examine.com title a page by the thing it is about, state 
 
 - A claim page is titled by its intervention name. The headline stays directly under the title, in full.
 - Every claim page carries one provenance line in the same place: how the page was put together, whether a person has checked it, and when the registries were last checked. It replaces the dashed box shown only on unchecked claims.
-- A claim page answers three fixed questions in plain words, each answer chosen by rule from the claim's status: whether it has been tested in people, whether it is approved, and what the next record on the path would be. Answers never predict, never advise and never use verdict wording.
-- The neutral-wording build check covers every answer.
 
-Out of scope: an evidence snapshot of counts, a follow button or section rail, an on-page status history, the topics directory, the page's `<title>`, share text, cards, `lookup.json`, the embed and the extension. The unchecked notice in `lookup.json` and the extension is unchanged.
+Out of scope: three fixed questions answered from the status (moved on 2026-11-14 to change `claim-at-a-glance`, which answers them from the records), an evidence snapshot of counts, a follow button or section rail, an on-page status history, the topics directory, the page's `<title>`, share text, cards, `lookup.json`, the embed and the extension. The unchecked notice in `lookup.json` and the extension is unchanged.
 
 ## Capabilities
 
@@ -23,13 +21,12 @@ None.
 
 ### Modified Capabilities
 
-- `site-publishing`: a claim page is titled by the intervention name; every claim page carries a provenance line; a claim page answers three fixed questions by rule from its status.
+- `site-publishing`: a claim page is titled by the intervention name; every claim page carries a provenance line.
 
 ## Impact
 
-- `site/src/pages/[slug].astro`: title block, provenance line in place of the unchecked box, a new "In plain words" section.
-- `site/src/lib/status.ts`: answer wording per status code for the three questions, under the neutral-wording check.
+- `site/src/pages/[slug].astro`: title block, provenance line in place of the unchecked box.
 - `site/src/lib/notices.ts`: provenance wording. `UNCHECKED_NOTE` stays for `lookup.json`.
-- `site/src/styles/global.css`, `DESIGN.md`, `GLOSSARY.md`: title, provenance line and question list, recorded in the visual system.
+- `site/src/styles/global.css`, `DESIGN.md`, `GLOSSARY.md`: title and provenance line, recorded in the visual system.
 - `site/tests/site.test.mjs`: one test per new scenario; existing claim-page tests that read the `h1` or the unchecked box are updated.
 - No export shape change: `intervention.name`, `checked_by_person` and `last_checked_at` are already exported. No schema or seed regeneration.
