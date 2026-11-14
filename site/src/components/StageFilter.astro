@@ -116,8 +116,13 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
     // Where the browser can, the table cross-fades to its narrowed self.
     const pick = (picked: string | null) => {
       const moving = matchMedia("(prefers-reduced-motion: no-preference)").matches;
-      if (moving && document.startViewTransition) document.startViewTransition(() => apply(picked));
-      else apply(picked);
+      if (moving && document.startViewTransition) {
+        // A second pick before the first has finished skips the first cross-fade. The
+        // table is still narrowed; only the fade is dropped.
+        const fade = document.startViewTransition(() => apply(picked));
+        fade.ready.catch(() => {});
+        fade.finished.catch(() => {});
+      } else apply(picked);
     };
     for (const button of buttons) {
       button.addEventListener("click", () =>

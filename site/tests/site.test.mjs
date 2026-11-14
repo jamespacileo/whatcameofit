@@ -210,6 +210,50 @@ test("Scenario: Anniversaries on the home page", () => {
   assert.match(block, /href="\/anniversaries"/);
 });
 
+test("Scenario: A returning reader's home page", () => {
+  const html = page("index.html");
+  // Filled in by the reader's browser: nothing about a visit is in the built page.
+  assert.match(html, /<p class="since"[^>]*hidden/);
+  assert.match(html, /<section class="following"[^>]*hidden/);
+  assert.match(html, /Kept in this browser only\./);
+  // Each dated row carries its day, so the browser can count what is dated since a visit.
+  assert.match(html, /<tr[^>]*data-on="2019-05-03"/);
+  const moved = html.slice(html.indexOf('id="feed-moved"'), html.indexOf('id="feed-promised"'));
+  assert.match(moved, /data-on="2023-02-01"/);
+  assert.match(moved, /<a href="\/changes\.xml">every status change<\/a>/);
+  // The tally says when the registries were last checked.
+  assert.match(html, /Registries last checked <span class="unbroken">/);
+  // On a phone the counts wait behind one control.
+  assert.match(html, /<button[^>]*class="narrow-toggle"[^>]*aria-expanded="false"[^>]*hidden/);
+});
+
+test("Scenario: Following from a claim page", () => {
+  const html = page("phase-claim/index.html");
+  // The pill carries what the browser keeps: the claim, its headline, its status in words.
+  assert.match(
+    html,
+    /<button[^>]*data-follow[^>]*data-slug="phase-claim"[^>]*data-status="Phase 2 trial"[^>]*aria-pressed="false"[^>]*hidden/,
+  );
+  // A way back beside the answer, and a next step at the end of the page.
+  const digest = html.slice(html.indexOf('class="digest"'), html.indexOf('class="facts"'));
+  assert.match(digest, /<a href="#check-again">Check again later<\/a>/);
+  assert.match(html, /<a class="share" href="\/#search">/);
+  // The networks open on request; copying the link does not wait behind them.
+  assert.match(html, /<details class="post-to">/);
+  const actions = html.slice(html.indexOf('class="take-actions"'), html.indexOf('class="post-to"'));
+  assert.match(actions, /data-copy="page-address"/);
+});
+
+test("Scenario: A topic's status changes as a feed", () => {
+  const html = page("topic/gum-disease/index.html");
+  assert.match(html, /href="\/changes\/topic\/gum-disease\.xml"/);
+  assert.match(html, /data-share/);
+  const feed = page("changes/topic/gum-disease.xml");
+  assert.match(feed, /<feed xmlns="http:\/\/www\.w3\.org\/2005\/Atom">/);
+  // The fixture's one moving claim changed twice after its first status.
+  assert.equal(count(feed, "<entry>"), 3);
+});
+
 test("Scenario: One topic", () => {
   // With a single listed topic there is nothing to choose between.
   assert.doesNotMatch(page("index.html"), /data-topic-filter/);
@@ -269,6 +313,9 @@ test("Scenario: Preview build", () => {
     assert.match(built(file), /<meta name="robots" content="noindex"/, file);
   }
   assert.match(built("phase-claim/index.html"), /has not yet been checked by a person/);
+  // The answer comes first: the notice sits under the status panel, not above it.
+  const claimPage = built("phase-claim/index.html");
+  assert.ok(claimPage.indexOf('class="digest"') < claimPage.indexOf('class="unchecked"'));
   assert.doesNotMatch(built("quiet-claim/index.html"), /has not yet been checked by a person/);
   const lookup = JSON.parse(built("lookup.json"));
   assert.equal(lookup.preview, true);
