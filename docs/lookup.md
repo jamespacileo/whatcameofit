@@ -619,6 +619,23 @@ All 61 links approved by rule were read beside their claim's intervention, indic
 - **Named genes (5a.12):** 6 approved: GFAP, APOE, CPNE7, DLK1, CXCR3 and SOSTDC1 (USAG-1). None is a coincidence, so none is rejected. CPNE7 and DLK1 are genes the treatment is made from, not genes it acts on. The spec counts "made from it", and the card says only that the treatment's name names the gene. 0 of 6 wrong is within the one-in-twenty bar.
 - **Entry terms (5a.13):** 4 condition links and 4 intervention links, all exact and all right. pexidartinib is the drug listed for "Temporary removal of microglia" (PLX3397). The others are tideglusib, AdipoRon, and TOFA as 5-(tetradecyloxy)-2-furancarboxylic acid. None is rejected.
 
+## Drug cards on the real database (14 November 2026)
+
+Openspec `knowledge-cards`, task 6.5, under ADR 0002 (ChEMBL-derived facts on pages, not in the data file). A backup was taken first. The database was migrated from 0015 to 0016 with `main` at 2cc9bf9. `thenwhat terms` was then run for each published claim on its own: 220 seconds, with no source failure.
+
+- **Drug links:** 16 approved by rule, none pending or rejected. Each is the claim's own drug under its exact name, or a name the claim lists (pexidartinib for "Temporary removal of microglia"). All 16 were read beside their claims, and none is rejected.
+- **Molecule kinds (ChEMBL's words):** small molecule 7, oligonucleotide 3, antibody–drug conjugate 2, protein 2, antibody 1, cell 1. ChEMBL calls intismeran autogene, an mRNA vaccine, an oligonucleotide. The card states the source's classification.
+- **Mechanisms:** given for 5 of the 16:
+  - aspirin: cyclooxygenase inhibitor
+  - tideglusib: GSK-3β inhibitor
+  - pexidartinib: CSF1R, FLT3 and KIT inhibitor
+  - survodutide: GLP-1 and glucagon receptor agonist
+  - trastuzumab deruxtecan: binds HER2 and inhibits topoisomerase 1
+
+  The other 11 have no mechanism in the record, and their cards say none.
+- **Target cards:** one new, GSK3B for tideglusib. It is the single protein the drug's record names, and it is shown in place of no named gene. Drugs with two or more targets, and aspirin's enzyme family, get no target card. Zilganersen keeps its named-gene card for GFAP. That makes 7 target cards on pages.
+- **The data file:** built from the snapshot, `data/claims.json` holds no drug card, no molecule kind, no mechanism, and not the GSK3B card, because that the record names a target is a ChEMBL fact. It keeps the 6 named-gene target cards. `left_out` names "ChEMBL, through Open Targets Platform" with its licence, CC BY-SA 3.0 Unported. The claim page shows the drug card with ChEMBL's credit and licence.
+
 ## Development codes from GSRS (14 November 2026)
 
 Task 4.3 of `live-lookup`. A report names a drug by its generic or brand name; the registry often files its trials under a company's code. The intervention is now looked up in the Global Substance Registration System (terms in `docs/sources.md`), and the names GSRS marks as codes for that one substance are searched within the claim's indication. Only an exact name counts, and no model supplies a code.
