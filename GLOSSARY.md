@@ -16,6 +16,7 @@ Domain terms for thenwhat. Behavior is specified in `openspec/`; this file only 
 | **Approach** | The kind of intervention a claim reports, such as drug, gene therapy or transplant. Optional, at most one per claim, and never part of status. |
 | **Entity** | Something a claim names: an intervention, paper, person, institution or company. Has a name and synonyms. |
 | **Search phrase** | Words a registry or a paper would use for an intervention that has no product name, such as "median nerve stimulation". Searched for within the claim's indication only. Not a name, and never shown as one. |
+| **Development code** | A code a substance registry lists for a drug, such as CIN-107 for baxdrostat. Taken only from the one substance the registry lists under the intervention's names, and kept with that substance's record. Searched for like a search phrase, within the claim's indication only. Not a name, and never shown as one. |
 | **Origin paper** | The publication the first news reports of a claim were about. At most one per claim. |
 | **Related paper** | A published paper about a claim's intervention and indication that the literature search found and the article did not cite. Stored as a match on the intervention, with a score and the reasons found by rule. Approved by rule when it scores high. It is not an evidence event and never changes the status. |
 | **Match** | A proposed link between an entity and a record in a public registry (a trial, a DOI). Approved by rule when its score is in the high band; a person can reject it afterwards. |

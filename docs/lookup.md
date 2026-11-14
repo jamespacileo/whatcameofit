@@ -427,3 +427,50 @@ All 104 articles together:
 What the 446 are: effect 171, how it works 102, safety 51, what it could lead to 45, who it could help 41, comparison 36. As fact 301, as a possibility 145. Said by the article itself 264, a researcher 129, another expert 27, a company 25, a patient 1. Resting, as the article gives it, on a study in people 136, in animals 90, laboratory work 42, not said 178.
 
 Limits. One run, one model each for proposing and checking, and the 218 statements approved in task 6.3 were not read one by one. The model's cost was recorded in the copy's ledger, not the real database's, so the real ledger does not count these $0.10. Statements are of each page as read on 14 November; an article that gave no statement would be read again by a later `--missing` run, though here every article read gave at least one.
+
+## Development codes from GSRS (14 November 2026)
+
+Task 4.3 of `live-lookup`. A report names a drug by its generic or brand name; the registry often files its trials under a company's code. The intervention is now looked up in the Global Substance Registration System (terms in `docs/sources.md`), and the names GSRS marks as codes for that one substance are searched within the claim's indication. Only an exact name counts, and no model supplies a code.
+
+Run on a copy of the real database (`thenwhat_codes`, taken on this date at migration 0011 and migrated to this change), not on the real one. `thenwhat entity codes --all`, then `thenwhat resolve` for each claim given a code, with the paper search off.
+
+| | Count |
+| --- | --- |
+| Claims, each with one intervention | 84 |
+| Intervention listed by GSRS under one substance | 21 |
+| Listed under two substances, so given no code | 2 |
+| Not listed by GSRS | 61 |
+| Given at least one code beyond the names already recorded | 18 |
+| Claims where a code found a trial not found before | 4 |
+| New trial candidates | 22 |
+| Approved by rule (0.8 or more for the claim's indication) | 19 |
+| Left pending | 3 (scored 0.58, 0.19 and 0.09) |
+| Rejected by rule | 0 |
+
+The four claims, each of which already had approved trials:
+
+| Claim | Codes that found something | New | Approved by rule | Trial candidates before (approved) |
+| --- | --- | --- | --- | --- |
+| `type-2-diabetes-insulin-efsitora-alfa` | LY3209590, LY-3209590 | 11 | 10 | 5 (4) |
+| `hepatitis-b-bepirovirsen` | GSK3228836, GSK-3228836, ISIS-505358, IONIS HBVRX | 4 | 4 | 13 (13) |
+| `obesity-survodutide` | BI 456906 in three spellings | 4 | 3 | 29 (16) |
+| `pancreatic-cancer-daraxonrasib` | RMC-6236 | 3 | 2 | 16 (8) |
+
+Every one of the 22 was returned by a search for a code and by no search for a name, read from the stored registry answers. One exception in part: NCT05751226 was also returned by "semaglutide", which is not a name of survodutide and was never searched for this claim.
+
+What the 19 approvals are, read from their stored summaries: 17 are trials whose registration names the code as the drug under test (ten of efsitora in type 2 diabetes, four of bepirovirsen in chronic hepatitis B, two of survodutide in obesity, one of daraxonrasib in solid tumours). Two are trials of another drug in which this one is a partner: NCT05751226 tests doses of BI 1820237 alone or with semaglutide or BI 456906, and NCT06360354 tests anvumetostat with other therapies, RMC-6236 among them. Both test the claim's drug in the claim's condition, which is what the rule asks; whether a trial led by another drug belongs on the claim's page is for the operator, who archives what is wrong. The three left pending: a trial in type 1 diabetes (0.09), one in healthy men (0.19), and a trial of RMC-9805 that also gives RMC-6236 (0.58).
+
+The fourteen claims given a code that found nothing new include baxdrostat (CIN-107 was already recorded as a name; the two Roche codes found no further trial in primary aldosteronism), tideglusib, aspirin and vitamin C. For most the registry already answers the generic name with the trials filed under the code.
+
+Two listings worth knowing. `alzheimers-sleep-microglia-removal` is recorded as "Temporary removal of microglia" and is listed through its synonym, pexidartinib. `obesity-tofa` is listed as olumacostat, the substance GSRS files the name "TOFA" under. Both are exact names in GSRS; neither gained a candidate.
+
+The two given no code because their names lead to two substances: `biological-ageing-glp-1-drugs` (semaglutide and tirzepatide) and `periodontal-maresin-resolvin-stem-cells` (maresin 1 and resolvin E1). Each is a claim about two substances recorded as one intervention.
+
+Requests: 217 to GSRS for the 84 claims, at one a second, with the contact User-Agent. No model was asked for a code. The scoring of the 22 candidates used the decision backend as any `resolve` does.
+
+Limits:
+
+- One run, on a copy. The real database is unchanged: after this change is merged, run `thenwhat entity codes --all` and then `resolve` there. Whether any claim's status changes was not measured; all four claims already had approved trials.
+- A GSRS "Code" is any code, not only a development code. Vitamin C's six include "E-300" and "FEMA NO. 2109", and aspirin's include two National Service Center numbers. They are searched within the indication and found nothing here.
+- A combination, a class and a method are not substances, so 61 of 84 claims are untouched. That is the empty state, said in the command's output, and nothing looser is tried.
+- The lookup (`thenwhat lookup`) now asks GSRS about the names an article gives, and searches the codes too. It was not measured again here: that waits for the reviewed test set (task 4.5). The site's Worker does not ask GSRS; that is decision 6 in the change's design.
