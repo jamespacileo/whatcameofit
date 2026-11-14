@@ -67,7 +67,8 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
   // A followed claim seen here has been seen, so its change is not announced twice.
   function showPage(state) {
     pageState = state;
-    if (tab?.key && !tab.incognito && KEPT_KINDS.has(state.kind)) {
+    // The site's own claim page is not a report the reader checked.
+    if (tab?.key && !tab.incognito && !state.own && KEPT_KINDS.has(state.kind)) {
       recent = addRecent(recent, {
         key: tab.key,
         url: tab.url,
@@ -234,7 +235,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     reminders = saved?.reminders ?? [];
     results = saved?.results ?? [];
     sharing = !sharingWriteFailed && (!requiresSharingConsent || saved?.sharing?.version === 1 && saved.sharing.enabled === true);
-    const state = stateFor(tab?.key ?? null, loaded);
+    const state = stateFor(tab?.key ?? null, loaded, site.key ?? null);
     live = state.live ?? null;
     if (state.kind === "untracked" && live) {
       if (!sharing) {
