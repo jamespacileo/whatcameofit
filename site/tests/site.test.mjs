@@ -671,11 +671,83 @@ test("Scenario: Claim with thirty-three trials", () => {
   assert.match(rest, /The other 2 of 7 trials/);
 });
 
+// Openspec site-publishing (change claim-at-a-glance): "The record in brief". The rules
+// are tested in record-brief.test.mjs; these read the built page.
+const briefOf = (slug) => wordsOf(sectionOf(page(`${slug}/index.html`), "brief")).replace(/\u00a0|&nbsp;/g, " ");
+
 test("Scenario: Three trials, the largest of 1,200", () => {
   const html = page("phase-claim/index.html");
-  assert.match(html, /Trials in people/);
-  assert.match(html, /7 on record/);
-  assert.match(html, /The largest, 1,200 participants planned/);
+  // Said once, in the section: the facts under the digest no longer count the trials.
+  assert.match(briefOf("phase-claim"), /Tested in people\? In 7 trials\. 1,200 people in the largest/);
+  assert.match(briefOf("phase-claim"), /The largest number is a planned size, not people who took part\./);
+  assert.doesNotMatch(html, /Trials in people/);
+  assert.doesNotMatch(html, /7 on record/);
+});
+
+test("Scenario: Claim with trials", () => {
+  const brief = briefOf("phase-claim");
+  assert.match(brief, /The record in brief/);
+  assert.match(brief, /describe the records, not the treatment, and are not advice/);
+  assert.ok(brief.indexOf("How it was tested") < brief.indexOf("Where the records stand now"));
+  assert.match(brief, /Compared with a placebo\? One record names a placebo/);
+  assert.match(brief, /Results posted to the registry\? By 1 of 7 trials\. Posted on 1 Sep 2025/);
+  assert.match(brief, /A trial under way\? One under way/);
+  assert.match(brief, /Approved by a regulator\? None on record/);
+  // The largest trial states no main measure, so that question has nothing to ask.
+  assert.doesNotMatch(brief, /What did the largest trial measure/);
+});
+
+test("Scenario: Every answer opens to something", () => {
+  for (const slug of ["phase-claim", "quiet-claim", "approved-claim"]) {
+    const section = sectionOf(page(`${slug}/index.html`), "brief");
+    const answers = count(section, "<details");
+    assert.ok(answers >= 3, `${slug} has ${answers} answers`);
+    assert.equal(count(section, 'class="brief-source"'), answers);
+    // Closed until opened, and opened by the browser alone.
+    assert.equal(count(section, "<details open"), 0);
+    assert.doesNotMatch(section, /<script|<button/);
+  }
+});
+
+test("Scenario: Results posted", () => {
+  const section = sectionOf(page("phase-claim/index.html"), "brief");
+  // Outside the disclosure, so it shows without opening the answer.
+  assert.match(section, /<\/details>\s*<p class="brief-link brief-shown">\s*<a href="#trials">\s*See the posted results/);
+});
+
+test("Scenario: Largest trial with posted values", () => {
+  const brief = briefOf("phase-claim");
+  // The trial entries below carry "p = 0.03"; the section carries no result value.
+  assert.doesNotMatch(brief, /p\s*[=<]|\d\.\d/);
+});
+
+test("Scenario: Claim with no trial on record", () => {
+  const brief = briefOf("quiet-claim");
+  assert.match(brief, /Tested in people\? None on record/);
+  assert.match(brief, /What was the first report about\? A study in animals/);
+  assert.match(brief, /Approved by a regulator\? None on record/);
+  assert.doesNotMatch(brief, /Compared with|Results posted|A trial under way/);
+  assert.match(brief, /Three answers read from the records on this page/);
+});
+
+test("Scenario: Approved claim", () => {
+  const brief = briefOf("approved-claim");
+  assert.match(brief, /Approved by a regulator\? On 1 Apr 2024\. An approval is not advice to take a treatment/);
+});
+
+test("Scenario: Status with a phase", () => {
+  assert.doesNotMatch(page("phase-claim/index.html"), /class="bridge"/);
+});
+
+test("Scenario: Narrow screen", () => {
+  const styles = fs
+    .readdirSync(path.join(dist, "_astro"))
+    .filter((name) => name.endsWith(".css"))
+    .map((name) => fs.readFileSync(path.join(dist, "_astro", name), "utf8"))
+    .join("");
+  // Under 40rem a row, and a link on a line of its own, is 44 pixels tall at least.
+  assert.match(styles, /\.brief summary\{[^}]*min-height:2\.75rem/);
+  assert.match(styles, /\.brief-link a\{[^}]*min-height:2\.75rem/);
 });
 
 test("Scenario: Posted comparison with a p value", () => {

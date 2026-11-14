@@ -4218,3 +4218,191 @@ main ul:not([class]) li + li {
     flex-direction: column;
   }
 }
+
+/* The record in brief: fixed questions about a claim's records, in two groups. The
+   answer is read without opening anything; opening shows the record it came from. A
+   group's name stands in a column of its own beside its rows, as in the topic
+   directory. No colour, mark or order says an answer is for or against a treatment. */
+
+.digest .bridge {
+  margin: 0 0 0.45rem;
+  font-size: 1.02rem;
+}
+
+.brief-group {
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr);
+  column-gap: 1.5rem;
+  border-top: 1px solid var(--ring);
+  padding-top: 0.2rem;
+}
+
+.brief .take-why + .brief-group {
+  margin-top: 1rem;
+  border-top: 2px solid var(--ink);
+}
+
+.brief-group + .brief-group {
+  margin-top: 0.6rem;
+}
+
+.brief-group:last-child {
+  border-bottom: 2px solid var(--ink);
+}
+
+.brief-group h3 {
+  margin: 0.72rem 0 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+/* Twice the class, to outrank the page's own list indent. */
+.brief .brief-group ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.brief-group li + li {
+  border-top: 1px solid var(--rule-soft);
+}
+
+.brief summary {
+  display: grid;
+  grid-template-columns: 17rem minmax(0, 1fr) auto;
+  column-gap: 1rem;
+  align-items: baseline;
+  padding: 0.7rem 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.brief summary::-webkit-details-marker {
+  display: none;
+}
+
+/* One chevron, turned when the answer is open. */
+.brief summary::after {
+  content: "";
+  align-self: center;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin: 0 0.4rem 0.2rem 0;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  transition: transform 120ms var(--ease-out);
+}
+
+.brief details[open] > summary::after {
+  margin-bottom: -0.25rem;
+  transform: rotate(-135deg);
+}
+
+.brief-q {
+  color: var(--muted);
+}
+
+.brief-a {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.brief-open {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0 0 0.85rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 0.65rem;
+  background: var(--panel);
+}
+
+.brief-open p {
+  margin: 0;
+  max-width: 62ch;
+}
+
+.brief-open .brief-source {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.brief-link {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.brief-shown {
+  margin: -0.3rem 0 0.7rem 18rem;
+}
+
+@media (max-width: 40rem) {
+  /* With the sentence that says what the status means, ahead of the path. */
+  .digest .bridge {
+    order: 2;
+    margin: 0 0 0.2rem;
+  }
+
+  .brief-group {
+    display: block;
+    padding-top: 0.7rem;
+  }
+
+  .brief-group h3 {
+    margin: 0 0 0.2rem;
+  }
+
+  /* The question above its answer; a row is 44 pixels tall at least. */
+  .brief summary {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 0.75rem;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0.5rem 0;
+  }
+
+  .brief-q {
+    grid-column: 1;
+    font-size: 0.88rem;
+  }
+
+  .brief-a {
+    grid-column: 1;
+  }
+
+  .brief summary::after {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .brief-shown {
+    margin: -0.2rem 0 0.3rem;
+  }
+
+  .brief-link a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brief summary::after {
+    transition: none;
+  }
+}
+
+/* On paper every answer is printed open, with no chevron. */
+@media print {
+  .brief details::details-content {
+    display: block;
+    block-size: auto;
+    content-visibility: visible;
+  }
+
+  .brief summary::after {
+    display: none;
+  }
+}

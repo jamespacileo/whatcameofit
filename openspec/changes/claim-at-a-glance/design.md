@@ -89,7 +89,7 @@ Rejected: the model writing the plain phrase; reading the outcome description; a
 
 ### 6. The digest bridges to the brief
 
-When the status is `trial_registered` and the claim has trials, the digest adds after the status's meaning: "{n} trials are on record and all have finished. The registry gives none a phase." ("and {k} have finished" when not all), with a link to the guide entry on phases. It is a count from the same trials the page lists. The status, its place on the path and `STATUS_MEANINGS` are unchanged. This answers the second critique's finding that "No trial with a phase has started" read as a contradiction of "Yes, in 3 trials".
+When the status is `trial_registered` and the claim has trials, the digest adds after the status's meaning: "{n} trials are on record and all have finished. The registry gives none a phase." ("and {k} have finished" when not all). It carries no link: on a phone it is drawn ahead of the path, and DESIGN.md lets only unpressable text change its drawn order. It is a count from the same trials the page lists. The status, its place on the path and `STATUS_MEANINGS` are unchanged. This answers the second critique's finding that "No trial with a phase has started" read as a contradiction of "Yes, in 3 trials".
 
 ### 7. The facts row loses its trial count
 
