@@ -572,6 +572,43 @@ The other 8 read as right: "Bacterial Infections", "Dentin Sensitivity" for "Den
 
 No name equalled an entry term whose record the vocabulary did not give, on either run.
 
+## Entry terms, kinds and named genes on the real database (14 November 2026)
+
+Openspec `knowledge-cards`, tasks 5a.10 to 5a.13, repeated on the real database after #90 merged. A backup was taken first. The database was migrated from 0012 to 0015 with `main` at b81728b. `thenwhat terms` was then run for each published claim on its own, between 20:50 and 21:00 UTC.
+
+`thenwhat terms --all` was tried twice first. Both runs stopped when MeSH did not answer after four attempts, and both kept nothing, because the command writes every claim in one transaction. Run claim by claim, 22 of 84 claims met the same MeSH failure on the first pass. All 22 succeeded on the second pass, two minutes later. The same request was repeated each time, and nothing was looked up another way. DNS for `id.nlm.nih.gov` also failed intermittently on the machine that day.
+
+| | Count |
+| --- | --- |
+| New links stored | 92 |
+| Condition links: approved by rule (exact), rejected by rule | 4, 1 |
+| Intervention links from entry terms: approved (exact), pending (exact), pending (broader), rejected by rule | 4, 4, 1, 1 |
+| Kind decisions, of which "none of these" | 75, 17 |
+| Kind links: approved by rule (one rejected on reading), pending | 47, 11 |
+| Named-gene candidates: approved by rule, pending, rejected by rule | 6, 2, 11 |
+| Claims with an intervention card after the reading below: exact, broader, kind, none | 9, 1, 46, 28 |
+| Claims with any card | 70 of 84 (36 before) |
+| Model decisions and cost | 109 decisions (75 kind, 19 target, 15 term), $0.0064 |
+
+HTTP requests to MeSH and Open Targets were not counted on this run.
+
+Kind cards exported, by kind: Tissue Engineering 7, Peptides 6, Cell- and Tissue-Based Therapy 5, Antibodies, Monoclonal 4, Biocompatible Materials 4, Electric Stimulation Therapy 2, Gene Editing 2, Genetic Therapy 2, Oligonucleotides 2, Prostheses and Implants 2, RNA, Messenger 2, Surgical Procedures, Operative 2, Dietary Supplements 1, Equipment and Supplies 1, Phage Therapy 1, Probiotics 1, Transplantation 1, Vaccines 1.
+
+### Every approved link read once (tasks 5a.11 to 5a.13)
+
+All 61 links approved by rule were read beside their claim's intervention, indication and summary. One was rejected, recorded as the assistant's decision:
+
+| Claim | Link | Why it is wrong |
+| --- | --- | --- |
+| knee-osteoarthritis-genicular-artery-embolisation | kind "Surgical Procedures, Operative" (term 140) | Embolisation is a catheter procedure. MeSH files "Embolization, Therapeutic" (D004621) under Therapeutics (E02.520.360, E02.926.500), not under Surgical Procedures, Operative (E04). The claim keeps its condition card and has no intervention card. |
+
+- **Kind cards (5a.11):** 47 approved, 1 wrong and rejected. Two are true but say little:
+  - "Equipment and Supplies" for the peanut-protein microneedle stamp. The treatment is allergen immunotherapy delivered by a device.
+  - "Antibodies, Monoclonal" for sacituzumab tirumotecan, an antibody–drug conjugate.
+  No kind's cards mostly say nothing, so none is removed from the list.
+- **Named genes (5a.12):** 6 approved: GFAP, APOE, CPNE7, DLK1, CXCR3 and SOSTDC1 (USAG-1). None is a coincidence, so none is rejected. CPNE7 and DLK1 are genes the treatment is made from, not genes it acts on. The spec counts "made from it", and the card says only that the treatment's name names the gene. 0 of 6 wrong is within the one-in-twenty bar.
+- **Entry terms (5a.13):** 4 condition links and 4 intervention links, all exact and all right. pexidartinib is the drug listed for "Temporary removal of microglia" (PLX3397). The others are tideglusib, AdipoRon, and TOFA as 5-(tetradecyloxy)-2-furancarboxylic acid. None is rejected.
+
 ## Development codes from GSRS (14 November 2026)
 
 Task 4.3 of `live-lookup`. A report names a drug by its generic or brand name; the registry often files its trials under a company's code. The intervention is now looked up in the Global Substance Registration System (terms in `docs/sources.md`), and the names GSRS marks as codes for that one substance are searched within the claim's indication. Only an exact name counts, and no model supplies a code.
