@@ -21,7 +21,7 @@ export const Lookup: FC<SceneProps> = ({ at, v }) => {
   return (
     <>
       {/* The opening band: pale, with ink on it, under the white masthead. */}
-      <AbsoluteFill style={{ top: v ? 150 : 111, background: C.panel, borderBottom: `2px solid ${C.rule}` }} />
+      <AbsoluteFill style={{ top: v ? 150 : 111, background: C.panel }} />
       <Stage v={v}>
         <Rise at={2}>
           <div style={{ fontSize: v ? 60 : 68, fontWeight: 700, lineHeight: 1.12 }}>
