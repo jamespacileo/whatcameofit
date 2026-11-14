@@ -19,7 +19,8 @@ from thenwhat.claims.entry import add_article, add_claim
 from thenwhat.claims.status import refresh_status
 from thenwhat.db.models import Claim, DecisionLog, Entity, EntityMatch
 from thenwhat.decide.core import BackendAnswer, DecisionFailed
-from thenwhat.domain import Decider, EntityType, ReviewState
+from thenwhat.domain import ClaimStatus, Decider, EntityType, EventType, ReviewState
+from thenwhat.events.fetch import fetch_claim
 from thenwhat.export.build import build_export
 from thenwhat.resolve.organisations import match_organisations
 from thenwhat.resolve.papers import choose_origin, find_papers, trials_from_papers
@@ -34,6 +35,7 @@ from thenwhat.review.decisions import record_decision
 from thenwhat.review.queue import decide_item, pending_items
 from thenwhat.sources import openalex
 from thenwhat.sources.base import AllowanceUsedUp, SourceRecord
+from thenwhat.sources.crossref import Notice
 from thenwhat.sources.europepmc import EuropePmc
 from thenwhat.sources.ror import Ror
 
@@ -664,6 +666,98 @@ def test_no_decision_is_asked_when_no_approved_paper_predates_the_report(session
 
     assert origin(session, claim, papers, backend) is None
     assert backend.states == []
+
+
+class EuropePmcIndex:
+    """Europe PMC as `fetch` reads it: the origin paper by DOI and the papers citing it."""
+
+    def __init__(self, citing: list[SourceRecord]) -> None:
+        self.citing = citing
+        self.asked: list[str] = []
+
+    def paper(self, doi: str) -> SourceRecord | None:
+        self.asked.append(doi)
+        return _indexed(doi, "The trial report", "2023-05-29")
+
+    def citing_papers(self, paper: SourceRecord) -> list[SourceRecord]:
+        return self.citing
+
+
+def _indexed(doi: str, title: str, published: str) -> SourceRecord:
+    payload = {
+        "id": doi.rsplit("/", 1)[-1],
+        "source": "MED",
+        "doi": doi,
+        "title": title,
+        "abstractText": "",
+        "firstPublicationDate": published,
+        "authorList": {"author": [{"fullName": "Example A"}]},
+    }
+    return SourceRecord("europepmc", doi, f"https://europepmc.org/article/MED/{doi}", payload, NOW)
+
+
+class Retractions:
+    def __init__(self, by_doi: dict[str, list[Notice]]) -> None:
+        self.by_doi = by_doi
+
+    def notices(self, doi: str) -> list[Notice]:
+        return self.by_doi.get(doi.lower(), [])
+
+
+class NoTrials:
+    def fetch_trial(self, nct_id: str) -> SourceRecord | None:
+        return None
+
+
+def fetch_evidence(session: Session, claim: Claim, literature: EuropePmcIndex, notices=None):
+    return fetch_claim(
+        session,
+        claim,
+        trials=NoTrials(),
+        literature=literature,
+        notices=notices or Retractions({}),
+        threshold=0.95,
+        now=NOW,
+    )
+
+
+def test_origin_paper_set_by_rule_lets_fetch_find_follow_ups_and_a_retraction(session: Session):
+    """From a literature search to a status: the claim's article gave no DOI, a paper is
+    found and approved by rule, chosen as the origin paper by rule, and its retraction
+    then reaches the claim's status through an approved evidence event."""
+    claim, papers = with_two_approved_papers(session)
+    record_decision(claim, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+    follow_up = _indexed("10.1000/later", "A second study by the same group", "2024-02-01")
+    literature = EuropePmcIndex([follow_up])
+    notice = Notice("retraction", date(2025, 4, 5), "10.1000/retraction-notice")
+    retractions = Retractions({"10.1000/before": [notice]})
+
+    # Approved papers alone give fetch nothing to follow, and the status stays put.
+    assert fetch_evidence(session, claim, literature, retractions) == []
+    before = claim.current_status
+    assert before is not ClaimStatus.RETRACTED and literature.asked == []
+
+    backend = Reading()
+    backend.origin = ("10.1000/before", 0.9)
+    assert origin(session, claim, papers, backend) is not None
+    created = fetch_evidence(session, claim, literature, retractions)
+
+    assert literature.asked == ["10.1000/before"]
+    by_type = {event.type: event for event in created}
+    assert set(by_type) == {EventType.FOLLOWUP_PAPER, EventType.RETRACTION}
+    assert by_type[EventType.FOLLOWUP_PAPER].external_id == "10.1000/later"
+    retraction = by_type[EventType.RETRACTION]
+    assert (retraction.external_id, retraction.reviewed_by) == ("10.1000/before", Decider.RULE)
+    assert retraction.source_url == "https://doi.org/10.1000/retraction-notice"
+    assert claim.current_status is ClaimStatus.RETRACTED
+    # The status rests on the event, and the event on the match a rule approved.
+    confirmed = session.get(EntityMatch, retraction.entity_match_id)
+    assert confirmed is not None
+    assert (confirmed.source_name, confirmed.reviewed_by) == ("openalex", Decider.RULE)
+
+    # The operator removes the origin paper by rejecting its match: the status goes back.
+    decide_item(session, "match", confirmed.id, ReviewState.REJECTED, now=NOW)
+    assert claim.current_status is before
 
 
 # --- organisations -------------------------------------------------------------------
