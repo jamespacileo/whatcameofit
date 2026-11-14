@@ -44,6 +44,26 @@ test("Scenario: Reader opens a claim", () => {
 
 test("Scenario: Unknown slug", () => {
   assert.match(page("404.html"), /No page at this address/);
+  // The path with no place marked: six places, none of them the marker.
+  const drawing = page("404.html").match(/<svg class="unfound"[\s\S]*?<\/svg>/)[0];
+  assert.equal(count(drawing, 'class="place"'), 6);
+  assert.doesNotMatch(drawing, /here/);
+});
+
+test("Scenario: The mark in the masthead", () => {
+  // Drawn into the page so its parts can move; the drawing is the reverse mark's own.
+  const drawn = page("index.html").match(/<svg class="mark"[\s\S]*?<\/svg>/)[0];
+  const file = fs.readFileSync("public/mark-reverse.svg", "utf8");
+  const shapes = (svg) => [...svg.matchAll(/ (?:d|r|cx|cy|fill|stroke-width)="[^"]+"/g)].map(([part]) => part.trim()).sort();
+  assert.deepEqual(shapes(drawn).filter((part) => part !== 'fill="none"'), shapes(file).filter((part) => part !== 'fill="none"'));
+});
+
+test("Scenario: The method page's drawing", () => {
+  const figure = page("how-it-works/index.html").match(/<figure class="made"[\s\S]*?<\/figure>/)[0];
+  assert.match(figure, /made-up records, not a tracked claim/);
+  // Whole without scripting or motion: the control that plays it starts hidden.
+  assert.match(figure, /<button[^>]*data-made-play[^>]*hidden|<button[^>]*hidden[^>]*data-made-play/);
+  assert.match(figure, /Place 3 of 6/);
 });
 
 test("Scenario: Status produced by one trial", () => {
@@ -145,6 +165,7 @@ test("Scenario: Search with no result", () => {
     .map((name) => page(path.join("_astro", name)))
     .join("\n");
   assert.match(scripts + page("index.html"), /No record found for/);
+  assert.match(page("index.html"), /<template id="unfound">\s*<svg class="unfound"/);
 });
 
 test("Scenario: Home lists the newest reports", () => {

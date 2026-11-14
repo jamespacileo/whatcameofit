@@ -45,6 +45,24 @@ ffmpeg -i $V/final_video.mp4 -vf scale=1920:1080:flags=lanczos -c:v libx264 -pre
 
 Captions are drawn into the picture. To leave them out and upload `podcast_audio.srt` beside the video instead, add `--props='{"showCaptions":false}'`.
 
+## The logo sting
+
+Four silent seconds, once: the site's own card put together, for the end of a video and for a clip in a post. The headline's half, the glass, the record's half, the name, the question, the dot, then the tagline; the host and "Not medical advice" are there from the first frame. `src/remotion/Sting.tsx`.
+
+| Composition | Size | For |
+|---|---|---|
+| `Sting` | 1920 × 1080 | The end of a video |
+| `StingSquare` | 1080 × 1080 | Square posts |
+| `StingVertical` | 1080 × 1920 | Tall posts |
+
+```sh
+npx remotion render src/remotion/index.ts Sting out/sting.mp4
+npx remotion render src/remotion/index.ts StingSquare out/sting_square.mp4
+npx remotion render src/remotion/index.ts StingVertical out/sting_vertical.mp4
+```
+
+Rendered files are not committed (`out/` is ignored).
+
 ## How it is put together
 
 - `videos/<name>/podcast.txt` is the script. `[SECTION:name]` starts a scene; `{spoken|shown}` says one thing and captions another.

@@ -1,6 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import StageTrack from "../components/StageTrack.astro";
+import StatusMade from "../components/StatusMade.astro";
 import { brandAsset } from "../lib/brand";
 import { data } from "../lib/export";
 import { SITE } from "../../site.config.mjs";
@@ -77,6 +78,8 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
       <p>No medical advice. No verdicts. Only what the records show, and when.</p>
     </details>
   </figure>
+
+  <StatusMade />
 
   {/* A long page on a phone: its sections, one tap away. */}
   <nav class="contents" aria-label="On this page">

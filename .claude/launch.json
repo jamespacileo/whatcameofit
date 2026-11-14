@@ -58,6 +58,20 @@
         "127.0.0.1"
       ],
       "port": 4333
+    },
+    {
+      "name": "mocks",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4335",
+        "--directory",
+        ".impeccable/mocks",
+        "--bind",
+        "127.0.0.1"
+      ],
+      "port": 4335
     }
   ]
 }

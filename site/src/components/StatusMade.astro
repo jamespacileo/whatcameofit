@@ -1,0 +1,75 @@
+---
+// How a status is made, as one drawing: what was reported, what was recorded, where
+// that leaves it. The example is made up and says so, because a drawing on this page
+// cannot be kept current the way a claim page is. It is complete as it stands; a reader
+// may ask to see it arrive in order, and nothing plays unasked.
+import BasisMark from "./BasisMark.astro";
+import KindIcon from "./KindIcon.astro";
+import StageTrack from "./StageTrack.astro";
+import { STATUS_LABELS, type RecordKind } from "../lib/status";
+
+const STATUS = "phase_1";
+const records: { kind: RecordKind; year: string; what: string; basis?: boolean }[] = [
+  { kind: "trial", year: "2020", what: "Trial registered" },
+  { kind: "trial", year: "2022", what: "Phase 1 trial started", basis: true },
+  { kind: "paper", year: "2023", what: "Paper published" },
+];
+---
+
+<figure class="made" data-made data-pagefind-ignore>
+  <div class="made-row">
+    <div class="made-col">
+      <p class="made-label">Reported</p>
+      <p class="made-quote">“A cure in five years”</p>
+      <p class="made-by">A news report, 2019</p>
+      <p class="made-promise">Promised by <b>2027</b></p>
+    </div>
+    <svg class="made-to first" viewBox="0 0 44 16" aria-hidden="true">
+      <path pathLength="1" d="M2 8h39"></path>
+      <path pathLength="1" d="M35 3l6 5-6 5"></path>
+    </svg>
+    <div class="made-col">
+      <p class="made-label">Recorded</p>
+      <ul class="made-records">
+        {
+          records.map((record, index) => (
+            <li style={`--i:${index}`}>
+              <KindIcon kind={record.kind} />
+              <span class="year">{record.year}</span>
+              <span>{record.what}</span>
+              {record.basis && <BasisMark />}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+    <svg class="made-to second" viewBox="0 0 44 16" aria-hidden="true">
+      <path pathLength="1" d="M2 8h39"></path>
+      <path pathLength="1" d="M35 3l6 5-6 5"></path>
+    </svg>
+    <div class="made-col">
+      <p class="made-label">Where it stands</p>
+      <p class="made-status">{STATUS_LABELS[STATUS]}</p>
+      <StageTrack code={STATUS} ends />
+    </div>
+  </div>
+  <figcaption>
+    An example with made-up records, not a tracked claim.
+    {/* Shown by the script, and only to a reader who has not asked for less motion. */}
+    <button type="button" class="text-control" data-made-play hidden>Play it in order</button>
+  </figcaption>
+</figure>
+
+<script>
+  const figure = document.querySelector<HTMLElement>("[data-made]");
+  const play = figure?.querySelector<HTMLButtonElement>("[data-made-play]");
+  if (figure && play && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    play.hidden = false;
+    play.addEventListener("click", () => {
+      // Taken off and put back, so a second press plays it from the start.
+      figure.classList.remove("play");
+      void figure.offsetWidth;
+      figure.classList.add("play");
+    });
+  }
+</script>
