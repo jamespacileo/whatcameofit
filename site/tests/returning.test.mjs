@@ -44,14 +44,28 @@ test("Scenario: What is dated since the last visit", () => {
   assert.equal(isSince("2026-11-07", "2026-11-07", "2026-11-14"), true);
   assert.equal(isSince("2026-11-06", "2026-11-07", "2026-11-14"), false);
   assert.equal(isSince("2026-12-31", "2026-11-07", "2026-11-14"), false);
-  assert.deepEqual(changedParts({ reports: 12, moves: 1, promises: 0 }), [
-    { view: "headlines", text: "12 news reports" },
-    { view: "moved", text: "1 status change" },
+  // Each count sits beside the total its list shows.
+  const totals = { reports: 104, moves: 38, promises: 10 };
+  assert.deepEqual(changedParts({ reports: 12, moves: 1, promises: 0 }, totals), [
+    { view: "headlines", count: 12, text: "12 of 104 news reports" },
+    { view: "moved", count: 1, text: "1 of 38 status changes" },
   ]);
-  assert.deepEqual(changedParts({ reports: 0, moves: 0, promises: 2 }), [
-    { view: "promised", text: "2 promised dates reached" },
+});
+
+test("Scenario: No status change since the last visit", () => {
+  const totals = { reports: 104, moves: 38, promises: 10 };
+  // The none is said, not left out: status changes are what a reader comes back for.
+  assert.deepEqual(changedParts({ reports: 14, moves: 0, promises: 2 }, totals), [
+    { view: "headlines", count: 14, text: "14 of 104 news reports" },
+    { view: "moved", count: 0, text: "none of 38 status changes" },
+    { view: "promised", count: 2, text: "2 of 10 promised dates reached" },
   ]);
-  assert.deepEqual(changedParts({ reports: 0, moves: 0, promises: 0 }), []);
+  // Nothing dated at all: no parts, and the page says so in a sentence.
+  assert.deepEqual(changedParts({ reports: 0, moves: 0, promises: 0 }, totals), []);
+  // A site with no status change on record has none to count against.
+  assert.deepEqual(changedParts({ reports: 1, moves: 0, promises: 0 }, { reports: 1, moves: 0, promises: 0 }), [
+    { view: "headlines", count: 1, text: "1 of 1 news report" },
+  ]);
 });
 
 test("Scenario: A followed claim has changed status", () => {

@@ -43,7 +43,7 @@ const anyPromise = claims.some((claim) => latestPromise(claim) !== null);
       claims.map((claim, index) => {
         const promise = latestPromise(claim);
         return (
-          <tr data-status={claim.status.code} data-later={index >= PAGE_SIZE ? "" : undefined} role="row">
+          <tr data-status={claim.status.code} data-first={claim.first_reported_date ?? undefined} data-later={index >= PAGE_SIZE ? "" : undefined} role="row">
             <td role="cell" class="claim">
               <ClaimName claim={claim} />
             </td>
@@ -77,3 +77,27 @@ const anyPromise = claims.some((claim) => latestPromise(claim) !== null);
 </div>
 <Pager name={name} total={claims.length} size={PAGE_SIZE} one="claim" many="claims" />
 
+<script>
+  // A claim first reported since the reader last opened the home page says so in a
+  // word, as the home page's own rows do. The day is read from this browser's storage
+  // and is not changed here: only the home page counts as a visit.
+  import { VISIT_ENTRY, isSince, nextVisit } from "../lib/returning";
+
+  let raw: string | null = null;
+  try {
+    raw = localStorage.getItem(VISIT_ENTRY);
+  } catch {}
+  const now = new Date();
+  const two = (value: number) => String(value).padStart(2, "0");
+  const today = `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`;
+  const since = nextVisit(raw, today).previous;
+  if (since) {
+    for (const row of document.querySelectorAll<HTMLTableRowElement>("table.index tr[data-first]")) {
+      if (!isSince(row.dataset.first!, since, today)) continue;
+      const tag = document.createElement("span");
+      tag.className = "new-tag";
+      tag.textContent = "New";
+      row.querySelector(".claim a")?.after(" ", tag);
+    }
+  }
+</script>
