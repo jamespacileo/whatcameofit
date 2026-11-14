@@ -3,7 +3,6 @@
 import { articleKey } from "../src/lib/article-key.mjs";
 import { sourceUrl } from "./visual.mjs";
 const TTL = 86400;
-const incompleteResearch = found => ["unavailable", "limit"].includes(found?.research?.availability?.openalex);
 async function keyFor(address) {
   const safe = sourceUrl(address);
   if (!safe) return null;
@@ -17,14 +16,13 @@ export async function previousResult(store, address, now = Date.now()) {
   try {
     const entry = await store.get(key, "json");
     if (entry?.version !== 1 || !entry.publicVerified || !entry.found?.about_a_treatment || entry.at > now || now - entry.at >= TTL * 1000) return null;
-    if (incompleteResearch(entry.found)) return null;
     return { ...entry.found, cache: { checkedAt: entry.at, shared: true } };
   } catch { return null; }
 }
 export async function storeResult(store, address, found, publicVerified, now = Date.now()) {
   if (!store || !publicVerified || found.about_a_treatment !== true) return;
   // An answer that is missing a linked paper is not kept: the next lookup asks again.
-  if (found.papers_unchecked > 0 || incompleteResearch(found)) return;
+  if (found.papers_unchecked > 0) return;
   const key = await keyFor(address);
   if (!key) return;
   // Explicit fields only. Never persist an uploaded request, copied text or model gist.

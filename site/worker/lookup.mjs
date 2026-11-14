@@ -122,18 +122,11 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
 
   // Metadata enrichment runs alongside trial lookup. It adds no model calls and
   // cannot change clinical candidates, their scores, or a tracked claim's status.
-  // Only extracted names and the page's own metadata go: never its text or image.
-  const strings = (value) => (Array.isArray(value) ? value.filter((one) => typeof one === "string") : []);
   const related = research ? Promise.resolve().then(() => research.search({
     intervention: reading.intervention,
     indication: reading.indication,
     searchPhrases: reading.search_phrases ?? [],
     organisations: [...(Array.isArray(reading.organisations) ? reading.organisations : []), reading.sponsor].filter(Boolean),
-    paperQueries: strings(reading.paper_queries),
-    researchers: strings(reading.researchers),
-    publishedBefore: typeof page?.published === "string" ? page.published : null,
-    dois: strings(page?.dois),
-    pubmedIds: strings(page?.pubmedIds),
   })).catch(() => ({ papers: [], organisations: [], availability: { openalex: "unavailable", ror: "unavailable" } })) : null;
 
   const names = unique([reading.intervention, ...(reading.other_names ?? []).filter(isAName)]);
