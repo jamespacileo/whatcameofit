@@ -108,6 +108,23 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 - **What was done about it:** `sample-leads --tenth` draws a whole sample from one tenth. A second batch of 360 leads, 300 from the lowest tenth and 60 from across the range, shuffled together so that the batch says nothing of a lead's score, is with the same labeller. With 300 labelled and none a report, the lowest tenth would hold fewer than about 1 in 100.
 - **Precision by the labeller's rules:** the strongest disagreements are mostly about where a treatment report ends: a safety recall of a drug, a first-of-its-kind operation, a headline that names an approach and a disease without a result. They are differences of definition between the triage question and the labeller's rules more than errors of either, and the operator's spot-check is where that is settled.
 
+## Second batch of labels: what the lowest tenth holds (2026-11-14)
+
+- **Labels:** a further 360 leads, 306 of them under 0.1 and 54 from the nine tenths above, shuffled together and labelled by the same assistant under the same rules, without being told how the batch was drawn. 560 leads are now labelled, all by an assistant; the operator has checked none.
+- **The lowest tenth:** 326 labelled, none a treatment report. That shows fewer than about 1 in 100 of its 34,441 leads is one, so at most about 315, where 20 labels had allowed for several thousand.
+- **Treatment reports among the 26 labelled in each tenth from 0.1 up:** 1, 6, 8, 11, 13, 9, 17, 20, 25. Weighted by how many leads each tenth holds, that is about 388 treatment reports at or above 0.1.
+
+| Pass at or above | Precision | Recall, as reported | Recall if the lowest tenth hid 315 | Leads passed |
+| --- | --- | --- | --- | --- |
+| 0.3 | 71% | 94% | 52% | 517 |
+| 0.5 | 79% | 85% | 47% | 422 |
+| 0.7 | 90% | 74% | 41% | 320 |
+| 0.8 | 93% | 67% | 37% | 280 |
+| 0.9 | 96% | 59% | 33% | 237 |
+
+- **How to read it:** precision is measured where it matters and is steady across both batches. The best estimate of recall is the reported column, since no report was found under 0.1; the next column is the worst case the labels still allow, not an expectation. Each tenth above 0.1 rests on 26 labels, so its own share is rough: one label is four points.
+- **Not settled by this:** every label is an assistant's and follows that assistant's rules for the borderline groups. The thresholds are not set. Whether a passed lead that is not a treatment report can still become a published claim when read is not measured here; the first reading run and its audit are where that shows.
+
 ## Workflow follow-up
 
 - Archive `backfill-work-ledger` before this change is archived, so that `work-ledger` exists in the main specs.
