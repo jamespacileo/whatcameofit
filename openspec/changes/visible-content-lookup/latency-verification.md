@@ -12,7 +12,7 @@ ScienceAlert's tinnitus biomarker article reproduced the reported slow lookup in
 
 Separate local probes read ScienceAlert's robots and article in about 0.1 seconds total. All three Europe PMC calls returned HTTP 500. This is evidence of an optional paper dependency holding up an otherwise completed identification; it is not a measured post-deployment speed guarantee.
 
-The installed Safari app was version 0.9.1, build 10. Its controller had no lookup deadline. Neither that installation nor production was changed during this work.
+At diagnosis the installed Safari app was version 0.9.1, build 10. Its controller had no lookup deadline. The subsequent deployment and installation are recorded below.
 
 ## Regression coverage
 
@@ -28,7 +28,20 @@ Committed tests also cover treatment requests overlapping normally, optional pub
 - Cloudflare Worker packaging dry run passed; nothing was deployed.
 - OpenSpec strict validation and whitespace checks passed.
 
-Service deployment and installed-Safari verification remain release tasks. The corrected negative-identification path returns immediately in deterministic tests, but the 2.7-second production text-only reading is a diagnostic comparison, not a released extension benchmark.
+The corrected negative-identification path returns immediately in deterministic tests, but the 2.7-second production text-only reading is a diagnostic comparison, not a released extension benchmark.
+
+## Deployment and installed-Safari verification
+
+- [PR #94](https://github.com/jamespacileo/whatcameofit/pull/94) merged at `6386b159f3c48a98ad14b03756b7a930c2ad53db`, including the extension version bump to 0.9.2.
+- [PR checks](https://github.com/jamespacileo/whatcameofit/actions/runs/43642743796) passed the complete `make check` suite and public deployment rehearsal.
+- [Production run](https://github.com/jamespacileo/whatcameofit/actions/runs/43642992718) passed tests, verified Cloudflare authentication, deployed the latest main revision and passed the live-site smoke checks.
+- Built Safari 0.9.2 (11), Intel and Apple silicon, with stable Xcode 27.2 (27B52). Signed with the existing Apple Development identity and exactly the installed app and extension entitlements; verified both signatures and every bundled extension resource against the tested build.
+- Installed at `/Users/jay/Applications/WhatCameOfIt.app`. The registered Safari extension and both bundle versions report 0.9.2 (11). Previous application preserved in a rollback copy. Restarted Safari and restored its previous windows and tabs; existing extension permission and automatic-search consent persisted.
+- Opened the existing ScienceAlert tinnitus article in the installed Safari extension. The popup advanced from screenshot reading to its automatic, unreviewed result instead of remaining on the loading message.
+- Explicitly pressed **Search again** to bypass saved results. The fresh attempt was still reading the automatic screenshot at the 5.6-second observation and had displayed the completed answer by the 9.4-second observation. These are UI observation bounds, not instrumentation of exact completion time.
+- Final text: “A specific treatment and condition could not be identified from the content that could be read. The registry was not searched; nothing has been ruled out.” This is the expected treatment-identification outcome for this biomarker report. The completed popup was left open on the article.
+
+The update was installed locally; no App Store submission was performed.
 
 ## Delegation and integration cost
 
