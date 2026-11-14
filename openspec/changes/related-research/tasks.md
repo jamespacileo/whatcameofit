@@ -49,8 +49,8 @@
 
 ## 8. Measurement
 
-- [ ] 8.1 Run paper search on every claim whose status is "No trial record found" or "preclinical only", and record in `docs/lookup.md` how many gained an approved paper, how many gained a trial candidate, and the spend
-- [ ] 8.2 Record how many papers the rule approved on that run and how many the operator rejected afterwards
+- [x] 8.1 Run paper search on every claim whose status is "No trial record found" or "preclinical only", and record in `docs/lookup.md` how many gained an approved paper, how many gained a trial candidate, and the spend (2026-11-14: 47 claims, 46 completed; 14 gained an approved paper, none a trial candidate, no status changed; 0.046 US dollars of OpenAlex's free allowance and under 0.02 of model spend)
+- [ ] 8.2 Record how many papers the rule approved on that run and how many the operator rejected afterwards (2026-11-14: the rule approved 33; the operator has rejected none yet, so this stays open until the operator has looked)
 
 ## Workflow follow-up
 
