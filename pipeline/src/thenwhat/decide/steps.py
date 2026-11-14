@@ -80,6 +80,24 @@ TERM_QUESTIONS = {
 }
 
 
+STATEMENT_CHECK = "statement_check"
+SAYS_THIS = "says_this"
+SAYS_SOMETHING_WEAKER = "says_something_weaker"
+DOES_NOT_SAY = "does_not_say"
+# What is asked about a reported statement (openspec reported-statements). The middle
+# option is there for a statement worded more firmly than its article, so that it lowers
+# the probability of the first instead of being split between yes and no.
+STATEMENT_OPTIONS = [SAYS_THIS, SAYS_SOMETHING_WEAKER, DOES_NOT_SAY]
+STATEMENT_QUESTION = (
+    "Does the article say this, as it is put here: as firmly, said by the same kind of"
+    " person, and resting on what the article says it rests on?\n"
+    f"- {SAYS_THIS}: the article says this, no more firmly or widely than it is put here.\n"
+    f"- {SAYS_SOMETHING_WEAKER}: the article says something like this, but less firmly,"
+    " more narrowly, with less behind it, or said by someone else.\n"
+    f"- {DOES_NOT_SAY}: the article does not say this."
+)
+
+
 def match_ref(match_id: int) -> str:
     """The decision log's reference to a candidate match."""
     return f"{ENTITY_MATCH}:{match_id}"
@@ -261,32 +279,106 @@ def check_terms(
     Every candidate gets its own log record. A candidate the backend gave no usable
     answer for comes back as None: the failure is in its log record and it has no answer.
     """
-    before = session.scalar(select(func.max(DecisionLog.id))) or 0
     refs = [term_ref(term) for term, _ in candidates]
+    return _each_answered(
+        session,
+        backend,
+        step=TERM_MATCH,
+        intro=_claim_text(session, claim),
+        question=TERM_QUESTIONS[role],
+        items=[
+            (ref, term_text(term, definition))
+            for ref, (term, definition) in zip(refs, candidates, strict=True)
+        ],
+        options=TERM_OPTIONS,
+        now=now,
+    )
+
+
+def statement_ref(article_id: int, place: int) -> str:
+    """The decision log's reference to a proposed statement: its article and its place
+    among the statements proposed for that article, counted from one. The statement row
+    keeps the same string, so a later human label can be joined to the record."""
+    return f"source_article:{article_id}:statement:{place}"
+
+
+def last_statement_place(session: Session, article_id: int) -> int:
+    """The highest place a statement of the article was checked at, or 0. A later read
+    counts on from it, so that every check of the article has its own reference."""
+    prefix = statement_ref(article_id, 0).removesuffix("0")
+    refs = session.scalars(
+        select(DecisionLog.input_ref).where(
+            DecisionLog.step == STATEMENT_CHECK, DecisionLog.input_ref.startswith(prefix)
+        )
+    )
+    return max((int(ref.removeprefix(prefix)) for ref in refs), default=0)
+
+
+def check_statements(
+    session: Session,
+    backend: Backend,
+    *,
+    article_text: str,
+    statements: list[tuple[str, str]],
+    now: datetime,
+) -> list[Decision | None]:
+    """Ask, for each proposed statement given as (reference, how it is put), whether the
+    article says it, says something weaker, or does not say it. Decides nothing.
+
+    The article's text is shown to the backend and goes no further: the log records hold
+    the reference and the answer, neither the article nor the statement. A statement the
+    backend gave no usable answer for comes back as None, with the failure in its record.
+    """
+    if not statements:
+        return []
+    return _each_answered(
+        session,
+        backend,
+        step=STATEMENT_CHECK,
+        intro=f"A news article follows.\n\nArticle:\n{article_text}",
+        question=STATEMENT_QUESTION,
+        items=statements,
+        options=STATEMENT_OPTIONS,
+        now=now,
+    )
+
+
+def _each_answered(
+    session: Session,
+    backend: Backend,
+    *,
+    step: str,
+    intro: str,
+    question: str,
+    items: list[tuple[str, str]],
+    options: list[str],
+    now: datetime,
+) -> list[Decision | None]:
+    """`decide_many`, with an item that has no usable answer given as None instead of
+    failing the rest. Every item keeps its own log record."""
+    before = session.scalar(select(func.max(DecisionLog.id))) or 0
+    refs = [ref for ref, _ in items]
     try:
         return list(
             decide_many(
                 session,
                 backend,
-                step=TERM_MATCH,
-                intro=_claim_text(session, claim),
-                question=TERM_QUESTIONS[role],
-                items=[
-                    (ref, term_text(term, definition))
-                    for ref, (term, definition) in zip(refs, candidates, strict=True)
-                ],
-                options=TERM_OPTIONS,
+                step=step,
+                intro=intro,
+                question=question,
+                items=items,
+                options=options,
                 now=now,
             )
         )
     except DecisionFailed:
-        # Some candidates of the batch may have been answered before the failure.
+        # Some items of the batch may have been answered before the failure.
         answered = {
             entry.input_ref: entry
             for entry in session.scalars(
                 select(DecisionLog)
                 .where(
-                    DecisionLog.step == TERM_MATCH,
+                    DecisionLog.step == step,
                     DecisionLog.id > before,
                     DecisionLog.input_ref.in_(refs),
                     DecisionLog.error.is_(None),

@@ -17,6 +17,7 @@ EXPECTED_TABLES = {
     "paper_record",
     "claim_term",
     "term_record",
+    "reported_statement",
 }
 
 

@@ -42,6 +42,15 @@ class Settings(BaseSettings):
     match_accept_above: float = 0.8
     # How many candidate subject terms are kept for a claim (openspec knowledge-cards).
     term_candidates_max: int = 10
+    # Reported statements (openspec reported-statements). A statement the statement check
+    # gives this probability or more that its article says it is approved by rule and
+    # published; one below it waits, unpublished. 0 turns the rule off.
+    statement_accept_above: float = 0.8
+    # The most reported statements kept for one article.
+    statements_per_article: int = 6
+    # A proposed statement sharing this many consecutive words with its article is
+    # refused as copied.
+    statement_copied_run: int = 8
     # Decide new drafts by rule: approved, and published, when the intervention is a
     # name; rejected and kept otherwise. On by default: approval needs no person
     # (openspec auto-publish).

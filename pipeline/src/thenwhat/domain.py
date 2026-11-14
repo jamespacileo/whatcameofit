@@ -46,6 +46,45 @@ class TermFit(StrEnum):
     BROADER = "broader"
 
 
+class StatementKind(StrEnum):
+    """What a reported statement is about (openspec reported-statements)."""
+
+    EFFECT = "effect"
+    SAFETY = "safety"
+    HOW_IT_WORKS = "how_it_works"
+    WHO_IT_COULD_HELP = "who_it_could_help"
+    # Compared with an existing treatment.
+    COMPARISON = "comparison"
+    WHAT_IT_COULD_LEAD_TO = "what_it_could_lead_to"
+
+
+class StatementFirmness(StrEnum):
+    """How firmly the article puts a reported statement."""
+
+    FACT = "fact"
+    POSSIBILITY = "possibility"
+
+
+class StatementSpeaker(StrEnum):
+    """Who the article has saying a reported statement: a role, never a name."""
+
+    ARTICLE = "article"
+    RESEARCHER = "researcher"
+    COMPANY = "company"
+    PATIENT = "patient"
+    OTHER_EXPERT = "other_expert"
+
+
+class StatementBasis(StrEnum):
+    """What the article says a reported statement rests on. The article's word, not a
+    registry's or a paper's."""
+
+    PEOPLE = "people"
+    ANIMALS = "animals"
+    LABORATORY = "laboratory"
+    NOT_SAID = "not_said"
+
+
 class EventType(StrEnum):
     FOLLOWUP_PAPER = "followup_paper"
     TRIAL_REGISTERED = "trial_registered"

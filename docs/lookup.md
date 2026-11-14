@@ -297,6 +297,7 @@ Openspec `paper-facts`, task 7.1, after `make check` passed. Five papers were pi
 | PubMed 36778375 | same | medRxiv, 2023: same | Preprint: "Preprint" | nothing said: no subject headings | marked open access |
 
 No field differed, so no failing test was added. Two things a reader may notice: the entry gives a journal's name as the index record writes it ("Science (New York, N.Y.)", "Drug and alcohol dependence"), where the index's page capitalises or shortens it; and "open access" is the record's own mark, so a paper that is free to read at the index without an open access licence is not marked. None of the five is retracted, and none of the 136 records is, so the retracted mark was checked only on the recorded fixture of a known retracted paper.
+
 ## Subject terms on the real database (14 November 2026)
 
 Openspec `knowledge-cards`, tasks 5.1 to 5.3. `thenwhat terms --missing` was run once on the real database, for the 84 published claims, with the decisions backend and the default thresholds (approve at 0.8, reject under 0.05, ten candidates a claim). It took 4 minutes 24 seconds. Nothing was exported or deployed.
@@ -347,3 +348,82 @@ The operator's decision, 14 November 2026: these definitions are shown as they a
 Other things a reader would notice: several definitions are one line and say little ("Diseases affecting the eye.", "Diseases involving the SPINE."); "Alcoholism" is the vocabulary's own heading and its definition says "often progressive and fatal"; three supplementary records for new drugs (INNA-051, orforglipron, trastuzumab deruxtecan) have no definition, so their cards are a label and a link.
 
 How it was run: from a checkout of the branch against the database on its local port. This Mac's default resolver (Tailscale) gave no address for `id.nlm.nih.gov`, so that one name's address was taken from a public resolver for the run; the certificate was still checked against the name.
+
+## Reported statements: the first reads (14 November 2026)
+
+Openspec `reported-statements`, tasks 6.1 to 6.3. Run with `thenwhat statements` on a copy of the real database made the same day (`thenwhat_statements`, migrated to this change's 0011), not on the real one: the real database is at 0009 and is shared with branches whose migrations are not merged yet. The real database gets its statements by running `thenwhat statements --missing` once this change is merged and migrated. Model: the configured extraction model for proposing and the configured Decisions backend for the check, with the defaults: approved by rule at 0.8, six statements an article at most, eight words in a row refused as copied.
+
+### Ten articles first (task 6.1)
+
+Ten claims with one article each, from ten outlets: a press release, a video page and eight news reports, in people, animals and laboratory work.
+
+| | Count |
+| --- | --- |
+| Articles read | 10 |
+| Statements proposed | 50 |
+| Refused for copying eight words in a row | 4 |
+| Refused for a quotation mark | 0 |
+| Refused for naming a recorded person | 0 |
+| Refused for length | 0 |
+| Checked and stored | 46 |
+| Approved by rule (0.8 or more) | 23 |
+| Pending, unpublished | 23 |
+| Not checked (no usable answer) | 0 |
+| Model cost, proposing | $0.0057 (10 calls) |
+| Model cost, checking | $0.0035 (10 calls) |
+| Model cost for ten articles | $0.0091 |
+| Estimated cost of all 104 articles | about $0.095, under 1% of the $13 monthly budget (a quarter is $3.25) |
+
+The cost is well under a quarter of the budget, so the run went on.
+
+### Read beside their articles (task 6.2)
+
+Each of the 23 approved statements was read beside its article as fetched again that day.
+
+| | Statements |
+| --- | --- |
+| Misstate the article | 0 |
+| Stronger than the article | 0 |
+| Name someone | 0 |
+| Faithful | 23 |
+
+One in 23 has a speaker that could be read either way: a university's press release states a mouse result in its own voice, and the statement gives a researcher as its speaker. It is not counted as a misstatement. Fewer than one in ten misstate, so the threshold and the instructions stay as they are.
+
+What reading them showed besides:
+
+- The statements paraphrase closely. The copying rule allows up to seven words in a row, and several statements share six with their article. None repeats a sentence.
+- The check is cautious. Half the stored statements wait below 0.8. The pending ones read beside the same ten articles were mostly faithful too, numbers from a trial among them (a hair count was at 0.26). The check chose "says something weaker" for 6 of the 46, and its probabilities for "says this" are spread from 0.10 to 0.99.
+- Nine of the ten pages no longer matched the hash stored at their first read, mostly because of what the page shows around the article (related links, "published 2 days ago", other stories). The command's message was reworded to say so.
+
+### The rest (task 6.3)
+
+`thenwhat statements --missing` over the other 94 articles of the 84 published claims.
+
+| | Count |
+| --- | --- |
+| Articles | 94 |
+| Read | 90 |
+| Could not be read | 4: three from The US Sun and one from Queen's University Belfast, all refused by robots.txt with no archived copy; each needs pasted text |
+| Statements proposed | 447 |
+| Refused for copying | 47 |
+| Refused for any other rule | 0 |
+| Approved by rule | 218 |
+| Pending | 182 |
+| Not checked | 0 |
+| Pages that no longer matched their stored hash | 61 of 90 |
+| Model cost | $0.0868 (proposing $0.0553, checking $0.0315) |
+
+All 104 articles together:
+
+| | Count |
+| --- | --- |
+| Articles with statements | 100 of 104 |
+| Statements stored | 446 (241 approved, 205 pending) |
+| Most statements on one article | 6 |
+| Claims with at least one approved statement | 75 of 84 |
+| Published articles with no approved statement | 13 (the 4 not read, and 9 whose statements all wait) |
+| Model cost | $0.0959 |
+
+What the 446 are: effect 171, how it works 102, safety 51, what it could lead to 45, who it could help 41, comparison 36. As fact 301, as a possibility 145. Said by the article itself 264, a researcher 129, another expert 27, a company 25, a patient 1. Resting, as the article gives it, on a study in people 136, in animals 90, laboratory work 42, not said 178.
+
+Limits. One run, one model each for proposing and checking, and the 218 statements approved in task 6.3 were not read one by one. The model's cost was recorded in the copy's ledger, not the real database's, so the real ledger does not count these $0.10. Statements are of each page as read on 14 November; an article that gave no statement would be read again by a later `--missing` run, though here every article read gave at least one.

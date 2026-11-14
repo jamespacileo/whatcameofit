@@ -1,11 +1,13 @@
 """Drafting a claim from the text of a news article. Behavior: openspec claim-extraction.
 
 The text is passed in, shown to the model, hashed and dropped. Nothing here
-stores, caches or logs it.
+stores, caches or logs it. While it is in memory, the reported statements the model
+proposes are checked against it (openspec reported-statements).
 """
 
 import hashlib
-from datetime import date, datetime
+from dataclasses import dataclass
+from datetime import UTC, date, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -28,6 +30,12 @@ from thenwhat.extract.names import is_a_name, is_a_search_phrase
 from thenwhat.extract.schema import MAX_SEARCH_PHRASES, Draft
 from thenwhat.llm.client import Llm
 from thenwhat.review.decisions import record_decision
+from thenwhat.statements.service import (
+    StatementChecker,
+    StatementsRun,
+    keep_statements,
+    statement_rules,
+)
 
 INSTRUCTIONS = """\
 You read one news article about a medical research claim and return structured fields.
@@ -46,9 +54,19 @@ class ClaimNotPending(EntryError):
     pass
 
 
+@dataclass(frozen=True, slots=True)
+class Extracted:
+    """A claim drafted or added to from an article, and what became of the article's
+    reported statements."""
+
+    claim: Claim
+    statements: StatementsRun
+
+
 def draft_claim_from_article(
     session: Session,
     llm: Llm,
+    checker: StatementChecker,
     *,
     text: str,
     slug: str,
@@ -59,16 +77,19 @@ def draft_claim_from_article(
     published_date: date,
     archive_url: str | None = None,
     decide_by_rule_at: datetime | None = None,
-) -> Claim:
-    """Create a pending claim, with its article, entities and promises, from article text.
+    now: datetime | None = None,
+) -> Extracted:
+    """Create a pending claim, with its article, entities, promises and reported
+    statements, from article text.
 
     Nothing is saved if the model's output never validates or an entry rule refuses it.
+    A statement the check cannot answer for is not stored; the claim still is.
     With `decide_by_rule_at`, the draft is decided by rule at that time (openspec
     auto-publish): approved when the intervention it names is a name, else rejected and
     kept for the operator, since a description would be searched for as if it were one.
     """
     check_new_claim(session, slug, vertical)
-    draft = _extract(llm, text)
+    draft = _extract(llm, text, checker)
     with session.begin_nested():
         claim = add_claim(
             session,
@@ -86,19 +107,30 @@ def draft_claim_from_article(
         if decide_by_rule_at is not None:
             state = ReviewState.APPROVED if is_a_name(draft.intervention) else ReviewState.REJECTED
             record_decision(claim, state, by=Decider.RULE, now=decide_by_rule_at)
-    return claim
+        statements = keep_statements(
+            session,
+            checker,
+            article=article,
+            text=text,
+            proposed=draft.statements,
+            now=now or datetime.now(UTC),
+        )
+    return Extracted(claim, statements)
 
 
 def extract_into_claim(
     session: Session,
     llm: Llm,
+    checker: StatementChecker,
     *,
     claim_slug: str,
     article_url: str,
     text: str,
     archive_url: str | None = None,
-) -> Claim:
-    """Add what an article says to a claim that is still pending.
+    now: datetime | None = None,
+) -> Extracted:
+    """Add what an article says to a claim that is still pending, its reported statements
+    included.
 
     What the operator already entered is kept: the headline always, the summary if set.
     """
@@ -111,15 +143,28 @@ def extract_into_claim(
     if article is None:
         raise ArticleNotFound(f"Claim '{claim_slug}' has no article {article_url}.")
 
-    draft = _extract(llm, text)
+    draft = _extract(llm, text, checker)
     if not claim.summary:
         claim.summary = draft.summary
     _apply(session, claim, article, draft, text, archive_url)
-    return claim
+    statements = keep_statements(
+        session,
+        checker,
+        article=article,
+        text=text,
+        proposed=draft.statements,
+        now=now or datetime.now(UTC),
+    )
+    return Extracted(claim, statements)
 
 
-def _extract(llm: Llm, text: str) -> Draft:
-    return llm.run("extraction", instructions=INSTRUCTIONS, prompt=text, output_type=Draft)
+def _extract(llm: Llm, text: str, checker: StatementChecker) -> Draft:
+    return llm.run(
+        "extraction",
+        instructions=INSTRUCTIONS + statement_rules(checker.per_article),
+        prompt=text,
+        output_type=Draft,
+    )
 
 
 def _apply(

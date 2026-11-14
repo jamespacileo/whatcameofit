@@ -26,17 +26,28 @@ from thenwhat.claims.entry import (
     find_claim,
     promises_of,
 )
-from thenwhat.db.models import Base, Claim, Entity
-from thenwhat.domain import Decider, EntityType, ReviewState
+from thenwhat.db.models import Base, Claim, Entity, ReportedStatement
+from thenwhat.decide.core import BackendAnswer
+from thenwhat.domain import (
+    Decider,
+    EntityType,
+    ReviewState,
+    StatementBasis,
+    StatementFirmness,
+    StatementKind,
+    StatementSpeaker,
+)
 from thenwhat.extract.names import is_a_name
 from thenwhat.extract.phrases import backfill_search_phrases
 from thenwhat.extract.service import (
     ClaimNotPending,
+    Extracted,
     draft_claim_from_article,
     extract_into_claim,
 )
 from thenwhat.llm.client import Llm, LlmOutputInvalid, LlmSettings
 from thenwhat.review.decisions import record_decision
+from thenwhat.statements.service import StatementChecker
 
 NOW = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
 MARKER = "The zebra-striped molars glowed under ultraviolet lamps."
@@ -63,6 +74,38 @@ DRAFT: dict[str, Any] = {
 }
 
 
+class Checks:
+    """A batch backend for the statement check: says each statement is in the article,
+    with the probability given for its text, 0.9 when none is given."""
+
+    name = "fake"
+
+    def __init__(self, probabilities: dict[str, float] | None = None) -> None:
+        self.probabilities = probabilities or {}
+        self.calls: list[tuple[str, str, list[str]]] = []
+
+    def answer_many(
+        self, step: str, intro: str, question: str, items: list[str], options: list[str]
+    ) -> list[BackendAnswer]:
+        self.calls.append((step, intro, items))
+        answers = []
+        for item in items:
+            text = item.splitlines()[0].removeprefix("Statement: ")
+            p = self.probabilities.get(text, 0.9)
+            rest = (1 - p) / (len(options) - 1)
+            answers.append(
+                BackendAnswer(options[0], {o: p if o == options[0] else rest for o in options})
+            )
+        return answers
+
+    def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
+        raise AssertionError("Statements are checked together.")
+
+
+def checker(backend: Checks | None = None) -> StatementChecker:
+    return StatementChecker(backend or Checks())
+
+
 def model_returning(*outputs: dict[str, Any]) -> tuple[FunctionModel, list[str]]:
     """A scripted model and the list of prompts it was shown."""
     remaining = list(outputs)
@@ -83,6 +126,15 @@ def llm(session: Session, *outputs: dict[str, Any]) -> tuple[Llm, list[str]]:
 
 
 def draft(session: Session, output: dict[str, Any] = DRAFT, **overrides: Any) -> Claim:
+    return drafted(session, output, **overrides).claim
+
+
+def drafted(
+    session: Session,
+    output: dict[str, Any] = DRAFT,
+    checks: StatementChecker | None = None,
+    **overrides: Any,
+) -> Extracted:
     client, _ = llm(session, output)
     arguments: dict[str, Any] = {
         "text": ARTICLE_TEXT,
@@ -93,7 +145,9 @@ def draft(session: Session, output: dict[str, Any] = DRAFT, **overrides: Any) ->
         "title": "Mice regrow teeth",
         "published_date": date(2018, 3, 10),
     }
-    return draft_claim_from_article(session, client, **(arguments | overrides))
+    return draft_claim_from_article(
+        session, client, checks or checker(), now=NOW, **(arguments | overrides)
+    )
 
 
 def entities(session: Session, claim: Claim, type: EntityType) -> list[Entity]:
@@ -234,6 +288,7 @@ def test_only_the_researcher_is_recorded_as_a_person(session: Session):
     claim = draft_claim_from_article(
         session,
         client,
+        checker(),
         text=(
             "By Rae Reporter. Milo, 15, wore the wristband for a month."
             " Professor Ada Example, who led the study, said it calmed his tics."
@@ -244,7 +299,7 @@ def test_only_the_researcher_is_recorded_as_a_person(session: Session):
         outlet="Example News",
         title="A wristband for tics",
         published_date=date(2023, 6, 1),
-    )
+    ).claim
 
     assert [p.name for p in entities(session, claim, EntityType.PERSON)] == [
         "Professor Ada Example"
@@ -274,6 +329,7 @@ def test_model_is_shown_the_article_text(session: Session):
     draft_claim_from_article(
         session,
         client,
+        checker(),
         text=ARTICLE_TEXT,
         slug="tooth-regrowth-ex1",
         vertical="mouth-and-teeth",
@@ -370,8 +426,13 @@ def test_pasted_text_of_a_paywalled_article_is_used_and_discarded(session: Sessi
     client, prompts = llm(session, DRAFT)
 
     claim = extract_into_claim(
-        session, client, claim_slug="tooth-regrowth-ex1", article_url=ARTICLE_URL, text=ARTICLE_TEXT
-    )
+        session,
+        client,
+        checker(),
+        claim_slug="tooth-regrowth-ex1",
+        article_url=ARTICLE_URL,
+        text=ARTICLE_TEXT,
+    ).claim
 
     assert MARKER in prompts[0]
     assert claim.summary == DRAFT["summary"]
@@ -386,6 +447,148 @@ def test_snapshot_url_is_kept_with_the_article(session: Session):
 
     [article] = articles_of(session, claim)
     assert article.archive_url == snapshot
+
+
+# --- reported statements (openspec reported-statements) ------------------------------
+
+STATEMENT_ARTICLE = (
+    "Researchers at Example University report that an antibody named EX-1 regrew missing"
+    " teeth in seven of ten mice. Professor Ada Example said she hoped the antibody might one"
+    f" day spare people born without teeth from implants. {MARKER} Trials in people could"
+    " begin by 2027."
+)
+EFFECT = "EX-1 regrew missing teeth in most of the mice it was given to."
+HOPE = "The antibody might let people born without teeth avoid implants in future."
+STATEMENT_DRAFT = DRAFT | {
+    "promises": ["trials in people could begin by 2027"],
+    "statements": [
+        {
+            "text": EFFECT,
+            "kind": "effect",
+            "firmness": "fact",
+            "speaker": "article",
+            "basis": "animals",
+        },
+        {
+            "text": HOPE,
+            "kind": "who_it_could_help",
+            "firmness": "possibility",
+            "speaker": "researcher",
+            "basis": "not_said",
+        },
+    ],
+}
+
+
+def stored_statements(session: Session, claim: Claim) -> list[ReportedStatement]:
+    return list(
+        session.scalars(
+            select(ReportedStatement)
+            .where(ReportedStatement.claim_id == claim.id)
+            .order_by(ReportedStatement.id)
+        )
+    )
+
+
+def test_article_with_an_effect_a_hope_and_a_timeline_gives_two_statements_and_a_promise(
+    session: Session,
+):
+    """Scenario: Article with an effect and a hope"""
+    client, prompts = llm(session, STATEMENT_DRAFT)
+
+    claim = draft_claim_from_article(
+        session,
+        client,
+        checker(),
+        text=STATEMENT_ARTICLE,
+        slug="tooth-regrowth-ex1",
+        vertical="mouth-and-teeth",
+        url=ARTICLE_URL,
+        outlet="Example News",
+        title="Mice regrow teeth",
+        published_date=date(2018, 3, 10),
+        now=NOW,
+    ).claim
+
+    effect, hope = stored_statements(session, claim)
+    [promise] = promises_of(session, claim)
+    assert (effect.text, effect.kind, effect.firmness, effect.speaker, effect.basis) == (
+        EFFECT,
+        StatementKind.EFFECT,
+        StatementFirmness.FACT,
+        StatementSpeaker.ARTICLE,
+        StatementBasis.ANIMALS,
+    )
+    assert (hope.firmness, hope.speaker, hope.basis) == (
+        StatementFirmness.POSSIBILITY,
+        StatementSpeaker.RESEARCHER,
+        StatementBasis.NOT_SAID,
+    )
+    assert promise.description == "trials in people could begin by 2027"
+    assert effect.article_read_at == NOW
+    # The model is told the rules: own words, no quotation, no names, timelines apart.
+    for rule in (
+        "in your own words",
+        "never use quotation marks",
+        "Never name a person in a statement",
+        "A timeline is a promise, never a statement",
+        "Only statements about the intervention",
+    ):
+        assert rule in prompts[0]
+
+
+def test_article_that_only_announces_a_trial_gives_a_promise_and_no_statement(session: Session):
+    """Scenario: Article that only announces a trial"""
+    claim = draft(session, DRAFT | {"statements": []})
+
+    assert stored_statements(session, claim) == []
+    assert len(promises_of(session, claim)) == 1
+
+
+def test_a_confident_statement_is_approved_by_rule_and_an_unsure_one_waits(session: Session):
+    """Scenarios: Confident statement; Unsure statement"""
+    checks = checker(Checks({EFFECT: 0.9, HOPE: 0.6}))
+
+    run = drafted(session, STATEMENT_DRAFT, checks, text=STATEMENT_ARTICLE).statements
+
+    [approved] = run.approved
+    [pending] = run.pending
+    assert (approved.text, approved.confidence, approved.reviewed_by) == (EFFECT, 0.9, Decider.RULE)
+    assert approved.reviewed_at == NOW
+    assert (pending.text, pending.confidence, pending.review_state) == (
+        HOPE,
+        pytest.approx(0.6),
+        ReviewState.PENDING,
+    )
+
+
+def test_statements_keep_nothing_of_the_article(session: Session, caplog: pytest.LogCaptureFixture):
+    """Scenario: After successful extraction, with statements"""
+    caplog.set_level(logging.DEBUG)
+
+    claim = drafted(session, STATEMENT_DRAFT, text=STATEMENT_ARTICLE).claim
+
+    assert len(stored_statements(session, claim)) == 2
+    stored = everything_stored(session)
+    assert MARKER not in stored and MARKER not in caplog.text
+    assert not any(sentence in stored for sentence in STATEMENT_ARTICLE.split(". "))
+
+
+def test_statements_are_added_for_the_article_of_a_pending_claim(session: Session):
+    claim = draft(session, DRAFT | {"statements": []})
+    client, _ = llm(session, STATEMENT_DRAFT)
+
+    extracted = extract_into_claim(
+        session,
+        client,
+        checker(),
+        claim_slug=claim.slug,
+        article_url=ARTICLE_URL,
+        text=STATEMENT_ARTICLE,
+        now=NOW,
+    )
+
+    assert [s.text for s in extracted.statements.stored] == [EFFECT, HOPE]
 
 
 # --- drafts and existing claims ----------------------------------------------------
@@ -432,8 +635,13 @@ def test_extraction_into_an_existing_claim_keeps_what_the_operator_entered(sessi
     client, _ = llm(session, DRAFT)
 
     claim = extract_into_claim(
-        session, client, claim_slug="tooth-regrowth-ex1", article_url=ARTICLE_URL, text=ARTICLE_TEXT
-    )
+        session,
+        client,
+        checker(),
+        claim_slug="tooth-regrowth-ex1",
+        article_url=ARTICLE_URL,
+        text=ARTICLE_TEXT,
+    ).claim
 
     [intervention] = entities(session, claim, EntityType.INTERVENTION)
     assert (claim.headline, claim.summary) == ("Operator's headline", "Operator's summary.")
@@ -447,7 +655,12 @@ def test_running_extraction_twice_adds_nothing_twice(session: Session):
     client, _ = llm(session, DRAFT)
 
     extract_into_claim(
-        session, client, claim_slug=claim.slug, article_url=ARTICLE_URL, text=ARTICLE_TEXT
+        session,
+        client,
+        checker(),
+        claim_slug=claim.slug,
+        article_url=ARTICLE_URL,
+        text=ARTICLE_TEXT,
     )
 
     assert len(entities(session, claim, EntityType.PAPER)) == 1
@@ -462,7 +675,12 @@ def test_extraction_into_an_approved_claim_is_refused(session: Session):
 
     with pytest.raises(ClaimNotPending):
         extract_into_claim(
-            session, client, claim_slug=claim.slug, article_url=ARTICLE_URL, text=ARTICLE_TEXT
+            session,
+            client,
+            checker(),
+            claim_slug=claim.slug,
+            article_url=ARTICLE_URL,
+            text=ARTICLE_TEXT,
         )
 
 

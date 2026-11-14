@@ -74,6 +74,20 @@ See proposal.md for the motivation. What the code holds today:
 4. Site in the deploy that follows the first backfill, so the section does not ship empty. An export without statements builds as today.
 5. Rollback: revert the site deploy. Stored statements are unpublished by archiving or by leaving the export field empty.
 
+## Decisions made while building
+
+For the proposer to confirm.
+
+- **The check is shown how the statement is put.** Each item gives the statement's text and its firmness, speaker and basis codes, so that "says something weaker" also covers a statement attributed to the wrong kind of speaker or given a firmer basis than the article gives.
+- **Places count on across reads.** A statement's place is its position among every statement proposed for the article so far, so a read with `--again` counts on from the highest place already checked. Each log reference then names one check only, and a statement row joins to exactly one log record.
+- **The length limit is a refusal, not a validation.** The schema does not cap a statement at 200 characters or the list at six: a long statement would fail the whole draft, claim included. The service refuses the long one and keeps the first six of the rest.
+- **What counts as a quotation mark.** Double quotation marks of every kind, guillemets, the opening single quote, and a straight or closing single quote that opens a word. A closing single quote inside or after a word is an apostrophe and is allowed.
+- **What counts as a name.** Any part of a recorded person's name of two letters or more, as a whole word starting with a capital letter, titles such as "Professor" left out. A family name alone is refused; a word that only looks like one in lower case ("a small sample") is not.
+- **`--missing` covers published claims.** Approved and unarchived claims with an article that has no statement. Named claims may be in any review state. `--again` needs named claims.
+- **An article that gave no statement is read again by a later `--missing` run.** Nothing records that an article was read for statements apart from the statements themselves. The spec only asks that an article with statements is skipped.
+- **A statement that cannot be checked fails the command after the claim is saved.** `extract new`, `extract article` and `statements` commit the claim, its other fields and the decision records, say how many statements were not stored, and exit 1.
+- **The changed-text message speaks of the page.** On the first ten articles, nine pages no longer matched their stored hash, mostly because of what the page shows around the article. The output says the text has changed since it was first read, if only around the article.
+
 ## Open Questions
 
 - Whether pending statements should be shown apart with their lower confidence, as candidate matches are. Left out here because an unsure statement is a likelier misstatement than an unsure match; it can be added without a schema change.

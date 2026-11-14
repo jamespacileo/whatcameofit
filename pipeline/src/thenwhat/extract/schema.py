@@ -4,6 +4,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+from thenwhat.domain import StatementBasis, StatementFirmness, StatementKind, StatementSpeaker
+
 ShortText = Annotated[str, Field(min_length=1, max_length=200)]
 # The most search phrases a treatment is given or kept.
 MAX_SEARCH_PHRASES = 3
@@ -12,6 +14,57 @@ MAX_SEARCH_PHRASES = 3
 class NamedEntity(BaseModel):
     type: Literal["person", "institution", "company"]
     name: ShortText
+
+
+class ProposedStatement(BaseModel):
+    """A reported statement as the model proposes it, before it is checked. The length
+    limit is a refusal rule, not a validation, so one long statement does not cost the
+    whole draft."""
+
+    text: str = Field(
+        min_length=1,
+        description=(
+            "What the article says, in one sentence of your own words, under 200"
+            " characters. Not who said it, which is the speaker. No quotation marks, no"
+            " names of people."
+        ),
+    )
+    kind: StatementKind = Field(
+        description=(
+            "effect: what it did or does; safety: harms or side effects; how_it_works;"
+            " who_it_could_help; comparison: against an existing treatment;"
+            " what_it_could_lead_to."
+        )
+    )
+    firmness: StatementFirmness = Field(
+        description="fact when the article states it as fact; possibility otherwise."
+    )
+    speaker: StatementSpeaker = Field(
+        description=(
+            "Who the article has saying it: article (the article itself), researcher,"
+            " company, patient or other_expert."
+        )
+    )
+    basis: StatementBasis = Field(
+        description=(
+            "What the article says it rests on: people (a study in people), animals,"
+            " laboratory (cells or laboratory work) or not_said."
+        )
+    )
+
+
+STATEMENTS_DESCRIPTION = (
+    "What the article says about the intervention beyond its timeline, most important"
+    " first. Empty if it says nothing more."
+)
+
+
+class StatementsDraft(BaseModel):
+    """The statements of an article read again for statements only."""
+
+    statements: list[ProposedStatement] = Field(
+        default_factory=list, description=STATEMENTS_DESCRIPTION
+    )
 
 
 class Draft(BaseModel):
@@ -62,6 +115,9 @@ class Draft(BaseModel):
     promises: list[Annotated[str, Field(min_length=1, max_length=300)]] = Field(
         default_factory=list,
         description="Each timeline the article promises, as a short phrase. Empty if none.",
+    )
+    statements: list[ProposedStatement] = Field(
+        default_factory=list, description=STATEMENTS_DESCRIPTION
     )
 
     @field_validator("entities")
