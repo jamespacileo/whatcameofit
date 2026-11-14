@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mark refinement</title>
+<style>
+:root{color-scheme:light;--ink:#0f1f38;--muted:#46566b;--rule:#d9e2ee;--panel:#f1f5fb;--navy:#0b2545;--tag:#d6e2f2}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 "Figtree","Helvetica Neue",Arial,sans-serif;color:var(--ink);background:#fff}
+main{max-width:76rem;margin:0 auto;padding:2rem clamp(1rem,4vw,2rem) 4rem}
+h1{font-size:2rem;line-height:1.15;margin:0 0 .5rem;letter-spacing:-.015em}
+h2{font-size:1.2rem;margin:0;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+p{margin:0;max-width:66ch}
+.lede{color:var(--muted)}
+.tag{font-size:.72rem;font-weight:700;background:var(--tag);border-radius:.3rem;padding:.12rem .42rem}
+.row{border-top:1px solid var(--rule);padding:1.6rem 0;margin-top:1.6rem}
+.row>p{margin-top:.35rem;color:var(--muted);font-size:.92rem}
+.plates{display:grid;grid-template-columns:repeat(3,minmax(0,13.5rem)) minmax(0,1fr);gap:1rem;margin-top:1rem;align-items:start}
+.plate{border-radius:.85rem;aspect-ratio:1;display:grid;place-items:center;overflow:hidden;position:relative}
+.plate.navy{background:var(--navy)}
+.plate.paper{background:var(--panel)}
+.plate svg{width:74%;height:74%;overflow:visible}
+.plate.paper svg{border-radius:25%;box-shadow:0 0 0 1px var(--rule)}
+.plate.joint svg{width:100%;height:100%}
+.cap{position:absolute;left:.6rem;bottom:.45rem;font-size:.7rem;color:#c9d9ee}
+.paper .cap{color:var(--muted)}
+.sizes{display:flex;flex-wrap:wrap;gap:.9rem 1.1rem;align-items:flex-end;padding:.2rem 0}
+.sizes figure{margin:0;display:grid;justify-items:center;gap:.3rem;font-size:.68rem;color:var(--muted)}
+.sizes svg{display:block}
+.sizes .on-navy{background:var(--navy);padding:8px;border-radius:6px}
+.sizes .on-paper{background:var(--panel);padding:8px;border-radius:6px}
+.strip{margin-top:.8rem;background:var(--navy);color:#fff;border-radius:.6rem;padding:.9rem 1.2rem;display:flex;align-items:center;gap:2.5rem;flex-wrap:wrap}
+.name{display:inline-flex;align-items:baseline;letter-spacing:-.01em;white-space:nowrap;font-size:1.25rem}
+.name.big{font-size:2.2rem}
+.name .lead{font-weight:400}.name .tail{font-weight:800;margin-left:.26em}
+.name .ask{height:.94em;width:auto;margin-left:.05em;transform:translateY(.13em);overflow:visible;flex:none}
+.name .hook{fill:none;stroke:currentColor;stroke-width:4.8;stroke-linecap:round}
+.name .dot{fill:#8ec1f5}
+.name svg.mk{width:1.4em;height:1.4em;margin-right:.45em;align-self:center;flex:none;overflow:visible}
+@media (max-width:60rem){.plates{grid-template-columns:repeat(3,minmax(0,1fr))}.plates .sizes{grid-column:1/-1}}
+</style></head>
+<body><main>
+<h1>The mark, refined</h1>
+<p class="lede">The same mark: a flat glass over a coral-and-blue capsule. What changed on 14 Nov 2026 is how it is drawn. Each row shows it on navy, on its white tile, the joint enlarged, the sizes it ships at, and beside the name.</p>
+<div id="rows"></div>
+</main>
+<script>
+// As shipped until 2026-11-14: a stroked ring and a stroked handle with round ends.
+const before = (kind) => {
+  const glass = kind === "reverse" ? "#ffffff" : "#16477d", lens = kind === "reverse" ? "none" : "#ffffff";
+  return `<path d="M44.5 45.5 51.5 52.5" fill="none" stroke="${glass}" stroke-width="8" stroke-linecap="round"/><circle cx="31" cy="32" r="19.5" fill="${lens}" stroke="${glass}" stroke-width="5.7"/><path d="M30.4 25h-6.9a7 7 0 0 0 0 14h6.9z" fill="#f28a62"/><path d="M31.6 25h6.9a7 7 0 0 1 0 14h-6.9z" fill="#1687da"/>`;
+};
+// Refined: the glass is one outline, as in site/public/mark.svg.
+const GLASS = "M42.38 49.02A22 22 0 1 1 49.02 42.38A1.2 1.2 0 0 0 49.18 43.88L54.36 49.06A3.75 3.75 0 0 1 49.06 54.36L43.88 49.18A1.2 1.2 0 0 0 42.38 49.02ZM47 30.5A16.5 16.5 0 1 0 14 30.5A16.5 16.5 0 1 0 47 30.5Z";
+const after = (kind) => {
+  const glass = kind === "reverse" ? "#ffffff" : "#16477d";
+  return `${kind === "reverse" ? "" : '<circle cx="30.5" cy="30.5" r="17" fill="#ffffff"/>'}<path fill="${glass}" fill-rule="evenodd" d="${GLASS}"/><path d="M29.7 23.75h-6.2a6.75 6.75 0 0 0 0 13.5h6.2z" fill="#f28a62"/><path d="M31.3 23.75h6.2a6.75 6.75 0 0 1 0 13.5h-6.2z" fill="#1687da"/>`;
+};
+// The drawing for a browser tab, 16 to 32 pixels.
+const tabBefore = `<path d="M44 45 54 55" fill="none" stroke="#16477d" stroke-width="8" stroke-linecap="round"/><circle cx="28" cy="29" r="21" fill="#ffffff" stroke="#16477d" stroke-width="6"/><path d="M27 21h-6a8 8 0 0 0 0 16h6z" fill="#f28a62"/><path d="M29 21h6a8 8 0 0 1 0 16h-6z" fill="#1687da"/>`;
+const tabAfter = `<path d="M45.1 45.1 54.8 54.8" fill="none" stroke="#16477d" stroke-width="8" stroke-linecap="round"/><circle cx="29" cy="29" r="21" fill="#ffffff" stroke="#16477d" stroke-width="6"/><path d="M28 21h-6a8 8 0 0 0 0 16h6z" fill="#f28a62"/><path d="M30 21h6a8 8 0 0 1 0 16h-6z" fill="#1687da"/>`;
+
+const svg = (body, kind, box, size, extra = "") =>
+  `<svg class="mk" viewBox="${kind === "tile" ? "0 0 64 64" : box}" ${size ? `width="${size}" height="${size}"` : ""} ${extra} aria-hidden="true">${kind === "tile" ? '<rect width="64" height="64" rx="16" fill="#ffffff"/>' : ""}${body}</svg>`;
+
+const ROWS = [
+  ["As shipped", "", before, "8 9 48 48", "36 37 22 22", tabBefore, "The handle is a line with round ends, and the end at the ring pokes into the lens. The capsule's tips sit 2 units from the ring, its seam is 1.2 units, and the drawing hangs 1 unit low on its tile."],
+  ["Refined", "Now in the files", after, "8 8 48 48", "35.5 35.5 22 22", tabAfter, "The glass is one outline. The handle grows out of the ring with a small arc in each corner, and nothing enters the lens. The ring is a touch lighter, the handle a touch longer, the capsule has room at its tips, the seam is wider, and the drawing sits in the middle of its tile."],
+];
+const name = (draw, box, cls = "") => `<span class="name ${cls}">${svg(draw("reverse"), "reverse", box)}<span class="lead">What came</span><span class="tail">of it</span><svg class="ask" viewBox="0 0 20 30"><path class="hook" d="M4.2 8.8a5.9 5.9 0 1 1 9 5c-2.1 1.3-3.2 2.4-3.2 4.7"/><circle class="dot" cx="10" cy="26" r="3.6"/></svg></span>`;
+
+document.getElementById("rows").innerHTML = ROWS.map(([title, tag, draw, box, joint, tab, note]) => `
+  <section class="row">
+    <h2>${title}${tag ? `<span class="tag">${tag}</span>` : ""}</h2><p>${note}</p>
+    <div class="plates">
+      <div class="plate navy">${svg(draw("reverse"), "reverse", box)}<span class="cap">On navy</span></div>
+      <div class="plate paper">${svg(draw("tile"), "tile")}<span class="cap">Tile</span></div>
+      <div class="plate navy joint">${svg(draw("reverse"), "reverse", joint)}<span class="cap">The joint, enlarged</span></div>
+      <div class="sizes">
+        ${[16, 32].map((s) => `<figure><span class="on-paper">${svg(tab, "tile", "", s)}</span>Tab ${s}</figure>`).join("")}
+        ${[48, 64].map((s) => `<figure><span class="on-paper">${svg(draw("tile"), "tile", "", s)}</span>${s}</figure>`).join("")}
+        ${[20, 28, 40].map((s) => `<figure><span class="on-navy">${svg(draw("reverse"), "reverse", box, s)}</span>${s}</figure>`).join("")}
+      </div>
+    </div>
+    <div class="strip">${name(draw, box, "big")}${name(draw, box)}</div>
+  </section>`).join("");
+</script>
+</body></html>

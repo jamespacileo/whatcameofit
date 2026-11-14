@@ -1,6 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import StageTrack from "../components/StageTrack.astro";
+import StatusMade from "../components/StatusMade.astro";
 import { brandAsset } from "../lib/brand";
 import { data } from "../lib/export";
 import { SITE } from "../../site.config.mjs";
@@ -78,12 +79,15 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
     </details>
   </figure>
 
+  <StatusMade />
+
   {/* A long page on a phone: its sections, one tap away. */}
   <nav class="contents" aria-label="On this page">
     <ul>
       <li><a href="#how-a-status-is-set">How a status is set</a></li>
       <li><a href="#what-each-status-means">What each status means</a></li>
       <li><a href="#no-signal">No signal</a></li>
+      <li><a href="#what-a-trial-entry-shows">What a trial entry shows</a></li>
       <li><a href="#what-this-site-never-says">What this site never says</a></li>
       <li><a href="#where-the-data-comes-from">Where the data comes from</a></li>
       <li><a href="#an-optional-search-of-a-new-report">An optional search of a new report</a></li>
@@ -157,6 +161,24 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
   <p>
     It says nothing about work that has not been published or registered, and it is not a status.
     A new record removes it.
+  </p>
+
+  <h2 class="bar" id="what-a-trial-entry-shows">What a trial entry shows</h2>
+  <p>
+    A claim page lists each of its trials once. Each entry gives what the trial's registry record
+    states: its phase, how many people it enrolled or plans to enrol, how it was designed, who
+    sponsored it, what it set out to measure, and, where the sponsor has posted them, the results
+    for its main measures. These facts are read from the record by fixed rules. No editor and no
+    AI model reads them.
+  </p>
+  <p>
+    The facts are a selection from the record, unaltered, with the date the record was read and a
+    link to the whole of it. Posted results are the numbers the trial's sponsor gave the registry:
+    each group's value, and any p value the sponsor posted with it. The site shows the numbers and
+    adds no word on what they mean for the treatment. They do not change a claim's status.
+  </p>
+  <p>
+    An entry does not say where a trial takes place or who may take part in it.
   </p>
 
   <h2 class="bar" id="what-this-site-never-says">What this site never says</h2>

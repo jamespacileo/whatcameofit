@@ -194,7 +194,8 @@ p {
   stroke: currentColor;
   stroke-width: 4.8;
   stroke-linecap: round;
-  stroke-dasharray: 1;
+  /* A gap longer than the line: a round end on a dash of no length is drawn as a dot. */
+  stroke-dasharray: 1 1.2;
 }
 
 .masthead .name .ask .dot {
@@ -203,27 +204,64 @@ p {
   transform-origin: center;
 }
 
+/* The reverse mark: no tile, the glass in white, the navy showing through the lens. */
+.masthead .name .mark {
+  width: 1.4em;
+  height: 1.4em;
+  margin-right: 0.45em;
+  align-self: center;
+  flex: none;
+  /* The glass starts a little larger than its box. */
+  overflow: visible;
+}
+
+.masthead .name .mark .capsule {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  /* One sentence, told once a visit: the glass is lowered onto the capsule, the
+     question is drawn, its dot lands. */
+  .masthead .name .mark .glass {
+    animation: glass-lower 0.7s var(--ease-out) both;
+  }
+
   .masthead .name .ask .hook {
-    animation: ask-hook 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
+    animation: ask-hook 0.7s var(--ease-out) 0.4s both;
   }
 
   .masthead .name .ask .dot {
-    animation: ask-dot 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.85s both;
+    animation: ask-dot 0.6s var(--ease-out) 1s both;
   }
 
-  .masthead .name:hover .ask .hook {
-    animation-name: ask-hook-again;
+  /* Hovered, the capsule is seen closer and settles: feedback, not the story again. */
+  .masthead .name:hover .mark .capsule,
+  .masthead .name:focus-visible .mark .capsule {
+    animation: closer-look 0.52s cubic-bezier(0.3, 0, 0.2, 1);
   }
+}
 
-  .masthead .name:hover .ask .dot {
-    animation-name: ask-dot-again;
+/* Lowered about the middle of the lens, written out so that no browser's reading of
+   an origin inside a cropped drawing matters. */
+@keyframes glass-lower {
+  from {
+    transform: translate(29px, 29px) scale(1.14) translate(-30.5px, -30.5px);
+  }
+  to {
+    transform: translate(30.5px, 30.5px) scale(1) translate(-30.5px, -30.5px);
+  }
+}
+
+@keyframes closer-look {
+  35% {
+    transform: scale(1.16);
   }
 }
 
 @keyframes ask-hook {
   from {
-    stroke-dashoffset: 1;
+    stroke-dashoffset: 1.1;
   }
   to {
     stroke-dashoffset: 0;
@@ -237,34 +275,6 @@ p {
   to {
     transform: scale(1);
   }
-}
-
-/* The same motion under second names, so a hover plays it again. */
-@keyframes ask-hook-again {
-  from {
-    stroke-dashoffset: 1;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes ask-dot-again {
-  from {
-    transform: scale(0);
-  }
-  to {
-    transform: scale(1);
-  }
-}
-
-/* The reverse mark: no tile, the glass in white, the navy showing through the lens. */
-.masthead .name .mark {
-  width: 1.4em;
-  height: 1.4em;
-  margin-right: 0.45em;
-  align-self: center;
-  flex: none;
 }
 
 .masthead nav ul {
@@ -680,9 +690,46 @@ a.share {
   background: var(--blue);
 }
 
-/* The not-found page: the path with no place marked. */
-.track.nowhere {
+/* Nothing under the glass: the path with no place marked, and the glass at rest past
+   the last of them. On the not-found page, and above a search that finds nothing. */
+.unfound {
+  display: block;
+  width: min(100%, 19rem);
+  height: auto;
   margin-top: 0.9rem;
+  overflow: visible;
+  color: var(--blue);
+}
+
+.unfound .path {
+  stroke: var(--rule);
+  stroke-width: 1.5;
+}
+
+.unfound .place {
+  fill: var(--paper);
+  stroke: var(--ring);
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.unfound .glass {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  transform: translateX(var(--rest));
+}
+
+.results .unfound {
+  width: min(100%, 12rem);
+  margin: 0 0 0.7rem;
+}
+
+/* A saved date: the pill is tinted while its words say so. */
+.share.saved {
+  background: var(--tint);
+  border-color: var(--tint);
 }
 
 /* Under the records: how a status is set, and how to say one is wrong. */
@@ -1104,7 +1151,137 @@ body.embed {
   cursor: pointer;
 }
 
+/* How a status is made, under the video: reported, recorded, where it stands. The
+   drawing is whole as it stands; a reader may ask to see it arrive in order. */
+.made {
+  margin: 1.5rem 0 0;
+}
+
+.made-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.15fr) auto minmax(0, 0.95fr);
+  gap: 1.25rem;
+  align-items: start;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.3rem 1.25rem;
+}
+
+.made-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 0 0 0.35rem;
+}
+
+.made-quote {
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.made-by {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0.15rem 0 0;
+}
+
+/* A promise is on pale amber with a dashed rule here, as everywhere. */
+.made-promise {
+  display: inline-block;
+  margin: 0.6rem 0 0;
+  background: var(--promise);
+  border: 1.5px dashed var(--promise-rule);
+  border-radius: 6px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.85rem;
+}
+
+.made-records {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.made li {
+  display: grid;
+  grid-template-columns: auto 2.4rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
+  padding-block: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.made li + li {
+  border-top: 1px solid var(--rule-soft);
+}
+
+.made li .kind,
+.made li .basis-mark {
+  margin: 0;
+}
+
+.made li .year {
+  font-weight: 700;
+}
+
+.made-status {
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--blue);
+  margin: 0 0 0.45rem;
+}
+
+.made .track .ends {
+  white-space: normal;
+}
+
+.made-to {
+  width: 2.4rem;
+  height: 0.9rem;
+  align-self: center;
+  color: var(--ring);
+}
+
+.made-to path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 1.2;
+}
+
+.made figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.made figcaption .text-control {
+  margin-left: 0.35rem;
+}
+
 @media (max-width: 40rem) {
+  /* Stacked, each arrow pointing down to the next. */
+  .made-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+
+  .made-to {
+    transform: rotate(90deg);
+    align-self: start;
+    margin: 0.7rem 0 0.7rem 0.1rem;
+  }
+
+  .made figcaption .text-control {
+    display: block;
+    margin: 0;
+    padding-block: 0.6rem;
+  }
+
   /* Pressed with a thumb, so it gets the room every pressed thing has. */
   .explainer summary {
     padding-block: 0.6rem;
@@ -2785,6 +2962,187 @@ main ul:not([class]) li + li {
   }
 }
 
+/* Trials on record: each trial once. What it is and how far it got are on the lines a
+   reader sees; what it set out to measure and what it posted are one press away.
+   Openspec trial-facts. */
+.trials {
+  margin-top: 2rem;
+}
+
+.trial {
+  display: grid;
+  gap: 0.15rem;
+  scroll-margin-top: 1.25rem;
+}
+
+.trial > p {
+  margin: 0;
+}
+
+.trial:target {
+  background: var(--tint);
+  outline: 0.3rem solid var(--tint);
+  border-radius: 2px;
+}
+
+.trial-name {
+  overflow-wrap: anywhere;
+}
+
+.trial-name a {
+  font-weight: 700;
+}
+
+.trial-name .out {
+  margin-left: 0.15rem;
+  vertical-align: -0.05em;
+}
+
+.trial-standing {
+  font-weight: 600;
+}
+
+/* Notes about the entry, in one muted line that wraps between notes, not inside them.
+   A gap parts them, so a wrapped line never starts with a mark. */
+.trial-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+}
+
+.trial-more summary,
+.trials-rest > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: fit-content;
+  cursor: pointer;
+  list-style: none;
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.trial-more summary {
+  font-size: 0.9rem;
+  margin-top: 0.2rem;
+}
+
+.trial-more summary::-webkit-details-marker,
+.trials-rest > summary::-webkit-details-marker {
+  display: none;
+}
+
+.trial-more[open] > summary svg,
+.trials-rest[open] > summary svg {
+  transform: rotate(180deg);
+}
+
+.trials-rest {
+  max-width: var(--measure);
+}
+
+.trials-rest > summary {
+  margin-top: 0.9rem;
+}
+
+.trial-facts {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0.6rem 0 0.3rem;
+  padding: 0.8rem 1rem;
+  background: var(--panel);
+  border-radius: 0.65rem;
+}
+
+.trial-facts dt {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.trial-facts dd {
+  margin: 0.1rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.trial-measures,
+.result-groups {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+/* These lists sit inside a row of the trial list and take none of its rules. */
+.trial-list .trial-measures li,
+.trial-list .result-groups li {
+  padding: 0;
+  border: 0;
+}
+
+.result + .result {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--rule);
+}
+
+.result-title {
+  margin: 0 0 0.35rem;
+  font-weight: 600;
+}
+
+.result-title .entry-note {
+  font-weight: 400;
+}
+
+/* One group on one line: its name, its number, and how many were analysed under it. */
+.result-groups li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 1rem;
+  align-items: baseline;
+}
+
+.result-value {
+  font-variant-numeric: tabular-nums lining-nums;
+  text-align: right;
+}
+
+.result-groups .entry-note {
+  grid-column: 1 / -1;
+}
+
+.result-comparison {
+  margin: 0.45rem 0 0;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+@media (max-width: 40rem) {
+  .trial-more summary,
+  .trials-rest > summary {
+    min-height: 2.75rem;
+  }
+
+  .result-groups li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .result-value {
+    text-align: left;
+  }
+}
+
+@media print {
+  .trial {
+    break-inside: avoid;
+  }
+
+  .trial-more summary svg,
+  .trials-rest > summary svg {
+    display: none;
+  }
+}
+
 .index td.claim a {
   font-weight: 700;
 }
@@ -3202,9 +3560,81 @@ main ul:not([class]) li + li {
     transition: transform 120ms var(--ease-out);
   }
 
-  /* The name's story is told once a visit; a hover tells it again. */
-  .seen .masthead .name:not(:hover) .ask .hook,
-  .seen .masthead .name:not(:hover) .ask .dot {
+  /* Nothing under the glass: it passes over the places at one speed, each seen larger
+     as it passes, and comes to rest past the last. It never marks one. */
+  .unfound .glass {
+    animation: glass-pass 2.065s both;
+  }
+
+  .unfound .place {
+    animation: place-seen 0.42s ease-in-out calc(var(--i) * 269ms - 210ms) both;
+  }
+
+  /* How a status is made, when a reader asks to see it in order. */
+  .made.play .made-quote,
+  .made.play .made-by {
+    animation: arrive 0.5s var(--ease-out) both;
+  }
+
+  .made.play .made-promise {
+    animation: arrive 0.5s var(--ease-out) 0.3s both;
+  }
+
+  .made.play .made-to.first path {
+    animation: line-drawn 0.4s var(--ease-out) 0.6s both;
+  }
+
+  .made.play li {
+    animation: arrive 0.45s var(--ease-out) calc(0.9s + var(--i) * 0.25s) both;
+  }
+
+  .made.play .basis-mark {
+    animation: mark-land 0.5s var(--ease-out) 1.7s both;
+  }
+
+  .made.play .made-to.second path {
+    animation: line-drawn 0.4s var(--ease-out) 1.8s both;
+  }
+
+  .made.play .made-status,
+  .made.play .track .ends {
+    animation: fade-in 0.4s ease-out 2.1s both;
+  }
+
+  .made.play .track .step.here {
+    position: relative;
+    animation: mark-land 0.6s var(--ease-out) 2.3s both;
+  }
+
+  .made.play .track .step.here::after {
+    content: "";
+    position: absolute;
+    inset: -1.5px;
+    border-radius: 50%;
+    border: 1.5px solid var(--blue);
+    animation: mark-ring 0.9s var(--ease-out) 2.6s both;
+  }
+
+  /* A topic's drawing is drawn again when its chip is hovered, line by line. */
+  a.chip:hover svg.lines > *,
+  a.chip:focus-visible svg.lines > * {
+    stroke-dasharray: 1 1.2;
+    animation: line-drawn 0.6s var(--ease-out) calc(var(--i, 0) * 60ms) both;
+  }
+
+  /* Followed: the bookmark lands when it is pressed. Saved: the clock's hand turns once. */
+  .share.landed svg {
+    animation: mark-land 0.4s var(--ease-out);
+  }
+
+  .share.saved .clock .hand {
+    animation: hand-turn 0.6s var(--ease-out);
+  }
+
+  /* The name's story is told once a visit. */
+  .seen .masthead .name .mark .glass,
+  .seen .masthead .name .ask .hook,
+  .seen .masthead .name .ask .dot {
     animation-name: none;
   }
 }
@@ -3227,6 +3657,57 @@ main ul:not([class]) li + li {
   to {
     transform: scale(2.8);
     opacity: 0;
+  }
+}
+
+/* The glass crosses the places at one speed, then slows to rest from that speed. */
+@keyframes glass-pass {
+  0% {
+    transform: translateX(8px);
+    animation-timing-function: linear;
+  }
+  71.7% {
+    transform: translateX(var(--past));
+    animation-timing-function: cubic-bezier(0.3, 1, 0.6, 1);
+  }
+  100% {
+    transform: translateX(var(--rest));
+  }
+}
+
+@keyframes place-seen {
+  50% {
+    transform: scale(1.55);
+  }
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* It starts a little further back than its own length: see the name's question mark. */
+@keyframes line-drawn {
+  from {
+    stroke-dashoffset: 1.1;
+  }
+}
+
+/* Once round the middle of the face, written out in the drawing's own units. */
+@keyframes hand-turn {
+  from {
+    transform: translate(12px, 12px) rotate(-360deg) translate(-12px, -12px);
+  }
+  to {
+    transform: translate(12px, 12px) rotate(0deg) translate(-12px, -12px);
   }
 }
 
@@ -3314,6 +3795,7 @@ main ul:not([class]) li + li {
   .again,
   .others,
   .search,
+  .made .text-control,
   .skip {
     display: none;
   }

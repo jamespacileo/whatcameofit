@@ -6,6 +6,7 @@ interface between pipeline and site; its schema is checked in at site/export.sch
 
 import base64
 import json
+from dataclasses import asdict
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -39,6 +40,21 @@ from thenwhat.domain import (
     TrialState,
 )
 from thenwhat.events.manual import TRIAL_TYPES
+from thenwhat.events.trial_facts import (
+    AgeGroup,
+    Allocation,
+    Comparator,
+    Masking,
+    MeasureKind,
+    ParticipantBasis,
+    SponsorKind,
+    StudyKind,
+    TestKind,
+    TrialStateCode,
+    is_registry_record,
+    read_trial,
+    reported_state,
+)
 from thenwhat.outlets.icons import is_blank_icon, outlet_domain
 
 SCHEMA_VERSION = 1
@@ -138,6 +154,9 @@ class ExportedEvent(Strict):
     trial_phases: list[TrialPhase]
     trial_state: TrialState | None
     regulatory_outcome: RegulatoryOutcome | None
+    # How sure the pipeline is that the event is evidence for the claim, 0 to 1. Always
+    # set; optional only so that an export made before it was added is still valid.
+    confidence: float | None = None
 
 
 class ExportedFailureFlag(Strict):
@@ -163,6 +182,97 @@ class ExportedMatch(Strict):
     summary: str | None
 
 
+# Trial facts (openspec trial-facts): what a registry record says of its trial, read by
+# rule. Codes only; the site owns the words. Registry numbers stay strings as written.
+
+
+class ExportedParticipants(Strict):
+    count: int
+    basis: ParticipantBasis
+
+
+class ExportedSponsor(Strict):
+    # None when the sponsor is a person.
+    name: str | None
+    kind: SponsorKind | None
+
+
+class ExportedPlannedOutcome(Strict):
+    measure: str
+    time_frame: str | None
+
+
+class ExportedResultGroup(Strict):
+    title: str
+    analysed: str | None
+    value: str | None
+    spread: str | None
+    lower: str | None
+    upper: str | None
+
+
+class ExportedComparison(Strict):
+    # The titles of the groups compared.
+    groups: list[str]
+    p_value: str | None
+    method: str | None
+    test: TestKind | None
+
+
+class ExportedResultOutcome(Strict):
+    title: str
+    time_frame: str | None
+    unit: str | None
+    measure: MeasureKind | None
+    # The registry's own words, such as "Standard Deviation".
+    spread_kind: str | None
+    # How many rows the outcome is reported in. Groups and comparisons are carried only
+    # for an outcome reported in one row.
+    rows: int
+    groups: list[ExportedResultGroup]
+    comparisons: list[ExportedComparison]
+
+
+class ExportedResults(Strict):
+    # At most three posted primary outcomes, and how many the record posts.
+    outcomes: list[ExportedResultOutcome]
+    outcomes_total: int
+
+
+class ExportedTrialFacts(Strict):
+    study_kind: StudyKind | None
+    participants: ExportedParticipants | None
+    allocation: Allocation | None
+    masking: Masking | None
+    comparators: list[Comparator]
+    healthy_volunteers: bool | None
+    age_groups: list[AgeGroup]
+    sponsor: ExportedSponsor | None
+    # At most three planned primary outcomes, and how many the record plans.
+    primary_outcomes: list[ExportedPlannedOutcome]
+    primary_outcomes_total: int
+    why_stopped: str | None
+    results: ExportedResults | None
+
+
+class ExportedTrial(Strict):
+    """One trial behind the claim's approved events. Its match, if any, is the entry in
+    `matches` with the same identifier."""
+
+    trial_id: str
+    source_name: str
+    # The source link of the trial's newest approved event.
+    url: str
+    # The registry's brief title; None when no registry record is held.
+    title: str | None
+    phases: list[TrialPhase]
+    state: TrialStateCode
+    # When the record the facts were read from was fetched.
+    facts_as_of: datetime | None
+    # None when no registry record is held, as for a trial entered by hand.
+    facts: ExportedTrialFacts | None
+
+
 class ExportedClaim(Strict):
     slug: str
     headline: str
@@ -183,6 +293,8 @@ class ExportedClaim(Strict):
     failure_flags: list[ExportedFailureFlag]
     # Approved matches first, then up to five candidates, each with its confidence.
     matches: list[ExportedMatch] = []
+    # One per registry identifier among the approved trial events, ordered by identifier.
+    trials: list[ExportedTrial] = []
 
 
 class ExportedArchived(Strict):
@@ -301,6 +413,45 @@ def _matches(session: Session, claim: Claim) -> list[ExportedMatch]:
     ]
 
 
+def _trials(events: list[EvidenceEvent]) -> list[ExportedTrial]:
+    """One entry per registry identifier among the claim's approved trial events, given
+    oldest first. Openspec trial-facts: the facts are read from the most recently fetched
+    registry record those events hold; a trial with none is listed without facts."""
+    by_trial: dict[str, list[EvidenceEvent]] = {}
+    for event in events:
+        if event.type in TRIAL_TYPES:
+            by_trial.setdefault(event.external_id, []).append(event)
+    trials: list[ExportedTrial] = []
+    for trial_id, held in sorted(by_trial.items()):
+        newest = held[-1]
+        record = max(
+            (event for event in held if is_registry_record(event.raw_payload)),
+            key=lambda event: (event.fetched_at, event.id),
+            default=None,
+        )
+        if record is None:
+            changes = [event for event in held if event.type is EventType.TRIAL_STATUS_CHANGE]
+            state = reported_state(changes[-1].trial_state if changes else None)
+            title, facts, facts_as_of = None, None, None
+        else:
+            read = read_trial(record.raw_payload)
+            state, title, facts_as_of = read.state, read.title, record.fetched_at
+            facts = ExportedTrialFacts.model_validate(asdict(read.facts))
+        trials.append(
+            ExportedTrial(
+                trial_id=trial_id,
+                source_name=newest.source_name,
+                url=newest.source_url,
+                title=title,
+                phases=[TrialPhase(phase) for phase in newest.trial_phases or []],
+                state=state,
+                facts_as_of=facts_as_of,
+                facts=facts,
+            )
+        )
+    return trials
+
+
 def _outlets(session: Session, claims: list[ExportedClaim]) -> list[ExportedOutlet]:
     domains = {outlet_domain(article.url) for claim in claims for article in claim.articles}
     return [
@@ -416,10 +567,12 @@ def build_export(session: Session, *, now: datetime, no_signal_years: int = 3) -
                         trial_phases=[TrialPhase(phase) for phase in event.trial_phases or []],
                         trial_state=event.trial_state,
                         regulatory_outcome=event.regulatory_outcome,
+                        confidence=round(event.confidence, 4),
                     )
                     for event in events
                 ],
                 matches=_matches(session, claim),
+                trials=_trials(events),
                 failure_flags=[
                     ExportedFailureFlag(trial_id=flag.trial_external_id, source_url=flag.source_url)
                     for flag in session.scalars(

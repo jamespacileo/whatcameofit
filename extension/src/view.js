@@ -1,7 +1,7 @@
 // Draws one popup state. Status wording comes from the lookup file, and the wording of a
 // registry search's answer from the site's own module; the few sentences here are the
 // extension's own and never describe a claim.
-import { icon } from "./icons.js";
+import { icon, waitMark } from "./icons.js";
 
 const text = {
   checking: "Checking this page…",
@@ -128,12 +128,22 @@ function track(place, places) {
   return el("dd", "track", [steps]);
 }
 
+// A wait is one line: the mark, looking, and what is being waited for.
+function waiting(words) {
+  return el("p", "checking", [waitMark(), words]);
+}
+
 // Following a claim, or stopping: one control under the way to its evidence.
 function followControl(claim, kept, actions) {
   if (!kept || !actions.follow) return null;
   if (kept.followed.includes(claim.page)) {
+    // Just pressed: the bell gives way to a tick that is drawn. Opened on a claim
+    // already followed, the tick is simply there.
+    const fresh = kept.fresh === claim.page;
+    const tick = icon("check");
+    if (fresh) tick.children[0].setAttribute("pathLength", "1");
     return el("p", "small followed", [
-      el("span", "followed-mark", [icon("check"), text.followingThis]),
+      el("span", fresh ? "followed-mark drawn" : "followed-mark", [tick, text.followingThis]),
       " ",
       press(text.stop, "text-button", () => actions.unfollow(claim.page)),
     ]);
@@ -408,7 +418,7 @@ const BUSY = new Set(["checking", "searching", "capturing"]);
 export function render(root, state, site, actions, kept = null) {
   let children;
   if (state.kind === "checking") {
-    children = [el("p", "checking", text.checking)];
+    children = [waiting(text.checking)];
   } else if (state.kind === "recent") {
     children = recentView(state, actions);
   } else if (state.kind === "entry") {
@@ -446,7 +456,7 @@ export function render(root, state, site, actions, kept = null) {
       state.enabled ? press("Turn off automatic search", "button quiet", actions.disableSharing) : press("Allow and search", "button", actions.enableSharing),
       !state.enabled && press("Use reviewed claims only", "button quiet", actions.disableSharing)];
   } else if (state.kind === "capturing") {
-    children = [el("p", "checking", "Reading the visible image…"), privacyNote(site, actions)];
+    children = [waiting("Reading the visible image…"), privacyNote(site, actions)];
   } else if (state.kind === "visual-preview") {
     const preview = el("img", "visual-preview");
     preview.src = state.image.dataUrl;
@@ -455,7 +465,7 @@ export function render(root, state, site, actions, kept = null) {
       el("p", "small", "This image and the page address go to What came of it? and OpenAI. Check for private messages or other personal information. A video contributes only this frame, not its audio."),
       press("Search this image", "button", actions.sendVisual), press("Cancel", "button quiet", actions.cancelVisual)];
   } else if (state.kind === "searching") {
-    children = [el("p", "checking", state.visual ? "Reading the screenshot and searching the registry…" : text.searching), privacyNote(site, actions)];
+    children = [waiting(state.visual ? "Reading the screenshot and searching the registry…" : text.searching), privacyNote(site, actions)];
   } else if (state.kind === "too-little") {
     children = [message(text.tooLittleTitle, text.tooLittleBody, press(text.again, "button quiet", actions.search))];
   } else if (state.kind === "refused") {

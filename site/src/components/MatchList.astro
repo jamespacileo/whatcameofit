@@ -1,0 +1,42 @@
+---
+// Matched records: the record on the left, how sure the match is on the right, how it
+// was read one press away. Used for registry records and for papers. Openspec
+// auto-publish: "Confidence is shown with every match".
+import ChevronDown from "@lucide/astro/icons/chevron-down";
+import { confidenceLabel, readingOf } from "../lib/confidence";
+import type { ExportedMatch } from "../lib/export";
+
+interface Props {
+  matches: ExportedMatch[];
+}
+
+const { matches } = Astro.props;
+---
+
+<ul class="plain match-list">
+  {
+    matches.map((match) => (
+      <li>
+        <span class="match-record">
+          {match.url ? (
+            <a href={match.url} rel="noopener">
+              {match.external_id}
+            </a>
+          ) : (
+            match.external_id
+          )}
+          {match.summary && (
+            <span class="entry-note">{match.summary.replace(`${match.external_id}: `, "")}</span>
+          )}
+        </span>
+        <details class="match-why">
+          <summary>
+            <strong>{confidenceLabel(match.score)}</strong>
+            <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+          </summary>
+          <p>{readingOf(match.reading)}</p>
+        </details>
+      </li>
+    ))
+  }
+</ul>
