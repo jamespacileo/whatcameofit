@@ -90,6 +90,13 @@ As built (2026-11-14):
 - The rule checks that the number is in the words as digits of its own (4 is in "week 4", not in "week 14"). It does not check that the unit is in the words.
 - `thenwhat readings <slug>…` or `--all`; `thenwhat prepare` runs it as each claim's last step. The seed export carries empty readings: the seed loader cannot seed model-read rows.
 
+First run (2026-11-14), on a copy of the local database (`thenwhat_readings`), not the shared one: main had moved to migration 0015, so this change's migration was renumbered 0016 after merging main. Four claims, 17 trials read in 17 calls, 49 readings stored, none refused by rule, a second run read nothing. Seen on the built pages: the largest Tourette trial reads "How much a symptom score changed over 4 weeks", with its quoted words in the record. What the run showed:
+
+- 13 of 49 readings came back with a confidence of 1.0, shown as "very likely · 100%". The figure is the model's own and says more than a reading can.
+- A walking test was read as `other`, so its answer fell back to the registry's title. The list has no kind for a test of physical function.
+- "Progression-Free Survival" was read as `survival` and worded "How long until an event, such as a relapse". The event in that trial is the illness getting worse or death, so "such as a relapse" is not exact.
+- A trial whose time frame gives no number has no follow-up, and its answer names the measure alone.
+
 Repeatability is delivered by storing readings, not by trusting a model to repeat itself. The site never says the same records always give the same answers.
 
 Rejected: the model writing the plain phrase; reading the outcome description; a second model as checker.

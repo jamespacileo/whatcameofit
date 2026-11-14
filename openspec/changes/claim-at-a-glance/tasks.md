@@ -33,7 +33,7 @@
 
 - [x] 5.1 Record "The record in brief" under Components in `DESIGN.md`, update its Digest panel and Facts entries for the bridging sentence and the removed fact, add "reading" and "under way" to `GLOSSARY.md` if not there, and add the readings step to the README's commands if it lists pipeline steps; verify each file names the new element
 - [x] 5.2 Run `make check` and verify ruff, ty, pytest, the site tests, the site build and the extension tests all pass
-- [ ] 5.3 Run the readings step on the local database, rebuild the export, and open the Tourette claim, one preclinical claim and one approved claim in the browser preview; verify each answer matches the trials and papers listed lower on the page and each model-read answer's quoted words are in the linked registry record
+- [x] 5.3 Run the readings step on the local database, rebuild the export, and open the Tourette claim, one preclinical claim and one approved claim in the browser preview; verify each answer matches the trials and papers listed lower on the page and each model-read answer's quoted words are in the linked registry record
 
 ## Workflow follow-up
 
