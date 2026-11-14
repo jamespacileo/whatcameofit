@@ -329,6 +329,26 @@ class OrganisationRecord(Base):
     fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
 
 
+class EntitySubstance(Base):
+    """The one substance a registry of substances lists an intervention under, as that
+    registry returned it, with the development codes it lists for the substance. An
+    intervention the registry does not list, or lists under more than one substance,
+    has no row."""
+
+    __tablename__ = "entity_substance"
+
+    entity_id: Mapped[int] = mapped_column(ForeignKey("entity.id"), primary_key=True)
+    source_name: Mapped[str] = mapped_column(Text)
+    # The substance's identifier at the source.
+    external_id: Mapped[str] = mapped_column(Text)
+    url: Mapped[str] = mapped_column(Text)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    # The names the source marks as codes for this substance. Searched for like search
+    # phrases, within the claim's indication only, and never shown as a name.
+    codes: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, server_default="{}")
+
+
 class EvidenceEvent(Reviewed, Base):
     __tablename__ = "evidence_event"
     __table_args__ = (

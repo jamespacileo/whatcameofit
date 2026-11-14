@@ -18,6 +18,7 @@ from thenwhat.sources.base import AllowanceUsedUp, MissingKey, SourceError, Unse
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref, Notice
 from thenwhat.sources.europepmc import EuropePmc, describe
+from thenwhat.sources.gsrs import Gsrs, codes_of, label_of
 from thenwhat.sources.mesh import Mesh
 from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.ror import Ror
@@ -883,3 +884,63 @@ def test_name_no_label_equals_returns_no_term(session: Session, fake_time, fixtu
     source, _ = vocabulary(session, fake_time, lambda request: nothing)
 
     assert source.terms_labelled("Knee osteoarthritis pain") == []
+
+
+# --- GSRS ------------------------------------------------------------------------
+
+BAXDROSTAT = "d050debb-84b5-4703-90a9-afc4fd2c21c6"
+
+
+def substances(session: Session, fake_time, fixture_json, search: str) -> tuple[Gsrs, Replay]:
+    def route(request: httpx.Request):
+        if request.url.path.endswith("/substances/search"):
+            return fixture_json(f"gsrs/{search}.json")
+        if request.url.path.endswith(f"/substances({BAXDROSTAT})/names"):
+            return fixture_json("gsrs/names_baxdrostat.json")
+        return NOT_FOUND
+
+    replay = Replay(route)
+    source = Gsrs(
+        session, contact_email=CONTACT, transport=httpx.MockTransport(replay), time=fake_time
+    )
+    return source, replay
+
+
+def test_substance_is_found_under_a_name_the_registry_lists(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Substance listed under the name"""
+    source, replay = substances(session, fake_time, fixture_json, "search_baxdrostat")
+
+    [record] = source.substances_named("baxdrostat")
+
+    assert record.source_name == "gsrs"
+    assert record.external_id == BAXDROSTAT
+    assert record.url.endswith(f"/substances/{BAXDROSTAT}")
+    assert record.fetched_at == fake_time.now()
+    assert record.payload["names"] == fixture_json("gsrs/names_baxdrostat.json")
+    assert label_of(record) == "Baxdrostat (UNII NF3P9Z8J5Y)"
+    # Only the names the registry marks as codes, as it writes them.
+    assert codes_of(record) == ["CIN-107", "RO-6836191", "RO6836191"]
+    assert replay.requests[0].url.params["q"] == 'root_names_name:"^baxdrostat$"'
+    assert CONTACT in replay.requests[0].headers["User-Agent"]
+
+
+def test_a_name_that_only_resembles_a_listed_name_finds_no_substance(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Name that only resembles a listed name"""
+    # The registry's own search answers "cin 107" with the substance coded CIN-107.
+    source, _ = substances(session, fake_time, fixture_json, "search_cin_107_spaced")
+
+    assert source.substances_named("cin 107") == []
+
+
+def test_a_name_the_registry_does_not_list_finds_no_substance(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Name the registry does not list"""
+    source, replay = substances(session, fake_time, fixture_json, "search_nothing")
+
+    assert source.substances_named("faecal microbiota transplant") == []
+    assert len(replay.requests) == 1

@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from thenwhat.extract.page import Page
     from thenwhat.llm.client import Llm
     from thenwhat.lookup.service import Papers, Trials
+    from thenwhat.resolve.codes import Substances
 
 # Why a record is ranked where it is, in the operator's words.
 WHY = {
@@ -45,6 +46,13 @@ def make_papers(session: Session) -> "Papers":
     from thenwhat.sources.europepmc import EuropePmc
 
     return EuropePmc(session, contact_email=settings_or_exit().contact_email)
+
+
+def make_substances(session: Session) -> "Substances":
+    from thenwhat.cli.session import settings_or_exit
+    from thenwhat.sources.gsrs import Gsrs
+
+    return Gsrs(session, contact_email=settings_or_exit().contact_email)
 
 
 def _post_and_article(url: str) -> tuple[str, "Page | None"] | None:
@@ -137,6 +145,7 @@ def lookup_command(
             now=datetime.now(UTC),
             page=page,
             papers=make_papers(session) if page else None,
+            substances=make_substances(session),
         )
 
     if as_json:
@@ -154,6 +163,17 @@ def lookup_command(
             f"Also searched under names the text does not give: {', '.join(found.known_names)}",
             markup=False,
         )
+    if found.codes:
+        out.print(
+            f"Also searched under development codes GSRS lists: {', '.join(found.codes)}",
+            markup=False,
+        )
+    elif found.codes_not_looked_up:
+        out.print(
+            f"Development codes were not looked up: {found.codes_not_looked_up}", markup=False
+        )
+    else:
+        out.print("GSRS lists no development code for the names the text gives.")
     out.print(f"Condition: {found.indication}", markup=False)
     said = [
         f"trial name {found.details.trial_name}" if found.details.trial_name else "",

@@ -1,15 +1,15 @@
 """record which step is done for which record, and hold registry trials and article leads
 
-Revision ID: 0013
-Revises: 0012
+Revision ID: 0014
+Revises: 0013
 """
 
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
-revision = "0013"
-down_revision = "0012"
+revision = "0014"
+down_revision = "0013"
 branch_labels = None
 depends_on = None
 
