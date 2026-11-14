@@ -153,6 +153,18 @@ Rollback: the new tables can be dropped without touching claims. Claims and sour
 Groups 1 to 6 are built. Before the reading step is written, two things the specs do not settle have to be decided by the operator, because each changes what the public site shows.
 
 1. **The article's date when its page gives none.** A source article needs a publication date, and it sets a claim's first reported date. `extract/page.py` reads the date from the page, and `docs/outlets.md` shows it finds none on some of the most shared outlets (sciencedaily.com and eurekalert.org: none of 13 pages). The date a link was first shared is on or after publication, usually the same day, but it is not the publication date. The project's rule is one way at full quality and an explicit empty state otherwise, so the proposal is: a lead whose page gives no date is not read, its outcome says so, and the funnel counts these by outlet so the page reader can be taught their markup. The alternative, using the first shared date, would publish a date nobody published.
+   **Measured on 2026-11-14.** For articles whose address holds their date, the date of the first Hacker News share was compared with it. Sample: stories found through the Hacker News search interface, 143 requests, one article counted once at its earliest share, share time in UTC.
+
+   | Sample | Articles | Same day | Within a day | Within 7 days | Same month | Same year | Over 30 days late | Over a year late |
+   | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+   | Six news outlets, a health word in the address | 4,620 | 48% | 80% | 93% | 93% | 97.5% | 3.3% | 1.5% |
+   | sciencedaily.com | 4,070 | 11% | 43% | 83% | 81% | 93.5% | 8.9% | 4.2% |
+   | eurekalert.org, old addresses | 932 | 11% | 35% | 84% | 88% | 96% | 4.6% | 1.4% |
+
+   The six outlets are theguardian.com, nytimes.com, statnews.com, washingtonpost.com, cnn.com and npr.org. A share is almost never earlier than the address's date (20 of 4,620 by two days or more; the rest of the early ones are one day, the time zone). So the first shared date is a sound upper bound and right to the year in 93 to 97 cases in 100. It is the wrong day in half the news articles and nine in ten press releases, and its misses are large: the late shares over 30 days have a median of about 300 days and reach 17 years. Those are old reports shared again, which are the reports this tracker most needs dated correctly.
+
+   The same sample shows a better source for the outlets that gave the question: the address. 4,070 of 4,073 sciencedaily.com addresses hold the release date (99.9%), as do 4,620 of 4,701 of the six news outlets' (98%) and 932 of 1,034 old eurekalert.org addresses (90%). Newer eurekalert.org addresses hold a number only and were not sampled. Proposal, replacing the one above: the date is read from the page, or by rule from the address for outlets whose addresses hold it; a lead with neither is not read and is counted by outlet. The first shared date stays on the lead and is never shown as a publication date. Limits of the sample: Hacker News only, and for the news outlets only addresses that hold a health word.
+
 2. **The outlet's name on a source article.** Entered articles carry a name a person typed ("The Guardian"). A lead knows only the domain. The choices are to show the domain as the outlet, or to add a display name to each listed outlet in `backfill/outlet_kinds.py` and refuse a lead whose outlet has none.
 
 Neither is in `specs/lead-reading/spec.md` yet. Whichever is chosen becomes a requirement there before task group 7 starts.
