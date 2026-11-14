@@ -117,8 +117,9 @@ def find_papers(
 
     The intervention's name, other names and search phrases are each searched together
     with the indication. A claim keeps at most twenty papers, taken in the source's own
-    order of relevance, in turn from each term. A paper the claim already has is left as
-    it is, whatever its state.
+    order of relevance, in turn from each term. A rejected paper is not one the claim
+    keeps, so it leaves room for another; it is never added again. A paper the claim
+    already has is left as it is, whatever its state.
 
     A candidate scored under `reject_below` is rejected by rule. One scored at or above
     `accept_above` is approved by rule, with or without a reason; 0 turns that off. If a
@@ -127,8 +128,10 @@ def find_papers(
     intervention = _intervention(session, claim)
     if intervention is None or not claim.indication.strip():
         return []
-    had = {match.external_id for match in _paper_matches(session, intervention)}
-    room = MAX_PAPERS_PER_CLAIM - len(had)
+    known = _paper_matches(session, intervention)
+    had = {match.external_id for match in known}
+    kept = [match for match in known if match.review_state is not ReviewState.REJECTED]
+    room = MAX_PAPERS_PER_CLAIM - len(kept)
     if room <= 0:
         return []
 

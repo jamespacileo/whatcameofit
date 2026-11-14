@@ -248,6 +248,28 @@ def test_a_claim_keeps_at_most_twenty_papers_in_turn_from_each_term(session: Ses
     assert find(session, claim, FakePapers({NAME_SEARCH: [paper("10.1/new")]})) == []
 
 
+def test_rejected_papers_leave_room_for_others_and_are_not_added_again(session: Session):
+    claim = new_claim(session)
+    twenty = [paper(f"10.1/p{n}", f"Paper {n:02}", work=f"W{n}") for n in range(20)]
+    low = {"Paper 00": 0.01, "Paper 01": 0.01}
+    first = find(
+        session, claim, FakePapers({PHRASE_SEARCH: twenty}), Reading(low), reject_below=0.05
+    )
+    assert [m.review_state for m in first[:3]] == [
+        ReviewState.REJECTED,
+        ReviewState.REJECTED,
+        ReviewState.PENDING,
+    ]
+    newer = [paper(f"10.1/new{n}", f"New {n}", work=f"W9{n}") for n in range(5)]
+
+    added = find(session, claim, FakePapers({PHRASE_SEARCH: [*twenty[:2], *newer]}))
+
+    # Two were rejected, so two fit; the rejected ones stay rejected and are not re-added.
+    assert [m.external_id for m in added] == ["10.1/new0", "10.1/new1"]
+    kept = [m for m in paper_matches(session) if m.review_state is not ReviewState.REJECTED]
+    assert len(kept) == 20 and len(paper_matches(session)) == 22
+
+
 def test_allowance_used_up_before_any_paper_is_found_is_the_reason_given(session: Session):
     class UsedUp(FakePapers):
         def search_papers(self, words: str, limit: int = 20) -> list[SourceRecord]:
