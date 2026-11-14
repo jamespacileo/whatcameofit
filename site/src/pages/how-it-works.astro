@@ -186,6 +186,47 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
     An entry does not say where a trial takes place or who may take part in it.
   </p>
 
+  <h2 class="bar" id="what-a-paper-entry-shows">What a paper entry shows</h2>
+  <p>
+    A claim page lists each of its papers once, under "Papers on record": the paper the first
+    news reports were about, papers a trial's registry record names, follow-up papers, and
+    related research a literature search found. A paper is not a trial record. No paper sets or
+    changes a claim's status, with one exception that is a record of its own: a retraction notice
+    for the paper first reported.
+  </p>
+  <p>
+    What an entry says of a paper is read from the paper's record in Europe PMC, an index of
+    life-science publications, by fixed rules: its title, the journal, the year, the kind of
+    publication the index gives it, whether it is open access, and whether the index marks it as
+    retracted. The entry shows the date the record was read. No abstract and no author is stored
+    or shown, and no editor and no AI model reads the paper. An entry says what kind of
+    publication a paper is and never what it concluded.
+  </p>
+  <p>
+    "Files it as a study in people" or "in animals" repeats two subject headings that the
+    index's own indexers apply, "Humans" and "Animals". The site reads those two and guesses
+    nothing from a title or a species name. Work on human cells can carry "Humans", and a recent
+    paper may carry no heading yet, in which case the entry says nothing. The count of records in
+    people and in animals on a claim page counts trials and papers filed that way. It counts
+    records, and says nothing about whether a treatment does anything in people or in animals.
+  </p>
+  <p>
+    A paper reaches a trial's entry in one of two ways, both taken from the trial's own registry
+    record with no search. "Listed by the sponsor" means the trial's sponsor gave the registry
+    the paper and marked it as reporting results from the study. "Linked by the registry" means
+    ClinicalTrials.gov filled the paper in from PubMed; the registry itself says such a paper
+    "may or may not be about the study". Papers a sponsor listed only as background are not
+    shown.
+  </p>
+  <p>
+    Related research is found by searching OpenAlex, an index of scholarly papers, for the
+    treatment and the condition. A paper is listed when its match scores in the high band, with
+    the score and the reasons a fixed rule found: that its title names the treatment, that it
+    names the condition, that it comes from an institution the report names, or that it was
+    published on or before the day of the first report. The score is about the match, not about
+    the treatment, and a related paper is not counted in the status.
+  </p>
+
   <h2 class="bar" id="background-on-a-claims-terms">Background on a claim’s terms</h2>
   <p>
     Some claim pages end with a short section called Background. It says what the claim’s

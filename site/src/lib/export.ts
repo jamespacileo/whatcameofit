@@ -4,6 +4,7 @@ import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import { unlabelledApproaches } from "./approach";
+import { unlabelledPaperCodes } from "./paper-facts";
 import { unwordedCardCodes, type ExportedCard, type ExportedCardSource } from "./background";
 import { unlabelledTrialCodes } from "./trial-facts";
 
@@ -96,6 +97,52 @@ export interface ExportedTrial {
   facts_as_of: string | null;
   /** Null for a trial entered by hand, which has no registry record. */
   facts: ExportedTrialFacts | null;
+  /** Identifiers of the papers the trial's registry record names, each an entry in the
+   * claim's `papers`. Absent from an export made before openspec paper-facts. */
+  papers?: string[];
+}
+
+/** One role a paper plays for a claim. Openspec paper-facts. */
+export interface ExportedPaperRole {
+  /** "origin", "trial_result", "follow_up" or "related". */
+  role: string;
+  /** For a trial's results paper: the trial, and how its record came to name the paper. */
+  trial_id?: string | null;
+  listed?: string | null;
+  /** For a follow-up paper: the evidence event it is behind. */
+  event_id?: number | null;
+  /** For a related paper: the match score, the reasons as codes, and what the search
+   * source says of the paper in one line. */
+  score?: number | null;
+  reasons?: string[];
+  decided_by?: string | null;
+  summary?: string | null;
+}
+
+/** What a paper's index record states of the paper, as codes and the record's own text. */
+export interface ExportedPaperFacts {
+  title: string | null;
+  journal: string | null;
+  year: number | null;
+  /** Every kind the record gives, most specific first. */
+  kinds: string[];
+  open_access: boolean | null;
+  retracted: boolean;
+  /** "people", "animals", both or neither, from the record's subject headings. */
+  studied_in: string[];
+}
+
+/** One paper a claim page lists, once, whatever brought it there. */
+export interface ExportedPaper {
+  /** The DOI, else "pmid:<number>", else the search source's own identifier. */
+  identifier: string;
+  url: string;
+  /** The index record the facts were read from. */
+  record_url: string | null;
+  roles: ExportedPaperRole[];
+  facts_as_of: string | null;
+  /** Null when the index does not hold the paper. */
+  facts: ExportedPaperFacts | null;
 }
 
 export interface ExportedMatch {
@@ -148,6 +195,9 @@ export interface ExportedClaim {
   /** The claim's trials, one per registry identifier. Absent from an export made before
    * openspec trial-facts. */
   trials?: ExportedTrial[];
+  /** Each paper the page lists, once. Absent from an export made before openspec
+   * paper-facts, which lists its papers among `matches` instead. */
+  papers?: ExportedPaper[];
   /** Background cards: at most one for the condition, then one for the intervention.
    * Absent from an export made before openspec knowledge-cards. */
   background?: ExportedCard[];
@@ -222,6 +272,14 @@ function load(): Export {
   if (unworded.length > 0) {
     throw new Error(
       `The export at ${file} has trial fact codes the site has no words for: ${unworded.join(", ")}. Add them to src/lib/trial-facts.ts.`,
+    );
+  }
+  const unwordedPapers = unlabelledPaperCodes(
+    (content as Export).claims.flatMap((claim) => claim.papers ?? []),
+  );
+  if (unwordedPapers.length > 0) {
+    throw new Error(
+      `The export at ${file} has paper codes the site has no words for: ${unwordedPapers.join(", ")}. Add them to src/lib/paper-facts.ts.`,
     );
   }
   const unwordedCards = unwordedCardCodes(

@@ -13,9 +13,17 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.entities import add_synonym
+from thenwhat.claims.entities import add_entity, add_synonym, entities_of, set_origin_paper
 from thenwhat.claims.entry import add_article, add_claim, add_promise, archive_claim
-from thenwhat.db.models import Claim, ClaimTerm, Entity, EntityMatch, EvidenceEvent, TermRecord
+from thenwhat.db.models import (
+    Claim,
+    ClaimTerm,
+    Entity,
+    EntityMatch,
+    EvidenceEvent,
+    PaperRecord,
+    TermRecord,
+)
 from thenwhat.domain import (
     Decider,
     EntityType,
@@ -29,6 +37,7 @@ from thenwhat.domain import (
 )
 from thenwhat.events.fetch import event_row
 from thenwhat.events.manual import add_manual_event
+from thenwhat.events.paper_facts import reduced
 from thenwhat.events.trial import trial_events
 from thenwhat.export.build import SCHEMA_VERSION, build_export, export_json_schema, write_export
 from thenwhat.review.decisions import record_decision
@@ -480,6 +489,7 @@ def test_trial_with_four_approved_events_is_listed_once_with_its_facts(
         "phases": ["phase_2"],
         "state": "completed",
         "facts_as_of": "2026-10-03T08:00:00Z",
+        "papers": ["pmid:26048637"],
     }
     facts = trial["facts"]
     assert facts["participants"] == {"count": 20, "basis": "actual"}
@@ -556,6 +566,7 @@ def test_trial_entered_by_hand_is_listed_without_facts(session: Session):
             "state": "under_way",
             "facts_as_of": None,
             "facts": None,
+            "papers": [],
         },
         {
             "trial_id": "NCT2",
@@ -566,6 +577,7 @@ def test_trial_entered_by_hand_is_listed_without_facts(session: Session):
             "state": "not_started",
             "facts_as_of": None,
             "facts": None,
+            "papers": [],
         },
     ]
 
@@ -583,6 +595,7 @@ def test_seed_claims_jrct_trial_is_listed_without_facts(session: Session):
             "state": "completed",
             "facts_as_of": None,
             "facts": None,
+            "papers": [],
         }
     ]
 
@@ -635,6 +648,287 @@ def test_posted_result_with_a_high_p_value_leaves_the_status_unchanged(
     assert without_results["trials"][0]["facts"]["results"] is None
     assert without_results["status"]["code"] == with_results["status"]["code"]
     assert without_results["status"]["explained_by"] == with_results["status"]["explained_by"]
+
+
+# --- papers and their facts (openspec paper-facts) --------------------------------------
+
+TRIAL_REPORT_DOI = "10.1056/nejmoa2206038"
+TRIAL_REPORT_PMID = "35658024"
+NO_ROLE_DETAILS = {
+    "trial_id": None,
+    "listed": None,
+    "event_id": None,
+    "score": None,
+    "reasons": [],
+    "decided_by": None,
+    "summary": None,
+}
+
+
+def role(name: str, **details: Any) -> dict[str, Any]:
+    return {"role": name} | NO_ROLE_DETAILS | details
+
+
+def index_record(fixture_json, name: str = "pmid_35658024_trial_report") -> dict[str, Any]:
+    return copy.deepcopy(fixture_json(f"europepmc/{name}.json")["resultList"]["result"][0])
+
+
+def store_paper(session: Session, record: dict[str, Any] | None, *, pubmed_id: str | None = None):
+    """A paper record as a fetch stores it: reduced, or with no payload when the index
+    does not hold the paper."""
+    doi = record["doi"].lower() if record else None
+    number = record["pmid"] if record else pubmed_id
+    session.add(
+        PaperRecord(
+            identifier=doi or f"pmid:{number}",
+            source_name="europepmc",
+            pubmed_id=number,
+            payload=reduced(record) if record else None,
+            fetched_at=OCTOBER,
+        )
+    )
+    session.flush()
+
+
+def with_references(record: dict[str, Any], *entries: tuple[str, str]) -> dict[str, Any]:
+    record["protocolSection"]["referencesModule"] = {
+        "references": [
+            {"pmid": pubmed_id, "type": kind, "citation": "Example A. A made-up citation."}
+            for pubmed_id, kind in entries
+        ]
+    }
+    return record
+
+
+def add_origin_paper(session: Session, doi: str, slug: str = SLUG) -> EntityMatch:
+    origin = add_entity(session, slug, type=EntityType.PAPER, name="Origin", doi=doi)
+    set_origin_paper(session, slug, "Origin")
+    match = EntityMatch(entity_id=origin.id, source_name="crossref", external_id=doi, score=1.0)
+    record_decision(match, ReviewState.APPROVED, by=Decider.HUMAN, now=EARLIER)
+    session.add(match)
+    session.flush()
+    return match
+
+
+def add_follow_up(session: Session, doi: str, state: ReviewState) -> EvidenceEvent:
+    event = add_event(
+        session,
+        approve=False,
+        type=EventType.FOLLOWUP_PAPER,
+        event_date=date(2021, 5, 1),
+        source_url=f"https://europepmc.org/article/MED/{doi.rsplit('/', 1)[-1]}",
+        summary="A later study",
+        external_id=doi,
+        trial_phases=[],
+    )
+    decide_item(session, "event", event.id, state, now=EARLIER)
+    return event
+
+
+def test_origin_paper_that_a_trial_also_lists_is_exported_once_with_both_roles(
+    session: Session, fixture_json
+):
+    """Scenario: Origin paper that a trial also lists"""
+    claim = new_claim(session)
+    add_origin_paper(session, TRIAL_REPORT_DOI)
+    store_paper(session, index_record(fixture_json))
+    record = with_references(
+        study(fixture_json, "study_NCT01596231_results"), (TRIAL_REPORT_PMID, "RESULT")
+    )
+    add_registry_events(session, claim, record, fetched_at=OCTOBER)
+
+    exported_claim = claim_in(exported(session))
+
+    [paper] = exported_claim["papers"]
+    assert paper["identifier"] == TRIAL_REPORT_DOI
+    assert paper["url"] == f"https://doi.org/{TRIAL_REPORT_DOI}"
+    assert paper["record_url"] == "https://europepmc.org/article/MED/35658024"
+    assert paper["roles"] == [
+        role("origin"),
+        role("trial_result", trial_id="NCT01596231", listed="listed_by_sponsor"),
+    ]
+    assert paper["facts_as_of"] == "2026-10-03T08:00:00Z"
+    assert paper["facts"] == {
+        "title": "Tirzepatide Once Weekly for the Treatment of Obesity.",
+        "journal": "The New England journal of medicine",
+        "year": 2022,
+        "kinds": ["randomised_trial", "clinical_trial", "article"],
+        "open_access": False,
+        "retracted": False,
+        "studied_in": ["people"],
+    }
+    assert exported_claim["trials"][0]["papers"] == [TRIAL_REPORT_DOI]
+
+
+def test_paper_behind_a_rejected_event_is_not_exported(session: Session):
+    """Scenario: Paper behind a rejected event"""
+    new_claim(session)
+    add_follow_up(session, "10.1000/rejected", ReviewState.REJECTED)
+    approved = add_follow_up(session, "10.1000/later", ReviewState.APPROVED)
+
+    papers = claim_in(exported(session))["papers"]
+
+    assert [paper["identifier"] for paper in papers] == ["10.1000/later"]
+    assert papers[0]["roles"] == [role("follow_up", event_id=approved.id)]
+    # No record of it is stored yet, so it is listed with its link only.
+    assert (papers[0]["facts"], papers[0]["facts_as_of"]) == (None, None)
+
+
+def test_paper_the_index_does_not_hold_is_listed_with_its_number_and_link_only(
+    session: Session, fixture_json
+):
+    """Scenario: Paper the index does not hold"""
+    claim = new_claim(session)
+    store_paper(session, None, pubmed_id="26048637")
+    add_registry_events(session, claim, study(fixture_json, "study_NCT01596231_results"))
+
+    [paper] = claim_in(exported(session))["papers"]
+
+    assert paper == {
+        "identifier": "pmid:26048637",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26048637/",
+        "record_url": None,
+        "roles": [role("trial_result", trial_id="NCT01596231", listed="linked_by_registry")],
+        "facts_as_of": None,
+        "facts": None,
+    }
+
+
+def test_trial_lists_its_sponsor_listed_and_its_registry_linked_paper(
+    session: Session, fixture_json
+):
+    claim = new_claim(session)
+    store_paper(session, index_record(fixture_json))
+    record = with_references(
+        study(fixture_json, "study_NCT01596231_results"),
+        ("111", "BACKGROUND"),
+        (TRIAL_REPORT_PMID, "RESULT"),
+        ("26048637", "DERIVED"),
+    )
+    add_registry_events(session, claim, record)
+
+    exported_claim = claim_in(exported(session))
+
+    assert exported_claim["trials"][0]["papers"] == [TRIAL_REPORT_DOI, "pmid:26048637"]
+    assert [
+        (paper["identifier"], paper["roles"][0]["listed"]) for paper in exported_claim["papers"]
+    ] == [
+        (TRIAL_REPORT_DOI, "listed_by_sponsor"),
+        ("pmid:26048637", "linked_by_registry"),
+    ]
+
+
+def test_papers_of_a_trial_with_only_pending_events_are_not_exported(
+    session: Session, fixture_json
+):
+    claim = new_claim(session)
+    add_registry_events(
+        session, claim, study(fixture_json, "study_NCT01596231_results"), approve=False
+    )
+
+    assert claim_in(exported(session))["papers"] == []
+
+
+def test_exported_papers_carry_no_abstract_and_no_author(session: Session, fixture_json):
+    new_claim(session)
+    add_origin_paper(session, TRIAL_REPORT_DOI)
+    store_paper(session, index_record(fixture_json))
+
+    text = json.dumps(claim_in(exported(session))["papers"])
+
+    assert "Jastreboff" not in text and "Abstract replaced" not in text
+
+
+def test_retracted_results_paper_leaves_the_status_unchanged(session: Session, fixture_json):
+    """Scenario: Retracted results paper"""
+    claim = new_claim(session)
+    record = with_references(
+        study(fixture_json, "study_NCT01596231_results"), ("9500320", "RESULT")
+    )
+    add_registry_events(session, claim, record)
+    without = claim_in(exported(session))
+    assert without["papers"][0]["facts"] is None
+
+    store_paper(session, index_record(fixture_json, "pmid_9500320_retracted"))
+    with_paper = claim_in(exported(session))
+
+    assert with_paper["papers"][0]["facts"]["retracted"] is True
+    assert with_paper["status"] == without["status"]
+    assert with_paper["events"] == without["events"]
+
+
+def test_paper_of_a_study_in_people_leaves_a_preclinical_claim_as_it_is(
+    session: Session, fixture_json
+):
+    """Scenario: Claim with no trial and a paper of a study in people"""
+    claim = new_claim(session)
+    confirm_stage(session, claim.slug, EvidenceStage.ANIMAL, now=EARLIER)
+    without = claim_in(exported(session))
+
+    add_origin_paper(session, TRIAL_REPORT_DOI)
+    store_paper(session, index_record(fixture_json))
+    with_paper = claim_in(exported(session))
+
+    assert with_paper["papers"][0]["facts"]["studied_in"] == ["people"]
+    assert without["status"]["code"] == "preclinical_only"
+    assert with_paper["status"] == without["status"]
+
+
+# --- related papers (openspec related-research, "Export and site") ----------------------
+
+
+def add_related(
+    session: Session, claim: Claim, external_id: str, score: float, state: ReviewState
+) -> EntityMatch:
+    intervention = entities_of(session, claim)[0]
+    match = EntityMatch(
+        entity_id=intervention.id,
+        source_name="openalex",
+        external_id=external_id,
+        score=score,
+        record_summary="A study of EX-1 in tooth agenesis. 2023. article. Journal of Examples",
+        reasons=["named_in_title", "indication_named"],
+    )
+    if state is not ReviewState.PENDING:
+        record_decision(match, state, by=Decider.RULE, now=EARLIER)
+    session.add(match)
+    session.flush()
+    return match
+
+
+def test_approved_related_papers_are_exported_as_papers_with_score_and_reasons(
+    session: Session, fixture_json
+):
+    claim = new_claim(session)
+    add_related(session, claim, TRIAL_REPORT_DOI, 0.93, ReviewState.APPROVED)
+    add_related(session, claim, "W4400000001", 0.85, ReviewState.APPROVED)
+    add_related(session, claim, "10.1000/pending", 0.5, ReviewState.PENDING)
+    add_related(session, claim, "10.1000/rejected", 0.01, ReviewState.REJECTED)
+    store_paper(session, index_record(fixture_json))
+
+    exported_claim = claim_in(exported(session))
+
+    held, unheld = exported_claim["papers"]
+    summary = "A study of EX-1 in tooth agenesis. 2023. article. Journal of Examples"
+    related = role(
+        "related",
+        score=0.93,
+        reasons=["named_in_title", "indication_named"],
+        decided_by="rule",
+        summary=summary,
+    )
+    assert (held["identifier"], held["roles"]) == (TRIAL_REPORT_DOI, [related])
+    assert held["facts"]["year"] == 2022
+    # A paper known only to the search source keeps that source's link and has no facts.
+    assert (unheld["identifier"], unheld["url"], unheld["facts"]) == (
+        "openalex:W4400000001",
+        "https://openalex.org/W4400000001",
+        None,
+    )
+    assert unheld["roles"][0]["score"] == 0.85
+    # Papers found by search are papers, never registry matches of the claim.
+    assert exported_claim["matches"] == []
+    assert "abstract" not in json.dumps(exported_claim["papers"]).lower()
 
 
 # --- background cards (openspec knowledge-cards) ----------------------------------------

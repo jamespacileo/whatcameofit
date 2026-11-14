@@ -58,6 +58,7 @@ const claim = (slug, extra = {}) => ({
       phases: ["phase_1"],
       state: "completed",
       facts_as_of: "2024-06-01T00:00:00Z",
+      papers: ["10.5555/results"],
       raw_payload: { secret: true },
       facts: {
         study_kind: "interventional",
@@ -89,6 +90,30 @@ const claim = (slug, extra = {}) => ({
             },
           ],
         },
+      },
+    },
+  ],
+  papers: [
+    {
+      identifier: "10.5555/results",
+      url: "https://doi.org/10.5555/results",
+      record_url: "https://index.example/MED/1",
+      roles: [
+        { role: "trial_result", trial_id: "NCT0", listed: "listed_by_sponsor", decided_by: "rule" },
+      ],
+      facts_as_of: "2024-06-02T00:00:00Z",
+      authors: ["Example A"],
+      facts: {
+        title: "A report of the trial",
+        journal: "Journal of Examples",
+        year: 2024,
+        kinds: ["randomised_trial", "article"],
+        open_access: true,
+        retracted: false,
+        studied_in: ["people"],
+        authorString: "Example A, Sample B.",
+        abstractText: "The abstract of the paper",
+        affiliation: "A hospital department",
       },
     },
   ],
@@ -167,6 +192,34 @@ test("Scenario: Registry record", () => {
   const names = everyKey(out.claims[0].trials);
   assert.ok(!names.some((name) => /payload|description/i.test(name)), names.join());
   assert.ok(!everyString(out).some((text) => /conclusion|did well/.test(text)));
+});
+
+test("Scenario: Claim with a results paper", () => {
+  const out = openData(exported(), LICENCE, CREDIT, METHOD);
+  const [paper] = out.claims[0].papers;
+  const [trial] = out.claims[0].trials;
+  assert.equal(paper.identifier, "10.5555/results");
+  assert.deepEqual(
+    [paper.facts.title, paper.facts.journal, paper.facts.year, paper.facts.kinds],
+    ["A report of the trial", "Journal of Examples", 2024, ["randomised_trial", "article"]],
+  );
+  assert.equal(paper.facts_as_of, "2024-06-02T00:00:00Z");
+  // The paper names the trial it reports, and the trial lists the paper.
+  assert.deepEqual([paper.roles[0].trial_id, paper.roles[0].listed], [trial.trial_id, "listed_by_sponsor"]);
+  assert.deepEqual(trial.papers, [paper.identifier]);
+});
+
+test("Scenario: Authors", () => {
+  const out = openData(exported(), LICENCE, CREDIT, METHOD);
+  const names = everyKey(out.claims[0].papers);
+  assert.ok(!names.some((name) => /author|abstract|affiliation|payload/i.test(name)), names.join());
+  assert.ok(!everyString(out).some((text) => /Example A|The abstract|hospital department/.test(text)));
+});
+
+test("an export made before paper facts gives a file with no papers", () => {
+  const before = exported();
+  for (const entry of before.claims) delete entry.papers;
+  assert.deepEqual(openData(before, LICENCE, CREDIT, METHOD).claims[0].papers, []);
 });
 
 test("a preview export gives a preview file", () => {

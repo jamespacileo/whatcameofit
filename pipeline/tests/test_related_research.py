@@ -812,6 +812,9 @@ class EuropePmcIndex:
         self.asked.append(doi)
         return _indexed(doi, "The trial report", "2023-05-29")
 
+    def paper_by_pubmed_id(self, pubmed_id: str) -> SourceRecord | None:
+        return None
+
     def citing_papers(self, paper: SourceRecord) -> list[SourceRecord]:
         return self.citing
 
@@ -865,10 +868,13 @@ def test_origin_paper_set_by_rule_lets_fetch_find_follow_ups_and_a_retraction(se
     notice = Notice("retraction", date(2025, 4, 5), "10.1000/retraction-notice")
     retractions = Retractions({"10.1000/before": [notice]})
 
-    # Approved papers alone give fetch nothing to follow, and the status stays put.
+    # Approved papers alone give fetch nothing to follow, and the status stays put. Each
+    # is asked for once, for the index record its paper facts are read from.
     assert fetch_evidence(session, claim, literature, retractions) == []
     before = claim.current_status
-    assert before is not ClaimStatus.RETRACTED and literature.asked == []
+    assert before is not ClaimStatus.RETRACTED
+    assert sorted(literature.asked) == ["10.1000/after", "10.1000/before"]
+    literature.asked.clear()
 
     backend = Reading()
     backend.origin = ("10.1000/before", 0.9)

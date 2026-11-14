@@ -393,6 +393,14 @@
           "title": "Trials",
           "type": "array"
         },
+        "papers": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedPaper"
+          },
+          "title": "Papers",
+          "type": "array"
+        },
         "background": {
           "default": [],
           "items": {
@@ -747,6 +755,269 @@
         "fetched_at"
       ],
       "title": "ExportedOutlet",
+      "type": "object"
+    },
+    "ExportedPaper": {
+      "additionalProperties": false,
+      "properties": {
+        "identifier": {
+          "title": "Identifier",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "record_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Record Url"
+        },
+        "roles": {
+          "items": {
+            "$ref": "#/$defs/ExportedPaperRole"
+          },
+          "title": "Roles",
+          "type": "array"
+        },
+        "facts_as_of": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Facts As Of"
+        },
+        "facts": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedPaperFacts"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "identifier",
+        "url",
+        "record_url",
+        "roles",
+        "facts_as_of",
+        "facts"
+      ],
+      "title": "ExportedPaper",
+      "type": "object"
+    },
+    "ExportedPaperFacts": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Title"
+        },
+        "journal": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Journal"
+        },
+        "year": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Year"
+        },
+        "kinds": {
+          "items": {
+            "enum": [
+              "randomised_trial",
+              "clinical_trial",
+              "meta_analysis",
+              "systematic_review",
+              "review",
+              "observational_study",
+              "case_report",
+              "preprint",
+              "comment",
+              "correction",
+              "retraction_notice",
+              "article"
+            ],
+            "type": "string"
+          },
+          "title": "Kinds",
+          "type": "array"
+        },
+        "open_access": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Open Access"
+        },
+        "retracted": {
+          "title": "Retracted",
+          "type": "boolean"
+        },
+        "studied_in": {
+          "items": {
+            "enum": [
+              "people",
+              "animals"
+            ],
+            "type": "string"
+          },
+          "title": "Studied In",
+          "type": "array"
+        }
+      },
+      "required": [
+        "title",
+        "journal",
+        "year",
+        "kinds",
+        "open_access",
+        "retracted",
+        "studied_in"
+      ],
+      "title": "ExportedPaperFacts",
+      "type": "object"
+    },
+    "ExportedPaperRole": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "enum": [
+            "origin",
+            "trial_result",
+            "follow_up",
+            "related"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "trial_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trial Id"
+        },
+        "listed": {
+          "anyOf": [
+            {
+              "enum": [
+                "listed_by_sponsor",
+                "linked_by_registry"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Listed"
+        },
+        "event_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Event Id"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Score"
+        },
+        "reasons": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "decided_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Decided By"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        }
+      },
+      "required": [
+        "role"
+      ],
+      "title": "ExportedPaperRole",
       "type": "object"
     },
     "ExportedParticipants": {
@@ -1241,6 +1512,14 @@
               "type": "null"
             }
           ]
+        },
+        "papers": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Papers",
+          "type": "array"
         }
       },
       "required": [

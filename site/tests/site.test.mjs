@@ -714,6 +714,121 @@ test("Scenario: Claim with one matched paper and no trial", () => {
   assert.ok(!registry.includes("10.5555/synthetic.1"), "a paper is listed as a registry record");
 });
 
+// Openspec paper-facts: each paper once, with what its index record states.
+test("Scenario: Claim with an origin paper and two results papers", () => {
+  const html = page("phase-claim/index.html");
+  const papers = sectionOf(html, "papers");
+  assert.match(papers, /Papers on record/);
+  assert.equal(count(papers, 'class="paper"'), 5);
+  for (const heading of ["The paper first reported", "Papers named by a trial&#39;s registry record", "Follow-up papers", "Related research"]) {
+    assert.ok(papers.includes(heading), `no group "${heading}"`);
+  }
+  assert.ok(papers.indexOf("The paper first reported") < papers.indexOf("Follow-up papers"));
+  const words = wordsOf(papers);
+  assert.match(words, /Report of a randomised trial · Journal of Synthetic Trials · 2023/);
+  assert.match(words, /A paper is not a trial record and does not set the status/);
+  assert.ok(!html.includes("Matched papers"));
+});
+
+test("Scenario: Paper with two roles", () => {
+  const html = page("phase-claim/index.html");
+  assert.equal(count(html, 'id="paper-10-5555-synthetic-origin"'), 1);
+  const [origin] = sectionOf(html, "papers").split("Papers named by a trial");
+  assert.ok(origin.includes('id="paper-10-5555-synthetic-origin"'), "not in the origin paper's group");
+  assert.match(wordsOf(origin), /Linked by the registry from PubMed to NCT00000002/);
+});
+
+test("Scenario: Reader goes from a trial to its paper", () => {
+  const html = page("phase-claim/index.html");
+  const trials = sectionOf(html, "trials");
+  assert.ok(trials.includes('href="#paper-10-5555-synthetic-origin"'), "the trial does not lead to its papers");
+  assert.match(wordsOf(trials), /2 papers named by its record/);
+  const papers = sectionOf(html, "papers");
+  assert.ok(papers.includes('href="#trial-NCT00000002"'), "the paper does not lead back to its trial");
+  assert.match(wordsOf(papers), /Listed by the sponsor as reporting results of NCT00000002/);
+  assert.match(wordsOf(papers), /may or may not be about the study/);
+});
+
+test("Scenario: Paper of a study in mice, retracted follow-up paper, record read on 3 October 2026", () => {
+  const papers = wordsOf(sectionOf(page("phase-claim/index.html"), "papers"));
+  assert.match(papers, /Europe PMC files it as a study in animals\./);
+  assert.match(papers, /This paper has been retracted/);
+  assert.match(papers, /Europe PMC record\s+read\s+3\s+Oct\s+2026/);
+  // A paper the index does not hold is listed by its number, with no facts.
+  assert.match(papers, /PubMed 90000003/);
+  // The preprint's record states neither people nor animals, so its entry says neither.
+  const preprint = papers.slice(papers.indexOf("A synthetic preprint on the compound"));
+  assert.doesNotMatch(preprint, /files it as/);
+});
+
+test("related papers are shown as a group of the papers on record, with score and reasons", () => {
+  const papers = wordsOf(sectionOf(page("phase-claim/index.html"), "papers"));
+  const related = papers.slice(papers.indexOf("Related research"));
+  assert.match(related, /High match · 86%/);
+  assert.match(related, /Names the treatment in its title · Names the condition/);
+  assert.match(related, /A score is about the match, not about the treatment/);
+  assert.doesNotMatch(papers, /\b(supports?|confirms?|proves?|refutes?)\b/i);
+});
+
+test("Scenario: Claim with three trials and one mouse paper", () => {
+  // Seven trials and two papers filed as studies in people; two papers filed in animals.
+  const html = wordsOf(page("phase-claim/index.html"));
+  assert.match(html, /Records of studies\s+9 in people · 2 in animals/);
+});
+
+test("Scenario: Claim with no paper", () => {
+  const html = page("approved-claim/index.html");
+  assert.ok(!html.includes('id="papers"'));
+  assert.ok(!html.includes("Papers on record"));
+  assert.ok(!html.includes("Records of studies"));
+});
+
+test("Scenario: Kind code without site wording", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.claims[1].papers[0].facts.kinds = ["hologram"];
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-paper-code-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+
+  const result = build(file, path.join(directory, "dist"));
+
+  assert.notEqual(result.status, 0);
+});
+
+test("the build fails on a related paper's reason the site has no wording for", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.claims[1].papers.at(-1).roles[0].reasons = ["liked_it"];
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-paper-reason-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+
+  const result = build(file, path.join(directory, "dist"));
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout + result.stderr, /paper reason: liked_it/);
+});
+
+test("an export made before paper facts still builds, with the matched papers as before", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  for (const claim of fixture.claims) {
+    delete claim.papers;
+    for (const trial of claim.trials ?? []) delete trial.papers;
+  }
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-no-papers-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+  const out = path.join(directory, "dist");
+
+  const result = build(file, out);
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const quiet = fs.readFileSync(path.join(out, "quiet-claim/index.html"), "utf8");
+  assert.match(sectionOf(quiet, "papers"), /Matched papers/);
+  const phase = fs.readFileSync(path.join(out, "phase-claim/index.html"), "utf8");
+  assert.ok(!phase.includes("Papers on record"));
+  assert.ok(!phase.includes("Records of studies"));
+});
+
 test("Scenario: Follow-up paper scored 0.6", () => {
   const timetable = sectionOf(page("phase-claim/index.html"), "timetable");
   assert.match(timetable, /Medium match · 60%/);

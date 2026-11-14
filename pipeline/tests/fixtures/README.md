@@ -21,6 +21,11 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `openalex/work_704541.json` | `GET /works/doi:10.64898/2026.02.07.704541?select=…` (2026-11-14) |
 | `ror/affiliation_university_of_nottingham.json` | `GET /v2/organizations?affiliation=University of Nottingham` (2026-11-14) |
 | `ror/affiliation_unknown.json` | the same for a made-up name: ROR lists near misses and marks none as chosen (2026-11-14) |
+| `europepmc/pmid_35658024_trial_report.json` | `GET /search?query=EXT_ID:35658024 AND SRC:MED&resultType=core`: a Phase 3 randomised trial's report, with its subject headings (2026-11-14) |
+| `europepmc/pmid_9500320_retracted.json` | the same for 9500320, a paper the index marks "Retracted Publication" (2026-11-14) |
+| `europepmc/pmid_41363554_humans_animals.json` | the same for 41363554, a review indexed with both "Humans" and "Animals" (2026-11-14) |
+| `europepmc/pmid_unknown.json` | the same for a number no paper has: `hitCount` 0 (2026-11-14) |
+| `europepmc/paper_preprint_299164.json` | `GET /search?query=DOI:"10.1101/2020.09.15.299164"&resultType=core`: a preprint, with no journal and no subject headings (2026-11-14) |
 | `mesh/descriptor_obesity.json` | `GET id.nlm.nih.gov/mesh/2026/D009765.json` (2026-11-14) |
 | `mesh/concept_obesity.json` | `GET /mesh/2026/M0015159.json`, the descriptor's preferred concept, which holds the definition (2026-11-14) |
 | `mesh/descriptor_unknown.json` | `GET /mesh/2026/D999999.json`: an unknown identifier answers 200 with an empty object (2026-11-14) |
@@ -32,6 +37,7 @@ Changes made to the recordings, for copyright and size:
 
 - Europe PMC citing papers, `europepmc/paper_srep39654.json` and `europepmc/paper_sciadv_abf1798.json`: each `abstractText` is replaced by a placeholder sentence.
 - `europepmc/paper_nejmoa2206038.json`: `abstractText` is replaced by a placeholder that keeps only the paper's registry number; subject headings, grants, links and all but two authors are removed.
+- The five Europe PMC recordings of 2026-11-14: `abstractText` is replaced by a placeholder sentence, all but two authors are removed from `authorList`, and grants, chemicals, keywords, data links and comment lists are removed. `authorString` and `affiliation` are kept so that a test can show they are not stored.
 - OpenAlex works: each `abstract_inverted_index` is replaced by a placeholder sentence. The key was sent in a header and is in no recording.
 - MeSH: none. The records are NLM's own and are kept whole, re-indented.
 - ROR: only the first two items of each answer are kept.

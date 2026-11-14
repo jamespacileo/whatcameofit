@@ -345,7 +345,11 @@
                 }
               ]
             }
-          }
+          },
+          "papers": [
+            "10.5555/synthetic.origin",
+            "10.5555/synthetic.results"
+          ]
         },
         {
           "trial_id": "NCT00000030",
@@ -376,7 +380,10 @@
             "primary_outcomes_total": 0,
             "why_stopped": null,
             "results": null
-          }
+          },
+          "papers": [
+            "pmid:90000003"
+          ]
         },
         {
           "trial_id": "jRCT0000000011",
@@ -388,7 +395,8 @@
           ],
           "state": "not_started",
           "facts_as_of": null,
-          "facts": null
+          "facts": null,
+          "papers": []
         },
         {
           "trial_id": "jRCT0000000012",
@@ -400,7 +408,8 @@
           ],
           "state": "not_started",
           "facts_as_of": null,
-          "facts": null
+          "facts": null,
+          "papers": []
         },
         {
           "trial_id": "jRCT0000000013",
@@ -412,7 +421,8 @@
           ],
           "state": "not_started",
           "facts_as_of": null,
-          "facts": null
+          "facts": null,
+          "papers": []
         },
         {
           "trial_id": "jRCT0000000014",
@@ -424,7 +434,8 @@
           ],
           "state": "not_started",
           "facts_as_of": null,
-          "facts": null
+          "facts": null,
+          "papers": []
         },
         {
           "trial_id": "jRCT0000000015",
@@ -436,7 +447,167 @@
           ],
           "state": "not_started",
           "facts_as_of": null,
+          "facts": null,
+          "papers": []
+        }
+      ],
+      "papers": [
+        {
+          "identifier": "10.5555/synthetic.origin",
+          "url": "https://doi.org/10.5555/synthetic.origin",
+          "record_url": "https://index.example/MED/1001",
+          "roles": [
+            {
+              "role": "origin",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            },
+            {
+              "role": "trial_result",
+              "trial_id": "NCT00000002",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-10-03T08:00:00Z",
+          "facts": {
+            "title": "A synthetic compound in a mouse model",
+            "journal": "Journal of Synthetic Trials",
+            "year": 2019,
+            "kinds": [
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": [
+              "animals"
+            ]
+          }
+        },
+        {
+          "identifier": "10.5555/synthetic.results",
+          "url": "https://doi.org/10.5555/synthetic.results",
+          "record_url": "https://index.example/MED/1002",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT00000002",
+              "listed": "listed_by_sponsor",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-10-03T08:00:00Z",
+          "facts": {
+            "title": "Synthetic compound against placebo: a randomised trial",
+            "journal": "Journal of Synthetic Trials",
+            "year": 2023,
+            "kinds": [
+              "randomised_trial",
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "pmid:90000003",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/90000003/",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT00000030",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": null,
           "facts": null
+        },
+        {
+          "identifier": "10.5555/synthetic.followup",
+          "url": "https://doi.org/10.5555/synthetic.followup",
+          "record_url": "https://index.example/MED/1004",
+          "roles": [
+            {
+              "role": "follow_up",
+              "trial_id": null,
+              "listed": null,
+              "event_id": 4,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-10-03T08:00:00Z",
+          "facts": {
+            "title": "A later synthetic study",
+            "journal": "Journal of Synthetic Trials",
+            "year": 2024,
+            "kinds": [
+              "article"
+            ],
+            "open_access": false,
+            "retracted": true,
+            "studied_in": [
+              "people",
+              "animals"
+            ]
+          }
+        },
+        {
+          "identifier": "10.5555/synthetic.related",
+          "url": "https://doi.org/10.5555/synthetic.related",
+          "record_url": "https://index.example/PPR/1005",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 0.86,
+              "reasons": [
+                "named_in_title",
+                "indication_named"
+              ],
+              "decided_by": "rule",
+              "summary": "A synthetic preprint. 2025. preprint."
+            }
+          ],
+          "facts_as_of": "2026-10-03T08:00:00Z",
+          "facts": {
+            "title": "A synthetic preprint on the compound",
+            "journal": null,
+            "year": 2025,
+            "kinds": [
+              "preprint"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": []
+          }
         }
       ],
       "background": [
@@ -533,6 +704,7 @@
         }
       ],
       "failure_flags": [],
+      "papers": [],
       "background": [
         {
           "kind": "condition",
