@@ -241,7 +241,10 @@ h1 + p {
 /* --- Controls ----------------------------------------------------------- */
 
 .button {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
   margin-top: 14px;
   padding: 10px 14px;
@@ -258,6 +261,61 @@ h1 + p {
 .button:hover {
   border-color: var(--footer);
   background: var(--footer);
+}
+
+/* The arrow of a button that opens a new tab: smaller than the words it follows. */
+.button .icon {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2.2;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* A second, smaller choice under the way to the evidence: a pill, as on the site. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  margin-top: 10px;
+  padding: 5px 14px 5px 11px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--blue);
+  font: 600 13.5px/1.3 var(--face);
+  cursor: pointer;
+  transition: background-color 120ms, border-color 120ms;
+}
+
+.pill:hover {
+  border-color: var(--blue);
+  background: var(--panel);
+}
+
+.pill:active {
+  transform: translateY(1px);
+}
+
+/* A line that says what is already set, with its drawing ahead of the words. */
+.followed-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  vertical-align: bottom;
+}
+
+.followed-mark .icon {
+  width: 14px;
+  height: 14px;
 }
 
 .button.quiet {
@@ -481,7 +539,7 @@ h1 + p {
 .answer-actions + .kept { margin-top: 8px; }
 
 @media (pointer: coarse) {
-  .disclosure > summary, .answer-actions .text-button { min-height: 44px; }
+  .disclosure > summary, .answer-actions .text-button, .pill { min-height: 44px; }
 }
 
 /* --- The reader's own lists: recently checked, and following ------------- */
