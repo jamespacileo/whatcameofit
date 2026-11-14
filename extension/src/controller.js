@@ -325,13 +325,13 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
 
   async function enableSharing() {
     if (!await saveSharing(true)) return;
-    if (pageState?.kind === "tracked") show(pageState);
+    if (!live && pageState) show(pageState);
     else await search({ reuse: true });
   }
 
   async function disableSharing() {
     if (!await saveSharing(false)) return;
-    showPage(pageState?.kind === "tracked" ? pageState : { kind: "untracked" });
+    showPage(!live && pageState ? pageState : { kind: "untracked" });
   }
 
   async function saveSharing(enabled) {
