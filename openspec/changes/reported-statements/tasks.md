@@ -46,7 +46,7 @@
 
 ## 8. Integration
 
-- [ ] 8.1 Run `make check` and confirm no test, fixture, log or cache holds article text
+- [x] 8.1 Run `make check` and confirm no test, fixture, log or cache holds article text
 
 ## Workflow follow-up
 
