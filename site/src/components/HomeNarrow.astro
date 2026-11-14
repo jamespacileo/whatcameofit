@@ -1,0 +1,50 @@
+---
+// Above the home page's lists: where every tracked claim stands, and a topic to narrow
+// to. A pick narrows the day-by-day list and the four tabbed lists at once.
+import SlidersHorizontal from "@lucide/astro/icons/sliders-horizontal";
+import type { ExportedClaim } from "../lib/export";
+import StageFilter from "./StageFilter.astro";
+
+interface Props {
+  claims: ExportedClaim[];
+  topics: { slug: string; title: string; count: number }[];
+  /** How many claims are at each status, for every topic and, under "", for all. */
+  counts: Record<string, Record<string, number>>;
+}
+
+const { claims, topics, counts } = Astro.props;
+---
+
+<div class="scoreboard" data-scoreboard>
+  {/* On a phone the counts and the topic choice wait behind this, so a row is on the
+      first screen. Shown by the script; without it everything is in view. */}
+  <button
+    type="button"
+    class="narrow-toggle"
+    aria-expanded="false"
+    aria-controls="narrow-body"
+    hidden
+    data-narrow
+  >
+    <SlidersHorizontal size={16} stroke-width={1.9} aria-hidden="true" />
+    Narrow these lists
+  </button>
+  <div class="narrow-body" id="narrow-body">
+    <StageFilter claims={claims} scope="[data-feed]" param="status" />
+    {
+      topics.length > 1 && (
+        <p class="topic-filter" hidden data-topic-filter>
+          <label for="feed-topic">Topic</label>
+          <select id="feed-topic" data-counts={JSON.stringify(counts)}>
+            <option value="">All topics ({claims.length})</option>
+            {topics.map((topic) => (
+              <option value={topic.slug}>
+                {topic.title} ({topic.count})
+              </option>
+            ))}
+          </select>
+        </p>
+      )
+    }
+  </div>
+</div>

@@ -169,3 +169,16 @@ export function followedRows(
     )
     .map(({ since: _since, ...row }) => row);
 }
+
+/**
+ * Where the last-visit line goes in a list of dated rows, newest first: the index of
+ * the first row dated before the visit, so that every row above the line is dated in
+ * the span the since line counts. Null on a first visit, when nothing is dated in the
+ * span, and when no row is older than it: then there is nothing to divide.
+ */
+export function lastVisitIndex(days: string[], since: Since, today: string): number | null {
+  if (!since.visited) return null;
+  const index = days.findIndex((day) => day < since.from);
+  if (index <= 0) return null;
+  return days.slice(0, index).some((day) => isSince(day, since.from, today)) ? index : null;
+}

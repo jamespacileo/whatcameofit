@@ -830,7 +830,12 @@ def _collect_papers(
             )
 
 
-def _trials(session: Session, events: list[EvidenceEvent], papers: _Papers) -> list[ExportedTrial]:
+def _trials(
+    session: Session,
+    events: list[EvidenceEvent],
+    papers: _Papers,
+    reading_accept_above: float = 0.8,
+) -> list[ExportedTrial]:
     """One entry per registry identifier among the claim's approved trial events, given
     oldest first. Openspec trial-facts: the facts are read from the most recently fetched
     registry record those events hold; a trial with none is listed without facts.
@@ -872,6 +877,9 @@ def _trials(session: Session, events: list[EvidenceEvent], papers: _Papers) -> l
                     trial_id,
                     [Outcome(o.measure, o.time_frame) for o in read.facts.primary_outcomes],
                 )
+                # A reading below the bar is not published: the page and the data file
+                # give the registry's own words for that answer instead (ADR 0003).
+                if reading.confidence >= reading_accept_above
             ]
             results = [
                 key
@@ -1112,7 +1120,13 @@ def _outlets(session: Session, claims: list[ExportedClaim]) -> list[ExportedOutl
     ]
 
 
-def build_export(session: Session, *, now: datetime, no_signal_years: int = 3) -> Export:
+def build_export(
+    session: Session,
+    *,
+    now: datetime,
+    no_signal_years: int = 3,
+    reading_accept_above: float = 0.8,
+) -> Export:
     """Everything the site may show, as of now.
 
     Each claim's status is derived again first, because the no-signal overlay depends
@@ -1159,7 +1173,7 @@ def build_export(session: Session, *, now: datetime, no_signal_years: int = 3) -
         assert intervention is not None, "every claim is created with its intervention entity"
         papers = _Papers(session)
         _collect_papers(session, claim, events, papers)
-        trials = _trials(session, events, papers)
+        trials = _trials(session, events, papers, reading_accept_above)
         organisations = organisations_of(
             session,
             claim,
@@ -1299,9 +1313,15 @@ def write_export(
     *,
     now: datetime,
     no_signal_years: int = 3,
+    reading_accept_above: float = 0.8,
 ) -> Export:
     """Write the export to `path`, replacing any earlier file only once it is complete."""
-    export = build_export(session, now=now, no_signal_years=no_signal_years)
+    export = build_export(
+        session,
+        now=now,
+        no_signal_years=no_signal_years,
+        reading_accept_above=reading_accept_above,
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
     partial = path.with_suffix(path.suffix + ".partial")
     partial.write_text(export.model_dump_json(indent=2) + "\n")

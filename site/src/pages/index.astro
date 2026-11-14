@@ -1,13 +1,13 @@
 ---
 import Rss from "@lucide/astro/icons/rss";
-import SlidersHorizontal from "@lucide/astro/icons/sliders-horizontal";
 import Base from "../layouts/Base.astro";
 import ClaimName from "../components/ClaimName.astro";
+import DayList from "../components/DayList.astro";
+import HomeNarrow from "../components/HomeNarrow.astro";
 import Lookup from "../components/Lookup.astro";
 import Outlet from "../components/Outlet.astro";
 import Pager from "../components/Pager.astro";
 import PromiseText from "../components/PromiseText.astro";
-import StageFilter from "../components/StageFilter.astro";
 import StageTrack from "../components/StageTrack.astro";
 import StatusCell from "../components/StatusCell.astro";
 import TestedCell from "../components/TestedCell.astro";
@@ -15,6 +15,7 @@ import TopicChip from "../components/TopicChip.astro";
 import { EXTENSION_OFFERED, SITE } from "../../site.config.mjs";
 import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
 import { calendarByMonth } from "../lib/anniversaries";
+import { dayList } from "../lib/day-list";
 import { data, listedTopics } from "../lib/export";
 import {
   longestWithoutSignal,
@@ -95,11 +96,14 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December",
 ];
 const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days);
+// Everything dated, under dated headings. Null when the export does not say when the
+// registries were last checked: then the four lists follow the lookup, as before.
+const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at) : null;
 ---
 
 <Base current="home" structured={siteData()}>
   {/* The lookup is what the site is for: it gets a band of its own under the masthead. */}
-  <section class="band" slot="band" aria-labelledby="lookup-title">
+  <section class="band home" slot="band" aria-labelledby="lookup-title">
     <div class="wrap">
       <h1 class="title" id="lookup-title">What happened to that breakthrough?</h1>
       <p class="lede">{SITE.description}</p>
@@ -109,9 +113,9 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
   </section>
 
   <div class="front">
-  {/* The tally opens the lists, under the band: the band holds only the lookup. */}
+  {/* With no day-by-day list the tally opens the lists, under the band. */}
   {
-    data.claims.length > 0 && (
+    data.claims.length > 0 && !days && (
       <p class="tally">
         {data.claims.length} {data.claims.length === 1 ? "claim" : "claims"} tracked in{" "}
         <a href="/topics">
@@ -135,46 +139,33 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
     <p class="visually-hidden" role="status" data-following-said></p>
   </section>
 
+  <div class="feed" data-feed>
+  {/* Everything dated, day by day, with the counts and the topic choice that narrow it
+      and the four lists under it. With no day of last check in the export there is no
+      such list: the page is not dated by any other day. */}
+  {
+    days ? (
+      <DayList list={days} topics={topicChoices}>
+        <p class="tally" slot="tally">
+          {data.claims.length} {data.claims.length === 1 ? "claim" : "claims"} tracked in{" "}
+          <a href="/topics">
+            {listedTopics.length} {listedTopics.length === 1 ? "topic" : "topics"}
+          </a>
+          . <a href="/it-happened">Approvals on record</a>: {approvals} of {data.claims.length}.
+        </p>
+        <HomeNarrow slot="narrow" claims={data.claims} topics={topicChoices} counts={topicCounts} />
+      </DayList>
+    ) : (
+      data.claims.length > 0 && (
+        <HomeNarrow claims={data.claims} topics={topicChoices} counts={topicCounts} />
+      )
+    )
+  }
+  {days && <h2 class="bar lists-title" id="lists">Every headline and claim, as lists</h2>}
+
   {/* Filled in by the script from the dates on the rows below: what is dated since this
       reader's last visit, or in the last thirty days on a first one. */}
   <p class="since" hidden data-since></p>
-
-  <div class="feed" data-feed>
-  {
-    data.claims.length > 0 && (
-      <div class="scoreboard" data-scoreboard>
-        {/* On a phone the counts and the topic choice wait behind this, so a headline is
-            on the first screen. Shown by the script; without it everything is in view. */}
-        <button
-          type="button"
-          class="narrow-toggle"
-          aria-expanded="false"
-          aria-controls="narrow-body"
-          hidden
-          data-narrow
-        >
-          <SlidersHorizontal size={16} stroke-width={1.9} aria-hidden="true" />
-          Narrow these lists
-        </button>
-        <div class="narrow-body" id="narrow-body">
-        <StageFilter claims={data.claims} scope="[data-feed]" param="status" />
-        {topicChoices.length > 1 && (
-          <p class="topic-filter" hidden data-topic-filter>
-            <label for="feed-topic">Topic</label>
-            <select id="feed-topic" data-counts={JSON.stringify(topicCounts)}>
-              <option value="">All topics ({data.claims.length})</option>
-              {topicChoices.map((topic) => (
-                <option value={topic.slug}>
-                  {topic.title} ({topic.count})
-                </option>
-              ))}
-            </select>
-          </p>
-        )}
-        </div>
-      </div>
-    )
-  }
     {/* Shown by the script: without it the lists follow one another, each under its heading. */}
     <div class="feed-tabs" role="tablist" aria-label="Lists of tracked claims" hidden>
       {views.map((view, index) => (
@@ -217,12 +208,13 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
             <tr role="row" data-status={report.claim.status.code} data-topic={report.claim.vertical} data-on={report.publishedDate} data-later={index >= PAGE_SIZE ? "" : undefined}>
               <td role="cell" class="claim">
                 {/* Named as on the claim page, so the headline pressed here is
-                    carried to its place there. */}
+                    carried to its place there. With the day-by-day list above, the
+                    name is on that list's row: a name is on a page once. */}
                 <a
                   class="followed"
                   href={`/${report.claim.slug}`}
                   style={
-                    followedNameFor(report.claim, report.url)
+                    !days && followedNameFor(report.claim, report.url)
                       ? `view-transition-name: ${followedNameFor(report.claim, report.url)}`
                       : undefined
                   }
@@ -660,6 +652,10 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
           }
           list.table.dispatchEvent(new Event("paged:refresh"));
         }
+        for (const row of feed.querySelectorAll<HTMLElement>("[data-day-row]")) {
+          row.toggleAttribute("data-out-topic", topic !== "" && row.dataset.topic !== topic);
+        }
+        feed.querySelector("[data-day-list]")?.dispatchEvent(new Event("paged:refresh"));
         strip?.dispatchEvent(new CustomEvent("stage:counts", { detail: counts[topic] ?? {} }));
       };
       choice.addEventListener("change", () => {
