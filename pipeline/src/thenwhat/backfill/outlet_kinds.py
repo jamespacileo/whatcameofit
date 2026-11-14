@@ -129,6 +129,7 @@ PRESS_RELEASE = frozenset(
         "eurekalert.org",
         "globenewswire.com",
         "newswire.com",
+        "prnewswire.co.uk",
         "prnewswire.com",
         "prweb.com",
     ]

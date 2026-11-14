@@ -53,9 +53,9 @@
 
 - [x] 7.1 Run `make check`; verify ruff, ty, pytest and the site build pass
 - [x] 7.2 Load the phase 3 drug and biological trials on the operator's machine and run `backfill plan`; verify the trial count is close to 43,320 and record the plan's figures in this change
-- [ ] 7.3 Run the news search with a limit of 200 and `backfill leads`; verify the hit rate is recorded here beside the sample's 52% overall and 20% trial-specific (31% and 16% after one search per trial), with the split by outlet kind
-- [ ] 7.4 Stop a second limited run part way and start it again; verify the report shows no record processed twice
-- [ ] 7.5 Give the operator the 200-trial figures and the plan for the full run, and wait for a decision before running without a limit
+- [x] 7.3 Run the news search with a limit of 200 and `backfill leads`; verify the hit rate is recorded here beside the sample's 52% overall and 20% trial-specific (31% and 16% after one search per trial), with the split by outlet kind
+- [x] 7.4 Stop a second limited run part way and start it again; verify the report shows no record processed twice
+- [x] 7.5 Give the operator the 200-trial figures and the plan for the full run, and wait for a decision before running without a limit
 
 ## First run: what was done on 2026-11-14
 
@@ -63,7 +63,32 @@
 - **Load (7.2):** `thenwhat backfill load-trials` stored 43,320 trials in 44 requests, in 1 minute 44 seconds. The sampling frame was 43,320.
 - **Plan (7.2):** 40,006 of the 43,320 trials (92%) have a usable name and indication and are in the news search's scope. They need 40,006 requests: about 333 hours at 30 seconds apart, and 11 weekly allowances of 4,000.
 - **A fault the live run found:** `load-trials --changes-only` read the previous load's date after its transaction had closed. Fixed, with a test that runs the load on separate committed transactions.
-- **Not done (7.3, 7.4, 7.5):** the 200-trial news search needs a Media Cloud key, which only the operator can create. `thenwhat backfill run news_search` refuses with "MEDIACLOUD_API_KEY is not set" and touches no record, as specified. Stopping and restarting a run is covered by tests on real transactions, not yet by a live run.
+- **Before the key existed:** `thenwhat backfill run news_search` refused with "MEDIACLOUD_API_KEY is not set" and touched no record, as specified.
+
+## Limited run: what was done on 2026-11-14 (7.3, 7.4, 7.5)
+
+- **Which trials:** the 200 trials of the web-search sample (`docs/research/phase3-article-hit-rate`), loaded by their identifiers into their own database, `thenwhat_backfill_sample`, so that the two results are for the same trials. 186 of the 200 have a usable name and indication and were in scope. The operator's `thenwhat` database was not written to.
+- **What was searched:** the United States and United Kingdom national collections (`34412234`, `34412476`) and twenty clinical trade outlets by id, in one search per trial.
+- **A fault the live run found:** Media Cloud refuses a search that names neither a collection nor an outlet (status 422). The client now takes outlet ids beside collection ids and refuses before any record is touched when both are empty.
+- **Result (7.3):** 180 trials were searched; 6 got no answer within 60 seconds on two attempts each and are still due.
+
+| Measure | Media Cloud, one search | Web-search sample, same 180 trials |
+| --- | --- | --- |
+| At least one article lead | 148 (82%) | a news article on the intervention for the indication: 97 (54%) |
+| A lead from a general news outlet | 100 (56%) | |
+| A lead from health or clinical trade press | 104 (58%) | |
+| A lead from a press release outlet | 11 (6%) | |
+| A lead from an outlet on no list | 128 (71%) | |
+| A lead whose title holds the intervention's name | 55 (31%) | a news article about that trial: 40 (22%) |
+| The same, from a general news or trade outlet | 44 (24%) | |
+| The same, from a general news outlet | 19 (11%) | |
+
+  The sample's figures for all 200 trials are 52% and 20% (31% and 16% after one search per trial).
+- **How to read it:** the two columns do not measure the same thing. A lead is any story that holds the intervention's name and one word of the indication anywhere in it; nobody judged whether the story reports the intervention for the indication. The sample's figure is a judgement of the best result's title. So 82% is an upper bound, and the title rows are a strict lower bound. The two methods also find different trials: of the 180, both found something for 83, only Media Cloud for 65, only the web search for 14.
+- **Outlets:** 2,161 leads. biospace.com gave about two thirds of the trade press leads; healio.com, onclive.com and fiercepharma.com gave none, because Media Cloud no longer collects them. Market wires (benzinga.com, thestreet.com) and prnewswire.co.uk rank high among outlets on no list; prnewswire.co.uk has since been added to the press release list.
+- **Stop and restart (7.4):** Media Cloud answered "too many requests" after 136 searches, and the run stopped itself with 61 records due and a pause until 19:27 UTC. Started again after the pause, it processed those 61 and nothing else. The ledger holds 186 entries for 186 records; the 175 finished before or after the stop with one attempt were asked once, and the only records asked twice are the 11 that failed the first time (ten timeouts and the one refused search). No trial has the same address twice.
+- **Requests:** 197 by the pipeline, and about 30 more by hand to read the directory and one refusal, which the pipeline's count does not include.
+- **For the operator (7.5):** the full run is 40,006 trials, one search each: 11 weekly allowances at the default, longer if Media Cloud refuses again at 30 seconds apart. It has not been started and waits for the operator's decision. Open points for that decision: about 8% of searches time out at 60 seconds and are retried; the trade press that reported most trials in the sample is largely not collected by Media Cloud; and a lead is not checked for relevance by this change.
 
 ## Workflow follow-up
 

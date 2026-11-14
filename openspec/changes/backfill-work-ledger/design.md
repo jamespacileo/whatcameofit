@@ -96,10 +96,10 @@ The sample showed that the two obvious routes do not scale: the GDELT live inter
 **Decision (2026-11-14): Media Cloud.** It is the only candidate that returns exactly an address, outlet, title and date for a query of two terms, and it never releases article text, so none can reach the pipeline. It is free with an account and a key.
 
 - **Allowance:** 4,000 requests a week by default, so the allowance is 4,000 in 168 hours with 30 seconds between requests. The 43,320 phase 3 trials take at least 11 weeks unless Media Cloud grants more.
-- **What the operator must set up:** create the account and accept its terms, put the key in `.env` as `MEDIACLOUD_API_KEY`, check in Media Cloud's directory that the clinical trade press is covered and from when, and, if 11 weeks is too slow, email Media Cloud to ask for a larger allowance. None of this is done by the pipeline or by an assistant.
+- **What the operator must set up:** create the account and accept its terms, put the key in `.env` as `MEDIACLOUD_API_KEY`, name what is searched in `MEDIACLOUD_COLLECTION_IDS` and `MEDIACLOUD_SOURCE_IDS` (Media Cloud refuses a search that names neither), check in Media Cloud's directory that the clinical trade press is covered and from when, and, if 11 weeks is too slow, email Media Cloud to ask for a larger allowance. None of this is done by the pipeline or by an assistant.
 - **Until the key exists** the step is built and tested against synthetic fixtures and refuses to run live, naming the missing key.
 
-*Alternatives:* GDELT on BigQuery matches keywords only from 2020, needs a paid cloud project, and its matching table carries fragments of article text that would have to be discarded; it stays the fallback if Media Cloud's coverage of the trade press proves thin. Common Crawl's news crawl has no search and would mean holding about 47 TiB of article pages, which this project never does.
+*Alternatives:* GDELT on BigQuery matches keywords only from 2020, needs a paid cloud project, and its matching table carries fragments of article text that would have to be discarded. It is not used, and it is not kept as a second source for when Media Cloud finds little: a trial Media Cloud cannot answer for is recorded as not looked up. Common Crawl's news crawl has no search and would mean holding about 47 TiB of article pages, which this project never does.
 
 The spec does not depend on the choice: it describes a search by intervention and indication that returns address, outlet, title and date.
 
