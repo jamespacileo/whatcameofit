@@ -87,6 +87,11 @@ For the proposer to confirm.
 - **An article that gave no statement is read again by a later `--missing` run.** Nothing records that an article was read for statements apart from the statements themselves. The spec only asks that an article with statements is skipped.
 - **A statement that cannot be checked fails the command after the claim is saved.** `extract new`, `extract article` and `statements` commit the claim, its other fields and the decision records, say how many statements were not stored, and exit 1.
 - **The changed-text message speaks of the page.** On the first ten articles, nine pages no longer matched their stored hash, mostly because of what the page shows around the article. The output says the text has changed since it was first read, if only around the article.
+- **An operator's rejection labels nothing.** Approving a statement labels its check `says_this`. A rejection does not say whether the report said something weaker or nothing, and may be for another reason, so it leaves the label empty, as a rejected related paper does.
+- **An assistant's decision on a statement makes `checked_by_person` false**, as one on a match or an event does.
+- **The export's statement codes are fixed lists in its schema.** An unknown code stops the site build at the schema, which now names the value it refused. The site's own check names a code the schema gains before the site words it.
+- **How sure the check is, in words.** "Very likely in the report" from 0.8, "Likely in the report" from 0.5, "Unsure it is in the report" below, then the percentage. The disclosure says the number is about the reading of the report, not about the treatment.
+- **The kind "how it works" is worded "How it acts"**, since "works" is among the outcome words the site's check refuses.
 
 ## Open Questions
 

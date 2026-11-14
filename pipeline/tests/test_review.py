@@ -12,7 +12,15 @@ from sqlalchemy.orm import Session
 
 from thenwhat.claims.entities import entities_of
 from thenwhat.claims.entry import EntryError, InvalidUrl, add_article, add_claim, edit_claim
-from thenwhat.db.models import Claim, DecisionLog, EntityMatch, EvidenceEvent, FailureFlag
+from thenwhat.db.models import (
+    Claim,
+    DecisionLog,
+    EntityMatch,
+    EvidenceEvent,
+    FailureFlag,
+    ReportedStatement,
+    SourceArticle,
+)
 from thenwhat.decide.core import BackendAnswer
 from thenwhat.decide.steps import suggest_evidence_stage
 from thenwhat.domain import (
@@ -21,10 +29,15 @@ from thenwhat.domain import (
     EventType,
     EvidenceStage,
     ReviewState,
+    StatementBasis,
+    StatementFirmness,
+    StatementKind,
+    StatementSpeaker,
     TrialPhase,
     TrialState,
 )
 from thenwhat.events.manual import add_manual_event
+from thenwhat.extract.schema import ProposedStatement
 from thenwhat.resolve.service import resolve_claim
 from thenwhat.review.decisions import record_decision
 from thenwhat.review.queue import (
@@ -38,6 +51,7 @@ from thenwhat.review.queue import (
     rejected_by_rule,
 )
 from thenwhat.sources.base import SourceRecord
+from thenwhat.statements.service import StatementChecker, keep_statements
 
 EARLIER = datetime(2026, 11, 19, 9, 0, tzinfo=UTC)
 NOW = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
@@ -607,3 +621,89 @@ def test_confirming_a_stage_brings_the_status_up_to_date(session: Session):
 
     confirm_stage(session, SLUG, EvidenceStage.ANIMAL, now=NOW)
     assert claim.current_status is ClaimStatus.PRECLINICAL_ONLY
+
+
+# --- reported statements (openspec reported-statements) --------------------------------
+
+
+class Checks:
+    """The statement check: says each statement is in its article, at the given
+    probability."""
+
+    name = "fake"
+
+    def __init__(self, probability: float) -> None:
+        self.probability = probability
+
+    def answer_many(
+        self, step: str, intro: str, question: str, items: list[str], options: list[str]
+    ) -> list[BackendAnswer]:
+        rest = (1 - self.probability) / (len(options) - 1)
+        return [
+            BackendAnswer(
+                options[0], {o: self.probability if o == options[0] else rest for o in options}
+            )
+            for _ in items
+        ]
+
+    def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
+        raise AssertionError("Statements are checked together.")
+
+
+def statement(session: Session, claim: Claim, text: str, probability: float) -> ReportedStatement:
+    [article] = session.scalars(select(SourceArticle).where(SourceArticle.claim_id == claim.id))
+    [stored] = keep_statements(
+        session,
+        StatementChecker(Checks(probability)),
+        article=article,
+        text="Synthetic article: an antibody called EX-1 regrew teeth in mice.",
+        proposed=[
+            ProposedStatement(
+                text=text,
+                kind=StatementKind.EFFECT,
+                firmness=StatementFirmness.FACT,
+                speaker=StatementSpeaker.ARTICLE,
+                basis=StatementBasis.ANIMALS,
+            )
+        ],
+        now=EARLIER,
+    ).stored
+    return stored
+
+
+def test_queue_lists_pending_statements_with_their_articles_outlet_and_date(session: Session):
+    claim = approved_claim(session)
+    unsure = statement(session, claim, "EX-1 grew teeth in mice.", 0.6)
+    statement(session, claim, "EX-1 may help people born without teeth.", 0.9)
+
+    [item] = pending_items(session, claim_slug=SLUG, kind="statement")
+
+    assert (item.id, item.score, item.source_url) == (unsure.id, pytest.approx(0.6), ARTICLE)
+    assert item.assertion == (
+        "reported statement (effect, as fact, said by article, resting on animals):"
+        " EX-1 grew teeth in mice."
+    )
+    assert item.detail == "Example News, 2018-03-10, as read 2026-11-19"
+
+
+def test_approving_a_statement_publishes_it_and_labels_its_check(session: Session):
+    claim = approved_claim(session)
+    unsure = statement(session, claim, "EX-1 grew teeth in mice.", 0.6)
+
+    approve(session, "statement", unsure)
+
+    assert (unsure.review_state, unsure.reviewed_by) == (ReviewState.APPROVED, Decider.HUMAN)
+    assert labels(session, "statement_check") == ["says_this"]
+    assert claim.current_status is ClaimStatus.PRECLINICAL_ONLY
+
+
+def test_rejecting_a_statement_approved_by_rule_keeps_it_and_labels_nothing(session: Session):
+    claim = approved_claim(session)
+    confident = statement(session, claim, "EX-1 grew teeth in mice.", 0.9)
+    assert confident.reviewed_by is Decider.RULE
+
+    decide_item(session, "statement", confident.id, ReviewState.REJECTED, now=NOW)
+
+    assert (confident.review_state, confident.reviewed_by) == (ReviewState.REJECTED, Decider.HUMAN)
+    assert labels(session, "statement_check") == [None]
+    assert pending_items(session, claim_slug=SLUG, kind="statement") == []
