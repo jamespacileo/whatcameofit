@@ -1,0 +1,417 @@
+{
+  "meta": {
+    "count": 959,
+    "db_response_time_ms": 76,
+    "page": 1,
+    "per_page": 3,
+    "groups_count": null,
+    "x_query": {
+      "oql": "get works with (median nerve stimulation Tourette syndrome) in the title, abstract, or full text",
+      "x_new_oql": "get works with (median nerve stimulation Tourette syndrome) in the title, abstract, or full text",
+      "oqo": {
+        "get_rows": "works",
+        "filter_rows": [
+          {
+            "column_id": "fulltext.search",
+            "value": "median nerve stimulation Tourette syndrome",
+            "operator": "has"
+          }
+        ]
+      },
+      "url": "/works?filter=fulltext.search:median nerve stimulation Tourette syndrome&per_page=3",
+      "order": "best matches first",
+      "order_default": true
+    },
+    "cost_usd": 0.001
+  },
+  "results": [
+    {
+      "id": "https://openalex.org/W7136693234",
+      "doi": "https://doi.org/10.5281/zenodo.19046790",
+      "title": "How effective is median nerve stimulation for suppressing tics in Tourette's syndrome?",
+      "publication_year": 2026,
+      "publication_date": "2026-03-16",
+      "type": "article",
+      "primary_location": {
+        "id": "doi:10.5281/zenodo.19046790",
+        "doi": "https://doi.org/10.5281/zenodo.19046790",
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.5281/zenodo.19046790",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S4306400562",
+          "display_name": "Zenodo (CERN European Organization for Nuclear Research)",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": true,
+          "is_in_doaj": false,
+          "is_core": false,
+          "listed_in": [],
+          "host_organization": "https://openalex.org/I67311998",
+          "host_organization_name": "European Organization for Nuclear Research",
+          "host_organization_lineage": [
+            "https://openalex.org/I67311998"
+          ],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": "cc-by-nc",
+        "license_id": "https://openalex.org/licenses/cc-by-nc",
+        "version": null,
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": null,
+        "raw_type": "article"
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5129579804",
+            "display_name": "Tripdatabase",
+            "orcid": null,
+            "observed_orcids": []
+          },
+          "institutions": [],
+          "countries": [],
+          "is_corresponding": true,
+          "raw_author_name": "Tripdatabase",
+          "raw_affiliation_strings": [
+            "Tripdatabase"
+          ],
+          "raw_orcid": null,
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Tripdatabase",
+              "institution_ids": []
+            }
+          ]
+        }
+      ],
+      "abstract_inverted_index": {
+        "Abstract": [
+          0
+        ],
+        "replaced": [
+          1
+        ],
+        "in": [
+          2
+        ],
+        "this": [
+          3
+        ],
+        "fixture.": [
+          4
+        ]
+      },
+      "ids": {
+        "openalex": "https://openalex.org/W7136693234",
+        "doi": "https://doi.org/10.5281/zenodo.19046790"
+      }
+    },
+    {
+      "id": "https://openalex.org/W7128171646",
+      "doi": "https://doi.org/10.1177/27546330261423083",
+      "title": "Centring Tourettic Experiences in Technology: Tourette Syndrome, Median Nerve Stimulation, and the Role of Technoableism in Self-Harm and Stigma",
+      "publication_year": 2026,
+      "publication_date": "2026-02-01",
+      "type": "editorial",
+      "primary_location": {
+        "id": "doi:10.1177/27546330261423083",
+        "doi": "https://doi.org/10.1177/27546330261423083",
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.1177/27546330261423083",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S4387292802",
+          "display_name": "Neurodiversity",
+          "issn_l": "2754-6330",
+          "issn": [
+            "2754-6330"
+          ],
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": true,
+          "listed_in": [
+            "cwts-core",
+            "norway-1",
+            "vabb-shw"
+          ],
+          "host_organization": "https://openalex.org/P4310320017",
+          "host_organization_name": "SAGE Publishing",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310320017"
+          ],
+          "host_organization_lineage_names": [
+            "SAGE Publishing"
+          ],
+          "type": "journal"
+        },
+        "license": "cc-by-nc",
+        "license_id": "https://openalex.org/licenses/cc-by-nc",
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Neurodiversity",
+        "raw_type": "journal-article"
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5083546443",
+            "display_name": "Daniel P. Jones",
+            "orcid": "https://orcid.org/0000-0002-8208-162X",
+            "observed_orcids": [
+              "https://orcid.org/0000-0002-8208-162X"
+            ]
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I190082696",
+              "display_name": "Durham University",
+              "ror": "https://ror.org/01v29qb04",
+              "country_code": "GB",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I190082696"
+              ]
+            }
+          ],
+          "countries": [
+            "GB"
+          ],
+          "is_corresponding": true,
+          "raw_author_name": "Daniel P. Jones",
+          "raw_affiliation_strings": [
+            "Durham University"
+          ],
+          "raw_orcid": "https://orcid.org/0000-0002-8208-162X",
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Durham University",
+              "institution_ids": [
+                "https://openalex.org/I190082696"
+              ]
+            }
+          ]
+        }
+      ],
+      "abstract_inverted_index": {
+        "Abstract": [
+          0
+        ],
+        "replaced": [
+          1
+        ],
+        "in": [
+          2
+        ],
+        "this": [
+          3
+        ],
+        "fixture.": [
+          4
+        ]
+      },
+      "ids": {
+        "openalex": "https://openalex.org/W7128171646",
+        "doi": "https://doi.org/10.1177/27546330261423083"
+      }
+    },
+    {
+      "id": "https://openalex.org/W7128526191",
+      "doi": "https://doi.org/10.64898/2026.02.07.704541",
+      "title": "Low-intensity sub-threshold rhythmic 10Hz median nerve stimulation modulates mu-band EEG oscillations in individuals with Tourette syndrome",
+      "publication_year": 2026,
+      "publication_date": "2026-02-10",
+      "type": "preprint",
+      "primary_location": {
+        "id": "doi:10.64898/2026.02.07.704541",
+        "doi": "https://doi.org/10.64898/2026.02.07.704541",
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.64898/2026.02.07.704541",
+        "pdf_url": "https://www.biorxiv.org/content/biorxiv/early/2026/02/10/2026.02.07.704541.full.pdf",
+        "source": {
+          "id": "https://openalex.org/S4306402567",
+          "display_name": "bioRxiv (Cold Spring Harbor Laboratory)",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "listed_in": [],
+          "host_organization": "https://openalex.org/I2750212522",
+          "host_organization_name": "Cold Spring Harbor Laboratory",
+          "host_organization_lineage": [
+            "https://openalex.org/I2750212522"
+          ],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": "cc-by-nc",
+        "license_id": "https://openalex.org/licenses/cc-by-nc",
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": "bioRxiv",
+        "raw_type": "posted-content"
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5086529837",
+            "display_name": "Bàrbara Morera Maiquez",
+            "orcid": null,
+            "observed_orcids": []
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I142263535",
+              "display_name": "University of Nottingham",
+              "ror": "https://ror.org/01ee9ar58",
+              "country_code": "GB",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I142263535"
+              ]
+            }
+          ],
+          "countries": [
+            "GB"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Barbara Morera",
+          "raw_affiliation_strings": [
+            "Neurotherapeutics Ltd, Sir Colin Campbell Building, University of Nottingham Innovation Park, Triumph Road, Nottingham, NG7 2TU",
+            "School of Psychology, University of Nottingham, University Park, Nottingham, NG7 2RD, UK"
+          ],
+          "raw_orcid": null,
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Neurotherapeutics Ltd, Sir Colin Campbell Building, University of Nottingham Innovation Park, Triumph Road, Nottingham, NG7 2TU",
+              "institution_ids": [
+                "https://openalex.org/I142263535"
+              ]
+            },
+            {
+              "raw_affiliation_string": "School of Psychology, University of Nottingham, University Park, Nottingham, NG7 2RD, UK",
+              "institution_ids": [
+                "https://openalex.org/I142263535"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5067875302",
+            "display_name": "Ciara McCready",
+            "orcid": null,
+            "observed_orcids": []
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I142263535",
+              "display_name": "University of Nottingham",
+              "ror": "https://ror.org/01ee9ar58",
+              "country_code": "GB",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I142263535"
+              ]
+            }
+          ],
+          "countries": [
+            "GB"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Ciara McCready",
+          "raw_affiliation_strings": [
+            "Neurotherapeutics Ltd, Sir Colin Campbell Building, University of Nottingham Innovation Park, Triumph Road, Nottingham, NG7 2TU"
+          ],
+          "raw_orcid": null,
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Neurotherapeutics Ltd, Sir Colin Campbell Building, University of Nottingham Innovation Park, Triumph Road, Nottingham, NG7 2TU",
+              "institution_ids": [
+                "https://openalex.org/I142263535"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "last",
+          "author": {
+            "id": "https://openalex.org/A5034804421",
+            "display_name": "Stephen R. Jackson",
+            "orcid": "https://orcid.org/0000-0002-5676-4072",
+            "observed_orcids": [
+              "https://orcid.org/0000-0002-5676-4072"
+            ]
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I142263535",
+              "display_name": "University of Nottingham",
+              "ror": "https://ror.org/01ee9ar58",
+              "country_code": "GB",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I142263535"
+              ]
+            }
+          ],
+          "countries": [
+            "GB"
+          ],
+          "is_corresponding": true,
+          "raw_author_name": "Stephen R. Jackson",
+          "raw_affiliation_strings": [
+            "Neurotherapeutics Ltd, Sir Colin Campbell Building, University of Nottingham Innovation Park, Triumph Road, Nottingham, NG7 2TU",
+            "School of Psychology, University of Nottingham, University Park, Nottingham, NG7 2RD, UK"
+          ],
+          "raw_orcid": "https://orcid.org/0000-0002-5676-4072",
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Neurotherapeutics Ltd, Sir Colin Campbell Building, University of Nottingham Innovation Park, Triumph Road, Nottingham, NG7 2TU",
+              "institution_ids": [
+                "https://openalex.org/I142263535"
+              ]
+            },
+            {
+              "raw_affiliation_string": "School of Psychology, University of Nottingham, University Park, Nottingham, NG7 2RD, UK",
+              "institution_ids": [
+                "https://openalex.org/I142263535"
+              ]
+            }
+          ]
+        }
+      ],
+      "abstract_inverted_index": {
+        "Abstract": [
+          0
+        ],
+        "replaced": [
+          1
+        ],
+        "in": [
+          2
+        ],
+        "this": [
+          3
+        ],
+        "fixture.": [
+          4
+        ]
+      },
+      "ids": {
+        "openalex": "https://openalex.org/W7128526191",
+        "doi": "https://doi.org/10.64898/2026.02.07.704541"
+      }
+    }
+  ],
+  "group_by": []
+}

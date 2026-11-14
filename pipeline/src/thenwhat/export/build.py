@@ -56,7 +56,9 @@ from thenwhat.events.trial_facts import (
     reported_state,
 )
 from thenwhat.outlets.icons import is_blank_icon, outlet_domain
-from thenwhat.sources.base import RECORD_URLS
+from thenwhat.sources.base import record_url
+from thenwhat.sources.openalex import OpenAlex
+from thenwhat.sources.ror import Ror
 
 SCHEMA_VERSION = 1
 # Registries the clients read. Always listed, as their terms ask for attribution.
@@ -374,6 +376,10 @@ def _matches(session: Session, claim: Claim) -> list[ExportedMatch]:
             .where(
                 Entity.claim_id == claim.id,
                 EntityMatch.review_state.in_([ReviewState.APPROVED, ReviewState.PENDING]),
+                # Papers and organisations are not registry matches of the claim. They
+                # stay out until they are exported under their own heading (openspec
+                # related-research, "Export and site").
+                EntityMatch.source_name.not_in([OpenAlex.name, Ror.name]),
             )
             .order_by(EntityMatch.score.desc(), EntityMatch.id)
         )
@@ -384,11 +390,7 @@ def _matches(session: Session, claim: Claim) -> list[ExportedMatch]:
         ExportedMatch(
             source_name=match.source_name,
             external_id=match.external_id,
-            url=(
-                RECORD_URLS[match.source_name].format(match.external_id)
-                if match.source_name in RECORD_URLS
-                else None
-            ),
+            url=record_url(match.source_name, match.external_id),
             score=round(match.score, 4),
             state="approved" if match.review_state is ReviewState.APPROVED else "candidate",
             reading=_reading(session, match),
