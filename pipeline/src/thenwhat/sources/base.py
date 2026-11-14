@@ -30,7 +30,21 @@ class SourceRecord:
 RECORD_URLS = {
     "clinicaltrials.gov": "https://clinicaltrials.gov/study/{}",
     "crossref": "https://doi.org/{}",
+    "ror": "https://ror.org/{}",
 }
+
+
+def record_url(source_name: str, external_id: str) -> str | None:
+    """Where a reader can open the record a match points to, if the registry has a page
+    for it. A paper found by a literature search is known by its DOI when it has one,
+    else by the search source's own identifier."""
+    if source_name == "openalex":
+        template = (
+            "https://doi.org/{}" if external_id.startswith("10.") else "https://openalex.org/{}"
+        )
+        return template.format(external_id)
+    template = RECORD_URLS.get(source_name)
+    return template.format(external_id) if template else None
 
 
 class SourceError(Exception):
@@ -43,6 +57,14 @@ class MissingContact(SourceError):
 
 class SourceUnavailable(SourceError):
     """The registry kept failing after every allowed attempt."""
+
+
+class MissingKey(SourceError):
+    """The source needs a key and none is configured, so no request may be sent."""
+
+
+class AllowanceUsedUp(SourceError):
+    """The source's allowance for the day is used up. It is not asked again this run."""
 
 
 # The name this client goes by, in its User-Agent and when reading a site's robots.txt.
@@ -166,7 +188,7 @@ class Source:
 
     def _request(self, url: str, params: dict[str, str] | None) -> httpx.Response | None:
         """One GET with bounded retries. None means the registry said not-found."""
-        headers = {"User-Agent": user_agent(self._contact)}
+        headers = {"User-Agent": user_agent(self._contact)} | self._extra_headers()
         for attempt in range(self._max_attempts):
             self._wait_for_turn()
             stated_delay = 0.0
@@ -175,6 +197,7 @@ class Source:
             except httpx.TransportError:
                 response = None
             if response is not None:
+                self._heed(response)
                 if response.status_code == 404:
                     return None
                 if response.is_success:
@@ -187,6 +210,15 @@ class Source:
             if attempt + 1 < self._max_attempts:
                 self._time.sleep(max(2.0**attempt, stated_delay))
         raise SourceUnavailable(f"{self.name} did not answer after {self._max_attempts} attempts.")
+
+    def _extra_headers(self) -> dict[str, str]:
+        """Headers a source adds to every request, such as its key. They are never part
+        of the cache key, which is built from the address alone."""
+        return {}
+
+    def _heed(self, response: httpx.Response) -> None:
+        """Called with every answer before it is used. A source that states an allowance
+        reads it here and raises when nothing is left, which also ends the retries."""
 
     def _wait_for_turn(self) -> None:
         self._pacer.wait(self._time, self._interval)

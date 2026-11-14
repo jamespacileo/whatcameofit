@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     # Sent in the User-Agent of every registry request. No request is sent without it.
     contact_email: str | None = None
 
+    # OpenAlex's free key, for the literature search. Empty turns paper search off and
+    # leaves the rest of resolution as it is.
+    openalex_api_key: str | None = None
+
     # Language model: provider and model as "provider:model". No default on purpose.
     llm_model: str | None = None
     llm_monthly_budget_usd: Decimal = Decimal("13")
@@ -33,6 +37,8 @@ class Settings(BaseSettings):
     # A new trial candidate scored for the claim's indication at or above this is
     # approved by rule and published. The default is where the site's "High match" band
     # starts. 0 turns the rule off (openspec auto-publish).
+    # A related paper scored at or above it is approved by rule too (openspec
+    # related-research), and one scored under `match_reject_below` is rejected.
     match_accept_above: float = 0.8
     # Decide new drafts by rule: approved, and published, when the intervention is a
     # name; rejected and kept otherwise. On by default: approval needs no person

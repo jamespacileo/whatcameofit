@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "count": 0,
+    "db_response_time_ms": 70,
+    "page": 1,
+    "per_page": 3,
+    "groups_count": null,
+    "x_query": {
+      "oql": "get works with (zzqxv9 nonexistent intervention qqxzj7 syndrome) in the title, abstract, or full text",
+      "x_new_oql": "get works with (zzqxv9 nonexistent intervention qqxzj7 syndrome) in the title, abstract, or full text",
+      "oqo": {
+        "get_rows": "works",
+        "filter_rows": [
+          {
+            "column_id": "fulltext.search",
+            "value": "zzqxv9 nonexistent intervention qqxzj7 syndrome",
+            "operator": "has"
+          }
+        ]
+      },
+      "url": "/works?filter=fulltext.search:zzqxv9 nonexistent intervention qqxzj7 syndrome&per_page=3",
+      "order": "best matches first",
+      "order_default": true
+    },
+    "cost_usd": 0.001
+  },
+  "results": [],
+  "group_by": []
+}

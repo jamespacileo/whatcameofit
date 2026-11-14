@@ -1,4 +1,5 @@
-"""The three registry clients, replaying recorded responses (see tests/fixtures/README.md).
+"""The registry, literature and organisation clients, replaying recorded responses
+(see tests/fixtures/README.md).
 
 Scenario names are from openspec source-clients.
 """
@@ -6,11 +7,18 @@ Scenario names are from openspec source-clients.
 from datetime import date
 
 import httpx
+import pytest
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from thenwhat.db.models import HttpCache
+from thenwhat.sources import openalex, ror
+from thenwhat.sources.base import AllowanceUsedUp, MissingKey
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref, Notice
 from thenwhat.sources.europepmc import EuropePmc, describe
+from thenwhat.sources.openalex import OpenAlex
+from thenwhat.sources.ror import Ror
 
 CONTACT = "ops@thenwhat.test"
 NOT_FOUND = httpx.Response(404, text="not found")
@@ -412,3 +420,193 @@ def test_search_phrase_that_is_broad_within_the_condition_finds_nothing(
     )
 
     assert source.search_phrase("cell therapy", "Cancer") == []
+
+
+# --- OpenAlex --------------------------------------------------------------------
+
+OPENALEX_KEY = "test-key-not-a-real-one"
+SOME_LEFT = {"X-RateLimit-Cost-USD": "0.001", "X-RateLimit-Remaining-USD": "0.998"}
+
+
+def papers(
+    session: Session, fake_time, route, *, api_key: str | None = OPENALEX_KEY
+) -> tuple[OpenAlex, Replay]:
+    replay = Replay(route)
+    source = OpenAlex(
+        session,
+        contact_email=CONTACT,
+        api_key=api_key,
+        transport=httpx.MockTransport(replay),
+        time=fake_time,
+    )
+    return source, replay
+
+
+def test_literature_search_returns_papers_most_relevant_first(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Search with results"""
+    found = fixture_json("openalex/search_median_nerve_tourette.json")
+    source, replay = papers(session, fake_time, lambda request: found)
+
+    records = source.search_papers("median nerve stimulation Tourette syndrome")
+
+    assert [record.external_id for record in records] == [
+        "10.5281/zenodo.19046790",
+        "10.1177/27546330261423083",
+        "10.64898/2026.02.07.704541",
+    ]
+    assert records[0].url == "https://doi.org/10.5281/zenodo.19046790"
+    preprint = openalex.describe(records[2])
+    assert preprint.title.startswith("Low-intensity sub-threshold rhythmic 10Hz median nerve")
+    assert (preprint.kind, preprint.year) == ("preprint", 2026)
+    assert preprint.published_date == date(2026, 2, 10)
+    assert preprint.journal == "bioRxiv (Cold Spring Harbor Laboratory)"
+    assert preprint.abstract == "Abstract replaced in this fixture."
+    assert len(preprint.authors) == 3
+    editorial = openalex.describe(records[1])
+    assert editorial.authors[0].institutions == (("Durham University", "01v29qb04"),)
+    assert replay.requests[0].url.params["search"] == "median nerve stimulation Tourette syndrome"
+
+
+def test_literature_search_asks_for_no_page_beyond_the_limit(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Search with more results than the limit"""
+    found = fixture_json("openalex/search_median_nerve_tourette.json")
+    source, replay = papers(session, fake_time, lambda request: found)
+
+    records = source.search_papers("median nerve stimulation Tourette syndrome", limit=2)
+
+    assert found["meta"]["count"] > 900
+    assert len(records) == 2
+    assert [request.url.params["per_page"] for request in replay.requests] == ["2"]
+
+
+def test_literature_search_that_finds_nothing_is_empty(session: Session, fake_time, fixture_json):
+    source, _ = papers(
+        session, fake_time, lambda request: fixture_json("openalex/search_nothing.json")
+    )
+
+    assert source.search_papers("no such treatment") == []
+
+
+def test_one_paper_is_looked_up_by_its_doi(session: Session, fake_time, fixture_json):
+    work = fixture_json("openalex/work_704541.json")
+    source, replay = papers(session, fake_time, lambda request: work)
+
+    record = source.paper("10.64898/2026.02.07.704541")
+
+    assert record is not None
+    assert record.external_id == "10.64898/2026.02.07.704541"
+    assert replay.requests[0].url.path == "/works/doi:10.64898/2026.02.07.704541"
+    assert source.paper("not an identifier") is None
+    assert len(replay.requests) == 1
+
+
+def test_literature_search_without_a_key_sends_nothing_and_names_the_setting(
+    session: Session, fake_time
+):
+    """Scenario: Missing key"""
+    source, replay = papers(session, fake_time, lambda request: {}, api_key=None)
+
+    with pytest.raises(MissingKey, match="OPENALEX_API_KEY"):
+        source.search_papers("median nerve stimulation")
+    assert replay.requests == []
+
+
+def test_the_key_is_sent_in_a_header_and_kept_out_of_the_cache(
+    session: Session, fake_time, fixture_json, caplog
+):
+    found = fixture_json("openalex/search_median_nerve_tourette.json")
+    source, replay = papers(session, fake_time, lambda request: found)
+
+    with caplog.at_level("DEBUG"):
+        source.search_papers("median nerve stimulation Tourette syndrome")
+
+    [request] = replay.requests
+    assert request.headers["Authorization"] == f"Bearer {OPENALEX_KEY}"
+    assert OPENALEX_KEY not in str(request.url)
+    cached = session.scalars(select(HttpCache)).all()
+    assert cached and all(OPENALEX_KEY not in f"{row.request_key} {row.payload}" for row in cached)
+    assert OPENALEX_KEY not in caplog.text
+
+
+def test_used_up_allowance_stops_the_run_without_a_retry(session: Session, fake_time):
+    """Scenario: Allowance used up"""
+    refused = httpx.Response(429, json={}, headers={"X-RateLimit-Remaining-USD": "0"})
+    source, replay = papers(session, fake_time, lambda request: refused)
+
+    with pytest.raises(AllowanceUsedUp, match="used up"):
+        source.search_papers("first")
+    with pytest.raises(AllowanceUsedUp):
+        source.search_papers("second")
+
+    assert len(replay.requests) == 1
+    assert fake_time.slept == []
+
+
+def test_the_last_search_of_the_allowance_is_used_and_no_other_is_sent(
+    session: Session, fake_time, fixture_json
+):
+    found = fixture_json("openalex/search_median_nerve_tourette.json")
+    last = httpx.Response(
+        200, json=found, headers={"X-RateLimit-Cost-USD": "0.001", "X-RateLimit-Remaining-USD": "0"}
+    )
+    source, replay = papers(session, fake_time, lambda request: last)
+
+    assert len(source.search_papers("first")) == 3
+    with pytest.raises(AllowanceUsedUp):
+        source.search_papers("second")
+    assert len(replay.requests) == 1
+
+
+def test_a_brief_rate_limit_with_allowance_left_is_retried(
+    session: Session, fake_time, fixture_json
+):
+    found = fixture_json("openalex/search_median_nerve_tourette.json")
+    answers = [httpx.Response(429, json={}, headers=SOME_LEFT), found]
+    source, replay = papers(session, fake_time, lambda request: answers.pop(0))
+
+    assert len(source.search_papers("median nerve stimulation")) == 3
+    assert len(replay.requests) == 2
+
+
+# --- ROR -------------------------------------------------------------------------
+
+
+def organisations(session: Session, fake_time, route) -> tuple[Ror, Replay]:
+    replay = Replay(route)
+    source = Ror(
+        session, contact_email=CONTACT, transport=httpx.MockTransport(replay), time=fake_time
+    )
+    return source, replay
+
+
+def test_known_organisation_is_returned_with_its_identifier_and_match_measure(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Known organisation"""
+    found = fixture_json("ror/affiliation_university_of_nottingham.json")
+    source, replay = organisations(session, fake_time, lambda request: found)
+
+    [record] = source.organisations("University of Nottingham")
+
+    assert (record.source_name, record.external_id) == ("ror", "01ee9ar58")
+    assert record.url == "https://ror.org/01ee9ar58"
+    assert ror.describe(record) == ror.Organisation(
+        name="University of Nottingham",
+        country="United Kingdom",
+        website="https://www.nottingham.ac.uk/",
+        name_match=1.0,
+    )
+    assert replay.requests[0].url.params["affiliation"] == "University of Nottingham"
+
+
+def test_unknown_organisation_gives_an_empty_result(session: Session, fake_time, fixture_json):
+    """Scenario: Unknown organisation"""
+    near_misses = fixture_json("ror/affiliation_unknown.json")
+    source, _ = organisations(session, fake_time, lambda request: near_misses)
+
+    assert near_misses["items"]
+    assert source.organisations("Zzqxv Institute of Nowhere Qqxzj") == []

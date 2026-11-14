@@ -16,11 +16,18 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `europepmc/citing_srep39654_page1.json` | `GET /search?query=CITES:28067250_MED&resultType=core&pageSize=3` |
 | `crossref/work_retracted_lancet_1998.json` | `GET /works/10.1016/S0140-6736(97)11096-0` |
 | `crossref/work_srep39654.json` | `GET /works/10.1038/srep39654` |
+| `openalex/search_median_nerve_tourette.json` | `GET /works?search=median nerve stimulation Tourette syndrome&per_page=3&select=id,doi,title,publication_year,publication_date,type,primary_location,authorships,abstract_inverted_index,ids` (2026-11-14) |
+| `openalex/search_nothing.json` | the same search for made-up words that no paper holds (2026-11-14) |
+| `openalex/work_704541.json` | `GET /works/doi:10.64898/2026.02.07.704541?select=…` (2026-11-14) |
+| `ror/affiliation_university_of_nottingham.json` | `GET /v2/organizations?affiliation=University of Nottingham` (2026-11-14) |
+| `ror/affiliation_unknown.json` | the same for a made-up name: ROR lists near misses and marks none as chosen (2026-11-14) |
 
 Changes made to the recordings, for copyright and size:
 
 - Europe PMC citing papers, `europepmc/paper_srep39654.json` and `europepmc/paper_sciadv_abf1798.json`: each `abstractText` is replaced by a placeholder sentence.
 - `europepmc/paper_nejmoa2206038.json`: `abstractText` is replaced by a placeholder that keeps only the paper's registry number; subject headings, grants, links and all but two authors are removed.
+- OpenAlex works: each `abstract_inverted_index` is replaced by a placeholder sentence. The key was sent in a header and is in no recording.
+- ROR: only the first two items of each answer are kept.
 - Crossref works: `abstract` removed; `reference` removed from `work_srep39654.json`.
 - `openai/decisions_three_records.json`: the model's name is replaced by `example-model` in the request and the response. The input is synthetic.
 
