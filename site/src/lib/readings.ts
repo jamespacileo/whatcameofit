@@ -1,7 +1,7 @@
 // The site's words for a record reading (openspec record-readings): what a model read
 // from a trial's stored registry record into a fixed code, checked by rule before it was
 // stored. One place words a measure, so "The record in brief" and a trial's entry cannot
-// say it differently. The model writes nothing a reader sees (docs/adr/0002).
+// say it differently. The model writes nothing a reader sees (docs/adr/0003).
 
 import type { ExportedReading, ExportedTrial } from "./export";
 import { assertNeutral } from "./status.ts";
