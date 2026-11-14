@@ -59,8 +59,8 @@ test("no contact means no requests; input and result counts are bounded", async 
   const missing = setup({contact: ""}); await missing.research.search(input); assert.equal(missing.calls.length, 0);
   const s = setup();
   await s.research.search({...input, searchPhrases: Array(100).fill("another phrase"), organisations: Array(100).fill("Kyoto University")});
-  assert.equal(s.calls.filter(c=>new URL(c.url).pathname==="/works").length, 2);
-  assert.equal(s.calls.filter(c=>c.url.includes("ror.org")).length, 1);
+  assert.equal(s.calls.filter(c=>new URL(c.url).pathname==="/works").length, 3);
+  assert.equal(s.calls.filter(c=>new URL(c.url).hostname==="api.ror.org").length, 1);
 });
 
 test("exhausted provider pauses survive a new client via shared cache", async () => {
@@ -100,10 +100,59 @@ test("stalled metadata cache cannot stall a completed trial answer", async () =>
 });
 
 test("recorded provider responses run through the same normalization used in production", async () => {
- const s=setup({fetch:async url=>Response.json(recorded(String(url).includes("rate-limit") ? "openalex-allowance" : String(url).includes("ror.org") ? "ror-affiliation" : "openalex-works"))});
+ const s=setup({fetch:async url=>Response.json(recorded(String(url).includes("rate-limit") ? "openalex-allowance" : new URL(url).hostname==="api.ror.org" ? "ror-affiliation" : "openalex-works"))});
  const result=await s.research.search(input);
  assert.equal(result.papers.length,10);assert.equal(result.organisations[0].name,"Kyoto University");
  assert.equal(result.availability.openalex,"ok");assert.equal(result.availability.ror,"ok");
  assert(result.papers.every(p=>p.title&&p.url.startsWith("https://")));
  assert(!JSON.stringify(result).includes("abstract_inverted_index"));
+});
+
+test("a paper the page links to is fetched by its identifier and listed first, whatever the search finds", async () => {
+  const linkedWork = recorded("openalex-work");
+  const serving = allowed => async url => {
+    const u = new URL(url);
+    if (u.hostname === "api.ror.org") return Response.json({ items: [] });
+    if (u.pathname === "/rate-limit") return Response.json({ rate_limit: allowed });
+    if (u.pathname === "/works/pmid:39532305") return Response.json(linkedWork);
+    if (u.pathname.startsWith("/works/")) return new Response("", { status: 404 });
+    return Response.json({ results: [work, linkedWork] });
+  };
+  const fetch = serving(budget);
+  const s = setup({ fetch });
+  const a = await s.research.search({ ...input, linked: [{ pubmedId: "39532305" }, { doi: "10.1000/unknown" }, { doi: "not a doi" }] });
+  assert.equal(a.availability.openalex, "ok");
+  assert.deepEqual(a.papers[0], { id: linkedWork.id, title: linkedWork.title, source: "openalex", year: 2024, kind: "article",
+    journal: "ACS Macro Letters", url: linkedWork.doi, linked: true });
+  assert.equal(a.papers.filter(p => p.url === linkedWork.doi).length, 1);
+  assert(a.papers.slice(1).every(p => !p.linked));
+  // With no treatment name to search by, the linked paper is still found.
+  const alone = await setup({ fetch }).research.search({ linked: [{ pubmedId: "39532305" }] });
+  assert.equal(alone.papers.length, 1);
+  // A plan that charges for a lookup by identifier is never used.
+  const charged = setup({ fetch: serving({ ...budget, endpoint_costs_usd: { ...budget.endpoint_costs_usd, singleton: 0.001 } }) });
+  assert.equal((await charged.research.search({ linked: [{ pubmedId: "39532305" }] })).availability.openalex, "limit");
+});
+
+test("papers by authors at the organisations a report names are searched for and listed before keyword results", async () => {
+  const sought = recorded("openalex-work");
+  const other = { ...work, id: "https://openalex.org/W1", doi: "https://doi.org/10.1000/other", title: "Another paper" };
+  const s = setup({ fetch: async url => {
+    s.calls.push({ url: String(url) });
+    const u = new URL(url);
+    if (u.hostname === "api.ror.org") return Response.json({ items: [{ chosen: true, score: 1, organization: org }] });
+    if (u.pathname === "/rate-limit") return Response.json({ rate_limit: budget });
+    return Response.json({ results: u.searchParams.get("filter") ? [other, sought] : [work] });
+  } });
+  const a = await s.research.search({ ...input, published: "2025-04-14T09:00:00" });
+  const filtered = s.calls.map(c => new URL(c.url)).filter(u => u.searchParams.get("filter"));
+  assert.equal(filtered.length, 1);
+  assert.equal(filtered[0].searchParams.get("search"), "(EX-1) OR (tooth repair)");
+  assert.equal(filtered[0].searchParams.get("filter"), `authorships.institutions.ror:${org.id},from_publication_date:2023-04-15,to_publication_date:2025-05-15`);
+  assert.deepEqual(a.papers.map(p => p.title), ["Another paper", sought.title, work.title]);
+  assert.deepEqual(a.papers[1].institutions, ["Kyoto University"]);
+  assert.equal(a.papers[2].institutions, undefined);
+  // No date known: the organisation alone narrows the search.
+  const undated = setup(); await undated.research.search(input);
+  assert(undated.calls.some(c => new URL(c.url).searchParams.get("filter") === `authorships.institutions.ror:${org.id}`));
 });

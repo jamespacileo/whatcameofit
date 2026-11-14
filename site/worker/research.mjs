@@ -62,6 +62,24 @@ function allowance(body) {
     finite(cost) && cost >= 0.001 && cost <= 0.01 && finite(body.daily_remaining_usd) &&
     body.daily_remaining_usd >= cost + 0.01 && body.prepaid_balance_usd === 0 && body.prepaid_remaining_usd === 0;
 }
+/** Fetching one work by its identifier is free on the free plan. Anything else is refused. */
+function freeLookup(body) {
+  return body?.endpoint_costs_usd?.singleton === 0 && body.prepaid_balance_usd === 0 && body.prepaid_remaining_usd === 0;
+}
+/** A paper the page links to, as OpenAlex addresses it: by DOI or by PubMed number. */
+function linkedId(ref) {
+  const doi = clean(ref?.doi).toLowerCase();
+  if (/^10\.\d{4,9}\/[^\s?#]+$/.test(doi)) return `doi:${doi}`;
+  const pubmedId = clean(ref?.pubmedId);
+  return /^\d{4,9}$/.test(pubmedId) ? `pmid:${pubmedId}` : null;
+}
+/** Two years before a report to a month after it, as publication-date filters. Nothing for no date. */
+function around(published) {
+  const at = Date.parse(clean(published, 40));
+  if (!Number.isFinite(at)) return [];
+  const day = offset => new Date(at + offset * DAY * 1000).toISOString().slice(0, 10);
+  return [`from_publication_date:${day(-730)}`, `to_publication_date:${day(31)}`];
+}
 function retrySeconds(header, now) {
   const seconds = Number(header);
   const delay = header && Number.isFinite(seconds) ? seconds : (Date.parse(header) - now) / 1000;
@@ -106,6 +124,8 @@ export function makeResearch({ fetch, apiKey, contact, cache, now = Date.now, ti
             // Authorization header can never follow a redirect to another host.
             redirect: "manual", signal: controller.signal,
           });
+          // No such record. Only a lookup by identifier treats this as an answer.
+          if (response.status === 404) return { missing: true };
           if (!response.ok) {
             if ([401, 402, 403, 429].includes(response.status)) {
               await pause(source, response.status === 429 ? retrySeconds(response.headers.get("Retry-After"), now()) : untilTomorrow());
@@ -133,8 +153,8 @@ export function makeResearch({ fetch, apiKey, contact, cache, now = Date.now, ti
     } catch { return { error: "unavailable" }; }
     finally { clearTimeout(timer); }
   }
-  async function searchPapers(query) {
-    const key = `research-v1:openalex:${await digest(query.toLowerCase())}`;
+  async function searchPapers(query, filter = "") {
+    const key = `research-v1:openalex:${await digest(`${query}${filter && `\n${filter}`}`.toLowerCase())}`;
     const cached = await get(key);
     if (Array.isArray(cached)) return { items: cached };
     if (await paused("openalex")) return { error: "limit" };
@@ -142,11 +162,29 @@ export function makeResearch({ fetch, apiKey, contact, cache, now = Date.now, ti
     if (budget.error) return budget;
     if (!allowance(budget.body?.rate_limit)) { await pause("openalex", untilTomorrow()); return { error: "limit" }; }
     const url = new URL("https://api.openalex.org/works");
-    url.search = new URLSearchParams({ search: query, per_page: "10", select: "id,title,doi,publication_year,type,primary_location" });
+    url.search = new URLSearchParams({ search: query, ...(filter ? { filter } : {}), per_page: "10", select: "id,title,doi,publication_year,type,primary_location" });
     const reply = await request(url.href, "openalex");
     if (reply.error) return reply;
     if (!Array.isArray(reply.body?.results)) return { error: "unavailable" };
     const items = reply.body.results.slice(0, 10).map(paper).filter(Boolean);
+    await put(key, items, TTL);
+    return { items };
+  }
+  /** The record of one paper the page links to. Not a search: the identifier is the page's own. */
+  async function linkedPaper(id) {
+    const key = `research-v1:openalex-work:${await digest(id)}`;
+    const cached = await get(key);
+    if (Array.isArray(cached)) return { items: cached };
+    if (await paused("openalex")) return { error: "limit" };
+    const budget = await request("https://api.openalex.org/rate-limit", "openalex");
+    if (budget.error || budget.missing) return { error: budget.error ?? "unavailable" };
+    if (!freeLookup(budget.body?.rate_limit)) return { error: "limit" };
+    const url = new URL(`https://api.openalex.org/works/${id}`);
+    url.search = new URLSearchParams({ select: "id,title,doi,publication_year,type,primary_location" });
+    const reply = await request(url.href, "openalex");
+    if (reply.error) return reply;
+    const found = reply.missing ? null : paper(reply.body);
+    const items = found ? [{ ...found, linked: true }] : [];
     await put(key, items, TTL);
     return { items };
   }
@@ -170,34 +208,62 @@ export function makeResearch({ fetch, apiKey, contact, cache, now = Date.now, ti
     return { items };
   }
   return {
-    async search({ intervention, indication, searchPhrases = [], organisations = [] } = {}) {
+    async search({ intervention, indication, searchPhrases = [], organisations = [], linked = [], published } = {}) {
       const result = { papers: [], organisations: [], availability: { openalex: "not_needed", ror: "not_needed" } };
       if (!clean(contact)) return { ...result, availability: { openalex: "not_configured", ror: "not_configured" } };
       const terms = distinct([clean(intervention), ...(Array.isArray(searchPhrases) ? searchPhrases.slice(0, 3).map(v => clean(v)) : [])].filter(Boolean)).slice(0, 2);
+      const ids = distinct((Array.isArray(linked) ? linked.slice(0, 3).map(linkedId) : []).filter(Boolean));
       const names = distinct((Array.isArray(organisations) ? organisations.slice(0, 10).map(v => clean(v)) : []).filter(Boolean)).slice(0, 3);
-      // Independent providers; a failure of one never removes the other's results.
+      // A failure of one provider never removes the other's results.
+      const identified = (async () => {
+        if (!names.length) return;
+        result.availability.ror = "ok";
+        for (const name of names) {
+          const found = await findOrganisation(name);
+          if (found.error) { result.availability.ror = found.error; break; }
+          result.organisations.push(...found.items.map(item => ({ ...item, matchedName: name })));
+        }
+        result.organisations = [...new Map(result.organisations.map(o => [o.id, o])).values()];
+      })().catch(() => { result.availability.ror = "unavailable"; });
       await Promise.all([
         (async () => {
           if (!apiKey) { result.availability.openalex = "not_configured"; return; }
-          if (!terms.length || !clean(indication)) return;
+          const queries = terms.length && clean(indication) ? terms.map(term => `${term} ${clean(indication)}`) : [];
+          if (!ids.length && !queries.length) return;
           result.availability.openalex = "ok";
-          for (const term of terms) {
-            const found = await searchPapers(`${term} ${clean(indication)}`);
-            if (found.error) { result.availability.openalex = found.error; break; }
-            result.papers.push(...found.items);
+          const found = [];
+          const ask = async (search, mark = {}) => {
+            const reply = await search();
+            if (reply.error) { result.availability.openalex = reply.error; return false; }
+            found.push(...reply.items.map(item => ({ ...item, ...mark })));
+            return true;
+          };
+          // The papers the page links to come first: a press release words a finding
+          // differently from its paper's title, so a search by keyword can miss it.
+          for (const id of ids) if (!await ask(() => linkedPaper(id))) return;
+          for (const query of queries) if (!await ask(() => searchPapers(query))) return;
+          // A report names where the work was done. Papers on the treatment whose authors
+          // are at a named organisation, published around the report, are searched for too:
+          // this finds the paper when its title shares few words with the report.
+          await identified;
+          const anyTerm = terms.map(term => `(${term.replace(/[()"]/g, " ")})`).join(" OR ");
+          for (const org of terms.length ? result.organisations : []) {
+            const filter = [`authorships.institutions.ror:${org.id}`, ...around(published)].join(",");
+            if (!await ask(() => searchPapers(anyTerm, filter), { institutions: [org.name] })) break;
           }
-          result.papers = [...new Map(result.papers.map(p => [p.url.toLowerCase(), p])).values()].slice(0, 20);
+          // One record per paper: marked as linked if any finding was, with every named
+          // organisation it was found under. Linked first, then the most organisations.
+          const papers = new Map();
+          for (const { institutions = [], ...one } of found) {
+            const kept = papers.get(one.url.toLowerCase()) ?? papers.set(one.url.toLowerCase(), { ...one, institutions: [] }).get(one.url.toLowerCase());
+            if (one.linked) kept.linked = true;
+            kept.institutions = distinct([...kept.institutions, ...institutions]);
+          }
+          const weight = p => (p.linked ? 10 : 0) + p.institutions.length;
+          result.papers = [...papers.values()].sort((a, b) => weight(b) - weight(a)).slice(0, 20)
+            .map(({ institutions, ...one }) => institutions.length ? { ...one, institutions } : one);
         })().catch(() => { result.availability.openalex = "unavailable"; }),
-        (async () => {
-          if (!names.length) return;
-          result.availability.ror = "ok";
-          for (const name of names) {
-            const found = await findOrganisation(name);
-            if (found.error) { result.availability.ror = found.error; break; }
-            result.organisations.push(...found.items.map(item => ({ ...item, matchedName: name })));
-          }
-          result.organisations = [...new Map(result.organisations.map(o => [o.id, o])).values()];
-        })().catch(() => { result.availability.ror = "unavailable"; }),
+        identified,
       ]);
       return result;
     },

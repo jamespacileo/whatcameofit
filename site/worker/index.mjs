@@ -10,7 +10,7 @@ import { lookUp } from "./lookup.mjs";
 import { SITE } from "../site.config.mjs";
 import { goneList, gonePage } from "./gone.mjs";
 import { makeModel } from "./model.mjs";
-import { linkSignals } from "./page.mjs";
+import { linkSignals, publishedIn } from "./page.mjs";
 import { makePapers } from "./papers.mjs";
 import { readPost } from "./post.mjs";
 import { makeRegistry } from "./registry.mjs";
@@ -210,9 +210,10 @@ export async function handle(request, env, tools) {
       if (!text && !both.source.article_read) return refuse(422, "post_unreadable", { platform });
       text = both.text;
       page = both.page;
-    } else if (links.length) {
-      // An article the reader's browser read: its links still say which paper it reports.
-      page = linkSignals(links, text);
+    } else if (links.length || publishedIn(text)) {
+      // An article the reader's browser read: its links still say which paper it reports,
+      // and its opening lines when it was published.
+      page = { ...linkSignals(links, text), published: publishedIn(text) };
     }
     // Browser-supplied content is never proof that a page is public. For a readable
     // source, obtain independent anonymous evidence before making its result shared.

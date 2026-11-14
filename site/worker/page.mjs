@@ -129,6 +129,12 @@ export function linkSignals(links, text = "") {
   };
 }
 
+/** The date a page gives for itself, from the opening lines `pageAsText` writes. */
+export function publishedIn(text) {
+  const line = String(text).split("\n", 3).find((one) => one.startsWith("Published: "));
+  return line ? line.slice("Published: ".length).trim() || null : null;
+}
+
 /** The page for a reader who sees only text: what it is first, then the article. */
 export function pageAsText(page) {
   const lead = [

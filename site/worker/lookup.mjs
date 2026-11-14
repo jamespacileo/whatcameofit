@@ -62,14 +62,18 @@ async function inTurn(items, ask) {
 
 /** The registry numbers given by the papers the page links to. A paper that cannot be
  * looked up is passed over: the lookup goes on without it. */
+/** The papers the page links to, by DOI or PubMed number. */
+function linkedPapers(page) {
+  return [
+    ...(page?.dois ?? []).map((doi) => ({ doi })),
+    ...(page?.pubmedIds ?? []).map((pubmedId) => ({ pubmedId })),
+  ].slice(0, MAX_PAPERS);
+}
+
 async function paperNumbers(page, papers) {
   if (!page || !papers) return [];
-  const linked = [
-    ...(page.dois ?? []).map((doi) => ({ doi })),
-    ...(page.pubmedIds ?? []).map((pubmedId) => ({ pubmedId })),
-  ].slice(0, MAX_PAPERS);
   const found = [];
-  for (const paper of linked) {
+  for (const paper of linkedPapers(page)) {
     found.push(...(await papers.trialNumbers(paper).catch(() => [])));
   }
   return unique(found);
@@ -101,6 +105,8 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
     indication: reading.indication,
     searchPhrases: reading.search_phrases ?? [],
     organisations: [...(Array.isArray(reading.organisations) ? reading.organisations : []), reading.sponsor].filter(Boolean),
+    linked: linkedPapers(page),
+    published: page?.published ?? null,
   })).catch(() => ({ papers: [], organisations: [], availability: { openalex: "unavailable", ror: "unavailable" } })) : null;
 
   const names = unique([reading.intervention, ...(reading.other_names ?? []).filter(isAName)]);

@@ -1,0 +1,14 @@
+{
+  "source_url": "https://api.openalex.org/works/pmid:39532305?select=id,title,doi,publication_year,type,primary_location",
+  "fetched_at": "2026-11-14T00:00:00+00:00",
+  "status": 200,
+  "note": "Recorded with a generic client name. primary_location is cut down to the one field the worker reads.",
+  "body": {
+    "id": "https://openalex.org/W4404326590",
+    "title": "Generating Tooth Organoids Using Defined Bioorthogonally Cross-Linked Hydrogels",
+    "doi": "https://doi.org/10.1021/acsmacrolett.4c00520",
+    "publication_year": 2024,
+    "type": "article",
+    "primary_location": { "source": { "display_name": "ACS Macro Letters" } }
+  }
+}

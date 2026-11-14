@@ -126,6 +126,8 @@ test("papers and organisation identities have no clinical confidence or status",
   }}));
   assert.equal(result.research.papers[0].detail,"2024 · article · Example Journal");
   assert.match(result.research.paperNote,/Unreviewed/);
+  assert.equal(describeAnswer(answer({research:{papers:[{title:"Synthetic research",year:2024,linked:true}]}})).research.papers[0].detail,"Linked from the article · 2024");
+  assert.equal(describeAnswer(answer({research:{papers:[{title:"Synthetic research",year:2024,institutions:["Example University"]}]}})).research.papers[0].detail,"Authors at Example University · 2024");
   assert.equal(result.research.organisations[0].title,"Example University");
   assert(!JSON.stringify(result.research).includes("confidence"));
   assert.equal(result.none,LIVE.none);
