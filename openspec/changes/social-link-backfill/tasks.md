@@ -74,7 +74,7 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 
 - [x] 8.1 Load the Hacker News file and run screening on a separate database, as the ledger change's first run did; verify the report's counts are recorded in this change, with the unlisted domains shown to the operator
 - [x] 8.2 Run `backfill plan` for triage and record the estimated cost beside the month's remaining ceiling; verify the operator has seen the figure before triage runs
-- [ ] 8.3 (triage has run on every lead in scope; the sample of 200 has not been drawn for the operator and nothing is labelled) Run triage, draw a sample of 200 and give it to the operator to label; verify the evaluation report's figures are recorded in this change
+- [x] 8.3 (the sample was labelled by an assistant, under the operator's decision of 2026-11-14, not by the operator; figures below) Run triage, draw a sample of 200 and give it to the operator to label; verify the evaluation report's figures are recorded in this change
 - [ ] 8.4 If the operator asks for it, reword the triage question, raise the version, run again and evaluate again; verify each round's figures are recorded here with what was changed
 - [ ] 8.5 Load, screen and triage the chosen Reddit communities, and have the operator label a further sample; verify the report's platform split holds figures for both platforms
 - [ ] 8.6 After the operator sets the thresholds, read 200 leads and record the funnel here; verify the operator is shown the funnel and the claims made, and that no further reading runs before their decision
@@ -90,6 +90,23 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 - **Triage (8.3, first half):** all 35,158 leads in scope scored through the Decisions API in about four minutes with four workers: 1,821 calls, 10,619,023 input tokens, 1.06 US dollars. A minute without a connection failed 2,839 questions and, because each of four workers retried the same leads, used up all three attempts of 449 leads; they were scored on a further run with a higher attempt limit. A model that cannot be reached now stops the run with its leads still due.
 - **Scores:** 34,460 leads (98%) are under 0.1. The other tenths hold 112, 74, 55, 45, 52, 43, 40, 42 and, from 0.9, 235. So 317 leads are at or above 0.7. Every tenth holds at least 20 leads, so a sample of 200 can take 20 from each.
 - **Not measured:** nothing is labelled, so precision and recall are unknown. A look at a few dozen titles suggests the high scores are treatment reports and that low-scored titles holding a word such as "drug" or "trial" are mostly pricing, policy and court stories, with a few arguable misses. That is an impression, not a figure.
+
+## First evaluation: what was done on 2026-11-14 (the rest of 8.3)
+
+- **Labels:** 200 leads, 20 from each tenth of the score range, labelled by an assistant in another session that did not write the triage and saw no score, from the title, outlet and date alone. 87 treatment reports, 92 other health news, 21 not about health. The operator has checked none of them yet; `spot-check-leads` lists 20 disagreements and a random 30. The labeller named 31 leads it was unsure of, about one in six, mostly lifestyle findings, safety findings about a treatment, and enabling technology with no condition named, and wrote down the rule it applied to each group for the operator to accept or change.
+- **Treatment reports among the 20 labelled in each tenth, lowest first:** 0, 1, 6, 7, 9, 10, 7, 12, 16, 19. The score does order the leads.
+
+| Pass at or above | Precision | Recall, as reported | Leads passed |
+| --- | --- | --- | --- |
+| 0.5 | 78% | 83% | 422 |
+| 0.6 | 82% | 76% | 364 |
+| 0.7 | 89% | 72% | 320 |
+| 0.8 | 93% | 66% | 280 |
+| 0.9 | 95% | 57% | 237 |
+
+- **What the recall figures do not show:** 34,441 of the 35,158 scored leads are under 0.1, and 20 of them were labelled. None was a treatment report, so the report counts none there. But 0 of 20 only shows that fewer than about 14 in 100 are, which over 34,441 leads allows for several thousand, against about 390 estimated above 0.1. So the recall column is an upper bound that could be far too high. Precision does not depend on this. Equal numbers from each tenth was the wrong plan for scores this lopsided.
+- **What was done about it:** `sample-leads --tenth` draws a whole sample from one tenth. A second batch of 360 leads, 300 from the lowest tenth and 60 from across the range, shuffled together so that the batch says nothing of a lead's score, is with the same labeller. With 300 labelled and none a report, the lowest tenth would hold fewer than about 1 in 100.
+- **Precision by the labeller's rules:** the strongest disagreements are mostly about where a treatment report ends: a safety recall of a drug, a first-of-its-kind operation, a headline that names an approach and a disease without a result. They are differences of definition between the triage question and the labeller's rules more than errors of either, and the operator's spot-check is where that is settled.
 
 ## Workflow follow-up
 

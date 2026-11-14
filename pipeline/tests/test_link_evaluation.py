@@ -113,6 +113,17 @@ def test_a_samples_order_does_not_give_away_the_scores(session: Session):
     assert len(set(tenths[:20])) > 3
 
 
+def test_a_sample_can_be_drawn_from_one_tenth(session: Session):
+    """Scenario: A crowded tenth"""
+    spread(session, 40)
+
+    sample = sample_leads(session, size=30, seed="1", version=1, only_tenth=0)
+
+    ids = [one.lead_id for one in sample.leads]
+    scores = session.scalars(select(LinkLead.triage_score).where(LinkLead.id.in_(ids))).all()
+    assert len(ids) == 30 and all(tenth_of(score or 0.0) == 0 for score in scores)
+
+
 def test_a_thin_tenth_gives_what_it_has_and_is_reported_short(session: Session):
     """Scenario: A thin tenth"""
     for number in range(30):

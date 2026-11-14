@@ -7,7 +7,7 @@ Measures how well triage separates leads that report a treatment from those that
 ## ADDED Requirements
 
 ### Requirement: Sample across the score range
-`thenwhat backfill sample-leads` SHALL draw a sample of scored leads that have no label, in equal numbers from each tenth of the score range and spread across platforms. The same seed SHALL draw the same sample. For each lead it SHALL show the title, the outlet, the date first shared and the address, and SHALL NOT show the score.
+`thenwhat backfill sample-leads` SHALL draw a sample of scored leads that have no label, in equal numbers from each tenth of the score range and spread across platforms. Asked for one tenth, it SHALL draw the whole sample from that tenth. The same seed SHALL draw the same sample. For each lead it SHALL show the title, the outlet, the date first shared and the address, and SHALL NOT show the score.
 
 #### Scenario: A sample of 200
 - **WHEN** the operator asks for 200 leads and every tenth of the score range holds at least 20 unlabelled leads
@@ -16,6 +16,10 @@ Measures how well triage separates leads that report a treatment from those that
 #### Scenario: A thin tenth
 - **WHEN** one tenth of the score range holds only 5 unlabelled leads
 - **THEN** those 5 are listed, and the output says that tenth is short
+
+#### Scenario: A crowded tenth
+- **WHEN** the operator asks for 300 leads from the one tenth of the score range that starts at 0.0
+- **THEN** 300 unlabelled leads scored under 0.1 are listed, and no other tenth is drawn from
 
 #### Scenario: A lead an assistant has labelled
 - **WHEN** a lead has an assistant's label and no person's

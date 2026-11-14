@@ -121,13 +121,20 @@ class Sample:
     per_tenth: int = 0
 
 
-def sample_leads(session: Session, *, size: int, seed: str, version: int) -> Sample:
+def sample_leads(
+    session: Session, *, size: int, seed: str, version: int, only_tenth: int | None = None
+) -> Sample:
     """Draw scored leads that nobody has labelled, in equal numbers from each tenth of
-    the score range, spread across platforms. The same seed draws the same sample."""
-    per_tenth = max(size // TENTHS, 1)
+    the score range, spread across platforms. The same seed draws the same sample.
+
+    With `only_tenth`, all of them come from that one tenth. Equal numbers leave a tenth
+    that holds most of the leads thinly labelled: found on the first real run, where 98%
+    of leads were under 0.1 and 20 labels there could not say how many reports it hides."""
+    tenths = range(TENTHS) if only_tenth is None else [only_tenth]
+    per_tenth = max(size // len(tenths), 1)
     sample = Sample(per_tenth=per_tenth)
     platforms = list(session.scalars(select(LinkShare.platform).distinct().order_by("platform")))
-    for tenth in range(TENTHS):
+    for tenth in tenths:
         chosen: dict[int, LinkLead] = {}
         drawn = {
             platform: list(

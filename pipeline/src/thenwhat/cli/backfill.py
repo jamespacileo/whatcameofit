@@ -512,6 +512,15 @@ def _triage_version(settings: Settings) -> int:
 def sample_leads_command(
     size: Annotated[int, typer.Option(min=10, help="How many leads to draw, in tens.")] = 200,
     seed: Annotated[str, typer.Option(help="The same seed draws the same sample.")] = "1",
+    tenth: Annotated[
+        float | None,
+        typer.Option(
+            min=0.0,
+            max=0.9,
+            help="Draw every lead from the one tenth of the score range that starts here, "
+            "for example 0.0. Use it where one tenth holds most of the leads.",
+        ),
+    ] = None,
 ) -> None:
     """Draw scored link leads to label, in equal numbers from each tenth of the score
     range and spread across platforms.
@@ -521,7 +530,13 @@ def sample_leads_command(
     """
     settings = settings_or_exit()
     with refusals(), open_session() as session:
-        sample = sample_leads(session, size=size, seed=seed, version=_triage_version(settings))
+        sample = sample_leads(
+            session,
+            size=size,
+            seed=seed,
+            version=_triage_version(settings),
+            only_tenth=None if tenth is None else round(tenth * TENTHS),
+        )
     if not sample.leads:
         out.print(
             "No scored link lead is waiting for a label. Run `thenwhat backfill run "
@@ -534,12 +549,15 @@ def sample_leads_command(
             markup=False,
             soft_wrap=True,
         )
-    out.print(
-        f"{len(sample.leads):,} leads, {sample.per_tenth} from each tenth of the score range."
+    where = (
+        f"{sample.per_tenth} from each tenth of the score range"
+        if tenth is None
+        else f"all from the tenth of the score range that starts at {tenth:.1f}"
     )
-    for tenth, found in sorted(sample.short.items()):
+    out.print(f"{len(sample.leads):,} leads, {where}.")
+    for short, found in sorted(sample.short.items()):
         out.print(
-            f"  the tenth from {tenth / TENTHS:.1f} is short: it holds only {found} "
+            f"  the tenth from {short / TENTHS:.1f} is short: it holds only {found} "
             "unlabelled leads",
             markup=False,
         )
