@@ -76,7 +76,7 @@ A raised failure undoes what the step wrote. A model step must not lose a decisi
 
 *Alternative:* triage one lead per call inside the existing runner. Rejected: the instructions and options are about 150 tokens against about 25 for a title, so one lead per call costs several times more and takes twenty times as many calls.
 
-Estimated triage size, to be replaced by the plan's own figure: about 33 input tokens a lead in batches of twenty, so a million leads is about 3.30 US dollars at the Decisions API's listed price.
+Triage size, measured on the first live run (2026-11-14): 60,362 input tokens for 200 leads, about 300 a lead, so a million leads is about 30 US dollars at the Decisions API's listed price. The estimate written before the run, 33 tokens a lead, was nine times too low: it counted the instructions and options once per call, but the Decisions API is sent the question and each option's description with every headline. The alternative above is still right in direction, and the plan's figure now uses the measured number.
 
 ### 6. Screening is three queries and a dictionary
 

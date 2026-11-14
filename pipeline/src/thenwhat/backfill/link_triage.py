@@ -107,9 +107,10 @@ class LinkTriage:
     source = MODEL
     requests_per_record = 0
     batch_size = 20
-    # An estimate for the plan: the instructions and options are shared by a call's
-    # twenty headlines, and a headline with its outlet and year is about 25 tokens.
-    model_spend = ModelSpend(input_tokens=35)
+    # For the plan. Measured on the first live run (2026-11-14, Decisions API): 60,362
+    # input tokens for 200 headlines. The question and the options' descriptions are
+    # sent with every headline, so a headline costs far more than its own words.
+    model_spend = ModelSpend(input_tokens=300)
 
     def __init__(self, time: Time | None = None) -> None:
         self._time = time or SystemTime()
