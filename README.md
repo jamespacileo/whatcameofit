@@ -121,6 +121,14 @@ thenwhat terms claim-one claim-two      # named claims
 thenwhat terms --missing                # every published claim with no candidate yet
 ```
 
+Reported statements are what an article says about the intervention beyond its timeline, in the site's own words (`GLOSSARY.md`). Reading an article for a new or pending claim proposes them; a decided claim's articles are read again for statements only, and nothing else about the claim changes. Each is checked against its article and approved by rule when the check is confident:
+
+```sh
+thenwhat statements claim-one           # its articles that have no statement yet
+thenwhat statements --missing           # every published claim with such an article
+thenwhat statements claim-one --again   # read them again; pending statements are replaced
+```
+
 Then review. `review list` shows what each registry record says, so most candidates can be judged without opening the link. Several items can be decided at once:
 
 ```sh

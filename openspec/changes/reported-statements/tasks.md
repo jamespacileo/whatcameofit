@@ -2,27 +2,27 @@
 
 ## 1. Vocabulary and storage
 
-- [ ] 1.1 Add "Reported statement" to `GLOSSARY.md`, saying how it differs from a claim and from a promise; verify the term is used exactly in every later task's code and output
-- [ ] 1.2 Add the `reported_statement` table with the review columns, a normalised text key unique per article, the date the article was read, and its migration; verify it applies and reverses against the test database, and that a statement without an article is refused
-- [ ] 1.3 Add `STATEMENT_ACCEPT_ABOVE` (0.8), the number of statements per article (6) and the copied-run length (8) to `config.py` and `.env.example`; verify the defaults in a test
+- [x] 1.1 Add "Reported statement" to `GLOSSARY.md`, saying how it differs from a claim and from a promise; verify the term is used exactly in every later task's code and output
+- [x] 1.2 Add the `reported_statement` table with the review columns, a normalised text key unique per article, the date the article was read, and its migration; verify it applies and reverses against the test database, and that a statement without an article is refused
+- [x] 1.3 Add `STATEMENT_ACCEPT_ABOVE` (0.8), the number of statements per article (6) and the copied-run length (8) to `config.py` and `.env.example`; verify the defaults in a test
 
 ## 2. Refusal rules
 
-- [ ] 2.1 Add a pure function that refuses a statement over 200 characters, with a quotation mark, or containing a given person's name; verify each refusal and one acceptance
-- [ ] 2.2 Refuse a statement that shares a run of consecutive words with the article at or above the configured length, compared on lower-cased words; verify on synthetic articles that a copied sentence is refused and that a drug name with a condition is not
+- [x] 2.1 Add a pure function that refuses a statement over 200 characters, with a quotation mark, or containing a given person's name; verify each refusal and one acceptance
+- [x] 2.2 Refuse a statement that shares a run of consecutive words with the article at or above the configured length, compared on lower-cased words; verify on synthetic articles that a copied sentence is refused and that a drug name with a condition is not
 
 ## 3. Proposing and checking
 
-- [ ] 3.1 Add `statements` to the extraction schema with kind, firmness, speaker and basis as fixed lists, and the rules to the instructions (own words, no quotation, no names, timelines stay promises, about the intervention only); verify extraction tests with a synthetic article that has an effect, a researcher's hope and a timeline give two statements and one promise
-- [ ] 3.2 Add the `statement_check` step with its three options through `decide_many`, referring to the article and the statement's place; verify one log record per statement, that no record holds text from the article, and that a backend failure stores nothing for that statement
-- [ ] 3.3 Store each checked statement with its confidence, approved by rule at or above the threshold and pending below; verify 0.9 is approved and 0.6 is pending, and that the marker-sentence test still finds no article text in any table
-- [ ] 3.4 Run the proposing and checking in the existing extraction command for a pending claim; verify the CLI test for one success, and that refused statements are counted in the output
+- [x] 3.1 Add `statements` to the extraction schema with kind, firmness, speaker and basis as fixed lists, and the rules to the instructions (own words, no quotation, no names, timelines stay promises, about the intervention only); verify extraction tests with a synthetic article that has an effect, a researcher's hope and a timeline give two statements and one promise
+- [x] 3.2 Add the `statement_check` step with its three options through `decide_many`, referring to the article and the statement's place; verify one log record per statement, that no record holds text from the article, and that a backend failure stores nothing for that statement
+- [x] 3.3 Store each checked statement with its confidence, approved by rule at or above the threshold and pending below; verify 0.9 is approved and 0.6 is pending, and that the marker-sentence test still finds no article text in any table
+- [x] 3.4 Run the proposing and checking in the existing extraction command for a pending claim; verify the CLI test for one success, and that refused statements are counted in the output
 
 ## 4. Decided claims
 
-- [ ] 4.1 Add `thenwhat statements <slug…>` and `--missing`, reading each article under the same robots, archived-copy and pasted-text rules, extracting statements only; verify one success and one refusal, and that the claim's headline, summary, intervention, promises and entities are unchanged
-- [ ] 4.2 Skip an article that already has statements unless `--again` is given, replacing only pending statements and skipping a proposal whose key matches an existing one; verify a second run makes no model call, and that a rejected statement is not created again under the same wording
-- [ ] 4.3 Report an article whose text no longer matches its stored hash without overwriting the hash, and an article that cannot be read with the words that pasted text is needed; verify both outputs
+- [x] 4.1 Add `thenwhat statements <slug…>` and `--missing`, reading each article under the same robots, archived-copy and pasted-text rules, extracting statements only; verify one success and one refusal, and that the claim's headline, summary, intervention, promises and entities are unchanged
+- [x] 4.2 Skip an article that already has statements unless `--again` is given, replacing only pending statements and skipping a proposal whose key matches an existing one; verify a second run makes no model call, and that a rejected statement is not created again under the same wording
+- [x] 4.3 Report an article whose text no longer matches its stored hash without overwriting the hash, and an article that cannot be read with the words that pasted text is needed; verify both outputs
 
 ## 5. Review and export
 
