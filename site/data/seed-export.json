@@ -318,8 +318,10 @@
           "facts_as_of": null,
           "facts": null
         }
-      ]
+      ],
+      "background": []
     }
   ],
-  "archived": []
+  "archived": [],
+  "card_sources": []
 }

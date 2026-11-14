@@ -2,6 +2,7 @@
 on a real database. Scenario names are from openspec site-publishing and trial-facts."""
 
 import copy
+import dataclasses
 import json
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -14,13 +15,15 @@ from sqlalchemy.orm import Session
 
 from thenwhat.claims.entities import add_synonym
 from thenwhat.claims.entry import add_article, add_claim, add_promise, archive_claim
-from thenwhat.db.models import Claim, Entity, EntityMatch, EvidenceEvent
+from thenwhat.db.models import Claim, ClaimTerm, Entity, EntityMatch, EvidenceEvent, TermRecord
 from thenwhat.domain import (
     Decider,
     EntityType,
     EventType,
     EvidenceStage,
     ReviewState,
+    TermFit,
+    TermRole,
     TrialPhase,
     TrialState,
 )
@@ -28,9 +31,11 @@ from thenwhat.events.fetch import event_row
 from thenwhat.events.manual import add_manual_event
 from thenwhat.events.trial import trial_events
 from thenwhat.export.build import SCHEMA_VERSION, build_export, export_json_schema, write_export
+from thenwhat.review.decisions import record_decision
 from thenwhat.review.queue import confirm_stage, decide_item
 from thenwhat.seed.load import load_seed
 from thenwhat.sources.base import SourceRecord
+from thenwhat.sources.terms import SOURCES as LISTED_SOURCES
 
 EARLIER = datetime(2026, 11, 19, 9, 0, tzinfo=UTC)
 NOW = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
@@ -630,3 +635,189 @@ def test_posted_result_with_a_high_p_value_leaves_the_status_unchanged(
     assert without_results["trials"][0]["facts"]["results"] is None
     assert without_results["status"]["code"] == with_results["status"]["code"]
     assert without_results["status"]["explained_by"] == with_results["status"]["explained_by"]
+
+
+# --- background cards (openspec knowledge-cards) ----------------------------------------
+
+
+def add_term(
+    session: Session,
+    claim: Claim,
+    identifier: str,
+    label: str,
+    *,
+    fit: TermFit | None = TermFit.EXACT,
+    score: float = 0.95,
+    role: TermRole = TermRole.CONDITION,
+    definition: str | None = "The vocabulary's OWN WORDS for the term.",
+    state: ReviewState = ReviewState.APPROVED,
+    record: bool = True,
+) -> ClaimTerm:
+    """A scored link between the claim and a vocabulary term, with the term's record."""
+    term = ClaimTerm(
+        claim_id=claim.id,
+        role=role,
+        source_name="mesh",
+        external_id=identifier,
+        label=label,
+        fit=fit,
+        score=score,
+        reasons=[{"code": "filed_by_registry", "trials": 5, "of": 6}],
+    )
+    if state is not ReviewState.PENDING:
+        record_decision(term, state, by=Decider.RULE, now=EARLIER)
+    session.add(term)
+    if record:
+        session.add(
+            TermRecord(
+                source_name="mesh",
+                external_id=identifier,
+                url=f"https://id.nlm.nih.gov/mesh/{identifier}",
+                payload={
+                    "term": {
+                        "@id": f"http://id.nlm.nih.gov/mesh/2026/{identifier}",
+                        "label": {"@language": "en", "@value": label},
+                    },
+                    "concept": {"scopeNote": {"@value": definition}} if definition else None,
+                },
+                fetched_at=EARLIER,
+            )
+        )
+    session.flush()
+    return term
+
+
+def test_exact_term_makes_the_card_when_a_broader_one_is_approved_too(session: Session):
+    """Scenario: Exact and broader terms both approved"""
+    claim = new_claim(session)
+    add_term(session, claim, "D000001", "Dental Diseases", fit=TermFit.BROADER, score=0.99)
+    add_term(session, claim, "D000002", "Anodontia", score=0.9)
+    add_term(session, claim, "D000003", "Tooth Abnormalities", score=0.85)
+    add_term(session, claim, "D000004", "Jaw", fit=None, score=0.0, state=ReviewState.REJECTED)
+    add_term(session, claim, "D000005", "Tooth Loss", score=0.5, state=ReviewState.PENDING)
+
+    data = exported(session)
+
+    assert data["claims"][0]["background"] == [
+        {
+            "kind": "condition",
+            "fit": "exact",
+            "label": "Anodontia",
+            "definition": "The vocabulary's OWN WORDS for the term.",
+            "url": "https://id.nlm.nih.gov/mesh/D000002",
+            "source": "mesh",
+            "external_id": "D000002",
+            "version": "2026",
+            "score": 0.9,
+            "reasons": [{"code": "filed_by_registry", "trials": 5, "of": 6, "name": None}],
+            "decided_by": "rule",
+            "read_at": "2026-11-19T09:00:00Z",
+        }
+    ]
+    assert data["card_sources"] == [
+        {
+            "name": "mesh",
+            "title": "Medical Subject Headings (MeSH)",
+            "credit": "Medical Subject Headings (MeSH), U.S. National Library of Medicine",
+            "licence": "NLM terms and conditions for MeSH data",
+            "url": "https://www.nlm.nih.gov/mesh/meshhome.html",
+            "terms_url": (
+                "https://www.nlm.nih.gov/databases/download/terms_and_conditions_mesh.html"
+            ),
+            "in_data_file": True,
+        }
+    ]
+    # The footer's list of data sources credits the vocabulary.
+    assert data["sources"][-1] == {
+        "name": "Medical Subject Headings (MeSH)",
+        "url": "https://www.nlm.nih.gov/mesh/meshhome.html",
+    }
+
+
+def test_only_a_broader_term_makes_a_card_marked_broader(session: Session):
+    """Scenario: Only a broader term"""
+    claim = new_claim(session)
+    add_term(session, claim, "D000001", "Dental Diseases", fit=TermFit.BROADER, score=0.9)
+    add_term(
+        session,
+        claim,
+        "D000009",
+        "Antibodies",
+        fit=TermFit.BROADER,
+        score=0.85,
+        role=TermRole.INTERVENTION,
+    )
+
+    cards = exported(session)["claims"][0]["background"]
+
+    assert [(card["kind"], card["fit"], card["label"]) for card in cards] == [
+        ("condition", "broader", "Dental Diseases"),
+        ("intervention", "broader", "Antibodies"),
+    ]
+
+
+def test_term_with_no_definition_makes_a_card_with_its_label_and_link(session: Session):
+    """Scenario: Term with no definition"""
+    claim = new_claim(session)
+    add_term(session, claim, "D000002", "Anodontia", definition=None)
+
+    [card] = exported(session)["claims"][0]["background"]
+
+    assert card["definition"] is None
+    assert (card["label"], card["url"]) == ("Anodontia", "https://id.nlm.nih.gov/mesh/D000002")
+
+
+def test_claim_with_no_approved_term_or_no_stored_record_has_no_card(session: Session):
+    claim = new_claim(session)
+    add_term(session, claim, "D000005", "Tooth Loss", score=0.5, state=ReviewState.PENDING)
+    add_term(session, claim, "D000002", "Anodontia", record=False)
+
+    data = exported(session)
+
+    assert data["claims"][0]["background"] == []
+    assert data["card_sources"] == []
+    assert [source["name"] for source in data["sources"]] == [
+        "ClinicalTrials.gov",
+        "Europe PMC",
+        "Crossref",
+    ]
+
+
+def test_source_not_marked_accepted_gives_no_card(
+    session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    """Scenario: Share-alike source not yet accepted"""
+    claim = new_claim(session)
+    add_term(session, claim, "D000002", "Anodontia")
+    monkeypatch.setitem(
+        LISTED_SOURCES, "mesh", dataclasses.replace(LISTED_SOURCES["mesh"], accepted=False)
+    )
+
+    data = exported(session)
+
+    assert data["claims"][0]["background"] == []
+    assert data["card_sources"] == []
+
+
+def test_cards_do_not_change_the_status_or_what_explains_it(session: Session):
+    """Scenario: Card for an approved drug class"""
+    claim = new_claim(session)
+    add_event(session)
+    confirm_stage(session, SLUG, EvidenceStage.ANIMAL, now=EARLIER)
+
+    def decided() -> tuple[Any, Any, Any]:
+        [shown] = exported(session)["claims"]
+        return shown["status"], shown["evidence_stage"], shown["events"]
+
+    before = decided()
+    add_term(
+        session,
+        claim,
+        "D000009",
+        "Antibodies",
+        role=TermRole.INTERVENTION,
+        definition="Agents APPROVED for the treatment of many conditions.",
+    )
+
+    assert len(exported(session)["claims"][0]["background"]) == 1
+    assert decided() == before

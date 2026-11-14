@@ -19,10 +19,10 @@
 
 ## 3. Export
 
-- [ ] 3.1 Export at most one card for the condition and one for the intervention, exact before broader, highest score first, with label, definition word for word, link, source, vocabulary version, score, reasons and date read; verify export tests for exact and broader both approved, only a broader term, and a term with no definition
-- [ ] 3.2 Export a fact only from a source the list marks accepted, and no card that would then be empty; verify by test with a source marked not accepted
-- [ ] 3.3 Verify by test that status, explaining events and evidence stage are the same with and without cards
-- [ ] 3.4 Regenerate `site/export.schema.json` and `site/data/seed-export.json`, and verify the checked-in `site/data/published-export.json` still validates
+- [x] 3.1 Export at most one card for the condition and one for the intervention, exact before broader, highest score first, with label, definition word for word, link, source, vocabulary version, score, reasons and date read; verify export tests for exact and broader both approved, only a broader term, and a term with no definition
+- [x] 3.2 Export a fact only from a source the list marks accepted, and no card that would then be empty; verify by test with a source marked not accepted
+- [x] 3.3 Verify by test that status, explaining events and evidence stage are the same with and without cards
+- [x] 3.4 Regenerate `site/export.schema.json` and `site/data/seed-export.json`, and verify the checked-in `site/data/published-export.json` still validates
 
 ## 4. Site
 

@@ -17,6 +17,8 @@ class SourceTerms:
     licence: str
     # How the source asks to be credited.
     credit: str
+    # The source's own front page, for the site's list of data sources.
+    home_url: str
     # Where the terms were read, and when.
     terms_url: str
     read_on: date
@@ -32,6 +34,7 @@ _LISTED = (
         title="ClinicalTrials.gov",
         licence="ClinicalTrials.gov terms and conditions",
         credit="ClinicalTrials.gov, U.S. National Library of Medicine",
+        home_url="https://clinicaltrials.gov/",
         terms_url="https://clinicaltrials.gov/about-site/terms-conditions",
         read_on=date(2026, 11, 11),
         accepted=True,
@@ -42,6 +45,7 @@ _LISTED = (
         title="Europe PMC",
         licence="Europe PMC copyright terms: titles and links only, no abstracts",
         credit="Europe PMC",
+        home_url="https://europepmc.org/",
         terms_url="https://europepmc.org/Copyright",
         read_on=date(2026, 11, 11),
         accepted=True,
@@ -52,6 +56,7 @@ _LISTED = (
         title="Crossref",
         licence="Crossref metadata, almost none of it subject to copyright; no abstracts",
         credit="Crossref",
+        home_url="https://www.crossref.org/",
         terms_url="https://www.crossref.org/documentation/retrieve-metadata/rest-api/",
         read_on=date(2026, 11, 11),
         accepted=True,
@@ -62,6 +67,7 @@ _LISTED = (
         title="OpenAlex",
         licence="CC0 1.0",
         credit="OpenAlex",
+        home_url="https://openalex.org/",
         terms_url="https://help.openalex.org/hc/en-us/articles/24397285563671-OpenAlex-data-license",
         read_on=date(2026, 11, 13),
         accepted=True,
@@ -72,6 +78,7 @@ _LISTED = (
         title="Research Organization Registry",
         licence="CC0 1.0",
         credit="Research Organization Registry (ROR)",
+        home_url="https://ror.org/",
         terms_url="https://ror.org/terms/",
         read_on=date(2026, 11, 13),
         accepted=True,
@@ -82,6 +89,7 @@ _LISTED = (
         title="Medical Subject Headings (MeSH)",
         licence="NLM terms and conditions for MeSH data",
         credit="Medical Subject Headings (MeSH), U.S. National Library of Medicine",
+        home_url="https://www.nlm.nih.gov/mesh/meshhome.html",
         terms_url="https://www.nlm.nih.gov/databases/download/terms_and_conditions_mesh.html",
         read_on=date(2026, 11, 14),
         accepted=True,
@@ -94,6 +102,7 @@ _LISTED = (
         title="Open Targets Platform",
         licence="CC0 1.0",
         credit="Open Targets Platform",
+        home_url="https://platform.opentargets.org/",
         terms_url="https://platform-docs.opentargets.org/licence",
         read_on=date(2026, 11, 14),
         accepted=False,
@@ -104,6 +113,7 @@ _LISTED = (
         title="ChEMBL, through Open Targets Platform",
         licence="CC BY-SA 3.0 Unported",
         credit="ChEMBL, EMBL-EBI",
+        home_url="https://www.ebi.ac.uk/chembl/",
         terms_url="https://chembl.gitbook.io/chembl-interface-documentation/about",
         read_on=date(2026, 11, 14),
         accepted=False,
@@ -115,6 +125,7 @@ _LISTED = (
         title="UniProt, through Open Targets Platform",
         licence="CC BY 4.0",
         credit="UniProt Consortium",
+        home_url="https://www.uniprot.org/",
         terms_url="https://www.uniprot.org/help/license",
         read_on=date(2026, 11, 14),
         accepted=False,
