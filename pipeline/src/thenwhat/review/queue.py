@@ -1,6 +1,7 @@
 """The review queue and the operator's decisions. Behavior: openspec review.
 
-Everything here is a human decision. Rule approvals are made where events are created.
+Decisions here are the operator's, or the assistant's when it is named. Rule decisions
+are made where drafts, matches and events are created.
 """
 
 from dataclasses import dataclass
@@ -10,7 +11,7 @@ from typing import Literal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.entry import ClaimNotFound, EntryError, InvalidUrl, find_claim
+from thenwhat.claims.entry import ClaimNotFound, EntryError, InvalidUrl, claim_by_slug
 from thenwhat.claims.status import refresh_status
 from thenwhat.db.models import (
     Claim,
@@ -27,15 +28,14 @@ from thenwhat.decide.steps import (
     MATCH,
     NOT_A_MATCH,
     OTHER_INDICATION,
+    latest_scoring,
+    match_ref,
 )
 from thenwhat.domain import Decider, EntityType, EvidenceStage, ReviewState
 from thenwhat.review.decisions import record_decision
+from thenwhat.sources.base import RECORD_URLS
 
 Kind = Literal["claim", "match", "event"]
-RECORD_URLS = {
-    "clinicaltrials.gov": "https://clinicaltrials.gov/study/{}",
-    "crossref": "https://doi.org/{}",
-}
 
 
 class ItemNotFound(EntryError):
@@ -134,8 +134,7 @@ def rejected_by_rule(session: Session, *, claim_slug: str | None = None) -> list
         .order_by(Claim.id, EntityMatch.score.desc(), EntityMatch.id)
     )
     if claim_slug is not None:
-        if find_claim(session, claim_slug) is None:
-            raise ClaimNotFound(f"No claim has the slug '{claim_slug}'.")
+        claim_by_slug(session, claim_slug)
         query = query.where(Claim.slug == claim_slug)
     return [
         _match_item(session, claim, match, entity)
@@ -147,15 +146,7 @@ def _score_note(session: Session, match: EntityMatch, entity: Entity) -> str:
     """What the reviewer should know about how a trial candidate's score was reached."""
     if entity.type is not EntityType.INTERVENTION:
         return ""
-    scored = session.scalars(
-        select(DecisionLog)
-        .where(
-            DecisionLog.step == ENTITY_MATCH,
-            DecisionLog.input_ref == f"entity_match:{match.id}",
-            DecisionLog.error.is_(None),
-        )
-        .order_by(DecisionLog.id.desc())
-    ).first()
+    scored = latest_scoring(session, match)
     if scored is None or scored.output is None:
         return ""
     if OTHER_INDICATION not in scored.options:
@@ -200,7 +191,7 @@ def decide_item(
         record_decision(match, state, by=by, now=now)
         if by is Decider.HUMAN:
             label = MATCH if state is ReviewState.APPROVED else NOT_A_MATCH
-            _label(session, ENTITY_MATCH, f"entity_match:{match.id}", label)
+            _label(session, ENTITY_MATCH, match_ref(match.id), label)
         entity = session.get(Entity, match.entity_id)
         assert entity is not None
         claim = session.get(Claim, entity.claim_id)
@@ -244,9 +235,7 @@ def decide_matches(
     Returns the ids decided. Candidates already decided are left as they are."""
     if (at_least is None) == (below is None):
         raise EntryError("Give one of --at-least and --below.")
-    claim = find_claim(session, claim_slug)
-    if claim is None:
-        raise ClaimNotFound(f"No claim has the slug '{claim_slug}'.")
+    claim = claim_by_slug(session, claim_slug)
     pending = session.scalars(
         select(EntityMatch)
         .join(Entity, Entity.id == EntityMatch.entity_id)
@@ -278,9 +267,7 @@ def flag_failure(
 ) -> FailureFlag:
     """Record that a trial missed its primary endpoint. This is the only way a claim
     can become failed, and it needs an approved event and a source link."""
-    claim = find_claim(session, claim_slug)
-    if claim is None:
-        raise ClaimNotFound(f"No claim has the slug '{claim_slug}'.")
+    claim = claim_by_slug(session, claim_slug)
     source_url = source_url.strip()
     if not source_url.startswith(("http://", "https://")):
         raise InvalidUrl("A failure flag needs a source link starting with http:// or https://.")
@@ -325,9 +312,7 @@ def confirm_stage(
     """Set the stage of evidence at announcement and bring the status up to date: with
     no trial found, the stage decides between two statuses. The operator's choice becomes
     the human label for whatever was suggested; the assistant's choice labels nothing."""
-    claim = find_claim(session, claim_slug)
-    if claim is None:
-        raise ClaimNotFound(f"No claim has the slug '{claim_slug}'.")
+    claim = claim_by_slug(session, claim_slug)
     claim.evidence_stage = stage
     if by is Decider.HUMAN:
         _label(session, EVIDENCE_STAGE, f"claim:{claim.id}", stage.value)

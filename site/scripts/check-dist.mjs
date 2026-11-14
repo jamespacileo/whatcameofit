@@ -1,14 +1,10 @@
 // Runs after every build. A page without the footer notices must never ship.
 import fs from "node:fs";
 import path from "node:path";
+import { NOTICES } from "../src/lib/notices.ts";
 
 const DIST = path.resolve("dist");
-const REQUIRED = [
-  "This site gives no medical advice",
-  "A registered clinical trial is not a treatment option",
-  "Data sources:",
-  "Registries",
-];
+const REQUIRED = [...NOTICES, "Data sources:", "Registries"];
 
 function pages(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {

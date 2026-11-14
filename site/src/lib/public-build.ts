@@ -2,12 +2,11 @@
 // and the sitemap are all built from it, and a sitemap of local addresses must never
 // ship. A build is public when PUBLIC_BUILD=1 is set and the export is not a preview.
 // The check runs once, when this module is first imported.
+import { LOCAL_HOST } from "../../scripts/deploy-checks.mjs";
 import { SITE } from "../../site.config.mjs";
 import { data } from "./export";
 
-const LOCAL_HOST = /^(localhost|.+\.localhost|.+\.test|127(\.\d{1,3}){3}|0\.0\.0\.0|\[::1\])$/i;
-
-export function isLocalAddress(address: string): boolean {
+function isLocalAddress(address: string): boolean {
   return LOCAL_HOST.test(new URL(address).hostname);
 }
 

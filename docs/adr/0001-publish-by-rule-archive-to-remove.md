@@ -23,6 +23,6 @@ Status is derived only by the pure rules in `pipeline/src/thenwhat/status`, from
 
 - The site grows with the pipeline rather than with review time.
 - Mistakes will be public until archived. The visible score is meant to make readers expect them, and archiving has to be quick: a CLI first, then a private web admin.
-- `MATCH_ACCEPT_ABOVE` becomes the most important setting in the project. It is unset by default, which turns rule approval off, and it is chosen from the lookup's measured agreement with past human approvals.
+- `MATCH_ACCEPT_ABOVE` becomes the most important setting in the project. It is unset by default, which turns rule approval off, and it is chosen from the lookup's measured agreement with past human approvals. (Amended 14 November 2026: the shipped default is 0.8, where the site's "High match" band starts; 0 turns the rule off.)
 - The assistant decider no longer holds claims back, and the preview mode is removed.
 - The first export after this change publishes every approved claim in the database, including ones an assistant decided.

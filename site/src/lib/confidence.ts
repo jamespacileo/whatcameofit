@@ -5,13 +5,13 @@
 // condition, nothing about whether the treatment works.
 
 /** Score bands, lowest first: a score at or above `from` takes the word. */
-export const CONFIDENCE_BANDS = [
+const CONFIDENCE_BANDS = [
   { from: 0, word: "Low match" },
   { from: 0.5, word: "Medium match" },
   { from: 0.8, word: "High match" },
 ] as const;
 
-export type Band = (typeof CONFIDENCE_BANDS)[number]["word"];
+type Band =(typeof CONFIDENCE_BANDS)[number]["word"];
 
 export function bandOf(score: number): Band {
   let word: Band = CONFIDENCE_BANDS[0].word;
@@ -25,13 +25,13 @@ export function confidenceLabel(score: number): string {
 }
 
 /** Why the record scored as it did, from how it was read. */
-export const READINGS: Record<string, string> = {
+const READINGS:Record<string, string> = {
   match: "Read as a study of this treatment for this condition.",
   other_indication: "Read as the same treatment studied for a different condition.",
   not_a_match: "Read as a study of something else.",
 };
 
-export const UNREAD = "Scored before the condition was part of the question.";
+const UNREAD ="Scored before the condition was part of the question.";
 
 export function readingOf(reading: string | null): string {
   return (reading && READINGS[reading]) ?? UNREAD;

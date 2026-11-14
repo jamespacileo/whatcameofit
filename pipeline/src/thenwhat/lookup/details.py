@@ -9,13 +9,12 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-# The codes for why a record is ranked where it is, in the order they are listed.
+# The codes for why a record is ranked where it is.
 STATED = "stated"  # the text or the page gives this record's registry number
 PAPER = "paper"  # a paper the page links to gives it
 TRIAL_NAME = "trial_name"
 PARTICIPANTS = "participants"
 SPONSOR = "sponsor"
-REASONS = (STATED, PAPER, TRIAL_NAME, PARTICIPANTS, SPONSOR)
 
 # How far a reported number of participants may be from the registered one: articles
 # round, and report the people analysed rather than the people enrolled.

@@ -26,6 +26,13 @@ class SourceRecord:
     fetched_at: datetime
 
 
+# Where a reader can open a record, by registry name.
+RECORD_URLS = {
+    "clinicaltrials.gov": "https://clinicaltrials.gov/study/{}",
+    "crossref": "https://doi.org/{}",
+}
+
+
 class SourceError(Exception):
     """A registry could not be read."""
 
@@ -36,6 +43,20 @@ class MissingContact(SourceError):
 
 class SourceUnavailable(SourceError):
     """The registry kept failing after every allowed attempt."""
+
+
+# The name this client goes by, in its User-Agent and when reading a site's robots.txt.
+CLIENT_NAME = "thenwhat"
+
+
+def user_agent(contact: str) -> str:
+    return f"{CLIENT_NAME}/{__version__} (mailto:{contact})"
+
+
+def require_contact(contact: str) -> None:
+    """Refuse to send a request when no contact address is configured."""
+    if not contact:
+        raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
 
 
 class Time(Protocol):
@@ -120,8 +141,7 @@ class Source:
         if cached is not None and not force and cached.expires_at > self._time.now():
             return Fetched(cached.payload, cached.fetched_at)
 
-        if not self._contact:
-            raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
+        require_contact(self._contact)
         response = self._request(url, params)
         if response is None:
             return None
@@ -146,7 +166,7 @@ class Source:
 
     def _request(self, url: str, params: dict[str, str] | None) -> httpx.Response | None:
         """One GET with bounded retries. None means the registry said not-found."""
-        headers = {"User-Agent": f"thenwhat/{__version__} (mailto:{self._contact})"}
+        headers = {"User-Agent": user_agent(self._contact)}
         for attempt in range(self._max_attempts):
             self._wait_for_turn()
             stated_delay = 0.0

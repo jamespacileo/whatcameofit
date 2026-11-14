@@ -10,6 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from thenwhat.db.models import LlmUsage
+from thenwhat.llm.errors import BudgetExceeded
 
 MICRO_DOLLAR = Decimal("0.000001")
 
@@ -22,6 +23,15 @@ def spent_this_month(session: Session, now: datetime) -> Decimal:
         )
     )
     return Decimal(total or 0)
+
+
+def check_ceiling(session: Session, now: datetime, monthly_budget_usd: Decimal) -> None:
+    """Refuse a call when this month's recorded cost has reached the ceiling."""
+    if spent_this_month(session, now) >= monthly_budget_usd:
+        raise BudgetExceeded(
+            f"The monthly ceiling of ${monthly_budget_usd} for language model"
+            " calls has been reached. No call was made."
+        )
 
 
 def record_usage(

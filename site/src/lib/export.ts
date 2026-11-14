@@ -161,7 +161,8 @@ export interface Export {
   schema_version: number;
   generated_at: string;
   last_checked_at: string | null;
-  // True when the export holds claims an AI assistant decided. Never for the public site.
+  // Always false since the auto-publish decision. Kept so that an older export, which
+  // could be a preview, is still read and refused for the public site.
   preview: boolean;
   sources: { name: string; url: string }[];
   verticals: ExportedVertical[];
@@ -226,6 +227,11 @@ export const data: Export = load();
 export const listedTopics = data.verticals.filter((vertical) =>
   data.claims.some((claim) => claim.vertical === vertical.slug),
 );
+
+/** One address per published claim, each given its claim: getStaticPaths for every claim route. */
+export function claimPaths() {
+  return data.claims.map((claim) => ({ params: { slug: claim.slug }, props: { claim } }));
+}
 
 export function verticalTitle(slug: string): string {
   return data.verticals.find((vertical) => vertical.slug === slug)?.title ?? slug;

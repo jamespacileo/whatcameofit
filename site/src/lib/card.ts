@@ -2,6 +2,7 @@
 // alternative are all built from this, so they cannot disagree.
 import type { ExportedClaim } from "./export";
 import { assertNeutral } from "./status.ts";
+import { MONTHS } from "./timetable.ts";
 
 export interface CardFact {
   label: string;
@@ -32,14 +33,12 @@ const LABELS = {
   checked: "Checked",
 };
 
-// The card's own words are held to the same rule as status labels: a build fails
-// rather than publish a verdict.
 /** The card draws this one fact on pale amber, so it is found by its label. */
 export const PROMISED_LABEL = LABELS.promised;
 
+// The card's own words are held to the same rule as status labels: a build fails
+// rather than publish a verdict.
 assertNeutral([CARD_NOTICE, ...Object.values(LABELS)]);
-
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /** "Nov 2026": the month a date falls in. A card is dated, never counted from. */
 export function monthAndYear(isoDate: string): string {

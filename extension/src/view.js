@@ -462,7 +462,7 @@ export function render(root, state, site, actions, kept = null) {
     preview.src = state.image.dataUrl;
     preview.alt = "The visible content that will be sent for lookup";
     children = [el("h1", null, "Search this visible image"), preview,
-      el("p", "small", "This image and the page address go to What came of it? and OpenAI. Check for private messages or other personal information. A video contributes only this frame, not its audio."),
+      el("p", "small", `This image and the page address go to ${site.name} and OpenAI. Check for private messages or other personal information. A video contributes only this frame, not its audio.`),
       press("Search this image", "button", actions.sendVisual), press("Cancel", "button quiet", actions.cancelVisual)];
   } else if (state.kind === "searching") {
     children = [waiting(state.visual ? "Reading the screenshot and searching the registry…" : text.searching), privacyNote(site, actions)];
@@ -483,10 +483,7 @@ export function render(root, state, site, actions, kept = null) {
   } else if (state.kind === "no-page") {
     children = [message(text.noPageTitle, text.noPageBody(site.name))];
   } else {
-    const retry = el("button", "button quiet", text.retry);
-    retry.type = "button";
-    retry.addEventListener("click", actions.retry);
-    children = [message(text.unreachableTitle(site.name), text.unreachableBody, retry)];
+    children = [message(text.unreachableTitle(site.name), text.unreachableBody, press(text.retry, "button quiet", actions.retry))];
   }
   if (state.kind !== "answer" && state.canVisual && actions.previewVisual) children.push(press("Preview a screenshot instead", "text-button", actions.previewVisual));
   if (!BUSY.has(state.kind) && !["answer", "sharing", "sharing-error", "visual-preview"].includes(state.kind) && actions.sharingView) children.push(press("Automatic search settings", "text-button", actions.sharingView));

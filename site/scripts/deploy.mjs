@@ -1,5 +1,5 @@
-// Deploy the site to Cloudflare. Refuses unless the export is a reviewed, non-preview
-// one and SITE_URL is the public address; then builds a public build and hands the
+// Deploy the site to Cloudflare. Refuses unless the export is a non-preview one
+// and SITE_URL is the public address; then builds a public build and hands the
 // built files to Wrangler, which serves them at SITE_URL's domain.
 //
 //   SITE_URL=https://example.org node scripts/deploy.mjs            deploy

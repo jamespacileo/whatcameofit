@@ -6,7 +6,7 @@ from typing import Annotated
 import typer
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.entry import ClaimNotFound, find_claim
+from thenwhat.claims.entry import claim_by_slug
 from thenwhat.cli.console import out
 from thenwhat.cli.entry import DATE_FORMATS, entry_session
 from thenwhat.cli.session import settings_or_exit
@@ -36,14 +36,13 @@ def fetch_command(
 ) -> None:
     """Read the registries for a claim's approved matches and record what they show.
 
-    Trial events from an approved match are approved by rule. Follow-up papers wait
-    for your review.
+    Trial events from an approved match are approved by rule. A follow-up paper is
+    approved by rule when its confidence reaches the review threshold, and waits for
+    your review otherwise.
     """
     settings = settings_or_exit()
     with entry_session() as session:
-        claim = find_claim(session, claim_slug)
-        if claim is None:
-            raise ClaimNotFound(f"No claim has the slug '{claim_slug}'.")
+        claim = claim_by_slug(session, claim_slug)
         trials, literature, notices = make_evidence_sources(session)
         created = fetch_claim(
             session,
@@ -91,7 +90,7 @@ def event_add(
         RegulatoryOutcome | None, typer.Option(help="For a regulatory decision.")
     ] = None,
 ) -> None:
-    """Enter an event by hand. It waits for review like any other."""
+    """Enter an event by hand. It waits for review."""
     with entry_session() as session:
         event = add_manual_event(
             session,

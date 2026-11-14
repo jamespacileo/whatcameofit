@@ -2,9 +2,9 @@
 
 <img src="site/public/mark.svg" width="56" height="56" alt="The site's mark: a magnifying glass over a capsule in two halves">
 
-News reports medical "breakthroughs" that are rarely mentioned again. thenwhat tracks what happened afterwards: each claim gets a status derived from dated, sourced evidence in public registries, reviewed by a human before it is published.
+News reports medical "breakthroughs" that are rarely mentioned again. thenwhat tracks what happened afterwards: each claim gets a status derived from dated, sourced evidence in public registries. Items are approved by deterministic rules, every match shown carries its confidence score, and a wrong item is removed by archiving it.
 
-`thenwhat` is the repository codename for [What came of it?](https://whatcameofit.com). The public site runs on Cloudflare; the curation pipeline and database stay local. GitHub tests each proposed change and deploys reviewed content from `main`.
+`thenwhat` is the repository codename for [What came of it?](https://whatcameofit.com). The public site runs on Cloudflare; the curation pipeline and database stay local. GitHub tests each proposed change and deploys the committed snapshot from `main`.
 
 ## Setup
 
@@ -55,7 +55,7 @@ thenwhat extract article example-enamel --article-url https://example.org/articl
 thenwhat claim edit example-enamel --headline "Corrected headline"
 ```
 
-`extract new` drafts a pending claim from the article. `extract article` adds entities, the paper and promises to a claim that is still pending. If the site's robots.txt forbids fetching, or the page is gone with no archived copy, the command says so: run it again with `--paste` and pipe the text in. Article text is used for the one call and never stored.
+`extract new` drafts a claim from the article. With `APPROVE_DRAFTS_BY_RULE` on (the default) the draft is approved by rule when its intervention is a name and rejected otherwise; with it off the draft stays pending. `extract article` adds entities, the paper and promises to a claim that is still pending. If the site's robots.txt forbids fetching, or the page is gone with no archived copy, the command says so: run it again with `--paste` and pipe the text in. Article text is used for the one call and never stored.
 
 Model calls stop for the month once the recorded cost reaches `LLM_MONTHLY_BUDGET_USD`.
 
@@ -68,7 +68,7 @@ thenwhat entity origin-paper example-enamel "Paper title"
 thenwhat resolve example-enamel
 ```
 
-`resolve` searches ClinicalTrials.gov for the intervention under every name it has, looks up each paper's DOI at Crossref, and stores every hit as a pending candidate match with a score. A trial scores as a match only when it tests the intervention for the claim's indication; the same intervention in another condition scores low and is labelled. A broad name (more than 100 trials) is searched within the indication, and a name that is still broad there contributes nothing. The score orders the review queue, and a candidate scored under `MATCH_REJECT_BELOW` (0.05) is rejected by rule so it does not wait for you; `review list --by-rule` shows those, and you can approve any of them. Nothing is approved until you approve it. It also suggests the stage of evidence at announcement, which stays unset until you confirm it. Compound names change over time, so add synonyms before resolving. `resolve --rescore` scores pending candidates again.
+`resolve` searches ClinicalTrials.gov for the intervention under every name it has, looks up each paper's DOI at Crossref, and stores every hit as a candidate match with a score. A trial scores as a match only when it tests the intervention for the claim's indication; the same intervention in another condition scores low and is labelled. A broad name (more than 100 trials) is searched within the indication, and a name that is still broad there contributes nothing. The score orders the review queue, and a candidate scored under `MATCH_REJECT_BELOW` (0.05) is rejected by rule so it does not wait for you; `review list --by-rule` shows those, and you can approve any of them. A trial candidate scored at or above `MATCH_ACCEPT_ABOVE` (0.8) for the claim's indication is approved by rule; the rest wait for you. It also suggests the stage of evidence at announcement, which stays unset until you confirm it. Compound names change over time, so add synonyms before resolving. `resolve --rescore` scores pending candidates again.
 
 ### Evidence
 
@@ -83,13 +83,13 @@ thenwhat event add example-enamel --type regulatory_decision --date 2026-03-01 \
 
 `fetch` reads the registries for the claim's approved matches only. Each trial gives up to four events from the dated fields of its current record: registered, started, a current end state, and results posted. Papers that cite the origin paper become follow-up events when they share an author with it or name the intervention. Retraction notices become retraction events. Fetching again records nothing twice.
 
-Trial events from a match you approved are approved by rule; follow-up papers and events entered by hand always wait for review. Set `REVIEW_CONFIDENCE_THRESHOLD` above 1 to review everything yourself.
+Trial events from an approved match are approved by rule. A follow-up paper is approved by rule when its confidence reaches `REVIEW_CONFIDENCE_THRESHOLD`, and waits for review otherwise. Events entered by hand always wait for review. Set `REVIEW_CONFIDENCE_THRESHOLD` above 1 to review everything yourself.
 
 Use `event add` for what no client covers yet: approvals, company events, and trials in registries other than ClinicalTrials.gov. A trial event needs `--id` and `--phase`; a status change needs `--state` (and a `started` event is what moves a claim to its phase); a regulatory decision needs `--outcome`.
 
 ### Review
 
-Nothing reaches the site until you approve it. Draft claims, candidate matches, follow-up papers and events entered by hand all wait in one queue.
+Whatever the rules did not decide waits in one queue: draft claims, candidate matches, follow-up papers below the confidence threshold and events entered by hand. An approved item is published without waiting for you; `thenwhat archive <slug> --reason` takes a claim down.
 
 ```sh
 thenwhat review list
@@ -145,7 +145,7 @@ SITE_URL=https://whatcameofit.com make deploy-check   # checks and builds, publi
 SITE_URL=https://whatcameofit.com make deploy
 ```
 
-A deploy is refused if the export is a preview or any claim in it has not been checked by a person.
+A deploy is refused if the export is a preview.
 
 ### Looking up an article that is not tracked
 
@@ -210,7 +210,7 @@ Needs [uv](https://docs.astral.sh/uv/), Node 22.23.4 or later, make and Docker.
 make check
 ```
 
-This runs ruff, ty, pytest, the site's tests and the site build. CI runs the same command. The tests start the Compose database and use a throwaway `thenwhat_test` database in it, which is dropped and rebuilt from the migrations on every run.
+This runs ruff, ty, pytest, the site's tests, the site build and the extension's tests and build. CI runs the same command. The tests start the Compose database and use a throwaway `thenwhat_test` database in it, which is dropped and rebuilt from the migrations on every run.
 
 Database migrations live in `pipeline/migrations` and are applied each time the `pipeline` container starts. After changing a model, generate a migration with the database running:
 
@@ -225,7 +225,10 @@ DATABASE_URL=postgresql+psycopg://thenwhat:thenwhat@127.0.0.1:5433/thenwhat uv r
 |---|---|
 | `pipeline/` | Python pipeline and CLI |
 | `site/` | Astro static site, built from the pipeline's JSON export |
+| `extension/` | Browser extension for Chrome and Safari |
+| `video/` | Remotion project for explainer videos |
 | `data/seed/` | Seed claims |
+| `scripts/` | Operator helper scripts |
 | `openspec/` | Specifications and the active change |
 | `docs/` | Architecture decisions and data source notes |
 | `SPEC.md` | Original product specification |

@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-const origin = process.env.SITE_URL || "https://whatcameofit.com";
+import { SITE } from "../site.config.mjs";
+
+const origin = SITE.url;
 const expected = JSON.parse(fs.readFileSync(new URL("../data/published-export.json", import.meta.url)));
 // A page added in this deploy can answer 404 for a few seconds while the new version
 // reaches every Cloudflare location, so each check is tried again before it fails.

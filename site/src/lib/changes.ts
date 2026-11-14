@@ -40,7 +40,7 @@ export function changeSummary(change: StatusChange): string {
     : `Was: ${STATUS_LABELS[change.before]}. Now: ${now}.`;
 }
 
-const escape = (text: string) =>
+export const escapeXml = (text: string) =>
   text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -72,21 +72,21 @@ export function changesFeed(feed: Feed): string {
     const link = `${site}/${change.claim.slug}`;
     return [
       "  <entry>",
-      `    <title>${escape(change.claim.headline)}</title>`,
-      `    <id>${escape(`${link}#status-${change.on}-${change.code}`)}</id>`,
-      `    <link href="${escape(link)}"/>`,
+      `    <title>${escapeXml(change.claim.headline)}</title>`,
+      `    <id>${escapeXml(`${link}#status-${change.on}-${change.code}`)}</id>`,
+      `    <link href="${escapeXml(link)}"/>`,
       `    <updated>${change.on}T00:00:00Z</updated>`,
-      `    <summary>${escape(summaries[index])}</summary>`,
+      `    <summary>${escapeXml(summaries[index])}</summary>`,
       "  </entry>",
     ].join("\n");
   });
   return [
     '<?xml version="1.0" encoding="utf-8"?>',
     '<feed xmlns="http://www.w3.org/2005/Atom">',
-    `  <title>${escape(title)}</title>`,
-    `  <id>${escape(self)}</id>`,
-    `  <link rel="self" href="${escape(self)}"/>`,
-    `  <link href="${escape(page)}"/>`,
+    `  <title>${escapeXml(title)}</title>`,
+    `  <id>${escapeXml(self)}</id>`,
+    `  <link rel="self" href="${escapeXml(self)}"/>`,
+    `  <link href="${escapeXml(page)}"/>`,
     `  <updated>${updated}</updated>`,
     ...entries,
     "</feed>",

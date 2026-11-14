@@ -123,8 +123,7 @@ def lookup_command(
 ) -> None:
     """Find the registry trials behind an article or a post. The answer is a ranked list
     of candidates for you to check, not a reviewed status. No claim is stored."""
-    from thenwhat.lookup.details import STATED
-    from thenwhat.lookup.service import LIKELY_FROM, look_up
+    from thenwhat.lookup.service import look_up
 
     with entry_session() as session:
         text, page = _text(url, paste)
@@ -169,7 +168,7 @@ def lookup_command(
         )
     for slug in found.tracked:
         out.print(f"Already tracked as claim {slug}.", markup=False)
-    likely = [c for c in found.candidates if c.score >= LIKELY_FROM or STATED in c.agrees]
+    likely = [c for c in found.candidates if c.likely]
     other = [c for c in found.candidates if c not in likely]
     if not found.candidates:
         out.print("No trial record was found in the registry searched.")

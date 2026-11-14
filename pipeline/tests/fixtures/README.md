@@ -19,7 +19,7 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 
 Changes made to the recordings, for copyright and size:
 
-- Europe PMC citing papers: each `abstractText` is replaced by a placeholder sentence.
+- Europe PMC citing papers, `europepmc/paper_srep39654.json` and `europepmc/paper_sciadv_abf1798.json`: each `abstractText` is replaced by a placeholder sentence.
 - `europepmc/paper_nejmoa2206038.json`: `abstractText` is replaced by a placeholder that keeps only the paper's registry number; subject headings, grants, links and all but two authors are removed.
 - Crossref works: `abstract` removed; `reference` removed from `work_srep39654.json`.
 - `openai/decisions_three_records.json`: the model's name is replaced by `example-model` in the request and the response. The input is synthetic.
