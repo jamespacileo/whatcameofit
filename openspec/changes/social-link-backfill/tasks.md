@@ -4,7 +4,7 @@
 
 - [x] 1.1 Read the current terms, authentication, size and field list of the Hacker News bulk candidates (the public parquet archive, the BigQuery public dataset, the search interface queried by domain) and write an entry for each in `docs/sources.md` with the date checked; verify each entry states whether bulk download is permitted and what the operator must set up. Done 2026-11-14 for the parquet archive in full. The BigQuery entry records that its terms were not read (it needs a Google Cloud project of the operator's and was not needed for the choice), and the search interface's rate limit is recorded as unconfirmed
 - [x] 1.2 Pick one Hacker News file source in `design.md` decision 3 and tell the operator; verify the decision names the source, how the operator obtains the file and its size, or states plainly that none qualifies and Hacker News is not loaded
-- [ ] 1.3 Have the operator download one Reddit per-community submissions file and check its field names against `design.md` decision 3 without printing any line; verify the fields for address, community, time, score, title, self post and removal are recorded in `docs/sources.md`, with the release the file came from
+- [ ] 1.3 (waits on the operator: no Reddit file is on this machine yet; the reader is written against the field names in `design.md` and tested on synthetic lines) Have the operator download one Reddit per-community submissions file and check its field names against `design.md` decision 3 without printing any line; verify the fields for address, community, time, score, title, self post and removal are recorded in `docs/sources.md`, with the release the file came from
 - [x] 1.4 Correct the Reddit entry's limits in `docs/sources.md`: the title is kept with the lead, privately, and why (`design.md` decision 4); verify the entry and `specs/link-leads/spec.md` say the same thing about what is kept
 - [x] 1.5 Add link lead, screening, triage and lead label to `GLOSSARY.md`, stating that a link lead is neither an article lead nor a source article; verify the terms match the words in the specs
 
@@ -39,7 +39,7 @@
 - [x] 5.1 Add the triage decision (options, question, what it is shown) to the decision steps and implement the `link_triage` step in batches of twenty, storing the score and its version; verify tests with a fake backend cover a scored batch, a lead out of scope never asked, and a refusal for one lead leaving it without a score while the others are scored
 - [x] 5.2 Add `LEAD_PASS_ABOVE` and `LEAD_REJECT_BELOW` with no defaults to the configuration and `.env.example`, and compute passed, held and rejected from them; verify tests cover thresholds unset (nothing passed), and a lowered threshold passing more leads with no new decision logged
 - [x] 5.3 Verify with a test that raising the step's version makes every lead in scope due and keeps the earlier decision log entries
-- [ ] 5.4 Record a fixture of one Decisions API answer for a batch of synthetic titles; verify the fixture holds no real title and the backend test reads it with no live call
+- [ ] 5.4 (waits on the operator: recording needs one live call with the OpenAI key, which was not used) Record a fixture of one Decisions API answer for a batch of synthetic titles; verify the fixture holds no real title and the backend test reads it with no live call
 
 ## 6. Evaluation
 
@@ -50,6 +50,8 @@
 - [x] 6.5 Verify with a test that the export is the same before and after labelling
 
 ## 7. Reading
+
+Not started. Two decisions the specs do not settle have to be made first: the article's date when its page gives none, and the outlet's name on a source article (`design.md`, "Found while applying"). Whichever is chosen is added to `specs/lead-reading/spec.md` before 7.1.
 
 - [ ] 7.1 Split drafting so the model call comes first and returns the draft, keeping `thenwhat extract new` and `extract article` behaving as before; verify the existing extraction tests pass unchanged
 - [ ] 7.2 Add the slug rule from intervention and indication; verify tests cover a long name cut at 60 characters, characters outside the allowed set, and a slug already taken by another claim

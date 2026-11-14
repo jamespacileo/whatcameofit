@@ -104,7 +104,7 @@ The vertical has one way: a decision among the configured verticals, shown the d
 
 ### 10. Outlet spacing reuses the allowance table
 
-Before a fetch the reading step claims a request against `source_allowance_use` under the name `outlet:<domain>`, with a default interval for every outlet (`OUTLET_INTERVAL_SECONDS`, 10 unless set) and no count limit. The row lock spaces processes, as it does for sources. A crawl delay in robots.txt replaces the interval when longer. Leads are taken in reading order but a lead whose outlet is not yet free is skipped for the moment, so one busy outlet does not stall the run.
+Before a fetch the reading step claims a request against `source_allowance_use` under the name `outlet:<domain>`, with a default interval for every outlet (`OUTLET_INTERVAL_SECONDS`, 10 unless set) and no count limit. The row lock spaces processes, as it does for sources. A crawl delay in robots.txt replaces the interval when longer. Whether a lead whose outlet is not yet free is skipped for the moment or simply waited for is left to task 7.4: the requirement is only the interval.
 
 ### 11. Where stored data saves cost, and where it does not
 
@@ -147,6 +147,15 @@ One migration, `0016`, adds the four tables. No existing table changes.
 6. Read 200 leads. Show the operator the funnel and the claims made. Only on their decision, read further, always with a limit.
 
 Rollback: the new tables can be dropped without touching claims. Claims and source articles made by reading are ordinary ones and are removed by archiving.
+
+## Found while applying (2026-11-14): two decisions reading waits on
+
+Groups 1 to 6 are built. Before the reading step is written, two things the specs do not settle have to be decided by the operator, because each changes what the public site shows.
+
+1. **The article's date when its page gives none.** A source article needs a publication date, and it sets a claim's first reported date. `extract/page.py` reads the date from the page, and `docs/outlets.md` shows it finds none on some of the most shared outlets (sciencedaily.com and eurekalert.org: none of 13 pages). The date a link was first shared is on or after publication, usually the same day, but it is not the publication date. The project's rule is one way at full quality and an explicit empty state otherwise, so the proposal is: a lead whose page gives no date is not read, its outcome says so, and the funnel counts these by outlet so the page reader can be taught their markup. The alternative, using the first shared date, would publish a date nobody published.
+2. **The outlet's name on a source article.** Entered articles carry a name a person typed ("The Guardian"). A lead knows only the domain. The choices are to show the domain as the outlet, or to add a display name to each listed outlet in `backfill/outlet_kinds.py` and refuse a lead whose outlet has none.
+
+Neither is in `specs/lead-reading/spec.md` yet. Whichever is chosen becomes a requirement there before task group 7 starts.
 
 ## Open Questions
 
