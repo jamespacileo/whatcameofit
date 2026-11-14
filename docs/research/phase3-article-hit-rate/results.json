@@ -14,10 +14,14 @@
   "intervention": "GC5107 immune globulin",
   "indication": "primary humoral immunodeficiency (children)",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "US FDA Accepts GC Pharma's Biologics License Application for Immune Globulin 'GC5107'",
+   "domain": "biospace.com",
+   "url": "https://www.biospace.com/us-fda-accepts-gc-pharma-s-biologics-license-application-for-immune-globulin-gc5107"
+  }
  },
  {
   "nct": "NCT01997268",
@@ -34,7 +38,7 @@
   "intervention": "glucarpidase",
   "indication": "delayed methotrexate clearance in childhood ALL",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -68,7 +72,7 @@
   "intervention": "post-transplant cyclophosphamide (PTCy)",
   "indication": "graft-versus-host disease prevention",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -108,17 +112,21 @@
   "intervention": "zolmitriptan nasal spray (Zomig)",
   "indication": "migraine in children 6-11",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "US FDA approves nasal spray to treat children's migraines",
+   "domain": "ctvnews.ca",
+   "url": "https://ctvnews.ca/health/article/us-fda-approves-nasal-spray-to-treat-childrens-migraines"
+  }
  },
  {
   "nct": "NCT01066689",
   "intervention": "rituximab",
   "indication": "acute humoral rejection after kidney transplant",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -142,7 +150,7 @@
   "intervention": "ezetimibe plus atorvastatin",
   "indication": "primary hypercholesterolemia with coronary disease",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -152,10 +160,14 @@
   "intervention": "azithromycin plus chloroquine",
   "indication": "uncomplicated falciparum malaria",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Pfizer, MMV seek to expand fight against malaria with intermittent preventive treatment option",
+   "domain": "fiercebiotech.com",
+   "url": "https://www.fiercebiotech.com/biotech/pfizer-mmv-seek-to-expand-fight-against-malaria-intermittent-preventive-treatment-option"
+  }
  },
  {
   "nct": "NCT07801599",
@@ -176,10 +188,14 @@
   "intervention": "docetaxel plus carboplatin",
   "indication": "metastatic castration-resistant prostate cancer with DNA repair alterations",
   "searched": true,
-  "searches": 1,
-  "level": "none",
-  "about_trial": false,
-  "best": null
+  "searches": 2,
+  "level": "news",
+  "about_trial": true,
+  "best": {
+   "title": "ASCO 2026: OPTION-DDR (CCTG PR.25) randomized phase III trial of platinum and taxane chemotherapy in mCRPC with DDR gene alterations",
+   "domain": "urotoday.com",
+   "url": "https://www.urotoday.com/conference-highlights/asco-2026/asco-2026-prostate-cancer/169761-asco-2026-option-ddr-cctg-pr-25-a-randomized-phase-iii-trial-investigating-platinum-and-taxane-chemotherapy-in-mcrpc-patients-with-alterations-in-ddr-genes.html"
+  }
  },
  {
   "nct": "NCT04952051",
@@ -200,17 +216,21 @@
   "intervention": "BGB-16673",
   "indication": "relapsed/refractory chronic lymphocytic leukemia",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "BeiGene's head-to-head test advances",
+   "domain": "oncologypipeline.com",
+   "url": "https://www.oncologypipeline.com/apexonco/node/1328"
+  }
  },
  {
   "nct": "NCT00932542",
   "intervention": "EMLA (lidocaine/prilocaine eutectic mixture)",
   "indication": "pain after hemorrhoidectomy",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -220,27 +240,35 @@
   "intervention": "certolizumab pegol (CDP870)",
   "indication": "early rheumatoid arthritis",
   "searched": true,
-  "searches": 1,
-  "level": "none",
-  "about_trial": false,
-  "best": null
+  "searches": 2,
+  "level": "news",
+  "about_trial": true,
+  "best": {
+   "title": "C-EARLY results support Cimzia's use sooner for severe RA",
+   "domain": "scrip.pharmaintelligence.informa.com",
+   "url": "https://scrip.pharmaintelligence.informa.com/SC028983/CEARLY-results-support-Cimzias-use-sooner-for-severe-RA"
+  }
  },
  {
   "nct": "NCT00561821",
   "intervention": "esmirtazapine (Org 50081)",
   "indication": "insomnia in elderly",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Organon is excited about new insomnia drug",
+   "domain": "pharmatimes.com",
+   "url": "https://www.pharmatimes.com/news/organon_is_excited_about_new_insomnia_drug_995476"
+  }
  },
  {
   "nct": "NCT05771896",
   "intervention": "darolutamide plus radium-223",
   "indication": "metastatic hormone-sensitive prostate cancer",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -264,7 +292,7 @@
   "intervention": "pegol-sihematide",
   "indication": "anemia in chronic kidney disease (dialysis)",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -274,17 +302,21 @@
   "intervention": "fentanyl sublingual spray",
   "indication": "breakthrough cancer pain",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "INSYS Therapeutics Announces Positive Phase III Efficacy Trial Results for Fentanyl Sublingual Spray",
+   "domain": "fiercebiotech.com",
+   "url": "https://www.fiercebiotech.com/biotech/insys-therapeutics-announces-positive-phase-iii-efficacy-trial-results-for-fentanyl"
+  }
  },
  {
   "nct": "NCT03659929",
   "intervention": "amphetamine sulfate",
   "indication": "adult ADHD",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -294,7 +326,7 @@
   "intervention": "empagliflozin plus linagliptin",
   "indication": "type 2 diabetes (kidney and vascular effects)",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -304,7 +336,7 @@
   "intervention": "BR-TD-1001 (Td vaccine)",
   "indication": "diphtheria and tetanus vaccination",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -314,7 +346,7 @@
   "intervention": "Venticute",
   "indication": "pneumonia/aspiration needing ventilation",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -324,7 +356,7 @@
   "intervention": "paracetamol with codeine or caffeine",
   "indication": "acute pain after trauma",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -334,20 +366,28 @@
   "intervention": "HBV-MPL adjuvanted hepatitis B vaccine (208129)",
   "indication": "hepatitis B vaccination in non-responders",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Adjuvant debuts in new hep B vaccine",
+   "domain": "outsourcing-pharma.com",
+   "url": "https://www.outsourcing-pharma.com/Article/2005/02/09/Adjuvant-debuts-in-new-hep-B-vaccine"
+  }
  },
  {
   "nct": "NCT07284394",
   "intervention": "hepatic arterial infusion chemotherapy",
   "indication": "colorectal cancer liver metastases after surgery",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Adjuvant hepatic arterial infusion after surgery for four or more colorectal liver metastases",
+   "domain": "ascopost.com",
+   "url": "https://ascopost.com/news/may-2026/adjuvant-hepatic-arterial-infusion-after-surgery-for-four-or-more-colorectal-liver-metastases/"
+  }
  },
  {
   "nct": "NCT01489111",
@@ -368,37 +408,49 @@
   "intervention": "DPI-386 nasal gel (scopolamine)",
   "indication": "motion sickness nausea",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Defender's Scopolamine Nasal Gel Secures Pivotal Win In Motion Sickness",
+   "domain": "insights.citeline.com",
+   "url": "https://insights.citeline.com/SC148510/Defenders-Scopolamine-Nasal-Gel-Secures-Pivotal-Win-In-Motion-Sickness/link-DUYP5VHPIJFOPHASZNJGJ7GADM"
+  }
  },
  {
   "nct": "NCT00240695",
   "intervention": "galantamine",
   "indication": "mild cognitive impairment",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Reminyl Safety Signal Reported In Two Cognitive Impairment Studies",
+   "domain": "pink.pharmaintelligence.informa.com",
+   "url": "https://pink.pharmaintelligence.informa.com/PS060929/Reminyl-Safety-Signal-Reported-In-Two-Cognitive-Impairment-Studies"
+  }
  },
  {
   "nct": "NCT00981409",
   "intervention": "fondaparinux sodium",
   "indication": "acute pulmonary embolism",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Arixtra filed for acute treatment uses in Japan",
+   "domain": "scrip.pharmaintelligence.informa.com",
+   "url": "https://scrip.pharmaintelligence.informa.com/SC008294/Arixtra-filed-for-acute-treatment-uses-in-Japan"
+  }
  },
  {
   "nct": "NCT00731120",
   "intervention": "vortioxetine",
   "indication": "generalized anxiety disorder",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -464,7 +516,7 @@
   "intervention": "alflutinib mesylate (AST2818, furmonertinib)",
   "indication": "EGFR-mutant non-small cell lung cancer",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -473,71 +525,91 @@
   "nct": "NCT07538284",
   "intervention": "dexmedetomidine (nasal)",
   "indication": "postoperative delirium after major abdominal surgery",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
-  "best": null
+  "searched": true,
+  "searches": 2,
+  "level": "news",
+  "about_trial": false,
+  "best": {
+   "title": "Night before dexmedetomidine cut delirium after arthroplasty",
+   "domain": "reachmd.com",
+   "url": "https://reachmd.com/news/night-before-dexmedetomidine-cut-delirium-after-arthroplasty/2488198/"
+  }
  },
  {
   "nct": "NCT05967130",
   "intervention": "bacteriophage",
-  "indication": "chronic urinary tract infection after kidney transplant",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
+  "indication": "recurrent UTI in kidney transplant recipients",
+  "searched": true,
+  "searches": 2,
+  "level": "none",
+  "about_trial": false,
   "best": null
  },
  {
   "nct": "NCT04184505",
   "intervention": "azacitidine then allogeneic transplant",
-  "indication": "high-risk myelodysplastic syndrome",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
+  "indication": "higher-risk MDS",
+  "searched": true,
+  "searches": 2,
+  "level": "none",
+  "about_trial": false,
   "best": null
  },
  {
   "nct": "NCT01299857",
   "intervention": "rituximab",
   "indication": "severe pemphigus",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
-  "best": null
+  "searched": true,
+  "searches": 1,
+  "level": "news",
+  "about_trial": false,
+  "best": {
+   "title": "Long-term pemphigus remission associated with first-line rituximab therapy",
+   "domain": "healio.com",
+   "url": "https://cm.healio.com/news/dermatology/20240207/longterm-pemphigus-remission-associated-with-firstline-rituximab-therapy"
+  }
  },
  {
   "nct": "NCT00989235",
-  "intervention": "abatacept",
-  "indication": "rheumatoid arthritis",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
-  "best": null
+  "intervention": "abatacept (low dose)",
+  "indication": "early rheumatoid arthritis",
+  "searched": true,
+  "searches": 1,
+  "level": "news",
+  "about_trial": true,
+  "best": {
+   "title": "Reducing abatacept feasible in poor-prognosis early RA patients",
+   "domain": "mdedge.com",
+   "url": "https://mdedge.com/content/reducing-abatacept-feasible-poor-prognosis-early-ra-patients"
+  }
  },
  {
   "nct": "NCT01222247",
   "intervention": "betamethasone",
-  "indication": "late preterm antenatal steroids (neonatal respiratory distress)",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
-  "best": null
+  "indication": "late preterm antenatal steroids / neonatal respiratory distress",
+  "searched": true,
+  "searches": 2,
+  "level": "news",
+  "about_trial": true,
+  "best": {
+   "title": "Betamethasone decreases risk for late preterm respiratory illness",
+   "domain": "healio.com",
+   "url": "https://www.healio.com/news/primary-care/20160218/betamethasone-decreases-risk-for-late-preterm-respiratory-illness"
+  }
  },
  {
   "nct": "NCT02892149",
   "intervention": "vadadustat",
-  "indication": "anemia in dialysis-dependent chronic kidney disease",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
-  "best": null
+  "indication": "anemia in dialysis-dependent CKD",
+  "searched": true,
+  "searches": 2,
+  "level": "news",
+  "about_trial": true,
+  "best": {
+   "title": "Vadadustat shows positive results in phase 3 trials",
+   "domain": "healio.com",
+   "url": "https://www.healio.com/news/nephrology/20200511/vadadustat-shows-positive-results-in-phase-3-trials"
+  }
  },
  {
   "nct": "NCT03905304",
@@ -606,7 +678,7 @@
   "intervention": "Calderasib (MK-1084)",
   "indication": "colorectal cancer (KRAS G12C)",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -616,7 +688,7 @@
   "intervention": "Calcium gluconate",
   "indication": "massive hemorrhage / trauma",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -626,7 +698,7 @@
   "intervention": "Rituximab / cyclophosphamide / prednisone",
   "indication": "idiopathic membranous nephropathy",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -636,7 +708,7 @@
   "intervention": "Bonjesta",
   "indication": "nausea and vomiting of pregnancy in adolescents",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -646,7 +718,7 @@
   "intervention": "Patiromer",
   "indication": "hyperkalaemia in chronic dialysis",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -656,7 +728,7 @@
   "intervention": "Beclomethasone dipropionate/formoterol fumarate (CHF 1535)",
   "indication": "asthma",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -666,7 +738,7 @@
   "intervention": "Stannous fluoride toothpaste + CPC mouthwash regimen",
   "indication": "dental plaque and gingivitis",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -676,7 +748,7 @@
   "intervention": "FOY-305",
   "indication": "COVID-19",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -686,17 +758,21 @@
   "intervention": "Antiplatelet preloading (aspirin/clopidogrel)",
   "indication": "stroke/embolic events in TAVI",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Aspirin alone preferred antithrombotic strategy after TAVI",
+   "domain": "mdedge.com",
+   "url": "https://mdedge.com/content/aspirin-alone-preferred-antithrombotic-strategy-after-tavi"
+  }
  },
  {
   "nct": "NCT02492087",
   "intervention": "Topical tranexamic acid",
   "indication": "postpartum haemorrhage at caesarean section",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -706,13 +782,13 @@
   "intervention": "ZP-Zolmitriptan",
   "indication": "acute migraine",
   "searched": true,
-  "searches": 1,
-  "level": "press_only",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
   "best": {
-   "title": "Zosano completes enrollment in phase I study for microneedle patch delivery of zolmitriptan for the treatment of migraine",
-   "domain": "biospace.com",
-   "url": "https://www.biospace.com/zosano-completes-enrollment-in-phase-i-study-for-microneedle-patch-delivery-of-zolmitriptan-for-the-treatment-of-migraine"
+   "title": "NDA for Qtrypta accepted for acute migraine",
+   "domain": "neurologylive.com",
+   "url": "https://www.neurologylive.com/clinical-focus/nda-for-qtrypta-accepted-for-acute-migraine-"
   }
  },
  {
@@ -720,10 +796,14 @@
   "intervention": "Cipaglucosidase alfa + miglustat",
   "indication": "late-onset Pompe disease in children",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Pombiliti + Opfolda Approved by FDA as Combination Therapy for Late-Onset Pompe Disease",
+   "domain": "practicalneurology.com",
+   "url": "https://practicalneurology.com/news/pombiliti-opfolda-approved-by-fda-as-combination-therapy-for-late-onset-pompe-disease"
+  }
  },
  {
   "nct": "NCT00735241",
@@ -758,7 +838,7 @@
   "intervention": "Clarithromycin extended-release",
   "indication": "acute bacterial sinusitis",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -768,17 +848,21 @@
   "intervention": "Bromfenac ophthalmic solution",
   "indication": "cataract surgery inflammation",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Once-daily bromfenac approved",
+   "domain": "ophthalmologytimes.com",
+   "url": "https://www.ophthalmologytimes.com/view/once-daily-bromfenac-approved"
+  }
  },
  {
   "nct": "NCT00952341",
   "intervention": "Aprepitant (MK-0869)",
   "indication": "chemotherapy-induced nausea and vomiting (cisplatin)",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -788,7 +872,7 @@
   "intervention": "Sugammadex",
   "indication": "reversal of neuromuscular block in heart failure",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -798,20 +882,28 @@
   "intervention": "Omega-3",
   "indication": "coronary artery disease undergoing PCI",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "EPA with statins may reduce periprocedural MI in PCI",
+   "domain": "healio.com",
+   "url": "https://cm.healio.com/news/cardiology/20141121/epa-with-statins-may-reduce-periprocedural-mi-in-pci"
+  }
  },
  {
   "nct": "NCT03715166",
   "intervention": "Bumetanide oral solution",
   "indication": "autism spectrum disorder",
   "searched": true,
-  "searches": 1,
-  "level": "none",
-  "about_trial": false,
-  "best": null
+  "searches": 2,
+  "level": "press_only",
+  "about_trial": true,
+  "best": {
+   "title": "Efficacy and safety of bumetanide oral liquid formulation in children and adolescents 7 to <18 with ASD",
+   "domain": "clinicaltrials.servier.com",
+   "url": "https://clinicaltrials.servier.com/trial/NCT03715166/efficacy-and-safety-of-bumetanide-oral-liquid-formulation-in-children-and-adolescents-aged-from-7-to-less-than-18-years-old-with-autism-spectrum-disorder"
+  }
  },
  {
   "nct": "NCT04269200",
@@ -832,13 +924,13 @@
   "intervention": "Pimavanserin",
   "indication": "Parkinson's disease psychosis",
   "searched": true,
-  "searches": 1,
-  "level": "press_only",
-  "about_trial": true,
+  "searches": 2,
+  "level": "news",
+  "about_trial": false,
   "best": {
-   "title": "ACADIA Announces Results from Phase III Trial of Pimavanserin in Parkinson's Disease Psychosis",
-   "domain": "technologynetworks.com",
-   "url": "https://www.technologynetworks.com/drug-discovery/news/acadia-announces-results-from-phase-iii-trial-of-pimavanserin-in-parkinsons-disease-psychosis-184864"
+   "title": "Nuplazid (pimavanserin) tablets approved to treat hallucinations and delusions",
+   "domain": "news-medical.net",
+   "url": "https://www.news-medical.net/news/20160430/Nuplazid-(pimavanserin)-tablets-approved-to-treat-hallucinations-and-delusions.aspx"
   }
  },
  {
@@ -846,17 +938,21 @@
   "intervention": "Maribavir",
   "indication": "cytomegalovirus infection in transplant recipients",
   "searched": true,
-  "searches": 1,
-  "level": "none",
-  "about_trial": false,
-  "best": null
+  "searches": 2,
+  "level": "news",
+  "about_trial": true,
+  "best": {
+   "title": "Phase 3 trial of maribavir yields post-transplant benefits",
+   "domain": "mdedge.com",
+   "url": "https://mdedge.com/content/phase-3-trial-maribavir-yields-post-transplant-benefits"
+  }
  },
  {
   "nct": "NCT01153685",
   "intervention": "Fluviral",
   "indication": "influenza vaccination",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -894,17 +990,21 @@
   "intervention": "Methylnaltrexone (MOA-728)",
   "indication": "opioid-induced constipation",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Methylnaltrexone bromide (Relistor) approved by FDA for opioid-induced constipation",
+   "domain": "drugtopics.com",
+   "url": "https://www.drugtopics.com/view/methylnaltrexone-bromide-relistor-approved-fda-opioid-induced-constipation"
+  }
  },
  {
   "nct": "NCT05161221",
   "intervention": "Liposomal bupivacaine adductor canal block",
   "indication": "postoperative pain after ACL reconstruction",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -914,7 +1014,7 @@
   "intervention": "Bismuth quadruple therapy (bismuth, tetracycline, metronidazole, omeprazole)",
   "indication": "H. pylori infection in PCI patients",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -938,7 +1038,7 @@
   "intervention": "Solifenacin (VESIcare)",
   "indication": "overactive bladder",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -948,7 +1048,7 @@
   "intervention": "GnRHa + tamoxifen",
   "indication": "premenopausal hormone-responsive breast cancer",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -958,7 +1058,7 @@
   "intervention": "Nifedipine CR (BAYA1040)",
   "indication": "hypertension",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -996,17 +1096,21 @@
   "intervention": "Guselkumab",
   "indication": "generalized pustular psoriasis",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "press_only",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "J&J Japan press release (jnj.com, 2017-08-15; title not shown in results)",
+   "domain": "jnj.com",
+   "url": "https://www.jnj.com/innovativemedicine/japan/press-release/20170815"
+  }
  },
  {
   "nct": "NCT00705744",
   "intervention": "Lactic acid (Dermacyd Femina)",
   "indication": "feminine hygiene (skin irritation)",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1016,7 +1120,7 @@
   "intervention": "Esomeprazole",
   "indication": "early onset preeclampsia",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1040,20 +1144,28 @@
   "intervention": "Pasireotide LAR",
   "indication": "carcinoid syndrome",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Signifor LAR pasireotide: Phase III data",
+   "domain": "biocentury.com",
+   "url": "https://www.biocentury.com/article/162009/signifor-lar-pasireotide-phase-iii-data"
+  }
  },
  {
   "nct": "NCT02477618",
   "intervention": "SAGE-547 (brexanolone)",
   "indication": "super-refractory status epilepticus",
   "searched": true,
-  "searches": 1,
-  "level": "none",
-  "about_trial": false,
-  "best": null
+  "searches": 2,
+  "level": "news",
+  "about_trial": true,
+  "best": {
+   "title": "Sage sags on phase 3 epilepsy med failure",
+   "domain": "fiercebiotech.com",
+   "url": "https://www.fiercebiotech.com/biotech/sage-sags-phase-3-epilepsy-med-failure"
+  }
  },
  {
   "nct": "NCT00920816",
@@ -1088,17 +1200,21 @@
   "intervention": "FMX-101 (4% minocycline foam)",
   "indication": "acne vulgaris",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Foamix: Positive Topline Phase 3 Results for Topical Minocycline Foam",
+   "domain": "practicaldermatology.com",
+   "url": "https://practicaldermatology.com/news/foamix-positive-topline-phase-3-results-for-topical-minocycline-foam/2457614/"
+  }
  },
  {
   "nct": "NCT02709564",
   "intervention": "Misoprostol",
   "indication": "blood loss in myomectomy",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1108,7 +1224,7 @@
   "intervention": "Extended-release buprenorphine",
   "indication": "opioid use disorder in jail",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1118,7 +1234,7 @@
   "intervention": "midazolam",
   "indication": "dental anxiety",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1156,7 +1272,7 @@
   "intervention": "mannitol / retrograde autologous priming",
   "indication": "hemodilution in cardiac surgery",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1166,7 +1282,7 @@
   "intervention": "darbepoetin alfa",
   "indication": "acute myocardial infarction",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1190,7 +1306,7 @@
   "intervention": "morphine + amethocaine",
   "indication": "procedural pain in neonates",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1200,13 +1316,13 @@
   "intervention": "lisdexamfetamine",
   "indication": "binge-eating disorder with obesity",
   "searched": true,
-  "searches": 1,
-  "level": "press_only",
-  "about_trial": true,
+  "searches": 2,
+  "level": "news",
+  "about_trial": false,
   "best": {
-   "title": "Combined CBT and Drug Therapy Reduced Binge Eating Episodes in Patients with Obesity by 96%",
-   "domain": "bbrfoundation.org",
-   "url": "https://bbrfoundation.org/node/14529"
+   "title": "TOS announces FDA approval of new prescription drug for treating binge eating disorder",
+   "domain": "news-medical.net",
+   "url": "https://www.news-medical.net/news/20150203/TOS-announces-FDA-approval-of-new-prescription-drug-for-treating-binge-eating-disorder.aspx"
   }
  },
  {
@@ -1242,20 +1358,28 @@
   "intervention": "thymosin alpha-1",
   "indication": "chronic hepatitis C",
   "searched": true,
-  "searches": 1,
-  "level": "none",
-  "about_trial": false,
-  "best": null
+  "searches": 2,
+  "level": "news",
+  "about_trial": true,
+  "best": {
+   "title": "SciClone and Sigma-Tau fill spots for phase III hepatitis C trial",
+   "domain": "fdanews.com",
+   "url": "https://fdanews.com/articles/90958-sciclone-and-sigma-tau-fill-spots-for-phase-iii-hepatitis-c-trial"
+  }
  },
  {
   "nct": "NCT00849056",
   "intervention": "albiglutide",
   "indication": "type 2 diabetes",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Albiglutide proves effective for management of type 2 diabetes",
+   "domain": "hcplive.com",
+   "url": "https://hcplive.com/view/albiglutide-proves-effective-for-management-of-type-2-diabetes"
+  }
  },
  {
   "nct": "NCT01650701",
@@ -1276,7 +1400,7 @@
   "intervention": "TC-002 (latanoprost)",
   "indication": "elevated intraocular pressure",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "press_only",
   "about_trial": true,
   "best": {
@@ -1304,10 +1428,14 @@
   "intervention": "sofosbuvir/velpatasvir",
   "indication": "hepatitis C",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "First drug for all major hepatitis C genotypes approved by FDA",
+   "domain": "pharmacytimes.com",
+   "url": "https://www.pharmacytimes.com/view/first-drug-for-all-major-hepatitis-c-genotypes-approved-by-fda"
+  }
  },
  {
   "nct": "NCT03829657",
@@ -1328,7 +1456,7 @@
   "intervention": "apatinib + EGFR-TKI",
   "indication": "EGFR-TKI resistant non-small cell lung cancer",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1338,7 +1466,7 @@
   "intervention": "naltrexone",
   "indication": "problem drinking",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1376,7 +1504,7 @@
   "intervention": "ramipril + telmisartan",
   "indication": "hypertension with type 2 diabetes and albuminuria",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1386,7 +1514,7 @@
   "intervention": "prostatic artery embolization",
   "indication": "benign prostatic hyperplasia",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1396,17 +1524,21 @@
   "intervention": "clindamycin/benzoyl peroxide gel 1.2%/2.5%",
   "indication": "acne",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Perrigo gets tentative FDA nod for Acanya generic",
+   "domain": "drugstorenews.com",
+   "url": "https://drugstorenews.com/pharmacy/perrigo-gets-tentative-fda-nod-acanya-generic"
+  }
  },
  {
   "nct": "NCT05450458",
   "intervention": "hyaluronic acid with sorbitol (Synolis VA)",
   "indication": "overuse knee pain",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1416,7 +1548,7 @@
   "intervention": "iron oligosaccharide",
   "indication": "iron-deficiency anemia in chronic kidney disease",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1426,10 +1558,14 @@
   "intervention": "tafluprost",
   "indication": "open-angle glaucoma / ocular hypertension",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Preservative free Saflutan",
+   "domain": "mivision.com.au",
+   "url": "https://mivision.com.au/2021/03/preservative-free-saflutan/"
+  }
  },
  {
   "nct": "NCT00685841",
@@ -1450,7 +1586,7 @@
   "intervention": "osimertinib + bevacizumab",
   "indication": "EGFR-mutant non-small cell lung cancer",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1460,10 +1596,14 @@
   "intervention": "budesonide MMX",
   "indication": "ulcerative colitis",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Uceris tablets induce remission in mesalamine-refractory mild-to-moderate ulcerative colitis",
+   "domain": "healio.com",
+   "url": "https://www.healio.com/news/gastroenterology/20170713/uceris-tablets-induce-remission-in-mesalaminerefractory-mildtomoderate-ulcerative-colitis"
+  }
  },
  {
   "nct": "NCT06972459",
@@ -1484,7 +1624,7 @@
   "intervention": "letrozole",
   "indication": "infertility (IVF ovarian stimulation)",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1508,7 +1648,7 @@
   "intervention": "amiodarone",
   "indication": "atrial fibrillation in sepsis/septic shock",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1518,7 +1658,7 @@
   "intervention": "Rebif new formulation via RebiSmart",
   "indication": "relapsing multiple sclerosis",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1528,7 +1668,7 @@
   "intervention": "SR58611A (amibegron)",
   "indication": "major depressive disorder",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1538,7 +1678,7 @@
   "intervention": "valganciclovir",
   "indication": "kidney transplant (CMV prophylaxis)",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1562,17 +1702,21 @@
   "intervention": "chloroquine",
   "indication": "malaria in pregnancy",
   "searched": true,
-  "searches": 1,
-  "level": "none",
-  "about_trial": false,
-  "best": null
+  "searches": 2,
+  "level": "news",
+  "about_trial": true,
+  "best": {
+   "title": "Chloroquine as prophylaxis may offer pregnant women protection from malaria",
+   "domain": "healio.com",
+   "url": "https://cm.healio.com/news/infectious-disease/20181023/chloroquine-as-prophylaxis-may-offer-pregnant-women-protection-from-malaria"
+  }
  },
  {
   "nct": "NCT03823521",
   "intervention": "Cardioplexol (cardioplegia solution)",
   "indication": "cardiac surgery",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1582,7 +1726,7 @@
   "intervention": "V221 MMRV vaccine",
   "indication": "measles, mumps, rubella, varicella",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1592,7 +1736,7 @@
   "intervention": "camrelizumab + chemotherapy",
   "indication": "recurrent/metastatic nasopharyngeal carcinoma",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1602,7 +1746,7 @@
   "intervention": "OOC (injectable osteoconductive/osteoinductive compound)",
   "indication": "ACL injury",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1612,7 +1756,7 @@
   "intervention": "botulinum toxin A / nanofat",
   "indication": "androgenetic alopecia",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1622,7 +1766,7 @@
   "intervention": "enoxaparin",
   "indication": "venous thromboembolism prevention in pregnancy",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1632,17 +1776,21 @@
   "intervention": "Dimebon (latrepirdine)",
   "indication": "Huntington disease",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Pfizer/Medivation Dimebon fails as Huntington disease drug",
+   "domain": "pharmatimes.com",
+   "url": "https://pharmatimes.com/?p=50654"
+  }
  },
  {
   "nct": "NCT02402530",
   "intervention": "neridronic acid",
   "indication": "complex regional pain syndrome type I",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1920,7 +2068,7 @@
   "intervention": "MG1109 (H5N1 influenza vaccine)",
   "indication": "influenza (pandemic H5N1)",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1930,7 +2078,7 @@
   "intervention": "narlaprevir + ritonavir",
   "indication": "chronic hepatitis C genotype 1",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1940,10 +2088,14 @@
   "intervention": "Pegasys (peginterferon alfa-2a)",
   "indication": "chronic hepatitis B",
   "searched": true,
-  "searches": 1,
-  "level": "none",
+  "searches": 2,
+  "level": "news",
   "about_trial": false,
-  "best": null
+  "best": {
+   "title": "Major Pegasys trial in chronic hepatitis B patients published in New England Journal",
+   "domain": "infectioncontroltoday.com",
+   "url": "https://www.infectioncontroltoday.com/view/major-pegasys-trial-chronic-hepatitis-b-patients-published-new-england-journal"
+  }
  },
  {
   "nct": "NCT03397134",
@@ -1964,7 +2116,7 @@
   "intervention": "montelukast",
   "indication": "seasonal allergic rhinitis",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -1974,7 +2126,7 @@
   "intervention": "crenolanib",
   "indication": "GIST with PDGFRA D842V mutation",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -2012,7 +2164,7 @@
   "intervention": "tirzepatide",
   "indication": "type 1 diabetes with automated insulin delivery",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
@@ -2022,209 +2174,261 @@
   "intervention": "brivaracetam",
   "indication": "epilepsy (partial-onset seizures)",
   "searched": true,
-  "searches": 1,
+  "searches": 2,
+  "level": "news",
+  "about_trial": false,
+  "best": {
+   "title": "U.S. FDA approves UCB's new epilepsy treatment, BRIVIACT, for patients with partial-onset seizures",
+   "domain": "fiercepharma.com",
+   "url": "https://www.fiercepharma.com/drug-delivery/u-s-fda-approves-ucb-s-new-epilepsy-treatment-briviact%C2%AE-for-patients-partial-onset"
+  }
+ },
+ {
+  "nct": "NCT01652534",
+  "intervention": "amantadine",
+  "indication": "freezing of gait in Parkinson's disease",
+  "searched": true,
+  "searches": 2,
   "level": "none",
   "about_trial": false,
   "best": null
  },
  {
-  "nct": "NCT01652534",
-  "intervention": "amantadine",
-  "indication": "gait dysfunction/freezing in Parkinson's disease",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
-  "best": null
- },
- {
   "nct": "NCT01609010",
   "intervention": "rituximab + interferon alfa-2a",
-  "indication": "lymphoma",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
-  "best": null
+  "indication": "indolent lymphoma",
+  "searched": true,
+  "searches": 2,
+  "level": "news",
+  "about_trial": false,
+  "best": {
+   "title": "Rituximab single agent and combination interferon alfa-2a treatment, untreated and first relapse",
+   "domain": "cancernetwork.com",
+   "url": "https://www.cancernetwork.com/view/rituximab-single-agent-and-combination-interferon-alfa-2a-treatment-untreated-and-first-relapse"
+  }
  },
  {
   "nct": "NCT03837184",
   "intervention": "onasemnogene abeparvovec",
-  "indication": "spinal muscular atrophy type I",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
-  "best": null
+  "indication": "spinal muscular atrophy type 1",
+  "searched": true,
+  "searches": 1,
+  "level": "news",
+  "about_trial": false,
+  "best": {
+   "title": "Onasemnogene abeparvovec demonstrates long-term durability for SMA patients",
+   "domain": "contemporarypediatrics.com",
+   "url": "https://www.contemporarypediatrics.com/view/onasemnogene-abeparvovec-demonstrates-long-term-durability-for-sma-patients"
+  }
  },
  {
   "nct": "NCT07276542",
-  "intervention": "ketamine (intramuscular)",
+  "intervention": "ketamine",
   "indication": "phantom limb pain",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
+  "searched": true,
+  "searches": 2,
+  "level": "none",
+  "about_trial": false,
   "best": null
  },
  {
   "nct": "NCT07768371",
   "intervention": "remibrutinib",
-  "indication": "IgE-mediated food allergy",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
-  "best": null
+  "indication": "IgE-mediated food allergy (peanut)",
+  "searched": true,
+  "searches": 2,
+  "level": "news",
+  "about_trial": false,
+  "best": {
+   "title": "Beyond CSU: remibrutinib shows promise in treatment of adults with peanut allergy",
+   "domain": "pharmacytimes.com",
+   "url": "https://www.pharmacytimes.com/view/beyond-csu-remibrutinib-shows-promise-in-treatment-of-adults-with-peanut-allergy"
+  }
  },
  {
   "nct": "NCT00802672",
-  "intervention": "ciclopirox olamine cream",
+  "intervention": "ciclopirox olamine cream (generic)",
   "indication": "tinea pedis",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
-  "best": null
+  "searched": true,
+  "searches": 2,
+  "level": "press_only",
+  "about_trial": false,
+  "best": {
+   "title": "Perrigo Company Announces Approval for Ciclopirox Olamine Cream",
+   "domain": "investor.perrigo.com",
+   "url": "https://investor.perrigo.com/2006-03-07-Perrigo-Company-Announces-Approval-for-Ciclopirox-Olamine-Cream?asPDF=1"
+  }
  },
  {
   "nct": "NCT04571164",
-  "intervention": "LY03003 (rotigotine ER microspheres)",
+  "intervention": "LY03003 (rotigotine extended-release microspheres)",
   "indication": "early Parkinson's disease",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
-  "best": null
+  "searched": true,
+  "searches": 1,
+  "level": "news",
+  "about_trial": false,
+  "best": {
+   "title": "Luye Pharma submits its Parkinson's drug for clinical trial approval",
+   "domain": "biospectrumasia.com",
+   "url": "https://www.biospectrumasia.com/news/50/12287/luye-pharma-submits-its-parkinsons-drug-for-clinical-trial-approval-.html"
+  }
  },
  {
   "nct": "NCT00348140",
   "intervention": "rosiglitazone extended release",
-  "indication": "mild to moderate Alzheimer's disease",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
-  "best": null
+  "indication": "Alzheimer's disease",
+  "searched": true,
+  "searches": 2,
+  "level": "news",
+  "about_trial": false,
+  "best": {
+   "title": "Alzheimer's treatment strategies fail trials",
+   "domain": "mdedge.com",
+   "url": "https://mdedge.com/internalmedicine/article/13650/neurology/alzheimers-treatment-strategies-fail-trials"
+  }
  },
  {
   "nct": "NCT00113594",
   "intervention": "olanzapine",
-  "indication": "schizophrenia / bipolar I in adolescents",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
-  "best": null
+  "indication": "adolescent schizophrenia and bipolar I disorder",
+  "searched": true,
+  "searches": 2,
+  "level": "news",
+  "about_trial": false,
+  "best": {
+   "title": "FDA approves Zyprexa in tablet form for schizophrenia and manic treatment",
+   "domain": "news-medical.net",
+   "url": "https://www.news-medical.net/news/20091204/FDA-approves-Zyprexa-in-tablet-form-for-schizophrenia-and-manic-treatment.aspx"
+  }
  },
  {
   "nct": "NCT03016000",
   "intervention": "thalidomide",
   "indication": "diffuse large B-cell lymphoma maintenance",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
+  "searched": true,
+  "searches": 2,
+  "level": "none",
+  "about_trial": false,
   "best": null
  },
  {
   "nct": "NCT02011841",
   "intervention": "rifaximin",
   "indication": "spontaneous bacterial peritonitis prevention",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
+  "searched": true,
+  "searches": 2,
+  "level": "none",
+  "about_trial": false,
   "best": null
  },
  {
   "nct": "NCT02051348",
-  "intervention": "Pylopass",
-  "indication": "Helicobacter pylori infection",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
+  "intervention": "Pylopass (L. reuteri DSM 17648)",
+  "indication": "Helicobacter pylori carriers",
+  "searched": true,
+  "searches": 2,
+  "level": "none",
+  "about_trial": false,
   "best": null
  },
  {
   "nct": "NCT05828758",
   "intervention": "amoxicillin",
   "indication": "enteral feeding intolerance in pediatric ICU",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
+  "searched": true,
+  "searches": 2,
+  "level": "none",
+  "about_trial": false,
   "best": null
  },
  {
   "nct": "NCT02104947",
   "intervention": "idarucizumab",
-  "indication": "dabigatran reversal in hemorrhage",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
-  "best": null
+  "indication": "dabigatran reversal in bleeding",
+  "searched": true,
+  "searches": 1,
+  "level": "news",
+  "about_trial": true,
+  "best": {
+   "title": "Final results confirm idarucizumab's ability to restore clotting in dabigatran recipients",
+   "domain": "acepnow.com",
+   "url": "https://www.acepnow.com/final-results-confirm-idarucizumabs-ability-restore-clotting-dabigatran-recipients/"
+  }
  },
  {
   "nct": "NCT05335876",
   "intervention": "onasemnogene abeparvovec (OAV101)",
-  "indication": "spinal muscular atrophy long-term follow-up",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
-  "best": null
+  "indication": "spinal muscular atrophy",
+  "searched": true,
+  "searches": 1,
+  "level": "news",
+  "about_trial": false,
+  "best": {
+   "title": "Novartis releases long-term data for SMA gene therapy",
+   "domain": "europeanpharmaceuticalreview.com",
+   "url": "https://www.europeanpharmaceuticalreview.com/news/180780/novartis-releases-long-term-data-for-sma-gene-therapy/"
+  }
  },
  {
   "nct": "NCT00097708",
-  "intervention": "experimental anti-anxiety drug (unnamed)",
+  "intervention": "unnamed experimental anti-anxiety drug",
   "indication": "generalized anxiety disorder",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
+  "searched": true,
+  "searches": 2,
+  "level": "none",
+  "about_trial": false,
   "best": null
  },
  {
   "nct": "NCT02975323",
   "intervention": "carvedilol",
   "indication": "portal hypertension",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
+  "searched": true,
+  "searches": 2,
+  "level": "none",
+  "about_trial": false,
   "best": null
  },
  {
   "nct": "NCT01772316",
   "intervention": "tocilizumab (subcutaneous)",
   "indication": "rheumatoid arthritis",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
-  "best": null
+  "searched": true,
+  "searches": 1,
+  "level": "news",
+  "about_trial": true,
+  "best": {
+   "title": "Long-term subcutaneous tocilizumab seen as safe, effective in phase 3b trial of adults with RA",
+   "domain": "healio.com",
+   "url": "https://www.healio.com/news/rheumatology/20160929/long-term-subcutaneous-tocilizumab-seen-as-safe-effective-in-phase-3b-trial-of-adults-with-ra"
+  }
  },
  {
   "nct": "NCT02136914",
-  "intervention": "ADS-5102 (amantadine ER)",
+  "intervention": "ADS-5102 (extended-release amantadine)",
   "indication": "levodopa-induced dyskinesia in Parkinson's disease",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
-  "best": null
+  "searched": true,
+  "searches": 1,
+  "level": "news",
+  "about_trial": true,
+  "best": {
+   "title": "Adamas Pharmaceuticals' Lead Drug ADS-5102 Meets Phase III Goals; Stock Surges",
+   "domain": "biospace.com",
+   "url": "https://www.biospace.com/adamas-pharmaceuticals-lead-drug-ads-5102-meets-phase-iii-goals-stock-surges"
+  }
  },
  {
   "nct": "NCT00152009",
-  "intervention": "SPD503 (guanfacine)",
+  "intervention": "SPD503 (guanfacine extended release)",
   "indication": "ADHD",
-  "searched": false,
-  "searches": 0,
-  "level": null,
-  "about_trial": null,
-  "best": null
+  "searched": true,
+  "searches": 1,
+  "level": "news",
+  "about_trial": false,
+  "best": {
+   "title": "Shire's ADHD drug impresses in phase III trial",
+   "domain": "thepharmaletter.com",
+   "url": "https://www.thepharmaletter.com/shire-s-adhd-drug-impresses-in-phase-iii-trial"
+  }
  }
 ]

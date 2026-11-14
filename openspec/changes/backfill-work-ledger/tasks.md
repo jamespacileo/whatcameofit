@@ -53,7 +53,7 @@
 
 - [x] 7.1 Run `make check`; verify ruff, ty, pytest and the site build pass
 - [x] 7.2 Load the phase 3 drug and biological trials on the operator's machine and run `backfill plan`; verify the trial count is close to 43,320 and record the plan's figures in this change
-- [ ] 7.3 Run the news search with a limit of 200 and `backfill leads`; verify the hit rate is recorded here beside the sample's 31% overall and 16% trial-specific, with the split by outlet kind
+- [ ] 7.3 Run the news search with a limit of 200 and `backfill leads`; verify the hit rate is recorded here beside the sample's 52% overall and 20% trial-specific (31% and 16% after one search per trial), with the split by outlet kind
 - [ ] 7.4 Stop a second limited run part way and start it again; verify the report shows no record processed twice
 - [ ] 7.5 Give the operator the 200-trial figures and the plan for the full run, and wait for a decision before running without a limit
 

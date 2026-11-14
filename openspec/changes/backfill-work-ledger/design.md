@@ -115,7 +115,7 @@ One new Alembic migration, `0009`, adds all five tables (the ledger, allowance u
 
 - [No news index permits bulk search on acceptable terms] → The gate in decision 8. The ledger, allowances and corpus are useful without it, and the step is ready for whichever source later qualifies.
 - [Registry names are messy: codes, combinations, doses, descriptions] → The step's scope excludes trials with no usable name, and the plan reports how many are excluded so the loss is visible. The sample's rule-based cleaning found a usable name for 178 of 200 trials.
-- [A hit means "an article names this intervention and indication", not "an article is about this trial"] → Leads are unreviewed and never published. The sample put trial-specific coverage at about half of all hits; deciding what a lead becomes is a later change.
+- [A hit means "an article names this intervention and indication", not "an article is about this trial"] → Leads are unreviewed and never published. The sample put trial-specific coverage at about two in five hits; deciding what a lead becomes is a later change.
 - [An index may count trade press as news and inflate the hit rate] → Outlet kind is stored per lead and the report splits by it.
 - [One open transaction per in-flight record] → Workers are capped at a small number, as `prepare` caps at 8. Request timeouts bound how long a row stays locked.
 - [Entries pointing at records without a foreign key can be orphaned] → Records are not deleted in this pipeline. The plan counts entries only through a join to the record table, so an orphan is never counted as work done.
@@ -125,7 +125,7 @@ One new Alembic migration, `0009`, adds all five tables (the ledger, allowance u
 
 1. Apply the new migration. It only adds tables.
 2. Load the phase 3 drug and biological trials.
-3. Run `backfill plan`, then the news search with a limit of 200, and compare the hit rate report with the sample's 31%.
+3. Run `backfill plan`, then the news search with a limit of 200, and compare the hit rate report with the sample's 52% (31% after one search per trial).
 4. Only after that comparison, run without a limit.
 
 Rollback: the new tables can be dropped without affecting claims, matches, events or the export. No existing table or command changes.

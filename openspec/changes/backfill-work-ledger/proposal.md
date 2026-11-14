@@ -5,7 +5,7 @@
 The pipeline works one claim at a time, from an article to its registry records. Filling the tracker at volume means working the other way too: starting from the registry's trials and looking for the news that reported them. A sample taken on 2026-11-14 shows the size of that job and how it fails without bookkeeping.
 
 - ClinicalTrials.gov holds 611,771 studies. 43,320 are phase 3 trials of a drug or biological.
-- Of 173 sampled phase 3 trials that were searched, 53 (31%) had a news article on the intervention for that indication, and 28 (16%) had one about that trial. Most of those articles were in the clinical trade press.
+- Of 200 sampled phase 3 trials, 104 (52%) had a news article on the intervention for that indication, and 40 (20%) had one about that trial. Most of those articles were in the clinical trade press; a general news outlet was the best result for about one trial in twenty. A first pass with one search per trial had found only 31%.
 - The sample run lost its results once to a cleared temporary folder, stopped once because four workers shared a search allowance none of them could see, and was refused by a news index for exceeding a rate nobody had counted beforehand.
 
 Nothing in the pipeline records which record has been through which step, so a run that stops has to start again, and a new kind of processing cannot be added without re-running the old kinds.
