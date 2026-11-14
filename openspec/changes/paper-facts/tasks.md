@@ -2,9 +2,9 @@
 
 ## 1. Terms, vocabulary and coordination
 
-- [ ] 1.1 Read ClinicalTrials.gov's data element definitions for a reference's type and record in `docs/sources.md` what `RESULT`, `DERIVED` and `BACKGROUND` each mean in the registry's own words, with the address and date read; verify the entry exists before any wording for "how listed" is written
-- [ ] 1.2 Read Europe PMC's current terms for republishing publication types, journal titles and subject headings, and record them in `docs/sources.md` with the fields this change republishes and the fields it never stores; verify the entry carries the date read
-- [ ] 1.3 Add "Paper facts" and "Results paper" to `GLOSSARY.md`, and edit `openspec/changes/related-research/tasks.md` 7.1 and 7.2 so approved papers are exported into `papers` with the role "related" and shown as a group of "Papers on record"; verify `openspec validate related-research --strict` still passes
+- [x] 1.1 Read ClinicalTrials.gov's data element definitions for a reference's type and record in `docs/sources.md` what `RESULT`, `DERIVED` and `BACKGROUND` each mean in the registry's own words, with the address and date read; verify the entry exists before any wording for "how listed" is written
+- [x] 1.2 Read Europe PMC's current terms for republishing publication types, journal titles and subject headings, and record them in `docs/sources.md` with the fields this change republishes and the fields it never stores; verify the entry carries the date read
+- [x] 1.3 Add "Paper facts" and "Results paper" to `GLOSSARY.md`, and edit `openspec/changes/related-research/tasks.md` 7.1 and 7.2 so approved papers are exported into `papers` with the role "related" and shown as a group of "Papers on record"; verify `openspec validate related-research --strict` still passes
 
 ## 2. Reading the facts
 
