@@ -18,6 +18,7 @@ import Pop from "../components/Pop.astro";
 import SharePill from "../components/SharePill.astro";
 import StageTrack from "../components/StageTrack.astro";
 import TopicChip from "../components/TopicChip.astro";
+import TrialDetailsLink from "../components/TrialDetailsLink.astro";
 import { APPROACH_LABELS } from "../lib/approach";
 import { claimPaths, data, verticalTitle, type ExportedClaim } from "../lib/export";
 import { statusSlug } from "../lib/guide";
@@ -40,6 +41,7 @@ import { cardAlt, clip, shareSentence } from "../lib/card";
 import { embedSnippet, shareLinks } from "../lib/share";
 import { confidenceLabel } from "../lib/confidence";
 import MatchList from "../components/MatchList.astro";
+import Background from "../components/Background.astro";
 import Paper from "../components/Paper.astro";
 import Trial from "../components/Trial.astro";
 import {
@@ -615,6 +617,7 @@ const posts = shareLinks(postText, address, claim.headline);
                                     ? `, ${line.steps[0].event.trial_id}`
                                     : ""}
                                 </a>
+                                <TrialDetailsLink url={line.sourceUrl} />
                                 {
                                   /* A record read from a registry is certain. One found by
                                      rule, such as a follow-up paper, says how sure it is. */
@@ -758,6 +761,14 @@ const posts = shareLinks(postText, address, claim.headline);
           </p>
           <MatchList matches={papers} />
         </section>
+      )
+    }
+
+    {
+      /* What open vocabularies say of the claim's terms. After the records and away
+         from the status: a card describes a term, never the claim's evidence. */
+      (claim.background ?? []).length > 0 && (
+        <Background cards={claim.background ?? []} sources={data.card_sources ?? []} />
       )
     }
 

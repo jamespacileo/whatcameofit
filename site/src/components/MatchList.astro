@@ -5,6 +5,7 @@
 import ChevronDown from "@lucide/astro/icons/chevron-down";
 import { confidenceLabel, readingOf } from "../lib/confidence";
 import type { ExportedMatch } from "../lib/export";
+import TrialDetailsLink from "./TrialDetailsLink.astro";
 
 interface Props {
   matches: ExportedMatch[];
@@ -25,6 +26,7 @@ const { matches } = Astro.props;
           ) : (
             match.external_id
           )}
+          <TrialDetailsLink url={match.url} />
           {match.summary && (
             <span class="entry-note">{match.summary.replace(`${match.external_id}: `, "")}</span>
           )}

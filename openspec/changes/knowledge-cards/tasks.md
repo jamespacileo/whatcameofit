@@ -19,7 +19,7 @@
 
 ## 2a. Entry terms, kinds and named genes
 
-Added after group 2 was built, from the measurements and the code read recorded in design.md. Done before group 3, so the export is written once. Nothing here is built yet.
+Added after group 2 was built, from the measurements and the code read recorded in design.md. Groups 3 to 5 were built meanwhile for exact and broader terms; group 5a carries these links through the export and the site. Nothing here is built yet.
 
 Sources and words first:
 
@@ -52,7 +52,7 @@ Named genes:
 - [ ] 2a.15 Add a pure function that takes candidate words from an intervention's name and other names: split on spaces and brackets, a leading "anti-" and a trailing "-derived", "-mediated", "-targeting", "-based" or "-to-…" removed, kept when a letter is followed by two to nine letters, digits or hyphens with a capital or a digit among them; verify "Anti-CXCR3 antibody", "CPNE7-derived peptide", "APOE4-to-APOE3 base editing", and that "Aspirin" and "Vitamin C" give no word
 - [ ] 2a.16 Add the `target_match` step with its two options, its state (the claim's headline, summary and intervention names, the word, the gene's symbol and name) and a log record per candidate referring to the claim and the gene; verify two candidates give two records and a backend failure leaves one without a score
 - [ ] 2a.17 In the terms service, gather a claim's candidate genes (at most `TARGET_CANDIDATES_MAX`, three by default, symbol matches first), store each as a link with role `target`, source `opentargets`, the gene's identifier, the approved symbol as label and the reasons (the word, symbol or synonym, the synonym's source), score those without a score, decide by the two thresholds, and keep the record of each approved one; add the setting to `config.py` and `.env.example`; verify "Anti-CXCR3 antibody" at 0.95 approved, "TMS" at zero rejected by rule, "APOE4" giving the gene APOE, four gene-like words keeping three, a second run sending no request, and that a link an operator rejected stays rejected
-- [ ] 2a.18 Bring to the operator whether Open Targets' own data (CC0) and UniProt's function descriptions (CC BY 4.0, credited) are accepted for the page and the data file, with the two entries in `docs/sources.md`; record the answer and its date there and in the list of sources, leaving `chembl` not accepted; do not start 3.1's target card without a yes. Tasks 2a.13 to 2a.17 do not wait for it
+- [ ] 2a.18 Bring to the operator whether Open Targets' own data (CC0) and UniProt's function descriptions (CC BY 4.0, credited) are accepted for the page and the data file, with the two entries in `docs/sources.md`; record the answer and its date there and in the list of sources, leaving `chembl` not accepted; do not start 5a.1's target card without a yes. Tasks 2a.13 to 2a.17 do not wait for it
 
 Command and queue:
 
@@ -62,33 +62,48 @@ Command and queue:
 
 ## 3. Export
 
-- [ ] 3.1 Export at most one card for the condition and one for the intervention, exact before broader before kind, and at most one target card from a named gene with its score and reasons; highest score first, with label, definition word for word, link, source, vocabulary version, score, reasons and date read; verify export tests for exact and broader both approved, only a broader term, broader and kind both approved, only a kind, a named gene with no drug record, and a term with no definition
-- [ ] 3.2 Export a fact only from a source the list marks accepted, and no card that would then be empty; verify by test with a source marked not accepted, and that an approved named-gene link gives no target card while its source is not accepted
-- [ ] 3.5 Export a supplementary record's note as its card's definition and never the paper it was taken from; export a target card's first function description word for word with UniProt named as its origin; verify both by export tests
-- [ ] 3.3 Verify by test that status, explaining events and evidence stage are the same with and without cards
-- [ ] 3.4 Regenerate `site/export.schema.json` and `site/data/seed-export.json`, and verify the checked-in `site/data/published-export.json` still validates
+- [x] 3.1 Export at most one card for the condition and one for the intervention, exact before broader, highest score first, with label, definition word for word, link, source, vocabulary version, score, reasons and date read; verify export tests for exact and broader both approved, only a broader term, and a term with no definition
+- [x] 3.2 Export a fact only from a source the list marks accepted, and no card that would then be empty; verify by test with a source marked not accepted
+- [x] 3.3 Verify by test that status, explaining events and evidence stage are the same with and without cards
+- [x] 3.4 Regenerate `site/export.schema.json` and `site/data/seed-export.json`, and verify the checked-in `site/data/published-export.json` still validates
 
 ## 4. Site
 
-- [ ] 4.1 Add the card types to `site/src/lib/export.ts` and a wording module for card kinds, how a link fits (exact, broader, kind), reasons, registry types and molecule kinds with a function naming any unworded code; verify a site test fails the build on an unknown code
-- [ ] 4.2 Add "Background" to the claim page to `DESIGN.md`, after the records: each card's label, its definition in a disclosure marked as the source's words, the source's credit and version, the score and reasons, the date read, and the section's note that cards describe terms and are not advice or evidence; a kind card says it is the kind of treatment and not the treatment, and a target card from a named gene says the report names it and states no mechanism; verify in the browser at phone and desktop widths on a claim with one card, a claim with two, a claim with a kind card and a claim with a named-gene target card, and that a claim with none has no section
-- [ ] 4.3 Add each card source to the footer's data sources from the export, Open Targets with the citation it asks for and UniProt for a target's description among them, and carry cards into the open data file with the sources left out named; verify the footer test and the open data test
-- [ ] 4.4 Explain background cards on the method page: where they come from, how a term is chosen and scored, what a kind card is and that the kind is chosen from a fixed list, that a target card from a named gene means the report names the gene and not that the treatment is known to work through it, and that the words are the source's; verify the site build and the verdict-wording test
+- [x] 4.1 Add the card types to `site/src/lib/export.ts` and a wording module for card kinds and reasons with a function naming any unworded code; verify a site test fails the build on an unknown code (molecule kinds are worded in 6.4, when the export first carries one)
+- [x] 4.2 Add "Background" to the claim page to `DESIGN.md`, after the records: each card's label, its definition in a disclosure marked as the source's words, the source's credit and version, the score and reasons, the date read, and the section's note that cards describe terms and are not advice or evidence; verify in the browser at phone and desktop widths on a claim with one card and a claim with two, and that a claim with none has no section
+- [x] 4.3 Add each card source to the footer's data sources from the export, and carry cards into the open data file with the sources left out named; verify the footer test and the open data test
+- [x] 4.4 Explain background cards on the method page: where they come from, how a term is chosen and scored, and that the words are the source's; verify the site build and the verdict-wording test
 
 ## 5. Measurement before release
 
-- [ ] 5.1 Run `thenwhat terms --all` on the real database and record in `docs/lookup.md`: candidates gathered, approved exact, approved broader, rejected, claims with a condition card, claims with an intervention card by exact, broader and kind, kinds chosen with their counts, claims given "none of these", named-gene candidates approved and rejected, model cost and requests made. If fewer than one claim in three has a condition card, stop and report before the site tasks ship
-- [ ] 5.2 Read every approved link beside its claim and record how many are wrong or misleading; reject those. If more than one in twenty is wrong, raise the threshold and run again
-- [ ] 5.3 Read ten definitions as a reader would and record any that read as advice or as a statement that a treatment works; bring those to the operator before release
-- [ ] 5.4 Read every kind card beside its claim and record, per kind, how many are wrong and how many are true but say nothing useful; reject the wrong ones, and remove from the list a kind whose cards mostly say nothing
-- [ ] 5.5 Read every approved named-gene link beside its claim and record how many are coincidences or name a gene the intervention does not act on; reject those. If more than one in twenty is wrong, raise the threshold and run again
+- [x] 5.1 Run `thenwhat terms --missing` on the real database and record in `docs/lookup.md`: candidates gathered, approved exact, approved broader, rejected, claims with a condition card, claims with an intervention card, model cost and requests made. If fewer than one claim in three has a condition card, stop and report before the site tasks ship
+- [x] 5.2 Read every approved link beside its claim and record how many are wrong or misleading; reject those. If more than one in twenty is wrong, raise the threshold and run again
+- [x] 5.3 Read ten definitions as a reader would and record any that read as advice or as a statement that a treatment works; bring those to the operator before release
+
+## 5a. Export, site and measurement for entry terms, kinds and named genes
+
+Groups 3 to 5 were built for exact and broader terms before group 2a was written. These carry 2a's links through them.
+
+- [ ] 5a.1 Export the intervention's card exact before broader before kind, a kind card marked as the kind of intervention, and at most one target card from an approved named-gene link with its score and reasons; verify export tests for broader and kind both approved, only a kind, and a named gene with no drug record
+- [ ] 5a.2 Export no target card while its source is not accepted, the approved link staying stored; verify by test with the target source marked not accepted
+- [ ] 5a.3 Export a supplementary record's note as its card's definition and never the paper it was taken from, and a target card's first function description word for word with UniProt named as its origin; verify both by export tests
+- [ ] 5a.4 Verify by test that status, explaining events and evidence stage are the same with and without kind and target links
+- [ ] 5a.5 Regenerate `site/export.schema.json` and `site/data/seed-export.json`, and verify the checked-in `site/data/published-export.json` still validates
+- [ ] 5a.6 Add to `site/src/lib/export.ts` and the wording module how a link fits (exact, broader, kind), the entry-term, kind and named-gene reasons and the registry's types; verify the site test fails the build on an unknown fit, reason or registry type
+- [ ] 5a.7 Add to `DESIGN.md` and the claim page: a kind card says it is the kind of treatment and not the treatment, and a target card from a named gene says the report names it and states no mechanism; verify in the browser at phone and desktop widths on a claim with a kind card and a claim with a named-gene target card
+- [ ] 5a.8 Credit Open Targets with the citation it asks for and UniProt for a target's description in the footer's data sources, and carry kind and target cards into the open data file; verify the footer test and the open data test
+- [ ] 5a.9 Add to the method page what a kind card is and that the kind is chosen from a fixed list, and that a target card from a named gene means the report names the gene and not that the treatment is known to work through it; verify the site build and the verdict-wording test
+- [ ] 5a.10 Run `thenwhat terms --all` on the real database and add to `docs/lookup.md`: new candidates from entry terms, claims with an intervention card by exact, broader and kind, kinds chosen with their counts, claims given "none of these", named-gene candidates approved and rejected, model cost and requests made
+- [ ] 5a.11 Read every kind card beside its claim and record, per kind, how many are wrong and how many are true but say nothing useful; reject the wrong ones, and remove from the list a kind whose cards mostly say nothing
+- [ ] 5a.12 Read every approved named-gene link beside its claim and record how many are coincidences or name a gene the intervention does not act on; reject those. If more than one in twenty is wrong, raise the threshold and run again
+- [ ] 5a.13 Read every new approved link from an entry term beside its claim, as 5.2 did for the first run; reject the wrong ones
 
 ## 6. Drug and target cards
 
 - [ ] 6.1 Bring the share-alike question to the operator with the entry from 1.2, and record the decision as an ADR in `docs/adr/`; do not start 6.2 to 6.5 without it
 - [ ] 6.2 Add the drug part to the Open Targets client from 2a.14: a drug whose own name equals a given name, with kind of molecule and mechanisms, and a single-protein target's name, gene symbol and function description; verify on recorded fixtures a named drug with two mechanisms, a drug with none, and a procedure's name that returns nothing
 - [ ] 6.3 Export a drug card and, for exactly one single-protein target, a target card, each only as the ADR allows; verify a drug with one target, a drug with two, a drug's one target winning over an approved named gene, and that no phase, approval or indication is exported
-- [ ] 6.4 Show both cards on the claim page and keep share-alike facts out of the data file, naming the source left out; verify in the browser and by the open data test
+- [ ] 6.4 Word molecule kinds in the wording module, failing the build on an unworded one; show both cards on the claim page and keep share-alike facts out of the data file, naming the source left out; verify in the browser and by the open data test
 - [ ] 6.5 Run on the real database and record how many claims gained a drug card and a target card
 
 ## 7. Integration
@@ -97,4 +112,4 @@ Command and queue:
 
 ## Workflow follow-up
 
-- Archive the change after the operator has reviewed the first deployed pages. Groups 1 to 5, with 2a, can ship and be reviewed before group 6. Within 2a the order is as listed; 2a.18 is the operator's and can be asked at any point.
+- Archive the change after the operator has reviewed the first deployed pages. Groups 1 to 5 can ship as built; 2a and 5a follow as a second release and be reviewed before group 6. Within 2a the order is as listed; 2a.18 is the operator's and can be asked at any point.

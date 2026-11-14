@@ -61,6 +61,16 @@ class SourceUnavailable(SourceError):
     """The registry kept failing after every allowed attempt."""
 
 
+class UnsearchableTerm(SourceError):
+    """The registry cannot search for a term as written, and says why. The term is
+    reported for someone to reword. It is never searched for in a simpler form."""
+
+    def __init__(self, term: str, reason: str, source_name: str) -> None:
+        super().__init__(f"{source_name} cannot search for '{term}': {reason}")
+        self.term = term
+        self.reason = reason
+
+
 class MissingKey(SourceError):
     """The source needs a key and none is configured, so no request may be sent."""
 
