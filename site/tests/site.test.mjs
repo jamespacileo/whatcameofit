@@ -1035,6 +1035,141 @@ test("Scenario: Code without site wording", () => {
   );
 });
 
+test("Scenarios: Kind card, and Registry type as a reason", () => {
+  // The same site, built from the fixture with a kind link's card added to one claim.
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  const claim = fixture.claims.find((claim) => claim.slug === "approved-claim");
+  claim.background.push({
+    kind: "intervention",
+    fit: "kind",
+    label: "Example Stimulation Therapy",
+    definition: "A synthetic definition of a KIND OF TREATMENT, as the vocabulary writes it.",
+    url: "https://vocabulary.example/D900009",
+    source: "mesh",
+    external_id: "D900009",
+    version: "2026",
+    score: 0.9,
+    reasons: [
+      { code: "kind_chosen", kind: "electrical_stimulation" },
+      { code: "registry_lists_type", type: "DEVICE", trials: 3 },
+    ],
+    decided_by: "rule",
+    read_at: "2026-11-14T09:00:00Z",
+  });
+  // And a target card from a gene named in the treatment's name, with its two sources.
+  claim.background.push({
+    kind: "target",
+    fit: "exact",
+    label: "EXG1",
+    name: "example gene 1 receptor",
+    definition: "[Isoform 1]: A synthetic description of what the product does (PubMed:1).",
+    definition_source: "uniprot",
+    url: "https://targets.example/target/ENSG00000000001",
+    source: "opentargets",
+    external_id: "ENSG00000000001",
+    version: null,
+    score: 0.95,
+    reasons: [{ code: "word_equals_synonym", word: "EX-1", sources: ["uniprot", "HGNC"] }],
+    decided_by: "rule",
+    read_at: "2026-11-14T09:00:00Z",
+  });
+  const source = (name, title, credit, licence, url) => ({
+    name,
+    title,
+    credit,
+    licence,
+    url,
+    terms_url: `${url}terms`,
+    in_data_file: true,
+  });
+  const cited = "Example Targets: Author, A. et al. (2025), “A synthetic citation”, A Journal";
+  fixture.card_sources.push(
+    source("opentargets", "Example Targets", cited, "CC0 1.0", "https://targets.example/"),
+    source("uniprot", "Example Proteins", "Example Proteins Consortium", "CC BY 4.0", "https://proteins.example/"),
+  );
+  fixture.sources.push(
+    { name: "Example Targets", url: "https://targets.example/" },
+    { name: "Example Proteins", url: "https://proteins.example/" },
+  );
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-kind-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+  const dist = path.join(directory, "dist");
+
+  const result = build(file, dist);
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const built = fs.readFileSync(path.join(dist, "approved-claim/index.html"), "utf8");
+  const section = backgroundOf(built);
+  assert.equal(count(section, 'class="card-kind"'), 3);
+  // Scenario: Target the report names.
+  assert.match(section, /A gene named in the treatment’s name/);
+  assert.match(section, /href="https:\/\/targets\.example\/target\/ENSG00000000001"[^>]*>\s*EXG1\s*</);
+  assert.match(section, /example gene 1 receptor/);
+  assert.match(section, /High match · 95%/);
+  assert.match(
+    section,
+    /“EX-1”, a word in the treatment’s name, is another name for this gene, listed by UniProt and the HUGO Gene Nomenclature Committee\. It is not the gene’s symbol\./,
+  );
+  assert.match(section, /What this gene’s product does, in the source’s words/);
+  assert.match(section, /<blockquote[^>]*>\[Isoform 1\]: A synthetic description of what the product does \(PubMed:1\)\.<\/blockquote>/);
+  // Both sources are credited on the card: the citation asked for, and whose words.
+  assert.match(section, /Author, A\. et al\. \(2025\), “A synthetic citation”, A Journal/);
+  assert.match(section, /href="https:\/\/proteins\.example\/"[^>]*>\s*Description by Example Proteins Consortium, CC BY 4\.0\s*</);
+  assert.match(section, /That does not say the treatment is known to work through that gene\./);
+  // And in the footer's data sources.
+  const footer = built.split("Data sources:")[1].split("</p>")[0];
+  assert.match(footer, /href="https:\/\/targets\.example\/"[^>]*>Example Targets</);
+  assert.match(footer, /href="https:\/\/proteins\.example\/"[^>]*>Example Proteins</);
+  // A page with no target card does not carry the sentence about genes.
+  assert.ok(!page("phase-claim/index.html").includes("known to work through that gene"));
+  assert.match(section, /The kind of treatment this is, not the treatment itself/);
+  assert.match(section, /href="https:\/\/vocabulary\.example\/D900009"[^>]*>\s*Example Stimulation Therapy\s*</);
+  assert.match(section, /High match · 90%/);
+  assert.match(section, /Its kind was chosen from this site’s fixed list of kinds\./);
+  assert.match(section, /The trial registry lists it as a device in 3 of this claim’s trials\./);
+  assert.match(section, /<blockquote[^>]*>A synthetic definition of a KIND OF TREATMENT, as the vocabulary writes it\.<\/blockquote>/);
+  assert.match(section, /the note is for the kind of treatment it is, and says so/);
+  // The open data file carries the kind card with its reasons.
+  const data = JSON.parse(fs.readFileSync(path.join(dist, "data/claims.json"), "utf8"));
+  const cards = data.claims.find((claim) => claim.slug === "approved-claim").background;
+  assert.deepEqual(cards.map((card) => [card.kind, card.fit]), [
+    ["condition", "exact"],
+    ["intervention", "kind"],
+    ["target", "exact"],
+  ]);
+  assert.equal(cards[2].definition_source, "uniprot");
+  assert.ok(data.card_sources.some((held) => held.name === "uniprot" && held.licence === "CC BY 4.0"));
+  assert.deepEqual(cards[1].reasons[1], { code: "registry_lists_type", type: "DEVICE", trials: 3 });
+
+  // An unknown fit, reason or registry type fails the build and is named.
+  for (const [change, named] of [
+    // The export's schema lists the fits, so an unknown one is refused before wording.
+    [(card) => (card.fit = "narrower"), /background\/1\/fit must be equal to one of the allowed values \(it is "narrower"\)/],
+    [(card) => (card.reasons[0].code = "sounds_right"), /card reason: sounds_right/],
+    [(card) => (card.reasons[1].type = "HOLOGRAM"), /card registry type: HOLOGRAM/],
+  ]) {
+    const broken = structuredClone(fixture);
+    change(broken.claims.find((claim) => claim.slug === "approved-claim").background[1]);
+    fs.writeFileSync(file, JSON.stringify(broken));
+    const refused = build(file, path.join(directory, "refused"));
+    assert.notEqual(refused.status, 0);
+    assert.match(refused.stdout + refused.stderr, named);
+  }
+});
+
+test("the method page explains kind cards", () => {
+  const html = page("how-it-works/index.html");
+  const part = html.split('id="background-on-a-claims-terms"')[1].split('id="who-a-claim-names"')[0];
+  assert.match(part, /the card is for the kind of\s+treatment it is/);
+  assert.match(part, /from a fixed list of kinds that this site keeps, or none of them/);
+  assert.match(part, /about the kind of treatment and not the treatment itself/);
+  assert.match(part, /registry’s type never decides the kind/);
+  // And what a card for a named gene means.
+  assert.match(part, /The card\s+means the report names the gene\. It does not mean the treatment is known to work through it,\s+and the site states no mechanism\./);
+  assert.match(part, /in UniProt’s words as Open Targets Platform gives them/);
+});
+
 // --- organisations (openspec site-publishing: "Organisations on the claim page") ---
 
 const organisationsSection = (html) =>

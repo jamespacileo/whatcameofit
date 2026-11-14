@@ -27,6 +27,7 @@ const text = {
     busy: "Too many searches are being made right now. Try again in a minute.",
     not_set_up: (name) => `${name} is not offering the registry search at the moment.`,
     failed: "Nothing was found or ruled out. Try again in a minute.",
+    timeout: "The search took too long and was stopped. Nothing was found or ruled out. Choose Search again to try once more.",
     budget_exhausted: "Automatic search has used its monthly allowance. It will be available again next month. Reviewed claim pages remain available.",
     page_changed: "The page changed while this lookup started. Reopen the extension on the page you want to check.",
     post_unreadable: "The linked article could not be read and the post has too little text. Open the article in your browser and reopen the extension.",

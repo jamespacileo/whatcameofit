@@ -225,6 +225,8 @@ export interface ExportedClaim {
    * paper-facts, which lists its papers among `matches` instead. */
   papers?: ExportedPaper[];
   /** Background cards: at most one for the condition, then one for the intervention.
+   * Each says how its term fits: "exact", "broader", or "kind" when it is the term of
+   * the kind of treatment and not of the treatment itself (an intervention card only).
    * Absent from an export made before openspec knowledge-cards. */
   background?: ExportedCard[];
   /** Each organisation the claim names, once. Absent from an export made before

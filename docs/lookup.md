@@ -93,6 +93,14 @@ So what is left is the outlet's own speed (one site took a minute to answer afte
 
 The model now reads the article while the linked papers and any stated registry numbers are looked up. `thenwhat outlets` checks four outlets at a time (`--workers`), with one shared turn-taker per registry so the registry's rate is kept however many lookups run.
 
+### Slow linked-paper lookups (14 November 2026)
+
+A lookup of ScienceAlert's [tinnitus biomarker report](https://www.sciencealert.com/scientists-identified-a-biological-signature-of-tinnitus-and-its-in-your-blood) exposed an unnecessary wait: the model identified no specific treatment, but the service waited for all linked-paper requests before returning that identification. Timed production probes using the same article text took 32.8 seconds with public-page verification, 31.9 seconds with paper links but no publisher verification, and 2.7 seconds with text alone. These are single diagnostic runs, not a performance benchmark. Europe PMC returned HTTP 500 in separate local probes.
+
+The correction in `openspec/changes/visible-content-lookup` returns a non-treatment identification without waiting for paper or stated-record requests. Publisher, paper and registry calls have deadlines covering headers and bodies. Independent public verification has a shorter deadline; if it fails, browser text can still be read, but its result stays private to that reader. The popup has a 45-second overall lookup deadline and an explicit retry, including page reading and automatic screenshot fallback. Timeout means an incomplete search, never that no research exists.
+
+The diagnostic tests use stalled synthetic sources, including sources that ignore cancellation, and check that late completions cannot update the popup or its saved results. The fix must be deployed with an updated Safari extension before installed users receive all of these protections.
+
 ## Posts on social media
 
 The address of a post works in place of an article's, on the platforms that offer posts to software without signing in: Bluesky, Hacker News and Mastodon servers. The post is read, the first article it links to is read as any article, and the two are looked up together. The answer says where it read from. If the article cannot be read, the lookup goes on from the post alone. On the site, a post that links to an article we track is answered with that claim's page, with no automatic search.
@@ -502,3 +510,156 @@ The one wrong match left is "Marie Curie" on enamel-regeneration-protein-scaffol
 Previously right matches the stricter rule leaves unidentified: 49 of the 253 read as right. 7 are the parent and partner matches listed above (a hospital to its university, a joint body to one partner). 8 are public bodies whose name does not state their country (NHS England twice, BBSRC, the European Research Council, the European Union, NHMRC, NICE twice). 2 are records typed "other": The New York Times and the European Society of Gynaecological Oncology. The other 32 are a school or department matched to its university (Washington University School of Medicine on four entities, Tufts University School of Dental Medicine, University of Pittsburgh School of Medicine on two, and others), and spellings that differ from every name on the record ("Copenhagen University Hospital, Rigshospitalet", "North American Science Associates Ltd.", "Veradermics" against "VeraDermics"). Each is listed by the name its source gave, as not matched to a registry record.
 
 Journals, news outlets and banks: of the 24 journal names and 6 outlets and banks recorded by extraction, none is identified under the stricter rule. Neuron is caught both as a journal title on record and by the one-word test; The New York Times by its "other" type; the rest had no chosen record or no exact name. A bank ROR held under exactly the name given, typed as a company, would still be identified; none was in this run.
+
+## Entry terms, kinds and named genes on a copy of the real database (14 November 2026)
+
+Openspec `knowledge-cards`, tasks 5a.10 to 5a.13. Run on a copy of the real database made the same evening (`thenwhat_knowledgecards`), not on the real one: the change's migration (0015, numbered 0013 when the copy was made) was not merged and the real database is shared between branches. `thenwhat terms --all` was run for the 84 published claims with the decisions backend and the default thresholds (approve at 0.8, reject under 0.05, ten term candidates and three named genes a claim). The first run took 5 minutes 53 seconds. Nothing was exported or deployed. After the merge the real database needs `alembic upgrade head`, one `thenwhat terms --all`, and the rejections below made again.
+
+| | Count |
+| --- | --- |
+| Published claims | 84 |
+| New term candidates, all from entry terms or supplementary records | 17: 14 by an entry term, 3 by the label of a supplementary record |
+| Of those: approved by rule, pending, rejected by rule | 10 (all exact), 5, 2 |
+| Claims asked for a kind | 74 on the first run (10 had an approved exact intervention term) |
+| Kind decisions the backend gave no answer for | 0 |
+| Named-gene candidates | 19 on 13 claims |
+| Named genes approved by rule, pending, rejected by rule | 6, 2, 11 |
+| Requests to MeSH for the run | 360 more stored answers than before: 265 entry-term lookups, 39 owner queries, 56 records. The 265 label lookups were already stored |
+| Requests to Open Targets | 71: 55 searches, 16 target records |
+| Model calls | 121 (93 kind, 13 named-gene, 15 term), 77,794 input tokens, 0.0078 US dollars, both runs together |
+
+**The list of kinds was changed once, after reading the first run (task 5a.11).** The first run offered 23 kinds. Sixteen claims were given `drug`, tied to "Pharmaceutical Preparations", whose definition is "Drugs intended for human or veterinary use, presented in their finished dosage form." Every one of those cards was true and said nothing a reader does not get from the word "drug". The kind was removed from the list, the sixteen links were deleted on the copy, and the run was repeated: 19 claims were asked again (the sixteen and the three answered "none of these", since the list had changed), 16 answered "none of these" and 3 chose a kind below the threshold. The figures below are after that second run.
+
+| Kind (its MeSH term) | Approved | Pending | Read: wrong | Read: true, says little |
+| --- | --- | --- | --- | --- |
+| tissue_engineering (Tissue Engineering) | 5 | 4 | 0 | 0 |
+| biomaterial (Biocompatible Materials) | 7 | 0 | 1 | 0 |
+| peptide (Peptides) | 6 | 2 | 0 | 0 |
+| cell_therapy (Cell- and Tissue-Based Therapy) | 4 | 1 | 0 | 0 |
+| antibody (Antibodies, Monoclonal) | 3 | 1 | 0 | 0 |
+| surgical_procedure (Surgical Procedures, Operative) | 3 | 0 | 0 | 0 |
+| electrical_stimulation (Electric Stimulation Therapy) | 2 | 1 | 0 | 0 |
+| transplant (Transplantation) | 2 | 1 | 0 | 0 |
+| gene_editing, gene_therapy, implant, messenger_rna, oligonucleotide | 2 each | 0 | 0 | 0 |
+| dietary_supplement, phage_therapy, vaccine | 1 each | 0 | 0 | 0 |
+| device (Equipment and Supplies) | 1 | 0 | 0 | 1 |
+| probiotic (Probiotics) | 1 | 0 | 1 | 0 |
+| stem_cell_transplant (Stem Cell Transplantation) | 0 | 1 | 0 | 0 |
+| none of these | 16 claims | | | |
+
+Kinds on the list that no claim was given: radiotherapy, diet, exercise.
+
+**Every kind card read beside its claim (task 5a.11).** 47 approved kind links, 2 judged wrong and rejected, recorded as the assistant's decisions:
+
+- "Biocompatible Materials" (0.92) for "Nano-ERASER" (`alzheimers-nano-eraser`). The definition is of materials "used to replace or repair any body TISSUES or bodily function"; the claim's intervention is a nanoparticle meant to clear a protein, not a material that replaces tissue.
+- "Probiotics" (1.00) for "Oral engineered E. coli that senses glucose and releases GLP-1" (`type-2-diabetes-glp-1-secreting-bacteria`). The definition is of "Live microbial DIETARY SUPPLEMENTS" that improve "intestinal microbial balance", which is not what an engineered drug-releasing bacterium is.
+
+That is 2 of 47, about 1 in 24. One is true and says little: "Equipment and Supplies" for the microneedle skin stamp ("Expendable and nonexpendable equipment, supplies, apparatus, and instruments…"). It is one card, so the kind stays on the list for now; if later claims get it and read the same, it goes the way of `drug`. For the operator's eye: "Oligonucleotides" is defined partly by laboratory probes, which sits oddly beside two antisense drugs; "Surgical Procedures, Operative" stands for an embolisation done through a catheter. The registry's type was carried as a reason on 20 of the first run's kind links and disagreed with a sensible kind several times (DRUG for a cell product, for a gene-editing treatment and for two antisense drugs; COMBINATION_PRODUCT ahead of DRUG for one compound), which is why it is a reason and not the rule.
+
+The 16 claims with "none of these" are the 13 code-named or newly named compounds that were `drug` before, and three that fit no kind: "Direct conversion of blood cells into neural stem cells", "Dlk1-mediated stem cell activation" and "Intensive low-calorie diet with structured exercise" (two kinds equally).
+
+**Every approved named-gene link read beside its claim (task 5a.12).** 6 approved, none a coincidence and none a gene the intervention does not act on or come from: GFAP (the antisense drug zilganersen, whose other names name it), APOE (for "APOE4", an allele of it), CPNE7 (a peptide derived from it), DLK1, CXCR3 (an antibody against it) and SOSTDC1 (for "USAG-1", a synonym the source lists). 0 of 6 wrong, so the threshold was not raised. All 11 rejected by rule were read too and are coincidences or right to reject: TYMS and PYCARD for "TMS", BTG3 for "TOFA", SCARA3 for "CSR", ARSI for "ASI", RTL1 and SETMAR for "Mar1", ZGLP1 and GCG for "GLP-1" on the class claim, GLP1R and ZGLP1 on the claim about bacteria that release GLP-1. Two wait for review: GLP1R (0.68) for "GLP-1 receptor agonists", which is right, and GCG (0.68), the gene GLP-1 is made from, for the bacteria claim. The operator accepted the two sources later the same day (task 2a.18), so the six approved links each give a target card on the next export. For the operator's eye: UniProt's descriptions carry its evidence codes as written, such as "{ECO:0000269|PubMed:12782716}", and the card shows them unchanged.
+
+**Every new approved link from an entry term read beside its claim (task 5a.13).** 10 links. 2 were wrong, for the cause found in task 5.2: the claim `biological-ageing-glp-1-drugs` has the class "GLP-1 receptor agonists" as its intervention and its member drugs among its other names.
+
+- "semaglutide" (supplementary record, 1.00), by the entry term "Ozempic". Rejected as the assistant's decision.
+- "[OBSOLETE] tirzepatide" (1.00), a supplementary record NLM has withdrawn: the owner query still answers it beside the descriptor that replaced it, and its own address answers nothing. The client now leaves out a record whose label NLM marks "[OBSOLETE]" (a recorded fixture covers it), the link was deleted on the copy, and the second run made no new link for it. The descriptor "Tirzepatide" was already rejected for this claim in task 5.2 and stayed rejected.
+
+The other 8 read as right: "Bacterial Infections", "Dentin Sensitivity" for "Dentine hypersensitivity", "Peanut Hypersensitivity" for "Peanut allergy", "Diabetes Mellitus, Type 2", "tideglusib", "AdipoRon", "5-(tetradecyloxy)-2-furancarboxylic acid" for "TOFA", and "pexidartinib" for the claim about temporary removal of microglia, where it is the drug used to do it and one of the claim's other names: right as a name, and for the operator's eye as a card for a procedure. The class's own term, "Glucagon-Like Peptide-1 Receptor Agonists", was found by its entry term and waits at 0.64.
+
+**Cards after the run and the reading.**
+
+| | Before | After |
+| --- | --- | --- |
+| Claims with a condition card | 35 | 36 |
+| Claims with an intervention card from an exact term | 5 | 9 |
+| from a broader term | 1 | 1 |
+| from a kind | 0 | 45 |
+| Claims with an intervention card | 6 of 84 | 55 of 84 |
+| Claims with any card | 36 | 67 of 84 |
+
+No name equalled an entry term whose record the vocabulary did not give, on either run.
+
+## Entry terms, kinds and named genes on the real database (14 November 2026)
+
+Openspec `knowledge-cards`, tasks 5a.10 to 5a.13, repeated on the real database after #90 merged. A backup was taken first. The database was migrated from 0012 to 0015 with `main` at b81728b. `thenwhat terms` was then run for each published claim on its own, between 20:50 and 21:00 UTC.
+
+`thenwhat terms --all` was tried twice first. Both runs stopped when MeSH did not answer after four attempts, and both kept nothing, because the command writes every claim in one transaction. Run claim by claim, 22 of 84 claims met the same MeSH failure on the first pass. All 22 succeeded on the second pass, two minutes later. The same request was repeated each time, and nothing was looked up another way. DNS for `id.nlm.nih.gov` also failed intermittently on the machine that day.
+
+| | Count |
+| --- | --- |
+| New links stored | 92 |
+| Condition links: approved by rule (exact), rejected by rule | 4, 1 |
+| Intervention links from entry terms: approved (exact), pending (exact), pending (broader), rejected by rule | 4, 4, 1, 1 |
+| Kind decisions, of which "none of these" | 75, 17 |
+| Kind links: approved by rule (one rejected on reading), pending | 47, 11 |
+| Named-gene candidates: approved by rule, pending, rejected by rule | 6, 2, 11 |
+| Claims with an intervention card after the reading below: exact, broader, kind, none | 9, 1, 46, 28 |
+| Claims with any card | 70 of 84 (36 before) |
+| Model decisions and cost | 109 decisions (75 kind, 19 target, 15 term), $0.0064 |
+
+HTTP requests to MeSH and Open Targets were not counted on this run.
+
+Kind cards exported, by kind: Tissue Engineering 7, Peptides 6, Cell- and Tissue-Based Therapy 5, Antibodies, Monoclonal 4, Biocompatible Materials 4, Electric Stimulation Therapy 2, Gene Editing 2, Genetic Therapy 2, Oligonucleotides 2, Prostheses and Implants 2, RNA, Messenger 2, Surgical Procedures, Operative 2, Dietary Supplements 1, Equipment and Supplies 1, Phage Therapy 1, Probiotics 1, Transplantation 1, Vaccines 1.
+
+### Every approved link read once (tasks 5a.11 to 5a.13)
+
+All 61 links approved by rule were read beside their claim's intervention, indication and summary. One was rejected, recorded as the assistant's decision:
+
+| Claim | Link | Why it is wrong |
+| --- | --- | --- |
+| knee-osteoarthritis-genicular-artery-embolisation | kind "Surgical Procedures, Operative" (term 140) | Embolisation is a catheter procedure. MeSH files "Embolization, Therapeutic" (D004621) under Therapeutics (E02.520.360, E02.926.500), not under Surgical Procedures, Operative (E04). The claim keeps its condition card and has no intervention card. |
+
+- **Kind cards (5a.11):** 47 approved, 1 wrong and rejected. Two are true but say little:
+  - "Equipment and Supplies" for the peanut-protein microneedle stamp. The treatment is allergen immunotherapy delivered by a device.
+  - "Antibodies, Monoclonal" for sacituzumab tirumotecan, an antibody–drug conjugate.
+  No kind's cards mostly say nothing, so none is removed from the list.
+- **Named genes (5a.12):** 6 approved: GFAP, APOE, CPNE7, DLK1, CXCR3 and SOSTDC1 (USAG-1). None is a coincidence, so none is rejected. CPNE7 and DLK1 are genes the treatment is made from, not genes it acts on. The spec counts "made from it", and the card says only that the treatment's name names the gene. 0 of 6 wrong is within the one-in-twenty bar.
+- **Entry terms (5a.13):** 4 condition links and 4 intervention links, all exact and all right. pexidartinib is the drug listed for "Temporary removal of microglia" (PLX3397). The others are tideglusib, AdipoRon, and TOFA as 5-(tetradecyloxy)-2-furancarboxylic acid. None is rejected.
+
+## Development codes from GSRS (14 November 2026)
+
+Task 4.3 of `live-lookup`. A report names a drug by its generic or brand name; the registry often files its trials under a company's code. The intervention is now looked up in the Global Substance Registration System (terms in `docs/sources.md`), and the names GSRS marks as codes for that one substance are searched within the claim's indication. Only an exact name counts, and no model supplies a code.
+
+Run on a copy of the real database (`thenwhat_codes`, taken on this date at migration 0011 and migrated to this change), not on the real one. `thenwhat entity codes --all`, then `thenwhat resolve` for each claim given a code, with the paper search off.
+
+| | Count |
+| --- | --- |
+| Claims, each with one intervention | 84 |
+| Intervention listed by GSRS under one substance | 21 |
+| Listed under two substances, so given no code | 2 |
+| Not listed by GSRS | 61 |
+| Given at least one code beyond the names already recorded | 18 |
+| Claims where a code found a trial not found before | 4 |
+| New trial candidates | 22 |
+| Approved by rule (0.8 or more for the claim's indication) | 19 |
+| Left pending | 3 (scored 0.58, 0.19 and 0.09) |
+| Rejected by rule | 0 |
+
+The four claims, each of which already had approved trials:
+
+| Claim | Codes that found something | New | Approved by rule | Trial candidates before (approved) |
+| --- | --- | --- | --- | --- |
+| `type-2-diabetes-insulin-efsitora-alfa` | LY3209590, LY-3209590 | 11 | 10 | 5 (4) |
+| `hepatitis-b-bepirovirsen` | GSK3228836, GSK-3228836, ISIS-505358, IONIS HBVRX | 4 | 4 | 13 (13) |
+| `obesity-survodutide` | BI 456906 in three spellings | 4 | 3 | 29 (16) |
+| `pancreatic-cancer-daraxonrasib` | RMC-6236 | 3 | 2 | 16 (8) |
+
+Every one of the 22 was returned by a search for a code and by no search for a name, read from the stored registry answers. One exception in part: NCT05751226 was also returned by "semaglutide", which is not a name of survodutide and was never searched for this claim.
+
+What the 19 approvals are, read from their stored summaries: 17 are trials whose registration names the code as the drug under test (ten of efsitora in type 2 diabetes, four of bepirovirsen in chronic hepatitis B, two of survodutide in obesity, one of daraxonrasib in solid tumours). Two are trials of another drug in which this one is a partner: NCT05751226 tests doses of BI 1820237 alone or with semaglutide or BI 456906, and NCT06360354 tests anvumetostat with other therapies, RMC-6236 among them. Both test the claim's drug in the claim's condition, which is what the rule asks; whether a trial led by another drug belongs on the claim's page is for the operator, who archives what is wrong. The three left pending: a trial in type 1 diabetes (0.09), one in healthy men (0.19), and a trial of RMC-9805 that also gives RMC-6236 (0.58).
+
+The fourteen claims given a code that found nothing new include baxdrostat (CIN-107 was already recorded as a name; the two Roche codes found no further trial in primary aldosteronism), tideglusib, aspirin and vitamin C. For most the registry already answers the generic name with the trials filed under the code.
+
+Two listings worth knowing. `alzheimers-sleep-microglia-removal` is recorded as "Temporary removal of microglia" and is listed through its synonym, pexidartinib. `obesity-tofa` is listed as olumacostat, the substance GSRS files the name "TOFA" under. Both are exact names in GSRS; neither gained a candidate.
+
+The two given no code because their names lead to two substances: `biological-ageing-glp-1-drugs` (semaglutide and tirzepatide) and `periodontal-maresin-resolvin-stem-cells` (maresin 1 and resolvin E1). Each is a claim about two substances recorded as one intervention.
+
+Requests: 217 to GSRS for the 84 claims, at one a second, with the contact User-Agent. No model was asked for a code. The scoring of the 22 candidates used the decision backend as any `resolve` does.
+
+Limits:
+
+- One run, on a copy. The real database is unchanged: after this change is merged, run `thenwhat entity codes --all` and then `resolve` there. Whether any claim's status changes was not measured; all four claims already had approved trials.
+- A GSRS "Code" is any code, not only a development code. Vitamin C's six include "E-300" and "FEMA NO. 2109", and aspirin's include two National Service Center numbers. They are searched within the indication and found nothing here.
+- A combination, a class and a method are not substances, so 61 of 84 claims are untouched. That is the empty state, said in the command's output, and nothing looser is tried.
+- The lookup (`thenwhat lookup`) now asks GSRS about the names an article gives, and searches the codes too. It was not measured again here: that waits for the reviewed test set (task 4.5). The site's Worker does not ask GSRS; that is decision 6 in the change's design.

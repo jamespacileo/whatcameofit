@@ -1,0 +1,33 @@
+{
+  "head": {
+    "vars": [
+      "term",
+      "record",
+      "label",
+      "type"
+    ]
+  },
+  "results": {
+    "bindings": [
+      {
+        "term": {
+          "type": "uri",
+          "value": "http://id.nlm.nih.gov/mesh/T001140881"
+        },
+        "record": {
+          "type": "uri",
+          "value": "http://id.nlm.nih.gov/mesh/C000729680"
+        },
+        "label": {
+          "type": "literal",
+          "xml:lang": "en",
+          "value": "orforglipron"
+        },
+        "type": {
+          "type": "uri",
+          "value": "http://id.nlm.nih.gov/mesh/vocab#SCR_Chemical"
+        }
+      }
+    ]
+  }
+}

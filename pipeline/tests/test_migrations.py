@@ -20,6 +20,12 @@ EXPECTED_TABLES = {
     "reported_statement",
     "organisation_record",
     "entity_article",
+    "work_entry",
+    "source_allowance_use",
+    "registry_trial",
+    "registry_load",
+    "article_lead",
+    "entity_substance",
     "trial_read",
     "reading",
 }

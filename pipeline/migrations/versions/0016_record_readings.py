@@ -1,15 +1,15 @@
 """record readings: what a model read from a trial's stored record, checked by rule
 
-Revision ID: 0013
-Revises: 0012
+Revision ID: 0016
+Revises: 0015
 """
 
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects.postgresql import JSONB
 
-revision = "0013"
-down_revision = "0012"
+revision = "0016"
+down_revision = "0015"
 branch_labels = None
 depends_on = None
 

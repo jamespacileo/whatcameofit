@@ -2,7 +2,27 @@
 
 from decimal import Decimal
 
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class SourceAllowance(BaseModel):
+    """How many requests a source may receive in a period, and how far apart."""
+
+    requests: int
+    period_hours: float
+    interval_seconds: float
+    # How long to stop asking after the source says "too many requests" without
+    # saying for how long.
+    pause_minutes: float = 60
+
+
+# At or below what each source publishes (docs/sources.md). SOURCE_ALLOWANCES in the
+# environment replaces or adds entries by source name.
+DEFAULT_ALLOWANCES = {
+    "clinicaltrials.gov": SourceAllowance(requests=5000, period_hours=24, interval_seconds=0.5),
+    "mediacloud": SourceAllowance(requests=4000, period_hours=168, interval_seconds=30),
+}
 
 
 class Settings(BaseSettings):
@@ -42,6 +62,8 @@ class Settings(BaseSettings):
     match_accept_above: float = 0.8
     # How many candidate subject terms are kept for a claim (openspec knowledge-cards).
     term_candidates_max: int = 10
+    # How many genes named in a claim's intervention are kept as candidate targets.
+    target_candidates_max: int = 3
     # Reported statements (openspec reported-statements). A statement the statement check
     # gives this probability or more that its article says it is approved by rule and
     # published; one below it waits, unpublished. 0 turns the rule off.
@@ -59,6 +81,24 @@ class Settings(BaseSettings):
     # A stored paper record older than this is asked for again at fetch; a younger one
     # causes no request (openspec paper-facts).
     paper_record_max_age_days: int = 30
+
+    # Backfill (openspec work-ledger, source-allowances, article-leads).
+    # JSON by source name, for example
+    # {"mediacloud": {"requests": 4000, "period_hours": 168, "interval_seconds": 30}}.
+    source_allowances: dict[str, SourceAllowance] = {}
+    # A record that failed this many times is skipped and reported.
+    backfill_attempt_limit: int = 3
+    # Media Cloud key, and the collections and single outlets to search, as
+    # comma-separated ids from its directory. The news search refuses to run while the
+    # key is empty or while neither list names anything.
+    mediacloud_api_key: str | None = None
+    mediacloud_collection_ids: str = ""
+    mediacloud_source_ids: str = ""
+    # At most this many article leads are kept for one trial.
+    leads_per_trial: int = 20
+
+    def allowances(self) -> dict[str, SourceAllowance]:
+        return {**DEFAULT_ALLOWANCES, **self.source_allowances}
 
 
 def load_settings() -> Settings:

@@ -85,13 +85,17 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
     ...(page?.registryNumbers ?? []),
   ]);
   // Three hosts, none waiting on another: the model reads the text while the linked
-  // papers and the registry numbers the article gives are looked up.
-  const [reading, linked, stated] = await Promise.all([
-    model.read(text, image ? { image, pageUrl } : undefined),
-    paperNumbers(page, papers),
-    inTurn(numbers, (number) => registry.fetch(number)),
-  ]);
+  // papers and the registry numbers the article gives are looked up. Only a treatment
+  // needs those: an answer that it is not one is given as soon as the model has read.
+  const pending = [
+    Promise.resolve().then(() => paperNumbers(page, papers)),
+    Promise.resolve().then(() => inTurn(numbers, (number) => registry.fetch(number))),
+  ];
+  // Whatever is still pending once the answer is given ends unwatched, so it is handled here.
+  for (const one of pending) one.catch(() => {});
+  const reading = await model.read(text, image ? { image, pageUrl } : undefined);
   if (!reading.about_a_treatment || !reading.intervention) return nothingFound(reading, numbers);
+  const [linked, stated] = await Promise.all(pending);
 
   // Metadata enrichment runs alongside trial lookup. It adds no model calls and
   // cannot change clinical candidates, their scores, or a tracked claim's status.

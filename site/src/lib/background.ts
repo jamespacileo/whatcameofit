@@ -6,17 +6,36 @@ import { assertNeutral } from "./status.ts";
 import { assertNoOutcomeVerdict } from "./trial-facts.ts";
 
 export interface CardReason {
-  /** "filed_by_registry" or "label_equals_name". */
+  /** "filed_by_registry", "label_equals_name", "entry_term_equals_name", "kind_chosen"
+   * or "registry_lists_type". */
   code: string;
   trials?: number | null;
   of?: number | null;
   name?: string | null;
+  /** For "entry_term_equals_name": the vocabulary's other wording the name equals. */
+  entry_term?: string | null;
+  /** For "kind_chosen": the code of the kind, from the pipeline's fixed list. */
+  kind?: string | null;
+  /** For "registry_lists_type": the trial registry's own code, such as "DEVICE". */
+  type?: string | null;
+  /** For "word_equals_symbol" and "word_equals_synonym": the word of the treatment's
+   * name that equals the gene's symbol or a listed synonym of it. */
+  word?: string | null;
+  /** For "word_equals_synonym": the target source's codes for who lists the synonym. */
+  sources?: string[] | null;
 }
 
 export interface ExportedCard {
-  /** What the term is to the claim: "condition" or "intervention". */
+  /** What the term is to the claim: "condition", "intervention", or "target" for a gene
+   * named in the treatment's name. */
   kind: string;
-  /** "exact" or "broader". */
+  /** For a target: the gene's approved name. Absent or null otherwise. */
+  name?: string | null;
+  /** The name in `card_sources` of the source the definition's words come from, when
+   * that is not the card's own source. */
+  definition_source?: string | null;
+  /** How the term fits the claim: "exact", "broader", or "kind" for the term of the
+   * kind of treatment this is. */
   fit: string;
   label: string;
   /** The vocabulary publisher's own words. Null when it gives none. */
@@ -49,7 +68,22 @@ export interface ExportedCardSource {
 export const CARD_KIND_WORDS: Record<string, string> = {
   condition: "The condition",
   intervention: "The treatment",
+  // Says where the gene comes from and nothing about how the treatment works.
+  target: "A gene named in the treatment’s name",
 };
+
+/** Who lists a synonym of a gene's symbol, by the target source's code for them. */
+export const SYNONYM_SOURCE_WORDS: Record<string, string> = {
+  uniprot: "UniProt",
+  HGNC: "the HUGO Gene Nomenclature Committee",
+  NCBI_entrez: "NCBI Gene",
+};
+const SYNONYM_SOURCES = Object.entries(SYNONYM_SOURCE_WORDS).map(([code]) => code);
+
+function listed(words: string[]): string {
+  if (words.length <= 1) return words.join("");
+  return `${words.slice(0, -1).join(", ")} and ${words[words.length - 1]}`;
+}
 
 /** What a card is about, when its term is wider than the claim's. */
 export const BROADER_WORDS: Record<string, string> = {
@@ -57,7 +91,33 @@ export const BROADER_WORDS: Record<string, string> = {
   intervention: "A broader term than this claim’s treatment",
 };
 
-const FIT_CODES = ["exact", "broader"];
+/** What a card is about, when its term is the kind of thing the claim's treatment is. */
+export const KIND_WORDS: Record<string, string> = {
+  intervention: "The kind of treatment this is, not the treatment itself",
+};
+
+/** How a link fits, each with the words for what its card is about. */
+const FIT_WORDS: Record<string, Record<string, string>> = {
+  exact: CARD_KIND_WORDS,
+  broader: BROADER_WORDS,
+  kind: KIND_WORDS,
+};
+
+/** The trial registry's types of intervention, as the end of "lists it as …". */
+export const REGISTRY_TYPE_WORDS: Record<string, string> = {
+  DRUG: "a drug",
+  DEVICE: "a device",
+  BIOLOGICAL: "a biological product or vaccine",
+  PROCEDURE: "a procedure",
+  RADIATION: "radiation",
+  BEHAVIORAL: "a behavioural intervention",
+  GENETIC: "a genetic intervention",
+  DIETARY_SUPPLEMENT: "a dietary supplement",
+  COMBINATION_PRODUCT: "a combination product",
+  DIAGNOSTIC_TEST: "a diagnostic test",
+  OTHER: "an intervention of another type",
+};
+const REGISTRY_TYPES = Object.entries(REGISTRY_TYPE_WORDS).map(([type]) => type);
 
 const REASON_WORDS: Record<string, (reason: CardReason) => string> = {
   filed_by_registry: ({ trials, of }) =>
@@ -66,19 +126,45 @@ const REASON_WORDS: Record<string, (reason: CardReason) => string> = {
       : `The trial registry files ${trials} of this claim’s ${of} trials under this term.`,
   label_equals_name: ({ name }) =>
     `The term’s label is the same as “${name}”, a name this claim uses.`,
+  entry_term_equals_name: ({ entry_term, name }) =>
+    `The vocabulary files “${entry_term}” under this term, and that is the same as “${name}”, a name this claim uses.`,
+  kind_chosen: () =>
+    "No term was found for the treatment itself. Its kind was chosen from this site’s fixed list of kinds.",
+  registry_lists_type: ({ type, trials }) =>
+    trials === 1
+      ? `The trial registry lists it as ${REGISTRY_TYPE_WORDS[type ?? ""]} in one of this claim’s trials.`
+      : `The trial registry lists it as ${REGISTRY_TYPE_WORDS[type ?? ""]} in ${trials} of this claim’s trials.`,
+  word_equals_symbol: ({ word }) =>
+    `“${word}”, a word in the treatment’s name, is this gene’s symbol.`,
+  word_equals_synonym: ({ word, sources }) =>
+    `“${word}”, a word in the treatment’s name, is another name for this gene, listed by ${listed(
+      (sources ?? []).map((code) => SYNONYM_SOURCE_WORDS[code]),
+    )}. It is not the gene’s symbol.`,
 };
+
+/** What the section says, in addition, when one of its cards is for a named gene. */
+export const TARGET_NOTE =
+  "A gene is shown because the treatment’s name names it. That does not say the treatment is known to work through that gene.";
+export const TARGET_DEFINITION_LABEL = "What this gene’s product does, in the source’s words";
+export const NO_TARGET_DEFINITION = "The source gives this gene no description.";
+
+/** Who wrote a definition that is not the card's own source's, with its licence. */
+export function definitionCreditText(source: Pick<ExportedCardSource, "credit" | "licence">): string {
+  return `Description by ${source.credit}, ${source.licence}`;
+}
 
 /** What the section says of itself, once, above the cards. */
 export const BACKGROUND_NOTE =
-  "What an open vocabulary says about the terms this claim uses. Each definition is its source’s own wording, written for indexing research, and is not this site’s. These notes describe terms. They are not about this claim’s evidence and they are not medical advice. A score is about how well a term fits the claim, not about the treatment. Naming a source does not mean it endorses this site.";
+  "What an open vocabulary says about the terms this claim uses. Each definition is its source’s own wording, written for indexing research, and is not this site’s. Where the vocabulary has no term for the treatment itself, the note is for the kind of treatment it is, and says so. These notes describe terms. They are not about this claim’s evidence and they are not medical advice. A score is about how well a term fits the claim, not about the treatment. Naming a source does not mean it endorses this site.";
 
 export const DEFINITION_LABEL = "Definition, in the source’s words";
 export const NO_DEFINITION = "The source gives this term no definition.";
 export const NO_REASON = "No reason was found by rule.";
 
-/** "The condition", or that the term is broader than the claim's. */
+/** "The condition", or that the term is broader than the claim's, or that it is the
+ * kind of treatment and not the treatment. */
 export function cardKindText(card: Pick<ExportedCard, "kind" | "fit">): string {
-  return (card.fit === "broader" ? BROADER_WORDS : CARD_KIND_WORDS)[card.kind];
+  return FIT_WORDS[card.fit][card.kind];
 }
 
 /** Why the term was chosen, one sentence per reason found by rule. */
@@ -96,17 +182,33 @@ export function creditText(
 
 /** Card codes in the export that the site has no words for, as "kind: code". */
 export function unwordedCardCodes(
-  cards: Pick<ExportedCard, "kind" | "fit" | "reasons" | "source">[],
+  cards: Pick<ExportedCard, "kind" | "fit" | "reasons" | "source" | "definition_source">[],
   sources: Pick<ExportedCardSource, "name">[],
 ): string[] {
   const missing = new Set<string>();
   const known = new Set(sources.map((source) => source.name));
   for (const card of cards) {
+    if (card.definition_source && !known.has(card.definition_source)) {
+      missing.add(`card source: ${card.definition_source}`);
+    }
     if (!(card.kind in CARD_KIND_WORDS)) missing.add(`card kind: ${card.kind}`);
-    if (!FIT_CODES.includes(card.fit)) missing.add(`card fit: ${card.fit}`);
+    if (!(card.fit in FIT_WORDS)) missing.add(`card fit: ${card.fit}`);
+    // A fit the site words for one kind of card only, such as a kind of treatment.
+    else if (card.kind in CARD_KIND_WORDS && !(card.kind in FIT_WORDS[card.fit])) {
+      missing.add(`card fit: ${card.fit} for ${card.kind}`);
+    }
     if (!known.has(card.source)) missing.add(`card source: ${card.source}`);
     for (const reason of card.reasons) {
       if (!(reason.code in REASON_WORDS)) missing.add(`card reason: ${reason.code}`);
+      else if (reason.code === "registry_lists_type" && !REGISTRY_TYPES.includes(reason.type ?? "")) {
+        missing.add(`card registry type: ${reason.type}`);
+      } else if (reason.code === "word_equals_synonym") {
+        // A synonym with no source named cannot be worded either.
+        if (!reason.sources?.length) missing.add("card synonym source: none given");
+        for (const code of reason.sources ?? []) {
+          if (!SYNONYM_SOURCES.includes(code)) missing.add(`card synonym source: ${code}`);
+        }
+      }
     }
   }
   return [...missing].sort();
@@ -117,7 +219,26 @@ export function unwordedCardCodes(
 const SITE_WORDS = [
   ...Object.values(CARD_KIND_WORDS),
   ...Object.values(BROADER_WORDS),
-  ...Object.values(REASON_WORDS).map((word) => word({ code: "", trials: 2, of: 3, name: "a name" })),
+  ...Object.values(KIND_WORDS),
+  ...REGISTRY_TYPES.flatMap((type) =>
+    [1, 3].map((trials) => REASON_WORDS.registry_lists_type({ code: "", type, trials })),
+  ),
+  ...Object.values(REASON_WORDS).map((word) =>
+    word({
+      code: "",
+      trials: 2,
+      of: 3,
+      name: "a name",
+      entry_term: "a wording",
+      type: "DRUG",
+      word: "ABC1",
+      sources: SYNONYM_SOURCES,
+    }),
+  ),
+  definitionCreditText({ credit: "A Consortium", licence: "A licence" }),
+  TARGET_NOTE,
+  TARGET_DEFINITION_LABEL,
+  NO_TARGET_DEFINITION,
   BACKGROUND_NOTE,
   DEFINITION_LABEL,
   NO_DEFINITION,

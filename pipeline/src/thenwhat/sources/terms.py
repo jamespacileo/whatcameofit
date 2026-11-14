@@ -95,18 +95,36 @@ _LISTED = (
         accepted=True,
         in_data_file=True,
     ),
-    # The three below are read for drug and target cards. None is accepted until the
-    # operator's decision on share-alike material is recorded (knowledge-cards, 6.1).
+    SourceTerms(
+        name="gsrs",
+        title="Global Substance Registration System (GSRS)",
+        licence="CC0 1.0",
+        credit="Global Substance Registration System, FDA and NCATS",
+        home_url="https://gsrs.ncats.nih.gov/",
+        terms_url="https://gsrs.ncats.nih.gov/licensing",
+        read_on=date(2026, 11, 14),
+        accepted=True,
+        in_data_file=True,
+    ),
+    # The three below are read for target and drug cards. The operator accepted Open
+    # Targets' own data and UniProt's function descriptions for the page and the data
+    # file on 2026-11-14 (knowledge-cards, 2a.18; docs/sources.md). ChEMBL's share-alike
+    # material is not accepted until the decision in knowledge-cards 6.1 is recorded.
     SourceTerms(
         name="opentargets",
         title="Open Targets Platform",
         licence="CC0 1.0",
-        credit="Open Targets Platform",
+        # The citation the platform asks for (docs/sources.md).
+        credit=(
+            "Open Targets Platform: Buniello, A. et al. (2025), “Open Targets Platform:"
+            " facilitating therapeutic hypotheses building in drug discovery”, Nucleic"
+            " Acids Research"
+        ),
         home_url="https://platform.opentargets.org/",
         terms_url="https://platform-docs.opentargets.org/licence",
         read_on=date(2026, 11, 14),
-        accepted=False,
-        in_data_file=False,
+        accepted=True,
+        in_data_file=True,
     ),
     SourceTerms(
         name="chembl",
@@ -128,8 +146,9 @@ _LISTED = (
         home_url="https://www.uniprot.org/",
         terms_url="https://www.uniprot.org/help/license",
         read_on=date(2026, 11, 14),
-        accepted=False,
-        in_data_file=False,
+        accepted=True,
+        # CC BY 4.0, which the data file's own licence can carry with credit.
+        in_data_file=True,
     ),
 )
 

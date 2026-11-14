@@ -6,8 +6,10 @@ import { test } from "node:test";
 
 import {
   BACKGROUND_NOTE,
+  TARGET_NOTE,
   cardKindText,
   creditText,
+  definitionCreditText,
   reasonTexts,
   unwordedCardCodes,
 } from "../src/lib/background.ts";
@@ -41,6 +43,103 @@ test("reasons are worded with their counts and names", () => {
   );
 });
 
+test("Scenario: Kind card. It says it is the kind of treatment, not the treatment", () => {
+  assert.equal(
+    cardKindText(card({ kind: "intervention", fit: "kind" })),
+    "The kind of treatment this is, not the treatment itself",
+  );
+});
+
+test("Scenario: Registry type as a reason, with the entry-term and kind reasons", () => {
+  const reasons = [
+    { code: "kind_chosen", kind: "electrical_stimulation" },
+    { code: "registry_lists_type", type: "DEVICE", trials: 3 },
+    { code: "registry_lists_type", type: "PROCEDURE", trials: 1 },
+    { code: "entry_term_equals_name", entry_term: "Ketogenic Diet", name: "Ketogenic diet" },
+  ];
+  assert.deepEqual(reasonTexts(card({ reasons })), [
+    "No term was found for the treatment itself. Its kind was chosen from this site’s fixed list of kinds.",
+    "The trial registry lists it as a device in 3 of this claim’s trials.",
+    "The trial registry lists it as a procedure in one of this claim’s trials.",
+    "The vocabulary files “Ketogenic Diet” under this term, and that is the same as “Ketogenic diet”, a name this claim uses.",
+  ]);
+});
+
+test("an unknown fit, a kind fit on a condition and an unknown registry type are named", () => {
+  const sources = [{ name: "mesh" }];
+  const kind = card({
+    kind: "intervention",
+    fit: "kind",
+    reasons: [{ code: "kind_chosen", kind: "device" }, { code: "registry_lists_type", type: "DEVICE", trials: 2 }],
+  });
+  assert.deepEqual(unwordedCardCodes([kind], sources), []);
+  assert.deepEqual(
+    unwordedCardCodes(
+      [
+        card({ fit: "kind" }),
+        card({ fit: "narrower" }),
+        card({ reasons: [{ code: "registry_lists_type", type: "HOLOGRAM", trials: 2 }] }),
+        card({ reasons: [{ code: "registry_lists_type", trials: 2 }] }),
+      ],
+      sources,
+    ),
+    [
+      "card fit: kind for condition",
+      "card fit: narrower",
+      "card registry type: HOLOGRAM",
+      "card registry type: undefined",
+    ],
+  );
+});
+
+test("Scenario: Target the report names. The card says where the gene comes from and no more", () => {
+  const target = card({
+    kind: "target",
+    source: "opentargets",
+    definition_source: "uniprot",
+    version: null,
+    reasons: [{ code: "word_equals_symbol", word: "CXCR3" }],
+  });
+  assert.equal(cardKindText(target), "A gene named in the treatment’s name");
+  assert.deepEqual(reasonTexts(target), [
+    "“CXCR3”, a word in the treatment’s name, is this gene’s symbol.",
+  ]);
+  assert.deepEqual(
+    reasonTexts(card({ reasons: [{ code: "word_equals_synonym", word: "TMS", sources: ["HGNC", "NCBI_entrez"] }] })),
+    [
+      "“TMS”, a word in the treatment’s name, is another name for this gene, listed by the HUGO Gene Nomenclature Committee and NCBI Gene. It is not the gene’s symbol.",
+    ],
+  );
+  assert.equal(
+    definitionCreditText({ credit: "UniProt Consortium", licence: "CC BY 4.0" }),
+    "Description by UniProt Consortium, CC BY 4.0",
+  );
+  assert.match(TARGET_NOTE, /does not say the treatment is known to work through that gene/);
+  // No word of the site's about a target says how the treatment works.
+  for (const words of [cardKindText(target), ...reasonTexts(target), TARGET_NOTE]) {
+    assert.doesNotMatch(words, /acts on|targets|works by|mechanism|inhibit|block/i);
+  }
+  const sources = [{ name: "opentargets" }, { name: "uniprot" }];
+  assert.deepEqual(unwordedCardCodes([target], sources), []);
+  assert.deepEqual(
+    unwordedCardCodes(
+      [
+        target,
+        card({ kind: "target", fit: "broader", source: "opentargets" }),
+        card({ source: "opentargets", reasons: [{ code: "word_equals_synonym", word: "X1", sources: ["a_blog"] }] }),
+        card({ source: "opentargets", reasons: [{ code: "word_equals_synonym", word: "X1" }] }),
+      ],
+      [{ name: "opentargets" }],
+    ),
+    [
+      "card fit: broader for target",
+      "card source: uniprot",
+      "card synonym source: a_blog",
+      "card synonym source: none given",
+    ],
+  );
+});
+
 test("the credit states the vocabulary's edition when the record gives it", () => {
   const source = { credit: "A Vocabulary, Its Publisher" };
   assert.equal(creditText(card(), source), "A Vocabulary, Its Publisher, 2026 edition");
@@ -53,14 +152,14 @@ test("codes with no wording are named, and worded ones are not", () => {
   assert.deepEqual(
     unwordedCardCodes(
       [
-        card({ kind: "target" }),
+        card({ kind: "organ" }),
         card({ fit: "close" }),
         card({ source: "elsewhere" }),
         card({ reasons: [{ code: "sounds_right" }] }),
       ],
       sources,
     ),
-    ["card fit: close", "card kind: target", "card reason: sounds_right", "card source: elsewhere"],
+    ["card fit: close", "card kind: organ", "card reason: sounds_right", "card source: elsewhere"],
   );
 });
 

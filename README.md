@@ -70,6 +70,8 @@ thenwhat resolve example-enamel
 
 `resolve` searches ClinicalTrials.gov for the intervention under every name it has, looks up each paper's DOI at Crossref, and stores every hit as a candidate match with a score. A trial scores as a match only when it tests the intervention for the claim's indication; the same intervention in another condition scores low and is labelled. A broad name (more than 100 trials) is searched within the indication, and a name that is still broad there contributes nothing. The score orders the review queue, and a candidate scored under `MATCH_REJECT_BELOW` (0.05) is rejected by rule so it does not wait for you; `review list --by-rule` shows those, and you can approve any of them. A trial candidate scored at or above `MATCH_ACCEPT_ABOVE` (0.8) for the claim's indication is approved by rule; the rest wait for you. It also suggests the stage of evidence at announcement, which stays unset until you confirm it. A name or search phrase the registry cannot read as written (a very long phrase gets "Too complicated query") is named in the output and not searched for; the claim's other terms still are, and nothing simpler is tried in its place. Reword it and resolve again. Compound names change over time, so add synonyms before resolving. `resolve --rescore` scores pending candidates again.
 
+Before it searches, `resolve` looks the intervention up in the Global Substance Registration System (GSRS) under its name and synonyms, and keeps the development codes GSRS lists for that one substance, such as CIN-107 for baxdrostat. Each code is searched within the claim's indication, like a search phrase, and is never shown as a name. Only an exact name counts: an intervention GSRS does not list, or lists under more than one substance, gets no code, and `resolve` says so. `thenwhat entity codes --all` does the lookup for every claim without searching the trial registry.
+
 `resolve` then searches OpenAlex for papers about the intervention and the indication, under each name and search phrase, and keeps up to twenty per claim as related papers. Each is scored, carries the reasons found by rule (named in the title, indication named, from an institution the article named, published by the first report), and is approved by rule at or above `MATCH_ACCEPT_ABOVE`, with or without a reason. A related paper is never an evidence event and never changes the status. A registry number an approved paper states becomes a trial candidate, and an approved paper that is confidently the one first reported on becomes the origin paper. Institutions and companies are looked up in ROR; people never are. `resolve --rescore` also scores the pending related papers again and brings their reasons up to date; it reads each paper by its identifier, which spends none of the day's searches. Paper search needs `OPENALEX_API_KEY` and is off without it. It costs one OpenAlex search per claim, kept for a week, with no second, looser search when that one finds nothing: `resolve` then says the claim has no related paper, and `resolve` ends by saying what was sent, what it cost and what is left of the day's free allowance. Searches stop until the allowance resets when it is used up, is not stated, or the account holds prepaid credit. Related papers and organisations are not in the export yet.
 
 `thenwhat entity people` lists every stored person with their claim. Only researchers belong: remove anyone else with `thenwhat entity delete-people ID...`.
@@ -119,7 +121,10 @@ Subject terms tie a claim's condition and intervention to entries in an open voc
 ```sh
 thenwhat terms claim-one claim-two      # named claims
 thenwhat terms --missing                # every published claim with no candidate yet
+thenwhat terms --all                    # every published claim again
 ```
+
+For each claim the command runs three things. Subject terms: the terms the registry files the claim's approved trials under, and vocabulary terms whose label or entry term equals the indication, the intervention's name or one of its other names (never a search phrase). The intervention kind: for an intervention with no approved exact term, a decision chooses its kind from the fixed list in `pipeline/src/thenwhat/terms/kinds.py` (drug, antibody, device, surgical procedure and so on) or none of them, once per claim, and the kind's vocabulary term becomes a kind link. Named genes: a word of the intervention's names that equals a human gene's symbol, or a listed synonym of it, makes that gene a candidate target, checked for the claim; at most `TARGET_CANDIDATES_MAX` (3) are kept. Every link is approved at or above `MATCH_ACCEPT_ABOVE` and rejected under `MATCH_REJECT_BELOW`; the rest wait in `review list`, and `review reject term ID` rejects a wrong approved one. `--all` gathers and scores new candidates and leaves those that already have a score as they are. A name that equals an entry term whose record the vocabulary did not give is named in the output and makes no candidate. The command exits non-zero when a candidate stayed without a score; run it again for those.
 
 Reported statements are what an article says about the intervention beyond its timeline, in the site's own words (`GLOSSARY.md`). Reading an article for a new or pending claim proposes them; a decided claim's articles are read again for statements only, and nothing else about the claim changes. Each is checked against its article and approved by rule when the check is confident:
 
@@ -227,6 +232,27 @@ One row per source article. Rows that share a slug belong to one claim: the firs
 | `published_date` | yes | `YYYY-MM-DD` |
 | `promise` | no | The promised timeline as worded, for example `by 2025`. |
 | `promise_date` | no | `YYYY-MM-DD`. Overrides the date read from `promise`. |
+
+### Backfill from the registry
+
+The commands above start from an article. A backfill starts from the registry's trials and looks for the news that reported them. It works through many records and can be stopped and started again at any point: a ledger records which step is finished for which record, so nothing finished is done twice.
+
+```sh
+thenwhat backfill load-trials                 # phase 3 drug and biological trials, 1,000 per request
+thenwhat backfill load-trials --changes-only  # later: only what the registry updated since
+thenwhat backfill steps                       # the steps that exist
+thenwhat backfill plan                        # what is due, the requests and hours it needs
+thenwhat backfill run news_search --limit 200 # search the news for 200 trials
+thenwhat backfill leads                       # how many searched trials have an article
+```
+
+- `plan` sends nothing. Run it before `run`: it shows how many records are due, how many requests they need, and how much of the source's allowance is left.
+- `run` stops when nothing is due, at `--limit`, or when the source's allowance is used up. Each source's allowance is counted in the database and shared by every process (`SOURCE_ALLOWANCES` in `.env`).
+- The news search needs a Media Cloud key in `MEDIACLOUD_API_KEY`. Create the account and accept its terms yourself; `docs/sources.md` has the terms and the weekly limit.
+- It also needs something to search: collection ids in `MEDIACLOUD_COLLECTION_IDS`, outlet ids in `MEDIACLOUD_SOURCE_IDS`, or both, taken from Media Cloud's directory. Media Cloud refuses a search that names neither.
+- What a search finds is stored as an article lead: an address, outlet, title and date, never text. A lead is not a source article. Loaded trials and leads create no claim, change no status and never reach the export.
+
+The sample that sized this is in `docs/research/phase3-article-hit-rate`.
 
 ## Development
 

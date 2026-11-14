@@ -45,13 +45,17 @@ class TermRole(StrEnum):
 
     CONDITION = "condition"
     INTERVENTION = "intervention"
+    # A gene named in the intervention, proposed as what it acts on or is made from.
+    TARGET = "target"
 
 
 class TermFit(StrEnum):
-    """How a subject term was read against the claim: as the thing itself, or broader."""
+    """How a subject term fits the claim: the thing itself, broader than it, or the
+    kind of intervention it is. The order is the order a card is chosen in."""
 
     EXACT = "exact"
     BROADER = "broader"
+    KIND = "kind"
 
 
 class StatementKind(StrEnum):
@@ -206,3 +210,20 @@ class EvidenceStage(StrEnum):
     ANIMAL = "animal"
     EARLY_HUMAN = "early_human"
     LATE_HUMAN = "late_human"
+
+
+class WorkOutcome(StrEnum):
+    """How a step ended for one record. Nothing found is finished work, not a failure."""
+
+    DONE = "done"
+    NOTHING_FOUND = "nothing_found"
+    FAILED = "failed"
+
+
+class OutletKind(StrEnum):
+    """What kind of outlet an article lead is from, set by rule from its domain."""
+
+    GENERAL_NEWS = "general_news"
+    TRADE_PRESS = "trade_press"
+    PRESS_RELEASE = "press_release"
+    UNKNOWN = "unknown"

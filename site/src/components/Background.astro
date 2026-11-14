@@ -8,8 +8,12 @@ import {
   DEFINITION_LABEL,
   NO_DEFINITION,
   NO_REASON,
+  NO_TARGET_DEFINITION,
+  TARGET_DEFINITION_LABEL,
+  TARGET_NOTE,
   cardKindText,
   creditText,
+  definitionCreditText,
   reasonTexts,
   type ExportedCard,
   type ExportedCardSource,
@@ -23,6 +27,12 @@ interface Props {
 
 const { cards, sources } = Astro.props;
 const sourceOf = (card: ExportedCard) => sources.find((source) => source.name === card.source)!;
+// The source a definition's words are from, when it is not the card's own source.
+const wordsBy = (card: ExportedCard) =>
+  card.definition && card.definition_source
+    ? sources.find((source) => source.name === card.definition_source)
+    : undefined;
+const isTarget = (card: ExportedCard) => card.kind === "target";
 const day = (stamp: string) =>
   new Date(stamp).toLocaleDateString("en-GB", {
     day: "numeric",
@@ -34,7 +44,10 @@ const day = (stamp: string) =>
 
 <section class="matched background" data-pagefind-ignore>
   <h2 class="bar" id="background">Background</h2>
-  <p class="take-why">{BACKGROUND_NOTE}</p>
+  <p class="take-why">
+    {BACKGROUND_NOTE}
+    {cards.some(isTarget) && ` ${TARGET_NOTE}`}
+  </p>
   <ul class="plain match-list card-list">
     {
       cards.map((card) => (
@@ -44,22 +57,32 @@ const day = (stamp: string) =>
             <a class="card-label" href={card.url} rel="noopener">
               {card.label}
             </a>
+            {card.name && <span class="entry-note">{card.name}</span>}
             <span class="entry-note">
               <a href={sourceOf(card).url} rel="noopener">
                 {creditText(card, sourceOf(card))}
               </a>
               . Record read {day(card.read_at)}.
+              {wordsBy(card) && (
+                <>
+                  {" "}
+                  <a href={wordsBy(card)!.url} rel="noopener">
+                    {definitionCreditText(wordsBy(card)!)}
+                  </a>
+                  .
+                </>
+              )}
             </span>
             {card.definition ? (
               <details class="card-words">
                 <summary>
-                  {DEFINITION_LABEL}
+                  {isTarget(card) ? TARGET_DEFINITION_LABEL : DEFINITION_LABEL}
                   <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
                 </summary>
                 <blockquote cite={card.url}>{card.definition}</blockquote>
               </details>
             ) : (
-              <span class="entry-note">{NO_DEFINITION}</span>
+              <span class="entry-note">{isTarget(card) ? NO_TARGET_DEFINITION : NO_DEFINITION}</span>
             )}
           </div>
           <details class="match-why">

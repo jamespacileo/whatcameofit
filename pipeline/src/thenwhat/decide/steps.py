@@ -1,11 +1,13 @@
 """The steps that use decisions, and what each is shown."""
 
 import json
+from collections.abc import Sequence
 from datetime import datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from thenwhat.claims.entities import development_codes
 from thenwhat.db.models import Claim, ClaimTerm, DecisionLog, Entity, EntityMatch
 from thenwhat.decide.core import Backend, Decision, DecisionFailed, decide, decide_many
 from thenwhat.domain import EntityType, EvidenceStage, TermRole
@@ -79,6 +81,23 @@ TERM_QUESTIONS = {
     ),
 }
 
+INTERVENTION_KIND = "intervention_kind"
+NONE_OF_THESE = "none_of_these"
+
+TARGET_MATCH = "target_match"
+ACTS_ON = "acts_on_or_made_from"
+# What is asked about a gene named in the claim's intervention (openspec knowledge-cards).
+TARGET_OPTIONS = [ACTS_ON, SOMETHING_ELSE]
+TARGET_QUESTION = (
+    "A word of the intervention's name equals this human gene's symbol, or a listed"
+    " synonym of it. Is that what the word means here?\n"
+    f"- {ACTS_ON}: the word names this gene or its product, and the intervention acts"
+    " on that product or is made from it.\n"
+    f"- {SOMETHING_ELSE}: the word means something else here, such as an abbreviation"
+    " of a procedure or a product code, or the intervention has nothing to do with"
+    " this gene."
+)
+
 
 STATEMENT_CHECK = "statement_check"
 SAYS_THIS = "says_this"
@@ -124,6 +143,12 @@ def candidate_text(record: SourceRecord) -> str:
 
 
 def _claim_text(session: Session, claim: Claim) -> str:
+    return f"{_intervention_text(session, claim)}\nIndication: {claim.indication}."
+
+
+def _intervention_text(session: Session, claim: Claim) -> str:
+    """The claim as a kind or a named gene is judged against: its headline, summary
+    and intervention names, without its indication."""
     intervention = session.scalars(
         select(Entity).where(Entity.claim_id == claim.id, Entity.type == EntityType.INTERVENTION)
     ).first()
@@ -132,9 +157,11 @@ def _claim_text(session: Session, claim: Claim) -> str:
         also = (
             f" (also known as: {', '.join(intervention.synonyms)})" if intervention.synonyms else ""
         )
-        names = f"Intervention: {intervention.name}{also}.\n"
-    summary = f"{claim.summary}\n" if claim.summary else ""
-    return f"Claim: {claim.headline}\n{summary}{names}Indication: {claim.indication}."
+        codes = development_codes(session, intervention)
+        coded = f" (development codes: {', '.join(codes)})" if codes else ""
+        names = f"\nIntervention: {intervention.name}{also}{coded}."
+    summary = f"\n{claim.summary}" if claim.summary else ""
+    return f"Claim: {claim.headline}{summary}{names}"
 
 
 def has_stage_suggestion(session: Session, claim: Claim) -> bool:
@@ -291,6 +318,101 @@ def check_terms(
             for ref, (term, definition) in zip(refs, candidates, strict=True)
         ],
         options=TERM_OPTIONS,
+        now=now,
+    )
+
+
+def kind_options(kinds: Sequence[tuple[str, str]]) -> list[str]:
+    """What the kind step offers for a list of kinds, given as (code, label)."""
+    return [*(code for code, _ in kinds), NONE_OF_THESE]
+
+
+def has_kind_answer(session: Session, claim: Claim, kinds: Sequence[tuple[str, str]]) -> bool:
+    """Whether the claim's kind was already chosen from exactly this list of kinds."""
+    asked = session.scalars(
+        select(DecisionLog)
+        .where(
+            DecisionLog.step == INTERVENTION_KIND,
+            DecisionLog.input_ref == f"claim:{claim.id}",
+            DecisionLog.error.is_(None),
+        )
+        .order_by(DecisionLog.id.desc())
+    ).first()
+    return asked is not None and asked.options == kind_options(kinds)
+
+
+def choose_intervention_kind(
+    session: Session,
+    backend: Backend,
+    claim: Claim,
+    *,
+    kinds: Sequence[tuple[str, str]],
+    now: datetime,
+) -> Decision | None:
+    """Ask which kind of intervention the claim's is, from the kinds given as (code,
+    the vocabulary's label for it), or none of them. Decides nothing.
+
+    One log record, referring to the claim, holds every kind's probability. A backend
+    failure is in that record and comes back as None: there is no answer.
+    """
+    listed = "\n".join(f"- {code}: {label}" for code, label in kinds)
+    try:
+        return decide(
+            session,
+            backend,
+            step=INTERVENTION_KIND,
+            state=(
+                f"{_intervention_text(session, claim)}\n\n"
+                "What kind of intervention is the claim's? Each kind is given with the"
+                f" medical vocabulary's name for it:\n{listed}\n"
+                f"- {NONE_OF_THESE}: it is none of these kinds, it is several of them"
+                " equally, or you cannot tell.\n\n"
+                "Choose the kind the intervention itself is, not what it is made with,"
+                " how it is given or what it is compared with."
+            ),
+            options=kind_options(kinds),
+            input_ref=f"claim:{claim.id}",
+            now=now,
+        )
+    except DecisionFailed:
+        return None
+
+
+def target_text(term: ClaimTerm, word: str, name: str | None) -> str:
+    """A candidate gene as it is shown to the backend: the word of the intervention's
+    name that was equal, the gene's symbol and its name."""
+    return (
+        f"Word in the intervention's name: {word}\n"
+        f"Candidate gene ({term.source_name} {term.external_id}): {term.label}\n"
+        f"Gene name: {name or 'not given'}"
+    )
+
+
+def check_targets(
+    session: Session,
+    backend: Backend,
+    *,
+    claim: Claim,
+    candidates: list[tuple[ClaimTerm, str, str | None]],
+    now: datetime,
+) -> list[Decision | None]:
+    """Ask, for each candidate gene given with the word that equals it and the gene's
+    name, whether the intervention acts on the gene's product or is made from it, or
+    the word means something else. Decides nothing.
+
+    Every candidate gets its own log record, referring to the claim and the gene. A
+    candidate the backend gave no usable answer for comes back as None.
+    """
+    if not candidates:
+        return []
+    return _each_answered(
+        session,
+        backend,
+        step=TARGET_MATCH,
+        intro=_intervention_text(session, claim),
+        question=TARGET_QUESTION,
+        items=[(term_ref(term), target_text(term, word, name)) for term, word, name in candidates],
+        options=TARGET_OPTIONS,
         now=now,
     )
 

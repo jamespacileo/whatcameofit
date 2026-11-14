@@ -17,6 +17,9 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `europepmc/citing_srep39654_page1.json` | `GET /search?query=CITES:28067250_MED&resultType=core&pageSize=3` |
 | `crossref/work_retracted_lancet_1998.json` | `GET /works/10.1016/S0140-6736(97)11096-0` |
 | `crossref/work_srep39654.json` | `GET /works/10.1038/srep39654` |
+| `clinicaltrials/list_page_{1,2}.json` | `GET /api/v2/studies?filter.advanced=<phase 3 drug or biological, migraine, updated since 2026-11-10>&pageSize=3&fields=…`, following `nextPageToken`: four trials over two pages (2026-11-14) |
+| `clinicaltrials/phase3_sample_trials.json` | the identifiers, conditions and interventions of the 200 phase 3 trials sampled on 2026-11-14 (`docs/research/phase3-article-hit-rate`), read from `GET /api/v2/studies?filter.ids=…` |
+| `mediacloud/story_list.json` | synthetic: the shape of `GET /api/search/story-list` as Media Cloud's own client reads it, with made-up stories. Never recorded from the service, so it holds no real headline |
 | `openalex/search_median_nerve_tourette.json` | `GET /works?search=("median nerve stimulation") AND "Tourette syndrome"&per_page=3&select=id,doi,title,publication_year,publication_date,type,primary_location,authorships,abstract_inverted_index,ids` (2026-11-14) |
 | `openalex/search_nothing.json` | the same search for made-up words that no paper holds (2026-11-14) |
 | `openalex/work_704541.json` | `GET /works/doi:10.64898/2026.02.07.704541?select=…` (2026-11-14) |
@@ -36,6 +39,26 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `mesh/label_obesity.json` | `GET /mesh/lookup/descriptor?label=Obesity&match=exact&limit=10&year=2026` (2026-11-14) |
 | `mesh/label_obesity_contains.json` | the same with `match=contains`, which the client never asks; it lists "Anti-Obesity Agents" first (2026-11-14) |
 | `mesh/label_none.json` | the exact lookup for "Knee osteoarthritis pain", which no label equals (2026-11-14) |
+| `gsrs/search_baxdrostat.json` | `GET gsrs.ncats.nih.gov/api/v1/substances/search?q=root_names_name:"^baxdrostat$"&top=5&fdim=0` (2026-11-14) |
+| `gsrs/names_baxdrostat.json` | `GET /api/v1/substances(d050debb-84b5-4703-90a9-afc4fd2c21c6)/names`: twelve names, three of the kind `cd` (2026-11-14) |
+| `gsrs/search_cin_107_spaced.json` | the search for `"^cin 107$"`, which GSRS answers with the substance coded "CIN-107"; the client refuses it (2026-11-14) |
+| `gsrs/search_nothing.json` | the search for `"^faecal microbiota transplant$"`: `total` 0 (2026-11-14) |
+| `mesh/term_ketogenic_diet.json` | `GET /mesh/lookup/term?label=Ketogenic Diet&match=exact&limit=10&year=2026`: an entry term of a descriptor labelled otherwise (2026-11-14) |
+| `mesh/term_orforglipron.json`, `mesh/term_obesity.json` | the same lookup for "orforglipron" (the term of a supplementary record) and "Obesity" (2026-11-14) |
+| `mesh/term_tirzepatide.json`, `mesh/owner_tirzepatide.json` | the term lookup and the owner query for "tirzepatide": the term belongs to a descriptor and to a withdrawn supplementary record labelled "[OBSOLETE] tirzepatide", whose own address answers an empty object (2026-11-14) |
+| `mesh/term_ketogenic_word.json` | the same lookup for "Ketogenic", a word contained in an entry term: `[]` (2026-11-14) |
+| `mesh/owner_ketogenic_diet.json`, `mesh/owner_orforglipron.json`, `mesh/owner_obesity.json` | `GET /mesh/sparql?query=…&format=JSON&year=2026&inference=false`, the query in `docs/sources.md` for one term each: the descriptor or supplementary record the term belongs to (2026-11-14) |
+| `mesh/owners_three_terms.json` | the same query for the three terms at once (2026-11-14) |
+| `mesh/owner_none.json` | the same query for a term identifier the vocabulary does not hold (`T999999999`): no row (2026-11-14) |
+| `mesh/supplementary_orforglipron.json` | `GET /mesh/2026/C000729680.json`: a supplementary record, with its `note` and the `source` it was taken from (2026-11-14) |
+| `mesh/concept_orforglipron.json` | `GET /mesh/2026/M000766720.json`, its preferred concept, which holds no definition (2026-11-14) |
+| `opentargets/search_cxcr3.json` | `POST api.platform.opentargets.org/api/v4/graphql` with the target search in `sources/opentargets.py` for the word "CXCR3": equal to an approved symbol (2026-11-14) |
+| `opentargets/search_usag_1.json`, `opentargets/search_apoe4.json` | the same for "USAG-1" and "APOE4": each equal to a listed synonym of one gene (2026-11-14) |
+| `opentargets/search_tms.json` | the same for "TMS": a synonym of two genes, among eight genes whose symbols only start with it (2026-11-14) |
+| `opentargets/search_tmsb1.json` | the same for "TMSB1": seven hits, none with an equal symbol or synonym (2026-11-14) |
+| `opentargets/search_ctx310.json` | the same for "CTX310": no hit (2026-11-14) |
+| `opentargets/target_cxcr3.json` | the same address with the target query for `ENSG00000186810`: three function descriptions (2026-11-14) |
+| `opentargets/target_unknown.json` | the target query for `ENSG00000000000`, which the platform does not hold (2026-11-14) |
 
 Changes made to the recordings, for copyright and size:
 
@@ -44,6 +67,8 @@ Changes made to the recordings, for copyright and size:
 - The five Europe PMC recordings of 2026-11-14: `abstractText` is replaced by a placeholder sentence, all but two authors are removed from `authorList`, and grants, chemicals, keywords, data links and comment lists are removed. `authorString` and `affiliation` are kept so that a test can show they are not stored.
 - OpenAlex works: each `abstract_inverted_index` is replaced by a placeholder sentence. The key was sent in a header and is in no recording.
 - MeSH: none. The records are NLM's own and are kept whole, re-indented.
+- GSRS: none. The data is CC0 and the records are kept whole, re-indented.
+- Open Targets: none. The answers are kept whole, re-indented. Function descriptions are UniProt's (CC BY 4.0).
 - ROR: only the first two items of each answer are kept.
 - Crossref works: `abstract` removed; `reference` removed from `work_srep39654.json`.
 - `openai/decisions_three_records.json`: the model's name is replaced by `example-model` in the request and the response. The input is synthetic.

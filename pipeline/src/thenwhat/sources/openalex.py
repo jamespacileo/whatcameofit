@@ -211,7 +211,9 @@ class OpenAlex(Source):
     def _extra_headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self._key}"}
 
-    def _request(self, url: str, params: dict[str, str] | None) -> httpx.Response | None:
+    def _request(
+        self, url: str, params: dict[str, str] | None, *, body: dict[str, Any] | None = None
+    ) -> httpx.Response | None:
         """A search is sent only while none is paused. An answer still in the cache never
         reaches here, and a lookup of one work is free and is always sent."""
         if url == f"{API}/works":
@@ -219,7 +221,7 @@ class OpenAlex(Source):
             if paused:
                 self.usage.stopped = paused
                 raise AllowanceUsedUp(paused)
-        return super()._request(url, params)
+        return super()._request(url, params, body=body)
 
     def _heed(self, response: httpx.Response) -> None:
         """Read what the answer says of the allowance. Searches stop, for every run until

@@ -26,9 +26,11 @@ from thenwhat.db.models import (
     SourceArticle,
 )
 from thenwhat.decide.steps import (
+    ACTS_ON,
     BROADER,
     ENTITY_MATCH,
     EVIDENCE_STAGE,
+    INTERVENTION_KIND,
     MATCH,
     NOT_A_MATCH,
     OTHER_INDICATION,
@@ -37,15 +39,17 @@ from thenwhat.decide.steps import (
     SAYS_THIS,
     SOMETHING_ELSE,
     STATEMENT_CHECK,
+    TARGET_MATCH,
     TERM_MATCH,
     latest_scoring,
     match_ref,
     term_ref,
 )
-from thenwhat.domain import Decider, EntityType, EvidenceStage, ReviewState, TermFit
+from thenwhat.domain import Decider, EntityType, EvidenceStage, ReviewState, TermFit, TermRole
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import record_url
 from thenwhat.sources.openalex import OpenAlex
+from thenwhat.terms.kinds import KIND_CHOSEN
 
 Kind = Literal["claim", "match", "event", "term", "statement"]
 
@@ -197,18 +201,25 @@ def _match_item(session: Session, claim: Claim, match: EntityMatch, entity: Enti
 
 
 def _term_item(claim: Claim, term: ClaimTerm) -> QueueItem:
+    """A subject term link: a vocabulary term, the term of the intervention's kind, or
+    a gene named in the intervention, with its role, how it fits and its reasons."""
     if term.score is None:
         read = "not scored yet: run `terms` for the claim"
     elif term.fit is None:
         read = "read as something else"
+    elif term.fit is TermFit.KIND:
+        read = "chosen as the kind of intervention (fit: kind)"
+    elif term.role is TermRole.TARGET:
+        read = "read as what the intervention acts on or is made from (fit: exact)"
     else:
         read = f"read as {term.fit.value}"
     told = "; ".join(_reason_line(reason) for reason in term.reasons) or "none found by rule"
+    what = "named gene" if term.role is TermRole.TARGET else "subject term"
     return QueueItem(
         "term",
         term.id,
         claim.slug,
-        f"subject term '{term.label}' ({term.source_name} {term.external_id}) for the"
+        f"{what} '{term.label}' ({term.source_name} {term.external_id}) for the"
         f" claim's {term.role.value}, {read}. Reasons: {told}",
         record_url(term.source_name, term.external_id),
         term.score,
@@ -217,11 +228,21 @@ def _term_item(claim: Claim, term: ClaimTerm) -> QueueItem:
 
 
 def _reason_line(reason: dict) -> str:
+    code = reason.get("code")
+    if "type" in reason:
+        return f"{code} ({reason['type']} in {reason.get('trials')} trial(s))"
     if "trials" in reason:
-        return f"{reason.get('code')} ({reason['trials']} of {reason.get('of')} trials)"
+        return f"{code} ({reason['trials']} of {reason.get('of')} trials)"
+    if "entry_term" in reason:
+        return f"{code} ('{reason['entry_term']}' equals '{reason.get('name')}')"
     if "name" in reason:
-        return f"{reason.get('code')} ('{reason['name']}')"
-    return str(reason.get("code"))
+        return f"{code} ('{reason['name']}')"
+    if "kind" in reason:
+        return f"{code} ({reason['kind']})"
+    if "word" in reason:
+        given = f", given by {', '.join(reason['sources'])}" if reason.get("sources") else ""
+        return f"{code} ('{reason['word']}'{given})"
+    return str(code)
 
 
 def _is_paper_candidate(match: EntityMatch, entity: Entity) -> bool:
@@ -327,7 +348,23 @@ def decide_item(
         if term is None:
             raise ItemNotFound(f"There is no subject term link with id {item_id}.")
         record_decision(term, state, by=by, now=now)
-        if by is Decider.HUMAN:
+        if by is Decider.HUMAN and term.fit is TermFit.KIND:
+            # An approval says the kind chosen was right. A rejection does not say
+            # which kind is, so it labels nothing.
+            chosen = next(
+                (r.get("kind") for r in term.reasons if r.get("code") == KIND_CHOSEN), None
+            )
+            if state is ReviewState.APPROVED and chosen:
+                _label(session, INTERVENTION_KIND, f"claim:{term.claim_id}", str(chosen))
+        elif by is Decider.HUMAN and term.role is TermRole.TARGET:
+            # An approval says the word names this gene; a rejection, that it means
+            # something else. An approval of a gene never read as named labels nothing.
+            label = SOMETHING_ELSE if state is ReviewState.REJECTED else None
+            if state is ReviewState.APPROVED and term.fit is TermFit.EXACT:
+                label = ACTS_ON
+            if label is not None:
+                _label(session, TARGET_MATCH, term_ref(term), label)
+        elif by is Decider.HUMAN:
             # An approval says the reading was right; a rejection, that the term is
             # something else. An approval of a term never read as either labels nothing.
             label = SOMETHING_ELSE
