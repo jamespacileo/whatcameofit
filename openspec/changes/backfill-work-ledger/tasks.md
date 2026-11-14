@@ -30,7 +30,7 @@
 - [x] 4.4 Implement loading changes since the previous completed load; verify a test shows the request carries the previous load's date and that an updated trial's fingerprint changes only when a field a step reads changed
 - [x] 4.5 Add `thenwhat backfill load-trials`; verify one test of a successful load and one of the refusal when no contact address is configured
 - [x] 4.6 Verify with a test that the export is byte-for-byte the same before and after a load
-- [ ] 4.7 Add registry trial to `GLOSSARY.md` and describe the load in the README's pipeline section; verify the documented command runs as written against the Compose stack
+- [x] 4.7 Add registry trial to `GLOSSARY.md` and describe the load in the README's pipeline section; verify the documented command runs as written against the Compose stack
 
 ## 5. Plan and run commands
 
@@ -52,10 +52,18 @@
 ## 7. First run
 
 - [x] 7.1 Run `make check`; verify ruff, ty, pytest and the site build pass
-- [ ] 7.2 Load the phase 3 drug and biological trials on the operator's machine and run `backfill plan`; verify the trial count is close to 43,320 and record the plan's figures in this change
+- [x] 7.2 Load the phase 3 drug and biological trials on the operator's machine and run `backfill plan`; verify the trial count is close to 43,320 and record the plan's figures in this change
 - [ ] 7.3 Run the news search with a limit of 200 and `backfill leads`; verify the hit rate is recorded here beside the sample's 31% overall and 16% trial-specific, with the split by outlet kind
 - [ ] 7.4 Stop a second limited run part way and start it again; verify the report shows no record processed twice
 - [ ] 7.5 Give the operator the 200-trial figures and the plan for the full run, and wait for a decision before running without a limit
+
+## First run: what was done on 2026-11-14
+
+- **Where:** a separate database, `thenwhat_backfill`, on the Compose Postgres server. The operator's `thenwhat` database was not migrated: other worktrees share it, and they do not have migration `0009` until this branch is merged.
+- **Load (7.2):** `thenwhat backfill load-trials` stored 43,320 trials in 44 requests, in 1 minute 44 seconds. The sampling frame was 43,320.
+- **Plan (7.2):** 40,006 of the 43,320 trials (92%) have a usable name and indication and are in the news search's scope. They need 40,006 requests: about 333 hours at 30 seconds apart, and 11 weekly allowances of 4,000.
+- **A fault the live run found:** `load-trials --changes-only` read the previous load's date after its transaction had closed. Fixed, with a test that runs the load on separate committed transactions.
+- **Not done (7.3, 7.4, 7.5):** the 200-trial news search needs a Media Cloud key, which only the operator can create. `thenwhat backfill run news_search` refuses with "MEDIACLOUD_API_KEY is not set" and touches no record, as specified. Stopping and restarting a run is covered by tests on real transactions, not yet by a live run.
 
 ## Workflow follow-up
 

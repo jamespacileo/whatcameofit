@@ -131,8 +131,8 @@ def load_trials(
     if changes_only:
         with open_session() as session:
             previous = session.get(RegistryLoad, (registry.name, condition))
-        if previous is not None:
-            report.changes_since = previous.loaded_from.date()
+            if previous is not None:
+                report.changes_since = previous.loaded_from.date()
     token: str | None = None
     while True:
         if before_request is not None:

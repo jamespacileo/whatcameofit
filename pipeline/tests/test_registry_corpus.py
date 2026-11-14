@@ -5,10 +5,10 @@ from datetime import timedelta
 
 import httpx
 import pytest
-from sqlalchemy import select
+from sqlalchemy import Engine, delete, select
 from sqlalchemy.orm import Session
 
-from backfill_support import DemoStep, same_session
+from backfill_support import DemoStep, committed_sessions, remove_committed, same_session
 from thenwhat.backfill.ledger import count
 from thenwhat.backfill.registry_load import load_trials
 from thenwhat.backfill.runner import run_step
@@ -136,6 +136,37 @@ def test_loading_changes_asks_only_for_trials_updated_since_the_last_load(
     assert registry.asked[0]["filter.advanced"] == (
         f"({CONDITION}) AND AREA[LastUpdatePostDate]RANGE[{first_load_day.isoformat()},MAX]"
     )
+
+
+def test_loading_changes_works_when_every_page_is_its_own_transaction(
+    session: Session, engine: Engine, fake_time, fixture_json
+):
+    """As the command runs it: each read and each page commits on its own connection."""
+    condition = "AREA[Condition]Migraine AND committed"
+    open_session = committed_sessions(engine)
+
+    def load_committed(**options):
+        return load_trials(
+            open_session,
+            client(session, fake_time, Registry(fixture_json)),
+            [],
+            condition=condition,
+            now=fake_time.now,
+            **options,
+        )
+
+    try:
+        first_load_day = fake_time.now().date()
+        load_committed(changes_only=False)
+        fake_time.advance(timedelta(days=3))
+
+        report = load_committed(changes_only=True)
+
+        assert (report.changes_since, report.updated) == (first_load_day, 4)
+    finally:
+        with open_session() as cleanup:
+            cleanup.execute(delete(RegistryLoad).where(RegistryLoad.condition == condition))
+        remove_committed(engine, registry=REGISTRY, step="none", source="none")
 
 
 def test_loading_changes_with_no_earlier_load_loads_everything(
