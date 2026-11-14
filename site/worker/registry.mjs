@@ -1,7 +1,9 @@
 // ClinicalTrials.gov API v2, as the pipeline's client searches it. Terms and limits:
 // docs/sources.md. Keep the search rule in step with thenwhat.sources.clinicaltrials.
+// A public registry answer may be reused for a day; a failure is never kept.
 
 import { withDeadline } from "./deadline.mjs";
+import { SOURCE_TTL_SECONDS, makeShared, makeSourceCache } from "./public-cache.mjs";
 
 const API = "https://clinicaltrials.gov/api/v2";
 // One request, its body included.
@@ -33,41 +35,52 @@ function tellingWords(condition) {
   return kept.length ? kept.join(" OR ") : null;
 }
 
-export function makeRegistry({ fetch, contact, timeoutMs = TIMEOUT_MS }) {
+export function makeRegistry({ fetch, contact, timeoutMs = TIMEOUT_MS, cache, cacheTimeoutMs }) {
   const headers = { "User-Agent": `thenwhat-lookup/${VERSION} (mailto:${contact})`, Accept: "application/json" };
+  const reuse = makeSourceCache(cache, { kind: "registry", timeoutMs: cacheTimeoutMs });
+  const shared = makeShared();
 
-  async function get(path, params) {
+  /** Aborting `parent` ends the wait: the lookup no longer needs the answer. */
+  async function get(path, params, parent) {
     const url = new URL(`${API}${path}`);
     for (const [name, value] of Object.entries(params ?? {})) url.searchParams.set(name, value);
-    // A registry that does not answer in time is an error, never an empty search.
-    return withDeadline(timeoutMs, async (signal) => {
-      const response = await fetch(url.href, { headers, signal });
-      if (response.status === 404) return null;
-      if (!response.ok) throw new Error(`registry ${response.status}`);
-      return response.json();
-    }, { label: "registry" });
+    return shared(url.href, async (signal) => {
+      const key = await reuse.key(url.href);
+      const saved = await reuse.get(key);
+      if (saved && typeof saved === "object") return saved;
+      // A registry that does not answer in time is an error, never an empty search.
+      const body = await withDeadline(timeoutMs, async (deadline) => {
+        const response = await fetch(url.href, { headers, signal: deadline });
+        if (response.status === 404) return null;
+        if (!response.ok) throw new Error(`registry ${response.status}`);
+        return response.json();
+      }, { label: "registry", parent: signal });
+      // Only a public answer is kept; a missing record is asked about again.
+      if (body && typeof body === "object") await reuse.put(key, body, SOURCE_TTL_SECONDS);
+      return body;
+    }, parent);
   }
 
-  async function page(intervention, condition, pageToken) {
+  async function page(intervention, condition, pageToken, signal) {
     const params = { "query.intr": intervention, pageSize: "100", fields: SEARCH_FIELDS, countTotal: "true" };
     if (condition) params["query.cond"] = condition;
     if (pageToken) params.pageToken = pageToken;
-    const body = await get("/studies", params);
+    const body = await get("/studies", params, signal);
     const studies = body?.studies ?? [];
     return { studies, total: body?.totalCount ?? studies.length, next: body?.nextPageToken ?? null };
   }
 
   return {
     /** The full record of one trial, or null when the registry has none by that number. */
-    async fetch(number) {
-      return /^NCT\d{8}$/.test(number) ? get(`/studies/${number}`) : null;
+    async fetch(number, { signal } = {}) {
+      return /^NCT\d{8}$/.test(number) ? get(`/studies/${number}`, null, signal) : null;
     },
 
     /**
      * The trials that carry this name in their acronym or title, such as SURMOUNT-5.
      * None when so many do that the name does not identify a trial.
      */
-    async named(name) {
+    async named(name, { signal } = {}) {
       const phrase = String(name ?? "").replaceAll('"', " ").trim();
       if (!phrase) return [];
       const body = await get("/studies", {
@@ -75,7 +88,7 @@ export function makeRegistry({ fetch, contact, timeoutMs = TIMEOUT_MS }) {
         pageSize: String(MAX_NAMED_TRIALS),
         fields: SEARCH_FIELDS,
         countTotal: "true",
-      });
+      }, signal);
       const studies = body?.studies ?? [];
       return (body?.totalCount ?? studies.length) > MAX_NAMED_TRIALS ? [] : studies;
     },
@@ -85,12 +98,12 @@ export function makeRegistry({ fetch, contact, timeoutMs = TIMEOUT_MS }) {
      * condition: as worded, then by its telling words. A name still broad there, or with
      * no trial there, returns nothing: it does not identify one treatment.
      */
-    async search(intervention, condition) {
-      const first = await page(intervention, null, null);
+    async search(intervention, condition, { signal } = {}) {
+      const first = await page(intervention, null, null, signal);
       if (condition && first.total > BROAD_NAME) {
         for (const wording of [condition, tellingWords(condition)]) {
           if (!wording) continue;
-          const narrowed = await page(intervention, wording, null);
+          const narrowed = await page(intervention, wording, null, signal);
           if (narrowed.total > BROAD_NAME) return [];
           if (narrowed.studies.length) return narrowed.studies;
         }
@@ -99,7 +112,7 @@ export function makeRegistry({ fetch, contact, timeoutMs = TIMEOUT_MS }) {
       const studies = [...first.studies];
       let next = first.next;
       for (let read = 1; next && read < MAX_PAGES; read += 1) {
-        const more = await page(intervention, null, next);
+        const more = await page(intervention, null, next, signal);
         studies.push(...more.studies);
         next = more.next;
       }

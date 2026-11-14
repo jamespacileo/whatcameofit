@@ -11,7 +11,7 @@ import {
   unfollow as withoutFollowed,
 } from "./kept.js";
 import { CACHE_VERSION, isFresh, stateFor } from "./lookup.js";
-import { remember, reusable } from "./results.js";
+import { remember, reusable, savedFor } from "./results.js";
 import { fingerprint, publicWebUrl } from "./visual.js";
 import { remind as withReminder, reminderDay, unremind as withoutReminder } from "./watch.js";
 
@@ -24,6 +24,61 @@ const LOOKUP_TIMEOUT_MS = 45_000;
 // The lookup file and an earlier shared result are each waited on no longer than this.
 const INDEX_TIMEOUT_MS = 5_000;
 const CACHE_PROBE_TIMEOUT_MS = 1_500;
+// A staged answer larger than this, or one line of it, is refused as malformed.
+const MAX_STREAM_BYTES = 4_000_000;
+const STREAMED = /^application\/x-ndjson\b/i;
+
+const malformed = () => Object.assign(new Error("malformed"), { code: "failed" });
+const ended = () => Object.assign(new Error("ended"), { name: "AbortError" });
+
+function eventOf(line) {
+  let event;
+  try { event = JSON.parse(line); } catch { throw malformed(); }
+  if (!event || typeof event !== "object" || !["core", "complete", "error"].includes(event.type)) throw malformed();
+  if (event.type !== "error" && (!event.result || typeof event.result !== "object" || Array.isArray(event.result))) throw malformed();
+  return event;
+}
+
+/**
+ * The events of a staged lookup answer, one JSON object per line, as they arrive. A line
+ * may be split across chunks, a character across bytes. Malformed, oversized or cut-off
+ * input throws; aborting `signal` stops reading and cancels the body.
+ */
+export async function* lookupEvents(response, signal, { maxBytes = MAX_STREAM_BYTES } = {}) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  const stop = () => { reader.cancel().catch(() => {}); };
+  signal?.addEventListener("abort", stop, { once: true });
+  let buffer = "";
+  let size = 0;
+  let finished = false;
+  try {
+    for (;;) {
+      if (signal?.aborted) throw ended();
+      const { done, value } = await reader.read();
+      if (signal?.aborted) throw ended();
+      if (done) break;
+      size += value.byteLength;
+      if (size > maxBytes) throw malformed();
+      try { buffer += decoder.decode(value, { stream: true }); } catch { throw malformed(); }
+      for (let at = buffer.indexOf("\n"); at >= 0; at = buffer.indexOf("\n")) {
+        const line = buffer.slice(0, at).trim();
+        buffer = buffer.slice(at + 1);
+        if (line) yield eventOf(line);
+      }
+    }
+    try { buffer += decoder.decode(); } catch { throw malformed(); }
+    finished = true;
+    // A last line without its newline counts only if it is whole.
+    if (buffer.trim()) yield eventOf(buffer.trim());
+  } finally {
+    signal?.removeEventListener("abort", stop);
+    if (!finished) stop();
+  }
+}
+
+const streamed = (response) => response?.ok && STREAMED.test(response.headers?.get?.("content-type") ?? "") &&
+  typeof response.body?.getReader === "function";
 
 /** `work(signal)` within `ms`, its body included: past it the signal is aborted and this
  * rejects, even if the work does not listen. `parent` aborting aborts the work too. */
@@ -44,7 +99,7 @@ async function bounded(ms, parent, work) {
 }
 
 export function createPopupController({ storage, fetch, site, readTab, readPage, isCurrentPage, capturePage, describeAnswer, present, requiresSharingConsent = false,
-  lookupTimeoutMs = LOOKUP_TIMEOUT_MS, indexTimeoutMs = INDEX_TIMEOUT_MS, cacheProbeTimeoutMs = CACHE_PROBE_TIMEOUT_MS }) {
+  lookupTimeoutMs = LOOKUP_TIMEOUT_MS, indexTimeoutMs = INDEX_TIMEOUT_MS, cacheProbeTimeoutMs = CACHE_PROBE_TIMEOUT_MS, now = Date.now }) {
   const abort = new AbortController();
   let tab = null;
   let live = null;
@@ -142,12 +197,18 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     let over = false;
     let timer;
     let closing;
+    // A completed core answer already shown stays when only its enrichment runs out of time.
+    let kept = null;
+    const started = now();
     const scope = {
       signal: controller.signal,
       over: () => over || closed,
       show: (state) => { if (!scope.over()) show(state); },
       showPage: (state) => { if (!scope.over()) showPage(state); },
       save: (values) => (scope.over() ? Promise.resolve() : save(values)),
+      keep: (state) => { kept = state; },
+      // Milliseconds since this attempt began: a number, never content.
+      elapsed: () => Math.max(0, now() - started),
     };
     const ended = new Promise((resolve) => {
       closing = () => { controller.abort(); resolve("closed"); };
@@ -156,48 +217,131 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     });
     if (abort.signal.aborted) closing();
     const done = Promise.resolve().then(() => work(scope)).then(() => "done", () => "done");
-    return Promise.race([done, ended]).then((outcome) => {
+    return Promise.race([done, ended]).then(async (outcome) => {
       clearTimeout(timer);
       abort.signal.removeEventListener("abort", closing);
       const timedOut = outcome === "timeout" && !scope.over();
       over = true;
       if (outcome !== "done") controller.abort();
-      if (timedOut) showPage({ kind: "refused", code: "timeout" });
+      if (timedOut && kept) {
+        // The clinical result already left the blocking spinner. Before changing its
+        // enrichment notice, recheck identity without allowing a stuck browser check
+        // to hold this ended attempt open. Unknown identity fails closed.
+        const samePage = await bounded(100, abort.signal, () => isCurrentPage(tab)).catch(() => false);
+        if (samePage && !closed) showPage(kept);
+      } else if (timedOut) showPage({ kind: "refused", code: "timeout" });
     });
   }
 
   const serviceRequest = request => {
-    const { visualCandidate, selectionOnly, contentFingerprint, ...sent } = request;
+    const { visualCandidate, selectionOnly, contentFingerprint, readableArticle, ...sent } = request;
     return sent;
   };
   const eligible = () => Boolean(sharing && capturePage && tab && live && !tab.incognito && publicWebUrl(tab.url));
+  // A text reading that finds no treatment does not settle a page whose claim may be in
+  // its media: a screenshot follows, and that first reading is neither shown nor kept.
+  const mediaDependent = (request) => Boolean(request?.visualCandidate && !request.selectionOnly && !request.readableArticle);
   async function current(scope) {
     return !scope.over() && await isCurrentPage(tab).catch(() => false) && !scope.over();
   }
-  function resultState(found, cachedAt = null) {
+  function resultState(found, cachedAt = null, extra = {}) {
     const shown = describeAnswer(found);
     if (cachedAt && shown.marked) shown.marked = "Automatic search from an earlier check. It has not been checked by a person and is not a status.";
-    return { kind: "answer", shown, cachedAt, canVisual: eligible() };
+    return { kind: "answer", shown, cachedAt, canVisual: eligible(), ...extra };
   }
-  async function send(scope, request, { reuse = false, key = null } = {}) {
-    if (!await current(scope)) { scope.showPage({ kind: "refused", code: "page_changed" }); return null; }
-    if (reuse && key) {
-      const saved = reusable(results, tab.key, key, Date.now());
-      if (saved) { scope.showPage(resultState(saved.found, saved.at)); return saved.found; }
+  // Stage durations for comparing a first answer with a complete one: numbers only.
+  function timingsOf(stages, service) {
+    const times = { ...stages };
+    for (const [name, value] of Object.entries(service && typeof service === "object" ? service : {})) {
+      if (/^[a-z_]+$/.test(name) && Number.isFinite(value)) times[`service_${name}`] = value;
     }
-    const response = await fetch(site.url + live, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...serviceRequest(request), ...(request.pageUrl ? { refresh: !reuse } : {}) }), signal: scope.signal,
-    });
-    const found = await response.json();
-    if (!await current(scope)) { scope.showPage({ kind: "refused", code: "page_changed" }); return null; }
-    if (!response.ok) { scope.showPage({ kind: "refused", code: found?.error ?? "failed", ...(eligible() && found?.error !== "budget_exhausted" ? { canVisual: true } : {}) }); return null; }
+    return { timings: Object.fromEntries(Object.entries(times).map(([name, value]) => [name, Math.round(value)])) };
+  }
+  /** An earlier shared result for this page's cleaned address, or null. Never throws. */
+  async function probeShared(scope, pageUrl) {
+    if (!await current(scope)) return null;
+    // An earlier shared result is a shortcut only: when it is slow, the search goes on.
+    try {
+      const { response, saved } = await bounded(cacheProbeTimeoutMs, scope.signal, async (signal) => {
+        const response = await fetch(site.url + live, { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cacheOnly: true, pageUrl }), signal });
+        return { response, saved: await response.json() };
+      });
+      return response.ok && saved?.cache?.shared && typeof saved.cache.checkedAt === "number" &&
+        typeof saved.about_a_treatment === "boolean" ? saved : null;
+    } catch { return null; }
+  }
+  // A finished answer: kept for this content when whole and final, then shown.
+  function settle(scope, found, { key, provisional, stages = {}, service = null }) {
+    if (provisional && found?.about_a_treatment === false) return found;
     if (key) {
       results = remember(results, tab.key, key, found, found.cache?.checkedAt ?? Date.now());
       scope.save({ results });
     }
-    scope.showPage(resultState(found, found.cache?.checkedAt ?? null));
+    scope.showPage(resultState(found, found.cache?.checkedAt ?? null, timingsOf({ ...stages, complete_ms: scope.elapsed() }, service)));
     return found;
+  }
+  function refusedBy(scope, code) {
+    scope.showPage({ kind: "refused", code: code ?? "failed", ...(eligible() && code !== "budget_exhausted" ? { canVisual: true } : {}) });
+    return null;
+  }
+  // A staged answer: the completed clinical answer is shown as soon as it arrives, with
+  // research still loading. If the rest never comes, the core answer stays, said to be
+  // without its research, and is not kept. Nothing renders once the attempt has ended.
+  async function receive(scope, response, { key, provisional }) {
+    let core = null;
+    let stages = {};
+    const coreShown = () => core && !(provisional && core.about_a_treatment === false);
+    try {
+      for await (const event of lookupEvents(response, scope.signal)) {
+        if (scope.over()) return null;
+        if (event.type === "error" && core) break;
+        if (!await current(scope)) { scope.showPage({ kind: "refused", code: "page_changed" }); return null; }
+        if (event.type === "error") return refusedBy(scope, typeof event.error === "string" ? event.error : "failed");
+        if (event.type === "complete") {
+          scope.keep(null);
+          return settle(scope, event.result, { key, provisional, stages, service: event.timings });
+        }
+        if (core) continue;
+        core = event.result;
+        stages = { core_ms: scope.elapsed() };
+        if (coreShown()) {
+          const pending = core.about_a_treatment === true && !core.research;
+          const timings = timingsOf(stages, event.timings);
+          scope.showPage(resultState(core, core.cache?.checkedAt ?? null, { ...(pending ? { research: "loading" } : {}), ...timings }));
+          scope.keep(resultState(core, core.cache?.checkedAt ?? null, { ...(pending ? { research: "incomplete" } : {}), ...timings }));
+        }
+      }
+    } catch {
+      if (scope.over()) return null;
+    }
+    if (scope.over()) return null;
+    scope.keep(null);
+    if (!await current(scope)) return null;
+    if (!core) return refusedBy(scope, "failed");
+    if (coreShown()) {
+      const pending = core.about_a_treatment === true && !core.research;
+      scope.showPage(resultState(core, core.cache?.checkedAt ?? null, { ...(pending ? { research: "incomplete" } : {}), ...timingsOf(stages) }));
+    }
+    // A non-treatment core is a finished identification, so its screenshot may follow.
+    return core;
+  }
+  async function send(scope, request, { reuse = false, key = null, provisional = false } = {}) {
+    if (!await current(scope)) { scope.showPage({ kind: "refused", code: "page_changed" }); return null; }
+    if (reuse && key) {
+      const saved = reusable(results, tab.key, key, Date.now());
+      if (saved) { scope.showPage(resultState(saved.found, saved.at, timingsOf({ reused_ms: scope.elapsed() }))); return saved.found; }
+    }
+    // A staged answer is asked for; a service that answers in one piece is read as before.
+    const response = await fetch(site.url + live, {
+      method: "POST", headers: { "Content-Type": "application/json", Accept: "application/x-ndjson, application/json" },
+      body: JSON.stringify({ ...serviceRequest(request), ...(request.pageUrl ? { refresh: !reuse } : {}), stream: true }), signal: scope.signal,
+    });
+    if (streamed(response)) return receive(scope, response, { key, provisional });
+    const found = await response.json();
+    if (!await current(scope)) { scope.showPage({ kind: "refused", code: "page_changed" }); return null; }
+    if (!response.ok) return refusedBy(scope, found?.error);
+    return settle(scope, found, { key, provisional });
   }
   async function visualSearch(scope, { preview = false, reuse = true } = {}) {
     if (!eligible() || scope.over()) return;
@@ -222,8 +366,18 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     if (!sharing) { sharingView(); return; }
     visual = null;
     scope.show({ kind: "searching" });
+    // The shared-result probe may start while the page is still being collected, once
+    // the page reader has settled selection, private-window and address checks. When
+    // this page has a saved result here, it waits: the content may match that instead.
+    let probe = null;
+    let probedFor = null;
+    const startProbe = (pageUrl) => {
+      if (probe || !reuse || !pageUrl || tab.incognito || scope.over() || savedFor(results, tab.key, Date.now())) return;
+      probedFor = pageUrl;
+      probe = probeShared(scope, pageUrl);
+    };
     let request;
-    try { request = await readPage(tab, scope.signal); }
+    try { request = await readPage(tab, scope.signal, { onContext: (context) => startProbe(context?.pageUrl) }); }
     catch (error) {
       scope.showPage(error?.code === "page_changed" ? { kind: "refused", code: "page_changed" } : { kind: "too-little", canVisual: eligible() });
       return;
@@ -233,32 +387,41 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     if (!request) { scope.showPage({ kind: "too-little", canVisual: eligible() }); return; }
     if (!await current(scope)) { scope.showPage({ kind: "refused", code: "page_changed" }); return; }
     try {
-      if (reuse && !request.selectionOnly && request.contentFingerprint) {
-        const saved = reusable(results, tab.key, request.contentFingerprint, Date.now());
-        if (saved) { scope.showPage(resultState(saved.found, saved.at)); return; }
+      const key = !request.selectionOnly && request.contentFingerprint ? request.contentFingerprint : null;
+      if (reuse && key) {
+        const saved = reusable(results, tab.key, key, Date.now());
+        if (saved) { scope.showPage(resultState(saved.found, saved.at, timingsOf({ reused_ms: scope.elapsed() }))); return; }
       }
-      if (reuse && request.pageUrl) {
-        // An earlier shared result is a shortcut only: when it is slow, the search goes on.
-        try {
-          const { response, saved } = await bounded(cacheProbeTimeoutMs, scope.signal, async (signal) => {
-            const response = await fetch(site.url + live, { method: "POST", headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ cacheOnly: true, pageUrl: request.pageUrl }), signal });
-            return { response, saved: await response.json() };
-          });
-          if (!await current(scope)) { scope.showPage({ kind: "refused", code: "page_changed" }); return; }
-          if (response.ok && saved.cache?.shared && saved.about_a_treatment === true) {
-            scope.showPage(resultState(saved, saved.cache.checkedAt)); return;
+      if (reuse && request.pageUrl && !request.selectionOnly) {
+        if (!probe || probedFor !== request.pageUrl) probe = probeShared(scope, request.pageUrl);
+        const shared = await probe;
+        if (!await current(scope)) { scope.showPage({ kind: "refused", code: "page_changed" }); return; }
+        if (shared) {
+          const final = shared.about_a_treatment === true || !mediaDependent(request);
+          if (final || !eligible()) {
+            // Dated as first checked, and kept for this content once whole and final.
+            if (key && final) {
+              results = remember(results, tab.key, key, shared, shared.cache.checkedAt);
+              scope.save({ results });
+            }
+            scope.showPage(resultState(shared, shared.cache.checkedAt, timingsOf({ reused_ms: scope.elapsed() })));
+            return;
           }
-        } catch { if (scope.over()) return; }
+          // The public words were read as no treatment; what the media shows is read next.
+          await visualSearch(scope, { reuse }); return;
+        }
+      } else if (probe) {
+        // Not to be used: the reading has since turned out to be the reader's own selection.
+        probe = null;
       }
       // A media-only post does not buy a fruitless caption-only model call first.
       const earlierVisual = reuse && results.some(entry => entry.key === tab.key && entry.found?.source?.kind === "screenshot");
-      if (request.visualCandidate && !request.selectionOnly && !request.links?.length && (request.text.length < 240 || earlierVisual)) {
+      if (mediaDependent(request) && !request.links?.length && (request.text.length < 240 || earlierVisual)) {
         await visualSearch(scope, { reuse }); return;
       }
-      const key = !request.selectionOnly && request.contentFingerprint ? request.contentFingerprint : null;
-      const found = await send(scope, request, { reuse, key });
-      if (found?.about_a_treatment === false && request.visualCandidate && !request.selectionOnly) await visualSearch(scope, { reuse });
+      const provisional = mediaDependent(request) && eligible();
+      const found = await send(scope, request, { reuse, key, provisional });
+      if (found?.about_a_treatment === false && provisional) await visualSearch(scope, { reuse });
     } catch { scope.showPage({ kind: "refused", code: "failed", canVisual: eligible() }); }
   }
   function search(options) {

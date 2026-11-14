@@ -10,6 +10,24 @@ const MAX_LINK = 500;
 const CHOSEN_FROM = 20;
 // Less than this and there is nothing to search on.
 const ENOUGH = 40;
+// An article this long, in characters and in words, is read from its words alone.
+const READABLE_FROM = 1000;
+const READABLE_WORDS = 150;
+// What a page's structured data may call an ordinary written article.
+const ARTICLE_TYPES = new Set([
+  "Article", "NewsArticle", "ReportageNewsArticle", "AnalysisNewsArticle", "BackgroundNewsArticle",
+  "OpinionNewsArticle", "ReviewNewsArticle", "AskPublicNewsArticle", "ScholarlyArticle",
+  "MedicalScholarlyArticle", "TechArticle", "Report",
+]);
+// A post, a thread or a live page is not an ordinary article whatever its length.
+const POST_TYPES = new Set(["SocialMediaPosting", "DiscussionForumPosting", "LiveBlogPosting", "BlogPosting"]);
+// Words saying that the claim is in a picture, chart or clip rather than in the text.
+const IMAGE_CLAIM = new RegExp([
+  String.raw`\b(?:screenshot|screen grab|infographic)s?\b`,
+  String.raw`\b(?:see|watch|look at|shown in|pictured in|in) (?:the|this|our) (?:image|photo|picture|chart|graph|graphic|video|clip|slide|figure)s?\b`,
+  String.raw`\b(?:image|photo|picture|chart|graph|graphic|video|clip)s? (?:above|below)\b`,
+  String.raw`\b(?:above|below) (?:image|photo|picture|chart|graph|graphic|video|clip)s?\b`,
+].join("|"), "i");
 
 /**
  * Runs inside the open page and hands back its raw materials. It is sent into the page
@@ -30,7 +48,7 @@ export function collectFromPage() {
       : url.pathname.match(/^\/(?:shorts|live)\/([\w-]{11})\/?$/)?.[1];
     const empty = {
       address: location.href, title: "", selection: String(getSelection() ?? "").trim().slice(0, 20000),
-      head: "", focusHtml: "", focusText: "", links: [], postTitle: null, contentHref: null,
+      head: "", focusHtml: "", focusText: "", links: [], postTitle: null, contentHref: null, structured: [],
       mediaScope: { address: location.href, selector: null, videoOnly: true },
     };
     if (!id || !/^[\w-]{11}$/.test(id)) return empty;
@@ -108,6 +126,10 @@ export function collectFromPage() {
     // Some platforms state a post's title and the address it links to on the post itself.
     postTitle: focus?.getAttribute("post-title"),
     contentHref: focus?.getAttribute("content-href"),
+    // What the page says it is, for other software: read here only to tell an ordinary
+    // article from a post or a gallery, and never sent.
+    structured: [...document.querySelectorAll('script[type="application/ld+json"]')].slice(0, 20)
+      .map((node) => (node.textContent ?? "").slice(0, 100000)),
   };
 }
 
@@ -209,4 +231,65 @@ export function composeRequest(collected, address, { readAddress, readPage, page
   }
   const request = { text, links: outgoing };
   return isPost ? { ...request, platform: read.platform } : request;
+}
+
+/** The types a page's structured data gives its top-level things, in an @graph too. */
+function structuredTypes(collected) {
+  const blocks = [...(Array.isArray(collected.structured) ? collected.structured : [])];
+  for (const match of String(collected.head ?? "").matchAll(/<script\b[^>]*\btype\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script\s*>/gi)) {
+    blocks.push(match[1]);
+  }
+  const types = new Set();
+  const add = (node) => {
+    if (Array.isArray(node)) { node.forEach(add); return; }
+    if (!node || typeof node !== "object") return;
+    for (const type of [node["@type"]].flat()) if (typeof type === "string") types.add(type.replace(/^https?:\/\/schema\.org\//, ""));
+    if (Array.isArray(node["@graph"])) node["@graph"].forEach(add);
+  };
+  for (const block of blocks.slice(0, 40)) {
+    try { add(JSON.parse(block)); } catch { /* Malformed structured data says nothing. */ }
+  }
+  return types;
+}
+
+function openGraphType(head) {
+  for (const [tag] of String(head ?? "").matchAll(/<meta\b[^>]*>/gi)) {
+    if (/\bproperty\s*=\s*["']og:type["']/i.test(tag)) return (tag.match(/\bcontent\s*=\s*["']([^"']*)["']/i)?.[1] ?? "").trim().toLowerCase();
+  }
+  return "";
+}
+
+/**
+ * Whether the open page is an ordinary written article whose words can be read on their
+ * own: it says so in its structured data, is not a post, carries substantial text, shows
+ * no video or canvas, and does not point to a picture for its claim. Such a page is not
+ * screenshotted automatically when its words name no treatment. When unsure, false.
+ *
+ * @param {ReturnType<typeof collectFromPage>} collected
+ * @param {{ text: string, platform?: string } | null} request what composeRequest made of it
+ * @param {string} address the page's address
+ * @param {{ readAddress: Function, media?: { kind: string }[] }} context the visible media
+ */
+export function readableArticle(collected, request, address, { readAddress, media = [] }) {
+  if (!collected || !request || request.platform) return false;
+  if (String(collected.selection ?? "").length >= CHOSEN_FROM) return false;
+  try { if (readAddress(address).kind !== "article") return false; } catch { return false; }
+  const types = structuredTypes(collected);
+  const og = openGraphType(collected.head);
+  if ([...types].some((type) => POST_TYPES.has(type)) || /^(?:video|music|profile)\b/.test(og)) return false;
+  if (![...types].some((type) => ARTICLE_TYPES.has(type)) && og !== "article") return false;
+  const text = String(request.text ?? "");
+  if (text.length < READABLE_FROM || (text.match(/[\p{L}\p{N}]+/gu) ?? []).length < READABLE_WORDS) return false;
+  if ((Array.isArray(media) ? media : []).some((one) => one?.kind !== "img")) return false;
+  return !IMAGE_CLAIM.test(text);
+}
+
+/**
+ * What a page's content fingerprint is taken over. An ordinary article is its words and
+ * links only, so a decorative photo moving as the reader scrolls does not make the page
+ * new. Other pages include the visible media, and a video page its words only.
+ */
+export function fingerprintInput(request, media, { videoOnly = false } = {}) {
+  if (request.readableArticle) return { text: request.text, links: request.links, media: null, article: true };
+  return { text: request.text, links: request.links, media: videoOnly ? null : media };
 }

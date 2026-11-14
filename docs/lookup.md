@@ -101,7 +101,7 @@ The correction in `openspec/changes/visible-content-lookup` returns a non-treatm
 
 A linked paper that passes its deadline, or fails, is not dropped in silence. The answer counts the papers not looked up, the site and the popup say beside the list that a trial such a paper reports may be missing, and that answer is kept out of the shared results library and the popup's saved results, so the next lookup asks again. Europe PMC answered the same papers in under 0.3 seconds a minute after taking 17 to 25 seconds over them.
 
-The diagnostic tests use stalled synthetic sources, including sources that ignore cancellation, and check that late completions cannot update the popup or its saved results. The fix must be deployed with an updated Safari extension before installed users receive all of these protections.
+The diagnostic tests use stalled synthetic sources, including sources that ignore cancellation, and check that late completions cannot update the popup or its saved results. The service fix was deployed through [PR #94](https://github.com/jamespacileo/whatcameofit/pull/94), and Safari 0.9.2 (11) was installed locally. On the same article, an explicit fresh search including automatic screenshot fallback had reached its result by the 9.4-second UI observation. This was a single observed check, not a performance guarantee. See `openspec/changes/visible-content-lookup/latency-verification.md` for the release evidence; no App Store submission was made.
 
 ## Posts on social media
 
@@ -711,3 +711,25 @@ Limits known before it started, from the limited run on the sample's trials:
 - Media Cloud no longer collects several of the trade titles that reported most trials in the sample (healio.com, onclive.com, fiercepharma.com, endpts.com).
 
 The first allowance's figures are added here when it has been used.
+
+## Record readings on the real database (14 November 2026)
+
+Openspec `claim-at-a-glance`, under ADR 0003. A backup was taken first. The database was migrated from 0016 to 0017 with `main` at 677e0c7. `thenwhat readings` was then run for each published claim on its own: 943 seconds, with no failures.
+
+| | Count |
+| --- | --- |
+| Trials read | 235 |
+| Readings stored (each checked by rule) | 722: 342 follow-up lengths and 380 measure kinds |
+| Measure kinds | body measure 82, frequency 78, symptom score 75, side effects 56, survival 38, other 32, scan finding 9, use of treatment 5, quality of life 3, physical test 2 |
+| Below 0.8 confidence | 15 |
+| Exported at or above the bar (`READING_ACCEPT_ABOVE` 0.8, PR #102) | 707, on 234 of 237 trials |
+
+**Checked again, independently of the rule, against each trial's stored record.** All 722 readings found their record. Every reading's words are in the named field character for character, and every follow-up's number is in its words. Two follow-ups do not spell their unit: "24 M" for 24 months, and "16 mounths", the registry's own spelling.
+
+**Read by hand.** All 15 readings under 0.8 were read, and a random sample of 25 above it. The 25 were all right. 4 of the 15 were wrong:
+- NCT05953168: "every 9 weeks" read as a follow-up length. It is how often response was assessed.
+- NCT00274820: "at least 4 weeks after" read as the follow-up of a measure taken at 6 months.
+- NCT04757922: "Menopausal age" read as survival.
+- NCT02850068: "Patient Function" read as quality of life.
+
+A single reading cannot be rejected, by design. So the operator chose the bar, and none of the 15 is exported. For those answers, the page gives the registry's own words.

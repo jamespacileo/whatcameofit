@@ -7,58 +7,6 @@ const clean = (value, limit = 200) => typeof value === "string" ? value.trim().s
 const distinct = (values) => [...new Map(values.map(v => [v.toLowerCase(), v])).values()];
 const finite = (n) => typeof n === "number" && Number.isFinite(n);
 const array = value => Array.isArray(value) ? value : [];
-const SELECT = "id,title,doi,publication_year,type,primary_location";
-// The most of each the page or the extraction may add to one lookup.
-const MAX_CITATIONS = 3;
-const MAX_PAPER_QUERIES = 2;
-const MAX_RESEARCHERS = 2;
-const MAX_PAPERS = 20;
-
-// Bounded literature-search inputs. Anything that is not plainly words is dropped, not
-// repaired: it reaches a provider's query language. Search operators, quotes and filter
-// separators never pass.
-const OPERATOR = /^(?:AND|OR|NOT)$/;
-function paperQuery(value) {
-  const words = clean(value).split(/\s+/).filter(Boolean);
-  if (words.length < 2 || words.length > 6 || words.some(word => OPERATOR.test(word) || !/^[\p{L}\p{N}][\p{L}\p{N}'’-]*$/u.test(word))) return "";
-  const query = words.join(" ");
-  return query.length <= 120 ? query : "";
-}
-const TITLE = /^(?:dr|prof|professor|mr|mrs|ms|mx|sir|dame)\.?$/i;
-function researcher(value) {
-  const parts = clean(value).split(/\s+/).filter(Boolean);
-  if (parts.length < 2 || parts.length > 5 || parts.some(part => TITLE.test(part) || !/^\p{L}[\p{L}\p{M}'’.-]*$/u.test(part))) return "";
-  const name = parts.join(" ");
-  return name.length <= 80 && parts.filter(part => /\p{L}{2}/u.test(part)).length >= 2 ? name : "";
-}
-// The calendar date of an ISO date or timestamp, when it is a real date.
-function isoDate(value) {
-  const raw = typeof value === "string" ? value.trim() : "";
-  if (raw.length > 40 || !finite(Date.parse(raw))) return "";
-  const found = /^(\d{4})-(\d{2})-(\d{2})(?:$|T[\d:.]+(?:Z|[+-]\d{2}:?\d{2})?$)/.exec(raw);
-  if (!found) return "";
-  const [, year, month, day] = found.map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return year >= 1900 && year < 2200 && date.getUTCMonth() === month - 1 && date.getUTCDate() === day ? found.slice(1).join("-") : "";
-}
-function doiOf(value) {
-  const doi = (typeof value === "string" ? value.trim() : "").replace(/^(?:https:\/\/(?:dx\.)?doi\.org\/|doi:)/i, "").toLowerCase();
-  return /^10\.\d{4,9}\/[^\s?#&"'<>\\|,%]+$/.test(doi) && doi.length <= 200 && !/[\u0000-\u001f\u007f]/.test(doi) ? doi : "";
-}
-function pmidOf(value) {
-  const pmid = typeof value === "number" && Number.isInteger(value) ? String(value) : clean(value);
-  return /^[1-9]\d{0,8}$/.test(pmid) ? pmid : "";
-}
-// First occurrence wins: a later record with the same OpenAlex id or the same link is dropped.
-function firstOfEach(papers) {
-  const ids = new Set(), urls = new Set();
-  return papers.filter(item => {
-    const id = item.id.toLowerCase(), url = item.url.toLowerCase();
-    if (ids.has(id) || urls.has(url)) return false;
-    ids.add(id); urls.add(url);
-    return true;
-  });
-}
 
 async function boundedCache(operation) {
   let timer;
@@ -124,24 +72,6 @@ async function digest(value) {
   return [...new Uint8Array(bytes)].map(n => n.toString(16).padStart(2, "0")).join("");
 }
 
-// The literature searches for one lookup. Paper queries from the report are complete
-// queries in their own right, about the research itself; the condition is not appended.
-// Without them, the treatment's names within the condition, as before.
-function plan({ intervention, indication, searchPhrases, paperQueries, researchers, publishedBefore }) {
-  const before = isoDate(publishedBefore);
-  const queries = distinct(array(paperQueries).slice(0, 10).map(paperQuery).filter(Boolean)).slice(0, MAX_PAPER_QUERIES);
-  const authors = distinct(array(researchers).slice(0, 10).map(researcher).filter(Boolean)).slice(0, MAX_RESEARCHERS);
-  let searches;
-  if (queries.length) {
-    searches = [...authors.map(author => ({ query: queries[0], author })), ...queries.map(query => ({ query }))];
-  } else {
-    const terms = distinct([clean(intervention), ...array(searchPhrases).slice(0, 3).map(v => clean(v))].filter(Boolean)).slice(0, 2);
-    searches = clean(indication) ? terms.map(term => ({ query: `${term} ${clean(indication)}` })) : [];
-  }
-  const planned = new Map(searches.map(s => ({ ...s, before })).map(s => [JSON.stringify([s.query.toLowerCase(), (s.author ?? "").toLowerCase()]), s]));
-  return [...planned.values()];
-}
-
 export function makeResearch({ fetch, apiKey, contact, cache, now = Date.now, timeoutMs = 5000 }) {
   const pauses = new Map();
   let rorAfter = 0;
@@ -180,7 +110,7 @@ export function makeResearch({ fetch, apiKey, contact, cache, now = Date.now, ti
             if ([401, 402, 403, 429].includes(response.status)) {
               await pause(source, response.status === 429 ? retrySeconds(response.headers.get("Retry-After"), now()) : untilTomorrow());
             }
-            return { error: [402, 429].includes(response.status) ? "limit" : "unavailable", status: response.status };
+            return { error: [402, 429].includes(response.status) ? "limit" : "unavailable" };
           }
           // Hold the timeout through body consumption. Bound an unexpected provider
           // payload, as well as the number of records requested.
@@ -203,45 +133,22 @@ export function makeResearch({ fetch, apiKey, contact, cache, now = Date.now, ti
     } catch { return { error: "unavailable" }; }
     finally { clearTimeout(timer); }
   }
-  // One charged search. The cache key holds every constraint, so a search scoped to
-  // an author or a date never answers for another.
-  async function searchPapers({ query, author = "", before = "" }) {
-    const key = author || before
-      ? `research-v1:openalex:scoped:${await digest(JSON.stringify([query.toLowerCase(), author.toLowerCase(), before]))}`
-      : `research-v1:openalex:${await digest(query.toLowerCase())}`;
+  async function searchPapers(query) {
+    const key = `research-v1:openalex:${await digest(query.toLowerCase())}`;
     const cached = await get(key);
     if (Array.isArray(cached)) return { items: cached };
     if (await paused("openalex")) return { error: "limit" };
     const budget = await request("https://api.openalex.org/rate-limit", "openalex");
     if (budget.error) return budget;
     if (!allowance(budget.body?.rate_limit)) { await pause("openalex", untilTomorrow()); return { error: "limit" }; }
-    const filter = [author && `raw_author_name.search:"${author}"`, before && `to_publication_date:${before}`].filter(Boolean).join(",");
     const url = new URL("https://api.openalex.org/works");
-    url.search = new URLSearchParams({ search: query, ...(filter ? { filter } : {}), per_page: "10", select: SELECT });
+    url.search = new URLSearchParams({ search: query, per_page: "10", select: "id,title,doi,publication_year,type,primary_location" });
     const reply = await request(url.href, "openalex");
     if (reply.error) return reply;
     if (!Array.isArray(reply.body?.results)) return { error: "unavailable" };
     const items = reply.body.results.slice(0, 10).map(paper).filter(Boolean);
     await put(key, items, TTL);
     return { items };
-  }
-  // One cited work by its identifier. A singleton costs nothing, so it needs no allowance
-  // check, but it still honours a provider pause. A clean 404 is a cached no-hit; a
-  // malformed record or an outage is never cached as empty.
-  async function citedWork({ kind, value }) {
-    const key = `research-v1:openalex:work:${kind}:${await digest(value)}`;
-    const cached = await get(key);
-    if (Array.isArray(cached)) return { items: cached };
-    if (await paused("openalex")) return { error: "limit" };
-    const url = new URL(`https://api.openalex.org/works/${kind}:${kind === "doi" ? encodeURIComponent(value) : value}`);
-    url.search = new URLSearchParams({ select: SELECT });
-    const reply = await request(url.href, "openalex");
-    if (reply.status === 404) { await put(key, [], TTL); return { items: [] }; }
-    if (reply.error) return reply;
-    const item = paper(reply.body);
-    if (!item) return { error: "unavailable" };
-    await put(key, [item], TTL);
-    return { items: [item] };
   }
   async function findOrganisation(name) {
     const key = `research-v1:ror:${await digest(name.toLowerCase())}`;
@@ -263,43 +170,23 @@ export function makeResearch({ fetch, apiKey, contact, cache, now = Date.now, ti
     return { items };
   }
   return {
-    async search({ intervention, indication, searchPhrases = [], organisations = [], paperQueries = [], researchers = [],
-      publishedBefore = null, dois = [], pubmedIds = [] } = {}) {
+    async search({ intervention, indication, searchPhrases = [], organisations = [] } = {}) {
       const result = { papers: [], organisations: [], availability: { openalex: "not_needed", ror: "not_needed" } };
       if (!clean(contact)) return { ...result, availability: { openalex: "not_configured", ror: "not_configured" } };
-      const names = distinct(array(organisations).slice(0, 10).map(v => clean(v)).filter(Boolean)).slice(0, 3);
-      const citations = [...new Map([
-        ...array(dois).slice(0, 10).map(v => ({ kind: "doi", value: doiOf(v) })),
-        ...array(pubmedIds).slice(0, 10).map(v => ({ kind: "pmid", value: pmidOf(v) })),
-      ].filter(c => c.value).map(c => [`${c.kind}:${c.value}`, c])).values()].slice(0, MAX_CITATIONS);
-      const searches = plan({ intervention, indication, searchPhrases, paperQueries, researchers, publishedBefore });
+      const terms = distinct([clean(intervention), ...(Array.isArray(searchPhrases) ? searchPhrases.slice(0, 3).map(v => clean(v)) : [])].filter(Boolean)).slice(0, 2);
+      const names = distinct((Array.isArray(organisations) ? organisations.slice(0, 10).map(v => clean(v)) : []).filter(Boolean)).slice(0, 3);
       // Independent providers; a failure of one never removes the other's results.
       await Promise.all([
         (async () => {
           if (!apiKey) { result.availability.openalex = "not_configured"; return; }
-          if (!citations.length && !searches.length) return;
+          if (!terms.length || !clean(indication)) return;
           result.availability.openalex = "ok";
-          // A paper the page cites comes first and stays whatever happens to discovery.
-          const cited = [], found = [];
-          let citationError = null;
-          try {
-            for (const citation of citations) {
-              const reply = await citedWork(citation);
-              if (reply.error === "limit") { result.availability.openalex = "limit"; return; }
-              if (reply.error) citationError = reply.error;
-              if (!reply.error) cited.push(...reply.items);
-            }
-            // Researcher-scoped searches first, then the unscoped fallbacks. Every planned
-            // search runs; the result cap applies only after all of them.
-            for (const search of searches) {
-              const reply = await searchPapers(search);
-              if (reply.error) { result.availability.openalex = reply.error; break; }
-              found.push(...reply.items);
-            }
-            if (citationError && result.availability.openalex === "ok") result.availability.openalex = citationError;
-          } finally {
-            result.papers = firstOfEach([...cited, ...found]).slice(0, MAX_PAPERS);
+          for (const term of terms) {
+            const found = await searchPapers(`${term} ${clean(indication)}`);
+            if (found.error) { result.availability.openalex = found.error; break; }
+            result.papers.push(...found.items);
           }
+          result.papers = [...new Map(result.papers.map(p => [p.url.toLowerCase(), p])).values()].slice(0, 20);
         })().catch(() => { result.availability.openalex = "unavailable"; }),
         (async () => {
           if (!names.length) return;
