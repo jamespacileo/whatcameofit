@@ -42,11 +42,14 @@ await test('does not forward reader cookies or authorisation and has a timeout',
 await test('reuses a fresh copy without upstream reads',async()=>{
  const s=setup({entry:{version:1,at:now-3600000,record}});const r=await s.run();assert.equal(r.status,200);assert.equal(s.calls.length,0);assert.equal(s.puts.length,0);
 });
-await test('outage shows dated older copy, never resets retrieval time',async()=>{
- const at=now-2*86400000;const s=setup({fail:true,entry:{version:1,at,record}});const r=await s.run();const h=await r.text();assert.equal(r.status,200);assert.match(h,/older|out.of.date|cached copy/i);assert.match(h,/2026-11-12|12\s+Nov(?:ember)?\s+2026/);assert.equal(s.puts.length,0);assert.ok(!h.includes('PRIVATE_ERROR_SECRET'));
+await test('a copy older than a day is never shown, even when the registry is down',async()=>{
+ const s=setup({fail:true,entry:{version:1,at:now-2*86400000,record}});const r=await s.run();const h=await r.text();assert.equal(r.status,503);assert.equal(s.calls.length,1);assert.ok(!h.includes('A study of CIN-107'));assert.doesNotMatch(h,/older copy/i);assert.ok(h.includes(original));assert.ok(!h.includes('PRIVATE_ERROR_SECRET'));
+});
+await test('a copy older than a day is read again from the registry',async()=>{
+ const s=setup({entry:{version:1,at:now-2*86400000,record}});const r=await s.run();assert.equal(r.status,200);assert.equal(s.calls.length,1);assert.equal(s.puts.length,1);assert.equal(s.puts[0].v.at,now);assert.equal(s.puts[0].options.expirationTtl,86400);
 });
 await test('outage without a usable copy is a recoverable 503',async()=>{
- for(const entry of [undefined,{version:1,at:now-8*86400000,record},{version:1,at:now+60000,record}]){const s=setup({fail:true,entry});const r=await s.run();const h=await r.text();assert.equal(r.status,503);assert.ok(h.includes(original));assert.match(h,/try again|retry/i);assert.match(r.headers.get('cache-control'),/no-store/);assert.ok(!h.includes('PRIVATE_ERROR_SECRET'));}
+ for(const entry of [undefined,{version:1,at:now-2*86400000,record},{version:1,at:now-8*86400000,record},{version:1,at:now+60000,record}]){const s=setup({fail:true,entry});const r=await s.run();const h=await r.text();assert.equal(r.status,503);assert.ok(h.includes(original));assert.match(h,/try again|retry/i);assert.match(r.headers.get('cache-control'),/no-store/);assert.ok(!h.includes('PRIVATE_ERROR_SECRET'));}
 });
 await test('invalid or uncited IDs never query registry',async()=>{
  for(const suffix of ['NCT1','NCT00000000','NCT04605549/extra','%3Cscript%3E']){const s=setup();const r=await s.run('/trials/'+suffix);assert.equal(r.status,404);assert.equal(s.calls.length,0);}

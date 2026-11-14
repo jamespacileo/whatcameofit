@@ -6,7 +6,7 @@ The site builds offline. `trial-index.json` is derived from the published export
 
 The Worker uses the existing public API v2 client with `CONTACT_EMAIL`. It does not need model credentials and never forwards visitor cookies or authorisation. Each fetch has an eight-second deadline. `TRIAL_RECORD_READS` limits uncached upstream requests to 60 per minute per Cloudflare location; cached responses do not spend lookup/model quotas.
 
-Validated raw records are saved in the existing `LOOKUP_RESULTS` KV namespace under `trial-record:v1:<id>` with their retrieval time. A copy is fresh for 24 hours and retained seven days. A transient failure can show a younger-than-seven-days copy with an explicit “older copy” notice. Expired, future-dated or mismatched copies are ignored. Missing registry records return 404; temporary failures without a usable copy return 503 with recovery links. Errors and stale replies use `no-store`. KV outages do not prevent a successful live response.
+Validated raw records are saved in the existing `LOOKUP_RESULTS` KV namespace under `trial-record:v1:<id>` with their retrieval time. A copy is reused for 24 hours and then expires. No older copy is ever shown: when the registry cannot be read, the page says so. Expired, future-dated or mismatched copies are ignored. Missing registry records return 404; temporary failures without a usable copy return 503 with recovery links. Errors use `no-store`. KV outages do not prevent a successful live response.
 
 ## Local preview
 

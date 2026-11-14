@@ -28,3 +28,7 @@ The preferred Claude worker could not verify the existing subscription and did n
 ## Local preview
 
 `http://127.0.0.1:8789/primary-aldosteronism-baxdrostat` with direct readers at `/trials/NCT04605549`, `/trials/NCT07007793`, and `/trials/NCT07800858`. See docs/trial-records.md to restart it. The preview binds only to loopback; no public tunnel or publication was created.
+
+## Revision, 14 November 2026
+
+Before release, the older-copy state checked above was removed under the operator's rule against lower-quality fallbacks. A record is reused for 24 hours. After that it is read again, and when the registry cannot be read the page shows the unavailable state. `site/tests/trials.test.mjs` covers both cases. The branch was also brought level with `main`, and the "View trial details here" link now sits in the `Trial` and `MatchList` components that replaced the old matched-records list.

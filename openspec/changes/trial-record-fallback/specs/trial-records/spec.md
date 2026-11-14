@@ -27,16 +27,16 @@ The local page SHALL deliver readable HTML without client-side registry requests
 - **WHEN** a reader opens the local page in Safari without ClinicalTrials.gov cookies
 - **THEN** the study details are readable and the browser sends no request to ClinicalTrials.gov
 
-### Requirement: Provenance and bounded freshness
-The page SHALL identify ClinicalTrials.gov as the source, describe its fields as a formatted selection, and show retrieval and registry-update dates separately. Successful records SHALL be reused for 24 hours. During transient failures, a cached record up to seven days old SHALL be labelled as an older copy with its original retrieval date.
+### Requirement: Provenance and one day of reuse
+The page SHALL identify ClinicalTrials.gov as the source, describe its fields as a formatted selection, and show retrieval and registry-update dates separately. A record read within the last 24 hours SHALL be reused with its original retrieval date. A record older than that SHALL NOT be shown: the registry SHALL be read again, and when it cannot be read the page SHALL show an unavailable state with the official record's link and a way to try again. No older copy is shown in place of a live read.
 
-#### Scenario: Cached record during an outage
-- **WHEN** the registry is unavailable and a two-day-old validated record exists
-- **THEN** the reader sees that record with an explicit older-copy notice and its unchanged retrieval date
+#### Scenario: Record read today
+- **WHEN** a validated record was read three hours ago
+- **THEN** the reader sees it with its retrieval date and the registry is not asked again
 
-#### Scenario: Cache too old
-- **WHEN** the registry fails and the only record is older than seven days
-- **THEN** the page shows an unavailable state rather than the old record
+#### Scenario: Registry unavailable
+- **WHEN** the registry is unavailable and the only saved record is two days old
+- **THEN** the page shows an unavailable state with the official link, and the old record is not shown
 
 ### Requirement: Safe and bounded record access
 Only well-formed ClinicalTrials.gov identifiers cited by the published export SHALL be fetched. Returned and cached identifiers MUST match the requested record. External text SHALL be rendered safely. Upstream reads SHALL have a finite timeout and a dedicated request limit. Errors SHALL not expose internal exception details.

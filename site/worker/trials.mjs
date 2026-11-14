@@ -3,8 +3,9 @@ import { makeRegistry } from "./registry.mjs";
 import { SITE } from "../site.config.mjs";
 
 const DAY = 86400000;
+// A record read within the day is reused, with its retrieval date. An older one is never shown:
+// when the registry cannot be read, the page says so (no lower-quality fallbacks).
 const FRESH = DAY;
-const RETAIN = 7 * DAY;
 const PREFIX = "trial-record:v1:";
 const text = value => typeof value === "string" ? value : "";
 const strings = value => Array.isArray(value) ? value.filter(item => typeof item === "string") : [];
@@ -18,7 +19,7 @@ function validRecord(record, id) {
 
 function validCopy(copy, id, now) {
   return copy?.version === 1 && Number.isFinite(copy.at) && copy.at <= now &&
-    now - copy.at < RETAIN && validRecord(copy.record, id);
+    now - copy.at < FRESH && validRecord(copy.record, id);
 }
 
 // Registry dates can be a year, a month or a full date; never invent missing precision.
@@ -62,7 +63,7 @@ function sourceLink(id) {
   return id ? `<a href="https://clinicaltrials.gov/study/${id}" rel="noopener">Open the full record on ClinicalTrials.gov</a>` : "";
 }
 
-function content(copy, id, claims, stale) {
+function content(copy, id, claims) {
   const p = copy.record.protocolSection;
   const info = p.identificationModule;
   const status = p.statusModule ?? {};
@@ -88,7 +89,6 @@ function content(copy, id, claims, stale) {
     <p>${sourceLink(id)}</p>
     <p class="trial-source">Selected fields from ClinicalTrials.gov, formatted for reading. Registry text is reproduced without interpretation.</p>
     <p class="trial-source">Retrieved <time datetime="${retrieved}">${date(retrieved)}</time>. Registry last updated ${dated(status.lastUpdatePostDateStruct)}.</p>
-    ${stale ? '<div class="trial-notice" role="status"><p><strong>This is an older copy.</strong> We could not refresh the registry record. The retrieval date above shows when this copy was saved.</p></div>' : ""}
     <dl class="trial-facts">${facts.map(([name,value])=>`<div><dt>${name}</dt><dd>${escape(value)}</dd></div>`).join("")}</dl>
     <p class="trial-source" style="margin-top:1rem">This is the registry’s study status. It may be newer than the evidence on a claim page and does not change that claim’s status.</p>
     <section aria-labelledby="trial-overview"><h2 id="trial-overview">Study overview</h2>${summary ? paragraphs(summary) : '<p>No summary is reported in this record.</p>'}</section>
@@ -100,8 +100,8 @@ function content(copy, id, claims, stale) {
     </dl></section>${claimLinks(claims)}`;
 }
 
-async function page(request, env, {id="", title, html, status=200, age=0, stale=false}) {
-  const headers = {"Content-Type":"text/html; charset=utf-8", "X-Robots-Tag":"noindex, follow", "Cache-Control": status === 200 && !stale ? `public, max-age=${Math.max(0, Math.min(300, Math.floor((FRESH-age)/1000)))}` : "no-store"};
+async function page(request, env, {id="", title, html, status=200, age=0}) {
+  const headers = {"Content-Type":"text/html; charset=utf-8", "X-Robots-Tag":"noindex, follow", "Cache-Control": status === 200 ? `public, max-age=${Math.max(0, Math.min(300, Math.floor((FRESH-age)/1000)))}` : "no-store"};
   if (status === 405) headers.Allow = "GET, HEAD";
   if (status === 503 || status === 429) headers["Retry-After"] = "60";
   let body;
@@ -141,20 +141,20 @@ export async function handleTrial(request, env, {fetch: get=globalThis.fetch, no
   let copy;
   try { copy = await env.LOOKUP_RESULTS?.get(key,"json"); } catch { /* The reader still works without KV. */ }
   if (!validCopy(copy,id,at)) copy = null;
-  const render = (saved,stale=false) => page(request,env,{id,title:saved.record.protocolSection.identificationModule.briefTitle,html:content(saved,id,claims,stale),age:at-saved.at,stale});
-  if (copy && at-copy.at < FRESH) return render(copy);
-  const unavailable = () => copy ? render(copy,true) : failure(request,env,id,claims,503,"We could not retrieve this record from ClinicalTrials.gov. Please try again shortly, or open the official record.");
+  const render = saved => page(request,env,{id,title:saved.record.protocolSection.identificationModule.briefTitle,html:content(saved,id,claims),age:at-saved.at});
+  if (copy) return render(copy);
+  const unavailable = () => failure(request,env,id,claims,503,"We could not retrieve this record from ClinicalTrials.gov. Please try again shortly, or open the official record.");
   if (!text(env.CONTACT_EMAIL).trim()) return unavailable();
   try {
     if (env.TRIAL_RECORD_READS && !(await env.TRIAL_RECORD_READS.limit({key:"all"})).success) {
-      return copy ? render(copy,true) : failure(request,env,id,claims,503,"The registry reader is busy. Please try again in a minute.");
+      return failure(request,env,id,claims,503,"The registry reader is busy. Please try again in a minute.");
     }
     const registry = makeRegistry({contact:env.CONTACT_EMAIL, fetch:(url,options={})=>get(url,{...options,signal:AbortSignal.timeout(8000)})});
     const record = await registry.fetch(id);
     if (!record) return failure(request,env,id,claims,404,"ClinicalTrials.gov has no record at this identifier.");
     if (!validRecord(record,id)) throw Error("invalid registry record");
     const saved = {version:1,at:now(),record};
-    try { await env.LOOKUP_RESULTS?.put(key,JSON.stringify(saved),{expirationTtl:RETAIN/1000}); } catch { /* Saving a public copy is optional. */ }
+    try { await env.LOOKUP_RESULTS?.put(key,JSON.stringify(saved),{expirationTtl:FRESH/1000}); } catch { /* Saving a public copy is optional. */ }
     return render(saved);
   } catch { return unavailable(); }
 }

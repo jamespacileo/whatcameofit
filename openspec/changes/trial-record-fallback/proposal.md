@@ -8,7 +8,7 @@ ClinicalTrials.gov's study pages can display 403 when their browser session lack
 
 - Retain official registry links and add a quiet local trial-details link beside ClinicalTrials.gov records in claim timelines and matched records.
 - Serve readable trial records using the existing public API client, the site's normal layout, and server-side caching.
-- Show provenance, retrieval and registry update dates, explicit stale-data notices, and useful unavailable states.
+- Show provenance, retrieval and registry update dates and useful unavailable states. (Revised 2026-11-14: no older copy is shown when the registry cannot be read.)
 - Verify the three baxdrostat records in Safari without registry cookies and provide a loopback-only local preview. Publication is excluded pending the user's review.
 
 ## Capabilities

@@ -8,7 +8,7 @@
 ## 2. Verify
 - [x] 2.1 Pass protected behavior checks and relevant existing site tests.
 - [x] 2.2 Build the published snapshot offline and inspect desktop and mobile layouts.
-- [x] 2.3 Verify all three real records in Safari without registry cookies and verify unavailable/stale states.
+- [x] 2.3 Verify all three real records in Safari without registry cookies and verify unavailable states. (The older-copy state verified here was removed on 2026-11-14 before release; its replacement is covered by `site/tests/trials.test.mjs`.)
 - [x] 2.4 Leave a local preview running and record the evidence for user review; do not publish.
 
 Verification and review findings are recorded in verification.md. Publication remains a separate user decision.
