@@ -312,6 +312,8 @@ const sentenceJson = sentences
       block.append(element("p", LIVE.likelyLead), list);
     }
     if (shown.none) block.append(element("p", shown.none));
+    // Said beside the list it qualifies, never folded away.
+    if (shown.papersUnchecked) block.append(element("p", shown.papersUnchecked));
     if (shown.rest) block.append(element("p", shown.rest, "entry-note"));
     if (shown.research) {
       const research = shown.research;
