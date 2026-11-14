@@ -44,7 +44,7 @@
 
 ## 7. Integration
 
-- [ ] 7.1 Run `make check`, then compare the built entries of five papers with their Europe PMC pages, field by field; record any mismatch as a failing test before fixing it
+- [x] 7.1 Run `make check`, then compare the built entries of five papers with their Europe PMC pages, field by field; record any mismatch as a failing test before fixing it
 
 ## Workflow follow-up
 
