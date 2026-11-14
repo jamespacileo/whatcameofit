@@ -1,0 +1,184 @@
+{
+  "number_of_results": 10,
+  "items": [
+    {
+      "substring": "Zzqxv Institute of Nowhere Qqxzj",
+      "score": 0.88,
+      "matching_type": "SINGLE SEARCH",
+      "chosen": false,
+      "organization": {
+        "admin": {
+          "created": {
+            "date": "2018-11-14",
+            "schema_version": "1.0"
+          },
+          "last_modified": {
+            "date": "2024-12-11",
+            "schema_version": "2.1"
+          }
+        },
+        "domains": [],
+        "established": 1935,
+        "external_ids": [
+          {
+            "all": [
+              "grid.473515.1"
+            ],
+            "preferred": "grid.473515.1",
+            "type": "grid"
+          }
+        ],
+        "id": "https://ror.org/054r35483",
+        "links": [
+          {
+            "type": "website",
+            "value": "http://www.iolaw.org.cn/global/en/"
+          }
+        ],
+        "locations": [
+          {
+            "geonames_details": {
+              "continent_code": "AS",
+              "continent_name": "Asia",
+              "country_code": "CN",
+              "country_name": "China",
+              "country_subdivision_code": "BJ",
+              "country_subdivision_name": "Beijing",
+              "lat": 39.9075,
+              "lng": 116.39723,
+              "name": "Beijing"
+            },
+            "geonames_id": 1816670
+          }
+        ],
+        "names": [
+          {
+            "lang": "en",
+            "types": [
+              "ror_display",
+              "label"
+            ],
+            "value": "Institute of Law"
+          },
+          {
+            "lang": "en",
+            "types": [
+              "alias"
+            ],
+            "value": "Institute of Law and Institute of International Law"
+          },
+          {
+            "lang": "zh",
+            "types": [
+              "label"
+            ],
+            "value": "中国法学网"
+          }
+        ],
+        "relationships": [
+          {
+            "label": "Chinese Academy of Social Sciences",
+            "type": "parent",
+            "id": "https://ror.org/05bxbmy32"
+          }
+        ],
+        "status": "active",
+        "types": [
+          "facility"
+        ]
+      }
+    },
+    {
+      "substring": "Zzqxv Institute of Nowhere Qqxzj",
+      "score": 0.88,
+      "matching_type": "SINGLE SEARCH",
+      "chosen": false,
+      "organization": {
+        "admin": {
+          "created": {
+            "date": "2019-02-17",
+            "schema_version": "1.0"
+          },
+          "last_modified": {
+            "date": "2024-12-11",
+            "schema_version": "2.1"
+          }
+        },
+        "domains": [],
+        "established": 1991,
+        "external_ids": [
+          {
+            "all": [
+              "grid.501888.c"
+            ],
+            "preferred": "grid.501888.c",
+            "type": "grid"
+          },
+          {
+            "all": [
+              "Q1584915"
+            ],
+            "preferred": null,
+            "type": "wikidata"
+          }
+        ],
+        "id": "https://ror.org/04ks1pv36",
+        "links": [
+          {
+            "type": "website",
+            "value": "http://teise.org/en/"
+          },
+          {
+            "type": "wikipedia",
+            "value": "https://en.wikipedia.org/wiki/Law_Institute_of_Lithuania"
+          }
+        ],
+        "locations": [
+          {
+            "geonames_details": {
+              "continent_code": "EU",
+              "continent_name": "Europe",
+              "country_code": "LT",
+              "country_name": "Lithuania",
+              "country_subdivision_code": "VL",
+              "country_subdivision_name": "Vilnius",
+              "lat": 54.68916,
+              "lng": 25.2798,
+              "name": "Vilnius"
+            },
+            "geonames_id": 593116
+          }
+        ],
+        "names": [
+          {
+            "lang": "en",
+            "types": [
+              "alias"
+            ],
+            "value": "Institute of Law"
+          },
+          {
+            "lang": "en",
+            "types": [
+              "ror_display",
+              "label"
+            ],
+            "value": "Law Institute of Lithuania"
+          },
+          {
+            "lang": "lt",
+            "types": [
+              "label"
+            ],
+            "value": "Teisės institutas"
+          }
+        ],
+        "relationships": [],
+        "status": "active",
+        "types": [
+          "facility"
+        ]
+      }
+    }
+  ]
+}
