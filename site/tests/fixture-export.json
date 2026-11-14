@@ -89,10 +89,23 @@
           "trial_id": null,
           "trial_phases": [],
           "trial_state": null,
-          "regulatory_outcome": null
+          "regulatory_outcome": null,
+          "confidence": 1.0
         }
       ],
-      "failure_flags": []
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "crossref",
+          "external_id": "10.5555/synthetic.1",
+          "url": "https://doi.org/10.5555/synthetic.1",
+          "score": 1.0,
+          "state": "approved",
+          "reading": null,
+          "decided_by": "seed",
+          "summary": "A synthetic paper about the quiet claim"
+        }
+      ]
     },
     {
       "slug": "phase-claim",
@@ -155,7 +168,8 @@
             "phase_2"
           ],
           "trial_state": null,
-          "regulatory_outcome": null
+          "regulatory_outcome": null,
+          "confidence": 1.0
         },
         {
           "id": 3,
@@ -170,7 +184,8 @@
             "phase_2"
           ],
           "trial_state": "started",
-          "regulatory_outcome": null
+          "regulatory_outcome": null,
+          "confidence": 1.0
         },
         {
           "id": 4,
@@ -183,7 +198,8 @@
           "trial_id": null,
           "trial_phases": [],
           "trial_state": null,
-          "regulatory_outcome": null
+          "regulatory_outcome": null,
+          "confidence": 0.6
         },
         {
           "id": 5,
@@ -198,7 +214,8 @@
             "phase_2"
           ],
           "trial_state": null,
-          "regulatory_outcome": null
+          "regulatory_outcome": null,
+          "confidence": 1.0
         }
       ],
       "failure_flags": [],
@@ -222,6 +239,199 @@
           "reading": "other_indication",
           "decided_by": null,
           "summary": "NCT00000077: Synthetic trial of phase-claim agent in another condition. Phase 1. Recruiting."
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT00000002",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://registry.example/record/5",
+          "title": "Synthetic trial of phase-claim agent in example condition",
+          "phases": [
+            "phase_2"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-10-03T08:00:00Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 83,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "double",
+            "comparators": [
+              "placebo"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Synthetic Institute",
+              "kind": "other"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Change in synthetic score",
+                "time_frame": "12 weeks"
+              },
+              {
+                "measure": "Second synthetic measure",
+                "time_frame": null
+              },
+              {
+                "measure": "Third synthetic measure",
+                "time_frame": "24 weeks"
+              }
+            ],
+            "primary_outcomes_total": 5,
+            "why_stopped": null,
+            "results": {
+              "outcomes_total": 2,
+              "outcomes": [
+                {
+                  "title": "Change in synthetic score",
+                  "time_frame": "12 weeks",
+                  "unit": "points on a scale",
+                  "measure": "mean",
+                  "spread_kind": "Standard Deviation",
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "Synthetic placebo",
+                      "analysed": "41",
+                      "value": "3.4",
+                      "spread": "1.1",
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "Synthetic treatment",
+                      "analysed": "42",
+                      "value": "1.9",
+                      "spread": "1.3",
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": [
+                    {
+                      "groups": [
+                        "Synthetic placebo",
+                        "Synthetic treatment"
+                      ],
+                      "p_value": "0.03",
+                      "method": "t-test, 2 sided",
+                      "test": "superiority"
+                    }
+                  ]
+                },
+                {
+                  "title": "Synthetic measure at four visits",
+                  "time_frame": "24 weeks",
+                  "unit": "participants",
+                  "measure": "count_of_participants",
+                  "spread_kind": null,
+                  "rows": 4,
+                  "groups": [],
+                  "comparisons": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "trial_id": "NCT00000030",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://registry.example/trial/30",
+          "title": "Synthetic later trial",
+          "phases": [
+            "phase_3"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-10-03T08:00:00Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 1200,
+              "basis": "planned"
+            },
+            "allocation": null,
+            "masking": null,
+            "comparators": [],
+            "healthy_volunteers": null,
+            "age_groups": [],
+            "sponsor": {
+              "name": null,
+              "kind": "individual"
+            },
+            "primary_outcomes": [],
+            "primary_outcomes_total": 0,
+            "why_stopped": null,
+            "results": null
+          }
+        },
+        {
+          "trial_id": "jRCT0000000011",
+          "source_name": "jRCT",
+          "url": "https://registry.example/trial/11",
+          "title": null,
+          "phases": [
+            "phase_1"
+          ],
+          "state": "not_started",
+          "facts_as_of": null,
+          "facts": null
+        },
+        {
+          "trial_id": "jRCT0000000012",
+          "source_name": "jRCT",
+          "url": "https://registry.example/trial/12",
+          "title": null,
+          "phases": [
+            "phase_1"
+          ],
+          "state": "not_started",
+          "facts_as_of": null,
+          "facts": null
+        },
+        {
+          "trial_id": "jRCT0000000013",
+          "source_name": "jRCT",
+          "url": "https://registry.example/trial/13",
+          "title": null,
+          "phases": [
+            "phase_1"
+          ],
+          "state": "not_started",
+          "facts_as_of": null,
+          "facts": null
+        },
+        {
+          "trial_id": "jRCT0000000014",
+          "source_name": "jRCT",
+          "url": "https://registry.example/trial/14",
+          "title": null,
+          "phases": [
+            "phase_1"
+          ],
+          "state": "not_started",
+          "facts_as_of": null,
+          "facts": null
+        },
+        {
+          "trial_id": "jRCT0000000015",
+          "source_name": "jRCT",
+          "url": "https://registry.example/trial/15",
+          "title": null,
+          "phases": [
+            "phase_1"
+          ],
+          "state": "not_started",
+          "facts_as_of": null,
+          "facts": null
         }
       ]
     },
@@ -269,7 +479,8 @@
           "trial_id": null,
           "trial_phases": [],
           "trial_state": null,
-          "regulatory_outcome": "approved"
+          "regulatory_outcome": "approved",
+          "confidence": 1.0
         }
       ],
       "failure_flags": []

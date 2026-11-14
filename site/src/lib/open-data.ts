@@ -1,7 +1,7 @@
 // The open data file: the validated export, reduced to what the claim pages already show,
 // with its licence, credit line, sources and method address inside. Pure: no files, no
 // clock. Outlet icon images, article text and raw registry payloads are never in it.
-import type { Export, ExportedClaim } from "./export";
+import type { Export, ExportedClaim, ExportedTrialFacts } from "./export";
 
 /** The licence's name as LICENSE-DATA gives it. */
 export const DATA_LICENCE = "Creative Commons Attribution 4.0 International (CC BY 4.0)";
@@ -24,6 +24,52 @@ export interface OpenDataHeader {
 
 export interface OpenData extends OpenDataHeader {
   claims: Omit<ExportedClaim, "failure_flags">[];
+}
+
+// Field by field, so that a fact added to the export reaches the file only when it is
+// also added here, beside what the claim page shows.
+function trialFacts(facts: ExportedTrialFacts): ExportedTrialFacts {
+  return {
+    study_kind: facts.study_kind,
+    participants: facts.participants && { ...facts.participants },
+    allocation: facts.allocation,
+    masking: facts.masking,
+    comparators: [...facts.comparators],
+    healthy_volunteers: facts.healthy_volunteers,
+    age_groups: [...facts.age_groups],
+    sponsor: facts.sponsor && { name: facts.sponsor.name, kind: facts.sponsor.kind },
+    primary_outcomes: facts.primary_outcomes.map(({ measure, time_frame }) => ({
+      measure,
+      time_frame,
+    })),
+    primary_outcomes_total: facts.primary_outcomes_total,
+    why_stopped: facts.why_stopped,
+    results: facts.results && {
+      outcomes_total: facts.results.outcomes_total,
+      outcomes: facts.results.outcomes.map((outcome) => ({
+        title: outcome.title,
+        time_frame: outcome.time_frame,
+        unit: outcome.unit,
+        measure: outcome.measure,
+        spread_kind: outcome.spread_kind,
+        rows: outcome.rows,
+        groups: outcome.groups.map(({ title, analysed, value, spread, lower, upper }) => ({
+          title,
+          analysed,
+          value,
+          spread,
+          lower,
+          upper,
+        })),
+        comparisons: outcome.comparisons.map(({ groups, p_value, method, test }) => ({
+          groups: [...groups],
+          p_value,
+          method,
+          test,
+        })),
+      })),
+    },
+  };
 }
 
 export function openData(
@@ -76,6 +122,19 @@ export function openData(
         trial_phases: [...event.trial_phases],
         trial_state: event.trial_state,
         regulatory_outcome: event.regulatory_outcome,
+        confidence: event.confidence ?? null,
+      })),
+      // Each trial with the facts the claim page shows for it and when its registry
+      // record was read. Never the record itself. Openspec trial-facts.
+      trials: (claim.trials ?? []).map((trial) => ({
+        trial_id: trial.trial_id,
+        source_name: trial.source_name,
+        url: trial.url,
+        title: trial.title,
+        phases: [...trial.phases],
+        state: trial.state,
+        facts_as_of: trial.facts_as_of,
+        facts: trial.facts === null ? null : trialFacts(trial.facts),
       })),
       // What the claim page shows of each match: the record, its score and how it was read.
       matches: (claim.matches ?? []).map((match) => ({

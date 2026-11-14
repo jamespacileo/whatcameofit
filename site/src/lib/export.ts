@@ -4,6 +4,7 @@ import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import { unlabelledApproaches } from "./approach";
+import { unlabelledTrialCodes } from "./trial-facts";
 
 export type StatusCode =
   | "preclinical_only"
@@ -29,6 +30,71 @@ export interface ExportedEvent {
   trial_phases: string[];
   trial_state: string | null;
   regulatory_outcome: string | null;
+  /** 0 to 1: how sure the pipeline is of the event. Absent or null in an export made
+   * before openspec trial-facts; shown only when below 1. */
+  confidence?: number | null;
+}
+
+/** One group's posted numbers for an outcome, each as the registry wrote it. */
+export interface ExportedResultGroup {
+  title: string;
+  analysed: string | null;
+  value: string | null;
+  spread: string | null;
+  lower: string | null;
+  upper: string | null;
+}
+
+export interface ExportedComparison {
+  /** Titles of the groups compared. */
+  groups: string[];
+  p_value: string | null;
+  method: string | null;
+  test: string | null;
+}
+
+export interface ExportedResultOutcome {
+  title: string;
+  time_frame: string | null;
+  unit: string | null;
+  measure: string | null;
+  /** What the spread is, in the registry's words, such as "Standard Deviation". */
+  spread_kind: string | null;
+  /** How many rows of values the registry posts. Groups are carried only for one. */
+  rows: number;
+  groups: ExportedResultGroup[];
+  comparisons: ExportedComparison[];
+}
+
+/** What a trial's registry record states, as codes and the registry's own text. */
+export interface ExportedTrialFacts {
+  study_kind: string | null;
+  participants: { count: number; basis: "actual" | "planned" } | null;
+  allocation: string | null;
+  masking: string | null;
+  comparators: string[];
+  healthy_volunteers: boolean | null;
+  age_groups: string[];
+  /** The name is absent when the sponsor is a person. */
+  sponsor: { name: string | null; kind: string | null } | null;
+  primary_outcomes: { measure: string; time_frame: string | null }[];
+  primary_outcomes_total: number;
+  why_stopped: string | null;
+  results: { outcomes: ExportedResultOutcome[]; outcomes_total: number } | null;
+}
+
+/** One trial behind a claim's approved events. Openspec trial-facts. */
+export interface ExportedTrial {
+  trial_id: string;
+  source_name: string;
+  url: string;
+  title: string | null;
+  phases: string[];
+  state: string;
+  /** When the registry record the facts were read from was fetched. */
+  facts_as_of: string | null;
+  /** Null for a trial entered by hand, which has no registry record. */
+  facts: ExportedTrialFacts | null;
 }
 
 export interface ExportedMatch {
@@ -78,6 +144,9 @@ export interface ExportedClaim {
   /** Registry records matched to the claim, approved first, each with its score. Absent
    * from an export made before openspec auto-publish. */
   matches?: ExportedMatch[];
+  /** The claim's trials, one per registry identifier. Absent from an export made before
+   * openspec trial-facts. */
+  trials?: ExportedTrial[];
   failure_flags: { trial_id: string; source_url: string }[];
 }
 
@@ -138,6 +207,14 @@ function load(): Export {
   if (unlabelled.length > 0) {
     throw new Error(
       `The export at ${file} has approaches the site has no words for: ${unlabelled.join(", ")}. Add them to src/lib/approach.ts.`,
+    );
+  }
+  const unworded = unlabelledTrialCodes(
+    (content as Export).claims.flatMap((claim) => claim.trials ?? []),
+  );
+  if (unworded.length > 0) {
+    throw new Error(
+      `The export at ${file} has trial fact codes the site has no words for: ${unworded.join(", ")}. Add them to src/lib/trial-facts.ts.`,
     );
   }
   return content as Export;

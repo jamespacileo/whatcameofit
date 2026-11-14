@@ -1,0 +1,739 @@
+{
+  "protocolSection": {
+    "identificationModule": {
+      "nctId": "NCT04951479",
+      "orgStudyIdInfo": {
+        "id": "STUDY19010266"
+      },
+      "organization": {
+        "fullName": "University of Pittsburgh",
+        "class": "OTHER"
+      },
+      "briefTitle": "Geniculate Artery Embolization for Knee Osteoarthritis",
+      "officialTitle": "Geniculate Artery Embolization for Knee Osteoarthritis",
+      "acronym": "GAE"
+    },
+    "statusModule": {
+      "statusVerifiedDate": "2025-04",
+      "overallStatus": "COMPLETED",
+      "expandedAccessInfo": {
+        "hasExpandedAccess": false
+      },
+      "startDateStruct": {
+        "date": "2021-11-03",
+        "type": "ACTUAL"
+      },
+      "primaryCompletionDateStruct": {
+        "date": "2023-10-26",
+        "type": "ACTUAL"
+      },
+      "completionDateStruct": {
+        "date": "2023-10-26",
+        "type": "ACTUAL"
+      },
+      "studyFirstSubmitDate": "2021-06-28",
+      "studyFirstSubmitQcDate": "2021-06-28",
+      "studyFirstPostDateStruct": {
+        "date": "2021-07-06",
+        "type": "ACTUAL"
+      },
+      "resultsFirstSubmitDate": "2024-10-24",
+      "resultsFirstSubmitQcDate": "2025-04-08",
+      "resultsFirstPostDateStruct": {
+        "date": "2025-04-09",
+        "type": "ACTUAL"
+      },
+      "lastUpdateSubmitDate": "2025-04-08",
+      "lastUpdatePostDateStruct": {
+        "date": "2025-04-09",
+        "type": "ACTUAL"
+      }
+    },
+    "sponsorCollaboratorsModule": {
+      "responsibleParty": {
+        "type": "SPONSOR_INVESTIGATOR",
+        "investigatorFullName": "Example Investigator",
+        "investigatorTitle": "Assistant Professor",
+        "investigatorAffiliation": "University of Pittsburgh"
+      },
+      "leadSponsor": {
+        "name": "Example Investigator",
+        "class": "OTHER"
+      }
+    },
+    "oversightModule": {
+      "oversightHasDmc": true,
+      "isFdaRegulatedDrug": false,
+      "isFdaRegulatedDevice": true
+    },
+    "descriptionModule": {
+      "briefSummary": "The purpose of this study is to perform a prospective case series to determine efficacy of transcatheter arterial embolization in treating knee osteoarthritis related pain, improving functionality, and reducing opiate usage in patients with mild to moderate knee osteoarthritis who have failed conservative management.\n\nThe Gel-Bead embolization particles will be used to perform geniculate artery embolization (GAE) for the purposes of treatment of osteoarthritis-related knee pain.",
+      "detailedDescription": "Management of mild and moderate knee osteoarthritis is curated to each specific patient and their needs, their quality of life, and desired goals. Weight loss is advised for overweight and obese patients. All patients should attempt extended-duration exercise/physical therapy and realignment therapy. If these conservative lifestyle modifications fail to reduce pain, topical and oral non-steroidal anti-inflammatories are indicated. Escalation of care from here is controversial. Some clinicians opt for adjunctive treatments such as intra-articular injection of steroids or viscosupplementation. Unfortunately, pain alleviation from intra-articular steroids is short-lasting and a recent meta-analysis demonstrated no significant difference between intra-articular hyaluronic acid injection and placebo injection. Finally, weak opioids are an option for patients who continue to have pain despite all the aforementioned treatment measures. Joint replacement is reserved for patients with severe osteoarthritis.\n\nPatients who fail conservative, medical management pose a challenge to clinicians. For decades, there have been no interventions available to these patients between the controversial intra-articular hyaluronic acid injection and joint replacement. Interventional radiology (IR) may provide one possible solution. Geniculate artery embolization (GAE) is a minimally-invasive procedure that has historically been performed for patients with recurrent hemarthrosis. It was recently applied to patients with moderate osteoarthritis refractory to maximal medical management. Several studies have been performed and have found that GAE is safe and improves pain."
+    },
+    "conditionsModule": {
+      "conditions": [
+        "Knee Osteoarthritis"
+      ]
+    },
+    "designModule": {
+      "studyType": "INTERVENTIONAL",
+      "phases": [
+        "NA"
+      ],
+      "designInfo": {
+        "allocation": "NA",
+        "interventionModel": "SINGLE_GROUP",
+        "primaryPurpose": "TREATMENT",
+        "maskingInfo": {
+          "masking": "NONE"
+        }
+      },
+      "enrollmentInfo": {
+        "count": 11,
+        "type": "ACTUAL"
+      }
+    },
+    "armsInterventionsModule": {
+      "armGroups": [
+        {
+          "label": "Gel-Bead Embolization",
+          "type": "EXPERIMENTAL",
+          "description": "This is the arm undergoing the genicular artery embolization procedure",
+          "interventionNames": [
+            "Device: Gel-Bead embolization"
+          ]
+        }
+      ],
+      "interventions": [
+        {
+          "type": "DEVICE",
+          "name": "Gel-Bead embolization",
+          "description": "OptiSphere is FDA approved for the embolization of hypervascular tumors. The product is crosslinked with glutaraldehyde, which improves the mechanical strength of the spheres and provides controlled degradation after implant. The spherical shape provides smooth embolic delivery and even, predictable distribution. In this study the Optispheres will be used for Geniculate artery embolization (GAE) which is a minimally-invasive procedure that has historically been performed for treatment of patients with recurrent knee hemarthrosis. Embolization is a procedure in which material is used to block small blood vessels. Angiogenesis, or growth of new vessels, has been implicated in the initiation and maintenance of joint inflammation. GAE has been applied to patients with moderate osteoarthritis-related pain refractory to maximal medical management with preliminary studies demonstrating a reduction in patient pain.",
+          "armGroupLabels": [
+            "Gel-Bead Embolization"
+          ]
+        }
+      ]
+    },
+    "outcomesModule": {
+      "primaryOutcomes": [
+        {
+          "measure": "Change in KOOS Pain Score",
+          "description": "Change in pain score of at least 10 points based on the KOOS Pain questionnaire. The KOOS Pain score runs from 0 (no pain) to 100 (worst pain). The change in KOOS pain score will be the primary outcome measure. Minimum score is 0 and maximum is 100. higher score is better outcome",
+          "timeFrame": "Baseline and 6 months from treatment"
+        }
+      ],
+      "secondaryOutcomes": [
+        {
+          "measure": "Change in Knee-related Functionality",
+          "description": "Average change in the KOOS Function in Sport and Recreation (FSR). The KOOS FSR score runs from 0 (no symptoms) to 100 (worst symptoms).",
+          "timeFrame": "Baseline and 6 months from treatment"
+        },
+        {
+          "measure": "Change in KOOS Quality of Life Scale",
+          "description": "Average change in in the KOOS Quality of Life Scale (QoL) score. The KOOS QoL score runs from 0 (no symptoms) to 100 (worst symptoms). An increase in this value is considered improvement.",
+          "timeFrame": "Baseline and 6 months from treatment"
+        },
+        {
+          "measure": "Change in 30-second Chair Stand Test",
+          "description": "Average change in 30-second chair stand test in number of chair stands. An increase in this value is considered improvement.",
+          "timeFrame": "Baseline and 6 months from treatment"
+        },
+        {
+          "measure": "6-minute Walk Test",
+          "description": "distance walked (meters) in 6 minutes",
+          "timeFrame": "Baseline and 6 months from treatment"
+        }
+      ]
+    },
+    "eligibilityModule": {
+      "eligibilityCriteria": "Inclusion Criteria:\n\n1. Patients between ages 18 and 75 with moderate/severe knee pain secondary to primary osteoarthritis. Moderate/severe pain will be defined as pain 30 mm to 100 mm on the Visual Analog Pain Scale (where 0 denotes 'no pain' and 100 mm denotes worst pain imaginable')\n2. Grade 1, 2, or 3 osteoarthritis on the Kellgren-Lawrence grading scale on knee x-ray in the last 6 months\n3. Pain must be refractory to 3 months of medical management (which may include a combination of oral analgesics, intraarticular steroids, viscosupplementation, opioid therapy, etc)\n4. Patients willing and able to consent to the study\n\nExclusion Criteria:\n\n1. Kidney dysfunction defined as an estimated GFR \\< 60 mL/min\n2. Acute knee injury\n3. Current local infection\n4. Prior ipsilateral knee replacement surgery\n5. Infectious or inflammatory arthritis\n6. History of contrast allergy resulting in anaphylaxis\n7. INR (International Normalization Ratio) \\> 1.6\n8. Platelets \\< 50,000\n9. Significant atherosclerosis that would limit angiography\n10. Active malignancy\n11. Active pregnancy\n12. Appropriate candidate for knee replacement surgery determined by clinical and physical examination\n13. Recent within 3 months, or active cigarette user",
+      "healthyVolunteers": false,
+      "sex": "ALL",
+      "minimumAge": "18 Years",
+      "maximumAge": "75 Years",
+      "stdAges": [
+        "ADULT",
+        "OLDER_ADULT"
+      ]
+    },
+    "ipdSharingStatementModule": {
+      "ipdSharing": "NO"
+    }
+  },
+  "resultsSection": {
+    "participantFlowModule": {
+      "groups": [
+        {
+          "id": "FG000",
+          "title": "Genicular Artery Embolization Arm",
+          "description": "This is the single arm of this cohort study. This cohort underwent the GAE procedure."
+        }
+      ],
+      "periods": [
+        {
+          "title": "Overall Study",
+          "milestones": [
+            {
+              "type": "STARTED",
+              "achievements": [
+                {
+                  "groupId": "FG000",
+                  "numSubjects": "11"
+                }
+              ]
+            },
+            {
+              "type": "COMPLETED",
+              "achievements": [
+                {
+                  "groupId": "FG000",
+                  "numSubjects": "10"
+                }
+              ]
+            },
+            {
+              "type": "NOT COMPLETED",
+              "achievements": [
+                {
+                  "groupId": "FG000",
+                  "numSubjects": "1"
+                }
+              ]
+            }
+          ],
+          "dropWithdraws": [
+            {
+              "type": "Pre-existing Acute Knee Injury",
+              "reasons": [
+                {
+                  "groupId": "FG000",
+                  "numSubjects": "1"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "baselineCharacteristicsModule": {
+      "groups": [
+        {
+          "id": "BG000",
+          "title": "Gel-Bead Embolization",
+          "description": "Gel-Bead embolization: Gelbead is FDA approved for the embolization of hypervascular tumors. The product is crosslinked with glutaraldehyde, which improves the mechanical strength of the spheres and provides controlled degradation after implant. The spherical shape provides smooth embolic delivery and even, predictable distribution. In this study the Gelbeads will be used for Geniculate artery embolization (GAE) which is a minimally-invasive procedure that has historically been performed for treatment of patients with recurrent knee hemarthrosis. Embolization is a procedure in which material is used to block small blood vessels. Angiogenesis, or growth of new vessels, has been implicated in the initiation and maintenance of joint inflammation. GAE has been applied to patients with moderate osteoarthritis-related pain refractory to maximal medical management with preliminary studies demonstrating a reduction in patient pain."
+        }
+      ],
+      "denoms": [
+        {
+          "units": "Participants",
+          "counts": [
+            {
+              "groupId": "BG000",
+              "value": "10"
+            }
+          ]
+        }
+      ],
+      "measures": [
+        {
+          "title": "Age, Continuous",
+          "paramType": "MEAN",
+          "dispersionType": "STANDARD_DEVIATION",
+          "unitOfMeasure": "years",
+          "classes": [
+            {
+              "denoms": [
+                {
+                  "units": "Participants",
+                  "counts": [
+                    {
+                      "groupId": "BG000",
+                      "value": "10"
+                    }
+                  ]
+                }
+              ],
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "53",
+                      "spread": "11.8"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Sex: Female, Male",
+          "paramType": "COUNT_OF_PARTICIPANTS",
+          "unitOfMeasure": "Participants",
+          "classes": [
+            {
+              "denoms": [
+                {
+                  "units": "Participants",
+                  "counts": [
+                    {
+                      "groupId": "BG000",
+                      "value": "10"
+                    }
+                  ]
+                }
+              ],
+              "categories": [
+                {
+                  "title": "Female",
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "6"
+                    }
+                  ]
+                },
+                {
+                  "title": "Male",
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "4"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Race and Ethnicity Not Collected",
+          "populationDescription": "Race and Ethnicity were not collected from any participant.",
+          "paramType": "COUNT_OF_PARTICIPANTS",
+          "unitOfMeasure": "Participants",
+          "classes": [
+            {
+              "denoms": [
+                {
+                  "units": "Participants",
+                  "counts": [
+                    {
+                      "groupId": "BG000",
+                      "value": "0"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "KOOS Pain Score",
+          "description": "The KOOS Pain score runs from 0 (no pain) to 100 (worst pain).",
+          "paramType": "MEDIAN",
+          "dispersionType": "INTER_QUARTILE_RANGE",
+          "unitOfMeasure": "score on a scale",
+          "classes": [
+            {
+              "denoms": [
+                {
+                  "units": "Participants",
+                  "counts": [
+                    {
+                      "groupId": "BG000",
+                      "value": "10"
+                    }
+                  ]
+                }
+              ],
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "42",
+                      "lowerLimit": "38",
+                      "upperLimit": "50"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "outcomeMeasuresModule": {
+      "outcomeMeasures": [
+        {
+          "type": "PRIMARY",
+          "title": "Change in KOOS Pain Score",
+          "description": "Change in pain score of at least 10 points based on the KOOS Pain questionnaire. The KOOS Pain score runs from 0 (no pain) to 100 (worst pain). The change in KOOS pain score will be the primary outcome measure. Minimum score is 0 and maximum is 100. higher score is better outcome",
+          "reportingStatus": "POSTED",
+          "paramType": "MEDIAN",
+          "dispersionType": "Inter-Quartile Range",
+          "unitOfMeasure": "score on a scale",
+          "timeFrame": "Baseline and 6 months from treatment",
+          "groups": [
+            {
+              "id": "OG000",
+              "title": "Genicular Artery Embolization Arm",
+              "description": "This is the single arm of this cohort study. This cohort underwent the GAE procedure."
+            }
+          ],
+          "denoms": [
+            {
+              "units": "Participants",
+              "counts": [
+                {
+                  "groupId": "OG000",
+                  "value": "10"
+                }
+              ]
+            }
+          ],
+          "classes": [
+            {
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "33",
+                      "lowerLimit": "22",
+                      "upperLimit": "47"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "analyses": [
+            {
+              "groupIds": [
+                "OG000"
+              ],
+              "groupDescription": "Paired t-test of KOOS Pain score pre and 6 months post embolization",
+              "nonInferiorityType": "SUPERIORITY",
+              "pValue": "0.00041",
+              "statisticalMethod": "t-test, 2 sided"
+            }
+          ]
+        },
+        {
+          "type": "SECONDARY",
+          "title": "Change in Knee-related Functionality",
+          "description": "Average change in the KOOS Function in Sport and Recreation (FSR). The KOOS FSR score runs from 0 (no symptoms) to 100 (worst symptoms).",
+          "reportingStatus": "POSTED",
+          "paramType": "MEDIAN",
+          "dispersionType": "Inter-Quartile Range",
+          "unitOfMeasure": "score on a scale",
+          "timeFrame": "Baseline and 6 months from treatment",
+          "groups": [
+            {
+              "id": "OG000",
+              "title": "Genicular Artery Embolization Arm",
+              "description": "This is the single arm of this cohort study. This cohort underwent the GAE procedure."
+            }
+          ],
+          "denoms": [
+            {
+              "units": "Participants",
+              "counts": [
+                {
+                  "groupId": "OG000",
+                  "value": "10"
+                }
+              ]
+            }
+          ],
+          "classes": [
+            {
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "39",
+                      "lowerLimit": "15",
+                      "upperLimit": "52"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "analyses": [
+            {
+              "groupIds": [
+                "OG000"
+              ],
+              "nonInferiorityType": "SUPERIORITY",
+              "pValue": "0.008",
+              "statisticalMethod": "t-test, 2 sided"
+            }
+          ]
+        },
+        {
+          "type": "SECONDARY",
+          "title": "Change in KOOS Quality of Life Scale",
+          "description": "Average change in in the KOOS Quality of Life Scale (QoL) score. The KOOS QoL score runs from 0 (no symptoms) to 100 (worst symptoms). An increase in this value is considered improvement.",
+          "reportingStatus": "POSTED",
+          "paramType": "MEDIAN",
+          "dispersionType": "Inter-Quartile Range",
+          "unitOfMeasure": "score on a scale",
+          "timeFrame": "Baseline and 6 months from treatment",
+          "groups": [
+            {
+              "id": "OG000",
+              "title": "Genicular Artery Embolization Arm",
+              "description": "This is the single arm of this cohort study. This cohort underwent the GAE procedure."
+            }
+          ],
+          "denoms": [
+            {
+              "units": "Participants",
+              "counts": [
+                {
+                  "groupId": "OG000",
+                  "value": "10"
+                }
+              ]
+            }
+          ],
+          "classes": [
+            {
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "42",
+                      "lowerLimit": "17",
+                      "upperLimit": "50"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "analyses": [
+            {
+              "groupIds": [
+                "OG000"
+              ],
+              "nonInferiorityType": "SUPERIORITY",
+              "pValue": "0.001",
+              "statisticalMethod": "t-test, 2 sided"
+            }
+          ]
+        },
+        {
+          "type": "SECONDARY",
+          "title": "Change in 30-second Chair Stand Test",
+          "description": "Average change in 30-second chair stand test in number of chair stands. An increase in this value is considered improvement.",
+          "reportingStatus": "POSTED",
+          "paramType": "MEDIAN",
+          "dispersionType": "Inter-Quartile Range",
+          "unitOfMeasure": "chair stands",
+          "timeFrame": "Baseline and 6 months from treatment",
+          "groups": [
+            {
+              "id": "OG000",
+              "title": "Genicular Artery Embolization Arm",
+              "description": "This is the single arm of this cohort study. This cohort underwent the GAE procedure."
+            }
+          ],
+          "denoms": [
+            {
+              "units": "Participants",
+              "counts": [
+                {
+                  "groupId": "OG000",
+                  "value": "10"
+                }
+              ]
+            }
+          ],
+          "classes": [
+            {
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "4.5",
+                      "lowerLimit": "2.3",
+                      "upperLimit": "10.3"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "analyses": [
+            {
+              "groupIds": [
+                "OG000"
+              ],
+              "nonInferiorityType": "SUPERIORITY",
+              "pValue": "0.00797",
+              "statisticalMethod": "t-test, 2 sided",
+              "statisticalComment": "paired t-test"
+            }
+          ]
+        },
+        {
+          "type": "SECONDARY",
+          "title": "6-minute Walk Test",
+          "description": "distance walked (meters) in 6 minutes",
+          "populationDescription": "6 minute walk test was not conducted due to feasibility issues. Protocol was amended to reflect exclusion of 6 minute walk test",
+          "reportingStatus": "POSTED",
+          "timeFrame": "Baseline and 6 months from treatment",
+          "groups": [
+            {
+              "id": "OG000",
+              "title": "Gel-Bead Embolization",
+              "description": "Gel-Bead embolization: OptiSphere is FDA approved for the embolization of hypervascular tumors. The product is crosslinked with glutaraldehyde, which improves the mechanical strength of the spheres and provides controlled degradation after implant. The spherical shape provides smooth embolic delivery and even, predictable distribution. In this study the Optispheres will be used for Geniculate artery embolization (GAE) which is a minimally-invasive procedure that has historically been performed for treatment of patients with recurrent knee hemarthrosis. Embolization is a procedure in which material is used to block small blood vessels. Angiogenesis, or growth of new vessels, has been implicated in the initiation and maintenance of joint inflammation. GAE has been applied to patients with moderate osteoarthritis-related pain refractory to maximal medical management with preliminary studies demonstrating a reduction in patient pain."
+            }
+          ],
+          "denoms": [
+            {
+              "units": "Participants",
+              "counts": [
+                {
+                  "groupId": "OG000",
+                  "value": "0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "adverseEventsModule": {
+      "frequencyThreshold": "0",
+      "timeFrame": "6 months",
+      "eventGroups": [
+        {
+          "id": "EG000",
+          "title": "Genicular Artery Embolization Arm",
+          "description": "This is the single arm of this cohort study. This cohort underwent the GAE procedure.",
+          "deathsNumAffected": 0,
+          "deathsNumAtRisk": 10,
+          "seriousNumAffected": 0,
+          "seriousNumAtRisk": 10,
+          "otherNumAffected": 5,
+          "otherNumAtRisk": 10
+        }
+      ],
+      "otherEvents": [
+        {
+          "term": "Transient Skin Discoloration of the Knee",
+          "organSystem": "Skin and subcutaneous tissue disorders",
+          "assessmentType": "SYSTEMATIC_ASSESSMENT",
+          "notes": "Transient blueish discoloration about the knee related to embolization",
+          "stats": [
+            {
+              "groupId": "EG000",
+              "numEvents": 3,
+              "numAffected": 3,
+              "numAtRisk": 10
+            }
+          ]
+        },
+        {
+          "term": "Allergic Reaction to Toradol",
+          "organSystem": "Skin and subcutaneous tissue disorders",
+          "assessmentType": "SYSTEMATIC_ASSESSMENT",
+          "notes": "Skin Rash secondary to PO Toradol given for post-GAE pain",
+          "stats": [
+            {
+              "groupId": "EG000",
+              "numEvents": 2,
+              "numAffected": 2,
+              "numAtRisk": 10
+            }
+          ]
+        },
+        {
+          "term": "Fever",
+          "organSystem": "Infections and infestations",
+          "assessmentType": "SYSTEMATIC_ASSESSMENT",
+          "notes": "Development of fever \\>100.4 ºF in within the 5 days following GAE",
+          "stats": [
+            {
+              "groupId": "EG000",
+              "numEvents": 1,
+              "numAffected": 1,
+              "numAtRisk": 10
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "documentSection": {
+    "largeDocumentModule": {
+      "largeDocs": [
+        {
+          "typeAbbrev": "Prot_SAP",
+          "hasProtocol": true,
+          "hasSap": true,
+          "hasIcf": false,
+          "label": "Study Protocol and Statistical Analysis Plan",
+          "date": "2025-04-08",
+          "uploadDate": "2025-04-08T14:38",
+          "filename": "Prot_SAP_001.pdf",
+          "size": 402701
+        }
+      ]
+    }
+  },
+  "derivedSection": {
+    "miscInfoModule": {
+      "versionHolder": "2026-11-13",
+      "submissionTracking": {
+        "firstMcpInfo": {
+          "postDateStruct": {
+            "date": "2024-11-19",
+            "type": "ACTUAL"
+          }
+        }
+      }
+    },
+    "conditionBrowseModule": {
+      "meshes": [
+        {
+          "id": "D020370",
+          "term": "Osteoarthritis, Knee"
+        }
+      ],
+      "ancestors": [
+        {
+          "id": "D010003",
+          "term": "Osteoarthritis"
+        },
+        {
+          "id": "D001168",
+          "term": "Arthritis"
+        },
+        {
+          "id": "D007592",
+          "term": "Joint Diseases"
+        },
+        {
+          "id": "D009140",
+          "term": "Musculoskeletal Diseases"
+        },
+        {
+          "id": "D012216",
+          "term": "Rheumatic Diseases"
+        }
+      ]
+    }
+  },
+  "hasResults": true
+}
