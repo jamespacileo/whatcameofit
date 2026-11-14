@@ -92,7 +92,8 @@ export interface Export {
   schema_version: number;
   generated_at: string;
   last_checked_at: string | null;
-  // True when the export holds claims an AI assistant decided. Never for the public site.
+  // Always false since the auto-publish decision. Kept so that an older export, which
+  // could be a preview, is still read and refused for the public site.
   preview: boolean;
   sources: { name: string; url: string }[];
   verticals: ExportedVertical[];

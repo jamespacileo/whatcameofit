@@ -4,7 +4,7 @@ import StageTrack from "../components/StageTrack.astro";
 import { brandAsset } from "../lib/brand";
 import { data } from "../lib/export";
 import { SITE } from "../../site.config.mjs";
-import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS } from "../lib/status";
+import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS, overlayText } from "../lib/status";
 
 const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
 ---
@@ -88,7 +88,7 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
       <li><a href="#where-the-data-comes-from">Where the data comes from</a></li>
       <li><a href="#an-optional-search-of-a-new-report">An optional search of a new report</a></li>
       <li><a href="#what-is-counted">What is counted</a></li>
-      <li><a href="#report-an-error">Report an error</a></li>
+      {SITE.correctionsUrl && <li><a href="#report-an-error">Report an error</a></li>}
     </ul>
   </nav>
 
@@ -149,7 +149,7 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
   <h2 class="bar" id="no-signal">No signal</h2>
   <p>
     A claim that has stayed at an open stage for several years, with no new approved record, shows a
-    note such as “No signal for 5 years”. The note means that the most recent record is that old.
+    note such as “{overlayText(5)}”. The note means that the most recent record is that old.
     The count starts from the date of that record, or from the date the claim was first reported
     when no record has been found.
   </p>

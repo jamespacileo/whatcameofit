@@ -3,11 +3,11 @@
 // docs/sources.md. The text and the links are returned to the caller and kept nowhere,
 // and who wrote the post is never read out.
 import { allowedByRobots, client, isPublic } from "./article.mjs";
+import { decoded } from "./page.mjs";
 
 const BLUESKY = "https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread";
 const HACKER_NEWS = "https://hacker-news.firebaseio.com/v0/item";
 const MAX_POST_CHARACTERS = 4000;
-const ENTITIES = { nbsp: " ", amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
 
 const unique = (items) => [...new Set(items.filter(Boolean))];
 
@@ -23,13 +23,6 @@ function fromHtml(html) {
   // A paragraph or a line break ends a line; any other tag is only markup around words.
   const text = decoded(source.replace(/<\/?(p|br|div|li)\b[^>]*>/gi, "\n").replace(/<[^>]+>/g, ""));
   return { text, links };
-}
-
-function decoded(text) {
-  return text
-    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCodePoint(parseInt(code, 16)))
-    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
-    .replace(/&([a-z]+);/gi, (whole, name) => ENTITIES[name.toLowerCase()] ?? whole);
 }
 
 const tidy = (text) => String(text ?? "").replace(/[ \t]+/g, " ").replace(/\s*\n\s*/g, "\n").trim();

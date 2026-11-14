@@ -332,12 +332,6 @@ function content(claim: ExportedClaim): CardContent {
   );
 }
 
-export const CARD_SIZES: Record<Shape, { width: number; height: number }> = {
-  wide: { width: LAYOUTS.wide.width, height: LAYOUTS.wide.height },
-  square: { width: LAYOUTS.square.width, height: LAYOUTS.square.height },
-  tall: { width: LAYOUTS.tall.width, height: LAYOUTS.tall.height },
-};
-
 export async function cardPng(claim: ExportedClaim, which: Shape): Promise<Uint8Array> {
   const layout = LAYOUTS[which];
   const svg = await satori(draw(cardFor(claim), layout) as never, {

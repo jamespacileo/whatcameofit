@@ -1,11 +1,12 @@
 ---
 import Base from "../layouts/Base.astro";
+import { SITE } from "../../site.config.mjs";
 ---
 
 <Base title="Privacy" description="What the website and browser extension read, send and keep.">
   <h1 class="title">Privacy</h1>
   <p class="lede">What the website and browser extension read, send and keep.</p>
-  <p>Updated 13 November 2026. What came of it? is operated by James Pacileo.</p>
+  <p>Updated 13 November 2026. {SITE.name} is operated by James Pacileo.</p>
 
   <h2 class="bar">Reading the site</h2>
   <p>
@@ -36,7 +37,7 @@ import Base from "../layouts/Base.astro";
   <p>
     When you open the extension, it reads the current tab's address and compares it with a public
     lookup file inside your browser. A reviewed match is answered without sending that page address. An untracked public report may send a cleaned page address to check for a previous automatic result. It downloads
-    the lookup file from whatcameofit.com and saves the file and its retrieval time in the browser,
+    the lookup file from {new URL(SITE.url).host} and saves the file and its retrieval time in the browser,
     refreshing it after six hours. If the site cannot be reached, the saved copy can still be used.
     Removing the extension removes this local cache.
   </p>

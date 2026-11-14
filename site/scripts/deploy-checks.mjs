@@ -37,7 +37,7 @@ export function deployProblems({ data, siteUrl }) {
 
   if (data.preview) {
     problems.push(
-      "The export is a preview: it holds claims decided by the assistant. A preview is never deployed. Write a normal export first (make public-export).",
+      "The export is a preview. A preview is never deployed. Write a normal export first (make public-export).",
     );
   }
 
