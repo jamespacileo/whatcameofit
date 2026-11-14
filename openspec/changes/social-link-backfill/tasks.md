@@ -51,7 +51,9 @@
 
 ## 7. Reading
 
-Not started. Two decisions the specs do not settle have to be made first: the article's date when its page gives none, and the outlet's name on a source article (`design.md`, "Found while applying"). Whichever is chosen is added to `specs/lead-reading/spec.md` before 7.1.
+The article's date is decided: from the page only (`specs/lead-reading/spec.md`, "The article's date"). The outlet's name on a source article is still the operator's to decide, and 7.5 waits on it (`design.md`, "Found while applying").
+
+- [x] 7.0 Read a date that a page shows in words in an element known to hold it, and the day from a date as a page gives it; verify tests with synthetic pages cover a date in a tag, a date in words, the tag preferred, and a date that cannot be read
 
 - [ ] 7.1 Split drafting so the model call comes first and returns the draft, keeping `thenwhat extract new` and `extract article` behaving as before; verify the existing extraction tests pass unchanged
 - [ ] 7.2 Add the slug rule from intervention and indication; verify tests cover a long name cut at 60 characters, characters outside the allowed set, and a slug already taken by another claim

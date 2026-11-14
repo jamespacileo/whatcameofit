@@ -46,6 +46,25 @@ An article SHALL be read by the model at most once for its lead, with the existi
 - **WHEN** a lead's article has been read
 - **THEN** its text is stored nowhere, and a second run does not read it again
 
+### Requirement: The article's date
+A source article made from a lead SHALL carry the publication date that the article's own page gives. The date a link was first shared SHALL NOT be used as a publication date, and neither SHALL a date read from the article's address. A lead whose page gives no date that can be read SHALL NOT be read by the model: its outcome SHALL be cannot be read, with the reason that the page gives no publication date.
+
+#### Scenario: A date the page gives in a tag
+- **WHEN** a lead's page carries its publication time in a tag made for other software
+- **THEN** the source article's date is that day
+
+#### Scenario: A date the page shows in words
+- **WHEN** a lead's page shows its date only as words, in an element the page reader knows for that outlet
+- **THEN** the source article's date is that day
+
+#### Scenario: A page with no date
+- **WHEN** a lead's page gives no publication date
+- **THEN** no model is called, the lead's outcome is cannot be read with that reason, and no source article is made
+
+#### Scenario: A date that cannot be read
+- **WHEN** a lead's page gives a date in a form the page reader does not know
+- **THEN** the lead is treated as a page with no date, and its outlet is counted among those with no date
+
 ### Requirement: An article for a claim that exists
 When the read names an intervention and an indication that an existing claim covers, the article SHALL be added to that claim as a source article, with its content hash, any archive address and its reported statements, which are checked and approved by the existing rule. The claim's headline, summary, intervention, indication, vertical and review state SHALL NOT change.
 
@@ -95,7 +114,7 @@ A lead linked by its title to a claim that already has the configured number of 
 - **THEN** the lead is read
 
 ### Requirement: Funnel report
-`thenwhat backfill funnel` SHALL report how many leads are loaded, in scope, scored, passed, read, could not be read by reason, added to an existing claim, made a new claim approved by rule, made a claim rejected by rule, and need a vertical. It SHALL give the model cost recorded for triage and for reading.
+`thenwhat backfill funnel` SHALL report how many leads are loaded, in scope, scored, passed, read, could not be read by reason, added to an existing claim, made a new claim approved by rule, made a claim rejected by rule, and need a vertical. It SHALL give the model cost recorded for triage and for reading. It SHALL list the outlets whose pages gave no publication date, with how many leads each lost.
 
 #### Scenario: After a limited run
 - **WHEN** 200 leads have been through the reading step

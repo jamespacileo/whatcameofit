@@ -8,6 +8,7 @@ All of it is read from the page the site served and kept nowhere, like the text.
 import json
 import re
 from dataclasses import dataclass
+from datetime import date
 from html.parser import HTMLParser
 from typing import Any
 from urllib.parse import unquote
@@ -32,6 +33,31 @@ MAX_LINKED = 5
 HEADLINE_TAGS = ("og:title", "twitter:title")
 SUMMARY_TAGS = ("og:description", "description", "twitter:description")
 DATE_TAGS = ("article:published_time", "date", "dc.date", "pubdate", "parsely-pub-date")
+# Elements, by id, in which an outlet shows its date as words and gives it in no tag.
+# sciencedaily.com: seen on four of its pages on 2026-11-14.
+DATE_ELEMENT_IDS = ("date_posted",)
+ISO_DAY = re.compile(r"^(\d{4})-(\d{2})-(\d{2})(?:$|[T\s])")
+MONTHS = (
+    "january",
+    "february",
+    "march",
+    "april",
+    "may",
+    "june",
+    "july",
+    "august",
+    "september",
+    "october",
+    "november",
+    "december",
+)
+MONTH = "|".join(f"{month[:3]}[a-z]*" for month in MONTHS)
+WORDED_MONTH_FIRST = re.compile(
+    rf"\b({MONTH})\.?\s+(\d{{1,2}})(?:st|nd|rd|th)?,?\s+(\d{{4}})\b", re.I
+)
+WORDED_DAY_FIRST = re.compile(
+    rf"\b(\d{{1,2}})(?:st|nd|rd|th)?\s+({MONTH})\.?,?\s+(\d{{4}})\b", re.I
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,7 +102,7 @@ def read_page(html: str) -> Page:
         text=text,
         headline=_first(tags, HEADLINE_TAGS) or described.get("headline") or collector.title,
         summary=_first(tags, SUMMARY_TAGS) or described.get("description"),
-        published=_first(tags, DATE_TAGS) or described.get("datePublished"),
+        published=_first(tags, DATE_TAGS) or described.get("datePublished") or collector.posted,
         body=described.get("articleBody"),
         registry_numbers=_unique(
             number.upper() for number in REGISTRY_NUMBER.findall(f"{all_text} {links}")
@@ -95,6 +121,10 @@ class _Collector(HTMLParser):
         self.tags: dict[str, str] = {}
         self.structured: list[str] = []
         self.title: str | None = None
+        # The date as an element known to hold it shows it, when the page has one.
+        self.posted: str | None = None
+        self._date_element: str | None = None
+        self._date_pieces: list[str] = []
         self._skipping = 0
         self._in_title = False
         self._in_structured = False
@@ -102,6 +132,9 @@ class _Collector(HTMLParser):
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         given = {name: value or "" for name, value in attrs}
+        looking = self.posted is None and self._date_element is None
+        if looking and given.get("id", "").lower() in DATE_ELEMENT_IDS:
+            self._date_element = tag
         if tag == "main":
             self._main_depth += 1
         if tag == "a" and given.get("href"):
@@ -119,6 +152,10 @@ class _Collector(HTMLParser):
             self._skipping += 1
 
     def handle_endtag(self, tag: str) -> None:
+        if tag == self._date_element:
+            self.posted = _tidy(" ".join(self._date_pieces)) or None
+            self._date_element = None
+            self._date_pieces = []
         if tag == "main" and self._main_depth:
             self._main_depth -= 1
         if tag == "title":
@@ -132,11 +169,42 @@ class _Collector(HTMLParser):
         if self._in_structured:
             self.structured[-1] += data
         elif not self._skipping:
+            if self._date_element is not None:
+                self._date_pieces.append(data)
             self.pieces.append(data)
             if self._main_depth:
                 self.main_pieces.append(data)
             if self._in_title and self.title is None and data.strip():
                 self.title = _tidy(data)
+
+
+def published_day(published: str | None) -> date | None:
+    """The day a page says it was published, from the date as the page gives it: a
+    timestamp such as 2026-10-22T09:00:00Z, or words such as "April 30, 2021" or
+    "30 April 2021". None when the page gives no date or one in another form. The day
+    is the one the outlet wrote: a time zone is not applied."""
+    text = _tidy(published or "")
+    if not text:
+        return None
+    try:
+        stamped = ISO_DAY.match(text)
+        if stamped:
+            return date(int(stamped[1]), int(stamped[2]), int(stamped[3]))
+        worded = WORDED_MONTH_FIRST.search(text)
+        if worded:
+            return date(int(worded[3]), _month(worded[1]), int(worded[2]))
+        worded = WORDED_DAY_FIRST.search(text)
+        if worded:
+            return date(int(worded[3]), _month(worded[2]), int(worded[1]))
+    except ValueError:
+        return None  # a day that is not in the calendar
+    return None
+
+
+def _month(word: str) -> int:
+    """The number of a month given as its name or the start of it."""
+    start = word[:3].lower()
+    return next(number for number, month in enumerate(MONTHS, start=1) if month[:3] == start)
 
 
 def _structured(blocks: list[str]) -> dict[str, str]:
