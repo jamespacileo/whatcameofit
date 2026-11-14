@@ -42,6 +42,8 @@ jobs:
         env:
           SUGGEST_URL: ${{ vars.SUGGEST_URL }}
           CORRECTIONS_URL: ${{ vars.CORRECTIONS_URL }}
+          CHROME_STORE_URL: ${{ vars.CHROME_STORE_URL }}
+          SAFARI_STORE_URL: ${{ vars.SAFARI_STORE_URL }}
           LLM_MODEL: ${{ vars.LLM_MODEL }}
           CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
           DECISION_BACKEND: ${{ vars.DECISION_BACKEND }}
@@ -92,6 +94,8 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           SUGGEST_URL: ${{ vars.SUGGEST_URL }}
           CORRECTIONS_URL: ${{ vars.CORRECTIONS_URL }}
+          CHROME_STORE_URL: ${{ vars.CHROME_STORE_URL }}
+          SAFARI_STORE_URL: ${{ vars.SAFARI_STORE_URL }}
           LLM_MODEL: ${{ vars.LLM_MODEL }}
           CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
           DECISION_BACKEND: ${{ vars.DECISION_BACKEND }}

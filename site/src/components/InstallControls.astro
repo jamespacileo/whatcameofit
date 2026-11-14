@@ -1,0 +1,155 @@
+---
+// Where the extension is installed from: one control for each store that lists it.
+// A store's address is a deployment setting (site.config.mjs). With scripting on, the
+// control for the reader's own browser is the filled one and comes first; without it
+// both are shown alike. At 40rem and below both step back to outlines, because the
+// extension runs in a computer's browser and a phone installs nothing; a narrow window
+// in a browser that can install it keeps its own control filled. Nothing is recorded
+// when one is pressed.
+import { SITE } from "../../site.config.mjs";
+
+const stores = [
+  SITE.chromeStoreUrl && { id: "chrome", href: SITE.chromeStoreUrl, label: "Add to Chrome" },
+  SITE.safariStoreUrl && { id: "safari", href: SITE.safariStoreUrl, label: "Get it for Safari" },
+].filter((store) => store !== null);
+const fits =
+  stores.length === 2
+    ? "For Chrome on a computer, and for Safari on a Mac."
+    : SITE.chromeStoreUrl
+      ? "For Chrome on a computer. The Safari version is not yet available."
+      : "For Safari on a Mac. The Chrome version is not yet available.";
+---
+
+<div class="install">
+  <p class="stores" data-install>
+    {
+      stores.map((store) => (
+        <a class="store" data-store={store.id} href={store.href} rel="noopener">
+          {store.label}
+        </a>
+      ))
+    }
+  </p>
+  <p class="fits">{fits}</p>
+</div>
+
+<script>
+  // Which of the two stores is this reader's. Read here and sent nowhere.
+  const agent = navigator.userAgent;
+  const chromium = /Chrome|Chromium|Edg\//.test(agent);
+  const mine =
+    /Safari/.test(agent) && !chromium && /Macintosh/.test(agent)
+      ? "safari"
+      : chromium && !/Android/.test(agent)
+        ? "chrome"
+        : null;
+  for (const group of document.querySelectorAll<HTMLElement>("[data-install]")) {
+    const own = mine && group.querySelector<HTMLElement>(`[data-store="${mine}"]`);
+    if (!own || group.children.length < 2) continue;
+    own.dataset.mine = "";
+    group.dataset.known = "";
+  }
+</script>
+
+<style>
+  .install :where(p) {
+    margin: 0;
+    max-width: none;
+  }
+
+  .stores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .store {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.9rem;
+    padding: 0.55rem 1.3rem;
+    border: 1.5px solid var(--blue);
+    border-radius: 0.65rem;
+    background: var(--blue);
+    color: var(--paper);
+    font-size: 1.08rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition:
+      background-color 120ms ease-out,
+      border-color 120ms ease-out,
+      color 120ms ease-out;
+  }
+
+  .store:hover {
+    border-color: var(--footer);
+    background: var(--footer);
+  }
+
+  .store:active {
+    transform: translateY(1px);
+  }
+
+  /* Once the reader's browser is known, the other store's control steps back. */
+  .stores[data-known] .store[data-mine] {
+    order: -1;
+  }
+
+  .stores[data-known] .store:not([data-mine]) {
+    background: var(--paper);
+    color: var(--blue);
+  }
+
+  .stores[data-known] .store:not([data-mine]):hover {
+    background: var(--tint);
+    border-color: var(--footer);
+    color: var(--footer);
+  }
+
+  .fits {
+    margin-top: 0.55rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  /* On a phone nothing can be installed, so neither control is the page's main action:
+     both are outlined, on one row, and the line that says where it runs is in ink. */
+  @media (max-width: 40rem) {
+    .stores {
+      flex-wrap: nowrap;
+      gap: 0.5rem;
+    }
+
+    .store {
+      flex: 0 1 auto;
+      justify-content: center;
+      padding-inline: 0.85rem;
+      background: var(--paper);
+      color: var(--blue);
+      font-size: 1rem;
+      text-align: center;
+    }
+
+    .store:hover {
+      background: var(--tint);
+      border-color: var(--footer);
+      color: var(--footer);
+    }
+
+    .stores[data-known] .store[data-mine] {
+      background: var(--blue);
+      color: var(--paper);
+    }
+
+    .fits {
+      color: var(--ink);
+    }
+  }
+
+  @media print {
+    .store {
+      background: none;
+      color: var(--ink);
+    }
+  }
+</style>

@@ -37,6 +37,8 @@ Set these repository values in Settings → Secrets and variables → Actions:
 | Variable | `CLOUDFLARE_ACCOUNT_ID` | `ee6dc8763af66b85cf2333e1ea5a4d9f` |
 | Variable | `SUGGEST_URL` | `mailto:suggest@whatcameofit.com` once forwarding is active |
 | Variable | `CORRECTIONS_URL` | `mailto:corrections@whatcameofit.com` once forwarding is active |
+| Variable | `CHROME_STORE_URL` | The extension's Chrome Web Store listing, once it is published there |
+| Variable | `SAFARI_STORE_URL` | The extension's Mac App Store listing, once it is published there |
 
 The token permits Workers Scripts editing in Palladio, Workers Routes editing for `whatcameofit.com`, and Zone read for that domain. It expires on 12 November 2027; replace the encrypted GitHub secret before then. It has no billing, database, model-provider, or email permissions.
 
