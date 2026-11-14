@@ -316,7 +316,39 @@
           ],
           "state": "completed",
           "facts_as_of": null,
-          "facts": null
+          "facts": null,
+          "papers": []
+        }
+      ],
+      "papers": [
+        {
+          "identifier": "10.1126/sciadv.abf1798",
+          "url": "https://doi.org/10.1126/sciadv.abf1798",
+          "record_url": "https://europepmc.org/article/MED/33579703",
+          "roles": [
+            {
+              "role": "origin",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-14T17:48:34Z",
+          "facts": {
+            "title": "Anti-USAG-1 therapy for tooth regeneration through enhanced BMP signaling.",
+            "journal": "Science advances",
+            "year": 2021,
+            "kinds": [
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": []
+          }
         }
       ]
     }

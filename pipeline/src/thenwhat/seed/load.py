@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from thenwhat.claims.entities import add_entity, add_synonym, set_origin_paper
 from thenwhat.claims.entry import add_article, add_claim, add_promise, find_claim
 from thenwhat.claims.status import refresh_status
-from thenwhat.db.models import Claim, EntityMatch, EvidenceEvent, OutletIcon
+from thenwhat.db.models import Claim, EntityMatch, EvidenceEvent, OutletIcon, PaperRecord
 from thenwhat.domain import (
     Decider,
     EntityType,
@@ -27,9 +27,11 @@ from thenwhat.domain import (
     TrialState,
 )
 from thenwhat.events.manual import add_manual_event
+from thenwhat.events.paper_facts import doi_of, pubmed_id_of, reduced
 from thenwhat.export.build import Strict
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.crossref import Crossref
+from thenwhat.sources.europepmc import EuropePmc
 
 
 class SeedClaim(Strict):
@@ -85,6 +87,14 @@ class SeedOutletIcon(Strict):
     content_base64: str
 
 
+class SeedPaperRecord(Strict):
+    """A paper's Europe PMC record as the pipeline stores it for paper facts: without
+    abstract or authors. Kept so a fresh checkout shows the origin paper's facts."""
+
+    fetched_at: datetime
+    record: dict[str, Any]
+
+
 class SeedFile(Strict):
     compiled_by: str
     checked_on: date
@@ -96,6 +106,7 @@ class SeedFile(Strict):
     origin_paper: SeedPaper | None = None
     events: list[SeedEvent] = []
     outlet_icons: list[SeedOutletIcon] = []
+    paper_records: list[SeedPaperRecord] = []
 
 
 def load_seed(session: Session, content: dict[str, Any], *, now: datetime) -> Claim | None:
@@ -185,6 +196,21 @@ def load_seed(session: Session, content: dict[str, Any], *, now: datetime) -> Cl
                     media_type=icon.media_type,
                     content=base64.b64decode(icon.content_base64),
                     fetched_at=icon.fetched_at,
+                )
+            )
+
+    for paper_record in seed.paper_records:
+        payload = reduced(paper_record.record)
+        identifier = doi_of(payload)
+        held = select(PaperRecord.id).where(PaperRecord.identifier == identifier)
+        if identifier is not None and session.scalar(held) is None:
+            session.add(
+                PaperRecord(
+                    identifier=identifier,
+                    source_name=EuropePmc.name,
+                    pubmed_id=pubmed_id_of(payload),
+                    payload=payload,
+                    fetched_at=paper_record.fetched_at,
                 )
             )
 

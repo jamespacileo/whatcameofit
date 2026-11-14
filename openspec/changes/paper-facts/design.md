@@ -56,6 +56,19 @@ Observed in the three recorded Europe PMC fixtures: `pubTypeList` is present in 
 
 **Paper wording lives in one site module**, as trial wording does: labels for kinds, roles, how a results paper was listed and the people or animals statement, one function naming unworded codes, and the same build-time check against verdict wording.
 
+## Decisions made while building
+
+- **What `DERIVED` covers (task 1.1).** The registry defines `RESULT` as the sponsor's "yes" to "reports on results from this clinical study". It does not define `DERIVED` among its data elements; a study's page heads those papers "From PubMed" and says they "are automatically filled in from PubMed … and may or may not be about the study". The code stays `linked_by_registry`. The site words it as linked by the registry from PubMed, repeats the registry's caution under the group's heading, and calls no paper "the results".
+- **Retraction mark (task 2.4).** The recorded fixture of a known retracted paper carries the publication type "Retracted Publication", so the requirement stays.
+- **A paper's role carries its own details.** A `trial_result` role names its trial and how the paper was listed; a `follow_up` role names its evidence event; a `related` role carries the score, the reason codes, who approved it and the search source's one-line summary, which is what a reader sees of a related paper the index does not hold. A paper also carries `record_url`, the index record's own page.
+- **Follow-up papers are stored from the record their event already holds**, reduced, so listing one costs no request until the stored record is old. The origin paper's record is stored from the answer the fetch already asks for.
+- **A paper found only by the literature search with no DOI** is identified as `openalex:<id>`, linked to the search source, and carries no facts.
+- **Not held is a row with no payload** (SQL NULL), so a paper the index lacks is asked for once per refresh age, not on every fetch.
+- **The seed file carries the origin paper's reduced record** (`paper_records`), as it carries its outlet's icon, so a fresh checkout shows a paper's facts.
+- **Journal** is `journalInfo.journal.title` only. A preprint has none and shows none.
+- **Migration number.** `paper_record` is migration 0010: `knowledge-cards` merged 0009 first.
+- **Measurement on a copy (tasks 5.1, 5.2).** See `docs/lookup.md`: the real database is shared between branches and was not migrated from an unmerged one.
+
 ## Risks / Trade-offs
 
 - [A registry-linked paper is about the trial but is not its results, such as a protocol paper] → the entry says how the paper was listed and shows its kind; nothing calls it "the results" unless the sponsor listed it as such.

@@ -339,6 +339,27 @@ class HttpCache(Base):
     expires_at: Mapped[datetime] = mapped_column(TIMESTAMP)
 
 
+class PaperRecord(Base):
+    """The index record a paper's facts are read from (openspec paper-facts), kept once
+    per paper with the time it was fetched.
+
+    Unlike an evidence event's payload, this one is reduced before it is stored: the
+    abstract, the authors, their identifiers and affiliations are removed. A row with
+    no payload records that the index was asked and does not hold the paper.
+    """
+
+    __tablename__ = "paper_record"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # The DOI in lower case, else `pmid:<number>`, else the index's own identifier.
+    identifier: Mapped[str] = mapped_column(Text, unique=True)
+    source_name: Mapped[str] = mapped_column(Text)
+    pubmed_id: Mapped[str | None] = mapped_column(Text, index=True)
+    # SQL NULL, not a JSON null, when the index does not hold the paper.
+    payload: Mapped[dict[str, Any] | None] = mapped_column(JSONB(none_as_null=True))
+    fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+
+
 class OutletIcon(Base):
     """The small icon an outlet's own site serves, kept once per outlet domain.
 
