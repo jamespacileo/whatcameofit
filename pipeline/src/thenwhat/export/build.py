@@ -86,6 +86,7 @@ from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.ror import Ror
 from thenwhat.sources.terms import SOURCES as LISTED_SOURCES
 from thenwhat.terms.candidates import REASON_CODES
+from thenwhat.terms.drugs import DRUG_REASON_CODES, DRUG_RECORD_NAMES_TARGET
 from thenwhat.terms.genes import TARGET_REASON_CODES
 from thenwhat.terms.kinds import KIND_REASON_CODES
 from thenwhat.terms.records import read_record
@@ -392,7 +393,15 @@ class ExportedPaper(Strict):
 
 
 # The reasons a card can carry: those of a vocabulary term and those of a kind link.
-CARD_REASON_CODES = (*REASON_CODES, *KIND_REASON_CODES, *TARGET_REASON_CODES)
+CARD_REASON_CODES = (
+    *REASON_CODES,
+    *KIND_REASON_CODES,
+    *TARGET_REASON_CODES,
+    *DRUG_REASON_CODES,
+)
+# Whose facts a drug's kind of molecule and mechanisms are: the source in the list of
+# sources that the drug source draws them from (docs/sources.md, docs/adr/0002).
+DRUG_FACTS_FROM = "chembl"
 # Whose words a target's function description is: the source in the list of sources
 # that the target source draws it from (docs/sources.md).
 TARGET_DESCRIPTIONS_FROM = "uniprot"
@@ -402,15 +411,17 @@ class ExportedCardReason(Strict):
     """Why the term was a candidate, found by rule. The site owns the wording."""
 
     # "filed_by_registry", "label_equals_name", "entry_term_equals_name", "kind_chosen",
-    # "registry_lists_type", "word_equals_symbol" or "word_equals_synonym".
+    # "registry_lists_type", "word_equals_symbol", "word_equals_synonym",
+    # "drug_name_equals_name" or "drug_record_names_target".
     code: str
     # For "filed_by_registry": how many of the claim's approved trials carry the term,
     # and how many trials there were. For "registry_lists_type": how many of them list
     # the intervention under that type.
     trials: int | None = None
     of: int | None = None
-    # For "label_equals_name" and "entry_term_equals_name": the claim's name that was
-    # equal.
+    # For "label_equals_name", "entry_term_equals_name" and "drug_name_equals_name": the
+    # claim's name that was equal. For "drug_record_names_target": the drug's name as
+    # its source writes it.
     name: str | None = None
     # For "entry_term_equals_name": the vocabulary's entry term the name equals.
     entry_term: str | None = None
@@ -426,9 +437,20 @@ class ExportedCardReason(Strict):
     sources: list[str] | None = None
 
 
+class ExportedMechanism(Strict):
+    """One thing a drug's record says the drug does. The site words the action."""
+
+    # What the drug does to the target, as a code: "agonist", "binding_agent".
+    action: str
+    # The target's name as the source writes it.
+    target: str
+
+
 class ExportedCard(Strict):
-    # What the term is to the claim: its condition, its intervention, or a target: a
-    # gene named in the intervention's name. A target card states no mechanism.
+    # What the term is to the claim: its condition, its intervention, a drug source's
+    # record of the intervention, or a target. A target is the one protein a drug's
+    # record names, or else a gene named in the intervention's name; the second states
+    # no mechanism.
     kind: TermRole
     # "exact" when the term is the claim's own condition or intervention, "broader"
     # when it names a wider group that includes it, "kind" when it is the term of the
@@ -451,8 +473,18 @@ class ExportedCard(Strict):
     # The version of the vocabulary the record was read from, such as a year.
     version: str | None
     # The probability, 0 to 1, of the answer the term check chose for this term or,
-    # for a kind, of the kind chosen.
-    score: float
+    # for a kind, of the kind chosen. None for a card made by a rule a reader can check:
+    # a drug found by its exact name, and the target that drug's record names.
+    score: float | None
+    # For a drug: the kind of molecule, as a code such as "small_molecule". The site
+    # words it. None when the source gives none, and on every other card.
+    molecule_kind: str | None = None
+    # For a drug: what its record says it does, each an action and a target's name.
+    mechanisms: list[ExportedMechanism] = []
+    # The name in `card_sources` of the source the card's facts are drawn from, when
+    # they are under another licence than the card's own source: a drug's kind of
+    # molecule and mechanisms, and that a drug's record names this target.
+    facts_source: str | None = None
     reasons: list[ExportedCardReason]
     # Who approved the link: "rule", "human" or "assistant".
     decided_by: str
@@ -840,7 +872,15 @@ def _background(session: Session, claim: Claim) -> list[ExportedCard]:
         )
     )
     cards: list[ExportedCard] = []
-    for role in TermRole:  # a named gene is only ever read as exact
+    drug, drugs_target = _drug_cards(session, claim)
+    # The drug source's own target comes before a gene named in the intervention.
+    for role in (TermRole.CONDITION, TermRole.INTERVENTION, TermRole.DRUG, TermRole.TARGET):
+        if role is TermRole.DRUG:
+            cards += [drug] if drug is not None else []
+            continue
+        if role is TermRole.TARGET and drugs_target is not None:
+            cards.append(drugs_target)
+            continue
         for fit in TermFit:  # exact before broader before kind
             card = next(
                 (
@@ -896,6 +936,86 @@ def _card(session: Session, term: ClaimTerm) -> ExportedCard | None:
     )
 
 
+def _drug_cards(session: Session, claim: Claim) -> tuple[ExportedCard | None, ExportedCard | None]:
+    """The claim's drug card and, when the drug's record names exactly one single
+    protein as its target, that target's card. Neither is scored: the drug was found by
+    its exact name.
+
+    Both rest on facts the drug source draws from another source under a share-alike
+    licence, so both are made only while that source is accepted, and each names it.
+    A drug whose record gives no kind of molecule and no mechanism makes no card.
+    """
+    link = session.scalars(
+        select(ClaimTerm)
+        .where(
+            ClaimTerm.claim_id == claim.id,
+            ClaimTerm.role == TermRole.DRUG,
+            ClaimTerm.review_state == ReviewState.APPROVED,
+        )
+        .order_by(ClaimTerm.id)
+    ).first()
+    listed, facts = (
+        LISTED_SOURCES.get(opentargets.OpenTargets.name),
+        LISTED_SOURCES.get(DRUG_FACTS_FROM),
+    )
+    if link is None or listed is None or not listed.accepted or facts is None or not facts.accepted:
+        return None, None
+    record = session.get(TermRecord, (link.source_name, link.external_id))
+    if record is None or link.source_name != listed.name:
+        return None, None
+    assert link.fit is not None and link.reviewed_by is not None
+    drug = opentargets.describe_drug(_source_record(record))
+    if drug.molecule_kind is None and not drug.mechanisms:
+        return None, None
+    drug_card = ExportedCard(
+        kind=TermRole.DRUG,
+        fit=link.fit,
+        label=drug.name or link.label,
+        definition=None,
+        url=record.url,
+        source=link.source_name,
+        external_id=link.external_id,
+        version=None,
+        score=None,
+        molecule_kind=drug.molecule_kind,
+        mechanisms=[
+            ExportedMechanism(action=mechanism.action, target=mechanism.target_name)
+            for mechanism in drug.mechanisms
+        ],
+        facts_source=DRUG_FACTS_FROM,
+        reasons=[
+            ExportedCardReason.model_validate(reason)
+            for reason in link.reasons
+            if reason.get("code") in CARD_REASON_CODES
+        ],
+        decided_by=link.reviewed_by.value,
+        read_at=record.fetched_at,
+    )
+    target = opentargets.single_protein_target(drug)
+    if target is None:
+        return drug_card, None
+    described = LISTED_SOURCES.get(TARGET_DESCRIPTIONS_FROM)
+    definition = target.definition if described is not None and described.accepted else None
+    target_card = ExportedCard(
+        kind=TermRole.TARGET,
+        fit=TermFit.EXACT,
+        label=target.symbol,
+        name=target.name or None,
+        definition=definition,
+        definition_source=TARGET_DESCRIPTIONS_FROM if definition is not None else None,
+        url=record_url(link.source_name, target.identifier) or record.url,
+        source=link.source_name,
+        external_id=target.identifier,
+        version=None,
+        score=None,
+        facts_source=DRUG_FACTS_FROM,
+        reasons=[ExportedCardReason(code=DRUG_RECORD_NAMES_TARGET, name=drug_card.label)],
+        decided_by=link.reviewed_by.value,
+        read_at=record.fetched_at,
+    )
+    return drug_card, target_card
+
+
 def _source_record(record: TermRecord) -> SourceRecord:
     return SourceRecord(
         record.source_name, record.external_id, record.url, record.payload, record.fetched_at
@@ -907,7 +1027,7 @@ def _card_sources(claims: list[ExportedClaim]) -> list[ExportedCardSource]:
         name
         for claim in claims
         for card in claim.background
-        for name in (card.source, card.definition_source)
+        for name in (card.source, card.definition_source, card.facts_source)
         if name
     }
     return [

@@ -271,7 +271,8 @@ class EntityMatch(Reviewed, Base):
 
 class ClaimTerm(Reviewed, Base):
     """A subject term proposed for a claim's condition or intervention, the term of its
-    intervention kind, or a gene named in its intervention (GLOSSARY.md).
+    intervention kind, a gene named in its intervention, or a drug source's record of
+    its intervention (GLOSSARY.md).
     Behavior: openspec knowledge-cards."""
 
     __tablename__ = "claim_term"

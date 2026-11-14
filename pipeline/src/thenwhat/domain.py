@@ -47,6 +47,8 @@ class TermRole(StrEnum):
     INTERVENTION = "intervention"
     # A gene named in the intervention, proposed as what it acts on or is made from.
     TARGET = "target"
+    # A drug source's record of the intervention, found by its own name. Not scored.
+    DRUG = "drug"
 
 
 class TermFit(StrEnum):
