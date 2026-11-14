@@ -148,9 +148,8 @@ class OpenAlex(Source):
 
         All the terms go into one search, so a claim costs one search however many names
         and phrases its intervention has. Each term and the condition is searched for as
-        a phrase. Only when that finds nothing is the first term searched for loosely,
-        word by word, with the condition: a second search at most. No second page is
-        asked for.
+        a phrase. That is the only search: when it finds nothing, nothing is the answer,
+        and no looser search is tried in its place. No second page is asked for.
         """
         self._require_key()
         limit = max(1, min(limit, MAX_RESULTS))
@@ -158,10 +157,7 @@ class OpenAlex(Source):
         about = _phrase(condition)
         if not phrases or not about:
             return []
-        records = self._search(f"({' OR '.join(phrases)}) AND {about}", limit)
-        if not records:
-            records = self._search(f"{_words(terms[0])} {_words(condition)}", limit)
-        return records
+        return self._search(f"({' OR '.join(phrases)}) AND {about}", limit)
 
     def _search(self, query: str, limit: int) -> list[SourceRecord]:
         sent = self.usage.searches_sent

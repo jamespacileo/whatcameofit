@@ -40,11 +40,15 @@ When a source reports that the day's allowance is used up, the client SHALL stop
 - **THEN** no further search is sent until the next day
 
 ### Requirement: A charged search is not repeated needlessly
-A source that charges for each search SHALL be asked once for all the terms of a claim where it can take them together, SHALL keep a search's answer for seven days, and SHALL report for each run how many searches it sent, what they cost and what is left of the allowance.
+A source that charges for each search SHALL be asked once for all the terms of a claim where it can take them together, SHALL NOT be asked a looser search when that one finds nothing, SHALL keep a search's answer for seven days, and SHALL report for each run how many searches it sent, what they cost and what is left of the allowance.
 
 #### Scenario: Intervention with a name and two phrases
 - **WHEN** the literature is searched for a claim whose intervention has a name and two search phrases
 - **THEN** one search is sent that names all three together with the indication
+
+#### Scenario: The one search finds nothing
+- **WHEN** the search for all of a claim's terms finds no paper
+- **THEN** the result is empty, no second or looser search is sent, and the run reports that the claim has no related paper
 
 #### Scenario: Claim resolved again within the week
 - **WHEN** the same search was answered three days ago

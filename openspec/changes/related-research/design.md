@@ -89,7 +89,9 @@ Store only normalized public metadata for seven days under hashed search keys. D
 
 The operator asked that the pipeline handle the allowance correctly, say what it did, and do more with fewer searches.
 
-**One search per claim.** The first build sent one search per name, other name and search phrase. OpenAlex takes `("a" OR "b") AND "condition"` in `search`, so every term goes into one search. Checked 2026-11-14 for the Tourette claim: the two separate searches matched 23 and 948 works; the combined one matched 97, with the two Washington University trial reports and the Nottingham sham-controlled trial in the first six. It is both cheaper and more exact, because each term is a phrase. A description that matches nothing as a phrase gets one loose search of the first name with the indication. Alternative considered: keep one search per term and cache longer. Rejected: it still costs up to five searches for a new claim.
+**One search per claim.** The first build sent one search per name, other name and search phrase. OpenAlex takes `("a" OR "b") AND "condition"` in `search`, so every term goes into one search. Checked 2026-11-14 for the Tourette claim: the two separate searches matched 23 and 948 works; the combined one matched 97, with the two Washington University trial reports and the Nottingham sham-controlled trial in the first six. It is both cheaper and more exact, because each term is a phrase. Alternative considered: keep one search per term and cache longer. Rejected: it still costs up to five searches for a new claim.
+
+**No looser second search.** The first version of this change searched the first name word by word when the phrases found nothing. Removed the same day under the operator's rule against lower-quality fallbacks: there is one way to search, and when it finds nothing `resolve` says the claim has no related paper. The empty answer is kept for the week like any other. The operator resolves it by giving the intervention a search phrase.
 
 **A search's answer is kept for seven days**, as the Worker keeps its own. Lookups of one work stay at 24 hours and cost nothing.
 

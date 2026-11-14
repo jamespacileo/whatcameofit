@@ -312,6 +312,24 @@ def test_resolve_says_what_the_paper_search_sent_and_what_is_left(
     assert "test-key" not in result.output
 
 
+def test_resolve_says_plainly_when_the_paper_search_found_nothing(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    class NoPapers(Papers):
+        def search_papers(
+            self, terms: list[str], condition: str, limit: int = 20
+        ) -> list[SourceRecord]:
+            return []
+
+    monkeypatch.setattr("thenwhat.cli.resolve.make_research", lambda s: research(NoPapers()))
+
+    result = run("resolve", SLUG)
+
+    assert result.exit_code == 0, result.output
+    assert "The paper search found nothing for this claim." in result.output
+    assert session.scalars(select(EntityMatch)).one().source_name == "clinicaltrials.gov"
+
+
 def test_resolve_rescore_scores_the_pending_papers_again(
     run, session: Session, monkeypatch: pytest.MonkeyPatch
 ):

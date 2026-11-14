@@ -521,7 +521,7 @@ def test_literature_search_asks_for_no_page_beyond_the_limit(
     assert [request.url.params["per_page"] for request in replay.requests] == ["2"]
 
 
-def test_search_that_finds_nothing_as_phrases_is_tried_once_more_by_its_words(
+def test_search_that_finds_nothing_is_empty_and_no_looser_search_is_sent(
     session: Session, fake_time, fixture_json
 ):
     nothing = httpx.Response(
@@ -531,9 +531,12 @@ def test_search_that_finds_nothing_as_phrases_is_tried_once_more_by_its_words(
 
     assert source.search_papers(["Wrist-worn stimulation device", "a phrase"], CONDITION) == []
     assert searches(replay) == [
-        '("Wrist-worn stimulation device" OR "a phrase") AND "Tourette syndrome"',
-        "Wrist-worn stimulation device Tourette syndrome",
+        '("Wrist-worn stimulation device" OR "a phrase") AND "Tourette syndrome"'
     ]
+    # The empty answer is kept like any other, so a later run sees it without asking.
+    again, _ = papers(session, fake_time, replay)
+    assert again.search_papers(["Wrist-worn stimulation device", "a phrase"], CONDITION) == []
+    assert len(replay.requests) == 1
 
 
 def test_a_search_is_answered_from_the_cache_for_a_week(session: Session, fake_time, fixture_json):
