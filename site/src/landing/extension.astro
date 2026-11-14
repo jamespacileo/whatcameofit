@@ -132,7 +132,7 @@ const checked = data.last_checked_at ? formatDate(data.last_checked_at) : null;
     <div class="wrap get-after">
       <p class="elsewhere">The extension runs in a computer's browser. Send this page there:</p>
       <SharePill />
-      <InstallControls quiet />
+      <InstallControls />
       <p class="doubt"><a href="#what-it-sends">What it reads, sends and keeps</a></p>
     </div>
   </section>
@@ -455,6 +455,57 @@ const checked = data.last_checked_at ? formatDate(data.last_checked_at) : null;
     .get-after {
       display: block;
       margin-top: 2rem;
+    }
+
+    /* One column needs no shared rows. In the first answer the popup comes straight
+       under its situation, so the status is on the first screen, and the report it
+       answers for is named beneath it, where the note says "this report". Only the
+       drawn order changes, never the order a keyboard moves in. */
+    .answer {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .toolbar {
+      align-self: stretch;
+    }
+
+    .answer:first-child .shown {
+      display: contents;
+    }
+
+    /* The first answer's button sits at the end of its heading's line, so the popup
+       starts one row sooner. */
+    .answer:first-child h2 {
+      padding-right: 3.25rem;
+    }
+
+    .answer:first-child .toolbar {
+      order: 1;
+      margin-top: -1.55rem;
+    }
+
+    .band {
+      padding-top: 1.25rem;
+    }
+
+    .answers {
+      margin-top: 1.1rem;
+    }
+
+    .answer:first-child :global(.pp-popup) {
+      order: 2;
+      margin-top: 0.5rem;
+    }
+
+    .answer:first-child .page {
+      order: 3;
+      margin-top: 0.9rem;
+    }
+
+    .answer:first-child .note {
+      order: 4;
+      margin-top: 0.35rem;
     }
 
     /* A link on a line of its own is pressed like a button: 44 pixels. */

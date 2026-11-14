@@ -2,15 +2,11 @@
 // Where the extension is installed from: one control for each store that lists it.
 // A store's address is a deployment setting (site.config.mjs). With scripting on, the
 // control for the reader's own browser is the filled one and comes first; without it
-// both are shown alike. Nothing is recorded when one is pressed.
+// both are shown alike. On a phone both step back to outlines: the extension runs in a
+// computer's browser, so neither is that reader's next step. Nothing is recorded when
+// one is pressed.
 import { SITE } from "../../site.config.mjs";
 
-interface Props {
-  /** Outlined controls, for a phone: the extension runs in a computer's browser. */
-  quiet?: boolean;
-}
-
-const { quiet = false } = Astro.props;
 const stores = [
   SITE.chromeStoreUrl && { id: "chrome", href: SITE.chromeStoreUrl, label: "Add to Chrome" },
   SITE.safariStoreUrl && { id: "safari", href: SITE.safariStoreUrl, label: "Get it for Safari" },
@@ -23,7 +19,7 @@ const fits =
       : "For Safari on a Mac. The Chrome version is not yet available.";
 ---
 
-<div class:list={["install", { quiet }]}>
+<div class="install">
   <p class="stores" data-install>
     {
       stores.map((store) => (
@@ -115,26 +111,38 @@ const fits =
     font-size: 0.9rem;
   }
 
-  /* Where nothing can be installed, neither control is the page's main action. */
-  .quiet .store {
-    background: var(--paper);
-    color: var(--blue);
-    font-size: 1rem;
-  }
+  /* On a phone nothing can be installed, so neither control is the page's main action:
+     both are outlined, on one row, and the line that says where it runs is in ink. */
+  @media (max-width: 40rem) {
+    .stores {
+      flex-wrap: nowrap;
+      gap: 0.5rem;
+    }
 
-  .quiet .store:hover {
-    background: var(--tint);
-    border-color: var(--footer);
-    color: var(--footer);
-  }
+    .store {
+      flex: 0 1 auto;
+      justify-content: center;
+      padding-inline: 0.85rem;
+      background: var(--paper);
+      color: var(--blue);
+      font-size: 1rem;
+      text-align: center;
+    }
 
-  .quiet .stores[data-known] .store[data-mine] {
-    background: var(--blue);
-    color: var(--paper);
-  }
+    .store:hover {
+      background: var(--tint);
+      border-color: var(--footer);
+      color: var(--footer);
+    }
 
-  .quiet .fits {
-    color: var(--ink);
+    .stores[data-known] .store[data-mine] {
+      background: var(--blue);
+      color: var(--paper);
+    }
+
+    .fits {
+      color: var(--ink);
+    }
   }
 
   @media print {
