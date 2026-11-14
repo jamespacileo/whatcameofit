@@ -66,6 +66,16 @@ Measured read-only on 2026-11-14: 271 institution entities on 74 claims, 42 comp
 4. Site in the same deploy as the export field. An export without `organisations` builds as today.
 5. Rollback: revert the deploy. Sponsor entities can stay; nothing else reads them.
 
+## Decisions made while building
+
+Recorded on 2026-11-14 for the operator to confirm.
+
+- **The registry record is kept in its own table.** The export needs the record's name, kinds, country, website and the time it was read, and a match holds only a one-line summary. `organisation_record` keeps ROR's `organization` object once per identifier with its fetch time, like `term_record` does for vocabulary terms. The match score stays on the match, since it is ROR's answer for one name. The same migration as `entity.named_by`.
+- **An organisation remembers which reports named it.** The role "named in a report" gives the report's address, and an entity did not record which of its claim's articles it was read from. `entity_article` links an institution or company to each article that named it; extraction now records the link, and matches an organisation by name across institution and company so that one name is one entity. The migration links existing organisations on claims with one article to that article. On the 14 claims with several articles (12 of them name organisations, 57 entities on 14 November) which article named an existing organisation is not known and is not guessed: those organisations carry the role with no address. Recording it would need the articles read again, which no command does for an approved claim.
+- **What "registry chooses none" stores in practice.** The rule leaves any match the registry did not choose pending, as specified and tested with a registry that returns near misses. The ROR client from `related-research` returns only the record ROR marks chosen ("Name the registry does not know": no candidate is stored), so with ROR a name with no chosen record stores nothing rather than pending near misses. Both specs hold; the queue does not fill with near misses.
+- **Pending matches stored before the rule are approved when ROR chooses them again.** 112 ROR matches on the real database were stored pending by `related-research` before this rule existed. A later `resolve` asks ROR again; when ROR still chooses the record, the pending match is approved by rule. An approved or rejected match is never changed.
+- **A sponsor is recorded only for a trial with approved events**, as the spec says, so that every sponsor entity has a trial on the claim page; the export still derives the sponsor role from the trials it lists, so an entity whose trial later leaves the page has no sponsor role.
+
 ## Open Questions
 
 - Whether an organisation's entry should later link to the site's other claims that name it. Deferred with the page-per-organisation question; it needs the operator's wording decision and no schema change.

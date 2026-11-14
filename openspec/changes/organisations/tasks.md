@@ -2,19 +2,19 @@
 
 ## 1. Prerequisites and vocabulary
 
-- [ ] 1.1 Confirm `related-research` tasks 6.1 and 6.2 are ticked (the registry's entry in `docs/sources.md`, its client, candidate matches for institution and company entities). If they are not, do them in that change first; verify `thenwhat resolve` stores a candidate match for a known institution on a recorded fixture
-- [ ] 1.2 Add "Organisation" and "Sponsor" to `GLOSSARY.md`, and note in `docs/sources.md` which five registry fields are republished and which are never exported; verify the entry carries the date read
+- [x] 1.1 Confirm `related-research` tasks 6.1 and 6.2 are ticked (the registry's entry in `docs/sources.md`, its client, candidate matches for institution and company entities). If they are not, do them in that change first; verify `thenwhat resolve` stores a candidate match for a known institution on a recorded fixture
+- [x] 1.2 Add "Organisation" and "Sponsor" to `GLOSSARY.md`, and note in `docs/sources.md` which five registry fields are republished and which are never exported; verify the entry carries the date read
 
 ## 2. Sponsors as entities
 
-- [ ] 2.1 Add `entity.named_by` with its migration, defaulting to article for existing rows; verify it applies and reverses against the test database
-- [ ] 2.2 At fetch, record each approved trial's organisation sponsor as a company or institution entity marked as named by a registry record, adding the mark to an entity the claim already has under that name; verify an industry sponsor no report named, a sponsor a report also named, and that a second fetch records nothing new
-- [ ] 2.3 Record no entity for a sponsor that is a person, by the two signs trial facts use; verify on `study_NCT04951479_comparison.json` (a sponsor-investigator classed "other")
+- [x] 2.1 Add `entity.named_by` with its migration, defaulting to article for existing rows; verify it applies and reverses against the test database
+- [x] 2.2 At fetch, record each approved trial's organisation sponsor as a company or institution entity marked as named by a registry record, adding the mark to an entity the claim already has under that name; verify an industry sponsor no report named, a sponsor a report also named, and that a second fetch records nothing new
+- [x] 2.3 Record no entity for a sponsor that is a person, by the two signs trial facts use; verify on `study_NCT04951479_comparison.json` (a sponsor-investigator classed "other")
 
 ## 3. Approval rule
 
-- [ ] 3.1 Approve by rule a new organisation match the registry marks as chosen, and leave any other pending; verify one chosen record, three records with none chosen, and that a match an operator rejected stays rejected on a later run
-- [ ] 3.2 Show organisation matches in the review queue with the registry's name, country and website; verify the queue test
+- [x] 3.1 Approve by rule a new organisation match the registry marks as chosen, and leave any other pending; verify one chosen record, three records with none chosen, and that a match an operator rejected stays rejected on a later run
+- [x] 3.2 Show organisation matches in the review queue with the registry's name, country and website; verify the queue test
 
 ## 4. Export
 

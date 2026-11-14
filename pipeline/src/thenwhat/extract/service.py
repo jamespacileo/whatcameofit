@@ -10,6 +10,7 @@ from datetime import date, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from thenwhat.claims.entities import ORGANISATION_TYPES, note_named_organisation
 from thenwhat.claims.entry import (
     ArticleNotFound,
     EntryError,
@@ -173,7 +174,10 @@ def _apply(
 
     for named in draft.entities:
         entity_type = EntityType(named.type)
-        if (entity_type, name_key(named.name)) not in known:
+        if entity_type in ORGANISATION_TYPES:
+            # Kept with the article that named it, once per organisation of the claim.
+            note_named_organisation(session, claim, article, named.name, entity_type)
+        elif (entity_type, name_key(named.name)) not in known:
             known.add((entity_type, name_key(named.name)))
             session.add(Entity(claim_id=claim.id, type=entity_type, name=named.name))
 

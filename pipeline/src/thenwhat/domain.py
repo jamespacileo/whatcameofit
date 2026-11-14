@@ -32,6 +32,14 @@ class EntityType(StrEnum):
     COMPANY = "company"
 
 
+class NamedBy(StrEnum):
+    """Where an entity's name came from: a source article, a registry record (a trial's
+    lead sponsor), or both."""
+
+    ARTICLE = "article"
+    REGISTRY = "registry"
+
+
 class TermRole(StrEnum):
     """What a subject term is proposed as for a claim."""
 

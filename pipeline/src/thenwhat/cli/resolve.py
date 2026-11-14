@@ -229,10 +229,14 @@ def _related_research(
     matched = _step(
         session,
         "Organisations were not looked up",
-        lambda: match_organisations(session, claim, registry=research.organisations),
+        lambda: match_organisations(session, claim, registry=research.organisations, now=now),
     )
     if matched:
-        out.print(f"Matched {len(matched)} organisation(s) in ROR. They are pending review.")
+        chosen = sum(match.review_state is ReviewState.APPROVED for match in matched)
+        out.print(
+            f"Matched {len(matched)} organisation(s) in ROR: {chosen} approved by rule as"
+            f" ROR's chosen record, {len(matched) - chosen} pending review."
+        )
 
     papers = research.papers
     if papers is None:

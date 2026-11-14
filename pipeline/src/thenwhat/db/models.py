@@ -28,6 +28,7 @@ from thenwhat.domain import (
     EntityType,
     EventType,
     EvidenceStage,
+    NamedBy,
     RegulatoryOutcome,
     ReviewState,
     TermFit,
@@ -160,6 +161,10 @@ class Entity(Base):
         ),
         CheckConstraint("NOT is_origin_paper OR type = 'paper'", name="origin_paper_is_paper"),
         CheckConstraint("doi IS NULL OR type = 'paper'", name="doi_only_on_papers"),
+        CheckConstraint(
+            "cardinality(named_by) > 0 AND named_by <@ ARRAY['article', 'registry']::text[]",
+            name="named_by_known",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -176,6 +181,25 @@ class Entity(Base):
     # A DOI the article or operator gave for a paper. It is a lead for resolution,
     # not a confirmed identifier: confirmation is an approved match.
     doi: Mapped[str | None] = mapped_column(Text)
+    # Where the name came from: a source article, a registry record (a trial's lead
+    # sponsor), or both. Values of `NamedBy`.
+    named_by: Mapped[list[str]] = mapped_column(
+        ARRAY(Text),
+        default=lambda: [NamedBy.ARTICLE.value],
+        server_default="{article}",
+    )
+
+
+class EntityArticle(Base):
+    """A source article that named an organisation entity of its claim, so that the
+    organisation's role can give the report's address (openspec organisations)."""
+
+    __tablename__ = "entity_article"
+
+    entity_id: Mapped[int] = mapped_column(ForeignKey("entity.id"), primary_key=True)
+    source_article_id: Mapped[int] = mapped_column(
+        ForeignKey("source_article.id"), primary_key=True
+    )
 
 
 class EntityMatch(Reviewed, Base):
@@ -239,6 +263,20 @@ class TermRecord(Base):
     """A vocabulary term's own record as its source returned it, kept once per term."""
 
     __tablename__ = "term_record"
+
+    source_name: Mapped[str] = mapped_column(Text, primary_key=True)
+    external_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    url: Mapped[str] = mapped_column(Text)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+
+
+class OrganisationRecord(Base):
+    """An organisation's own record as the organisation registry returned it, kept once
+    per record with the time it was read (openspec organisations). The match score is
+    the registry's answer for one name, so it stays on the match."""
+
+    __tablename__ = "organisation_record"
 
     source_name: Mapped[str] = mapped_column(Text, primary_key=True)
     external_id: Mapped[str] = mapped_column(Text, primary_key=True)

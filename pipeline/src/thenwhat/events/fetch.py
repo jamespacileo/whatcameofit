@@ -10,15 +10,15 @@ from typing import Any, Protocol
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.entities import entities_of
+from thenwhat.claims.entities import entities_of, note_sponsor
 from thenwhat.claims.status import refresh_status
 from thenwhat.db.models import Claim, EntityMatch, EvidenceEvent
-from thenwhat.domain import Decider, EntityType, EventType, ReviewState
+from thenwhat.domain import TRIAL_EVENT_TYPES, Decider, EntityType, EventType, ReviewState
 from thenwhat.events.draft import EventDraft
 from thenwhat.events.paper_records import keep_paper, note_paper, paper_reference
 from thenwhat.events.papers import follow_up_confidence, follow_up_event, retraction_event
 from thenwhat.events.trial import trial_events
-from thenwhat.events.trial_facts import read_trial
+from thenwhat.events.trial_facts import Sponsor, read_trial
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord
 from thenwhat.sources.clinicaltrials import ClinicalTrials
@@ -90,10 +90,15 @@ def fetch_claim(
             if match.source_name != ClinicalTrials.name:
                 continue
             record = trials.fetch_trial(match.external_id)
-            for draft in trial_events(record) if record else []:
+            if record is None:
+                continue
+            for draft in trial_events(record):
                 store(draft, match)
-            for results_paper in read_trial(record.payload).results_papers if record else []:
+            read = read_trial(record.payload)
+            for results_paper in read.results_papers:
                 keep(pubmed_id=results_paper.pubmed_id)
+            if _has_approved_events(session, claim, match.external_id):
+                _note_sponsor(session, claim, read.facts.sponsor)
         for match in approved.get(entity.id, []):
             if match.source_name == OpenAlex.name and match.external_id.startswith("10."):
                 keep(doi=match.external_id)
@@ -145,6 +150,29 @@ def fetch_claim(
 
     refresh_status(session, claim, as_of=now.date(), now=now, no_signal_years=no_signal_years)
     return created
+
+
+def _has_approved_events(session: Session, claim: Claim, trial_id: str) -> bool:
+    return (
+        session.scalars(
+            select(EvidenceEvent.id).where(
+                EvidenceEvent.claim_id == claim.id,
+                EvidenceEvent.external_id == trial_id,
+                EvidenceEvent.type.in_(TRIAL_EVENT_TYPES),
+                EvidenceEvent.review_state == ReviewState.APPROVED,
+            )
+        ).first()
+        is not None
+    )
+
+
+def _note_sponsor(session: Session, claim: Claim, sponsor: Sponsor | None) -> None:
+    """Record the trial's lead sponsor as an organisation of the claim (openspec
+    entity-resolution). A sponsor that is a person has no name in the trial facts, by
+    the two signs they use, and is never recorded."""
+    if sponsor is None or sponsor.name is None or sponsor.kind == "individual":
+        return
+    note_sponsor(session, claim, sponsor.name, industry=sponsor.kind == "industry")
 
 
 def _index_record(event: EvidenceEvent) -> SourceRecord | None:
