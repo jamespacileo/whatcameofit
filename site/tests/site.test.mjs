@@ -1030,7 +1030,8 @@ test("the method page explains organisations and the publisher note", () => {
   const part = html.split('id="who-a-claim-names"')[1].split('id="what-this-site-never-says"')[0];
   assert.match(part, /a news report named it, or a trial's registry record names it as\s+the trial's lead sponsor/);
   assert.match(part, /A trial sponsor that is a person is never listed/);
-  assert.match(part, /chosen answer for the\s+name, a fixed rule accepts that match/);
+  assert.match(part, /chosen answer for the name and the name, ignoring capitals and punctuation,\s+is exactly one of that record's own names/);
+  assert.match(part, /no looser match is tried/);
   assert.match(part, /it does not verify the organisation's part in a\s+claim/);
   assert.match(part, /The note says where a report is published\. It is not a\s+judgement on the report/);
 });

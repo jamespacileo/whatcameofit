@@ -13,13 +13,20 @@ from sqlalchemy.orm import Session
 
 from thenwhat.claims.entities import entities_of, note_named_organisation, note_sponsor
 from thenwhat.claims.entry import add_article, add_claim, articles_of
-from thenwhat.db.models import Claim, Entity, EntityArticle, EntityMatch, OrganisationRecord
+from thenwhat.db.models import (
+    Claim,
+    Entity,
+    EntityArticle,
+    EntityMatch,
+    OrganisationRecord,
+    PaperRecord,
+)
 from thenwhat.domain import Decider, EntityType, NamedBy, ReviewState
 from thenwhat.events.fetch import event_row, fetch_claim
 from thenwhat.events.trial import trial_events
 from thenwhat.export.build import build_export
 from thenwhat.export.organisations import is_on_website
-from thenwhat.resolve.organisations import match_organisations
+from thenwhat.resolve.organisations import is_named_exactly, match_organisations
 from thenwhat.review.decisions import record_decision
 from thenwhat.review.queue import decide_item, pending_items
 from thenwhat.sources.base import SourceRecord
@@ -312,6 +319,117 @@ def test_chosen_match_the_operator_rejected_stays_rejected(session: Session, fix
     assert (match.review_state, match.reviewed_by) == (ReviewState.REJECTED, Decider.HUMAN)
 
 
+def chosen_record(fixture_json, path: str) -> SourceRecord:
+    return ror_record(
+        next(item for item in affiliation_items(fixture_json, path) if item["chosen"])
+    )
+
+
+@pytest.mark.parametrize(
+    ("name", "path"),
+    [
+        # ROR chose another organisation: the name given is none of its names.
+        ("CRISPR Therapeutics", "affiliation_crispr_therapeutics.json"),
+        ("Ulster University", "affiliation_ulster_university.json"),
+        ("Göteborg University", "affiliation_goteborg_university.json"),
+        (
+            "University College London Hospitals",
+            "affiliation_university_college_london_hospitals.json",
+        ),
+        # A government body's name is reused from country to country: without its
+        # country the US agency's name is exactly the Thai agency's.
+        ("Food and Drug Administration", "affiliation_food_and_drug_administration.json"),
+        # A one-word name must match with its capitals: the journal is not "NeurON".
+        ("Neuron", "affiliation_neuron.json"),
+        # A newspaper: ROR types the record only as funder and "other".
+        ("The New York Times", "affiliation_the_new_york_times.json"),
+    ],
+)
+def test_chosen_record_without_strong_evidence_stays_pending(
+    session: Session, fixture_json, name: str, path: str
+):
+    """Scenario: Registry chooses another organisation. The name stays unidentified and
+    no looser match is tried."""
+    claim = new_claim(session)
+    entity = with_institution(session, claim, name)
+    registry = Registry({name: [chosen_record(fixture_json, path)]})
+
+    [match] = match_organisations(session, claim, registry=registry, now=NOW)
+
+    assert match.review_state is ReviewState.PENDING
+    assert registry.asked == [name]
+    assert (
+        session.scalars(
+            select(EntityMatch).where(
+                EntityMatch.entity_id == entity.id,
+                EntityMatch.review_state == ReviewState.APPROVED,
+            )
+        ).first()
+        is None
+    )
+
+
+def test_government_body_named_with_its_country_is_approved(session: Session, fixture_json):
+    """Scenario: Government body named with its country"""
+    claim = new_claim(session)
+    with_institution(session, claim, "U.S. Food and Drug Administration")
+    record = chosen_record(fixture_json, "affiliation_us_food_and_drug_administration.json")
+    registry = Registry({"U.S. Food and Drug Administration": [record]})
+
+    [match] = match_organisations(session, claim, registry=registry, now=NOW)
+
+    assert (match.review_state, match.reviewed_by) == (ReviewState.APPROVED, Decider.RULE)
+
+
+def test_journal_name_is_never_approved(session: Session, fixture_json):
+    """Scenario: Journal named in the report. "NeurON" is exactly one of the record's
+    names, but a paper on record was published in a journal of that name."""
+    claim = new_claim(session)
+    with_institution(session, claim, "NeurON")
+    session.add(
+        PaperRecord(
+            identifier="10.1000/neuron-paper",
+            source_name="europepmc",
+            payload={"journalInfo": {"journal": {"title": "Neuron", "isoabbreviation": "Neuron"}}},
+            fetched_at=NOW,
+        )
+    )
+    session.flush()
+    registry = Registry({"NeurON": [chosen_record(fixture_json, "affiliation_neuron.json")]})
+
+    [match] = match_organisations(session, claim, registry=registry, now=NOW)
+
+    assert match.review_state is ReviewState.PENDING
+
+
+@pytest.mark.parametrize(
+    ("name", "named"),
+    [
+        ("University of Nottingham", True),
+        ("the university of nottingham", True),
+        ("University of Nottingham (UoN)", True),
+        ("Nottingham University", False),
+        ("University of Nottingham Malaysia", False),
+        ("Nottingham", False),
+    ],
+)
+def test_a_name_is_one_of_the_record_names_only_when_it_is_equal(
+    fixture_json, name: str, named: bool
+):
+    organisation = chosen_record(fixture_json, "affiliation_university_of_nottingham.json").payload[
+        "organization"
+    ]
+    assert is_named_exactly(name, organisation) is named
+
+
+def test_a_company_record_name_is_compared_without_its_country_bracket(fixture_json):
+    organisation = chosen_record(fixture_json, "affiliation_crispr_therapeutics.json").payload[
+        "organization"
+    ]
+    assert is_named_exactly("Sprint PNS System", organisation)
+    assert not is_named_exactly("CRISPR Therapeutics", organisation)
+
+
 def test_pending_match_stored_before_the_rule_is_approved_when_chosen_again(
     session: Session, fixture_json
 ):
@@ -597,15 +715,14 @@ def test_organisation_whose_registry_name_is_a_person_of_the_claim_is_not_export
 ):
     claim = published_claim(session)
     session.add(Entity(claim_id=claim.id, type=EntityType.PERSON, name="University of Nottingham"))
+    given = "The University of Nottingham"
     note_named_organisation(
-        session, claim, article_of(session, claim, REPORT), "Nottingham Uni", EntityType.INSTITUTION
+        session, claim, article_of(session, claim, REPORT), given, EntityType.INSTITUTION
     )
-    match_organisations(
-        session,
-        claim,
-        registry=Registry({"Nottingham Uni": [nottingham(fixture_json)]}),
-        now=NOW,
+    [match] = match_organisations(
+        session, claim, registry=Registry({given: [nottingham(fixture_json)]}), now=NOW
     )
+    assert match.review_state is ReviewState.APPROVED
 
     assert exported_claim(session).organisations == []
 

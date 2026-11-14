@@ -47,6 +47,8 @@ When the article gives the treatment no product name, give up to three search ph
 the words a trial registry or a paper would use for it.
 Record a person only when the article names them as carrying out or leading the research.
 Never record a patient, a relative, a reporter or a commentator, by full name or by first name.
+Record an institution or company only for a university, hospital, research institute, company,
+funder or public body. A journal, a news outlet, a bank or an investment analyst is none of these.
 Give a DOI only if the article states it. List a promised timeline only if the article states one.
 """
 

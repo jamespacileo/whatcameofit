@@ -261,12 +261,16 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
   </p>
   <p>
     Each name is looked up in the Research Organization Registry (ROR), an open registry of
-    research organisations. When ROR marks one of its records as its own chosen answer for the
-    name, a fixed rule accepts that match, and the entry shows what the record says: the
+    research organisations. A fixed rule accepts ROR's answer only when ROR marks one of its
+    records as its chosen answer for the name and the name, ignoring capitals and punctuation,
+    is exactly one of that record's own names. A one-word name must match letter for letter, a
+    public body's name must state its country, since such names repeat from country to
+    country, and a name that is a journal's is never accepted. Then the entry shows what the
+    record says: the
     registry's name for the organisation, its kind, its country and its website, with a link to
     the record, ROR's score for how well the name matched, and the date the record was read. No
-    AI model takes part. Two names that lead to the same record are one entry. A name ROR does
-    not choose a record for is listed as its source gave it and says it was not matched. ROR
+    AI model takes part. Two names that lead to the same record are one entry. Any other name is
+    listed as its source gave it and says it was not matched; no looser match is tried. ROR
     identifies an organisation from its name; it does not verify the organisation's part in a
     claim, and a wrong match is removed by a person.
   </p>

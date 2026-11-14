@@ -480,3 +480,25 @@ Not organisations in the sense the section's note gives ("universities, hospital
 Left unidentified although ROR holds them, because ROR marked no record as chosen for the name as given: among others Harvard, UCLA, University of California San Francisco, University of Copenhagen, National Institutes of Health, Medical Research Council, Eli Lilly, Novo Nordisk, AstraZeneca, Pfizer, Novartis, Moderna and GSK. Each is listed by the name the report gave, saying it was not matched. No looser match is tried.
 
 **Rejecting the wrong matches.** They exist only on the copy until the real database is fetched and resolved. After that run, the same matches are approved by rule there too; each is then rejected with `thenwhat review reject match <id> --as-assistant` (or by the operator), finding its id by the claim, the name and the ROR id above, and a later run leaves it rejected. The organisation is then listed by the name its source gave, as not matched.
+
+### Raising the bar, and the run again (14 November 2026, later)
+
+The operator's decision on the figures above: raise the bar rather than reject by hand. A ROR match is now approved by rule only when ROR chose it, the name given is exactly one of the record's names, labels, aliases or acronyms (ignoring case, accents, punctuation, a leading "The" and a closing bracket), a one-word name matches letter for letter, the record is not typed as ROR's catch-all "other", the name is not a journal title held in the paper records, and a government body's name states its country. Anything else stays a pending match and the organisation unidentified, with no looser match tried. Extraction is also asked, from now on, not to record journals, news outlets, banks or investment analysts as organisations.
+
+The copy's 269 ROR matches were set back to pending and the organisation step was run again with the same ROR answers (from the cache; no request was sent).
+
+| | First rule | Stricter rule |
+| --- | --- | --- |
+| Names ROR chose a record for | 269 | 269 |
+| Approved by rule (identified) | 269 | 205 |
+| Of those, wrong | 15 (5.6%) | 1 (0.5%) |
+| Of those, doubtful | 1 | 0 |
+| Left pending, organisation unidentified | 0 | 64 |
+| Organisations exported | 419 (258 identified) | 430 (205 identified) |
+| Reports marked as on an organisation's website | 10 | 10 |
+
+The one wrong match left is "Marie Curie" on enamel-regeneration-protein-scaffold: the report meant the EU's Marie Skłodowska-Curie Actions, and ROR's chosen record is the UK charity whose name is exactly "Marie Curie". No rule on the name can tell them apart. It is rejected with `thenwhat review reject match <id>` after the real database's run, and stays rejected. Every other wrong match is now pending: CRISPR Therapeutics (both spellings), the European Regional Development Fund, PNOC, ACS Biomaterials Science and Engineering, PAMAfrica, Ulster University, Göteborg University, University College London Hospitals, UPMC Eye Center, Adicet Therapeutics, Neuron and The Lancet Regional Health – Americas by the exact-name test, the US FDA without its country by the government test, and the doubtful Axial Therapeutic Research too. 1 in 205 is under the one-in-twenty stop, so task 6.2 is met.
+
+Previously right matches the stricter rule leaves unidentified: 49 of the 253 read as right. 7 are the parent and partner matches listed above (a hospital to its university, a joint body to one partner). 8 are public bodies whose name does not state their country (NHS England twice, BBSRC, the European Research Council, the European Union, NHMRC, NICE twice). 2 are records typed "other": The New York Times and the European Society of Gynaecological Oncology. The other 32 are a school or department matched to its university (Washington University School of Medicine on four entities, Tufts University School of Dental Medicine, University of Pittsburgh School of Medicine on two, and others), and spellings that differ from every name on the record ("Copenhagen University Hospital, Rigshospitalet", "North American Science Associates Ltd.", "Veradermics" against "VeraDermics"). Each is listed by the name its source gave, as not matched to a registry record.
+
+Journals, news outlets and banks: of the 24 journal names and 6 outlets and banks recorded by extraction, none is identified under the stricter rule. Neuron is caught both as a journal title on record and by the one-word test; The New York Times by its "other" type; the rest had no chosen record or no exact name. A bank ROR held under exactly the name given, typed as a company, would still be identified; none was in this run.

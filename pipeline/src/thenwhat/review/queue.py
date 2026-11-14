@@ -148,7 +148,7 @@ def _match_item(session: Session, claim: Claim, match: EntityMatch, entity: Enti
             claim.slug,
             f"{entity.type.value} '{entity.name}' is organisation {match.external_id} in"
             f" {match.source_name}, scored by the registry's own name match. A rule approves"
-            " it only when the registry marks it as its chosen record",
+            " it only when the registry chose it and the name is exactly one of its names",
             link,
             match.score,
             match.record_summary,

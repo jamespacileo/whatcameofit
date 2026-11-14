@@ -15,6 +15,7 @@
 
 - [x] 3.1 Approve by rule a new organisation match the registry marks as chosen, and leave any other pending; verify one chosen record, three records with none chosen, and that a match an operator rejected stays rejected on a later run
 - [x] 3.2 Show organisation matches in the review queue with the registry's name, country and website; verify the queue test
+- [x] 3.3 Raise the bar, by the operator's decision after 6.2 found 5.6% wrong: approve only when ROR chose the record and the name given is exactly one of its names, a one-word name letter for letter, never a record typed "other" or a journal title, and a government body only with its country; ask extraction not to record journals, news outlets, banks or analysts; verify each wrong match from the run stays pending on its recorded answer, and re-run 6.1 and 6.2
 
 ## 4. Export
 
@@ -36,7 +37,7 @@
 ## 6. Measurement and release check
 
 - [x] 6.1 Run fetch and resolve against the real database and record in `docs/lookup.md`: organisation names looked up, identified, left unidentified, requests made, and how many source articles gained the publisher mark
-- [ ] 6.2 Read every organisation name in that run's export once, and record how many are a person, a department too vague to be an organisation, or matched to the wrong record. Reject wrong matches before release; if more than one in twenty is wrong, stop and report before the site task ships
+- [x] 6.2 Read every organisation name in that run's export once, and record how many are a person, a department too vague to be an organisation, or matched to the wrong record. Reject wrong matches before release; if more than one in twenty is wrong, stop and report before the site task ships
 - [x] 6.3 Run `make check`
 
 ## Workflow follow-up
