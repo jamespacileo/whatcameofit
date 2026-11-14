@@ -3,11 +3,14 @@
 // thenwhat.extract.retrieve: robots.txt is obeyed, and when its rules cannot be read the
 // article is not fetched.
 
+import { withDeadline } from "./deadline.mjs";
 import { pageAsText, readPage } from "./page.mjs";
 
 const ROBOTS_NAME = "thenwhat";
 const VERSION = "1";
 export const MAX_TEXT_CHARACTERS = 20_000;
+// The whole of one reading, robots.txt and the article's headers and body together.
+export const ARTICLE_TIMEOUT_MS = 10_000;
 const NOT_PUBLIC = /^(localhost|.+\.localhost|.+\.local|.+\.internal|.+\.test|\d{1,3}(\.\d{1,3}){3}|\[.*\])$/i;
 
 /** Whether robots.txt lets this client fetch the path: the longest matching rule decides. */
@@ -54,24 +57,28 @@ export function isPublic(url) {
 
 /**
  * Whether the site's robots.txt lets this client fetch the address. Rules that cannot be
- * read, or that are themselves refused, mean no.
+ * read in time, or that are themselves refused, mean no. `signal` is the caller's own
+ * deadline, when it has one.
  */
-export async function allowedByRobots(url, { fetch, contact }) {
-  let robots;
+export async function allowedByRobots(url, { fetch, contact, signal, timeoutMs = ARTICLE_TIMEOUT_MS }) {
   try {
-    robots = await fetch(`${url.origin}/robots.txt`, { headers: client(contact), redirect: "follow" });
+    return await withDeadline(timeoutMs, async (bounded) => {
+      const robots = await fetch(`${url.origin}/robots.txt`, { headers: client(contact), redirect: "follow", signal: bounded });
+      if (robots.status >= 500 || robots.status === 401 || robots.status === 403) return false;
+      return robots.status !== 200 || allowedBy(await robots.text(), url.pathname + url.search);
+    }, { label: "robots", parent: signal });
   } catch {
     return false;
   }
-  if (robots.status >= 500 || robots.status === 401 || robots.status === 403) return false;
-  return robots.status !== 200 || allowedBy(await robots.text(), url.pathname + url.search);
 }
 
 /**
+ * @param {{ fetch: Function, contact: string, timeoutMs?: number }} given `timeoutMs` bounds
+ *   the whole reading; past it the article is refused as unreadable.
  * @returns {Promise<{ text: string, page: object } | { refused: "address" | "robots" | "unreadable" }>}
  *   `text` opens with the page's headline, summary and date; `page` is worker/page.mjs's reading.
  */
-export async function readArticle(address, { fetch, contact }) {
+export async function readArticle(address, { fetch, contact, timeoutMs = ARTICLE_TIMEOUT_MS }) {
   let url;
   try {
     url = new URL(address);
@@ -79,18 +86,25 @@ export async function readArticle(address, { fetch, contact }) {
     return { refused: "address" };
   }
   if (!isPublic(url)) return { refused: "address" };
-  if (!(await allowedByRobots(url, { fetch, contact }))) return { refused: "robots" };
 
-  const get = async (target) => {
-    try {
-      return await fetch(target, { headers: client(contact), redirect: "follow" });
-    } catch {
-      return null;
-    }
-  };
-  const page = await get(url.href);
-  if (!page || page.status !== 200) return { refused: "unreadable" };
-  const read = readPage(await page.text());
-  const text = pageAsText(read).slice(0, MAX_TEXT_CHARACTERS);
-  return text ? { text, page: read } : { refused: "unreadable" };
+  try {
+    return await withDeadline(timeoutMs, async (signal) => {
+      if (!(await allowedByRobots(url, { fetch, contact, signal, timeoutMs }))) {
+        return signal.aborted ? { refused: "unreadable" } : { refused: "robots" };
+      }
+      let page;
+      try {
+        page = await fetch(url.href, { headers: client(contact), redirect: "follow", signal });
+      } catch {
+        return { refused: "unreadable" };
+      }
+      if (!page || page.status !== 200) return { refused: "unreadable" };
+      const read = readPage(await page.text());
+      const text = pageAsText(read).slice(0, MAX_TEXT_CHARACTERS);
+      return text ? { text, page: read } : { refused: "unreadable" };
+    }, { label: "article" });
+  } catch {
+    // Out of time, or a body that could not be read: the article is not read.
+    return { refused: "unreadable" };
+  }
 }

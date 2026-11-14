@@ -169,7 +169,7 @@ test("Scenario: Linked paper not answered in time", async () => {
   const registry = fakeRegistry({}, { NCT07654321: study("NCT07654321", "EX-1 in tooth agenesis, second study") });
   const page = { registryNumbers: [], dois: ["10.1/slow", "10.1/quick"], pubmedIds: [] };
 
-  await assert.rejects(papers.trialNumbers({ doi: "10.1/slow" }), { name: "TimeoutError" });
+  await assert.rejects(papers.trialNumbers({ doi: "10.1/slow" }), { code: "timeout" });
   const found = await lookUp({ text: TEXT, model: fakeModel(), registry, index: INDEX, page, papers });
 
   // The lookup went on to the next paper, and says one was not looked up.
@@ -595,7 +595,7 @@ test("the model reads the text while linked papers and stated numbers are looked
   assert.deepEqual((await looking).candidates.map((c) => c.id), ["NCT01234567"]);
 });
 
-test("Scenario: Text that reports no treatment while a linked paper is slow", async () => {
+test("a non-treatment answer ends the paper request in flight and asks nothing further", async () => {
   // The papers' host never answers; only ending the request settles it.
   const asked = [];
   const papers = {

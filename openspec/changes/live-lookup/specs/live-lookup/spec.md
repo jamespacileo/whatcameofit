@@ -86,11 +86,7 @@ The pipeline SHALL be able to check every tracked article's address and report, 
 - **THEN** the record shows the first as read with its signals, the second as refused without its article being asked for, and the third as failed with that status
 
 ### Requirement: Work that does not wait on other work is done at the same time
-A lookup SHALL read the text with the model while it looks up the papers the page links to and the registry numbers the article gives. One host SHALL still be asked one request at a time. The outlet check SHALL be able to check several outlets at the same time; one outlet SHALL still be asked one article at a time, a second apart, and all lookups running together SHALL keep, between them, to each registry's rate. Each lookup of an outlet check SHALL be saved when it ends, so a run that is stopped keeps what it fetched and what it spent. The registry cache SHALL accept two sessions writing the same request without failing. When the model reads that the text reports no specific treatment, the lookup SHALL answer at once: it SHALL NOT wait for the linked papers or the registry numbers, SHALL end the request in flight for a paper, and SHALL ask neither host anything further.
-
-#### Scenario: Text that reports no treatment while a linked paper is slow
-- **WHEN** the page links to a paper whose host has not answered, and the model reads that the text reports no specific treatment
-- **THEN** the lookup answers that no treatment could be identified without waiting for the paper, and the paper's request is ended
+A lookup SHALL read the text with the model while it looks up the papers the page links to and the registry numbers the article gives. One host SHALL still be asked one request at a time. The outlet check SHALL be able to check several outlets at the same time; one outlet SHALL still be asked one article at a time, a second apart, and all lookups running together SHALL keep, between them, to each registry's rate. Each lookup of an outlet check SHALL be saved when it ends, so a run that is stopped keeps what it fetched and what it spent. The registry cache SHALL accept two sessions writing the same request without failing.
 
 #### Scenario: Several outlets checked at the same time
 - **WHEN** the outlet check runs with three workers
@@ -99,18 +95,6 @@ A lookup SHALL read the text with the model while it looks up the papers the pag
 #### Scenario: Two lookups fetch the same page at once
 - **WHEN** another session caches a registry answer while this one is fetching the same request
 - **THEN** this session's answer replaces it and no error is raised
-
-### Requirement: A linked paper is given a bounded time, and a paper not looked up is said
-The lookup service SHALL give each linked paper at most ten seconds to answer, its body included. A paper that is not answered in that time, or whose lookup fails, SHALL be passed over, and the answer SHALL carry how many linked papers were not looked up. No registry number SHALL be guessed for such a paper. Where that count is above zero, the site and the extension SHALL say, beside the list of records and not folded away, that a linked paper could not be looked up and that a trial it reports may be missing from the list. An answer with a paper not looked up SHALL NOT be kept in the shared results library or in the extension's saved results, so the next lookup of that page asks again.
-
-#### Scenario: Linked paper not answered in time
-- **WHEN** the page links to two papers, the first paper's host does not answer within the deadline, and the second paper's abstract gives a ClinicalTrials.gov number
-- **THEN** the second paper's trial is among the candidates, and the answer says one linked paper was not looked up
-
-#### Scenario: Reader is told a linked paper was not looked up
-- **WHEN** an answer says one linked paper was not looked up
-- **THEN** the reader sees, beside the list, that a linked paper could not be looked up just now and a trial it reports may be missing
-- **AND** the answer is not saved for reuse
 
 ### Requirement: A post is read by its address where its platform offers posts to software
 The lookup SHALL read a post by its address on the platforms noted in `docs/sources.md` as offering posts to software without signing in: Bluesky, Hacker News and Mastodon servers. It SHALL take the post's text, the headline and summary of the link card the post carries, and the links in the post, leaving out links to tags and to people. It SHALL NOT read out who wrote the post. A Mastodon server SHALL be asked only when its robots.txt allows it and only for a post that is public. A post that is private, deleted or not there SHALL be refused with a code that names the platform. Nothing read from a post SHALL be stored.

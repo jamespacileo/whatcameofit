@@ -80,9 +80,3 @@
 
 - [x] 8.1 Give each displayed trial record its own match-confidence percentage and unavailable state, with wording distinguishing it from effectiveness and trial quality; verify score boundaries and missing values through the shared answer seam
 - [x] 8.2 Update the public privacy and method copy for automatic lookup when the extension opens, with no background browsing collection; extension implementation and browser checks are tracked in the browser-extension change
-
-## 9. Slow linked papers (requested 2026-11-14)
-
-- [x] 9.1 Answer that a text reports no treatment without waiting for linked papers or stated registry numbers, ending the paper request in flight (a ScienceAlert article took 49 seconds to answer; its reading took 4).
-- [x] 9.2 Give each linked paper ten seconds, count the papers not looked up in the answer, word the notice in the site's wording module and show it beside the list on the site and in the extension, and keep such an answer out of the shared results library and the extension's saved results.
-- [ ] 9.3 Deploy the Worker, and release the extension so its popup shows the notice (an installed extension applies the deadline's shorter list without the notice until it is updated).

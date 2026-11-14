@@ -19,8 +19,32 @@ import { remind as withReminder, reminderDay, unremind as withoutReminder } from
 const KEPT_KINDS = new Set(["tracked", "answer", "untracked"]);
 
 const SIX_HOURS = 6 * 60 * 60 * 1000;
+// One search or screenshot attempt, everything in it included, ends by this time.
+const LOOKUP_TIMEOUT_MS = 45_000;
+// The lookup file and an earlier shared result are each waited on no longer than this.
+const INDEX_TIMEOUT_MS = 5_000;
+const CACHE_PROBE_TIMEOUT_MS = 1_500;
 
-export function createPopupController({ storage, fetch, site, readTab, readPage, isCurrentPage, capturePage, describeAnswer, present, requiresSharingConsent = false }) {
+/** `work(signal)` within `ms`, its body included: past it the signal is aborted and this
+ * rejects, even if the work does not listen. `parent` aborting aborts the work too. */
+async function bounded(ms, parent, work) {
+  const controller = new AbortController();
+  const stop = () => controller.abort();
+  parent.addEventListener("abort", stop, { once: true });
+  let timer;
+  const late = new Promise((_resolve, reject) => {
+    timer = setTimeout(() => { controller.abort(); reject(new Error("timeout")); }, ms);
+  });
+  try {
+    return await Promise.race([Promise.resolve().then(() => work(controller.signal)), late]);
+  } finally {
+    clearTimeout(timer);
+    parent.removeEventListener("abort", stop);
+  }
+}
+
+export function createPopupController({ storage, fetch, site, readTab, readPage, isCurrentPage, capturePage, describeAnswer, present, requiresSharingConsent = false,
+  lookupTimeoutMs = LOOKUP_TIMEOUT_MS, indexTimeoutMs = INDEX_TIMEOUT_MS, cacheProbeTimeoutMs = CACHE_PROBE_TIMEOUT_MS }) {
   const abort = new AbortController();
   let tab = null;
   let live = null;
@@ -98,9 +122,11 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
       return { index: saved.index, savedAt: null };
     }
     try {
-      const response = await fetch(`${site.url}/lookup.json`, { cache: "no-store", signal: abort.signal });
-      if (!response.ok) throw new Error(`status ${response.status}`);
-      const index = await response.json();
+      const index = await bounded(indexTimeoutMs, abort.signal, async (signal) => {
+        const response = await fetch(`${site.url}/lookup.json`, { cache: "no-store", signal });
+        if (!response.ok) throw new Error(`status ${response.status}`);
+        return response.json();
+      });
       await storage.set({ lookup: { version: CACHE_VERSION, index, savedAt: Date.now() } }).catch(() => {});
       return { index, savedAt: null };
     } catch {
@@ -108,103 +134,139 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     }
   }
 
+  // One search or screenshot attempt: its own signal and one deadline over all of it. Once
+  // it has ended, by its deadline or the popup closing, nothing it was waiting on shows,
+  // saves or sends anything. A timeout is not an answer: it says so and offers a retry.
+  function attempt(work) {
+    const controller = new AbortController();
+    let over = false;
+    let timer;
+    let closing;
+    const scope = {
+      signal: controller.signal,
+      over: () => over || closed,
+      show: (state) => { if (!scope.over()) show(state); },
+      showPage: (state) => { if (!scope.over()) showPage(state); },
+      save: (values) => (scope.over() ? Promise.resolve() : save(values)),
+    };
+    const ended = new Promise((resolve) => {
+      closing = () => { controller.abort(); resolve("closed"); };
+      abort.signal.addEventListener("abort", closing, { once: true });
+      timer = setTimeout(resolve, lookupTimeoutMs, "timeout");
+    });
+    if (abort.signal.aborted) closing();
+    const done = Promise.resolve().then(() => work(scope)).then(() => "done", () => "done");
+    return Promise.race([done, ended]).then((outcome) => {
+      clearTimeout(timer);
+      abort.signal.removeEventListener("abort", closing);
+      const timedOut = outcome === "timeout" && !scope.over();
+      over = true;
+      if (outcome !== "done") controller.abort();
+      if (timedOut) showPage({ kind: "refused", code: "timeout" });
+    });
+  }
+
   const serviceRequest = request => {
     const { visualCandidate, selectionOnly, contentFingerprint, ...sent } = request;
     return sent;
   };
   const eligible = () => Boolean(sharing && capturePage && tab && live && !tab.incognito && publicWebUrl(tab.url));
-  async function current() {
-    return !closed && await isCurrentPage(tab).catch(() => false) && !closed;
+  async function current(scope) {
+    return !scope.over() && await isCurrentPage(tab).catch(() => false) && !scope.over();
   }
   function resultState(found, cachedAt = null) {
     const shown = describeAnswer(found);
     if (cachedAt && shown.marked) shown.marked = "Automatic search from an earlier check. It has not been checked by a person and is not a status.";
     return { kind: "answer", shown, cachedAt, canVisual: eligible() };
   }
-  async function send(request, { reuse = false, key = null } = {}) {
-    if (!await current()) { showPage({ kind: "refused", code: "page_changed" }); return null; }
+  async function send(scope, request, { reuse = false, key = null } = {}) {
+    if (!await current(scope)) { scope.showPage({ kind: "refused", code: "page_changed" }); return null; }
     if (reuse && key) {
       const saved = reusable(results, tab.key, key, Date.now());
-      if (saved) { showPage(resultState(saved.found, saved.at)); return saved.found; }
+      if (saved) { scope.showPage(resultState(saved.found, saved.at)); return saved.found; }
     }
     const response = await fetch(site.url + live, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...serviceRequest(request), ...(request.pageUrl ? { refresh: !reuse } : {}) }), signal: abort.signal,
+      body: JSON.stringify({ ...serviceRequest(request), ...(request.pageUrl ? { refresh: !reuse } : {}) }), signal: scope.signal,
     });
     const found = await response.json();
-    if (!await current()) { showPage({ kind: "refused", code: "page_changed" }); return null; }
-    if (!response.ok) { showPage({ kind: "refused", code: found?.error ?? "failed", ...(eligible() && found?.error !== "budget_exhausted" ? { canVisual: true } : {}) }); return null; }
+    if (!await current(scope)) { scope.showPage({ kind: "refused", code: "page_changed" }); return null; }
+    if (!response.ok) { scope.showPage({ kind: "refused", code: found?.error ?? "failed", ...(eligible() && found?.error !== "budget_exhausted" ? { canVisual: true } : {}) }); return null; }
     if (key) {
       results = remember(results, tab.key, key, found, found.cache?.checkedAt ?? Date.now());
-      save({ results });
+      scope.save({ results });
     }
-    showPage(resultState(found, found.cache?.checkedAt ?? null));
+    scope.showPage(resultState(found, found.cache?.checkedAt ?? null));
     return found;
   }
-  async function visualSearch({ preview = false, reuse = true } = {}) {
-    if (!eligible() || closed) return;
+  async function visualSearch(scope, { preview = false, reuse = true } = {}) {
+    if (!eligible() || scope.over()) return;
     const generation = ++visualGeneration;
-    show({ kind: "capturing" });
+    scope.show({ kind: "capturing" });
     try {
-      const captured = await capturePage(tab, abort.signal);
-      if (closed || generation !== visualGeneration) return;
+      const captured = await capturePage(tab, scope.signal);
+      if (scope.over() || generation !== visualGeneration) return;
       const request = { ...serviceRequest(lastRead ?? { text: "", links: [] }), ...captured };
       // Image bytes enter only a one-way digest, never browser storage.
       const key = lastRead?.selectionOnly ? null : await fingerprint(request);
-      if (preview) { visual = { request, key }; show({ kind: "visual-preview", image: captured.image }); return; }
-      show({ kind: "searching", visual: true });
-      await send(request, { reuse, key });
+      if (scope.over()) return;
+      if (preview) { visual = { request, key }; scope.show({ kind: "visual-preview", image: captured.image }); return; }
+      scope.show({ kind: "searching", visual: true });
+      await send(scope, request, { reuse, key });
     } catch (error) {
-      if (generation === visualGeneration) showPage({ kind: "refused", code: error?.code ?? "capture_unavailable", canVisual: false });
+      if (generation === visualGeneration) scope.showPage({ kind: "refused", code: error?.code ?? "capture_unavailable", canVisual: false });
     }
   }
-  async function performSearch({ reuse = false } = {}) {
-    if (closed || !tab || !live) return;
+  async function performSearch(scope, { reuse = false } = {}) {
+    if (scope.over() || !tab || !live) return;
     if (!sharing) { sharingView(); return; }
     visual = null;
-    show({ kind: "searching" });
+    scope.show({ kind: "searching" });
     let request;
-    try { request = await readPage(tab, abort.signal); }
+    try { request = await readPage(tab, scope.signal); }
     catch (error) {
-      showPage(error?.code === "page_changed" ? { kind: "refused", code: "page_changed" } : { kind: "too-little", canVisual: eligible() });
+      scope.showPage(error?.code === "page_changed" ? { kind: "refused", code: "page_changed" } : { kind: "too-little", canVisual: eligible() });
       return;
     }
-    if (closed) return;
+    if (scope.over()) return;
     lastRead = request;
-    if (!request) { showPage({ kind: "too-little", canVisual: eligible() }); return; }
-    if (!await current()) { showPage({ kind: "refused", code: "page_changed" }); return; }
+    if (!request) { scope.showPage({ kind: "too-little", canVisual: eligible() }); return; }
+    if (!await current(scope)) { scope.showPage({ kind: "refused", code: "page_changed" }); return; }
     try {
       if (reuse && !request.selectionOnly && request.contentFingerprint) {
         const saved = reusable(results, tab.key, request.contentFingerprint, Date.now());
-        if (saved) { showPage(resultState(saved.found, saved.at)); return; }
+        if (saved) { scope.showPage(resultState(saved.found, saved.at)); return; }
       }
       if (reuse && request.pageUrl) {
+        // An earlier shared result is a shortcut only: when it is slow, the search goes on.
         try {
-          const response = await fetch(site.url + live, { method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ cacheOnly: true, pageUrl: request.pageUrl }), signal: abort.signal });
-          const saved = await response.json();
-          if (!await current()) { showPage({ kind: "refused", code: "page_changed" }); return; }
+          const { response, saved } = await bounded(cacheProbeTimeoutMs, scope.signal, async (signal) => {
+            const response = await fetch(site.url + live, { method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ cacheOnly: true, pageUrl: request.pageUrl }), signal });
+            return { response, saved: await response.json() };
+          });
+          if (!await current(scope)) { scope.showPage({ kind: "refused", code: "page_changed" }); return; }
           if (response.ok && saved.cache?.shared && saved.about_a_treatment === true) {
-            showPage(resultState(saved, saved.cache.checkedAt)); return;
+            scope.showPage(resultState(saved, saved.cache.checkedAt)); return;
           }
-        } catch { if (closed) return; }
+        } catch { if (scope.over()) return; }
       }
       // A media-only post does not buy a fruitless caption-only model call first.
       const earlierVisual = reuse && results.some(entry => entry.key === tab.key && entry.found?.source?.kind === "screenshot");
       if (request.visualCandidate && !request.selectionOnly && !request.links?.length && (request.text.length < 240 || earlierVisual)) {
-        await visualSearch({ reuse }); return;
+        await visualSearch(scope, { reuse }); return;
       }
       const key = !request.selectionOnly && request.contentFingerprint ? request.contentFingerprint : null;
-      const found = await send(request, { reuse, key });
-      if (found?.about_a_treatment === false && request.visualCandidate && !request.selectionOnly) await visualSearch({ reuse });
-    } catch { showPage({ kind: "refused", code: "failed", canVisual: eligible() }); }
+      const found = await send(scope, request, { reuse, key });
+      if (found?.about_a_treatment === false && request.visualCandidate && !request.selectionOnly) await visualSearch(scope, { reuse });
+    } catch { scope.showPage({ kind: "refused", code: "failed", canVisual: eligible() }); }
   }
   function search(options) {
-    if (!searching) searching = performSearch(options).finally(() => { searching = null; });
+    if (!searching) searching = attempt((scope) => performSearch(scope, options)).finally(() => { searching = null; });
     return searching;
   }
   function previewVisual() {
-    if (!searching) searching = visualSearch({ preview: true }).finally(() => { searching = null; });
+    if (!searching) searching = attempt((scope) => visualSearch(scope, { preview: true })).finally(() => { searching = null; });
     return searching;
   }
   function cancelVisual() {
@@ -217,8 +279,8 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     if (!visual || searching) return searching;
     const selected = visual; visual = null;
     show({ kind: "searching", visual: true });
-    searching = send(selected.request, { reuse: true, key: selected.key })
-      .catch(() => showPage({ kind: "refused", code: "failed" })).finally(() => { searching = null; });
+    searching = attempt((scope) => send(scope, selected.request, { reuse: true, key: selected.key })
+      .catch(() => scope.showPage({ kind: "refused", code: "failed" }))).finally(() => { searching = null; });
     return searching;
   }
 

@@ -97,10 +97,9 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
     ...(page?.registryNumbers ?? []),
   ]);
   // Three hosts, none waiting on another: the model reads the text while the linked
-  // papers and the registry numbers the article gives are looked up.
-  // Only the reading says whether there is a treatment to look up. When there is none,
-  // the answer is given at once and the other two are stopped: the papers' host can take
-  // half a minute over one paper, and nothing it says would change that answer.
+  // papers and the registry numbers the article gives are looked up. Only a treatment
+  // needs those: an answer that it is not one is given as soon as the model has read,
+  // and the other two are stopped, since nothing they say would change that answer.
   const others = new AbortController();
   const read = model.read(text, image ? { image, pageUrl } : undefined);
   const linking = paperNumbers(page, papers, others.signal);

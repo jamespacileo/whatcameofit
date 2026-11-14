@@ -60,6 +60,7 @@ const REFUSALS = {
   budget_exhausted: "Automatic search has used its monthly allowance. It will be available again next month. Reviewed claim pages remain available.",
   not_set_up: "The registry search is not available on this site at the moment.",
   failed: "The search could not be completed. Nothing was found or ruled out. Try again in a minute.",
+  timeout: "The search took too long and was stopped. Nothing was found or ruled out. Try again in a minute.",
 };
 
 // Why a record is listed where it is. Each is a fact a reader can check on the record.

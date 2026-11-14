@@ -24,3 +24,18 @@ Before reading or transmitting untracked page content, the extension SHALL ask o
 #### Scenario: First opening before permission
 - **WHEN** the reader opens an untracked page without having enabled automatic search
 - **THEN** no page content is read or sent, and the reader can allow automatic search or use reviewed claims only
+
+### Requirement: Bounded popup lookup
+Each lookup attempt SHALL leave its loading state within 45 seconds, including page reading, service response consumption and automatic screenshot fallback. Index requests and optional shared-cache probes SHALL have shorter deadlines. A timed-out attempt SHALL be cancelled and described as an incomplete search with an explicit retry, never as no matching research.
+
+#### Scenario: A service request never completes
+- **WHEN** the lookup deadline expires before the answer arrives
+- **THEN** the popup leaves its loading state, aborts the request and offers Search again
+
+#### Scenario: A late answer arrives after timeout
+- **WHEN** an expired operation completes after the timeout or after a new attempt begins
+- **THEN** it does not change the display or cache, and the new attempt uses a fresh cancellation signal
+
+#### Scenario: Popup closes during a stalled operation
+- **WHEN** the reader closes the popup before its deadline
+- **THEN** active work is cancelled without rendering a timeout or sending further requests
