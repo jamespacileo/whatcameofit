@@ -1,6 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
 import ClaimTable from "../../components/ClaimTable.astro";
+import SharePill from "../../components/SharePill.astro";
 import { data, type StatusCode } from "../../lib/export";
 import { topicSummary } from "../../lib/status";
 
@@ -40,7 +41,18 @@ const summary = topicSummary(counts);
     claims.length === 0 ? (
       <p>No claims are tracked in this topic yet.</p>
     ) : (
-      <ClaimTable claims={claims} caption={`Claims in ${vertical.title}`} filter />
+      <>
+        <h2 class="visually-hidden">Claims in {vertical.title.toLowerCase()}</h2>
+        <ClaimTable claims={claims} caption={`Claims in ${vertical.title}`} filter />
+        {/* Ways to pass the topic on and to hear when one of its claims moves. */}
+        <div class="page-foot">
+          <SharePill />
+          <p class="entry-note">
+            For a feed reader:{" "}
+            <a href={`/changes/topic/${vertical.slug}.xml`}>status changes in this topic</a>.
+          </p>
+        </div>
+      </>
     )
   }
 </Base>

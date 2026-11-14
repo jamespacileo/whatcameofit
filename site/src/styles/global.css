@@ -320,9 +320,8 @@ main > .wrap {
   margin-top: 0;
 }
 
-/* Title, lede, box and suggestion share one right edge. */
-.band .lede,
-.band .suggest {
+/* Title, lede and box share one right edge. */
+.band .lede {
   max-width: 46rem;
 }
 
@@ -447,6 +446,45 @@ a.chip:hover {
 .share:hover {
   background: var(--tint);
   border-color: var(--tint);
+}
+
+a.share {
+  text-decoration: none;
+}
+
+/* Followed: the pill stays filled, and its words say so. */
+.share[aria-pressed="true"] {
+  background: var(--tint);
+  border-color: var(--tint);
+}
+
+.share[aria-pressed="true"] svg {
+  fill: currentColor;
+}
+
+/* Follow and Share, together at the title's far side. */
+.page-actions {
+  display: flex;
+  flex: none;
+  gap: 0.5rem;
+}
+
+/* Under a topic's table: pass it on, or hear of a change. */
+.page-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-top: 1rem;
+}
+
+.page-foot .entry-note {
+  margin: 0;
+}
+
+/* The last section of a page: one next step. */
+.closing .share {
+  margin-top: 0.2rem;
 }
 
 /* Under the headline: what kind of page this is, for a reader who arrived cold. */
@@ -678,11 +716,16 @@ a.share {
   margin-top: 0.9rem;
 }
 
-.post-label {
-  font-size: 0.8rem;
+.post-to summary {
+  cursor: pointer;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: var(--muted);
-  margin: 0 0 0.4rem;
+  color: var(--blue);
+  width: fit-content;
+}
+
+.post-to[open] summary {
+  margin-bottom: 0.5rem;
 }
 
 .post-links {
@@ -1926,6 +1969,103 @@ main nav.contents ul li + li {
   }
 }
 
+/* A control that reads as a link: blue, underlined, no fill. */
+.text-control {
+  font: inherit;
+  font-weight: 600;
+  color: var(--blue);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.text-control:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* One word on a row dated since the reader's last visit, or on a followed claim whose
+   status has changed. The words beside it say what; the tag never stands alone. */
+.new-tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--tag);
+  border-radius: 0.3rem;
+  padding: 0 0.4rem;
+  vertical-align: 0.1em;
+}
+
+/* What is dated since the reader's last visit: one line above the lists. */
+.since {
+  margin: 1.2rem 0 0;
+  max-width: var(--measure);
+}
+
+/* The reader's own list, ahead of everyone's. */
+.following .plain {
+  margin-top: 0.4rem;
+}
+
+.following .plain a {
+  font-weight: 600;
+}
+
+.following .entry-note .text-control {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.following > .entry-note {
+  margin-top: 0.5rem;
+}
+
+.feed-link {
+  margin-top: 0.6rem;
+}
+
+/* On a phone the counts and the topic choice open on request. */
+.narrow-toggle {
+  display: none;
+  align-items: center;
+  gap: 0.4rem;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--blue);
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  cursor: pointer;
+}
+
+.narrow-toggle[aria-expanded="true"] {
+  background: var(--tint);
+  border-color: var(--tint);
+}
+
+@media (max-width: 40rem) and (scripting: enabled) {
+  .narrow-toggle {
+    display: inline-flex;
+  }
+
+  .scoreboard:not(.open) .narrow-body {
+    display: none;
+  }
+
+  .scoreboard.open .narrow-body {
+    margin-top: 0.8rem;
+  }
+}
+
 /* Above the lists: where every tracked claim stands, and a topic to narrow to. */
 .scoreboard {
   margin-top: 1rem;
@@ -2014,6 +2154,43 @@ main nav.contents ul li + li {
   padding: 0 0.45rem;
 }
 
+@media (max-width: 40rem) {
+  .feed-tabs {
+    flex-wrap: wrap;
+    gap: 0 1rem;
+    overflow-x: visible;
+  }
+
+  .feed-tabs [role="tab"] {
+    flex: 1 1 40%;
+    justify-content: flex-start;
+    min-height: 2.75rem;
+  }
+}
+
+/* Everything pressed on a phone is at least 44 pixels tall. */
+@media (max-width: 40rem) {
+  .stage-filter .place.off,
+  .topic-filter select,
+  .pager button {
+    min-height: 2.75rem;
+  }
+
+  .topic-filter select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  table.index td.claim .entry-note a,
+  .more-topics a,
+  .on-this-day .bar-row a,
+  .feed-link a,
+  .page-foot .entry-note a {
+    display: inline-block;
+    padding-block: 0.65rem;
+  }
+}
+
 .feed.tabbed .feed-panel > .bar {
   margin-top: 1.1rem;
   font-size: 1rem;
@@ -2055,9 +2232,9 @@ main nav.contents ul li + li {
 
 .pager button[aria-disabled="true"] {
   color: var(--muted);
+  font-weight: 400;
   text-decoration: none;
   cursor: default;
-  opacity: 0.6;
 }
 
 /* The topic directory: dense, lettered, narrowed by typing. */

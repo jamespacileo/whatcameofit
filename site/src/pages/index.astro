@@ -1,5 +1,6 @@
 ---
 import CalendarPlus from "@lucide/astro/icons/calendar-plus";
+import SlidersHorizontal from "@lucide/astro/icons/sliders-horizontal";
 import Base from "../layouts/Base.astro";
 import ClaimName from "../components/ClaimName.astro";
 import Outlet from "../components/Outlet.astro";
@@ -112,14 +113,6 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
       </noscript>
       {/* No space inside: an empty answer area is hidden by ":empty". */}
       <div class="results" id="results" aria-live="polite" data-suggest={SITE.suggestUrl ?? undefined} data-live={SITE.lookupUrl ?? undefined}></div>
-      {
-        suggest && (
-          <p class="suggest">
-            Seen a reported breakthrough we do not track? Send the address of the news article:{" "}
-            <a href={suggest.href}>Suggest a headline (opens {suggest.opens})</a>
-          </p>
-        )
-      }
     </div>
   </section>
 
@@ -132,13 +125,40 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
           {listedTopics.length} {listedTopics.length === 1 ? "topic" : "topics"}
         </a>
         . <a href="/it-happened">Approvals on record</a>: {approvals} of {data.claims.length}.
+        {data.last_checked_at && (
+          <>
+            {" "}Registries last checked <span class="unbroken">{formatDate(data.last_checked_at)}</span>.
+          </>
+        )}
       </p>
     )
   }
 
+  {/* The claims this reader follows, read from this browser's own storage by the script. */}
+  <section class="following" hidden data-following>
+    <h2 class="bar">Following</h2>
+    <ul class="plain" data-following-list></ul>
+    <p class="entry-note">Kept in this browser only.</p>
+    <p class="visually-hidden" role="status" data-following-said></p>
+  </section>
+
   {
     data.claims.length > 0 && (
-      <div class="scoreboard">
+      <div class="scoreboard" data-scoreboard>
+        {/* On a phone the counts and the topic choice wait behind this, so a headline is
+            on the first screen. Shown by the script; without it everything is in view. */}
+        <button
+          type="button"
+          class="narrow-toggle"
+          aria-expanded="false"
+          aria-controls="narrow-body"
+          hidden
+          data-narrow
+        >
+          <SlidersHorizontal size={16} stroke-width={1.9} aria-hidden="true" />
+          Narrow these lists
+        </button>
+        <div class="narrow-body" id="narrow-body">
         <StageFilter claims={data.claims} scope="[data-feed]" param="status" />
         {topicChoices.length > 1 && (
           <p class="topic-filter" hidden data-topic-filter>
@@ -153,9 +173,14 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
             </select>
           </p>
         )}
+        </div>
       </div>
     )
   }
+
+  {/* Filled in by the script from the dates on the rows below: what is dated since this
+      reader's last visit, or in the last thirty days on a first one. */}
+  <p class="since" hidden data-since></p>
 
   <div class="feed" data-feed>
     {/* Shown by the script: without it the lists follow one another, each under its heading. */}
@@ -197,7 +222,7 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
         </thead>
         <tbody role="rowgroup">
           {reports.map((report, index) => (
-            <tr role="row" data-status={report.claim.status.code} data-topic={report.claim.vertical} data-later={index >= PAGE_SIZE ? "" : undefined}>
+            <tr role="row" data-status={report.claim.status.code} data-topic={report.claim.vertical} data-on={report.publishedDate} data-later={index >= PAGE_SIZE ? "" : undefined}>
               <td role="cell" class="claim">
                 {/* Named as on the claim page, so the headline pressed here is
                     carried to its place there. */}
@@ -266,7 +291,7 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
         </thead>
         <tbody role="rowgroup">
           {moves.map((move, index) => (
-            <tr role="row" data-status={move.claim.status.code} data-topic={move.claim.vertical} data-later={index >= PAGE_SIZE ? "" : undefined}>
+            <tr role="row" data-status={move.claim.status.code} data-topic={move.claim.vertical} data-on={move.on} data-later={index >= PAGE_SIZE ? "" : undefined}>
               <td role="cell" class="claim">
                 <ClaimName claim={move.claim} />
               </td>
@@ -287,6 +312,9 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
       </div>
       <Pager name="moved" total={moves.length} size={PAGE_SIZE} one="change" many="changes" />
       <p class="none" data-none hidden>Nothing in this list for that choice.</p>
+      <p class="entry-note feed-link">
+        For a feed reader: <a href="/changes.xml">every status change</a>.
+      </p>
       </section>
     )
   }
@@ -309,7 +337,7 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
         </thead>
         <tbody role="rowgroup">
           {promised.map((claim, index) => (
-            <tr role="row" data-status={claim.status.code} data-topic={claim.vertical} data-later={index >= PAGE_SIZE ? "" : undefined}>
+            <tr role="row" data-status={claim.status.code} data-topic={claim.vertical} data-on={latestPromise(claim)?.parsed_date} data-later={index >= PAGE_SIZE ? "" : undefined}>
               <td role="cell" class="claim">
                 <ClaimName claim={claim} />
               </td>
@@ -442,6 +470,18 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
           ))}
         </ul>
       </>
+    )
+  }
+  {/* The page ends on something to do: the one way a reader adds to what is tracked. */}
+  {
+    suggest && (
+      <section class="closing">
+        <h2 class="bar">Not here yet?</h2>
+        <p class="suggest">
+          Seen a reported breakthrough we do not track? Send the address of the news article:{" "}
+          <a href={suggest.href}>Suggest a headline (opens {suggest.opens})</a>
+        </p>
+      </section>
     )
   }
   {/* For a report with no record yet: a calendar file made in the reader's browser. */}
@@ -1070,6 +1110,171 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
   if (initial) {
     input.value = initial;
     answer(initial);
+  }
+</script>
+
+<script>
+  // For a reader who comes back. Two things are kept in this browser's own storage and
+  // sent nowhere: the day of the last visit, and the claims the reader follows.
+  import {
+    FOLLOWING_ENTRY,
+    VISIT_ENTRY,
+    changedParts,
+    followedRows,
+    isSince,
+    nextVisit,
+    readFollowed,
+    sinceOf,
+  } from "../lib/returning";
+  import { formatDate } from "../lib/timetable";
+
+  // Storage can be refused (a private window, a setting): then nothing is remembered
+  // and the page says what is dated in the last thirty days.
+  const store = (() => {
+    try {
+      localStorage.setItem("probe", "1");
+      localStorage.removeItem("probe");
+      return localStorage;
+    } catch {
+      return null;
+    }
+  })();
+  const now = new Date();
+  const two = (value: number) => String(value).padStart(2, "0");
+  const today = `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`;
+  const feed = document.querySelector<HTMLElement>("[data-feed]");
+
+  const line = document.querySelector<HTMLElement>("[data-since]");
+  if (line && feed) {
+    const visit = nextVisit(store?.getItem(VISIT_ENTRY) ?? null, today);
+    try {
+      store?.setItem(VISIT_ENTRY, JSON.stringify(visit));
+    } catch {}
+    const since = sinceOf(visit, today);
+    const rowsOf = (view: string) => [
+      ...feed.querySelectorAll<HTMLTableRowElement>(`#feed-${view} tbody tr[data-on]`),
+    ];
+    const dated = (view: string) =>
+      rowsOf(view).filter((row) => isSince(row.dataset.on!, since.from, today));
+    const parts = changedParts({
+      reports: dated("headlines").length,
+      moves: dated("moved").length,
+      promises: dated("promised").length,
+    });
+
+    line.append(
+      since.visited ? `Since your last visit on ${formatDate(since.from)}: ` : "In the last 30 days: ",
+    );
+    parts.forEach((part, index) => {
+      if (index > 0) line.append(", ");
+      // Each count opens the list that holds its rows.
+      const open = document.createElement("button");
+      open.type = "button";
+      open.className = "text-control";
+      open.textContent = part.text;
+      open.addEventListener("click", () => {
+        const tab = document.getElementById(`tab-${part.view}`);
+        tab?.click();
+        (tab ?? feed).scrollIntoView({ block: "nearest" });
+      });
+      line.append(open);
+    });
+    line.append(parts.length > 0 ? "." : "nothing new on record.");
+    line.hidden = false;
+
+    // A row dated since the last visit says so in a word. Not on a first visit: with
+    // nothing to compare against, everything would be new.
+    if (since.visited) {
+      for (const row of [...dated("headlines"), ...dated("moved")]) {
+        const tag = document.createElement("span");
+        tag.className = "new-tag";
+        tag.textContent = "New";
+        row.querySelector(".claim a")?.after(" ", tag);
+      }
+    }
+  }
+
+  // The claims this reader follows, with a note on any whose status has changed since
+  // they last opened it. The statuses now come from the site's lookup file.
+  const following = document.querySelector<HTMLElement>("[data-following]");
+  if (following && store) {
+    const list = following.querySelector<HTMLElement>("[data-following-list]")!;
+    const said = following.querySelector<HTMLElement>("[data-following-said]")!;
+    const followed = readFollowed(store.getItem(FOLLOWING_ENTRY));
+    const element = (tag: string, text?: string, className?: string) => {
+      const node = document.createElement(tag);
+      if (text) node.textContent = text;
+      if (className) node.className = className;
+      return node;
+    };
+    const draw = (listed: Parameters<typeof followedRows>[1]) => {
+      const rows = followedRows(followed, listed);
+      list.replaceChildren(
+        ...rows.map((row) => {
+          const item = element("li");
+          if (row.page) {
+            const link = element("a", row.headline) as HTMLAnchorElement;
+            link.href = row.page;
+            item.append(link);
+          } else {
+            item.append(element("span", row.headline));
+          }
+          const note = element("span", undefined, "entry-note");
+          if (row.status === null) {
+            note.append("No longer listed on this site.");
+          } else if (row.was) {
+            // The change is said in words; the tag alone never carries it.
+            note.append(element("span", "Changed", "new-tag"), ` Was: ${row.was}. Now: ${row.status}.`);
+          } else {
+            note.append(element("strong", row.status));
+          }
+          const stop = element("button", "Stop following", "text-control") as HTMLButtonElement;
+          stop.type = "button";
+          stop.addEventListener("click", () => {
+            delete followed[row.slug];
+            try {
+              store.setItem(FOLLOWING_ENTRY, JSON.stringify(followed));
+            } catch {}
+            said.textContent = `No longer following: ${row.headline}`;
+            draw(listed);
+          });
+          note.append(" ", stop);
+          item.append(note);
+          return item;
+        }),
+      );
+      following.hidden = rows.length === 0;
+    };
+    if (Object.keys(followed).length > 0) {
+      fetch("/lookup.json")
+        .then((response) => response.json())
+        .then((index) => draw(index.claims ?? {}))
+        // Without the lookup file the stored headlines and statuses are still true as kept.
+        .catch(() => draw(Object.fromEntries(
+          Object.entries(followed).map(([slug, entry]) => [
+            slug,
+            { headline: entry.headline, page: `/${slug}`, status: entry.status },
+          ]),
+        )));
+    }
+  }
+
+  // A reader sent here to look something up lands with the field ready.
+  if (location.hash === "#search") document.querySelector<HTMLInputElement>("#query")?.focus();
+
+  // On a phone the counts and the topic choice open on request. They start open when
+  // the address already narrows the lists, so a narrowed list is never unexplained.
+  const board = document.querySelector<HTMLElement>("[data-scoreboard]");
+  const toggle = board?.querySelector<HTMLButtonElement>("[data-narrow]");
+  if (board && toggle) {
+    const set = (open: boolean) => {
+      board.classList.toggle("open", open);
+      toggle.setAttribute("aria-expanded", String(open));
+    };
+    const asked = new URL(location.href).searchParams;
+    set(asked.has("status") || asked.has("topic"));
+    toggle.addEventListener("click", () => set(toggle.getAttribute("aria-expanded") !== "true"));
+    toggle.hidden = false;
   }
 </script>
 
