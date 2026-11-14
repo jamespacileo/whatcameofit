@@ -12,11 +12,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.db.models import HttpCache
-from thenwhat.sources import openalex, ror
+from thenwhat.sources import mesh, openalex, ror
 from thenwhat.sources.base import AllowanceUsedUp, MissingKey
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref, Notice
 from thenwhat.sources.europepmc import EuropePmc, describe
+from thenwhat.sources.mesh import Mesh
 from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.ror import Ror
 
@@ -625,3 +626,88 @@ def test_unknown_organisation_gives_an_empty_result(session: Session, fake_time,
 
     assert near_misses["items"]
     assert source.organisations("Zzqxv Institute of Nowhere Qqxzj") == []
+
+
+# --- MeSH --------------------------------------------------------------------------
+
+
+def vocabulary(session: Session, fake_time, route) -> tuple[Mesh, Replay]:
+    replay = Replay(route)
+    source = Mesh(
+        session, contact_email=CONTACT, transport=httpx.MockTransport(replay), time=fake_time
+    )
+    return source, replay
+
+
+def test_known_term_is_returned_with_its_label_definition_and_version(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Known identifier"""
+    descriptor = fixture_json("mesh/descriptor_obesity.json")
+    concept = fixture_json("mesh/concept_obesity.json")
+    source, replay = vocabulary(
+        session,
+        fake_time,
+        lambda request: descriptor if request.url.path.endswith("/D009765.json") else concept,
+    )
+
+    asked_at = fake_time.now()
+
+    record = source.term("D009765")
+
+    assert record is not None
+    assert (record.source_name, record.external_id) == ("mesh", "D009765")
+    assert record.url == "https://id.nlm.nih.gov/mesh/D009765"
+    assert record.fetched_at == asked_at
+    assert record.payload == {"term": descriptor, "concept": concept}
+    term = mesh.describe(record)
+    assert (term.label, term.version) == ("Obesity", "2026")
+    assert term.definition == concept["scopeNote"]["@value"]
+    assert concept["scopeNote"]["@value"].startswith("A status with BODY WEIGHT that is")
+    # Both records are asked of the year's vocabulary, so the version can be stated.
+    assert [request.url.path for request in replay.requests] == [
+        "/mesh/2026/D009765.json",
+        "/mesh/2026/M0015159.json",
+    ]
+
+
+def test_unknown_term_identifier_returns_nothing(session: Session, fake_time, fixture_json):
+    empty = fixture_json("mesh/descriptor_unknown.json")
+    source, replay = vocabulary(session, fake_time, lambda request: empty)
+
+    assert empty == {}
+    assert source.term("D999999") is None
+    assert len(replay.requests) == 1
+    assert source.term("not-an-identifier") is None
+    assert len(replay.requests) == 1
+
+
+def test_label_that_only_contains_the_name_is_not_equal_to_it(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Name contained in a longer label"""
+    exact = fixture_json("mesh/label_obesity.json")
+    source, replay = vocabulary(session, fake_time, lambda request: exact)
+
+    assert source.terms_labelled("obesity") == [mesh.LabelledTerm("D009765", "Obesity")]
+    assert dict(replay.requests[0].url.params) == {
+        "label": "obesity",
+        "match": "exact",
+        "limit": "10",
+        "year": "2026",
+    }
+
+    # Even if the service answered as its "contains" search does, with "Anti-Obesity
+    # Agents" first, only the equal label is returned.
+    containing = fixture_json("mesh/label_obesity_contains.json")
+    assert containing[0]["label"] == "Anti-Obesity Agents"
+    loose, _ = vocabulary(session, fake_time, lambda request: containing)
+
+    assert loose.terms_labelled("Obesity ") == [mesh.LabelledTerm("D009765", "Obesity")]
+
+
+def test_name_no_label_equals_returns_no_term(session: Session, fake_time, fixture_json):
+    nothing = fixture_json("mesh/label_none.json")
+    source, _ = vocabulary(session, fake_time, lambda request: nothing)
+
+    assert source.terms_labelled("Knee osteoarthritis pain") == []

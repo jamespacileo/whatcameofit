@@ -18,6 +18,7 @@ from thenwhat.cli.resolve import entity_app, resolve_command
 from thenwhat.cli.review import review_app
 from thenwhat.cli.seed import seed_app
 from thenwhat.cli.session import settings_or_exit
+from thenwhat.cli.terms import terms_command
 from thenwhat.db.session import make_engine, ping
 
 app = typer.Typer(no_args_is_help=True)
@@ -28,6 +29,7 @@ app.add_typer(extract_app, name="extract")
 app.add_typer(entity_app, name="entity")
 app.command("resolve")(resolve_command)
 app.command("prepare")(prepare_command)
+app.command("terms")(terms_command)
 app.command("lookup")(lookup_command)
 app.command("fetch")(fetch_command)
 app.add_typer(event_app, name="event")
