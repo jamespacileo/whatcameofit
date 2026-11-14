@@ -81,3 +81,34 @@ export function recentAnniversaries(claims: ExportedClaim[], today: string): Ann
     (a, b) => b.date.localeCompare(a.date) || a.claim.headline.localeCompare(b.claim.headline),
   );
 }
+
+export interface AnniversaryDay {
+  /** The calendar days ("MM-DD") whose entries fall on `date`. */
+  ids: string[];
+  /** The day the anniversaries fall, ISO. */
+  date: string;
+  /** True when that day is `today`. */
+  today: boolean;
+}
+
+/**
+ * The first day, from `today` on, that is the anniversary of a first report: at least
+ * one whole year after it. In a common year a 29 February report falls on the 28th.
+ */
+export function nextAnniversaryDay(
+  entries: { id: string; year: number }[],
+  today: string,
+): AnniversaryDay | null {
+  const day = new Date(`${today.slice(0, 10)}T00:00:00Z`);
+  for (let ahead = 0; ahead <= 366; ahead += 1) {
+    const date = day.toISOString().slice(0, 10);
+    const [year, month, dayOfMonth] = parts(date);
+    const ids = [`${pad(month)}-${pad(dayOfMonth)}`];
+    if (ids[0] === "02-28" && !isLeap(year)) ids.push("02-29");
+    if (entries.some((entry) => ids.includes(entry.id) && entry.year < year)) {
+      return { ids, date, today: ahead === 0 };
+    }
+    day.setUTCDate(day.getUTCDate() + 1);
+  }
+  return null;
+}

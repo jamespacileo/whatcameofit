@@ -1,0 +1,291 @@
+{
+  "number_of_results": 10,
+  "items": [
+    {
+      "score": 1.0,
+      "chosen": true,
+      "substring": "The New York Times",
+      "organization": {
+        "id": "https://ror.org/011w6k548",
+        "admin": {
+          "created": {
+            "date": "2018-11-14",
+            "schema_version": "1.0"
+          },
+          "last_modified": {
+            "date": "2025-10-28",
+            "schema_version": "2.1"
+          }
+        },
+        "links": [
+          {
+            "type": "website",
+            "value": "https://www.nytco.com"
+          },
+          {
+            "type": "wikipedia",
+            "value": "https://en.wikipedia.org/wiki/The_New_York_Times_Company"
+          }
+        ],
+        "names": [
+          {
+            "lang": "en",
+            "types": [
+              "ror_display",
+              "label"
+            ],
+            "value": "New York Times"
+          }
+        ],
+        "types": [
+          "funder",
+          "other"
+        ],
+        "status": "active",
+        "domains": [
+          "nytco.com",
+          "nytimes.com"
+        ],
+        "locations": [
+          {
+            "geonames_id": 5125771,
+            "geonames_details": {
+              "lat": 40.78343,
+              "lng": -73.96625,
+              "name": "Manhattan",
+              "country_code": "US",
+              "country_name": "United States",
+              "continent_code": "NA",
+              "continent_name": "North America",
+              "country_subdivision_code": "NY",
+              "country_subdivision_name": "New York"
+            }
+          }
+        ],
+        "established": 1851,
+        "external_ids": [
+          {
+            "all": [
+              "100000891"
+            ],
+            "type": "fundref",
+            "preferred": null
+          },
+          {
+            "all": [
+              "grid.481403.a"
+            ],
+            "type": "grid",
+            "preferred": "grid.481403.a"
+          },
+          {
+            "all": [
+              "0000 0004 0507 0438"
+            ],
+            "type": "isni",
+            "preferred": null
+          },
+          {
+            "all": [
+              "Q2529982"
+            ],
+            "type": "wikidata",
+            "preferred": null
+          }
+        ],
+        "relationships": []
+      },
+      "matching_type": "SINGLE SEARCH"
+    },
+    {
+      "score": 0.86,
+      "chosen": false,
+      "substring": "The New York Times",
+      "organization": {
+        "id": "https://ror.org/03dkvy735",
+        "admin": {
+          "created": {
+            "date": "2018-11-14",
+            "schema_version": "1.0"
+          },
+          "last_modified": {
+            "date": "2026-09-22",
+            "schema_version": "2.1"
+          }
+        },
+        "links": [
+          {
+            "type": "website",
+            "value": "https://www.nymc.edu/"
+          },
+          {
+            "type": "wikipedia",
+            "value": "https://en.wikipedia.org/wiki/New_York_Medical_College"
+          }
+        ],
+        "names": [
+          {
+            "lang": null,
+            "types": [
+              "acronym"
+            ],
+            "value": "NYMC"
+          },
+          {
+            "lang": null,
+            "types": [
+              "alias"
+            ],
+            "value": "New York Med"
+          },
+          {
+            "lang": "en",
+            "types": [
+              "ror_display",
+              "label"
+            ],
+            "value": "New York Medical College"
+          }
+        ],
+        "types": [
+          "education",
+          "funder"
+        ],
+        "status": "active",
+        "domains": [
+          "nymc.edu"
+        ],
+        "locations": [
+          {
+            "geonames_id": 5142090,
+            "geonames_details": {
+              "lat": 41.07482,
+              "lng": -73.77513,
+              "name": "Valhalla",
+              "country_code": "US",
+              "country_name": "United States",
+              "continent_code": "NA",
+              "continent_name": "North America",
+              "country_subdivision_code": "NY",
+              "country_subdivision_name": "New York"
+            }
+          }
+        ],
+        "established": 1860,
+        "external_ids": [
+          {
+            "all": [
+              "100016250"
+            ],
+            "type": "fundref",
+            "preferred": "100016250"
+          },
+          {
+            "all": [
+              "grid.260917.b"
+            ],
+            "type": "grid",
+            "preferred": "grid.260917.b"
+          },
+          {
+            "all": [
+              "0000 0001 0728 151X"
+            ],
+            "type": "isni",
+            "preferred": null
+          },
+          {
+            "all": [
+              "Q4115972"
+            ],
+            "type": "wikidata",
+            "preferred": null
+          }
+        ],
+        "relationships": [
+          {
+            "id": "https://ror.org/0065vkd37",
+            "type": "related",
+            "label": "Brookdale University Hospital and Medical Center"
+          },
+          {
+            "id": "https://ror.org/04t2rv460",
+            "type": "related",
+            "label": "Danbury Hospital"
+          },
+          {
+            "id": "https://ror.org/00fj3a809",
+            "type": "related",
+            "label": "Good Samaritan Regional Medical Center"
+          },
+          {
+            "id": "https://ror.org/036qtaj98",
+            "type": "related",
+            "label": "Greenwich Hospital"
+          },
+          {
+            "id": "https://ror.org/02navrb60",
+            "type": "related",
+            "label": "Lady of Mercy Medical Center"
+          },
+          {
+            "id": "https://ror.org/0231d2y50",
+            "type": "related",
+            "label": "Lenox Hill Hospital"
+          },
+          {
+            "id": "https://ror.org/005h65c20",
+            "type": "related",
+            "label": "Metropolitan Hospital Center"
+          },
+          {
+            "id": "https://ror.org/005xhc966",
+            "type": "related",
+            "label": "Norwalk Hospital"
+          },
+          {
+            "id": "https://ror.org/01m9rk435",
+            "type": "related",
+            "label": "Richmond University Medical Center"
+          },
+          {
+            "id": "https://ror.org/04ned8342",
+            "type": "related",
+            "label": "Saint Michael's Medical Center"
+          },
+          {
+            "id": "https://ror.org/00cwrhn79",
+            "type": "related",
+            "label": "Saint Vincent's Catholic Medical Center"
+          },
+          {
+            "id": "https://ror.org/02c495c76",
+            "type": "related",
+            "label": "St. Joseph’s University Medical Center"
+          },
+          {
+            "id": "https://ror.org/006vx3924",
+            "type": "related",
+            "label": "St. Vincent's Medical Center"
+          },
+          {
+            "id": "https://ror.org/05hwfvk38",
+            "type": "related",
+            "label": "Touro College"
+          },
+          {
+            "id": "https://ror.org/03fcgva33",
+            "type": "related",
+            "label": "Westchester Medical Center"
+          },
+          {
+            "id": "https://ror.org/00yzb1d91",
+            "type": "related",
+            "label": "Wyckoff Heights Medical Center"
+          }
+        ]
+      },
+      "matching_type": "SINGLE SEARCH"
+    }
+  ]
+}

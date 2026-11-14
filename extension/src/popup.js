@@ -19,7 +19,7 @@ document.querySelector("#name").textContent = SITE.name;
 const controller = createPopupController({
   storage: api.storage.local,
   fetch,
-  site: SITE,
+  site: { ...SITE, key: articleKey(SITE.url) },
   requiresSharingConsent: true,
   async readTab() {
     const [tab] = await api.tabs.query({ active: true, currentWindow: true });

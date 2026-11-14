@@ -16,8 +16,8 @@ from typing import Any
 import httpx
 from sqlalchemy.orm import Session
 
-from thenwhat.llm.errors import BudgetExceeded, LlmCallFailed, LlmNotConfigured
-from thenwhat.llm.ledger import record_usage, spent_this_month
+from thenwhat.llm.errors import LlmCallFailed, LlmNotConfigured
+from thenwhat.llm.ledger import check_ceiling, record_usage
 
 API = "https://api.openai.com/v1"
 # The name of the environment variable that holds the provider's credential.
@@ -94,11 +94,7 @@ class Decisions:
 
         answers: list[Chosen | None] = []
         for start in range(0, len(questions), MAX_QUESTIONS):
-            if spent_this_month(self._session, self._now()) >= settings.monthly_budget_usd:
-                raise BudgetExceeded(
-                    f"The monthly ceiling of ${settings.monthly_budget_usd} for language model"
-                    " calls has been reached. No call was made."
-                )
+            check_ceiling(self._session, self._now(), settings.monthly_budget_usd)
             asked = questions[start : start + MAX_QUESTIONS]
             answers += self._ask(purpose, credential, evidence, asked)
         return answers

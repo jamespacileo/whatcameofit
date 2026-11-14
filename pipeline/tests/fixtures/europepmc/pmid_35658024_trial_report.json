@@ -1,0 +1,1117 @@
+{
+  "version": "6.9",
+  "hitCount": 1,
+  "request": {
+    "queryString": "EXT_ID:35658024 AND SRC:MED",
+    "internalQuery": "EXT_ID:35658024 AND SRC:MED",
+    "resultType": "CORE",
+    "cursorMark": "*",
+    "pageSize": 25,
+    "sort": "",
+    "synonym": false
+  },
+  "resultList": {
+    "result": [
+      {
+        "id": "35658024",
+        "source": "MED",
+        "pmid": "35658024",
+        "doi": "10.1056/nejmoa2206038",
+        "title": "Tirzepatide Once Weekly for the Treatment of Obesity.",
+        "authorString": "Jastreboff AM, Aronne LJ, Ahmad NN, Wharton S, Connery L, Alves B, Kiyosue A, Zhang S, Liu B, Bunck MC, Stefanski A, SURMOUNT-1 Investigators.",
+        "authorList": {
+          "author": [
+            {
+              "fullName": "Jastreboff AM",
+              "lastName": "Jastreboff",
+              "firstName": "Ania M",
+              "initials": "AM",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "From the Section of Endocrinology and Metabolism, Department of Medicine, and the Section of Pediatric Endocrinology, Department of Pediatrics, Yale University School of Medicine, New Haven, CT (A.M.J.); the Comprehensive Weight Control Center, Division of Endocrinology, Diabetes, and Metabolism, Weill Cornell Medicine, New York (L.J.A.); Eli Lilly, Indianapolis (N.N.A., S.Z., B.L., M.C.B., A.S.); McMaster University, Hamilton, and York University and Wharton Weight Management Clinic, Toronto - all in Ontario, Canada (S.W.); Intend Research, Norman, OK (L.C.); Centro Paulista De Investigação Clínica (Cepic), Sao Paulo (B.A.); and Tokyo-Eki Center-Building Clinic, Tokyo (A.K.)."
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Aronne LJ",
+              "lastName": "Aronne",
+              "firstName": "Louis J",
+              "initials": "LJ",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "From the Section of Endocrinology and Metabolism, Department of Medicine, and the Section of Pediatric Endocrinology, Department of Pediatrics, Yale University School of Medicine, New Haven, CT (A.M.J.); the Comprehensive Weight Control Center, Division of Endocrinology, Diabetes, and Metabolism, Weill Cornell Medicine, New York (L.J.A.); Eli Lilly, Indianapolis (N.N.A., S.Z., B.L., M.C.B., A.S.); McMaster University, Hamilton, and York University and Wharton Weight Management Clinic, Toronto - all in Ontario, Canada (S.W.); Intend Research, Norman, OK (L.C.); Centro Paulista De Investigação Clínica (Cepic), Sao Paulo (B.A.); and Tokyo-Eki Center-Building Clinic, Tokyo (A.K.)."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "investigatorList": {
+          "investigator": [
+            {
+              "fullName": "Connery L",
+              "lastName": "Connery",
+              "firstName": "Lisa",
+              "initials": "L"
+            },
+            {
+              "fullName": "Tran H",
+              "lastName": "Tran",
+              "firstName": "Hien",
+              "initials": "H"
+            },
+            {
+              "fullName": "Singh K",
+              "lastName": "Singh",
+              "firstName": "Kamalpreet",
+              "initials": "K"
+            },
+            {
+              "fullName": "Ozer K",
+              "lastName": "Ozer",
+              "firstName": "Kerem",
+              "initials": "K"
+            },
+            {
+              "fullName": "Blevins T",
+              "lastName": "Blevins",
+              "firstName": "Thomas",
+              "initials": "T"
+            },
+            {
+              "fullName": "Gangi S",
+              "lastName": "Gangi",
+              "firstName": "Sumana",
+              "initials": "S"
+            },
+            {
+              "fullName": "Welch M",
+              "lastName": "Welch",
+              "firstName": "Michelle",
+              "initials": "M"
+            },
+            {
+              "fullName": "Nunez L",
+              "lastName": "Nunez",
+              "firstName": "Lazaro",
+              "initials": "L"
+            },
+            {
+              "fullName": "Aronoff S",
+              "lastName": "Aronoff",
+              "firstName": "Stephen",
+              "initials": "S"
+            },
+            {
+              "fullName": "Bhargava A",
+              "lastName": "Bhargava",
+              "firstName": "Anuj",
+              "initials": "A"
+            },
+            {
+              "fullName": "Kutner M",
+              "lastName": "Kutner",
+              "firstName": "Mark",
+              "initials": "M"
+            },
+            {
+              "fullName": "Nardandrea J",
+              "lastName": "Nardandrea",
+              "firstName": "John",
+              "initials": "J"
+            },
+            {
+              "fullName": "Willingham K",
+              "lastName": "Willingham",
+              "firstName": "Katherine",
+              "initials": "K"
+            },
+            {
+              "fullName": "Bogle T",
+              "lastName": "Bogle",
+              "firstName": "Tanya",
+              "initials": "T"
+            },
+            {
+              "fullName": "Sosa J",
+              "lastName": "Sosa",
+              "firstName": "John",
+              "initials": "J"
+            },
+            {
+              "fullName": "True D",
+              "lastName": "True",
+              "firstName": "David",
+              "initials": "D"
+            },
+            {
+              "fullName": "Lillestol M",
+              "lastName": "Lillestol",
+              "firstName": "Michael",
+              "initials": "M"
+            },
+            {
+              "fullName": "Smith T",
+              "lastName": "Smith",
+              "firstName": "Timothy",
+              "initials": "T"
+            },
+            {
+              "fullName": "Detweiler R",
+              "lastName": "Detweiler",
+              "firstName": "Robert",
+              "initials": "R"
+            },
+            {
+              "fullName": "Hartley P",
+              "lastName": "Hartley",
+              "firstName": "Paul",
+              "initials": "P"
+            },
+            {
+              "fullName": "Rohlf J",
+              "lastName": "Rohlf",
+              "firstName": "Jane",
+              "initials": "J"
+            },
+            {
+              "fullName": "Davis M",
+              "lastName": "Davis",
+              "firstName": "Matthew",
+              "initials": "M"
+            },
+            {
+              "fullName": "Murray A",
+              "lastName": "Murray",
+              "firstName": "Alexander",
+              "initials": "A"
+            },
+            {
+              "fullName": "Strout C",
+              "lastName": "Strout",
+              "firstName": "Cynthia",
+              "initials": "C"
+            },
+            {
+              "fullName": "Byars W",
+              "lastName": "Byars",
+              "firstName": "William",
+              "initials": "W"
+            },
+            {
+              "fullName": "Fried D",
+              "lastName": "Fried",
+              "firstName": "David",
+              "initials": "D"
+            },
+            {
+              "fullName": "Soufer J",
+              "lastName": "Soufer",
+              "firstName": "Joseph",
+              "initials": "J"
+            },
+            {
+              "fullName": "Yacoub T",
+              "lastName": "Yacoub",
+              "firstName": "Tamer",
+              "initials": "T"
+            },
+            {
+              "fullName": "Block B",
+              "lastName": "Block",
+              "firstName": "Bradley",
+              "initials": "B"
+            },
+            {
+              "fullName": "Barranco Santana E",
+              "lastName": "Barranco Santana",
+              "firstName": "Elizabeth",
+              "initials": "E"
+            },
+            {
+              "fullName": "Bressler P",
+              "lastName": "Bressler",
+              "firstName": "Peter",
+              "initials": "P"
+            },
+            {
+              "fullName": "Cortes-Maisonet G",
+              "lastName": "Cortes-Maisonet",
+              "firstName": "Gregorio",
+              "initials": "G"
+            },
+            {
+              "fullName": "Rivera Colon L",
+              "lastName": "Rivera Colon",
+              "firstName": "Luis",
+              "initials": "L"
+            },
+            {
+              "fullName": "Ortiz-Carrasquillo R",
+              "lastName": "Ortiz-Carrasquillo",
+              "firstName": "Ramon",
+              "initials": "R"
+            },
+            {
+              "fullName": "Gonzalez-Bossolo A",
+              "lastName": "Gonzalez-Bossolo",
+              "firstName": "Alex",
+              "initials": "A"
+            },
+            {
+              "fullName": "Fitz-Patrick D",
+              "lastName": "Fitz-Patrick",
+              "firstName": "David",
+              "initials": "D"
+            },
+            {
+              "fullName": "Chang A",
+              "lastName": "Chang",
+              "firstName": "Anna",
+              "initials": "A"
+            },
+            {
+              "fullName": "Bergthold J",
+              "lastName": "Bergthold",
+              "firstName": "James",
+              "initials": "J"
+            },
+            {
+              "fullName": "Lofton H",
+              "lastName": "Lofton",
+              "firstName": "Holly",
+              "initials": "H"
+            },
+            {
+              "fullName": "Recknor C",
+              "lastName": "Recknor",
+              "firstName": "Chris",
+              "initials": "C"
+            },
+            {
+              "fullName": "Norwood P",
+              "lastName": "Norwood",
+              "firstName": "Paul",
+              "initials": "P"
+            },
+            {
+              "fullName": "Quinn T",
+              "lastName": "Quinn",
+              "firstName": "Timothy",
+              "initials": "T"
+            },
+            {
+              "fullName": "Vaughn M",
+              "lastName": "Vaughn",
+              "firstName": "Michael",
+              "initials": "M"
+            },
+            {
+              "fullName": "Shelton C",
+              "lastName": "Shelton",
+              "firstName": "Courtney",
+              "initials": "C"
+            },
+            {
+              "fullName": "Herman L",
+              "lastName": "Herman",
+              "firstName": "Lee",
+              "initials": "L"
+            },
+            {
+              "fullName": "Palal B",
+              "lastName": "Palal",
+              "firstName": "Betsy",
+              "initials": "B"
+            },
+            {
+              "fullName": "Mohseni R",
+              "lastName": "Mohseni",
+              "firstName": "Rizwana",
+              "initials": "R"
+            },
+            {
+              "fullName": "Cullen A",
+              "lastName": "Cullen",
+              "firstName": "Amy",
+              "initials": "A"
+            },
+            {
+              "fullName": "Van J",
+              "lastName": "Van",
+              "firstName": "Joanna",
+              "initials": "J"
+            },
+            {
+              "fullName": "McCartney M",
+              "lastName": "McCartney",
+              "firstName": "Michael",
+              "initials": "M"
+            },
+            {
+              "fullName": "Audish H",
+              "lastName": "Audish",
+              "firstName": "Hanid",
+              "initials": "H"
+            },
+            {
+              "fullName": "Frias J",
+              "lastName": "Frias",
+              "firstName": "Juan",
+              "initials": "J"
+            },
+            {
+              "fullName": "Steil K",
+              "lastName": "Steil",
+              "firstName": "Kenneth",
+              "initials": "K"
+            },
+            {
+              "fullName": "Arora S",
+              "lastName": "Arora",
+              "firstName": "Samir",
+              "initials": "S"
+            },
+            {
+              "fullName": "Toth P",
+              "lastName": "Toth",
+              "firstName": "Phillip",
+              "initials": "P"
+            },
+            {
+              "fullName": "McKenzie M",
+              "lastName": "McKenzie",
+              "firstName": "Mark",
+              "initials": "M"
+            },
+            {
+              "fullName": "Fraser N",
+              "lastName": "Fraser",
+              "firstName": "Neil",
+              "initials": "N"
+            },
+            {
+              "fullName": "O'Neil P",
+              "lastName": "O'Neil",
+              "firstName": "Patrick",
+              "initials": "P"
+            },
+            {
+              "fullName": "Bays H",
+              "lastName": "Bays",
+              "firstName": "Harold",
+              "initials": "H"
+            },
+            {
+              "fullName": "Briskin T",
+              "lastName": "Briskin",
+              "firstName": "Toby",
+              "initials": "T"
+            },
+            {
+              "fullName": "Machineni S",
+              "lastName": "Machineni",
+              "firstName": "Sriram",
+              "initials": "S"
+            },
+            {
+              "fullName": "Aronne L",
+              "lastName": "Aronne",
+              "firstName": "Louis",
+              "initials": "L"
+            },
+            {
+              "fullName": "Jastreboff A",
+              "lastName": "Jastreboff",
+              "firstName": "Ania",
+              "initials": "A"
+            },
+            {
+              "fullName": "Rosenstock J",
+              "lastName": "Rosenstock",
+              "firstName": "Julio",
+              "initials": "J"
+            },
+            {
+              "fullName": "Cheng Z",
+              "lastName": "Cheng",
+              "firstName": "ZhiFeng",
+              "initials": "Z"
+            },
+            {
+              "fullName": "Yu Y",
+              "lastName": "Yu",
+              "firstName": "Yerong",
+              "initials": "Y"
+            },
+            {
+              "fullName": "Xiao J",
+              "lastName": "Xiao",
+              "firstName": "Jianzhong",
+              "initials": "J"
+            },
+            {
+              "fullName": "Li Y",
+              "lastName": "Li",
+              "firstName": "Ya",
+              "initials": "Y"
+            },
+            {
+              "fullName": "Pang S",
+              "lastName": "Pang",
+              "firstName": "Shuguang",
+              "initials": "S"
+            },
+            {
+              "fullName": "Li L",
+              "lastName": "Li",
+              "firstName": "Li",
+              "initials": "L"
+            },
+            {
+              "fullName": "Yang J",
+              "lastName": "Yang",
+              "firstName": "Jun",
+              "initials": "J"
+            },
+            {
+              "fullName": "Xu L",
+              "lastName": "Xu",
+              "firstName": "Lan",
+              "initials": "L"
+            },
+            {
+              "fullName": "Lei T",
+              "lastName": "Lei",
+              "firstName": "Tao",
+              "initials": "T"
+            },
+            {
+              "fullName": "Lu YB",
+              "lastName": "Lu",
+              "firstName": "Yi Bing",
+              "initials": "YB"
+            },
+            {
+              "fullName": "Wang K",
+              "lastName": "Wang",
+              "firstName": "Kun",
+              "initials": "K"
+            },
+            {
+              "fullName": "Lin J",
+              "lastName": "Lin",
+              "firstName": "Jingna",
+              "initials": "J"
+            },
+            {
+              "fullName": "Drapkina O",
+              "lastName": "Drapkina",
+              "firstName": "Oksana",
+              "initials": "O"
+            },
+            {
+              "fullName": "Chazova I",
+              "lastName": "Chazova",
+              "firstName": "Irina",
+              "initials": "I"
+            },
+            {
+              "fullName": "Zrazhevskiy K",
+              "lastName": "Zrazhevskiy",
+              "firstName": "Konstantin",
+              "initials": "K"
+            },
+            {
+              "fullName": "Troshina E",
+              "lastName": "Troshina",
+              "firstName": "Ekaterina",
+              "initials": "E"
+            },
+            {
+              "fullName": "Shutemova E",
+              "lastName": "Shutemova",
+              "firstName": "Elena",
+              "initials": "E",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-5324-3570"
+              }
+            },
+            {
+              "fullName": "Voevoda M",
+              "lastName": "Voevoda",
+              "firstName": "Mikhail",
+              "initials": "M"
+            },
+            {
+              "fullName": "Ezhov A",
+              "lastName": "Ezhov",
+              "firstName": "Andrei",
+              "initials": "A"
+            },
+            {
+              "fullName": "Shalaev S",
+              "lastName": "Shalaev",
+              "firstName": "Sergey",
+              "initials": "S",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0003-2724-4016"
+              }
+            },
+            {
+              "fullName": "Gordeev I",
+              "lastName": "Gordeev",
+              "firstName": "Ivan",
+              "initials": "I"
+            },
+            {
+              "fullName": "Rafalskiy V",
+              "lastName": "Rafalskiy",
+              "firstName": "Vladimir",
+              "initials": "V",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-2503-9580"
+              }
+            },
+            {
+              "fullName": "Russo L",
+              "lastName": "Russo",
+              "firstName": "Luis",
+              "initials": "L"
+            },
+            {
+              "fullName": "Franco D",
+              "lastName": "Franco",
+              "firstName": "Denise",
+              "initials": "D"
+            },
+            {
+              "fullName": "Balabem Alves B",
+              "lastName": "Balabem Alves",
+              "firstName": "Breno",
+              "initials": "B"
+            },
+            {
+              "fullName": "da Silva Lima L",
+              "lastName": "da Silva Lima",
+              "firstName": "Luana",
+              "initials": "L"
+            },
+            {
+              "fullName": "Akerman Augusto G",
+              "lastName": "Akerman Augusto",
+              "firstName": "Gustavo",
+              "initials": "G"
+            },
+            {
+              "fullName": "Vidotti MH",
+              "lastName": "Vidotti",
+              "firstName": "Maria Helena",
+              "initials": "MH"
+            },
+            {
+              "fullName": "Cercato C",
+              "lastName": "Cercato",
+              "firstName": "Cintia",
+              "initials": "C",
+              "authorId": {
+                "type": "ORCID",
+                "value": "0000-0002-6181-4951"
+              }
+            },
+            {
+              "fullName": "Santos Q",
+              "lastName": "Santos",
+              "firstName": "Queulla",
+              "initials": "Q"
+            },
+            {
+              "fullName": "Saraiva J",
+              "lastName": "Saraiva",
+              "firstName": "Jose",
+              "initials": "J"
+            },
+            {
+              "fullName": "Gelersztein E",
+              "lastName": "Gelersztein",
+              "firstName": "Elizabeth",
+              "initials": "E"
+            },
+            {
+              "fullName": "Fretes J",
+              "lastName": "Fretes",
+              "firstName": "José",
+              "initials": "J"
+            },
+            {
+              "fullName": "Lisandro Gutnisky L",
+              "lastName": "Lisandro Gutnisky",
+              "firstName": "Lucas",
+              "initials": "L"
+            },
+            {
+              "fullName": "Perez Manghi F",
+              "lastName": "Perez Manghi",
+              "firstName": "Federico",
+              "initials": "F"
+            },
+            {
+              "fullName": "Costanzo P",
+              "lastName": "Costanzo",
+              "firstName": "Pablo",
+              "initials": "P"
+            },
+            {
+              "fullName": "Sernia V",
+              "lastName": "Sernia",
+              "firstName": "Virginia",
+              "initials": "V"
+            },
+            {
+              "fullName": "Vico M",
+              "lastName": "Vico",
+              "firstName": "Marisa",
+              "initials": "M"
+            },
+            {
+              "fullName": "Abalos F",
+              "lastName": "Abalos",
+              "firstName": "Franklin",
+              "initials": "F"
+            },
+            {
+              "fullName": "Montana O",
+              "lastName": "Montana",
+              "firstName": "Oscar",
+              "initials": "O"
+            },
+            {
+              "fullName": "Serra L",
+              "lastName": "Serra",
+              "firstName": "Leonardo",
+              "initials": "L"
+            },
+            {
+              "fullName": "Aizenberg D",
+              "lastName": "Aizenberg",
+              "firstName": "Diego",
+              "initials": "D"
+            },
+            {
+              "fullName": "Alpizar-Salazar M",
+              "lastName": "Alpizar-Salazar",
+              "firstName": "Melchor",
+              "initials": "M"
+            },
+            {
+              "fullName": "Herrera Marmolejo M",
+              "lastName": "Herrera Marmolejo",
+              "firstName": "Marisol",
+              "initials": "M"
+            },
+            {
+              "fullName": "Garcia P",
+              "lastName": "Garcia",
+              "firstName": "Pedro",
+              "initials": "P"
+            },
+            {
+              "fullName": "Sauque L",
+              "lastName": "Sauque",
+              "firstName": "Leobardo",
+              "initials": "L"
+            },
+            {
+              "fullName": "Nevarez L",
+              "lastName": "Nevarez",
+              "firstName": "Luis",
+              "initials": "L"
+            },
+            {
+              "fullName": "Aguilar Espinoza LH",
+              "lastName": "Aguilar Espinoza",
+              "firstName": "Luis Horacio",
+              "initials": "LH"
+            },
+            {
+              "fullName": "Crespo M",
+              "lastName": "Crespo",
+              "firstName": "Mariana",
+              "initials": "M"
+            },
+            {
+              "fullName": "Virgen Carrillo L",
+              "lastName": "Virgen Carrillo",
+              "firstName": "Luis",
+              "initials": "L"
+            },
+            {
+              "fullName": "de Los Rios Ibarra MO",
+              "lastName": "de Los Rios Ibarra",
+              "firstName": "Manuel Odin",
+              "initials": "MO"
+            },
+            {
+              "fullName": "López Maldonado F",
+              "lastName": "López Maldonado",
+              "firstName": "Francisco",
+              "initials": "F"
+            },
+            {
+              "fullName": "Kumar H",
+              "lastName": "Kumar",
+              "firstName": "Harish",
+              "initials": "H"
+            },
+            {
+              "fullName": "Sethi B",
+              "lastName": "Sethi",
+              "firstName": "Bipin",
+              "initials": "B"
+            },
+            {
+              "fullName": "Vikram N",
+              "lastName": "Vikram",
+              "firstName": "Naval",
+              "initials": "N"
+            },
+            {
+              "fullName": "Aggarwal A",
+              "lastName": "Aggarwal",
+              "firstName": "Ajay",
+              "initials": "A"
+            },
+            {
+              "fullName": "Goyal G",
+              "lastName": "Goyal",
+              "firstName": "Ghanshyam",
+              "initials": "G"
+            },
+            {
+              "fullName": "Deshmukh V",
+              "lastName": "Deshmukh",
+              "firstName": "Vaishali",
+              "initials": "V"
+            },
+            {
+              "fullName": "Julka S",
+              "lastName": "Julka",
+              "firstName": "Sandeep",
+              "initials": "S"
+            },
+            {
+              "fullName": "Gada J",
+              "lastName": "Gada",
+              "firstName": "Jugal",
+              "initials": "J"
+            },
+            {
+              "fullName": "Gupta H",
+              "lastName": "Gupta",
+              "firstName": "Hemant",
+              "initials": "H"
+            },
+            {
+              "fullName": "Shah P",
+              "lastName": "Shah",
+              "firstName": "Parag",
+              "initials": "P"
+            },
+            {
+              "fullName": "Yamada M",
+              "lastName": "Yamada",
+              "firstName": "Masamichi",
+              "initials": "M"
+            },
+            {
+              "fullName": "Kiyosue A",
+              "lastName": "Kiyosue",
+              "firstName": "Arihiro",
+              "initials": "A"
+            },
+            {
+              "fullName": "Inoue S",
+              "lastName": "Inoue",
+              "firstName": "Satoshi",
+              "initials": "S"
+            },
+            {
+              "fullName": "Yamasaki Y",
+              "lastName": "Yamasaki",
+              "firstName": "Yoshimitsu",
+              "initials": "Y"
+            },
+            {
+              "fullName": "Fukushima Y",
+              "lastName": "Fukushima",
+              "firstName": "Yasushi",
+              "initials": "Y"
+            },
+            {
+              "fullName": "Huang KC",
+              "lastName": "Huang",
+              "firstName": "Kuo-Chin",
+              "initials": "KC"
+            },
+            {
+              "fullName": "Lin WY",
+              "lastName": "Lin",
+              "firstName": "Wen-Yuan",
+              "initials": "WY"
+            },
+            {
+              "fullName": "Yeh NC",
+              "lastName": "Yeh",
+              "firstName": "Nai Cheng",
+              "initials": "NC"
+            },
+            {
+              "fullName": "Huang CN",
+              "lastName": "Huang",
+              "firstName": "Chien-Ning",
+              "initials": "CN"
+            },
+            {
+              "fullName": "Yang YC",
+              "lastName": "Yang",
+              "firstName": "Yi-Ching",
+              "initials": "YC"
+            },
+            {
+              "fullName": "Chang CJ",
+              "lastName": "Chang",
+              "firstName": "Chih-Jen",
+              "initials": "CJ"
+            }
+          ]
+        },
+        "authorIdList": {
+          "authorId": [
+            {
+              "type": "ORCID",
+              "value": "0000-0002-2503-9580"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-5324-3570"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0002-6181-4951"
+            },
+            {
+              "type": "ORCID",
+              "value": "0000-0003-2724-4016"
+            }
+          ]
+        },
+        "journalInfo": {
+          "issue": "3",
+          "volume": "387",
+          "journalIssueId": 3393923,
+          "dateOfPublication": "2022 Jul",
+          "monthOfPublication": 7,
+          "yearOfPublication": 2022,
+          "journal": {
+            "medlineAbbreviation": "N Engl J Med",
+            "title": "The New England journal of medicine",
+            "essn": "1533-4406",
+            "issn": "0028-4793",
+            "isoabbreviation": "N Engl J Med",
+            "nlmid": "0255562"
+          },
+          "printPublicationDate": "2022-07-01"
+        },
+        "pubYear": "2022",
+        "pageInfo": "205-216",
+        "abstractText": "Abstract replaced in this fixture. The recorded text is not kept.",
+        "affiliation": "From the Section of Endocrinology and Metabolism, Department of Medicine, and the Section of Pediatric Endocrinology, Department of Pediatrics, Yale University School of Medicine, New Haven, CT (A.M.J.); the Comprehensive Weight Control Center, Division of Endocrinology, Diabetes, and Metabolism, Weill Cornell Medicine, New York (L.J.A.); Eli Lilly, Indianapolis (N.N.A., S.Z., B.L., M.C.B., A.S.); McMaster University, Hamilton, and York University and Wharton Weight Management Clinic, Toronto - all in Ontario, Canada (S.W.); Intend Research, Norman, OK (L.C.); Centro Paulista De Investigação Clínica (Cepic), Sao Paulo (B.A.); and Tokyo-Eki Center-Building Clinic, Tokyo (A.K.).",
+        "publicationStatus": "ppublish",
+        "language": "eng",
+        "pubModel": "Print-Electronic",
+        "pubTypeList": {
+          "pubType": [
+            "Clinical Trial, Phase III",
+            "Randomized Controlled Trial",
+            "Journal Article"
+          ]
+        },
+        "meshHeadingList": {
+          "meshHeading": [
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Humans"
+            },
+            {
+              "majorTopic_YN": "Y",
+              "descriptorName": "Obesity",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "CO",
+                    "qualifierName": "complications"
+                  },
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "DT",
+                    "qualifierName": "drug therapy"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "Y",
+              "descriptorName": "Weight Loss",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "DE",
+                    "qualifierName": "drug effects"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Gastric Inhibitory Polypeptide",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "AD",
+                    "qualifierName": "administration & dosage"
+                  },
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "TU",
+                    "qualifierName": "therapeutic use"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "Y",
+              "descriptorName": "Anti-Obesity Agents",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "AD",
+                    "qualifierName": "administration & dosage"
+                  },
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "PD",
+                    "qualifierName": "pharmacology"
+                  },
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "TU",
+                    "qualifierName": "therapeutic use"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Treatment Outcome"
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Injections, Subcutaneous"
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Double-Blind Method"
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Dose-Response Relationship, Drug"
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Adult"
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Glucagon-Like Peptides",
+              "meshQualifierList": {
+                "meshQualifier": [
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "AD",
+                    "qualifierName": "administration & dosage"
+                  },
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "TU",
+                    "qualifierName": "therapeutic use"
+                  },
+                  {
+                    "majorTopic_YN": "N",
+                    "abbreviation": "AG",
+                    "qualifierName": "agonists"
+                  }
+                ]
+              }
+            },
+            {
+              "majorTopic_YN": "N",
+              "descriptorName": "Tirzepatide"
+            }
+          ]
+        },
+        "subsetList": {
+          "subset": [
+            {
+              "code": "IM",
+              "name": "Index Medicus"
+            }
+          ]
+        },
+        "fullTextUrlList": {
+          "fullTextUrl": [
+            {
+              "availability": "Subscription required",
+              "availabilityCode": "S",
+              "documentStyle": "doi",
+              "site": "DOI",
+              "url": "https://doi.org/10.1056/NEJMoa2206038"
+            }
+          ]
+        },
+        "isOpenAccess": "N",
+        "inEPMC": "N",
+        "inPMC": "N",
+        "citedByCount": 2896,
+        "hasReferences": "Y",
+        "hasTextMinedTerms": "Y",
+        "hasDbCrossReferences": "N",
+        "hasPDF": "N",
+        "hasBook": "N",
+        "hasSuppl": "N",
+        "hasLabsLinks": "Y",
+        "hasData": "Y",
+        "authMan": "N",
+        "epmcAuthMan": "N",
+        "nihAuthMan": "N",
+        "hasTMAccessionNumbers": "Y",
+        "dateOfCompletion": "2022-07-22",
+        "dateOfCreation": "2022-06-03",
+        "dateOfRevision": "2025-01-03",
+        "electronicPublicationDate": "2022-06-04",
+        "firstPublicationDate": "2022-06-04",
+        "firstIndexDate": "2022-06-07",
+        "hasEvaluations": "N"
+      }
+    ]
+  }
+}

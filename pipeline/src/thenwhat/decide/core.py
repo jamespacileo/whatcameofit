@@ -18,8 +18,20 @@ if TYPE_CHECKING:
     from thenwhat.llm.decisions import Decisions
 
 SUM_TOLERANCE = 1e-6
+# Models often return probabilities that sum to 0.98 or 1.01; a sum this far from 1 is
+# rescaled. Further off, the answer is left for the caller to refuse.
+RESCALE_WITHIN = 0.1
 # How many items a backend is asked about in one call.
 BATCH_SIZE = 20
+
+
+def rescaled(probabilities: dict[str, float]) -> dict[str, float]:
+    """The probabilities scaled to sum to 1 when their sum is within RESCALE_WITHIN of 1,
+    else as given."""
+    total = sum(probabilities.values())
+    if total > 0 and abs(total - 1) <= RESCALE_WITHIN:
+        return {option: value / total for option, value in probabilities.items()}
+    return probabilities
 
 
 @dataclass(frozen=True, slots=True)

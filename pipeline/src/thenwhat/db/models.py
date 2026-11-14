@@ -28,8 +28,15 @@ from thenwhat.domain import (
     EntityType,
     EventType,
     EvidenceStage,
+    NamedBy,
     RegulatoryOutcome,
     ReviewState,
+    StatementBasis,
+    StatementFirmness,
+    StatementKind,
+    StatementSpeaker,
+    TermFit,
+    TermRole,
     TrialState,
 )
 
@@ -147,6 +154,44 @@ class Promise(Base):
     parsed_date: Mapped[date | None]
 
 
+class ReportedStatement(Reviewed, Base):
+    """Something a source article says about a claim's intervention beyond its timeline,
+    in the site's own words (GLOSSARY.md). Behavior: openspec reported-statements.
+
+    Nothing of the article's text is kept: the statement is the pipeline's own wording,
+    refused by rule before it is stored when it copies the article, quotes or names
+    someone.
+    """
+
+    __tablename__ = "reported_statement"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_article_id", "text_key", name="uq_reported_statement_article_text_key"
+        ),
+        CheckConstraint("char_length(text) BETWEEN 1 AND 200", name="text_length"),
+        CheckConstraint("confidence >= 0 AND confidence <= 1", name="confidence_range"),
+        _review_decision_recorded(),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    claim_id: Mapped[int] = mapped_column(ForeignKey("claim.id"), index=True)
+    source_article_id: Mapped[int] = mapped_column(ForeignKey("source_article.id"), index=True)
+    text: Mapped[str] = mapped_column(Text)
+    # The text compared without letter case, spacing or punctuation: one per article.
+    text_key: Mapped[str] = mapped_column(Text)
+    kind: Mapped[StatementKind] = mapped_column(_enum(StatementKind, "kind"))
+    firmness: Mapped[StatementFirmness] = mapped_column(_enum(StatementFirmness, "firmness"))
+    speaker: Mapped[StatementSpeaker] = mapped_column(_enum(StatementSpeaker, "speaker"))
+    basis: Mapped[StatementBasis] = mapped_column(_enum(StatementBasis, "basis"))
+    # The statement check's probability that the article says this.
+    confidence: Mapped[float]
+    # The statement check's log reference, `source_article:<id>:statement:<place>`.
+    decision_ref: Mapped[str] = mapped_column(Text)
+    # When the article was read for this statement: it is of the article as read then.
+    article_read_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
+
+
 class Entity(Base):
     __tablename__ = "entity"
     __table_args__ = (
@@ -158,6 +203,10 @@ class Entity(Base):
         ),
         CheckConstraint("NOT is_origin_paper OR type = 'paper'", name="origin_paper_is_paper"),
         CheckConstraint("doi IS NULL OR type = 'paper'", name="doi_only_on_papers"),
+        CheckConstraint(
+            "cardinality(named_by) > 0 AND named_by <@ ARRAY['article', 'registry']::text[]",
+            name="named_by_known",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -174,6 +223,25 @@ class Entity(Base):
     # A DOI the article or operator gave for a paper. It is a lead for resolution,
     # not a confirmed identifier: confirmation is an approved match.
     doi: Mapped[str | None] = mapped_column(Text)
+    # Where the name came from: a source article, a registry record (a trial's lead
+    # sponsor), or both. Values of `NamedBy`.
+    named_by: Mapped[list[str]] = mapped_column(
+        ARRAY(Text),
+        default=lambda: [NamedBy.ARTICLE.value],
+        server_default="{article}",
+    )
+
+
+class EntityArticle(Base):
+    """A source article that named an organisation entity of its claim, so that the
+    organisation's role can give the report's address (openspec organisations)."""
+
+    __tablename__ = "entity_article"
+
+    entity_id: Mapped[int] = mapped_column(ForeignKey("entity.id"), primary_key=True)
+    source_article_id: Mapped[int] = mapped_column(
+        ForeignKey("source_article.id"), primary_key=True
+    )
 
 
 class EntityMatch(Reviewed, Base):
@@ -197,6 +265,66 @@ class EntityMatch(Reviewed, Base):
     # site owns their wording.
     reasons: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, server_default="{}")
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
+
+
+class ClaimTerm(Reviewed, Base):
+    """A subject term proposed for a claim's condition or intervention (GLOSSARY.md).
+    Behavior: openspec knowledge-cards."""
+
+    __tablename__ = "claim_term"
+    __table_args__ = (
+        UniqueConstraint(
+            "claim_id",
+            "role",
+            "source_name",
+            "external_id",
+            name="uq_claim_term_claim_role_source_external",
+        ),
+        CheckConstraint("score >= 0 AND score <= 1", name="score_range"),
+        _review_decision_recorded(),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    claim_id: Mapped[int] = mapped_column(ForeignKey("claim.id"), index=True)
+    role: Mapped[TermRole] = mapped_column(_enum(TermRole, "role"))
+    source_name: Mapped[str] = mapped_column(Text)
+    external_id: Mapped[str] = mapped_column(Text)
+    # The term's label as the candidate was gathered, so the queue can name it.
+    label: Mapped[str] = mapped_column(Text)
+    # Empty until the term check has an answer for the candidate.
+    score: Mapped[float | None]
+    # Whether it was read as the claim's own condition or intervention, or as broader.
+    # Empty when it was read as something else, or not read yet.
+    fit: Mapped[TermFit | None] = mapped_column(_enum(TermFit, "fit"))
+    # Why the term is a candidate, found by rule: each a code with its counts or name.
+    reasons: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list, server_default="[]")
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
+
+
+class TermRecord(Base):
+    """A vocabulary term's own record as its source returned it, kept once per term."""
+
+    __tablename__ = "term_record"
+
+    source_name: Mapped[str] = mapped_column(Text, primary_key=True)
+    external_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    url: Mapped[str] = mapped_column(Text)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+
+
+class OrganisationRecord(Base):
+    """An organisation's own record as the organisation registry returned it, kept once
+    per record with the time it was read (openspec organisations). The match score is
+    the registry's answer for one name, so it stays on the match."""
+
+    __tablename__ = "organisation_record"
+
+    source_name: Mapped[str] = mapped_column(Text, primary_key=True)
+    external_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    url: Mapped[str] = mapped_column(Text)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
 
 
 class EvidenceEvent(Reviewed, Base):
@@ -289,6 +417,27 @@ class HttpCache(Base):
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB)
     fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
     expires_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+
+
+class PaperRecord(Base):
+    """The index record a paper's facts are read from (openspec paper-facts), kept once
+    per paper with the time it was fetched.
+
+    Unlike an evidence event's payload, this one is reduced before it is stored: the
+    abstract, the authors, their identifiers and affiliations are removed. A row with
+    no payload records that the index was asked and does not hold the paper.
+    """
+
+    __tablename__ = "paper_record"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # The DOI in lower case, else `pmid:<number>`, else the index's own identifier.
+    identifier: Mapped[str] = mapped_column(Text, unique=True)
+    source_name: Mapped[str] = mapped_column(Text)
+    pubmed_id: Mapped[str | None] = mapped_column(Text, index=True)
+    # SQL NULL, not a JSON null, when the index does not hold the paper.
+    payload: Mapped[dict[str, Any] | None] = mapped_column(JSONB(none_as_null=True))
+    fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
 
 
 class OutletIcon(Base):

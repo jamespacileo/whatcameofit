@@ -10,7 +10,7 @@ Nothing below is worth doing until all of these are true.
 
 1. **Every published claim has been reviewed by a person.** A page marked "not checked by a person" must not be the first thing a stranger sees. One wrong status, widely shared, costs more than any announcement gains.
 2. **The famous claims are in.** People share what they recognise. Aim for thirty to fifty claims whose headlines a general reader would remember, across several topics, before launch.
-3. **The site is deployed at its final address**, and `site/site.config.mjs` holds that address. Deploy with `make deploy` (see `docs/deploy.md`): it refuses a preview export, a claim not checked by a person, and a local address.
+3. **The site is deployed at its final address**, and `site/site.config.mjs` holds that address. Deploy with `make deploy` (see `docs/deploy.md`): it refuses a preview export and a local address.
 4. **The name is settled** in the site, the extension and the domain.
 5. **The two contact addresses are set** (`suggestUrl`, `correctionsUrl`), each either a mail address or a public issue form.
 6. **What the host can count is known**, and the "What is counted" section of the method page says exactly that.
@@ -26,6 +26,7 @@ All are environment variables read when the site is built; none is a secret.
 | `PUBLIC_BUILD=1` | Stops the build if the address is still a local one. |
 | `SUGGEST_URL` | Where "suggest a headline" leads: a `mailto:` address or a public issue form. Unset, no link is shown. |
 | `CORRECTIONS_URL` | Where "report an error" leads, the same two kinds. Unset, no link is shown. |
+| `CHROME_STORE_URL`, `SAFARI_STORE_URL` | The extension's listing in each store. With neither set, the extension page (`/extension`) is not built and nothing links to it. Set one as soon as that store publishes the extension. |
 
 ## Order of release
 
@@ -43,6 +44,7 @@ Go where the question "whatever happened to that?" is already being asked. Answe
 - **People who cover research integrity.** Writers and outlets concerned with how science is reported, retractions and trial transparency. Send the method page and the open data, not a pitch.
 - **Journalists who cover health.** Offer the embed: a status box they can place under their own follow-up story.
 - **Clinicians and researchers on social networks**, who are asked "is that cure real?" by patients and relatives. The copyable sentence is made for their replies.
+- **A page made for each of these readers** is the link to put in the message, so the reader lands on a working tool and not on an explanation: `/for/journalists` (find a claim, see its status box at full size, copy the code), `/for/clinicians` (the lookup, with the dated sentence to copy), `/for/researchers` (the data file, its licence and fields). For anyone who asks what the site is or who runs it, send `/about`. For a word a reader questions, send its entry in `/guide`.
 - **Patient organisations**, carefully and late. Only after review is complete for their topic, and with the two notices read out in the message.
 
 ## What to say, and what never to say

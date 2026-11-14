@@ -25,7 +25,7 @@ Record browser version, extension build, tested URLs, exact popup result and any
 
 ### Baseline tools
 
-- Run two shell commands in the repository at `/Users/jay/Projects/products/thenwhat`.
+- Run two shell commands at the repository root.
 - Click Chrome's own toolbar (the extension's button sits there, outside any web page), and click inside the small popup window that opens under it.
 - Take screenshots.
 
@@ -61,7 +61,7 @@ If you can only act inside web pages and cannot click the browser's toolbar, sto
 
 3. In Chrome, go to `chrome://extensions`.
 4. Turn on "Developer mode", the switch at the top right.
-5. Click "Load unpacked" and choose the folder `/Users/jay/Projects/products/thenwhat/extension/dist`.
+5. Click "Load unpacked" and choose the folder `extension/dist` in the repository.
    - If this same unpacked extension is already listed, use its Reload control after rebuilding. Version 0.2.0 refreshes older cached service settings. If it was loaded from a different folder, remove that development copy and load the intended folder.
 6. Click the puzzle-piece icon in Chrome's toolbar, find "What came of it?", and click the pin beside it. Its icon now shows in the toolbar.
 

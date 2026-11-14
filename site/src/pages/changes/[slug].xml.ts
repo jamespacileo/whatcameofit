@@ -2,11 +2,9 @@
 import type { APIRoute } from "astro";
 import { SITE } from "../../../site.config.mjs";
 import { changesFeed, changesOf } from "../../lib/changes";
-import { data, type ExportedClaim } from "../../lib/export";
+import { claimPaths, data, type ExportedClaim } from "../../lib/export";
 
-export function getStaticPaths() {
-  return data.claims.map((claim) => ({ params: { slug: claim.slug }, props: { claim } }));
-}
+export const getStaticPaths = claimPaths;
 
 export const GET: APIRoute = ({ props }) => {
   const claim = props.claim as ExportedClaim;

@@ -1,6 +1,7 @@
 // Freeze a publishable export for GitHub, without giving CI database access.
 import fs from "node:fs";
 import path from "node:path";
+import { SITE } from "../site.config.mjs";
 import { deployProblems } from "./deploy-checks.mjs";
 
 const [source, destination, historyFile] = process.argv.slice(2);
@@ -11,7 +12,7 @@ if (!source || !destination) {
 let temporary;
 try {
   const data = JSON.parse(fs.readFileSync(source, "utf8"));
-  const problems = deployProblems({ data, siteUrl: process.env.SITE_URL || "https://whatcameofit.com" });
+  const problems = deployProblems({ data, siteUrl: SITE.url });
   if (problems.length) throw new Error(problems.join("\n"));
   if (historyFile) {
     const before = fs.existsSync(historyFile) ? JSON.parse(fs.readFileSync(historyFile, "utf8")) : [];

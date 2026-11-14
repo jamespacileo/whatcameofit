@@ -19,8 +19,7 @@ from sqlalchemy.orm import Session
 from thenwhat.claims.verticals import GROUPS, VERTICALS
 from thenwhat.db.models import Claim, EntityMatch, EvidenceEvent
 from thenwhat.domain import ReviewState
-
-CLINICALTRIALS_SOURCE = "clinicaltrials.gov"
+from thenwhat.sources.clinicaltrials import ClinicalTrials
 
 # MeSH heading to group slug.
 MESH_GROUPS: dict[str, str] = {
@@ -90,7 +89,7 @@ def approved_trial_payloads(session: Session, claim: Claim) -> list[dict[str, An
             .join(EntityMatch, EntityMatch.id == EvidenceEvent.entity_match_id)
             .where(
                 EvidenceEvent.claim_id == claim.id,
-                EvidenceEvent.source_name == CLINICALTRIALS_SOURCE,
+                EvidenceEvent.source_name == ClinicalTrials.name,
                 EntityMatch.review_state == ReviewState.APPROVED,
             )
             .order_by(EvidenceEvent.id)

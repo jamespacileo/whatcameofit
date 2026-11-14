@@ -5,8 +5,9 @@
 // A live answer is an automatic search, never a status. It says so first, every time.
 import { NOTICES } from "./notices.ts";
 
-// A record scored at or above this is listed; the rest are counted.
-const LIKELY_FROM = 0.5;
+// From this score a record reads as a trial of the treatment for the condition: it is
+// listed, and the rest are counted. The lookup service ranks records by it too.
+export const LIKELY_FROM = 0.5;
 const SHOWN_AT_MOST = 10;
 
 export const LIVE = {
