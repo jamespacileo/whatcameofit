@@ -206,7 +206,10 @@ Limits: one run, with one model. The phrases were not read one by one. Many are 
 
 **What it shows.**
 
-- None of the four "No trial record found" claims gained a paper, and no claim gained a trial candidate, so the run moved no claim off its status. The papers found are preclinical reports of preclinical claims.
+- None of the four "No trial record found" claims gained a paper, and no claim gained a trial candidate, so the run moved no claim off its status.
+- Some approved papers report studies in people for claims whose status is "preclinical only": a first-in-human study for `dentine-regeneration-cpne7-peptide`, and a double-blind randomised trial for `periodontal-adipose-stem-cells`. Neither gave a registry number that Europe PMC's abstract holds, so neither became a trial candidate. A paper does not change a status; these two claims are worth the operator's look.
+- One approved paper is a retracted one: its title begins "RETRACTED:" (`periodontal-maresin-resolvin-stem-cells`). The score does not know about retraction. It was not chosen as an origin paper, so no retraction event follows from it.
+- Some approvals at 1.00 are about a neighbouring thing: papers on resolvin E1 alone for a claim about maresin and resolvin with stem cells, and a chitosan peptide paper for an amelogenin peptide claim. The titles were read once, by the assistant, not by the operator.
 - More than half the searches (25 of 46) found nothing. The search asks for the intervention's names and phrases as exact phrases together with the indication as an exact phrase, and many of these claims have a long descriptive name and no search phrase that a paper would use. The remedy is a better search phrase (`thenwhat entity phrase`), not a looser search.
 - Where papers were found, most were not about the claim: 215 of 273 scored under 0.05. Eleven claims had all twenty slots filled, mostly by rejected papers.
 - The four origin papers set by rule let `thenwhat fetch` look for follow-up papers and retractions for claims whose article gave no DOI. `fetch` was not run here.
