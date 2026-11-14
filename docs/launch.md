@@ -26,6 +26,7 @@ All are environment variables read when the site is built; none is a secret.
 | `PUBLIC_BUILD=1` | Stops the build if the address is still a local one. |
 | `SUGGEST_URL` | Where "suggest a headline" leads: a `mailto:` address or a public issue form. Unset, no link is shown. |
 | `CORRECTIONS_URL` | Where "report an error" leads, the same two kinds. Unset, no link is shown. |
+| `CHROME_STORE_URL`, `SAFARI_STORE_URL` | The extension's listing in each store. With neither set, the extension page (`/extension`) is not built and nothing links to it. Set one as soon as that store publishes the extension. |
 
 ## Order of release
 

@@ -4,14 +4,9 @@
 import type { APIRoute } from "astro";
 import { articleKey } from "../lib/article-key.mjs";
 import { data } from "../lib/export";
-import { NOTICES, UNCHECKED_NOTE } from "../lib/notices";
-import {
-  STAGE_PATH,
-  STATUS_LABELS,
-  STATUS_MEANINGS,
-  latestPromise,
-  overlayText,
-} from "../lib/status";
+import { lookupClaim } from "../lib/lookup-claim";
+import { NOTICES } from "../lib/notices";
+import { STAGE_PATH } from "../lib/status";
 import { SITE } from "../../site.config.mjs";
 import { formatDate } from "../lib/timetable";
 
@@ -20,26 +15,7 @@ export const GET: APIRoute = () => {
   const claims: Record<string, unknown> = {};
 
   for (const claim of data.claims) {
-    const promise = latestPromise(claim);
-    claims[claim.slug] = {
-      headline: claim.headline,
-      page: `/${claim.slug}`,
-      status: STATUS_LABELS[claim.status.code],
-      meaning: STATUS_MEANINGS[claim.status.code],
-      // The status's place on the path from preclinical to approved, counted from 1, or
-      // null for a status that is off the path. A position, never a score.
-      place: STAGE_PATH.indexOf(claim.status.code) + 1 || null,
-      no_signal: overlayText(claim.status.overlay_years),
-      first_reported: claim.first_reported_date ? formatDate(claim.first_reported_date) : null,
-      latest_promise: promise
-        ? `${promise.description} (by ${promise.parsed_date!.slice(0, 4)})`
-        : null,
-      unchecked: claim.checked_by_person ? null : UNCHECKED_NOTE,
-      // For offering close matches to an address that is not tracked: the treatment's
-      // names, then the condition and the titles of the reports.
-      names: [claim.intervention.name, ...claim.intervention.synonyms],
-      terms: [claim.indication, ...claim.articles.map((article) => article.title)].join(" "),
-    };
+    claims[claim.slug] = lookupClaim(claim);
     for (const article of claim.articles) {
       const key = articleKey(article.url);
       if (key === null) continue;

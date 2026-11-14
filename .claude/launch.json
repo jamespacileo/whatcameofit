@@ -60,6 +60,15 @@
       "port": 4333
     },
     {
+      "name": "site-extension",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd site && CHROME_STORE_URL=https://example.org/chrome-listing SAFARI_STORE_URL=https://example.org/safari-listing EXPORT_FILE=data/published-export.json npx astro dev --port 4336"
+      ],
+      "port": 4336
+    },
+    {
       "name": "mocks",
       "runtimeExecutable": "python3",
       "runtimeArgs": [
