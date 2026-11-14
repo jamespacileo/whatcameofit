@@ -1,0 +1,102 @@
+# Spec Delta
+
+## Purpose
+
+Reads the article of a link lead that triage passed, once, and makes it a source article of the claim it reports or a new claim, by the rules that already govern extraction, claims and publishing.
+
+## ADDED Requirements
+
+### Requirement: Which leads are read
+The reading step SHALL apply to leads that are passed at the configured thresholds. Before a lead is read, the check for an article already tracked SHALL run again; a lead that has become already tracked SHALL NOT be read.
+
+#### Scenario: A held lead
+- **WHEN** a lead's score is between the two thresholds
+- **THEN** it is not read
+
+#### Scenario: Tracked since it was screened
+- **WHEN** a lead's address became a claim's source article after the lead was screened
+- **THEN** the lead's outcome becomes already tracked, and no article is fetched and no model is called for it
+
+### Requirement: Reading order
+Due leads SHALL be read in this order: first those linked to a registry trial, then by the sum of their shares' scores, highest first.
+
+#### Scenario: Two leads, one linked to a trial
+- **WHEN** two leads are due and only the less shared one is linked to a registry trial
+- **THEN** the lead linked to a trial is read first
+
+### Requirement: Outlets are asked politely
+An article SHALL be fetched only where the outlet's robots.txt allows the pipeline's client, with the contact User-Agent. No outlet SHALL be asked for two articles less than the configured interval apart, counted across every process, or less than the delay its robots.txt asks for when that is longer. An article that cannot be retrieved SHALL be looked for as an archived snapshot, as extraction does today.
+
+#### Scenario: Robots.txt forbids the fetch
+- **WHEN** a lead's outlet forbids the pipeline's client
+- **THEN** the article is not fetched, the lead's outcome is cannot be read with that reason, and it is not tried again
+
+#### Scenario: Two processes, one outlet
+- **WHEN** two processes each hold a due lead on the same outlet
+- **THEN** their two fetches are at least the configured interval apart
+
+#### Scenario: A dead link with no snapshot
+- **WHEN** the address answers not found and no archived snapshot exists
+- **THEN** the lead's outcome is cannot be read, and no text is asked of the operator
+
+### Requirement: One read per article
+An article SHALL be read by the model at most once for its lead, with the existing extraction. Its text SHALL be held only while the read runs and SHALL NOT be stored, cached, logged or written to a fixture. The article's content hash SHALL be recorded.
+
+#### Scenario: After a read
+- **WHEN** a lead's article has been read
+- **THEN** its text is stored nowhere, and a second run does not read it again
+
+### Requirement: An article for a claim that exists
+When the read names an intervention and an indication that an existing claim covers, the article SHALL be added to that claim as a source article, with its content hash, any archive address and its reported statements, which are checked and approved by the existing rule. The claim's headline, summary, intervention, indication, vertical and review state SHALL NOT change.
+
+#### Scenario: An earlier report of a tracked claim
+- **WHEN** a lead's article reports a claim the tracker holds, and was published before the claim's other articles
+- **THEN** the claim gains the article, and its first reported date becomes the article's
+
+#### Scenario: A decided claim
+- **WHEN** the existing claim is approved
+- **THEN** it stays approved, and no field the operator reviewed is changed
+
+### Requirement: An article for a new claim
+When no existing claim covers what the read names, a claim SHALL be drafted from the read exactly as extraction drafts one, and decided by the existing rule for drafts. Its slug SHALL be made by rule from the intervention and the indication. Its vertical SHALL be chosen by a decision among the configured verticals and accepted only at or above the configured probability.
+
+#### Scenario: A named intervention
+- **WHEN** the read names an intervention that is a name, and the vertical decision is confident
+- **THEN** a claim is created with that slug and vertical, and is approved by rule and published with the next export
+
+#### Scenario: A description in place of a name
+- **WHEN** the read gives a description where a name is needed
+- **THEN** the claim is rejected by rule and kept, as for any draft
+
+#### Scenario: No confident vertical
+- **WHEN** the vertical decision is below the configured probability
+- **THEN** no claim is created, the lead's outcome is needs a vertical, and the lead is listed for the operator with what the read named
+
+#### Scenario: The slug is taken
+- **WHEN** the slug the rule makes belongs to a claim for another intervention or indication
+- **THEN** no claim is created and the lead's failure names the slug
+
+### Requirement: Registry numbers and papers the page gives
+Registry numbers and paper identifiers that the article's own page gives SHALL be recorded for the claim as candidates, with the reason that the article names them, without a search. Each SHALL be scored and decided as any candidate is, for the claim's indication.
+
+#### Scenario: An article that links its trial
+- **WHEN** an article's page gives a registry number
+- **THEN** that trial is a candidate match of the claim, scored for the claim's indication, and is not approved by having been named
+
+### Requirement: Enough articles for one claim
+A lead linked by its title to a claim that already has the configured number of source articles SHALL be held and not read, unless it was first shared before the claim's first reported date.
+
+#### Scenario: A much-reported claim
+- **WHEN** a claim has the configured number of source articles and a lead for it was shared after its first reported date
+- **THEN** the lead is held, with the reason that the claim has enough articles
+
+#### Scenario: An earlier article
+- **WHEN** a lead for that claim was first shared before the claim's first reported date
+- **THEN** the lead is read
+
+### Requirement: Funnel report
+`thenwhat backfill funnel` SHALL report how many leads are loaded, in scope, scored, passed, read, could not be read by reason, added to an existing claim, made a new claim approved by rule, made a claim rejected by rule, and need a vertical. It SHALL give the model cost recorded for triage and for reading.
+
+#### Scenario: After a limited run
+- **WHEN** 200 leads have been through the reading step
+- **THEN** the report gives each count and the two costs, and no request is sent
