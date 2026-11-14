@@ -88,6 +88,7 @@ test("the drawn popup's labels are the extension's own", () => {
   }
   for (const line of Object.values(POPUP_LINES)) assert.ok(view.includes(line), `view.js does not write "${line}"`);
   assert.ok(view.includes("wasNow: (was, now) => `Was: ${was}. Now: ${now}.`"));
+  assert.ok(view.includes("lastChecked: (date) => `Registries last checked ${date}.`"));
   assert.equal(wasNow("Phase 1 trial", "Phase 2 trial"), "Was: Phase 1 trial. Now: Phase 2 trial.");
 });
 

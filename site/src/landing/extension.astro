@@ -67,7 +67,7 @@ const checked = data.last_checked_at ? formatDate(data.last_checked_at) : null;
               <img src={brandAsset("/favicon.svg")} alt="" width="26" height="26" />
             </div>
             <div class="shown">
-            <PopupDemo claim={shown} lands />
+            <PopupDemo claim={shown} checked={checked} lands />
             <p class="note">
               The extension's answer for this report{checked && `, as the registries showed it on ${checked}`}.
               It is found inside your browser: the page's address is sent nowhere.

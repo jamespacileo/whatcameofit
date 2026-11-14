@@ -41,6 +41,10 @@ export const POPUP_WORDS = {
   latestPromise: "Latest promise",
   open: "See the evidence",
   follow: "Keep me up to date",
+  remindMe: "Remind me to look again:",
+  inSixMonths: "in six months",
+  inAYear: "in a year",
+  recent: "Recently checked",
   following: "Following",
   back: "Back",
   stop: "Stop following",
@@ -52,7 +56,11 @@ export const POPUP_WORDS = {
 export const POPUP_LINES = {
   automatic: "Automatic · Unreviewed",
   medical: "Not medical advice. A trial is not a treatment option.",
+  settings: "Automatic search settings",
 } as const;
+
+/** The line under the notices, in the extension's words. */
+export const lastChecked = (date: string) => `Registries last checked ${date}.`;
 
 /** What the popup says of a followed claim that has moved, in the extension's words. */
 export const wasNow = (was: string, now: string) => `Was: ${was}. Now: ${now}.`;
