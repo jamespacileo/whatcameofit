@@ -26,12 +26,12 @@
 
 ## 5. Site
 
-- [ ] 5.1 Add the organisation types to `site/src/lib/export.ts` and a wording module for kinds and roles with a function naming any unworded code; verify a site test fails the build on an unknown kind and on wording containing "endorses"
+- [x] 5.1 Add the organisation types to `site/src/lib/export.ts` and a wording module for kinds and roles with a function naming any unworded code; verify a site test fails the build on an unknown kind and on wording containing "endorses"
 - [ ] 5.2 Add "Organisations named" to the claim page to `DESIGN.md`: each organisation once, ordered by role then name, sponsors linked to their trials, an unidentified organisation saying so, and the note that the registry does not verify an organisation's part; verify in the browser at phone and desktop widths on a claim with one organisation and the claim with the most
-- [ ] 5.3 Say beside a marked report that it is on that organisation's website; verify a marked and an unmarked report by site test, and that the wording passes the verdict check
-- [ ] 5.4 Verify by site test that no person entity's name from the fixture appears anywhere in the organisations section
-- [ ] 5.5 Carry organisations and the publisher mark into the open data file; verify the open data test
-- [ ] 5.6 Explain on the method page what an organisation's entry says, where it comes from and what the publisher mark means; verify the site build
+- [x] 5.3 Say beside a marked report that it is on that organisation's website; verify a marked and an unmarked report by site test, and that the wording passes the verdict check
+- [x] 5.4 Verify by site test that no person entity's name from the fixture appears anywhere in the organisations section
+- [x] 5.5 Carry organisations and the publisher mark into the open data file; verify the open data test
+- [x] 5.6 Explain on the method page what an organisation's entry says, where it comes from and what the publisher mark means; verify the site build
 
 ## 6. Measurement and release check
 

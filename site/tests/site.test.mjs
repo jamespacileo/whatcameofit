@@ -962,3 +962,90 @@ test("Scenario: Code without site wording", () => {
     /background card codes the site has no words for: card reason: sounds_right/,
   );
 });
+
+// --- organisations (openspec site-publishing: "Organisations on the claim page") ---
+
+const organisationsSection = (html) =>
+  html.match(/<section class="matched organisations"[\s\S]*?<\/section>/)?.[0] ?? null;
+
+test("Scenario: Claim with a university and a company", () => {
+  const section = organisationsSection(page("phase-claim/index.html"));
+  assert.ok(section, "the claim names organisations, so the page lists them");
+  assert.match(section, /id="organisations"[^>]*>Organisations named</);
+  // Named in the report first, then sponsors; each group by name.
+  const names = [...section.matchAll(/class="organisation-name"[^>]*>([^<]+)</g)].map(([, name]) => name);
+  assert.deepEqual(names, ["Example University", "Zed Start-up", "Synthetic Institute"]);
+  // A sponsor's role links to the trial it sponsors on this page.
+  const institute = section.split("Synthetic Institute")[1];
+  assert.match(institute, /Sponsor of 1 trial: <a href="#trial-NCT00000002">NCT00000002<\/a>/);
+  // An identified organisation shows the registry's facts, its record and the score.
+  const university = section.split("Example University")[1].split("Zed Start-up")[0];
+  assert.match(university, /Education, Funder · United Kingdom · <a href="https:\/\/www\.example\.ac\.uk\/"[^>]*>example\.ac\.uk<\/a>/);
+  assert.match(university, /Named in the report: <a href="https:\/\/uk\.news\.example\.org\/3"/);
+  assert.match(university, /which scores the name match 97%/);
+  assert.match(university, /href="https:\/\/ror\.org\/00example1"[^>]*>\s*Its registry record/);
+  assert.match(section, /it does not verify the organisation’s part in this claim/);
+});
+
+test("Scenario: Start-up the registry does not know", () => {
+  const section = organisationsSection(page("phase-claim/index.html"));
+  const startUp = section.split("Zed Start-up")[1].split("Synthetic Institute")[0];
+  assert.match(startUp, /Named in the report/);
+  assert.match(startUp, /Not matched to a registry record/);
+  assert.doesNotMatch(startUp, /organisation-facts|ror\.org/);
+});
+
+test("Scenario: Claim with no organisation", () => {
+  const html = page("quiet-claim/index.html");
+  assert.equal(organisationsSection(html), null);
+  assert.doesNotMatch(html, /Organisations named|id="organisations"/);
+});
+
+test("Scenario: Trial sponsored by a person", () => {
+  // NCT00000030's sponsor is a person: the export names no one and the section lists nothing for it.
+  const section = organisationsSection(page("phase-claim/index.html"));
+  assert.doesNotMatch(section, /NCT00000030/);
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  const sponsors = fixture.claims.flatMap((claim) => (claim.trials ?? []).map((trial) => trial.facts?.sponsor));
+  assert.ok(sponsors.some((sponsor) => sponsor?.kind === "individual" && sponsor.name === null));
+});
+
+test("Scenario: University press release on the claim page", () => {
+  const html = page("approved-claim/index.html");
+  const reported = html.match(/<section class="reported"[\s\S]*?<\/section>/)[0];
+  assert.match(reported, /This report is on Other Example Hospital’s website\./);
+  // The timetable names the report too, with the same note beside it.
+  assert.equal(count(html, "This report is on Other Example Hospital’s website."), 2);
+});
+
+test("Scenario: Newspaper report on the claim page", () => {
+  for (const slug of ["phase-claim", "quiet-claim"]) {
+    assert.doesNotMatch(page(`${slug}/index.html`), /This report is on/);
+  }
+});
+
+test("the method page explains organisations and the publisher note", () => {
+  const html = page("how-it-works/index.html");
+  const part = html.split('id="who-a-claim-names"')[1].split('id="what-this-site-never-says"')[0];
+  assert.match(part, /a news report named it, or a trial's registry record names it as\s+the trial's lead sponsor/);
+  assert.match(part, /A trial sponsor that is a person is never listed/);
+  assert.match(part, /chosen answer for the\s+name, a fixed rule accepts that match/);
+  assert.match(part, /it does not verify the organisation's part in a\s+claim/);
+  assert.match(part, /The note says where a report is published\. It is not a\s+judgement on the report/);
+});
+
+test("Scenario: Kind code without site wording fails the build", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.claims.find((claim) => claim.slug === "phase-claim").organisations[0].record.kinds = ["think_tank"];
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-organisation-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+
+  const result = build(file, path.join(directory, "dist"));
+
+  assert.notEqual(result.status, 0);
+  assert.match(
+    result.stdout + result.stderr,
+    /organisation codes the site has no words for: organisation kind: think_tank/,
+  );
+});

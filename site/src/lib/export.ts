@@ -7,6 +7,7 @@ import { unlabelledApproaches } from "./approach";
 import { unlabelledPaperCodes } from "./paper-facts";
 import { unwordedCardCodes, type ExportedCard, type ExportedCardSource } from "./background";
 import { unlabelledTrialCodes } from "./trial-facts";
+import { unwordedOrganisationCodes, type ExportedOrganisation } from "./organisations";
 
 export type StatusCode =
   | "preclinical_only"
@@ -186,6 +187,10 @@ export interface ExportedClaim {
     title: string;
     published_date: string;
     archive_url: string | null;
+    /** The registry record address of the claim's identified organisation on whose
+     * website the report is. Absent or null for any other report, and in an export made
+     * before openspec organisations. */
+    published_by?: string | null;
   }[];
   promises: { description: string; parsed_date: string | null; article_url: string }[];
   events: ExportedEvent[];
@@ -201,6 +206,9 @@ export interface ExportedClaim {
   /** Background cards: at most one for the condition, then one for the intervention.
    * Absent from an export made before openspec knowledge-cards. */
   background?: ExportedCard[];
+  /** Each organisation the claim names, once. Absent from an export made before
+   * openspec organisations. */
+  organisations?: ExportedOrganisation[];
   failure_flags: { trial_id: string; source_url: string }[];
 }
 
@@ -289,6 +297,14 @@ function load(): Export {
   if (unwordedCards.length > 0) {
     throw new Error(
       `The export at ${file} has background card codes the site has no words for: ${unwordedCards.join(", ")}. Add them to src/lib/background.ts.`,
+    );
+  }
+  const unwordedOrganisations = unwordedOrganisationCodes(
+    (content as Export).claims.flatMap((claim) => claim.organisations ?? []),
+  );
+  if (unwordedOrganisations.length > 0) {
+    throw new Error(
+      `The export at ${file} has organisation codes the site has no words for: ${unwordedOrganisations.join(", ")}. Add them to src/lib/organisations.ts.`,
     );
   }
   return content as Export;

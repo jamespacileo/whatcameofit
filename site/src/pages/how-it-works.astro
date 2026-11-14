@@ -249,6 +249,40 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
     is not medical advice. A claim whose terms are in no vocabulary has no Background section.
   </p>
 
+  <h2 class="bar" id="who-a-claim-names">Who a claim names</h2>
+  <p>
+    A claim page can list, under "Organisations named", the universities, hospitals and
+    companies its sources name, each once. An organisation is listed for one of two reasons,
+    and its entry says which: a news report named it, or a trial's registry record names it as
+    the trial's lead sponsor, with a link to each of those trials on the page. The entry states
+    that part and nothing more. It does not say that an organisation did the work, paid for it,
+    stands behind the claim or approves of it. A trial sponsor that is a person is never listed,
+    and no researcher, author or other person is named in the section.
+  </p>
+  <p>
+    Each name is looked up in the Research Organization Registry (ROR), an open registry of
+    research organisations. When ROR marks one of its records as its own chosen answer for the
+    name, a fixed rule accepts that match, and the entry shows what the record says: the
+    registry's name for the organisation, its kind, its country and its website, with a link to
+    the record, ROR's score for how well the name matched, and the date the record was read. No
+    AI model takes part. Two names that lead to the same record are one entry. A name ROR does
+    not choose a record for is listed as its source gave it and says it was not matched. ROR
+    identifies an organisation from its name; it does not verify the organisation's part in a
+    claim, and a wrong match is removed by a person.
+  </p>
+  <p>
+    Organisations are listed by their part, reports first and sponsors second, and then by name.
+    Nothing is ranked, counted or described: the site gives no measure of an organisation's size
+    or standing, and organisations never change a status.
+  </p>
+  <p>
+    When a news report sits on the website of an organisation the claim names, such as a
+    university's own news pages, the page says so beside the report: "This report is on" that
+    organisation's website. It is found by comparing the report's address with the website in
+    the organisation's registry record. The note says where a report is published. It is not a
+    judgement on the report, and a report on any other site carries no note of any kind.
+  </p>
+
   <h2 class="bar" id="what-this-site-never-says">What this site never says</h2>
   <p class="plain">
     This site gives no verdict on a claim, a researcher, a company or a news outlet. It gives no

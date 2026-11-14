@@ -136,6 +136,8 @@ export function openData(
         published_date: article.published_date,
         url: article.url,
         archive_url: article.archive_url,
+        // The registry record of the claim's organisation on whose website the report is.
+        published_by: article.published_by ?? null,
       })),
       promises: claim.promises.map((promise) => ({ ...promise })),
       // Every event field is shown on the claim page or needed to match status.explained_by.
@@ -219,6 +221,29 @@ export function openData(
           reasons: card.reasons.map((reason) => ({ ...reason })),
           read_at: card.read_at,
         })),
+      // Each organisation the claim page lists, with its roles and, when identified,
+      // the five registry fields, the score and when the record was read. Never a
+      // person's name and never the record itself. Openspec organisations.
+      organisations: (claim.organisations ?? []).map((organisation) => ({
+        name: organisation.name,
+        identified: organisation.identified,
+        record: organisation.record && {
+          source: organisation.record.source,
+          external_id: organisation.record.external_id,
+          url: organisation.record.url,
+          name: organisation.record.name,
+          kinds: [...organisation.record.kinds],
+          country: organisation.record.country,
+          website: organisation.record.website,
+          score: organisation.record.score,
+          read_at: organisation.record.read_at,
+        },
+        roles: organisation.roles.map((role) => ({
+          role: role.role,
+          article_urls: [...role.article_urls],
+          trial_ids: [...role.trial_ids],
+        })),
+      })),
       checked_by_person: claim.checked_by_person,
     })),
   };

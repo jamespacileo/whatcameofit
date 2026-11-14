@@ -20,7 +20,8 @@ export const CLAIM_FIELDS: Record<string, string> = {
   evidence_stage: "The kind of study the first reports described.",
   status:
     "The status code, the years behind a no-signal note, and the records that produced the status.",
-  articles: "Each news report: outlet, title, date and address. Never its text.",
+  articles:
+    "Each news report: outlet, title, date and address, and the organisation named on this page whose website it is on, if any. Never its text.",
   promises: "Each timeline stated in a report, with the date it names and its report.",
   events: "Each dated record, with its kind, source and link.",
   trials: "Each trial once, with what its registry record states and when that was read.",
@@ -29,6 +30,8 @@ export const CLAIM_FIELDS: Record<string, string> = {
   matches: "Each registry record matched to the claim, with its score and whether it counts.",
   background:
     "Each background card: a vocabulary term for the condition or the treatment, its definition in its source's words, its source and edition, its score and when its record was read.",
+  organisations:
+    "Each organisation a report or trial record names, once: its name, the part each source gives it, and, when an open registry identifies it, the registry's name, kinds, country, website, record link, name-match score and when that was read. Never a person.",
   checked_by_person: "Whether a person has reviewed the page.",
 };
 

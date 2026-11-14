@@ -41,6 +41,8 @@ import { embedSnippet, shareLinks } from "../lib/share";
 import { confidenceLabel } from "../lib/confidence";
 import MatchList from "../components/MatchList.astro";
 import Background from "../components/Background.astro";
+import Organisations from "../components/Organisations.astro";
+import { publisherOf, publisherText } from "../lib/organisations";
 import Paper from "../components/Paper.astro";
 import Trial from "../components/Trial.astro";
 import {
@@ -124,6 +126,16 @@ const foldedResults = withResults(trials.slice(TRIALS_SHOWN));
 const matchOf = (trialId: string) =>
   registryMatches.find((match) => match.state === "approved" && match.external_id === trialId);
 const trialTally = countTrials(claim);
+// Who a report or a trial record says is behind the claim (openspec organisations), and
+// the organisation, if any, on whose website a report is.
+const organisations = claim.organisations ?? [];
+const publisherNote = (url: string) => {
+  const publisher = publisherOf(
+    organisations,
+    claim.articles.find((article) => article.url === url)?.published_by,
+  );
+  return publisher ? publisherText(publisher.name) : null;
+};
 // An approved record with no dated event yet has no trial entry, so it stays listed here.
 const untried = registryMatches.filter(
   (match) => match.state === "approved" && !trialIds.has(match.external_id),
@@ -234,6 +246,9 @@ const posts = shareLinks(postText, address, claim.headline);
                   <Outlet url={report.url} outlet={report.outlet} link={false} />{" "}
                   <span class="unbroken">{formatDate(report.published_date)}</span>
                 </span>
+                {publisherNote(report.url) && (
+                  <span class="entry-note publisher">{publisherNote(report.url)}</span>
+                )}
               </li>
             ))}
           </ul>
@@ -568,6 +583,9 @@ const posts = shareLinks(postText, address, claim.headline);
                                     <span class="unbroken">(<a href={line.archiveUrl}>archived copy</a>)</span>
                                   </>
                                 )}
+                                {publisherNote(line.url) && (
+                                  <span class="entry-note publisher">{publisherNote(line.url)}</span>
+                                )}
                               </span>
                             </li>
                           ) : (
@@ -759,6 +777,14 @@ const posts = shareLinks(postText, address, claim.headline);
           </p>
           <MatchList matches={papers} />
         </section>
+      )
+    }
+
+    {
+      /* Who the reports and trial records name, each once, by role and then by name.
+         After the records and away from the status: an organisation is never evidence. */
+      organisations.length > 0 && (
+        <Organisations organisations={organisations} articles={claim.articles} trialIds={trialIds} />
       )
     }
 
