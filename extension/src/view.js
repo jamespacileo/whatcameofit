@@ -27,6 +27,7 @@ const text = {
     busy: "Too many searches are being made right now. Try again in a minute.",
     not_set_up: (name) => `${name} is not offering the registry search at the moment.`,
     failed: "Nothing was found or ruled out. Try again in a minute.",
+    timeout: "The search took too long and was stopped. Nothing was found or ruled out. Choose Search again to try once more.",
     budget_exhausted: "Automatic search has used its monthly allowance. It will be available again next month. Reviewed claim pages remain available.",
     page_changed: "The page changed while this lookup started. Reopen the extension on the page you want to check.",
     post_unreadable: "The linked article could not be read and the post has too little text. Open the article in your browser and reopen the extension.",
@@ -268,6 +269,8 @@ function answerBlock(state, site, actions) {
     shown.likely.length > 0 && el("p", "listed", `${shown.likely.length} possible ${shown.likely.length === 1 ? "match" : "matches"}`),
     shown.likely.length > 0 && records(shown.likely, (record) => record.url, true),
     shown.none && el("p", "empty-result", shown.none),
+    // Said beside the list it qualifies, never folded into "Sources & privacy".
+    shown.papersUnchecked && el("p", "empty-result", shown.papersUnchecked),
     ...researchPanels(shown.research, actions),
     el("footer", "answer-notes", [
       (shown.marked || context.length > 0 || shown.notices.length > 0) && disclosure([icon("info"), el("span", null, "Sources & privacy")], [

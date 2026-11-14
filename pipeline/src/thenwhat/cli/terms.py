@@ -16,10 +16,12 @@ from thenwhat.domain import ReviewState, TermFit
 from thenwhat.sources.mesh import Mesh
 from thenwhat.sources.opentargets import OpenTargets
 from thenwhat.terms.service import (
+    Drugs,
     Genes,
     KindTermMissing,
     Vocabulary,
     claims_without_terms,
+    link_drug,
     link_kind,
     link_targets,
     link_terms,
@@ -32,6 +34,10 @@ def make_vocabulary(session: Session) -> Vocabulary:
 
 
 def make_genes(session: Session) -> Genes:
+    return OpenTargets(session, contact_email=settings_or_exit().contact_email)
+
+
+def make_drugs(session: Session) -> Drugs:
     return OpenTargets(session, contact_email=settings_or_exit().contact_email)
 
 
@@ -54,7 +60,8 @@ def terms_command(
         ),
     ] = False,
 ) -> None:
-    """Propose subject terms, the intervention kind and named genes for claims.
+    """Propose subject terms, the intervention kind, named genes and the drug record
+    for claims.
 
     Subject terms: candidates are gathered by rule, from the terms the registry files
     the claim's approved trials under and from vocabulary terms whose label or entry
@@ -68,6 +75,10 @@ def terms_command(
     Named genes: a word of the intervention's names that equals a human gene's symbol,
     or a listed synonym of it, makes that gene a candidate target, checked for the
     claim.
+
+    Drug record: a drug whose own name in the drug source equals the intervention's
+    name or one of its other names is tied to the claim by that rule, with no score.
+    When the claim's names equal several different drugs' names, none is tied.
 
     A rule approves a link scored high and rejects one scored near zero; the rest wait
     in `review list`. Reject a wrong approved one with `review reject term ID`. Nothing
@@ -97,6 +108,7 @@ def terms_command(
             return
         vocabulary = make_vocabulary(session)
         genes = make_genes(session)
+        drugs = make_drugs(session)
         backend = resolve.make_backend(session)
         accept, reject = settings.match_accept_above, settings.match_reject_below
         for claim in claims:
@@ -188,6 +200,22 @@ def terms_command(
                     f"  approved {term.score:.2f}  target  {term.external_id}  {term.label}",
                     markup=False,
                 )
+
+            found = link_drug(session, claim, drugs=drugs, now=now)
+            if found.link is not None:
+                drug_line = (
+                    f"{found.link.label} ({found.link.external_id}), found by its name,"
+                    f" {'new' if found.added else 'already linked'},"
+                    f" {found.link.review_state.value}"
+                )
+            elif found.several:
+                drug_line = (
+                    f"none tied: this claim's names equal {len(found.several)} drugs'"
+                    f" names ({', '.join(found.several)})"
+                )
+            else:
+                drug_line = "none found by name"
+            out.print(f"  Drug record: {drug_line}.", markup=False)
 
             unscored = len(run.unscored) + len(targets.unscored) + int(kind.failed)
             if unscored:

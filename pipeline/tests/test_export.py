@@ -497,6 +497,7 @@ def test_trial_with_four_approved_events_is_listed_once_with_its_facts(
         "state": "completed",
         "facts_as_of": "2026-10-03T08:00:00Z",
         "papers": ["pmid:26048637"],
+        "readings": [],
     }
     facts = trial["facts"]
     assert facts["participants"] == {"count": 20, "basis": "actual"}
@@ -574,6 +575,7 @@ def test_trial_entered_by_hand_is_listed_without_facts(session: Session):
             "facts_as_of": None,
             "facts": None,
             "papers": [],
+            "readings": [],
         },
         {
             "trial_id": "NCT2",
@@ -585,6 +587,7 @@ def test_trial_entered_by_hand_is_listed_without_facts(session: Session):
             "facts_as_of": None,
             "facts": None,
             "papers": [],
+            "readings": [],
         },
     ]
 
@@ -603,6 +606,7 @@ def test_seed_claims_jrct_trial_is_listed_without_facts(session: Session):
             "facts_as_of": None,
             "facts": None,
             "papers": [],
+            "readings": [],
         }
     ]
 
@@ -1013,6 +1017,9 @@ def test_exact_term_makes_the_card_when_a_broader_one_is_approved_too(session: S
             "external_id": "D000002",
             "version": "2026",
             "score": 0.9,
+            "molecule_kind": None,
+            "mechanisms": [],
+            "facts_source": None,
             "reasons": [
                 {
                     "code": "filed_by_registry",
@@ -1298,6 +1305,9 @@ def test_named_gene_with_no_drug_record_gives_a_target_card_in_its_sources_words
         "external_id": "ENSG00000186810",
         "version": None,
         "score": 0.95,
+        "molecule_kind": None,
+        "mechanisms": [],
+        "facts_source": None,
         "reasons": [
             {
                 "code": "word_equals_symbol",
@@ -1409,6 +1419,212 @@ def test_kind_and_named_gene_links_do_not_change_the_status_or_what_explains_it(
         ("intervention", "kind"),
         ("target", "exact"),
     ]
+    assert decided() == before
+
+
+def add_drug(session: Session, claim: Claim, fixture_json, fixture: str, name: str) -> ClaimTerm:
+    """An approved link to the drug source's record of the intervention, as the fixture
+    `opentargets/drugs_<fixture>.json` holds it under `name`."""
+    hits = fixture_json(f"opentargets/drugs_{fixture}.json")["data"]["search"]["hits"]
+    drug = next(hit["object"] for hit in hits if hit["object"]["name"] == name)
+    link = ClaimTerm(
+        claim_id=claim.id,
+        role=TermRole.DRUG,
+        source_name="opentargets",
+        external_id=drug["id"],
+        label=name,
+        fit=TermFit.EXACT,
+        reasons=[{"code": "drug_name_equals_name", "name": name.capitalize()}],
+    )
+    record_decision(link, ReviewState.APPROVED, by=Decider.RULE, now=EARLIER)
+    session.add(link)
+    session.add(
+        TermRecord(
+            source_name="opentargets",
+            external_id=drug["id"],
+            url=f"https://platform.opentargets.org/drug/{drug['id']}",
+            payload=drug,
+            fetched_at=EARLIER,
+        )
+    )
+    session.flush()
+    return link
+
+
+def cards_by_kind(data: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    return {card["kind"]: card for card in data["claims"][0]["background"]}
+
+
+def test_drug_with_one_protein_target_gives_a_drug_card_and_that_targets_card(
+    session: Session, fixture_json
+):
+    """Scenarios: Drug with one protein target, Drug record and named gene disagree"""
+    claim = new_claim(session)
+    add_drug(session, claim, fixture_json, "semaglutide", "SEMAGLUTIDE")
+    # An approved link to another gene named in the intervention does not win.
+    add_named_gene(session, claim, fixture_json)
+
+    data = exported(session)
+
+    assert [card["kind"] for card in data["claims"][0]["background"]] == ["drug", "target"]
+    drug, target = cards_by_kind(data)["drug"], cards_by_kind(data)["target"]
+    assert drug == {
+        "kind": "drug",
+        "fit": "exact",
+        "label": "SEMAGLUTIDE",
+        "name": None,
+        "definition": None,
+        "definition_source": None,
+        "url": "https://platform.opentargets.org/drug/CHEMBL2108724",
+        "source": "opentargets",
+        "external_id": "CHEMBL2108724",
+        "version": None,
+        # Found by its exact name: a reason a reader can check, and no percentage.
+        "score": None,
+        "molecule_kind": "protein",
+        "mechanisms": [{"action": "agonist", "target": "Glucagon-like peptide 1 receptor"}],
+        "facts_source": "chembl",
+        "reasons": [
+            {
+                "code": "drug_name_equals_name",
+                "trials": None,
+                "of": None,
+                "name": "Semaglutide",
+                "entry_term": None,
+                "kind": None,
+                "type": None,
+                "word": None,
+                "sources": None,
+            }
+        ],
+        "decided_by": "rule",
+        "read_at": "2026-11-19T09:00:00Z",
+    }
+    assert (target["label"], target["name"], target["score"]) == (
+        "GLP1R",
+        "glucagon like peptide 1 receptor",
+        None,
+    )
+    assert target["url"] == "https://platform.opentargets.org/target/ENSG00000112164"
+    assert (target["definition_source"], target["facts_source"]) == ("uniprot", "chembl")
+    described = fixture_json("opentargets/drugs_semaglutide.json")["data"]["search"]["hits"][0]
+    gene = described["object"]["mechanismsOfAction"]["rows"][0]["targets"][0]
+    assert target["definition"] == gene["functionDescriptions"][0]
+    assert [
+        {name: value for name, value in reason.items() if value is not None}
+        for reason in target["reasons"]
+    ] == [{"code": "drug_record_names_target", "name": "SEMAGLUTIDE"}]
+    assert "CXCR3" not in json.dumps(data)
+    assert [source["name"] for source in data["card_sources"]] == [
+        "opentargets",
+        "chembl",
+        "uniprot",
+    ]
+    chembl = data["card_sources"][1]
+    assert (chembl["licence"], chembl["in_data_file"]) == ("CC BY-SA 3.0 Unported", False)
+
+
+def test_drug_with_two_targets_gives_both_mechanisms_and_no_target_card(
+    session: Session, fixture_json
+):
+    """Scenarios: Named peptide with two targets, Drug with two targets"""
+    claim = new_claim(session)
+    add_drug(session, claim, fixture_json, "tirzepatide", "TIRZEPATIDE")
+
+    [card] = exported(session)["claims"][0]["background"]
+
+    assert (card["kind"], card["molecule_kind"]) == ("drug", "protein")
+    assert card["mechanisms"] == [
+        {"action": "agonist", "target": "Gastric inhibitory polypeptide receptor"},
+        {"action": "agonist", "target": "Glucagon-like peptide 1 receptor"},
+    ]
+
+
+def test_drug_with_two_targets_leaves_the_target_card_to_an_approved_named_gene(
+    session: Session, fixture_json
+):
+    claim = new_claim(session)
+    add_drug(session, claim, fixture_json, "tirzepatide", "TIRZEPATIDE")
+    add_named_gene(session, claim, fixture_json)
+
+    cards = cards_by_kind(exported(session))
+
+    assert list(cards) == ["drug", "target"]
+    assert (cards["target"]["label"], cards["target"]["score"]) == ("CXCR3", 0.95)
+    assert cards["target"]["facts_source"] is None
+
+
+def test_drug_with_no_mechanism_on_record_carries_its_kind_of_molecule_only(
+    session: Session, fixture_json
+):
+    """Scenario: Drug with no mechanism on record"""
+    claim = new_claim(session)
+    add_drug(session, claim, fixture_json, "orforglipron", "ORFORGLIPRON")
+
+    [card] = exported(session)["claims"][0]["background"]
+
+    assert (card["molecule_kind"], card["mechanisms"]) == ("small_molecule", [])
+
+
+def test_no_phase_approval_or_indication_of_a_drug_is_stored_or_exported(
+    session: Session, fixture_json
+):
+    claim = new_claim(session)
+    link = add_drug(session, claim, fixture_json, "semaglutide", "SEMAGLUTIDE")
+    record = session.get(TermRecord, ("opentargets", link.external_id))
+    assert record is not None
+
+    def names(value: Any) -> set[str]:
+        if isinstance(value, dict):
+            return set(value) | {name for item in value.values() for name in names(item)}
+        if isinstance(value, list):
+            return {name for item in value for name in names(item)}
+        return set()
+
+    held = names(record.payload) | names(cards_by_kind(exported(session)))
+    for word in ("phase", "approv", "indication", "withdrawn", "blackbox", "tradename"):
+        assert not [
+            name
+            for name in held
+            if word in name.lower() and name != "approvedSymbol" and name != "approvedName"
+        ], word
+
+
+def test_no_drug_card_or_drug_records_target_while_the_share_alike_source_is_not_accepted(
+    session: Session, fixture_json, monkeypatch: pytest.MonkeyPatch
+):
+    """Scenario: Share-alike source not yet accepted"""
+    claim = new_claim(session)
+    link = add_drug(session, claim, fixture_json, "semaglutide", "SEMAGLUTIDE")
+    add_named_gene(session, claim, fixture_json)
+    monkeypatch.setitem(
+        LISTED_SOURCES, "chembl", dataclasses.replace(LISTED_SOURCES["chembl"], accepted=False)
+    )
+
+    data = exported(session)
+
+    # The named gene gives the target card again; nothing drawn from ChEMBL is there.
+    assert [(card["kind"], card["label"]) for card in data["claims"][0]["background"]] == [
+        ("target", "CXCR3")
+    ]
+    assert "chembl" not in [source["name"] for source in data["card_sources"]]
+    assert "agonist" not in json.dumps(data) and "GLP1R" not in json.dumps(data)
+    assert link.review_state is ReviewState.APPROVED
+
+
+def test_drug_cards_do_not_change_the_status_or_what_explains_it(session: Session, fixture_json):
+    claim = new_claim(session)
+    add_event(session)
+    confirm_stage(session, SLUG, EvidenceStage.ANIMAL, now=EARLIER)
+
+    def decided() -> tuple[Any, Any, Any]:
+        [shown] = exported(session)["claims"]
+        return shown["status"], shown["evidence_stage"], shown["events"]
+
+    before = decided()
+    add_drug(session, claim, fixture_json, "semaglutide", "SEMAGLUTIDE")
+
+    assert len(exported(session)["claims"][0]["background"]) == 2
     assert decided() == before
 
 

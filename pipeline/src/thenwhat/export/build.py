@@ -2,7 +2,8 @@
 
 Only approved, unarchived claims are exported, with their approved events, their
 approved matches, a few candidates still awaiting review, their background cards,
-their approved reported statements and the organisations they name.
+their approved reported statements, the organisations they name and their trials'
+record readings.
 The file is the single interface between pipeline and site; its schema is checked in at
 site/export.schema.json.
 """
@@ -42,6 +43,10 @@ from thenwhat.domain import (
     EntityType,
     EventType,
     EvidenceStage,
+    FollowUpUnit,
+    MeasureCode,
+    ReadingField,
+    ReadingKind,
     RegulatoryOutcome,
     ReviewState,
     StatementBasis,
@@ -74,18 +79,21 @@ from thenwhat.events.trial_facts import (
     StudyKind,
     TestKind,
     TrialStateCode,
-    is_registry_record,
     read_trial,
     reported_state,
 )
+from thenwhat.events.trial_records import newest_registry_record
 from thenwhat.export.organisations import ExportedOrganisation, organisations_of, publisher_of
 from thenwhat.outlets.icons import is_blank_icon, outlet_domain
+from thenwhat.readings.rules import Outcome
+from thenwhat.readings.service import readings_for
 from thenwhat.sources import opentargets
 from thenwhat.sources.base import SourceRecord, record_url
 from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.ror import Ror
 from thenwhat.sources.terms import SOURCES as LISTED_SOURCES
 from thenwhat.terms.candidates import REASON_CODES
+from thenwhat.terms.drugs import DRUG_REASON_CODES, DRUG_RECORD_NAMES_TARGET
 from thenwhat.terms.genes import TARGET_REASON_CODES
 from thenwhat.terms.kinds import KIND_REASON_CODES
 from thenwhat.terms.records import read_record
@@ -313,6 +321,29 @@ class ExportedTrialFacts(Strict):
     results: ExportedResults | None
 
 
+class ExportedReading(Strict):
+    """A record reading (openspec record-readings): what a model read from one field of
+    one of the trial's planned primary outcomes, as a code or a number with a unit, with
+    the words it read. A rule checked it against the stored record. Codes only; the site
+    owns the wording."""
+
+    kind: ReadingKind
+    # The place of the outcome in the trial's `facts.primary_outcomes`, counted from 0.
+    outcome: int
+    # The field of that outcome the words are in, character for character.
+    field: ReadingField
+    words: str
+    # A follow-up's number and unit; None for a measure.
+    number: int | None
+    unit: FollowUpUnit | None
+    # A measure's kind; None for a follow-up.
+    code: MeasureCode | None
+    # How sure the model said it was of the reading.
+    confidence: float = Field(ge=0, le=1)
+    # When the record that was read was fetched: the trial's `facts_as_of`.
+    read_on: datetime
+
+
 class ExportedTrial(Strict):
     """One trial behind the claim's approved events. Its match, if any, is the entry in
     `matches` with the same identifier."""
@@ -332,6 +363,9 @@ class ExportedTrial(Strict):
     # The identifiers of the papers the trial's registry record names for it, each an
     # entry in the claim's `papers`. Empty for a trial with no registry record.
     papers: list[str] = []
+    # Stored readings of the record the facts were read from. Empty when it has not
+    # been read, or no reading passed the rules.
+    readings: list[ExportedReading] = []
 
 
 # Papers (openspec paper-facts): each paper a claim page lists, once, with the roles it
@@ -392,7 +426,15 @@ class ExportedPaper(Strict):
 
 
 # The reasons a card can carry: those of a vocabulary term and those of a kind link.
-CARD_REASON_CODES = (*REASON_CODES, *KIND_REASON_CODES, *TARGET_REASON_CODES)
+CARD_REASON_CODES = (
+    *REASON_CODES,
+    *KIND_REASON_CODES,
+    *TARGET_REASON_CODES,
+    *DRUG_REASON_CODES,
+)
+# Whose facts a drug's kind of molecule and mechanisms are: the source in the list of
+# sources that the drug source draws them from (docs/sources.md, docs/adr/0002).
+DRUG_FACTS_FROM = "chembl"
 # Whose words a target's function description is: the source in the list of sources
 # that the target source draws it from (docs/sources.md).
 TARGET_DESCRIPTIONS_FROM = "uniprot"
@@ -402,15 +444,17 @@ class ExportedCardReason(Strict):
     """Why the term was a candidate, found by rule. The site owns the wording."""
 
     # "filed_by_registry", "label_equals_name", "entry_term_equals_name", "kind_chosen",
-    # "registry_lists_type", "word_equals_symbol" or "word_equals_synonym".
+    # "registry_lists_type", "word_equals_symbol", "word_equals_synonym",
+    # "drug_name_equals_name" or "drug_record_names_target".
     code: str
     # For "filed_by_registry": how many of the claim's approved trials carry the term,
     # and how many trials there were. For "registry_lists_type": how many of them list
     # the intervention under that type.
     trials: int | None = None
     of: int | None = None
-    # For "label_equals_name" and "entry_term_equals_name": the claim's name that was
-    # equal.
+    # For "label_equals_name", "entry_term_equals_name" and "drug_name_equals_name": the
+    # claim's name that was equal. For "drug_record_names_target": the drug's name as
+    # its source writes it.
     name: str | None = None
     # For "entry_term_equals_name": the vocabulary's entry term the name equals.
     entry_term: str | None = None
@@ -426,9 +470,20 @@ class ExportedCardReason(Strict):
     sources: list[str] | None = None
 
 
+class ExportedMechanism(Strict):
+    """One thing a drug's record says the drug does. The site words the action."""
+
+    # What the drug does to the target, as a code: "agonist", "binding_agent".
+    action: str
+    # The target's name as the source writes it.
+    target: str
+
+
 class ExportedCard(Strict):
-    # What the term is to the claim: its condition, its intervention, or a target: a
-    # gene named in the intervention's name. A target card states no mechanism.
+    # What the term is to the claim: its condition, its intervention, a drug source's
+    # record of the intervention, or a target. A target is the one protein a drug's
+    # record names, or else a gene named in the intervention's name; the second states
+    # no mechanism.
     kind: TermRole
     # "exact" when the term is the claim's own condition or intervention, "broader"
     # when it names a wider group that includes it, "kind" when it is the term of the
@@ -451,8 +506,18 @@ class ExportedCard(Strict):
     # The version of the vocabulary the record was read from, such as a year.
     version: str | None
     # The probability, 0 to 1, of the answer the term check chose for this term or,
-    # for a kind, of the kind chosen.
-    score: float
+    # for a kind, of the kind chosen. None for a card made by a rule a reader can check:
+    # a drug found by its exact name, and the target that drug's record names.
+    score: float | None
+    # For a drug: the kind of molecule, as a code such as "small_molecule". The site
+    # words it. None when the source gives none, and on every other card.
+    molecule_kind: str | None = None
+    # For a drug: what its record says it does, each an action and a target's name.
+    mechanisms: list[ExportedMechanism] = []
+    # The name in `card_sources` of the source the card's facts are drawn from, when
+    # they are under another licence than the card's own source: a drug's kind of
+    # molecule and mechanisms, and that a drug's record names this target.
+    facts_source: str | None = None
     reasons: list[ExportedCardReason]
     # Who approved the link: "rule", "human" or "assistant".
     decided_by: str
@@ -765,10 +830,17 @@ def _collect_papers(
             )
 
 
-def _trials(events: list[EvidenceEvent], papers: _Papers) -> list[ExportedTrial]:
+def _trials(
+    session: Session,
+    events: list[EvidenceEvent],
+    papers: _Papers,
+    reading_accept_above: float = 0.8,
+) -> list[ExportedTrial]:
     """One entry per registry identifier among the claim's approved trial events, given
     oldest first. Openspec trial-facts: the facts are read from the most recently fetched
-    registry record those events hold; a trial with none is listed without facts."""
+    registry record those events hold; a trial with none is listed without facts.
+    Openspec record-readings: the trial's stored readings are carried beside its facts,
+    and are no input to them."""
     by_trial: dict[str, list[EvidenceEvent]] = {}
     for event in events:
         if event.type in TRIAL_EVENT_TYPES:
@@ -776,20 +848,39 @@ def _trials(events: list[EvidenceEvent], papers: _Papers) -> list[ExportedTrial]
     trials: list[ExportedTrial] = []
     for trial_id, held in sorted(by_trial.items()):
         newest = held[-1]
-        record = max(
-            (event for event in held if is_registry_record(event.raw_payload)),
-            key=lambda event: (event.fetched_at, event.id),
-            default=None,
-        )
+        record = newest_registry_record(held)
         if record is None:
             changes = [event for event in held if event.type is EventType.TRIAL_STATUS_CHANGE]
             state = reported_state(changes[-1].trial_state if changes else None)
             title, facts, facts_as_of = None, None, None
             results: list[str] = []
+            readings: list[ExportedReading] = []
         else:
             read = read_trial(record.raw_payload)
             state, title, facts_as_of = read.state, read.title, record.fetched_at
             facts = ExportedTrialFacts.model_validate(asdict(read.facts))
+            readings = [
+                ExportedReading(
+                    kind=reading.kind,
+                    outcome=reading.outcome,
+                    field=reading.field,
+                    words=reading.words,
+                    number=reading.number,
+                    unit=reading.unit,
+                    code=reading.code,
+                    confidence=round(reading.confidence, 4),
+                    read_on=record.fetched_at,
+                )
+                for reading in readings_for(
+                    session,
+                    record.source_name,
+                    trial_id,
+                    [Outcome(o.measure, o.time_frame) for o in read.facts.primary_outcomes],
+                )
+                # A reading below the bar is not published: the page and the data file
+                # give the registry's own words for that answer instead (ADR 0003).
+                if reading.confidence >= reading_accept_above
+            ]
             results = [
                 key
                 for paper in read.results_papers
@@ -813,6 +904,7 @@ def _trials(events: list[EvidenceEvent], papers: _Papers) -> list[ExportedTrial]
                 facts_as_of=facts_as_of,
                 facts=facts,
                 papers=list(dict.fromkeys(results)),
+                readings=readings,
             )
         )
     return trials
@@ -840,7 +932,15 @@ def _background(session: Session, claim: Claim) -> list[ExportedCard]:
         )
     )
     cards: list[ExportedCard] = []
-    for role in TermRole:  # a named gene is only ever read as exact
+    drug, drugs_target = _drug_cards(session, claim)
+    # The drug source's own target comes before a gene named in the intervention.
+    for role in (TermRole.CONDITION, TermRole.INTERVENTION, TermRole.DRUG, TermRole.TARGET):
+        if role is TermRole.DRUG:
+            cards += [drug] if drug is not None else []
+            continue
+        if role is TermRole.TARGET and drugs_target is not None:
+            cards.append(drugs_target)
+            continue
         for fit in TermFit:  # exact before broader before kind
             card = next(
                 (
@@ -896,6 +996,86 @@ def _card(session: Session, term: ClaimTerm) -> ExportedCard | None:
     )
 
 
+def _drug_cards(session: Session, claim: Claim) -> tuple[ExportedCard | None, ExportedCard | None]:
+    """The claim's drug card and, when the drug's record names exactly one single
+    protein as its target, that target's card. Neither is scored: the drug was found by
+    its exact name.
+
+    Both rest on facts the drug source draws from another source under a share-alike
+    licence, so both are made only while that source is accepted, and each names it.
+    A drug whose record gives no kind of molecule and no mechanism makes no card.
+    """
+    link = session.scalars(
+        select(ClaimTerm)
+        .where(
+            ClaimTerm.claim_id == claim.id,
+            ClaimTerm.role == TermRole.DRUG,
+            ClaimTerm.review_state == ReviewState.APPROVED,
+        )
+        .order_by(ClaimTerm.id)
+    ).first()
+    listed, facts = (
+        LISTED_SOURCES.get(opentargets.OpenTargets.name),
+        LISTED_SOURCES.get(DRUG_FACTS_FROM),
+    )
+    if link is None or listed is None or not listed.accepted or facts is None or not facts.accepted:
+        return None, None
+    record = session.get(TermRecord, (link.source_name, link.external_id))
+    if record is None or link.source_name != listed.name:
+        return None, None
+    assert link.fit is not None and link.reviewed_by is not None
+    drug = opentargets.describe_drug(_source_record(record))
+    if drug.molecule_kind is None and not drug.mechanisms:
+        return None, None
+    drug_card = ExportedCard(
+        kind=TermRole.DRUG,
+        fit=link.fit,
+        label=drug.name or link.label,
+        definition=None,
+        url=record.url,
+        source=link.source_name,
+        external_id=link.external_id,
+        version=None,
+        score=None,
+        molecule_kind=drug.molecule_kind,
+        mechanisms=[
+            ExportedMechanism(action=mechanism.action, target=mechanism.target_name)
+            for mechanism in drug.mechanisms
+        ],
+        facts_source=DRUG_FACTS_FROM,
+        reasons=[
+            ExportedCardReason.model_validate(reason)
+            for reason in link.reasons
+            if reason.get("code") in CARD_REASON_CODES
+        ],
+        decided_by=link.reviewed_by.value,
+        read_at=record.fetched_at,
+    )
+    target = opentargets.single_protein_target(drug)
+    if target is None:
+        return drug_card, None
+    described = LISTED_SOURCES.get(TARGET_DESCRIPTIONS_FROM)
+    definition = target.definition if described is not None and described.accepted else None
+    target_card = ExportedCard(
+        kind=TermRole.TARGET,
+        fit=TermFit.EXACT,
+        label=target.symbol,
+        name=target.name or None,
+        definition=definition,
+        definition_source=TARGET_DESCRIPTIONS_FROM if definition is not None else None,
+        url=record_url(link.source_name, target.identifier) or record.url,
+        source=link.source_name,
+        external_id=target.identifier,
+        version=None,
+        score=None,
+        facts_source=DRUG_FACTS_FROM,
+        reasons=[ExportedCardReason(code=DRUG_RECORD_NAMES_TARGET, name=drug_card.label)],
+        decided_by=link.reviewed_by.value,
+        read_at=record.fetched_at,
+    )
+    return drug_card, target_card
+
+
 def _source_record(record: TermRecord) -> SourceRecord:
     return SourceRecord(
         record.source_name, record.external_id, record.url, record.payload, record.fetched_at
@@ -907,7 +1087,7 @@ def _card_sources(claims: list[ExportedClaim]) -> list[ExportedCardSource]:
         name
         for claim in claims
         for card in claim.background
-        for name in (card.source, card.definition_source)
+        for name in (card.source, card.definition_source, card.facts_source)
         if name
     }
     return [
@@ -940,7 +1120,13 @@ def _outlets(session: Session, claims: list[ExportedClaim]) -> list[ExportedOutl
     ]
 
 
-def build_export(session: Session, *, now: datetime, no_signal_years: int = 3) -> Export:
+def build_export(
+    session: Session,
+    *,
+    now: datetime,
+    no_signal_years: int = 3,
+    reading_accept_above: float = 0.8,
+) -> Export:
     """Everything the site may show, as of now.
 
     Each claim's status is derived again first, because the no-signal overlay depends
@@ -987,7 +1173,7 @@ def build_export(session: Session, *, now: datetime, no_signal_years: int = 3) -
         assert intervention is not None, "every claim is created with its intervention entity"
         papers = _Papers(session)
         _collect_papers(session, claim, events, papers)
-        trials = _trials(events, papers)
+        trials = _trials(session, events, papers, reading_accept_above)
         organisations = organisations_of(
             session,
             claim,
@@ -1127,9 +1313,15 @@ def write_export(
     *,
     now: datetime,
     no_signal_years: int = 3,
+    reading_accept_above: float = 0.8,
 ) -> Export:
     """Write the export to `path`, replacing any earlier file only once it is complete."""
-    export = build_export(session, now=now, no_signal_years=no_signal_years)
+    export = build_export(
+        session,
+        now=now,
+        no_signal_years=no_signal_years,
+        reading_accept_above=reading_accept_above,
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
     partial = path.with_suffix(path.suffix + ".partial")
     partial.write_text(export.model_dump_json(indent=2) + "\n")

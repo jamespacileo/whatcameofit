@@ -26,6 +26,9 @@ const MAX_LINKS = 30;
 const MAX_LINK_CHARACTERS = 500;
 // The most shortened links followed for one post.
 const MAX_SHORT_LINKS = 3;
+// An independent reading that would let a browser-read result be shared. It is only
+// worth this long: past it the reader's own content is searched and nothing is shared.
+const PROOF_TIMEOUT_MS = 3_000;
 const UNREADABLE = { robots: "unreadable_robots", unreadable: "unreadable", address: "address" };
 
 function answer(body, status = 200) {
@@ -185,7 +188,7 @@ export async function handle(request, env, tools) {
   }
 
   try {
-    const { model, registry, papers, research, fetch: get = fetch } = tools ?? realTools(env);
+    const { model, registry, papers, research, fetch: get = fetch, proofTimeoutMs = PROOF_TIMEOUT_MS } = tools ?? realTools(env);
     const index = await env.ASSETS.fetch(new Request(new URL("/lookup.json", here)))
       .then((response) => (response.ok ? response.json() : { claims: {} }))
       .catch(() => ({ claims: {} }));
@@ -226,7 +229,7 @@ export async function handle(request, env, tools) {
     if (!publicVerified && !image && cacheUrl && env.LOOKUP_RESULTS) {
       const context = readAddress(cacheUrl);
       if (context.kind === "article") {
-        const proof = await readArticle(context.address, { fetch: get, contact: env.CONTACT_EMAIL });
+        const proof = await readArticle(context.address, { fetch: get, contact: env.CONTACT_EMAIL, timeoutMs: proofTimeoutMs });
         if (!proof.refused && !image && !platform) {
           // Use the independently public article itself, rather than publishing a
           // client's private/personalised additions under an otherwise public URL.

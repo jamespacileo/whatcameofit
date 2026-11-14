@@ -73,6 +73,10 @@ class Settings(BaseSettings):
     # A proposed statement sharing this many consecutive words with its article is
     # refused as copied.
     statement_copied_run: int = 8
+    # Record readings (openspec claim-at-a-glance, ADR 0003). A reading the model gives
+    # less confidence than this is not exported, so the page and the data file give the
+    # registry's own words for that answer instead. 0 exports every reading the rule kept.
+    reading_accept_above: float = 0.8
     # Decide new drafts by rule: approved, and published, when the intervention is a
     # name; rejected and kept otherwise. On by default: approval needs no person
     # (openspec auto-publish).

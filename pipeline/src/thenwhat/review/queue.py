@@ -356,6 +356,9 @@ def decide_item(
             )
             if state is ReviewState.APPROVED and chosen:
                 _label(session, INTERVENTION_KIND, f"claim:{term.claim_id}", str(chosen))
+        elif term.role is TermRole.DRUG:
+            # A drug link is made by an exact name, with no decision to label.
+            pass
         elif by is Decider.HUMAN and term.role is TermRole.TARGET:
             # An approval says the word names this gene; a rejection, that it means
             # something else. An approval of a gene never read as named labels nothing.

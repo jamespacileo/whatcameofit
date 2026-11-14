@@ -122,7 +122,7 @@ Does not yet save anything: `resolve` still searches the registry once per new c
 
 ### 12. Migration
 
-One migration, `0016`, adds the four tables. No existing table changes.
+One migration adds the four tables. No existing table changes. It was written as `0016` and renumbered `0018` when main, which had gained its own `0016` and `0017`, was merged into the branch.
 
 ## Risks / Trade-offs
 
@@ -140,7 +140,7 @@ One migration, `0016`, adds the four tables. No existing table changes.
 ## Migration Plan
 
 1. Archive `backfill-work-ledger`, so that `work-ledger` exists in the main specs before this change adds to it.
-2. Apply migration `0016`. It only adds tables.
+2. Apply migration `0018`. It only adds tables.
 3. Load Hacker News, screen, and read the screening report. Add outlets from the unlisted list where warranted and screen again.
 4. Triage. Sample 200, label, read the evaluation report. Reword and re-run triage if needed. Set the thresholds.
 5. Load the chosen Reddit communities; screen and triage them; label a further sample so the report's platform split has Reddit figures.

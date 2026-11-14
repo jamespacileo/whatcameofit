@@ -1,0 +1,75 @@
+---
+// A registry record in the day-by-day list, on the panel blue: what was recorded, the
+// claim it belongs to and where that claim stands, then the report a reader may know it by.
+import type { RecordRow } from "../lib/day-list";
+import { changeSummary } from "../lib/changes";
+import { confidenceLabel } from "../lib/confidence";
+import { followedReports } from "../lib/reports";
+import { STATUS_LABELS, eventLabel, sourceName } from "../lib/status";
+import { formatDate } from "../lib/timetable";
+import Outlet from "./Outlet.astro";
+import StageTrack from "./StageTrack.astro";
+
+interface Props {
+  row: RecordRow;
+}
+
+const { row } = Astro.props;
+const { claim, event, change } = row;
+const [report] = followedReports(claim);
+const confidence = event.confidence ?? 1;
+// A trial's record is named by its identifier; any other by where it is kept.
+const sourceText = event.trial_id ?? sourceName(event.source_name);
+const said = change
+  ? changeSummary({ claim, on: row.date, code: change.code, before: change.before })
+  : null;
+---
+
+<li
+  class="day-row record-row"
+  data-day-row
+  data-kind="record"
+  data-status={claim.status.code}
+  data-topic={claim.vertical}
+  data-on={row.date}
+>
+  <p class="row-source">
+    <span class="row-label">{event.trial_id ? "Registry record" : "Record"}</span>
+    <a href={event.source_url}>{sourceText}</a>
+    <span class="when">{formatDate(row.date)}</span>
+  </p>
+  <p class="row-what">
+    <strong>{eventLabel(event)}.</strong>{" "}
+    <a href={`/${claim.slug}`}>{claim.intervention.name}</a> · {claim.indication}
+  </p>
+  {/* A record with no trial behind it (a regulator's decision, a paper) is given in its own words. */}
+  {!event.trial_id && <p class="row-detail">{event.summary}</p>}
+  {confidence < 1 && <p class="row-detail">{confidenceLabel(confidence)}</p>}
+  <p class="row-status">
+    {
+      said ? (
+        <>
+          <span class="new-tag">Changed</span>
+          <span>{said}</span>
+          <StageTrack code={change!.code} />
+        </>
+      ) : (
+        <>
+          <span>
+            Status now: <strong class="status-name">{STATUS_LABELS[claim.status.code]}</strong>
+          </span>
+          <StageTrack code={claim.status.code} />
+        </>
+      )
+    }
+  </p>
+  {
+    report && (
+      <p class="row-about">
+        The report: <a href={`/${claim.slug}`}>“{report.title}”</a>{" "}
+        <Outlet url={report.url} outlet={report.outlet} link={false} />{" "}
+        <span class="when">{formatDate(report.published_date)}</span>
+      </p>
+    )
+  }
+</li>

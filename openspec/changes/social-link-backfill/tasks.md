@@ -18,7 +18,7 @@
 
 ## 3. Link leads
 
-- [x] 3.1 Add migration `0016` with the link lead, share, link and label tables (`design.md` decision 1); verify `alembic upgrade head` then `alembic downgrade -1` both succeed on the test database
+- [x] 3.1 Add migration `0018` (written as `0016`, renumbered when main was merged) with the link lead, share, link and label tables (`design.md` decision 1); verify `alembic upgrade head` then `alembic downgrade -1` both succeed on the test database
 - [x] 3.2 Move the site's address comparison cases to a fixture both sides read, and write the pipeline's address key; verify the pipeline's test and the site's test pass on the same cases file
 - [x] 3.3 Write the Hacker News reader and the Reddit reader, each turning one line into a lead's fields or a skip reason; verify tests use synthetic lines only and cover a link post, a text post, a removed post, a link to the platform itself, an unusable address and, for Reddit, a community that is not configured
 - [x] 3.4 Verify with a test that a Reddit line carrying an author, an id, a permalink and text stores none of them, and that no log line holds them

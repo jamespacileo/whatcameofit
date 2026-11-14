@@ -186,8 +186,47 @@
           "title": "Version"
         },
         "score": {
-          "title": "Score",
-          "type": "number"
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Score"
+        },
+        "molecule_kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Molecule Kind"
+        },
+        "mechanisms": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedMechanism"
+          },
+          "title": "Mechanisms",
+          "type": "array"
+        },
+        "facts_source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Facts Source"
         },
         "reasons": {
           "items": {
@@ -845,6 +884,26 @@
       "title": "ExportedMatch",
       "type": "object"
     },
+    "ExportedMechanism": {
+      "additionalProperties": false,
+      "description": "One thing a drug's record says the drug does. The site words the action.",
+      "properties": {
+        "action": {
+          "title": "Action",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "target"
+      ],
+      "title": "ExportedMechanism",
+      "type": "object"
+    },
     "ExportedOrganisation": {
       "additionalProperties": false,
       "properties": {
@@ -1361,6 +1420,81 @@
       "title": "ExportedPromise",
       "type": "object"
     },
+    "ExportedReading": {
+      "additionalProperties": false,
+      "description": "A record reading (openspec record-readings): what a model read from one field of\none of the trial's planned primary outcomes, as a code or a number with a unit, with\nthe words it read. A rule checked it against the stored record. Codes only; the site\nowns the wording.",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/ReadingKind"
+        },
+        "outcome": {
+          "title": "Outcome",
+          "type": "integer"
+        },
+        "field": {
+          "$ref": "#/$defs/ReadingField"
+        },
+        "words": {
+          "title": "Words",
+          "type": "string"
+        },
+        "number": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Number"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FollowUpUnit"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "code": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MeasureCode"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "read_on": {
+          "format": "date-time",
+          "title": "Read On",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "outcome",
+        "field",
+        "words",
+        "number",
+        "unit",
+        "code",
+        "confidence",
+        "read_on"
+      ],
+      "title": "ExportedReading",
+      "type": "object"
+    },
     "ExportedResultGroup": {
       "additionalProperties": false,
       "properties": {
@@ -1827,6 +1961,14 @@
           },
           "title": "Papers",
           "type": "array"
+        },
+        "readings": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedReading"
+          },
+          "title": "Readings",
+          "type": "array"
         }
       },
       "required": [
@@ -2030,6 +2172,51 @@
       "title": "ExportedVertical",
       "type": "object"
     },
+    "FollowUpUnit": {
+      "enum": [
+        "days",
+        "weeks",
+        "months",
+        "years"
+      ],
+      "title": "FollowUpUnit",
+      "type": "string"
+    },
+    "MeasureCode": {
+      "description": "The kinds of measure a reading may give. The site words each one; adding a code\nis a change to its wording table too (docs/adr/0003).",
+      "enum": [
+        "symptom_score",
+        "frequency",
+        "body_measure",
+        "scan_finding",
+        "survival",
+        "side_effects",
+        "use_of_treatment",
+        "physical_test",
+        "quality_of_life",
+        "other"
+      ],
+      "title": "MeasureCode",
+      "type": "string"
+    },
+    "ReadingField": {
+      "description": "The field of a planned primary outcome a reading's words are read from.",
+      "enum": [
+        "time_frame",
+        "measure"
+      ],
+      "title": "ReadingField",
+      "type": "string"
+    },
+    "ReadingKind": {
+      "description": "What a record reading says of a planned primary outcome (openspec record-readings).",
+      "enum": [
+        "follow_up",
+        "measure"
+      ],
+      "title": "ReadingKind",
+      "type": "string"
+    },
     "RegulatoryOutcome": {
       "enum": [
         "approved",
@@ -2098,7 +2285,8 @@
       "enum": [
         "condition",
         "intervention",
-        "target"
+        "target",
+        "drug"
       ],
       "title": "TermRole",
       "type": "string"

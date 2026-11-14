@@ -87,7 +87,7 @@ Groups 3 to 5 were built for exact and broader terms before group 2a was written
 State on 2026-11-14:
 
 - The operator answered task 2a.18 on this date: Open Targets' own data and UniProt's function descriptions are accepted for the page and the data file. The target card from a named gene was built after that answer.
-- 5a.10 to 5a.13 were done once on a copy of the real database (`thenwhat_knowledgecards`), because the change's migration (now 0015) was not yet merged and the real database is shared. The figures and every decision made while reading are in `docs/lookup.md`. They stay unticked until the run and the rejections are repeated on the real database after the merge.
+- 5a.10 to 5a.13 were done first on a copy of the real database (`thenwhat_knowledgecards`), then repeated on the real database on 14 November 2026 after #90 merged. That run had one rejection, the kind "Surgical Procedures, Operative" for genicular artery embolisation. Both records are in `docs/lookup.md`.
 
 - [x] 5a.1 Export the intervention's card exact before broader before kind, a kind card marked as the kind of intervention, and at most one target card from an approved named-gene link with its score and reasons; verify export tests for broader and kind both approved, only a kind, and a named gene with no drug record
 - [x] 5a.2 Export no target card while its source is not accepted, the approved link staying stored; verify by test with the target source marked not accepted
@@ -98,18 +98,20 @@ State on 2026-11-14:
 - [x] 5a.7 Add to `DESIGN.md` and the claim page: a kind card says it is the kind of treatment and not the treatment, and a target card from a named gene says the report names it and states no mechanism; verify in the browser at phone and desktop widths on a claim with a kind card and a claim with a named-gene target card
 - [x] 5a.8 Credit Open Targets with the citation it asks for and UniProt for a target's description in the footer's data sources, and carry kind and target cards into the open data file; verify the footer test and the open data test
 - [x] 5a.9 Add to the method page what a kind card is and that the kind is chosen from a fixed list, and that a target card from a named gene means the report names the gene and not that the treatment is known to work through it; verify the site build and the verdict-wording test
-- [ ] 5a.10 Run `thenwhat terms --all` on the real database and add to `docs/lookup.md`: new candidates from entry terms, claims with an intervention card by exact, broader and kind, kinds chosen with their counts, claims given "none of these", named-gene candidates approved and rejected, model cost and requests made
-- [ ] 5a.11 Read every kind card beside its claim and record, per kind, how many are wrong and how many are true but say nothing useful; reject the wrong ones, and remove from the list a kind whose cards mostly say nothing
-- [ ] 5a.12 Read every approved named-gene link beside its claim and record how many are coincidences or name a gene the intervention does not act on; reject those. If more than one in twenty is wrong, raise the threshold and run again
-- [ ] 5a.13 Read every new approved link from an entry term beside its claim, as 5.2 did for the first run; reject the wrong ones
+- [x] 5a.10 Run `thenwhat terms --all` on the real database and add to `docs/lookup.md`: new candidates from entry terms, claims with an intervention card by exact, broader and kind, kinds chosen with their counts, claims given "none of these", named-gene candidates approved and rejected, model cost and requests made
+- [x] 5a.11 Read every kind card beside its claim and record, per kind, how many are wrong and how many are true but say nothing useful; reject the wrong ones, and remove from the list a kind whose cards mostly say nothing
+- [x] 5a.12 Read every approved named-gene link beside its claim and record how many are coincidences or name a gene the intervention does not act on; reject those. If more than one in twenty is wrong, raise the threshold and run again
+- [x] 5a.13 Read every new approved link from an entry term beside its claim, as 5.2 did for the first run; reject the wrong ones
 
 ## 6. Drug and target cards
 
-- [ ] 6.1 Bring the share-alike question to the operator with the entry from 1.2, and record the decision as an ADR in `docs/adr/`; do not start 6.2 to 6.5 without it
-- [ ] 6.2 Add the drug part to the Open Targets client from 2a.14: a drug whose own name equals a given name, with kind of molecule and mechanisms, and a single-protein target's name, gene symbol and function description; verify on recorded fixtures a named drug with two mechanisms, a drug with none, and a procedure's name that returns nothing
-- [ ] 6.3 Export a drug card and, for exactly one single-protein target, a target card, each only as the ADR allows; verify a drug with one target, a drug with two, a drug's one target winning over an approved named gene, and that no phase, approval or indication is exported
-- [ ] 6.4 Word molecule kinds in the wording module, failing the build on an unworded one; show both cards on the claim page and keep share-alike facts out of the data file, naming the source left out; verify in the browser and by the open data test
-- [ ] 6.5 Run on the real database and record how many claims gained a drug card and a target card
+State on 2026-11-14: the operator answered 6.1 ("Yes, accept ChEMBL for drug cards", relayed by the coordinating session) and it is recorded as ADR 0002. 6.2 to 6.4 were built after that. Decided while building, for the proposer to confirm: a claim whose names equal several different drugs' names gets no drug link (a class whose other names are its members); a drug's own name is compared, never its synonyms or trade names; the target card a drug's record gives rests on a ChEMBL fact, so it is left out of the data file with the drug card; an unworded action code fails the build as an unworded molecule kind does. 6.5 is the coordinator's, with the next data publish.
+
+- [x] 6.1 Bring the share-alike question to the operator with the entry from 1.2, and record the decision as an ADR in `docs/adr/`; do not start 6.2 to 6.5 without it
+- [x] 6.2 Add the drug part to the Open Targets client from 2a.14: a drug whose own name equals a given name, with kind of molecule and mechanisms, and a single-protein target's name, gene symbol and function description; verify on recorded fixtures a named drug with two mechanisms, a drug with none, and a procedure's name that returns nothing
+- [x] 6.3 Export a drug card and, for exactly one single-protein target, a target card, each only as the ADR allows; verify a drug with one target, a drug with two, a drug's one target winning over an approved named gene, and that no phase, approval or indication is exported
+- [x] 6.4 Word molecule kinds in the wording module, failing the build on an unworded one; show both cards on the claim page and keep share-alike facts out of the data file, naming the source left out; verify in the browser and by the open data test
+- [x] 6.5 Run on the real database and record how many claims gained a drug card and a target card
 
 ## 7. Integration
 

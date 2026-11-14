@@ -124,7 +124,7 @@ thenwhat terms --missing                # every published claim with no candidat
 thenwhat terms --all                    # every published claim again
 ```
 
-For each claim the command runs three things. Subject terms: the terms the registry files the claim's approved trials under, and vocabulary terms whose label or entry term equals the indication, the intervention's name or one of its other names (never a search phrase). The intervention kind: for an intervention with no approved exact term, a decision chooses its kind from the fixed list in `pipeline/src/thenwhat/terms/kinds.py` (drug, antibody, device, surgical procedure and so on) or none of them, once per claim, and the kind's vocabulary term becomes a kind link. Named genes: a word of the intervention's names that equals a human gene's symbol, or a listed synonym of it, makes that gene a candidate target, checked for the claim; at most `TARGET_CANDIDATES_MAX` (3) are kept. Every link is approved at or above `MATCH_ACCEPT_ABOVE` and rejected under `MATCH_REJECT_BELOW`; the rest wait in `review list`, and `review reject term ID` rejects a wrong approved one. `--all` gathers and scores new candidates and leaves those that already have a score as they are. A name that equals an entry term whose record the vocabulary did not give is named in the output and makes no candidate. The command exits non-zero when a candidate stayed without a score; run it again for those.
+For each claim the command runs four things. Subject terms: the terms the registry files the claim's approved trials under, and vocabulary terms whose label or entry term equals the indication, the intervention's name or one of its other names (never a search phrase). The intervention kind: for an intervention with no approved exact term, a decision chooses its kind from the fixed list in `pipeline/src/thenwhat/terms/kinds.py` (drug, antibody, device, surgical procedure and so on) or none of them, once per claim, and the kind's vocabulary term becomes a kind link. Named genes: a word of the intervention's names that equals a human gene's symbol, or a listed synonym of it, makes that gene a candidate target, checked for the claim; at most `TARGET_CANDIDATES_MAX` (3) are kept. Every link is approved at or above `MATCH_ACCEPT_ABOVE` and rejected under `MATCH_REJECT_BELOW`; the rest wait in `review list`, and `review reject term ID` rejects a wrong approved one. `--all` gathers and scores new candidates and leaves those that already have a score as they are. The drug record: a drug whose own name in the drug source equals the intervention's name or one of its other names is tied to the claim by that rule alone, with no score; when the claim's names equal several different drugs' names (a class whose other names are its members), none is tied. A name that equals an entry term whose record the vocabulary did not give is named in the output and makes no candidate. The command exits non-zero when a candidate stayed without a score; run it again for those.
 
 Reported statements are what an article says about the intervention beyond its timeline, in the site's own words (`GLOSSARY.md`). Reading an article for a new or pending claim proposes them; a decided claim's articles are read again for statements only, and nothing else about the claim changes. Each is checked against its article and approved by rule when the check is confident:
 
@@ -132,6 +132,13 @@ Reported statements are what an article says about the intervention beyond its t
 thenwhat statements claim-one           # its articles that have no statement yet
 thenwhat statements --missing           # every published claim with such an article
 thenwhat statements claim-one --again   # read them again; pending statements are replaced
+```
+
+Record readings are what the configured model reads from a trial's stored registry record into fixed codes: for each planned primary outcome, how long it was followed and what kind of measure it is, each with the words read (`docs/adr/0003-a-model-reads-records-into-fixed-codes.md`). A rule checks every reading against the record before it is kept, a trial whose record has not changed is not read again, and the run stops at the monthly spend ceiling. `thenwhat prepare` runs it as its last step: A reading the model gives less than `READING_ACCEPT_ABOVE` confidence (0.8 by default) is not exported, and the page gives the registry's own words for that answer.
+
+```sh
+thenwhat readings claim-one             # the trials of the named claims
+thenwhat readings --all                 # every published claim
 ```
 
 Then review. `review list` shows what each registry record says, so most candidates can be judged without opening the link. Several items can be decided at once:
@@ -246,6 +253,21 @@ thenwhat backfill leads                       # how many searched trials have an
 - What a search finds is stored as an article lead: an address, outlet, title and date, never text. A lead is not a source article. Loaded trials and leads create no claim, change no status and never reach the export.
 
 The sample that sized this is in `docs/research/phase3-article-hit-rate`.
+
+A step that needs more requests than its source allows in one period runs for weeks. `scripts/backfill-job.sh` keeps it going without anyone watching: it starts the run again every half hour, and the run stops itself whenever the allowance is used up or the source asks it to wait.
+
+```sh
+sh scripts/backfill-job.sh install   # set the job up for the news search; it starts at once
+sh scripts/backfill-job.sh status    # what is done and due, and the last lines of the log
+sh scripts/backfill-job.sh pause     # stop now and do not start again
+sh scripts/backfill-job.sh resume    # let it start again
+sh scripts/backfill-job.sh remove    # take the job out; the work done is kept
+```
+
+- The job is a launchd agent of the logged-in user on a Mac. It runs from the checkout the script is in, so keep that checkout in place.
+- It reads the operator's `.env` (`THENWHAT_ENV_FILE`) and then `~/Library/Application Support/thenwhat/backfill.env`, which holds this job's own settings: the database, what to search, and its allowance.
+- Its log is `~/Library/Logs/thenwhat/backfill.log`: start and end times, counts and reasons for stopping. No title or address is written to it.
+- Each record is its own short transaction, so other commands can use the database while it runs.
 
 ### Backfill from shared links
 

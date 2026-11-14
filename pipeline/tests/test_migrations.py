@@ -26,6 +26,8 @@ EXPECTED_TABLES = {
     "registry_load",
     "article_lead",
     "entity_substance",
+    "trial_read",
+    "reading",
     "link_lead",
     "link_share",
     "link_lead_link",

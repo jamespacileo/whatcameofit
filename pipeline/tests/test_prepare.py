@@ -61,6 +61,7 @@ def test_a_claim_needs_its_unread_articles_read_then_a_search_then_a_fetch(sessi
         ["extract", "article", "one", "--article-url", "https://news.example.org/b"],
         ["resolve", "one"],
         ["fetch", "one"],
+        ["readings", "one"],
     ]
 
 
@@ -74,7 +75,7 @@ def test_a_decided_claim_is_searched_and_fetched_but_its_articles_are_not_read(s
     [plan] = plan_claims(session, ["one"])
 
     assert plan.unread_articles == []
-    assert steps_for(plan) == [["resolve", "one"], ["fetch", "one"]]
+    assert steps_for(plan) == [["resolve", "one"], ["fetch", "one"], ["readings", "one"]]
 
 
 def test_without_names_every_claim_awaiting_review_is_planned(session: Session):
@@ -124,7 +125,7 @@ def test_prepare_runs_every_step_and_carries_on_after_an_article_that_cannot_be_
     result, ran = run("prepare", "one")
 
     assert result.exit_code == 0, result.output
-    assert [step[0] for step in ran] == ["extract", "resolve", "fetch"]
+    assert [step[0] for step in ran] == ["extract", "resolve", "fetch", "readings"]
     assert "one" in result.output and "could not be read" in result.output
 
 

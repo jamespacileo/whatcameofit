@@ -11,9 +11,16 @@ import {
   NO_TARGET_DEFINITION,
   TARGET_DEFINITION_LABEL,
   TARGET_NOTE,
+  DRUG_NOTE,
+  NO_MECHANISM,
   cardKindText,
   creditText,
   definitionCreditText,
+  factsCreditText,
+  isDrugsTarget,
+  mechanismTexts,
+  moleculeKindText,
+  scoreLabel,
   reasonTexts,
   type ExportedCard,
   type ExportedCardSource,
@@ -33,6 +40,9 @@ const wordsBy = (card: ExportedCard) =>
     ? sources.find((source) => source.name === card.definition_source)
     : undefined;
 const isTarget = (card: ExportedCard) => card.kind === "target";
+// The source a card's facts are drawn from, when it is not the card's own source.
+const factsBy = (card: ExportedCard) =>
+  card.facts_source ? sources.find((source) => source.name === card.facts_source) : undefined;
 const day = (stamp: string) =>
   new Date(stamp).toLocaleDateString("en-GB", {
     day: "numeric",
@@ -46,7 +56,8 @@ const day = (stamp: string) =>
   <h2 class="bar" id="background">Background</h2>
   <p class="take-why">
     {BACKGROUND_NOTE}
-    {cards.some(isTarget) && ` ${TARGET_NOTE}`}
+    {cards.some((card) => isTarget(card) && !isDrugsTarget(card)) && ` ${TARGET_NOTE}`}
+    {cards.some((card) => card.kind === "drug" || isDrugsTarget(card)) && ` ${DRUG_NOTE}`}
   </p>
   <ul class="plain match-list card-list">
     {
@@ -73,7 +84,28 @@ const day = (stamp: string) =>
                 </>
               )}
             </span>
-            {card.definition ? (
+            {factsBy(card) && (
+              <span class="entry-note">
+                <a href={factsBy(card)!.url} rel="noopener">
+                  {factsCreditText(card, factsBy(card)!)}
+                </a>
+                .
+              </span>
+            )}
+            {card.kind === "drug" ? (
+              <div class="card-facts">
+                {moleculeKindText(card) && <p>{moleculeKindText(card)}</p>}
+                {mechanismTexts(card).length > 0 ? (
+                  <ul>
+                    {mechanismTexts(card).map((mechanism) => (
+                      <li>{mechanism}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p class="entry-note">{NO_MECHANISM}</p>
+                )}
+              </div>
+            ) : card.definition ? (
               <details class="card-words">
                 <summary>
                   {isTarget(card) ? TARGET_DEFINITION_LABEL : DEFINITION_LABEL}
@@ -87,7 +119,7 @@ const day = (stamp: string) =>
           </div>
           <details class="match-why">
             <summary>
-              <strong>{confidenceLabel(card.score)}</strong>
+              <strong>{scoreLabel(card, confidenceLabel)}</strong>
               <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
             </summary>
             {reasonTexts(card).map((reason) => (
