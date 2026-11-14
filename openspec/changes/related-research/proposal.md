@@ -18,6 +18,7 @@ The same claim also holds two person entities who are not researchers: the repor
 - Institutions and companies an article names are looked up in open organisation registries and stored as candidate matches.
 - The claim page lists approved papers under their own heading, each with its score and reasons. They are not evidence events and do not change the status.
 - Extraction records as people only those named as doing the research. Stored person entities that are anyone else are removed.
+- Public on-demand lookup extracts literature queries about the experiment separately from clinical-trial phrases, and searches with explicitly named researchers before unscoped fallbacks. Discovery is verified with citation identifiers removed; direct DOI/PubMed resolution is complementary.
 
 Not in this change: pages for institutions, companies or people; organisations derived from paper affiliations; any change to how status is derived; searching the web with a model.
 

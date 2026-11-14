@@ -81,7 +81,8 @@ test("optional research gets named entities only and cannot affect clinical resu
   const {research,...clinical} = result;
   assert.deepEqual(clinical,plain);
   assert.equal(research.papers.length,1);
-  assert.deepEqual(calls,[{intervention:"EX-1",indication:"tooth agenesis",searchPhrases:[],organisations:["Example University"]}]);
+  assert.deepEqual(calls,[{intervention:"EX-1",indication:"tooth agenesis",searchPhrases:[],organisations:["Example University"],
+    paperQueries:[],researchers:[],publishedBefore:null,dois:[],pubmedIds:[]}]);
   const outage = await lookUp({...base,research:{search:async()=>{throw new Error("provider failure")}}});
   assert.deepEqual(outage.candidates,plain.candidates);
   assert.equal(outage.research.availability.openalex,"unavailable");

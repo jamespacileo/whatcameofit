@@ -101,10 +101,11 @@ import { SITE } from "../../site.config.mjs";
   <p>
     Organisation names explicitly mentioned in the report are sent to
     <a href="https://ror.org/privacy/">ROR</a> to find their public registry records.
-    OpenAlex receives only treatment and condition search terms, and ROR receives only
-    organisation names; neither receives your screenshot, page address or full article text.
+    OpenAlex receives research-topic or treatment-and-condition search terms, explicitly named
+    researchers, the report's publication date when available, and cited DOI or PubMed identifiers.
+    ROR receives only organisation names; neither receives your screenshot, page address or full article text.
     Public paper and organisation metadata, including empty search results, may be cached
-    for seven days under a hash of the search terms. No abstracts are stored or shown.
+    for seven days under a hash of the search terms and constraints. No abstracts are stored or shown.
     See <a href="https://openalex.org/privacy">OpenAlex's privacy policy</a>.
   </p>
   <p>
