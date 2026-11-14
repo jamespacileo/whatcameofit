@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mock: home page | What came of it?</title>
+<link rel="stylesheet" href="mock.css">
+</head>
+<body>
+
+<header class="mast">
+  <div class="mast-in">
+    <a class="name" href="home.html"><span data-mark></span><span>What came <b>of it?</b></span></a>
+    <nav aria-label="Site"><a href="home.html">Look up</a><a href="topic.html">Topics</a><a href="#">It happened</a></nav>
+  </div>
+</header>
+
+<main>
+<div class="hero navy home-hero">
+  <div class="hero-in">
+    <h1>What happened to that breakthrough?</h1>
+    <p class="lede">Each reported breakthrough gets a page showing where it stands now and the dated, sourced records that say so.</p>
+    <form class="lookup" onsubmit="return false">
+      <label class="vh" for="q">Paste a link to an article, or search by treatment or condition</label>
+      <input id="q" type="text" placeholder="Paste an article link, or type a treatment or condition">
+      <button class="btn" type="submit"><i data-i="search"></i>Look up</button>
+    </form>
+    <p class="tally what">84 claims tracked in <a href="topic.html">18 topics</a>. <a href="#">Approvals on record</a>: 2 of 84. Registries last checked <span class="nowrap">14 Nov 2026</span>.</p>
+  </div>
+</div>
+
+<div class="wide">
+  <section class="block" aria-labelledby="stand">
+    <h2 id="stand">Where the 84 tracked claims stand</h2>
+    <p>Each claim’s place on the path from preclinical to approved, by the records on file. Press a place to list its claims.</p>
+    <div class="path">
+      <a href="#"><b>42</b><span>Preclinical only</span></a>
+      <a href="#"><b>6</b><span>Trial registered</span></a>
+      <a href="#"><b>5</b><span>Phase 1 trial</span></a>
+      <a href="#"><b>8</b><span>Phase 2 trial</span></a>
+      <a href="#"><b>16</b><span>Phase 3 trial</span></a>
+      <a href="#"><b>2</b><span>Approved</span></a>
+    </div>
+    <p class="small muted" style="margin-top:1.1rem">Off the path: <a href="#">4 with no trial record found</a>, <a href="#">1 whose origin paper was retracted</a>.</p>
+  </section>
+
+  <section class="block" aria-labelledby="explore">
+    <h2 id="explore">Explore the record</h2>
+    <p>Every claim is listed by topic. A promise with a date is kept beside what was recorded for that date.</p>
+    <div class="cols">
+      <section>
+        <h3><i data-i="topics"></i>Topics</h3>
+        <ul>
+          <li class="split"><a href="#">Mouth and teeth</a><span class="muted">18</span></li>
+          <li class="split"><a href="#">Diabetes, weight and hormones</a><span class="muted">8</span></li>
+          <li class="split"><a href="#">Gum disease</a><span class="muted">8</span></li>
+          <li class="split"><a href="topic.html">Brain and nerves</a><span class="muted">7</span></li>
+          <li class="split"><a href="#">Cancer</a><span class="muted">7</span></li>
+          <li class="split"><a href="#">Dementia</a><span class="muted">7</span></li>
+        </ul>
+        <a class="all" href="#">All 18 topics</a>
+      </section>
+      <section>
+        <h3><i data-i="clock"></i>Promises with a date</h3>
+        <ul>
+          <li><span class="promise-chip"><b>2027</b></span> <a href="#">Personalised engineered spinal cord implant</a><span class="m">Preclinical only</span></li>
+          <li><span class="promise-chip"><b>2027</b></span> <a href="#"><q>New drug could be cure for common cause of high blood pressure</q></a><span class="m">The Guardian · Phase 3 trial</span></li>
+          <li><span class="promise-chip"><b>2029</b></span> <a href="#">Solengepras</a><span class="m">Phase 3 trial</span></li>
+        </ul>
+        <a class="all" href="#">All 10 dated promises</a>
+      </section>
+      <section>
+        <h3><i data-i="brief"></i>Made for your work</h3>
+        <ul>
+          <li><a href="#">Journalists</a><span class="m">Find a claim and embed its status in a story.</span></li>
+          <li><a href="#">Clinicians</a><span class="m">A dated sentence to copy when a patient asks about a headline.</span></li>
+          <li><a href="#">Researchers</a><span class="m">The published claims as one file, with its licence and fields.</span></li>
+        </ul>
+        <a class="all" href="#">How a status is set</a>
+      </section>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="latest">
+    <h2 id="latest">Headlines reported most recently</h2>
+    <p>News reports about tracked claims, newest first. Each headline is the outlet’s own wording.</p>
+    <div class="tabs" style="margin-top:1.3rem">
+      <button class="tab" type="button" aria-pressed="true">Headlines <span class="n">104</span></button>
+      <button class="tab" type="button" aria-pressed="false">Status changes <span class="n">43</span></button>
+      <button class="tab" type="button" aria-pressed="false">Promises <span class="n">10</span></button>
+      <button class="tab" type="button" aria-pressed="false">No signal <span class="n">24</span></button>
+    </div>
+    <div class="grid" style="--cols: minmax(0,2.3fr) minmax(0,0.75fr) minmax(0,1.15fr) minmax(11rem,1.4fr); background:var(--paper)">
+      <div class="grid-head" aria-hidden="true"><span>Headline</span><span>Reported</span><span>Promised</span><span>Status now</span></div>
+      <div class="grid-row"><div class="cells">
+        <span class="lead"><span><a href="claim.html"><q>Tourette syndrome: The life-changing device helping to stop tics</q></a><span class="sub">BBC News · bbc.co.uk</span></span></span>
+        <span class="cell"><span class="lbl">Reported</span>12 Nov 2026</span>
+        <span class="cell muted small"><span class="lbl">Promised</span>None with a date</span>
+        <span class="cell status-cell wide-cell"><b>Trial registered <span data-track="2"></span></b><span class="muted small">A trial in people is registered</span></span>
+      </div></div>
+      <div class="grid-row"><div class="cells">
+        <span class="lead"><span><a href="#"><q>Scientists suggest new treatment could see hearts repair themselves in major breakthrough</q></a><span class="sub">Extra.ie · extra.ie</span></span></span>
+        <span class="cell"><span class="lbl">Reported</span>11 Nov 2026</span>
+        <span class="cell muted small"><span class="lbl">Promised</span>None with a date</span>
+        <span class="cell status-cell wide-cell"><b>Preclinical only <span data-track="1"></span></b><span class="muted small">No trial in people on record</span></span>
+      </div></div>
+      <div class="grid-row"><div class="cells">
+        <span class="lead"><span><a href="#"><q>Medical breakthrough offers hope to people with same stiff person syndrome as Céline Dion</q></a><span class="sub">The Guardian · theguardian.com</span></span></span>
+        <span class="cell"><span class="lbl">Reported</span>9 Nov 2026</span>
+        <span class="cell muted small"><span class="lbl">Promised</span>None with a date</span>
+        <span class="cell status-cell wide-cell"><b>Phase 2 trial <span data-track="4"></span></b><span class="muted small">Mid-stage trial in people</span></span>
+      </div></div>
+      <div class="grid-row"><div class="cells">
+        <span class="lead"><span><a href="#"><q>New drug could be cure for common cause of high blood pressure</q></a><span class="sub">The Guardian · theguardian.com</span></span></span>
+        <span class="cell"><span class="lbl">Reported</span>8 Nov 2026</span>
+        <span class="cell promise"><span class="lbl">Promised</span>Could be available through the NHS in <b style="display:inline">2027</b></span>
+        <span class="cell status-cell wide-cell"><b>Phase 3 trial <span data-track="5"></span></b><span class="muted small">Large late-stage trial in people</span></span>
+      </div></div>
+      <div class="grid-row"><div class="cells">
+        <span class="lead"><span><a href="#"><q>Could a Nasal Spray Stop Alzheimer’s Before Memory Loss Begins?</q></a><span class="sub">SciTechDaily · scitechdaily.com</span></span></span>
+        <span class="cell"><span class="lbl">Reported</span>8 Nov 2026</span>
+        <span class="cell muted small"><span class="lbl">Promised</span>None with a date</span>
+        <span class="cell status-cell wide-cell"><b>Preclinical only <span data-track="1"></span></b><span class="muted small">No trial in people on record</span></span>
+      </div></div>
+    </div>
+    <p class="more-row"><a href="#">All 104 news reports</a></p>
+  </section>
+</div>
+</main>
+
+<footer class="foot">
+  <div class="foot-in">
+    <b>Not medical advice.</b>
+    <b>A registered trial is not a treatment option.</b>
+    <p>Data: ClinicalTrials.gov, Europe PMC, Crossref. Registries last checked 14 Nov 2026. We will check again.</p>
+  </div>
+</footer>
+
+<div class="mockbar" role="group" aria-label="Mock controls">
+  Mock · band
+  <button type="button" data-band="navy">Navy</button>
+  <button type="button" data-band="pale">Pale</button>
+  <a href="index.html">All mocks</a>
+</div>
+<script src="mock.js"></script>
+</body>
+</html>
