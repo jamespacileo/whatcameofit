@@ -246,10 +246,10 @@ p {
    an origin inside a cropped drawing matters. */
 @keyframes glass-lower {
   from {
-    transform: translate(29.5px, 30.5px) scale(1.14) translate(-31px, -32px);
+    transform: translate(29px, 29px) scale(1.14) translate(-30.5px, -30.5px);
   }
   to {
-    transform: translate(31px, 32px) scale(1) translate(-31px, -32px);
+    transform: translate(30.5px, 30.5px) scale(1) translate(-30.5px, -30.5px);
   }
 }
 

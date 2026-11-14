@@ -27,6 +27,12 @@ asked for the suggested set and the four drawings to be built.
   press.
 - **Video.** A four-second sting of the mark and the name, in three shapes, for the
   end of a video or a clip. It is not used on the site.
+- **The mark's drawing, refined.** The operator asked on 2026-11-14 for the glass and
+  the logo to be polished. The mark is the same; its drawing is cleaner
+  (`.impeccable/mocks/brand/refinement.html`): the glass is one outline, the handle
+  grows out of the ring without a nick and no longer pokes into the lens, the capsule
+  has room at its tips and a wider seam, and the drawing sits in the middle of its
+  tile. Every generated icon, the lockup, the extension's and the video's copies follow.
 - **A repair.** A drawn line began as a dot: a round end is drawn on a dash of no
   length. Drawn lines now start a little further back than their own length.
 
@@ -39,5 +45,6 @@ asked for the suggested set and the four drawings to be built.
 - The study in which the capsule's blue half arrives after its coral half is not on
   any page: beside a status it could be read as bad then good. It appears only in
   the video sting, where no status is shown.
-- The explainer video is not re-rendered.
+- The explainer video and its poster are not re-rendered, so they show the earlier drawing
+  until the video is next made.
 - No extension version is changed; the Safari release in review is untouched.

@@ -1,7 +1,9 @@
 // Draws the site's raster icons from the mark, so a change to it reaches every size.
-// public/mark.svg is the mark; public/favicon.svg is the same mark drawn for a browser
-// tab, where it is 16 to 32 pixels: the glass runs to the tile's edges and the capsule
-// keeps a visible seam between its halves. Run after editing either:
+// public/mark.svg is the mark: the glass is one outline (ring, handle, and a small arc
+// in each corner where they meet) over a white lens, on the tile. public/favicon.svg is
+// the same mark drawn for a browser tab, where it is 16 to 32 pixels: the glass runs to
+// the tile's edges, and the capsule's seam and flat edges fall on whole pixels at 32.
+// Run after editing either:
 //   node site/scripts/brand-icons.mjs
 import fs from "node:fs";
 import path from "node:path";
@@ -60,10 +62,10 @@ fs.writeFileSync(path.join(pub, "mark-symbol.svg"), symbol);
 // lens, the capsule in its own colours. Cropped to the drawing, so it sits at the size
 // the tile did.
 const reverse = symbol
-  .replace('viewBox="0 0 64 64"', 'viewBox="8 9 48 48"')
-  .replaceAll("#16477d", "#ffffff")
-  .replace('fill="#ffffff" stroke="#ffffff"', 'fill="none" stroke="#ffffff"');
-if (!reverse.includes('fill="none" stroke="#ffffff" stroke-width="5.7"')) throw new Error("mark.svg's lens no longer has the white fill this script clears");
+  .replace('viewBox="0 0 64 64"', 'viewBox="8 8 48 48"')
+  .replace(/    <circle id="lens"[^>]+\/>\n/, "")
+  .replaceAll("#16477d", "#ffffff");
+if (reverse.includes('id="lens"') || !reverse.includes('<path id="glass" fill="#ffffff"')) throw new Error("mark.svg no longer has the lens and glass this script reverses");
 fs.writeFileSync(path.join(pub, "mark-reverse.svg"), reverse);
 fs.writeFileSync(path.join(pub, "mark-monochrome.svg"), symbol.replaceAll("#16477d", "#152d49").replaceAll("#f28a62", "#152d49").replaceAll("#1687da", "#152d49"));
 

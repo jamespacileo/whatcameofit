@@ -18,7 +18,13 @@
 - [x] 3.1 Add the sting as three compositions (wide, square, tall). Verified by typecheck, stills at seven frames and one full render
 - [ ] 3.2 Render the three and decide where they are used
 
-## 4. Record
+## 4. The mark's drawing
 
-- [x] 4.1 Update the Motion table and the components in `DESIGN.md`
-- [ ] 4.2 Watch every motion on a phone and in Safari
+- [x] 4.1 Redraw the glass as one outline with a clean joint, give the capsule room, centre the drawing; regenerate every icon and the lockup. Verified against the earlier drawing at 16 to 640 pixels, on navy and on the tile
+- [x] 4.2 Bring the masthead's, the extension's and the video's copies to the same drawing; a site test holds the masthead's to the generated file
+- [ ] 4.3 Refresh the Safari project's generated artwork with `extension/sync-brand-icons.mjs` at its next release
+
+## 5. Record
+
+- [x] 5.1 Update the Motion table and the components in `DESIGN.md`
+- [ ] 5.2 Watch every motion on a phone and in Safari

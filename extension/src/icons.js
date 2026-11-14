@@ -280,16 +280,13 @@ export function waitMark() {
     node.append(...children);
     return node;
   };
-  return make("svg", { viewBox: "8 9 48 48", "aria-hidden": "true", focusable: "false", class: "wait-mark" }, [
-    make("clipPath", { id: "wait-lens" }, [make("circle", { cx: "31", cy: "32", r: "16.65" })]),
-    make("g", { fill: "none", stroke: "#16477d", "stroke-linecap": "round" }, [
-      make("path", { d: "M44.5 45.5 51.5 52.5", "stroke-width": "8" }),
-      make("circle", { cx: "31", cy: "32", r: "19.5", "stroke-width": "5.7" }),
-    ]),
+  return make("svg", { viewBox: "8 8 48 48", "aria-hidden": "true", focusable: "false", class: "wait-mark" }, [
+    make("clipPath", { id: "wait-lens" }, [make("circle", { cx: "30.5", cy: "30.5", r: "16.5" })]),
+    make("path", { fill: "#16477d", "fill-rule": "evenodd", d: "M42.38 49.02A22 22 0 1 1 49.02 42.38A1.2 1.2 0 0 0 49.18 43.88L54.36 49.06A3.75 3.75 0 0 1 49.06 54.36L43.88 49.18A1.2 1.2 0 0 0 42.38 49.02ZM47 30.5A16.5 16.5 0 1 0 14 30.5A16.5 16.5 0 1 0 47 30.5Z" }),
     make("g", { "clip-path": "url(#wait-lens)" }, [
       make("g", { class: "capsule" }, [
-        make("path", { d: "M30.4 25h-6.9a7 7 0 0 0 0 14h6.9z", fill: "#f28a62" }),
-        make("path", { d: "M31.6 25h6.9a7 7 0 0 1 0 14h-6.9z", fill: "#1687da" }),
+        make("path", { d: "M29.7 23.75h-6.2a6.75 6.75 0 0 0 0 13.5h6.2z", fill: "#f28a62" }),
+        make("path", { d: "M31.3 23.75h6.2a6.75 6.75 0 0 1 0 13.5h-6.2z", fill: "#1687da" }),
       ]),
     ]),
   ]);
