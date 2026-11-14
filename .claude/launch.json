@@ -20,6 +20,15 @@
       "port": 4334
     },
     {
+      "name": "site-export",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd site && npx astro dev --port 4337"
+      ],
+      "port": 4337
+    },
+    {
       "name": "site-built",
       "runtimeExecutable": "sh",
       "runtimeArgs": [

@@ -35,12 +35,12 @@
 
 ## 6. Site
 
-- [ ] 6.1 Add the paper types to `site/src/lib/export.ts` and a wording module for kinds, roles, how a paper was listed and the people or animals statement, with a function naming any unworded code; verify a site test fails the build on an unknown kind and on wording containing "proves"
-- [ ] 6.2 Add "Papers on record" to the claim page to `DESIGN.md`, grouped by role, each paper once, with the date its record was read, in place of "Matched papers"; link each results paper to its trial entry and each trial entry to its papers; verify in the browser at phone and desktop widths on a claim with an origin paper and on the claim with the most results papers
-- [ ] 6.3 Add the count of records in people and in animals to the claim's facts; verify a claim with trials and a mouse paper, and a claim with neither shows no count
-- [ ] 6.4 Carry papers into the open data file; verify the open data test finds a results paper with its trial and finds no author
-- [ ] 6.5 Describe papers on the method page: where the facts come from, what "listed by the sponsor" and "linked by the registry" mean, and that a paper is not a trial record; verify the site build and the verdict-wording test
-- [ ] 6.6 Build the site from an export without `papers`; verify the build succeeds and the page shows the present "Matched papers" section
+- [x] 6.1 Add the paper types to `site/src/lib/export.ts` and a wording module for kinds, roles, how a paper was listed and the people or animals statement, with a function naming any unworded code; verify a site test fails the build on an unknown kind and on wording containing "proves"
+- [x] 6.2 Add "Papers on record" to the claim page to `DESIGN.md`, grouped by role, each paper once, with the date its record was read, in place of "Matched papers"; link each results paper to its trial entry and each trial entry to its papers; verify in the browser at phone and desktop widths on a claim with an origin paper and on the claim with the most results papers
+- [x] 6.3 Add the count of records in people and in animals to the claim's facts; verify a claim with trials and a mouse paper, and a claim with neither shows no count
+- [x] 6.4 Carry papers into the open data file; verify the open data test finds a results paper with its trial and finds no author
+- [x] 6.5 Describe papers on the method page: where the facts come from, what "listed by the sponsor" and "linked by the registry" mean, and that a paper is not a trial record; verify the site build and the verdict-wording test
+- [x] 6.6 Build the site from an export without `papers`; verify the build succeeds and the page shows the present "Matched papers" section
 
 ## 7. Integration
 

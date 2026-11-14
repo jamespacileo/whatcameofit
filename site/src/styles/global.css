@@ -3038,6 +3038,86 @@ main ul:not([class]) li + li {
   margin-top: 0.9rem;
 }
 
+/* Papers on record: each paper once, in the group of its first role. An entry is built
+   like a trial's: a name that leaves the site, one semibold line of what it is, then
+   how it came to be listed and a grey line of notes. Openspec paper-facts. */
+.papers {
+  margin-top: 2rem;
+}
+
+.paper-group-note {
+  max-width: var(--measure);
+  margin: 0 0 0.5rem;
+}
+
+.paper {
+  display: grid;
+  gap: 0.15rem;
+  scroll-margin-top: 1.25rem;
+}
+
+.paper > p {
+  margin: 0;
+}
+
+.paper:target {
+  background: var(--tint);
+  outline: 0.3rem solid var(--tint);
+  border-radius: 2px;
+}
+
+.paper-name {
+  overflow-wrap: anywhere;
+}
+
+.paper-name a {
+  font-weight: 700;
+}
+
+.paper-name .out {
+  margin-left: 0.15rem;
+  vertical-align: -0.05em;
+}
+
+.paper-standing,
+.paper-retracted {
+  font-weight: 600;
+}
+
+.paper-role .entry-note {
+  display: block;
+}
+
+.paper-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+}
+
+.papers-rest {
+  max-width: var(--measure);
+}
+
+.papers-rest > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: fit-content;
+  margin-top: 0.9rem;
+  cursor: pointer;
+  list-style: none;
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.papers-rest > summary::-webkit-details-marker {
+  display: none;
+}
+
+.papers-rest[open] > summary svg {
+  transform: rotate(180deg);
+}
+
 .trial-facts {
   display: grid;
   gap: 0.7rem;

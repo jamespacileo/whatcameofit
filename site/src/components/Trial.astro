@@ -7,6 +7,7 @@ import ChevronDown from "@lucide/astro/icons/chevron-down";
 import ExternalLink from "@lucide/astro/icons/external-link";
 import { confidenceLabel, readingOf } from "../lib/confidence";
 import type { ExportedMatch, ExportedTrial } from "../lib/export";
+import { paperAnchor } from "../lib/paper-facts";
 import { sourceName } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 import {
@@ -29,6 +30,8 @@ interface Props {
 }
 
 const { trial, match } = Astro.props;
+// The papers its registry record names, each with an entry under "Papers on record".
+const papers = trial.papers ?? [];
 const facts = trial.facts;
 const registry = sourceName(trial.source_name);
 // What the trial is, in the order a reader asks: how far, in what state, how big.
@@ -66,6 +69,13 @@ const hasMore = Boolean(
   <p class="entry-note trial-meta">
     {results && <span class="unbroken">Results posted</span>}
     {match && <span class="unbroken">{confidenceLabel(match.score)}</span>}
+    {
+      papers.length > 0 && (
+        <a class="unbroken" href={`#${paperAnchor(papers[0])}`}>
+          {papers.length === 1 ? "1 paper named by its record" : `${papers.length} papers named by its record`}
+        </a>
+      )
+    }
     {
       trial.facts_as_of && (
         <span>
