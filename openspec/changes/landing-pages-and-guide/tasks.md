@@ -46,7 +46,8 @@
 
 - [x] 6.1a The extension link in the footer, on the home page and at the end of a claim page, drawn only when the extension page is published
 - [ ] 6.1b Footer links for the guide, the about page and the audience pages
-- [ ] 6.2 Update `PRODUCT.md` capabilities and `DESIGN.md` components for each part as it ships
+- [x] 6.2a Update `PRODUCT.md` and `DESIGN.md` for the extension page
+- [ ] 6.2b Update `PRODUCT.md` capabilities and `DESIGN.md` components for each further part as it ships
 - [ ] 6.3 Add the audience pages to "Where to say it" in `docs/launch.md`
 - [ ] 6.4 Verify `make check` passes
 - [ ] 6.5 Run the design detector over the new pages

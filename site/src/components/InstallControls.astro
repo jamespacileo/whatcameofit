@@ -2,9 +2,10 @@
 // Where the extension is installed from: one control for each store that lists it.
 // A store's address is a deployment setting (site.config.mjs). With scripting on, the
 // control for the reader's own browser is the filled one and comes first; without it
-// both are shown alike. On a phone both step back to outlines: the extension runs in a
-// computer's browser, so neither is that reader's next step. Nothing is recorded when
-// one is pressed.
+// both are shown alike. At 40rem and below both step back to outlines, because the
+// extension runs in a computer's browser and a phone installs nothing; a narrow window
+// in a browser that can install it keeps its own control filled. Nothing is recorded
+// when one is pressed.
 import { SITE } from "../../site.config.mjs";
 
 const stores = [
