@@ -135,6 +135,34 @@ export function openData(
         state: trial.state,
         facts_as_of: trial.facts_as_of,
         facts: trial.facts === null ? null : trialFacts(trial.facts),
+        papers: [...(trial.papers ?? [])],
+      })),
+      // Each paper the claim page lists, with its roles, the facts the page shows for
+      // it and when its index record was read. Never an abstract, an author, an
+      // affiliation or the record itself. Openspec paper-facts.
+      papers: (claim.papers ?? []).map((paper) => ({
+        identifier: paper.identifier,
+        url: paper.url,
+        record_url: paper.record_url,
+        roles: paper.roles.map((role) => ({
+          role: role.role,
+          trial_id: role.trial_id ?? null,
+          listed: role.listed ?? null,
+          event_id: role.event_id ?? null,
+          score: role.score ?? null,
+          reasons: [...(role.reasons ?? [])],
+          summary: role.summary ?? null,
+        })),
+        facts_as_of: paper.facts_as_of,
+        facts: paper.facts && {
+          title: paper.facts.title,
+          journal: paper.facts.journal,
+          year: paper.facts.year,
+          kinds: [...paper.facts.kinds],
+          open_access: paper.facts.open_access,
+          retracted: paper.facts.retracted,
+          studied_in: [...paper.facts.studied_in],
+        },
       })),
       // What the claim page shows of each match: the record, its score and how it was read.
       matches: (claim.matches ?? []).map((match) => ({

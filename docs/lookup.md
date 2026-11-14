@@ -205,3 +205,53 @@ What the trials state: 127 randomised, 25 not randomised, 69 with no allocation 
 Checked by hand against the registry's records as fetched the same day, number by number: NCT04494425 (866 participants; median 13.2 against 8.1 months; "<0.0001" by log rank), NCT05870540 (196 participants; two outcomes; "0.0033" by mixed models) and NCT02412735 (404 participants; three groups; two comparisons posted with no p value). Every participant count, group title, number analysed, value, spread, interval, p value and method agreed. The 74 distinct names of sponsors classed "other" were read: none is a person's.
 
 Limits: the export grew by 44%, more than the quarter of a megabyte the design estimated. A trial's facts are as old as its newest stored record; the oldest was not measured. Thirteen of the 56 outcomes are reported in several rows and show a title and a row count only.
+
+## Paper facts: the first fetch (14 November 2026)
+
+Openspec `paper-facts`. Run on a copy of the real database made the same day (`thenwhat_paperfacts`), not on the real one: when it was run the change's migration was numbered 0009, as were two other branches' migrations, and the real database is shared between them (it is 0010 since the merge with `knowledge-cards`). The real database's `paper_record` table is filled by the first `thenwhat fetch` of each claim after this change is merged and migrated. The copy was fetched claim by claim, all 84 published claims, with the 24-hour HTTP cache as copied.
+
+| | Count |
+| --- | --- |
+| Published claims fetched | 84 (none failed) |
+| Paper records stored | 137 |
+| Of those, held by Europe PMC | 136 |
+| Of those, not held | 1 (an origin paper published in 2026, asked for by its DOI) |
+| Europe PMC requests for a paper's record | 123 |
+| Other Europe PMC requests in the run (citing papers of origin papers) | 6 |
+| Time for the whole fetch, registry and Crossref requests included | 101 seconds |
+| New evidence events the fetch also recorded | 4 |
+
+What the 136 held records state:
+
+| | Papers |
+| --- | --- |
+| Carry "Humans" or "Animals" | 108 (79%) |
+| "Humans" | 99 |
+| "Animals" | 30 |
+| Both | 21 |
+| Neither, or no subject headings yet | 28 |
+| First kind other than article | 59: randomised trial 28, review 18, clinical trial 8, comment 3, observational study 1, preprint 1 |
+| First kind article | 77 |
+| No kind at all | 0 |
+| Marked retracted | 0 |
+| Marked open access | 63 |
+
+More than half carry one of the two headings, so the claim page keeps its count of records in people and in animals as specified.
+
+What the export built from the copy lists: 134 papers on 38 of the 84 claims. By role: 124 results papers of trials (49 listed by a sponsor, 75 linked by the registry), 19 origin papers and 3 follow-up papers; 2 papers play two roles and are listed once. No related paper: the copy was made before the literature search was first run on the real database, later the same day. The claim with the most papers has 29, all named by its trials' records. The export grew from 1,365,759 to 1,524,788 bytes.
+
+Limits. Eight origin papers of claims with no trial are indexed with "Humans" as well as "Animals", which the index applies to work on human cells too: the page words the heading as how the index files the paper, not as a finding. A registry-linked paper may or may not be about its trial, in the registry's own words (`docs/sources.md`), and the page says so. The requests figure is lower than the papers stored because a DOI asked for in the last 24 hours was answered from the HTTP cache.
+
+### Five built entries against their index pages (14 November 2026)
+
+Openspec `paper-facts`, task 7.1, after `make check` passed. Five papers were picked from the export built from the copy, one for each of five first kinds, and each built entry was compared field by field with the paper's Europe PMC page and, for the fields that page does not display (publication types and subject headings), with its PubMed page, which shows the same NLM indexing.
+
+| Paper | Title | Journal and year | Kind shown | People or animals | Open access |
+| --- | --- | --- | --- | --- | --- |
+| PubMed 26048637 | same | Drug and alcohol dependence, 2015: same | Report of a randomised trial: "Randomized Controlled Trial" | people: "Humans" | not marked; the page offers free full text, which is not an open access licence |
+| PubMed 37499870 | same | Annals of oncology, 2023: same | Editorial, letter or comment: "Letter", "Comment" | people: "Humans" | not marked: none offered |
+| PubMed 41325201 | same | Journal of visualized experiments, 2025: same | Journal article | animals: "Animals" | not marked; free full text |
+| PubMed 33004510 | same | Science, 2020: same | Review: "Review" | both: "Animals", "Humans" | not marked; free full text |
+| PubMed 36778375 | same | medRxiv, 2023: same | Preprint: "Preprint" | nothing said: no subject headings | marked open access |
+
+No field differed, so no failing test was added. Two things a reader may notice: the entry gives a journal's name as the index record writes it ("Science (New York, N.Y.)", "Drug and alcohol dependence"), where the index's page capitalises or shortens it; and "open access" is the record's own mark, so a paper that is free to read at the index without an open access licence is not marked. None of the five is retracted, and none of the 136 records is, so the retracted mark was checked only on the recorded fixture of a known retracted paper.
