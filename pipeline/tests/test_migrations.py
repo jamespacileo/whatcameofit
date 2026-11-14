@@ -14,6 +14,11 @@ EXPECTED_TABLES = {
     "llm_usage",
     "http_cache",
     "outlet_icon",
+    "work_entry",
+    "source_allowance_use",
+    "registry_trial",
+    "registry_load",
+    "article_lead",
 }
 
 

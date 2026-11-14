@@ -2,7 +2,27 @@
 
 from decimal import Decimal
 
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class SourceAllowance(BaseModel):
+    """How many requests a source may receive in a period, and how far apart."""
+
+    requests: int
+    period_hours: float
+    interval_seconds: float
+    # How long to stop asking after the source says "too many requests" without
+    # saying for how long.
+    pause_minutes: float = 60
+
+
+# At or below what each source publishes (docs/sources.md). SOURCE_ALLOWANCES in the
+# environment replaces or adds entries by source name.
+DEFAULT_ALLOWANCES = {
+    "clinicaltrials.gov": SourceAllowance(requests=5000, period_hours=24, interval_seconds=0.5),
+    "mediacloud": SourceAllowance(requests=4000, period_hours=168, interval_seconds=30),
+}
 
 
 class Settings(BaseSettings):
@@ -39,6 +59,22 @@ class Settings(BaseSettings):
     # (openspec auto-publish).
     approve_drafts_by_rule: bool = True
     no_signal_years: int = 3
+
+    # Backfill (openspec work-ledger, source-allowances, article-leads).
+    # JSON by source name, for example
+    # {"mediacloud": {"requests": 4000, "period_hours": 168, "interval_seconds": 30}}.
+    source_allowances: dict[str, SourceAllowance] = {}
+    # A record that failed this many times is skipped and reported.
+    backfill_attempt_limit: int = 3
+    # Media Cloud key and the collections to search, as comma-separated ids. The news
+    # search refuses to run while the key is empty.
+    mediacloud_api_key: str | None = None
+    mediacloud_collection_ids: str = ""
+    # At most this many article leads are kept for one trial.
+    leads_per_trial: int = 20
+
+    def allowances(self) -> dict[str, SourceAllowance]:
+        return {**DEFAULT_ALLOWANCES, **self.source_allowances}
 
 
 def load_settings() -> Settings:

@@ -33,3 +33,7 @@ Domain terms for thenwhat. Behavior is specified in `openspec/`; this file only 
 | **Export** | The JSON file of approved data that the site is built from. |
 | **Seed** | A checked-in claim loaded as already reviewed so a fresh checkout has a page. Its decisions are marked as the seed loader's, not an operator's. |
 | **Operator** | The person who runs the pipeline, corrects decisions and archives wrong items. |
+| **Step** | One kind of processing applied to one kind of record in a backfill, such as the news search for a registry trial. It has a name and a version, and declares which records it applies to and which source it asks. |
+| **Work ledger** | The record of which step has been completed for which record at which version. A run processes only what the ledger does not show as finished. |
+| **Due** | A record is due for a step when it is in the step's scope and the ledger has no finished entry for it at the step's current version, or the fields the step reads have changed since. |
+| **Allowance** | How many requests a source may receive in a period and how far apart, shared by every process that asks that source. |

@@ -8,19 +8,19 @@
 
 ## 2. Ledger and steps
 
-- [ ] 2.1 Add migration `0009` for the `work_entry` table with its unique key on record kind, record id, step and step version, together with the other tables this change adds (design decision 10); verify `alembic upgrade head` then `alembic downgrade -1` both succeed on the test database
-- [ ] 2.2 Add the `thenwhat/backfill` package with the step shape, the list of registered steps and the duplicate-name check; verify a test registers two steps with one name and the check refuses
-- [ ] 2.3 Implement the due-work query (in scope, no finished entry at the current version, or a different fingerprint); verify tests against the test database cover finished records skipped, a changed fingerprint, a record out of scope, a new step and a raised version
-- [ ] 2.4 Implement the runner: lock a due record with skip-locked, run the step, save the result and the entry together, commit per record; verify tests cover a failure on one record of ten, the attempt limit, and a step that raises part way leaving none of its partial result and an entry that records the failure
-- [ ] 2.5 Verify with a test that two sessions running the same step over 100 due records process each record once
-- [ ] 2.6 Add step, work ledger and due to `GLOSSARY.md`; verify the terms match the words used in the CLI output and the specs
+- [x] 2.1 Add migration `0009` for the `work_entry` table with its unique key on record kind, record id, step and step version, together with the other tables this change adds (design decision 10); verify `alembic upgrade head` then `alembic downgrade -1` both succeed on the test database
+- [x] 2.2 Add the `thenwhat/backfill` package with the step shape, the list of registered steps and the duplicate-name check; verify a test registers two steps with one name and the check refuses
+- [x] 2.3 Implement the due-work query (in scope, no finished entry at the current version, or a different fingerprint); verify tests against the test database cover finished records skipped, a changed fingerprint, a record out of scope, a new step and a raised version
+- [x] 2.4 Implement the runner: lock a due record with skip-locked, run the step, save the result and the entry together, commit per record; verify tests cover a failure on one record of ten, the attempt limit, and a step that raises part way leaving none of its partial result and an entry that records the failure
+- [x] 2.5 Verify with a test that two sessions running the same step over 100 due records process each record once
+- [x] 2.6 Add step, work ledger and due to `GLOSSARY.md`; verify the terms match the words used in the CLI output and the specs
 
 ## 3. Source allowances
 
-- [ ] 3.1 Add settings for each source's allowance (requests per period, least interval, pause when refused) to the configuration and `.env.example`; verify a step whose source has no allowance refuses to run and names the missing setting
-- [ ] 3.2 Add the allowance use table to migration `0009`; verify upgrade and downgrade on the test database
-- [ ] 3.3 Implement claiming a request against an allowance in one transaction, with spacing between requests; verify tests using two sessions and a fake clock show the shared count holds and no two requests are closer than the least interval
-- [ ] 3.4 Implement the used-up and refused cases: stop asking, leave records due, do not count an attempt, record the pause; verify tests cover running out mid-run, a too-many-requests answer, and a restart within the same period
+- [x] 3.1 Add settings for each source's allowance (requests per period, least interval, pause when refused) to the configuration and `.env.example`; verify a step whose source has no allowance refuses to run and names the missing setting
+- [x] 3.2 Add the allowance use table to migration `0009`; verify upgrade and downgrade on the test database
+- [x] 3.3 Implement claiming a request against an allowance in one transaction, with spacing between requests; verify tests using two sessions and a fake clock show the shared count holds and no two requests are closer than the least interval
+- [x] 3.4 Implement the used-up and refused cases: stop asking, leave records due, do not count an attempt, record the pause; verify tests cover running out mid-run, a too-many-requests answer, and a restart within the same period
 
 ## 4. Registry corpus
 
