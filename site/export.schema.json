@@ -2183,7 +2183,7 @@
       "type": "string"
     },
     "MeasureCode": {
-      "description": "The kinds of measure a reading may give. The site words each one; adding a code\nis a change to its wording table too (docs/adr/0002).",
+      "description": "The kinds of measure a reading may give. The site words each one; adding a code\nis a change to its wording table too (docs/adr/0003).",
       "enum": [
         "symptom_score",
         "frequency",
