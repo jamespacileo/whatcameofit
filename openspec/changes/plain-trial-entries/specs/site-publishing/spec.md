@@ -66,7 +66,15 @@ Where a trial's first main measure has a usable reading of its kind, the entry S
 
 #### Scenario: Symptom score followed for four weeks
 - **WHEN** a trial's first main measure has a measure reading of symptom score, a title that names a change, and a follow-up reading of 4 weeks
-- **THEN** the entry says it measured how much a symptom score changed over 4 weeks, and says a model read that and it was checked against the record
+- **THEN** the entry says it measured the change in a symptom score over 4 weeks, and says a model read that and it was checked against the record
+
+#### Scenario: Measure of a trial that has not ended
+- **WHEN** a trial that has not ended and has posted no results has a usable reading of its first main measure
+- **THEN** the entry says what it sets out to measure, and does not say that it measured anything
+
+#### Scenario: Time until an event, followed for years
+- **WHEN** a trial's first main measure is read as a time until an event with a follow-up of 4 years
+- **THEN** the entry says people were followed for 4 years, and does not say the event was measured "over" 4 years
 
 #### Scenario: Same wording as the record in brief
 - **WHEN** the claim's largest trial has a measure sentence in its entry

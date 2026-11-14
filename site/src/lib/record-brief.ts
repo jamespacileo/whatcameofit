@@ -7,7 +7,8 @@
 // "None on record" is said where its question sits. An answer states a fact and never
 // begins with "Yes", so the list is not a tally. No answer carries a result value.
 
-import type { ExportedClaim, ExportedEvent, ExportedReading, ExportedTrial } from "./export";
+import type { ExportedClaim, ExportedEvent, ExportedTrial } from "./export";
+import { measureWords, readingConfidenceLabel } from "./readings.ts";
 import { assertNeutral, sourceName } from "./status.ts";
 import { formatDate } from "./timetable.ts";
 import { COMPARATOR_WORDS, designText } from "./trial-facts.ts";
@@ -107,48 +108,6 @@ export const FIRST_REPORT: Record<string, { answer: string; opened: string }> = 
     opened: "The first news report described a later study in people. No registered trial of it is among the records this site holds.",
   },
 };
-
-/** The site's phrase for each kind of measure a reading can name: as stated, and as a
- * change when the registry's title names a change. "other" has no phrase. */
-export const MEASURE_PHRASES: Record<string, { plain: string; change: string }> = {
-  symptom_score: { plain: "A symptom score", change: "How much a symptom score changed" },
-  frequency: { plain: "How often an event happened", change: "The change in how often an event happened" },
-  body_measure: {
-    plain: "A body measurement or lab value",
-    change: "The change in a body measurement or lab value",
-  },
-  scan_finding: { plain: "What a scan or image showed", change: "The change in what a scan or image showed" },
-  survival: {
-    plain: "How long until an event, such as the illness getting worse or death",
-    change: "How long until an event, such as the illness getting worse or death",
-  },
-  side_effects: { plain: "Side effects", change: "The change in side effects" },
-  use_of_treatment: { plain: "How much the treatment was used", change: "How much the treatment was used" },
-  quality_of_life: { plain: "A quality-of-life score", change: "How much a quality-of-life score changed" },
-  physical_test: {
-    plain: "A test of what the body can do, such as walking",
-    change: "How much a test of what the body can do, such as walking, changed",
-  },
-};
-
-/** A reading less sure than this is not used; the answer gives the registry's own title. */
-export const READING_SHOWN_FROM = 0.5;
-
-const READING_BANDS = [
-  { from: 0.5, word: "likely" },
-  { from: 0.8, word: "very likely" },
-] as const;
-
-/** A reading is a model's, and its confidence is the model's own figure: it is never
- * shown as certain, whatever the model says. */
-const MOST_SURE = 99;
-
-/** "very likely · 92%": how sure a reading is. Never how sure a result is. */
-export function readingConfidenceLabel(confidence: number): string {
-  let word: string = READING_BANDS[0].word;
-  for (const band of READING_BANDS) if (confidence >= band.from) word = band.word;
-  return `${word} · ${Math.min(MOST_SURE, Math.round(confidence * 100))}%`;
-}
 
 const SMALL = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
 const digits = (count: number) => count.toLocaleString("en-GB");
@@ -345,23 +304,17 @@ function firstReportRow(claim: ExportedClaim): BriefRow | null {
   });
 }
 
-const usable = (reading: ExportedReading | undefined): reading is ExportedReading =>
-  Boolean(reading && reading.confidence >= READING_SHOWN_FROM);
-
 function measureRow(trials: ExportedTrial[]): BriefRow | null {
   const trial = largestTrial(trials);
   const outcome = trial?.facts?.primary_outcomes[0];
   if (!trial || !outcome) return null;
-  const about = (trial.readings ?? []).filter((reading) => reading.outcome === 0);
-  const measure = about.find((reading) => reading.kind === "measure");
-  const followUp = about.find((reading) => reading.kind === "follow_up");
-  const phrase = usable(measure) && measure.code ? MEASURE_PHRASES[measure.code] : undefined;
   const link = {
     href: `#trial-${trial.trial_id}`,
     text: trial.facts?.results ? "See this trial's posted results" : "See this trial",
   };
   const record = [{ label: trial.trial_id, url: trial.url }];
-  if (!phrase) {
+  const words = measureWords(trial, 0);
+  if (!words) {
     return row({
       code: "measure",
       question: QUESTIONS.measure,
@@ -371,18 +324,12 @@ function measureRow(trials: ExportedTrial[]): BriefRow | null {
       source: { how: "direct", from: null, records: record, on: trial.facts_as_of, onLabel: "Record read", confidence: null },
     });
   }
-  // Whether the measure is a change is read by rule from the registry's title.
-  const isChange = /\bchange\b/i.test(outcome.measure);
-  const timed = usable(followUp) && followUp.number !== null && followUp.unit !== null;
-  const over = timed
-    ? ` over ${digits(followUp.number!)} ${followUp.number === 1 ? followUp.unit!.slice(0, -1) : followUp.unit}`
-    : "";
-  const timing = timed && outcome.time_frame ? ` and gives its timing as “${outcome.time_frame}”` : "";
+  const timing = words.timeFrame ? ` and gives its timing as “${words.timeFrame}”` : "";
   return row({
     code: "measure",
     question: QUESTIONS.measure,
-    answer: `${isChange ? phrase.change : phrase.plain}${over}`,
-    opened: [`The registry names the measure “${outcome.measure}”${timing}.`],
+    answer: `${words.phrase}${words.over}`,
+    opened: [`The registry names the measure “${words.measure}”${timing}.`],
     link,
     source: {
       how: "model",
@@ -390,7 +337,7 @@ function measureRow(trials: ExportedTrial[]): BriefRow | null {
       records: record,
       on: trial.facts_as_of,
       onLabel: "Record read",
-      confidence: timed ? Math.min(measure!.confidence, followUp.confidence) : measure!.confidence,
+      confidence: words.confidence,
     },
   });
 }
@@ -555,7 +502,6 @@ assertNeutral([
   ...Object.values(QUESTIONS),
   ...Object.values(DEFINITIONS),
   ...Object.values(FIRST_REPORT).flatMap((stage) => [stage.answer, stage.opened]),
-  ...Object.values(MEASURE_PHRASES).flatMap((phrase) => [phrase.plain, phrase.change]),
   ...Object.values(DUMMY).flatMap((dummy) => [dummy.noun, dummy.plural]),
   ...Object.values(COMPARATOR_WORDS),
 ]);

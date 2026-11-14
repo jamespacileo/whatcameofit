@@ -9,7 +9,7 @@ The readings added by `claim-at-a-glance` can now say what a trial measured in p
 ## What Changes
 
 - A trial entry leads with a plain heading: how many people, and what the record says it was compared with ("135 people, compared with a sham device and with no treatment"). The registry identifier stays on the entry as the link to the record; the registry's title moves into the fold.
-- Where a usable reading exists, one sentence says what the trial measured and for how long ("It measured how much a symptom score changed over 4 weeks."), in the wording "The record in brief" already uses.
+- Where a usable reading exists, one sentence says what the trial measured and for how long ("It measured the change in a symptom score over 4 weeks."), in the wording "The record in brief" already uses.
 - The design and state are said in plain words on one line: assigned at random, blinded or open label, finished or under way with its date, results posted with its date, and the phase when the registry gives one. The registry's exact terms stay one press away.
 - The fold says what is in it, and its posted results become a table: one row for each group, with the value and how many were analysed, under a line that says what the numbers are. No figure is larger than body text.
 - Every trial is drawn the same. The order is unchanged: furthest phase first, then those with posted results.

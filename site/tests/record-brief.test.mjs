@@ -176,7 +176,7 @@ test("Scenario: Comparison group", () => {
 test("Scenario: What the largest trial measured", () => {
   const measure = rowOf(recordBrief(device, null), "measure");
   // "Changed" because the registry's title names a change: read by rule, not by the model.
-  assert.equal(plain(measure.answer), "How much a symptom score changed over 4 weeks");
+  assert.equal(plain(measure.answer), "The change in a symptom score over 4 weeks");
   assert.equal(
     measure.opened[0],
     "The registry names the measure “Change in Synthetic Severity Score” and gives its timing as “Baseline and week 4”.",
@@ -212,7 +212,7 @@ test("the kinds of measure are worded exactly", () => {
   };
   // The event can be death, so the phrase does not name a relapse alone.
   assert.equal(worded("survival", "Progression-Free Survival"), "How long until an event, such as the illness getting worse or death");
-  assert.equal(worded("physical_test", "Percent Change from Baseline in the 10-Metre Walk Test"), "How much a test of what the body can do, such as walking, changed");
+  assert.equal(worded("physical_test", "Percent Change from Baseline in the 10-Metre Walk Test"), "The change in a test of what the body can do, such as walking");
   assert.equal(worded("physical_test", "10-Metre Walk Test"), "A test of what the body can do, such as walking");
 });
 
