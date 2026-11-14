@@ -113,9 +113,9 @@ def statements_command(
                 out.print(f"  {line}", markup=False)
             if reread.changed:
                 out.print(
-                    "  The text read now does not match the text first read, by its stored"
-                    " hash: the article has changed since it was first read. The statements"
-                    " are of the article as read today.",
+                    "  The page's text does not match the text first read, by its stored"
+                    " hash: the article has changed since it was first read, if only in what"
+                    " the page shows around it. The statements are of the page as read today.",
                     markup=False,
                 )
             unchecked = extract.unchecked_line(reread.run, slug)
