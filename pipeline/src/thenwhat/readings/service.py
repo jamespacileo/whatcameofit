@@ -1,5 +1,5 @@
 """Asking a model to read a trial's stored record, checking what it says, and storing it.
-Behavior: openspec record-readings; decision: docs/adr/0002.
+Behavior: openspec record-readings; decision: docs/adr/0003.
 
 The model is shown the titles and time frames of the trial's planned primary outcomes,
 as the trial's facts carry them, and nothing else of the record. It answers in fixed

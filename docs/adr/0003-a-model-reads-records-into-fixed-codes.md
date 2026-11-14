@@ -1,4 +1,4 @@
-# 2. A model may read a stored record into a fixed code; it never decides a status or writes what a reader sees
+# 3. A model may read a stored record into a fixed code; it never decides a status or writes what a reader sees
 
 Date: 2026-11-14. Status: accepted. Change: `openspec/changes/claim-at-a-glance`.
 

@@ -40,7 +40,7 @@ Out of scope:
 
 ## Impact
 
-- `docs/adr/0002-*.md` (new): a model may read a stored record into a fixed code; it never decides a status and never writes a sentence a reader sees.
+- `docs/adr/0003-*.md` (new): a model may read a stored record into a fixed code; it never decides a status and never writes a sentence a reader sees.
 - `pipeline/src/thenwhat/readings/` (new package): `rules.py` (pure checks), `service.py` (propose, check, store); a CLI command in `pipeline/src/thenwhat/cli/`; a step in `thenwhat prepare`. Uses the configured provider and the usage ledger of `llm-usage`.
 - Database: a new table for readings (a new migration, not an edit of the initial one, if any database holds real claims by then).
 - Export: each exported trial gains its readings. `site/export.schema.json` and `site/data/seed-export.json` are regenerated.
