@@ -37,7 +37,7 @@
 
 - [x] 6.1 Run fetch and resolve against the real database and record in `docs/lookup.md`: organisation names looked up, identified, left unidentified, requests made, and how many source articles gained the publisher mark
 - [ ] 6.2 Read every organisation name in that run's export once, and record how many are a person, a department too vague to be an organisation, or matched to the wrong record. Reject wrong matches before release; if more than one in twenty is wrong, stop and report before the site task ships
-- [ ] 6.3 Run `make check`
+- [x] 6.3 Run `make check`
 
 ## Workflow follow-up
 
