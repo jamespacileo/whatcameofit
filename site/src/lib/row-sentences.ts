@@ -28,7 +28,9 @@ const TEMPLATES = {
       results > 0 ? `${results} with results posted` : "none with results posted",
     ].join(", ") + ".",
   nothingSince: (years: number) =>
-    `No record is dated in the ${plural(years, "year", "years")} since the first report.`,
+    years === 1
+      ? "No record is dated in the year since the first report."
+      : `No record is dated in the ${years} years since the first report.`,
 };
 
 /** A sentence that ends as a sentence, whatever the record's own words end with. */
