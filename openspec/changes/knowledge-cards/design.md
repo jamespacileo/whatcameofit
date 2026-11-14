@@ -80,7 +80,6 @@ Read in the code and observed at the sources on 2026-11-14, for group 2a (generi
 
 | Kind code | MeSH descriptor |
 | --- | --- |
-| `drug` | Pharmaceutical Preparations |
 | `antibody` | Antibodies, Monoclonal |
 | `peptide` | Peptides |
 | `oligonucleotide` | Oligonucleotides |
@@ -103,6 +102,8 @@ Read in the code and observed at the sources on 2026-11-14, for group 2a (generi
 | `diet` | Diet Therapy |
 | `dietary_supplement` | Dietary Supplements |
 | `exercise` | Exercise Therapy |
+
+The list first held `drug`, tied to "Pharmaceutical Preparations". It was removed after the first measured run (task 5a.11, `docs/lookup.md`): sixteen claims got that card and its definition says only that a drug is a drug. A compound with no term of its own and no narrower kind now gets no card.
 
 All were found by exact label on the day measured. A kind is added by adding a row; a test asserts codes and identifiers are unique, and each kind's record is fetched when first used. The step runs only for a claim with no approved exact intervention term, because an exact term always wins and the decision would be paid for and unused. Alternatives considered: (a) a glossary of kinds written by the site. Rejected: it is the site explaining a treatment, which this change rules out, and the vocabulary already defines each kind. (b) Walking up the MeSH tree from a term. Rejected: 67 interventions have no term to start from. (c) The registry's intervention type as the kind. Rejected as the rule: it exists for 25 of 84 claims, its commonest values are DRUG and OTHER, and it has no definition. It is kept as a reason.
 

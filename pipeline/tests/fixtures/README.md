@@ -38,6 +38,7 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `mesh/label_none.json` | the exact lookup for "Knee osteoarthritis pain", which no label equals (2026-11-14) |
 | `mesh/term_ketogenic_diet.json` | `GET /mesh/lookup/term?label=Ketogenic Diet&match=exact&limit=10&year=2026`: an entry term of a descriptor labelled otherwise (2026-11-14) |
 | `mesh/term_orforglipron.json`, `mesh/term_obesity.json` | the same lookup for "orforglipron" (the term of a supplementary record) and "Obesity" (2026-11-14) |
+| `mesh/term_tirzepatide.json`, `mesh/owner_tirzepatide.json` | the term lookup and the owner query for "tirzepatide": the term belongs to a descriptor and to a withdrawn supplementary record labelled "[OBSOLETE] tirzepatide", whose own address answers an empty object (2026-11-14) |
 | `mesh/term_ketogenic_word.json` | the same lookup for "Ketogenic", a word contained in an entry term: `[]` (2026-11-14) |
 | `mesh/owner_ketogenic_diet.json`, `mesh/owner_orforglipron.json`, `mesh/owner_obesity.json` | `GET /mesh/sparql?query=…&format=JSON&year=2026&inference=false`, the query in `docs/sources.md` for one term each: the descriptor or supplementary record the term belongs to (2026-11-14) |
 | `mesh/owners_three_terms.json` | the same query for the three terms at once (2026-11-14) |

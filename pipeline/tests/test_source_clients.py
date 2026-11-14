@@ -996,6 +996,25 @@ def test_term_found_by_label_and_by_entry_term_is_returned_once(
     assert source.terms_labelled("Obesity") == [mesh.LabelledTerm("D009765", "Obesity")]
 
 
+def test_withdrawn_supplementary_record_is_never_the_record_an_entry_term_belongs_to(
+    session: Session, fake_time, fixture_json
+):
+    owners = fixture_json("mesh/owner_tirzepatide.json")["results"]["bindings"]
+    assert [row["label"]["value"] for row in owners] == ["[OBSOLETE] tirzepatide", "Tirzepatide"]
+    source, _ = vocabulary(
+        session,
+        fake_time,
+        mesh_route(
+            fixture_json,
+            {"descriptor": "label_none", "term": "term_tirzepatide"},
+            "owner_tirzepatide",
+        ),
+    )
+
+    assert source.terms_labelled("tirzepatide") == [mesh.LabelledTerm("D000098860", "Tirzepatide")]
+    assert source.unresolved_entry_terms("tirzepatide") == []
+
+
 def test_entry_term_whose_owner_is_not_returned_gives_nothing(
     session: Session, fake_time, fixture_json
 ):

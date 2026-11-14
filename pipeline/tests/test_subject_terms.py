@@ -627,13 +627,14 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setattr(
         "thenwhat.cli.terms.make_vocabulary",
-        lambda s: Vocabulary({"D004364": "Drugs intended for human or veterinary use."}),
+        lambda s: Vocabulary({"D010455": "Compounds of AMINO ACIDS joined by peptide bonds."}),
     )
     monkeypatch.setattr("thenwhat.cli.terms.make_genes", lambda s: Genes())
     monkeypatch.setattr(
         "thenwhat.cli.resolve.make_backend",
         lambda s: Reader(
-            {"Osteoarthritis, Knee": ("same", 0.95), "Pain": ("broader", 0.5)}, kind=("drug", 0.9)
+            {"Osteoarthritis, Knee": ("same", 0.95), "Pain": ("broader", 0.5)},
+            kind=("peptide", 0.9),
         ),
     )
     runner = CliRunner()
@@ -653,7 +654,7 @@ def test_terms_proposes_and_decides_a_claims_subject_terms(
     assert "approved 0.95  condition  exact  D020370  Osteoarthritis, Knee" in result.output
     # The kind and the named genes are run for the claim too, and counted on its line.
     assert (
-        "Kind: drug 0.90, approved by rule (D004364 Pharmaceutical Preparations)."
+        "Kind: peptide 0.90, approved by rule (D010455 Peptides)."
         " Named genes: 0 candidate(s), 0 new. Approved by rule: 0. Rejected by rule: 0."
         " Pending review: 0." in result.output
     )
@@ -807,11 +808,11 @@ def test_list_of_kinds_has_unique_codes_and_descriptors_in_a_stable_order():
     codes = [kind.code for kind in KINDS]
     identifiers = [kind.identifier for kind in KINDS]
 
-    assert len(set(codes)) == len(codes) == 23
+    assert len(set(codes)) == len(codes) == 22
     assert len(set(identifiers)) == len(identifiers)
     assert all(identifier[0] == "D" and identifier[1:].isdigit() for identifier in identifiers)
     assert all(kind.label and kind.code != NONE_OF_THESE for kind in KINDS)
-    assert codes[:3] == ["drug", "antibody", "peptide"] and codes[-1] == "exercise"
+    assert codes[:3] == ["antibody", "peptide", "oligonucleotide"] and codes[-1] == "exercise"
     assert kind_options([(k.code, k.label) for k in KINDS]) == [*codes, NONE_OF_THESE]
 
 
@@ -1006,7 +1007,7 @@ def test_claim_with_an_approved_exact_intervention_term_is_not_asked_for_a_kind(
         )
     )
     session.flush()
-    backend = Reader(kind=("drug", 0.9))
+    backend = Reader(kind=("peptide", 0.9))
 
     assert kind_run(session, claim, backend).asked is False
     assert backend.kinds_asked == [] and kind_logs(session) == []
@@ -1377,7 +1378,7 @@ def test_terms_exits_non_zero_when_a_candidate_stayed_without_a_score(
     monkeypatch.setattr(
         "thenwhat.cli.resolve.make_backend",
         lambda s: Reader(
-            {"Osteoarthritis, Knee": ("same", 0.95), "Pain": None}, kind=("drug", 0.9)
+            {"Osteoarthritis, Knee": ("same", 0.95), "Pain": None}, kind=("peptide", 0.9)
         ),
     )
 
@@ -1395,7 +1396,7 @@ def test_terms_reports_a_name_whose_entry_term_could_not_be_resolved(
     monkeypatch.setattr(
         "thenwhat.cli.terms.make_vocabulary",
         lambda s: Vocabulary(
-            {"D004364": "Drugs intended for human or veterinary use."},
+            {"D010455": "Compounds of AMINO ACIDS joined by peptide bonds."},
             unresolved={"ex-1": ["EX-1"]},
         ),
     )

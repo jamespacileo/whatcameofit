@@ -84,11 +84,17 @@ Command and queue:
 
 Groups 3 to 5 were built for exact and broader terms before group 2a was written. These carry 2a's links through them.
 
+State on 2026-11-14, after group 2a was built:
+
+- Built for kind cards, entry terms and supplementary records: the parts of 5a.1, 5a.3 and 5a.6 to 5a.9 that do not concern a target card. Each stays unticked until its target-card part is built.
+- Not built: the target card from a named gene (in 5a.1, 5a.3, 5a.6, 5a.7, 5a.8, 5a.9). It waits for the operator's answer to task 2a.18, which was asked on this date. Named-gene links are gathered, checked and stored meanwhile, and 5a.2's test holds.
+- 5a.10 to 5a.13 were done once on a copy of the real database (`thenwhat_knowledgecards`), because migration 0013 was not yet merged and the real database is shared. The figures and every decision made while reading are in `docs/lookup.md`. They stay unticked until the run and the rejections are repeated on the real database after the merge.
+
 - [ ] 5a.1 Export the intervention's card exact before broader before kind, a kind card marked as the kind of intervention, and at most one target card from an approved named-gene link with its score and reasons; verify export tests for broader and kind both approved, only a kind, and a named gene with no drug record
-- [ ] 5a.2 Export no target card while its source is not accepted, the approved link staying stored; verify by test with the target source marked not accepted
+- [x] 5a.2 Export no target card while its source is not accepted, the approved link staying stored; verify by test with the target source marked not accepted
 - [ ] 5a.3 Export a supplementary record's note as its card's definition and never the paper it was taken from, and a target card's first function description word for word with UniProt named as its origin; verify both by export tests
-- [ ] 5a.4 Verify by test that status, explaining events and evidence stage are the same with and without kind and target links
-- [ ] 5a.5 Regenerate `site/export.schema.json` and `site/data/seed-export.json`, and verify the checked-in `site/data/published-export.json` still validates
+- [x] 5a.4 Verify by test that status, explaining events and evidence stage are the same with and without kind and target links
+- [x] 5a.5 Regenerate `site/export.schema.json` and `site/data/seed-export.json`, and verify the checked-in `site/data/published-export.json` still validates
 - [ ] 5a.6 Add to `site/src/lib/export.ts` and the wording module how a link fits (exact, broader, kind), the entry-term, kind and named-gene reasons and the registry's types; verify the site test fails the build on an unknown fit, reason or registry type
 - [ ] 5a.7 Add to `DESIGN.md` and the claim page: a kind card says it is the kind of treatment and not the treatment, and a target card from a named gene says the report names it and states no mechanism; verify in the browser at phone and desktop widths on a claim with a kind card and a claim with a named-gene target card
 - [ ] 5a.8 Credit Open Targets with the citation it asks for and UniProt for a target's description in the footer's data sources, and carry kind and target cards into the open data file; verify the footer test and the open data test

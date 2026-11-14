@@ -502,3 +502,73 @@ The one wrong match left is "Marie Curie" on enamel-regeneration-protein-scaffol
 Previously right matches the stricter rule leaves unidentified: 49 of the 253 read as right. 7 are the parent and partner matches listed above (a hospital to its university, a joint body to one partner). 8 are public bodies whose name does not state their country (NHS England twice, BBSRC, the European Research Council, the European Union, NHMRC, NICE twice). 2 are records typed "other": The New York Times and the European Society of Gynaecological Oncology. The other 32 are a school or department matched to its university (Washington University School of Medicine on four entities, Tufts University School of Dental Medicine, University of Pittsburgh School of Medicine on two, and others), and spellings that differ from every name on the record ("Copenhagen University Hospital, Rigshospitalet", "North American Science Associates Ltd.", "Veradermics" against "VeraDermics"). Each is listed by the name its source gave, as not matched to a registry record.
 
 Journals, news outlets and banks: of the 24 journal names and 6 outlets and banks recorded by extraction, none is identified under the stricter rule. Neuron is caught both as a journal title on record and by the one-word test; The New York Times by its "other" type; the rest had no chosen record or no exact name. A bank ROR held under exactly the name given, typed as a company, would still be identified; none was in this run.
+
+## Entry terms, kinds and named genes on a copy of the real database (14 November 2026)
+
+Openspec `knowledge-cards`, tasks 5a.10 to 5a.13. Run on a copy of the real database made the same evening (`thenwhat_knowledgecards`), not on the real one: the change's migration (0013) was not merged and the real database is shared between branches. `thenwhat terms --all` was run for the 84 published claims with the decisions backend and the default thresholds (approve at 0.8, reject under 0.05, ten term candidates and three named genes a claim). The first run took 5 minutes 53 seconds. Nothing was exported or deployed. After the merge the real database needs `alembic upgrade head`, one `thenwhat terms --all`, and the rejections below made again.
+
+| | Count |
+| --- | --- |
+| Published claims | 84 |
+| New term candidates, all from entry terms or supplementary records | 17: 14 by an entry term, 3 by the label of a supplementary record |
+| Of those: approved by rule, pending, rejected by rule | 10 (all exact), 5, 2 |
+| Claims asked for a kind | 74 on the first run (10 had an approved exact intervention term) |
+| Kind decisions the backend gave no answer for | 0 |
+| Named-gene candidates | 19 on 13 claims |
+| Named genes approved by rule, pending, rejected by rule | 6, 2, 11 |
+| Requests to MeSH for the run | 360 more stored answers than before: 265 entry-term lookups, 39 owner queries, 56 records. The 265 label lookups were already stored |
+| Requests to Open Targets | 71: 55 searches, 16 target records |
+| Model calls | 121 (93 kind, 13 named-gene, 15 term), 77,794 input tokens, 0.0078 US dollars, both runs together |
+
+**The list of kinds was changed once, after reading the first run (task 5a.11).** The first run offered 23 kinds. Sixteen claims were given `drug`, tied to "Pharmaceutical Preparations", whose definition is "Drugs intended for human or veterinary use, presented in their finished dosage form." Every one of those cards was true and said nothing a reader does not get from the word "drug". The kind was removed from the list, the sixteen links were deleted on the copy, and the run was repeated: 19 claims were asked again (the sixteen and the three answered "none of these", since the list had changed), 16 answered "none of these" and 3 chose a kind below the threshold. The figures below are after that second run.
+
+| Kind (its MeSH term) | Approved | Pending | Read: wrong | Read: true, says little |
+| --- | --- | --- | --- | --- |
+| tissue_engineering (Tissue Engineering) | 5 | 4 | 0 | 0 |
+| biomaterial (Biocompatible Materials) | 7 | 0 | 1 | 0 |
+| peptide (Peptides) | 6 | 2 | 0 | 0 |
+| cell_therapy (Cell- and Tissue-Based Therapy) | 4 | 1 | 0 | 0 |
+| antibody (Antibodies, Monoclonal) | 3 | 1 | 0 | 0 |
+| surgical_procedure (Surgical Procedures, Operative) | 3 | 0 | 0 | 0 |
+| electrical_stimulation (Electric Stimulation Therapy) | 2 | 1 | 0 | 0 |
+| transplant (Transplantation) | 2 | 1 | 0 | 0 |
+| gene_editing, gene_therapy, implant, messenger_rna, oligonucleotide | 2 each | 0 | 0 | 0 |
+| dietary_supplement, phage_therapy, vaccine | 1 each | 0 | 0 | 0 |
+| device (Equipment and Supplies) | 1 | 0 | 0 | 1 |
+| probiotic (Probiotics) | 1 | 0 | 1 | 0 |
+| stem_cell_transplant (Stem Cell Transplantation) | 0 | 1 | 0 | 0 |
+| none of these | 16 claims | | | |
+
+Kinds on the list that no claim was given: radiotherapy, diet, exercise.
+
+**Every kind card read beside its claim (task 5a.11).** 47 approved kind links, 2 judged wrong and rejected, recorded as the assistant's decisions:
+
+- "Biocompatible Materials" (0.92) for "Nano-ERASER" (`alzheimers-nano-eraser`). The definition is of materials "used to replace or repair any body TISSUES or bodily function"; the claim's intervention is a nanoparticle meant to clear a protein, not a material that replaces tissue.
+- "Probiotics" (1.00) for "Oral engineered E. coli that senses glucose and releases GLP-1" (`type-2-diabetes-glp-1-secreting-bacteria`). The definition is of "Live microbial DIETARY SUPPLEMENTS" that improve "intestinal microbial balance", which is not what an engineered drug-releasing bacterium is.
+
+That is 2 of 47, about 1 in 24. One is true and says little: "Equipment and Supplies" for the microneedle skin stamp ("Expendable and nonexpendable equipment, supplies, apparatus, and instruments…"). It is one card, so the kind stays on the list for now; if later claims get it and read the same, it goes the way of `drug`. For the operator's eye: "Oligonucleotides" is defined partly by laboratory probes, which sits oddly beside two antisense drugs; "Surgical Procedures, Operative" stands for an embolisation done through a catheter. The registry's type was carried as a reason on 20 of the first run's kind links and disagreed with a sensible kind several times (DRUG for a cell product, for a gene-editing treatment and for two antisense drugs; COMBINATION_PRODUCT ahead of DRUG for one compound), which is why it is a reason and not the rule.
+
+The 16 claims with "none of these" are the 13 code-named or newly named compounds that were `drug` before, and three that fit no kind: "Direct conversion of blood cells into neural stem cells", "Dlk1-mediated stem cell activation" and "Intensive low-calorie diet with structured exercise" (two kinds equally).
+
+**Every approved named-gene link read beside its claim (task 5a.12).** 6 approved, none a coincidence and none a gene the intervention does not act on or come from: GFAP (the antisense drug zilganersen, whose other names name it), APOE (for "APOE4", an allele of it), CPNE7 (a peptide derived from it), DLK1, CXCR3 (an antibody against it) and SOSTDC1 (for "USAG-1", a synonym the source lists). 0 of 6 wrong, so the threshold was not raised. All 11 rejected by rule were read too and are coincidences or right to reject: TYMS and PYCARD for "TMS", BTG3 for "TOFA", SCARA3 for "CSR", ARSI for "ASI", RTL1 and SETMAR for "Mar1", ZGLP1 and GCG for "GLP-1" on the class claim, GLP1R and ZGLP1 on the claim about bacteria that release GLP-1. Two wait for review: GLP1R (0.68) for "GLP-1 receptor agonists", which is right, and GCG (0.68), the gene GLP-1 is made from, for the bacteria claim. No target card is exported from any of them until the operator accepts the source (task 2a.18).
+
+**Every new approved link from an entry term read beside its claim (task 5a.13).** 10 links. 2 were wrong, for the cause found in task 5.2: the claim `biological-ageing-glp-1-drugs` has the class "GLP-1 receptor agonists" as its intervention and its member drugs among its other names.
+
+- "semaglutide" (supplementary record, 1.00), by the entry term "Ozempic". Rejected as the assistant's decision.
+- "[OBSOLETE] tirzepatide" (1.00), a supplementary record NLM has withdrawn: the owner query still answers it beside the descriptor that replaced it, and its own address answers nothing. The client now leaves out a record whose label NLM marks "[OBSOLETE]" (a recorded fixture covers it), the link was deleted on the copy, and the second run made no new link for it. The descriptor "Tirzepatide" was already rejected for this claim in task 5.2 and stayed rejected.
+
+The other 8 read as right: "Bacterial Infections", "Dentin Sensitivity" for "Dentine hypersensitivity", "Peanut Hypersensitivity" for "Peanut allergy", "Diabetes Mellitus, Type 2", "tideglusib", "AdipoRon", "5-(tetradecyloxy)-2-furancarboxylic acid" for "TOFA", and "pexidartinib" for the claim about temporary removal of microglia, where it is the drug used to do it and one of the claim's other names: right as a name, and for the operator's eye as a card for a procedure. The class's own term, "Glucagon-Like Peptide-1 Receptor Agonists", was found by its entry term and waits at 0.64.
+
+**Cards after the run and the reading.**
+
+| | Before | After |
+| --- | --- | --- |
+| Claims with a condition card | 35 | 36 |
+| Claims with an intervention card from an exact term | 5 | 9 |
+| from a broader term | 1 | 1 |
+| from a kind | 0 | 45 |
+| Claims with an intervention card | 6 of 84 | 55 of 84 |
+| Claims with any card | 36 | 67 of 84 |
+
+No name equalled an entry term whose record the vocabulary did not give, on either run.
+

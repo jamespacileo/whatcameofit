@@ -20,6 +20,9 @@ IDENTIFIER = re.compile(r"^[DC]\d{6,9}$")
 # A supplementary record. Its definition is its own note, not its concept's.
 SUPPLEMENTARY = re.compile(r"^C\d+$")
 MAX_LABELLED = 10
+# How NLM marks a supplementary record it has withdrawn. Such a record has no page in
+# the year's vocabulary, so it is never the record an entry term belongs to.
+OBSOLETE = "[OBSOLETE]"
 # The record each entry term belongs to: from the term to the concept that lists it to
 # the descriptor or supplementary record that lists that concept (docs/sources.md).
 OWNERS_QUERY = (
@@ -211,6 +214,8 @@ class Mesh(Source):
             term_at = RESOURCE.match(term or "")
             record_at = RESOURCE.match(record or "")
             if term_at is None or record_at is None or not label:
+                continue
+            if label.startswith(OBSOLETE):
                 continue
             identifier = record_at.group(2)
             if IDENTIFIER.match(identifier) and (identifier, label) not in owners.setdefault(

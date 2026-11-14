@@ -2,7 +2,10 @@
 Behavior: openspec knowledge-cards, "An intervention with no exact term is given its
 kind". Pure: no database, network, clock or model.
 
-A kind is added or removed by editing the list. The label is NLM's own for the
+A kind is added or removed by editing the list. "Pharmaceutical Preparations" was on
+it as the kind `drug` and was removed after the first measured run (docs/lookup.md):
+its definition says only that a drug is a drug, so a compound with no term of its own
+and no narrower kind gets no card. The label is NLM's own for the
 descriptor on the day the list was checked (2026-11-14) and is only shown to the
 decision; a card's label and definition come from the term's stored record.
 """
@@ -28,7 +31,6 @@ class Kind:
 
 
 KINDS: tuple[Kind, ...] = (
-    Kind("drug", "D004364", "Pharmaceutical Preparations"),
     Kind("antibody", "D000911", "Antibodies, Monoclonal"),
     Kind("peptide", "D010455", "Peptides"),
     Kind("oligonucleotide", "D009841", "Oligonucleotides"),
