@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-14T21:11:58.038942Z",
+  "generated_at": "2026-11-14T21:52:23.484951Z",
   "last_checked_at": "2026-11-14T21:11:35.654853Z",
   "preview": false,
   "sources": [
@@ -27,6 +27,10 @@
     {
       "name": "Open Targets Platform",
       "url": "https://platform.opentargets.org/"
+    },
+    {
+      "name": "ChEMBL, through Open Targets Platform",
+      "url": "https://www.ebi.ac.uk/chembl/"
     },
     {
       "name": "UniProt, through Open Targets Platform",
@@ -1141,6 +1145,9 @@
           "external_id": "D000437",
           "version": "2026",
           "score": 0.81,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -1169,6 +1176,9 @@
           "external_id": "D019587",
           "version": "2026",
           "score": 0.97,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -1551,6 +1561,9 @@
           "external_id": "D038261",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -1590,6 +1603,9 @@
           "external_id": "D009841",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -1618,6 +1634,37 @@
           "read_at": "2026-11-14T20:50:51.869938Z"
         },
         {
+          "kind": "drug",
+          "fit": "exact",
+          "label": "ZILGANERSEN",
+          "name": null,
+          "definition": null,
+          "definition_source": null,
+          "url": "https://platform.opentargets.org/drug/CHEMBL5095433",
+          "source": "opentargets",
+          "external_id": "CHEMBL5095433",
+          "version": null,
+          "score": null,
+          "molecule_kind": "oligonucleotide",
+          "mechanisms": [],
+          "facts_source": "chembl",
+          "reasons": [
+            {
+              "code": "drug_name_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Zilganersen",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T21:48:21.147196Z"
+        },
+        {
           "kind": "target",
           "fit": "exact",
           "label": "GFAP",
@@ -1629,6 +1676,9 @@
           "external_id": "ENSG00000131095",
           "version": null,
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "word_equals_symbol",
@@ -1841,6 +1891,9 @@
           "external_id": "D000072669",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -1869,6 +1922,9 @@
           "external_id": "ENSG00000130203",
           "version": null,
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "word_equals_synonym",
@@ -2700,6 +2756,9 @@
           "external_id": "D000544",
           "version": "2026",
           "score": 0.89,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -2728,6 +2787,9 @@
           "external_id": "D000911",
           "version": "2026",
           "score": 0.99,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -2754,6 +2816,37 @@
           ],
           "decided_by": "rule",
           "read_at": "2026-11-14T20:50:12.517495Z"
+        },
+        {
+          "kind": "drug",
+          "fit": "exact",
+          "label": "TRONTINEMAB",
+          "name": null,
+          "definition": null,
+          "definition_source": null,
+          "url": "https://platform.opentargets.org/drug/CHEMBL5095377",
+          "source": "opentargets",
+          "external_id": "CHEMBL5095377",
+          "version": null,
+          "score": null,
+          "molecule_kind": "antibody",
+          "mechanisms": [],
+          "facts_source": "chembl",
+          "reasons": [
+            {
+              "code": "drug_name_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Trontinemab",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T21:48:30.924018Z"
         }
       ],
       "organisations": [
@@ -2988,6 +3081,9 @@
           "external_id": "C000600259",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "label_equals_name",
@@ -3003,6 +3099,50 @@
           ],
           "decided_by": "rule",
           "read_at": "2026-11-14T20:58:21.497613Z"
+        },
+        {
+          "kind": "drug",
+          "fit": "exact",
+          "label": "PEXIDARTINIB",
+          "name": null,
+          "definition": null,
+          "definition_source": null,
+          "url": "https://platform.opentargets.org/drug/CHEMBL3813873",
+          "source": "opentargets",
+          "external_id": "CHEMBL3813873",
+          "version": null,
+          "score": null,
+          "molecule_kind": "small_molecule",
+          "mechanisms": [
+            {
+              "action": "inhibitor",
+              "target": "Macrophage colony-stimulating factor 1 receptor"
+            },
+            {
+              "action": "inhibitor",
+              "target": "Receptor-type tyrosine-protein kinase FLT3"
+            },
+            {
+              "action": "inhibitor",
+              "target": "Mast/stem cell growth factor receptor Kit"
+            }
+          ],
+          "facts_source": "chembl",
+          "reasons": [
+            {
+              "code": "drug_name_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Pexidartinib",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T21:48:34.216619Z"
         }
       ],
       "organisations": [
@@ -3350,6 +3490,9 @@
           "external_id": "D001424",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "entry_term_equals_name",
@@ -3378,6 +3521,9 @@
           "external_id": "D000071059",
           "version": "2026",
           "score": 0.99,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -6177,6 +6323,9 @@
           "external_id": "D001943",
           "version": "2026",
           "score": 0.98,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -6205,6 +6354,9 @@
           "external_id": "C000614160",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -6220,6 +6372,46 @@
           ],
           "decided_by": "rule",
           "read_at": "2026-11-14T18:25:34.676500Z"
+        },
+        {
+          "kind": "drug",
+          "fit": "exact",
+          "label": "TRASTUZUMAB DERUXTECAN",
+          "name": null,
+          "definition": null,
+          "definition_source": null,
+          "url": "https://platform.opentargets.org/drug/CHEMBL4297844",
+          "source": "opentargets",
+          "external_id": "CHEMBL4297844",
+          "version": null,
+          "score": null,
+          "molecule_kind": "antibody_drug_conjugate",
+          "mechanisms": [
+            {
+              "action": "binding_agent",
+              "target": "Receptor tyrosine-protein kinase erbB-2"
+            },
+            {
+              "action": "inhibitor",
+              "target": "DNA topoisomerase 1"
+            }
+          ],
+          "facts_source": "chembl",
+          "reasons": [
+            {
+              "code": "drug_name_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Trastuzumab deruxtecan",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T21:48:44.027451Z"
         }
       ],
       "organisations": [
@@ -6939,6 +7131,9 @@
           "external_id": "D008659",
           "version": "2026",
           "score": 0.95,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -6967,6 +7162,9 @@
           "external_id": "D000072669",
           "version": "2026",
           "score": 0.99,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -9685,6 +9883,9 @@
           "external_id": "D000544",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -9713,6 +9914,9 @@
           "external_id": "D013514",
           "version": "2026",
           "score": 0.99,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -10091,6 +10295,9 @@
           "external_id": "D003807",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "entry_term_equals_name",
@@ -10119,6 +10326,9 @@
           "external_id": "D010455",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -10147,6 +10357,9 @@
           "external_id": "ENSG00000178773",
           "version": null,
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "word_equals_symbol",
@@ -10274,6 +10487,9 @@
           "external_id": "D001241",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "label_equals_name",
@@ -10289,6 +10505,42 @@
           ],
           "decided_by": "rule",
           "read_at": "2026-11-14T18:25:51.271822Z"
+        },
+        {
+          "kind": "drug",
+          "fit": "exact",
+          "label": "ASPIRIN",
+          "name": null,
+          "definition": null,
+          "definition_source": null,
+          "url": "https://platform.opentargets.org/drug/CHEMBL25",
+          "source": "opentargets",
+          "external_id": "CHEMBL25",
+          "version": null,
+          "score": null,
+          "molecule_kind": "small_molecule",
+          "mechanisms": [
+            {
+              "action": "inhibitor",
+              "target": "Cyclooxygenase"
+            }
+          ],
+          "facts_source": "chembl",
+          "reasons": [
+            {
+              "code": "drug_name_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Aspirin",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T21:48:56.608368Z"
         }
       ],
       "organisations": [],
@@ -10393,6 +10645,9 @@
           "external_id": "ENSG00000185559",
           "version": null,
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "word_equals_symbol",
@@ -10979,6 +11234,9 @@
           "external_id": "C520571",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "label_equals_name",
@@ -10994,6 +11252,73 @@
           ],
           "decided_by": "rule",
           "read_at": "2026-11-14T21:00:07.936728Z"
+        },
+        {
+          "kind": "drug",
+          "fit": "exact",
+          "label": "TIDEGLUSIB",
+          "name": null,
+          "definition": null,
+          "definition_source": null,
+          "url": "https://platform.opentargets.org/drug/CHEMBL3545157",
+          "source": "opentargets",
+          "external_id": "CHEMBL3545157",
+          "version": null,
+          "score": null,
+          "molecule_kind": "small_molecule",
+          "mechanisms": [
+            {
+              "action": "inhibitor",
+              "target": "Glycogen synthase kinase-3 beta"
+            }
+          ],
+          "facts_source": "chembl",
+          "reasons": [
+            {
+              "code": "drug_name_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Tideglusib",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T21:49:00.494263Z"
+        },
+        {
+          "kind": "target",
+          "fit": "exact",
+          "label": "GSK3B",
+          "name": "glycogen synthase kinase 3 beta",
+          "definition": "Constitutively active protein kinase that acts as a negative regulator in the hormonal control of glucose homeostasis, Wnt signaling and regulation of transcription factors and microtubules, by phosphorylating and inactivating glycogen synthase (GYS1 or GYS2), EIF2B, CTNNB1/beta-catenin, APC, AXIN1, DPYSL2/CRMP2, JUN, NFATC1/NFATC, MAPT/TAU and MACF1 (PubMed:11430833, PubMed:12554650, PubMed:14690523, PubMed:16484495, PubMed:1846781, PubMed:20937854, PubMed:9072970). Requires primed phosphorylation of the majority of its substrates (PubMed:11430833, PubMed:16484495). In skeletal muscle, contributes to insulin regulation of glycogen synthesis by phosphorylating and inhibiting GYS1 activity and hence glycogen synthesis (PubMed:8397507). May also mediate the development of insulin resistance by regulating activation of transcription factors (PubMed:8397507). Regulates protein synthesis by controlling the activity of initiation factor 2B (EIF2BE/EIF2B5) in the same manner as glycogen synthase (PubMed:8397507). In Wnt signaling, GSK3B forms a multimeric complex with APC, AXIN1 and CTNNB1/beta-catenin and phosphorylates the N-terminus of CTNNB1 leading to its degradation mediated by ubiquitin/proteasomes (PubMed:12554650). Phosphorylates JUN at sites proximal to its DNA-binding domain, thereby reducing its affinity for DNA (PubMed:1846781). Phosphorylates NFATC1/NFATC on conserved serine residues promoting NFATC1/NFATC nuclear export, shutting off NFATC1/NFATC gene regulation, and thereby opposing the action of calcineurin (PubMed:9072970). Phosphorylates MAPT/TAU on 'Thr-548', decreasing significantly MAPT/TAU ability to bind and stabilize microtubules (PubMed:14690523). MAPT/TAU is the principal component of neurofibrillary tangles in Alzheimer disease (PubMed:14690523). Plays an important role in ERBB2-dependent stabilization of microtubules at the cell cortex (PubMed:20937854). Phosphorylates MACF1, inhibiting its binding to microtubules which is critical for its role in bulge stem cell migration and skin wound repair (By similarity). Probably regulates NF-kappa-B (NFKB1) at the transcriptional level and is required for the NF-kappa-B-mediated anti- apoptotic response to TNF (TNF/TNFA) (By similarity). Negatively regulates replication in pancreatic beta-cells, resulting in apoptosis, loss of beta-cells and diabetes (By similarity). Through phosphorylation of the anti-apoptotic protein MCL1, may control cell apoptosis in response to growth factors deprivation (By similarity). Phosphorylates MUC1 in breast cancer cells, decreasing the interaction of MUC1 with CTNNB1/beta-catenin (PubMed:9819408). Is necessary for the establishment of neuronal polarity and axon outgrowth (PubMed:20067585). Phosphorylates MARK2, leading to inhibition of its activity (By similarity). Phosphorylates SIK1 at 'Thr-182', leading to sustainment of its activity (PubMed:18348280). Phosphorylates ZC3HAV1 which enhances its antiviral activity (PubMed:22514281). Phosphorylates SNAI1, leading to its ubiquitination and proteasomal degradation (PubMed:15448698, PubMed:15647282, PubMed:25827072, PubMed:29059170). Phosphorylates SFPQ at 'Thr-687' upon T-cell activation (PubMed:20932480). Phosphorylates NR1D1 st 'Ser-55' and 'Ser-59' and stabilizes it by protecting it from proteasomal degradation. Regulates the circadian clock via phosphorylation of the major clock components including BMAL1, CLOCK and PER2 (PubMed:19946213, PubMed:28903391). Phosphorylates FBXL2 at 'Thr-404' and primes it for ubiquitination by the SCF(FBXO3) complex and proteasomal degradation (By similarity). Phosphorylates CLOCK AT 'Ser-427' and targets it for proteasomal degradation (PubMed:19946213). Phosphorylates BMAL1 at 'Ser-17' and 'Ser-21' and primes it for ubiquitination and proteasomal degradation (PubMed:28903391). Phosphorylates OGT at 'Ser-3' or 'Ser-4' which positively regulates its activity. Phosphorylates MYCN in neuroblastoma cells which may promote its degradation (PubMed:24391509). Regulates the circadian rhythmicity of hippocampal long-term potentiation and BMAL1 and PER2 expression (By similarity). Acts as a regulator of autophagy by mediating phosphorylation of KAT5/TIP60 under starvation conditions, activating KAT5/TIP60 acetyltransferase activity and promoting acetylation of key autophagy regulators, such as ULK1 and RUBCNL/Pacer (PubMed:30704899). Negatively regulates extrinsic apoptotic signaling pathway via death domain receptors. Promotes the formation of an anti-apoptotic complex, made of DDX3X, BRIC2 and GSK3B, at death receptors, including TNFRSF10B. The anti-apoptotic function is most effective with weak apoptotic signals and can be overcome by stronger stimulation (PubMed:18846110). Phosphorylates E2F1, promoting the interaction between E2F1 and USP11, stabilizing E2F1 and promoting its activity (PubMed:17050006, PubMed:28992046). Phosphorylates mTORC2 complex component RICTOR at 'Ser-1235' in response to endoplasmic stress, inhibiting mTORC2 (PubMed:21343617). Phosphorylates mTORC2 complex component RICTOR at 'Thr-1695' which facilitates FBXW7-mediated ubiquitination and subsequent degradation of RICTOR (PubMed:25897075). Acts as a negative regulator of smoothened signaling by mediating phosphorylation of GLI2 and GLI3 in absence of smoothened, promoting their processing by the SCF(BTRC) complex (PubMed:16705181). Phosphorylates FXR1, promoting FXR1 ubiquitination by the SCF(FBXO4) complex and FXR1 degradation by the proteasome (By similarity). Phosphorylates interleukin-22 receptor subunit IL22RA1, preventing its proteasomal degradation (By similarity). Phosphorylates and inhibits the CTP synthase and protein-asparagine deamidase activities of CTPS1 (PubMed:17681942). Phosphorylates DSP at multiple sequential serine residues in the C-terminus tail, promoting its recruitment to developing desmosome cell-cell junctions (PubMed:25733715). {ECO:0000250|UniProtKB:P18266, ECO:0000250|UniProtKB:Q9WV60, ECO:0000269|PubMed:11430833, ECO:0000269|PubMed:12554650, ECO:0000269|PubMed:14690523, ECO:0000269|PubMed:15448698, ECO:0000269|PubMed:15647282, ECO:0000269|PubMed:16484495, ECO:0000269|PubMed:16705181, ECO:0000269|PubMed:17050006, ECO:0000269|PubMed:17681942, ECO:0000269|PubMed:18348280, ECO:0000269|PubMed:1846781, ECO:0000269|PubMed:18846110, ECO:0000269|PubMed:19946213, ECO:0000269|PubMed:20067585, ECO:0000269|PubMed:20932480, ECO:0000269|PubMed:20937854, ECO:0000269|PubMed:21343617, ECO:0000269|PubMed:22514281, ECO:0000269|PubMed:24391509, ECO:0000269|PubMed:25733715, ECO:0000269|PubMed:25827072, ECO:0000269|PubMed:25897075, ECO:0000269|PubMed:28903391, ECO:0000269|PubMed:28992046, ECO:0000269|PubMed:29059170, ECO:0000269|PubMed:30704899, ECO:0000269|PubMed:8397507, ECO:0000269|PubMed:9072970, ECO:0000269|PubMed:9819408}.",
+          "definition_source": "uniprot",
+          "url": "https://platform.opentargets.org/target/ENSG00000082701",
+          "source": "opentargets",
+          "external_id": "ENSG00000082701",
+          "version": null,
+          "score": null,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": "chembl",
+          "reasons": [
+            {
+              "code": "drug_record_names_target",
+              "trials": null,
+              "of": null,
+              "name": "TIDEGLUSIB",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T21:49:00.494263Z"
         }
       ],
       "organisations": [
@@ -11606,6 +11931,9 @@
           "external_id": "D061218",
           "version": "2026",
           "score": 0.94,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -11846,6 +12174,9 @@
           "external_id": "D064987",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -12086,6 +12417,9 @@
           "external_id": "D015316",
           "version": "2026",
           "score": 0.99,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -12255,6 +12589,9 @@
           "external_id": "D001672",
           "version": "2026",
           "score": 0.93,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -12399,6 +12736,9 @@
           "external_id": "D001672",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -12556,6 +12896,9 @@
           "external_id": "D010455",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -12882,6 +13225,9 @@
           "external_id": "D010455",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -13545,6 +13891,9 @@
           "external_id": "D000911",
           "version": "2026",
           "score": 0.8,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -13571,6 +13920,37 @@
           ],
           "decided_by": "rule",
           "read_at": "2026-11-14T20:50:12.517495Z"
+        },
+        {
+          "kind": "drug",
+          "fit": "exact",
+          "label": "SACITUZUMAB TIRUMOTECAN",
+          "name": null,
+          "definition": null,
+          "definition_source": null,
+          "url": "https://platform.opentargets.org/drug/CHEMBL5314875",
+          "source": "opentargets",
+          "external_id": "CHEMBL5314875",
+          "version": null,
+          "score": null,
+          "molecule_kind": "antibody_drug_conjugate",
+          "mechanisms": [],
+          "facts_source": "chembl",
+          "reasons": [
+            {
+              "code": "drug_name_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Sacituzumab tirumotecan",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T21:49:19.346355Z"
         }
       ],
       "organisations": [
@@ -13699,6 +14079,9 @@
           "external_id": "D004599",
           "version": "2026",
           "score": 0.98,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -14580,6 +14963,9 @@
           "external_id": "D006333",
           "version": "2026",
           "score": 0.95,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -14608,6 +14994,9 @@
           "external_id": "D064987",
           "version": "2026",
           "score": 0.99,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -14761,6 +15150,9 @@
           "external_id": "D012333",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -14938,6 +15330,9 @@
           "external_id": "D012333",
           "version": "2026",
           "score": 0.91,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -17244,6 +17639,9 @@
           "external_id": "D019694",
           "version": "2026",
           "score": 0.99,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -17272,6 +17670,9 @@
           "external_id": "D009841",
           "version": "2026",
           "score": 0.98,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -17298,6 +17699,37 @@
           ],
           "decided_by": "rule",
           "read_at": "2026-11-14T20:50:51.869938Z"
+        },
+        {
+          "kind": "drug",
+          "fit": "exact",
+          "label": "BEPIROVIRSEN",
+          "name": null,
+          "definition": null,
+          "definition_source": null,
+          "url": "https://platform.opentargets.org/drug/CHEMBL4650468",
+          "source": "opentargets",
+          "external_id": "CHEMBL4650468",
+          "version": null,
+          "score": null,
+          "molecule_kind": "oligonucleotide",
+          "mechanisms": [],
+          "facts_source": "chembl",
+          "reasons": [
+            {
+              "code": "drug_name_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Bepirovirsen",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T21:49:35.107642Z"
         }
       ],
       "organisations": [
@@ -17684,6 +18116,9 @@
           "external_id": "D007246",
           "version": "2026",
           "score": 0.9,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -18348,6 +18783,9 @@
           "external_id": "D007676",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -18376,6 +18814,9 @@
           "external_id": "D014180",
           "version": "2026",
           "score": 0.98,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -22681,6 +23122,9 @@
           "external_id": "D020370",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -23386,6 +23830,9 @@
           "external_id": "D016388",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "label_equals_name",
@@ -23414,6 +23861,9 @@
           "external_id": "D023822",
           "version": "2026",
           "score": 0.95,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -24036,6 +24486,9 @@
           "external_id": "D009140",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -24064,6 +24517,9 @@
           "external_id": "D064987",
           "version": "2026",
           "score": 0.96,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -24090,6 +24546,37 @@
           ],
           "decided_by": "rule",
           "read_at": "2026-11-14T20:50:35.122929Z"
+        },
+        {
+          "kind": "drug",
+          "fit": "exact",
+          "label": "REXLEMESTROCEL-L",
+          "name": null,
+          "definition": null,
+          "definition_source": null,
+          "url": "https://platform.opentargets.org/drug/CHEMBL3545318",
+          "source": "opentargets",
+          "external_id": "CHEMBL3545318",
+          "version": null,
+          "score": null,
+          "molecule_kind": "cell",
+          "mechanisms": [],
+          "facts_source": "chembl",
+          "reasons": [
+            {
+              "code": "drug_name_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Rexlemestrocel-L",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T21:49:52.589763Z"
         }
       ],
       "organisations": [
@@ -25030,6 +25517,9 @@
           "external_id": "D008288",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -25056,6 +25546,37 @@
           ],
           "decided_by": "rule",
           "read_at": "2026-11-14T18:27:41.868521Z"
+        },
+        {
+          "kind": "drug",
+          "fit": "exact",
+          "label": "CABAMIQUINE",
+          "name": null,
+          "definition": null,
+          "definition_source": null,
+          "url": "https://platform.opentargets.org/drug/CHEMBL4091762",
+          "source": "opentargets",
+          "external_id": "CHEMBL4091762",
+          "version": null,
+          "score": null,
+          "molecule_kind": "small_molecule",
+          "mechanisms": [],
+          "facts_source": "chembl",
+          "reasons": [
+            {
+              "code": "drug_name_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Cabamiquine",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T21:49:56.034294Z"
         }
       ],
       "organisations": [
@@ -25433,6 +25954,9 @@
           "external_id": "D010455",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -25986,6 +26510,9 @@
           "external_id": "D008545",
           "version": "2026",
           "score": 0.88,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -26014,6 +26541,9 @@
           "external_id": "D014612",
           "version": "2026",
           "score": 0.97,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -26040,6 +26570,37 @@
           ],
           "decided_by": "rule",
           "read_at": "2026-11-14T20:51:42.841163Z"
+        },
+        {
+          "kind": "drug",
+          "fit": "exact",
+          "label": "INTISMERAN AUTOGENE",
+          "name": null,
+          "definition": null,
+          "definition_source": null,
+          "url": "https://platform.opentargets.org/drug/CHEMBL6068256",
+          "source": "opentargets",
+          "external_id": "CHEMBL6068256",
+          "version": null,
+          "score": null,
+          "molecule_kind": "oligonucleotide",
+          "mechanisms": [],
+          "facts_source": "chembl",
+          "reasons": [
+            {
+              "code": "drug_name_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Intismeran autogene",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T21:50:02.254068Z"
         }
       ],
       "organisations": [
@@ -26442,6 +27003,9 @@
           "external_id": "D009103",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "label_equals_name",
@@ -29346,6 +29910,9 @@
           "external_id": "D009765",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -29372,6 +29939,46 @@
           ],
           "decided_by": "rule",
           "read_at": "2026-11-14T18:25:29.632087Z"
+        },
+        {
+          "kind": "drug",
+          "fit": "exact",
+          "label": "SURVODUTIDE",
+          "name": null,
+          "definition": null,
+          "definition_source": null,
+          "url": "https://platform.opentargets.org/drug/CHEMBL5314776",
+          "source": "opentargets",
+          "external_id": "CHEMBL5314776",
+          "version": null,
+          "score": null,
+          "molecule_kind": "protein",
+          "mechanisms": [
+            {
+              "action": "agonist",
+              "target": "Glucagon-like peptide 1 receptor"
+            },
+            {
+              "action": "agonist",
+              "target": "Glucagon receptor"
+            }
+          ],
+          "facts_source": "chembl",
+          "reasons": [
+            {
+              "code": "drug_name_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Survodutide",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T21:50:10.514789Z"
         }
       ],
       "organisations": [
@@ -29551,6 +30158,9 @@
           "external_id": "D009765",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "label_equals_name",
@@ -29579,6 +30189,9 @@
           "external_id": "C014289",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "entry_term_equals_name",
@@ -31024,6 +31637,9 @@
           "external_id": "D013514",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -33740,6 +34356,9 @@
           "external_id": "D010300",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -33755,6 +34374,37 @@
           ],
           "decided_by": "rule",
           "read_at": "2026-11-14T18:28:05.098705Z"
+        },
+        {
+          "kind": "drug",
+          "fit": "exact",
+          "label": "SOLENGEPRAS",
+          "name": null,
+          "definition": null,
+          "definition_source": null,
+          "url": "https://platform.opentargets.org/drug/CHEMBL4802203",
+          "source": "opentargets",
+          "external_id": "CHEMBL4802203",
+          "version": null,
+          "score": null,
+          "molecule_kind": "small_molecule",
+          "mechanisms": [],
+          "facts_source": "chembl",
+          "reasons": [
+            {
+              "code": "drug_name_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Solengepras",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T21:50:21.419719Z"
         }
       ],
       "organisations": [
@@ -33982,6 +34632,9 @@
           "external_id": "D021183",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "entry_term_equals_name",
@@ -34010,6 +34663,9 @@
           "external_id": "D004864",
           "version": "2026",
           "score": 0.95,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -34098,6 +34754,9 @@
           "external_id": "D023822",
           "version": "2026",
           "score": 0.98,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -34564,6 +35223,9 @@
           "external_id": "D010518",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "label_equals_name",
@@ -34732,6 +35394,9 @@
           "external_id": "C585113",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "label_equals_name",
@@ -34929,6 +35594,9 @@
           "external_id": "D023822",
           "version": "2026",
           "score": 0.85,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -35320,6 +35988,9 @@
           "external_id": "D010518",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "label_equals_name",
@@ -35504,6 +36175,9 @@
           "external_id": "D010518",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "label_equals_name",
@@ -35683,6 +36357,9 @@
           "external_id": "D010518",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "label_equals_name",
@@ -35711,6 +36388,9 @@
           "external_id": "D001672",
           "version": "2026",
           "score": 0.87,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -37081,6 +37761,9 @@
           "external_id": "D001205",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -37863,6 +38546,9 @@
           "external_id": "D006929",
           "version": "2026",
           "score": 0.85,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -37878,6 +38564,37 @@
           ],
           "decided_by": "rule",
           "read_at": "2026-11-14T18:28:23.217677Z"
+        },
+        {
+          "kind": "drug",
+          "fit": "exact",
+          "label": "BAXDROSTAT",
+          "name": null,
+          "definition": null,
+          "definition_source": null,
+          "url": "https://platform.opentargets.org/drug/CHEMBL4113975",
+          "source": "opentargets",
+          "external_id": "CHEMBL4113975",
+          "version": null,
+          "score": null,
+          "molecule_kind": "small_molecule",
+          "mechanisms": [],
+          "facts_source": "chembl",
+          "reasons": [
+            {
+              "code": "drug_name_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Baxdrostat",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T21:50:47.116849Z"
         }
       ],
       "organisations": [
@@ -38837,6 +39554,9 @@
           "external_id": "D013313",
           "version": "2026",
           "score": 0.83,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -39079,6 +39799,9 @@
           "external_id": "D023822",
           "version": "2026",
           "score": 0.99,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -39471,6 +40194,9 @@
           "external_id": "D003790",
           "version": "2026",
           "score": 0.89,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -39499,6 +40225,9 @@
           "external_id": "D064987",
           "version": "2026",
           "score": 0.81,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -41891,6 +42620,9 @@
           "external_id": "D019736",
           "version": "2026",
           "score": 0.99,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -42239,6 +42971,9 @@
           "external_id": "D001672",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -42827,6 +43562,9 @@
           "external_id": "C000720267",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -43240,6 +43978,9 @@
           "external_id": "D012174",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -43268,6 +44009,9 @@
           "external_id": "D015316",
           "version": "2026",
           "score": 0.98,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -43602,6 +44346,9 @@
           "external_id": "D010455",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -43896,6 +44643,9 @@
           "external_id": "C000729680",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -43911,6 +44661,37 @@
           ],
           "decided_by": "rule",
           "read_at": "2026-11-14T18:28:52.916524Z"
+        },
+        {
+          "kind": "drug",
+          "fit": "exact",
+          "label": "ORFORGLIPRON",
+          "name": null,
+          "definition": null,
+          "definition_source": null,
+          "url": "https://platform.opentargets.org/drug/CHEMBL4446782",
+          "source": "opentargets",
+          "external_id": "CHEMBL4446782",
+          "version": null,
+          "score": null,
+          "molecule_kind": "small_molecule",
+          "mechanisms": [],
+          "facts_source": "chembl",
+          "reasons": [
+            {
+              "code": "drug_name_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Orforglipron",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T21:51:15.459447Z"
         }
       ],
       "organisations": [
@@ -44034,6 +44815,9 @@
           "external_id": "D023822",
           "version": "2026",
           "score": 0.96,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -44648,6 +45432,9 @@
           "external_id": "D016750",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -44676,6 +45463,9 @@
           "external_id": "D064987",
           "version": "2026",
           "score": 0.98,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -44955,6 +45745,9 @@
           "external_id": "D010455",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -45161,6 +45954,9 @@
           "external_id": "D000911",
           "version": "2026",
           "score": 0.98,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -45189,6 +45985,9 @@
           "external_id": "ENSG00000186810",
           "version": null,
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "word_equals_symbol",
@@ -45706,6 +46505,9 @@
           "external_id": "D000911",
           "version": "2026",
           "score": 0.98,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -45734,6 +46536,9 @@
           "external_id": "ENSG00000171243",
           "version": null,
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "word_equals_synonym",
@@ -46674,6 +47479,9 @@
           "external_id": "D005879",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -46713,6 +47521,9 @@
           "external_id": "D004599",
           "version": "2026",
           "score": 0.81,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -46872,6 +47683,9 @@
           "external_id": "D003924",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "entry_term_equals_name",
@@ -46900,6 +47714,9 @@
           "external_id": "D019936",
           "version": "2026",
           "score": 0.97,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -47089,6 +47906,9 @@
           "external_id": "D019736",
           "version": "2026",
           "score": 0.97,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -49472,6 +50292,9 @@
           "external_id": "D003924",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -49487,6 +50310,37 @@
           ],
           "decided_by": "rule",
           "read_at": "2026-11-14T18:27:54.971305Z"
+        },
+        {
+          "kind": "drug",
+          "fit": "exact",
+          "label": "INSULIN EFSITORA ALFA",
+          "name": null,
+          "definition": null,
+          "definition_source": null,
+          "url": "https://platform.opentargets.org/drug/CHEMBL5095357",
+          "source": "opentargets",
+          "external_id": "CHEMBL5095357",
+          "version": null,
+          "score": null,
+          "molecule_kind": "protein",
+          "mechanisms": [],
+          "facts_source": "chembl",
+          "reasons": [
+            {
+              "code": "drug_name_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Insulin efsitora alfa",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T21:51:40.167330Z"
         }
       ],
       "organisations": [
@@ -50219,6 +51073,9 @@
           "external_id": "D003924",
           "version": "2026",
           "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -50247,6 +51104,9 @@
           "external_id": "D031204",
           "version": "2026",
           "score": 0.99,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "filed_by_registry",
@@ -52224,6 +53084,9 @@
           "external_id": "D023822",
           "version": "2026",
           "score": 0.83,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -52603,6 +53466,9 @@
           "external_id": "D023822",
           "version": "2026",
           "score": 0.93,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
           "reasons": [
             {
               "code": "kind_chosen",
@@ -52729,6 +53595,15 @@
       "url": "https://platform.opentargets.org/",
       "terms_url": "https://platform-docs.opentargets.org/licence",
       "in_data_file": true
+    },
+    {
+      "name": "chembl",
+      "title": "ChEMBL, through Open Targets Platform",
+      "credit": "ChEMBL, EMBL-EBI",
+      "licence": "CC BY-SA 3.0 Unported",
+      "url": "https://www.ebi.ac.uk/chembl/",
+      "terms_url": "https://chembl.gitbook.io/chembl-interface-documentation/about",
+      "in_data_file": false
     },
     {
       "name": "uniprot",

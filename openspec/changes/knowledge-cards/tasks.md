@@ -111,7 +111,7 @@ State on 2026-11-14: the operator answered 6.1 ("Yes, accept ChEMBL for drug car
 - [x] 6.2 Add the drug part to the Open Targets client from 2a.14: a drug whose own name equals a given name, with kind of molecule and mechanisms, and a single-protein target's name, gene symbol and function description; verify on recorded fixtures a named drug with two mechanisms, a drug with none, and a procedure's name that returns nothing
 - [x] 6.3 Export a drug card and, for exactly one single-protein target, a target card, each only as the ADR allows; verify a drug with one target, a drug with two, a drug's one target winning over an approved named gene, and that no phase, approval or indication is exported
 - [x] 6.4 Word molecule kinds in the wording module, failing the build on an unworded one; show both cards on the claim page and keep share-alike facts out of the data file, naming the source left out; verify in the browser and by the open data test
-- [ ] 6.5 Run on the real database and record how many claims gained a drug card and a target card
+- [x] 6.5 Run on the real database and record how many claims gained a drug card and a target card
 
 ## 7. Integration
 
