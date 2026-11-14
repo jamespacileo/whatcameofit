@@ -1,0 +1,22 @@
+---
+// Nothing under the glass: the path with no place marked, and the glass that looked
+// along it. Where a page or a search finds nothing, the glass passes over the places,
+// each seen larger for a moment, and comes to rest past the last. It is the glass that
+// travels, never the marker. The words beside it say what was not found.
+import { STAGE_PATH } from "../lib/status";
+
+// The places sit 44 units apart; the keyframes in global.css are timed to that.
+const GAP = 44;
+const last = (STAGE_PATH.length - 1) * GAP + 8;
+---
+
+<svg class="unfound" viewBox={`0 0 ${last + 76} 52`} aria-hidden="true">
+  <line class="path" x1="8" y1="26" x2={last} y2="26"></line>
+  {STAGE_PATH.map((_, index) => <circle class="place" style={`--i:${index}`} cx={index * GAP + 8} cy="26" r="6" />)}
+  <g transform="translate(0 26)">
+    <g class="glass" style={`--rest:${last + 52}px;--past:${last + 22}px`}>
+      <path d="M12.6 12.6 18.6 18.6" stroke-width="7"></path>
+      <circle r="17" stroke-width="5"></circle>
+    </g>
+  </g>
+</svg>

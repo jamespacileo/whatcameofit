@@ -1,0 +1,17 @@
+---
+// The reverse mark, drawn into the page so that its two parts can move: on the first
+// page of a visit the glass is lowered onto the capsule, and when the name is hovered
+// the capsule is seen closer. The drawing is public/mark-reverse.svg, which
+// scripts/brand-icons.mjs makes from public/mark.svg; a site test holds the two together.
+---
+
+<svg class="mark" viewBox="8 9 48 48" width="32" height="32" aria-hidden="true">
+  <g class="glass" fill="none" stroke="#ffffff" stroke-linecap="round">
+    <path d="M44.5 45.5 51.5 52.5" stroke-width="8"></path>
+    <circle cx="31" cy="32" r="19.5" stroke-width="5.7"></circle>
+  </g>
+  <g class="capsule">
+    <path d="M30.4 25h-6.9a7 7 0 0 0 0 14h6.9z" fill="#f28a62"></path>
+    <path d="M31.6 25h6.9a7 7 0 0 1 0 14h-6.9z" fill="#1687da"></path>
+  </g>
+</svg>
