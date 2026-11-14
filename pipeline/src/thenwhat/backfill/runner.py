@@ -15,6 +15,8 @@ from thenwhat.backfill.steps import BatchStep, CountingClient, Failed, Step, bat
 from thenwhat.domain import WorkOutcome
 
 OpenSession = Callable[[], AbstractContextManager[Session]]
+# How many failures' errors a run's report carries. The ledger keeps every one.
+ERRORS_KEPT = 50
 # A record's id, its outcome and its error. The outcome is None for a record that
 # another run finished first.
 Processed = tuple[int, WorkOutcome | None, str | None]
@@ -223,7 +225,6 @@ def run_step(
         if processed is None:
             break
         for record_id, outcome, error in processed:
-            tried.add(record_id)
             if outcome is None:
                 continue
             if outcome is WorkOutcome.DONE:
@@ -231,8 +232,13 @@ def run_step(
             elif outcome is WorkOutcome.NOTHING_FOUND:
                 report.nothing_found += 1
             else:
+                # A failed record stays due, so this run must not pick it again. A
+                # finished one is no longer due and needs no remembering: a run over
+                # hundreds of thousands of records would otherwise carry them all into
+                # every query.
+                tried.add(record_id)
                 report.failed += 1
-                if error and report.errors is not None:
+                if error and report.errors is not None and len(report.errors) < ERRORS_KEPT:
                     report.errors.append(error)
     with open_session() as session:
         report.remaining_due = count(session, step, attempt_limit).due

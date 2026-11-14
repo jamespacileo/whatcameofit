@@ -19,6 +19,7 @@ from backfill_support import (
     remove_committed,
     same_session,
 )
+from thenwhat.backfill import runner
 from thenwhat.backfill.errors import DuplicateStep, UnknownStep
 from thenwhat.backfill.ledger import count, mark_changed
 from thenwhat.backfill.runner import run_step
@@ -355,3 +356,25 @@ def test_the_spend_ceiling_stops_a_model_step_and_leaves_records_due(session: Se
     assert len(entries(session, step)) == 40
     assert (second.processed, second.remaining_due) == (0, 60)
     assert len(step.calls) == 2
+
+
+def test_a_run_remembers_only_the_records_that_failed(session: Session, monkeypatch):
+    """A run over hundreds of thousands of records must not carry every finished one
+    into each query: found on the first real run, which stopped at 66,000 leads."""
+    add_trials(session, 60)
+    step = ModelStep()
+    step.unanswered = {"T0007"}
+    remembered: list[int] = []
+    real = runner.process_batch
+
+    def watched(*arguments, **options):
+        remembered.append(len(options["skip"]))
+        return real(*arguments, **options)
+
+    monkeypatch.setattr(runner, "process_batch", watched)
+
+    report = run(session, step)
+
+    assert (report.done, report.failed) == (59, 1)
+    # Nothing is remembered until a record fails, and then only that one.
+    assert remembered[0] == 0 and max(remembered) == 1

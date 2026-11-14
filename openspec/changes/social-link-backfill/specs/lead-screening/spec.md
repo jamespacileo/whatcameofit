@@ -40,7 +40,7 @@ For a lead in scope, screening SHALL record a link, with the reason found, to ea
 
 - a registry trial for which an article lead with the same address is stored;
 - a claim whose intervention's name or other name appears in the lead's title;
-- a registry trial whose search name appears in the lead's title together with a word of its indication.
+- a registry trial whose search name appears in the lead's title together with a word of its indication that is not also a word of the name.
 
 #### Scenario: An address the news search already found
 - **WHEN** a lead's address is stored as an article lead for a registry trial
@@ -56,6 +56,10 @@ A name SHALL match a title only as whole words. At most the configured number of
 #### Scenario: A name inside a longer word
 - **WHEN** a trial's search name is "Iron" and a lead's title holds "Ironman" and no other use of the name
 - **THEN** no link is recorded
+
+#### Scenario: A name that is also the indication
+- **WHEN** a trial's search name is "Diphtheria", its indication is diphtheria, and a lead's title reports an outbreak of diphtheria
+- **THEN** the lead is not linked to that trial
 
 #### Scenario: A common name without the indication
 - **WHEN** a lead's title holds a trial's search name and no word of that trial's indication

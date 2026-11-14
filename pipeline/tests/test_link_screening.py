@@ -134,7 +134,7 @@ def test_a_domain_added_to_the_list_puts_its_leads_in_scope_on_the_next_screenin
         ),
     )
     again = LinkScreen()
-    again.version = 2
+    again.version += 1
 
     screen(session, again)
 
@@ -232,6 +232,31 @@ def test_a_trial_is_linked_only_when_a_word_of_its_indication_is_in_the_title(se
 
     assert links(session, with_word) == [(REGISTRY_TRIAL, for_anaemia.id, TITLE_NAMES_TRIAL)]
     assert links(session, without) == []
+
+
+def test_a_trial_named_by_its_own_disease_is_not_linked_by_that_one_word(session: Session):
+    """Scenario: A name that is also the indication"""
+    trial(session, "Diphtheria", "diphtheria", 1)
+    with_another_word = trial(session, "Vitamin D", "vitamin deficiency", 2)
+    outbreak = share(
+        session, "https://www.bbc.com/news/health-6", "Two cases of deadly diphtheria detected"
+    )
+    advice = share(
+        session,
+        "https://www.bbc.com/news/health-7",
+        "Scientist urges vitamin D supplements",
+        item=2,
+    )
+    report = share(
+        session, "https://www.bbc.com/news/health-8", "Vitamin D eases deficiency in trial", item=3
+    )
+
+    screen(session)
+
+    assert links(session, outbreak) == []
+    # "vitamin" is a word of the name, so it does not count as a word of the indication.
+    assert links(session, advice) == []
+    assert links(session, report) == [(REGISTRY_TRIAL, with_another_word.id, TITLE_NAMES_TRIAL)]
 
 
 def test_at_most_the_configured_number_of_links_is_kept(session: Session):

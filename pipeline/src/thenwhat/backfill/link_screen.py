@@ -51,8 +51,8 @@ class Name:
     words: tuple[str, ...]
     record_kind: str
     record_id: int
-    # For a trial: the telling words of its indication, one of which the title must
-    # hold too. Empty for a claim.
+    # For a trial: the telling words of its indication that are not words of its name,
+    # one of which the title must hold too. Empty for a claim.
     beside: frozenset[str] = frozenset()
 
 
@@ -96,14 +96,13 @@ def read_stored(session: Session) -> Stored:
         .where(RegistryTrial.search_name.is_not(None), RegistryTrial.search_indication.is_not(None))
         .order_by(RegistryTrial.id)
     ):
-        stored.add_name(
-            Name(
-                words_of(name or ""),
-                REGISTRY_TRIAL,
-                trial_id,
-                frozenset(words_of(indication or "")),
-            )
-        )
+        named = words_of(name or "")
+        # The indication's words that are not also the name's. A trial named by its own
+        # disease, as a vaccine is, has none: its name alone in a title says nothing
+        # about the trial, so it is not linked by title.
+        beside = frozenset(words_of(indication or "")) - frozenset(named)
+        if beside:
+            stored.add_name(Name(named, REGISTRY_TRIAL, trial_id, beside))
     return stored
 
 
@@ -134,7 +133,9 @@ def links_for(lead: LinkLead, stored: Stored, most: int) -> list[tuple[str, int,
 
 class LinkScreen:
     name = "link_screen"
-    version = 1
+    # 2: a trial is linked by title only on a word of its indication that is not also a
+    # word of its name (found on the first real run, 2026-11-14).
+    version = 2
     record_kind = "link_lead"
     model = LinkLead
     source = NO_SOURCE
