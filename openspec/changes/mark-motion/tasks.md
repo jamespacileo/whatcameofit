@@ -22,7 +22,8 @@
 
 - [x] 4.1 Redraw the glass as one outline with a clean joint, give the capsule room, centre the drawing; regenerate every icon and the lockup. Verified against the earlier drawing at 16 to 640 pixels, on navy and on the tile
 - [x] 4.2 Bring the masthead's, the extension's and the video's copies to the same drawing; a site test holds the masthead's to the generated file
-- [ ] 4.3 Refresh the Safari project's generated artwork with `extension/sync-brand-icons.mjs` at its next release
+- [x] 4.3 Render the explainer video and its poster again from the same narration and music; raise the address's `?v=`. Verified by duration, frame count and frames at the open and the close
+- [ ] 4.4 Refresh the Safari project's generated artwork with `extension/sync-brand-icons.mjs` at its next release
 
 ## 5. Record
 

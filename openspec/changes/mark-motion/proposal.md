@@ -45,6 +45,6 @@ asked for the suggested set and the four drawings to be built.
 - The study in which the capsule's blue half arrives after its coral half is not on
   any page: beside a status it could be read as bad then good. It appears only in
   the video sting, where no status is shown.
-- The explainer video and its poster are not re-rendered, so they show the earlier drawing
-  until the video is next made.
+- The explainer video's words, timing and sound are unchanged. Its picture and poster were
+  rendered again from the same narration and music, so that they show the refined mark.
 - No extension version is changed; the Safari release in review is untouched.
