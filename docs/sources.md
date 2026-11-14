@@ -166,3 +166,40 @@ For every platform in this table the site names the platform, asks nothing of it
 - **Free limits:** 2,000 requests per five minutes per IP. At most three explicit organisation names per lookup, modest request pacing, seven-day metadata cache and shared 429 cooldown. No automatic retries.
 - **Use:** affiliation matching returns an organisation only when ROR marks it chosen. Names come from the supplied report, not from paper affiliations; the ROR identifier establishes organisation identity, not involvement in a study or an endorsement.
 - **Pipeline use:** `thenwhat resolve` asks once per institution and company entity of a claim, at two requests a second, with the 24-hour HTTP cache. Only the organisation ROR marks chosen becomes a candidate match, scored by ROR's own measure. A person is never looked up.
+
+## NLM Medical Subject Headings (MeSH)
+
+Read before the client was written (openspec `knowledge-cards`, task 1.1).
+
+- **Checked:** 2026-11-14
+- **Terms:** <https://www.nlm.nih.gov/databases/download/terms_and_conditions_mesh.html> (last reviewed 4 October 2018). "NLM freely provides MeSH data." No charge, fee or royalty. Translation files are not covered and are not used.
+- **Services:** MeSH RDF, <https://id.nlm.nih.gov/mesh/>; documentation at <https://hhs.github.io/meshrdf/> and its "SPARQL and URI Requests" page. A term's record is `GET https://id.nlm.nih.gov/mesh/<year>/<identifier>.json`; terms by label are `GET https://id.nlm.nih.gov/mesh/lookup/descriptor?label=…&match=exact&limit=10&year=<year>`.
+- **Authentication:** none (observed).
+- **Rate limit:** none stated on the pages read. The documentation limits one SPARQL answer to 1,000 results, which the client does not use. The client defaults to 2 requests per second, and a term's stored record is asked for again no sooner than ninety days later.
+- **Terms that bind the site:** acknowledge NLM as the source "in a clear and conspicuous manner"; do not indicate or imply that NLM endorses the site; when republishing, either keep the data the most current or make known that it may not be, "and/or identify the version of MeSH being used". NLM gives no warranty for the data.
+- **Credit line:** "Medical Subject Headings (MeSH), U.S. National Library of Medicine". A card also states the MeSH year and the date its record was read, and says NLM does not endorse the site.
+- **Which field gives the version (observed):** none inside the record. A record holds `dateIntroduced` and `lastUpdated`, which are the term's own dates, and no year of the vocabulary. The version is in the address: `/mesh/2026/D009765.json` answers with `"@id": "http://id.nlm.nih.gov/mesh/2026/D009765"`, and the address without a year serves the current vocabulary with no year in `@id`. The client therefore asks the address of the year in which it asks, and reads the version back from the year in the record's `@id`. A year NLM has not published answers like an unknown identifier (`/mesh/2027/…` on this date), so in the weeks around a new year's release a lookup can find nothing; it is then run again later, and no other year is tried.
+- **Behavior (observed, generic client name, no key):** a record is JSON-LD served as `application/rdf+json`. A descriptor carries `label`, `identifier`, `preferredConcept` and no definition. The definition is the `scopeNote` of the preferred concept's own record (`/mesh/2026/M0015159.json`), a second request. An unknown identifier answers 200 with an empty object, not 404. `match=exact` compares without regard to case ("obesity" returns "Obesity") and answers `[]` when no label is equal. `match=contains` for "Obesity" lists "Anti-Obesity Agents" first; the client never asks it, and compares labels itself as well. A supplementary record (`C…`) read without a year can be inactive with a label starting "[OBSOLETE]"; a year's address was not seen to serve one.
+- **What is kept:** the descriptor's and the concept's records as fetched, with the fetch time, in `term_record`.
+- **What is not used:** annotations, history notes, tree numbers, qualifiers and "see also" links. They are indexing instructions, not descriptions.
+
+## Open Targets Platform
+
+Read for the drug and target cards (openspec `knowledge-cards`, task 1.2). No client exists, and none is written before the operator's decision on share-alike material (task 6.1).
+
+- **Checked:** 2026-11-14
+- **Licence page:** <https://platform-docs.opentargets.org/licence>. "Open Targets Platform is marked with CC0 1.0." The same page lists each data source with its own licence and says every listed source has "agreed for their data to be used without restriction by all Open Targets users".
+- **Terms of use:** <https://platform-docs.opentargets.org/licence/terms-of-use>. They add no constraint beyond the data owner's. Open Targets "expects attribution" for its services and data. Use at a level that prevents, or looks likely to prevent, service to others is blocked.
+- **Citation asked for:** <https://platform-docs.opentargets.org/citation>: Buniello, A. et al. (2025), "Open Targets Platform: facilitating therapeutic hypotheses building in drug discovery", Nucleic Acids Research.
+- **API:** GraphQL at `https://api.platform.opentargets.org/api/v4/graphql`, documented at <https://platform-docs.opentargets.org/data-access/graphql-api>. No key. No rate limit is stated. The page says the API serves queries for a single target, disease or drug, discourages "repeatedly querying the GraphQL API one entity at a time", and points systematic use to the data downloads. One search and one record per named drug is single-entity use; a run over every claim at once should read the downloads instead.
+- **Licences of the parts a card would use, each listed separately:**
+
+| Part | Drawn from | Licence | Where it is stated | Read |
+| --- | --- | --- | --- | --- |
+| That a drug is in the platform, its name and identifier | Open Targets Platform | CC0 1.0 | <https://platform-docs.opentargets.org/licence> | 2026-11-14 |
+| Kind of molecule and mechanisms of action | ChEMBL (the platform's drug page names ChEMBL as the source of "Molecule information, Mechanisms of action": <https://platform-docs.opentargets.org/drug>) | CC BY-SA 3.0 Unported | Open Targets' licence table, and ChEMBL's own page <https://chembl.gitbook.io/chembl-interface-documentation/about>: "made available on a Creative Commons Attribution-Share Alike 3.0 Unported License" | 2026-11-14 |
+| A target's protein name and function description | UniProt (the platform's target page names UniProt for protein information: <https://platform-docs.opentargets.org/target>) | CC BY 4.0 | Open Targets' licence table, and UniProt's own page <https://www.uniprot.org/help/license> (last modified 18 December 2024): CC BY 4.0 applies "to all copyrightable parts of our databases" | 2026-11-14 |
+
+- **What follows for the site:** the data file is offered under CC BY 4.0. A CC BY 4.0 fact can enter it with credit. A CC BY-SA 3.0 fact cannot enter it without making the file share-alike, and whether such a fact may be shown on a page at all is the operator's decision (task 6.1). Until that decision the list of sources in `pipeline/src/thenwhat/sources/terms.py` marks Open Targets, ChEMBL and UniProt as not accepted, so nothing from them is exported.
+- **UniProt's disclaimer (same page):** its medical information is "for research, educational and informational purposes only" and is no substitute for professional advice. A target card would sit under the site's own notice that cards are not advice.
+- **Not checked:** which field of the GraphQL schema gives the function description and whether each description names its own origin. Check both, and this entry again, before the client is written (task 6.2).

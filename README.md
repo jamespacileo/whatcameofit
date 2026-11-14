@@ -114,6 +114,13 @@ thenwhat prepare --pending              # every claim awaiting review
 thenwhat prepare claim-one claim-two    # or named claims
 ```
 
+Subject terms tie a claim's condition and intervention to entries in an open vocabulary (`GLOSSARY.md`). They are proposed, scored and decided by rule, and never change a status:
+
+```sh
+thenwhat terms claim-one claim-two      # named claims
+thenwhat terms --missing                # every published claim with no candidate yet
+```
+
 Then review. `review list` shows what each registry record says, so most candidates can be judged without opening the link. Several items can be decided at once:
 
 ```sh

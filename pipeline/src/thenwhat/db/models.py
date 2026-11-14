@@ -30,6 +30,8 @@ from thenwhat.domain import (
     EvidenceStage,
     RegulatoryOutcome,
     ReviewState,
+    TermFit,
+    TermRole,
     TrialState,
 )
 
@@ -197,6 +199,52 @@ class EntityMatch(Reviewed, Base):
     # site owns their wording.
     reasons: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, server_default="{}")
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
+
+
+class ClaimTerm(Reviewed, Base):
+    """A subject term proposed for a claim's condition or intervention (GLOSSARY.md).
+    Behavior: openspec knowledge-cards."""
+
+    __tablename__ = "claim_term"
+    __table_args__ = (
+        UniqueConstraint(
+            "claim_id",
+            "role",
+            "source_name",
+            "external_id",
+            name="uq_claim_term_claim_role_source_external",
+        ),
+        CheckConstraint("score >= 0 AND score <= 1", name="score_range"),
+        _review_decision_recorded(),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    claim_id: Mapped[int] = mapped_column(ForeignKey("claim.id"), index=True)
+    role: Mapped[TermRole] = mapped_column(_enum(TermRole, "role"))
+    source_name: Mapped[str] = mapped_column(Text)
+    external_id: Mapped[str] = mapped_column(Text)
+    # The term's label as the candidate was gathered, so the queue can name it.
+    label: Mapped[str] = mapped_column(Text)
+    # Empty until the term check has an answer for the candidate.
+    score: Mapped[float | None]
+    # Whether it was read as the claim's own condition or intervention, or as broader.
+    # Empty when it was read as something else, or not read yet.
+    fit: Mapped[TermFit | None] = mapped_column(_enum(TermFit, "fit"))
+    # Why the term is a candidate, found by rule: each a code with its counts or name.
+    reasons: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list, server_default="[]")
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
+
+
+class TermRecord(Base):
+    """A vocabulary term's own record as its source returned it, kept once per term."""
+
+    __tablename__ = "term_record"
+
+    source_name: Mapped[str] = mapped_column(Text, primary_key=True)
+    external_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    url: Mapped[str] = mapped_column(Text)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
 
 
 class EvidenceEvent(Reviewed, Base):

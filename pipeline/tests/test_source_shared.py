@@ -10,7 +10,15 @@ import pytest
 from sqlalchemy.orm import Session
 
 from thenwhat.db.models import HttpCache
-from thenwhat.sources.base import MissingContact, Pacer, Source, SourceError, SourceUnavailable
+from thenwhat.sources.base import (
+    MissingContact,
+    Pacer,
+    Source,
+    SourceError,
+    SourceUnavailable,
+    TermsNotRecorded,
+)
+from thenwhat.sources.terms import SOURCES
 
 
 class Demo(Source):
@@ -19,6 +27,18 @@ class Demo(Source):
 
     def get(self, path: str, *, force: bool = False):
         return self._get(f"https://demo.test/{path}", force=force)
+
+
+class Unread(Demo):
+    """A source whose terms nobody has read."""
+
+    name = "unread"
+
+
+@pytest.fixture(autouse=True)
+def demo_is_recorded(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The minimal client stands for a source whose terms are recorded."""
+    monkeypatch.setitem(SOURCES, "demo", SOURCES["ror"])
 
 
 class Server:
@@ -43,6 +63,25 @@ def ok(body: dict | None = None) -> httpx.Response:
 def client(session: Session, fake_time, server: Server, **options) -> Demo:
     options.setdefault("contact_email", "ops@thenwhat.test")
     return Demo(session, transport=httpx.MockTransport(server), time=fake_time, **options)
+
+
+# --- recorded terms ------------------------------------------------------------
+
+
+def test_source_with_no_recorded_terms_is_not_asked(session: Session, fake_time):
+    """Scenario: Source not yet recorded"""
+    server = Server(ok())
+    unread = Unread(
+        session,
+        contact_email="ops@thenwhat.test",
+        transport=httpx.MockTransport(server),
+        time=fake_time,
+    )
+
+    with pytest.raises(TermsNotRecorded, match="'unread' are not recorded"):
+        unread.get("thing")
+
+    assert server.requests == []
 
 
 # --- caching -------------------------------------------------------------------
