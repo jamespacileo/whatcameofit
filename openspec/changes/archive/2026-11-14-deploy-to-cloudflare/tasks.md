@@ -13,6 +13,8 @@
 
 ## 3. For the operator
 
-- [ ] 3.1 Sign in with `wrangler login` and run `SITE_URL=https://<domain> make deploy-check` once the claims to publish are approved
-- [ ] 3.2 Make the method page's "What is counted" section true for Cloudflare hosting, then run `make deploy`
-- [ ] 3.3 Put the address in `site/site.config.mjs` and build the extension for it
+- [x] 3.1 Sign in with `wrangler login` and run `SITE_URL=https://<domain> make deploy-check` once the claims to publish are approved
+- [x] 3.2 Make the method page's "What is counted" section true for Cloudflare hosting, then run `make deploy`
+- [x] 3.3 Put the address in `site/site.config.mjs` and build the extension for it
+
+Group 3 met by 2026-11-14: production deploys from `main` through GitHub Actions (change `github-cloudflare-cicd`, `docs/deploy.md`), which runs the deployment rehearsal before it publishes, in place of a one-off `make deploy-check` by hand. https://whatcameofit.com serves the site; the method page's "What is counted" names Cloudflare as host; `site/site.config.mjs` defaults to that address and the Safari 0.9.0 extension is built for it.

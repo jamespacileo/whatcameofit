@@ -3,4 +3,4 @@
 - [x] Restore the fixed body width and add the browser regression page
 - [x] Verify the regression passes and run extension checks
 - [x] Install 0.6.1 and verify repeated native Safari openings (reader confirmed normal display; subsequent Reddit and Kyoto openings rendered content at the restored width)
-- [ ] Merge the fix and upload the corrected Apple build
+- [x] Merge the fix and upload the corrected Apple build (fixed 360px width in `extension/src/popup.css`, regression page `extension/dev/sizing.html`; shipped in the 0.9.0 release `a68ffd4`)
