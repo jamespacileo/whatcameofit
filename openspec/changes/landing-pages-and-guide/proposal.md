@@ -15,8 +15,8 @@ person who has to be told what the site is, why to trust it, or what to do with 
 
 The operator asked on 2026-11-14 to consider marketing landing pages and wikis, and chose:
 an extension page, a page per audience, a page on why the site exists, sharper topic
-pages for communities, and for "wiki" a reference guide the site writes itself. This
-change is the plan; nothing is built until the operator confirms the brief in `design.md`.
+pages for communities, and for "wiki" a reference guide the site writes itself. The
+operator confirmed the brief in `design.md` the same day.
 
 ## What changes
 
@@ -50,7 +50,8 @@ change is the plan; nothing is built until the operator confirms the brief in `d
   `PRODUCT.md` records that none exists, and none may be implied.
 - No counting of who presses an install button. `site-measurement` already limits the
   site to counts of requests.
-- The masthead keeps its three links. Whether "Guide" joins them is left to the operator.
+- The masthead keeps its three links. The guide is linked from the footer and from where
+  a word is met.
 - The method page keeps the explainer video and the rules. The about page links to them
   and does not repeat them.
 

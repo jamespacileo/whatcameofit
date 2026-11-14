@@ -1,6 +1,6 @@
 ## 0. Before building
 
-- [ ] 0.1 Operator confirms the brief in `design.md` and answers the six decisions at its end
+- [x] 0.1 Operator confirms the brief in `design.md` and answers the six decisions at its end (2026-11-14)
 
 ## 1. Extension page
 

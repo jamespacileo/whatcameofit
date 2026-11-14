@@ -1,6 +1,6 @@
 # Design
 
-This file is the design brief the operator is asked to confirm. It fixes who each page is
+This file is the design brief, confirmed by the operator on 2026-11-14. It fixes who each page is
 for, what it must prove, its structure and its limits. It does not fix the composition of
 the two pages that persuade; those get a structure round when they are built.
 
@@ -228,8 +228,7 @@ The address, the table and the stage filter are unchanged.
 - Static, built from the export and the entry files alone. No new service, no storage
   beyond what the site already keeps in the reader's browser.
 - No third-party request from any new page. Store buttons are the site's own drawn
-  controls, not the stores' badge images, unless the operator wants the official badges
-  and accepts their terms.
+  controls, not the stores' badge images.
 - Every count on a landing page is computed from the export at build.
 - 44-pixel targets, one breakpoint, print styles, forced-palette outlines and the footer
   notices hold as on every page.
@@ -245,15 +244,19 @@ Each part ships on its own.
 4. About page. Needed before anything is announced.
 5. Audience pages. Needed when outreach starts.
 
-## Decisions left to the operator
+## Decisions
 
-1. **Masthead.** Does "Guide" join the three masthead links, or stay in the footer?
-2. **Guide entries and review.** Publish entries marked "not yet checked by a person", as
-   claims are, or hold each back until read?
-3. **About page, "who runs it".** Named, as on the privacy page? Anything to declare
-   about funding?
-4. **Store buttons.** The site's own controls, or the stores' official badges?
-5. **The example claim** on the extension and about pages: chosen by a rule (most
-   reports, a dated promise, a status on the path) or named in the site's settings?
-6. **Composition of `/extension` and `/about`.** The structures above are the proposed
-   lead. Each gets a round of three first-viewport sketches to choose from when built.
+The operator confirmed this brief on 2026-11-14, with these answers.
+
+1. **Masthead.** It keeps its three links. "Guide" is linked from the footer and from
+   where a word is met.
+2. **Guide entries and review.** An entry is published marked "not yet checked by a
+   person", as a claim is (ADR 0001). The operator reading it sets it checked.
+3. **About page, "who runs it".** The operator is named, as on the privacy page. The
+   sentence on funding is the operator's to word (task 4.4).
+4. **Store buttons.** The site's own controls. No store's badge image is loaded.
+5. **The example claim** on the extension and about pages is chosen by a rule from the
+   export: a status on the path, a dated promise, then the most news reports. It is not
+   named in the settings.
+6. **Composition of `/extension` and `/about`.** The structures above are the lead. Each
+   gets a round of three first-viewport sketches to choose from when it is built.
