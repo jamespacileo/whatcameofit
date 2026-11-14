@@ -10,7 +10,7 @@
   .doc h1 { font-size: clamp(1.7rem, 4vw, 2.3rem); line-height: 1.15; letter-spacing: -0.018em; text-wrap: balance; }
   .doc > p { max-width: 68ch; margin-top: 0.8rem; }
   .doc h2 { font-size: 1.35rem; margin: 2.6rem 0 0.9rem; letter-spacing: -0.01em; }
-  .mocks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 1.6rem; }
+  .mocks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1.6rem; }
   .mocks a { display: block; background: var(--paper); border: 1px solid var(--rule); border-radius: 0.85rem; padding: 1.1rem 1.2rem 1.2rem; text-decoration: none; color: var(--ink); transition: border-color 120ms, background-color 120ms; }
   .mocks a:hover { border-color: var(--blue); background: var(--panel); }
   .mocks b { display: block; color: var(--blue); font-size: 1.1rem; text-decoration: underline; text-underline-offset: 0.18em; text-decoration-thickness: 1px; }
@@ -31,11 +31,12 @@
 <header class="mast"><div class="mast-in"><a class="name" href="home.html"><span data-mark></span><span>What came <b>of it?</b></span></a></div></header>
 
 <main class="doc">
-  <h1>Page patterns adapted from Examine, on three of our pages</h1>
-  <p>Compared on 14 Nov 2026: our claim page for the wrist-worn nerve stimulation device, our topic and home pages, and Examine’s supplement, conditions and home pages. The mocks keep our tokens, typeface, wording and guardrails; what changes is the page frame around them. Each mock has a switch, bottom left, between a deep navy band and the pale band the home page has today.</p>
+  <h1>Page patterns adapted from Examine, on our claim, topic and home pages</h1>
+  <p>Compared on 14 Nov 2026: our claim page for the wrist-worn nerve stimulation device, our topic and home pages, and Examine’s supplement, conditions and home pages. The mocks keep our tokens, typeface, wording and guardrails; what changes is the page frame around them. The band is deep navy, chosen on 14 Nov 2026.</p>
 
   <div class="mocks">
     <a href="claim.html"><b>Claim page</b><span>Band with the status card, section list, folding sections, dated timeline, trials as a table.</span></a>
+    <a href="claim-promise.html"><b>Claim page with a dated promise</b><span>Solengepras: a promise for 2029 on the timeline beside “Not yet reached”, three reports followed, trials with phases.</span></a>
     <a href="topic.html"><b>Topic page</b><span>Status filter in the band, topics down the side, a filter field over the claims table.</span></a>
     <a href="home.html"><b>Home page</b><span>Centred lookup on the band, the path with counts, three lists to explore, headlines table.</span></a>
   </div>
@@ -69,9 +70,9 @@
     <div>
       <h3>Changes to rules in DESIGN.md</h3>
       <ul>
-        <li><b>Navy band under the masthead.</b>Today a solid navy block is allowed only for the masthead and footer. The pale version of each mock stays inside the rule.</li>
+        <li><b>Navy band under the masthead.</b>Chosen. Today a solid navy block is allowed only for the masthead and footer, so the rule gains the band.</li>
         <li><b>Timeline order.</b>Newest first in the mock; the timetable is oldest first today.</li>
-        <li><b>Promised beside recorded.</b>The year table sets them side by side. In a timeline a promise would be an amber entry at its promised year; this claim has no dated promise, so the mock does not show one.</li>
+        <li><b>Promised beside recorded.</b>Kept. A year with a promise carries two boxes on the line: what was promised for it, on amber, beside what was recorded in it. See the second claim mock.</li>
         <li><b>Page width.</b>78rem with side columns, against 60rem today.</li>
         <li><b>Trial entries.</b>A table row per trial replaces the stacked entry DESIGN.md describes; the plain wording is kept.</li>
       </ul>

@@ -1,4 +1,4 @@
-// Mock behaviour only: icons, the band switch, the section list's current place,
+// Mock behaviour only: icons, the section list's current place,
 // the timeline's tabs and the table filter. None of this is the site's script.
 const ICONS = {
   chev: '<path d="m6 9 6 6 6-6"/>',
@@ -34,16 +34,6 @@ for (const el of document.querySelectorAll("[data-track]")) {
   el.className = "track mini";
   el.innerHTML = `<span class="steps" role="img" aria-label="Place ${place} of 6 on the path from preclinical to approved">${[1, 2, 3, 4, 5, 6].map((n) => `<span class="step${n === place ? " here" : ""}"></span>`).join("")}</span>`;
 }
-
-// Band switch: deep navy or the pale panel blue.
-const hero = document.querySelector(".hero");
-const store = { get: () => { try { return localStorage.getItem("mock-band"); } catch { return null; } }, set: (v) => { try { localStorage.setItem("mock-band", v); } catch {} } };
-function band(value) {
-  hero?.classList.toggle("navy", value === "navy");
-  for (const b of document.querySelectorAll("[data-band]")) b.setAttribute("aria-pressed", String(b.dataset.band === value));
-}
-band(store.get() ?? "navy");
-for (const b of document.querySelectorAll("[data-band]")) b.addEventListener("click", () => { band(b.dataset.band); store.set(b.dataset.band); });
 
 // Section list: mark the section in view, and open a folded section when its link is pressed.
 const links = [...document.querySelectorAll(".onpage a[href^='#']")];

@@ -234,6 +234,18 @@ summary:hover .chev { background: var(--tag); }
 .tl-gap { margin: 0.5rem 0 0.5rem -1.55rem; padding: 0.55rem 0 0.55rem 1.55rem; background: var(--paper); color: var(--muted); font-size: 0.9rem; }
 .tl-gap::before { content: ""; position: absolute; left: 0.7rem; top: 0; bottom: 0; border-left: 2px dotted var(--ring); }
 .tl-gap b { color: var(--ink); font-weight: 600; }
+/* A year with a promise: promised and recorded side by side, on the line. */
+.tl-year.ahead::after { background: var(--paper); border: 2px solid var(--ink); }
+.tl-ev.tl-pair { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 0.8rem; align-items: stretch; padding: 0.3rem 0 0.7rem; }
+.tl-ev.tl-pair::before { display: none; }
+.tl-promise, .undated { background: var(--promise); border: 1px dashed var(--promise-rule); border-radius: 0.65rem; padding: 0.7rem 0.9rem; }
+.tl-rec { border: 1px solid var(--rule); border-radius: 0.65rem; padding: 0.7rem 0.9rem; }
+.tl-pair .lbl, .undated .lbl { display: block; font-size: 0.82rem; font-weight: 700; color: var(--muted); margin-bottom: 0.3rem; }
+.tl-promise li + li, .undated li + li { border-top: 1px dashed var(--promise-rule); margin-top: 0.55rem; padding-top: 0.55rem; }
+.tl-promise .by, .undated .by { display: block; color: var(--muted); font-size: 0.875rem; }
+.tl-rec b { font-weight: 600; }
+.undated { margin-top: 1.4rem; max-width: 46rem; }
+.reports li + li { margin-top: 0.6rem; }
 .tl [hidden] { display: none; }
 .key { display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; color: var(--muted); font-size: 0.85rem; margin-top: 1.2rem; }
 .key span { display: inline-flex; align-items: center; gap: 0.4rem; }
@@ -332,7 +344,6 @@ summary:hover .chev { background: var(--tag); }
 /* Mock switch (not part of the design) ------------------------------------ */
 .mockbar { position: fixed; left: 0.8rem; bottom: 0.8rem; z-index: 9; display: flex; gap: 0.3rem; align-items: center; background: var(--ink); color: #fff; padding: 0.3rem 0.35rem 0.3rem 0.7rem; border-radius: 999px; font-size: 0.78rem; box-shadow: 0 6px 18px rgb(15 31 56 / 0.25); }
 .mockbar a, .mockbar button { color: #fff; background: rgb(255 255 255 / 0.14); border: 0; border-radius: 999px; padding: 0.25rem 0.65rem; font-size: 0.78rem; font-weight: 600; text-decoration: none; cursor: pointer; }
-.mockbar button[aria-pressed="true"] { background: #fff; color: var(--ink); }
 
 /* Narrow ------------------------------------------------------------------ */
 @media (max-width: 68rem) {
@@ -375,6 +386,7 @@ summary:hover .chev { background: var(--tag); }
   .tl-year .when { display: inline; margin-left: 0.4rem; }
   .tl-ev { grid-template-columns: minmax(0, 1fr); }
   .tl-ev::before { left: -1.32rem; top: 0.95rem; }
+  .tl-ev.tl-pair { grid-template-columns: minmax(0, 1fr); }
   .tl-ev .src { white-space: normal; min-height: 2.75rem; display: flex; align-items: center; }
   .tl-gap { margin-left: -1.4rem; padding-left: 1.4rem; }
   .tl-gap::before { left: 0.25rem; }
