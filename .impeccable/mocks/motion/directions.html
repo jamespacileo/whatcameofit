@@ -73,8 +73,8 @@ dl.meta dd{margin:0}
 .name .dot{fill:var(--on-navy);transform-box:fill-box;transform-origin:center}
 .name .mk{width:1.4em;height:1.4em;margin-right:.45em;align-self:center;flex:none}
 .mk{display:block;overflow:visible}
-.m-ghost{stroke-opacity:.28}
-.m-ring,.m-handle{stroke-dasharray:1 1.2}
+.m-ghost{fill-opacity:.28}
+.m-ring,.m-handle{stroke-dasharray:1 1.2;opacity:0}
 .m-cap{transform-box:fill-box;transform-origin:center}
 
 /* The question: as shipped */
@@ -87,7 +87,7 @@ dl.meta dd{margin:0}
 /* 1. Lowered into place */
 [data-study="rest"]{--hook-at:.4s;--dot-at:1s}
 [data-study="rest"].play .m-glass{animation:glass-lower .7s var(--ease) both}
-@keyframes glass-lower{from{transform:translate(29.5px,30.5px) scale(1.14) translate(-31px,-32px)}to{transform:translate(31px,32px) scale(1) translate(-31px,-32px)}}
+@keyframes glass-lower{from{transform:translate(29px,29px) scale(1.14) translate(-30.5px,-30.5px)}to{transform:translate(30.5px,30.5px) scale(1) translate(-30.5px,-30.5px)}}
 
 /* 2. The second half arrives */
 [data-study="then"]{--hook-at:.6s;--dot-at:1.2s}
@@ -96,8 +96,11 @@ dl.meta dd{margin:0}
 
 /* 3. Drawn like the question */
 [data-study="drawn"]{--hook-at:.7s;--dot-at:1.3s}
+[data-study="drawn"].play .m-ring,[data-study="drawn"].play .m-handle{opacity:1}
 [data-study="drawn"].play .m-ring{animation:stroke-draw .8s var(--ease) both}
 [data-study="drawn"].play .m-handle{animation:stroke-draw .3s var(--ease) .55s both}
+/* The outline, with its arcs at the joint, takes over once both lines are drawn. */
+[data-study="drawn"].play .m-outline{animation:fade-in .15s ease-out .85s both}
 
 /* 4. A closer look */
 [data-study="closer"].play .m-cap{animation:closer .52s cubic-bezier(.3,0,.2,1) both}
@@ -151,7 +154,7 @@ dl.meta dd{margin:0}
 [data-study="sting"].play .tagline{animation:fade-in .6s ease-out 2.6s both}
 @keyframes rise-in{from{opacity:0;transform:translateY(3px)}}
 @keyframes fade-in{from{opacity:0}}
-@keyframes glass-in{from{opacity:0;transform:translate(29.5px,30.5px) scale(1.14) translate(-31px,-32px)}to{opacity:1;transform:translate(31px,32px) scale(1) translate(-31px,-32px)}}
+@keyframes glass-in{from{opacity:0;transform:translate(29px,29px) scale(1.14) translate(-30.5px,-30.5px)}to{opacity:1;transform:translate(30.5px,30.5px) scale(1) translate(-30.5px,-30.5px)}}
 [data-study="sting"] .name .lead,[data-study="sting"] .name .tail{display:inline-block}
 
 /* 7. Nothing under the glass */
@@ -380,7 +383,7 @@ footer.close{margin-top:3rem;background:var(--footer);color:var(--pale);font-siz
         <g fill="#ffffff" stroke="#7f90a3" stroke-width="2">
           <circle class="pl" style="--i:0" cx="40" cy="52" r="6"/><circle class="pl" style="--i:1" cx="84" cy="52" r="6"/><circle class="pl" style="--i:2" cx="128" cy="52" r="6"/><circle class="pl" style="--i:3" cx="172" cy="52" r="6"/><circle class="pl" style="--i:4" cx="216" cy="52" r="6"/><circle class="pl" style="--i:5" cx="260" cy="52" r="6"/>
         </g>
-        <g transform="translate(0 52)"><g class="seeker" fill="none" stroke="#16477d" stroke-linecap="round"><path d="M12.6 12.6 18.6 18.6" stroke-width="7"/><circle r="17" stroke-width="5"/></g></g>
+        <g transform="translate(0 52)"><g class="seeker" fill="none" stroke="#16477d" stroke-linecap="round"><path d="M12.9 12.9 18.8 18.8" stroke-width="6.5"/><circle r="17" stroke-width="5"/></g></g>
       </svg>
       <p class="found">No page record found</p>
       <p class="checked">Last checked: just now.</p>
@@ -522,24 +525,29 @@ const icon = (name, cls = "") =>
     .map(([tag, a], i) => `<${tag} class="ln" pathLength="1" style="--i:${i}" ${attrs(a)}/>`)
     .join("")}</svg>`;
 
-// The mark, from site/public/mark.svg and mark-reverse.svg, with its parts named.
+// The mark, from site/public/mark.svg and mark-reverse.svg, with its parts named. The
+// glass is one outline. Under it lie a ring and a handle as plain lines, the same shape
+// but for the small arcs at the joint: they are shown only by the study that draws them.
+const GLASS = "M42.38 49.02A22 22 0 1 1 49.02 42.38A1.2 1.2 0 0 0 49.18 43.88L54.36 49.06A3.75 3.75 0 0 1 49.06 54.36L43.88 49.18A1.2 1.2 0 0 0 42.38 49.02ZM47 30.5A16.5 16.5 0 1 0 14 30.5A16.5 16.5 0 1 0 47 30.5Z";
 function mark(kind) {
   const id = `lens-${++clips}`;
   const glass = kind === "reverse" ? "#ffffff" : "#16477d";
-  const lens = kind === "reverse" ? "none" : "#ffffff";
-  const box = kind === "tile" ? "0 0 64 64" : "8 9 48 48";
+  const box = kind === "tile" ? "0 0 64 64" : "8 8 48 48";
   return `<svg class="mk" viewBox="${box}" aria-hidden="true">${
     kind === "tile" ? '<rect width="64" height="64" rx="16" fill="#ffffff"/>' : ""
-  }<clipPath id="${id}"><circle cx="31" cy="32" r="16.65"/></clipPath>
-  <g class="m-glass" fill="none" stroke="${glass}" stroke-linecap="round">
-    <path class="m-ghost" d="M44.5 45.5 51.5 52.5" stroke-width="8"/>
-    <path class="m-handle" pathLength="1" d="M44.5 45.5 51.5 52.5" stroke-width="8"/>
-    <circle class="m-ghost" cx="31" cy="32" r="19.5" stroke-width="5.7" fill="${lens}"/>
-    <circle class="m-ring" pathLength="1" cx="31" cy="32" r="19.5" stroke-width="5.7" transform="rotate(45 31 32)"/>
+  }<clipPath id="${id}"><circle cx="30.5" cy="30.5" r="16.5"/></clipPath>
+  <g class="m-glass">
+    ${kind === "reverse" ? "" : '<circle cx="30.5" cy="30.5" r="17" fill="#ffffff"/>'}
+    <path class="m-ghost" fill="${glass}" fill-rule="evenodd" d="${GLASS}"/>
+    <g fill="none" stroke="${glass}" stroke-linecap="round">
+      <path class="m-handle" pathLength="1" d="M45 45 51.71 51.71" stroke-width="7.5"/>
+      <circle class="m-ring" pathLength="1" cx="30.5" cy="30.5" r="19.25" stroke-width="5.5" transform="rotate(45 30.5 30.5)"/>
+    </g>
+    <path class="m-outline" fill="${glass}" fill-rule="evenodd" d="${GLASS}"/>
   </g>
   <g clip-path="url(#${id})"><g class="m-cap">
-    <path class="m-coral" d="M30.4 25h-6.9a7 7 0 0 0 0 14h6.9z" fill="#f28a62"/>
-    <path class="m-blue" d="M31.6 25h6.9a7 7 0 0 1 0 14h-6.9z" fill="#1687da"/>
+    <path class="m-coral" d="M29.7 23.75h-6.2a6.75 6.75 0 0 0 0 13.5h6.2z" fill="#f28a62"/>
+    <path class="m-blue" d="M31.3 23.75h6.2a6.75 6.75 0 0 1 0 13.5h-6.2z" fill="#1687da"/>
   </g></g></svg>`;
 }
 
