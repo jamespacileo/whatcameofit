@@ -8,7 +8,7 @@ import typer
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import EntryError
-from thenwhat.cli.console import out
+from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import DATE_FORMATS, entry_session
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.domain import ReviewState
@@ -16,6 +16,7 @@ from thenwhat.extract.retrieve import ArticleRetriever, PasteNeeded, Retrieved
 
 if TYPE_CHECKING:
     from thenwhat.llm.client import Llm
+    from thenwhat.statements.service import StatementChecker, StatementsRun
 
 extract_app = typer.Typer(help="Draft claims from news articles.", no_args_is_help=True)
 
@@ -35,6 +36,53 @@ def make_llm(session: Session) -> "Llm":
             input_usd_per_mtok=settings.llm_input_usd_per_mtok,
             output_usd_per_mtok=settings.llm_output_usd_per_mtok,
         ),
+    )
+
+
+def make_checker(session: Session) -> "StatementChecker":
+    """How reported statements are checked: the configured decision backend and the
+    statement settings."""
+    from thenwhat.cli.resolve import make_backend
+    from thenwhat.statements.service import StatementChecker
+
+    settings = settings_or_exit()
+    return StatementChecker(
+        make_backend(session),
+        accept_above=settings.statement_accept_above,
+        per_article=settings.statements_per_article,
+        copied_run=settings.statement_copied_run,
+    )
+
+
+def statement_lines(run: "StatementsRun") -> list[str]:
+    """What became of an article's reported statements, for the operator."""
+    refused = sum(run.refused.values())
+    reasons = ", ".join(
+        f"{reason.value.replace('_', ' ')}: {count}"
+        for reason, count in sorted(run.refused.items())
+    )
+    lines = [
+        f"Reported statements: {run.proposed} proposed, {len(run.approved)} approved by rule,"
+        f" {len(run.pending)} pending review, {refused} refused by rule"
+        + (f" ({reasons})" if reasons else "")
+        + "."
+    ]
+    if run.known:
+        lines.append(
+            f"{run.known} worded as a statement the article already has, so not added again."
+        )
+    if run.left_out:
+        lines.append(f"{run.left_out} left out: the article has as many statements as it may.")
+    return lines
+
+
+def unchecked_line(run: "StatementsRun", slug: str) -> str | None:
+    """Said when statements were proposed and the check could not answer for some."""
+    if not run.unchecked:
+        return None
+    return (
+        f"{run.unchecked} reported statement(s) could not be checked and were not stored."
+        f" Read the article again for them with `thenwhat statements {slug} --again`."
     )
 
 
@@ -74,11 +122,14 @@ def extract_new(
     from thenwhat.extract.service import draft_claim_from_article
 
     by_rule = settings_or_exit().approve_drafts_by_rule
+    unchecked = None
     with entry_session() as session:
         article = _article_text(url, paste)
-        claim = draft_claim_from_article(
+        now = datetime.now(UTC)
+        extracted = draft_claim_from_article(
             session,
             make_llm(session),
+            make_checker(session),
             text=article.text,
             archive_url=article.archive_url,
             slug=slug,
@@ -87,8 +138,10 @@ def extract_new(
             outlet=outlet,
             title=title,
             published_date=published.date(),
-            decide_by_rule_at=datetime.now(UTC) if by_rule else None,
+            decide_by_rule_at=now if by_rule else None,
+            now=now,
         )
+        claim = extracted.claim
         out.print(f"Drafted claim {claim.slug}: {claim.headline}", markup=False)
         if claim.review_state is ReviewState.APPROVED:
             out.print("Approved by rule: it is published with the next export.")
@@ -99,6 +152,13 @@ def extract_new(
             )
         else:
             out.print("It is pending. Correct it with `claim edit`, then approve it in review.")
+        for line in statement_lines(extracted.statements):
+            out.print(line, markup=False)
+        unchecked = unchecked_line(extracted.statements, claim.slug)
+    if unchecked:
+        # Raised once the session has committed the claim and the decision records.
+        err.print(unchecked, markup=False)
+        raise typer.Exit(code=1)
 
 
 @extract_app.command("article")
@@ -107,17 +167,26 @@ def extract_article(
     article_url: Annotated[str, typer.Option(help="One of the claim's articles.")],
     paste: Annotated[bool, typer.Option("--paste", help=PASTE_HELP)] = False,
 ) -> None:
-    """Add what one of a claim's articles says: entities, the paper, promises."""
+    """Add what one of a claim's articles says: entities, the paper, promises and
+    reported statements."""
     from thenwhat.extract.service import extract_into_claim
 
     with entry_session() as session:
         article = _article_text(article_url, paste)
-        claim = extract_into_claim(
+        extracted = extract_into_claim(
             session,
             make_llm(session),
+            make_checker(session),
             claim_slug=claim_slug,
             article_url=article_url,
             text=article.text,
             archive_url=article.archive_url,
+            now=datetime.now(UTC),
         )
-        out.print(f"Added details from the article to {claim.slug}.", markup=False)
+        out.print(f"Added details from the article to {extracted.claim.slug}.", markup=False)
+        for line in statement_lines(extracted.statements):
+            out.print(line, markup=False)
+        unchecked = unchecked_line(extracted.statements, claim_slug)
+    if unchecked:
+        err.print(unchecked, markup=False)
+        raise typer.Exit(code=1)

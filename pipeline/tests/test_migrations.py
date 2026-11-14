@@ -17,12 +17,13 @@ EXPECTED_TABLES = {
     "paper_record",
     "claim_term",
     "term_record",
+    "reported_statement",
     "organisation_record",
     "entity_article",
 }
 
 # The migration that records where an entity was named (openspec organisations).
-NAMED_BY_REVISION = "0011"
+NAMED_BY_REVISION = "0012"
 
 
 def _tables(engine: Engine) -> set[str]:
