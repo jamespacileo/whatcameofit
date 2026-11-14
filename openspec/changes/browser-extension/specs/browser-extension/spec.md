@@ -35,6 +35,17 @@ On a page that is not a source article of a published claim, the extension SHALL
 - **WHEN** the current tab is not an http or https page
 - **THEN** the extension asks the reader to open an article first
 
+### Requirement: The site's own pages (added 2026-11-13)
+On a page of the site itself the extension SHALL NOT read the page or start a registry search. On a published claim's page it SHALL show that claim as it does for a tracked article, and SHALL NOT add the page to the reader's list of checked pages. On any other page of the site it SHALL ask the reader to open an article first.
+
+#### Scenario: Claim page on the site
+- **WHEN** the reader activates the extension on a published claim's page on the site
+- **THEN** the extension shows that claim's status from the lookup file, and nothing is sent
+
+#### Scenario: Another page on the site
+- **WHEN** the reader activates the extension on the site's home, method or privacy page
+- **THEN** the extension asks the reader to open an article first, and nothing is sent
+
 ### Requirement: The page address stays in the browser
 The extension SHALL decide whether a page is tracked by comparing its address with the lookup file inside the browser. It SHALL NOT send the current page's address to any server. It SHALL read the current tab only when the reader opens the popup, and SHALL NOT monitor or read pages while the popup is closed. It SHALL retain the existing activeTab, scripting and storage permission scope.
 
