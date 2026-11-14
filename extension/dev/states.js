@@ -121,6 +121,12 @@ const states = [
     tracked([claim]),
     { recent: 3, following: 1, changed: 0, followed: [claim.page], was: { [claim.page]: "Trial registered" }, reminders: { [claim.page]: "2027-05-13" } },
   ],
+  // The moment after "Keep me up to date" is pressed: the tick is drawn.
+  [
+    "Tracked, just followed",
+    tracked([claim]),
+    { recent: 3, following: 1, changed: 0, followed: [claim.page], was: {}, fresh: claim.page },
+  ],
   [
     "Recently checked",
     {

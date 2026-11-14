@@ -19,6 +19,8 @@ export const C = {
   footer: "#0b2545",
   // The accent, lifted to read on navy: the name's dot in the masthead.
   onNavy: "#8ec1f5",
+  // Quiet text on navy: the tagline and foot of the site's own card.
+  pale: "#c9d9ee",
 } as const;
 
 export const FACE = '"Figtree Variable", "Helvetica Neue", Arial, sans-serif';

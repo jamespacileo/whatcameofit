@@ -3,6 +3,7 @@ import CalendarPlus from "@lucide/astro/icons/calendar-plus";
 import Rss from "@lucide/astro/icons/rss";
 import SlidersHorizontal from "@lucide/astro/icons/sliders-horizontal";
 import Base from "../layouts/Base.astro";
+import Unfound from "../components/Unfound.astro";
 import ClaimName from "../components/ClaimName.astro";
 import Outlet from "../components/Outlet.astro";
 import Pager from "../components/Pager.astro";
@@ -114,6 +115,8 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
       </noscript>
       {/* No space inside: an empty answer area is hidden by ":empty". */}
       <div class="results" id="results" aria-live="polite" data-suggest={SITE.suggestUrl ?? undefined} data-live={SITE.lookupUrl ?? undefined}></div>
+      {/* Drawn above a search that finds nothing: the path with no place marked. */}
+      <template id="unfound"><Unfound /></template>
     </div>
   </section>
 
@@ -937,6 +940,8 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
         `No record found for “${query}”. We say that a lot.`,
         "This site only covers claims it has tracked so far.",
       );
+      const drawing = document.querySelector<HTMLTemplateElement>("#unfound");
+      if (drawing) results.prepend(drawing.content.cloneNode(true));
       results.append(next());
       return;
     }

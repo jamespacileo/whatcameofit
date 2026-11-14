@@ -5,13 +5,21 @@ import { useCurrentFrame } from "remotion";
 import { arrive } from "./motion";
 import { C } from "./tokens";
 
+// The mark's shapes, as in site/public/mark.svg: the glass as one outline (ring, handle,
+// a small arc in each corner where they meet, the lens cut out) and the capsule's halves.
+const GLASS =
+  "M42.38 49.02A22 22 0 1 1 49.02 42.38A1.2 1.2 0 0 0 49.18 43.88L54.36 49.06A3.75 3.75 0 0 1 49.06 54.36L43.88 49.18A1.2 1.2 0 0 0 42.38 49.02ZM47 30.5A16.5 16.5 0 1 0 14 30.5A16.5 16.5 0 1 0 47 30.5Z";
+const CORAL = "M29.7 23.75h-6.2a6.75 6.75 0 0 0 0 13.5h6.2z";
+const BLUE = "M31.3 23.75h6.2a6.75 6.75 0 0 1 0 13.5h-6.2z";
+/** The lens centre, on both axes of the mark's 64-unit grid. */
+const LENS = 30.5;
+
 /** site/public/mark-reverse.svg: for navy ground. No tile, the glass in white, the capsule in its own colours. */
 export const MarkReverse: FC<{ size: number }> = ({ size }) => (
-  <svg viewBox="8 9 48 48" width={size} height={size} style={{ flex: "none" }}>
-    <path d="M44.5 45.5 51.5 52.5" fill="none" stroke="#ffffff" strokeWidth="8" strokeLinecap="round" />
-    <circle cx="31" cy="32" r="19.5" fill="none" stroke="#ffffff" strokeWidth="5.7" />
-    <path d="M30.4 25h-6.9a7 7 0 0 0 0 14h6.9z" fill="#f28a62" />
-    <path d="M31.6 25h6.9a7 7 0 0 1 0 14h-6.9z" fill="#1687da" />
+  <svg viewBox="8 8 48 48" width={size} height={size} style={{ flex: "none" }}>
+    <path d={GLASS} fill="#ffffff" fillRule="evenodd" />
+    <path d={CORAL} fill="#f28a62" />
+    <path d={BLUE} fill="#1687da" />
   </svg>
 );
 
@@ -19,23 +27,70 @@ export const MarkReverse: FC<{ size: number }> = ({ size }) => (
 export const Mark: FC<{ size: number }> = ({ size }) => (
   <svg viewBox="0 0 64 64" width={size} height={size} style={{ flex: "none" }}>
     <rect width="64" height="64" rx="16" fill="#ffffff" />
-    <path d="M44.5 45.5 51.5 52.5" fill="none" stroke="#16477d" strokeWidth="8" strokeLinecap="round" />
-    <circle cx="31" cy="32" r="19.5" fill="#ffffff" stroke="#16477d" strokeWidth="5.7" />
-    <path d="M30.4 25h-6.9a7 7 0 0 0 0 14h6.9z" fill="#f28a62" />
-    <path d="M31.6 25h6.9a7 7 0 0 1 0 14h-6.9z" fill="#1687da" />
+    <path d={GLASS} fill="#16477d" fillRule="evenodd" />
+    <path d={CORAL} fill="#f28a62" />
+    <path d={BLUE} fill="#1687da" />
   </svg>
 );
 
 /**
+ * The reverse mark put together part by part from frame `at`: the headline's half rises
+ * into the lens, the glass is lowered over it, the record's half arrives beside it.
+ * At rest it is MarkReverse.
+ */
+export const MarkReverseArriving: FC<{ size: number; at?: number }> = ({ size, at = 0 }) => {
+  const frame = useCurrentFrame();
+  const coral = arrive(frame, at, 15);
+  const glass = arrive(frame, at + 14, 21);
+  const blue = arrive(frame, at + 30, 18);
+  // Lowered onto the capsule: from up and to the left, a little larger, about the lens centre.
+  const lift = 1.5 * (1 - glass);
+  const scale = 1 + 0.14 * (1 - glass);
+  return (
+    <svg viewBox="8 8 48 48" width={size} height={size} style={{ flex: "none", overflow: "visible" }}>
+      <path
+        d={GLASS}
+        fill="#ffffff"
+        fillRule="evenodd"
+        opacity={glass}
+        transform={`translate(${LENS - lift} ${LENS - lift}) scale(${scale}) translate(${-LENS} ${-LENS})`}
+      />
+      <path
+        d={CORAL}
+        fill="#f28a62"
+        opacity={coral}
+        transform={`translate(0 ${3 * (1 - coral)})`}
+      />
+      <path
+        d={BLUE}
+        fill="#1687da"
+        opacity={blue}
+        transform={`translate(${3 * (1 - blue)} 0)`}
+      />
+    </svg>
+  );
+};
+
+/** Fades in and rises a little, over 15 frames from `at`. Nothing when `at` is not given. */
+const wordArrival = (frame: number, at: number | undefined): CSSProperties => {
+  if (at === undefined) return {};
+  const shown = arrive(frame, at, 15);
+  return { opacity: shown, transform: `translateY(${(1 - shown) * 0.05}em)` };
+};
+
+/**
  * "What came of it?": a light lead, a heavy tail, and a question mark that is drawn so
  * its dot can be the blue marker. With `drawAt`, the hook is drawn and the dot lands.
+ * With `leadAt` and `tailAt`, "What came" and "of it" each fade in and rise into place.
  */
-export const Wordmark: FC<{ size: number; drawAt?: number; color?: string; dotColor?: string }> = ({
-  size,
-  drawAt,
-  color = C.ink,
-  dotColor = C.blue,
-}) => {
+export const Wordmark: FC<{
+  size: number;
+  drawAt?: number;
+  leadAt?: number;
+  tailAt?: number;
+  color?: string;
+  dotColor?: string;
+}> = ({ size, drawAt, leadAt, tailAt, color = C.ink, dotColor = C.blue }) => {
   const frame = useCurrentFrame();
   const hook = drawAt === undefined ? 1 : arrive(frame, drawAt, 21);
   const dot = drawAt === undefined ? 1 : arrive(frame, drawAt + 18, 18);
@@ -51,8 +106,8 @@ export const Wordmark: FC<{ size: number; drawAt?: number; color?: string; dotCo
         whiteSpace: "nowrap",
       }}
     >
-      <span style={{ fontWeight: 400 }}>What came</span>
-      <span style={{ fontWeight: 800, marginLeft: "0.26em" }}>of it</span>
+      <span style={{ fontWeight: 400, ...wordArrival(frame, leadAt) }}>What came</span>
+      <span style={{ fontWeight: 800, marginLeft: "0.26em", ...wordArrival(frame, tailAt) }}>of it</span>
       <svg
         viewBox="0 0 20 30"
         style={{

@@ -3,6 +3,7 @@ import "../styles/global.css";
 // Preloaded so the first paint is already in the site's face and headings do not reflow.
 import faceUrl from "@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2?url";
 import { SITE } from "../../site.config.mjs";
+import Mark from "../components/Mark.astro";
 import { CARD_NOTICE } from "../lib/card";
 import { THEME_COLOR, brandAsset } from "../lib/brand";
 import { data, listedTopics } from "../lib/export";
@@ -145,7 +146,7 @@ const topicLink =
     <header class="masthead">
       <div class="wrap">
         <a class="name" href="/" aria-label={SITE.name}>
-          <img class="mark" src={brandAsset("/mark-reverse.svg")} alt="" width="32" height="32" />
+          <Mark />
           <span class="lead" aria-hidden="true">{SITE.wordmark[0]}</span>
           <span class="tail" aria-hidden="true">{SITE.wordmark[1]}</span>
           <svg class="ask" viewBox="0 0 20 30" aria-hidden="true">
