@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entities import development_codes
+from thenwhat.claims.verticals import VERTICALS
 from thenwhat.db.models import Claim, ClaimTerm, DecisionLog, Entity, EntityMatch
 from thenwhat.decide.core import Backend, Decision, DecisionFailed, decide, decide_many
 from thenwhat.domain import EntityType, EvidenceStage, TermRole
@@ -645,3 +646,47 @@ def triage_headlines(
         now=now,
     )
     return [decision.probabilities[TREATMENT_REPORT] for decision in decisions]
+
+
+# --- the vertical of a claim drafted from a link lead (openspec lead-reading) ---------
+
+VERTICAL_CHOICE = "vertical_choice"
+VERTICAL_QUESTION = (
+    "Which health area is this treatment filed under? Choose the area of the condition "
+    "it is reported to treat, not of the kind of treatment."
+)
+
+
+def vertical_state(intervention: str, indication: str, summary: str) -> str:
+    """What the vertical decision is shown: what was read from the article, the question,
+    and every configured vertical with its title."""
+    areas = "\n".join(f"- {slug}: {title}" for slug, title in VERTICALS.items())
+    return (
+        f"Intervention: {intervention}\nIndication: {indication}\nSummary: {summary}\n\n"
+        f"{VERTICAL_QUESTION}\n{areas}"
+    )
+
+
+def choose_vertical(
+    session: Session,
+    backend: Backend,
+    *,
+    ref: str,
+    intervention: str,
+    indication: str,
+    summary: str,
+    now: datetime,
+) -> tuple[str, float]:
+    """The vertical the backend chooses among the configured ones, and the probability
+    it gives that choice. A retired vertical is never offered. This function decides
+    nothing: the caller accepts the choice only at or above its own setting."""
+    decision = decide(
+        session,
+        backend,
+        step=VERTICAL_CHOICE,
+        state=vertical_state(intervention, indication, summary),
+        options=list(VERTICALS),
+        input_ref=ref,
+        now=now,
+    )
+    return decision.choice, decision.probabilities[decision.choice]

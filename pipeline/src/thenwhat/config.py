@@ -116,6 +116,16 @@ class Settings(BaseSettings):
     # carry a person's label and a score from the current version of triage.
     lead_evaluation_min_labels: int = 200
 
+    # Reading (openspec lead-reading). A new claim's vertical is chosen by a decision and
+    # accepted only at or above this probability; below it no claim is made.
+    vertical_accept_above: float = 0.8
+    # No outlet is asked for two articles less than this many seconds apart, across
+    # every process. A longer delay in the outlet's robots.txt replaces it.
+    outlet_interval_seconds: float = 10
+    # A lead for a claim that already has this many source articles is held, unless it
+    # was shared before the claim's first reported date.
+    lead_reads_per_claim: int = 3
+
     def chosen_subreddits(self) -> frozenset[str]:
         return frozenset(
             name.strip().removeprefix("r/")

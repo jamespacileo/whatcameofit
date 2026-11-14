@@ -77,6 +77,17 @@ class ArticleRetriever:
         require_contact(self._contact)
         return self._allowed(url)
 
+    def crawl_delay(self, url: str) -> float:
+        """The seconds the site's robots.txt asks this client to leave between requests,
+        or 0 when it asks for none."""
+        require_contact(self._contact)
+        self._allowed(url)  # reads the site's rules if they are not yet known
+        parts = urlsplit(url)
+        rules = self._rules.get(f"{parts.scheme}://{parts.netloc}")
+        if isinstance(rules, bool) or rules is None:
+            return 0.0
+        return float(rules.crawl_delay(CLIENT_NAME) or 0)
+
     def json(self, url: str) -> Any:
         """The JSON a platform's own interface for software serves at this address, or
         None when it does not answer with any."""

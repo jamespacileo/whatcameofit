@@ -92,7 +92,48 @@ def draft_claim_from_article(
     kept for the operator, since a description would be searched for as if it were one.
     """
     check_new_claim(session, slug, vertical)
-    draft = _extract(llm, text, checker)
+    return claim_from_draft(
+        session,
+        checker,
+        read_article(llm, checker, text),
+        text=text,
+        slug=slug,
+        vertical=vertical,
+        url=url,
+        outlet=outlet,
+        title=title,
+        published_date=published_date,
+        archive_url=archive_url,
+        decide_by_rule_at=decide_by_rule_at,
+        now=now,
+    )
+
+
+def read_article(llm: Llm, checker: StatementChecker, text: str) -> Draft:
+    """What the model reads out of an article's text: the one model call of extraction.
+    Nothing is saved, and the text is kept nowhere."""
+    return _extract(llm, text, checker)
+
+
+def claim_from_draft(
+    session: Session,
+    checker: StatementChecker,
+    draft: Draft,
+    *,
+    text: str,
+    slug: str,
+    vertical: str,
+    url: str,
+    outlet: str,
+    title: str,
+    published_date: date,
+    archive_url: str | None = None,
+    decide_by_rule_at: datetime | None = None,
+    now: datetime | None = None,
+) -> Extracted:
+    """Create a claim from an article that has been read: the claim, its article, its
+    entities, promises and reported statements, decided by rule when asked. Nothing is
+    saved if an entry rule refuses it."""
     with session.begin_nested():
         claim = add_claim(
             session,
@@ -119,6 +160,43 @@ def draft_claim_from_article(
             now=now or datetime.now(UTC),
         )
     return Extracted(claim, statements)
+
+
+def article_from_draft(
+    session: Session,
+    checker: StatementChecker,
+    claim: Claim,
+    draft: Draft,
+    *,
+    text: str,
+    url: str,
+    outlet: str,
+    title: str,
+    published_date: date,
+    archive_url: str | None = None,
+    now: datetime | None = None,
+) -> tuple[SourceArticle, StatementsRun]:
+    """Add an article that has been read to a claim that exists: its reference, the hash
+    of its text, any archive address and its reported statements, which are checked and
+    approved by their own rule. Nothing else of the claim is changed, whatever its review
+    state: not its headline, summary, names, entities or promises. Its first reported
+    date moves when the article is earlier, as for any article added."""
+    with session.begin_nested():
+        article = add_article(
+            session, claim.slug, url=url, outlet=outlet, title=title, published_date=published_date
+        )
+        article.content_hash = hashlib.sha256(text.encode()).hexdigest()
+        if archive_url:
+            article.archive_url = archive_url
+        statements = keep_statements(
+            session,
+            checker,
+            article=article,
+            text=text,
+            proposed=draft.statements,
+            now=now or datetime.now(UTC),
+        )
+    return article, statements
 
 
 def extract_into_claim(

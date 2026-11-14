@@ -98,7 +98,11 @@ def steps_for(settings: Settings) -> list[Step]:
 
 
 def make_allowances(settings: Settings) -> Allowances:
-    return Allowances(open_session, settings.allowances())
+    return Allowances(
+        open_session,
+        settings.allowances(),
+        outlet_interval_seconds=settings.outlet_interval_seconds,
+    )
 
 
 def make_registry(session: Session, settings: Settings) -> TrialList:
