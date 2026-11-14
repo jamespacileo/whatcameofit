@@ -158,3 +158,8 @@ Public lookup SHALL resolve at most three unique validated DOI/PubMed citations 
 #### Scenario: Citation lookup fails
 - **WHEN** a citation is missing from OpenAlex or its lookup fails without a rate-limit cooldown
 - **THEN** discovery remains available and successful sibling results are retained
+
+#### Scenario: Temporary failure followed by a completed keyword search
+- **WHEN** a citation lookup fails and a keyword search succeeds
+- **THEN** the answer preserves the source's unavailability and its successful results
+- **AND** an incomplete OpenAlex answer is neither written to nor reused from the shared result cache

@@ -296,7 +296,7 @@ export function makeResearch({ fetch, apiKey, contact, cache, now = Date.now, ti
               if (reply.error) { result.availability.openalex = reply.error; break; }
               found.push(...reply.items);
             }
-            if (citationError && !searches.length) result.availability.openalex = citationError;
+            if (citationError && result.availability.openalex === "ok") result.availability.openalex = citationError;
           } finally {
             result.papers = firstOfEach([...cited, ...found]).slice(0, MAX_PAPERS);
           }

@@ -5,6 +5,7 @@ import { test } from "node:test";
 
 import { lookUp } from "../worker/lookup.mjs";
 import { makeResearch } from "../worker/research.mjs";
+import { previousResult, storeResult } from "../worker/results.mjs";
 
 const BUDGET = {
   daily_budget_usd: 1, daily_remaining_usd: 0.9, prepaid_balance_usd: 0, prepaid_remaining_usd: 0,
@@ -160,7 +161,7 @@ test("a missing cited work is cached as none; an outage or malformed record is n
     const s = setup({ single, works: () => Response.json({ results: [work(1)] }) });
     const result = await s.research.search({ ...BASE, dois: ["10.5555/missing"] });
     assert.deepEqual(result.papers.map((p) => p.id), ["https://openalex.org/W1"]);
-    assert.equal(result.availability.openalex, "ok");
+    assert.equal(result.availability.openalex, cachedAsNone ? "ok" : "unavailable");
     await s.research.search({ ...BASE, dois: ["10.5555/missing"] });
     assert.equal(s.singles().length, cachedAsNone ? 1 : 2);
     assert.equal(s.searches().length, 1);
@@ -174,6 +175,34 @@ test("a rate-limited cited lookup stops discovery and pauses the source", async 
   assert.equal(s.singles().length, 1); assert.equal(s.searches().length, 0);
   await s.research.search({ dois: ["10.5555/c"] });
   assert.equal(s.singles().length, 1);
+});
+
+test("a failed citation cannot become a shared cached miss after successful keyword fallback", async () => {
+  let available = false;
+  const s = setup({single:() => available ? Response.json(work(7)) : new Response("", {status:503})});
+  const values = new Map();
+  const shared = {get:async key => JSON.parse(values.get(key) ?? "null"), put:async (key, value) => values.set(key, value)};
+  const address = "https://example.org/research-report";
+  const lookup = () => lookUp({text:"A synthetic report describes EX-1 for an example condition.",
+    page:{dois:["10.5555/w7"],pubmedIds:[],registryNumbers:[]},research:s.research,index:{claims:{}},
+    model:{read:async () => ({about_a_treatment:true,...BASE})},registry:{search:async () => []},
+  });
+  const first = await lookup();
+  assert.equal(first.research.availability.openalex, "unavailable");
+  await storeResult(shared, address, first, true, 1000);
+  assert.equal(await previousResult(shared, address, 1001), null);
+  available = true;
+  const recovered = await lookup();
+  assert.equal(recovered.research.papers[0]?.id, "https://openalex.org/W7");
+  assert.equal(s.singles().length, 2);
+  assert.equal(s.searches().length, 1, "Successful keyword metadata remains cached");
+  await storeResult(shared, address, recovered, true, 1002);
+  assert.equal((await previousResult(shared, address, 1003)).research.papers[0].id, "https://openalex.org/W7");
+  // Older whole-answer entries that already report an outage must not hide recovery.
+  const [key, value] = [...values][0];
+  const old = JSON.parse(value); old.found.research.availability.openalex = "unavailable";
+  values.set(key, JSON.stringify(old));
+  assert.equal(await previousResult(shared, address, 1004), null);
 });
 
 test("cited lookups send the key only to OpenAlex and refuse redirects", async () => {
