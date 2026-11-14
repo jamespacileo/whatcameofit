@@ -171,8 +171,10 @@ test("Scenario: Search with no result", () => {
 test("Scenario: Home lists the newest reports", () => {
   const html = page("index.html");
   assert.match(html, /Headlines reported most recently/);
-  // Newest first, across claims: reports 3, 2, 1, then 4.
-  const order = [3, 2, 1, 4].map((number) => html.indexOf(`Example report ${number}`));
+  // Newest first, across claims: reports 3, 2, 1, then 4. Read in the Headlines list:
+  // the day-by-day list above it holds the same reports under their dates.
+  const headlines = html.slice(html.indexOf('id="feed-headlines"'));
+  const order = [3, 2, 1, 4].map((number) => headlines.indexOf(`Example report ${number}`));
   assert.ok(order.every((position) => position > -1), "a report is missing from the home page");
   assert.deepEqual([...order].sort((a, b) => a - b), order);
   // The headline opens the claim; the outlet opens the report itself.
@@ -252,8 +254,8 @@ test("Scenario: A returning reader's home page", () => {
   assert.ok(feed.indexOf("data-scoreboard") < feed.indexOf('role="tablist"'));
   // A step that leads nowhere is passed over by the Tab key.
   assert.match(html, /<button type="button" data-step="-1" aria-disabled="true" tabindex="-1">Previous<\/button>/);
-  // The tally says when the registries were last checked.
-  assert.match(html, /Registries last checked <span class="unbroken">/);
+  // The head of the day-by-day list says when the registries were last checked.
+  assert.match(html, /Registries last checked\s+<span class="unbroken/);
   // On a phone the counts wait behind one control.
   assert.match(html, /<button[^>]*class="narrow-toggle"[^>]*aria-expanded="false"[^>]*hidden/);
 });
