@@ -63,7 +63,9 @@ const day = (stamp: string) =>
               {organisation.roles.map((role) => (
                 <li>
                   {roleText(role)}
+                  {/* With one report on the page, "the report" needs no title. */}
                   {role.role === "named_in_report" &&
+                    articles.length > 1 &&
                     role.article_urls.map((url, index) => (
                       <>
                         {index === 0 ? ": " : ", "}

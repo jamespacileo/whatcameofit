@@ -27,7 +27,7 @@
 ## 5. Site
 
 - [x] 5.1 Add the organisation types to `site/src/lib/export.ts` and a wording module for kinds and roles with a function naming any unworded code; verify a site test fails the build on an unknown kind and on wording containing "endorses"
-- [ ] 5.2 Add "Organisations named" to the claim page to `DESIGN.md`: each organisation once, ordered by role then name, sponsors linked to their trials, an unidentified organisation saying so, and the note that the registry does not verify an organisation's part; verify in the browser at phone and desktop widths on a claim with one organisation and the claim with the most
+- [x] 5.2 Add "Organisations named" to the claim page to `DESIGN.md`: each organisation once, ordered by role then name, sponsors linked to their trials, an unidentified organisation saying so, and the note that the registry does not verify an organisation's part; verify in the browser at phone and desktop widths on a claim with one organisation and the claim with the most
 - [x] 5.3 Say beside a marked report that it is on that organisation's website; verify a marked and an unmarked report by site test, and that the wording passes the verdict check
 - [x] 5.4 Verify by site test that no person entity's name from the fixture appears anywhere in the organisations section
 - [x] 5.5 Carry organisations and the publisher mark into the open data file; verify the open data test
@@ -35,7 +35,7 @@
 
 ## 6. Measurement and release check
 
-- [ ] 6.1 Run fetch and resolve against the real database and record in `docs/lookup.md`: organisation names looked up, identified, left unidentified, requests made, and how many source articles gained the publisher mark
+- [x] 6.1 Run fetch and resolve against the real database and record in `docs/lookup.md`: organisation names looked up, identified, left unidentified, requests made, and how many source articles gained the publisher mark
 - [ ] 6.2 Read every organisation name in that run's export once, and record how many are a person, a department too vague to be an organisation, or matched to the wrong record. Reject wrong matches before release; if more than one in twenty is wrong, stop and report before the site task ships
 - [ ] 6.3 Run `make check`
 

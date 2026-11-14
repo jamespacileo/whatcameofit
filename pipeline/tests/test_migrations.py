@@ -83,8 +83,8 @@ def test_existing_entities_are_named_by_an_article(engine: Engine, alembic_confi
             linked = (
                 connection.execute(
                     text(
-                        "SELECT source_article.url FROM entity_article"
-                        " JOIN source_article ON source_article.id = entity_article.source_article_id"
+                        "SELECT source_article.url FROM entity_article JOIN source_article"
+                        " ON source_article.id = entity_article.source_article_id"
                     )
                 )
                 .scalars()

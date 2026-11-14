@@ -2997,8 +2997,14 @@ main ul:not([class]) li + li {
   font-weight: 600;
 }
 
-.organisation-roles li {
+.organisation-list .organisation-roles {
+  margin: 0.15rem 0;
+}
+
+.organisation-list .organisation-roles li {
   display: block;
+  border: 0;
+  padding: 0;
   overflow-wrap: anywhere;
 }
 

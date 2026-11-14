@@ -981,7 +981,8 @@ test("Scenario: Claim with a university and a company", () => {
   // An identified organisation shows the registry's facts, its record and the score.
   const university = section.split("Example University")[1].split("Zed Start-up")[0];
   assert.match(university, /Education, Funder · United Kingdom · <a href="https:\/\/www\.example\.ac\.uk\/"[^>]*>example\.ac\.uk<\/a>/);
-  assert.match(university, /Named in the report: <a href="https:\/\/uk\.news\.example\.org\/3"/);
+  // One report on the page: "the report" needs no title.
+  assert.match(university, /Named in the report\s*<\/li>/);
   assert.match(university, /which scores the name match 97%/);
   assert.match(university, /href="https:\/\/ror\.org\/00example1"[^>]*>\s*Its registry record/);
   assert.match(section, /it does not verify the organisation’s part in this claim/);
