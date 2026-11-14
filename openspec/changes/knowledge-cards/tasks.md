@@ -87,7 +87,7 @@ Groups 3 to 5 were built for exact and broader terms before group 2a was written
 State on 2026-11-14:
 
 - The operator answered task 2a.18 on this date: Open Targets' own data and UniProt's function descriptions are accepted for the page and the data file. The target card from a named gene was built after that answer.
-- 5a.10 to 5a.13 were done once on a copy of the real database (`thenwhat_knowledgecards`), because the change's migration (now 0015) was not yet merged and the real database is shared. The figures and every decision made while reading are in `docs/lookup.md`. They stay unticked until the run and the rejections are repeated on the real database after the merge.
+- 5a.10 to 5a.13 were done first on a copy of the real database (`thenwhat_knowledgecards`), then repeated on the real database on 14 November 2026 after #90 merged. That run had one rejection, the kind "Surgical Procedures, Operative" for genicular artery embolisation. Both records are in `docs/lookup.md`.
 
 - [x] 5a.1 Export the intervention's card exact before broader before kind, a kind card marked as the kind of intervention, and at most one target card from an approved named-gene link with its score and reasons; verify export tests for broader and kind both approved, only a kind, and a named gene with no drug record
 - [x] 5a.2 Export no target card while its source is not accepted, the approved link staying stored; verify by test with the target source marked not accepted
@@ -98,10 +98,10 @@ State on 2026-11-14:
 - [x] 5a.7 Add to `DESIGN.md` and the claim page: a kind card says it is the kind of treatment and not the treatment, and a target card from a named gene says the report names it and states no mechanism; verify in the browser at phone and desktop widths on a claim with a kind card and a claim with a named-gene target card
 - [x] 5a.8 Credit Open Targets with the citation it asks for and UniProt for a target's description in the footer's data sources, and carry kind and target cards into the open data file; verify the footer test and the open data test
 - [x] 5a.9 Add to the method page what a kind card is and that the kind is chosen from a fixed list, and that a target card from a named gene means the report names the gene and not that the treatment is known to work through it; verify the site build and the verdict-wording test
-- [ ] 5a.10 Run `thenwhat terms --all` on the real database and add to `docs/lookup.md`: new candidates from entry terms, claims with an intervention card by exact, broader and kind, kinds chosen with their counts, claims given "none of these", named-gene candidates approved and rejected, model cost and requests made
-- [ ] 5a.11 Read every kind card beside its claim and record, per kind, how many are wrong and how many are true but say nothing useful; reject the wrong ones, and remove from the list a kind whose cards mostly say nothing
-- [ ] 5a.12 Read every approved named-gene link beside its claim and record how many are coincidences or name a gene the intervention does not act on; reject those. If more than one in twenty is wrong, raise the threshold and run again
-- [ ] 5a.13 Read every new approved link from an entry term beside its claim, as 5.2 did for the first run; reject the wrong ones
+- [x] 5a.10 Run `thenwhat terms --all` on the real database and add to `docs/lookup.md`: new candidates from entry terms, claims with an intervention card by exact, broader and kind, kinds chosen with their counts, claims given "none of these", named-gene candidates approved and rejected, model cost and requests made
+- [x] 5a.11 Read every kind card beside its claim and record, per kind, how many are wrong and how many are true but say nothing useful; reject the wrong ones, and remove from the list a kind whose cards mostly say nothing
+- [x] 5a.12 Read every approved named-gene link beside its claim and record how many are coincidences or name a gene the intervention does not act on; reject those. If more than one in twenty is wrong, raise the threshold and run again
+- [x] 5a.13 Read every new approved link from an entry term beside its claim, as 5.2 did for the first run; reject the wrong ones
 
 ## 6. Drug and target cards
 
