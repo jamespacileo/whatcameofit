@@ -11,6 +11,8 @@ from thenwhat.claims.entities import (
     add_entity,
     add_search_phrase,
     add_synonym,
+    delete_people,
+    people,
     set_origin_paper,
 )
 from thenwhat.claims.entry import EntryError, claim_by_slug
@@ -133,6 +135,28 @@ def entity_phrases(
                 given += 1
                 out.print(f"{claim.slug}: {', '.join(phrases)}", markup=False)
         out.print(f"{given} of {len(claims)} claims were given search phrases.")
+
+
+@entity_app.command("people")
+def entity_people() -> None:
+    """List every stored person with their claim. Only researchers belong: delete a
+    patient, relative, reporter or commentator with `entity delete-people`."""
+    with entry_session() as session:
+        listed = people(session)
+        for entity, claim in listed:
+            out.print(f"{entity.id}\t{claim.slug}\t{entity.name}", markup=False)
+        out.print(f"{len(listed)} person entities.")
+
+
+@entity_app.command("delete-people")
+def entity_delete_people(
+    ids: Annotated[list[int], typer.Argument(help="Ids from `entity people`.")],
+) -> None:
+    """Delete the person entities you name. Refused, deleting none, if an id is not a
+    person."""
+    with entry_session() as session:
+        for entity in delete_people(session, ids):
+            out.print(f"Deleted person {entity.name} ({entity.id}).", markup=False)
 
 
 @entity_app.command("origin-paper")

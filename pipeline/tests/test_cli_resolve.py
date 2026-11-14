@@ -166,6 +166,34 @@ def test_entity_phrases_refuses_without_claims_or_missing(run, session: Session)
     assert "--missing" in result.output
 
 
+def test_entity_people_lists_and_delete_people_removes_the_marked(run, session: Session):
+    run("entity", "add", SLUG, "--type", "person", "--name", "Rae Reporter")
+    run("entity", "add", SLUG, "--type", "person", "--name", "Ada Example")
+
+    listed = run("entity", "people")
+    reporter = next(line for line in listed.output.splitlines() if "Rae Reporter" in line)
+    result = run("entity", "delete-people", reporter.split()[0])
+
+    assert SLUG in reporter
+    assert result.exit_code == 0, result.output
+    assert "Rae Reporter" not in names(session)
+    assert "Ada Example" in names(session)
+
+
+def test_entity_delete_people_refuses_an_entity_that_is_not_a_person(run, session: Session):
+    from thenwhat.claims.entry import find_claim
+
+    claim = find_claim(session, SLUG)
+    assert claim is not None
+    [intervention] = entities_of(session, claim)
+
+    result = run("entity", "delete-people", str(intervention.id))
+
+    assert result.exit_code == 1
+    assert "no person entity" in result.output
+    assert names(session) == ["EX-1 antibody"]
+
+
 def test_entity_origin_paper_marks_the_paper(run, session: Session):
     run("entity", "add", SLUG, "--type", "paper", "--name", "A paper")
 

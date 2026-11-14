@@ -14,12 +14,12 @@
 
 ## 2. People
 
-- [ ] 2.1 Limit extraction's people to researchers and drop single given names; verify the test for an article naming a reporter, a patient and a professor
-- [ ] 2.2 List stored person entities with their claim for the operator, and delete those the operator marks; verify one success and one refusal of the command
+- [x] 2.1 Limit extraction's people to researchers and drop single given names; verify the test for an article naming a reporter, a patient and a professor
+- [x] 2.2 List stored person entities with their claim for the operator, and delete those the operator marks; verify one success and one refusal of the command
 
 ## 3. Literature search
 
-- [ ] 3.1 Read OpenAlex's current terms, key rules, allowance and headers and add its entry to `docs/sources.md`; add `OPENALEX_API_KEY` to `.env.example`
+- [x] 3.1 Read OpenAlex's current terms, key rules, allowance and headers and add its entry to `docs/sources.md`; add `OPENALEX_API_KEY` to `.env.example`
 - [ ] 3.2 Write the OpenAlex client: search by words with a limit, refusal without a key, a stop when the allowance is used up, the key kept out of cache keys and logs; verify on recorded fixtures with a generic client name and replaced abstracts
 - [ ] 3.3 Store up to twenty paper candidates per claim on the intervention entity with a one-line record; verify the resolution tests for a claim with no DOI, a paper found twice and a search that finds nothing
 
@@ -38,7 +38,7 @@
 
 ## 6. Organisations
 
-- [ ] 6.1 Read ROR's terms and limits and add its entry to `docs/sources.md`
+- [x] 6.1 Read ROR's terms and limits and add its entry to `docs/sources.md`
 - [ ] 6.2 Write the ROR client and store a candidate match for each institution and company entity, scored by ROR's own measure; verify a known and an unknown name on fixtures, and that a person entity causes no request
 
 ## 7. Export and site

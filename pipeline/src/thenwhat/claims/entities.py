@@ -14,7 +14,7 @@ from thenwhat.claims.entry import (
     slug_of_claim_covering,
     tidy,
 )
-from thenwhat.db.models import Claim, Entity
+from thenwhat.db.models import Claim, Entity, EntityMatch
 from thenwhat.domain import EntityType
 from thenwhat.extract.names import is_a_search_phrase
 
@@ -31,6 +31,37 @@ def entities_of(session: Session, claim: Claim) -> list[Entity]:
     return list(
         session.scalars(select(Entity).where(Entity.claim_id == claim.id).order_by(Entity.id))
     )
+
+
+def people(session: Session) -> list[tuple[Entity, Claim]]:
+    """Every stored person entity with its claim, in claim order, for the operator to
+    look through. Only researchers belong; anyone else is deleted with `delete_people`."""
+    rows = session.execute(
+        select(Entity, Claim)
+        .join(Claim, Claim.id == Entity.claim_id)
+        .where(Entity.type == EntityType.PERSON)
+        .order_by(Claim.slug, Entity.id)
+    )
+    return [(entity, claim) for entity, claim in rows]
+
+
+def delete_people(session: Session, entity_ids: list[int]) -> list[Entity]:
+    """Delete the person entities the operator marked. Nothing is deleted unless every
+    id is a person: an intervention, paper or organisation is never removed this way."""
+    marked: list[Entity] = []
+    for entity_id in dict.fromkeys(entity_ids):
+        entity = session.get(Entity, entity_id)
+        if entity is None or entity.type is not EntityType.PERSON:
+            raise EntityNotFound(f"There is no person entity with id {entity_id}.")
+        marked.append(entity)
+    for entity in marked:
+        # A person is never looked up, so one has no match; any left by hand goes too.
+        for match in session.scalars(select(EntityMatch).where(EntityMatch.entity_id == entity.id)):
+            session.delete(match)
+        session.flush()
+        session.delete(entity)
+    session.flush()
+    return marked
 
 
 def _find(session: Session, claim: Claim, name: str, type: EntityType | None = None) -> Entity:

@@ -36,6 +36,8 @@ Write the headline and summary in your own neutral words; never copy sentences f
 Keep the summary under 500 characters.
 When the article gives the treatment no product name, give up to three search phrases:
 the words a trial registry or a paper would use for it.
+Record a person only when the article names them as carrying out or leading the research.
+Never record a patient, a relative, a reporter or a commentator, by full name or by first name.
 Give a DOI only if the article states it. List a promised timeline only if the article states one.
 """
 
