@@ -44,6 +44,26 @@ test("Scenario: Reader opens a claim", () => {
 
 test("Scenario: Unknown slug", () => {
   assert.match(page("404.html"), /No page at this address/);
+  // The path with no place marked: six places, none of them the marker.
+  const drawing = page("404.html").match(/<svg class="unfound"[\s\S]*?<\/svg>/)[0];
+  assert.equal(count(drawing, 'class="place"'), 6);
+  assert.doesNotMatch(drawing, /here/);
+});
+
+test("Scenario: The mark in the masthead", () => {
+  // Drawn into the page so its parts can move; the drawing is the reverse mark's own.
+  const drawn = page("index.html").match(/<svg class="mark"[\s\S]*?<\/svg>/)[0];
+  const file = fs.readFileSync("public/mark-reverse.svg", "utf8");
+  const shapes = (svg) => [...svg.matchAll(/ (?:d|r|cx|cy|fill|stroke-width)="[^"]+"/g)].map(([part]) => part.trim()).sort();
+  assert.deepEqual(shapes(drawn).filter((part) => part !== 'fill="none"'), shapes(file).filter((part) => part !== 'fill="none"'));
+});
+
+test("Scenario: The method page's drawing", () => {
+  const figure = page("how-it-works/index.html").match(/<figure class="made"[\s\S]*?<\/figure>/)[0];
+  assert.match(figure, /made-up records, not a tracked claim/);
+  // Whole without scripting or motion: the control that plays it starts hidden.
+  assert.match(figure, /<button[^>]*data-made-play[^>]*hidden|<button[^>]*hidden[^>]*data-made-play/);
+  assert.match(figure, /Place 3 of 6/);
 });
 
 test("Scenario: Status produced by one trial", () => {
@@ -145,6 +165,7 @@ test("Scenario: Search with no result", () => {
     .map((name) => page(path.join("_astro", name)))
     .join("\n");
   assert.match(scripts + page("index.html"), /No record found for/);
+  assert.match(page("index.html"), /<template id="unfound">\s*<svg class="unfound"/);
 });
 
 test("Scenario: Home lists the newest reports", () => {
@@ -155,8 +176,142 @@ test("Scenario: Home lists the newest reports", () => {
   assert.ok(order.every((position) => position > -1), "a report is missing from the home page");
   assert.deepEqual([...order].sort((a, b) => a - b), order);
   // The headline opens the claim; the outlet opens the report itself.
-  assert.match(html, /<a href="\/phase-claim">“Example report 3”<\/a>/);
+  assert.match(html, /<a class="followed" href="\/phase-claim"[^>]*>“Example report 3”<\/a>/);
   assert.match(html, /<a href="https:\/\/uk\.news\.example\.org\/3">Example Outlet 3<\/a>/);
+});
+
+test("Scenario: A list that fits one page", () => {
+  // Four reports and two status changes: every row is on the first page, with a pager that
+  // stays out of sight under each list.
+  const html = page("index.html");
+  assert.doesNotMatch(html, /<tr[^>]*data-later/);
+  assert.match(html, /<nav class="pager"[^>]*data-pager="headlines"[^>]*hidden/);
+  assert.match(html, /<nav class="pager"[^>]*data-pager="moved"[^>]*hidden/);
+  assert.match(page("topic/gum-disease/index.html"), /data-pager="claims"/);
+});
+
+test("Scenario: Lists on the home page", () => {
+  const html = page("index.html");
+  // One tab per list that has rows, in a fixed order.
+  const tabs = [...html.matchAll(/role="tab"[^>]*data-view="(\w+)"/g)].map((match) => match[1]);
+  assert.deepEqual(tabs, ["headlines", "moved", "promised", "quiet"]);
+  // A change names the status from that day and the one before, in the site's wording.
+  const moved = html.slice(html.indexOf('id="feed-moved"'), html.indexOf('id="feed-promised"'));
+  assert.equal(count(moved, "<tr role=\"row\""), 3, "two changes under one header row");
+  assert.ok(moved.indexOf("Was: Trial registered") < moved.indexOf("Was: Preclinical only"));
+  // A dated promise sits beside the status now; the no-signal list holds the quiet claim.
+  const promised = html.slice(html.indexOf('id="feed-promised"'), html.indexOf('id="feed-quiet"'));
+  assert.match(promised, /human trials by <strong>2025<\/strong>/);
+  assert.match(promised, /Preclinical only/);
+  assert.match(html.slice(html.indexOf('id="feed-quiet"')), /No signal for 6 years/);
+});
+
+test("Scenario: Counts on the path", () => {
+  const html = page("index.html");
+  const strip = html.slice(html.indexOf("data-stage-filter"), html.indexOf('role="tablist"'));
+  // Three claims: one preclinical, one in phase 2, one approved. The strip narrows
+  // every list under it and keeps the pick in the address.
+  assert.match(strip, /data-scope="\[data-feed\]"/);
+  assert.match(strip, /data-param="status"/);
+  for (const [code, number] of [["preclinical_only", 1], ["phase_2", 1], ["approved", 1]]) {
+    assert.match(strip, new RegExp(`data-status="${code}"[^>]*>.*?<strong>${number}</strong>`, "s"));
+  }
+  assert.match(strip, /data-status="phase_1"[^>]*disabled/);
+  // Each row carries what the strip and the topic choice narrow by.
+  assert.match(html, /<tr[^>]*data-status="phase_2"[^>]*data-topic="gum-disease"/);
+});
+
+test("Scenario: Anniversaries on the home page", () => {
+  const html = page("index.html");
+  const block = html.slice(html.indexOf("data-on-this-day"), html.indexOf('id="topics"'));
+  // Out of sight until the reader's date picks a day; every day with a report is there.
+  assert.match(html, /<section class="on-this-day"[^>]*hidden/);
+  for (const day of ["05-01", "05-03", "05-04"]) assert.ok(block.includes(`data-day="${day}"`), day);
+  assert.match(block, /data-year="2019"/);
+  assert.match(block, /href="\/anniversaries"/);
+});
+
+test("Scenario: A returning reader's home page", () => {
+  const html = page("index.html");
+  // Filled in by the reader's browser: nothing about a visit is in the built page.
+  assert.match(html, /<p class="since"[^>]*hidden/);
+  assert.match(html, /<section class="following"[^>]*hidden/);
+  assert.match(html, /Kept in this browser only\./);
+  // Each dated row carries its day, so the browser can count what is dated since a visit.
+  assert.match(html, /<tr[^>]*data-on="2019-05-03"/);
+  const moved = html.slice(html.indexOf('id="feed-moved"'), html.indexOf('id="feed-promised"'));
+  assert.match(moved, /data-on="2023-02-01"/);
+  // How to keep up is said in the open, under the lists: the feed by a plain name, and,
+  // for a reader who follows nothing yet, what following is (shown by their browser).
+  const keep = html.slice(html.indexOf('class="keep-up"'), html.indexOf("data-on-this-day"));
+  assert.match(keep, /<a class="share" href="\/changes\.xml">/);
+  assert.match(keep, /Subscribe to status changes/);
+  assert.match(keep, /<p class="keep-hint" hidden data-follow-hint>/);
+  // The counts and the topic choice are part of the lists they narrow.
+  const feed = html.slice(html.indexOf("data-feed"));
+  assert.ok(feed.indexOf("data-scoreboard") < feed.indexOf('role="tablist"'));
+  // A step that leads nowhere is passed over by the Tab key.
+  assert.match(html, /<button type="button" data-step="-1" aria-disabled="true" tabindex="-1">Previous<\/button>/);
+  // The tally says when the registries were last checked.
+  assert.match(html, /Registries last checked <span class="unbroken">/);
+  // On a phone the counts wait behind one control.
+  assert.match(html, /<button[^>]*class="narrow-toggle"[^>]*aria-expanded="false"[^>]*hidden/);
+});
+
+test("Scenario: Following from a claim page", () => {
+  const html = page("phase-claim/index.html");
+  // The pill carries what the browser keeps: the claim, its headline, its status in words.
+  assert.match(
+    html,
+    /<button[^>]*data-follow[^>]*data-slug="phase-claim"[^>]*data-status="Phase 2 trial"[^>]*aria-pressed="false"[^>]*hidden/,
+  );
+  // Under the answer and again beside the reminders, Follow comes with its words: what
+  // it does, and where the list is once followed.
+  assert.equal(count(html, '<div class="follow-offer"'), 2);
+  const offer = html.slice(html.indexOf("data-follow-offer"), html.indexOf('class="facts"'));
+  assert.match(offer, /Lists this claim on the home page, with a note when its status changes\./);
+  assert.match(offer, /<a href="\/#following">the home page<\/a>/);
+  // A change since the reader last looked is said on the page they land on.
+  assert.match(html, /<p class="was-note" hidden data-follow-was/);
+  assert.ok(html.indexOf('class="digest"') < html.indexOf('class="was-note"'));
+  // A way back beside the answer, and a next step at the end of the page.
+  const digest = html.slice(html.indexOf('class="digest"'), html.indexOf('class="facts"'));
+  assert.match(digest, /<a href="#check-again">Check again later<\/a>/);
+  assert.match(html, /<a class="share" href="\/#search">/);
+  // The networks open on request; copying the link does not wait behind them.
+  assert.match(html, /<details class="post-to">/);
+  const actions = html.slice(html.indexOf('class="take-actions"'), html.indexOf('class="post-to"'));
+  assert.match(actions, /data-copy="page-address"/);
+});
+
+test("Scenario: A topic's status changes as a feed", () => {
+  const html = page("topic/gum-disease/index.html");
+  assert.match(html, /href="\/changes\/topic\/gum-disease\.xml"/);
+  assert.match(html, /data-share/);
+  // A topic page ends on a next step too, and its rows carry the day first reported,
+  // so a reader's browser can mark those reported since their last visit.
+  assert.match(html, /Another headline\?/);
+  assert.match(html, /<tr[^>]*data-first="2019-05-03"/);
+  const feed = page("changes/topic/gum-disease.xml");
+  assert.match(feed, /<feed xmlns="http:\/\/www\.w3\.org\/2005\/Atom">/);
+  // The fixture's one moving claim changed twice after its first status.
+  assert.equal(count(feed, "<entry>"), 3);
+});
+
+test("Scenario: Ways to keep up", () => {
+  const html = page("how-it-works/index.html");
+  assert.match(html, /<a href="#ways-to-keep-up">Ways to keep up<\/a>/);
+  const section = html.slice(html.indexOf('id="ways-to-keep-up"'), html.indexOf('id="what-is-counted"'));
+  for (const way of ["Follow a claim.", "Since your last visit.", "Check again later.", "Feeds.", "On your own page."]) {
+    assert.ok(section.includes(way), way);
+  }
+  // Said plainly: none of them needs an account.
+  assert.match(section, /None of these needs an account/);
+});
+
+test("Scenario: One topic", () => {
+  // With a single listed topic there is nothing to choose between.
+  assert.doesNotMatch(page("index.html"), /data-topic-filter/);
 });
 
 test("Scenario: Article of a published claim", () => {
@@ -213,6 +368,9 @@ test("Scenario: Preview build", () => {
     assert.match(built(file), /<meta name="robots" content="noindex"/, file);
   }
   assert.match(built("phase-claim/index.html"), /has not yet been checked by a person/);
+  // The answer comes first: the notice sits under the status panel, not above it.
+  const claimPage = built("phase-claim/index.html");
+  assert.ok(claimPage.indexOf('class="digest"') < claimPage.indexOf('class="unchecked"'));
   assert.doesNotMatch(built("quiet-claim/index.html"), /has not yet been checked by a person/);
   const lookup = JSON.parse(built("lookup.json"));
   assert.equal(lookup.preview, true);
@@ -442,4 +600,365 @@ test("Scenario: Summary of a topic with ended trials", () => {
   assert.match(said, /1 had its trials stopped early\.$/);
   assert.doesNotThrow(() => assertNeutral([said]));
   assert.equal(topicSummary(new Map()), null);
+});
+
+test("Scenario: Reader follows a headline from the home page", () => {
+  const home = page("index.html");
+  // Each headline on the home page is named, and its claim page gives the same name
+  // to the same headline, shown before the status.
+  const named = [...home.matchAll(/class="followed" href="\/([^"]+)" style="view-transition-name: ([^";]+)/g)];
+  assert.ok(named.length > 0, "no headline on the home page is named");
+  assert.equal(new Set(named.map(([, , name]) => name)).size, named.length, "a name is used twice");
+  for (const [, slug, name] of named) {
+    const html = page(`${slug}/index.html`);
+    const at = html.indexOf(`view-transition-name: ${name}`);
+    assert.ok(at > 0, `${slug} does not name its report ${name}`);
+    assert.ok(at < html.indexOf('class="digest"'), `${slug} names its report after the status`);
+  }
+});
+
+// Openspec trial-facts: each trial once, with what its registry record states.
+// A section runs from its heading to the next section heading.
+function sectionOf(html, id) {
+  const start = html.indexOf(`id="${id}"`);
+  assert.ok(start > 0, `no section with id ${id}`);
+  const next = html.indexOf('<h2 class="bar"', start);
+  return html.slice(start, next > 0 ? next : undefined);
+}
+
+// What a reader reads of a section: no markup, so a drawing's attributes are not words.
+const wordsOf = (html) => html.replace(/<[^>]*>/g, " ").replace(/&#39;/g, "'").replace(/\s+/g, " ");
+
+test("Scenario: Claim with one completed Phase 2 trial", () => {
+  const html = page("phase-claim/index.html");
+  assert.equal(count(html, 'id="trial-NCT00000002"'), 1);
+  const trials = sectionOf(html, "trials");
+  assert.match(trials, /Phase 2 · Completed · 83 participants enrolled/);
+  assert.match(trials, /Randomised, double-blind, compared with placebo/);
+  assert.match(trials, /Change in synthetic score/);
+  assert.match(trials, /3\.4 \(Standard Deviation 1\.1\)/);
+  assert.match(trials, /41 analysed/);
+  assert.match(trials, /High match · 94%/);
+  // Three of five planned measures are shown, and the page says where the rest are.
+  assert.match(trials, /2 more in the ClinicalTrials\.gov record/);
+});
+
+test("Scenario: Record read on 3 October 2026", () => {
+  const trials = wordsOf(sectionOf(page("phase-claim/index.html"), "trials"));
+  assert.match(trials, /record read[\s\S]{0,80}3\s+Oct\s+2026/);
+  assert.match(trials, /a selection, unaltered, from the trial's registry record/);
+});
+
+test("Scenario: Reader follows a timetable entry", () => {
+  const html = page("phase-claim/index.html");
+  const timetable = sectionOf(html, "timetable");
+  assert.ok(timetable.includes('href="#trial-NCT00000002"'), "no timetable entry leads to its trial");
+});
+
+test("Scenario: Claim with no trial", () => {
+  const html = page("quiet-claim/index.html");
+  assert.ok(!html.includes('id="trials"'));
+  assert.ok(!html.includes("Trials in people"));
+});
+
+test("Scenario: Claim with thirty-three trials", () => {
+  // Seven here: five shown, furthest phase first, the other two one press away.
+  const trials = sectionOf(page("phase-claim/index.html"), "trials");
+  const [shown, rest] = trials.split('class="trials-rest"');
+  assert.equal(count(shown, 'class="trial"'), 5);
+  assert.equal(count(rest, 'class="trial"'), 2);
+  assert.ok(shown.indexOf("NCT00000030") < shown.indexOf("NCT00000002"), "Phase 3 is not first");
+  assert.match(rest, /The other 2 of 7 trials/);
+});
+
+test("Scenario: Three trials, the largest of 1,200", () => {
+  const html = page("phase-claim/index.html");
+  assert.match(html, /Trials in people/);
+  assert.match(html, /7 on record/);
+  assert.match(html, /The largest, 1,200 participants planned/);
+});
+
+test("Scenario: Posted comparison with a p value", () => {
+  const trials = wordsOf(sectionOf(page("phase-claim/index.html"), "trials"));
+  assert.match(trials, /p = 0\.03, t-test, 2 sided \(superiority test\)/);
+  assert.match(trials, /numbers the trial's sponsor posted to the registry/);
+  // The numbers are shown; nothing says what they mean for the treatment.
+  assert.doesNotMatch(trials, /\b(met|missed|significan\w*|success\w*|fail\w*|worked|proven)\b/i);
+});
+
+test("Scenario: Outcome reported at four time points", () => {
+  const trials = sectionOf(page("phase-claim/index.html"), "trials");
+  assert.match(trials, /Posted in 4 rows of values/);
+});
+
+test("Scenario: Trial the registry shows as recruiting", () => {
+  const trials = wordsOf(sectionOf(page("phase-claim/index.html"), "trials"));
+  assert.match(trials, /Phase 3 · Under way · 1,200 participants planned/);
+  assert.doesNotMatch(trials, /recruit|eligib|contact|location|take part|join/i);
+});
+
+test("Scenario: Sponsor who is a person", () => {
+  const trials = sectionOf(page("phase-claim/index.html"), "trials");
+  assert.match(trials, /An individual researcher/);
+});
+
+test("Scenario: Claim with one matched paper and no trial", () => {
+  const html = page("quiet-claim/index.html");
+  const papers = sectionOf(html, "papers");
+  assert.match(papers, /Matched papers/);
+  assert.ok(papers.includes("10.5555/synthetic.1"));
+  assert.match(papers, /A paper is not a trial\s+record/);
+  assert.match(html, /No registry record matched/);
+  const registry = sectionOf(html, "matched");
+  assert.match(registry, /No record matched/);
+  assert.ok(!registry.includes("10.5555/synthetic.1"), "a paper is listed as a registry record");
+});
+
+// Openspec paper-facts: each paper once, with what its index record states.
+test("Scenario: Claim with an origin paper and two results papers", () => {
+  const html = page("phase-claim/index.html");
+  const papers = sectionOf(html, "papers");
+  assert.match(papers, /Papers on record/);
+  assert.equal(count(papers, 'class="paper"'), 5);
+  for (const heading of ["The paper first reported", "Papers named by a trial&#39;s registry record", "Follow-up papers", "Related research"]) {
+    assert.ok(papers.includes(heading), `no group "${heading}"`);
+  }
+  assert.ok(papers.indexOf("The paper first reported") < papers.indexOf("Follow-up papers"));
+  const words = wordsOf(papers);
+  assert.match(words, /Report of a randomised trial · Journal of Synthetic Trials · 2023/);
+  assert.match(words, /A paper is not a trial record and does not set the status/);
+  assert.ok(!html.includes("Matched papers"));
+});
+
+test("Scenario: Paper with two roles", () => {
+  const html = page("phase-claim/index.html");
+  assert.equal(count(html, 'id="paper-10-5555-synthetic-origin"'), 1);
+  const [origin] = sectionOf(html, "papers").split("Papers named by a trial");
+  assert.ok(origin.includes('id="paper-10-5555-synthetic-origin"'), "not in the origin paper's group");
+  assert.match(wordsOf(origin), /Linked by the registry from PubMed to NCT00000002/);
+});
+
+test("Scenario: Reader goes from a trial to its paper", () => {
+  const html = page("phase-claim/index.html");
+  const trials = sectionOf(html, "trials");
+  assert.ok(trials.includes('href="#paper-10-5555-synthetic-origin"'), "the trial does not lead to its papers");
+  assert.match(wordsOf(trials), /2 papers named by its record/);
+  const papers = sectionOf(html, "papers");
+  assert.ok(papers.includes('href="#trial-NCT00000002"'), "the paper does not lead back to its trial");
+  assert.match(wordsOf(papers), /Listed by the sponsor as reporting results of NCT00000002/);
+  assert.match(wordsOf(papers), /may or may not be about the study/);
+});
+
+test("Scenario: Paper of a study in mice, retracted follow-up paper, record read on 3 October 2026", () => {
+  const papers = wordsOf(sectionOf(page("phase-claim/index.html"), "papers"));
+  assert.match(papers, /Europe PMC files it as a study in animals\./);
+  assert.match(papers, /This paper has been retracted/);
+  assert.match(papers, /Europe PMC record\s+read\s+3\s+Oct\s+2026/);
+  // A paper the index does not hold is listed by its number, with no facts.
+  assert.match(papers, /PubMed 90000003/);
+  // The preprint's record states neither people nor animals, so its entry says neither.
+  const preprint = papers.slice(papers.indexOf("A synthetic preprint on the compound"));
+  assert.doesNotMatch(preprint, /files it as/);
+});
+
+test("related papers are shown as a group of the papers on record, with score and reasons", () => {
+  const papers = wordsOf(sectionOf(page("phase-claim/index.html"), "papers"));
+  const related = papers.slice(papers.indexOf("Related research"));
+  assert.match(related, /High match · 86%/);
+  assert.match(related, /Names the treatment in its title · Names the condition/);
+  assert.match(related, /A score is about the match, not about the treatment/);
+  assert.doesNotMatch(papers, /\b(supports?|confirms?|proves?|refutes?)\b/i);
+});
+
+test("Scenario: Claim with three trials and one mouse paper", () => {
+  // Seven trials and two papers filed as studies in people; two papers filed in animals.
+  const html = wordsOf(page("phase-claim/index.html"));
+  assert.match(html, /Records of studies\s+9 in people · 2 in animals/);
+});
+
+test("Scenario: Claim with no paper", () => {
+  const html = page("approved-claim/index.html");
+  assert.ok(!html.includes('id="papers"'));
+  assert.ok(!html.includes("Papers on record"));
+  assert.ok(!html.includes("Records of studies"));
+});
+
+test("Scenario: Kind code without site wording", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.claims[1].papers[0].facts.kinds = ["hologram"];
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-paper-code-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+
+  const result = build(file, path.join(directory, "dist"));
+
+  assert.notEqual(result.status, 0);
+});
+
+test("the build fails on a related paper's reason the site has no wording for", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.claims[1].papers.at(-1).roles[0].reasons = ["liked_it"];
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-paper-reason-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+
+  const result = build(file, path.join(directory, "dist"));
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout + result.stderr, /paper reason: liked_it/);
+});
+
+test("an export made before paper facts still builds, with the matched papers as before", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  for (const claim of fixture.claims) {
+    delete claim.papers;
+    for (const trial of claim.trials ?? []) delete trial.papers;
+  }
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-no-papers-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+  const out = path.join(directory, "dist");
+
+  const result = build(file, out);
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const quiet = fs.readFileSync(path.join(out, "quiet-claim/index.html"), "utf8");
+  assert.match(sectionOf(quiet, "papers"), /Matched papers/);
+  const phase = fs.readFileSync(path.join(out, "phase-claim/index.html"), "utf8");
+  assert.ok(!phase.includes("Papers on record"));
+  assert.ok(!phase.includes("Records of studies"));
+});
+
+test("Scenario: Follow-up paper scored 0.6", () => {
+  const timetable = sectionOf(page("phase-claim/index.html"), "timetable");
+  assert.match(timetable, /Medium match · 60%/);
+});
+
+test("Scenario: Trial event read from a registry record", () => {
+  const timetable = sectionOf(page("phase-claim/index.html"), "timetable");
+  assert.doesNotMatch(timetable, /match · 100%/);
+});
+
+test("Scenario: Fact code without site wording", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.claims[1].trials[0].facts.masking = "sextuple";
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-trial-code-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+
+  const result = build(file, path.join(directory, "dist"));
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout + result.stderr, /masking/);
+});
+
+test("an export made before trial facts still builds, with the matched records as before", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  for (const claim of fixture.claims) {
+    delete claim.trials;
+    for (const event of claim.events) delete event.confidence;
+  }
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-no-trials-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+  const out = path.join(directory, "dist");
+
+  const result = build(file, out);
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const html = fs.readFileSync(path.join(out, "phase-claim/index.html"), "utf8");
+  assert.ok(!html.includes('id="trials"'));
+  const registry = sectionOf(html, "matched");
+  assert.match(registry, /Matched registry records/);
+  assert.ok(registry.includes("NCT00000002"));
+  assert.match(registry, /High match · 94%/);
+});
+
+// --- background cards (openspec knowledge-cards, site-publishing) ---
+
+const backgroundOf = (html) => html.match(/<section class="matched background"[\s\S]*?<\/section>/)?.[0];
+
+test("Scenario: Claim with a condition card only", () => {
+  const html = page("approved-claim/index.html");
+  const section = backgroundOf(html);
+  assert.ok(section, "no background section");
+  assert.equal(count(section, 'class="card-kind"'), 1);
+  assert.match(section, /The condition/);
+  assert.match(section, /href="https:\/\/vocabulary\.example\/D900003"[^>]*>\s*Example Condition\s*</);
+  // The definition is one press away, marked as the source's words and unchanged.
+  assert.match(section, /<details class="card-words">[\s\S]*Definition, in the source’s words/);
+  assert.match(section, /<blockquote[^>]*>A synthetic definition of the example condition\.<\/blockquote>/);
+  assert.match(section, /The trial registry files this claim’s one trial under this term\./);
+  // After the records, and not inside the status panel.
+  assert.ok(html.indexOf('id="background"') > html.indexOf('id="timetable"'));
+  assert.ok(html.indexOf('id="background"') < html.indexOf('id="pass-on"'));
+});
+
+test("Scenario: Claim with no card", () => {
+  const html = page("quiet-claim/index.html");
+  assert.ok(!html.includes('id="background"'));
+  assert.ok(!html.includes("card-list"));
+});
+
+test("Scenario: Broader term, and Reason shown on request", () => {
+  const section = backgroundOf(page("phase-claim/index.html"));
+  assert.equal(count(section, 'class="card-kind"'), 2);
+  assert.match(section, /A broader term than this claim’s condition/);
+  assert.match(section, /High match · 90%/);
+  assert.match(section, /The trial registry files 5 of this claim’s 6 trials under this term\./);
+  assert.match(section, /The term’s label is the same as “examplumab”, a name this claim uses\./);
+  // A term its source gives no definition has no disclosure to press.
+  assert.equal(count(section, '<details class="card-words">'), 1);
+  assert.match(section, /The source gives this term no definition\./);
+});
+
+test("Scenario: Definition in the vocabulary's style, and Vocabulary that asks for its version to be stated", () => {
+  const section = backgroundOf(page("phase-claim/index.html"));
+  assert.match(section, /A synthetic definition with CAPITALISED CROSS-REFERENCES, as the vocabulary writes them\./);
+  assert.match(
+    section,
+    /Medical Subject Headings \(MeSH\), U\.S\. National Library of Medicine, 2026 edition\s*<\/a>\s*\. Record read 14 November 2026\./,
+  );
+  // The section's note: terms, not evidence, not advice, no endorsement.
+  assert.match(section, /They are not about this claim’s evidence and they are not medical advice\./);
+  assert.match(section, /Naming a source does not mean it endorses this site\./);
+});
+
+test("Scenario: Card for a drug class with approved uses", () => {
+  // The background section is never inside or beside the status.
+  const html = page("phase-claim/index.html");
+  const digest = html.match(/<section class="reported"[\s\S]*?<\/section>/)[0];
+  assert.ok(!digest.includes("card-kind") && !digest.includes("Background"));
+});
+
+test("the footer's data sources include each source a card comes from", () => {
+  for (const file of ["index.html", "quiet-claim/index.html"]) {
+    const footer = page(file).split("Data sources:")[1].split("</p>")[0];
+    assert.match(footer, /href="https:\/\/www\.nlm\.nih\.gov\/mesh\/meshhome\.html"[^>]*>Medical Subject Headings \(MeSH\)</);
+  }
+});
+
+test("the method page explains background cards", () => {
+  const html = page("how-it-works/index.html");
+  const part = html.split('id="background-on-a-claims-terms"')[1].split('id="what-this-site-never-says"')[0];
+  assert.match(part, /vocabulary publisher’s, shown unchanged/);
+  assert.match(part, /at least half of the\s+claim’s trials/);
+  assert.match(part, /An AI model then\s+reads each candidate/);
+  assert.match(part, /it never changes a status, and it\s+is not medical advice/);
+});
+
+test("Scenario: Code without site wording", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.claims.find((claim) => claim.slug === "phase-claim").background[0].reasons[0].code = "sounds_right";
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-card-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+
+  const result = build(file, path.join(directory, "dist"));
+
+  assert.notEqual(result.status, 0);
+  assert.match(
+    result.stdout + result.stderr,
+    /background card codes the site has no words for: card reason: sounds_right/,
+  );
 });

@@ -2,9 +2,11 @@
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 ShortText = Annotated[str, Field(min_length=1, max_length=200)]
+# The most search phrases a treatment is given or kept.
+MAX_SEARCH_PHRASES = 3
 
 
 class NamedEntity(BaseModel):
@@ -32,7 +34,7 @@ class Draft(BaseModel):
     )
     intervention_search_phrases: list[ShortText] = Field(
         default_factory=list,
-        max_length=3,
+        max_length=MAX_SEARCH_PHRASES,
         description=(
             "Up to three short phrases a clinical trial registry or a paper would use for"
             " this treatment when the article gives it no product name, most specific first,"
@@ -50,9 +52,21 @@ class Draft(BaseModel):
         description="DOI of that paper, only if the article gives it.",
     )
     entities: list[NamedEntity] = Field(
-        default_factory=list, description="People, institutions and companies named."
+        default_factory=list,
+        description=(
+            "Institutions and companies named, and each person the article names as"
+            " carrying out or leading the research, by full name. Never a patient, a"
+            " relative, a reporter or someone only commenting."
+        ),
     )
     promises: list[Annotated[str, Field(min_length=1, max_length=300)]] = Field(
         default_factory=list,
         description="Each timeline the article promises, as a short phrase. Empty if none.",
     )
+
+    @field_validator("entities")
+    @classmethod
+    def _people_have_full_names(cls, entities: list[NamedEntity]) -> list[NamedEntity]:
+        """A person given by one name is dropped: a report names a patient, often a
+        child, by first name, and a researcher by full name."""
+        return [e for e in entities if e.type != "person" or len(e.name.split()) > 1]

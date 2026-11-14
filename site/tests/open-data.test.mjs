@@ -45,7 +45,76 @@ const claim = (slug, extra = {}) => ({
       trial_phases: ["PHASE1"],
       trial_state: "recruiting",
       regulatory_outcome: null,
+      confidence: 0.6,
       raw_payload: { secret: true },
+    },
+  ],
+  trials: [
+    {
+      trial_id: "NCT0",
+      source_name: "registry",
+      url: "https://registry.example/1",
+      title: "A trial",
+      phases: ["phase_1"],
+      state: "completed",
+      facts_as_of: "2024-06-01T00:00:00Z",
+      papers: ["10.5555/results"],
+      raw_payload: { secret: true },
+      facts: {
+        study_kind: "interventional",
+        participants: { count: 20, basis: "actual" },
+        allocation: "randomised",
+        masking: "double",
+        comparators: ["placebo"],
+        healthy_volunteers: true,
+        age_groups: ["adult"],
+        sponsor: { name: "A hospital", kind: "other" },
+        primary_outcomes: [{ measure: "A measure", time_frame: "Study end" }],
+        primary_outcomes_total: 1,
+        why_stopped: null,
+        description: "The sponsor's own conclusion",
+        results: {
+          outcomes_total: 1,
+          outcomes: [
+            {
+              title: "A measure",
+              time_frame: "Study end",
+              unit: "units",
+              measure: "mean",
+              spread_kind: "Standard Deviation",
+              rows: 1,
+              groups: [
+                { title: "Placebo", analysed: "10", value: "3.4", spread: "1.1", lower: null, upper: null, description: "It did well" },
+              ],
+              comparisons: [{ groups: ["Placebo"], p_value: "0.03", method: "t-test", test: null }],
+            },
+          ],
+        },
+      },
+    },
+  ],
+  papers: [
+    {
+      identifier: "10.5555/results",
+      url: "https://doi.org/10.5555/results",
+      record_url: "https://index.example/MED/1",
+      roles: [
+        { role: "trial_result", trial_id: "NCT0", listed: "listed_by_sponsor", decided_by: "rule" },
+      ],
+      facts_as_of: "2024-06-02T00:00:00Z",
+      authors: ["Example A"],
+      facts: {
+        title: "A report of the trial",
+        journal: "Journal of Examples",
+        year: 2024,
+        kinds: ["randomised_trial", "article"],
+        open_access: true,
+        retracted: false,
+        studied_in: ["people"],
+        authorString: "Example A, Sample B.",
+        abstractText: "The abstract of the paper",
+        affiliation: "A hospital department",
+      },
     },
   ],
   failure_flags: [],
@@ -102,6 +171,57 @@ test("the file holds the given claims, the licence and the sources, and no icons
   assert.ok(!everyString(out).some((text) => text.startsWith("data:")));
 });
 
+test("Scenario: Claim with a trial that has posted results", () => {
+  const out = openData(exported(), LICENCE, CREDIT, METHOD);
+  const [trial] = out.claims[0].trials;
+  assert.equal(trial.facts_as_of, "2024-06-01T00:00:00Z");
+  assert.deepEqual(trial.facts.participants, { count: 20, basis: "actual" });
+  assert.equal(trial.facts.masking, "double");
+  assert.deepEqual(trial.facts.primary_outcomes, [{ measure: "A measure", time_frame: "Study end" }]);
+  const [outcome] = trial.facts.results.outcomes;
+  assert.equal(outcome.groups[0].value, "3.4");
+  assert.equal(outcome.comparisons[0].p_value, "0.03");
+  assert.equal(out.claims[0].events[0].confidence, 0.6);
+});
+
+test("Scenario: Registry record", () => {
+  // Only the fields the claim page shows are copied: no record, and no free text
+  // that an export might one day carry beside them.
+  const out = openData(exported(), LICENCE, CREDIT, METHOD);
+  assert.ok(!everyKey(out).some((name) => /payload/i.test(name)));
+  const names = everyKey(out.claims[0].trials);
+  assert.ok(!names.some((name) => /payload|description/i.test(name)), names.join());
+  assert.ok(!everyString(out).some((text) => /conclusion|did well/.test(text)));
+});
+
+test("Scenario: Claim with a results paper", () => {
+  const out = openData(exported(), LICENCE, CREDIT, METHOD);
+  const [paper] = out.claims[0].papers;
+  const [trial] = out.claims[0].trials;
+  assert.equal(paper.identifier, "10.5555/results");
+  assert.deepEqual(
+    [paper.facts.title, paper.facts.journal, paper.facts.year, paper.facts.kinds],
+    ["A report of the trial", "Journal of Examples", 2024, ["randomised_trial", "article"]],
+  );
+  assert.equal(paper.facts_as_of, "2024-06-02T00:00:00Z");
+  // The paper names the trial it reports, and the trial lists the paper.
+  assert.deepEqual([paper.roles[0].trial_id, paper.roles[0].listed], [trial.trial_id, "listed_by_sponsor"]);
+  assert.deepEqual(trial.papers, [paper.identifier]);
+});
+
+test("Scenario: Authors", () => {
+  const out = openData(exported(), LICENCE, CREDIT, METHOD);
+  const names = everyKey(out.claims[0].papers);
+  assert.ok(!names.some((name) => /author|abstract|affiliation|payload/i.test(name)), names.join());
+  assert.ok(!everyString(out).some((text) => /Example A|The abstract|hospital department/.test(text)));
+});
+
+test("an export made before paper facts gives a file with no papers", () => {
+  const before = exported();
+  for (const entry of before.claims) delete entry.papers;
+  assert.deepEqual(openData(before, LICENCE, CREDIT, METHOD).claims[0].papers, []);
+});
+
 test("a preview export gives a preview file", () => {
   assert.equal(openData(exported(true), LICENCE, CREDIT, METHOD).preview, true);
 });
@@ -139,4 +259,86 @@ test("the built file and page", () => {
   assert.equal(previewBuild.status, 0, previewBuild.stdout + previewBuild.stderr);
   const previewData = JSON.parse(fs.readFileSync(path.join(directory, "dist/data/claims.json"), "utf8"));
   assert.equal(previewData.preview, true);
+});
+
+// --- background cards (openspec open-data: "Background cards in the download") ---
+
+const cardSource = (name, in_data_file, licence = "A licence") => ({
+  name,
+  title: `Source ${name}`,
+  credit: `Credit ${name}`,
+  licence,
+  url: `https://${name}.example`,
+  terms_url: `https://${name}.example/terms`,
+  in_data_file,
+});
+
+const card = (source, label) => ({
+  kind: "condition",
+  fit: "exact",
+  label,
+  definition: "The source's own words.",
+  url: `https://${source}.example/term`,
+  source,
+  external_id: "T1",
+  version: "2026",
+  score: 0.9,
+  reasons: [{ code: "filed_by_registry", trials: 5, of: 6, name: null }],
+  decided_by: "rule",
+  read_at: "2026-11-14T09:00:00Z",
+});
+
+test("Scenario: Card from a public-domain source", () => {
+  const data = exported();
+  data.card_sources = [cardSource("open", true)];
+  data.claims[0].background = [card("open", "A term")];
+
+  const out = openData(data, LICENCE, CREDIT, METHOD);
+
+  assert.deepEqual(out.claims[0].background, [
+    {
+      kind: "condition",
+      fit: "exact",
+      label: "A term",
+      definition: "The source's own words.",
+      url: "https://open.example/term",
+      source: "open",
+      external_id: "T1",
+      version: "2026",
+      score: 0.9,
+      reasons: [{ code: "filed_by_registry", trials: 5, of: 6, name: null }],
+      read_at: "2026-11-14T09:00:00Z",
+    },
+  ]);
+  assert.deepEqual(out.card_sources, [
+    { name: "open", title: "Source open", credit: "Credit open", licence: "A licence", url: "https://open.example" },
+  ]);
+  assert.deepEqual(out.left_out, []);
+  assert.deepEqual(out.claims[1].background, []);
+});
+
+test("Scenario: Fact from a share-alike source", () => {
+  const data = exported();
+  data.card_sources = [cardSource("open", true), cardSource("alike", false, "CC BY-SA 3.0")];
+  data.claims[0].background = [card("open", "A term"), card("alike", "A mechanism")];
+
+  const out = openData(data, LICENCE, CREDIT, METHOD);
+
+  assert.deepEqual(out.claims[0].background.map((c) => c.label), ["A term"]);
+  assert.deepEqual(out.card_sources.map((source) => source.name), ["open"]);
+  assert.deepEqual(out.left_out, [
+    {
+      source: "Source alike",
+      licence: "CC BY-SA 3.0",
+      reason: "Its licence (CC BY-SA 3.0) does not allow its material to be offered under this file’s licence.",
+    },
+  ]);
+  assert.ok(!everyString(out).includes("A mechanism"));
+});
+
+test("an export made before background cards gives a file with none", () => {
+  const out = openData(exported(), LICENCE, CREDIT, METHOD);
+  assert.deepEqual(out.card_sources, []);
+  assert.deepEqual(out.left_out, []);
+  assert.deepEqual(out.claims[0].background, []);
 });

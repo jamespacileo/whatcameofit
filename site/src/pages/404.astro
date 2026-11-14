@@ -1,17 +1,13 @@
 ---
 import Base from "../layouts/Base.astro";
+import Unfound from "../components/Unfound.astro";
 import { listedTopics } from "../lib/export";
-import { STAGE_PATH } from "../lib/status";
 ---
 
 <Base title="No page at this address">
   {/* The site's own way of reporting, turned on a missing page. */}
   <h1 class="title">No page record found</h1>
-  <span class="track nowhere" aria-hidden="true">
-    <span class="steps">
-      {STAGE_PATH.map(() => <span class="step" />)}
-    </span>
-  </span>
+  <Unfound />
   <p class="lede">
     No tracked claim has this address. It may never have been tracked, or the address may be
     mistyped. Last checked: just now.

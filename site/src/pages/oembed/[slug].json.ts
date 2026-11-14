@@ -1,14 +1,13 @@
 // Each claim's oEmbed description: how a site that turns pasted links into embeds
 // (WordPress, Ghost, Notion and others) finds the claim's embed. The claim page
 // announces it; the embed itself is the same as the snippet the claim page gives.
-import type { APIRoute, GetStaticPaths } from "astro";
+import type { APIRoute } from "astro";
 import { SITE } from "../../../site.config.mjs";
-import { data, type ExportedClaim } from "../../lib/export";
+import { claimPaths, type ExportedClaim } from "../../lib/export";
 import { EMBED_SIZE, embedSnippet } from "../../lib/share";
 import { canonicalAddress } from "../../lib/structured";
 
-export const getStaticPaths: GetStaticPaths = () =>
-  data.claims.map((claim) => ({ params: { slug: claim.slug }, props: { claim } }));
+export const getStaticPaths = claimPaths;
 
 export const GET: APIRoute = ({ props }) => {
   const { claim } = props as { claim: ExportedClaim };

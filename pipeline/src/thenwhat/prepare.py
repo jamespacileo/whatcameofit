@@ -1,6 +1,6 @@
 """Working out what each claim needs before it can be reviewed.
 
-Pure planning: which articles are unread, and the commands to run. Running them is the
+Planning only: which articles are unread, and the commands to run. Running them is the
 command's job.
 """
 
@@ -9,14 +9,13 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.entry import ClaimNotFound, find_claim
+from thenwhat.claims.entry import claim_by_slug
 from thenwhat.db.models import Claim, SourceArticle
 from thenwhat.domain import ReviewState
 
 
 @dataclass(frozen=True, slots=True)
 class ClaimPlan:
-    claim_id: int
     slug: str
     # Articles the model has not read yet. Only a claim still awaiting review has any:
     # a decided claim is never redrafted.
@@ -32,12 +31,7 @@ def plan_claims(session: Session, slugs: list[str] | None) -> list[ClaimPlan]:
             )
         )
     else:
-        claims = []
-        for slug in slugs:
-            claim = find_claim(session, slug)
-            if claim is None:
-                raise ClaimNotFound(f"No claim has the slug '{slug}'.")
-            claims.append(claim)
+        claims = [claim_by_slug(session, slug) for slug in slugs]
 
     plans: list[ClaimPlan] = []
     for claim in claims:
@@ -50,7 +44,7 @@ def plan_claims(session: Session, slugs: list[str] | None) -> list[ClaimPlan]:
                     .order_by(SourceArticle.published_date, SourceArticle.id)
                 )
             )
-        plans.append(ClaimPlan(claim.id, claim.slug, unread))
+        plans.append(ClaimPlan(claim.slug, unread))
     return plans
 
 

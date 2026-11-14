@@ -1,5 +1,7 @@
 """Commands for a claim's entities and for proposing registry matches."""
 
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Annotated
 
@@ -11,20 +13,36 @@ from thenwhat.claims.entities import (
     add_entity,
     add_search_phrase,
     add_synonym,
+    delete_people,
+    people,
     set_origin_paper,
 )
-from thenwhat.claims.entry import ClaimNotFound, EntryError, find_claim
+from thenwhat.claims.entry import EntryError, claim_by_slug
 from thenwhat.cli import extract
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
-from thenwhat.db.models import Claim
+from thenwhat.db.models import Claim, Entity, EntityMatch
 from thenwhat.decide.core import Backend, DecisionFailed, UnknownBackend, backend_named
 from thenwhat.decide.steps import has_stage_suggestion, suggest_evidence_stage
 from thenwhat.domain import Decider, EntityType, ReviewState
+from thenwhat.resolve.organisations import OrganisationRegistry, match_organisations
+from thenwhat.resolve.papers import (
+    PaperSearch,
+    RegistryNumbers,
+    TrialRegistry,
+    choose_origin,
+    find_papers,
+    rescore_papers,
+    trials_from_papers,
+)
 from thenwhat.resolve.service import DoiLookup, TrialSearch, rescore_claim, resolve_claim
+from thenwhat.sources.base import UnsearchableTerm
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref
+from thenwhat.sources.europepmc import EuropePmc
+from thenwhat.sources.openalex import OpenAlex
+from thenwhat.sources.ror import Ror
 
 entity_app = typer.Typer(help="Add entities, synonyms and the origin paper.", no_args_is_help=True)
 
@@ -54,6 +72,32 @@ def make_registries(session: Session) -> tuple[TrialSearch, DoiLookup]:
     return (
         ClinicalTrials(session, contact_email=contact),
         Crossref(session, contact_email=contact),
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class Research:
+    """The sources behind related papers and organisations."""
+
+    # None while OPENALEX_API_KEY is empty: paper search is then off.
+    papers: PaperSearch | None
+    numbers: RegistryNumbers
+    registry: TrialRegistry
+    organisations: OrganisationRegistry
+
+
+def make_research(session: Session) -> Research:
+    settings = settings_or_exit()
+    contact = settings.contact_email
+    return Research(
+        papers=(
+            OpenAlex(session, contact_email=contact, api_key=settings.openalex_api_key)
+            if settings.openalex_api_key
+            else None
+        ),
+        numbers=EuropePmc(session, contact_email=contact),
+        registry=ClinicalTrials(session, contact_email=contact),
+        organisations=Ror(session, contact_email=contact),
     )
 
 
@@ -119,9 +163,7 @@ def entity_phrases(
         if slugs:
             claims = []
             for slug in slugs:
-                claim = find_claim(session, slug)
-                if claim is None:
-                    raise ClaimNotFound(f"No claim has the slug '{slug}'.")
+                claim = claim_by_slug(session, slug)
                 claims.append(claim)
         else:
             claims = list(session.scalars(select(Claim).order_by(Claim.slug)))
@@ -137,6 +179,28 @@ def entity_phrases(
         out.print(f"{given} of {len(claims)} claims were given search phrases.")
 
 
+@entity_app.command("people")
+def entity_people() -> None:
+    """List every stored person with their claim. Only researchers belong: delete a
+    patient, relative, reporter or commentator with `entity delete-people`."""
+    with entry_session() as session:
+        listed = people(session)
+        for entity, claim in listed:
+            out.print(f"{entity.id}\t{claim.slug}\t{entity.name}", markup=False)
+        out.print(f"{len(listed)} person entities.")
+
+
+@entity_app.command("delete-people")
+def entity_delete_people(
+    ids: Annotated[list[int], typer.Argument(help="Ids from `entity people`.")],
+) -> None:
+    """Delete the person entities you name. Refused, deleting none, if an id is not a
+    person."""
+    with entry_session() as session:
+        for entity in delete_people(session, ids):
+            out.print(f"Deleted person {entity.name} ({entity.id}).", markup=False)
+
+
 @entity_app.command("origin-paper")
 def entity_origin_paper(
     claim_slug: Annotated[str, typer.Argument(help="Slug of the claim.")],
@@ -148,31 +212,187 @@ def entity_origin_paper(
         out.print(f"Origin paper of {claim_slug}: {paper.name}.", markup=False)
 
 
+def _related_research(
+    session: Session,
+    claim: Claim,
+    research: Research,
+    backend: Backend,
+    now: datetime,
+    reject_below: float,
+    accept_above: float,
+    rescore: bool = False,
+) -> None:
+    """Organisations, related papers, the trials those papers name and the origin paper,
+    with a line on each. A step that fails is reported, what it had written is undone,
+    and the rest goes on: the trial candidates found before this stand either way."""
+    thresholds = {"reject_below": reject_below, "accept_above": accept_above}
+
+    matched = _step(
+        session,
+        "Organisations were not looked up",
+        lambda: match_organisations(session, claim, registry=research.organisations),
+    )
+    if matched:
+        out.print(f"Matched {len(matched)} organisation(s) in ROR. They are pending review.")
+
+    papers = research.papers
+    if papers is None:
+        out.print("Paper search is off: OPENALEX_API_KEY is not set.")
+    else:
+        found = _step(
+            session,
+            "Papers were not searched for",
+            lambda: find_papers(
+                session, claim, papers=papers, backend=backend, now=now, **thresholds
+            ),
+        )
+        if found is not None:
+            _say_papers(found, accept_above, reject_below, _has_papers(session, claim))
+        if rescore:
+            again = _step(
+                session,
+                "Pending papers were not scored again",
+                lambda: rescore_papers(
+                    session,
+                    claim,
+                    papers=papers,
+                    backend=backend,
+                    now=now,
+                    skip=found or [],
+                    **thresholds,
+                ),
+            )
+            if again is not None:
+                noun = "paper" if len(again) == 1 else "papers"
+                decided = sum(m.review_state is not ReviewState.PENDING for m in again)
+                out.print(f"Scored {len(again)} pending {noun} again; a rule decided {decided}.")
+
+    from_papers = _step(
+        session,
+        "Approved papers were not read for registry numbers",
+        lambda: trials_from_papers(
+            session,
+            claim,
+            numbers=research.numbers,
+            registry=research.registry,
+            backend=backend,
+            now=now,
+            papers=papers,
+            **thresholds,
+        ),
+    )
+    if from_papers:
+        ids = ", ".join(match.external_id for match in from_papers)
+        out.print(f"Trial candidates from approved papers: {ids}.", markup=False)
+
+    if papers is not None:
+        origin = _step(
+            session,
+            "The origin paper was not chosen",
+            lambda: choose_origin(
+                session, claim, papers=papers, backend=backend, now=now, accept_above=accept_above
+            ),
+        )
+        if origin is not None:
+            out.print(f"Origin paper set by rule: {origin.name}.", markup=False)
+    if isinstance(papers, OpenAlex):
+        out.print(papers.usage.line(), markup=False)
+
+
+def _step[T](session: Session, what_failed: str, work: Callable[[], T]) -> T | None:
+    """Run one step of related research in a savepoint. A decision that failed is
+    reported and its log entry kept; anything else undoes the step and is reported."""
+    try:
+        with session.begin_nested():
+            try:
+                return work()
+            except DecisionFailed as failed:
+                err.print(f"{what_failed}: {failed}", markup=False)
+                return None
+    except Exception as failed:
+        err.print(f"{what_failed}: {failed or type(failed).__name__}", markup=False)
+        return None
+
+
+def _has_papers(session: Session, claim: Claim) -> bool:
+    """Whether the claim has any paper candidate, in any state."""
+    return (
+        session.scalars(
+            select(EntityMatch.id)
+            .join(Entity, Entity.id == EntityMatch.entity_id)
+            .where(Entity.claim_id == claim.id, EntityMatch.source_name == OpenAlex.name)
+        ).first()
+        is not None
+    )
+
+
+def _say_papers(
+    found: list[EntityMatch], accept_above: float, reject_below: float, has_papers: bool
+) -> None:
+    if not found and not has_papers:
+        # Said as it is, and left at that: no looser search is tried in its place.
+        out.print(
+            "The paper search found nothing for this claim. It has no related paper."
+            " Give the intervention a search phrase with `entity phrase` to search again."
+        )
+        return
+    if not found:
+        out.print("No new related paper was found.")
+        return
+    approved = [m for m in found if m.review_state is ReviewState.APPROVED]
+    rejected = [m for m in found if m.review_state is ReviewState.REJECTED]
+    noun = "paper" if len(found) == 1 else "papers"
+    out.print(
+        f"Found {len(found)} related {noun}: {len(approved)} approved by rule for scoring"
+        f" {accept_above:g} or more, {len(rejected)} rejected by rule for scoring under"
+        f" {reject_below:g}, {len(found) - len(approved) - len(rejected)} pending review.",
+        markup=False,
+    )
+    for match in sorted(approved, key=lambda m: m.score, reverse=True):
+        out.print(f"  approved {match.score:.2f}  {match.external_id}", markup=False)
+
+
 def resolve_command(
     claim_slug: Annotated[str, typer.Argument(help="Slug of the claim.")],
     rescore: Annotated[
         bool,
         typer.Option(
             "--rescore",
-            help="Also score again the pending trial candidates the search still returns.",
+            help="Also score again the pending trial candidates the search still returns,"
+            " and the pending related papers.",
         ),
     ] = False,
 ) -> None:
     """Search the registries for a claim's interventions and papers.
 
-    Every hit becomes a pending candidate match for you to approve or reject. A trial
+    Every hit becomes a scored candidate match. A rule rejects one scored near zero and
+    approves a trial scored high; the rest wait for you to approve or reject. A trial
     scores as a match only when it tests the intervention for the claim's indication.
+
+    The literature is then searched for papers about the intervention and indication.
+    Each is scored, carries the reasons found by rule, and is approved by rule when it
+    scores high. A registry number an approved paper states becomes a trial candidate,
+    and a paper that is confidently the one first reported on becomes the origin paper.
+    Institutions and companies are looked up in the organisation registry.
     """
     with entry_session() as session:
-        claim = find_claim(session, claim_slug)
-        if claim is None:
-            raise ClaimNotFound(f"No claim has the slug '{claim_slug}'.")
+        claim = claim_by_slug(session, claim_slug)
         backend = make_backend(session)
         trials, dois = make_registries(session)
+        research = make_research(session)
         now = datetime.now(UTC)
         settings = settings_or_exit()
         reject_below = settings.match_reject_below
         accept_above = settings.match_accept_above
+        refused: dict[str, str] = {}
+
+        def unsearchable(term: UnsearchableTerm) -> None:
+            """Say once that the registry cannot search for a term, and go on with the
+            claim's other terms. The term is left for the operator to reword."""
+            if term.term not in refused:
+                refused[term.term] = term.reason
+                err.print(f"Not searched for: {term}", markup=False)
+
         try:
             added = resolve_claim(
                 session,
@@ -183,6 +403,7 @@ def resolve_command(
                 now=now,
                 reject_below=reject_below,
                 accept_above=accept_above,
+                unsearchable=unsearchable,
             )
             again = (
                 rescore_claim(
@@ -194,6 +415,7 @@ def resolve_command(
                     skip=added,
                     reject_below=reject_below,
                     accept_above=accept_above,
+                    unsearchable=unsearchable,
                 )
                 if rescore
                 else []
@@ -201,6 +423,9 @@ def resolve_command(
             if claim.evidence_stage is None and not has_stage_suggestion(session, claim):
                 stage = suggest_evidence_stage(session, backend, claim, now=now)
                 out.print(f"Suggested evidence stage: {stage.choice}. Confirm it in review.")
+            _related_research(
+                session, claim, research, backend, now, reject_below, accept_above, rescore
+            )
         except DecisionFailed as failed:
             # Leave through a clean exit so the logged failure is committed with the session.
             err.print(str(failed), markup=False)
@@ -225,6 +450,13 @@ def resolve_command(
             out.print(
                 f"{len(rejected)} rejected by rule for scoring under {reject_below:g}."
                 " See them with `review list --by-rule`.",
+                markup=False,
+            )
+        if refused:
+            terms = "; ".join(f"'{term}'" for term in refused)
+            out.print(
+                f"{len(refused)} term(s) the registry could not search for, and nothing was"
+                f" searched in their place: {terms}. Reword them and resolve again.",
                 markup=False,
             )
         for match in sorted(added, key=lambda m: m.score, reverse=True):

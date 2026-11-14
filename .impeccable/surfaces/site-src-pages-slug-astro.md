@@ -21,7 +21,7 @@ OWN-WORLD: White page, one clinical blue accent (the operator asked for blue in 
 
 STORY: The reader sees the topic, the headline, where it stands and the latest record date, reads two sentences, then runs down the years: promise on amber, record on white, gaps left as gaps. Each record has a footnote to its source.
 
-FIRST VIEWPORT: Quiet masthead. Topic chip. Headline. The digest panel with the status label at left and the summary at right. The facts row. The heading and top rows of the timetable.
+FIRST VIEWPORT: Deep navy masthead with white lettering. Topic chip. Headline. The digest panel with the status label at left and the summary at right. The facts row. The heading and top rows of the timetable.
 
 FORM: Category standard, chosen by the operator. seed: seed:4e8bc7dce82955a8 (rolled for the first direction; the operator then pinned this one)
 

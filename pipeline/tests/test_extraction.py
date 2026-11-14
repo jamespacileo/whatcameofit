@@ -220,6 +220,47 @@ def test_named_drug_may_have_no_search_phrase(session: Session):
     assert intervention.search_phrases == []
 
 
+def test_only_the_researcher_is_recorded_as_a_person(session: Session):
+    """Scenario: Report featuring a patient"""
+    output = DRAFT | {
+        "entities": [
+            {"type": "person", "name": "Milo"},
+            {"type": "person", "name": "Professor Ada Example"},
+            {"type": "institution", "name": "Example University"},
+        ]
+    }
+    client, prompts = llm(session, output)
+
+    claim = draft_claim_from_article(
+        session,
+        client,
+        text=(
+            "By Rae Reporter. Milo, 15, wore the wristband for a month."
+            " Professor Ada Example, who led the study, said it calmed his tics."
+        ),
+        slug="tic-wristband",
+        vertical="brain-and-nerves",
+        url=ARTICLE_URL,
+        outlet="Example News",
+        title="A wristband for tics",
+        published_date=date(2023, 6, 1),
+    )
+
+    assert [p.name for p in entities(session, claim, EntityType.PERSON)] == [
+        "Professor Ada Example"
+    ]
+    # The model is told who counts; a first name it returns anyway is dropped.
+    assert "carrying out or leading the research" in prompts[0]
+    assert "a patient, a relative, a reporter or a commentator" in prompts[0]
+
+
+def test_article_naming_only_patients_records_no_person(session: Session):
+    """Scenario: Article naming no researcher"""
+    claim = draft(session, DRAFT | {"entities": [{"type": "person", "name": "Milo"}]})
+
+    assert entities(session, claim, EntityType.PERSON) == []
+
+
 def test_article_with_no_promise_gives_a_draft_without_promises(session: Session):
     """Scenario: Article with no promise"""
     claim = draft(session, DRAFT | {"promises": []})

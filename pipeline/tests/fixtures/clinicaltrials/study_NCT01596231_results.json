@@ -1,0 +1,698 @@
+{
+  "protocolSection": {
+    "identificationModule": {
+      "nctId": "NCT01596231",
+      "orgStudyIdInfo": {
+        "id": "2010-P-001099"
+      },
+      "secondaryIdInfos": [
+        {
+          "id": "Grant # AA10536",
+          "type": "OTHER_GRANT",
+          "domain": "NIAAA"
+        }
+      ],
+      "organization": {
+        "fullName": "Mclean Hospital",
+        "class": "OTHER"
+      },
+      "briefTitle": "Kudzu Treatment for Alcohol Abuse",
+      "officialTitle": "Isoflavone (Kudzu) Extract Effects on Alcohol Drinking: Single Dose Pretreatment Study",
+      "acronym": "KUDZU"
+    },
+    "statusModule": {
+      "statusVerifiedDate": "2014-10",
+      "overallStatus": "COMPLETED",
+      "expandedAccessInfo": {
+        "hasExpandedAccess": false
+      },
+      "startDateStruct": {
+        "date": "2010-05"
+      },
+      "primaryCompletionDateStruct": {
+        "date": "2013-05",
+        "type": "ACTUAL"
+      },
+      "completionDateStruct": {
+        "date": "2014-07",
+        "type": "ACTUAL"
+      },
+      "studyFirstSubmitDate": "2012-05-09",
+      "studyFirstSubmitQcDate": "2012-05-09",
+      "studyFirstPostDateStruct": {
+        "date": "2012-05-10",
+        "type": "ESTIMATED"
+      },
+      "resultsFirstSubmitDate": "2014-10-15",
+      "resultsFirstSubmitQcDate": "2014-10-15",
+      "resultsFirstPostDateStruct": {
+        "date": "2014-10-21",
+        "type": "ESTIMATED"
+      },
+      "lastUpdateSubmitDate": "2014-10-15",
+      "lastUpdatePostDateStruct": {
+        "date": "2014-10-21",
+        "type": "ESTIMATED"
+      }
+    },
+    "sponsorCollaboratorsModule": {
+      "responsibleParty": {
+        "type": "PRINCIPAL_INVESTIGATOR",
+        "investigatorFullName": "Example Investigator",
+        "investigatorTitle": "Director, McLean Imaging Center",
+        "investigatorAffiliation": "Mclean Hospital"
+      },
+      "leadSponsor": {
+        "name": "Mclean Hospital",
+        "class": "OTHER"
+      },
+      "collaborators": [
+        {
+          "name": "National Institute on Alcohol Abuse and Alcoholism (NIAAA)",
+          "class": "NIH"
+        }
+      ]
+    },
+    "oversightModule": {
+      "oversightHasDmc": false
+    },
+    "descriptionModule": {
+      "briefSummary": "This is a study designed to test whether a single administration of kudzu extract (2 mg) will significantly reduce the number of drinks consumed during a single 1 ½ hours drinking session when given as pretreatment 2 ½ hours before the drinking session.",
+      "detailedDescription": "In a laboratory experimental setting, subjects will be treated with placebo or 2 grams of kudzu extract 2.5 hours before an afternoon drinking session. The investigators hypothesis is that the kudzu pretreatment will reduce alcohol consumption in this free choice, self-administration paradigm."
+    },
+    "conditionsModule": {
+      "conditions": [
+        "Alcohol Consumption"
+      ],
+      "keywords": [
+        "Alcohol consumption",
+        "Kudzu extract"
+      ]
+    },
+    "designModule": {
+      "studyType": "INTERVENTIONAL",
+      "phases": [
+        "PHASE2"
+      ],
+      "designInfo": {
+        "allocation": "RANDOMIZED",
+        "interventionModel": "PARALLEL",
+        "primaryPurpose": "TREATMENT",
+        "maskingInfo": {
+          "masking": "DOUBLE",
+          "whoMasked": [
+            "PARTICIPANT",
+            "INVESTIGATOR"
+          ]
+        }
+      },
+      "enrollmentInfo": {
+        "count": 20,
+        "type": "ACTUAL"
+      }
+    },
+    "armsInterventionsModule": {
+      "armGroups": [
+        {
+          "label": "Placebo",
+          "type": "PLACEBO_COMPARATOR",
+          "description": "This is a study designed to test whether a single administration of kudzu extract (2 mg) or placebo will significantly reduce the number of drinks consumed during a single 1 ½ hours drinking session when given as a pretreatment 2 ½ hours before the drinking session.",
+          "interventionNames": [
+            "Dietary Supplement: Placebo"
+          ]
+        },
+        {
+          "label": "Kudzu",
+          "type": "ACTIVE_COMPARATOR",
+          "description": "Kudzu 2mg",
+          "interventionNames": [
+            "Dietary Supplement: Kudzu"
+          ]
+        }
+      ],
+      "interventions": [
+        {
+          "type": "DIETARY_SUPPLEMENT",
+          "name": "Kudzu",
+          "description": "Kudzu (2 mg) will be administered as a pretreatment 2 ½ hours before a drinking session to see if it will significantly reduce the number of drinks consumed during a single 1 ½ hours drinking session.",
+          "armGroupLabels": [
+            "Kudzu"
+          ],
+          "otherNames": [
+            "Kudzu root extract (NPI-031)",
+            "Puerariae lobata",
+            "Alkontrol-Herbal®"
+          ]
+        },
+        {
+          "type": "DIETARY_SUPPLEMENT",
+          "name": "Placebo",
+          "description": "Placebo will be administered as a pretreatment 2 ½ hours before a drinking session",
+          "armGroupLabels": [
+            "Placebo"
+          ]
+        }
+      ]
+    },
+    "outcomesModule": {
+      "primaryOutcomes": [
+        {
+          "measure": "Drinking Behaviors",
+          "description": "A variety of measures describing the drinking behavior will be analyzed with appropriate parametric tests (t-test, analysis of variance): number of beers consumed, weight and volume consumed, sip analysis (number, interlude), and latency (time to open first and subsequent drinks).",
+          "timeFrame": "Study end"
+        }
+      ]
+    },
+    "eligibilityModule": {
+      "eligibilityCriteria": "Inclusion Criteria:\n\n* Capable of understanding and complying with the protocol\n* Good physical and mental health (normal physical exam, ECG, blood and urine chemistries)\n* Body Mass Index between 18-30, inclusive\n* Age 21-40 years\n* Moderate to heavy alcohol drinkers (on the average 20+ drinks/week) or a self-reported pattern of incidences of binge drinking 2 or more times per week (4 or more alcoholic beverages in one sitting)\n* Have a stable living situation with current postal address\n\nExclusion Criteria:\n\n* Concurrent diagnosis of Axis I disorder\n* Current or past alcohol dependence; may meet criteria for alcohol abuse. Other drug dependence acceptable only if greater than 3 years.\n* Immediate family history pattern of alcoholism or problem drinking (parents or siblings)\n* Current drug abuse (other than alcohol or marijuana abuse). Past drug abuse is acceptable.\n* Subjects cannot be actively seeking treatment for any drug or alcohol dependence.\n* Subjects cannot use marijuana more than once a week. Marijuana abuse/dependence are acceptable if the use criteria is met.\n* Maintained on an antipsychotic or antidepressant medication; taking prescription medications except certain short-term anti fungal agents and some tropical creams for dermal conditions.\n* Tobacco use greater than 5 cigarettes per day\n* History of major head trauma resulting in cognitive impairment or history of seizure disorder\n* Heavy caffeine use (greater than 500 mg on a regular, daily basis)\n* Subject has active hepatitis and/or aspartate aminotransferase (AST), alanine aminotransferase (ALT) \\> 3x the upper limit of normal\n* For female volunteers, a positive pregnancy test",
+      "healthyVolunteers": true,
+      "sex": "ALL",
+      "minimumAge": "21 Years",
+      "maximumAge": "40 Years",
+      "stdAges": [
+        "ADULT"
+      ]
+    },
+    "referencesModule": {
+      "references": [
+        {
+          "pmid": "26048637",
+          "type": "DERIVED",
+          "citation": "Example text in place of a passage that named a person."
+        }
+      ],
+      "seeAlsoLinks": [
+        {
+          "label": "Related Info",
+          "url": "http://www.mclean.harvard.edu/research/neuroimaging/bprl/kudzu.php"
+        }
+      ]
+    }
+  },
+  "resultsSection": {
+    "participantFlowModule": {
+      "groups": [
+        {
+          "id": "FG000",
+          "title": "Placebo",
+          "description": "This is a study designed to test whether a single administration of kudzu extract (2 mg) or placebo will significantly reduce the number of drinks consumed during a single 1 ½ hours drinking session when given as a pretreatment 2 ½ hours before the drinking session.\n\nPlacebo: Placebo will be administered as a pretreatment 2 ½ hours before a drinking session"
+        },
+        {
+          "id": "FG001",
+          "title": "Kudzu",
+          "description": "Kudzu 2mg\n\nKudzu: Kudzu (2 mg) will be administered as a pretreatment 2 ½ hours before a drinking session to see if it will significantly reduce the number of drinks consumed during a single 1 ½ hours drinking session."
+        }
+      ],
+      "periods": [
+        {
+          "title": "Overall Study",
+          "milestones": [
+            {
+              "type": "STARTED",
+              "achievements": [
+                {
+                  "groupId": "FG000",
+                  "numSubjects": "10"
+                },
+                {
+                  "groupId": "FG001",
+                  "numSubjects": "10"
+                }
+              ]
+            },
+            {
+              "type": "COMPLETED",
+              "achievements": [
+                {
+                  "groupId": "FG000",
+                  "numSubjects": "10"
+                },
+                {
+                  "groupId": "FG001",
+                  "numSubjects": "10"
+                }
+              ]
+            },
+            {
+              "type": "NOT COMPLETED",
+              "achievements": [
+                {
+                  "groupId": "FG000",
+                  "numSubjects": "0"
+                },
+                {
+                  "groupId": "FG001",
+                  "numSubjects": "0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "baselineCharacteristicsModule": {
+      "groups": [
+        {
+          "id": "BG000",
+          "title": "Placebo",
+          "description": "This is a study designed to test whether a single administration of kudzu extract (2 mg) or placebo will significantly reduce the number of drinks consumed during a single 1 ½ hours drinking session when given as a pretreatment 2 ½ hours before the drinking session.\n\nPlacebo: Placebo will be administered as a pretreatment 2 ½ hours before a drinking session"
+        },
+        {
+          "id": "BG001",
+          "title": "Kudzu",
+          "description": "Kudzu 2mg\n\nKudzu: Kudzu (2 mg) will be administered as a pretreatment 2 ½ hours before a drinking session to see if it will significantly reduce the number of drinks consumed during a single 1 ½ hours drinking session."
+        },
+        {
+          "id": "BG002",
+          "title": "Total",
+          "description": "Total of all reporting groups"
+        }
+      ],
+      "denoms": [
+        {
+          "units": "Participants",
+          "counts": [
+            {
+              "groupId": "BG000",
+              "value": "10"
+            },
+            {
+              "groupId": "BG001",
+              "value": "10"
+            },
+            {
+              "groupId": "BG002",
+              "value": "20"
+            }
+          ]
+        }
+      ],
+      "measures": [
+        {
+          "title": "Age, Continuous",
+          "paramType": "MEAN",
+          "dispersionType": "STANDARD_DEVIATION",
+          "unitOfMeasure": "years",
+          "classes": [
+            {
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "24.6",
+                      "spread": "3.3"
+                    },
+                    {
+                      "groupId": "BG001",
+                      "value": "22.6",
+                      "spread": "3.7"
+                    },
+                    {
+                      "groupId": "BG002",
+                      "value": "23.6",
+                      "spread": "6.2"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Sex: Female, Male",
+          "paramType": "COUNT_OF_PARTICIPANTS",
+          "unitOfMeasure": "Participants",
+          "classes": [
+            {
+              "categories": [
+                {
+                  "title": "Female",
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "BG001",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "BG002",
+                      "value": "0"
+                    }
+                  ]
+                },
+                {
+                  "title": "Male",
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "10"
+                    },
+                    {
+                      "groupId": "BG001",
+                      "value": "10"
+                    },
+                    {
+                      "groupId": "BG002",
+                      "value": "20"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Race (NIH/OMB)",
+          "paramType": "COUNT_OF_PARTICIPANTS",
+          "unitOfMeasure": "Participants",
+          "classes": [
+            {
+              "categories": [
+                {
+                  "title": "American Indian or Alaska Native",
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "BG001",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "BG002",
+                      "value": "0"
+                    }
+                  ]
+                },
+                {
+                  "title": "Asian",
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "BG001",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "BG002",
+                      "value": "0"
+                    }
+                  ]
+                },
+                {
+                  "title": "Native Hawaiian or Other Pacific Islander",
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "BG001",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "BG002",
+                      "value": "0"
+                    }
+                  ]
+                },
+                {
+                  "title": "Black or African American",
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "BG001",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "BG002",
+                      "value": "0"
+                    }
+                  ]
+                },
+                {
+                  "title": "White",
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "9"
+                    },
+                    {
+                      "groupId": "BG001",
+                      "value": "9"
+                    },
+                    {
+                      "groupId": "BG002",
+                      "value": "18"
+                    }
+                  ]
+                },
+                {
+                  "title": "More than one race",
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "1"
+                    },
+                    {
+                      "groupId": "BG001",
+                      "value": "1"
+                    },
+                    {
+                      "groupId": "BG002",
+                      "value": "2"
+                    }
+                  ]
+                },
+                {
+                  "title": "Unknown or Not Reported",
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "BG001",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "BG002",
+                      "value": "0"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Ethnicity (NIH/OMB)",
+          "paramType": "COUNT_OF_PARTICIPANTS",
+          "unitOfMeasure": "Participants",
+          "classes": [
+            {
+              "categories": [
+                {
+                  "title": "Hispanic or Latino",
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "1"
+                    },
+                    {
+                      "groupId": "BG001",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "BG002",
+                      "value": "1"
+                    }
+                  ]
+                },
+                {
+                  "title": "Not Hispanic or Latino",
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "9"
+                    },
+                    {
+                      "groupId": "BG001",
+                      "value": "10"
+                    },
+                    {
+                      "groupId": "BG002",
+                      "value": "19"
+                    }
+                  ]
+                },
+                {
+                  "title": "Unknown or Not Reported",
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "BG001",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "BG002",
+                      "value": "0"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Region of Enrollment",
+          "paramType": "NUMBER",
+          "unitOfMeasure": "participants",
+          "classes": [
+            {
+              "title": "United States",
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "10"
+                    },
+                    {
+                      "groupId": "BG001",
+                      "value": "10"
+                    },
+                    {
+                      "groupId": "BG002",
+                      "value": "20"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "outcomeMeasuresModule": {
+      "outcomeMeasures": [
+        {
+          "type": "PRIMARY",
+          "title": "Drinking Behaviors",
+          "description": "A variety of measures describing the drinking behavior will be analyzed with appropriate parametric tests (t-test, analysis of variance): number of beers consumed, weight and volume consumed, sip analysis (number, interlude), and latency (time to open first and subsequent drinks).",
+          "reportingStatus": "POSTED",
+          "paramType": "MEAN",
+          "dispersionType": "Standard Deviation",
+          "unitOfMeasure": "beers consumed",
+          "timeFrame": "Study end",
+          "groups": [
+            {
+              "id": "OG000",
+              "title": "Placebo",
+              "description": "Placebo did not alter alcohol consumption compared to baseline."
+            },
+            {
+              "id": "OG001",
+              "title": "Kudzu",
+              "description": "Kudzu extract treatment significantly reduced the number of beers opened and total amounts (weight and volume) consumed. Latency and time to consume a beer was not significantly altered, and there was no difference in the number of sips taken to drink a beer."
+            }
+          ],
+          "denoms": [
+            {
+              "units": "Participants",
+              "counts": [
+                {
+                  "groupId": "OG000",
+                  "value": "10"
+                },
+                {
+                  "groupId": "OG001",
+                  "value": "10"
+                }
+              ]
+            }
+          ],
+          "classes": [
+            {
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "3.4",
+                      "spread": "1.1"
+                    },
+                    {
+                      "groupId": "OG001",
+                      "value": "1.9",
+                      "spread": "1.3"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "adverseEventsModule": {
+      "frequencyThreshold": "0",
+      "eventGroups": [
+        {
+          "id": "EG000",
+          "title": "Placebo",
+          "description": "This is a study designed to test whether a single administration of kudzu extract (2 mg) or placebo will significantly reduce the number of drinks consumed during a single 1 ½ hours drinking session when given as a pretreatment 2 ½ hours before the drinking session.\n\nPlacebo: Placebo will be administered as a pretreatment 2 ½ hours before a drinking session",
+          "seriousNumAffected": 0,
+          "seriousNumAtRisk": 10,
+          "otherNumAffected": 0,
+          "otherNumAtRisk": 10
+        },
+        {
+          "id": "EG001",
+          "title": "Kudzu",
+          "description": "Kudzu 2mg\n\nKudzu: Kudzu (2 mg) will be administered as a pretreatment 2 ½ hours before a drinking session to see if it will significantly reduce the number of drinks consumed during a single 1 ½ hours drinking session.",
+          "seriousNumAffected": 0,
+          "seriousNumAtRisk": 10,
+          "otherNumAffected": 0,
+          "otherNumAtRisk": 10
+        }
+      ]
+    }
+  },
+  "derivedSection": {
+    "miscInfoModule": {
+      "versionHolder": "2026-11-13"
+    },
+    "conditionBrowseModule": {
+      "meshes": [
+        {
+          "id": "D000428",
+          "term": "Alcohol Drinking"
+        }
+      ],
+      "ancestors": [
+        {
+          "id": "D004327",
+          "term": "Drinking Behavior"
+        },
+        {
+          "id": "D001519",
+          "term": "Behavior"
+        }
+      ]
+    }
+  },
+  "hasResults": true
+}

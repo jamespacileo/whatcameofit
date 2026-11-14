@@ -97,8 +97,9 @@ p {
   position: absolute;
   left: -100vw;
   top: 0;
-  background: var(--blue);
-  color: var(--paper);
+  /* It lands over the navy masthead, so it is the page's white with blue on it. */
+  background: var(--paper);
+  color: var(--blue);
   padding: 0.6rem 1rem;
   z-index: 2;
 }
@@ -120,10 +121,23 @@ p {
   white-space: nowrap;
 }
 
-/* Masthead: quiet, the name and three plain links. */
+/* Masthead: the name and three plain links, light on the footer's deep navy.
+   The navy is the darkest blue the site has, not the accent. */
 
 .masthead {
-  border-bottom: 1px solid var(--rule);
+  /* The name's dot and the links' underline: the accent, lifted to read on navy. */
+  --on-navy: #8ec1f5;
+  background: var(--footer);
+  color: var(--paper);
+}
+
+.masthead :focus-visible {
+  outline-color: var(--paper);
+}
+
+.masthead ::selection {
+  background: var(--paper);
+  color: var(--footer);
 }
 
 .masthead .wrap {
@@ -138,10 +152,10 @@ p {
 .masthead .name {
   display: inline-flex;
   align-items: baseline;
-  gap: 0.26em;
+  gap: 0;
   font-size: 1.25rem;
   letter-spacing: -0.01em;
-  color: var(--ink);
+  color: var(--paper);
   text-decoration: none;
 }
 
@@ -150,20 +164,13 @@ p {
 }
 
 .masthead .name .tail {
+  margin-left: 0.26em;
   font-weight: 800;
 }
 
 /* The name's question mark is drawn, not typed, so that its dot can be the solid
    blue marker: the question, and under it where a claim stands. On a first visit
    the hook is drawn and the dot lands. */
-.masthead .name {
-  gap: 0;
-}
-
-.masthead .name .tail {
-  margin-left: 0.26em;
-}
-
 .masthead .name .ask {
   height: 0.94em;
   width: auto;
@@ -180,36 +187,74 @@ p {
   stroke: currentColor;
   stroke-width: 4.8;
   stroke-linecap: round;
-  stroke-dasharray: 1;
+  /* A gap longer than the line: a round end on a dash of no length is drawn as a dot. */
+  stroke-dasharray: 1 1.2;
 }
 
 .masthead .name .ask .dot {
-  fill: var(--blue);
+  fill: var(--on-navy);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* The reverse mark: no tile, the glass in white, the navy showing through the lens. */
+.masthead .name .mark {
+  width: 1.4em;
+  height: 1.4em;
+  margin-right: 0.45em;
+  align-self: center;
+  flex: none;
+  /* The glass starts a little larger than its box. */
+  overflow: visible;
+}
+
+.masthead .name .mark .capsule {
   transform-box: fill-box;
   transform-origin: center;
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  /* One sentence, told once a visit: the glass is lowered onto the capsule, the
+     question is drawn, its dot lands. */
+  .masthead .name .mark .glass {
+    animation: glass-lower 0.7s var(--ease-out) both;
+  }
+
   .masthead .name .ask .hook {
-    animation: ask-hook 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
+    animation: ask-hook 0.7s var(--ease-out) 0.4s both;
   }
 
   .masthead .name .ask .dot {
-    animation: ask-dot 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.85s both;
+    animation: ask-dot 0.6s var(--ease-out) 1s both;
   }
 
-  .masthead .name:hover .ask .hook {
-    animation-name: ask-hook-again;
+  /* Hovered, the capsule is seen closer and settles: feedback, not the story again. */
+  .masthead .name:hover .mark .capsule,
+  .masthead .name:focus-visible .mark .capsule {
+    animation: closer-look 0.52s cubic-bezier(0.3, 0, 0.2, 1);
   }
+}
 
-  .masthead .name:hover .ask .dot {
-    animation-name: ask-dot-again;
+/* Lowered about the middle of the lens, written out so that no browser's reading of
+   an origin inside a cropped drawing matters. */
+@keyframes glass-lower {
+  from {
+    transform: translate(29px, 29px) scale(1.14) translate(-30.5px, -30.5px);
+  }
+  to {
+    transform: translate(30.5px, 30.5px) scale(1) translate(-30.5px, -30.5px);
+  }
+}
+
+@keyframes closer-look {
+  35% {
+    transform: scale(1.16);
   }
 }
 
 @keyframes ask-hook {
   from {
-    stroke-dashoffset: 1;
+    stroke-dashoffset: 1.1;
   }
   to {
     stroke-dashoffset: 0;
@@ -225,33 +270,6 @@ p {
   }
 }
 
-/* The same motion under second names, so a hover plays it again. */
-@keyframes ask-hook-again {
-  from {
-    stroke-dashoffset: 1;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes ask-dot-again {
-  from {
-    transform: scale(0);
-  }
-  to {
-    transform: scale(1);
-  }
-}
-
-.masthead .name .mark {
-  width: 1.55em;
-  height: 1.55em;
-  margin-right: 0.45em;
-  align-self: center;
-  flex: none;
-}
-
 .masthead nav ul {
   display: flex;
   flex-wrap: wrap;
@@ -262,7 +280,7 @@ p {
 }
 
 .masthead nav a {
-  color: var(--blue);
+  color: var(--paper);
   font-weight: 600;
   font-size: 0.95rem;
   text-decoration: none;
@@ -275,6 +293,7 @@ p {
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 0.35em;
+  text-decoration-color: var(--on-navy);
 }
 
 main {
@@ -287,7 +306,7 @@ main > .wrap {
 }
 
 /* The opening band: a page's main task on the panel blue, full width, between the
-   white masthead and the white page. Pale, with ink on it; never a solid block of
+   navy masthead and the white page. Pale, with ink on it; never a solid block of
    the accent. */
 .band {
   background: var(--panel);
@@ -304,9 +323,8 @@ main > .wrap {
   margin-top: 0;
 }
 
-/* Title, lede, box and suggestion share one right edge. */
-.band .lede,
-.band .suggest {
+/* Title, lede and box share one right edge. */
+.band .lede {
   max-width: 46rem;
 }
 
@@ -422,7 +440,7 @@ a.chip:hover {
   font-weight: 600;
   color: var(--blue);
   background: none;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--ring);
   border-radius: 999px;
   padding: 0.2rem 0.8rem;
   cursor: pointer;
@@ -433,11 +451,123 @@ a.chip:hover {
   border-color: var(--tint);
 }
 
+a.share {
+  text-decoration: none;
+}
+
+/* Followed: the pill stays filled, and its words say so. */
+.share[aria-pressed="true"] {
+  background: var(--tint);
+  border-color: var(--tint);
+}
+
+.share[aria-pressed="true"] svg {
+  fill: currentColor;
+}
+
+/* Follow with its words: the pill, then what it does and where the list is kept. */
+.follow-offer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.9rem;
+  margin-top: 0.9rem;
+}
+
+.follow-offer .share {
+  flex: none;
+}
+
+.follow-offer .entry-note {
+  flex: 1 1 16rem;
+  margin: 0;
+  max-width: 52ch;
+}
+
+.again .follow-offer {
+  margin-top: 1.1rem;
+}
+
+/* For a reader who follows the claim and last saw another status. */
+.was-note {
+  margin: 0.9rem 0 0;
+  font-weight: 600;
+}
+
+/* How to hear of a change without looking for one. */
+.keep-up p {
+  max-width: var(--measure);
+}
+
+.keep-feed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.9rem;
+  margin-top: 0.7rem;
+}
+
+.keep-feed .entry-note {
+  margin: 0;
+}
+
+.closing .suggest {
+  margin-top: 1.1rem;
+}
+
+/* Follow and Share, together at the title's far side. */
+.page-actions {
+  display: flex;
+  flex: none;
+  gap: 0.5rem;
+}
+
+/* Under a topic's table: pass it on, or hear of a change. */
+.page-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-top: 1rem;
+}
+
+.page-foot .entry-note {
+  margin: 0;
+}
+
+/* The last section of a page: one next step. */
+.closing .share {
+  margin-top: 0.2rem;
+}
+
 /* Under the headline: what kind of page this is, for a reader who arrived cold. */
 .what-this-is {
   color: var(--muted);
   font-size: 0.95rem;
   margin: 0.6rem 0 0;
+}
+
+/* The headline a reader followed here, named before anything is said about it. */
+.reported {
+  margin-top: 0.7rem;
+}
+
+.reported-title {
+  display: block;
+  width: fit-content;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+.reported .entry-note {
+  display: block;
+  margin-top: 0.2rem;
+}
+
+.reported > .entry-note {
+  margin-top: 0.5rem;
 }
 
 /* A thumb needs more than a mouse does: 44 pixels, wherever something is pressed. */
@@ -478,7 +608,19 @@ a.chip:hover {
   .record .origin a,
   .record > span > a,
   .index .claim a {
+    padding-block: 0.75rem;
+  }
+
+  /* A headline is a box of its own, so its padding is taken back out of the page. */
+  .index td.claim a.followed,
+  .reported-title {
     padding-block: 0.6rem;
+    margin-block: -0.6rem;
+  }
+
+  .digest .changed a,
+  .reported > .entry-note a {
+    padding-block: 0.8rem;
   }
 
   .embed-how summary {
@@ -541,9 +683,46 @@ a.chip:hover {
   background: var(--blue);
 }
 
-/* The not-found page: the path with no place marked. */
-.track.nowhere {
+/* Nothing under the glass: the path with no place marked, and the glass at rest past
+   the last of them. On the not-found page, and above a search that finds nothing. */
+.unfound {
+  display: block;
+  width: min(100%, 19rem);
+  height: auto;
   margin-top: 0.9rem;
+  overflow: visible;
+  color: var(--blue);
+}
+
+.unfound .path {
+  stroke: var(--rule);
+  stroke-width: 1.5;
+}
+
+.unfound .place {
+  fill: var(--paper);
+  stroke: var(--ring);
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.unfound .glass {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  transform: translateX(var(--rest));
+}
+
+.results .unfound {
+  width: min(100%, 12rem);
+  margin: 0 0 0.7rem;
+}
+
+/* A saved date: the pill is tinted while its words say so. */
+.share.saved {
+  background: var(--tint);
+  border-color: var(--tint);
 }
 
 /* Under the records: how a status is set, and how to say one is wrong. */
@@ -627,11 +806,16 @@ a.share {
   margin-top: 0.9rem;
 }
 
-.post-label {
-  font-size: 0.8rem;
+.post-to summary {
+  cursor: pointer;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: var(--muted);
-  margin: 0 0 0.4rem;
+  color: var(--blue);
+  width: fit-content;
+}
+
+.post-to[open] summary {
+  margin-bottom: 0.5rem;
 }
 
 .post-links {
@@ -725,30 +909,45 @@ body.embed {
   border: 1px solid var(--rule);
   border-radius: var(--radius);
   background: var(--paper);
-  padding: 0.9rem 1.1rem 1rem;
+  padding: 0 1.1rem 1rem;
+  /* The navy head reaches the frame's edges and takes its corners. */
+  overflow: hidden;
 }
 
+/* The head is the site's masthead in small: the name in white on deep navy. */
 .embed-name {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: 1rem;
-  margin: 0;
+  margin: 0 -1.1rem;
+  padding: 0.5rem 1.1rem;
   max-width: none;
   font-size: 0.8rem;
-  color: var(--muted);
+  background: var(--footer);
+  /* The quieter line on navy: a pale blue, not a grey. */
+  color: #c9d9ee;
 }
 
 .embed-name a {
   font-weight: 700;
-  color: var(--ink);
+  color: var(--paper);
   text-decoration: none;
+}
+
+.embed-name a:focus-visible {
+  outline-color: var(--paper);
+}
+
+.embed-name ::selection {
+  background: var(--paper);
+  color: var(--footer);
 }
 
 .embed h1 {
   font-size: 1.05rem;
   line-height: 1.3;
-  margin: 0.5rem 0 0.7rem;
+  margin: 0.7rem 0 0.7rem;
   text-wrap: pretty;
   /* Three lines at most, so the status stays inside the frame the snippet asks for. */
   display: -webkit-box;
@@ -909,6 +1108,184 @@ body.embed {
 .contents {
   margin-top: 1.1rem;
   max-width: var(--measure);
+}
+
+/* The method page's video: a framed player that waits to be played, its note, and its words. */
+.explainer {
+  margin: 1.5rem 0 0;
+  max-width: 46rem;
+}
+
+.explainer video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+
+.explainer figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.explainer details {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.explainer summary {
+  width: fit-content;
+  color: var(--blue);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* How a status is made, under the video: reported, recorded, where it stands. The
+   drawing is whole as it stands; a reader may ask to see it arrive in order. */
+.made {
+  margin: 1.5rem 0 0;
+}
+
+.made-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.15fr) auto minmax(0, 0.95fr);
+  gap: 1.25rem;
+  align-items: start;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.3rem 1.25rem;
+}
+
+.made-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 0 0 0.35rem;
+}
+
+.made-quote {
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.made-by {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0.15rem 0 0;
+}
+
+/* A promise is on pale amber with a dashed rule here, as everywhere. */
+.made-promise {
+  display: inline-block;
+  margin: 0.6rem 0 0;
+  background: var(--promise);
+  border: 1.5px dashed var(--promise-rule);
+  border-radius: 6px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.85rem;
+}
+
+.made-records {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.made li {
+  display: grid;
+  grid-template-columns: auto 2.4rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
+  padding-block: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.made li + li {
+  border-top: 1px solid var(--rule-soft);
+}
+
+.made li .kind,
+.made li .basis-mark {
+  margin: 0;
+}
+
+.made li .year {
+  font-weight: 700;
+}
+
+.made-status {
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--blue);
+  margin: 0 0 0.45rem;
+}
+
+.made .track .ends {
+  white-space: normal;
+}
+
+.made-to {
+  width: 2.4rem;
+  height: 0.9rem;
+  align-self: center;
+  color: var(--ring);
+}
+
+.made-to path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 1.2;
+}
+
+.made figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.made figcaption .text-control {
+  margin-left: 0.35rem;
+}
+
+@media (max-width: 40rem) {
+  /* Stacked, each arrow pointing down to the next. */
+  .made-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+
+  .made-to {
+    transform: rotate(90deg);
+    align-self: start;
+    margin: 0.7rem 0 0.7rem 0.1rem;
+  }
+
+  .made figcaption .text-control {
+    display: block;
+    margin: 0;
+    padding-block: 0.6rem;
+  }
+
+  /* Pressed with a thumb, so it gets the room every pressed thing has. */
+  .explainer summary {
+    padding-block: 0.6rem;
+  }
+}
+
+@media print {
+  /* A video cannot be printed. Its words can: the fold is opened by the reader or not at all. */
+  .explainer video {
+    display: none;
+  }
 }
 
 main nav.contents ul {
@@ -1196,10 +1573,21 @@ main nav.contents ul li + li {
   grid-column: 2;
 }
 
-.record .what:target {
+.record .what:target,
+.bar:target {
   background: var(--tint);
   outline: 0.3rem solid var(--tint);
   border-radius: 2px;
+}
+
+/* A heading reached by a link is marked along its words, not across the page,
+   and keeps clear of the window's edge. */
+.bar {
+  scroll-margin-top: 1.25rem;
+}
+
+.bar:target {
+  width: fit-content;
 }
 
 .record .origin {
@@ -1781,6 +2169,373 @@ main nav.contents ul li + li {
   text-decoration-thickness: 2px;
 }
 
+/* Under a long table: step through it a page at a time. Rows after the first page
+   are in the document; where scripts run they are out of sight until asked for. */
+@media (scripting: enabled) {
+  tr[data-later] {
+    display: none;
+  }
+}
+
+.table-frame {
+  scroll-margin-top: 1rem;
+}
+
+/* The home page's lists: one shown at a time, picked by a tab. Where scripts run,
+   only the first is in sight until the tabs take over. */
+@media (scripting: enabled) {
+  .feed:not(.tabbed) .feed-panel ~ .feed-panel {
+    display: none;
+  }
+}
+
+/* A control that reads as a link: blue, underlined, no fill. */
+.text-control {
+  font: inherit;
+  font-weight: 600;
+  color: var(--blue);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.text-control:hover {
+  text-decoration-thickness: 2px;
+}
+
+.text-control[aria-pressed="true"] {
+  color: var(--ink);
+  text-decoration-thickness: 2px;
+}
+
+/* One word on a row dated since the reader's last visit, or on a followed claim whose
+   status has changed. The words beside it say what; the tag never stands alone. */
+.new-tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--tag);
+  border-radius: 0.3rem;
+  padding: 0 0.4rem;
+  vertical-align: 0.1em;
+}
+
+/* What is dated since the reader's last visit: one line above the lists. */
+.since {
+  margin: 1.2rem 0 0;
+  max-width: var(--measure);
+}
+
+/* The reader's own list, ahead of everyone's. */
+.following .plain {
+  margin-top: 0.4rem;
+}
+
+.following .plain a {
+  font-weight: 600;
+}
+
+.following .entry-note .text-control {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.following > .entry-note {
+  margin-top: 0.5rem;
+}
+
+.feed-link {
+  margin-top: 0.6rem;
+}
+
+/* On a phone the counts and the topic choice open on request. */
+.narrow-toggle {
+  display: none;
+  align-items: center;
+  gap: 0.4rem;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--blue);
+  background: none;
+  border: 1px solid var(--ring);
+  border-radius: 999px;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  cursor: pointer;
+}
+
+.narrow-toggle[aria-expanded="true"] {
+  background: var(--tint);
+  border-color: var(--tint);
+}
+
+@media (max-width: 40rem) and (scripting: enabled) {
+  .narrow-toggle {
+    display: inline-flex;
+  }
+
+  .scoreboard:not(.open) .narrow-body {
+    display: none;
+  }
+
+  .scoreboard.open .narrow-body {
+    margin-top: 0.8rem;
+  }
+}
+
+/* Above the lists: where every tracked claim stands, and a topic to narrow to. */
+.scoreboard {
+  margin-top: 1rem;
+}
+
+.topic-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.8rem 0 0;
+  font-size: 0.92rem;
+}
+
+.topic-filter label {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.topic-filter select {
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--ring);
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.6rem;
+  max-width: 100%;
+}
+
+/* Today's anniversaries of first reports, or the next day with one. */
+.on-this-day .calendar {
+  margin-top: 0.3rem;
+}
+
+.on-this-day .calendar .day:first-child,
+.on-this-day .calendar .day {
+  border-top: 0;
+}
+
+.feed-panel .none {
+  margin-top: 0.7rem;
+  color: var(--muted);
+}
+
+.feed-tabs {
+  display: flex;
+  gap: 0.25rem 1.4rem;
+  margin-top: clamp(1.5rem, 5vw, 2.25rem);
+  border-bottom: 1px solid var(--rule);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.feed-tabs [role="tab"] {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  padding: 0.65rem 0.1rem 0.5rem;
+  cursor: pointer;
+}
+
+.feed-tabs [role="tab"]:hover {
+  color: var(--blue);
+}
+
+.feed-tabs [role="tab"][aria-selected="true"] {
+  color: var(--ink);
+  border-bottom-color: var(--blue);
+}
+
+.feed-tabs .count {
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  background: var(--tint);
+  border-radius: 999px;
+  padding: 0 0.45rem;
+}
+
+/* On a phone the order drawn is: what is dated since the last visit, the tabs, the
+   control that narrows, the list; then the tally. A keyboard still moves in the
+   order of the page. The tabs lose their counts to fit one row, and wrap where they
+   cannot; the list's heading is left to the tab that names it. */
+@media (max-width: 40rem) {
+  .front {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .front > .following {
+    order: 1;
+  }
+
+  .front > .since {
+    order: 2;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+  }
+
+  .front > .feed {
+    order: 3;
+  }
+
+  .front > .tally {
+    order: 4;
+    margin-top: 1.4rem;
+  }
+
+  .feed {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .feed > .feed-tabs {
+    order: 1;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0 0.5rem;
+    margin-top: 0.7rem;
+    overflow-x: visible;
+  }
+
+  .feed > .scoreboard {
+    order: 2;
+    margin-top: 0.7rem;
+  }
+
+  .feed > .feed-panel {
+    order: 3;
+  }
+
+  .feed-tabs [role="tab"] {
+    flex: 0 1 auto;
+    font-size: 0.85rem;
+    min-height: 2.75rem;
+    padding-inline: 0;
+  }
+
+  .feed-tabs .count {
+    display: none;
+  }
+
+  .feed.tabbed .feed-panel > .bar {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .feed.tabbed .feed-panel > .bar + * {
+    margin-top: 0.8rem;
+  }
+}
+
+/* Everything pressed on a phone is at least 44 pixels tall. */
+@media (max-width: 40rem) {
+  .stage-filter .place.off,
+  .topic-filter select,
+  .pager button {
+    min-height: 2.75rem;
+  }
+
+  .topic-filter select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  table.index td.claim .entry-note a,
+  .more-topics a,
+  .on-this-day .bar-row a,
+  .page-foot .entry-note a,
+  .following .text-control,
+  .about-page a {
+    display: inline-block;
+    padding-block: 0.65rem;
+  }
+
+  .post-to summary,
+  .embed-how summary {
+    padding-block: 0.65rem;
+  }
+
+  .follow-offer .entry-note {
+    flex-basis: 100%;
+  }
+}
+
+.feed.tabbed .feed-panel > .bar {
+  margin-top: 1.1rem;
+  font-size: 1rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.pager {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.pager-at {
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.pager button {
+  font: inherit;
+  font-weight: 600;
+  color: var(--blue);
+  background: none;
+  border: 0;
+  padding: 0.55rem 0.2rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.pager button:hover {
+  text-decoration-thickness: 2px;
+}
+
+.pager button[aria-disabled="true"] {
+  color: var(--muted);
+  font-weight: 400;
+  text-decoration: none;
+  cursor: default;
+}
+
 /* The topic directory: dense, lettered, narrowed by typing. */
 .directory {
   margin-top: 1.5rem;
@@ -2179,6 +2934,55 @@ main ul:not([class]) li + li {
   font-size: 0.9rem;
 }
 
+/* Background cards: a term, its source and, one press away, the source's own words. */
+.card-list li + li {
+  margin-top: 1.1rem;
+}
+
+.card-kind {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.card-label {
+  font-weight: 600;
+  justify-self: start;
+}
+
+.card-words {
+  margin-top: 0.2rem;
+}
+
+.card-words summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  list-style: none;
+  color: var(--blue);
+}
+
+.card-words summary::-webkit-details-marker {
+  display: none;
+}
+
+.card-words[open] summary svg {
+  transform: rotate(180deg);
+}
+
+.card-words blockquote {
+  margin: 0.4rem 0 0;
+  padding: 0.7rem 0.9rem;
+  background: var(--panel);
+  border-radius: 0.65rem;
+  max-width: 62ch;
+  overflow-wrap: anywhere;
+}
+
+.card-list .match-why p + p {
+  margin-top: 0.4rem;
+}
+
 /* On a phone the record keeps the width; how sure the match is goes under it. */
 @media (max-width: 40rem) {
   .match-list li {
@@ -2190,7 +2994,8 @@ main ul:not([class]) li + li {
     text-align: left;
   }
 
-  .match-why summary {
+  .match-why summary,
+  .card-words summary {
     min-height: 2.75rem;
   }
 
@@ -2200,8 +3005,275 @@ main ul:not([class]) li + li {
   }
 }
 
+/* Trials on record: each trial once. What it is and how far it got are on the lines a
+   reader sees; what it set out to measure and what it posted are one press away.
+   Openspec trial-facts. */
+.trials {
+  margin-top: 2rem;
+}
+
+.trial {
+  display: grid;
+  gap: 0.15rem;
+  scroll-margin-top: 1.25rem;
+}
+
+.trial > p {
+  margin: 0;
+}
+
+.trial:target {
+  background: var(--tint);
+  outline: 0.3rem solid var(--tint);
+  border-radius: 2px;
+}
+
+.trial-name {
+  overflow-wrap: anywhere;
+}
+
+.trial-name a {
+  font-weight: 700;
+}
+
+.trial-name .out {
+  margin-left: 0.15rem;
+  vertical-align: -0.05em;
+}
+
+.trial-standing {
+  font-weight: 600;
+}
+
+/* Notes about the entry, in one muted line that wraps between notes, not inside them.
+   A gap parts them, so a wrapped line never starts with a mark. */
+.trial-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+}
+
+.trial-more summary,
+.trials-rest > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: fit-content;
+  cursor: pointer;
+  list-style: none;
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.trial-more summary {
+  font-size: 0.9rem;
+  margin-top: 0.2rem;
+}
+
+.trial-more summary::-webkit-details-marker,
+.trials-rest > summary::-webkit-details-marker {
+  display: none;
+}
+
+.trial-more[open] > summary svg,
+.trials-rest[open] > summary svg {
+  transform: rotate(180deg);
+}
+
+.trials-rest {
+  max-width: var(--measure);
+}
+
+.trials-rest > summary {
+  margin-top: 0.9rem;
+}
+
+/* Papers on record: each paper once, in the group of its first role. An entry is built
+   like a trial's: a name that leaves the site, one semibold line of what it is, then
+   how it came to be listed and a grey line of notes. Openspec paper-facts. */
+.papers {
+  margin-top: 2rem;
+}
+
+.paper-group-note {
+  max-width: var(--measure);
+  margin: 0 0 0.5rem;
+}
+
+.paper {
+  display: grid;
+  gap: 0.15rem;
+  scroll-margin-top: 1.25rem;
+}
+
+.paper > p {
+  margin: 0;
+}
+
+.paper:target {
+  background: var(--tint);
+  outline: 0.3rem solid var(--tint);
+  border-radius: 2px;
+}
+
+.paper-name {
+  overflow-wrap: anywhere;
+}
+
+.paper-name a {
+  font-weight: 700;
+}
+
+.paper-name .out {
+  margin-left: 0.15rem;
+  vertical-align: -0.05em;
+}
+
+.paper-standing,
+.paper-retracted {
+  font-weight: 600;
+}
+
+.paper-role .entry-note {
+  display: block;
+}
+
+.paper-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+}
+
+.papers-rest {
+  max-width: var(--measure);
+}
+
+.papers-rest > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: fit-content;
+  margin-top: 0.9rem;
+  cursor: pointer;
+  list-style: none;
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.papers-rest > summary::-webkit-details-marker {
+  display: none;
+}
+
+.papers-rest[open] > summary svg {
+  transform: rotate(180deg);
+}
+
+.trial-facts {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0.6rem 0 0.3rem;
+  padding: 0.8rem 1rem;
+  background: var(--panel);
+  border-radius: 0.65rem;
+}
+
+.trial-facts dt {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.trial-facts dd {
+  margin: 0.1rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.trial-measures,
+.result-groups {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+/* These lists sit inside a row of the trial list and take none of its rules. */
+.trial-list .trial-measures li,
+.trial-list .result-groups li {
+  padding: 0;
+  border: 0;
+}
+
+.result + .result {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--rule);
+}
+
+.result-title {
+  margin: 0 0 0.35rem;
+  font-weight: 600;
+}
+
+.result-title .entry-note {
+  font-weight: 400;
+}
+
+/* One group on one line: its name, its number, and how many were analysed under it. */
+.result-groups li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 1rem;
+  align-items: baseline;
+}
+
+.result-value {
+  font-variant-numeric: tabular-nums lining-nums;
+  text-align: right;
+}
+
+.result-groups .entry-note {
+  grid-column: 1 / -1;
+}
+
+.result-comparison {
+  margin: 0.45rem 0 0;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+@media (max-width: 40rem) {
+  .trial-more summary,
+  .trials-rest > summary {
+    min-height: 2.75rem;
+  }
+
+  .result-groups li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .result-value {
+    text-align: left;
+  }
+}
+
+@media print {
+  .trial {
+    break-inside: avoid;
+  }
+
+  .trial-more summary svg,
+  .trials-rest > summary svg {
+    display: none;
+  }
+}
+
 .index td.claim a {
   font-weight: 700;
+}
+
+/* A headline is one box, so the browser can carry it to its claim page. */
+.index td.claim a.followed {
+  display: block;
+  width: fit-content;
 }
 
 /* A claim is listed by its intervention's name; the reported headline sits under it,
@@ -2438,7 +3510,14 @@ main ul:not([class]) li + li {
   font-weight: 600;
 }
 
-.colophon .more + .details {
+/* The pages made for one kind of reader each, on one line under the links. */
+.colophon .for-readers {
+  margin: 0.35rem 0 0;
+  font-weight: 600;
+}
+
+.colophon .more + .details,
+.colophon .for-readers + .details {
   margin-top: 1rem;
 }
 
@@ -2565,14 +3644,127 @@ main ul:not([class]) li + li {
     animation: mark-land 0.4s var(--ease-out) both;
   }
 
-  /* A record reached from the status panel shows itself, then settles. */
-  .record .what:target {
+  /* A record reached from the status panel shows itself, then settles. So does a
+     section reached from there. */
+  .record .what:target,
+  .bar:target {
     animation: record-found 2.2s ease-out both;
   }
 
-  /* The name's story is told once a visit; a hover tells it again. */
-  .seen .masthead .name:not(:hover) .ask .hook,
-  .seen .masthead .name:not(:hover) .ask .dot {
+  /* A headline pressed on the home page is carried to its place on the claim page,
+     and back. It keeps its own size on the way, so its letters are never stretched. */
+  .followed {
+    view-transition-class: followed;
+  }
+
+  ::view-transition-group(.followed) {
+    animation-duration: 380ms;
+    animation-timing-function: var(--ease-out);
+  }
+
+  /* Only the headline as the next page sets it is drawn, uncovered as its box
+     opens, so two settings of one line are never seen over each other. */
+  ::view-transition-old(.followed) {
+    display: none;
+  }
+
+  ::view-transition-new(.followed) {
+    height: 100%;
+    object-fit: none;
+    object-position: left top;
+    overflow: clip;
+    animation: none;
+  }
+
+  /* A headline with no place on the other page leaves, or arrives, with the rest. */
+  ::view-transition-old(.followed):only-child {
+    display: block;
+    animation-duration: 170ms;
+  }
+
+  ::view-transition-new(.followed):only-child {
+    animation: -ua-view-transition-fade-in 170ms both;
+  }
+
+  .match-why summary svg {
+    transition: transform 120ms var(--ease-out);
+  }
+
+  /* Nothing under the glass: it passes over the places at one speed, each seen larger
+     as it passes, and comes to rest past the last. It never marks one. */
+  .unfound .glass {
+    animation: glass-pass 2.065s both;
+  }
+
+  .unfound .place {
+    animation: place-seen 0.42s ease-in-out calc(var(--i) * 269ms - 210ms) both;
+  }
+
+  /* How a status is made, when a reader asks to see it in order. */
+  .made.play .made-quote,
+  .made.play .made-by {
+    animation: arrive 0.5s var(--ease-out) both;
+  }
+
+  .made.play .made-promise {
+    animation: arrive 0.5s var(--ease-out) 0.3s both;
+  }
+
+  .made.play .made-to.first path {
+    animation: line-drawn 0.4s var(--ease-out) 0.6s both;
+  }
+
+  .made.play li {
+    animation: arrive 0.45s var(--ease-out) calc(0.9s + var(--i) * 0.25s) both;
+  }
+
+  .made.play .basis-mark {
+    animation: mark-land 0.5s var(--ease-out) 1.7s both;
+  }
+
+  .made.play .made-to.second path {
+    animation: line-drawn 0.4s var(--ease-out) 1.8s both;
+  }
+
+  .made.play .made-status,
+  .made.play .track .ends {
+    animation: fade-in 0.4s ease-out 2.1s both;
+  }
+
+  .made.play .track .step.here {
+    position: relative;
+    animation: mark-land 0.6s var(--ease-out) 2.3s both;
+  }
+
+  .made.play .track .step.here::after {
+    content: "";
+    position: absolute;
+    inset: -1.5px;
+    border-radius: 50%;
+    border: 1.5px solid var(--blue);
+    animation: mark-ring 0.9s var(--ease-out) 2.6s both;
+  }
+
+  /* A topic's drawing is drawn again when its chip is hovered, line by line. */
+  a.chip:hover svg.lines > *,
+  a.chip:focus-visible svg.lines > * {
+    stroke-dasharray: 1 1.2;
+    animation: line-drawn 0.6s var(--ease-out) calc(var(--i, 0) * 60ms) both;
+  }
+
+  /* Followed: the bookmark lands when it is pressed. Saved: the clock's hand turns once. */
+  .share.landed svg {
+    animation: mark-land 0.4s var(--ease-out);
+  }
+
+  .share.saved .clock .hand {
+    animation: hand-turn 0.6s var(--ease-out);
+  }
+
+  /* The name's story is told once a visit. */
+  .seen .masthead .name .mark .glass,
+  .seen .masthead .name .ask .hook,
+  .seen .masthead .name .ask .dot {
     animation-name: none;
   }
 }
@@ -2595,6 +3787,57 @@ main ul:not([class]) li + li {
   to {
     transform: scale(2.8);
     opacity: 0;
+  }
+}
+
+/* The glass crosses the places at one speed, then slows to rest from that speed. */
+@keyframes glass-pass {
+  0% {
+    transform: translateX(8px);
+    animation-timing-function: linear;
+  }
+  71.7% {
+    transform: translateX(var(--past));
+    animation-timing-function: cubic-bezier(0.3, 1, 0.6, 1);
+  }
+  100% {
+    transform: translateX(var(--rest));
+  }
+}
+
+@keyframes place-seen {
+  50% {
+    transform: scale(1.55);
+  }
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* It starts a little further back than its own length: see the name's question mark. */
+@keyframes line-drawn {
+  from {
+    stroke-dashoffset: 1.1;
+  }
+}
+
+/* Once round the middle of the face, written out in the drawing's own units. */
+@keyframes hand-turn {
+  from {
+    transform: translate(12px, 12px) rotate(-360deg) translate(-12px, -12px);
+  }
+  to {
+    transform: translate(12px, 12px) rotate(0deg) translate(-12px, -12px);
   }
 }
 
@@ -2626,6 +3869,14 @@ main ul:not([class]) li + li {
     fill: CanvasText;
   }
 
+  /* The white glass keeps a navy tile of its own, whatever ground the system gives. */
+  .masthead .name .mark {
+    background: var(--footer);
+    border-radius: 22%;
+    padding: 0.12em;
+    forced-color-adjust: none;
+  }
+
   .basis-mark svg {
     fill: CanvasText;
   }
@@ -2649,13 +3900,33 @@ main ul:not([class]) li + li {
 }
 
 @media print {
+  .masthead {
+    background: none;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .masthead .name {
+    color: var(--ink);
+  }
+
+  .masthead .name .ask .dot {
+    fill: var(--blue);
+  }
+
+  /* On paper the white glass would vanish: the mark is printed in one dark colour. */
+  .masthead .name .mark {
+    filter: brightness(0);
+  }
+
   .masthead nav,
   .colophon .more,
+  .colophon .for-readers,
   .share,
   .take,
   .again,
   .others,
   .search,
+  .made .text-control,
   .skip {
     display: none;
   }
@@ -2664,6 +3935,7 @@ main ul:not([class]) li + li {
     background: none;
     color: var(--ink);
     border-top: 1px solid var(--ink);
+    break-inside: avoid;
   }
 
   .colophon a {
@@ -2730,10 +4002,6 @@ main ul:not([class]) li + li {
     margin-bottom: 0.4rem;
   }
 
-  .colophon {
-    break-inside: avoid;
-  }
-
   .pop-trigger.more {
     text-decoration: none;
   }
@@ -2775,9 +4043,9 @@ main ul:not([class]) li + li {
   padding-block: 0.55rem;
 }
 
-/* On a claim page that came from a seed file or from an assistant's decisions. */
+/* On a claim page no person checked: approved by rule, seeded or decided by an assistant. */
 .unchecked {
-  max-width: 66ch;
+  max-width: var(--measure);
   margin-top: 1rem;
   padding: 0.6rem 0.85rem;
   border: 1px dashed var(--muted);

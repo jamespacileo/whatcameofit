@@ -1,6 +1,6 @@
 """An evidence event before it is stored."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any
 
@@ -22,8 +22,8 @@ class EventDraft:
     trial_phases: tuple[TrialPhase, ...] = ()
     trial_state: TrialState | None = None
     regulatory_outcome: RegulatoryOutcome | None = None
-    # Follow-up papers and hand-entered events always wait for a human.
-    always_review: bool = field(default=False)
+    # Hand-entered events always wait for review.
+    always_review: bool = False
 
     @property
     def dedupe_key(self) -> str:

@@ -1,7 +1,7 @@
 // Draws one popup state. Status wording comes from the lookup file, and the wording of a
 // registry search's answer from the site's own module; the few sentences here are the
 // extension's own and never describe a claim.
-import { icon } from "./icons.js";
+import { icon, waitMark } from "./icons.js";
 
 const text = {
   checking: "Checking this page…",
@@ -54,18 +54,19 @@ const text = {
   recentEmpty: "Nothing checked yet.",
   checkedOn: (outlet, date) => (outlet ? `${outlet} · checked ${date}` : `Checked ${date}`),
   possible: (count) => `${count} possible records`,
-  noneThen: "No record was found when this was checked. Open the page and press the button to check it again.",
+  noneThen: "No saved trial match. Open the page to check again.",
   openPage: "Open the page",
   clear: "Clear this list",
-  follow: "Follow this claim",
+  follow: "Keep me up to date",
   remindMe: "Remind me to look again:",
   inSixMonths: "in six months",
   inAYear: "in a year",
   remindOn: (date) => `Reminder set for ${date}.`,
   removeReminder: "Remove",
   followingThis: "You follow this claim.",
+  opens: "(opens in a new tab)",
   stop: "Stop following",
-  followingEmpty: "You follow no claims yet. Open a tracked report and choose Follow.",
+  followingEmpty: "You follow no claims yet. Open a tracked report and choose Keep me up to date.",
   changed: "Changed",
   wasNow: (was, now) => `Was: ${was}. Now: ${now}.`,
   wasSince: (was) => `Changed since you last looked. Was: ${was}.`,
@@ -98,6 +99,12 @@ function link(label, href, className, onOpen) {
   return node;
 }
 
+// A button that opens a page in a new tab says so: an arrow after its words, and the
+// same in words for a screen reader.
+function opening(label) {
+  return [el("span", null, label), icon("external"), el("span", "visually-hidden", ` ${text.opens}`)];
+}
+
 // A name such as "USAG-1" must not break at its hyphen.
 function headline(words) {
   const parts = words.split(" ").flatMap((word, index) => [
@@ -121,17 +128,27 @@ function track(place, places) {
   return el("dd", "track", [steps]);
 }
 
+// A wait is one line: the mark, looking, and what is being waited for.
+function waiting(words) {
+  return el("p", "checking", [waitMark(), words]);
+}
+
 // Following a claim, or stopping: one control under the way to its evidence.
 function followControl(claim, kept, actions) {
   if (!kept || !actions.follow) return null;
   if (kept.followed.includes(claim.page)) {
+    // Just pressed: the bell gives way to a tick that is drawn. Opened on a claim
+    // already followed, the tick is simply there.
+    const fresh = kept.fresh === claim.page;
+    const tick = icon("check");
+    if (fresh) tick.children[0].setAttribute("pathLength", "1");
     return el("p", "small followed", [
-      text.followingThis,
+      el("span", fresh ? "followed-mark drawn" : "followed-mark", [tick, text.followingThis]),
       " ",
       press(text.stop, "text-button", () => actions.unfollow(claim.page)),
     ]);
   }
-  return press(text.follow, "button quiet", () => actions.follow(claim));
+  return press([icon("bell"), text.follow], "pill", () => actions.follow(claim));
 }
 
 /** A day to look at this claim again, shown as a notification on that day. */
@@ -140,13 +157,13 @@ function reminderControl(claim, kept, actions) {
   const set = kept.reminders?.[claim.page];
   if (set) {
     return el("p", "small followed", [
-      text.remindOn(spokenDay(set)),
+      el("span", "followed-mark", [icon("clock"), text.remindOn(spokenDay(set))]),
       " ",
       press(text.removeReminder, "text-button", () => actions.forget(claim.page)),
     ]);
   }
   return el("p", "small followed", [
-    text.remindMe,
+    el("span", "followed-mark", [icon("clock"), text.remindMe]),
     " ",
     press(text.inSixMonths, "text-button", () => actions.remindLater(claim, "six-months")),
     " · ",
@@ -177,7 +194,7 @@ function claimBlock(claim, site, actions, places, kept) {
       claim.first_reported && fact(text.firstReported, claim.first_reported),
       claim.latest_promise && fact(text.latestPromise, claim.latest_promise, "promise"),
     ]),
-    link(text.open, site.url + claim.page, "button", actions.open),
+    link(opening(text.open), site.url + claim.page, "button", actions.open),
     followControl(claim, kept, actions),
     reminderControl(claim, kept, actions),
   ]);
@@ -318,9 +335,9 @@ function recentCard(entry, actions) {
     el("p", "small", text.checkedOn(entry.outlet, day.format(new Date(entry.at)))),
     entry.answer.unreviewed && el("p", "small", entry.answer.unreviewed),
     candidates.length === 1 && only.status && el("p", "kept-status", only.status),
-    candidates.length === 1 && link(only.status ? text.open : only.title, only.url, "button quiet", actions.open),
+    candidates.length === 1 && link(opening(only.status ? text.open : only.title), only.url, "button quiet", actions.open),
     candidates.length > 1 && press(text.possible(candidates.length), "button quiet", () => actions.showEntry(entry.key)),
-    candidates.length === 0 && el("p", "small", text.noneThen),
+    candidates.length === 0 && el("p", "small", entry.answer.limitation || text.noneThen),
   ]);
 }
 
@@ -354,7 +371,7 @@ function entryView(state, actions) {
         ]),
       ),
     ),
-    link(text.openPage, entry.url, "button quiet", actions.open),
+    link(opening(text.openPage), entry.url, "button quiet", actions.open),
   ];
 }
 
@@ -401,7 +418,7 @@ const BUSY = new Set(["checking", "searching", "capturing"]);
 export function render(root, state, site, actions, kept = null) {
   let children;
   if (state.kind === "checking") {
-    children = [el("p", "checking", text.checking)];
+    children = [waiting(text.checking)];
   } else if (state.kind === "recent") {
     children = recentView(state, actions);
   } else if (state.kind === "entry") {
@@ -422,7 +439,7 @@ export function render(root, state, site, actions, kept = null) {
       message(
         text.untrackedTitle,
         text.untrackedBody(site.name),
-        link(text.search, `${site.url}/`, "button quiet", actions.open),
+        link(opening(text.search), `${site.url}/`, "button quiet", actions.open),
       ),
       savedNote(state, site) && el("footer", "notices", [savedNote(state, site)]),
     ];
@@ -435,20 +452,20 @@ export function render(root, state, site, actions, kept = null) {
       el("h1", null, state.enabled ? "Automatic search is on" : "Allow automatic search?"),
       el("p", null, `When you open this extension on an untracked page, its text, links and cleaned address go to ${site.name} and OpenAI to identify the reported treatment. If text is insufficient, visible image content is sent as a screenshot automatically.`),
       el("p", "small", "Screenshots can include usernames or other visible personal information. Use public reports only. Nothing is read in the background. OpenAI may retain inputs for safety checks. We store no screenshots or article text; public search results may be reused for 24 hours."),
-      link(text.privacy, `${site.url}/privacy`, "text-button", actions.open),
+      link(opening(text.privacy), `${site.url}/privacy`, "text-button", actions.open),
       state.enabled ? press("Turn off automatic search", "button quiet", actions.disableSharing) : press("Allow and search", "button", actions.enableSharing),
       !state.enabled && press("Use reviewed claims only", "button quiet", actions.disableSharing)];
   } else if (state.kind === "capturing") {
-    children = [el("p", "checking", "Reading the visible image…"), privacyNote(site, actions)];
+    children = [waiting("Reading the visible image…"), privacyNote(site, actions)];
   } else if (state.kind === "visual-preview") {
     const preview = el("img", "visual-preview");
     preview.src = state.image.dataUrl;
     preview.alt = "The visible content that will be sent for lookup";
     children = [el("h1", null, "Search this visible image"), preview,
-      el("p", "small", "This image and the page address go to What came of it? and OpenAI. Check for private messages or other personal information. A video contributes only this frame, not its audio."),
+      el("p", "small", `This image and the page address go to ${site.name} and OpenAI. Check for private messages or other personal information. A video contributes only this frame, not its audio.`),
       press("Search this image", "button", actions.sendVisual), press("Cancel", "button quiet", actions.cancelVisual)];
   } else if (state.kind === "searching") {
-    children = [el("p", "checking", state.visual ? "Reading the screenshot and searching the registry…" : text.searching), privacyNote(site, actions)];
+    children = [waiting(state.visual ? "Reading the screenshot and searching the registry…" : text.searching), privacyNote(site, actions)];
   } else if (state.kind === "too-little") {
     children = [message(text.tooLittleTitle, text.tooLittleBody, press(text.again, "button quiet", actions.search))];
   } else if (state.kind === "refused") {
@@ -466,10 +483,7 @@ export function render(root, state, site, actions, kept = null) {
   } else if (state.kind === "no-page") {
     children = [message(text.noPageTitle, text.noPageBody(site.name))];
   } else {
-    const retry = el("button", "button quiet", text.retry);
-    retry.type = "button";
-    retry.addEventListener("click", actions.retry);
-    children = [message(text.unreachableTitle(site.name), text.unreachableBody, retry)];
+    children = [message(text.unreachableTitle(site.name), text.unreachableBody, press(text.retry, "button quiet", actions.retry))];
   }
   if (state.kind !== "answer" && state.canVisual && actions.previewVisual) children.push(press("Preview a screenshot instead", "text-button", actions.previewVisual));
   if (!BUSY.has(state.kind) && !["answer", "sharing", "sharing-error", "visual-preview"].includes(state.kind) && actions.sharingView) children.push(press("Automatic search settings", "text-button", actions.sharingView));

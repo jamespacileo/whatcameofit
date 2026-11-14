@@ -1,20 +1,34 @@
 ---
-import CalendarPlus from "@lucide/astro/icons/calendar-plus";
+import Rss from "@lucide/astro/icons/rss";
+import SlidersHorizontal from "@lucide/astro/icons/sliders-horizontal";
 import Base from "../layouts/Base.astro";
 import ClaimName from "../components/ClaimName.astro";
+import Lookup from "../components/Lookup.astro";
 import Outlet from "../components/Outlet.astro";
+import Pager from "../components/Pager.astro";
 import PromiseText from "../components/PromiseText.astro";
+import StageFilter from "../components/StageFilter.astro";
+import StageTrack from "../components/StageTrack.astro";
 import StatusCell from "../components/StatusCell.astro";
 import TopicChip from "../components/TopicChip.astro";
-import { SITE } from "../../site.config.mjs";
+import { EXTENSION_OFFERED, SITE } from "../../site.config.mjs";
 import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
+import { calendarByMonth } from "../lib/anniversaries";
 import { data, listedTopics } from "../lib/export";
-import { recentReports } from "../lib/reports";
+import {
+  longestWithoutSignal,
+  promisesByDate,
+  statusCountsByTopic,
+  statusMoves,
+} from "../lib/feed";
+import { followedNameFor, recentReports } from "../lib/reports";
 import { siteData } from "../lib/structured";
-import { latestPromise } from "../lib/status";
+import { STATUS_LABELS, latestPromise } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 
-const reports = recentReports(data.claims, 10);
+// Every row of every list is on the page, read ten at a time.
+const PAGE_SIZE = 10;
+const reports = recentReports(data.claims, Infinity);
 // Drawn only when a suggestion address is configured. Nothing is carried from here;
 // the lookup's own answers carry a pasted article address.
 const suggest = contactLink(SITE.suggestUrl, "", SUGGEST_SUBJECT);
@@ -42,14 +56,32 @@ const years = Array.from(perYear).sort((a, b) => b[0].localeCompare(a[0]));
 const anyPromise = reports.some((report) => latestPromise(report.claim) !== null);
 const approvals = data.claims.filter((claim) => claim.status.code === "approved").length;
 
-const recent = data.claims
-  .filter((claim) => claim.status.updated_at !== null)
-  .sort((a, b) => (a.status.updated_at! < b.status.updated_at! ? 1 : -1))
-  .slice(0, 10);
-// Statuses are often set in one batch. One shared date is said once, in the heading,
-// in place of a column that repeats it on every row.
-const setOn = new Set(recent.map((claim) => claim.status.updated_at!.slice(0, 10)));
-const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null;
+// The front page is one set of lists over the same claims, each in an order a reader
+// comes back for. A list with nothing in it is not offered.
+const moves = statusMoves(data.claims);
+const promised = promisesByDate(data.claims);
+const quiet = longestWithoutSignal(data.claims);
+const views = [
+  { id: "headlines", tab: "Headlines", count: reports.length },
+  { id: "moved", tab: "Status changes", count: moves.length },
+  { id: "promised", tab: "Promises", count: promised.length },
+  { id: "quiet", tab: "No signal", count: quiet.length },
+].filter((view) => view.id === "headlines" || view.count > 0);
+// The lists can be narrowed to one topic; the counts on the path follow the topic.
+const topicChoices = listedTopics
+  .map((topic) => ({
+    ...topic,
+    count: data.claims.filter((claim) => claim.vertical === topic.slug).length,
+  }))
+  .sort((a, b) => a.title.localeCompare(b.title));
+const topicCounts = statusCountsByTopic(data.claims);
+// Every day of the calendar that has a first report. The reader's own today picks
+// which is shown, so the page is true whenever it is read.
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days);
 ---
 
 <Base current="home" structured={siteData()}>
@@ -59,40 +91,11 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
       <h1 class="title" id="lookup-title">What happened to that breakthrough?</h1>
       <p class="lede">{SITE.description}</p>
 
-      <form class="search lookup" role="search" id="search">
-        <label for="query">Paste a link to an article, or search by treatment or condition</label>
-        <div class="row">
-          <input
-            id="query"
-            name="q"
-            type="search"
-            autocomplete="off"
-            autocapitalize="off"
-            spellcheck="false"
-            placeholder="https://… or tooth regrowth"
-          />
-          <button type="submit">Look up</button>
-        </div>
-      </form>
-      <noscript>
-        <p class="results">
-          Looking up needs JavaScript. Without it, <a href="/topics">the list of topics</a> leads to
-          every claim.
-        </p>
-      </noscript>
-      {/* No space inside: an empty answer area is hidden by ":empty". */}
-      <div class="results" id="results" aria-live="polite" data-suggest={SITE.suggestUrl ?? undefined} data-live={SITE.lookupUrl ?? undefined}></div>
-      {
-        suggest && (
-          <p class="suggest">
-            Seen a reported breakthrough we do not track? Send the address of the news article:{" "}
-            <a href={suggest.href}>Suggest a headline (opens {suggest.opens})</a>
-          </p>
-        )
-      }
+      <Lookup />
     </div>
   </section>
 
+  <div class="front">
   {/* The tally opens the lists, under the band: the band holds only the lookup. */}
   {
     data.claims.length > 0 && (
@@ -102,10 +105,82 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
           {listedTopics.length} {listedTopics.length === 1 ? "topic" : "topics"}
         </a>
         . <a href="/it-happened">Approvals on record</a>: {approvals} of {data.claims.length}.
+        {data.last_checked_at && (
+          <>
+            {" "}Registries last checked <span class="unbroken">{formatDate(data.last_checked_at)}</span>.
+          </>
+        )}
       </p>
     )
   }
 
+  {/* The claims this reader follows, read from this browser's own storage by the script. */}
+  <section class="following" id="following" hidden data-following>
+    <h2 class="bar">Following</h2>
+    <ul class="plain" data-following-list></ul>
+    <p class="entry-note">Kept in this browser only.</p>
+    <p class="visually-hidden" role="status" data-following-said></p>
+  </section>
+
+  {/* Filled in by the script from the dates on the rows below: what is dated since this
+      reader's last visit, or in the last thirty days on a first one. */}
+  <p class="since" hidden data-since></p>
+
+  <div class="feed" data-feed>
+  {
+    data.claims.length > 0 && (
+      <div class="scoreboard" data-scoreboard>
+        {/* On a phone the counts and the topic choice wait behind this, so a headline is
+            on the first screen. Shown by the script; without it everything is in view. */}
+        <button
+          type="button"
+          class="narrow-toggle"
+          aria-expanded="false"
+          aria-controls="narrow-body"
+          hidden
+          data-narrow
+        >
+          <SlidersHorizontal size={16} stroke-width={1.9} aria-hidden="true" />
+          Narrow these lists
+        </button>
+        <div class="narrow-body" id="narrow-body">
+        <StageFilter claims={data.claims} scope="[data-feed]" param="status" />
+        {topicChoices.length > 1 && (
+          <p class="topic-filter" hidden data-topic-filter>
+            <label for="feed-topic">Topic</label>
+            <select id="feed-topic" data-counts={JSON.stringify(topicCounts)}>
+              <option value="">All topics ({data.claims.length})</option>
+              {topicChoices.map((topic) => (
+                <option value={topic.slug}>
+                  {topic.title} ({topic.count})
+                </option>
+              ))}
+            </select>
+          </p>
+        )}
+        </div>
+      </div>
+    )
+  }
+    {/* Shown by the script: without it the lists follow one another, each under its heading. */}
+    <div class="feed-tabs" role="tablist" aria-label="Lists of tracked claims" hidden>
+      {views.map((view, index) => (
+        <button
+          type="button"
+          role="tab"
+          id={`tab-${view.id}`}
+          aria-controls={`feed-${view.id}`}
+          aria-selected={index === 0 ? "true" : "false"}
+          tabindex={index === 0 ? 0 : -1}
+          data-view={view.id}
+        >
+          {view.tab}
+          <span class="count">{view.count}</span>
+        </button>
+      ))}
+    </div>
+
+  <section class="feed-panel" id="feed-headlines" data-view="headlines">
   <h2 class="bar">Headlines reported most recently</h2>
   {
     reports.length === 0 ? (
@@ -125,10 +200,22 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
           </tr>
         </thead>
         <tbody role="rowgroup">
-          {reports.map((report) => (
-            <tr role="row">
+          {reports.map((report, index) => (
+            <tr role="row" data-status={report.claim.status.code} data-topic={report.claim.vertical} data-on={report.publishedDate} data-later={index >= PAGE_SIZE ? "" : undefined}>
               <td role="cell" class="claim">
-                <a href={`/${report.claim.slug}`}>“{report.title}”</a>
+                {/* Named as on the claim page, so the headline pressed here is
+                    carried to its place there. */}
+                <a
+                  class="followed"
+                  href={`/${report.claim.slug}`}
+                  style={
+                    followedNameFor(report.claim, report.url)
+                      ? `view-transition-name: ${followedNameFor(report.claim, report.url)}`
+                      : undefined
+                  }
+                >
+                  “{report.title}”
+                </a>
                 <span class="entry-note">
                   <Outlet url={report.url} outlet={report.outlet} />
                 </span>
@@ -159,42 +246,188 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
         </tbody>
       </table>
       </div>
+      <Pager name="headlines" total={reports.length} size={PAGE_SIZE} one="headline" many="headlines" />
+      <p class="none" data-none hidden>Nothing in this list for that choice.</p>
     )
   }
+  </section>
 
-  <h2 class="bar">{oneDay ? `Statuses set on ${oneDay}` : "Statuses set most recently"}</h2>
   {
-    recent.length === 0 ? (
-      <p>No status has changed yet.</p>
-    ) : (
+    moves.length > 0 && (
+      <section class="feed-panel" id="feed-moved" data-view="moved">
+      <h2 class="bar">Statuses changed most recently</h2>
       <div class="table-frame">
       <table role="table" class="index">
+        <caption class="visually-hidden">
+          Each change of a claim's status, newest first, with the status before it.
+        </caption>
         <thead role="rowgroup">
           <tr role="row">
             <th role="columnheader" scope="col">Claim</th>
-            <th role="columnheader" scope="col">Status</th>
-            {!oneDay && <th role="columnheader" scope="col">Status set</th>}
+            <th role="columnheader" scope="col">Changed</th>
+            <th role="columnheader" scope="col">Status from then</th>
           </tr>
         </thead>
         <tbody role="rowgroup">
-          {recent.map((claim) => (
-            <tr role="row">
+          {moves.map((move, index) => (
+            <tr role="row" data-status={move.claim.status.code} data-topic={move.claim.vertical} data-on={move.on} data-later={index >= PAGE_SIZE ? "" : undefined}>
               <td role="cell" class="claim">
-                <ClaimName claim={claim} />
+                <ClaimName claim={move.claim} />
               </td>
-              <td role="cell" class="status" data-column="Status">
-                <StatusCell claim={claim} />
+              <td role="cell" class="when" data-column="Changed">
+                {formatDate(move.on)}
               </td>
-              {!oneDay && (
-                <td role="cell" class="when" data-column="Status set">
-                  {formatDate(claim.status.updated_at)}
-                </td>
-              )}
+              <td role="cell" class="status" data-column="Status from then">
+                <span class="status-line">
+                  <StageTrack code={move.code} />
+                  <strong class="status-name">{STATUS_LABELS[move.code]}</strong>
+                </span>
+                <span class="gloss">Was: {STATUS_LABELS[move.before!]}</span>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
       </div>
+      <Pager name="moved" total={moves.length} size={PAGE_SIZE} one="change" many="changes" />
+      <p class="none" data-none hidden>Nothing in this list for that choice.</p>
+      </section>
+    )
+  }
+
+  {
+    promised.length > 0 && (
+      <section class="feed-panel" id="feed-promised" data-view="promised">
+      <h2 class="bar">Dated promises, earliest date first</h2>
+      <div class="table-frame">
+      <table role="table" class="index">
+        <caption class="visually-hidden">
+          Claims whose reports stated a date, in order of that date, each beside its status now.
+        </caption>
+        <thead role="rowgroup">
+          <tr role="row">
+            <th role="columnheader" scope="col">Claim</th>
+            <th role="columnheader" scope="col" class="promise">Promised</th>
+            <th role="columnheader" scope="col">Status now</th>
+          </tr>
+        </thead>
+        <tbody role="rowgroup">
+          {promised.map((claim, index) => (
+            <tr role="row" data-status={claim.status.code} data-topic={claim.vertical} data-on={latestPromise(claim)?.parsed_date} data-later={index >= PAGE_SIZE ? "" : undefined}>
+              <td role="cell" class="claim">
+                <ClaimName claim={claim} />
+              </td>
+              <td role="cell" class="promise" data-column="Promised">
+                <PromiseText promise={latestPromise(claim)} />
+              </td>
+              <td role="cell" class="status" data-column="Status now">
+                <StatusCell claim={claim} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      </div>
+      <Pager name="promised" total={promised.length} size={PAGE_SIZE} one="claim" many="claims" label="claims with a dated promise" />
+      <p class="none" data-none hidden>Nothing in this list for that choice.</p>
+      </section>
+    )
+  }
+
+  {
+    quiet.length > 0 && (
+      <section class="feed-panel" id="feed-quiet" data-view="quiet">
+      <h2 class="bar">Longest with no new record</h2>
+      <div class="table-frame">
+      <table role="table" class="index">
+        <caption class="visually-hidden">
+          Claims with no new dated record for a year or more, the longest first.
+        </caption>
+        <thead role="rowgroup">
+          <tr role="row">
+            <th role="columnheader" scope="col">Claim</th>
+            <th role="columnheader" scope="col">First reported</th>
+            <th role="columnheader" scope="col">Status now</th>
+          </tr>
+        </thead>
+        <tbody role="rowgroup">
+          {quiet.map((claim, index) => (
+            <tr role="row" data-status={claim.status.code} data-topic={claim.vertical} data-later={index >= PAGE_SIZE ? "" : undefined}>
+              <td role="cell" class="claim">
+                <ClaimName claim={claim} />
+              </td>
+              <td role="cell" class="when" data-column="First reported">
+                {claim.first_reported_date ? (
+                  formatDate(claim.first_reported_date)
+                ) : (
+                  <span class="visually-hidden">Not recorded</span>
+                )}
+              </td>
+              <td role="cell" class="status" data-column="Status now">
+                <StatusCell claim={claim} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      </div>
+      <Pager name="quiet" total={quiet.length} size={PAGE_SIZE} one="claim" many="claims" label="claims with no signal" />
+      <p class="none" data-none hidden>Nothing in this list for that choice.</p>
+      </section>
+    )
+  }
+  </div>
+
+  </div>
+
+  {/* How to hear of a change without looking for one. The first line is for a reader who
+      follows nothing yet, and is shown only where this browser can keep a list. */}
+  <section class="keep-up">
+    <h2 class="bar">Keep up</h2>
+    <p class="keep-hint" hidden data-follow-hint>
+      Follow a claim from its page and it is listed at the top of this page, with a note when
+      its status changes. This page also notes the day you open it, so next time it can say
+      what is dated since. Both are kept in this browser only: no account, nothing sent.
+    </p>
+    <div class="keep-feed">
+      <a class="share" href="/changes.xml">
+        <Rss size={16} stroke-width={1.9} aria-hidden="true" />
+        Subscribe to status changes
+      </a>
+      <span class="entry-note">A feed of every status change, for a feed reader.</span>
+    </div>
+  </section>
+
+  {/* Shown by the script, which knows the reader's date: today's anniversaries of first
+      reports, or the next day that has one. */}
+  {
+    calendarDays.length > 0 && (
+      <section class="on-this-day" hidden data-on-this-day>
+        <div class="bar-row">
+          <h2 class="bar" data-title>On this day</h2>
+          <a href="/anniversaries">All anniversaries</a>
+        </div>
+        <ul class="calendar">
+          {calendarDays.map((day) => (
+            <li class="day" hidden data-day={day.id} data-label={`${day.day} ${MONTH_NAMES[day.month - 1]}`}>
+              <strong class="when">
+                {day.day} {MONTH_NAMES[day.month - 1].slice(0, 3)}
+              </strong>
+              <ul>
+                {day.entries.map((entry) => (
+                  <li data-year={entry.year}>
+                    <span class="year"><span class="visually-hidden">First reported </span>{entry.year}</span>
+                    <a href={`/${entry.claim.slug}`}>{entry.claim.headline}</a>
+                    <span class="status">
+                      <StatusCell claim={entry.claim} />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </section>
     )
   }
 
@@ -235,488 +468,382 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
       </>
     )
   }
-  {/* For a report with no record yet: a calendar file made in the reader's browser. */}
-  <template id="remind-later">
-    <section class="again" data-pagefind-ignore>
-      <h2 class="bar">Check again later</h2>
-      <p class="take-why">
-        Nothing is on record for this report yet. Save a date to your calendar to look again.
-        The file is made on this device; nothing is sent to us, not even the link.
-      </p>
-      <div class="take-actions">
-        <button type="button" class="share" data-when="six-months">
-          <CalendarPlus size={16} stroke-width={1.9} aria-hidden="true" />
-          In six months
-        </button>
-        <button type="button" class="share" data-when="year">
-          <CalendarPlus size={16} stroke-width={1.9} aria-hidden="true" />
-          In a year
-        </button>
-      </div>
-      <p class="visually-hidden" aria-live="polite" data-said></p>
-    </section>
-  </template>
+  {/* Where the question arises is the article itself: the extension answers there. */}
+  {
+    EXTENSION_OFFERED && (
+      <section class="closing">
+        <h2 class="bar">Reading it somewhere else?</h2>
+        <p class="suggest">
+          The browser extension shows what came of a report from the article itself:{" "}
+          <a href="/extension">Get the extension</a>
+        </p>
+      </section>
+    )
+  }
+  {/* The page ends on something to do: the one way a reader adds to what is tracked. */}
+  {
+    suggest && (
+      <section class="closing">
+        <h2 class="bar">Not here yet?</h2>
+        <p class="suggest">
+          Seen a reported breakthrough we do not track? Send the address of the news article:{" "}
+          <a href={suggest.href}>Suggest a headline (opens {suggest.opens})</a>
+        </p>
+      </section>
+    )
+  }
 </Base>
 
 <script>
-  // A pasted link is compared with the site's lookup file here in the browser. It is
-  // sent to the site's server only if the reader then asks for a registry search, and
-  // only where the site is built with one. Other text is searched in an index built
-  // with the site. Without JavaScript the topic pages list every claim.
-  import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
-  import { LIVE, describeAnswer, refusalMessage, textWouldHelp } from "../lib/live-lookup.mjs";
-  import { calendarFile, reminderDate, type ReminderChoice } from "../lib/calendar";
-  import { SITE as BRAND } from "../../site.config.mjs";
-  const SITE_NAME = BRAND.name;
-  import { closestClaims, readAddress } from "../lib/lookup-match.mjs";
+  import { nextAnniversaryDay } from "../lib/anniversaries";
 
-  const form = document.querySelector<HTMLFormElement>("#search")!;
-  const input = document.querySelector<HTMLInputElement>("#query")!;
-  const results = document.querySelector<HTMLDivElement>("#results")!;
-  const suggestAddress = results.dataset.suggest ?? null;
-  const liveAddress = results.dataset.live ?? null;
-
-  interface Hit {
-    url: string;
-    meta: { title?: string; status?: string; summary?: string };
-  }
-  interface LookupClaim {
-    headline: string;
-    page: string;
-    status: string;
-    meaning: string;
-    place: number | null;
-    no_signal: string | null;
-    first_reported: string | null;
-    unchecked: string | null;
-  }
-  interface Lookup {
-    articles: Record<string, string[]>;
-    claims: Record<string, LookupClaim>;
-    places: number;
-  }
-
-  function element(tag: string, text?: string, className?: string) {
-    const node = document.createElement(tag);
-    if (text) node.textContent = text;
-    if (className) node.className = className;
-    return node;
-  }
-
-  // Where to go when the box has no answer: never a full stop.
-  function next() {
-    const line = element("p", "Every tracked claim is listed by ", "entry-note");
-    const topics = element("a", "topic") as HTMLAnchorElement;
-    topics.href = "/topics";
-    line.append(topics, ". A treatment's name can also be typed in the box above.");
-    return line;
-  }
-
-  function show(...messages: string[]) {
-    results.replaceChildren(...messages.map((message) => element("p", message)));
-  }
-
-  function claimList(claims: LookupClaim[]) {
-    const list = element("ul", undefined, "plain");
-    for (const claim of claims) {
-      const item = element("li");
-      const link = element("a", claim.headline) as HTMLAnchorElement;
-      link.href = claim.page;
-      const note = element("span", undefined, "entry-note");
-      note.append(element("strong", claim.status));
-      const rest = [
-        claim.no_signal,
-        claim.meaning,
-        claim.first_reported && `First reported ${claim.first_reported}.`,
-      ]
-        .filter(Boolean)
-        .join(" ");
-      note.append(` ${rest}`);
-      item.append(link, note);
-      if (claim.unchecked) item.append(element("span", claim.unchecked, "entry-note"));
-      list.append(item);
-    }
-    return list;
-  }
-
-  // An article we track is answered the way its claim page answers: the status in
-  // words, its place on the path, the no-signal note, then what the status means.
-  function standing(claim: LookupClaim, places: number) {
-    const card = element("div", undefined, "digest found");
-    const stands = element("div", undefined, "standing");
-    stands.append(element("span", claim.status, "label"));
-    if (claim.place) {
-      const track = element("span", undefined, "track");
-      const steps = element("span", undefined, "steps");
-      steps.setAttribute("role", "img");
-      steps.setAttribute(
-        "aria-label",
-        `Place ${claim.place} of ${places} on the path from preclinical to approved`,
-      );
-      for (let place = 1; place <= places; place += 1) {
-        steps.append(element("span", undefined, place === claim.place ? "step here" : "step"));
+  // The lists under the lookup: one is shown at a time, picked by its tab. The pick is
+  // kept in the page's address, so a list can be linked to and returned to.
+  const feed = document.querySelector<HTMLElement>("[data-feed]");
+  const tabs = [...(feed?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [])];
+  if (feed && tabs.length > 1) {
+    const panels = [...feed.querySelectorAll<HTMLElement>(".feed-panel")];
+    const list = feed.querySelector<HTMLElement>(".feed-tabs")!;
+    const select = (view: string, focus = false) => {
+      for (const tab of tabs) {
+        const on = tab.dataset.view === view;
+        tab.setAttribute("aria-selected", String(on));
+        tab.tabIndex = on ? 0 : -1;
+        if (on && focus) tab.focus();
+        // On a phone the tabs run off the side: the picked one is brought into the row.
+        if (on) list.scrollLeft = tab.offsetLeft - list.offsetLeft - 16;
       }
-      track.append(steps);
-      stands.append(track);
+      for (const panel of panels) panel.hidden = panel.dataset.view !== view;
+    };
+    const remember = (view: string) => {
+      const url = new URL(location.href);
+      if (view === tabs[0].dataset.view) url.searchParams.delete("view");
+      else url.searchParams.set("view", view);
+      history.replaceState(history.state, "", url);
+    };
+    for (const panel of panels) {
+      panel.setAttribute("role", "tabpanel");
+      panel.setAttribute("aria-labelledby", `tab-${panel.dataset.view}`);
     }
-    if (claim.no_signal) stands.append(element("span", claim.no_signal, "note"));
-
-    const about = element("div", undefined, "about");
-    about.append(element("h2", claim.headline));
-    if (claim.unchecked) about.append(element("p", claim.unchecked, "unchecked"));
-    about.append(element("p", claim.meaning));
-    const more = element("p", undefined, "changed");
-    if (claim.first_reported) more.append(`First reported ${claim.first_reported}. `);
-    const link = element("a", "See the records") as HTMLAnchorElement;
-    link.href = claim.page;
-    more.append(link);
-    about.append(more);
-
-    card.append(stands, about);
-    return card;
-  }
-
-  // An article we do not track can be suggested, when a suggestion address is set. The
-  // pasted address goes only into this link; the reader's mail or form sends it, if
-  // they choose to.
-  function suggestion(address: string) {
-    const link = contactLink(suggestAddress, address, SUGGEST_SUBJECT);
-    if (!link) return [];
-    const anchor = element("a", `Suggest this headline (opens ${link.opens})`) as HTMLAnchorElement;
-    anchor.href = link.href;
-    const paragraph = element("p", undefined, "suggest");
-    paragraph.append(anchor);
-    return [paragraph];
-  }
-
-  // --- a registry search for an article the site does not track ---------------------
-  // Nothing is sent until the reader presses the button. The answer is an automatic
-  // search and is marked as one before anything else is shown.
-
-  function liveAnswer(found: Parameters<typeof describeAnswer>[0]) {
-    const shown = describeAnswer(found);
-    const block = element("div", undefined, "live");
-    if (shown.marked) block.append(element("p", shown.marked, "unchecked"));
-    block.append(element("p", shown.lead));
-    if (shown.source) block.append(element("p", shown.source, "entry-note"));
-    if (shown.searchedAlso) block.append(element("p", shown.searchedAlso, "entry-note"));
-    if (shown.trialSaid) block.append(element("p", shown.trialSaid, "entry-note"));
-    if (shown.tracked.length > 0) {
-      const list = element("ul", undefined, "plain");
-      for (const claim of shown.tracked) {
-        const link = element("a", claim.headline) as HTMLAnchorElement;
-        link.href = claim.page;
-        const item = element("li");
-        item.append(link);
-        list.append(item);
-      }
-      // After a post that links to a tracked article, the lead above already says so.
-      if (shown.marked) block.append(element("p", LIVE.trackedLead));
-      block.append(list);
-    }
-    if (shown.likely.length > 0) {
-      const list = element("ul", undefined, "plain");
-      for (const record of shown.likely) {
-        const link = element("a", record.title) as HTMLAnchorElement;
-        link.href = record.url;
-        link.rel = "noopener";
-        const item = element("li");
-        item.append(link, element("span", record.detail, "entry-note"));
-        if (record.why) item.append(element("span", record.why, "entry-note"));
-        list.append(item);
-      }
-      block.append(element("p", LIVE.likelyLead), list);
-    }
-    if (shown.none) block.append(element("p", shown.none));
-    if (shown.rest) block.append(element("p", shown.rest, "entry-note"));
-    if (shown.research) {
-      const research = shown.research;
-      for (const group of [
-        { label: "Related papers", items: research.papers, note: research.paperNote, status: research.paperStatus },
-        { label: "Organisations", items: research.organisations, note: research.organisationNote, status: research.organisationStatus },
-      ]) {
-        if (!group.items.length && !group.status) continue;
-        const panel = element("details", undefined, "research-results");
-        panel.append(element("summary", `${group.label}${group.items.length ? ` · ${group.items.length}` : ""}`));
-        panel.append(element("p", group.note, "entry-note"));
-        if (group.status) panel.append(element("p", group.status, "entry-note"));
-        const list = element("ul", undefined, "plain");
-        for (const record of group.items) {
-          const link = element("a", record.title) as HTMLAnchorElement;
-          link.href = record.url;
-          link.rel = "noopener noreferrer";
-          const item = element("li");
-          item.append(link, element("span", record.detail, "entry-note"));
-          list.append(item);
-        }
-        if (group.items.length) panel.append(list);
-        block.append(panel);
-      }
-    }
-    for (const notice of shown.notices) block.append(element("p", notice, "entry-note"));
-    return block;
-  }
-
-  // Openspec reader-follow-up, open question 3: a calendar file for a report with no
-  // record yet. The event links to the report itself and says where to paste it.
-  function remindLater(address: string) {
-    const template = document.querySelector<HTMLTemplateElement>("#remind-later");
-    if (!template || typeof Blob === "undefined" || typeof URL.createObjectURL !== "function") return null;
-    const section = template.content.firstElementChild!.cloneNode(true) as HTMLElement;
-    const said = section.querySelector<HTMLElement>("[data-said]");
-    const now = new Date();
-    const pad = (value: number) => String(value).padStart(2, "0");
-    const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-    for (const choice of section.querySelectorAll<HTMLButtonElement>("[data-when]")) {
-      const date = reminderDate(choice.dataset.when as ReminderChoice, { today, promiseDue: null, firstReported: null });
-      if (!date) continue;
-      choice.addEventListener("click", () => {
-        const file = calendarFile({
-          site: SITE_NAME,
-          headline: "Check this report again",
-          url: address,
-          slug: `report-${today}`,
-          date,
-          madeAt: new Date().toISOString(),
-          description: `Paste this link into ${SITE_NAME} at ${location.origin} to see what is on record now: ${address}`,
-        });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(new Blob([file], { type: "text/calendar" }));
-        link.download = `check-again-${date}.ics`;
-        link.click();
-        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-        choice.classList.add("done");
-        if (said) said.textContent = "Calendar file saved";
-        setTimeout(() => {
-          choice.classList.remove("done");
-          if (said) said.textContent = "";
-        }, 2000);
+    const last = tabs.length - 1;
+    tabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => {
+        select(tab.dataset.view!);
+        remember(tab.dataset.view!);
       });
-    }
-    return section;
-  }
-
-  function textForm() {
-    const form = element("form", undefined, "live-text") as HTMLFormElement;
-    const label = element("label", LIVE.textLabel) as HTMLLabelElement;
-    const area = element("textarea") as HTMLTextAreaElement;
-    area.id = "live-text";
-    area.rows = 5;
-    area.maxLength = 20000;
-    label.htmlFor = area.id;
-    const button = element("button", LIVE.textOffer) as HTMLButtonElement;
-    button.type = "submit";
-    form.append(label, area, button);
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const text = area.value.trim();
-      if (text) void askLive({ text });
+      tab.addEventListener("keydown", (event) => {
+        const { key: pressed } = event;
+        const to = { ArrowRight: index + 1, ArrowLeft: index - 1, Home: 0, End: last }[pressed];
+        if (to === undefined) return;
+        event.preventDefault();
+        const next = tabs[(to + tabs.length) % tabs.length];
+        select(next.dataset.view!, true);
+        remember(next.dataset.view!);
+      });
     });
-    return form;
+    const asked = new URL(location.href).searchParams.get("view");
+    const wanted = tabs.find((tab) => tab.dataset.view === asked) ?? tabs[0];
+    feed.classList.add("tabbed");
+    list.hidden = false;
+    select(wanted.dataset.view!);
   }
 
-  async function askLive(body: { url: string } | { text: string }) {
-    latest += 1;
-    const asked = latest;
-    show(LIVE.working);
-    let status = 0;
-    let found: any = null;
-    try {
-      const response = await fetch(liveAddress!, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+  // Narrowing: each list keeps the rows no filter has left out. The tab says how many
+  // are left, and a list with none says so in place of an empty table.
+  if (feed) {
+    const lists = [...feed.querySelectorAll<HTMLElement>(".feed-panel")].map((panel) => ({
+      table: panel.querySelector("table"),
+      frame: panel.querySelector<HTMLElement>(".table-frame"),
+      none: panel.querySelector<HTMLElement>("[data-none]"),
+      count: feed.querySelector<HTMLElement>(`#tab-${panel.dataset.view} .count`),
+    }));
+    const left = (row: HTMLTableRowElement) =>
+      !row.getAttributeNames().some((name) => name.startsWith("data-out"));
+    for (const list of lists) {
+      if (!list.table) continue;
+      const rows = [...list.table.tBodies[0].rows];
+      const recount = () => {
+        const total = rows.filter(left).length;
+        if (list.count) list.count.textContent = String(total);
+        if (list.frame) list.frame.hidden = total === 0;
+        if (list.none) list.none.hidden = total > 0;
+      };
+      list.table.addEventListener("paged:refresh", recount);
+      // A status named in the address may have narrowed the lists already.
+      recount();
+    }
+
+    // Found by its field: this script is small enough to be written into the page, and a
+    // page with one topic carries no topic choice, not even its marker in a selector.
+    const choice = document.querySelector<HTMLSelectElement>("#feed-topic");
+    const line = choice?.closest<HTMLElement>(".topic-filter");
+    const strip = document.querySelector<HTMLElement>("[data-stage-filter]");
+    if (line && choice) {
+      const counts: Record<string, Record<string, number>> = JSON.parse(choice.dataset.counts!);
+      const narrow = (topic: string) => {
+        for (const list of lists) {
+          if (!list.table) continue;
+          for (const row of list.table.tBodies[0].rows) {
+            row.toggleAttribute("data-out-topic", topic !== "" && row.dataset.topic !== topic);
+          }
+          list.table.dispatchEvent(new Event("paged:refresh"));
+        }
+        strip?.dispatchEvent(new CustomEvent("stage:counts", { detail: counts[topic] ?? {} }));
+      };
+      choice.addEventListener("change", () => {
+        narrow(choice.value);
+        const url = new URL(location.href);
+        if (choice.value) url.searchParams.set("topic", choice.value);
+        else url.searchParams.delete("topic");
+        history.replaceState(history.state, "", url);
       });
-      status = response.status;
-      found = await response.json();
-    } catch {
-      found = null;
-    }
-    if (asked !== latest) return;
-    if (status === 200 && found) {
-      results.replaceChildren(liveAnswer(found));
-      // A linked report the site does not track yet: offer to come back to it.
-      if ("url" in body && !found.article_tracked && !(found.tracked?.length > 0)) {
-        const later = remindLater(body.url);
-        if (later) results.append(later);
+      line.hidden = false;
+      const asked = new URL(location.href).searchParams.get("topic") ?? "";
+      if (asked && asked in counts) {
+        choice.value = asked;
+        narrow(asked);
       }
-      return;
     }
-    const code = found?.error ?? "failed";
-    results.replaceChildren(
-      element("p", refusalMessage(code, { platform: found?.platform })),
-      ...(textWouldHelp(code) ? [textForm()] : []),
+  }
+
+  // Anniversaries of first reports, counted from the reader's own today: the ones that
+  // fall today, or else the next day that has one. A report from this year has none yet.
+  const onThisDay = document.querySelector<HTMLElement>("[data-on-this-day]");
+  if (onThisDay) {
+    const now = new Date();
+    const two = (value: number) => String(value).padStart(2, "0");
+    const today = `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`;
+    const days = [...onThisDay.querySelectorAll<HTMLElement>("[data-day]")];
+    const reports = days.flatMap((day) =>
+      [...day.querySelectorAll<HTMLElement>("[data-year]")].map((entry) => ({
+        entry,
+        id: day.dataset.day!,
+        year: Number(entry.dataset.year),
+      })),
     );
-  }
-
-  function liveOffer(address: string, post = false) {
-    if (!liveAddress) return [];
-    const button = element("button", post ? LIVE.postOffer : LIVE.offer, "live-offer") as HTMLButtonElement;
-    button.type = "button";
-    button.addEventListener("click", () => void askLive({ url: address }));
-    return [button, element("p", post ? LIVE.postDisclosure : LIVE.disclosure, "entry-note")];
-  }
-
-  let lookup: Promise<Lookup> | undefined;
-  const loadLookup = () => (lookup ??= fetch("/lookup.json").then((response) => response.json()));
-
-  async function lookUp(address: string, read: ReturnType<typeof readAddress>) {
-    if (read.kind === "short") {
-      show(
-        `That is a shortened link (${read.host}). Open it, then paste the address of the article it leads to.`,
-      );
-      return;
+    const found = nextAnniversaryDay(reports, today);
+    if (found) {
+      const year = Number(found.date.slice(0, 4));
+      for (const day of days) day.hidden = !found.ids.includes(day.dataset.day!);
+      for (const report of reports) report.entry.hidden = report.year >= year;
+      if (!found.today) {
+        const label = days.find((day) => !day.hidden)!.dataset.label!;
+        onThisDay.querySelector("[data-title]")!.textContent = `Next anniversary: ${label}`;
+      }
+      onThisDay.hidden = false;
     }
-    if (read.kind === "post") {
-      // A post the service can read is offered a search of the post and its article.
-      // Any other post is turned back here, before anything is sent.
-      if (read.readable && liveAddress) {
-        results.replaceChildren(
-          element("p", `That is a post on ${read.platform}. This site can read it and the article it links to.`),
-          ...liveOffer(address, true),
-        );
+  }
+</script>
+
+<script>
+  // For a reader who comes back. Two things are kept in this browser's own storage and
+  // sent nowhere: the day of the last visit, and the claims the reader follows.
+  import {
+    FOLLOWING_ENTRY,
+    VISIT_ENTRY,
+    changedParts,
+    followedRows,
+    isSince,
+    nextVisit,
+    readFollowed,
+    sinceOf,
+  } from "../lib/returning";
+  import { formatDate } from "../lib/timetable";
+
+  // Storage can be refused (a private window, a setting): then nothing is remembered
+  // and the page says what is dated in the last thirty days.
+  const store = (() => {
+    try {
+      localStorage.setItem("probe", "1");
+      localStorage.removeItem("probe");
+      return localStorage;
+    } catch {
+      return null;
+    }
+  })();
+  const now = new Date();
+  const two = (value: number) => String(value).padStart(2, "0");
+  const today = `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`;
+  const feed = document.querySelector<HTMLElement>("[data-feed]");
+
+  const line = document.querySelector<HTMLElement>("[data-since]");
+  if (line && feed) {
+    const visit = nextVisit(store?.getItem(VISIT_ENTRY) ?? null, today);
+    try {
+      store?.setItem(VISIT_ENTRY, JSON.stringify(visit));
+    } catch {}
+    const since = sinceOf(visit, today);
+    const views = ["headlines", "moved", "promised"] as const;
+    const rowsOf = (view: string) => [
+      ...feed.querySelectorAll<HTMLTableRowElement>(`#feed-${view} tbody tr[data-on]`),
+    ];
+    const dated = (view: string) =>
+      rowsOf(view).filter((row) => isSince(row.dataset.on!, since.from, today));
+    const parts = changedParts(
+      { reports: dated("headlines").length, moves: dated("moved").length, promises: dated("promised").length },
+      { reports: rowsOf("headlines").length, moves: rowsOf("moved").length, promises: rowsOf("promised").length },
+    );
+
+    // Pressing a count narrows its list to the rows dated in the span; pressing it
+    // again, or "Show all", brings the rest back. One list is narrowed at a time.
+    const counts: HTMLButtonElement[] = [];
+    const showAll = document.createElement("button");
+    showAll.type = "button";
+    showAll.className = "text-control";
+    showAll.textContent = "Show all";
+    showAll.hidden = true;
+    const narrow = (picked: string | null) => {
+      for (const view of views) {
+        const keep = new Set(view === picked ? dated(view) : rowsOf(view));
+        for (const row of rowsOf(view)) row.toggleAttribute("data-out-since", !keep.has(row));
+        feed.querySelector(`#feed-${view} table`)?.dispatchEvent(new Event("paged:refresh"));
+      }
+      for (const count of counts) {
+        count.setAttribute("aria-pressed", String(count.dataset.view === picked));
+      }
+      showAll.hidden = picked === null;
+    };
+    showAll.addEventListener("click", () => narrow(null));
+
+    line.append(
+      since.visited ? `Since your last visit on ${formatDate(since.from)}: ` : "In the last 30 days: ",
+    );
+    parts.forEach((part, index) => {
+      if (index > 0) line.append(", ");
+      // None of something is said in words; there is nothing to open.
+      if (part.count === 0) {
+        line.append(part.text);
         return;
       }
-      results.replaceChildren(
-        element(
-          "p",
-          liveAddress
-            ? refusalMessage("post", { platform: read.platform })
-            : `That is a post on ${read.platform}, not the article itself. Open the article it links to, then paste that address.`,
-        ),
-        ...(liveAddress ? [textForm()] : []),
-      );
-      return;
-    }
-    show("Looking up…");
-    let index: Lookup;
-    try {
-      index = await loadLookup();
-    } catch {
-      lookup = undefined;
-      results.replaceChildren(element("p", "The lookup is not available right now."), next());
-      return;
-    }
-    const slugs = index.articles[read["key"]] ?? [];
-    const tracked = slugs.map((slug) => index.claims[slug]).filter(Boolean);
-    if (tracked.length > 0) {
-      results.replaceChildren(
-        element(
-          "p",
-          tracked.length === 1 ? "This article is one we track." : "This article reports claims we track.",
-        ),
-        ...tracked.map((claim) => standing(claim, index.places)),
-      );
-      // On a phone the answer can land below the keyboard or the fold.
-      results.scrollIntoView({ block: "nearest" });
-      return;
-    }
-    const close = closestClaims(index, address).map((match: { claim: LookupClaim }) => match.claim);
-    if (close.length > 0) {
-      results.replaceChildren(
-        element(
-          "p",
-          "We do not track this exact article. These tracked claims share words with its address. That is a guess: check it is the same treatment for the same condition.",
-        ),
-        claimList(close),
-        ...liveOffer(address),
-        ...suggestion(address),
-      );
-      return;
-    }
-    results.replaceChildren(
-      element(
-        "p",
-        "This article is not one we track, and no tracked claim looks close. That says nothing about the story itself.",
-      ),
-      ...liveOffer(address),
-      ...suggestion(address),
-      next(),
-    );
-  }
-
-  // A slow answer to an earlier question must not replace the answer to a later one.
-  let latest = 0;
-
-  async function search(query: string) {
-    const asked = latest;
-    show("Searching…");
-    let hits: Hit[];
-    try {
-      const indexUrl = "/pagefind/pagefind.js";
-      const pagefind = await import(/* @vite-ignore */ indexUrl);
-      const found = await pagefind.search(query);
-      hits = await Promise.all(
-        found.results.slice(0, 20).map((result: { data: () => Promise<Hit> }) => result.data()),
-      );
-    } catch {
-      if (asked === latest) {
-        results.replaceChildren(element("p", "Search is not available right now."), next());
-      }
-      return;
-    }
-    if (asked !== latest) return;
-    if (hits.length === 0) {
-      show(
-        `No record found for “${query}”. We say that a lot.`,
-        "This site only covers claims it has tracked so far.",
-      );
-      results.append(next());
-      return;
-    }
-    // Each match: the headline, then its status in words ahead of the summary.
-    const list = element("ul", undefined, "plain hits");
-    for (const hit of hits) {
-      const item = element("li");
-      const link = element("a", hit.meta.title ?? hit.url) as HTMLAnchorElement;
-      link.href = hit.url;
-      const note = element("span", undefined, "entry-note");
-      if (hit.meta.status) note.append(element("strong", hit.meta.status), " ");
-      if (hit.meta.summary) note.append(hit.meta.summary);
-      item.append(link, note);
-      list.append(item);
-    }
-    const count = element(
-      "p",
-      `${hits.length} tracked ${hits.length === 1 ? "claim matches" : "claims match"} “${query}”.`,
-      "entry-note",
-    );
-    results.replaceChildren(count, list);
-  }
-
-  function answer(text: string) {
-    latest += 1;
-    if (!text) {
-      results.replaceChildren();
-      return;
-    }
-    const read = readAddress(text);
-    void (read.kind === "none" ? search(text) : lookUp(text, read));
-  }
-
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const text = input.value.trim();
-    const url = new URL(location.href);
-    // Only typed words go into the page's address. A pasted article address stays in
-    // the field: in the address it would reach the server on a reload or when shared.
-    if (text && readAddress(text).kind === "none") url.searchParams.set("q", text);
-    else url.searchParams.delete("q");
-    history.replaceState(null, "", url);
-    answer(text);
-  });
-
-  // A pasted link is answered at once; typed words wait for the button.
-  input.addEventListener("paste", () => {
-    setTimeout(() => {
-      if (readAddress(input.value.trim()).kind !== "none") form.requestSubmit();
+      const open = document.createElement("button");
+      open.type = "button";
+      open.className = "text-control";
+      open.textContent = part.text;
+      open.dataset.view = part.view;
+      open.setAttribute("aria-pressed", "false");
+      open.addEventListener("click", () => {
+        const on = open.getAttribute("aria-pressed") !== "true";
+        narrow(on ? part.view : null);
+        if (on) {
+          document.getElementById(`tab-${part.view}`)?.click();
+          feed.scrollIntoView({ block: "nearest" });
+        }
+      });
+      counts.push(open);
+      line.append(open);
     });
-  });
+    line.append(parts.length > 0 ? "." : "nothing new on record.", " ", showAll);
+    // Filled in below, once the followed claims have been compared with their statuses now.
+    const followedNote = document.createElement("span");
+    followedNote.dataset.sinceFollowed = "";
+    line.append(followedNote);
+    line.hidden = false;
 
-  const initial = new URL(location.href).searchParams.get("q");
-  if (initial) {
-    input.value = initial;
-    answer(initial);
+    // A row dated since the last visit says so in a word. Not on a first visit: with
+    // nothing to compare against, everything would be new.
+    if (since.visited) {
+      for (const row of [...dated("headlines"), ...dated("moved")]) {
+        const tag = document.createElement("span");
+        tag.className = "new-tag";
+        tag.textContent = "New";
+        row.querySelector(".claim a")?.after(" ", tag);
+      }
+    }
+  }
+
+  // The claims this reader follows, with a note on any whose status has changed since
+  // they last opened it. The statuses now come from the site's lookup file.
+  const following = document.querySelector<HTMLElement>("[data-following]");
+  if (following && store) {
+    const list = following.querySelector<HTMLElement>("[data-following-list]")!;
+    const said = following.querySelector<HTMLElement>("[data-following-said]")!;
+    const followed = readFollowed(store.getItem(FOLLOWING_ENTRY));
+    const hint = document.querySelector<HTMLElement>("[data-follow-hint]");
+    if (hint) hint.hidden = Object.keys(followed).length > 0;
+    const element = (tag: string, text?: string, className?: string) => {
+      const node = document.createElement(tag);
+      if (text) node.textContent = text;
+      if (className) node.className = className;
+      return node;
+    };
+    const draw = (listed: Parameters<typeof followedRows>[1]) => {
+      const rows = followedRows(followed, listed);
+      list.replaceChildren(
+        ...rows.map((row) => {
+          const item = element("li");
+          if (row.page) {
+            const link = element("a", row.headline) as HTMLAnchorElement;
+            link.href = row.page;
+            item.append(link);
+          } else {
+            item.append(element("span", row.headline));
+          }
+          const note = element("span", undefined, "entry-note");
+          if (row.status === null) {
+            note.append("No longer listed on this site.");
+          } else if (row.was) {
+            // The change is said in words; the tag alone never carries it.
+            note.append(element("span", "Changed", "new-tag"), ` Was: ${row.was}. Now: ${row.status}.`);
+          } else {
+            note.append(element("strong", row.status));
+          }
+          const stop = element("button", "Stop following", "text-control") as HTMLButtonElement;
+          stop.type = "button";
+          stop.addEventListener("click", () => {
+            delete followed[row.slug];
+            try {
+              store.setItem(FOLLOWING_ENTRY, JSON.stringify(followed));
+            } catch {}
+            said.textContent = `No longer following: ${row.headline}`;
+            draw(listed);
+          });
+          note.append(" ", stop);
+          item.append(note);
+          return item;
+        }),
+      );
+      following.hidden = rows.length === 0;
+      if (hint) hint.hidden = rows.length > 0;
+      // A changed followed claim is the news a reader came back for: the line above says so.
+      const note = document.querySelector<HTMLElement>("[data-since-followed]");
+      const changed = rows.filter((row) => row.was !== null).length;
+      if (note) {
+        note.replaceChildren();
+        if (changed > 0) {
+          const link = document.createElement("a");
+          link.href = "#following";
+          link.textContent = `${changed} followed ${changed === 1 ? "claim has" : "claims have"} changed`;
+          note.append(" ", link, ".");
+        }
+      }
+    };
+    if (Object.keys(followed).length > 0) {
+      fetch("/lookup.json")
+        .then((response) => response.json())
+        .then((index) => draw(index.claims ?? {}))
+        // Without the lookup file the stored headlines and statuses are still true as kept.
+        .catch(() => draw(Object.fromEntries(
+          Object.entries(followed).map(([slug, entry]) => [
+            slug,
+            { headline: entry.headline, page: `/${slug}`, status: entry.status },
+          ]),
+        )));
+    }
+  }
+
+  // On a phone the counts and the topic choice open on request. They start open when
+  // the address already narrows the lists, so a narrowed list is never unexplained.
+  const board = document.querySelector<HTMLElement>("[data-scoreboard]");
+  const toggle = board?.querySelector<HTMLButtonElement>("[data-narrow]");
+  if (board && toggle) {
+    const set = (open: boolean) => {
+      board.classList.toggle("open", open);
+      toggle.setAttribute("aria-expanded", String(open));
+    };
+    const asked = new URL(location.href).searchParams;
+    set(asked.has("status") || asked.has("topic"));
+    toggle.addEventListener("click", () => set(toggle.getAttribute("aria-expanded") !== "true"));
+    toggle.hidden = false;
   }
 </script>
 
@@ -732,5 +859,20 @@ const oneDay = setOn.size === 1 ? formatDate(recent[0].status.updated_at) : null
 
   .results .suggest {
     margin-top: 0.6rem;
+  }
+
+  /* The live answer uses the same record/confidence layout as a claim page.
+     Keep the native disclosure marker when no static Astro icon is present. */
+  .live-matches .match-why summary {
+    display: list-item;
+    list-style: disclosure-closed inside;
+  }
+
+  .live-matches .match-why[open] summary {
+    list-style-type: disclosure-open;
+  }
+
+  .live-matches .match-why summary::-webkit-details-marker {
+    display: inline;
   }
 </style>

@@ -102,6 +102,187 @@
       "title": "ExportedArticle",
       "type": "object"
     },
+    "ExportedCard": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/TermRole"
+        },
+        "fit": {
+          "$ref": "#/$defs/TermFit"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "definition": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Definition"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "external_id": {
+          "title": "External Id",
+          "type": "string"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Version"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "reasons": {
+          "items": {
+            "$ref": "#/$defs/ExportedCardReason"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "decided_by": {
+          "title": "Decided By",
+          "type": "string"
+        },
+        "read_at": {
+          "format": "date-time",
+          "title": "Read At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "fit",
+        "label",
+        "definition",
+        "url",
+        "source",
+        "external_id",
+        "version",
+        "score",
+        "reasons",
+        "decided_by",
+        "read_at"
+      ],
+      "title": "ExportedCard",
+      "type": "object"
+    },
+    "ExportedCardReason": {
+      "additionalProperties": false,
+      "description": "Why the term was a candidate, found by rule. The site owns the wording.",
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "trials": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trials"
+        },
+        "of": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Of"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        }
+      },
+      "required": [
+        "code"
+      ],
+      "title": "ExportedCardReason",
+      "type": "object"
+    },
+    "ExportedCardSource": {
+      "additionalProperties": false,
+      "description": "A source a published card comes from, with what its terms ask for.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "credit": {
+          "title": "Credit",
+          "type": "string"
+        },
+        "licence": {
+          "title": "Licence",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "terms_url": {
+          "title": "Terms Url",
+          "type": "string"
+        },
+        "in_data_file": {
+          "title": "In Data File",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "title",
+        "credit",
+        "licence",
+        "url",
+        "terms_url",
+        "in_data_file"
+      ],
+      "title": "ExportedCardSource",
+      "type": "object"
+    },
     "ExportedClaim": {
       "additionalProperties": false,
       "properties": {
@@ -203,6 +384,30 @@
           },
           "title": "Matches",
           "type": "array"
+        },
+        "trials": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedTrial"
+          },
+          "title": "Trials",
+          "type": "array"
+        },
+        "papers": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedPaper"
+          },
+          "title": "Papers",
+          "type": "array"
+        },
+        "background": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedCard"
+          },
+          "title": "Background",
+          "type": "array"
         }
       },
       "required": [
@@ -223,6 +428,64 @@
         "failure_flags"
       ],
       "title": "ExportedClaim",
+      "type": "object"
+    },
+    "ExportedComparison": {
+      "additionalProperties": false,
+      "properties": {
+        "groups": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Groups",
+          "type": "array"
+        },
+        "p_value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "P Value"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Method"
+        },
+        "test": {
+          "anyOf": [
+            {
+              "enum": [
+                "superiority",
+                "non_inferiority",
+                "equivalence"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Test"
+        }
+      },
+      "required": [
+        "groups",
+        "p_value",
+        "method",
+        "test"
+      ],
+      "title": "ExportedComparison",
       "type": "object"
     },
     "ExportedEvent": {
@@ -300,6 +563,18 @@
               "type": "null"
             }
           ]
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
         }
       },
       "required": [
@@ -482,6 +757,318 @@
       "title": "ExportedOutlet",
       "type": "object"
     },
+    "ExportedPaper": {
+      "additionalProperties": false,
+      "properties": {
+        "identifier": {
+          "title": "Identifier",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "record_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Record Url"
+        },
+        "roles": {
+          "items": {
+            "$ref": "#/$defs/ExportedPaperRole"
+          },
+          "title": "Roles",
+          "type": "array"
+        },
+        "facts_as_of": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Facts As Of"
+        },
+        "facts": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedPaperFacts"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "identifier",
+        "url",
+        "record_url",
+        "roles",
+        "facts_as_of",
+        "facts"
+      ],
+      "title": "ExportedPaper",
+      "type": "object"
+    },
+    "ExportedPaperFacts": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Title"
+        },
+        "journal": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Journal"
+        },
+        "year": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Year"
+        },
+        "kinds": {
+          "items": {
+            "enum": [
+              "randomised_trial",
+              "clinical_trial",
+              "meta_analysis",
+              "systematic_review",
+              "review",
+              "observational_study",
+              "case_report",
+              "preprint",
+              "comment",
+              "correction",
+              "retraction_notice",
+              "article"
+            ],
+            "type": "string"
+          },
+          "title": "Kinds",
+          "type": "array"
+        },
+        "open_access": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Open Access"
+        },
+        "retracted": {
+          "title": "Retracted",
+          "type": "boolean"
+        },
+        "studied_in": {
+          "items": {
+            "enum": [
+              "people",
+              "animals"
+            ],
+            "type": "string"
+          },
+          "title": "Studied In",
+          "type": "array"
+        }
+      },
+      "required": [
+        "title",
+        "journal",
+        "year",
+        "kinds",
+        "open_access",
+        "retracted",
+        "studied_in"
+      ],
+      "title": "ExportedPaperFacts",
+      "type": "object"
+    },
+    "ExportedPaperRole": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "enum": [
+            "origin",
+            "trial_result",
+            "follow_up",
+            "related"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "trial_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trial Id"
+        },
+        "listed": {
+          "anyOf": [
+            {
+              "enum": [
+                "listed_by_sponsor",
+                "linked_by_registry"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Listed"
+        },
+        "event_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Event Id"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Score"
+        },
+        "reasons": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "decided_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Decided By"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        }
+      },
+      "required": [
+        "role"
+      ],
+      "title": "ExportedPaperRole",
+      "type": "object"
+    },
+    "ExportedParticipants": {
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "title": "Count",
+          "type": "integer"
+        },
+        "basis": {
+          "enum": [
+            "actual",
+            "planned"
+          ],
+          "title": "Basis",
+          "type": "string"
+        }
+      },
+      "required": [
+        "count",
+        "basis"
+      ],
+      "title": "ExportedParticipants",
+      "type": "object"
+    },
+    "ExportedPlannedOutcome": {
+      "additionalProperties": false,
+      "properties": {
+        "measure": {
+          "title": "Measure",
+          "type": "string"
+        },
+        "time_frame": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Time Frame"
+        }
+      },
+      "required": [
+        "measure",
+        "time_frame"
+      ],
+      "title": "ExportedPlannedOutcome",
+      "type": "object"
+    },
     "ExportedPromise": {
       "additionalProperties": false,
       "properties": {
@@ -512,6 +1099,196 @@
         "article_url"
       ],
       "title": "ExportedPromise",
+      "type": "object"
+    },
+    "ExportedResultGroup": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "analysed": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Analysed"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        },
+        "spread": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Spread"
+        },
+        "lower": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Lower"
+        },
+        "upper": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Upper"
+        }
+      },
+      "required": [
+        "title",
+        "analysed",
+        "value",
+        "spread",
+        "lower",
+        "upper"
+      ],
+      "title": "ExportedResultGroup",
+      "type": "object"
+    },
+    "ExportedResultOutcome": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "time_frame": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Time Frame"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Unit"
+        },
+        "measure": {
+          "anyOf": [
+            {
+              "enum": [
+                "mean",
+                "median",
+                "number",
+                "count_of_participants",
+                "count_of_units",
+                "geometric_mean",
+                "least_squares_mean",
+                "geometric_least_squares_mean",
+                "log_mean"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Measure"
+        },
+        "spread_kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Spread Kind"
+        },
+        "rows": {
+          "title": "Rows",
+          "type": "integer"
+        },
+        "groups": {
+          "items": {
+            "$ref": "#/$defs/ExportedResultGroup"
+          },
+          "title": "Groups",
+          "type": "array"
+        },
+        "comparisons": {
+          "items": {
+            "$ref": "#/$defs/ExportedComparison"
+          },
+          "title": "Comparisons",
+          "type": "array"
+        }
+      },
+      "required": [
+        "title",
+        "time_frame",
+        "unit",
+        "measure",
+        "spread_kind",
+        "rows",
+        "groups",
+        "comparisons"
+      ],
+      "title": "ExportedResultOutcome",
+      "type": "object"
+    },
+    "ExportedResults": {
+      "additionalProperties": false,
+      "properties": {
+        "outcomes": {
+          "items": {
+            "$ref": "#/$defs/ExportedResultOutcome"
+          },
+          "title": "Outcomes",
+          "type": "array"
+        },
+        "outcomes_total": {
+          "title": "Outcomes Total",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "outcomes",
+        "outcomes_total"
+      ],
+      "title": "ExportedResults",
       "type": "object"
     },
     "ExportedRetiredVertical": {
@@ -551,6 +1328,46 @@
         "url"
       ],
       "title": "ExportedSource",
+      "type": "object"
+    },
+    "ExportedSponsor": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Name"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "industry",
+                "government",
+                "individual",
+                "network",
+                "other"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Kind"
+        }
+      },
+      "required": [
+        "name",
+        "kind"
+      ],
+      "title": "ExportedSponsor",
       "type": "object"
     },
     "ExportedStatus": {
@@ -627,6 +1444,255 @@
       "title": "ExportedStatusChange",
       "type": "object"
     },
+    "ExportedTrial": {
+      "additionalProperties": false,
+      "description": "One trial behind the claim's approved events. Its match, if any, is the entry in\n`matches` with the same identifier.",
+      "properties": {
+        "trial_id": {
+          "title": "Trial Id",
+          "type": "string"
+        },
+        "source_name": {
+          "title": "Source Name",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Title"
+        },
+        "phases": {
+          "items": {
+            "$ref": "#/$defs/TrialPhase"
+          },
+          "title": "Phases",
+          "type": "array"
+        },
+        "state": {
+          "enum": [
+            "not_started",
+            "under_way",
+            "completed",
+            "suspended",
+            "terminated",
+            "withdrawn",
+            "unknown"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "facts_as_of": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Facts As Of"
+        },
+        "facts": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedTrialFacts"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "papers": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Papers",
+          "type": "array"
+        }
+      },
+      "required": [
+        "trial_id",
+        "source_name",
+        "url",
+        "title",
+        "phases",
+        "state",
+        "facts_as_of",
+        "facts"
+      ],
+      "title": "ExportedTrial",
+      "type": "object"
+    },
+    "ExportedTrialFacts": {
+      "additionalProperties": false,
+      "properties": {
+        "study_kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "interventional",
+                "observational",
+                "expanded_access"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Study Kind"
+        },
+        "participants": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedParticipants"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "allocation": {
+          "anyOf": [
+            {
+              "enum": [
+                "randomised",
+                "non_randomised"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Allocation"
+        },
+        "masking": {
+          "anyOf": [
+            {
+              "enum": [
+                "none",
+                "single",
+                "double",
+                "triple",
+                "quadruple"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Masking"
+        },
+        "comparators": {
+          "items": {
+            "enum": [
+              "placebo",
+              "sham",
+              "active",
+              "no_treatment"
+            ],
+            "type": "string"
+          },
+          "title": "Comparators",
+          "type": "array"
+        },
+        "healthy_volunteers": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Healthy Volunteers"
+        },
+        "age_groups": {
+          "items": {
+            "enum": [
+              "child",
+              "adult",
+              "older_adult"
+            ],
+            "type": "string"
+          },
+          "title": "Age Groups",
+          "type": "array"
+        },
+        "sponsor": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedSponsor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "primary_outcomes": {
+          "items": {
+            "$ref": "#/$defs/ExportedPlannedOutcome"
+          },
+          "title": "Primary Outcomes",
+          "type": "array"
+        },
+        "primary_outcomes_total": {
+          "title": "Primary Outcomes Total",
+          "type": "integer"
+        },
+        "why_stopped": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Why Stopped"
+        },
+        "results": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedResults"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "study_kind",
+        "participants",
+        "allocation",
+        "masking",
+        "comparators",
+        "healthy_volunteers",
+        "age_groups",
+        "sponsor",
+        "primary_outcomes",
+        "primary_outcomes_total",
+        "why_stopped",
+        "results"
+      ],
+      "title": "ExportedTrialFacts",
+      "type": "object"
+    },
     "ExportedVertical": {
       "additionalProperties": false,
       "properties": {
@@ -663,6 +1729,24 @@
         "refused"
       ],
       "title": "RegulatoryOutcome",
+      "type": "string"
+    },
+    "TermFit": {
+      "description": "How a subject term was read against the claim: as the thing itself, or broader.",
+      "enum": [
+        "exact",
+        "broader"
+      ],
+      "title": "TermFit",
+      "type": "string"
+    },
+    "TermRole": {
+      "description": "What a subject term is proposed as for a claim.",
+      "enum": [
+        "condition",
+        "intervention"
+      ],
+      "title": "TermRole",
       "type": "string"
     },
     "TrialPhase": {
@@ -760,6 +1844,14 @@
         "$ref": "#/$defs/ExportedArchived"
       },
       "title": "Archived",
+      "type": "array"
+    },
+    "card_sources": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ExportedCardSource"
+      },
+      "title": "Card Sources",
       "type": "array"
     }
   },

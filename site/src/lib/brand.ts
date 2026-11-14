@@ -10,3 +10,6 @@ const revision = createHash("sha256")
   .digest("hex").slice(0, 12);
 
 export const brandAsset = (file: string) => `${file}?v=${revision}`;
+
+// The masthead's deep navy, which a browser or launcher may colour its own frame with.
+export const THEME_COLOR = "#0b2545";

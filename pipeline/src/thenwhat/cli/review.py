@@ -42,6 +42,7 @@ class ItemKind(StrEnum):
     CLAIM = "claim"
     MATCH = "match"
     EVENT = "event"
+    TERM = "term"
 
 
 @review_app.command("list")
@@ -144,7 +145,7 @@ def _decide(
 
 @review_app.command("approve")
 def review_approve(
-    kind: Annotated[ItemKind, typer.Argument(help="claim, match or event.")],
+    kind: Annotated[ItemKind, typer.Argument(help="claim, match, event or term.")],
     item_ids: ITEM_IDS = None,
     as_assistant: AS_ASSISTANT = False,
     claim: CLAIM = None,
@@ -157,7 +158,7 @@ def review_approve(
 
 @review_app.command("reject")
 def review_reject(
-    kind: Annotated[ItemKind, typer.Argument(help="claim, match or event.")],
+    kind: Annotated[ItemKind, typer.Argument(help="claim, match, event or term.")],
     item_ids: ITEM_IDS = None,
     as_assistant: AS_ASSISTANT = False,
     claim: CLAIM = None,

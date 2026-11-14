@@ -1,6 +1,7 @@
 """The review queue and the operator's decisions. Behavior: openspec review.
 
-Everything here is a human decision. Rule approvals are made where events are created.
+Decisions here are the operator's, or the assistant's when it is named. Rule decisions
+are made where drafts, matches and events are created.
 """
 
 from dataclasses import dataclass
@@ -10,10 +11,11 @@ from typing import Literal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.entry import ClaimNotFound, EntryError, InvalidUrl, find_claim
+from thenwhat.claims.entry import ClaimNotFound, EntryError, InvalidUrl, claim_by_slug
 from thenwhat.claims.status import refresh_status
 from thenwhat.db.models import (
     Claim,
+    ClaimTerm,
     DecisionLog,
     Entity,
     EntityMatch,
@@ -22,20 +24,26 @@ from thenwhat.db.models import (
     SourceArticle,
 )
 from thenwhat.decide.steps import (
+    BROADER,
     ENTITY_MATCH,
     EVIDENCE_STAGE,
     MATCH,
     NOT_A_MATCH,
     OTHER_INDICATION,
+    PAPER_MATCH,
+    SAME,
+    SOMETHING_ELSE,
+    TERM_MATCH,
+    latest_scoring,
+    match_ref,
+    term_ref,
 )
-from thenwhat.domain import Decider, EntityType, EvidenceStage, ReviewState
+from thenwhat.domain import Decider, EntityType, EvidenceStage, ReviewState, TermFit
 from thenwhat.review.decisions import record_decision
+from thenwhat.sources.base import record_url
+from thenwhat.sources.openalex import OpenAlex
 
-Kind = Literal["claim", "match", "event"]
-RECORD_URLS = {
-    "clinicaltrials.gov": "https://clinicaltrials.gov/study/{}",
-    "crossref": "https://doi.org/{}",
-}
+Kind = Literal["claim", "match", "event", "term"]
 
 
 class ItemNotFound(EntryError):
@@ -52,13 +60,16 @@ class QueueItem:
     score: float | None
     # For a candidate match: what the registry record says, when that was kept.
     detail: str | None = None
+    # For a paper candidate: the reason codes found by rule. Empty when it shows none.
+    reasons: tuple[str, ...] = ()
 
 
 def pending_items(
     session: Session, *, claim_slug: str | None = None, kind: Kind | None = None
 ) -> list[QueueItem]:
     """What awaits review, claim by claim: the draft claim, then candidate matches
-    (most likely first), then events (oldest first)."""
+    (most likely first), then events (oldest first), then candidate subject terms (most
+    likely first, those without a score last)."""
     claims = list(session.scalars(select(Claim).order_by(Claim.id)))
     if claim_slug is not None:
         claims = [claim for claim in claims if claim.slug == claim_slug]
@@ -103,21 +114,74 @@ def pending_items(
                     event.confidence,
                 )
             )
+        for term in session.scalars(
+            select(ClaimTerm)
+            .where(ClaimTerm.claim_id == claim.id, ClaimTerm.review_state == ReviewState.PENDING)
+            .order_by(ClaimTerm.score.desc().nulls_last(), ClaimTerm.id)
+        ):
+            items.append(_term_item(claim, term))
     return [item for item in items if kind is None or item.kind == kind]
 
 
 def _match_item(session: Session, claim: Claim, match: EntityMatch, entity: Entity) -> QueueItem:
-    template = RECORD_URLS.get(match.source_name)
+    link = record_url(match.source_name, match.external_id)
+    if _is_paper_candidate(match, entity):
+        # Its detail line carries the title, year, kind of paper and journal.
+        found = ", ".join(match.reasons) if match.reasons else "none found by rule"
+        return QueueItem(
+            "match",
+            match.id,
+            claim.slug,
+            f"related paper {match.external_id} for {entity.type.value} '{entity.name}'"
+            f"{_score_note(session, match, entity)}. Reasons: {found}",
+            link,
+            match.score,
+            match.record_summary,
+            tuple(match.reasons),
+        )
     return QueueItem(
         "match",
         match.id,
         claim.slug,
         f"{entity.type.value} '{entity.name}' is {match.source_name}"
         f" record {match.external_id}{_score_note(session, match, entity)}",
-        template.format(match.external_id) if template else None,
+        link,
         match.score,
         match.record_summary,
     )
+
+
+def _term_item(claim: Claim, term: ClaimTerm) -> QueueItem:
+    if term.score is None:
+        read = "not scored yet: run `terms` for the claim"
+    elif term.fit is None:
+        read = "read as something else"
+    else:
+        read = f"read as {term.fit.value}"
+    told = "; ".join(_reason_line(reason) for reason in term.reasons) or "none found by rule"
+    return QueueItem(
+        "term",
+        term.id,
+        claim.slug,
+        f"subject term '{term.label}' ({term.source_name} {term.external_id}) for the"
+        f" claim's {term.role.value}, {read}. Reasons: {told}",
+        record_url(term.source_name, term.external_id),
+        term.score,
+        reasons=tuple(str(reason.get("code")) for reason in term.reasons),
+    )
+
+
+def _reason_line(reason: dict) -> str:
+    if "trials" in reason:
+        return f"{reason.get('code')} ({reason['trials']} of {reason.get('of')} trials)"
+    if "name" in reason:
+        return f"{reason.get('code')} ('{reason['name']}')"
+    return str(reason.get("code"))
+
+
+def _is_paper_candidate(match: EntityMatch, entity: Entity) -> bool:
+    """A paper the literature search found for the claim's intervention."""
+    return entity.type is EntityType.INTERVENTION and match.source_name == OpenAlex.name
 
 
 def rejected_by_rule(session: Session, *, claim_slug: str | None = None) -> list[QueueItem]:
@@ -134,8 +198,7 @@ def rejected_by_rule(session: Session, *, claim_slug: str | None = None) -> list
         .order_by(Claim.id, EntityMatch.score.desc(), EntityMatch.id)
     )
     if claim_slug is not None:
-        if find_claim(session, claim_slug) is None:
-            raise ClaimNotFound(f"No claim has the slug '{claim_slug}'.")
+        claim_by_slug(session, claim_slug)
         query = query.where(Claim.slug == claim_slug)
     return [
         _match_item(session, claim, match, entity)
@@ -147,15 +210,7 @@ def _score_note(session: Session, match: EntityMatch, entity: Entity) -> str:
     """What the reviewer should know about how a trial candidate's score was reached."""
     if entity.type is not EntityType.INTERVENTION:
         return ""
-    scored = session.scalars(
-        select(DecisionLog)
-        .where(
-            DecisionLog.step == ENTITY_MATCH,
-            DecisionLog.input_ref == f"entity_match:{match.id}",
-            DecisionLog.error.is_(None),
-        )
-        .order_by(DecisionLog.id.desc())
-    ).first()
+    scored = latest_scoring(session, match)
     if scored is None or scored.output is None:
         return ""
     if OTHER_INDICATION not in scored.options:
@@ -178,9 +233,10 @@ def decide_item(
     """Approve or reject an item, or change an earlier decision.
 
     The decider is the operator unless the assistant is named. A decision on an event
-    re-derives the claim's status. The operator's decision on a match is recorded as
-    the human label for the score it was given; the assistant's is not, because a
-    label is a person's answer. Rejecting a match also rejects the events read from it.
+    re-derives the claim's status; one on a subject term never touches it. The
+    operator's decision on a match is recorded as the human label for the score it was
+    given; the assistant's is not, because a label is a person's answer. Rejecting a
+    match also rejects the events read from it.
     """
     if by not in (Decider.HUMAN, Decider.ASSISTANT):
         raise ValueError("A review decision is made by the operator or the assistant.")
@@ -200,7 +256,10 @@ def decide_item(
         record_decision(match, state, by=by, now=now)
         if by is Decider.HUMAN:
             label = MATCH if state is ReviewState.APPROVED else NOT_A_MATCH
-            _label(session, ENTITY_MATCH, f"entity_match:{match.id}", label)
+            _label(session, ENTITY_MATCH, match_ref(match.id), label)
+            if state is ReviewState.APPROVED:
+                # A rejection does not say which of a paper's other answers was right.
+                _label(session, PAPER_MATCH, match_ref(match.id), MATCH)
         entity = session.get(Entity, match.entity_id)
         assert entity is not None
         claim = session.get(Claim, entity.claim_id)
@@ -217,6 +276,19 @@ def decide_item(
             refresh_status(
                 session, claim, as_of=now.date(), now=now, no_signal_years=no_signal_years
             )
+    elif kind == "term":
+        term = session.get(ClaimTerm, item_id)
+        if term is None:
+            raise ItemNotFound(f"There is no subject term link with id {item_id}.")
+        record_decision(term, state, by=by, now=now)
+        if by is Decider.HUMAN:
+            # An approval says the reading was right; a rejection, that the term is
+            # something else. An approval of a term never read as either labels nothing.
+            label = SOMETHING_ELSE
+            if state is ReviewState.APPROVED:
+                label = {TermFit.EXACT: SAME, TermFit.BROADER: BROADER}.get(term.fit)
+            if label is not None:
+                _label(session, TERM_MATCH, term_ref(term), label)
     else:
         event = session.get(EvidenceEvent, item_id)
         if event is None:
@@ -244,9 +316,7 @@ def decide_matches(
     Returns the ids decided. Candidates already decided are left as they are."""
     if (at_least is None) == (below is None):
         raise EntryError("Give one of --at-least and --below.")
-    claim = find_claim(session, claim_slug)
-    if claim is None:
-        raise ClaimNotFound(f"No claim has the slug '{claim_slug}'.")
+    claim = claim_by_slug(session, claim_slug)
     pending = session.scalars(
         select(EntityMatch)
         .join(Entity, Entity.id == EntityMatch.entity_id)
@@ -278,9 +348,7 @@ def flag_failure(
 ) -> FailureFlag:
     """Record that a trial missed its primary endpoint. This is the only way a claim
     can become failed, and it needs an approved event and a source link."""
-    claim = find_claim(session, claim_slug)
-    if claim is None:
-        raise ClaimNotFound(f"No claim has the slug '{claim_slug}'.")
+    claim = claim_by_slug(session, claim_slug)
     source_url = source_url.strip()
     if not source_url.startswith(("http://", "https://")):
         raise InvalidUrl("A failure flag needs a source link starting with http:// or https://.")
@@ -325,9 +393,7 @@ def confirm_stage(
     """Set the stage of evidence at announcement and bring the status up to date: with
     no trial found, the stage decides between two statuses. The operator's choice becomes
     the human label for whatever was suggested; the assistant's choice labels nothing."""
-    claim = find_claim(session, claim_slug)
-    if claim is None:
-        raise ClaimNotFound(f"No claim has the slug '{claim_slug}'.")
+    claim = claim_by_slug(session, claim_slug)
     claim.evidence_stage = stage
     if by is Decider.HUMAN:
         _label(session, EVIDENCE_STAGE, f"claim:{claim.id}", stage.value)

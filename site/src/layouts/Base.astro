@@ -2,9 +2,11 @@
 import "../styles/global.css";
 // Preloaded so the first paint is already in the site's face and headings do not reflow.
 import faceUrl from "@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2?url";
-import { SITE } from "../../site.config.mjs";
+import { EXTENSION_OFFERED, SITE } from "../../site.config.mjs";
+import Mark from "../components/Mark.astro";
 import { CARD_NOTICE } from "../lib/card";
-import { brandAsset } from "../lib/brand";
+import { AUDIENCES } from "../lib/audiences";
+import { THEME_COLOR, brandAsset } from "../lib/brand";
 import { data, listedTopics } from "../lib/export";
 import { NOTICES, PREVIEW_NOTE } from "../lib/notices";
 // Stops a public build whose configured address is a local one.
@@ -91,7 +93,7 @@ const topicLink =
     <link rel="icon" type="image/svg+xml" sizes="any" href={brandAsset("/favicon.svg")} />
     <link rel="apple-touch-icon" sizes="180x180" href={brandAsset("/apple-touch-icon.png")} />
     <link rel="manifest" href={brandAsset("/manifest.webmanifest")} />
-    <meta name="theme-color" content="#0b2545" />
+    <meta name="theme-color" content={THEME_COLOR} />
     <link rel="preload" as="font" type="font/woff2" href={faceUrl} crossorigin />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
@@ -149,7 +151,7 @@ const topicLink =
     <header class="masthead">
       <div class="wrap">
         <a class="name" href="/" aria-label={SITE.name}>
-          <img class="mark" src={brandAsset("/mark.svg")} alt="" width="32" height="32" />
+          <Mark />
           <span class="lead" aria-hidden="true">{SITE.wordmark[0]}</span>
           <span class="tail" aria-hidden="true">{SITE.wordmark[1]}</span>
           <svg class="ask" viewBox="0 0 20 30" aria-hidden="true">
@@ -208,10 +210,25 @@ const topicLink =
         </div>
         <nav class="more" aria-label="About this site">
           <a href="/how-it-works">How it works</a>
+          <a href="/guide">Guide</a>
+          {EXTENSION_OFFERED && <a href="/extension">Extension</a>}
+          <a href="/about">About</a>
           <a href="/anniversaries">Anniversaries</a>
           <a href="/data">Data</a>
           <a href="/privacy">Privacy</a>
         </nav>
+        {/* The pages made for one kind of reader each, named on one line. */}
+        <p class="for-readers">
+          For{" "}
+          {
+            AUDIENCES.map((audience, index) => (
+              <>
+                {index > 0 && (index === AUDIENCES.length - 1 ? " and " : ", ")}
+                <a href={`/for/${audience}`}>{audience}</a>
+              </>
+            ))
+          }
+        </p>
         <div class="details">
           <p>
             Data sources:{" "}

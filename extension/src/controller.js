@@ -34,6 +34,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
   // One reminder per claim, each a day to look again; the background check shows it.
   let reminders = [];
   let follows = [];
+  let justFollowed = null;
   let pageState = null;
   let results = [];
   let visual = null;
@@ -54,6 +55,8 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
       following: follows.length,
       changed: now.filter((claim) => claim.changed).length,
       followed: follows.map((claim) => claim.page),
+      // The claim followed by the press being answered now, so its tick is drawn once.
+      fresh: justFollowed,
       was: Object.fromEntries(now.filter((claim) => claim.changed).map((claim) => [claim.page, claim.was])),
       reminders: Object.fromEntries(reminders.map((reminder) => [reminder.page, reminder.date])),
     };
@@ -67,7 +70,8 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
   // A followed claim seen here has been seen, so its change is not announced twice.
   function showPage(state) {
     pageState = state;
-    if (tab?.key && !tab.incognito && KEPT_KINDS.has(state.kind)) {
+    // The site's own claim page is not a report the reader checked.
+    if (tab?.key && !tab.incognito && !state.own && KEPT_KINDS.has(state.kind)) {
       recent = addRecent(recent, {
         key: tab.key,
         url: tab.url,
@@ -234,7 +238,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     reminders = saved?.reminders ?? [];
     results = saved?.results ?? [];
     sharing = !sharingWriteFailed && (!requiresSharingConsent || saved?.sharing?.version === 1 && saved.sharing.enabled === true);
-    const state = stateFor(tab?.key ?? null, loaded);
+    const state = stateFor(tab?.key ?? null, loaded, site.key ?? null);
     live = state.live ?? null;
     if (state.kind === "untracked" && live) {
       if (!sharing) {
@@ -277,7 +281,9 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
   function follow(claim) {
     follows = withFollowed(follows, claim);
     save({ follows });
+    justFollowed = claim.page;
     if (pageState) show(pageState);
+    justFollowed = null;
   }
 
   // Stopping from the list keeps the reader in the list.
@@ -324,13 +330,13 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
 
   async function enableSharing() {
     if (!await saveSharing(true)) return;
-    if (pageState?.kind === "tracked") show(pageState);
+    if (!live && pageState) show(pageState);
     else await search({ reuse: true });
   }
 
   async function disableSharing() {
     if (!await saveSharing(false)) return;
-    showPage(pageState?.kind === "tracked" ? pageState : { kind: "untracked" });
+    showPage(!live && pageState ? pageState : { kind: "untracked" });
   }
 
   async function saveSharing(enabled) {
