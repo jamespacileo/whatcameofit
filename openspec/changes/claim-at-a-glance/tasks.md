@@ -24,10 +24,10 @@
 
 ## 4. The section
 
-- [ ] 4.1 Add `site/src/components/RecordBrief.astro` (a list of native disclosures, the one-line note as text, `data-pagefind-ignore`) and render it in `site/src/pages/[slug].astro` after the follow offer and before the facts row; verify on the built Tourette claim page that the two groups and six answers appear and each answer opens to its record
+- [ ] 4.1 Add `site/src/components/RecordBrief.astro` (a list of native disclosures, the one-line note as text, `data-pagefind-ignore`) and render it in `site/src/pages/[slug].astro` after the follow offer and before the facts row; verify on the built Tourette claim page that the two groups and six answers appear, each answer opens to its record, the results link shows under answer 4 without opening it, and no date breaks across lines
 - [ ] 4.2 Render the opened answer about what the largest trial measured: the registry's title and time frame in quotation marks, how it was read, and a link to the trial's entry; verify "Largest trial with posted values" passes and no result value or p value appears in the section
 - [ ] 4.3 Style the section in `site/src/styles/global.css`: the group's name larger than body text, in its own column on a wide screen and above its rows under 40rem, one chevron that turns when open, 44-pixel rows and links on a phone, no status colour, printed open; verify in the browser preview at desktop and phone widths that nothing overflows at 320 pixels, focus is visible, and there are no console errors
-- [ ] 4.4 Add tests for "Answer read directly", "Answer read by a model", "Without scripting" and "Narrow screen"; verify they pass
+- [ ] 4.4 Add tests for "Answer read directly", "Answer read by a model", "Every answer opens to something", "Without scripting" and "Narrow screen"; verify they pass
 
 ## 5. Record and check
 

@@ -10,7 +10,8 @@
 - `site/src/lib/status.ts` holds `STATUS_MEANINGS` (`trial_registered`: "A clinical trial is registered. No trial with a phase has started.") and `assertNeutral`, run at module load. `site/src/lib/trial-facts.ts` already words allocation, masking and comparators.
 - The pipeline has a precedent for a model reading text into fixed fields with rule checks: `pipeline/src/thenwhat/statements/` (`rules.py` is pure and refuses a proposal; `service.py` proposes, checks and stores).
 - `DESIGN.md`: say it once; no colour for any status; nothing moves on scroll; everything pressed is 44 pixels tall on a phone; a section with nothing to show has no placeholder; no meters.
-- Two critiques shaped this design (`.impeccable/critique/`, 2026-11-14). The first (21/40) rejected two valenced columns, three overlapping summaries and oversize result figures. The second (27/40), of a ten-row version with a third group "What the records do not cover", found that group was defined by its answers being "None", that result values could not be read without a scale the spec rules out, that the digest contradicted the brief, and that ten rows was too many.
+- Three critiques shaped this design; the third (27/40, 2026-11-14) found the frame sound and the wording inexact: a group named "What has been recorded since" that was false for a claim whose trials predate its report, a comparison answer that implied more than the records state, and a digest bridge that kept the contradiction.
+- The first two critiques (`.impeccable/critique/`, 2026-11-14). The first (21/40) rejected two valenced columns, three overlapping summaries and oversize result figures. The second (27/40), of a ten-row version with a third group "What the records do not cover", found that group was defined by its answers being "None", that result values could not be read without a scale the spec rules out, that the digest contradicted the brief, and that ten rows was too many.
 
 ## Goals / Non-Goals
 
@@ -37,18 +38,24 @@
 
 | # | Group | Question | Asked when | Answer (values in braces) | Read |
 |---|---|---|---|---|---|
-| 1 | How it was tested | Tested in people? | always | "Yes, in {n} trials. {max} people in the largest" / "Yes, in {n} trials" / "None on record" | directly |
-| 2 | How it was tested | Compared with a dummy device / a placebo / another treatment? | any trial states a design | "Yes, in {k} of {n} trials" / "None on record" | directly |
+| 1 | How it was tested | Tested in people? | always | "In {n} trials. {max} people in the largest" / "In {n} trials" / "None on record" | directly |
+| 2 | How it was tested | Compared with a dummy device / a placebo / another treatment? | any trial states a design | "{k} records name {a dummy device}" ("One record names …") / "No record names one" | directly |
 | 2′ | How it was tested | What was the first report about? | no trial, `evidence_stage` known | fixed phrase per stage | directly |
-| 3 | How it was tested | What did the largest trial measure? | the largest trial has a primary outcome | fixed phrase per measure kind + ", {follow-up} after starting"; else the registry's title in quotation marks | model, else directly |
-| 4 | What has been recorded since | Results posted to the registry? | any trial | "Yes, by {k} of {n} trials. The latest on {date}" / "All {n}" / "None on record" | directly |
-| 5 | What has been recorded since | A trial under way? | any trial | "Yes, {n} under way" / "None on record. The last completed on {date}" | directly |
-| 6 | What has been recorded since | Approved by a regulator? | always | "Yes, on {date}. An approval is not advice to take a treatment" / "None on record" | directly |
+| 3 | How it was tested | What did the largest trial measure? | the largest trial has a primary outcome | fixed phrase per measure kind ("How much a symptom score changed" when the title names a change, else "A symptom score") + " over {follow-up}"; else the registry's title in quotation marks | model, else directly |
+| 4 | Where the records stand now | Results posted to the registry? | any trial | "By {k} of {n} trials. The latest on {date}" / "By all {n} trials…" / "None on record" | directly |
+| 5 | Where the records stand now | A trial under way? | any trial | "{n} under way" / "None on record. The last finished on {date}" | directly |
+| 6 | Where the records stand now | Approved by a regulator? | always | "By {regulator} on {date}. An approval is not advice to take a treatment" / "None on record" | directly |
 
 - A question's place never depends on its answer. "None on record" is said where the question sits. The scenario "Same questions, opposite answers" holds the design to it.
 - Questions 2 to 5 need a trial to ask about. With no trial they are left out and 2′ takes the second place.
 - The comparator noun comes from the comparator kind and the claim's `approach` (a device gets "dummy device", a drug "placebo"). "Sham" is used and defined once, in the opened answer.
 - "Under way", never "recruiting" or "running".
+- No answer begins with "Yes": an answer states the fact, so the list does not read as a tally of yes and none.
+- Answer 2 counts records that name a comparator. It does not say the other trials had none; a record can be randomised and blinded and still name no comparator in the fields read. The opened answer gives the design as the registry states it and nothing more.
+- Whether a measure is a change is read by rule: the registry's title contains the word "change". The model is not asked.
+- Under answer 4, outside the disclosure, a link leads to the trials' posted results on the page.
+- Every answer opens to at least its record and the date it was read. Terms a lay reader may not know (sham, placebo, regulator, posted, under way) are defined once, in the opened answer that uses them.
+- Dates never break across lines.
 - Opened, answer 1 gives the other trials' sizes (up to three, else lowest and highest) and whether the largest size is actual or planned.
 
 Rejected, with the critique that rejected each: two lists "On record / Not on record"; two columns "strengthens / limits"; a third group "What the records do not cover" (questions moved group by answer, and the page ended on a run of "None"); ten rows, including "Papers on record?" (a bare number) and "Who ran the trials?"; a question "Anything measured after {follow-up}?" (a leading question whose only answer is an absence; the follow-up is now stated as a fact in answer 3).
@@ -82,7 +89,7 @@ Rejected: the model writing the plain phrase; reading the outcome description; a
 
 ### 6. The digest bridges to the brief
 
-When the status is `trial_registered` and the claim has trials, the digest adds one sentence after the status's meaning: "{n} trials are on record; none states a phase." It is a count from the same trials the page lists. The status, its place on the path and `STATUS_MEANINGS` are unchanged. This answers the second critique's finding that "No trial with a phase has started" read as a contradiction of "Yes, in 3 trials".
+When the status is `trial_registered` and the claim has trials, the digest adds after the status's meaning: "{n} trials are on record and all have finished. The registry gives none a phase." ("and {k} have finished" when not all), with a link to the guide entry on phases. It is a count from the same trials the page lists. The status, its place on the path and `STATUS_MEANINGS` are unchanged. This answers the second critique's finding that "No trial with a phase has started" read as a contradiction of "Yes, in 3 trials".
 
 ### 7. The facts row loses its trial count
 
@@ -90,7 +97,7 @@ The fact "Trials in people: {n} on record, the largest {max}" is removed from th
 
 ### 8. Provenance in plain words
 
-The section's one-line note reads: "Read by software from the records on this page, and not yet checked by a person." (or "and checked by a person"), then "Open an answer to see its record. About the records, not the treatment; not advice." It is text, not a pill, so it is not mistaken for a control. An opened answer says "Read directly from …" or "Read by a model from those words, which were then checked against the record. How sure the reading is: very likely · 92%."
+The section's note reads: "Six answers read from the records on this page. Open one to see the record it came from. They describe the records, not the treatment, and are not advice." (the count is the number of answers shown). It is text, not a pill. Whether a person has checked the page is said once, by the page's existing notice under the digest, and is not repeated here. An opened answer says "Read directly from …" or "A model read the plain wording from the two quoted lines, and a rule checked that both lines are in {record}. How sure the reading is: very likely · 92%."
 
 ### 9. Markup
 

@@ -10,12 +10,12 @@ A second critique that day, of the rework (`.impeccable/critique/2026-11-14T20-4
 
 ## What Changes
 
-- Every claim page gains one section under the digest panel, "The record in brief": at most six short questions with short answers, in two groups, "How it was tested" and "What has been recorded since". Each question has one fixed place whatever its answer; "None on record" is said where its question sits. No group, heading, mark or order says whether an answer is good or bad for the treatment.
+- Every claim page gains one section under the digest panel, "The record in brief": at most six short questions with short answers, in two groups, "How it was tested" and "Where the records stand now". An answer states its fact and never begins with "Yes". Each question has one fixed place whatever its answer; "None on record" is said where its question sits. No group, heading, mark or order says whether an answer is good or bad for the treatment.
 - Each answer opens to the record it was read from: the trial or regulator record, linked, what was read, whether it was read by rule or by a model, and the date the record was read.
 - Most answers are read by rule on the site from fields the export already carries.
 - Two answers are read by a model from a trial's stored registry record, as a new pipeline step: how long after the start a trial's main measure was taken, and what kind of thing that measure is. The model returns a code from a fixed list and the exact words it read; a rule checks those words are in the record; an answer that fails is not stored. The site words every answer; the model writes no sentence a reader sees.
 - The section shows no posted result values. The answer about what the largest trial measured links to that trial's entry, where its results already are.
-- When the status is Trial registered and trials are on record, the digest panel adds one sentence: how many trials are on record and that none states a phase.
+- When the status is Trial registered and trials are on record, the digest panel adds how many trials are on record, how many have finished, and that the registry gives none a phase.
 - The facts row no longer counts trials or gives the largest size; the section says both.
 - The neutral-wording build check covers every question, answer and group name.
 - **Supersedes** the "A claim page answers three fixed questions by rule" requirement of the unstarted change `plain-claim-page`: its "tested in people" and "approved" answers are rows here. That change keeps its title and provenance-line requirements.

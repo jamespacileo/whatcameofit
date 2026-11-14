@@ -7,15 +7,15 @@ Every claim page SHALL show a section, "The record in brief", of at most six fix
 
 #### Scenario: Claim with trials
 - **WHEN** a reader opens a claim with 3 trials on record, the largest stating 135 participants
-- **THEN** the section answers that it was tested in people, in 3 trials, with 135 people in the largest
+- **THEN** the section answers "In 3 trials. 135 people in the largest", and the answer does not begin with "Yes"
 
 #### Scenario: Comparison group
 - **WHEN** 1 of the claim's 3 trials names a sham comparator and the claim's approach is a device
-- **THEN** the section asks whether it was compared with a dummy device and answers that it was, in 1 of 3 trials
+- **THEN** the section asks whether it was compared with a dummy device and answers that one record names a dummy device, and the opened answer says the other two records name no comparison
 
 #### Scenario: What the largest trial measured
 - **WHEN** the largest trial's main measure has a measure reading of symptom score and a follow-up reading of 4 weeks
-- **THEN** the section answers with the site's fixed phrase for a symptom score and "4 weeks after starting"
+- **THEN** the section answers with the site's fixed phrase for a symptom score, worded as a change when the registry's title names a change, and "over 4 weeks"
 
 #### Scenario: Measure with no reading
 - **WHEN** the largest trial's main measure has no stored reading
@@ -23,14 +23,14 @@ Every claim page SHALL show a section, "The record in brief", of at most six fix
 
 #### Scenario: Results posted
 - **WHEN** all 3 of the claim's trials have results posted, the latest on 30 June 2026
-- **THEN** the section says results were posted by all 3 trials and gives that date
+- **THEN** the section says results were posted by all 3 trials and gives that date, and a link under the answer, shown without opening it, leads to the trials' posted results on the page
 
 #### Scenario: Trial with no stated enrolment
 - **WHEN** no trial of the claim states how many participants it enrolled
 - **THEN** the answer about testing in people gives the number of trials and no size
 
 ### Requirement: Each question has one fixed place
-The questions SHALL be shown in a fixed order in two groups: how the treatment was tested, then what has been recorded since. A question's place SHALL NOT depend on its answer. A question that has nothing to ask about, because the claim has no trial, SHALL be left out, and the others SHALL keep their order. An answer that a kind of record is absent SHALL say "None on record" in the question's own place, with the date of the last record of that kind where the rule has one. No heading, mark, colour or order SHALL say that an answer counts for or against the treatment. No answer SHALL say why a record is absent, predict, advise, or say that a trial is open to participants.
+The questions SHALL be shown in a fixed order in two groups: how the treatment was tested, then where the records stand now. A question's place SHALL NOT depend on its answer. A question that has nothing to ask about, because the claim has no trial, SHALL be left out, and the others SHALL keep their order. An answer that a kind of record is absent SHALL say "None on record" in the question's own place, with the date of the last record of that kind where the rule has one. No heading, mark, colour or order SHALL say that an answer counts for or against the treatment. No answer SHALL say why a record is absent, predict, advise, or say that a trial is open to participants.
 
 #### Scenario: Same questions, opposite answers
 - **WHEN** one claim has a trial under way and an approval, and another has neither
@@ -46,7 +46,7 @@ The questions SHALL be shown in a fixed order in two groups: how the treatment w
 
 #### Scenario: Approved claim
 - **WHEN** a reader opens a claim whose status is Approved
-- **THEN** the answer gives the date of the approval and says, without being opened, that an approval is not advice to take a treatment
+- **THEN** the answer names the regulator and the date of the approval and says, without being opened, that an approval is not advice to take a treatment
 
 #### Scenario: Claim with no trial on record
 - **WHEN** a reader opens a claim with no trial on record
@@ -57,7 +57,7 @@ The questions SHALL be shown in a fixed order in two groups: how the treatment w
 - **THEN** the build fails and quotes the wording
 
 ### Requirement: Every answer shows the record it was read from
-Each answer SHALL open to show the record it was read from as a link, what was read from it, whether it was read directly from the record or by a model, and the date the record was read. An answer read by a model SHALL also show the exact words it was read from and how sure the reading is, as a word and a percentage. An answer that counts trials SHALL link to them on the page. The section SHALL say, in one line, that it was read by software, whether a person has checked the page, that it is about the records and not the treatment, and that it is not advice.
+Each answer SHALL open to show the record it was read from as a link, what was read from it, whether it was read directly from the record or by a model, and the date the record was read. An answer read by a model SHALL also show the exact words it was read from and how sure the reading is, as a word and a percentage. An answer that counts trials SHALL link to them on the page. The section SHALL say that its answers are read from the records on the page, that they describe the records and not the treatment, and that they are not advice.
 
 #### Scenario: Answer read directly
 - **WHEN** a reader opens the answer about a comparison group
@@ -66,6 +66,10 @@ Each answer SHALL open to show the record it was read from as a link, what was r
 #### Scenario: Answer read by a model
 - **WHEN** a reader opens an answer that rests on a reading
 - **THEN** it shows the words the reading was read from in quotation marks, says a model read them and that they were checked against the record, and says how sure the reading is
+
+#### Scenario: Every answer opens to something
+- **WHEN** a reader opens any answer in the section
+- **THEN** it shows at least the record or records it was read from and the date they were read
 
 #### Scenario: Without scripting
 - **WHEN** a reader opens a claim page with scripting turned off
@@ -83,11 +87,11 @@ The section SHALL NOT show a trial's posted result values or a posted comparison
 - **THEN** the section shows none of those numbers, and the opened answer links to the trial's entry
 
 ### Requirement: The digest says when trials state no phase
-When a claim's status is Trial registered and it has trials on record, the digest panel SHALL say, after what the status means, how many trials are on record and that none states a phase.
+When a claim's status is Trial registered and it has trials on record, the digest panel SHALL say, after what the status means, how many trials are on record, how many of them have finished, and that the registry gives none a phase.
 
 #### Scenario: Three trials with no phase
 - **WHEN** a reader opens a claim whose status is Trial registered and which has 3 trials on record, none stating a phase
-- **THEN** the digest says 3 trials are on record and none states a phase
+- **THEN** the digest says 3 trials are on record and all have finished, and that the registry gives none a phase
 
 #### Scenario: Status with a phase
 - **WHEN** a reader opens a claim whose status is Phase 2 trial
