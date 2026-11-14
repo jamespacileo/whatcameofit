@@ -262,6 +262,7 @@ def test_exported_claim_carries_what_its_page_shows(session: Session):
             "title": "Mice regrow teeth",
             "published_date": "2018-03-10",
             "archive_url": None,
+            "published_by": None,
         }
     ]
     assert out["promises"] == [

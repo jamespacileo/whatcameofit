@@ -936,11 +936,12 @@ def test_university_named_in_the_article_gets_one_candidate_scored_by_the_regist
     )
     backend = Reading()
 
-    [candidate] = match_organisations(session, claim, registry=registry)
+    [candidate] = match_organisations(session, claim, registry=registry, now=NOW)
 
     assert (candidate.source_name, candidate.external_id) == ("ror", "01ee9ar58")
     assert candidate.score == 1.0
-    assert candidate.review_state is ReviewState.PENDING
+    # ROR marks it chosen, so a rule approves it (openspec organisations).
+    assert (candidate.review_state, candidate.reviewed_by) == (ReviewState.APPROVED, Decider.RULE)
     assert candidate.record_summary == (
         "University of Nottingham. United Kingdom. https://www.nottingham.ac.uk/"
     )
@@ -950,4 +951,4 @@ def test_university_named_in_the_article_gets_one_candidate_scored_by_the_regist
         "Zzqxv Institute of Nowhere Qqxzj",
     ]
     assert backend.calls == []
-    assert match_organisations(session, claim, registry=registry) == []
+    assert match_organisations(session, claim, registry=registry, now=NOW) == []

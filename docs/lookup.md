@@ -427,3 +427,78 @@ All 104 articles together:
 What the 446 are: effect 171, how it works 102, safety 51, what it could lead to 45, who it could help 41, comparison 36. As fact 301, as a possibility 145. Said by the article itself 264, a researcher 129, another expert 27, a company 25, a patient 1. Resting, as the article gives it, on a study in people 136, in animals 90, laboratory work 42, not said 178.
 
 Limits. One run, one model each for proposing and checking, and the 218 statements approved in task 6.3 were not read one by one. The model's cost was recorded in the copy's ledger, not the real database's, so the real ledger does not count these $0.10. Statements are of each page as read on 14 November; an article that gave no statement would be read again by a later `--missing` run, though here every article read gave at least one.
+
+## Organisations: the first measured run (14 November 2026)
+
+Openspec `organisations`, tasks 6.1 and 6.2. Run on a copy of the real database made the same day (`thenwhat_organisations`), migrated to this change's migration (numbered 0011 at the time, 0012 since `reported-statements` took 0011), not on the real one: the real database is shared with branches whose migrations are still being numbered. The real database gains sponsors and organisation matches from the first `thenwhat fetch` and `thenwhat resolve` of each claim after this change is merged and migrated. On the copy, `thenwhat fetch` was run for all 84 published claims, then the organisation step of `thenwhat resolve` alone (ROR lookups and the approval rule), so that no trial search or model call was repeated. The HTTP cache was as copied, and held ROR answers from the related-papers run earlier the same day.
+
+| | Count |
+| --- | --- |
+| Published claims fetched | 84 (none failed), 5 minutes 45 seconds |
+| Trials with approved events | 222 |
+| Sponsors recorded as entities | 122 on the claims' trials: 117 new (82 institutions, 35 companies) and 5 a report had already named |
+| Institution and company entities looked up | 430 (308 read from articles, 122 sponsors), 371 distinct names |
+| ROR requests sent | 209, in 1 minute 36 seconds; the rest were answered from the cache |
+| Entities identified (ROR's chosen record, approved by rule) | 269 (63%): 157 new matches and the 112 that `related-research` had stored pending |
+| Entities left unidentified | 161 |
+| Distinct ROR records kept | 217 |
+| Organisations exported | 419 on 80 of the 84 claims: 258 identified, 161 not. 11 identified names joined another name's record, so 430 entities make 419 entries |
+| Roles exported | 304 named in a report (55 with no address, on claims with several reports), 121 sponsor; 6 organisations play both |
+| Identified organisations with no https website | 66 (ROR gives an http address or none), shown without a website |
+| Source articles marked as on an organisation's website | 10 of 104: university and institute news pages (Plymouth, King's College London, Queen Mary, Washington, USC, Griffith, Forsyth, Tufts, Nottingham, RIKEN). None is a newspaper |
+| Export size | 1,602,517 bytes without organisations, 1,878,130 with |
+
+The claim with the most organisations lists 28 (knee osteoarthritis, genicular artery embolisation), 26 of them named in its one report.
+
+### Every name read once (task 6.2)
+
+All 430 names were read beside the ROR record they were matched to. None is a person. Read as wrong:
+
+| Claim | Name given | ROR record chosen | ROR id | Score |
+| --- | --- | --- | --- | --- |
+| cholesterol-crispr-ctx310 | CRISPR Therapeutics; CRISPR Therapeutics AG | Sprint PNS System (United States) | 020bbbm37 | 1.00 |
+| dentine-repair-dlk1 | European Regional Development Fund | Development Fund (Norway) | 01rkhv978 | 1.00 |
+| diffuse-midline-glioma-b-sync-car-t | Pediatric Neuro-Oncology Consortium (PNOC) | Montreal Neurological Institute and Hospital | 05ghs6f64 | 1.00 |
+| enamel-regeneration-protein-scaffold | Marie Curie (the EU's Marie Skłodowska-Curie Actions) | Marie Curie, the UK charity | 02aqv1x10 | 1.00 |
+| enamel-remineralisation-amelogenin-peptide | ACS Biomaterials Science and Engineering (a journal) | Matériaux Ingénierie et Science (France) | 01rnfhz46 | 1.00 |
+| malaria-cabamiquine-pyronaridine | PAMAfrica consortium | Authorised Association Consortium (Tanzania) | 01j5adv11 | 0.96 |
+| obesity-tofa | Ulster University | RK University (India) | 057ap5t09 | 0.96 |
+| ovarian-cancer-salpingectomy | Göteborg University | Godfrey Okoye University (Nigeria) | 04japw488 | 0.96 |
+| ovarian-cancer-salpingectomy | University College London Hospitals (an NHS trust) | University College London | 02jx3x895 | 1.00 |
+| pancreatic-cancer-daraxonrasib | Food and Drug Administration (the US agency) | Food and Drug Administration (Thailand) | 05hvrsg85 | 1.00 |
+| retinitis-pigmentosa-optogenetic-therapy | UPMC Eye Center | Eye Center (Saudi Arabia) | 02jecxg34 | 1.00 |
+| stiff-person-syndrome-car-t | Adicet Therapeutics | TG Therapeutics | 00pwykz63 | 0.97 |
+| tauopathy-cxcr3-antibody | Neuron (a journal) | NeurON : Interface Neuro-machine (France) | 00a8q8z31 | 1.00 |
+| type-2-diabetes-remission-diet-exercise | The Lancet Regional Health – Americas (a journal) | Regional Health (United States) | 01d1vqp66 | 1.00 |
+
+That is 15 of the 269 identified names (5.6%), in 14 entries. One more could not be settled from the names alone: "Axial Therapeutic Research" matched to Vertero Therapeutics (00yw4wq90, 0.97), which may be the same company renamed; with it, 16 (5.9%). **Either way it is more than one in twenty, the stop in task 6.2: this is reported to the operator before the site section ships.** The score does not separate them: ten of the wrong matches score 1.00, and no threshold on ROR's score would have caught them without dropping many right ones. The rule is ROR's own choice, as designed; ROR's affiliation matching chose these.
+
+Matched to a parent or partner rather than the organisation named, and not counted as wrong: a hospital to its university (Second Affiliated Hospital to Zhejiang University, Shanghai Ninth People's Hospital to Shanghai Jiao Tong University, Cliniques universitaires Saint-Luc to UCLouvain), an institute to its university (Wyss Institute to Harvard University, Michigan Medicine to the University of Michigan), and two joint bodies to one partner (the NIHR Biomedical Research Centre at Guy's and St Thomas' and King's College London to King's College London, the Harvard-MIT Division of Health Sciences and Technology to MIT). A school or department matched to its university (Washington University School of Medicine, Tohoku University Graduate School of Dentistry) was read as right.
+
+Not organisations in the sense the section's note gives ("universities, hospitals and companies"), recorded by extraction as institutions or companies: 24 journal names (The New England Journal of Medicine, The Lancet, Journal of Dental Research, Nature, Cell and others; three of them among the wrong matches above), and 6 news outlets and banks (The New York Times, Fox News, LADbible, China Daily, RBC Capital Markets, William Blair). Each is listed as "Named in the report", which is true. Five names are a group, laboratory, team or programme rather than an organisation (MRC Redox Metabolism Group; Molecular Laboratory for Gene Therapy and Tooth Regeneration in Beijing; Oriental Neurosurgery Evidence-Based-Study Team; EDCTP2 Programme; National Key Research and Development Program of China). Tightening what extraction records as an organisation is an extraction change, not part of this one.
+
+Left unidentified although ROR holds them, because ROR marked no record as chosen for the name as given: among others Harvard, UCLA, University of California San Francisco, University of Copenhagen, National Institutes of Health, Medical Research Council, Eli Lilly, Novo Nordisk, AstraZeneca, Pfizer, Novartis, Moderna and GSK. Each is listed by the name the report gave, saying it was not matched. No looser match is tried.
+
+**Rejecting the wrong matches.** They exist only on the copy until the real database is fetched and resolved. After that run, the same matches are approved by rule there too; each is then rejected with `thenwhat review reject match <id> --as-assistant` (or by the operator), finding its id by the claim, the name and the ROR id above, and a later run leaves it rejected. The organisation is then listed by the name its source gave, as not matched.
+
+### Raising the bar, and the run again (14 November 2026, later)
+
+The operator's decision on the figures above: raise the bar rather than reject by hand. A ROR match is now approved by rule only when ROR chose it, the name given is exactly one of the record's names, labels, aliases or acronyms (ignoring case, accents, punctuation, a leading "The" and a closing bracket), a one-word name matches letter for letter, the record is not typed as ROR's catch-all "other", the name is not a journal title held in the paper records, and a government body's name states its country. Anything else stays a pending match and the organisation unidentified, with no looser match tried. Extraction is also asked, from now on, not to record journals, news outlets, banks or investment analysts as organisations.
+
+The copy's 269 ROR matches were set back to pending and the organisation step was run again with the same ROR answers (from the cache; no request was sent).
+
+| | First rule | Stricter rule |
+| --- | --- | --- |
+| Names ROR chose a record for | 269 | 269 |
+| Approved by rule (identified) | 269 | 205 |
+| Of those, wrong | 15 (5.6%) | 1 (0.5%) |
+| Of those, doubtful | 1 | 0 |
+| Left pending, organisation unidentified | 0 | 64 |
+| Organisations exported | 419 (258 identified) | 430 (205 identified) |
+| Reports marked as on an organisation's website | 10 | 10 |
+
+The one wrong match left is "Marie Curie" on enamel-regeneration-protein-scaffold: the report meant the EU's Marie Skłodowska-Curie Actions, and ROR's chosen record is the UK charity whose name is exactly "Marie Curie". No rule on the name can tell them apart. It is rejected with `thenwhat review reject match <id>` after the real database's run, and stays rejected. Every other wrong match is now pending: CRISPR Therapeutics (both spellings), the European Regional Development Fund, PNOC, ACS Biomaterials Science and Engineering, PAMAfrica, Ulster University, Göteborg University, University College London Hospitals, UPMC Eye Center, Adicet Therapeutics, Neuron and The Lancet Regional Health – Americas by the exact-name test, the US FDA without its country by the government test, and the doubtful Axial Therapeutic Research too. 1 in 205 is under the one-in-twenty stop, so task 6.2 is met.
+
+Previously right matches the stricter rule leaves unidentified: 49 of the 253 read as right. 7 are the parent and partner matches listed above (a hospital to its university, a joint body to one partner). 8 are public bodies whose name does not state their country (NHS England twice, BBSRC, the European Research Council, the European Union, NHMRC, NICE twice). 2 are records typed "other": The New York Times and the European Society of Gynaecological Oncology. The other 32 are a school or department matched to its university (Washington University School of Medicine on four entities, Tufts University School of Dental Medicine, University of Pittsburgh School of Medicine on two, and others), and spellings that differ from every name on the record ("Copenhagen University Hospital, Rigshospitalet", "North American Science Associates Ltd.", "Veradermics" against "VeraDermics"). Each is listed by the name its source gave, as not matched to a registry record.
+
+Journals, news outlets and banks: of the 24 journal names and 6 outlets and banks recorded by extraction, none is identified under the stricter rule. Neuron is caught both as a journal title on record and by the one-word test; The New York Times by its "other" type; the rest had no chosen record or no exact name. A bank ROR held under exactly the name given, typed as a company, would still be identified; none was in this run.

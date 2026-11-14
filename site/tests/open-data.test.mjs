@@ -162,6 +162,7 @@ test("the file holds the given claims, the licence and the sources, and no icons
   assert.deepEqual(Object.keys(out.claims[0].articles[0]).sort(), [
     "archive_url",
     "outlet",
+    "published_by",
     "published_date",
     "title",
     "url",
@@ -341,6 +342,69 @@ test("an export made before background cards gives a file with none", () => {
   assert.deepEqual(out.card_sources, []);
   assert.deepEqual(out.left_out, []);
   assert.deepEqual(out.claims[0].background, []);
+});
+
+// --- organisations (openspec open-data: "Organisations in the download") ---
+
+const sponsor = {
+  name: "Example Pharma",
+  identified: true,
+  record: {
+    source: "ror",
+    external_id: "00example9",
+    url: "https://ror.org/00example9",
+    name: "Example Pharma",
+    kinds: ["company"],
+    country: "Switzerland",
+    website: "https://www.pharma.example/",
+    score: 0.95,
+    read_at: "2026-11-14T09:00:00Z",
+    payload: { relationships: ["never carried"] },
+  },
+  roles: [{ role: "sponsor", article_urls: [], trial_ids: ["NCT0"] }],
+};
+
+test("Scenario: Claim with an identified sponsor", () => {
+  const data = exported();
+  data.claims[0].organisations = [sponsor];
+  data.claims[0].articles[0].published_by = "https://ror.org/00example9";
+
+  const out = openData(data, LICENCE, CREDIT, METHOD);
+
+  assert.deepEqual(out.claims[0].organisations, [
+    {
+      name: "Example Pharma",
+      identified: true,
+      record: {
+        source: "ror",
+        external_id: "00example9",
+        url: "https://ror.org/00example9",
+        name: "Example Pharma",
+        kinds: ["company"],
+        country: "Switzerland",
+        website: "https://www.pharma.example/",
+        score: 0.95,
+        read_at: "2026-11-14T09:00:00Z",
+      },
+      roles: [{ role: "sponsor", article_urls: [], trial_ids: ["NCT0"] }],
+    },
+  ]);
+  assert.equal(out.claims[0].articles[0].published_by, "https://ror.org/00example9");
+  assert.ok(!everyString(out).includes("never carried"));
+});
+
+test("Scenario: Person sponsor", () => {
+  // A trial whose sponsor is a person: the export holds no name and no organisation.
+  const data = exported();
+  data.claims[0].trials[0].facts.sponsor = { name: null, kind: "individual" };
+  data.claims[0].organisations = [];
+
+  const out = openData(data, LICENCE, CREDIT, METHOD);
+
+  assert.deepEqual(out.claims[0].organisations, []);
+  assert.equal(out.claims[0].trials[0].facts.sponsor.name, null);
+  assert.deepEqual(out.claims[1].organisations, []);
+  assert.equal(out.claims[1].articles[0].published_by, null);
 });
 
 // --- reported statements (openspec open-data: "Reported statements in the download") ---

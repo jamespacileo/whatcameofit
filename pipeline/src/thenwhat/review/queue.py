@@ -11,6 +11,7 @@ from typing import Literal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from thenwhat.claims.entities import ORGANISATION_TYPES
 from thenwhat.claims.entry import ClaimNotFound, EntryError, InvalidUrl, claim_by_slug
 from thenwhat.claims.status import refresh_status
 from thenwhat.db.models import (
@@ -169,6 +170,19 @@ def _match_item(session: Session, claim: Claim, match: EntityMatch, entity: Enti
             match.score,
             match.record_summary,
             tuple(match.reasons),
+        )
+    if entity.type in ORGANISATION_TYPES:
+        # Its detail line carries the registry's name, country and website.
+        return QueueItem(
+            "match",
+            match.id,
+            claim.slug,
+            f"{entity.type.value} '{entity.name}' is organisation {match.external_id} in"
+            f" {match.source_name}, scored by the registry's own name match. A rule approves"
+            " it only when the registry chose it and the name is exactly one of its names",
+            link,
+            match.score,
+            match.record_summary,
         )
     return QueueItem(
         "match",
