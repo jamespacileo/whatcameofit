@@ -64,3 +64,11 @@
 - [x] 9.4 Add collapsed source-attributed sections on the site and next extension build, and update privacy text.
 - [x] 9.5 Verify offline behavior, real-provider end-to-end lookups, quota/caching and responsive UI.
 - [x] 9.6 Deploy through checked CI and verify the production result (2026-11-13: live website returned papers and the named organisation; free allowance and collapsed UI verified).
+
+## 10. Citation-independent discovery regression
+
+- [x] 10.1 Reproduce the King's missing-paper failure with and without its PubMed citation; confirm the paper exists in OpenAlex and record metadata-only regression fixtures.
+- [x] 10.2 Extract experimental-topic queries and explicitly named researchers in the existing model call; add bounded researcher-scoped and unscoped discovery without changing clinical search.
+- [x] 10.3 Resolve explicit DOI/PubMed citations independently, preserving discovery, cache isolation, rate limits and result deduplication.
+- [x] 10.4 Verify offline regressions, real Worker runtime, extension compatibility and a fresh citation-free live extraction/retrieval; record rank and limitations (2026-11-14: expected paper ranked first; 262 site tests and 114 extension tests passed).
+- [ ] 10.5 Release the correction through the existing deployment workflow and verify a refreshed production lookup.
