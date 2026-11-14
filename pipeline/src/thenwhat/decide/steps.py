@@ -3,12 +3,12 @@
 import json
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from thenwhat.db.models import Claim, DecisionLog, Entity, EntityMatch
-from thenwhat.decide.core import Backend, Decision, decide, decide_many
-from thenwhat.domain import EntityType, EvidenceStage
+from thenwhat.db.models import Claim, ClaimTerm, DecisionLog, Entity, EntityMatch
+from thenwhat.decide.core import Backend, Decision, DecisionFailed, decide, decide_many
+from thenwhat.domain import EntityType, EvidenceStage, TermRole
 from thenwhat.sources import openalex
 from thenwhat.sources.base import SourceRecord
 
@@ -53,6 +53,31 @@ PAPER_QUESTION = (
 
 ORIGIN_PAPER = "origin_paper"
 NO_PAPER = "none"
+
+TERM_MATCH = "term_match"
+SAME = "same"
+BROADER = "broader"
+SOMETHING_ELSE = "something_else"
+# What is asked about a candidate subject term (openspec knowledge-cards).
+TERM_OPTIONS = [SAME, BROADER, SOMETHING_ELSE]
+TERM_QUESTIONS = {
+    TermRole.CONDITION: (
+        "What is this vocabulary term to the claim's indication?\n"
+        f"- {SAME}: it names the condition the claim is about, or is another name for it.\n"
+        f"- {BROADER}: it names a wider group of conditions that includes the claim's"
+        " indication.\n"
+        f"- {SOMETHING_ELSE}: it names a different condition, only one form of the"
+        " claim's indication, or something that is not a condition."
+    ),
+    TermRole.INTERVENTION: (
+        "What is this vocabulary term to the claim's intervention?\n"
+        f"- {SAME}: it names the claim's intervention, or is another name for it.\n"
+        f"- {BROADER}: it names a class or kind of treatment that includes the claim's"
+        " intervention.\n"
+        f"- {SOMETHING_ELSE}: it names a different treatment, such as another drug given"
+        " in the same trials, or something that is not the claim's intervention."
+    ),
+}
 
 
 def match_ref(match_id: int) -> str:
@@ -206,6 +231,78 @@ def score_papers(
     )
     for (match, _), decision in zip(candidates, decisions, strict=True):
         match.score = decision.probabilities[MATCH]
+
+
+def term_ref(term: ClaimTerm) -> str:
+    """The decision log's reference to a candidate subject term: the claim and the term."""
+    return f"claim:{term.claim_id}:{term.role.value}:{term.source_name}:{term.external_id}"
+
+
+def term_text(term: ClaimTerm, definition: str | None) -> str:
+    """A subject term as it is shown to the backend: its label and its definition."""
+    return (
+        f"Candidate term ({term.source_name} {term.external_id}): {term.label}\n"
+        f"Definition: {definition or 'none given'}"
+    )
+
+
+def check_terms(
+    session: Session,
+    backend: Backend,
+    *,
+    claim: Claim,
+    role: TermRole,
+    candidates: list[tuple[ClaimTerm, str | None]],
+    now: datetime,
+) -> list[Decision | None]:
+    """Ask, for each candidate term given with its definition, whether it is the claim's
+    condition (or intervention), a broader term, or something else. Decides nothing.
+
+    Every candidate gets its own log record. A candidate the backend gave no usable
+    answer for comes back as None: the failure is in its log record and it has no answer.
+    """
+    before = session.scalar(select(func.max(DecisionLog.id))) or 0
+    refs = [term_ref(term) for term, _ in candidates]
+    try:
+        return list(
+            decide_many(
+                session,
+                backend,
+                step=TERM_MATCH,
+                intro=_claim_text(session, claim),
+                question=TERM_QUESTIONS[role],
+                items=[
+                    (ref, term_text(term, definition))
+                    for ref, (term, definition) in zip(refs, candidates, strict=True)
+                ],
+                options=TERM_OPTIONS,
+                now=now,
+            )
+        )
+    except DecisionFailed:
+        # Some candidates of the batch may have been answered before the failure.
+        answered = {
+            entry.input_ref: entry
+            for entry in session.scalars(
+                select(DecisionLog)
+                .where(
+                    DecisionLog.step == TERM_MATCH,
+                    DecisionLog.id > before,
+                    DecisionLog.input_ref.in_(refs),
+                    DecisionLog.error.is_(None),
+                )
+                .order_by(DecisionLog.id)
+            )
+        }
+        return [_logged(answered.get(ref)) for ref in refs]
+
+
+def _logged(entry: DecisionLog | None) -> Decision | None:
+    if entry is None or entry.output is None or entry.confidence is None:
+        return None
+    return Decision(
+        entry.output["choice"], entry.output["probabilities"], entry.confidence, entry.id
+    )
 
 
 def has_origin_choice(session: Session, claim: Claim, offered: list[str]) -> bool:

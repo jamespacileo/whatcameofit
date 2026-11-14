@@ -33,7 +33,7 @@ from thenwhat.resolve.service import (
 )
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources import openalex
-from thenwhat.sources.base import AllowanceUsedUp, SourceRecord
+from thenwhat.sources.base import SourceRecord
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.ror import Ror
@@ -46,7 +46,9 @@ MAX_PAPERS_PER_CLAIM = 20
 class PaperSearch(Protocol):
     """The literature search. One source stands behind it, and it can be swapped."""
 
-    def search_papers(self, words: str, limit: int = ...) -> list[SourceRecord]: ...
+    def search_papers(
+        self, terms: list[str], condition: str, limit: int = ...
+    ) -> list[SourceRecord]: ...
 
     def paper(self, external_id: str) -> SourceRecord | None: ...
 
@@ -115,11 +117,11 @@ def find_papers(
     new paper as a scored candidate with its reasons. Returns the candidates this run
     added; an empty list means no new paper was found.
 
-    The intervention's name, other names and search phrases are each searched together
-    with the indication. A claim keeps at most twenty papers, taken in the source's own
-    order of relevance, in turn from each term. A rejected paper is not one the claim
-    keeps, so it leaves room for another; it is never added again. A paper the claim
-    already has is left as it is, whatever its state.
+    The intervention's name, other names and search phrases are searched together with
+    the indication, in one search where the source can take them all at once. A claim
+    keeps at most twenty papers, taken in the source's own order of relevance. A rejected
+    paper is not one the claim keeps, so it leaves room for another; it is never added
+    again. A paper the claim already has is left as it is, whatever its state.
 
     A candidate scored under `reject_below` is rejected by rule. One scored at or above
     `accept_above` is approved by rule, with or without a reason; 0 turns that off. If a
@@ -135,23 +137,12 @@ def find_papers(
     if room <= 0:
         return []
 
-    terms = _terms(intervention)
-    ranked: list[list[SourceRecord]] = []
-    for term in terms:
-        try:
-            ranked.append(papers.search_papers(f"{term} {claim.indication}", MAX_PAPERS_PER_CLAIM))
-        except AllowanceUsedUp:
-            if not any(ranked):
-                raise
-            break  # Keep what the earlier terms found; the source is not asked again.
-
     found: dict[str, SourceRecord] = {}
-    for rank in range(max((len(records) for records in ranked), default=0)):
-        for records in ranked:
-            if rank < len(records) and len(found) < room:
-                record = records[rank]
-                if record.external_id not in had:
-                    found.setdefault(record.external_id, record)
+    for record in papers.search_papers(
+        _terms(intervention), claim.indication, MAX_PAPERS_PER_CLAIM
+    ):
+        if len(found) < room and record.external_id not in had:
+            found.setdefault(record.external_id, record)
 
     added: list[tuple[EntityMatch, SourceRecord]] = []
     for record in found.values():

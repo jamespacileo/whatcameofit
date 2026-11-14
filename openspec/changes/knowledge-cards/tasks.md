@@ -2,20 +2,20 @@
 
 ## 1. Sources and vocabulary
 
-- [ ] 1.1 Read NLM's current terms for MeSH data and its lookup and record services, and add the entry to `docs/sources.md`: terms, credit line, how the vocabulary's version is to be stated and which field gives it, any stated limit, the date read; verify the entry exists before the client is written
-- [ ] 1.2 Read Open Targets Platform's current licence page, API terms and limits, and add its entry, listing separately the licence of drug mechanisms (drawn from ChEMBL) and of target descriptions (drawn from UniProt); verify the entry names each licence with the address and date read
-- [ ] 1.3 Add "Background card" and "Subject term" to `GLOSSARY.md`; verify both are used exactly in later code and output
-- [ ] 1.4 Add the list of sources with licence, credit line, accepted or not, and whether facts may enter the data file, and make a source client refuse a request for a source the list does not hold; verify one refusal by test
+- [x] 1.1 Read NLM's current terms for MeSH data and its lookup and record services, and add the entry to `docs/sources.md`: terms, credit line, how the vocabulary's version is to be stated and which field gives it, any stated limit, the date read; verify the entry exists before the client is written
+- [x] 1.2 Read Open Targets Platform's current licence page, API terms and limits, and add its entry, listing separately the licence of drug mechanisms (drawn from ChEMBL) and of target descriptions (drawn from UniProt); verify the entry names each licence with the address and date read
+- [x] 1.3 Add "Background card" and "Subject term" to `GLOSSARY.md`; verify both are used exactly in later code and output
+- [x] 1.4 Add the list of sources with licence, credit line, accepted or not, and whether facts may enter the data file, and make a source client refuse a request for a source the list does not hold; verify one refusal by test
 
 ## 2. Subject terms
 
-- [ ] 2.1 Write the MeSH client: a term by identifier with its definition, and terms whose label equals a name; verify on recorded fixtures with a generic client name a known identifier, an unknown one, and that "Obesity" does not return "Anti-Obesity Agents"
-- [ ] 2.2 Add `claim_term` and `term_record` with one migration; verify it applies and reverses against the test database
-- [ ] 2.3 Add a pure function that gathers a claim's candidates from its approved trials' stored records (condition and intervention terms carried by at least half the trials, with counts) and from exact labels, capped at the configured number; verify on fixtures a claim with six trials, a claim with no trial and a named drug, and a claim with no trial and a free-text condition
-- [ ] 2.4 Add the `term_match` step with its three options through `decide_many`; verify one log record per candidate and that a backend failure leaves the candidate without a score
-- [ ] 2.5 Store each candidate with its score, exact or broader, and reasons; approve at or above `MATCH_ACCEPT_ABOVE`, reject below `MATCH_REJECT_BELOW`; verify an exact term at 0.95, a broader term at 0.9, a wrongly filed term at zero, and that a link an operator rejected stays rejected
-- [ ] 2.6 Fetch and store the record of each approved term, refreshing one older than ninety days; verify a second run makes no request
-- [ ] 2.7 Add `thenwhat terms <slug…>` and `--missing`, and list pending links in the review queue; verify one success and one refusal of the command, and the queue test
+- [x] 2.1 Write the MeSH client: a term by identifier with its definition, and terms whose label equals a name; verify on recorded fixtures with a generic client name a known identifier, an unknown one, and that "Obesity" does not return "Anti-Obesity Agents"
+- [x] 2.2 Add `claim_term` and `term_record` with one migration; verify it applies and reverses against the test database
+- [x] 2.3 Add a pure function that gathers a claim's candidates from its approved trials' stored records (condition and intervention terms carried by at least half the trials, with counts) and from exact labels, capped at the configured number; verify on fixtures a claim with six trials, a claim with no trial and a named drug, and a claim with no trial and a free-text condition
+- [x] 2.4 Add the `term_match` step with its three options through `decide_many`; verify one log record per candidate and that a backend failure leaves the candidate without a score
+- [x] 2.5 Store each candidate with its score, exact or broader, and reasons; approve at or above `MATCH_ACCEPT_ABOVE`, reject below `MATCH_REJECT_BELOW`; verify an exact term at 0.95, a broader term at 0.9, a wrongly filed term at zero, and that a link an operator rejected stays rejected
+- [x] 2.6 Fetch and store the record of each approved term, refreshing one older than ninety days; verify a second run makes no request
+- [x] 2.7 Add `thenwhat terms <slug…>` and `--missing`, and list pending links in the review queue; verify one success and one refusal of the command, and the queue test
 
 ## 3. Export
 

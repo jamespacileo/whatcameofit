@@ -1,0 +1,300 @@
+---
+// For a journalist writing a follow-up: find a claim, and its status box appears as it
+// will on their own page, with the snippet that places it. The box is the site's own
+// embed at its real size, so nothing here can differ from what a reader of theirs
+// sees. Openspec landing-pages-and-guide.
+import { SITE } from "../../../site.config.mjs";
+import CopyButton from "../../components/CopyButton.astro";
+import Audience from "../../layouts/Audience.astro";
+import type { PickerClaim } from "../../lib/audiences";
+import { SUGGEST_SUBJECT, contactLink } from "../../lib/contact.mjs";
+import { data } from "../../lib/export";
+import { exampleClaim } from "../../lib/extension-page";
+import { DATA_LICENCE, DATA_LICENCE_URL } from "../../lib/open-data";
+import { EMBED_SIZE, checkedMonth, embedSnippet } from "../../lib/share";
+import { canonicalAddress } from "../../lib/structured";
+
+// What the search matches: a treatment's names, the condition and the headline.
+const claims: PickerClaim[] = data.claims.map((claim) => ({
+  slug: claim.slug,
+  name: claim.intervention.name,
+  headline: claim.headline,
+  words: [claim.intervention.name, ...claim.intervention.synonyms, claim.indication, claim.headline]
+    .join(" ")
+    .toLowerCase(),
+}));
+// The box is drawn on arrival for the example claim, so the tool is seen working.
+const first = exampleClaim(data.claims);
+const suggest = contactLink(SITE.suggestUrl, "", SUGGEST_SUBJECT);
+const checked = data.last_checked_at ? checkedMonth(data.last_checked_at) : null;
+// "<" is escaped so that no text in the data can close the script element.
+const claimsJson = JSON.stringify(claims).replace(/</g, "\\u003c");
+---
+
+<Audience
+  audience="journalists"
+  title="Writing a follow-up?"
+  lede="Find the claim your story is about. Its status box appears here as it will on your page, with the code that places it. The box follows the public records, so it stays current after you publish."
+  description="A status box for your own follow-up story: find a tracked claim, see its embed at full size and copy the code that places it."
+>
+  <div class="picker" slot="tool" data-picker data-site={SITE.url}>
+    <form class="search" role="search" data-picker-form>
+      <label for="pick">Find a claim by treatment or condition</label>
+      <div class="row">
+        <input
+          id="pick"
+          type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder="tooth regrowth"
+        />
+        <button type="submit">Find</button>
+      </div>
+    </form>
+    <noscript>
+      <p class="entry-note">
+        Finding a claim here needs JavaScript. Without it, every claim page has the same code
+        under “Writing about this?”.
+      </p>
+    </noscript>
+    <div class="found" aria-live="polite" data-picker-found></div>
+    <p class="none" data-picker-none hidden>
+      <span data-picker-none-text></span>
+      {
+        suggest && (
+          <>
+            {" "}
+            <a href={suggest.href}>Suggest a headline (opens {suggest.opens})</a>
+          </>
+        )
+      }
+    </p>
+
+    {
+      first && (
+        <div class="shown" data-picker-shown>
+          <p class="showing">
+            Showing: <a href={`/${first.slug}`} data-picker-link>{first.intervention.name}</a>
+          </p>
+          <div class="frame">
+            <iframe
+              src={`/embed/${first.slug}`}
+              title={first.headline}
+              width={EMBED_SIZE.width}
+              height={EMBED_SIZE.height}
+              data-picker-frame></iframe>
+          </div>
+          <div class="code">
+            <p class="entry-note">
+              Paste this where the box should appear. It shows the current status and links to the
+              claim page; it loads nothing else and stores nothing.
+            </p>
+            <pre id="picker-snippet" data-picker-snippet><code>{embedSnippet(SITE.url, first.slug, first.headline)}</code></pre>
+            <CopyButton source="picker-snippet" label="Copy code" />
+          </div>
+        </div>
+      )
+    }
+    <script type="application/json" id="picker-claims" is:inline set:html={claimsJson} />
+  </div>
+
+  <h2 class="bar">How to cite a page</h2>
+  <p>
+    Give the claim page's address and the month the registries were checked, since a status can
+    change.
+    {
+      first && checked && (
+        <>
+          {" "}
+          For example: “{SITE.name}, {canonicalAddress(`/${first.slug}`)}, checked {checked}.” Each
+          claim page also offers that as a sentence to copy.
+        </>
+      )
+    }
+  </p>
+
+  <h2 class="bar">Where corrections go</h2>
+  <p>
+    Every claim page links a way to report an error in it, where one is set up, and asks for the
+    source that shows it. A status is never edited by hand: the missing or wrong record is fixed,
+    and the rules set the status again. The box on your page follows at the next rebuild.
+  </p>
+
+  <h2 class="bar">The open data</h2>
+  <p>
+    Every published claim, with its records and sources, is one file under{" "}
+    <a href={DATA_LICENCE_URL}>{DATA_LICENCE}</a>. <a href="/data">Download and credit line</a>
+  </p>
+
+  <Fragment slot="limits">
+    <p>
+      Outlets are never ranked or compared. A claim page lists the reports it has read, by outlet
+      and date, and says nothing about how well any of them covered the story.
+    </p>
+    <p>
+      It gives no verdict on a claim, a researcher or a company. A status describes which records
+      exist; <a href="/guide">the guide</a> says what each one does not tell you.
+    </p>
+    <p>
+      A claim page that no person has checked says so, and so does its box. The box is shown here
+      as it is.
+    </p>
+  </Fragment>
+</Audience>
+
+<script>
+  // The search runs in the page, over the claims written into it at build. Nothing
+  // typed here is sent anywhere. Picking a claim swaps the box and the code under it.
+  import { pickClaims, type PickerClaim } from "../../lib/audiences";
+  import { embedSnippet } from "../../lib/share";
+
+  const picker = document.querySelector<HTMLElement>("[data-picker]");
+  const carried = document.querySelector("#picker-claims");
+  if (picker && carried) {
+    const claims: PickerClaim[] = JSON.parse(carried.textContent!);
+    const site = picker.dataset.site!;
+    const form = picker.querySelector<HTMLFormElement>("[data-picker-form]")!;
+    const input = picker.querySelector<HTMLInputElement>("#pick")!;
+    const found = picker.querySelector<HTMLElement>("[data-picker-found]")!;
+    const none = picker.querySelector<HTMLElement>("[data-picker-none]")!;
+    const noneText = picker.querySelector<HTMLElement>("[data-picker-none-text]")!;
+    const frame = picker.querySelector<HTMLIFrameElement>("[data-picker-frame]");
+    const link = picker.querySelector<HTMLAnchorElement>("[data-picker-link]");
+    const snippet = picker.querySelector<HTMLElement>("[data-picker-snippet] code");
+
+    const show = (claim: PickerClaim) => {
+      if (!frame || !link || !snippet) return;
+      frame.src = `/embed/${claim.slug}`;
+      frame.title = claim.headline;
+      link.href = `/${claim.slug}`;
+      link.textContent = claim.name;
+      snippet.textContent = embedSnippet(site, claim.slug, claim.headline);
+      found.replaceChildren();
+      link.closest<HTMLElement>("[data-picker-shown]")!.scrollIntoView({ block: "nearest" });
+    };
+
+    const search = () => {
+      const typed = input.value.trim();
+      const matches = pickClaims(claims, typed);
+      none.hidden = typed === "" || matches.length > 0;
+      noneText.textContent = `No tracked claim matches “${typed}”. This site only covers claims it has tracked so far.`;
+      const list = document.createElement("ul");
+      list.className = "plain picks";
+      for (const claim of matches) {
+        const item = document.createElement("li");
+        const pick = document.createElement("button");
+        pick.type = "button";
+        pick.className = "pick";
+        const name = document.createElement("strong");
+        name.textContent = claim.name;
+        const headline = document.createElement("span");
+        headline.className = "entry-note";
+        headline.textContent = claim.headline;
+        pick.append(name, headline);
+        pick.addEventListener("click", () => show(claim));
+        item.append(pick);
+        list.append(item);
+      }
+      found.replaceChildren(...(matches.length > 0 ? [list] : []));
+    };
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      search();
+    });
+    input.addEventListener("input", search);
+  }
+</script>
+
+<style>
+  .picker {
+    max-width: 46rem;
+  }
+
+  .found :global(.picks) {
+    margin-top: 0.75rem;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .found :global(.picks li) {
+    padding: 0;
+  }
+
+  .found :global(.picks li:first-child) {
+    border-top: 0;
+  }
+
+  .found :global(.picks li:last-child) {
+    border-bottom: 0;
+  }
+
+  .found :global(.pick) {
+    display: block;
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.6rem 0.9rem;
+    border: 0;
+    background: none;
+    color: var(--ink);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .found :global(.pick:hover) {
+    background: var(--panel);
+  }
+
+  .found :global(.pick strong) {
+    color: var(--blue);
+  }
+
+  .none {
+    margin-top: 0.75rem;
+  }
+
+  .shown {
+    margin-top: 1.25rem;
+  }
+
+  .showing {
+    margin: 0 0 0.5rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  /* The embed at the size its snippet gives, on the paper a reader's page would be. */
+  .frame {
+    width: fit-content;
+    max-width: 100%;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .frame iframe {
+    display: block;
+    max-width: 100%;
+    border: 0;
+  }
+
+  .code {
+    margin-top: 0.9rem;
+  }
+
+  .code pre {
+    margin: 0.5rem 0 0.6rem;
+    padding: 0.75rem 0.9rem;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 0.65rem;
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+</style>

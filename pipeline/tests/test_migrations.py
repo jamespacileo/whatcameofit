@@ -15,6 +15,8 @@ EXPECTED_TABLES = {
     "http_cache",
     "outlet_icon",
     "paper_record",
+    "claim_term",
+    "term_record",
 }
 
 

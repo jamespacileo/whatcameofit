@@ -1,0 +1,137 @@
+---
+// The guide's index (openspec landing-pages-and-guide): every entry under its shelf,
+// its title as the link and its one-sentence answer beside it. Statuses run along the
+// path, then those off it. A field narrows the list; without scripting all are listed.
+import Base from "../../layouts/Base.astro";
+import StageTrack from "../../components/StageTrack.astro";
+import { SHELVES, shelfEntries } from "../../lib/guide";
+import { guide } from "../../lib/guide-entries";
+import { guideData } from "../../lib/structured";
+
+const description =
+  "What each status means, the words this site uses, and how medical research is recorded: each with its sources and what it does not tell you.";
+---
+
+<Base
+  title="Guide"
+  description={description}
+  structured={guideData(description, guide)}
+  breadcrumbs={[{ name: "Guide", path: "/guide" }]}
+>
+  <h1 class="title">Guide</h1>
+  <p class="lede">
+    {guide.length} words you meet on this site, each explained in a sentence: what it rests on in
+    the records, and what it does not tell you.
+  </p>
+
+  <div class="directory guide-index" data-guide>
+    <div class="directory-tools">
+      <label class="visually-hidden" for="guide-filter">Find a word</label>
+      <input id="guide-filter" type="search" autocomplete="off" placeholder="Find a word" />
+      <nav class="letters" aria-label="Jump to a shelf">
+        {SHELVES.map((shelf) => <a href={`#${shelf.id}`}>{shelf.title}</a>)}
+      </nav>
+    </div>
+    <p class="none" role="status" data-none hidden>
+      No entry matches. <a href="/how-it-works">How it works</a> explains how a status is set.
+    </p>
+    {
+      SHELVES.map((shelf) => (
+        <section class="shelf" id={shelf.id} aria-labelledby={`heading-${shelf.id}`}>
+          <h2 class="bar" id={`heading-${shelf.id}`}>{shelf.title}</h2>
+          <p class="entry-note">{shelf.about}</p>
+          <ul class="plain">
+            {shelfEntries(guide, shelf.id).map((entry) => (
+              <li>
+                <span class="word">
+                  {entry.status && <StageTrack code={entry.status} />}
+                  <a href={`/guide/${entry.slug}`}>{entry.title}</a>
+                </span>
+                <span class="entry-note">{entry.answer}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+  </div>
+</Base>
+
+<script>
+  // Typing narrows the list in place, by an entry's title or its answer. Without
+  // JavaScript every entry is listed and the jump links still work.
+  const index = document.querySelector<HTMLElement>("[data-guide]")!;
+  const input = index.querySelector<HTMLInputElement>("#guide-filter")!;
+  const none = index.querySelector<HTMLElement>("[data-none]")!;
+  input.addEventListener("input", () => {
+    const query = input.value.trim().toLowerCase();
+    let any = false;
+    for (const shelf of index.querySelectorAll<HTMLElement>(".shelf")) {
+      let shown = 0;
+      for (const item of shelf.querySelectorAll<HTMLLIElement>("li")) {
+        item.hidden = !item.textContent!.toLowerCase().includes(query);
+        if (!item.hidden) shown += 1;
+      }
+      shelf.hidden = shown === 0;
+      any ||= shown > 0;
+    }
+    none.hidden = any;
+  });
+</script>
+
+<style>
+  .shelf .bar {
+    scroll-margin-top: 1rem;
+  }
+
+  .shelf .plain {
+    margin-top: 0.8rem;
+  }
+
+  .shelf li {
+    display: grid;
+    grid-template-columns: minmax(12rem, 1fr) 2fr;
+    gap: 0.2rem 1.5rem;
+    align-items: start;
+  }
+
+  .word {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-weight: 700;
+  }
+
+  .word a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
+  }
+
+  .guide-index .letters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.25rem;
+  }
+
+  .guide-index .letters a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    font-weight: 600;
+  }
+
+  .shelf .entry-note {
+    max-width: var(--measure);
+  }
+
+  @media (max-width: 40rem) {
+    .shelf li {
+      grid-template-columns: 1fr;
+    }
+
+    .word a {
+      min-height: 2.75rem;
+    }
+  }
+</style>

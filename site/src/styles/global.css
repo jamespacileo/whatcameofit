@@ -3460,7 +3460,14 @@ main ul:not([class]) li + li {
   font-weight: 600;
 }
 
-.colophon .more + .details {
+/* The pages made for one kind of reader each, on one line under the links. */
+.colophon .for-readers {
+  margin: 0.35rem 0 0;
+  font-weight: 600;
+}
+
+.colophon .more + .details,
+.colophon .for-readers + .details {
   margin-top: 1rem;
 }
 
@@ -3863,6 +3870,7 @@ main ul:not([class]) li + li {
 
   .masthead nav,
   .colophon .more,
+  .colophon .for-readers,
   .share,
   .take,
   .again,

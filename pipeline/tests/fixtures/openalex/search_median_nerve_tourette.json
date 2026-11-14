@@ -1,24 +1,29 @@
 {
   "meta": {
-    "count": 959,
-    "db_response_time_ms": 76,
+    "count": 97,
+    "db_response_time_ms": 140,
     "page": 1,
     "per_page": 3,
     "groups_count": null,
     "x_query": {
-      "oql": "get works with (median nerve stimulation Tourette syndrome) in the title, abstract, or full text",
-      "x_new_oql": "get works with (median nerve stimulation Tourette syndrome) in the title, abstract, or full text",
+      "oql": "get works with (stemmed \"Tourette syndrome\" AND stemmed \"median nerve stimulation\") in the title, abstract, or full text",
+      "x_new_oql": "get works with (stemmed \"Tourette syndrome\" AND stemmed \"median nerve stimulation\") in the title, abstract, or full text",
       "oqo": {
         "get_rows": "works",
         "filter_rows": [
           {
             "column_id": "fulltext.search",
-            "value": "median nerve stimulation Tourette syndrome",
+            "value": "\"Tourette syndrome\"",
+            "operator": "has"
+          },
+          {
+            "column_id": "fulltext.search",
+            "value": "\"median nerve stimulation\"",
             "operator": "has"
           }
         ]
       },
-      "url": "/works?filter=fulltext.search:median nerve stimulation Tourette syndrome&per_page=3",
+      "url": "/works?filter=fulltext.search:%22Tourette syndrome%22,fulltext.search:%22median nerve stimulation%22&per_page=3",
       "order": "best matches first",
       "order_default": true
     },
@@ -111,88 +116,440 @@
       }
     },
     {
-      "id": "https://openalex.org/W7128171646",
-      "doi": "https://doi.org/10.1177/27546330261423083",
-      "title": "Centring Tourettic Experiences in Technology: Tourette Syndrome, Median Nerve Stimulation, and the Role of Technoableism in Self-Harm and Stigma",
-      "publication_year": 2026,
-      "publication_date": "2026-02-01",
-      "type": "editorial",
+      "id": "https://openalex.org/W4361007444",
+      "doi": "https://doi.org/10.3390/jcm12072514",
+      "title": "Median Nerve Stimulation for Treatment of Tics: Randomized, Controlled, Crossover Trial",
+      "publication_year": 2023,
+      "publication_date": "2023-03-27",
+      "type": "article",
       "primary_location": {
-        "id": "doi:10.1177/27546330261423083",
-        "doi": "https://doi.org/10.1177/27546330261423083",
+        "id": "doi:10.3390/jcm12072514",
+        "doi": "https://doi.org/10.3390/jcm12072514",
         "is_oa": true,
-        "landing_page_url": "https://doi.org/10.1177/27546330261423083",
-        "pdf_url": null,
+        "landing_page_url": "https://doi.org/10.3390/jcm12072514",
+        "pdf_url": "https://www.mdpi.com/2077-0383/12/7/2514/pdf?version=1679897247",
         "source": {
-          "id": "https://openalex.org/S4387292802",
-          "display_name": "Neurodiversity",
-          "issn_l": "2754-6330",
+          "id": "https://openalex.org/S2737969411",
+          "display_name": "Journal of Clinical Medicine",
+          "issn_l": "2077-0383",
           "issn": [
-            "2754-6330"
+            "2077-0383"
           ],
-          "is_oa": false,
+          "is_oa": true,
           "is_in_doaj": false,
           "is_core": true,
           "listed_in": [
             "cwts-core",
+            "ki-jl-1",
             "norway-1",
+            "poland-140",
+            "russia-white-list-1",
             "vabb-shw"
           ],
-          "host_organization": "https://openalex.org/P4310320017",
-          "host_organization_name": "SAGE Publishing",
+          "host_organization": "https://openalex.org/P4310310987",
+          "host_organization_name": "Multidisciplinary Digital Publishing Institute",
           "host_organization_lineage": [
-            "https://openalex.org/P4310320017"
+            "https://openalex.org/P4310310987"
           ],
           "host_organization_lineage_names": [
-            "SAGE Publishing"
+            "Multidisciplinary Digital Publishing Institute"
           ],
           "type": "journal"
         },
-        "license": "cc-by-nc",
-        "license_id": "https://openalex.org/licenses/cc-by-nc",
+        "license": "cc-by",
+        "license_id": "https://openalex.org/licenses/cc-by",
         "version": "publishedVersion",
         "is_accepted": true,
         "is_published": true,
-        "raw_source_name": "Neurodiversity",
+        "raw_source_name": "Journal of Clinical Medicine",
         "raw_type": "journal-article"
       },
       "authorships": [
         {
           "author_position": "first",
           "author": {
-            "id": "https://openalex.org/A5083546443",
-            "display_name": "Daniel P. Jones",
-            "orcid": "https://orcid.org/0000-0002-8208-162X",
+            "id": "https://openalex.org/A5045774787",
+            "display_name": "Ann Iverson",
+            "orcid": "https://orcid.org/0000-0001-8844-7752",
             "observed_orcids": [
-              "https://orcid.org/0000-0002-8208-162X"
+              "https://orcid.org/0000-0001-8844-7752"
             ]
           },
           "institutions": [
             {
-              "id": "https://openalex.org/I190082696",
-              "display_name": "Durham University",
-              "ror": "https://ror.org/01v29qb04",
-              "country_code": "GB",
+              "id": "https://openalex.org/I204465549",
+              "display_name": "Washington University in St. Louis",
+              "ror": "https://ror.org/01yc7t268",
+              "country_code": "US",
               "type": "education",
               "lineage": [
-                "https://openalex.org/I190082696"
+                "https://openalex.org/I204465549"
               ]
             }
           ],
           "countries": [
-            "GB"
+            "US"
           ],
-          "is_corresponding": true,
-          "raw_author_name": "Daniel P. Jones",
+          "is_corresponding": false,
+          "raw_author_name": "Ann M. Iverson",
           "raw_affiliation_strings": [
-            "Durham University"
+            "Washington University in St. Louis School of Medicine, St. Louis, MO",
+            "Washington University School of Medicine, Washington University in St. Louis, St. Louis, MO 63110, USA"
           ],
-          "raw_orcid": "https://orcid.org/0000-0002-8208-162X",
+          "raw_orcid": "https://orcid.org/0000-0001-8844-7752",
           "affiliations": [
             {
-              "raw_affiliation_string": "Durham University",
+              "raw_affiliation_string": "Washington University in St. Louis School of Medicine, St. Louis, MO",
               "institution_ids": [
-                "https://openalex.org/I190082696"
+                "https://openalex.org/I204465549"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Washington University School of Medicine, Washington University in St. Louis, St. Louis, MO 63110, USA",
+              "institution_ids": [
+                "https://openalex.org/I204465549"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5017804488",
+            "display_name": "Amanda L. Arbuckle",
+            "orcid": "https://orcid.org/0000-0001-8267-580X",
+            "observed_orcids": [
+              "https://orcid.org/0000-0001-8267-580X"
+            ]
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I204465549",
+              "display_name": "Washington University in St. Louis",
+              "ror": "https://ror.org/01yc7t268",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I204465549"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Amanda L. Arbuckle",
+          "raw_affiliation_strings": [
+            "Department of Psychiatry, Washington University in St. Louis",
+            "Department of Psychiatry, Washington University in St. Louis, St. Louis, MO 63110, USA"
+          ],
+          "raw_orcid": "https://orcid.org/0000-0001-8267-580X",
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Psychiatry, Washington University in St. Louis",
+              "institution_ids": [
+                "https://openalex.org/I204465549"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Department of Psychiatry, Washington University in St. Louis, St. Louis, MO 63110, USA",
+              "institution_ids": [
+                "https://openalex.org/I204465549"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5016184370",
+            "display_name": "Keisuke Ueda",
+            "orcid": "https://orcid.org/0000-0003-4087-6018",
+            "observed_orcids": [
+              "https://orcid.org/0000-0003-4087-6018"
+            ]
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I204465549",
+              "display_name": "Washington University in St. Louis",
+              "ror": "https://ror.org/01yc7t268",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I204465549"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Keisuke Ueda",
+          "raw_affiliation_strings": [
+            "Department of Neurology, Washington University in St. Louis",
+            "Department of Neurology, Washington University in St. Louis, St. Louis, MO 63110, USA"
+          ],
+          "raw_orcid": "https://orcid.org/0000-0003-4087-6018",
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Neurology, Washington University in St. Louis",
+              "institution_ids": [
+                "https://openalex.org/I204465549"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Department of Neurology, Washington University in St. Louis, St. Louis, MO 63110, USA",
+              "institution_ids": [
+                "https://openalex.org/I204465549"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5000667013",
+            "display_name": "David Y. Song",
+            "orcid": "https://orcid.org/0000-0002-2178-9480",
+            "observed_orcids": [
+              "https://orcid.org/0000-0002-2178-9480"
+            ]
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I28792581",
+              "display_name": "University of Rochester Medicine",
+              "ror": "https://ror.org/00trqv719",
+              "country_code": "US",
+              "type": "healthcare",
+              "lineage": [
+                "https://openalex.org/I28792581",
+                "https://openalex.org/I5388228"
+              ]
+            },
+            {
+              "id": "https://openalex.org/I5388228",
+              "display_name": "University of Rochester",
+              "ror": "https://ror.org/022kthw22",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I5388228"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "David Y. Song",
+          "raw_affiliation_strings": [
+            "University of Rochester School of Medicine and Dentistry, Rochester, NY",
+            "University of Rochester School of Medicine and Dentistry, Rochester, NY 14642, USA"
+          ],
+          "raw_orcid": "https://orcid.org/0000-0002-2178-9480",
+          "affiliations": [
+            {
+              "raw_affiliation_string": "University of Rochester School of Medicine and Dentistry, Rochester, NY",
+              "institution_ids": [
+                "https://openalex.org/I28792581",
+                "https://openalex.org/I5388228"
+              ]
+            },
+            {
+              "raw_affiliation_string": "University of Rochester School of Medicine and Dentistry, Rochester, NY 14642, USA",
+              "institution_ids": [
+                "https://openalex.org/I28792581",
+                "https://openalex.org/I5388228"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5040447101",
+            "display_name": "Emily C. Bihun",
+            "orcid": "https://orcid.org/0000-0002-0426-4498",
+            "observed_orcids": [
+              "https://orcid.org/0000-0002-0426-4498"
+            ]
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I204465549",
+              "display_name": "Washington University in St. Louis",
+              "ror": "https://ror.org/01yc7t268",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I204465549"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Emily C. Bihun",
+          "raw_affiliation_strings": [
+            "Department of Psychiatry, Washington University in St. Louis",
+            "Department of Psychiatry, Washington University in St. Louis, St. Louis, MO 63110, USA"
+          ],
+          "raw_orcid": "https://orcid.org/0000-0002-0426-4498",
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Psychiatry, Washington University in St. Louis",
+              "institution_ids": [
+                "https://openalex.org/I204465549"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Department of Psychiatry, Washington University in St. Louis, St. Louis, MO 63110, USA",
+              "institution_ids": [
+                "https://openalex.org/I204465549"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5035553977",
+            "display_name": "Jonathan M. Koller",
+            "orcid": "https://orcid.org/0000-0002-1409-5608",
+            "observed_orcids": [
+              "https://orcid.org/0000-0002-1409-5608"
+            ]
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I204465549",
+              "display_name": "Washington University in St. Louis",
+              "ror": "https://ror.org/01yc7t268",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I204465549"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Jonathan M. Koller",
+          "raw_affiliation_strings": [
+            "Department of Psychiatry, Washington University in St. Louis",
+            "Department of Psychiatry, Washington University in St. Louis, St. Louis, MO 63110, USA"
+          ],
+          "raw_orcid": "https://orcid.org/0000-0002-1409-5608",
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Psychiatry, Washington University in St. Louis",
+              "institution_ids": [
+                "https://openalex.org/I204465549"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Department of Psychiatry, Washington University in St. Louis, St. Louis, MO 63110, USA",
+              "institution_ids": [
+                "https://openalex.org/I204465549"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5057246360",
+            "display_name": "Michael Wallendorf",
+            "orcid": "https://orcid.org/0000-0003-3005-3026",
+            "observed_orcids": [
+              "https://orcid.org/0000-0003-3005-3026"
+            ]
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I204465549",
+              "display_name": "Washington University in St. Louis",
+              "ror": "https://ror.org/01yc7t268",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I204465549"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Michael Wallendorf",
+          "raw_affiliation_strings": [
+            "Division of Biostatistics, Washington University in St. Louis",
+            "Division of Biostatistics, Institute for Informatics, Washington University in St. Louis, St. Louis, MO 63110, USA"
+          ],
+          "raw_orcid": "https://orcid.org/0000-0003-3005-3026",
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Division of Biostatistics, Washington University in St. Louis",
+              "institution_ids": [
+                "https://openalex.org/I204465549"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Division of Biostatistics, Institute for Informatics, Washington University in St. Louis, St. Louis, MO 63110, USA",
+              "institution_ids": [
+                "https://openalex.org/I204465549"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "last",
+          "author": {
+            "id": "https://openalex.org/A5046178026",
+            "display_name": "KEVIN JOHN BLACK",
+            "orcid": "https://orcid.org/0000-0002-6921-9567",
+            "observed_orcids": [
+              "https://orcid.org/0000-0002-6921-9567"
+            ]
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I204465549",
+              "display_name": "Washington University in St. Louis",
+              "ror": "https://ror.org/01yc7t268",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I204465549"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": true,
+          "raw_author_name": "Kevin J. Black",
+          "raw_affiliation_strings": [
+            "Departments of Psychiatry, Neurology, Radiology, and Neuroscience, Washington University in St. Louis, St. Louis, MO",
+            "Departments of Psychiatry, Neurology, Radiology, and Neuroscience, Washington University in St. Louis, St. Louis, MO 63110, USA"
+          ],
+          "raw_orcid": "https://orcid.org/0000-0002-6921-9567",
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Departments of Psychiatry, Neurology, Radiology, and Neuroscience, Washington University in St. Louis, St. Louis, MO",
+              "institution_ids": [
+                "https://openalex.org/I204465549"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Departments of Psychiatry, Neurology, Radiology, and Neuroscience, Washington University in St. Louis, St. Louis, MO 63110, USA",
+              "institution_ids": [
+                "https://openalex.org/I204465549"
               ]
             }
           ]
@@ -216,47 +573,66 @@
         ]
       },
       "ids": {
-        "openalex": "https://openalex.org/W7128171646",
-        "doi": "https://doi.org/10.1177/27546330261423083"
+        "openalex": "https://openalex.org/W4361007444",
+        "doi": "https://doi.org/10.3390/jcm12072514",
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/37048598",
+        "pmcid": "https://www.ncbi.nlm.nih.gov/pmc/articles/10095326"
       }
     },
     {
-      "id": "https://openalex.org/W7128526191",
-      "doi": "https://doi.org/10.64898/2026.02.07.704541",
-      "title": "Low-intensity sub-threshold rhythmic 10Hz median nerve stimulation modulates mu-band EEG oscillations in individuals with Tourette syndrome",
-      "publication_year": 2026,
-      "publication_date": "2026-02-10",
-      "type": "preprint",
+      "id": "https://openalex.org/W3032915125",
+      "doi": "https://doi.org/10.1016/j.cub.2020.04.044",
+      "title": "Entraining Movement-Related Brain Oscillations to Suppress Tics in Tourette Syndrome",
+      "publication_year": 2020,
+      "publication_date": "2020-06-01",
+      "type": "article",
       "primary_location": {
-        "id": "doi:10.64898/2026.02.07.704541",
-        "doi": "https://doi.org/10.64898/2026.02.07.704541",
+        "id": "doi:10.1016/j.cub.2020.04.044",
+        "doi": "https://doi.org/10.1016/j.cub.2020.04.044",
         "is_oa": true,
-        "landing_page_url": "https://doi.org/10.64898/2026.02.07.704541",
-        "pdf_url": "https://www.biorxiv.org/content/biorxiv/early/2026/02/10/2026.02.07.704541.full.pdf",
+        "landing_page_url": "https://doi.org/10.1016/j.cub.2020.04.044",
+        "pdf_url": "http://www.cell.com/article/S0960982220305583/pdf",
         "source": {
-          "id": "https://openalex.org/S4306402567",
-          "display_name": "bioRxiv (Cold Spring Harbor Laboratory)",
-          "issn_l": null,
-          "issn": null,
+          "id": "https://openalex.org/S128425624",
+          "display_name": "Current Biology",
+          "issn_l": "0960-9822",
+          "issn": [
+            "0960-9822",
+            "1879-0445"
+          ],
           "is_oa": false,
           "is_in_doaj": false,
-          "is_core": false,
-          "listed_in": [],
-          "host_organization": "https://openalex.org/I2750212522",
-          "host_organization_name": "Cold Spring Harbor Laboratory",
-          "host_organization_lineage": [
-            "https://openalex.org/I2750212522"
+          "is_core": true,
+          "listed_in": [
+            "anvur-scientific",
+            "cwts-core",
+            "dongbi-a",
+            "doyens",
+            "jufo-3",
+            "ki-jl-3",
+            "medline",
+            "norway-2",
+            "poland-200",
+            "russia-white-list-1",
+            "vabb-shw"
           ],
-          "host_organization_lineage_names": [],
-          "type": "repository"
+          "host_organization": "https://openalex.org/P4310320990",
+          "host_organization_name": "Elsevier BV",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310320990"
+          ],
+          "host_organization_lineage_names": [
+            "Elsevier BV"
+          ],
+          "type": "journal"
         },
-        "license": "cc-by-nc",
-        "license_id": "https://openalex.org/licenses/cc-by-nc",
-        "version": "submittedVersion",
-        "is_accepted": false,
-        "is_published": false,
-        "raw_source_name": "bioRxiv",
-        "raw_type": "posted-content"
+        "license": "cc-by-nc-nd",
+        "license_id": "https://openalex.org/licenses/cc-by-nc-nd",
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Current Biology",
+        "raw_type": "journal-article"
       },
       "authorships": [
         {
@@ -283,21 +659,14 @@
             "GB"
           ],
           "is_corresponding": false,
-          "raw_author_name": "Barbara Morera",
+          "raw_author_name": "Barbara Morera Maiquez",
           "raw_affiliation_strings": [
-            "Neurotherapeutics Ltd, Sir Colin Campbell Building, University of Nottingham Innovation Park, Triumph Road, Nottingham, NG7 2TU",
-            "School of Psychology, University of Nottingham, University Park, Nottingham, NG7 2RD, UK"
+            "School of Psychology University of Nottingham, University Park, Nottingham, NG7 2RD, UK"
           ],
           "raw_orcid": null,
           "affiliations": [
             {
-              "raw_affiliation_string": "Neurotherapeutics Ltd, Sir Colin Campbell Building, University of Nottingham Innovation Park, Triumph Road, Nottingham, NG7 2TU",
-              "institution_ids": [
-                "https://openalex.org/I142263535"
-              ]
-            },
-            {
-              "raw_affiliation_string": "School of Psychology, University of Nottingham, University Park, Nottingham, NG7 2RD, UK",
+              "raw_affiliation_string": "School of Psychology University of Nottingham, University Park, Nottingham, NG7 2RD, UK",
               "institution_ids": [
                 "https://openalex.org/I142263535"
               ]
@@ -307,10 +676,12 @@
         {
           "author_position": "middle",
           "author": {
-            "id": "https://openalex.org/A5067875302",
-            "display_name": "Ciara McCready",
-            "orcid": null,
-            "observed_orcids": []
+            "id": "https://openalex.org/A5020667793",
+            "display_name": "Hilmar P. Sigurdsson",
+            "orcid": "https://orcid.org/0000-0002-0624-065X",
+            "observed_orcids": [
+              "https://orcid.org/0000-0002-0624-065X"
+            ]
           },
           "institutions": [
             {
@@ -328,16 +699,361 @@
             "GB"
           ],
           "is_corresponding": false,
-          "raw_author_name": "Ciara McCready",
+          "raw_author_name": "Hilmar P. Sigurdsson",
           "raw_affiliation_strings": [
-            "Neurotherapeutics Ltd, Sir Colin Campbell Building, University of Nottingham Innovation Park, Triumph Road, Nottingham, NG7 2TU"
+            "School of Psychology University of Nottingham, University Park, Nottingham, NG7 2RD, UK"
           ],
           "raw_orcid": null,
           "affiliations": [
             {
-              "raw_affiliation_string": "Neurotherapeutics Ltd, Sir Colin Campbell Building, University of Nottingham Innovation Park, Triumph Road, Nottingham, NG7 2TU",
+              "raw_affiliation_string": "School of Psychology University of Nottingham, University Park, Nottingham, NG7 2RD, UK",
               "institution_ids": [
                 "https://openalex.org/I142263535"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5032579527",
+            "display_name": "Katherine Dyke",
+            "orcid": "https://orcid.org/0000-0002-2154-6200",
+            "observed_orcids": [
+              "https://orcid.org/0000-0002-2154-6200"
+            ]
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I142263535",
+              "display_name": "University of Nottingham",
+              "ror": "https://ror.org/01ee9ar58",
+              "country_code": "GB",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I142263535"
+              ]
+            },
+            {
+              "id": "https://openalex.org/I4210101111",
+              "display_name": "Institute of Mental Health",
+              "ror": "https://ror.org/015dvxx67",
+              "country_code": "GB",
+              "type": "healthcare",
+              "lineage": [
+                "https://openalex.org/I4210101111"
+              ]
+            }
+          ],
+          "countries": [
+            "GB"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Katherine Dyke",
+          "raw_affiliation_strings": [
+            "School of Psychology University of Nottingham, University Park, Nottingham, NG7 2RD, UK; Institute of Mental Health, University of Nottingham, Triumph Road Nottingham, NG7 2TU, UK",
+            "Institute of Mental Health, University of Nottingham, Triumph Road Nottingham, NG7 2TU, UK",
+            "School of Psychology University of Nottingham, University Park, Nottingham, NG7 2RD, UK"
+          ],
+          "raw_orcid": null,
+          "affiliations": [
+            {
+              "raw_affiliation_string": "School of Psychology University of Nottingham, University Park, Nottingham, NG7 2RD, UK; Institute of Mental Health, University of Nottingham, Triumph Road Nottingham, NG7 2TU, UK",
+              "institution_ids": [
+                "https://openalex.org/I142263535",
+                "https://openalex.org/I4210101111"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Institute of Mental Health, University of Nottingham, Triumph Road Nottingham, NG7 2TU, UK",
+              "institution_ids": [
+                "https://openalex.org/I142263535",
+                "https://openalex.org/I4210101111"
+              ]
+            },
+            {
+              "raw_affiliation_string": "School of Psychology University of Nottingham, University Park, Nottingham, NG7 2RD, UK",
+              "institution_ids": [
+                "https://openalex.org/I142263535"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5103909548",
+            "display_name": "Eleri Clarke",
+            "orcid": null,
+            "observed_orcids": []
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I142263535",
+              "display_name": "University of Nottingham",
+              "ror": "https://ror.org/01ee9ar58",
+              "country_code": "GB",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I142263535"
+              ]
+            },
+            {
+              "id": "https://openalex.org/I4210137227",
+              "display_name": "Queen's Medical Centre",
+              "ror": "https://ror.org/03ap6wx93",
+              "country_code": "GB",
+              "type": "healthcare",
+              "lineage": [
+                "https://openalex.org/I1334287468",
+                "https://openalex.org/I4210137227"
+              ]
+            }
+          ],
+          "countries": [
+            "GB"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Eleri Clarke",
+          "raw_affiliation_strings": [
+            "School of Medicine University of Nottingham, Queen's Medical Centre Nottingham, NG7 2UH, UK"
+          ],
+          "raw_orcid": null,
+          "affiliations": [
+            {
+              "raw_affiliation_string": "School of Medicine University of Nottingham, Queen's Medical Centre Nottingham, NG7 2UH, UK",
+              "institution_ids": [
+                "https://openalex.org/I142263535",
+                "https://openalex.org/I4210137227"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5054237027",
+            "display_name": "Polly McGrath",
+            "orcid": null,
+            "observed_orcids": []
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I142263535",
+              "display_name": "University of Nottingham",
+              "ror": "https://ror.org/01ee9ar58",
+              "country_code": "GB",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I142263535"
+              ]
+            },
+            {
+              "id": "https://openalex.org/I4210137227",
+              "display_name": "Queen's Medical Centre",
+              "ror": "https://ror.org/03ap6wx93",
+              "country_code": "GB",
+              "type": "healthcare",
+              "lineage": [
+                "https://openalex.org/I1334287468",
+                "https://openalex.org/I4210137227"
+              ]
+            }
+          ],
+          "countries": [
+            "GB"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Polly McGrath",
+          "raw_affiliation_strings": [
+            "School of Medicine University of Nottingham, Queen's Medical Centre Nottingham, NG7 2UH, UK"
+          ],
+          "raw_orcid": null,
+          "affiliations": [
+            {
+              "raw_affiliation_string": "School of Medicine University of Nottingham, Queen's Medical Centre Nottingham, NG7 2UH, UK",
+              "institution_ids": [
+                "https://openalex.org/I142263535",
+                "https://openalex.org/I4210137227"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5034717715",
+            "display_name": "Matthew Pasche",
+            "orcid": null,
+            "observed_orcids": []
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I142263535",
+              "display_name": "University of Nottingham",
+              "ror": "https://ror.org/01ee9ar58",
+              "country_code": "GB",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I142263535"
+              ]
+            },
+            {
+              "id": "https://openalex.org/I4210137227",
+              "display_name": "Queen's Medical Centre",
+              "ror": "https://ror.org/03ap6wx93",
+              "country_code": "GB",
+              "type": "healthcare",
+              "lineage": [
+                "https://openalex.org/I1334287468",
+                "https://openalex.org/I4210137227"
+              ]
+            }
+          ],
+          "countries": [
+            "GB"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Matthew Pasche",
+          "raw_affiliation_strings": [
+            "School of Medicine University of Nottingham, Queen's Medical Centre Nottingham, NG7 2UH, UK"
+          ],
+          "raw_orcid": null,
+          "affiliations": [
+            {
+              "raw_affiliation_string": "School of Medicine University of Nottingham, Queen's Medical Centre Nottingham, NG7 2UH, UK",
+              "institution_ids": [
+                "https://openalex.org/I142263535",
+                "https://openalex.org/I4210137227"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5005991687",
+            "display_name": "Anupriya Rajendran",
+            "orcid": null,
+            "observed_orcids": []
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I142263535",
+              "display_name": "University of Nottingham",
+              "ror": "https://ror.org/01ee9ar58",
+              "country_code": "GB",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I142263535"
+              ]
+            },
+            {
+              "id": "https://openalex.org/I4210137227",
+              "display_name": "Queen's Medical Centre",
+              "ror": "https://ror.org/03ap6wx93",
+              "country_code": "GB",
+              "type": "healthcare",
+              "lineage": [
+                "https://openalex.org/I1334287468",
+                "https://openalex.org/I4210137227"
+              ]
+            }
+          ],
+          "countries": [
+            "GB"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Anupriya Rajendran",
+          "raw_affiliation_strings": [
+            "School of Medicine University of Nottingham, Queen's Medical Centre Nottingham, NG7 2UH, UK"
+          ],
+          "raw_orcid": null,
+          "affiliations": [
+            {
+              "raw_affiliation_string": "School of Medicine University of Nottingham, Queen's Medical Centre Nottingham, NG7 2UH, UK",
+              "institution_ids": [
+                "https://openalex.org/I142263535",
+                "https://openalex.org/I4210137227"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5059852906",
+            "display_name": "Georgina Margaret Jackson",
+            "orcid": "https://orcid.org/0000-0001-6373-2055",
+            "observed_orcids": [
+              "https://orcid.org/0000-0001-6373-2055"
+            ]
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I142263535",
+              "display_name": "University of Nottingham",
+              "ror": "https://ror.org/01ee9ar58",
+              "country_code": "GB",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I142263535"
+              ]
+            },
+            {
+              "id": "https://openalex.org/I4210101111",
+              "display_name": "Institute of Mental Health",
+              "ror": "https://ror.org/015dvxx67",
+              "country_code": "GB",
+              "type": "healthcare",
+              "lineage": [
+                "https://openalex.org/I4210101111"
+              ]
+            },
+            {
+              "id": "https://openalex.org/I4210137227",
+              "display_name": "Queen's Medical Centre",
+              "ror": "https://ror.org/03ap6wx93",
+              "country_code": "GB",
+              "type": "healthcare",
+              "lineage": [
+                "https://openalex.org/I1334287468",
+                "https://openalex.org/I4210137227"
+              ]
+            }
+          ],
+          "countries": [
+            "GB"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Georgina M. Jackson",
+          "raw_affiliation_strings": [
+            "School of Medicine University of Nottingham, Queen's Medical Centre Nottingham, NG7 2UH, UK; Institute of Mental Health, University of Nottingham, Triumph Road Nottingham, NG7 2TU, UK",
+            "Institute of Mental Health, University of Nottingham, Triumph Road Nottingham, NG7 2TU, UK",
+            "School of Medicine University of Nottingham, Queen's Medical Centre Nottingham, NG7 2UH, UK"
+          ],
+          "raw_orcid": null,
+          "affiliations": [
+            {
+              "raw_affiliation_string": "School of Medicine University of Nottingham, Queen's Medical Centre Nottingham, NG7 2UH, UK; Institute of Mental Health, University of Nottingham, Triumph Road Nottingham, NG7 2TU, UK",
+              "institution_ids": [
+                "https://openalex.org/I142263535",
+                "https://openalex.org/I4210101111",
+                "https://openalex.org/I4210137227"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Institute of Mental Health, University of Nottingham, Triumph Road Nottingham, NG7 2TU, UK",
+              "institution_ids": [
+                "https://openalex.org/I142263535",
+                "https://openalex.org/I4210101111"
+              ]
+            },
+            {
+              "raw_affiliation_string": "School of Medicine University of Nottingham, Queen's Medical Centre Nottingham, NG7 2UH, UK",
+              "institution_ids": [
+                "https://openalex.org/I142263535",
+                "https://openalex.org/I4210137227"
               ]
             }
           ]
@@ -362,6 +1078,16 @@
               "lineage": [
                 "https://openalex.org/I142263535"
               ]
+            },
+            {
+              "id": "https://openalex.org/I4210101111",
+              "display_name": "Institute of Mental Health",
+              "ror": "https://ror.org/015dvxx67",
+              "country_code": "GB",
+              "type": "healthcare",
+              "lineage": [
+                "https://openalex.org/I4210101111"
+              ]
             }
           ],
           "countries": [
@@ -370,19 +1096,28 @@
           "is_corresponding": true,
           "raw_author_name": "Stephen R. Jackson",
           "raw_affiliation_strings": [
-            "Neurotherapeutics Ltd, Sir Colin Campbell Building, University of Nottingham Innovation Park, Triumph Road, Nottingham, NG7 2TU",
-            "School of Psychology, University of Nottingham, University Park, Nottingham, NG7 2RD, UK"
+            "School of Psychology University of Nottingham, University Park, Nottingham, NG7 2RD, UK; Institute of Mental Health, University of Nottingham, Triumph Road Nottingham, NG7 2TU, UK. Electronic address: stephen.jackson@nottingham.ac.uk",
+            "Institute of Mental Health, University of Nottingham, Triumph Road Nottingham, NG7 2TU, UK",
+            "School of Psychology University of Nottingham, University Park, Nottingham, NG7 2RD, UK"
           ],
-          "raw_orcid": "https://orcid.org/0000-0002-5676-4072",
+          "raw_orcid": null,
           "affiliations": [
             {
-              "raw_affiliation_string": "Neurotherapeutics Ltd, Sir Colin Campbell Building, University of Nottingham Innovation Park, Triumph Road, Nottingham, NG7 2TU",
+              "raw_affiliation_string": "School of Psychology University of Nottingham, University Park, Nottingham, NG7 2RD, UK; Institute of Mental Health, University of Nottingham, Triumph Road Nottingham, NG7 2TU, UK. Electronic address: stephen.jackson@nottingham.ac.uk",
               "institution_ids": [
-                "https://openalex.org/I142263535"
+                "https://openalex.org/I142263535",
+                "https://openalex.org/I4210101111"
               ]
             },
             {
-              "raw_affiliation_string": "School of Psychology, University of Nottingham, University Park, Nottingham, NG7 2RD, UK",
+              "raw_affiliation_string": "Institute of Mental Health, University of Nottingham, Triumph Road Nottingham, NG7 2TU, UK",
+              "institution_ids": [
+                "https://openalex.org/I142263535",
+                "https://openalex.org/I4210101111"
+              ]
+            },
+            {
+              "raw_affiliation_string": "School of Psychology University of Nottingham, University Park, Nottingham, NG7 2RD, UK",
               "institution_ids": [
                 "https://openalex.org/I142263535"
               ]
@@ -408,8 +1143,11 @@
         ]
       },
       "ids": {
-        "openalex": "https://openalex.org/W7128526191",
-        "doi": "https://doi.org/10.64898/2026.02.07.704541"
+        "openalex": "https://openalex.org/W3032915125",
+        "doi": "https://doi.org/10.1016/j.cub.2020.04.044",
+        "mag": "3032915125",
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/32502412",
+        "pmcid": "https://www.ncbi.nlm.nih.gov/pmc/articles/7308804"
       }
     }
   ],
