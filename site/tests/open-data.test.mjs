@@ -207,3 +207,85 @@ test("the built file and page", () => {
   const previewData = JSON.parse(fs.readFileSync(path.join(directory, "dist/data/claims.json"), "utf8"));
   assert.equal(previewData.preview, true);
 });
+
+// --- background cards (openspec open-data: "Background cards in the download") ---
+
+const cardSource = (name, in_data_file, licence = "A licence") => ({
+  name,
+  title: `Source ${name}`,
+  credit: `Credit ${name}`,
+  licence,
+  url: `https://${name}.example`,
+  terms_url: `https://${name}.example/terms`,
+  in_data_file,
+});
+
+const card = (source, label) => ({
+  kind: "condition",
+  fit: "exact",
+  label,
+  definition: "The source's own words.",
+  url: `https://${source}.example/term`,
+  source,
+  external_id: "T1",
+  version: "2026",
+  score: 0.9,
+  reasons: [{ code: "filed_by_registry", trials: 5, of: 6, name: null }],
+  decided_by: "rule",
+  read_at: "2026-11-14T09:00:00Z",
+});
+
+test("Scenario: Card from a public-domain source", () => {
+  const data = exported();
+  data.card_sources = [cardSource("open", true)];
+  data.claims[0].background = [card("open", "A term")];
+
+  const out = openData(data, LICENCE, CREDIT, METHOD);
+
+  assert.deepEqual(out.claims[0].background, [
+    {
+      kind: "condition",
+      fit: "exact",
+      label: "A term",
+      definition: "The source's own words.",
+      url: "https://open.example/term",
+      source: "open",
+      external_id: "T1",
+      version: "2026",
+      score: 0.9,
+      reasons: [{ code: "filed_by_registry", trials: 5, of: 6, name: null }],
+      read_at: "2026-11-14T09:00:00Z",
+    },
+  ]);
+  assert.deepEqual(out.card_sources, [
+    { name: "open", title: "Source open", credit: "Credit open", licence: "A licence", url: "https://open.example" },
+  ]);
+  assert.deepEqual(out.left_out, []);
+  assert.deepEqual(out.claims[1].background, []);
+});
+
+test("Scenario: Fact from a share-alike source", () => {
+  const data = exported();
+  data.card_sources = [cardSource("open", true), cardSource("alike", false, "CC BY-SA 3.0")];
+  data.claims[0].background = [card("open", "A term"), card("alike", "A mechanism")];
+
+  const out = openData(data, LICENCE, CREDIT, METHOD);
+
+  assert.deepEqual(out.claims[0].background.map((c) => c.label), ["A term"]);
+  assert.deepEqual(out.card_sources.map((source) => source.name), ["open"]);
+  assert.deepEqual(out.left_out, [
+    {
+      source: "Source alike",
+      licence: "CC BY-SA 3.0",
+      reason: "Its licence (CC BY-SA 3.0) does not allow its material to be offered under this file’s licence.",
+    },
+  ]);
+  assert.ok(!everyString(out).includes("A mechanism"));
+});
+
+test("an export made before background cards gives a file with none", () => {
+  const out = openData(exported(), LICENCE, CREDIT, METHOD);
+  assert.deepEqual(out.card_sources, []);
+  assert.deepEqual(out.left_out, []);
+  assert.deepEqual(out.claims[0].background, []);
+});

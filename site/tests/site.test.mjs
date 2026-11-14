@@ -758,3 +758,92 @@ test("an export made before trial facts still builds, with the matched records a
   assert.ok(registry.includes("NCT00000002"));
   assert.match(registry, /High match · 94%/);
 });
+
+// --- background cards (openspec knowledge-cards, site-publishing) ---
+
+const backgroundOf = (html) => html.match(/<section class="matched background"[\s\S]*?<\/section>/)?.[0];
+
+test("Scenario: Claim with a condition card only", () => {
+  const html = page("approved-claim/index.html");
+  const section = backgroundOf(html);
+  assert.ok(section, "no background section");
+  assert.equal(count(section, 'class="card-kind"'), 1);
+  assert.match(section, /The condition/);
+  assert.match(section, /href="https:\/\/vocabulary\.example\/D900003"[^>]*>\s*Example Condition\s*</);
+  // The definition is one press away, marked as the source's words and unchanged.
+  assert.match(section, /<details class="card-words">[\s\S]*Definition, in the source’s words/);
+  assert.match(section, /<blockquote[^>]*>A synthetic definition of the example condition\.<\/blockquote>/);
+  assert.match(section, /The trial registry files this claim’s one trial under this term\./);
+  // After the records, and not inside the status panel.
+  assert.ok(html.indexOf('id="background"') > html.indexOf('id="timetable"'));
+  assert.ok(html.indexOf('id="background"') < html.indexOf('id="pass-on"'));
+});
+
+test("Scenario: Claim with no card", () => {
+  const html = page("quiet-claim/index.html");
+  assert.ok(!html.includes('id="background"'));
+  assert.ok(!html.includes("card-list"));
+});
+
+test("Scenario: Broader term, and Reason shown on request", () => {
+  const section = backgroundOf(page("phase-claim/index.html"));
+  assert.equal(count(section, 'class="card-kind"'), 2);
+  assert.match(section, /A broader term than this claim’s condition/);
+  assert.match(section, /High match · 90%/);
+  assert.match(section, /The trial registry files 5 of this claim’s 6 trials under this term\./);
+  assert.match(section, /The term’s label is the same as “examplumab”, a name this claim uses\./);
+  // A term its source gives no definition has no disclosure to press.
+  assert.equal(count(section, '<details class="card-words">'), 1);
+  assert.match(section, /The source gives this term no definition\./);
+});
+
+test("Scenario: Definition in the vocabulary's style, and Vocabulary that asks for its version to be stated", () => {
+  const section = backgroundOf(page("phase-claim/index.html"));
+  assert.match(section, /A synthetic definition with CAPITALISED CROSS-REFERENCES, as the vocabulary writes them\./);
+  assert.match(
+    section,
+    /Medical Subject Headings \(MeSH\), U\.S\. National Library of Medicine, 2026 edition\s*<\/a>\s*\. Record read 14 November 2026\./,
+  );
+  // The section's note: terms, not evidence, not advice, no endorsement.
+  assert.match(section, /They are not about this claim’s evidence and they are not medical advice\./);
+  assert.match(section, /Naming a source does not mean it endorses this site\./);
+});
+
+test("Scenario: Card for a drug class with approved uses", () => {
+  // The background section is never inside or beside the status.
+  const html = page("phase-claim/index.html");
+  const digest = html.match(/<section class="reported"[\s\S]*?<\/section>/)[0];
+  assert.ok(!digest.includes("card-kind") && !digest.includes("Background"));
+});
+
+test("the footer's data sources include each source a card comes from", () => {
+  for (const file of ["index.html", "quiet-claim/index.html"]) {
+    const footer = page(file).split("Data sources:")[1].split("</p>")[0];
+    assert.match(footer, /href="https:\/\/www\.nlm\.nih\.gov\/mesh\/meshhome\.html"[^>]*>Medical Subject Headings \(MeSH\)</);
+  }
+});
+
+test("the method page explains background cards", () => {
+  const html = page("how-it-works/index.html");
+  const part = html.split('id="background-on-a-claims-terms"')[1].split('id="what-this-site-never-says"')[0];
+  assert.match(part, /vocabulary publisher’s, shown unchanged/);
+  assert.match(part, /at least half of the\s+claim’s trials/);
+  assert.match(part, /An AI model then\s+reads each candidate/);
+  assert.match(part, /it never changes a status, and it\s+is not medical advice/);
+});
+
+test("Scenario: Code without site wording", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.claims.find((claim) => claim.slug === "phase-claim").background[0].reasons[0].code = "sounds_right";
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-card-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+
+  const result = build(file, path.join(directory, "dist"));
+
+  assert.notEqual(result.status, 0);
+  assert.match(
+    result.stdout + result.stderr,
+    /background card codes the site has no words for: card reason: sounds_right/,
+  );
+});

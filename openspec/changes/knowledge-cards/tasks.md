@@ -26,10 +26,10 @@
 
 ## 4. Site
 
-- [ ] 4.1 Add the card types to `site/src/lib/export.ts` and a wording module for card kinds, reasons and molecule kinds with a function naming any unworded code; verify a site test fails the build on an unknown code
-- [ ] 4.2 Add "Background" to the claim page to `DESIGN.md`, after the records: each card's label, its definition in a disclosure marked as the source's words, the source's credit and version, the score and reasons, the date read, and the section's note that cards describe terms and are not advice or evidence; verify in the browser at phone and desktop widths on a claim with one card and a claim with two, and that a claim with none has no section
-- [ ] 4.3 Add each card source to the footer's data sources from the export, and carry cards into the open data file with the sources left out named; verify the footer test and the open data test
-- [ ] 4.4 Explain background cards on the method page: where they come from, how a term is chosen and scored, and that the words are the source's; verify the site build and the verdict-wording test
+- [x] 4.1 Add the card types to `site/src/lib/export.ts` and a wording module for card kinds and reasons with a function naming any unworded code; verify a site test fails the build on an unknown code (molecule kinds are worded in 6.4, when the export first carries one)
+- [x] 4.2 Add "Background" to the claim page to `DESIGN.md`, after the records: each card's label, its definition in a disclosure marked as the source's words, the source's credit and version, the score and reasons, the date read, and the section's note that cards describe terms and are not advice or evidence; verify in the browser at phone and desktop widths on a claim with one card and a claim with two, and that a claim with none has no section
+- [x] 4.3 Add each card source to the footer's data sources from the export, and carry cards into the open data file with the sources left out named; verify the footer test and the open data test
+- [x] 4.4 Explain background cards on the method page: where they come from, how a term is chosen and scored, and that the words are the source's; verify the site build and the verdict-wording test
 
 ## 5. Measurement before release
 
@@ -42,7 +42,7 @@
 - [ ] 6.1 Bring the share-alike question to the operator with the entry from 1.2, and record the decision as an ADR in `docs/adr/`; do not start 6.2 to 6.5 without it
 - [ ] 6.2 Write the Open Targets client: a drug whose own name equals a given name, with kind of molecule and mechanisms, and a single-protein target's name, gene symbol and function description; verify on recorded fixtures a named drug with two mechanisms, a drug with none, and a procedure's name that returns nothing
 - [ ] 6.3 Export a drug card and, for exactly one single-protein target, a target card, each only as the ADR allows; verify a drug with one target, a drug with two, and that no phase, approval or indication is exported
-- [ ] 6.4 Show both cards on the claim page and keep share-alike facts out of the data file, naming the source left out; verify in the browser and by the open data test
+- [ ] 6.4 Word molecule kinds in the wording module, failing the build on an unworded one; show both cards on the claim page and keep share-alike facts out of the data file, naming the source left out; verify in the browser and by the open data test
 - [ ] 6.5 Run on the real database and record how many claims gained a drug card and a target card
 
 ## 7. Integration

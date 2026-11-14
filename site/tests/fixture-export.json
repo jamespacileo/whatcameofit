@@ -7,6 +7,10 @@
     {
       "name": "ClinicalTrials.gov",
       "url": "https://clinicaltrials.gov/"
+    },
+    {
+      "name": "Medical Subject Headings (MeSH)",
+      "url": "https://www.nlm.nih.gov/mesh/meshhome.html"
     }
   ],
   "verticals": [
@@ -105,7 +109,8 @@
           "decided_by": "seed",
           "summary": "A synthetic paper about the quiet claim"
         }
-      ]
+      ],
+      "background": []
     },
     {
       "slug": "phase-claim",
@@ -433,6 +438,50 @@
           "facts_as_of": null,
           "facts": null
         }
+      ],
+      "background": [
+        {
+          "kind": "condition",
+          "fit": "broader",
+          "label": "Example Condition Group",
+          "definition": "A synthetic definition with CAPITALISED CROSS-REFERENCES, as the vocabulary writes them.",
+          "url": "https://vocabulary.example/D900001",
+          "source": "mesh",
+          "external_id": "D900001",
+          "version": "2026",
+          "score": 0.9,
+          "reasons": [
+            {
+              "code": "filed_by_registry",
+              "trials": 5,
+              "of": 6,
+              "name": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T09:00:00Z"
+        },
+        {
+          "kind": "intervention",
+          "fit": "exact",
+          "label": "Examplumab",
+          "definition": null,
+          "url": "https://vocabulary.example/D900002",
+          "source": "mesh",
+          "external_id": "D900002",
+          "version": "2026",
+          "score": 0.95,
+          "reasons": [
+            {
+              "code": "label_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "examplumab"
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T09:00:00Z"
+        }
       ]
     },
     {
@@ -483,7 +532,41 @@
           "confidence": 1.0
         }
       ],
-      "failure_flags": []
+      "failure_flags": [],
+      "background": [
+        {
+          "kind": "condition",
+          "fit": "exact",
+          "label": "Example Condition",
+          "definition": "A synthetic definition of the example condition.",
+          "url": "https://vocabulary.example/D900003",
+          "source": "mesh",
+          "external_id": "D900003",
+          "version": "2026",
+          "score": 0.97,
+          "reasons": [
+            {
+              "code": "filed_by_registry",
+              "trials": 1,
+              "of": 1,
+              "name": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T09:00:00Z"
+        }
+      ]
+    }
+  ],
+  "card_sources": [
+    {
+      "name": "mesh",
+      "title": "Medical Subject Headings (MeSH)",
+      "credit": "Medical Subject Headings (MeSH), U.S. National Library of Medicine",
+      "licence": "NLM terms and conditions for MeSH data",
+      "url": "https://www.nlm.nih.gov/mesh/meshhome.html",
+      "terms_url": "https://www.nlm.nih.gov/databases/download/terms_and_conditions_mesh.html",
+      "in_data_file": true
     }
   ]
 }

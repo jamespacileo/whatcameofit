@@ -1,6 +1,7 @@
 // The open data file: the validated export, reduced to what the claim pages already show,
 // with its licence, credit line, sources and method address inside. Pure: no files, no
 // clock. Outlet icon images, article text and raw registry payloads are never in it.
+import type { ExportedCard } from "./background";
 import type { Export, ExportedClaim, ExportedTrialFacts } from "./export";
 
 /** The licence's name as LICENSE-DATA gives it. */
@@ -20,10 +21,22 @@ export interface OpenDataHeader {
   generated_at: string;
   last_checked_at: string | null;
   preview: boolean;
+  /** The sources of the background cards in the file, each with the credit it asks for. */
+  card_sources: { name: string; title: string; credit: string; licence: string; url: string }[];
+  /** Sources whose cards the claim pages show and this file leaves out, and why. */
+  left_out: { source: string; licence: string; reason: string }[];
 }
 
+/** A background card as the file holds it: never the definition's source text altered. */
+export type OpenCard = Omit<ExportedCard, "decided_by">;
+
 export interface OpenData extends OpenDataHeader {
-  claims: Omit<ExportedClaim, "failure_flags">[];
+  claims: (Omit<ExportedClaim, "failure_flags" | "background"> & { background: OpenCard[] })[];
+}
+
+/** Why a source's cards are not in the file. */
+export function leftOutReason(licence: string): string {
+  return `Its licence (${licence}) does not allow its material to be offered under this file’s licence.`;
 }
 
 // Field by field, so that a fact added to the export reaches the file only when it is
@@ -78,10 +91,26 @@ export function openData(
   credit: string,
   method: string,
 ): OpenData {
+  // A card is in the file only when its source's licence allows it to be offered under
+  // the file's own. Openspec open-data: "Background cards in the download".
+  const cardSources = data.card_sources ?? [];
+  const allowed = new Set(
+    cardSources.filter((source) => source.in_data_file).map((source) => source.name),
+  );
   return {
     licence,
     credit,
     sources: data.sources.map(({ name, url }) => ({ name, url })),
+    card_sources: cardSources
+      .filter((source) => source.in_data_file)
+      .map(({ name, title, credit, licence, url }) => ({ name, title, credit, licence, url })),
+    left_out: cardSources
+      .filter((source) => !source.in_data_file)
+      .map((source) => ({
+        source: source.title,
+        licence: source.licence,
+        reason: leftOutReason(source.licence),
+      })),
     method,
     generated_at: data.generated_at,
     last_checked_at: data.last_checked_at,
@@ -146,6 +175,22 @@ export function openData(
         reading: match.reading,
         summary: match.summary,
       })),
+      // Each background card the claim page shows, in its source's own words.
+      background: (claim.background ?? [])
+        .filter((card) => allowed.has(card.source))
+        .map((card) => ({
+          kind: card.kind,
+          fit: card.fit,
+          label: card.label,
+          definition: card.definition,
+          url: card.url,
+          source: card.source,
+          external_id: card.external_id,
+          version: card.version,
+          score: card.score,
+          reasons: card.reasons.map((reason) => ({ ...reason })),
+          read_at: card.read_at,
+        })),
       checked_by_person: claim.checked_by_person,
     })),
   };

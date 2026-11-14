@@ -186,6 +186,28 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
     An entry does not say where a trial takes place or who may take part in it.
   </p>
 
+  <h2 class="bar" id="background-on-a-claims-terms">Background on a claim’s terms</h2>
+  <p>
+    Some claim pages end with a short section called Background. It says what the claim’s
+    condition and its treatment are, in the words of an open vocabulary that libraries use to
+    index medical research. The definition is the vocabulary publisher’s, shown unchanged and
+    marked as theirs, with the edition it came from and the date the record was read. The site
+    writes no explanation of a condition or a treatment of its own.
+  </p>
+  <p>
+    A term becomes a candidate by fixed rules only: the trial registry files at least half of the
+    claim’s trials under it, or its label is the same as a name the claim uses. An AI model then
+    reads each candidate beside the claim and answers one question: is this term the claim’s
+    condition (or treatment), a broader term, or something else. The score on a card is how sure
+    that answer was. A term scored high is shown, one read as something else is not, and a card
+    says when its term is broader than the claim’s. The reasons a term was a candidate are one
+    press away. A wrong card is removed by a person.
+  </p>
+  <p>
+    A card describes a term. It is not about a claim’s evidence, it never changes a status, and it
+    is not medical advice. A claim whose terms are in no vocabulary has no Background section.
+  </p>
+
   <h2 class="bar" id="what-this-site-never-says">What this site never says</h2>
   <p class="plain">
     This site gives no verdict on a claim, a researcher, a company or a news outlet. It gives no

@@ -25,6 +25,8 @@ export const CLAIM_FIELDS: Record<string, string> = {
   events: "Each dated record, with its kind, source and link.",
   trials: "Each trial once, with what its registry record states and when that was read.",
   matches: "Each registry record matched to the claim, with its score and whether it counts.",
+  background:
+    "Each background card: a vocabulary term for the condition or the treatment, its definition in its source's words, its source and edition, its score and when its record was read.",
   checked_by_person: "Whether a person has reviewed the page.",
 };
 
