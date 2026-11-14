@@ -52,7 +52,11 @@ Observed 2026-11-14 on the public record of NCT01596231 (one request, generic cl
 
 **Free-text descriptions are never read.** Group descriptions, outcome descriptions and population descriptions are skipped by the function, not filtered afterwards, so the export cannot carry a sponsor's conclusion by accident. A test asserts the fixture's "significantly reduced" sentence is absent from the export.
 
-**An individual sponsor's name is dropped.** The registry class `INDIV` means the lead sponsor is a person. The site holds no personal data beyond subscriber emails, so the kind is exported and the name is not.
+**An individual sponsor's name is dropped.** The site holds no personal data beyond subscriber emails, so when the lead sponsor is a person the kind `individual` is exported and the name is not. The class `INDIV` alone does not catch this: of fourteen records with results read on 2026-11-14, three had a person as lead sponsor, all classed `OTHER`, and each had `responsibleParty.type` of `SPONSOR_INVESTIGATOR` with the same name. A sponsor is therefore a person when the class is `INDIV` or the responsible party is a sponsor-investigator. The investigator's affiliation is not carried either: it describes the person.
+
+**An "active comparator" arm counts only beside an experimental arm.** Both recorded placebo-controlled fixtures (NCT02586935, NCT01596231) class the arm that receives the treatment as `ACTIVE_COMPARATOR`, with no `EXPERIMENTAL` arm. Read literally, each would say the trial compared the treatment with "another treatment". The active comparator is carried only when the record also has an experimental arm; otherwise it is left out, which under-states and never mis-states.
+
+**A comparison posted without a p value is still carried.** Two of the fourteen records post a comparison with an estimate and no p value. The comparison is listed with its groups and an absent p value, and the site says none was given; the estimate itself is not carried.
 
 **Event confidence is exported as a number on every event.** The site shows it only below 1. The test that forbids the word "confidence" in the export is rewritten to forbid `raw_payload`, `review_state` and `reviewed_by` only; the reason is recorded in the test's name.
 
@@ -68,7 +72,7 @@ Observed 2026-11-14 on the public record of NCT01596231 (one request, generic cl
 - [A reader takes a p value below 0.05 as proof] → the page states the numbers are as posted by the sponsor, adds no label, and links the record. The method page explains what a posted result is and is not.
 - [A registry title or outcome measure itself carries promotional wording] → it is the registry's text, attributed and linked; the site's own labels are the ones checked for verdicts.
 - [Thirty-three trials make the page long] → five shown, the rest in one disclosure, ordered furthest phase first.
-- [The export grows] → an estimate, not a measurement: about one kilobyte per trial, so 221 approved trials would add about a quarter of a megabyte to a 949-kilobyte file. Measured in task 3.4.
+- [The export grows] → measured on 2026-11-14 (`docs/lookup.md`): 222 trials took the export from 948,864 to 1,365,759 bytes, 44% more and above the quarter of a megabyte first estimated. The site build and the open data file both carry it; no page loads the export.
 - [Registry fields are missing or oddly shaped on old records] → every read is tolerant: a missing module yields an absent fact, never an error, and the function is run over every stored record in task 3.4 before release.
 
 ## Migration Plan

@@ -64,6 +64,10 @@ A trial's facts SHALL state, as codes, the kind of study, whether participants w
 - **WHEN** a record states random allocation, double masking and a placebo arm
 - **THEN** the facts carry the codes for randomised, double masking and a placebo comparator
 
+#### Scenario: Treatment arm classed as an active comparator
+- **WHEN** a record has a placebo arm and one other arm, which it classes as an active comparator, and no experimental arm
+- **THEN** the facts carry a placebo comparator and no active-treatment comparator
+
 #### Scenario: Single-arm trial
 - **WHEN** a record has one arm and states no allocation
 - **THEN** the facts carry no allocation and no comparator
@@ -76,7 +80,7 @@ A trial's facts SHALL state whether the record accepts healthy volunteers and wh
 - **THEN** the facts state healthy volunteers and the adult age group
 
 ### Requirement: Sponsor
-A trial's facts SHALL state the lead sponsor's name and its kind as the registry classes it. When the registry classes the lead sponsor as an individual, the facts SHALL state the kind and SHALL NOT state the name.
+A trial's facts SHALL state the lead sponsor's name and its kind as the registry classes it. When the lead sponsor is a person, the facts SHALL state the kind as individual and SHALL NOT state the name. The lead sponsor is a person when the registry classes it as an individual or when the record's responsible party is a sponsor-investigator.
 
 #### Scenario: Industry sponsor
 - **WHEN** a record's lead sponsor is a company the registry classes as industry
@@ -84,6 +88,10 @@ A trial's facts SHALL state the lead sponsor's name and its kind as the registry
 
 #### Scenario: Sponsor who is a person
 - **WHEN** a record's lead sponsor is classed as an individual
+- **THEN** the facts state that the sponsor is an individual and give no name
+
+#### Scenario: Sponsor-investigator classed as another kind
+- **WHEN** a record's lead sponsor carries a person's name, is classed as "other", and the responsible party is a sponsor-investigator
 - **THEN** the facts state that the sponsor is an individual and give no name
 
 ### Requirement: Planned primary outcomes

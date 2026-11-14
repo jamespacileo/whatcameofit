@@ -3,7 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: Trials on the claim page
-A claim page SHALL list each of the claim's trials once, under its own heading, with its registry identifier linked to the record, phase, state, the facts the export carries for it, and the score of its match. Trials SHALL be ordered furthest phase first. Each trial event in the timetable SHALL lead to its trial. A claim with no trial SHALL show no such section.
+A claim page SHALL list each of the claim's trials once, under its own heading, with its registry identifier linked to the record, phase, state, the facts the export carries for it, and the score of its match. Trials SHALL be ordered furthest phase first and, within a phase, those with posted results first. Each trial event in the timetable SHALL lead to its trial. A claim with no trial SHALL show no such section.
 
 #### Scenario: Claim with one completed Phase 2 trial
 - **WHEN** a reader opens a claim whose one trial enrolled 83 participants, was randomised and has posted results
@@ -23,6 +23,10 @@ When a claim has more than five trials, the claim page SHALL show the first five
 #### Scenario: Claim with thirty-three trials
 - **WHEN** a reader opens a claim with thirty-three trials
 - **THEN** five are shown, furthest phase first, and the other twenty-eight open on request
+
+#### Scenario: Posted results among the trials not shown
+- **WHEN** three of the twenty-eight trials not shown have posted results
+- **THEN** the control that opens them says that three have results posted
 
 ### Requirement: The claim page counts its trials
 A claim page for a claim with at least one trial SHALL state, among its facts, how many trials are on record and the largest number of participants any of them states, with whether that number is actual or planned. The statement SHALL be a count and SHALL NOT add participants across trials.
