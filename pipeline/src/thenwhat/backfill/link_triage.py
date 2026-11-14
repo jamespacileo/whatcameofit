@@ -14,6 +14,7 @@ from typing import Any
 from sqlalchemy import ColumnElement, and_, case, false, func, select
 from sqlalchemy.orm import Session
 
+from thenwhat.backfill.errors import ModelUnreachable
 from thenwhat.backfill.steps import MODEL, Failed, ModelSpend
 from thenwhat.db.models import DecisionLog, LinkLead
 from thenwhat.decide.core import Backend, DecisionFailed
@@ -87,6 +88,17 @@ def standings(
     return Counter({Standing(name): number for name, number in rows})
 
 
+def _stop_if_unreachable(failure: DecisionFailed) -> None:
+    """End the run when the model could not be reached. Found on the first real run: a
+    minute without a connection, met by four workers, used up three attempts each for
+    449 leads that nothing was wrong with."""
+    if failure.unreachable:
+        raise ModelUnreachable(
+            f"The model could not be reached: {failure}. Nothing was scored by this call; "
+            "the leads are still due. Run the step again."
+        )
+
+
 class DecisionClient:
     """What a step that asks the decision backend is given. The backend is made for the
     session at hand, because it logs each decision and its cost there."""
@@ -147,6 +159,7 @@ class LinkTriage:
                 now=self._time.now(),
             )
         except DecisionFailed as failure:
+            _stop_if_unreachable(failure)
             session.flush()
             return Failed(str(failure))
         return self._keep(record, score)
@@ -166,6 +179,7 @@ class LinkTriage:
                 now=now,
             )
         except DecisionFailed as failure:
+            _stop_if_unreachable(failure)
             session.flush()
             if len(records) == 1:
                 return [Failed(str(failure))]

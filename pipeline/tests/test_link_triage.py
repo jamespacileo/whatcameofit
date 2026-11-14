@@ -30,6 +30,7 @@ from thenwhat.decide.steps import (
     TRIAGE_OPTIONS,
 )
 from thenwhat.domain import ScreenOutcome, WorkOutcome
+from thenwhat.llm.errors import LlmCallFailed
 
 NOW = datetime(2026, 11, 20, 9, 0, tzinfo=UTC)
 WHEN = datetime(2019, 5, 4, 10, 30, tzinfo=UTC)
@@ -194,6 +195,29 @@ def test_a_lead_the_backend_gives_no_answer_for_has_no_score(session: Session):
         )
     ).one()
     assert entry.outcome is WorkOutcome.FAILED and entry.error
+
+
+def test_a_model_that_cannot_be_reached_stops_the_run_and_uses_no_attempt(session: Session):
+    """Scenario: Ceiling reached part way, for a call that never got through. Found on
+    the first real run, where a minute without a connection used up 449 leads' attempts."""
+    add_leads(session, [f"A trial result {n}" for n in range(45)])
+
+    class Offline(Headlines):
+        def answer_many(self, step, intro, question, items, options):
+            if len(self.calls) >= 1:
+                raise LlmCallFailed("The decision call failed (ConnectError).")
+            return super().answer_many(step, intro, question, items, options)
+
+    report = triage(session, Offline(session))
+
+    assert (report.done, report.failed, report.remaining_due) == (20, 0, 25)
+    assert "could not be reached" in (report.stopped or "")
+    entries = session.scalars(select(WorkEntry).where(WorkEntry.step == "link_triage")).all()
+    assert len(entries) == 20 and all(entry.attempts == 1 for entry in entries)
+
+    again = triage(session, Headlines(session))
+
+    assert (again.done, again.remaining_due) == (25, 0)
 
 
 # --- thresholds --------------------------------------------------------------------

@@ -69,12 +69,24 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 
 ## 8. First runs
 
-- [ ] 8.1 Load the Hacker News file and run screening on a separate database, as the ledger change's first run did; verify the report's counts are recorded in this change, with the unlisted domains shown to the operator
-- [ ] 8.2 Run `backfill plan` for triage and record the estimated cost beside the month's remaining ceiling; verify the operator has seen the figure before triage runs
-- [ ] 8.3 Run triage, draw a sample of 200 and give it to the operator to label; verify the evaluation report's figures are recorded in this change
+- [x] 8.1 Load the Hacker News file and run screening on a separate database, as the ledger change's first run did; verify the report's counts are recorded in this change, with the unlisted domains shown to the operator
+- [x] 8.2 Run `backfill plan` for triage and record the estimated cost beside the month's remaining ceiling; verify the operator has seen the figure before triage runs
+- [ ] 8.3 (triage has run on every lead in scope; the sample of 200 has not been drawn for the operator and nothing is labelled) Run triage, draw a sample of 200 and give it to the operator to label; verify the evaluation report's figures are recorded in this change
 - [ ] 8.4 If the operator asks for it, reword the triage question, raise the version, run again and evaluate again; verify each round's figures are recorded here with what was changed
 - [ ] 8.5 Load, screen and triage the chosen Reddit communities, and have the operator label a further sample; verify the report's platform split holds figures for both platforms
 - [ ] 8.6 After the operator sets the thresholds, read 200 leads and record the funnel here; verify the operator is shown the funnel and the claims made, and that no further reading runs before their decision
+
+## First run: what was done on 2026-11-14 (8.1, 8.2, and the triage of 8.3)
+
+- **Where:** a database of its own, `thenwhat_links`, on the Compose Postgres server, with the 43,320 registry trials copied read-only from `thenwhat_backfill`. It holds no claims, so no lead could be already tracked or linked to a claim. The operator's `thenwhat` database was not touched.
+- **Files:** the twelve monthly Hacker News files of 2019, 819 MB, downloaded with the operator's go-ahead to `~/Library/Caches/thenwhat/datasets/hackernews/data/2019/`. No Reddit file.
+- **Load (8.1):** 370,531 stories read; 242,705 link leads, about 20,000 a month; a month loads in about 21 seconds. About 6,000 stories a month are skipped as removed or deleted and 1,500 as having no link.
+- **Screening (8.1):** 35,158 leads in scope (14%): 34,803 general news, 65 health or clinical trade press, 290 press release. 207,547 are on unlisted outlets. The unlisted domains with the most leads are medium.com (12,227), github.com (10,796), youtube.com (6,038), en.wikipedia.org (4,025), twitter.com (3,391), techcrunch.com, theverge.com, arstechnica.com, arxiv.org (2,173), dev.to, nature.com (1,324), reddit.com, zdnet.com and phys.org (1,036). Of these, phys.org and nature.com's news pages are the candidates for the outlet list. Screening every lead takes about six minutes.
+- **Two faults the run found, both fixed with a test:** a run kept every processed record in the list it excludes from each query and stopped at 66,000 leads on the database's limit of 65,535 parameters; and a trial named by its own disease was linked to any headline holding that one word. With the second fixed (`link_screen` version 2), leads linked to a registry trial fell from 157 to 35. A look at those 35 shows mostly sound links (ketamine and esketamine for depression, GV-971, MDMA for PTSD, psilocybin) and a few wrong ones from trials the registry names with a common word ("cell", "Diet", "Test", "Weight loss").
+- **Plan (8.2):** the plan estimated triage at 0.12 US dollars. A live run of 200 leads showed about 300 input tokens a lead where the estimate assumed 35, so the true figure was about 1.06 US dollars. The operator was told the corrected figure as the full run began, not before deciding on it. The estimate is corrected in the code.
+- **Triage (8.3, first half):** all 35,158 leads in scope scored through the Decisions API in about four minutes with four workers: 1,821 calls, 10,619,023 input tokens, 1.06 US dollars. A minute without a connection failed 2,839 questions and, because each of four workers retried the same leads, used up all three attempts of 449 leads; they were scored on a further run with a higher attempt limit. A model that cannot be reached now stops the run with its leads still due.
+- **Scores:** 34,460 leads (98%) are under 0.1. The other tenths hold 112, 74, 55, 45, 52, 43, 40, 42 and, from 0.9, 235. So 317 leads are at or above 0.7. Every tenth holds at least 20 leads, so a sample of 200 can take 20 from each.
+- **Not measured:** nothing is labelled, so precision and recall are unknown. A look at a few dozen titles suggests the high scores are treatment reports and that low-scored titles holding a word such as "drug" or "trial" are mostly pricing, policy and court stories, with a few arguable misses. That is an impression, not a figure.
 
 ## Workflow follow-up
 
