@@ -4,6 +4,8 @@ test_news_search.py."""
 
 from collections.abc import Generator
 from contextlib import contextmanager
+from datetime import UTC, datetime
+from decimal import Decimal
 
 import httpx
 import pytest
@@ -11,14 +13,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner, Result
 
-from backfill_support import NOW, add_trials, same_session
+from backfill_support import NOW, ModelStep, QuietStep, add_trials, same_session
 from thenwhat.backfill.allowance import Allowances
 from thenwhat.backfill.mediacloud import Story
 from thenwhat.backfill.news_search import query_for
 from thenwhat.cli import app
 from thenwhat.cli.backfill import _hours
 from thenwhat.config import SourceAllowance
-from thenwhat.db.models import ArticleLead, RegistryTrial, WorkEntry
+from thenwhat.db.models import ArticleLead, LlmUsage, RegistryTrial, WorkEntry
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 
 
@@ -113,6 +115,97 @@ def test_plan_says_how_many_records_the_allowance_left_covers(
 
     assert "the allowance left covers 4 of the 10 due records" in result.output
     assert "the rest needs 2 more periods of 168 hours" in result.output
+
+
+def test_a_step_that_asks_no_source_is_planned_and_run_without_an_allowance(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    """Scenario: Planning a step that only reads the database"""
+    step = QuietStep("quiet")
+    monkeypatch.setattr("thenwhat.cli.backfill.registered_steps", lambda settings: [step])
+    add_trials(session, 5)
+
+    plan = run("plan")
+    ran = run("run", "quiet")
+
+    assert plan.exit_code == 0, plan.output
+    assert "due: 5" in plan.output
+    assert "asks no source: the due records need 0 requests" in plan.output
+    assert "hours" not in plan.output and "allowance" not in plan.output
+    assert ran.exit_code == 0, ran.output
+    assert "quiet: 5 done, 0 found nothing, 0 failed; 0 still due." in ran.output
+
+
+def model_step(monkeypatch: pytest.MonkeyPatch, usd_per_mtok: str | None) -> ModelStep:
+    """A registered step that calls the decision backend, priced as the Decisions API is."""
+    step = ModelStep()
+    monkeypatch.setattr("thenwhat.cli.backfill.registered_steps", lambda settings: [step])
+    monkeypatch.setenv("DECISION_BACKEND", "openai-decisions")
+    monkeypatch.setenv("LLM_MONTHLY_BUDGET_USD", "13")
+    if usd_per_mtok is None:
+        monkeypatch.delenv("DECISIONS_INPUT_USD_PER_MTOK", raising=False)
+    else:
+        monkeypatch.setenv("DECISIONS_INPUT_USD_PER_MTOK", usd_per_mtok)
+    return step
+
+
+def spend(session: Session, dollars: str) -> None:
+    session.add(
+        LlmUsage(
+            purpose="synthetic",
+            model="synthetic-model",
+            input_tokens=1,
+            output_tokens=0,
+            cost_usd=Decimal(dollars),
+            created_at=datetime.now(UTC),
+        )
+    )
+    session.flush()
+
+
+def test_plan_gives_a_model_steps_cost_beside_the_ceiling_left(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    """Scenario: Planning a model step"""
+    model_step(monkeypatch, "100")
+    add_trials(session, 100)
+    spend(session, "10")
+
+    result = run("plan")
+
+    assert result.exit_code == 0, result.output
+    # 100 records at 40 input tokens are 4,000 tokens: $0.40 at $100 a million.
+    assert "calls a model: the due records need about $0.40" in result.output
+    assert "$3.00 of the month's $13.00 ceiling is left, which covers them all" in result.output
+
+
+def test_plan_says_how_many_records_the_ceiling_left_covers(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    """Scenario: Planning a model step, with more work than the ceiling has left"""
+    model_step(monkeypatch, "1000")
+    add_trials(session, 100)
+    spend(session, "10")
+
+    result = run("plan")
+
+    # A record is $0.04, so the due records need $4.00 and the $3.00 left pays for 75.
+    assert "need about $4.00" in result.output
+    assert "which covers 75 of the 100 due records" in result.output
+
+
+def test_plan_gives_no_cost_while_the_price_is_not_configured(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    """Scenario: Prices not configured"""
+    model_step(monkeypatch, None)
+    add_trials(session, 100)
+
+    result = run("plan")
+
+    assert result.exit_code == 0, result.output
+    assert "no cost can be given, DECISIONS_INPUT_USD_PER_MTOK is not set" in result.output
+    assert "$" not in result.output
 
 
 def test_a_large_job_is_stated_in_hours():

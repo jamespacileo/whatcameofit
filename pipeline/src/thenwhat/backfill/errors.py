@@ -26,5 +26,9 @@ class AllowanceUsedUp(SourceStop):
     """The source's allowance for the period is spent."""
 
 
+class SpendCeilingReached(SourceStop):
+    """The month's recorded model cost has reached the ceiling. No call was made."""
+
+
 class SourcePaused(SourceStop):
     """The source said "too many requests" and is not asked until the pause has passed."""

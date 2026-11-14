@@ -10,11 +10,11 @@
 
 ## 2. Ledger additions
 
-- [ ] 2.1 Let a step declare that it asks no source, and make the plan and the run skip the allowance for it; verify a test plans and runs such a step with no allowance configured and no request counted
-- [ ] 2.2 Let a step declare model spend with estimated tokens per record, and add the estimated cost, the ceiling remaining and the records it covers to `backfill plan`; verify a test checks the figures against seeded `llm_usage` rows, and one checks the refusal when prices are not configured
-- [ ] 2.3 Stop a model step's run when the ceiling is reached, leaving records due with attempts unchanged; verify a test reaches the ceiling part way and a restart in the same month processes nothing
-- [ ] 2.4 Let a step declare a batch size: lock a batch with skip-locked, run it in one transaction, and on failure process its records one at a time; verify tests cover five batches over 100 records, one bad record in a batch of twenty, and two sessions over 200 records with each processed once
-- [ ] 2.5 Verify the existing ledger tests and the news search step pass unchanged
+- [x] 2.1 Let a step declare that it asks no source, and make the plan and the run skip the allowance for it; verify a test plans and runs such a step with no allowance configured and no request counted
+- [x] 2.2 Let a step declare model spend with estimated tokens per record, and add the estimated cost, the ceiling remaining and the records it covers to `backfill plan`; verify a test checks the figures against seeded `llm_usage` rows, and one checks the refusal when prices are not configured
+- [x] 2.3 Stop a model step's run when the ceiling is reached, leaving records due with attempts unchanged; verify a test reaches the ceiling part way and a restart in the same month processes nothing
+- [x] 2.4 Let a step declare a batch size: lock a batch with skip-locked, run it in one transaction, and on failure process its records one at a time; verify tests cover five batches over 100 records, one bad record in a batch of twenty, and two sessions over 200 records with each processed once
+- [x] 2.5 Verify the existing ledger tests and the news search step pass unchanged
 
 ## 3. Link leads
 

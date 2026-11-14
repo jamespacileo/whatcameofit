@@ -4,6 +4,7 @@ from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Annotated, Any
 
 import typer
@@ -22,7 +23,23 @@ from thenwhat.backfill.registry_load import (
     load_trials,
 )
 from thenwhat.backfill.runner import RunReport, run_step
-from thenwhat.backfill.steps import Step, by_name, find_step
+from thenwhat.backfill.spend import (
+    PricesNotSet,
+    ceiling_check,
+    cost_of,
+    left_this_month,
+    prices_for,
+    records_covered,
+)
+from thenwhat.backfill.steps import (
+    NO_SOURCE,
+    ModelSpend,
+    Step,
+    asks_a_source,
+    by_name,
+    find_step,
+    model_spend_of,
+)
 from thenwhat.cli import session as cli_session
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
@@ -76,9 +93,18 @@ def make_registry(session: Session, settings: Settings) -> TrialList:
     return ClinicalTrials(session, contact_email=settings.contact_email)
 
 
+class NoClient:
+    """What a step that asks no source is given: it only has to count, and counts nothing."""
+
+    def __init__(self) -> None:
+        self.requests_made = 0
+
+
 def make_client(step: Step, settings: Settings, allowances: Allowances) -> Any:
     """What a step asks its source through. Refuses here, before any record is
     touched, when the source could not be asked at all."""
+    if step.source == NO_SOURCE:
+        return NoClient()
     if step.source == MediaCloud.name:
         client = MediaCloud(
             api_key=settings.mediacloud_api_key,
@@ -111,6 +137,30 @@ def _allowance_line(source: str, allowance: SourceAllowance, status: AllowanceSt
     return line
 
 
+def _dollars(amount: Decimal) -> str:
+    return f"${amount.quantize(Decimal('0.01'))}"
+
+
+def _spend_line(session: Session, settings: Settings, spend: ModelSpend, due: int) -> str:
+    """What a model step's due records would cost beside what is left of the month's
+    ceiling. No cost is given while a price is not configured."""
+    try:
+        prices = prices_for(settings, spend.door)
+    except PricesNotSet as missing:
+        return f"  calls a model: no cost can be given, {missing}"
+    cost = cost_of(spend, prices, due)
+    left = left_this_month(session, settings, datetime.now(UTC))
+    line = (
+        f"  calls a model: the due records need about {_dollars(cost)}; "
+        f"{_dollars(left)} of the month's {_dollars(settings.llm_monthly_budget_usd)} "
+        "ceiling is left"
+    )
+    covered = records_covered(spend, prices, left)
+    if covered is None or covered >= due:
+        return f"{line}, which covers them all"
+    return f"{line}, which covers {covered:,} of the {due:,} due records"
+
+
 @backfill_app.command("steps")
 def steps_command() -> None:
     """List the steps a backfill can run."""
@@ -136,9 +186,6 @@ def plan_command() -> None:
             for step in steps_for(settings):
                 counts = count(session, step, settings.backfill_attempt_limit)
                 total = session.scalar(select(func.count()).select_from(step.model)) or 0
-                allowance = allowances.of(step.source)
-                status = allowances.status(session, step.source)
-                requests = counts.due * step.requests_per_record
                 out.print(f"{step.name} (version {step.version})", markup=False)
                 out.print(
                     f"  in scope: {counts.in_scope:,} of {total:,} {step.record_kind} records"
@@ -146,22 +193,31 @@ def plan_command() -> None:
                     f"  failed: {counts.failed:,}  due: {counts.due:,}",
                     markup=False,
                 )
-                out.print(
-                    f"  the due records need {requests:,} requests, "
-                    f"{_hours(requests, allowance)} at the source's rate",
-                    markup=False,
-                )
-                out.print(_allowance_line(step.source, allowance, status), markup=False)
-                if requests > status.left:
-                    covered = status.left // step.requests_per_record
-                    periods = -(-(requests - status.left) // allowance.requests)
+                if asks_a_source(step):
+                    allowance = allowances.of(step.source)
+                    status = allowances.status(session, step.source)
+                    requests = counts.due * step.requests_per_record
                     out.print(
-                        f"  the allowance left covers {covered:,} of the {counts.due:,} due "
-                        f"records; the rest needs {periods:,} more "
-                        f"{'period' if periods == 1 else 'periods'} of "
-                        f"{allowance.period_hours:g} hours",
+                        f"  the due records need {requests:,} requests, "
+                        f"{_hours(requests, allowance)} at the source's rate",
                         markup=False,
                     )
+                    out.print(_allowance_line(step.source, allowance, status), markup=False)
+                    if requests > status.left:
+                        covered = status.left // step.requests_per_record
+                        periods = -(-(requests - status.left) // allowance.requests)
+                        out.print(
+                            f"  the allowance left covers {covered:,} of the {counts.due:,} due "
+                            f"records; the rest needs {periods:,} more "
+                            f"{'period' if periods == 1 else 'periods'} of "
+                            f"{allowance.period_hours:g} hours",
+                            markup=False,
+                        )
+                else:
+                    out.print("  asks no source: the due records need 0 requests", markup=False)
+                spend = model_spend_of(step)
+                if spend is not None:
+                    out.print(_spend_line(session, settings, spend, counts.due), markup=False)
                 if counts.needs_attention:
                     out.print(
                         f"  {counts.needs_attention:,} failed "
@@ -203,18 +259,26 @@ def run_command(
     with refusals():
         step = find_step(steps_for(settings), step_name)
         allowances = make_allowances(settings)
-        allowances.of(step.source)
+        if asks_a_source(step):
+            allowances.of(step.source)
         clients = [make_client(step, settings, allowances) for _ in range(workers)]
         share = None if limit is None else -(-limit // workers)
+
+        def now() -> datetime:
+            return datetime.now(UTC)
+
+        # A step that calls a model stops when the month's ceiling is reached.
+        before_call = ceiling_check(settings, now) if model_spend_of(step) else None
 
         def work(client: Any) -> RunReport:
             return run_step(
                 open_session,
                 step,
                 client,
-                now=lambda: datetime.now(UTC),
+                now=now,
                 attempt_limit=settings.backfill_attempt_limit,
                 limit=share,
+                before_call=before_call,
             )
 
         if workers == 1:

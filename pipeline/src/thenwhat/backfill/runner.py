@@ -5,15 +5,19 @@ from collections.abc import Callable
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any, cast
 
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.errors import SourceStop
 from thenwhat.backfill.ledger import count, due_records, record_outcome
-from thenwhat.backfill.steps import CountingClient, Step
+from thenwhat.backfill.steps import BatchStep, CountingClient, Step, batch_size_of
 from thenwhat.domain import WorkOutcome
 
 OpenSession = Callable[[], AbstractContextManager[Session]]
+# A record's id, its outcome and its error. The outcome is None for a record that
+# another run finished first.
+Processed = tuple[int, WorkOutcome | None, str | None]
 
 
 @dataclass(slots=True)
@@ -40,7 +44,7 @@ def process_next(
     now: datetime,
     attempt_limit: int,
     skip: set[int],
-) -> tuple[int, WorkOutcome | None, str | None] | None:
+) -> Processed | None:
     """Process one due record that no other run is holding, in the caller's transaction.
 
     The record's row is locked until the transaction ends, and other runs skip locked
@@ -67,6 +71,14 @@ def process_next(
     )
     if still_due is None:
         return record.id, None, None
+    return _process_record(session, step, record, client, now)
+
+
+def _process_record(
+    session: Session, step: Step, record: Any, client: CountingClient, now: datetime
+) -> Processed:
+    """Run the step for one record whose row is held, and write its entry. A failure
+    undoes what the step wrote for it and is recorded in the entry."""
     before = client.requests_made
     error: str | None = None
     try:
@@ -89,6 +101,66 @@ def process_next(
     return record.id, outcome, error
 
 
+def process_batch(
+    session: Session,
+    step: Step,
+    client: CountingClient,
+    *,
+    now: datetime,
+    attempt_limit: int,
+    skip: set[int],
+    size: int,
+) -> list[Processed] | None:
+    """Process up to `size` due records in one call of the step, in the caller's
+    transaction, so their results and entries are saved together or not at all.
+
+    The records' rows are held as one record's is. When the call fails, whatever it
+    wrote is undone and the same records are processed one at a time, so that only a
+    record that fails alone has a failure recorded. Returns what became of each record,
+    or None when nothing is due.
+    """
+    query = due_records(step, attempt_limit)
+    if skip:
+        query = query.where(step.model.id.not_in(skip))
+    records = list(
+        session.scalars(query.limit(size).with_for_update(skip_locked=True, of=step.model))
+    )
+    if not records:
+        return None
+    still_due = set(
+        session.scalars(
+            due_records(step, attempt_limit)
+            .where(step.model.id.in_([record.id for record in records]))
+            .with_only_columns(step.model.id)
+        )
+    )
+    held = [record for record in records if record.id in still_due]
+    processed: list[Processed] = [
+        (record.id, None, None) for record in records if record.id not in still_due
+    ]
+    if not held:
+        return processed
+    before = client.requests_made
+    try:
+        with session.begin_nested():
+            outcomes = list(cast(BatchStep, step).run_many(session, held, client))
+            if len(outcomes) != len(held):
+                raise ValueError(f"The step answered for {len(outcomes)} of {len(held)} records.")
+    except SourceStop:
+        raise
+    except Exception:  # the call failed as a whole: find the record that fails alone
+        processed.extend(_process_record(session, step, record, client, now) for record in held)
+        return processed
+    used = client.requests_made - before
+    for place, (record, outcome) in enumerate(zip(held, outcomes, strict=True)):
+        # A call's requests cannot be split between its records: the first carries them.
+        record_outcome(
+            session, step, record, outcome, requests_used=used if place == 0 else 0, now=now
+        )
+        processed.append((record.id, outcome, None))
+    return processed
+
+
 def run_step(
     open_session: OpenSession,
     step: Step,
@@ -97,35 +169,56 @@ def run_step(
     now: Callable[[], datetime],
     attempt_limit: int,
     limit: int | None = None,
+    before_call: Callable[[Session], None] | None = None,
 ) -> RunReport:
     """Process due records until none is due, the limit is reached or the source may
-    not be asked. Each record is its own transaction, so a run can be stopped anywhere
-    and started again without repeating a finished record."""
+    not be asked. Each call of the step is its own transaction, so a run can be stopped
+    anywhere and started again without repeating a finished record.
+
+    `before_call` runs ahead of each call and may raise a `SourceStop`, which ends the
+    run with the records still due: a model step's spend ceiling is checked this way.
+    """
     report = RunReport(errors=[])
     tried: set[int] = set()
+    size = batch_size_of(step)
     while limit is None or report.processed < limit:
         try:
             with open_session() as session:
-                processed = process_next(
-                    session, step, client, now=now(), attempt_limit=attempt_limit, skip=tried
-                )
+                if before_call is not None:
+                    before_call(session)
+                if size == 1:
+                    one = process_next(
+                        session, step, client, now=now(), attempt_limit=attempt_limit, skip=tried
+                    )
+                    processed = None if one is None else [one]
+                else:
+                    room = size if limit is None else min(size, limit - report.processed)
+                    processed = process_batch(
+                        session,
+                        step,
+                        client,
+                        now=now(),
+                        attempt_limit=attempt_limit,
+                        skip=tried,
+                        size=room,
+                    )
         except SourceStop as stop:
             report.stopped = str(stop)
             break
         if processed is None:
             break
-        record_id, outcome, error = processed
-        tried.add(record_id)
-        if outcome is None:
-            continue
-        if outcome is WorkOutcome.DONE:
-            report.done += 1
-        elif outcome is WorkOutcome.NOTHING_FOUND:
-            report.nothing_found += 1
-        else:
-            report.failed += 1
-            if error and report.errors is not None:
-                report.errors.append(error)
+        for record_id, outcome, error in processed:
+            tried.add(record_id)
+            if outcome is None:
+                continue
+            if outcome is WorkOutcome.DONE:
+                report.done += 1
+            elif outcome is WorkOutcome.NOTHING_FOUND:
+                report.nothing_found += 1
+            else:
+                report.failed += 1
+                if error and report.errors is not None:
+                    report.errors.append(error)
     with open_session() as session:
         report.remaining_due = count(session, step, attempt_limit).due
     return report
