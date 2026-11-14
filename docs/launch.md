@@ -44,6 +44,7 @@ Go where the question "whatever happened to that?" is already being asked. Answe
 - **People who cover research integrity.** Writers and outlets concerned with how science is reported, retractions and trial transparency. Send the method page and the open data, not a pitch.
 - **Journalists who cover health.** Offer the embed: a status box they can place under their own follow-up story.
 - **Clinicians and researchers on social networks**, who are asked "is that cure real?" by patients and relatives. The copyable sentence is made for their replies.
+- **A page made for each of these readers** is the link to put in the message, so the reader lands on a working tool and not on an explanation: `/for/journalists` (find a claim, see its status box at full size, copy the code), `/for/clinicians` (the lookup, with the dated sentence to copy), `/for/researchers` (the data file, its licence and fields). For anyone who asks what the site is or who runs it, send `/about`. For a word a reader questions, send its entry in `/guide`.
 - **Patient organisations**, carefully and late. Only after review is complete for their topic, and with the two notices read out in the message.
 
 ## What to say, and what never to say

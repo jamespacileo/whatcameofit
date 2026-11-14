@@ -1,0 +1,287 @@
+---
+// One guide entry (openspec landing-pages-and-guide): the answer, what the word rests
+// on in the records, what it does not tell the reader, the site's rule for it with
+// claims where it applies today, its sources, and the entries beside it.
+import ArrowLeft from "@lucide/astro/icons/arrow-left";
+import ArrowRight from "@lucide/astro/icons/arrow-right";
+import Base from "../../layouts/Base.astro";
+import ClaimTable from "../../components/ClaimTable.astro";
+import ReportError from "../../components/ReportError.astro";
+import StageTrack from "../../components/StageTrack.astro";
+import { data } from "../../lib/export";
+import { METHOD_SECTIONS, SHELVES, claimsAtWork, neighbours } from "../../lib/guide";
+import { entryAt, entryBody, guide } from "../../lib/guide-entries";
+import { GUIDE_UNCHECKED_NOTE } from "../../lib/notices";
+import { definedTermData } from "../../lib/structured";
+import { formatDate } from "../../lib/timetable";
+
+export function getStaticPaths() {
+  return guide.map((entry) => ({ params: { slug: entry.slug }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const Body = entryBody(entry.slug);
+const shelf = SHELVES.find((shelf) => shelf.id === entry.shelf)!;
+const work = claimsAtWork(entry, data.claims);
+const total = data.claims.length;
+const related = entry.related.map((slug) => entryAt(slug)!);
+const { previous, next } = neighbours(guide, entry);
+const CHECKED_ENTRY = "checked-by-a-person";
+---
+
+<Base
+  title={entry.title}
+  tabTitle={`${entry.title}: what it means`}
+  description={entry.answer}
+  structured={definedTermData(entry)}
+  breadcrumbs={[
+    { name: "Guide", path: "/guide" },
+    { name: entry.title, path: `/guide/${entry.slug}` },
+  ]}
+>
+  <article class="guide-entry">
+    <p class="shelf"><a href={`/guide#${shelf.id}`}>Guide: {shelf.title}</a></p>
+    <h1 class:list={["title", { long: entry.title.length > 34 }]}>{entry.title}</h1>
+    {
+      entry.status && (
+        <p class="standing-line">
+          <StageTrack code={entry.status} ends />
+          {entry.gloss && <span class="gloss">{entry.gloss}</span>}
+        </p>
+      )
+    }
+    <p class="lede answer">{entry.answer}</p>
+    {
+      !entry.checked && (
+        <p class="unchecked">
+          {GUIDE_UNCHECKED_NOTE}
+          {entry.slug !== CHECKED_ENTRY && entryAt(CHECKED_ENTRY) && (
+            <>
+              {" "}
+              <a href={`/guide/${CHECKED_ENTRY}`}>What “checked by a person” means</a>
+            </>
+          )}
+        </p>
+      )
+    }
+
+    <div class="entry-text">
+      <Body />
+    </div>
+
+    <h2 class="bar" id="on-this-site">On this site</h2>
+    <p>
+      {entry.onSite}{" "}
+      <a href={`/how-it-works#${entry.rule}`}>The rule: {METHOD_SECTIONS[entry.rule]}</a>
+    </p>
+    {
+      work &&
+        (work.total === 0 ? (
+          <p>{work.none}</p>
+        ) : (
+          <>
+            <p>
+              {work.total} of {total} tracked {total === 1 ? "claim" : "claims"} {work.many}
+              {data.last_checked_at && <> when the registries were checked on {formatDate(data.last_checked_at)}</>}.
+              {work.total > work.shown.length && ` These are the ${work.shown.length} most recently reported.`}
+            </p>
+            <ClaimTable claims={work.shown} caption={`Tracked claims: ${entry.title}`} />
+            <p class="rest">
+              <a href={work.more.href}>{work.more.label}</a>
+            </p>
+          </>
+        ))
+    }
+
+    <h2 class="bar" id="sources">Sources</h2>
+    <ul class="plain">
+      <li>
+        <a href={`/how-it-works#${entry.rule}`}>How it works: {METHOD_SECTIONS[entry.rule]}</a>
+        <span class="entry-note">This site’s own rule.</span>
+      </li>
+      {
+        entry.sources.map((source) => (
+          <li>
+            <a href={source.url}>{source.name}</a>
+            <span class="entry-note">Checked {formatDate(source.checked)}</span>
+          </li>
+        ))
+      }
+    </ul>
+    <ReportError page={`/guide/${entry.slug}`} />
+
+    {
+      related.length > 0 && (
+        <>
+          <h2 class="bar" id="related">Related</h2>
+          <ul class="related">
+            {related.map((other) => (
+              <li>
+                <a href={`/guide/${other.slug}`}>{other.title}</a>
+              </li>
+            ))}
+          </ul>
+        </>
+      )
+    }
+
+    <nav class="beside" aria-label={shelf.title}>
+      {
+        previous ? (
+          <a class="previous" href={`/guide/${previous.slug}`}>
+            <ArrowLeft size={16} stroke-width={1.9} aria-hidden="true" />
+            <span>{previous.title}</span>
+          </a>
+        ) : (
+          <span />
+        )
+      }
+      <a class="all" href="/guide">All entries</a>
+      {
+        next ? (
+          <a class="next" href={`/guide/${next.slug}`}>
+            <span>{next.title}</span>
+            <ArrowRight size={16} stroke-width={1.9} aria-hidden="true" />
+          </a>
+        ) : (
+          <span />
+        )
+      }
+    </nav>
+  </article>
+</Base>
+
+<style>
+  .shelf {
+    margin: 0.8rem 0 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .shelf a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+
+  .shelf + .title {
+    margin-top: 0;
+    max-width: 28ch;
+    overflow-wrap: anywhere;
+  }
+
+  /* A status's place on the path, beside the answer, as the method page lists it.
+     Not the digest panel: that means "where this claim stands". */
+  .standing-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.9rem;
+    margin: 0.9rem 0 0;
+  }
+
+  .standing-line .gloss {
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .answer {
+    max-width: var(--measure);
+    font-size: 1.2rem;
+    line-height: 1.45;
+  }
+
+  .standing-line + .answer {
+    margin-top: 0.6rem;
+  }
+
+  .entry-text :global(h2) {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: clamp(2rem, 6vw, 2.75rem) 0 0;
+  }
+
+  .entry-text :global(h2 + *) {
+    margin-top: 0.7rem;
+  }
+
+  .entry-text :global(p),
+  .guide-entry > p {
+    max-width: var(--measure);
+  }
+
+  .rest {
+    margin-top: 0.8rem;
+  }
+
+  .related {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.6rem;
+    padding: 0;
+    margin: 0.7rem 0 0;
+    max-width: none;
+  }
+
+  .related a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0 0.9rem;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .related a:hover {
+    background: var(--panel);
+  }
+
+  .beside {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: clamp(2rem, 6vw, 2.75rem);
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .beside a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 2.75rem;
+    font-weight: 600;
+  }
+
+  .beside .next {
+    justify-self: end;
+    text-align: right;
+  }
+
+  .beside .all {
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  @media (max-width: 40rem) {
+    .beside {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .beside .all {
+      grid-row: 2;
+      grid-column: 1 / -1;
+      justify-self: center;
+    }
+  }
+
+  @media print {
+    .beside {
+      display: none;
+    }
+  }
+</style>

@@ -1,0 +1,405 @@
+---
+// Why the site exists and who runs it (openspec landing-pages-and-guide). The first
+// screen is one published claim at page scale: what an outlet reported, the years
+// since, and where the records leave it now. Every number on the page is counted from
+// the export; the one cited finding is stated in words and linked. How a status is set
+// is the method page's to say, and is only linked here.
+import ArrowUpRight from "@lucide/astro/icons/arrow-up-right";
+import { SITE } from "../../site.config.mjs";
+import Lookup from "../components/Lookup.astro";
+import Outlet from "../components/Outlet.astro";
+import StageTrack from "../components/StageTrack.astro";
+import Base from "../layouts/Base.astro";
+import { CITED_FINDING, WHO_RUNS_IT, yearStrip } from "../lib/about";
+import { CORRECTION_SUBJECT, contactLink } from "../lib/contact.mjs";
+import { data, listedTopics } from "../lib/export";
+import { exampleClaim, firstReport } from "../lib/extension-page";
+import { UNCHECKED_NOTE } from "../lib/notices";
+import { STATUS_GLOSSES, STATUS_LABELS, latestPromise } from "../lib/status";
+import { formatDate } from "../lib/timetable";
+
+const example = exampleClaim(data.claims);
+const report = example && firstReport(example);
+const strip = example ? yearStrip(example, data.last_checked_at) : [];
+const promise = example && latestPromise(example);
+const corrections = contactLink(SITE.correctionsUrl, "", CORRECTION_SUBJECT);
+const claims = data.claims.length;
+const topics = listedTopics.length;
+const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
+---
+
+<Base
+  title="About"
+  tabTitle="About this site"
+  description="Why this site exists, what it does and does not do, who runs it, and where its data and method can be checked."
+  breadcrumbs={[{ name: "About", path: "/about" }]}
+>
+  <section class="band about" slot="band" aria-labelledby="about-title">
+    <div class="wrap">
+      <h1 class="title" id="about-title">
+        <span>Headlines travel fast.</span> <span>The <span class="unbroken">follow-up</span> rarely does.</span>
+      </h1>
+      <p class="lede">
+        {SITE.name} keeps one page for each reported medical breakthrough, showing what the public
+        records hold since it was reported.
+      </p>
+
+      {
+        example && report && (
+          <figure class="case" data-pagefind-ignore>
+            <div class="sides">
+              <div class="said">
+                <h2>Reported</h2>
+                <p class="quote">
+                  <a href={report.url} rel="noopener">
+                    “{report.title}”
+                    <ArrowUpRight size={16} stroke-width={1.9} aria-hidden="true" />
+                  </a>
+                </p>
+                <p class="by">
+                  <Outlet url={report.url} outlet={report.outlet} link={false} />
+                  <span class="unbroken">{formatDate(report.published_date)}</span>
+                </p>
+              </div>
+              <div class="now">
+                <h2>
+                  On record
+                  {data.last_checked_at && (
+                    <>
+                      , <span class="unbroken">{formatDate(data.last_checked_at)}</span>
+                    </>
+                  )}
+                </h2>
+                <p class="status">{STATUS_LABELS[example.status.code]}</p>
+                <p class="gloss">{STATUS_GLOSSES[example.status.code]}</p>
+                <StageTrack code={example.status.code} ends />
+                <p class="open">
+                  <a href={`/${example.slug}`}>The records for {example.intervention.name}</a>
+                </p>
+              </div>
+            </div>
+
+            <ol class="years" aria-label={`${example.intervention.name}, year by year`}>
+              {strip.map((cell) =>
+                cell.kind === "gap" ? (
+                  <li class="gap">
+                    <span class="year">
+                      {cell.from === cell.to ? cell.from : `${cell.from} to ${cell.to}`}
+                    </span>
+                    <span class="quiet">Nothing on record</span>
+                  </li>
+                ) : (
+                  <li class:list={{ promised: cell.promised }}>
+                    <span class="year">{cell.year}</span>
+                    {cell.records > 0 && (
+                      <span>{plural(cell.records, "registry record", "registry records")}</span>
+                    )}
+                    {cell.reports > 0 && <strong>Reported in the news</strong>}
+                    {cell.checked && <span class="quiet">Registries checked</span>}
+                    {cell.promised && <span class="promise">Promised by this year</span>}
+                  </li>
+                ),
+              )}
+            </ol>
+
+            <figcaption>
+              A tracked claim, picked by a fixed rule and redrawn each time the site is built.
+              {promise && " The amber year is the one a news report named."}
+              {!example.checked_by_person && ` ${UNCHECKED_NOTE}`}
+            </figcaption>
+          </figure>
+        )
+      }
+    </div>
+  </section>
+
+  <div class="about-body">
+    <h2 class="bar" id="the-gap">The gap</h2>
+    <p>
+      A study published in{" "}
+      {CITED_FINDING.journal} in {CITED_FINDING.year} followed newspaper coverage of research
+      linking risk factors to diseases. Newspapers covered about one in eight first studies and
+      about one in forty later ones. About two thirds of the first studies they covered were not
+      confirmed by a later pooled analysis, and only a handful of newspaper articles reported that.
+      It studied risk-factor research in the English-language press, not treatments. This site asks
+      the same question of reported treatments, one claim at a time.
+    </p>
+    <p class="entry-note cited">
+      <a href={CITED_FINDING.url}>
+        {CITED_FINDING.authors}, “{CITED_FINDING.title}”, {CITED_FINDING.journal},{" "}
+        {CITED_FINDING.year}
+      </a>. Read {formatDate(CITED_FINDING.checked)}.
+    </p>
+
+    <div class="pair">
+      <section aria-labelledby="does">
+        <h2 class="bar" id="does">What this site does</h2>
+        <ul class="plain">
+          <li>
+            One page per claim: one treatment for one condition, however many reports there were.{" "}
+            <a href="/guide/claim">What a claim is</a>
+          </li>
+          <li>
+            A status set by fixed rules from public records. No editor and no AI model decides one.{" "}
+            <a href="/how-it-works#how-a-status-is-set">How a status is set</a>
+          </li>
+          <li>
+            Every record links to the registry, journal or regulator that holds it.{" "}
+            <a href="/how-it-works#where-the-data-comes-from">Where the data comes from</a>
+          </li>
+        </ul>
+      </section>
+      <section aria-labelledby="does-not">
+        <h2 class="bar" id="does-not">What it does not do</h2>
+        <ul class="plain">
+          <li>Give medical advice, or say whether a treatment works or is available.</li>
+          <li>Give a verdict on a claim, a researcher or a company.</li>
+          <li>Grade or score anything. A match's confidence is about the match alone.</li>
+          <li>
+            Rank or compare news outlets.{" "}
+            <a href="/how-it-works#what-this-site-never-says">What this site never says</a>
+          </li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="pair">
+      <section aria-labelledby="check">
+        <h2 class="bar" id="check">Check it yourself</h2>
+        <p>
+          {plural(claims, "claim is", "claims are")} tracked in {plural(topics, "topic", "topics")}
+          {data.last_checked_at && (
+            <>
+              , and the registries were last checked on{" "}
+              <span class="unbroken">{formatDate(data.last_checked_at)}</span>
+            </>
+          )}
+          . All of it is open: <a href="/data">the data file</a>,{" "}
+          <a href="/how-it-works">the method</a> and <a href="/guide">the guide</a> to what each
+          word does and does not tell you.
+          {corrections && (
+            <>
+              {" "}
+              Something wrong? <a href={corrections.href}>Report it (opens {corrections.opens})</a>.
+            </>
+          )}
+        </p>
+      </section>
+      <section aria-labelledby="who">
+        <h2 class="bar" id="who">Who runs it</h2>
+        <p>
+          {SITE.name} is operated by {WHO_RUNS_IT.operator}.
+          {WHO_RUNS_IT.funding && ` ${WHO_RUNS_IT.funding}`} <a href="/privacy">Privacy</a>
+        </p>
+      </section>
+    </div>
+
+    <section class="ask" aria-labelledby="ask-title" data-pagefind-ignore>
+      <h2 class="bar" id="ask-title">What came of the one you remember?</h2>
+      <Lookup />
+    </section>
+  </div>
+</Base>
+
+<style>
+  .about .title {
+    max-width: none;
+  }
+
+  /* Two sentences, a line each where the page is wide enough to hold them. */
+  .about .title > span {
+    display: block;
+  }
+
+  /* One claim at page scale: what was said, the years, where the records leave it. */
+  .case {
+    margin: clamp(1.5rem, 4vw, 2.25rem) 0 0;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .sides {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+  }
+
+  .said,
+  .now {
+    padding: clamp(1rem, 3vw, 1.5rem);
+  }
+
+  .now {
+    border-left: 1px solid var(--rule);
+  }
+
+  .case h2 {
+    margin: 0 0 0.5rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .quote {
+    margin: 0;
+    font-size: clamp(1.2rem, 2.6vw, 1.6rem);
+    font-weight: 600;
+    line-height: 1.3;
+    text-wrap: balance;
+  }
+
+  .quote a {
+    color: var(--ink);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+  }
+
+  .quote svg {
+    display: inline-block;
+    vertical-align: baseline;
+    color: var(--muted);
+  }
+
+  .by {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.2rem 0.75rem;
+    margin: 0.7rem 0 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .status {
+    margin: 0;
+    color: var(--blue);
+    font-size: clamp(1.5rem, 3.4vw, 2rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
+
+  .now .gloss {
+    margin: 0.25rem 0 0.7rem;
+  }
+
+  .open {
+    margin: 0.8rem 0 0;
+    font-weight: 600;
+  }
+
+  .years {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: none;
+    border-top: 1px solid var(--rule);
+  }
+
+  .years li {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+    margin: 0;
+    padding: 0.7rem 0.75rem 0.85rem;
+    border-left: 1px solid var(--rule-soft);
+    font-size: 0.85rem;
+    line-height: 1.3;
+  }
+
+  .years li:first-child {
+    border-left: 0;
+  }
+
+  .years .year {
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .years .quiet,
+  .years .gap {
+    color: var(--muted);
+  }
+
+  /* A promise is always on pale amber with dashed rules, wherever it appears. */
+  .years .promised {
+    background: var(--promise);
+    border-left: 1px dashed var(--promise-rule);
+  }
+
+  .case figcaption {
+    padding: 0.6rem clamp(1rem, 3vw, 1.5rem);
+    border-top: 1px solid var(--rule);
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .about-body p {
+    max-width: var(--measure);
+  }
+
+  .about-body .cited {
+    margin-top: 0.5rem;
+  }
+
+  .pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 clamp(1.5rem, 5vw, 3rem);
+  }
+
+  .ask :global(.search) {
+    margin-top: 0.9rem;
+  }
+
+  @media (max-width: 40rem) {
+    .sides,
+    .pair {
+      grid-template-columns: 1fr;
+    }
+
+    .now {
+      border-left: 0;
+      border-top: 1px solid var(--rule);
+    }
+
+    /* On a phone the years run down the page, a year to a line. */
+    .years {
+      flex-direction: column;
+    }
+
+    .years li {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.1rem 0.75rem;
+      padding: 0.55rem clamp(1rem, 3vw, 1.5rem);
+      border-left: 0;
+      border-top: 1px solid var(--rule-soft);
+    }
+
+    .years li:first-child {
+      border-top: 0;
+    }
+
+    .years .year {
+      min-width: 6.5rem;
+    }
+
+    .years .promised {
+      border-left: 0;
+      border-top: 1px dashed var(--promise-rule);
+    }
+  }
+
+  @media print {
+    .case {
+      border-color: #000;
+    }
+  }
+</style>

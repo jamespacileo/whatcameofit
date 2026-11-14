@@ -17,6 +17,7 @@ export type Structured = Record<string, unknown>;
 
 const SITE_ID = `${canonicalAddress("/")}#site`;
 const PUBLISHER_ID = `${canonicalAddress("/")}#publisher`;
+const GUIDE_ID = `${canonicalAddress("/guide")}#terms`;
 
 /** The publisher, with the mark as its logo. */
 function publisher(): Structured {
@@ -110,5 +111,42 @@ export function datasetData(options: {
       encodingFormat: "application/json",
       contentUrl: canonicalAddress("/data/claims.json"),
     },
+  };
+}
+
+/** A guide entry as a defined term: the word, its one-sentence answer and the set it belongs to. */
+export function definedTermData(entry: { slug: string; title: string; answer: string }): Structured {
+  return {
+    "@context": "https://schema.org",
+    "@type": "DefinedTerm",
+    "@id": canonicalAddress(`/guide/${entry.slug}`),
+    name: entry.title,
+    description: entry.answer,
+    url: canonicalAddress(`/guide/${entry.slug}`),
+    inLanguage: "en-GB",
+    inDefinedTermSet: { "@type": "DefinedTermSet", "@id": GUIDE_ID, name: `${SITE.name} guide` },
+  };
+}
+
+/** The guide as a set of defined terms, each named with its address. */
+export function guideData(
+  description: string,
+  entries: readonly { slug: string; title: string }[],
+): Structured {
+  return {
+    "@context": "https://schema.org",
+    "@type": "DefinedTermSet",
+    "@id": GUIDE_ID,
+    name: `${SITE.name} guide`,
+    description,
+    url: canonicalAddress("/guide"),
+    inLanguage: "en-GB",
+    publisher: { "@id": PUBLISHER_ID },
+    hasDefinedTerm: entries.map((entry) => ({
+      "@type": "DefinedTerm",
+      "@id": canonicalAddress(`/guide/${entry.slug}`),
+      name: entry.title,
+      url: canonicalAddress(`/guide/${entry.slug}`),
+    })),
   };
 }

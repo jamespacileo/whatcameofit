@@ -20,6 +20,7 @@ import StageTrack from "../components/StageTrack.astro";
 import TopicChip from "../components/TopicChip.astro";
 import { APPROACH_LABELS } from "../lib/approach";
 import { claimPaths, data, verticalTitle, type ExportedClaim } from "../lib/export";
+import { statusSlug } from "../lib/guide";
 import { UNCHECKED_NOTE } from "../lib/notices";
 import {
   EVIDENCE_STAGES,
@@ -275,6 +276,11 @@ const posts = shareLinks(postText, address, claim.headline);
               )
             }
             <p class="pop-note">
+              <a href={`/guide/${statusSlug(claim.status.code)}`}>
+                What “{STATUS_LABELS[claim.status.code]}” does and does not tell you
+              </a>
+            </p>
+            <p class="pop-note">
               <a href="/how-it-works#what-each-status-means">What each status means</a>
             </p>
             {
@@ -302,6 +308,9 @@ const posts = shareLinks(postText, address, claim.headline);
                 </p>
                 <p class="pop-note">
                   <a href="/how-it-works#no-signal">How "no signal" is counted</a>
+                </p>
+                <p class="pop-note">
+                  <a href="/guide/no-signal">What “no signal” does not tell you</a>
                 </p>
               </Pop>
             </div>
@@ -351,7 +360,13 @@ const posts = shareLinks(postText, address, claim.headline);
     <p class="was-note" hidden data-follow-was data-pagefind-ignore></p>
     <FollowOffer claim={claim} />
 
-    {!claim.checked_by_person && <p class="unchecked">{UNCHECKED_NOTE}</p>}
+    {
+      !claim.checked_by_person && (
+        <p class="unchecked">
+          {UNCHECKED_NOTE} <a href="/guide/checked-by-a-person">What “checked by a person” means</a>
+        </p>
+      )
+    }
 
     <dl class="facts">
       <div>

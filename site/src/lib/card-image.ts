@@ -7,14 +7,18 @@ import satori from "satori";
 import { SITE } from "../../site.config.mjs";
 import {
   CARD_NOTICE,
+  CHECKED_LABEL,
   PROMISED_LABEL,
   cardContent,
   clip,
+  topicCardContent,
   type CardContent,
   type CardFact,
+  type TopicCardContent,
 } from "./card";
-import { data, type ExportedClaim } from "./export";
-import { STAGE_PATH, STATUS_LABELS, latestPromise, overlayText } from "./status";
+import { data, type ExportedClaim, type ExportedVertical, type StatusCode } from "./export";
+import { STAGE_PATH, STATUS_LABELS, latestPromise, overlayText, topicSummary } from "./status";
+import { topicDrawing } from "./topic-drawing";
 
 const INK = "#0f1f38";
 const BLUE = "#14427f";
@@ -31,6 +35,8 @@ const PROMISE_RULE = "#d9c88a";
 const NAVY = "#0b2545";
 const ON_NAVY_QUIET = "#c9d9ee";
 const ON_NAVY_DOT = "#8ec1f5";
+// The topic chip's ground, behind a topic's drawing.
+const TINT = "#e6eef8";
 
 export type Shape = "wide" | "square" | "tall";
 
@@ -342,6 +348,141 @@ export async function cardPng(claim: ExportedClaim, which: Shape): Promise<Uint8
   return new Uint8Array(
     new Resvg(svg, { fitTo: { mode: "width", value: layout.width } }).render().asPng(),
   );
+}
+
+type IconLine = [tag: string, attributes: Record<string, string>];
+
+// An icon's lines, read from the icon set's own file. The package ships each icon as
+// an Astro component around one literal, and the literal is all an image needs.
+function iconLines(name: string): IconLine[] {
+  const file = path.resolve(`node_modules/@lucide/astro/src/icons/${name}.ts`);
+  const literal = fs.readFileSync(file, "utf8").match(/const iconData[^=]*=\s*(\{.*\});/)?.[1];
+  if (!literal) throw new Error(`No icon data found in ${file}.`);
+  return JSON.parse(literal).node;
+}
+
+// The topic's drawing as its chip draws it: blue on the chip's pale blue, with the
+// same round line. A topic with no drawing gets the plain ring.
+function topicMark(vertical: ExportedVertical, size: number): Node {
+  const drawing = topicDrawing(vertical);
+  const lines: IconLine[] = !drawing
+    ? [["circle", { cx: "12", cy: "12", r: "7.5" }]]
+    : "icon" in drawing
+      ? iconLines(drawing.icon)
+      : drawing.paths.map((d) => ["path", { d }]);
+  const line = {
+    fill: "none",
+    stroke: BLUE,
+    "stroke-width": 1.7,
+    "stroke-linecap": "round",
+    "stroke-linejoin": "round",
+  };
+  return box(
+    {
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+      width: size,
+      height: size,
+      borderRadius: size,
+      background: TINT,
+    },
+    [
+      shape("svg", {
+        width: size * 0.58,
+        height: size * 0.58,
+        viewBox: "0 0 24 24",
+        children: lines.map(([tag, attributes]) => shape(tag, { ...attributes, ...line })),
+      }),
+    ],
+  );
+}
+
+// A summary can run past 270 characters; the longest still fits in six lines.
+const summaryType = (length: number) =>
+  length > 220 ? 34 : length > 160 ? 38 : length > 100 ? 44 : 52;
+
+// The claim card's wide shape, for a topic: its drawing and name where a claim's
+// quotation is, and in the panel where its claims stand, then the month checked.
+function drawTopic(vertical: ExportedVertical, card: TopicCardContent): Node {
+  const layout = LAYOUTS.wide;
+  const name = card.title.length > 22 ? 52 : 60;
+  const summary = summaryType(card.summary.length);
+  return box(
+    {
+      width: layout.width,
+      height: layout.height,
+      flexDirection: "column",
+      background: PAPER,
+      color: INK,
+      fontFamily: "Figtree",
+    },
+    [
+      brand(layout),
+      box(
+        {
+          boxSizing: "border-box",
+          flexGrow: 1,
+          flexDirection: "column",
+          justifyContent: "space-between",
+          padding: `${layout.pad * 0.8}px ${layout.pad}px ${layout.pad}px`,
+        },
+        [
+          box({ alignItems: "center" }, [
+            topicMark(vertical, name * 1.6),
+            box(
+              {
+                marginLeft: name * 0.4,
+                fontSize: name,
+                fontWeight: 700,
+                lineHeight: 1.1,
+                letterSpacing: -name / 70,
+              },
+              card.title,
+            ),
+          ]),
+          box(
+            {
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+              background: PANEL,
+              borderRadius: 28,
+              padding: `${layout.pad * 0.5}px ${layout.pad * 0.62}px ${layout.pad * 0.56}px`,
+            },
+            [
+              box({ flexShrink: 1, fontSize: summary, lineHeight: 1.25 }, card.summary),
+              // The date keeps its width; the summary wraps instead.
+              card.checked &&
+                box({ flexShrink: 0 }, [fact({ label: CHECKED_LABEL, value: card.checked }, layout)]),
+            ],
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+/** What a topic's card says, from the topic's own published claims. */
+export function topicCardFor(vertical: ExportedVertical, claims: ExportedClaim[]): TopicCardContent {
+  const counts = new Map<StatusCode, number>();
+  for (const claim of claims) counts.set(claim.status.code, (counts.get(claim.status.code) ?? 0) + 1);
+  const summary = topicSummary(counts);
+  if (!summary) throw new Error(`The topic ${vertical.slug} has no published claim to draw a card for.`);
+  return topicCardContent(vertical.title, summary, data.last_checked_at);
+}
+
+/** A topic's link preview, 1200 by 630. `claims` are the topic's own published claims. */
+export async function topicPng(
+  vertical: ExportedVertical,
+  claims: ExportedClaim[],
+): Promise<Uint8Array> {
+  const { width, height } = LAYOUTS.wide;
+  const svg = await satori(drawTopic(vertical, topicCardFor(vertical, claims)) as never, {
+    width,
+    height,
+    fonts,
+  });
+  return new Uint8Array(new Resvg(svg, { fitTo: { mode: "width", value: width } }).render().asPng());
 }
 
 /**

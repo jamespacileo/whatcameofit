@@ -3,6 +3,8 @@
 // address. A preview build publishes no sitemap: an empty response writes no file.
 import type { APIRoute } from "astro";
 import { data, listedTopics } from "../lib/export";
+import { AUDIENCES } from "../lib/audiences";
+import { guide } from "../lib/guide-entries";
 import "../lib/public-build";
 import { sourcesOf } from "../lib/sources";
 import { canonicalAddress } from "../lib/structured";
@@ -22,6 +24,10 @@ function publicPages(): string[] {
     ...sourcesOf(data.claims).map((source) => `/source/${source.slug}`),
     "/it-happened",
     "/how-it-works",
+    "/guide",
+    ...guide.map((entry) => `/guide/${entry.slug}`),
+    "/about",
+    ...AUDIENCES.map((audience) => `/for/${audience}`),
     ...(EXTENSION_OFFERED ? ["/extension"] : []),
     "/privacy",
     "/anniversaries",
