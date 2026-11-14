@@ -57,7 +57,11 @@ Each record commits on its own. That is what makes "result and entry are saved t
 
 ### 4. Fingerprint from declared inputs
 
-A step declares which fields of a record it reads (the news search reads the intervention names and conditions). The fingerprint is a hash of those values. A reload of the registry that changes a trial's enrolment count leaves the fingerprint, and so the ledger, alone.
+A step declares which fields of a record it reads (the news search reads the name it searches by and the indication). The fingerprint is a hash of those values. A reload of the registry that changes a trial's enrolment count leaves the fingerprint, and so the ledger, alone.
+
+A fingerprint is computed in Python, so "due" cannot compare it in SQL. Whatever writes a record calls one function that recomputes the fingerprint for each step of that record's kind and marks the entry stale when it differs. Due work is then: no finished entry at the current version, or a stale one.
+
+The name a trial is searched by is worked out once, by rule, when the trial is loaded, and stored on the trial. That lets a step's scope ("has a usable name") be a plain query condition, and keeps the name rule in one place for every later step that works from trials.
 
 ### 5. A step is a small object with a fixed shape
 
@@ -69,7 +73,7 @@ The package is `thenwhat/backfill/` with `steps/` inside it. It is not named "le
 
 ### 6. Source allowances live in the database and are claimed in one statement
 
-Two tables: the configured allowance per source (requests per period, least interval), loaded from settings at start, and a use row per source and period (requests used, time of last request, paused until). Before each request a worker runs one transaction that locks the source's use row, waits out the least interval, checks the count and the pause, and increments. The row lock is what spaces requests across processes.
+The allowance itself (requests per period, least interval, pause after a refusal) is configuration: `SOURCE_ALLOWANCES` in the environment, with a default for ClinicalTrials.gov only. What is used is one row per source in `source_allowance_use` (period start, requests used, time of last request, paused until). Before each request a worker runs one short transaction of its own that locks the source's row, waits out the least interval, checks the count and the pause, and increments. The row lock is what spaces requests across processes, and because the transaction is separate from the record's, a request stays counted even when the record it was for fails.
 
 *Alternative:* keep the in-process `Pacer` and tell the operator to run one process. Rejected because it is exactly what failed in the sample: four workers, one allowance, no shared count.
 
@@ -85,11 +89,19 @@ ClinicalTrials.gov's list endpoint returns up to 1,000 studies per page with a c
 
 Trials go in a new `registry_trial` table with the fields the spec lists as columns and the full payload as JSONB. Columns exist for what scopes and reports filter on (phase, intervention type, status, start date, sponsor class). A load of changes uses the registry's last-update date as its filter, with the previous load's completion time kept in a small state row.
 
-### 8. The news index is chosen by a gate at the start, not assumed
+### 8. The news index is Media Cloud, chosen by a gate at the start
 
-The sample showed that the two obvious routes do not scale: the GDELT live interface refused the operator's address, and a search tool's allowance covers hundreds of records, not tens of thousands. Candidates to check, in this order: GDELT's bulk datasets, Media Cloud, Common Crawl's news crawl. The first task group reads each candidate's terms, authentication, rate and coverage, records them in `docs/sources.md`, and picks one.
+The sample showed that the two obvious routes do not scale: the GDELT live interface refused the operator's address, and a search tool's allowance covers hundreds of records, not tens of thousands. The first task group read the terms, authentication, rate and coverage of GDELT's bulk datasets, Media Cloud and Common Crawl's news crawl on 2026-11-14 and recorded them in `docs/sources.md`.
 
-The spec does not depend on the choice: it describes a search by intervention and indication that returns address, outlet, title and date. If no candidate's terms permit this use, the news search step is still built and tested against synthetic fixtures, is not run live, and the ledger and corpus stand on their own. That outcome is reported to the operator, not worked around.
+**Decision (2026-11-14): Media Cloud.** It is the only candidate that returns exactly an address, outlet, title and date for a query of two terms, and it never releases article text, so none can reach the pipeline. It is free with an account and a key.
+
+- **Allowance:** 4,000 requests a week by default, so the allowance is 4,000 in 168 hours with 30 seconds between requests. The 43,320 phase 3 trials take at least 11 weeks unless Media Cloud grants more.
+- **What the operator must set up:** create the account and accept its terms, put the key in `.env` as `MEDIACLOUD_API_KEY`, check in Media Cloud's directory that the clinical trade press is covered and from when, and, if 11 weeks is too slow, email Media Cloud to ask for a larger allowance. None of this is done by the pipeline or by an assistant.
+- **Until the key exists** the step is built and tested against synthetic fixtures and refuses to run live, naming the missing key.
+
+*Alternatives:* GDELT on BigQuery matches keywords only from 2020, needs a paid cloud project, and its matching table carries fragments of article text that would have to be discarded; it stays the fallback if Media Cloud's coverage of the trade press proves thin. Common Crawl's news crawl has no search and would mean holding about 47 TiB of article pages, which this project never does.
+
+The spec does not depend on the choice: it describes a search by intervention and indication that returns address, outlet, title and date.
 
 ### 9. Outlet kind by rule from the domain
 
@@ -97,7 +109,7 @@ A checked-in list maps domains to general news, trade press or press release; an
 
 ### 10. Migration
 
-A new Alembic migration adds the tables. The initial migration is not regenerated: databases with real claims exist.
+One new Alembic migration, `0009`, adds all five tables (the ledger, allowance use, registry trials, the load state and article leads), so the models and the migrations never disagree part way through the change. The initial migration is not regenerated: databases with real claims exist.
 
 ## Risks / Trade-offs
 

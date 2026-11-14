@@ -17,6 +17,8 @@ Terms, authentication and rate limits for each external source. Check an entry a
 
 - **Search by a trial's name (observed 2026-11-12):** `query.titles="SURMOUNT-5"` searches titles and acronyms and returned that one trial. The lookup asks for at most 20 and treats a name that more trials carry as identifying none. The search fields now also ask for `Acronym`, `EnrollmentCount` and `CollaboratorName`, which the lookup compares with what an article says of its trial.
 
+- **Bulk loads through the list endpoint (observed 2026-11-14):** `GET /studies` accepts `pageSize` up to 1,000 with a chosen list of `fields` and a `filter.advanced` expression, and pages with `nextPageToken`. The 43,320 phase 3 interventional trials of a drug or biological came back in 44 requests; the whole registry (611,771 studies) is about 620. `thenwhat backfill load-trials` uses this instead of one request per trial, at the same 2 requests per second, and counts its requests against the registry's allowance (`SOURCE_ALLOWANCES`). A load of changes adds `AREA[LastUpdatePostDate]RANGE[<date>,MAX]` to the expression. The loaded trials are kept in the private database only and are not exported.
+
 ## Europe PMC RESTful web service
 
 - **Checked:** 2026-11-11
@@ -159,3 +161,33 @@ For every platform in this table the site names the platform, asks nothing of it
 - **Access:** public API, no key or account required. Client-ID registration is paused; no identifier is invented.
 - **Free limits:** 2,000 requests per five minutes per IP. At most three explicit organisation names per lookup, modest request pacing, seven-day metadata cache and shared 429 cooldown. No automatic retries.
 - **Use:** affiliation matching returns an organisation only when ROR marks it chosen. Names come from the supplied report, not from paper affiliations; the ROR identifier establishes organisation identity, not involvement in a study or an endorsement.
+
+## News indexes for the registry-first backfill
+
+Read on 2026-11-14 for the change `backfill-work-ledger`, to choose where the news search step asks which articles name a trial's intervention and indication. The step needs an address, outlet, title and date for each article and must never receive or keep article text. Items marked unconfirmed were not found on the pages read.
+
+### Media Cloud (chosen)
+
+- **Checked:** 2026-11-14. [Terms of use](https://www.mediacloud.org/legal/media-cloud-terms-of-use) (effective 16 May 2023), [FAQ](https://mediacloud.org/documentation/faqs), [story guide](https://www.mediacloud.org/documentation/story-guide), [query guide](https://www.mediacloud.org/documentation/query-guide), [API client](https://github.com/mediacloud/api-client).
+- **Terms:** any lawful use; the terms say the platform is not designed as a commercial tool. Access and keys may not be sold or sublicensed. Attribution is recommended, not required. No rights are granted over the stories' own content. The FAQ says lists of story addresses may be downloaded.
+- **Authentication:** a free account and an API key. **The operator's step:** the account is created and the terms accepted by the operator, and the key goes in `.env` as `MEDIACLOUD_API_KEY`. No request is sent while it is empty.
+- **Rate limit:** 4,000 API requests a week by default; some endpoints allow 2 requests a minute. More is given on request by email. The pipeline's allowance is set to 4,000 a week with 30 seconds between requests.
+- **What a search returns:** story id, outlet name and address, title, publication date and the story's address, for a query with AND, phrases and proximity. Full text is never released, so none can reach the pipeline.
+- **Coverage:** over 200 million stories; an outlet is covered only from when its feed was first collected. The archive's start date, and whether the clinical trade press (healio.com, onclive.com, medscape.com, statnews.com, fiercepharma.com) is covered and from when, are unconfirmed: check in Media Cloud's directory before the full run.
+- **Size of the job:** one request per trial. The 43,320 phase 3 trials take at least 11 weeks at the default allowance.
+
+### GDELT bulk datasets (not used; the fallback for 2020 onward)
+
+- **Checked:** 2026-11-14. [Terms](https://www.gdeltproject.org/about.html#termsofuse), [data](https://www.gdeltproject.org/data.html), [Web NGrams 3.0](https://blog.gdeltproject.org/announcing-the-new-web-news-ngrams-3-0-dataset/), [BigQuery pricing](https://cloud.google.com/bigquery/pricing).
+- **Terms:** open for academic, commercial and governmental use, with redistribution allowed. Any use must cite GDELT and link to gdeltproject.org.
+- **Authentication and cost:** none for the raw files. BigQuery needs a Google Cloud project: the first 1 TiB scanned each month is free, then $6.25 per TiB.
+- **Rate limit:** not stated for file downloads.
+- **What is searchable:** the Global Knowledge Graph (from April 2013) holds GDELT's extracted themes, names and organisations, not free keywords. Web NGrams 3.0 (from January 2020) holds one record per word with the article's address and a few words of context; two keywords are matched by a join, and title, outlet and date come from a second table. The context words are fragments of article text and must be discarded if this is ever used.
+- **Coverage:** nothing before April 2013; keyword matching only from 2020. Whether the trade press is included is unconfirmed.
+- **The live DOC 2.0 interface:** searches back to January 2017 and answers "too many requests" above one request every five seconds. It refused every request from the operator's address on 2026-11-14, including single ones 40 minutes apart. No higher allowance is published; GDELT's posts send high-volume users to the datasets above.
+
+### Common Crawl news crawl (ruled out)
+
+- **Checked:** 2026-11-14. [Terms of use](https://commoncrawl.org/terms-of-use) (updated 7 March 2024), [news crawl data](https://data.commoncrawl.org/crawl-data/CC-NEWS/index.html).
+- **Why not:** there is no keyword search. The files hold full article pages, about 47 TiB for 2016 to 2025, so using it means downloading and holding article text, which this project never does.
+
