@@ -18,18 +18,20 @@
 
 - [ ] 3.1 Add `site/src/lib/record-brief.ts` with `recordBrief(claim)` returning the groups and rows of the question table, with each row's source, taking no clock or network; verify it type-checks and that every `TrialState` value is handled
 - [ ] 3.2 Add the wording per question and answer code and the fixed phrase per measure kind beside the status wording, reuse the comparator wording of `site/src/lib/trial-facts.ts`, and include every string in the module-load `assertNeutral` call; verify the build fails when a string is given the word "abandoned"
-- [ ] 3.3 Add tests to `site/tests/site.test.mjs` for every scenario under "A claim page answers fixed questions from its records" and "Answers are grouped by kind of fact", including "Same question, opposite result"; verify they pass
+- [ ] 3.3 Add tests to `site/tests/site.test.mjs` for every scenario under "A claim page answers fixed questions from its records" and "Each question has one fixed place", including "Same questions, opposite answers" and "Measure with no reading"; verify they pass
+- [ ] 3.4 Add the bridging sentence to the digest panel for a `trial_registered` claim with trials, worded in `site/src/lib/status.ts` under `assertNeutral`, and tests "Three trials with no phase" and "Status with a phase"; verify both pass and `STATUS_MEANINGS` is unchanged
+- [ ] 3.5 Remove the trial count and largest size from the facts row in `site/src/pages/[slug].astro`, update the tests of "The claim page counts its trials" to read the section, and verify "Three trials, the largest of 1,200" and "Trials that state no number" pass
 
 ## 4. The section
 
-- [ ] 4.1 Add `site/src/components/RecordBrief.astro` (a list of native disclosures, the one-line note, the "Automatic · Unreviewed" label, `data-pagefind-ignore`) and render it in `site/src/pages/[slug].astro` after the follow offer and before the facts row; verify on the built Tourette claim page that the three groups appear and each answer opens to its record
-- [ ] 4.2 Render the opened answer about what the largest trial measured: body-size rows per group, the statistic and direction in words, the posted comparison in the source line, and no values for an outcome posted in several rows; verify the three scenarios under "Posted results are shown only inside an opened answer"
-- [ ] 4.3 Style the section in `site/src/styles/global.css`: the group's name in its own column on a wide screen and above its rows under 40rem, 44-pixel rows on a phone, no status colour, printed open; verify in the browser preview at desktop and phone widths that nothing overflows at 320 pixels, focus is visible, and there are no console errors
-- [ ] 4.4 Add tests for "Answer read by rule", "Answer read by a model", "Without scripting" and "Narrow screen"; verify they pass
+- [ ] 4.1 Add `site/src/components/RecordBrief.astro` (a list of native disclosures, the one-line note as text, `data-pagefind-ignore`) and render it in `site/src/pages/[slug].astro` after the follow offer and before the facts row; verify on the built Tourette claim page that the two groups and six answers appear and each answer opens to its record
+- [ ] 4.2 Render the opened answer about what the largest trial measured: the registry's title and time frame in quotation marks, how it was read, and a link to the trial's entry; verify "Largest trial with posted values" passes and no result value or p value appears in the section
+- [ ] 4.3 Style the section in `site/src/styles/global.css`: the group's name larger than body text, in its own column on a wide screen and above its rows under 40rem, one chevron that turns when open, 44-pixel rows and links on a phone, no status colour, printed open; verify in the browser preview at desktop and phone widths that nothing overflows at 320 pixels, focus is visible, and there are no console errors
+- [ ] 4.4 Add tests for "Answer read directly", "Answer read by a model", "Without scripting" and "Narrow screen"; verify they pass
 
 ## 5. Record and check
 
-- [ ] 5.1 Record "The record in brief" under Components in `DESIGN.md`, add "reading" and "under way" to `GLOSSARY.md` if not there, and add the readings step to the README's commands if it lists pipeline steps; verify each file names the new element
+- [ ] 5.1 Record "The record in brief" under Components in `DESIGN.md`, update its Digest panel and Facts entries for the bridging sentence and the removed fact, add "reading" and "under way" to `GLOSSARY.md` if not there, and add the readings step to the README's commands if it lists pipeline steps; verify each file names the new element
 - [ ] 5.2 Run `make check` and verify ruff, ty, pytest, the site tests, the site build and the extension tests all pass
 - [ ] 5.3 Run the readings step on the local database, rebuild the export, and open the Tourette claim, one preclinical claim and one approved claim in the browser preview; verify each answer matches the trials and papers listed lower on the page and each model-read answer's quoted words are in the linked registry record
 
