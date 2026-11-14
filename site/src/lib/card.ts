@@ -87,6 +87,40 @@ export function cardAlt(card: CardContent): string {
   return [lead, ...facts, ...(card.note ? [card.note] : []), CARD_NOTICE].join(". ") + ".";
 }
 
+/**
+ * What a topic's card says: the topic's name, where its claims stand in the words of
+ * the topic page's summary, and the month the registries were checked. No claim's
+ * headline and no outlet's title: the card is for the topic, not for one claim in it.
+ */
+export interface TopicCardContent {
+  title: string;
+  summary: string;
+  /** "Nov 2026", or null before the registries have been checked. */
+  checked: string | null;
+}
+
+/** A topic's card names its one date with the same word as a claim's card. */
+export const CHECKED_LABEL = LABELS.checked;
+
+export function topicCardContent(
+  title: string,
+  summary: string,
+  lastCheckedAt: string | null,
+): TopicCardContent {
+  return { title, summary, checked: lastCheckedAt ? monthAndYear(lastCheckedAt) : null };
+}
+
+/** The same facts as the topic's image, as one line of text. */
+export function topicCardAlt(card: TopicCardContent): string {
+  const parts = [
+    card.title,
+    card.summary,
+    ...(card.checked ? [`${CHECKED_LABEL} ${card.checked}`] : []),
+    CARD_NOTICE,
+  ];
+  return parts.map((part) => part.replace(/[.\s]+$/, "")).join(". ") + ".";
+}
+
 /** A long title ends at a word, with an ellipsis, so the status below it is never pushed out. */
 export function clip(text: string, max: number): string {
   if (text.length <= max) return text;
