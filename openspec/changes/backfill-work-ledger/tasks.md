@@ -1,0 +1,63 @@
+# Tasks
+
+## 1. Choose the news index
+
+- [ ] 1.1 Read the current terms, authentication, rate limits and coverage of GDELT's bulk datasets, Media Cloud and Common Crawl's news crawl, and write an entry for each in `docs/sources.md` with the date checked; verify each entry states whether bulk search by keyword is permitted and at what rate
+- [ ] 1.2 Pick one index, or record that none qualifies, in `design.md` decision 8 and tell the operator; verify the decision names the source, its allowance and what the operator must set up (account, key), or states plainly that the step will not be run live
+- [ ] 1.3 Add the bulk use of ClinicalTrials.gov's list endpoint to its entry in `docs/sources.md`; verify the entry gives the page size, the request count for a full load and the rate used
+
+## 2. Ledger and steps
+
+- [ ] 2.1 Add a migration for the `work_entry` table with its unique key on record kind, record id, step and step version; verify `alembic upgrade head` then `alembic downgrade -1` both succeed on the test database
+- [ ] 2.2 Add the `thenwhat/backfill` package with the step shape, the list of registered steps and the duplicate-name check; verify a test registers two steps with one name and the check refuses
+- [ ] 2.3 Implement the due-work query (in scope, no finished entry at the current version, or a different fingerprint); verify tests against the test database cover finished records skipped, a changed fingerprint, a record out of scope, a new step and a raised version
+- [ ] 2.4 Implement the runner: lock a due record with skip-locked, run the step, save the result and the entry together, commit per record; verify tests cover a failure on one record of ten, the attempt limit, and a step that raises part way leaving neither result nor entry
+- [ ] 2.5 Verify with a test that two sessions running the same step over 100 due records process each record once
+- [ ] 2.6 Add step, work ledger and due to `GLOSSARY.md`; verify the terms match the words used in the CLI output and the specs
+
+## 3. Source allowances
+
+- [ ] 3.1 Add settings for each source's allowance (requests per period, least interval, pause when refused) to the configuration and `.env.example`; verify a step whose source has no allowance refuses to run and names the missing setting
+- [ ] 3.2 Add a migration for the allowance use table; verify upgrade and downgrade on the test database
+- [ ] 3.3 Implement claiming a request against an allowance in one transaction, with spacing between requests; verify tests using two sessions and a fake clock show the shared count holds and no two requests are closer than the least interval
+- [ ] 3.4 Implement the used-up and refused cases: stop asking, leave records due, do not count an attempt, record the pause; verify tests cover running out mid-run, a too-many-requests answer, and a restart within the same period
+
+## 4. Registry corpus
+
+- [ ] 4.1 Add a migration for the `registry_trial` table and the load state row; verify upgrade and downgrade on the test database
+- [ ] 4.2 Record fixtures of two list-endpoint pages with a generic client name; verify the fixtures contain no contact address
+- [ ] 4.3 Implement the paged load with a condition, storing each trial once with its raw payload and fetch time; verify tests against the fixtures cover a first load, a repeat load that updates in place, and a load resumed after stopping on the second page
+- [ ] 4.4 Implement loading changes since the previous completed load; verify a test shows the request carries the previous load's date and that an updated trial's fingerprint changes only when a field a step reads changed
+- [ ] 4.5 Add `thenwhat backfill load-trials`; verify one test of a successful load and one of the refusal when no contact address is configured
+- [ ] 4.6 Verify with a test that the export is byte-for-byte the same before and after a load
+- [ ] 4.7 Add registry trial to `GLOSSARY.md` and describe the load in the README's pipeline section; verify the documented command runs as written against the Compose stack
+
+## 5. Plan and run commands
+
+- [ ] 5.1 Add `thenwhat backfill steps` and `thenwhat backfill plan`, reporting per step the records in scope, done, nothing found, failed, due, requests needed, allowance left and hours; verify a test checks the figures for a seeded database and that no request is sent
+- [ ] 5.2 Add `thenwhat backfill run <step>` with a record limit and a worker count; verify one test of a limited run reporting what remains due and one of the refusal for an unknown step
+- [ ] 5.3 Verify with a test that a run stopped after some records and started again repeats none of them
+
+## 6. News search step and article leads
+
+- [ ] 6.1 Add a migration for the `article_lead` table, unique on trial and address; verify upgrade and downgrade on the test database
+- [ ] 6.2 Implement choosing the intervention name for a search (no placebo, comparator, dose, form, route or description) and the indication words; verify tests use the 200 sampled trials' registry fields as cases, including the ones the sample could not name
+- [ ] 6.3 Write the client for the index chosen in 1.2, with removal of any excerpt, summary or text field before a result is stored or logged; verify tests use synthetic fixtures only and one asserts that a result carrying an excerpt is stored without it
+- [ ] 6.4 Implement the news search step: scope, inputs, search, leads stored once per trial and address, outcome done or nothing found; verify tests cover coverage found, none found, the same article found twice, and one article found for two trials
+- [ ] 6.5 Check whether the outlet list behind `docs/outlets.md` can carry an outlet kind, add the kind there or in one new checked-in list, and set each lead's kind by rule from its domain; verify tests cover a general outlet, a trade outlet, a press release wire and an unlisted domain
+- [ ] 6.6 Add `thenwhat backfill leads`, the hit rate report by outlet kind; verify one test of the report's counts and percentages on seeded leads and one of its message when no trial has been processed
+- [ ] 6.7 Verify with a test that the export is the same before and after leads are stored
+- [ ] 6.8 Add article lead to `GLOSSARY.md`, stating that a lead is not a source article; verify the entry and the spec use the same words
+
+## 7. First run
+
+- [ ] 7.1 Run `make check`; verify ruff, ty, pytest and the site build pass
+- [ ] 7.2 Load the phase 3 drug and biological trials on the operator's machine and run `backfill plan`; verify the trial count is close to 43,320 and record the plan's figures in this change
+- [ ] 7.3 Run the news search with a limit of 200 and `backfill leads`; verify the hit rate is recorded here beside the sample's 31% overall and 16% trial-specific, with the split by outlet kind
+- [ ] 7.4 Stop a second limited run part way and start it again; verify the report shows no record processed twice
+- [ ] 7.5 Give the operator the 200-trial figures and the plan for the full run, and wait for a decision before running without a limit
+
+## Workflow follow-up
+
+- Archive the change after the operator has decided on the full run.
+- Propose the next steps (social posts, paper matching, turning leads into claims) as their own changes.
