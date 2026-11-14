@@ -93,6 +93,14 @@ So what is left is the outlet's own speed (one site took a minute to answer afte
 
 The model now reads the article while the linked papers and any stated registry numbers are looked up. `thenwhat outlets` checks four outlets at a time (`--workers`), with one shared turn-taker per registry so the registry's rate is kept however many lookups run.
 
+### Slow linked-paper lookups (14 November 2026)
+
+A lookup of ScienceAlert's [tinnitus biomarker report](https://www.sciencealert.com/scientists-identified-a-biological-signature-of-tinnitus-and-its-in-your-blood) exposed an unnecessary wait: the model identified no specific treatment, but the service waited for all linked-paper requests before returning that identification. Timed production probes using the same article text took 32.8 seconds with public-page verification, 31.9 seconds with paper links but no publisher verification, and 2.7 seconds with text alone. These are single diagnostic runs, not a performance benchmark. Europe PMC returned HTTP 500 in separate local probes.
+
+The correction in `openspec/changes/visible-content-lookup` returns a non-treatment identification without waiting for paper or stated-record requests. Publisher, paper and registry calls have deadlines covering headers and bodies. Independent public verification has a shorter deadline; if it fails, browser text can still be read, but its result stays private to that reader. The popup has a 45-second overall lookup deadline and an explicit retry, including page reading and automatic screenshot fallback. Timeout means an incomplete search, never that no research exists.
+
+The diagnostic tests use stalled synthetic sources, including sources that ignore cancellation, and check that late completions cannot update the popup or its saved results. The fix must be deployed with an updated Safari extension before installed users receive all of these protections.
+
 ## Posts on social media
 
 The address of a post works in place of an article's, on the platforms that offer posts to software without signing in: Bluesky, Hacker News and Mastodon servers. The post is read, the first article it links to is read as any article, and the two are looked up together. The answer says where it read from. If the article cannot be read, the lookup goes on from the post alone. On the site, a post that links to an article we track is answered with that claim's page, with no automatic search.

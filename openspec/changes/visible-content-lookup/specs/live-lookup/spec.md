@@ -17,3 +17,18 @@ The service MAY retain structured automatic findings from independently public r
 #### Scenario: Public access cannot be verified
 - **WHEN** the service cannot independently read a report publicly
 - **THEN** visual lookup may proceed but its result remains in the reader's local cache only
+
+### Requirement: Bounded source retrieval
+Article retrieval SHALL have a total deadline covering robots checks, response headers and response bodies. Independent public verification of browser-supplied text SHALL have a shorter deadline; if it expires, lookup SHALL continue with the supplied text without sharing that result. Paper and trial-registry requests SHALL have deadlines through body consumption. A registry timeout SHALL be reported as failure, never as evidence that no trial exists.
+
+#### Scenario: A publisher stalls during public verification
+- **WHEN** a browser supplies usable text but the anonymous publisher request exceeds three seconds
+- **THEN** lookup continues from browser text and does not publish its result to shared storage
+
+#### Scenario: A non-treatment report links to a stalled paper service
+- **WHEN** identification finds no specific treatment and a linked-paper or stated-record request is still pending
+- **THEN** the identification result returns without waiting for those requests
+
+#### Scenario: Response headers arrive but the body stalls
+- **WHEN** a publisher, paper or trial-registry response body fails to complete before its deadline
+- **THEN** the request is aborted and follows the same failure behavior as a header timeout
