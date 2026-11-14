@@ -2,12 +2,57 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { makeResearch } from "../worker/research.mjs";
+import { lookUp } from "../worker/lookup.mjs";
+import { readPage, pageAsText } from "../worker/page.mjs";
 import { readFileSync } from "node:fs";
 const recorded = name => JSON.parse(readFileSync(new URL(`./fixtures/research/${name}.json`, import.meta.url), "utf8")).body;
 const budget = recorded("openalex-allowance").rate_limit;
 const work = recorded("openalex-works").results[0];
 const org = recorded("ror-affiliation").items.find(item => item.chosen).organization;
 const input={intervention:"EX-1",indication:"tooth agenesis",searchPhrases:["tooth repair"],organisations:["Kyoto University"]};
+
+test("a report's PubMed citation supplies the paper when keyword search misses it", async () => {
+  // Synthetic article text, with the citation from the reported King's failure.
+  const page = readPage('<main><p>A laboratory method may help replace missing teeth.</p><a href="https://pubmed.ncbi.nlm.nih.gov/39532305/">Study</a></main>');
+  const expected = recorded("openalex-tooth-organoids");
+  const calls = [];
+  const research = makeResearch({apiKey:"fixture-only",contact:"operator@example.org",fetch:async url => {
+    const u = new URL(url); calls.push(u);
+    if (u.pathname === "/rate-limit") return Response.json({rate_limit:budget});
+    if (u.pathname === "/works/pmid:39532305") return Response.json(expected);
+    return Response.json({results:[]});
+  }});
+  assert.deepEqual(page.pubmedIds, ["39532305"]);
+  const result = await lookUp({text:pageAsText(page),page,research,index:{claims:{}},
+    model:{read:async () => ({about_a_treatment:true,intervention:"lab-grown teeth",indication:"missing teeth"})},
+    registry:{search:async () => []},
+  });
+  assert.equal(result.research.papers[0]?.url, expected.doi);
+  assert.equal(result.research.papers[0]?.id, expected.id);
+  assert.equal(calls.filter(u => u.pathname === "/works/pmid:39532305").length, 1);
+});
+
+test("citation-free research discovery finds the King's paper from experimental topic and researcher", async () => {
+  const probe = JSON.parse(readFileSync(new URL('./fixtures/research/kcl-blind-discovery.json', import.meta.url), 'utf8'));
+  const calls = [];
+  const research = makeResearch({apiKey:"fixture-only",contact:"operator@example.org",fetch:async url => {
+    const u = new URL(url); calls.push(u);
+    assert(!/39532305|4c00520|W4404326590|Generating.*Tooth.*Organoids/i.test(decodeURIComponent(u.href)), "Expected record must not leak into discovery requests");
+    if (u.pathname === "/rate-limit") return Response.json({rate_limit:budget});
+    if (u.hostname === "api.ror.org") return Response.json({items:[]});
+    assert.equal(u.pathname, "/works", "No identifier lookup in the citation-free case");
+    if (u.searchParams.get("search") === probe.query.search && u.searchParams.get("filter")?.includes(probe.query.filter)) return Response.json(probe.response.body);
+    return Response.json({results:[]});
+  }});
+  const result = await lookUp({text:"Synthetic report for replay; extraction was recorded separately without citations.",
+    page:{dois:[],pubmedIds:[],registryNumbers:[],published:probe.publicationDate},research,index:{claims:{}},
+    model:{read:async () => probe.reading},registry:{search:async () => []},
+  });
+  assert.equal(result.research.papers[0]?.id, "https://openalex.org/W4404326590");
+  assert.equal(result.research.papers[0]?.url, "https://doi.org/10.1021/acsmacrolett.4c00520");
+  assert.deepEqual(result.candidates, []);
+  assert(calls.some(u => u.searchParams.get("filter")?.includes(probe.query.filter)));
+});
 function setup(overrides={}) {
  const calls=[], entries=new Map(); const cache={get:async k=>JSON.parse(entries.get(k)??"null"),put:async(k,v)=>{entries.set(k,v)}};
  const fetch=async(url,init={})=>{calls.push({url:String(url),init});const u=new URL(url);if(u.hostname==="api.ror.org")return Response.json({items:[{chosen:true,score:1,organization:org}]});if(u.pathname==="/rate-limit")return Response.json({rate_limit:overrides.budget??budget});return Response.json({results:[work]});};
