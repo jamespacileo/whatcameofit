@@ -1,6 +1,6 @@
 """Commands that create evidence events: fetching from registries and entry by hand."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 import typer
@@ -52,6 +52,7 @@ def fetch_command(
             notices=notices,
             threshold=settings.review_confidence_threshold,
             no_signal_years=settings.no_signal_years,
+            paper_max_age=timedelta(days=settings.paper_record_max_age_days),
             now=datetime.now(UTC),
         )
         pending = sum(event.review_state is ReviewState.PENDING for event in created)

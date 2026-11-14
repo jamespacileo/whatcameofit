@@ -8,25 +8,25 @@
 
 ## 2. Reading the facts
 
-- [ ] 2.1 Record Europe PMC fixtures with a generic client name and abstracts replaced: a randomised trial report, a preprint, a paper with "Humans" and "Animals" headings, and a known retracted paper; verify each loads in a test and holds no abstract text
-- [ ] 2.2 Add a pure function from an index record to paper facts: title, journal, year, open access; verify on the recorded fixtures
-- [ ] 2.3 Map publication types to the twelve kind codes in their fixed order, ignoring a type with no mapping; verify the Phase 3 randomised trial fixture gives randomised trial, clinical trial, article, and an unknown type adds no code
-- [ ] 2.4 Read people, animals or both from the "Humans" and "Animals" headings only, and the retracted mark from the publication type; verify each of the four heading cases, that "Mice" alone states nothing, and the retracted fixture. If the retracted fixture carries no mark, remove the retraction requirement from the spec delta and say so in design.md
-- [ ] 2.5 Read results references from a registry record in `events/trial_facts.py`: PubMed number and how listed, for `RESULT` and `DERIVED` only; verify on `study_NCT01596231_results.json` (one registry-linked paper), on a record with background references only, and that no citation text is returned
+- [x] 2.1 Record Europe PMC fixtures with a generic client name and abstracts replaced: a randomised trial report, a preprint, a paper with "Humans" and "Animals" headings, and a known retracted paper; verify each loads in a test and holds no abstract text
+- [x] 2.2 Add a pure function from an index record to paper facts: title, journal, year, open access; verify on the recorded fixtures
+- [x] 2.3 Map publication types to the twelve kind codes in their fixed order, ignoring a type with no mapping; verify the Phase 3 randomised trial fixture gives randomised trial, clinical trial, article, and an unknown type adds no code
+- [x] 2.4 Read people, animals or both from the "Humans" and "Animals" headings only, and the retracted mark from the publication type; verify each of the four heading cases, that "Mice" alone states nothing, and the retracted fixture. If the retracted fixture carries no mark, remove the retraction requirement from the spec delta and say so in design.md
+- [x] 2.5 Read results references from a registry record in `events/trial_facts.py`: PubMed number and how listed, for `RESULT` and `DERIVED` only; verify on `study_NCT01596231_results.json` (one registry-linked paper), on a record with background references only, and that no citation text is returned
 
 ## 3. Storing records
 
-- [ ] 3.1 Add the `paper_record` table and its migration; verify it applies and reverses against the test database
-- [ ] 3.2 Add the lookup by PubMed number to the Europe PMC client; verify a known number, an unknown number and a malformed number on recorded fixtures
-- [ ] 3.3 At fetch, store a reduced record (no abstract, authors, author identifiers or affiliations) for the origin paper, each approved follow-up paper and each results paper of an approved trial, replacing a stored record only when it is older than the configured age; verify the stored payload names no author, a second fetch within the age makes no request, and a paper the index does not hold is stored as not held
-- [ ] 3.4 Add the setting for the refresh age to `config.py` and `.env.example`; verify the default of thirty days in a test
+- [x] 3.1 Add the `paper_record` table and its migration; verify it applies and reverses against the test database
+- [x] 3.2 Add the lookup by PubMed number to the Europe PMC client; verify a known number, an unknown number and a malformed number on recorded fixtures
+- [x] 3.3 At fetch, store a reduced record (no abstract, authors, author identifiers or affiliations) for the origin paper, each approved follow-up paper and each results paper of an approved trial, replacing a stored record only when it is older than the configured age; verify the stored payload names no author, a second fetch within the age makes no request, and a paper the index does not hold is stored as not held
+- [x] 3.4 Add the setting for the refresh age to `config.py` and `.env.example`; verify the default of thirty days in a test
 
 ## 4. Export
 
-- [ ] 4.1 Export `papers` on each claim, one per identifier, with roles merged across DOI and PubMed number, `facts_as_of` and facts; verify export tests for an origin paper a trial also lists, a paper behind a rejected follow-up event, and a paper the index does not hold
-- [ ] 4.2 Export each trial's results paper identifiers; verify a trial with one sponsor-listed and one registry-linked paper
-- [ ] 4.3 Verify by test that a claim's status and explaining events are the same with and without papers, including a retracted results paper
-- [ ] 4.4 Regenerate `site/export.schema.json` and `site/data/seed-export.json`, and verify the checked-in `site/data/published-export.json` still validates against the new schema
+- [x] 4.1 Export `papers` on each claim, one per identifier, with roles merged across DOI and PubMed number, `facts_as_of` and facts; verify export tests for an origin paper a trial also lists, a paper behind a rejected follow-up event, and a paper the index does not hold
+- [x] 4.2 Export each trial's results paper identifiers; verify a trial with one sponsor-listed and one registry-linked paper
+- [x] 4.3 Verify by test that a claim's status and explaining events are the same with and without papers, including a retracted results paper
+- [x] 4.4 Regenerate `site/export.schema.json` and `site/data/seed-export.json`, and verify the checked-in `site/data/published-export.json` still validates against the new schema
 
 ## 5. Measurement before the page
 

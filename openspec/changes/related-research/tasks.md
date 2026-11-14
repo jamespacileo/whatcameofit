@@ -43,7 +43,7 @@
 
 ## 7. Export and site
 
-- [ ] 7.1 Export approved papers into each claim's `papers` (openspec `paper-facts`) with the role "related", carrying title, year, kind, link, score and reason codes and no abstract; regenerate `site/export.schema.json` and `site/data/seed-export.json`; verify the export tests
+- [x] 7.1 Export approved papers into each claim's `papers` (openspec `paper-facts`) with the role "related", carrying title, year, kind, link, score and reason codes and no abstract; regenerate `site/export.schema.json` and `site/data/seed-export.json`; verify the export tests
 - [ ] 7.2 Show related papers as a group of "Papers on record" on the claim page, with the site's wording for each reason and the note that a paper is not a trial record; verify the build fails on an unknown reason code and that a claim with no paper shows no section
 - [ ] 7.3 Describe the section on the method page; verify the site build
 

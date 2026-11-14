@@ -2,7 +2,7 @@
 with fake registries on a real database. Scenario names are from openspec evidence-events."""
 
 import copy
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 import pytest
@@ -12,7 +12,8 @@ from sqlalchemy.orm import Session
 from thenwhat.claims.entities import add_entity, entities_of, set_origin_paper
 from thenwhat.claims.entry import InvalidField, InvalidUrl, MissingField, add_claim
 from thenwhat.claims.status import refresh_status
-from thenwhat.db.models import Claim, EntityMatch, EvidenceEvent
+from thenwhat.config import Settings
+from thenwhat.db.models import Claim, EntityMatch, EvidenceEvent, PaperRecord
 from thenwhat.domain import (
     ClaimStatus,
     Decider,
@@ -76,6 +77,9 @@ class Literature:
 
     def paper(self, doi: str) -> SourceRecord | None:
         return self.origin if self.origin and doi.lower() == ORIGIN_DOI else None
+
+    def paper_by_pubmed_id(self, pubmed_id: str) -> SourceRecord | None:
+        return None
 
     def citing_papers(self, paper: SourceRecord) -> list[SourceRecord]:
         return self.citing
@@ -495,3 +499,164 @@ def test_same_manual_event_entered_twice_is_refused(session: Session):
             regulatory_outcome=RegulatoryOutcome.APPROVED,
             now=NOW,
         )
+
+
+# --- paper records (openspec paper-facts, source-clients) -------------------------------
+
+RESULTS_PMID = "35658024"
+
+
+class Index(Literature):
+    """An index that also answers by PubMed number, and counts what it is asked."""
+
+    def __init__(self, by_pubmed_id: dict[str, SourceRecord], **options: Any) -> None:
+        super().__init__(**{"citing": []} | options)
+        self.by_pubmed_id = by_pubmed_id
+        self.asked: list[str] = []
+
+    def paper_by_pubmed_id(self, pubmed_id: str) -> SourceRecord | None:
+        self.asked.append(pubmed_id)
+        return self.by_pubmed_id.get(pubmed_id)
+
+
+def with_results_paper(study: dict[str, Any]) -> dict[str, Any]:
+    """The recorded trial, with a results paper its sponsor listed and one it listed as
+    background."""
+    citation = "Example A, Sample B. A made-up citation. J Ex. 2022."
+    study["protocolSection"]["referencesModule"] = {
+        "references": [
+            {"pmid": RESULTS_PMID, "type": "RESULT", "citation": citation},
+            {"pmid": "111", "type": "BACKGROUND", "citation": citation},
+        ]
+    }
+    return study
+
+
+def indexed(fixture_json, at: datetime = NOW) -> SourceRecord:
+    result = fixture_json("europepmc/pmid_35658024_trial_report.json")["resultList"]["result"][0]
+    url = "https://europepmc.org/article/MED/35658024"
+    return SourceRecord("europepmc", result["doi"], url, result, at)
+
+
+def paper_records(session: Session) -> list[PaperRecord]:
+    return list(session.scalars(select(PaperRecord).order_by(PaperRecord.id)))
+
+
+def test_results_paper_of_an_approved_trial_is_stored_without_abstract_or_authors(
+    session: Session, study, fixture_json
+):
+    """Scenario: Record with an abstract and eleven authors"""
+    claim = new_claim(session)
+    with_trial(session, claim)
+    index = Index({RESULTS_PMID: indexed(fixture_json)})
+
+    fetch(session, claim, trials=Trials({NCT: with_results_paper(study)}), literature=index)
+
+    [stored] = paper_records(session)
+    assert (stored.identifier, stored.pubmed_id) == ("10.1056/nejmoa2206038", RESULTS_PMID)
+    assert (stored.source_name, stored.fetched_at) == ("europepmc", NOW)
+    assert stored.payload is not None and stored.payload["pubTypeList"]
+    assert "abstractText" not in stored.payload and "Jastreboff" not in str(stored.payload)
+    # The paper the sponsor listed as background is not asked for.
+    assert index.asked == [RESULTS_PMID]
+
+
+def test_paper_of_a_pending_trial_match_is_not_stored(session: Session, study, fixture_json):
+    claim = new_claim(session)
+    with_trial(session, claim, approved=False)
+    index = Index({RESULTS_PMID: indexed(fixture_json)})
+
+    fetch(session, claim, trials=Trials({NCT: with_results_paper(study)}), literature=index)
+
+    assert paper_records(session) == [] and index.asked == []
+
+
+def test_record_fetched_last_week_causes_no_request(session: Session, study, fixture_json):
+    """Scenario: Record fetched last week"""
+    claim = new_claim(session)
+    with_trial(session, claim)
+    trials = Trials({NCT: with_results_paper(study)})
+    index = Index({RESULTS_PMID: indexed(fixture_json)})
+    fetch(session, claim, trials=trials, literature=index)
+
+    fetch_claim(
+        session,
+        claim,
+        trials=trials,
+        literature=index,
+        notices=Notices(),
+        threshold=0.95,
+        now=NOW + timedelta(days=7),
+    )
+
+    assert index.asked == [RESULTS_PMID]
+    assert [stored.fetched_at for stored in paper_records(session)] == [NOW]
+
+
+def test_record_fetched_two_months_ago_is_fetched_again(session: Session, study, fixture_json):
+    """Scenario: Record fetched two months ago"""
+    claim = new_claim(session)
+    with_trial(session, claim)
+    trials = Trials({NCT: with_results_paper(study)})
+    index = Index({RESULTS_PMID: indexed(fixture_json)})
+    fetch(session, claim, trials=trials, literature=index)
+    later = NOW + timedelta(days=60)
+    index.by_pubmed_id[RESULTS_PMID] = indexed(fixture_json, at=later)
+
+    fetch_claim(
+        session,
+        claim,
+        trials=trials,
+        literature=index,
+        notices=Notices(),
+        threshold=0.95,
+        now=later,
+    )
+
+    assert index.asked == [RESULTS_PMID, RESULTS_PMID]
+    assert [stored.fetched_at for stored in paper_records(session)] == [later]
+
+
+def test_paper_the_index_does_not_hold_is_stored_as_not_held(session: Session, study):
+    """Scenario: Paper the index does not hold"""
+    claim = new_claim(session)
+    with_trial(session, claim)
+    trials = Trials({NCT: with_results_paper(study)})
+    index = Index({})
+
+    fetch(session, claim, trials=trials, literature=index)
+    fetch(session, claim, trials=trials, literature=index)
+
+    [stored] = paper_records(session)
+    assert (stored.identifier, stored.pubmed_id, stored.payload) == (
+        f"pmid:{RESULTS_PMID}",
+        RESULTS_PMID,
+        None,
+    )
+    assert index.asked == [RESULTS_PMID]
+
+
+def test_origin_paper_and_approved_follow_up_are_stored_from_the_records_in_hand(
+    session: Session,
+):
+    claim = new_claim(session)
+    with_origin_paper(session, claim)
+    same_group = paper("10.1000/later", "A later study", ["Example A"], "EX-1 antibody again")
+    stranger = paper("10.1000/other", "EX-1 antibody elsewhere", ["Nobody N"])
+    index = Index({}, citing=[same_group, stranger])
+
+    fetch(session, claim, literature=index, threshold=0.9)
+
+    stored = {record.identifier: record for record in paper_records(session)}
+    # The origin paper and the follow-up a rule approved; not the one awaiting review.
+    assert set(stored) == {ORIGIN_DOI, "10.1000/later"}
+    assert index.asked == []
+    for record in stored.values():
+        assert record.payload is not None
+        assert not {"authorList", "abstractText"} & set(record.payload)
+
+
+def test_stored_paper_records_are_refreshed_after_thirty_days_by_default(monkeypatch):
+    monkeypatch.delenv("PAPER_RECORD_MAX_AGE_DAYS", raising=False)
+
+    assert Settings(database_url="postgresql://example").paper_record_max_age_days == 30

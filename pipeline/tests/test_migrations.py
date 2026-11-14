@@ -14,6 +14,7 @@ EXPECTED_TABLES = {
     "llm_usage",
     "http_cache",
     "outlet_icon",
+    "paper_record",
 }
 
 

@@ -37,6 +37,7 @@ MeasureKind = Literal[
     "log_mean",
 ]
 TestKind = Literal["superiority", "non_inferiority", "equivalence"]
+HowListed = Literal["listed_by_sponsor", "linked_by_registry"]
 
 # At most this many planned and this many posted primary outcomes are carried.
 OUTCOMES_SHOWN = 3
@@ -190,12 +191,32 @@ class TrialFacts:
 
 
 @dataclass(frozen=True, slots=True)
+class ResultsPaper:
+    """A paper the record names for the trial, by its PubMed number (openspec
+    paper-facts). The reference's citation text names authors and is never read."""
+
+    pubmed_id: str
+    listed: HowListed
+
+
+# A reference's type, and how the paper came to be on the record (docs/sources.md):
+# the sponsor said it reports the study's results, or the registry filled it in from
+# PubMed. A reference the sponsor listed as background is not read.
+HOW_LISTED: dict[str, HowListed] = {
+    "RESULT": "listed_by_sponsor",
+    "DERIVED": "linked_by_registry",
+}
+
+
+@dataclass(frozen=True, slots=True)
 class RegistryTrial:
-    """What a registry record says of its trial: its title, its state and its facts."""
+    """What a registry record says of its trial: its title, its state, its facts and
+    the papers it names as the trial's."""
 
     title: str | None
     state: TrialStateCode
     facts: TrialFacts
+    results_papers: tuple[ResultsPaper, ...] = ()
 
 
 def is_registry_record(payload: Any) -> bool:
@@ -237,7 +258,22 @@ def read_trial(study: dict[str, Any]) -> RegistryTrial:
             why_stopped=_text(status, "whyStopped"),
             results=_results(study),
         ),
+        results_papers=_results_papers(protocol),
     )
+
+
+def _results_papers(protocol: dict[str, Any]) -> tuple[ResultsPaper, ...]:
+    """One per PubMed number, in the record's order. A paper the sponsor listed and the
+    registry also linked is the sponsor's."""
+    found: dict[str, HowListed] = {}
+    for reference in _objects(protocol, "referencesModule", "references"):
+        listed = _code(HOW_LISTED, reference.get("type"))
+        pubmed_id = _text(reference, "pmid")
+        if listed is None or pubmed_id is None or not pubmed_id.isdigit():
+            continue
+        if pubmed_id not in found or listed == "listed_by_sponsor":
+            found[pubmed_id] = listed
+    return tuple(ResultsPaper(pubmed_id, listed) for pubmed_id, listed in found.items())
 
 
 def reported_state(state: TrialState | None) -> TrialStateCode:
