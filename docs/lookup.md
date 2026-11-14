@@ -99,6 +99,8 @@ A lookup of ScienceAlert's [tinnitus biomarker report](https://www.sciencealert.
 
 The correction in `openspec/changes/visible-content-lookup` returns a non-treatment identification without waiting for paper or stated-record requests. Publisher, paper and registry calls have deadlines covering headers and bodies. Independent public verification has a shorter deadline; if it fails, browser text can still be read, but its result stays private to that reader. The popup has a 45-second overall lookup deadline and an explicit retry, including page reading and automatic screenshot fallback. Timeout means an incomplete search, never that no research exists.
 
+A linked paper that passes its deadline, or fails, is not dropped in silence. The answer counts the papers not looked up, the site and the popup say beside the list that a trial such a paper reports may be missing, and that answer is kept out of the shared results library and the popup's saved results, so the next lookup asks again. Europe PMC answered the same papers in under 0.3 seconds a minute after taking 17 to 25 seconds over them.
+
 The diagnostic tests use stalled synthetic sources, including sources that ignore cancellation, and check that late completions cannot update the popup or its saved results. The fix must be deployed with an updated Safari extension before installed users receive all of these protections.
 
 ## Posts on social media
