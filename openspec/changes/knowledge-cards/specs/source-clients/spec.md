@@ -9,6 +9,14 @@ The vocabulary client SHALL return a term's record, with its label and definitio
 - **WHEN** the client is asked for terms equal to "Ketogenic Diet" and no term has that label but one lists it as an entry term
 - **THEN** that term is returned with its own label and the entry term that was equal
 
+#### Scenario: Entry term of a supplementary record
+- **WHEN** the client is asked for terms equal to a name that is the entry term of a supplementary record
+- **THEN** the supplementary record is returned with its identifier and label
+
+#### Scenario: Supplementary record's definition
+- **WHEN** the client is asked for a supplementary record by its identifier
+- **THEN** it returns the record's label and its note as the definition
+
 ### Requirement: A gene is looked up by symbol
 The target client SHALL return, for a word, each human gene whose approved symbol or a listed synonym of it equals the word without regard to case, saying which of the two was equal, with the protein's name and function description. A gene whose symbol or synonyms only resemble the word SHALL NOT be returned.
 
@@ -38,6 +46,17 @@ The drug client SHALL return, for a name, the drug whose own name equals it, wit
 #### Scenario: Name that only resembles a drug's
 - **WHEN** the client is asked for a procedure's name and the source's search returns unrelated drugs
 - **THEN** it returns nothing
+
+### Requirement: A request sent with a body is cached by its body
+When a source is asked by a request that carries a body, the stored answer SHALL be kept under the source, the address and the body together, and a second request with the same three SHALL be answered from the store while it is fresh. The request SHALL follow the same pacing, retries, client identification and refusal for an unrecorded source as any other.
+
+#### Scenario: Two queries to one address
+- **WHEN** a source is asked two different queries at the same address
+- **THEN** each gets its own answer and neither is served the other's
+
+#### Scenario: Same query twice
+- **WHEN** the same query is asked again within the time its answer is kept
+- **THEN** no request is sent
 
 ### Requirement: A source is used only once its terms are recorded
 A client for a source SHALL refuse to make a request unless the source is recorded in the project's list of sources with its terms, licence and the date they were read. The refusal SHALL name the source.

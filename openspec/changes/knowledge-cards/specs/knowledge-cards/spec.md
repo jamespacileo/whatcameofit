@@ -17,6 +17,10 @@ For each claim, candidate subject terms SHALL be gathered without a model from t
 - **WHEN** an intervention's name equals the label of a supplementary record and of no main term
 - **THEN** the supplementary record is a candidate for its intervention
 
+#### Scenario: Entry term whose record cannot be found
+- **WHEN** a name equals an entry term and the vocabulary does not say which record the entry term belongs to
+- **THEN** the name makes no candidate and the run reports it
+
 #### Scenario: Claim with trials
 - **WHEN** a claim has six approved trials, five filed under "Osteoarthritis, Knee", three under "Pain" and one under "Fibromyalgia"
 - **THEN** the first two terms are candidates for its condition, with counts of five and three, and the third is not a candidate
@@ -80,6 +84,21 @@ For a claim whose intervention has no approved exact term, a bounded decision SH
 - **WHEN** three of a claim's approved trials list an intervention whose name equals the claim's intervention name, each with the registry's device type
 - **THEN** the kind link carries that reason with the type and the count three, and its score is unchanged
 
+#### Scenario: Kind whose term the vocabulary does not hold
+- **WHEN** a kind on the list is tied to an identifier the vocabulary returns nothing for
+- **THEN** the run stops with an error naming the kind, and no other term is used in its place
+
+### Requirement: A kind is asked for once
+A kind SHALL NOT be asked for again for a claim that has a kind link, or that was answered with none of them for the same list of kinds. When the list of kinds changes, a claim answered with none of them SHALL be asked again.
+
+#### Scenario: Second run
+- **WHEN** a claim was answered "none of these" and the terms are run again with the same list of kinds
+- **THEN** no decision is made for it
+
+#### Scenario: Kind added to the list
+- **WHEN** a kind is added to the list and the terms are run again
+- **THEN** a claim answered "none of these" before is asked again, and a claim with a kind link is not
+
 ### Requirement: A chosen kind is a scored link
 When a kind is chosen, a link from the claim's intervention to that kind's term SHALL be stored as a kind link, with the probability of the choice as its score, and decided by the same thresholds as any term link. When none is chosen no link SHALL be stored.
 
@@ -87,12 +106,20 @@ When a kind is chosen, a link from the claim's intervention to that kind's term 
 - **WHEN** a claim's intervention is "Wrist-worn median nerve stimulation device", it has no approved exact term, and the decision chooses the electrical stimulation kind with a probability of 0.9
 - **THEN** a kind link to that kind's term is stored with a score of 0.9 and approved by rule
 
+#### Scenario: Kind's term already a link for the claim
+- **WHEN** the chosen kind's term is already a link for the claim's intervention, gathered from the registry and rejected by the operator
+- **THEN** no second link is stored and the rejected link stays rejected
+
 #### Scenario: Intervention that fits no kind
 - **WHEN** the decision chooses "none of these"
 - **THEN** no kind link is stored and the claim has no card for its intervention
 
 ### Requirement: A gene or protein named in the intervention is a candidate target
-For each claim, candidate targets SHALL be gathered without a model from the words of its intervention's name and other names: a human gene whose approved symbol, or a listed synonym of it, equals a word is a candidate. A gene variant SHALL NOT be a candidate in its own right.
+For each claim, candidate targets SHALL be gathered without a model from the words of its intervention's name and other names: a human gene whose approved symbol, or a listed synonym of it, equals a word is a candidate. No more than the configured number, three by default, SHALL be kept for a claim, a word equal to a symbol before a word equal to a synonym. A gene variant SHALL NOT be a candidate in its own right.
+
+#### Scenario: Name with four gene-like words
+- **WHEN** an intervention's names hold four words that each equal a gene's symbol or synonym
+- **THEN** three are candidates, and those equal to a symbol are kept first
 
 #### Scenario: Allele named in the intervention
 - **WHEN** an intervention's name contains "APOE4" and it equals a listed synonym of the gene APOE
@@ -150,6 +177,10 @@ A card SHALL carry the term's label, its definition as the vocabulary's publishe
 - **WHEN** an approved term's record has no definition
 - **THEN** the card carries the label and link and no definition
 
+#### Scenario: Supplementary record
+- **WHEN** a card is made from a supplementary record that has a note
+- **THEN** the note is the card's definition, word for word, and the paper the vocabulary took the record from is not shown
+
 ### Requirement: A drug card states what it is and what it acts on
 For an intervention found by name in the drug source, where the source's name for it equals the intervention's name or one of its other names, a card SHALL carry the kind of molecule and, when the source gives one, each mechanism as an action and a target's name. The card SHALL NOT carry the source's view of how far the drug has got, what it is approved for or what it is used for.
 
@@ -166,7 +197,7 @@ For an intervention found by name in the drug source, where the source's name fo
 - **THEN** no drug card is made
 
 ### Requirement: A target card states what the target is
-A claim SHALL carry at most one target card, with the protein's name, its gene symbol and the source's description of its function, with the description's own source and licence. A target card made from a named gene SHALL NOT state a mechanism.
+A claim SHALL carry at most one target card, with the protein's name, its gene symbol and the source's description of its function, with the description's own source and licence. When the source gives several descriptions, the card SHALL carry the first as given. A target card made from a named gene SHALL NOT state a mechanism.
 
 #### Scenario: Named gene and no drug record
 - **WHEN** a claim has an approved link to a gene named in its intervention and no drug card
@@ -193,6 +224,10 @@ A card fact SHALL be exported only when its source and licence are recorded as a
 #### Scenario: Share-alike source not yet accepted
 - **WHEN** the drug source's share-alike parts are not recorded as accepted
 - **THEN** the export carries no mechanism from that source
+
+#### Scenario: Target source not yet accepted
+- **WHEN** a claim has an approved named-gene link and the target source is not recorded as accepted
+- **THEN** the link stays stored and the export carries no target card
 
 ### Requirement: Cards do not change the status
 Background cards and term links SHALL NOT be inputs to a claim's status or to its evidence stage.
