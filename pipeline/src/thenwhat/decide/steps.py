@@ -589,3 +589,59 @@ def _describe(candidate: SourceRecord) -> str:
     else:
         text = json.dumps(candidate.payload, ensure_ascii=False, sort_keys=True)
     return text[:MAX_CANDIDATE_CHARACTERS]
+
+
+# --- link lead triage (openspec lead-triage) -----------------------------------------
+
+LEAD_TRIAGE = "lead_triage"
+TREATMENT_REPORT = "treatment_report"
+HEALTH_OTHER = "health_other"
+NOT_HEALTH = "not_health"
+TRIAGE_OPTIONS = [TREATMENT_REPORT, HEALTH_OTHER, NOT_HEALTH]
+TRIAGE_INTRO = (
+    "Each item is the headline of a news article, with the outlet that published it and "
+    "the year it was shared. Judge from the headline alone. Nothing else is known about "
+    "the article."
+)
+TRIAGE_QUESTION = (
+    "What does this headline report?\n"
+    f"- {TREATMENT_REPORT}: a result, finding or development about one specific treatment "
+    "(a drug, vaccine, device, procedure or therapy, named or described) for one specific "
+    "disease or condition\n"
+    f"- {HEALTH_OTHER}: health or medicine, but not that: policy, an outbreak, a risk "
+    "factor, advice on diet or lifestyle, a company's business, or science with no "
+    "treatment for a condition\n"
+    f"- {NOT_HEALTH}: not about health or medicine"
+)
+
+
+def lead_ref(lead_id: int) -> str:
+    """The decision log's reference to a link lead."""
+    return f"link_lead:{lead_id}"
+
+
+def headline_text(title: str, outlet: str, year: int) -> str:
+    """All that triage is shown of a link lead: its title, its outlet and the year."""
+    return f"Headline: {title}\nOutlet: {outlet}\nYear shared: {year}"
+
+
+def triage_headlines(
+    session: Session,
+    backend: Backend,
+    *,
+    headlines: Sequence[tuple[int, str]],
+    now: datetime,
+) -> list[float]:
+    """For each link lead, given as (id, text), the probability that its headline reports
+    a specific treatment for a specific condition. This function decides nothing."""
+    decisions = decide_many(
+        session,
+        backend,
+        step=LEAD_TRIAGE,
+        intro=TRIAGE_INTRO,
+        question=TRIAGE_QUESTION,
+        items=[(lead_ref(lead_id), text) for lead_id, text in headlines],
+        options=TRIAGE_OPTIONS,
+        now=now,
+    )
+    return [decision.probabilities[TREATMENT_REPORT] for decision in decisions]

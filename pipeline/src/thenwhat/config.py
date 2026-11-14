@@ -105,6 +105,13 @@ class Settings(BaseSettings):
     # by screening (openspec lead-screening).
     lead_links_max: int = 10
 
+    # Triage (openspec lead-triage): a link lead scored at or above the first is passed
+    # and may be read; one scored below the second is rejected and kept; between them it
+    # is held. No default on purpose: the operator sets both from the evaluation report,
+    # and until then nothing is passed.
+    lead_pass_above: float | None = None
+    lead_reject_below: float | None = None
+
     def chosen_subreddits(self) -> frozenset[str]:
         return frozenset(
             name.strip().removeprefix("r/")

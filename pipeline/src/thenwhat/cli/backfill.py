@@ -19,6 +19,7 @@ from thenwhat.backfill.ledger import count
 from thenwhat.backfill.link_load import load_links
 from thenwhat.backfill.link_readers import posts_of
 from thenwhat.backfill.link_report import IN_SCOPE_KINDS, screening_report
+from thenwhat.backfill.link_triage import DecisionClient, LinkTriage
 from thenwhat.backfill.mediacloud import MediaCloud
 from thenwhat.backfill.registered import registered_steps
 from thenwhat.backfill.registry_load import (
@@ -109,6 +110,12 @@ def make_client(step: Step, settings: Settings, allowances: Allowances) -> Any:
     touched, when the source could not be asked at all."""
     if step.source == NO_SOURCE:
         return NoClient()
+    if isinstance(step, LinkTriage):
+        # Imported here: the model libraries are slow to load and most commands never
+        # need them.
+        from thenwhat.cli.resolve import make_backend
+
+        return DecisionClient(make_backend)
     if step.source == MediaCloud.name:
         client = MediaCloud(
             api_key=settings.mediacloud_api_key,

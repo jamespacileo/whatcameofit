@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from thenwhat.backfill.errors import SourceStop
 from thenwhat.backfill.ledger import count, due_records, record_outcome
-from thenwhat.backfill.steps import BatchStep, CountingClient, Step, batch_size_of
+from thenwhat.backfill.steps import BatchStep, CountingClient, Failed, Step, batch_size_of
 from thenwhat.domain import WorkOutcome
 
 OpenSession = Callable[[], AbstractContextManager[Session]]
@@ -74,6 +74,14 @@ def process_next(
     return _process_record(session, step, record, client, now)
 
 
+def _outcome_of(answer: WorkOutcome | Failed) -> tuple[WorkOutcome, str | None]:
+    """A step's answer as an outcome and its error. A failure the step returns keeps
+    what the step wrote; one it raises does not."""
+    if isinstance(answer, Failed):
+        return WorkOutcome.FAILED, answer.error[:2000]
+    return answer, None
+
+
 def _process_record(
     session: Session, step: Step, record: Any, client: CountingClient, now: datetime
 ) -> Processed:
@@ -83,7 +91,7 @@ def _process_record(
     error: str | None = None
     try:
         with session.begin_nested():
-            outcome = step.run(session, record, client)
+            outcome, error = _outcome_of(step.run(session, record, client))
     except SourceStop:
         raise
     except Exception as failure:  # one record's failure must not end the run
@@ -152,12 +160,19 @@ def process_batch(
         processed.extend(_process_record(session, step, record, client, now) for record in held)
         return processed
     used = client.requests_made - before
-    for place, (record, outcome) in enumerate(zip(held, outcomes, strict=True)):
+    for place, (record, answer) in enumerate(zip(held, outcomes, strict=True)):
+        outcome, error = _outcome_of(answer)
         # A call's requests cannot be split between its records: the first carries them.
         record_outcome(
-            session, step, record, outcome, requests_used=used if place == 0 else 0, now=now
+            session,
+            step,
+            record,
+            outcome,
+            requests_used=used if place == 0 else 0,
+            now=now,
+            error=error,
         )
-        processed.append((record.id, outcome, None))
+        processed.append((record.id, outcome, error))
     return processed
 
 

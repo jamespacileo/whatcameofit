@@ -30,6 +30,15 @@ class ModelSpend:
     door: str = DECISION_DOOR
 
 
+@dataclass(frozen=True, slots=True)
+class Failed:
+    """A step's answer for a record it could not finish, when what it wrote about the
+    failure must be kept: a logged decision, a recorded cost. A failure that is raised
+    undoes what the step wrote; this one does not."""
+
+    error: str
+
+
 class CountingClient(Protocol):
     """What a step asks its source through. It counts its own requests so the ledger
     can record how many a record used, whether or not the step finished."""
@@ -55,9 +64,9 @@ class Step(Protocol):
         """The fields the step reads. The record is due again when they change."""
         ...
 
-    def run(self, session: Session, record: Any, client: Any) -> WorkOutcome:
+    def run(self, session: Session, record: Any, client: Any) -> "WorkOutcome | Failed":
         """Process one record and store its result in the session. Done or nothing found;
-        a failure is raised."""
+        a failure is raised, or returned as `Failed` to keep what was written."""
         ...
 
 
@@ -68,7 +77,7 @@ class BatchStep(Step, Protocol):
 
     def run_many(
         self, session: Session, records: Sequence[Any], client: Any
-    ) -> Sequence[WorkOutcome]:
+    ) -> "Sequence[WorkOutcome | Failed]":
         """Process the records together and give each one's outcome, in order. A failure
         is raised, and the records are then processed one at a time with `run`."""
         ...

@@ -72,6 +72,8 @@ The limits written in `docs/sources.md` on 2026-11-14 said a submission's title 
 
 The step shape gains three optional declarations: no source; model spend, with estimated tokens per record; and a batch size. The runner locks a batch with the same `FOR UPDATE SKIP LOCKED`, runs it in one transaction, and on failure rolls back and processes that batch's records one at a time. That matches the decision interface's own rule that a batch with one unanswered item fails whole.
 
+A raised failure undoes what the step wrote. A model step must not lose a decision it logged or a cost it recorded, so a step may instead return a failure for a record, which keeps what it wrote. Triage does this: when a call leaves a headline unanswered, the answers it gave are kept from the decision log, and only the unanswered leads are asked again, each alone. Nothing is asked twice and every call stays paid for in the ledger.
+
 *Alternative:* triage one lead per call inside the existing runner. Rejected: the instructions and options are about 150 tokens against about 25 for a title, so one lead per call costs several times more and takes twenty times as many calls.
 
 Estimated triage size, to be replaced by the plan's own figure: about 33 input tokens a lead in batches of twenty, so a million leads is about 3.30 US dollars at the Decisions API's listed price.

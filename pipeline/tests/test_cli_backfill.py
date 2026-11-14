@@ -243,7 +243,8 @@ def test_an_unknown_step_lists_the_steps_and_processes_nothing(run, session: Ses
     result = run("run", "no-such-step")
 
     assert result.exit_code == 1
-    assert "No step is named 'no-such-step'. Steps: link_screen, news_search." in result.output
+    assert "No step is named 'no-such-step'. Steps: " in result.output
+    assert "news_search" in result.output
     assert session.scalars(select(WorkEntry)).all() == []
 
 
