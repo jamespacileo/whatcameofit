@@ -30,6 +30,10 @@ from thenwhat.domain import (
     EvidenceStage,
     RegulatoryOutcome,
     ReviewState,
+    StatementBasis,
+    StatementFirmness,
+    StatementKind,
+    StatementSpeaker,
     TermFit,
     TermRole,
     TrialState,
@@ -147,6 +151,44 @@ class Promise(Base):
     source_article_id: Mapped[int] = mapped_column(ForeignKey("source_article.id"))
     description: Mapped[str] = mapped_column(Text)
     parsed_date: Mapped[date | None]
+
+
+class ReportedStatement(Reviewed, Base):
+    """Something a source article says about a claim's intervention beyond its timeline,
+    in the site's own words (GLOSSARY.md). Behavior: openspec reported-statements.
+
+    Nothing of the article's text is kept: the statement is the pipeline's own wording,
+    refused by rule before it is stored when it copies the article, quotes or names
+    someone.
+    """
+
+    __tablename__ = "reported_statement"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_article_id", "text_key", name="uq_reported_statement_article_text_key"
+        ),
+        CheckConstraint("char_length(text) BETWEEN 1 AND 200", name="text_length"),
+        CheckConstraint("confidence >= 0 AND confidence <= 1", name="confidence_range"),
+        _review_decision_recorded(),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    claim_id: Mapped[int] = mapped_column(ForeignKey("claim.id"), index=True)
+    source_article_id: Mapped[int] = mapped_column(ForeignKey("source_article.id"), index=True)
+    text: Mapped[str] = mapped_column(Text)
+    # The text compared without letter case, spacing or punctuation: one per article.
+    text_key: Mapped[str] = mapped_column(Text)
+    kind: Mapped[StatementKind] = mapped_column(_enum(StatementKind, "kind"))
+    firmness: Mapped[StatementFirmness] = mapped_column(_enum(StatementFirmness, "firmness"))
+    speaker: Mapped[StatementSpeaker] = mapped_column(_enum(StatementSpeaker, "speaker"))
+    basis: Mapped[StatementBasis] = mapped_column(_enum(StatementBasis, "basis"))
+    # The statement check's probability that the article says this.
+    confidence: Mapped[float]
+    # The statement check's log reference, `source_article:<id>:statement:<place>`.
+    decision_ref: Mapped[str] = mapped_column(Text)
+    # When the article was read for this statement: it is of the article as read then.
+    article_read_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
 
 
 class Entity(Base):
