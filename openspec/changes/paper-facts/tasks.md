@@ -30,8 +30,8 @@
 
 ## 5. Measurement before the page
 
-- [ ] 5.1 Run a fetch against the real database and record in `docs/lookup.md`: papers stored, papers the index does not hold, requests made and the time taken
-- [ ] 5.2 From that run, record how many papers carry "Humans" or "Animals", how many carry a kind other than article, and how many are marked retracted. If fewer than half carry either heading, change the count line in the site-publishing delta to count trials only before task 6.3
+- [x] 5.1 Run a fetch against the real database and record in `docs/lookup.md`: papers stored, papers the index does not hold, requests made and the time taken
+- [x] 5.2 From that run, record how many papers carry "Humans" or "Animals", how many carry a kind other than article, and how many are marked retracted. If fewer than half carry either heading, change the count line in the site-publishing delta to count trials only before task 6.3
 
 ## 6. Site
 

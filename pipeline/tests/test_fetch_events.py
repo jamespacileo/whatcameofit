@@ -636,6 +636,7 @@ def test_paper_the_index_does_not_hold_is_stored_as_not_held(session: Session, s
         None,
     )
     assert index.asked == [RESULTS_PMID]
+    assert session.scalar(select(PaperRecord.id).where(PaperRecord.payload.is_(None))) == stored.id
 
 
 def test_origin_paper_and_approved_follow_up_are_stored_from_the_records_in_hand(

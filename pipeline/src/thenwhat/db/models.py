@@ -307,7 +307,8 @@ class PaperRecord(Base):
     identifier: Mapped[str] = mapped_column(Text, unique=True)
     source_name: Mapped[str] = mapped_column(Text)
     pubmed_id: Mapped[str | None] = mapped_column(Text, index=True)
-    payload: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    # SQL NULL, not a JSON null, when the index does not hold the paper.
+    payload: Mapped[dict[str, Any] | None] = mapped_column(JSONB(none_as_null=True))
     fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
 
 
