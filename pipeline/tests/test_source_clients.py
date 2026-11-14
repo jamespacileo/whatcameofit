@@ -561,6 +561,21 @@ def test_the_last_search_of_the_allowance_is_used_and_no_other_is_sent(
     assert len(replay.requests) == 1
 
 
+def test_one_paper_is_still_looked_up_once_the_searches_are_spent(
+    session: Session, fake_time, fixture_json
+):
+    found = fixture_json("openalex/search_median_nerve_tourette.json")
+    spent = {"X-RateLimit-Cost-USD": "0.001", "X-RateLimit-Remaining-USD": "0"}
+    answers = [
+        httpx.Response(200, json=found, headers=spent),
+        httpx.Response(200, json=fixture_json("openalex/work_704541.json"), headers=spent),
+    ]
+    source, _ = papers(session, fake_time, lambda request: answers.pop(0))
+    source.search_papers("first")
+
+    assert source.paper("10.64898/2026.02.07.704541") is not None
+
+
 def test_a_brief_rate_limit_with_allowance_left_is_retried(
     session: Session, fake_time, fixture_json
 ):

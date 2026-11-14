@@ -1,5 +1,6 @@
 """Commands for a claim's entities and for proposing registry matches."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Annotated
@@ -35,7 +36,6 @@ from thenwhat.resolve.papers import (
     trials_from_papers,
 )
 from thenwhat.resolve.service import DoiLookup, TrialSearch, rescore_claim, resolve_claim
-from thenwhat.sources.base import SourceError
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref
 from thenwhat.sources.europepmc import EuropePmc
@@ -220,28 +220,36 @@ def _related_research(
     accept_above: float,
 ) -> None:
     """Organisations, related papers, the trials those papers name and the origin paper,
-    with a line on each. A source that cannot be read is reported and the rest goes on:
-    the trial candidates found before this stand either way."""
-    try:
-        matched = match_organisations(session, claim, registry=research.organisations)
-        if matched:
-            out.print(f"Matched {len(matched)} organisation(s) in ROR. They are pending review.")
-    except SourceError as failed:
-        err.print(f"Organisations were not looked up: {failed}", markup=False)
-
+    with a line on each. A step that fails is reported, what it had written is undone,
+    and the rest goes on: the trial candidates found before this stand either way."""
     thresholds = {"reject_below": reject_below, "accept_above": accept_above}
-    if research.papers is None:
+
+    matched = _step(
+        session,
+        "Organisations were not looked up",
+        lambda: match_organisations(session, claim, registry=research.organisations),
+    )
+    if matched:
+        out.print(f"Matched {len(matched)} organisation(s) in ROR. They are pending review.")
+
+    papers = research.papers
+    if papers is None:
         out.print("Paper search is off: OPENALEX_API_KEY is not set.")
     else:
-        try:
-            found = find_papers(
-                session, claim, papers=research.papers, backend=backend, now=now, **thresholds
-            )
+        found = _step(
+            session,
+            "Papers were not searched for",
+            lambda: find_papers(
+                session, claim, papers=papers, backend=backend, now=now, **thresholds
+            ),
+        )
+        if found is not None:
             _say_papers(found, accept_above, reject_below)
-        except (SourceError, DecisionFailed) as failed:
-            err.print(f"Papers were not searched for: {failed}", markup=False)
-    try:
-        from_papers = trials_from_papers(
+
+    from_papers = _step(
+        session,
+        "Approved papers were not read for registry numbers",
+        lambda: trials_from_papers(
             session,
             claim,
             numbers=research.numbers,
@@ -249,23 +257,37 @@ def _related_research(
             backend=backend,
             now=now,
             **thresholds,
+        ),
+    )
+    if from_papers:
+        ids = ", ".join(match.external_id for match in from_papers)
+        out.print(f"Trial candidates from approved papers: {ids}.", markup=False)
+
+    if papers is not None:
+        origin = _step(
+            session,
+            "The origin paper was not chosen",
+            lambda: choose_origin(
+                session, claim, papers=papers, backend=backend, now=now, accept_above=accept_above
+            ),
         )
-        if from_papers:
-            ids = ", ".join(match.external_id for match in from_papers)
-            out.print(f"Trial candidates from approved papers: {ids}.", markup=False)
-        if research.papers is not None:
-            origin = choose_origin(
-                session,
-                claim,
-                papers=research.papers,
-                backend=backend,
-                now=now,
-                accept_above=accept_above,
-            )
-            if origin is not None:
-                out.print(f"Origin paper set by rule: {origin.name}.", markup=False)
-    except (SourceError, DecisionFailed) as failed:
-        err.print(f"Approved papers were not followed up: {failed}", markup=False)
+        if origin is not None:
+            out.print(f"Origin paper set by rule: {origin.name}.", markup=False)
+
+
+def _step[T](session: Session, what_failed: str, work: Callable[[], T]) -> T | None:
+    """Run one step of related research in a savepoint. A decision that failed is
+    reported and its log entry kept; anything else undoes the step and is reported."""
+    try:
+        with session.begin_nested():
+            try:
+                return work()
+            except DecisionFailed as failed:
+                err.print(f"{what_failed}: {failed}", markup=False)
+                return None
+    except Exception as failed:
+        err.print(f"{what_failed}: {failed or type(failed).__name__}", markup=False)
+        return None
 
 
 def _say_papers(found: list[EntityMatch], accept_above: float, reject_below: float) -> None:
@@ -281,6 +303,8 @@ def _say_papers(found: list[EntityMatch], accept_above: float, reject_below: flo
         f" {reject_below:g}, {len(found) - len(approved) - len(rejected)} pending review.",
         markup=False,
     )
+    for match in sorted(approved, key=lambda m: m.score, reverse=True):
+        out.print(f"  approved {match.score:.2f}  {match.external_id}", markup=False)
 
 
 def resolve_command(

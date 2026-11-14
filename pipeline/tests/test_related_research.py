@@ -542,6 +542,30 @@ def test_review_listing_many_trials_contributes_no_candidate(
     assert registry.fetched == []
 
 
+def test_a_number_the_registry_answers_with_a_trial_the_claim_has_adds_nothing(
+    session: Session, fake_time, fixture_json
+):
+    claim = new_claim(session)
+    approved_paper(session, claim, "10.1056/nejmoa2206038")
+    numbers = europe_pmc(session, fake_time, fixture_json("europepmc/paper_nejmoa2206038.json"))
+    [intervention] = entities_of(session, claim)
+    session.add(
+        EntityMatch(
+            entity_id=intervention.id,
+            source_name="clinicaltrials.gov",
+            external_id="NCT09999999",
+            score=0.5,
+        )
+    )
+    session.flush()
+
+    class Renumbered(Registry):
+        def fetch_trial(self, nct_id: str) -> SourceRecord | None:
+            return super().fetch_trial("NCT09999999")
+
+    assert from_papers(session, claim, numbers, Renumbered()) == []
+
+
 def test_a_pending_paper_is_not_read_for_registry_numbers(
     session: Session, fake_time, fixture_json
 ):

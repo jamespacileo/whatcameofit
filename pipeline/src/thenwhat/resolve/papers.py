@@ -230,7 +230,12 @@ def trials_from_papers(
                 continue
             had.add(number)
             record = registry.fetch_trial(number)
-            if record is not None:
+            # The registry may answer an old number with the record under its current
+            # one, which the claim may already have.
+            if record is not None and (
+                record.external_id == number or record.external_id not in had
+            ):
+                had.add(record.external_id)
                 found.append((intervention, record))
 
     added = [

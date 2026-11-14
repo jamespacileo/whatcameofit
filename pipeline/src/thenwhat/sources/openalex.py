@@ -104,6 +104,8 @@ class OpenAlex(Source):
         """Papers about these words, most relevant first, up to the limit. One request:
         no second page is asked for."""
         self._require_key()
+        if self._used_up:
+            raise AllowanceUsedUp(_USED_UP)
         limit = max(1, min(limit, MAX_RESULTS))
         fetched = self._get(
             f"{API}/works", {"search": words, "per_page": str(limit), "select": FIELDS}
@@ -117,7 +119,8 @@ class OpenAlex(Source):
 
     def paper(self, external_id: str) -> SourceRecord | None:
         """The paper a candidate match points to: by its DOI, or by OpenAlex's own
-        identifier when it has none. None if OpenAlex does not have it."""
+        identifier when it has none. None if OpenAlex does not have it. Looking one
+        work up costs nothing, so it is still asked once the day's searches are spent."""
         self._require_key()
         if external_id.startswith("10."):
             known_as = f"doi:{external_id}"
@@ -146,11 +149,6 @@ class OpenAlex(Source):
     def _require_key(self) -> None:
         if not self._key:
             raise MissingKey("OPENALEX_API_KEY is not set, so no request was sent to OpenAlex.")
-
-    def _request(self, url: str, params: dict[str, str] | None) -> httpx.Response | None:
-        if self._used_up:
-            raise AllowanceUsedUp(_USED_UP)
-        return super()._request(url, params)
 
     def _extra_headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self._key}"}

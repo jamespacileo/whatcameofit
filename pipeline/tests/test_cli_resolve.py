@@ -271,8 +271,25 @@ def test_resolve_stores_the_related_papers_it_finds(
 
     assert result.exit_code == 0, result.output
     assert "Found 1 related paper: 1 approved by rule" in result.output
+    assert "approved 0.80  10.1000/found" in result.output
     paper = session.scalars(select(EntityMatch).where(EntityMatch.source_name == "openalex")).one()
     assert paper.reviewed_by is Decider.RULE
+
+
+def test_resolve_keeps_its_trial_candidates_when_the_paper_search_breaks(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    class BrokenPapers(Papers):
+        def search_papers(self, words: str, limit: int = 20) -> list[SourceRecord]:
+            raise KeyError("results")
+
+    monkeypatch.setattr("thenwhat.cli.resolve.make_research", lambda s: research(BrokenPapers()))
+
+    result = run("resolve", SLUG)
+
+    assert result.exit_code == 0, result.output
+    assert "Papers were not searched for" in result.output
+    assert session.scalars(select(EntityMatch)).one().source_name == "clinicaltrials.gov"
 
 
 def test_resolve_without_the_literature_key_says_paper_search_is_off(run, session: Session):

@@ -214,8 +214,10 @@ def decide_item(
         record_decision(match, state, by=by, now=now)
         if by is Decider.HUMAN:
             label = MATCH if state is ReviewState.APPROVED else NOT_A_MATCH
-            for step in (ENTITY_MATCH, PAPER_MATCH):
-                _label(session, step, match_ref(match.id), label)
+            _label(session, ENTITY_MATCH, match_ref(match.id), label)
+            if state is ReviewState.APPROVED:
+                # A rejection does not say which of a paper's other answers was right.
+                _label(session, PAPER_MATCH, match_ref(match.id), MATCH)
         entity = session.get(Entity, match.entity_id)
         assert entity is not None
         claim = session.get(Claim, entity.claim_id)
