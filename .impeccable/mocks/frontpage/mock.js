@@ -171,10 +171,10 @@
   };
 
   // ---------- 1. Then and now: a stream ----------
-  const streamItem = (c) => {
+  const streamItem = (c, opt) => {
       const facts = learnedBesideStage(c).slice(0, 2).join(" ");
       return `<li class="item">
-        <div class="src">${outlet(c.art)}<span>${fmt(c.art.d)}, ${ago(c.art.d)}</span>${moreReports(c)}${chip(c)}${newTag(c.art.d)}</div>
+        <div class="src">${outlet(c.art)}<span>${fmt(c.art.d)}, ${ago(c.art.d)}</span>${moreReports(c)}${chip(c)}${opt?.plain ? "" : newTag(c.art.d)}</div>
         <h3>${quote(c)}</h3>
         <div class="thennow">
           <div><div class="lab">Evidence when first reported</div><div class="big">${STAGE[c.stage]}</div><div class="gloss">${fmt(c.first)}</div></div>
@@ -404,12 +404,12 @@
       }).join("")}</div></div>`;
   const promisedItem = (c) => `<li><span class="when">${esc(c.iv)} · ${esc(c.ind)}</span><p class="promise">${promiseText(c.promise)}</p><span class="status">${LABEL[c.status]}</span> <span class="muted">${GLOSS[c.status]}</span></li>`;
   const recordLine = (r) => `<li><span class="when">${fmt(r.date)}${r.id ? ` · ${r.id}` : ""}</span><b>${r.label}.</b> <a href="${SITE + r.slug}" target="_blank" rel="noopener">${esc(bySlug[r.slug].iv)}</a> · ${esc(bySlug[r.slug].ind)}</li>`;
-  function rail() {
+  function rail(lastVisitJump = false) {
     const reportsSince = claims.flatMap((c) => c.arts).filter((a) => isNew(a.d)).length;
     const recordsSince = M.recent.filter((r) => isNew(r.date)).length;
     const topics = Object.entries(claims.reduce((a, c) => ((a[c.topic] = (a[c.topic] ?? 0) + 1), a), {})).sort((a, b) => b[1] - a[1]).slice(0, 9);
     return `<aside class="rail">
-      <div class="since"><h2>Since your last visit on 7 Nov 2026</h2><p>${plural(reportsSince, "news report")}, marked <span class="tagged">New</span>. ${recordsSince ? plural(recordsSince, "registry record") : "No registry record"} dated since.</p></div>
+      <div class="since"><h2>Since your last visit on 7 Nov 2026</h2><p>${plural(reportsSince, "news report")}${lastVisitJump ? "" : `, marked <span class="tagged">New</span>`}. ${recordsSince ? plural(recordsSince, "registry record") : "No registry record"} dated since.</p>${lastVisitJump ? `<p style="margin-top:.4rem"><a href="#last-visit"><b>Go to where you left off</b></a></p>` : ""}</div>
       <div><h2>Topics</h2><div class="chips">${topics.map(([t, n]) => `<a class="chip" href="#">${esc(t)} ${n}</a>`).join("")}</div></div>
     </aside>`;
   }
@@ -450,45 +450,87 @@
   // ---------- B. Day by day: one list of everything dated, with what is promised ahead of today ----------
   function days() {
     const e = editionData();
+    const year = TODAY.slice(0, 4);
+    // The three kinds of row. The pills that filter them are also the key to their colours.
+    const KINDS = [["report", "Reported", "report"], ["record", "Recorded", "registry record"], ["promise", "Promised", "promised date"]];
     const statusLine = (c) => `<p class="rr-now"><span class="status">${LABEL[c.status]}</span><span class="muted">${c.quiet ? `No signal for ${c.quiet} years` : GLOSS[c.status]}</span>${track(c.status)}</p>`;
-    const rows = claims.map((c) => ({ date: c.art.d, order: 0, kind: "report", html: streamItem(c) }));
+    // A registry row names a treatment few readers know, so it carries the headline it belongs to.
+    const about = (c) => `<p class="about">The report: ${quote(c)} <span class="nowrap">${esc(c.art.o)},</span> ${fmt(c.art.d)}</p>`;
+
+    const rows = claims.map((c) => ({ date: c.art.d, order: 0, kind: "report", html: streamItem(c, { plain: true }) }));
     for (const r of M.recent) {
       const c = bySlug[r.slug], i = c.hist.findIndex((h) => h.on === r.date);
       const changed = i > 0 ? `<span class="tagged">Changed</span><span>Was: ${LABEL[c.hist[i - 1].code]}. Now: ${LABEL[c.hist[i].code]}.</span>` : `<span>Status now: <span class="status">${LABEL[c.status]}</span></span>`;
       rows.push({ date: r.date, order: 1, kind: "record", html: `<li class="recrow"><div class="lab">Registry record${r.id ? ` · ${r.id}` : ""}</div>
         <p><b>${r.label}.</b> <a href="${c.url}" target="_blank" rel="noopener">${esc(c.iv)}</a> · ${esc(c.ind)}</p>
-        <p class="rr-now">${changed}${track(i > 0 ? c.hist[i].code : c.status)}</p></li>` });
+        <p class="rr-now">${changed}${track(i > 0 ? c.hist[i].code : c.status)}</p>${about(c)}</li>` });
     }
     for (const c of e.dated) rows.push({ date: c.promise.date, order: 2, kind: "promise", html: `<li class="prow"><div class="lab">Promised by ${c.promise.date.slice(0, 4)} · ${esc(c.art.o)}, ${fmt(c.art.d)}</div>
         <h3>${quote(c)}</h3><p class="promise">${promiseText(c.promise)}</p>${statusLine(c)}</li>` });
-    const a = e.anniv, annivYear = a.md >= TODAY.slice(5) ? +TODAY.slice(0, 4) : +TODAY.slice(0, 4) + 1;
-    rows.push({ date: `${annivYear}-${a.md}`, order: 3, kind: "anniversary", html: `<li class="prow"><div class="lab">${+a.md.slice(3)} ${MONTHS[+a.md.slice(0, 2) - 1]} ${annivYear} · ${annivYear - +a.c.first.slice(0, 4)} years since the first report</div>
+    const a = e.anniv, annivYear = a.md >= TODAY.slice(5) ? +year : +year + 1;
+    rows.push({ date: `${annivYear}-${a.md}`, order: 3, kind: "year", html: `<li class="prow"><div class="lab">${+a.md.slice(3)} ${MONTHS[+a.md.slice(0, 2) - 1]} ${annivYear} · ${annivYear - +a.c.first.slice(0, 4)} years since the first report</div>
         <h3>${quote(a.c)}</h3>${statusLine(a.c)}</li>` });
-    for (const day of e.week) if (!rows.some((r) => r.date === day)) rows.push({ date: day, order: 4, kind: "quiet", html: `<li class="quiet">Nothing is dated this day. The registries were read that morning.</li>` });
-    rows.push({ date: TODAY, order: 5, kind: "before", html: `<li class="lead"><p class="note">One from before, picked by the date: a different one each day. First reported ${ago(e.back.first)}.</p></li>${streamItem(e.back)}` });
+    const quietToday = !rows.some((r) => r.date === TODAY);
+    for (const day of e.week) if (!rows.some((r) => r.date === day)) rows.push({ date: day, order: 4, kind: "quiet", html: "" });
+    rows.push({ date: TODAY, order: 5, kind: "before", html: `${quietToday ? "" : `<li class="lead"><p class="note">One from before, picked by the date: a different one each day.</p></li>`}${streamItem(e.back, { plain: true })}` });
 
-    const twoWeeks = shift(TODAY, -13);
-    const keyOf = (d) => (d >= twoWeeks ? d : d.slice(0, 4) === TODAY.slice(0, 4) ? d.slice(0, 7) : d.slice(0, 4));
-    const titleOf = (k) => k.length === 10 ? (k === TODAY ? "Today, " : k === shift(TODAY, -1) ? "Yesterday, " : "") + dayName(k) : k.length === 7 ? `${FULL_MONTHS[+k.slice(5) - 1]} ${k.slice(0, 4)}` : k;
-    const counted = (items) => [["report", "report"], ["record", "registry record"], ["promise", "promised date"]]
-      .map(([kind, word]) => [items.filter((r) => r.kind === kind).length, word]).filter(([n]) => n).map(([n, word]) => plural(n, word)).join(", ");
-    const ahead = rows.filter((r) => r.date > TODAY).sort((x, y) => (x.date < y.date ? -1 : 1));
-    const groups = [];
-    for (const row of rows.filter((r) => r.date <= TODAY).sort((x, y) => (x.date === y.date ? x.order - y.order : x.date < y.date ? 1 : -1))) {
-      const key = keyOf(row.date), last = groups[groups.length - 1];
-      if (last && last.key === key) last.items.push(row); else groups.push({ key, items: [row] });
+    // Days for a fortnight, then weeks for the rest of the year, then years.
+    const fortnight = shift(TODAY, -13);
+    const monday = (d) => shift(d, -((new Date(d).getUTCDay() + 6) % 7));
+    const keyOf = (d) => (d >= fortnight ? d : d.slice(0, 4) === year ? "w" + monday(d) : d.slice(0, 4));
+    const titleOf = (k) => k.length === 10 ? (k === TODAY ? "Today, " : k === shift(TODAY, -1) ? "Yesterday, " : "") + dayName(k)
+      : k[0] === "w" ? `Week of ${+k.slice(9)} ${FULL_MONTHS[+k.slice(6, 8) - 1]}` : k;
+    const counted = (items) => KINDS.map(([kind, , word]) => [items.filter((r) => r.kind === kind).length, word]).filter(([n]) => n).map(([n, word]) => plural(n, word)).join(", ");
+    const said = (g) => g.key === TODAY && quietToday ? "Nothing is dated today. One from before instead, picked by the date: a different one each day."
+      : counted(g.items) || "Nothing dated";
+    const past = rows.filter((r) => r.date <= TODAY).sort((x, y) => (x.date === y.date ? x.order - y.order : x.date < y.date ? 1 : -1));
+    const future = rows.filter((r) => r.date > TODAY).sort((x, y) => (x.date < y.date ? -1 : 1));
+    const shows = (kind) => (r) => kind === "all" || r.kind === kind || (kind === "report" && r.kind === "before");
+
+    function list(kind) {
+      const ahead = future.filter(shows(kind));
+      const groups = [];
+      for (const row of past.filter(shows(kind))) {
+        const key = keyOf(row.date), last = groups[groups.length - 1];
+        if (last && last.key === key) last.items.push(row); else groups.push({ key, date: row.date, items: [row] });
+      }
+      let marked = false;
+      // The line is drawn only where something dated since the last visit stands above it.
+      const lastVisit = (g, i) => {
+        if (marked || g.date > LAST_VISIT) return "";
+        marked = true;
+        return i === 0 ? "" : `<p class="lastvisit" id="last-visit"><span>Your last visit, 7 Nov 2026. Everything above is dated since.</span></p>`;
+      };
+      return `${ahead.length ? `<section class="aheadline"><p><b>Ahead.</b> ${plural(ahead.length, "date")} that reports promised or that mark a year. Next: ${fmt(ahead[0].date)}. <button class="rest" type="button">Show them</button></p>
+          <ol hidden><li class="quiet">A promise is what a report said, not a record. It is listed under the year it was promised for.</li>${ahead.map((r) => r.html).join("")}</ol></section>` : ""}
+        ${groups.map((g, i) => `${lastVisit(g, i)}<section id="d-${g.key}"><div class="day"><h2>${titleOf(g.key)}</h2><span>${said(g)}</span></div><ol>${g.items.map((r) => r.html).join("")}</ol></section>`).join("")}`;
     }
-    shell("Day by day", false, `<div class="wrap">
+
+    const total = { all: claims.length + M.recent.length + e.dated.length, report: claims.length, record: M.recent.length, promise: e.dated.length };
+    shell("Day by day", false, `<div class="wrap mix-b">
       ${editionHead(e, true)}
+      <div class="filters kinds" role="group" aria-label="Show">
+        <button class="pill" type="button" data-filter="all" aria-pressed="true">Everything <span class="muted">${total.all}</span></button>
+        ${KINDS.map(([kind, name]) => `<button class="pill" type="button" data-filter="${kind}" aria-pressed="false"><i class="sw sw-${kind}"></i>${name} <span class="muted">${total[kind]}</span></button>`).join("")}
+      </div>
       <div class="stream">
-        <div class="daylist">
-          <section><div class="day"><h2>Ahead</h2><span>${plural(ahead.length, "date")} that reports promised or that mark a year. A promise is what a report said, not a record.</span></div>
-            <p class="note" style="padding-top:.6rem">Next: ${fmt(ahead[0].date)}.</p><button class="rest" type="button">Show the ${ahead.length} dates ahead</button><ol hidden>${ahead.map((r) => r.html).join("")}</ol></section>
-          ${groups.map((g) => `<section id="d-${g.key}"><div class="day"><h2>${titleOf(g.key)}</h2><span>${counted(g.items) || "Nothing dated"}</span></div><ol>${g.items.map((r) => r.html).join("")}</ol></section>`).join("")}
-        </div>
-        ${rail()}
+        <div class="daylist" id="days"></div>
+        ${rail(true)}
       </div></div>`);
-    document.querySelectorAll(".rest").forEach((b) => (b.onclick = () => { b.nextElementSibling.hidden = false; b.remove(); }));
+    const target = document.getElementById("days");
+    const pills = [...document.querySelectorAll("[data-filter]")];
+    const draw = (kind) => {
+      pills.forEach((p) => p.setAttribute("aria-pressed", p.dataset.filter === kind));
+      target.innerHTML = list(kind);
+    };
+    pills.forEach((p) => (p.onclick = () => draw(p.dataset.filter)));
+    target.addEventListener("click", (event) => {
+      const button = event.target.closest(".rest");
+      if (!button) return;
+      button.closest("section").querySelector("ol").hidden = false;
+      button.remove();
+    });
+    draw("all");
   }
 
   ({ stream, wire, edition, promises, path, guess, briefing, days })[document.body.dataset.page]();

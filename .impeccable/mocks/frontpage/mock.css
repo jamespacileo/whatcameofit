@@ -215,6 +215,18 @@ footer .small { color: #c9d9ee; }
 .daylist section { scroll-margin-top: 3.4rem; }
 .daylist .day { flex-wrap: wrap; gap: 0.1rem 0.7rem; }
 .daylist .rest { border: 0; background: none; padding: 0.7rem 0; color: var(--blue); font-weight: 600; text-decoration: underline; text-underline-offset: 0.16em; font-size: 0.9rem; min-height: 2.75rem; }
+.kinds { padding-top: 1.1rem; }
+.sw { width: 0.8rem; height: 0.8rem; border-radius: 0.2rem; border: 1px solid var(--ring); background: #fff; flex: none; }
+.sw-record { background: var(--tag); }
+.sw-promise { background: var(--promise); border: 1px dashed #a8924a; }
+.aheadline { padding: 1.1rem 0 0.2rem; }
+.aheadline .rest { padding: 0; min-height: 0; }
+.aheadline ol { margin-top: 0.8rem; border-top: 1px solid var(--rule); }
+.about { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px solid var(--rule); line-height: 1.45; }
+.about .q { font-weight: 600; }
+.lastvisit { display: flex; align-items: center; gap: 0.8rem; margin: 1.8rem 0 0; font-size: 0.85rem; font-weight: 700; scroll-margin-top: 4.2rem; }
+.lastvisit::before, .lastvisit::after { content: ""; flex: 1; min-width: 1rem; border-top: 2px solid var(--blue); }
+.lastvisit span { text-align: center; text-wrap: balance; }
 .recrow { background: var(--panel); border-radius: 0.85rem; padding: 0.8rem 1rem 0.85rem; margin: 1rem 0; }
 .rr-now { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.7rem; margin-top: 0.3rem; font-size: 0.95rem; }
 .prow { padding: 1.1rem 0 1.2rem; border-bottom: 1px solid var(--rule); }
@@ -320,6 +332,8 @@ footer .small { color: #c9d9ee; }
   .jumps a { font-weight: 600; }
   /* The dated head already says what is new, so the mixes drop the "since" box on a phone. */
   .mix-a .rail, .daylist + .rail { display: none; }
+  .mix-b .ed-head p { display: none; }
+  .aheadline .rest { padding: 0.5rem 0; }
   .brief3 + .stream .tabs { margin-top: 0.6rem; }
   .ed-head { padding-top: 1.2rem; }
   .ed-head h2 { font-size: 1.3rem; }
