@@ -300,6 +300,8 @@ Read as right but worth the operator's eye:
 | Diabetes Mellitus, Type 2, on the claim about a weekly insulin | "not INSULIN-responsive or dependent (NIDDM)": dated wording that sits oddly beside a claim about an insulin |
 | Semaglutide and Tirzepatide (rejected above) | "used to enhance glycemic control of TYPE 2 DIABETES MELLITUS, and for OBESITY MANAGEMENT" |
 
+The operator's decision, 14 November 2026: these definitions are shown as they are. They stay the source's words, closed until asked for, under the section's note that cards describe terms and are not advice.
+
 Other things a reader would notice: several definitions are one line and say little ("Diseases affecting the eye.", "Diseases involving the SPINE."); "Alcoholism" is the vocabulary's own heading and its definition says "often progressive and fatal"; three supplementary records for new drugs (INNA-051, orforglipron, trastuzumab deruxtecan) have no definition, so their cards are a label and a link.
 
 How it was run: from a checkout of the branch against the database on its local port. This Mac's default resolver (Tailscale) gave no address for `id.nlm.nih.gov`, so that one name's address was taken from a public resolver for the run; the certificate was still checked against the name.
