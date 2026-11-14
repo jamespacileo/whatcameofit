@@ -85,6 +85,7 @@ from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.ror import Ror
 from thenwhat.sources.terms import SOURCES as LISTED_SOURCES
 from thenwhat.terms.candidates import REASON_CODES
+from thenwhat.terms.kinds import KIND_REASON_CODES
 from thenwhat.terms.records import read_record
 
 SCHEMA_VERSION = 1
@@ -388,24 +389,39 @@ class ExportedPaper(Strict):
 # tied to the claim. Never an input to the status.
 
 
+# The reasons a card can carry: those of a vocabulary term and those of a kind link.
+CARD_REASON_CODES = (*REASON_CODES, *KIND_REASON_CODES)
+
+
 class ExportedCardReason(Strict):
     """Why the term was a candidate, found by rule. The site owns the wording."""
 
-    # "filed_by_registry" or "label_equals_name".
+    # "filed_by_registry", "label_equals_name", "entry_term_equals_name", "kind_chosen"
+    # or "registry_lists_type".
     code: str
     # For "filed_by_registry": how many of the claim's approved trials carry the term,
-    # and how many trials there were.
+    # and how many trials there were. For "registry_lists_type": how many of them list
+    # the intervention under that type.
     trials: int | None = None
     of: int | None = None
-    # For "label_equals_name": the claim's name the term's label equals.
+    # For "label_equals_name" and "entry_term_equals_name": the claim's name that was
+    # equal.
     name: str | None = None
+    # For "entry_term_equals_name": the vocabulary's entry term the name equals.
+    entry_term: str | None = None
+    # For "kind_chosen": the code of the kind chosen from the project's list.
+    kind: str | None = None
+    # For "registry_lists_type": the registry's own code for the intervention's type,
+    # such as "DEVICE".
+    type: str | None = None
 
 
 class ExportedCard(Strict):
     # What the term is to the claim: its condition or its intervention.
     kind: TermRole
     # "exact" when the term is the claim's own condition or intervention, "broader"
-    # when it names a wider group that includes it.
+    # when it names a wider group that includes it, "kind" when it is the term of the
+    # kind of intervention this is and not the intervention itself.
     fit: TermFit
     label: str
     # The vocabulary publisher's own words, never reworded. None when it gives none.
@@ -417,7 +433,8 @@ class ExportedCard(Strict):
     external_id: str
     # The version of the vocabulary the record was read from, such as a year.
     version: str | None
-    # The probability, 0 to 1, of the answer the term check chose for this term.
+    # The probability, 0 to 1, of the answer the term check chose for this term or,
+    # for a kind, of the kind chosen.
     score: float
     reasons: list[ExportedCardReason]
     # Who approved the link: "rule", "human" or "assistant".
@@ -786,7 +803,8 @@ def _trials(events: list[EvidenceEvent], papers: _Papers) -> list[ExportedTrial]
 
 def _background(session: Session, claim: Claim) -> list[ExportedCard]:
     """At most one card for the claim's condition and one for its intervention: the
-    approved exact link with the highest score or, with none, the approved broader one.
+    approved exact link with the highest score or, with none, the approved broader one
+    or, for the intervention with neither, the approved kind link.
 
     A link whose source is not accepted in the list of sources gives no card, nor does
     one whose term has no stored record, since a card states when its record was read.
@@ -805,7 +823,7 @@ def _background(session: Session, claim: Claim) -> list[ExportedCard]:
     )
     cards: list[ExportedCard] = []
     for role in (TermRole.CONDITION, TermRole.INTERVENTION):
-        for fit in (TermFit.EXACT, TermFit.BROADER):  # exact before broader
+        for fit in TermFit:  # exact before broader before kind
             card = next(
                 (
                     made
@@ -841,7 +859,7 @@ def _card(session: Session, term: ClaimTerm) -> ExportedCard | None:
         reasons=[
             ExportedCardReason.model_validate(reason)
             for reason in term.reasons
-            if reason.get("code") in REASON_CODES
+            if reason.get("code") in CARD_REASON_CODES
         ],
         decided_by=term.reviewed_by.value,
         read_at=record.fetched_at,

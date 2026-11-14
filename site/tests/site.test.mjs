@@ -963,6 +963,75 @@ test("Scenario: Code without site wording", () => {
   );
 });
 
+test("Scenarios: Kind card, and Registry type as a reason", () => {
+  // The same site, built from the fixture with a kind link's card added to one claim.
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  const claim = fixture.claims.find((claim) => claim.slug === "approved-claim");
+  claim.background.push({
+    kind: "intervention",
+    fit: "kind",
+    label: "Example Stimulation Therapy",
+    definition: "A synthetic definition of a KIND OF TREATMENT, as the vocabulary writes it.",
+    url: "https://vocabulary.example/D900009",
+    source: "mesh",
+    external_id: "D900009",
+    version: "2026",
+    score: 0.9,
+    reasons: [
+      { code: "kind_chosen", kind: "electrical_stimulation" },
+      { code: "registry_lists_type", type: "DEVICE", trials: 3 },
+    ],
+    decided_by: "rule",
+    read_at: "2026-11-14T09:00:00Z",
+  });
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-kind-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+  const dist = path.join(directory, "dist");
+
+  const result = build(file, dist);
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const section = backgroundOf(fs.readFileSync(path.join(dist, "approved-claim/index.html"), "utf8"));
+  assert.equal(count(section, 'class="card-kind"'), 2);
+  assert.match(section, /The kind of treatment this is, not the treatment itself/);
+  assert.match(section, /href="https:\/\/vocabulary\.example\/D900009"[^>]*>\s*Example Stimulation Therapy\s*</);
+  assert.match(section, /High match · 90%/);
+  assert.match(section, /Its kind was chosen from this site’s fixed list of kinds\./);
+  assert.match(section, /The trial registry lists it as a device in 3 of this claim’s trials\./);
+  assert.match(section, /<blockquote[^>]*>A synthetic definition of a KIND OF TREATMENT, as the vocabulary writes it\.<\/blockquote>/);
+  assert.match(section, /the note is for the kind of treatment it is, and says so/);
+  // The open data file carries the kind card with its reasons.
+  const data = JSON.parse(fs.readFileSync(path.join(dist, "data/claims.json"), "utf8"));
+  const cards = data.claims.find((claim) => claim.slug === "approved-claim").background;
+  assert.deepEqual(cards.map((card) => [card.kind, card.fit]), [["condition", "exact"], ["intervention", "kind"]]);
+  assert.deepEqual(cards[1].reasons[1], { code: "registry_lists_type", type: "DEVICE", trials: 3 });
+
+  // An unknown fit, reason or registry type fails the build and is named.
+  for (const [change, named] of [
+    // The export's schema lists the fits, so an unknown one is refused before wording.
+    [(card) => (card.fit = "narrower"), /background\/1\/fit must be equal to one of the allowed values \(it is "narrower"\)/],
+    [(card) => (card.reasons[0].code = "sounds_right"), /card reason: sounds_right/],
+    [(card) => (card.reasons[1].type = "HOLOGRAM"), /card registry type: HOLOGRAM/],
+  ]) {
+    const broken = structuredClone(fixture);
+    change(broken.claims.find((claim) => claim.slug === "approved-claim").background[1]);
+    fs.writeFileSync(file, JSON.stringify(broken));
+    const refused = build(file, path.join(directory, "refused"));
+    assert.notEqual(refused.status, 0);
+    assert.match(refused.stdout + refused.stderr, named);
+  }
+});
+
+test("the method page explains kind cards", () => {
+  const html = page("how-it-works/index.html");
+  const part = html.split('id="background-on-a-claims-terms"')[1].split('id="who-a-claim-names"')[0];
+  assert.match(part, /the card is for the kind of\s+treatment it is/);
+  assert.match(part, /from a fixed list of kinds that this site keeps, or none of them/);
+  assert.match(part, /about the kind of treatment and not the treatment itself/);
+  assert.match(part, /registry’s type never decides the kind/);
+});
+
 // --- organisations (openspec site-publishing: "Organisations on the claim page") ---
 
 const organisationsSection = (html) =>

@@ -271,6 +271,17 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
     press away. A wrong card is removed by a person.
   </p>
   <p>
+    A name the claim uses also counts when the vocabulary files it as another wording of one of
+    its terms. Many treatments have no term of their own: a device or an operation described in
+    a report’s words, or a compound known only by a code. For those, the card is for the kind of
+    treatment it is, such as a monoclonal antibody, an implant or a surgical procedure. The kind
+    is chosen by an AI model from a fixed list of kinds that this site keeps, or none of them.
+    Each kind on the list is tied to one vocabulary term, whose definition the card shows, and
+    the card says it is about the kind of treatment and not the treatment itself. When the trial
+    registry lists the treatment under one of its own types, the card gives that as a reason; the
+    registry’s type never decides the kind. A treatment that fits no kind on the list has no card.
+  </p>
+  <p>
     A card describes a term. It is not about a claim’s evidence, it never changes a status, and it
     is not medical advice. A claim whose terms are in no vocabulary has no Background section.
   </p>
