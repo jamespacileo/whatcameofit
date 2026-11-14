@@ -135,11 +135,9 @@ def find_papers(
     if room <= 0:
         return []
 
-    terms: dict[str, str] = {}
-    for term in [intervention.name, *intervention.synonyms, *intervention.search_phrases]:
-        terms.setdefault(name_key(term), term)
+    terms = _terms(intervention)
     ranked: list[list[SourceRecord]] = []
-    for term in terms.values():
+    for term in terms:
         try:
             ranked.append(papers.search_papers(f"{term} {claim.indication}", MAX_PAPERS_PER_CLAIM))
         except AllowanceUsedUp:
@@ -155,7 +153,6 @@ def find_papers(
                 if record.external_id not in had:
                     found.setdefault(record.external_id, record)
 
-    names, identifiers = _named_organisations(session, claim)
     added: list[tuple[EntityMatch, SourceRecord]] = []
     for record in found.values():
         match = EntityMatch(
@@ -164,14 +161,7 @@ def find_papers(
             external_id=record.external_id,
             score=0.0,
             record_summary=paper_line(record),
-            reasons=paper_reasons(
-                openalex.describe(record),
-                terms=list(terms.values()),
-                indication=claim.indication,
-                institutions=names,
-                institution_ids=identifiers,
-                first_reported=claim.first_reported_date,
-            ),
+            reasons=_reasons(session, claim, intervention, record),
         )
         session.add(match)
         added.append((match, record))
@@ -185,13 +175,83 @@ def find_papers(
             session.delete(match)
         session.flush()
         raise
-    reject_near_zero(matches, reject_below, now)
-    if accept_above > 0:
-        for match in matches:
-            if match.review_state is ReviewState.PENDING and match.score >= accept_above:
-                record_decision(match, ReviewState.APPROVED, by=Decider.RULE, now=now)
+    _decide_by_rule(matches, reject_below, accept_above, now)
     session.flush()
     return matches
+
+
+def rescore_papers(
+    session: Session,
+    claim: Claim,
+    *,
+    papers: PaperSearch,
+    backend: Backend,
+    now: datetime,
+    skip: list[EntityMatch] | None = None,
+    reject_below: float = 0.0,
+    accept_above: float = 0.0,
+) -> list[EntityMatch]:
+    """Score again the claim's pending paper candidates, and return them. For papers
+    scored before the claim's names, phrases, indication or named organisations changed.
+
+    Each paper is read again by its identifier, which costs nothing and spends none of
+    the day's searches. Its one-line record and its reasons are brought up to date, and
+    the rules are applied to the new score. A paper someone has decided keeps the score
+    it was decided on. One the source no longer has keeps its old score and reasons.
+    """
+    intervention = _intervention(session, claim)
+    if intervention is None:
+        return []
+    just_scored = {match.id for match in skip or []}
+    again: list[tuple[EntityMatch, SourceRecord]] = []
+    for match in _paper_matches(session, intervention, ReviewState.PENDING):
+        if match.id in just_scored:
+            continue
+        record = papers.paper(match.external_id)
+        if record is not None:
+            again.append((match, record))
+    for match, record in again:
+        match.record_summary = paper_line(record)
+        match.reasons = _reasons(session, claim, intervention, record)
+    score_papers(session, backend, claim=claim, candidates=again, now=now)
+    rescored = [match for match, _ in again]
+    _decide_by_rule(rescored, reject_below, accept_above, now)
+    session.flush()
+    return rescored
+
+
+def _terms(intervention: Entity) -> list[str]:
+    """The intervention's name, other names and search phrases, each once."""
+    terms: dict[str, str] = {}
+    for term in [intervention.name, *intervention.synonyms, *intervention.search_phrases]:
+        terms.setdefault(name_key(term), term)
+    return list(terms.values())
+
+
+def _reasons(
+    session: Session, claim: Claim, intervention: Entity, record: SourceRecord
+) -> list[str]:
+    names, identifiers = _named_organisations(session, claim)
+    return paper_reasons(
+        openalex.describe(record),
+        terms=_terms(intervention),
+        indication=claim.indication,
+        institutions=names,
+        institution_ids=identifiers,
+        first_reported=claim.first_reported_date,
+    )
+
+
+def _decide_by_rule(
+    scored: list[EntityMatch], reject_below: float, accept_above: float, now: datetime
+) -> None:
+    """Reject the papers scored near zero and approve those scored at or above the accept
+    threshold, with or without a reason. 0 turns the approval off."""
+    reject_near_zero(scored, reject_below, now)
+    if accept_above > 0:
+        for match in scored:
+            if match.review_state is ReviewState.PENDING and match.score >= accept_above:
+                record_decision(match, ReviewState.APPROVED, by=Decider.RULE, now=now)
 
 
 def trials_from_papers(

@@ -23,7 +23,12 @@ from thenwhat.domain import ClaimStatus, Decider, EntityType, EventType, ReviewS
 from thenwhat.events.fetch import fetch_claim
 from thenwhat.export.build import build_export
 from thenwhat.resolve.organisations import match_organisations
-from thenwhat.resolve.papers import choose_origin, find_papers, trials_from_papers
+from thenwhat.resolve.papers import (
+    choose_origin,
+    find_papers,
+    rescore_papers,
+    trials_from_papers,
+)
 from thenwhat.resolve.reasons import (
     INDICATION_NAMED,
     NAMED_IN_TITLE,
@@ -463,6 +468,57 @@ def test_approved_papers_do_not_change_the_status_or_show_as_registry_matches(se
     # Until papers are exported under their own heading, none is listed as a match.
     [exported] = build_export(session, now=NOW).claims
     assert exported.matches == []
+
+
+# --- scoring again -------------------------------------------------------------------
+
+
+def test_pending_papers_are_scored_again_with_their_reasons_brought_up_to_date(session: Session):
+    claim = new_claim(session)
+    papers = FakePapers({PHRASE_SEARCH: FOUR})
+    scores = {"Paper 1": 0.9, "Paper 2": 0.6, "Paper 3": 0.6, "Paper 4": 0.01}
+    approved, low, high, rejected = find(
+        session, claim, papers, Reading(scores), reject_below=0.05, accept_above=0.8
+    )
+    assert NAMED_INSTITUTION not in low.reasons
+    add_entity(session, SLUG, type=EntityType.INSTITUTION, name="Example University")
+    backend = Reading({"Paper 2": 0.02, "Paper 3": 0.95})
+
+    again = rescore_papers(
+        session, claim, papers=papers, backend=backend, now=NOW, reject_below=0.05, accept_above=0.8
+    )
+
+    assert again == [low, high]
+    assert (low.score, low.review_state, low.reviewed_by) == (
+        pytest.approx(0.02),
+        ReviewState.REJECTED,
+        Decider.RULE,
+    )
+    assert (high.score, high.review_state) == (pytest.approx(0.95), ReviewState.APPROVED)
+    assert NAMED_INSTITUTION in low.reasons and NAMED_INSTITUTION in high.reasons
+    # Decided papers keep the score they were decided on, and no search is spent.
+    assert approved.score == pytest.approx(0.9) and rejected.score == pytest.approx(0.01)
+    assert papers.looked_up == ["10.1000/p2", "10.1000/p3"]
+    assert len(papers.searched) == 2
+
+
+def test_a_paper_the_source_no_longer_has_or_just_scored_is_left_as_it_is(session: Session):
+    claim = new_claim(session)
+    gone, fresh = find(session, claim, FakePapers({PHRASE_SEARCH: FOUR[:2]}), Reading(default=0.6))
+    backend = Reading(default=0.95)
+
+    again = rescore_papers(
+        session,
+        claim,
+        papers=FakePapers({PHRASE_SEARCH: [FOUR[1]]}),
+        backend=backend,
+        now=NOW,
+        skip=[fresh],
+        accept_above=0.8,
+    )
+
+    assert again == [] and backend.calls == []
+    assert gone.score == pytest.approx(0.6) and gone.review_state is ReviewState.PENDING
 
 
 # --- review queue --------------------------------------------------------------------

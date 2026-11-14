@@ -276,6 +276,22 @@ def test_resolve_stores_the_related_papers_it_finds(
     assert paper.reviewed_by is Decider.RULE
 
 
+def test_resolve_rescore_scores_the_pending_papers_again(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    class Known(Papers):
+        def paper(self, external_id: str) -> SourceRecord | None:
+            return self.search_papers("")[0]
+
+    monkeypatch.setattr("thenwhat.cli.resolve.make_research", lambda s: research(Known()))
+    run("resolve", SLUG)
+
+    result = run("resolve", SLUG, "--rescore")
+
+    assert result.exit_code == 0, result.output
+    assert "Scored 1 pending paper again; a rule decided 0." in result.output
+
+
 def test_resolve_keeps_its_trial_candidates_when_the_paper_search_breaks(
     run, session: Session, monkeypatch: pytest.MonkeyPatch
 ):

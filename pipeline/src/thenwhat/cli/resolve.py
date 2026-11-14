@@ -33,6 +33,7 @@ from thenwhat.resolve.papers import (
     TrialRegistry,
     choose_origin,
     find_papers,
+    rescore_papers,
     trials_from_papers,
 )
 from thenwhat.resolve.service import DoiLookup, TrialSearch, rescore_claim, resolve_claim
@@ -218,6 +219,7 @@ def _related_research(
     now: datetime,
     reject_below: float,
     accept_above: float,
+    rescore: bool = False,
 ) -> None:
     """Organisations, related papers, the trials those papers name and the origin paper,
     with a line on each. A step that fails is reported, what it had written is undone,
@@ -245,6 +247,24 @@ def _related_research(
         )
         if found is not None:
             _say_papers(found, accept_above, reject_below)
+        if rescore:
+            again = _step(
+                session,
+                "Pending papers were not scored again",
+                lambda: rescore_papers(
+                    session,
+                    claim,
+                    papers=papers,
+                    backend=backend,
+                    now=now,
+                    skip=found or [],
+                    **thresholds,
+                ),
+            )
+            if again is not None:
+                noun = "paper" if len(again) == 1 else "papers"
+                decided = sum(m.review_state is not ReviewState.PENDING for m in again)
+                out.print(f"Scored {len(again)} pending {noun} again; a rule decided {decided}.")
 
     from_papers = _step(
         session,
@@ -314,7 +334,8 @@ def resolve_command(
         bool,
         typer.Option(
             "--rescore",
-            help="Also score again the pending trial candidates the search still returns.",
+            help="Also score again the pending trial candidates the search still returns,"
+            " and the pending related papers.",
         ),
     ] = False,
 ) -> None:
@@ -367,7 +388,9 @@ def resolve_command(
             if claim.evidence_stage is None and not has_stage_suggestion(session, claim):
                 stage = suggest_evidence_stage(session, backend, claim, now=now)
                 out.print(f"Suggested evidence stage: {stage.choice}. Confirm it in review.")
-            _related_research(session, claim, research, backend, now, reject_below, accept_above)
+            _related_research(
+                session, claim, research, backend, now, reject_below, accept_above, rescore
+            )
         except DecisionFailed as failed:
             # Leave through a clean exit so the logged failure is committed with the session.
             err.print(str(failed), markup=False)
