@@ -1,0 +1,28 @@
+---
+// The last section of a page that answers one question: a way to ask another, and,
+// where a suggestion address is configured, a way to add a headline that is not tracked.
+import Search from "@lucide/astro/icons/search";
+import { SITE } from "../../site.config.mjs";
+import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
+
+const suggest = contactLink(SITE.suggestUrl, "", SUGGEST_SUBJECT);
+---
+
+<section class="closing" data-pagefind-ignore>
+  <h2 class="bar">Another headline?</h2>
+  <p class="take-why">
+    Paste a link to a news report, or type a treatment or a condition, to see what is on record.
+  </p>
+  <a class="share" href="/#search">
+    <Search size={16} stroke-width={1.9} aria-hidden="true" />
+    Look up another
+  </a>
+  {
+    suggest && (
+      <p class="suggest">
+        Seen a reported breakthrough we do not track? Send the address of the news article:{" "}
+        <a href={suggest.href}>Suggest a headline (opens {suggest.opens})</a>
+      </p>
+    )
+  }
+</section>
