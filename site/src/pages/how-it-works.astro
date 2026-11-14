@@ -1,9 +1,12 @@
 ---
 import Base from "../layouts/Base.astro";
 import StageTrack from "../components/StageTrack.astro";
+import StatusMade from "../components/StatusMade.astro";
+import { brandAsset } from "../lib/brand";
 import { data } from "../lib/export";
+import { statusSlug } from "../lib/guide";
 import { SITE } from "../../site.config.mjs";
-import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS } from "../lib/status";
+import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS, overlayText } from "../lib/status";
 
 const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
 ---
@@ -18,17 +21,82 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
     This page explains how the status on a claim page is set and what it does not tell you.
   </p>
 
+  {/*
+    The explainer, made in video/. It never plays on its own and nothing of it is fetched
+    until the reader presses play. Its records are dated, because a video cannot be
+    rebuilt with the site; the pages under it are the current word.
+  */}
+  <figure class="explainer">
+    <video
+      controls
+      preload="none"
+      playsinline
+      width="1920"
+      height="1080"
+      poster={brandAsset("/video/explainer-poster.jpg")}
+      aria-describedby="explainer-note"
+    >
+      {/* Raise the number with each new render, so a returning reader is not shown the old one. */}
+      <source src="/video/explainer.mp4?v=3" type="video/mp4" />
+      <a href="/video/explainer.mp4">Download the video</a>
+    </video>
+    <figcaption id="explainer-note">
+      A video of 1 minute 52 seconds, with sound and captions, on how this site works. The records
+      in it are as the registries showed them in November 2026; the claim pages are kept current.
+    </figcaption>
+    <details>
+      <summary>What the video says</summary>
+      <p>
+        “New drug to regenerate lost teeth” (Kyoto University, 2021). “Multiplying teeth” (RIKEN,
+        2015). “Regrowing Teeth” (Technische Universität Berlin, 2019). Headlines like these travel
+        fast. The follow-up rarely does. So, years later: what came of it?
+      </p>
+      <p>
+        {SITE.name} is a public record of what followed reported medical breakthroughs. Each claim
+        gets one page: one treatment, for one condition. At the top is where it stands now. The
+        video shows one claim, first reported in 2021, as it stood in November 2026.
+      </p>
+      <p>
+        Underneath are the dated records that say so. Every record links to the registry that holds
+        it, so you can check it yourself. And what was promised sits beside what was recorded.
+      </p>
+      <p>
+        The status is set by fixed rules, from public registry records. No editor decides it, and no
+        AI model does either. When nothing new has been recorded for years, the page says exactly
+        that. That describes the records. It is not a verdict on the treatment.
+      </p>
+      <p>
+        Seen a headline shared again? Paste the article's link into the box on the home page. If the
+        claim is tracked, the answer comes back at once. The link is compared inside your browser,
+        and sent nowhere.
+      </p>
+      <p>
+        There is also a browser extension, for Chrome and Safari. Open it on an article, and it
+        shows the tracked claim's status right there. If the article is not tracked, it can search
+        the trial registries live. Those results are marked automatic and unreviewed, and every
+        match shows its confidence score.
+      </p>
+      <p>No medical advice. No verdicts. Only what the records show, and when.</p>
+    </details>
+  </figure>
+
+  <StatusMade />
+
   {/* A long page on a phone: its sections, one tap away. */}
   <nav class="contents" aria-label="On this page">
     <ul>
       <li><a href="#how-a-status-is-set">How a status is set</a></li>
       <li><a href="#what-each-status-means">What each status means</a></li>
       <li><a href="#no-signal">No signal</a></li>
+      <li><a href="#what-a-report-said">What a report said</a></li>
+      <li><a href="#what-a-trial-entry-shows">What a trial entry shows</a></li>
+      <li><a href="#who-a-claim-names">Who a claim names</a></li>
       <li><a href="#what-this-site-never-says">What this site never says</a></li>
       <li><a href="#where-the-data-comes-from">Where the data comes from</a></li>
       <li><a href="#an-optional-search-of-a-new-report">An optional search of a new report</a></li>
+      <li><a href="#ways-to-keep-up">Ways to keep up</a></li>
       <li><a href="#what-is-counted">What is counted</a></li>
-      <li><a href="#report-an-error">Report an error</a></li>
+      {SITE.correctionsUrl && <li><a href="#report-an-error">Report an error</a></li>}
     </ul>
   </nav>
 
@@ -78,24 +146,171 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
         <div>
           <dt>
             {STAGE_PATH.includes(code) && <StageTrack code={code} />}
-            {STATUS_LABELS[code]}
+            <a href={`/guide/${statusSlug(code)}`}>{STATUS_LABELS[code]}</a>
           </dt>
           <dd>{STATUS_MEANINGS[code]}</dd>
         </div>
       ))
     }
   </dl>
+  <p class="entry-note">
+    Each status links to its entry in <a href="/guide">the guide</a>, which says what it rests on
+    and what it does not tell you.
+  </p>
 
   <h2 class="bar" id="no-signal">No signal</h2>
   <p>
     A claim that has stayed at an open stage for several years, with no new approved record, shows a
-    note such as “No signal for 5 years”. The note means that the most recent record is that old.
+    note such as “{overlayText(5)}”. The note means that the most recent record is that old.
     The count starts from the date of that record, or from the date the claim was first reported
     when no record has been found.
   </p>
   <p>
     It says nothing about work that has not been published or registered, and it is not a status.
     A new record removes it.
+  </p>
+
+  <h2 class="bar" id="what-a-report-said">What a report said</h2>
+  <p>
+    A claim page can show, before its records, what the news reports said about the treatment.
+    An AI model reads each report and lists up to six things it says beyond its timeline: an
+    effect, the treatment’s safety, how it acts, who it could help, how it compares with existing
+    treatment, or what it could lead to. Each is written in this site’s own words. A statement
+    that repeats eight or more of the report’s words in a row, carries a quotation mark or names a
+    person is dropped before it is kept, and the report’s text is never stored.
+  </p>
+  <p>
+    A second automatic step then checks each statement against its report and answers one
+    question: does the report say this, as firmly as it is put here, say something weaker, or not
+    say it? The percentage beside a statement is how sure that check was that the report says it.
+    A statement is shown once the check is sure enough; the rest wait unseen until a person looks
+    at them. Beside each statement the page says how firmly the report put it, who the report had
+    saying it, by role and never by name, and what the report said it rests on.
+  </p>
+  <p>
+    A statement is what a report said, not what is on record, and this site does not say whether
+    the report was right. Nothing on the page sets a statement against a trial or a paper, and
+    statements never change a status. A statement that misreads its report is removed by a
+    person{SITE.correctionsUrl ? <>: <a href="#report-an-error">report an error</a></> : ""}.
+  </p>
+
+  <h2 class="bar" id="what-a-trial-entry-shows">What a trial entry shows</h2>
+  <p>
+    A claim page lists each of its trials once. Each entry gives what the trial's registry record
+    states: its phase, how many people it enrolled or plans to enrol, how it was designed, who
+    sponsored it, what it set out to measure, and, where the sponsor has posted them, the results
+    for its main measures. These facts are read from the record by fixed rules. No editor and no
+    AI model reads them.
+  </p>
+  <p>
+    The facts are a selection from the record, unaltered, with the date the record was read and a
+    link to the whole of it. Posted results are the numbers the trial's sponsor gave the registry:
+    each group's value, and any p value the sponsor posted with it. The site shows the numbers and
+    adds no word on what they mean for the treatment. They do not change a claim's status.
+  </p>
+  <p>
+    An entry does not say where a trial takes place or who may take part in it.
+  </p>
+
+  <h2 class="bar" id="what-a-paper-entry-shows">What a paper entry shows</h2>
+  <p>
+    A claim page lists each of its papers once, under "Papers on record": the paper the first
+    news reports were about, papers a trial's registry record names, follow-up papers, and
+    related research a literature search found. A paper is not a trial record. No paper sets or
+    changes a claim's status, with one exception that is a record of its own: a retraction notice
+    for the paper first reported.
+  </p>
+  <p>
+    What an entry says of a paper is read from the paper's record in Europe PMC, an index of
+    life-science publications, by fixed rules: its title, the journal, the year, the kind of
+    publication the index gives it, whether it is open access, and whether the index marks it as
+    retracted. The entry shows the date the record was read. No abstract and no author is stored
+    or shown, and no editor and no AI model reads the paper. An entry says what kind of
+    publication a paper is and never what it concluded.
+  </p>
+  <p>
+    "Files it as a study in people" or "in animals" repeats two subject headings that the
+    index's own indexers apply, "Humans" and "Animals". The site reads those two and guesses
+    nothing from a title or a species name. Work on human cells can carry "Humans", and a recent
+    paper may carry no heading yet, in which case the entry says nothing. The count of records in
+    people and in animals on a claim page counts trials and papers filed that way. It counts
+    records, and says nothing about whether a treatment does anything in people or in animals.
+  </p>
+  <p>
+    A paper reaches a trial's entry in one of two ways, both taken from the trial's own registry
+    record with no search. "Listed by the sponsor" means the trial's sponsor gave the registry
+    the paper and marked it as reporting results from the study. "Linked by the registry" means
+    ClinicalTrials.gov filled the paper in from PubMed; the registry itself says such a paper
+    "may or may not be about the study". Papers a sponsor listed only as background are not
+    shown.
+  </p>
+  <p>
+    Related research is found by searching OpenAlex, an index of scholarly papers, for the
+    treatment and the condition. A paper is listed when its match scores in the high band, with
+    the score and the reasons a fixed rule found: that its title names the treatment, that it
+    names the condition, that it comes from an institution the report names, or that it was
+    published on or before the day of the first report. The score is about the match, not about
+    the treatment, and a related paper is not counted in the status.
+  </p>
+
+  <h2 class="bar" id="background-on-a-claims-terms">Background on a claim’s terms</h2>
+  <p>
+    Some claim pages end with a short section called Background. It says what the claim’s
+    condition and its treatment are, in the words of an open vocabulary that libraries use to
+    index medical research. The definition is the vocabulary publisher’s, shown unchanged and
+    marked as theirs, with the edition it came from and the date the record was read. The site
+    writes no explanation of a condition or a treatment of its own.
+  </p>
+  <p>
+    A term becomes a candidate by fixed rules only: the trial registry files at least half of the
+    claim’s trials under it, or its label is the same as a name the claim uses. An AI model then
+    reads each candidate beside the claim and answers one question: is this term the claim’s
+    condition (or treatment), a broader term, or something else. The score on a card is how sure
+    that answer was. A term scored high is shown, one read as something else is not, and a card
+    says when its term is broader than the claim’s. The reasons a term was a candidate are one
+    press away. A wrong card is removed by a person.
+  </p>
+  <p>
+    A card describes a term. It is not about a claim’s evidence, it never changes a status, and it
+    is not medical advice. A claim whose terms are in no vocabulary has no Background section.
+  </p>
+
+  <h2 class="bar" id="who-a-claim-names">Who a claim names</h2>
+  <p>
+    A claim page can list, under "Organisations named", the universities, hospitals and
+    companies its sources name, each once. An organisation is listed for one of two reasons,
+    and its entry says which: a news report named it, or a trial's registry record names it as
+    the trial's lead sponsor, with a link to each of those trials on the page. The entry states
+    that part and nothing more. It does not say that an organisation did the work, paid for it,
+    stands behind the claim or approves of it. A trial sponsor that is a person is never listed,
+    and no researcher, author or other person is named in the section.
+  </p>
+  <p>
+    Each name is looked up in the Research Organization Registry (ROR), an open registry of
+    research organisations. A fixed rule accepts ROR's answer only when ROR marks one of its
+    records as its chosen answer for the name and the name, ignoring capitals and punctuation,
+    is exactly one of that record's own names. A one-word name must match letter for letter, a
+    public body's name must state its country, since such names repeat from country to
+    country, and a name that is a journal's is never accepted. Then the entry shows what the
+    record says: the
+    registry's name for the organisation, its kind, its country and its website, with a link to
+    the record, ROR's score for how well the name matched, and the date the record was read. No
+    AI model takes part. Two names that lead to the same record are one entry. Any other name is
+    listed as its source gave it and says it was not matched; no looser match is tried. ROR
+    identifies an organisation from its name; it does not verify the organisation's part in a
+    claim, and a wrong match is removed by a person.
+  </p>
+  <p>
+    Organisations are listed by their part, reports first and sponsors second, and then by name.
+    Nothing is ranked, counted or described: the site gives no measure of an organisation's size
+    or standing, and organisations never change a status.
+  </p>
+  <p>
+    When a news report sits on the website of an organisation the claim names, such as a
+    university's own news pages, the page says so beside the report: "This report is on" that
+    organisation's website. It is found by comparing the report's address with the website in
+    the organisation's registry record. The note says where a report is published. It is not a
+    judgement on the report, and a report on any other site carries no note of any kind.
   </p>
 
   <h2 class="bar" id="what-this-site-never-says">What this site never says</h2>
@@ -127,16 +342,58 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
     and condition. We search ClinicalTrials.gov and linked research through Europe PMC, then
     use OpenAI to compare the trial records. This is a live search of those research sources,
     not a general search of the web. Its answer is marked as automatic and unreviewed; it cannot
-    create a claim page or change a status. The service keeps neither the report nor the answer.
+    create a claim page or change a status. We do not store submitted article text or screenshots.
+    Structured answers for independently public reports may be reused for 24 hours; answers
+    based only on browser content stay in that browser.
     Read <a href="/privacy">what is sent and how the providers handle it</a> before searching.
   </p>
   <p>
+    Related papers come from OpenAlex searches for the treatment and condition. ROR identifies
+    organisations explicitly named in the report. These sections open when you need them.
+    A paper result does not establish that a treatment works, and an organisation record does
+    not verify involvement or endorsement. Neither provider receives the article text, page
+    address or screenshot. Public paper and organisation metadata may be cached for seven days.
+  </p>
+  <p>
     Opening the browser extension checks the current page automatically. A tracked article shows
-    its reviewed claim; an untracked page starts a live registry search when the service is available.
+    its saved claim. After you enable automatic search, an untracked page starts a live registry
+    search when the service is available. If its text is insufficient, a screenshot of visible
+    content can be sent. Select words first to search only those words, without links or a screenshot.
     Each candidate's match confidence is the model's estimate that the record concerns the reported
     treatment and condition. It is not a verified probability or a rating of treatment effectiveness
     or trial quality. Pages are not searched in the background while the extension is closed.
   </p>
+
+  <h2 class="bar" id="ways-to-keep-up">Ways to keep up</h2>
+  <p>
+    A status can change months or years after a headline. None of these needs an account, and
+    none tells us who you are.
+  </p>
+  <ul>
+    <li>
+      <strong>Follow a claim.</strong> Press "Follow" on its page. The claim is then listed on
+      the home page, with a note when its status changes. The list is kept in your browser
+      only.
+    </li>
+    <li>
+      <strong>Since your last visit.</strong> The home page notes the day you open it, in your
+      browser only, and next time says what is dated since.
+    </li>
+    <li>
+      <strong>Check again later.</strong> A claim page can save a date to your calendar: the
+      promised date, six months, a year, or the anniversary of the first report. The file is
+      made on your device.
+    </li>
+    <li>
+      <strong>Feeds.</strong> For a feed reader: <a href="/changes.xml">every status change</a>,
+      and <a href="/anniversaries.xml">anniversaries of first reports</a>. Each claim page and
+      each topic page links a feed of its own.
+    </li>
+    <li>
+      <strong>On your own page.</strong> Each claim page gives a sentence to copy, a card to
+      post, and a short piece of code that shows the claim's current status on another site.
+    </li>
+  </ul>
 
   <h2 class="bar" id="what-is-counted">What is counted</h2>
   <p class="plain">Cloudflare, which hosts this site, counts requests and errors to operate the service. We do not add analytics, set tracking cookies, or keep reader profiles. Request logging for our Worker is disabled.</p>

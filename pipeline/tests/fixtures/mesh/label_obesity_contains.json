@@ -1,0 +1,42 @@
+[
+  {
+    "resource": "http://id.nlm.nih.gov/mesh/2026/D019440",
+    "label": "Anti-Obesity Agents"
+  },
+  {
+    "resource": "http://id.nlm.nih.gov/mesh/2026/D009765",
+    "label": "Obesity"
+  },
+  {
+    "resource": "http://id.nlm.nih.gov/mesh/2026/D010845",
+    "label": "Obesity Hypoventilation Syndrome"
+  },
+  {
+    "resource": "http://id.nlm.nih.gov/mesh/2026/D000073319",
+    "label": "Obesity Management"
+  },
+  {
+    "resource": "http://id.nlm.nih.gov/mesh/2026/D000094408",
+    "label": "Obesity Paradox"
+  },
+  {
+    "resource": "http://id.nlm.nih.gov/mesh/2026/D056128",
+    "label": "Obesity, Abdominal"
+  },
+  {
+    "resource": "http://id.nlm.nih.gov/mesh/2026/D000067329",
+    "label": "Obesity, Metabolically Benign"
+  },
+  {
+    "resource": "http://id.nlm.nih.gov/mesh/2026/D009767",
+    "label": "Obesity, Morbid"
+  },
+  {
+    "resource": "http://id.nlm.nih.gov/mesh/2026/D063766",
+    "label": "Pediatric Obesity"
+  },
+  {
+    "resource": "http://id.nlm.nih.gov/mesh/2026/D000079262",
+    "label": "Pregnancy in Obesity"
+  }
+]

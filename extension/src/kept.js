@@ -42,6 +42,8 @@ export function answerOf(state) {
       // An automatic search stays marked as unreviewed wherever it is shown again.
       unreviewed: shown.marked ?? null,
       lead: shown.lead ?? null,
+      // Retain the generated limitation, never article text or a screenshot.
+      limitation: shown.none ?? (!shown.subject ? shown.lead ?? null : null),
       claims: (shown.tracked ?? []).map(({ headline, page }) => ({ headline, page })),
       records: (shown.likely ?? []).map(({ title, url }) => ({ title, url })),
     };
@@ -56,12 +58,6 @@ export function candidatesOf(entry, site) {
     ...(answer.claims ?? []).map((claim) => ({ title: claim.headline, url: site.url + claim.page, status: claim.status ?? null })),
     ...(answer.records ?? []).map((record) => ({ title: record.title, url: record.url, status: null })),
   ];
-}
-
-const sameClaim = (page) => (kept) => kept.page === page;
-
-export function isFollowed(follows, page) {
-  return (follows ?? []).some(sameClaim(page));
 }
 
 /** The followed list with this claim in it, remembered as it stands now. */

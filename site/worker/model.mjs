@@ -46,7 +46,7 @@ const READING = {
   additionalProperties: false,
   required: [
     "about_a_treatment", "gist", "intervention", "other_names", "known_names", "search_phrases", "indication",
-    "trial_name", "participants", "sponsor",
+    "trial_name", "participants", "sponsor", "organisations",
   ],
   properties: {
     about_a_treatment: { type: "boolean", description: "Whether the text reports a specific treatment for a specific condition." },
@@ -59,6 +59,7 @@ const READING = {
     trial_name: { type: ["string", "null"], description: "The name the text gives the trial itself, such as SURMOUNT-5 or RECOVERY. Not the treatment's name. Null if the text gives none." },
     participants: { type: ["integer", "null"], description: "How many people took part in the trial the text reports, as the text says. Null if it does not say." },
     sponsor: { type: ["string", "null"], description: "The company, university or hospital the text says ran or paid for the trial, by its name alone. Null if the text names none." },
+    organisations: names("Up to three universities, hospitals or companies explicitly named in the supplied report as involved in this research. Names only. Do not infer from authors, affiliations or your own knowledge. Empty when none are named."),
   },
 };
 const probability = { type: "number" };

@@ -82,7 +82,7 @@ def _flags(session: Session, claim: Claim) -> list[Flag]:
 
 
 def _origin_paper_ids(session: Session, claim: Claim) -> frozenset[str]:
-    """Identifiers of the origin paper, taken from its human-approved matches."""
+    """Identifiers of the origin paper, taken from its approved matches."""
     return frozenset(
         session.scalars(
             select(EntityMatch.external_id)

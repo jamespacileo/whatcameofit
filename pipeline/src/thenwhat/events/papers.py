@@ -9,7 +9,7 @@ from datetime import datetime
 from thenwhat.domain import EventType
 from thenwhat.events.draft import EventDraft
 from thenwhat.sources.base import SourceRecord
-from thenwhat.sources.crossref import Notice
+from thenwhat.sources.crossref import Crossref, Notice
 from thenwhat.sources.europepmc import PaperInfo, describe
 
 BOTH_SIGNS = 0.9
@@ -60,7 +60,7 @@ def retraction_event(doi: str, title: str, notice: Notice, now: datetime) -> Eve
         type=EventType.RETRACTION,
         event_date=notice.notice_date,
         date_basis="retraction notice date",
-        source_name="crossref",
+        source_name=Crossref.name,
         source_url=f"https://doi.org/{notice.notice_doi}",
         external_id=doi.lower(),
         summary=f"Retraction notice issued for: {title}",

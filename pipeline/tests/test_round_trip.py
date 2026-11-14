@@ -38,6 +38,7 @@ from thenwhat.review.queue import confirm_stage, decide_item, pending_items
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref
 from thenwhat.sources.europepmc import EuropePmc
+from thenwhat.statements.service import StatementChecker
 
 NOW = datetime(2026, 11, 11, 12, 0, tzinfo=UTC)
 REPOSITORY = Path(__file__).resolve().parents[2]
@@ -120,6 +121,7 @@ def test_seeded_example_round_trips_from_article_url_to_built_page(
     claim = draft_claim_from_article(
         session,
         llm,
+        StatementChecker(Scoring()),
         text=SYNTHETIC_ARTICLE,
         slug=SLUG,
         vertical="mouth-and-teeth",
@@ -127,7 +129,8 @@ def test_seeded_example_round_trips_from_article_url_to_built_page(
         outlet=article["outlet"],
         title=article["title"],
         published_date=date.fromisoformat(article["published_date"]),
-    )
+        now=NOW,
+    ).claim
     assert claim.review_state is ReviewState.PENDING
 
     # 2. The operator approves the draft and adds the names the compound goes by.

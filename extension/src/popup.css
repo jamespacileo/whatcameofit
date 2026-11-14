@@ -1,5 +1,5 @@
-/* The popup follows DESIGN.md: white ground, ink text, one blue accent, pale amber
-   only for a promise, Figtree. Light only. Sizes are in px because a popup has no
+/* The popup follows DESIGN.md: a deep navy masthead, white ground, ink text, one blue
+   accent, pale amber only for a promise, Figtree. Light only. Sizes are in px because a popup has no
    reader-chosen root size to respect and must fit a fixed width. */
 
 @font-face {
@@ -38,7 +38,6 @@ html {
 
 .mark {
   flex: none;
-  border-radius: 5px;
 }
 
 ::selection {
@@ -60,12 +59,17 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 16px 11px;
-  border-bottom: 1px solid var(--rule);
+  padding: 12px 16px;
+  background: var(--footer);
+}
+
+.masthead ::selection {
+  background: var(--paper);
+  color: var(--footer);
 }
 
 .name {
-  color: var(--blue);
+  color: var(--paper);
   font-weight: 700;
   font-size: 16px;
   letter-spacing: -0.01em;
@@ -151,37 +155,52 @@ h1 + p {
   background: var(--blue);
 }
 
-/* A wait of up to half a minute is marked as one: the site's dot, breathing. */
+/* A wait of up to half a minute is marked as one: the mark, looking. The glass holds
+   still and the capsule passes beneath it, the headline's half and then the record's.
+   The one loop on any surface; the answer takes the line's place the moment it is ready. */
 .checking {
   display: flex;
-  align-items: baseline;
-  gap: 9px;
+  align-items: flex-start;
+  gap: 10px;
 }
 
-.checking::before {
-  content: "";
+.checking .wait-mark {
   flex: none;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--blue);
-  transform: translateY(-1px);
+  width: 24px;
+  height: 24px;
+  /* Level with the first line of the sentence, however many lines it runs to. */
+  margin-top: -2px;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .checking::before {
-    animation: wait 1.4s ease-in-out infinite alternate;
+  .checking .wait-mark .capsule {
+    animation: pass-under 2.8s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
+
+  /* Just followed: the tick is drawn. */
+  .followed-mark.drawn .icon path {
+    stroke-dasharray: 1 1.2;
+    animation: tick-drawn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 }
 
-@keyframes wait {
-  from {
-    opacity: 0.25;
-    transform: translateY(-1px) scale(0.8);
+@keyframes pass-under {
+  0%,
+  100% {
+    transform: translateX(0);
   }
-  to {
-    opacity: 1;
-    transform: translateY(-1px) scale(1);
+  25% {
+    transform: translateX(7px);
+  }
+  75% {
+    transform: translateX(-7px);
+  }
+}
+
+/* It starts a little further back than its own length, so no dot is drawn before the line. */
+@keyframes tick-drawn {
+  from {
+    stroke-dashoffset: 1.1;
   }
 }
 
@@ -237,7 +256,10 @@ h1 + p {
 /* --- Controls ----------------------------------------------------------- */
 
 .button {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
   margin-top: 14px;
   padding: 10px 14px;
@@ -254,6 +276,61 @@ h1 + p {
 .button:hover {
   border-color: var(--footer);
   background: var(--footer);
+}
+
+/* The arrow of a button that opens a new tab: smaller than the words it follows. */
+.button .icon {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2.2;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* A second, smaller choice under the way to the evidence: a pill, as on the site. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  margin-top: 10px;
+  padding: 5px 14px 5px 11px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--blue);
+  font: 600 13.5px/1.3 var(--face);
+  cursor: pointer;
+  transition: background-color 120ms, border-color 120ms;
+}
+
+.pill:hover {
+  border-color: var(--blue);
+  background: var(--panel);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pill:active { transform: translateY(1px); }
+}
+
+/* A line that says what is already set, with its drawing ahead of the words. */
+.followed-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  vertical-align: bottom;
+}
+
+.followed-mark .icon {
+  width: 14px;
+  height: 14px;
 }
 
 .button.quiet {
@@ -477,7 +554,7 @@ h1 + p {
 .answer-actions + .kept { margin-top: 8px; }
 
 @media (pointer: coarse) {
-  .disclosure > summary, .answer-actions .text-button { min-height: 44px; }
+  .disclosure > summary, .answer-actions .text-button, .pill { min-height: 44px; }
 }
 
 /* --- The reader's own lists: recently checked, and following ------------- */
@@ -593,3 +670,9 @@ h1 + p {
     outline-offset: -1px;
   }
 }
+/* Bibliographic titles, deliberately outside the clinical candidate cards. */
+.research-results { margin-block: 0.75rem; }
+.research-list { list-style: none; padding: 0; margin: 0; }
+.research-list li + li { margin-top: 1rem; }
+.research-list a { font-weight: 650; overflow-wrap: anywhere; }
+.research-list .small { margin-top: 0.25rem; }

@@ -1,0 +1,13 @@
+{
+ "A009": ["pass", "paywall left only the headline; 'no specific treatment' is the right answer"],
+ "A015": ["pass", "preclinical work: no registry record is the expected outcome"],
+ "S015": ["review", "caption names no drug ('a personalized mRNA vaccine'); 'no specific treatment' is defensible"],
+ "S016": ["review", "Hacker News item links to a paywalled Economist piece; only the title was usable"],
+ "S024": ["review", "post names no drug ('a new pancreatic cancer drug'); 'no specific treatment' is defensible"],
+ "A053": ["review", "trial announced, not registered under this name yet; 0 records may be correct"],
+ "N003": ["fail", "earnings story read as a treatment report (Wegovy pill for obesity)"],
+ "N004": ["fail", "business story about insulin supply read as a treatment report"],
+ "N005": ["fail", "side-effect lawsuit story read as a treatment report (Ozempic)"],
+ "S014": ["fail", "TikTok showed a different video in the player; the reader read that one"],
+ "S021": ["fail", "Threads post text was not read: only the page footer was sent"]
+}

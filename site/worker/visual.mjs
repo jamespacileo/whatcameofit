@@ -1,5 +1,5 @@
 // Bounded visual input. No remote image fetches, files, persistence or diagnostics.
-export const MAX_IMAGE_BYTES = 750_000;
+const MAX_IMAGE_BYTES = 750_000;
 const MAX_BODY_BYTES = 1_100_000;
 const invalid = (code = "image_invalid", status = 400) => Object.assign(new Error(code), { code, status });
 

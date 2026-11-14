@@ -20,6 +20,7 @@ const one = source.claims.length === 1;
 <Base
   title={`“${source.title}”`}
   description={`What came of “${source.title}” (${source.outlet}): the ${one ? "claim it reports and where it stands" : "claims it reports and where each stands"} now.`}
+  breadcrumbs={[{ name: `“${source.title}”`, path: `/source/${source.slug}` }]}
 >
   <h1 class="title">“{source.title}”</h1>
   <p class="entry-note source-meta">

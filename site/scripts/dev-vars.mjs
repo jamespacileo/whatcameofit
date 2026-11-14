@@ -4,7 +4,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const WANTED = ["OPENAI_API_KEY", "LLM_MODEL", "LLM_BASE_URL", "CONTACT_EMAIL", "DECISION_BACKEND", "DECISIONS_MODEL"];
+const WANTED = ["OPENAI_API_KEY", "OPENALEX_API_KEY", "LLM_MODEL", "LLM_BASE_URL", "CONTACT_EMAIL", "DECISION_BACKEND", "DECISIONS_MODEL"];
 const root = path.resolve(import.meta.dirname, "../..");
 const source = path.join(root, ".env");
 

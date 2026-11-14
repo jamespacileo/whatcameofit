@@ -1,4 +1,4 @@
-// The site's Worker. Every address but one is a file of the built site. /api/lookup
+// The site's Worker. Static pages, readable trial records, and /api/lookup, which
 // answers a reader's question about an article the site does not track, or about a post
 // that links to one: which trial records is this about? Behaviour: openspec live-lookup.
 //
@@ -17,6 +17,8 @@ import { makeRegistry } from "./registry.mjs";
 import { followShort } from "./short.mjs";
 import { readBody, sourceUrl, validateImage } from "./visual.mjs";
 import { previousResult, storeResult } from "./results.mjs";
+import { makeResearch } from "./research.mjs";
+import { handleTrial } from "./trials.mjs";
 
 const PATH = "/api/lookup";
 // What a reader's browser may send with text it read: this many links, each this long.
@@ -44,6 +46,7 @@ function realTools(env) {
     }),
     registry: makeRegistry({ fetch, contact: env.CONTACT_EMAIL }),
     papers: makePapers({ fetch, contact: env.CONTACT_EMAIL }),
+    research: makeResearch({ fetch, apiKey: env.OPENALEX_API_KEY, contact: env.CONTACT_EMAIL, cache: env.LOOKUP_RESULTS }),
     fetch,
   };
 }
@@ -112,6 +115,11 @@ async function withLinkedArticle(platform, post, index, { fetch, contact }) {
 /** @param {{ model: object, registry: object, papers?: object, fetch?: Function } | undefined} tools stand-ins, for tests */
 export async function handle(request, env, tools) {
   const here = new URL(request.url);
+  if (here.pathname.startsWith("/trials/")) return handleTrial(request, env, tools?.trial);
+  // The built reader is a server template, never a public page of placeholders.
+  if (/^\/trial-reader(?:\/|\.html|\/index(?:\.html)?)?$/.test(here.pathname)) {
+    return new Response("Not found", { status: 404, headers: { "Cache-Control": "no-store" } });
+  }
   if (here.pathname !== PATH) {
     // A page the operator archived answers 410; everything else is a file of the site.
     const slug = here.pathname.replace(/^\/+|\/+$/g, "");
@@ -177,7 +185,7 @@ export async function handle(request, env, tools) {
   }
 
   try {
-    const { model, registry, papers, fetch: get = fetch } = tools ?? realTools(env);
+    const { model, registry, papers, research, fetch: get = fetch } = tools ?? realTools(env);
     const index = await env.ASSETS.fetch(new Request(new URL("/lookup.json", here)))
       .then((response) => (response.ok ? response.json() : { claims: {} }))
       .catch(() => ({ claims: {} }));
@@ -230,7 +238,7 @@ export async function handle(request, env, tools) {
       // Visual contents can differ from what an anonymous reader sees. They are not
       // published merely because the surrounding article is accessible.
     }
-    const found = { ...(await lookUp({ text, model, registry, index, page, papers, image, pageUrl })), post,
+    const found = { ...(await lookUp({ text, model, registry, index, page, papers, research, image, pageUrl })), post,
       ...(image ? { source: { kind: "screenshot", host: pageUrl ? new URL(pageUrl).hostname : null } } : {}) };
     await storeResult(env.LOOKUP_RESULTS, cacheUrl, found, publicVerified);
     return answer(found);

@@ -7,14 +7,18 @@ import satori from "satori";
 import { SITE } from "../../site.config.mjs";
 import {
   CARD_NOTICE,
+  CHECKED_LABEL,
   PROMISED_LABEL,
   cardContent,
   clip,
+  topicCardContent,
   type CardContent,
   type CardFact,
+  type TopicCardContent,
 } from "./card";
-import { data, type ExportedClaim } from "./export";
-import { STAGE_PATH, STATUS_LABELS, latestPromise, overlayText } from "./status";
+import { data, type ExportedClaim, type ExportedVertical, type StatusCode } from "./export";
+import { STAGE_PATH, STATUS_LABELS, latestPromise, overlayText, topicSummary } from "./status";
+import { topicDrawing } from "./topic-drawing";
 
 const INK = "#0f1f38";
 const BLUE = "#14427f";
@@ -26,6 +30,13 @@ const RING = "#7f90a3";
 // Pale amber: everything promised, here as on the pages.
 const PROMISE = "#fff7df";
 const PROMISE_RULE = "#d9c88a";
+// The masthead's deep navy, and what is set on it: white, a pale blue for the
+// quieter line, and the lifted blue of the name's dot.
+const NAVY = "#0b2545";
+const ON_NAVY_QUIET = "#c9d9ee";
+const ON_NAVY_DOT = "#8ec1f5";
+// The topic chip's ground, behind a topic's drawing.
+const TINT = "#e6eef8";
 
 export type Shape = "wide" | "square" | "tall";
 
@@ -105,14 +116,15 @@ const box = (style: Record<string, unknown>, children: unknown): Node => ({
 });
 const shape = (type: string, props: Record<string, unknown>): Node => ({ type, props });
 
-// Use the canonical vector artwork rather than maintaining another drawing.
-const markData = `data:image/svg+xml;base64,${fs.readFileSync(path.resolve("public/mark.svg")).toString("base64")}`;
+// The mark on navy is the reverse one: no tile, the glass in white. It is generated
+// from the canonical vector artwork, so there is no second drawing to maintain.
+const reverseData = `data:image/svg+xml;base64,${fs.readFileSync(path.resolve("public/mark-reverse.svg")).toString("base64")}`;
 function stamp(size: number): Node {
-  return shape("img", { src: markData, width: size, height: size });
+  return shape("img", { src: reverseData, width: size, height: size });
 }
 
 // The wordmark's question mark, whose dot is the blue marker. The same drawing as
-// the masthead's.
+// the masthead's, and on navy the same colours as the masthead's.
 function ask(height: number): Node {
   return shape("svg", {
     width: (height * 20) / 30,
@@ -123,26 +135,36 @@ function ask(height: number): Node {
       shape("path", {
         d: "M4.2 8.8a5.9 5.9 0 1 1 9 5c-2.1 1.3-3.2 2.4-3.2 4.7",
         fill: "none",
-        stroke: INK,
+        stroke: PAPER,
         "stroke-width": 4.8,
         "stroke-linecap": "round",
       }),
-      shape("circle", { cx: 10, cy: 26, r: 3.6, fill: BLUE }),
+      shape("circle", { cx: 10, cy: 26, r: 3.6, fill: ON_NAVY_DOT }),
     ],
   });
 }
 
+// The head of the card is the site's masthead: the name in white on deep navy, from
+// edge to edge, with the notice opposite.
 function brand(layout: Layout): Node {
   const size = layout.brand;
-  return box({ alignItems: "center", justifyContent: "space-between" }, [
-    box({ alignItems: "center", fontSize: size, color: INK }, [
-      stamp(size * 1.4),
+  return box(
+    {
+      alignItems: "center",
+      justifyContent: "space-between",
+      background: NAVY,
+      padding: `${layout.pad * 0.42}px ${layout.pad}px`,
+    },
+    [
+    box({ alignItems: "center", fontSize: size, color: PAPER }, [
+      stamp(size * 1.3),
       box({ fontWeight: 400, marginLeft: size * 0.5 }, SITE.wordmark[0]),
       box({ fontWeight: 700, marginLeft: size * 0.27 }, SITE.wordmark[1]),
       ask(size * 0.92),
     ]),
-    box({ fontSize: size * (layout.factsBelow ? 0.86 : 0.72), color: MUTED }, CARD_NOTICE),
-  ]);
+    box({ fontSize: size * (layout.factsBelow ? 0.86 : 0.72), color: ON_NAVY_QUIET }, CARD_NOTICE),
+    ],
+  );
 }
 
 // What was announced: the outlet's own words, marked as a quotation and attributed.
@@ -277,19 +299,28 @@ function recorded(card: CardContent, layout: Layout): Node {
 function draw(card: CardContent, layout: Layout): Node {
   return box(
     {
-      // The padding is counted inside the card's size. Without this the card is laid
-      // out wider and taller than the image, and its right and bottom edges are cut off.
-      boxSizing: "border-box",
       width: layout.width,
       height: layout.height,
       flexDirection: "column",
-      justifyContent: "space-between",
       background: PAPER,
       color: INK,
       fontFamily: "Figtree",
-      padding: layout.pad,
     },
-    [brand(layout), announced(card, layout), recorded(card, layout)],
+    [
+      brand(layout),
+      box(
+        {
+          // The padding is counted inside the body's size. Without this it is laid out
+          // wider and taller than the image, and its right and bottom edges are cut off.
+          boxSizing: "border-box",
+          flexGrow: 1,
+          flexDirection: "column",
+          justifyContent: "space-between",
+          padding: `${layout.pad * 0.8}px ${layout.pad}px ${layout.pad}px`,
+        },
+        [announced(card, layout), recorded(card, layout)],
+      ),
+    ],
   );
 }
 
@@ -307,12 +338,6 @@ function content(claim: ExportedClaim): CardContent {
   );
 }
 
-export const CARD_SIZES: Record<Shape, { width: number; height: number }> = {
-  wide: { width: LAYOUTS.wide.width, height: LAYOUTS.wide.height },
-  square: { width: LAYOUTS.square.width, height: LAYOUTS.square.height },
-  tall: { width: LAYOUTS.tall.width, height: LAYOUTS.tall.height },
-};
-
 export async function cardPng(claim: ExportedClaim, which: Shape): Promise<Uint8Array> {
   const layout = LAYOUTS[which];
   const svg = await satori(draw(cardFor(claim), layout) as never, {
@@ -323,6 +348,141 @@ export async function cardPng(claim: ExportedClaim, which: Shape): Promise<Uint8
   return new Uint8Array(
     new Resvg(svg, { fitTo: { mode: "width", value: layout.width } }).render().asPng(),
   );
+}
+
+type IconLine = [tag: string, attributes: Record<string, string>];
+
+// An icon's lines, read from the icon set's own file. The package ships each icon as
+// an Astro component around one literal, and the literal is all an image needs.
+function iconLines(name: string): IconLine[] {
+  const file = path.resolve(`node_modules/@lucide/astro/src/icons/${name}.ts`);
+  const literal = fs.readFileSync(file, "utf8").match(/const iconData[^=]*=\s*(\{.*\});/)?.[1];
+  if (!literal) throw new Error(`No icon data found in ${file}.`);
+  return JSON.parse(literal).node;
+}
+
+// The topic's drawing as its chip draws it: blue on the chip's pale blue, with the
+// same round line. A topic with no drawing gets the plain ring.
+function topicMark(vertical: ExportedVertical, size: number): Node {
+  const drawing = topicDrawing(vertical);
+  const lines: IconLine[] = !drawing
+    ? [["circle", { cx: "12", cy: "12", r: "7.5" }]]
+    : "icon" in drawing
+      ? iconLines(drawing.icon)
+      : drawing.paths.map((d) => ["path", { d }]);
+  const line = {
+    fill: "none",
+    stroke: BLUE,
+    "stroke-width": 1.7,
+    "stroke-linecap": "round",
+    "stroke-linejoin": "round",
+  };
+  return box(
+    {
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+      width: size,
+      height: size,
+      borderRadius: size,
+      background: TINT,
+    },
+    [
+      shape("svg", {
+        width: size * 0.58,
+        height: size * 0.58,
+        viewBox: "0 0 24 24",
+        children: lines.map(([tag, attributes]) => shape(tag, { ...attributes, ...line })),
+      }),
+    ],
+  );
+}
+
+// A summary can run past 270 characters; the longest still fits in six lines.
+const summaryType = (length: number) =>
+  length > 220 ? 34 : length > 160 ? 38 : length > 100 ? 44 : 52;
+
+// The claim card's wide shape, for a topic: its drawing and name where a claim's
+// quotation is, and in the panel where its claims stand, then the month checked.
+function drawTopic(vertical: ExportedVertical, card: TopicCardContent): Node {
+  const layout = LAYOUTS.wide;
+  const name = card.title.length > 22 ? 52 : 60;
+  const summary = summaryType(card.summary.length);
+  return box(
+    {
+      width: layout.width,
+      height: layout.height,
+      flexDirection: "column",
+      background: PAPER,
+      color: INK,
+      fontFamily: "Figtree",
+    },
+    [
+      brand(layout),
+      box(
+        {
+          boxSizing: "border-box",
+          flexGrow: 1,
+          flexDirection: "column",
+          justifyContent: "space-between",
+          padding: `${layout.pad * 0.8}px ${layout.pad}px ${layout.pad}px`,
+        },
+        [
+          box({ alignItems: "center" }, [
+            topicMark(vertical, name * 1.6),
+            box(
+              {
+                marginLeft: name * 0.4,
+                fontSize: name,
+                fontWeight: 700,
+                lineHeight: 1.1,
+                letterSpacing: -name / 70,
+              },
+              card.title,
+            ),
+          ]),
+          box(
+            {
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+              background: PANEL,
+              borderRadius: 28,
+              padding: `${layout.pad * 0.5}px ${layout.pad * 0.62}px ${layout.pad * 0.56}px`,
+            },
+            [
+              box({ flexShrink: 1, fontSize: summary, lineHeight: 1.25 }, card.summary),
+              // The date keeps its width; the summary wraps instead.
+              card.checked &&
+                box({ flexShrink: 0 }, [fact({ label: CHECKED_LABEL, value: card.checked }, layout)]),
+            ],
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+/** What a topic's card says, from the topic's own published claims. */
+export function topicCardFor(vertical: ExportedVertical, claims: ExportedClaim[]): TopicCardContent {
+  const counts = new Map<StatusCode, number>();
+  for (const claim of claims) counts.set(claim.status.code, (counts.get(claim.status.code) ?? 0) + 1);
+  const summary = topicSummary(counts);
+  if (!summary) throw new Error(`The topic ${vertical.slug} has no published claim to draw a card for.`);
+  return topicCardContent(vertical.title, summary, data.last_checked_at);
+}
+
+/** A topic's link preview, 1200 by 630. `claims` are the topic's own published claims. */
+export async function topicPng(
+  vertical: ExportedVertical,
+  claims: ExportedClaim[],
+): Promise<Uint8Array> {
+  const { width, height } = LAYOUTS.wide;
+  const svg = await satori(drawTopic(vertical, topicCardFor(vertical, claims)) as never, {
+    width,
+    height,
+    fonts,
+  });
+  return new Uint8Array(new Resvg(svg, { fitTo: { mode: "width", value: width } }).render().asPng());
 }
 
 /**
@@ -339,22 +499,23 @@ export async function sitePng(): Promise<Uint8Array> {
       height,
       flexDirection: "column",
       justifyContent: "space-between",
-      background: PAPER,
-      color: INK,
+      // The site's own card is its masthead at full size: white on deep navy.
+      background: NAVY,
+      color: PAPER,
       fontFamily: "Figtree",
       padding: 72,
     },
     [
-      stamp(176),
+      stamp(168),
       box({ flexDirection: "column" }, [
         box({ alignItems: "center", fontSize: name, letterSpacing: -name / 48 }, [
           box({ fontWeight: 400 }, SITE.wordmark[0]),
           box({ fontWeight: 700, marginLeft: name * 0.27 }, SITE.wordmark[1]),
           ask(name * 0.92),
         ]),
-        box({ fontSize: 40, color: MUTED, marginTop: 14 }, SITE.tagline),
+        box({ fontSize: 40, color: ON_NAVY_QUIET, marginTop: 14 }, SITE.tagline),
       ]),
-      box({ justifyContent: "space-between", fontSize: 26, color: MUTED }, [
+      box({ justifyContent: "space-between", fontSize: 26, color: ON_NAVY_QUIET }, [
         box({}, new URL(SITE.url).host),
         box({}, CARD_NOTICE),
       ]),
@@ -362,8 +523,4 @@ export async function sitePng(): Promise<Uint8Array> {
   );
   const svg = await satori(card as never, { width, height, fonts });
   return new Uint8Array(new Resvg(svg, { fitTo: { mode: "width", value: width } }).render().asPng());
-}
-
-export function cardPaths() {
-  return data.claims.map((claim) => ({ params: { slug: claim.slug }, props: { claim } }));
 }

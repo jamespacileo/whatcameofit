@@ -3,13 +3,23 @@ import Base from "../layouts/Base.astro";
 import { SITE } from "../../site.config.mjs";
 import { data } from "../lib/export";
 import { DATA_LICENCE, DATA_LICENCE_URL, dataCredit } from "../lib/open-data";
+import { datasetData } from "../lib/structured";
 
 const credit = dataCredit(SITE.name, SITE.url);
+const description =
+  "Every published claim, with its status, records and sources, as one file you can download and reuse.";
 ---
 
 <Base
   title="Data"
-  description="Every published claim, with its status, records and sources, as one file you can download and reuse."
+  description={description}
+  structured={datasetData({
+    description,
+    licence: DATA_LICENCE_URL,
+    claimCount: data.claims.length,
+    dateModified: data.generated_at,
+  })}
+  breadcrumbs={[{ name: "Data", path: "/data" }]}
 >
   <h1 class="title">Data</h1>
   <p class="lede">

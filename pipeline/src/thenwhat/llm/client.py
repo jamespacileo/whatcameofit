@@ -28,7 +28,7 @@ from thenwhat.llm.errors import (  # noqa: E402
     LlmNotConfigured,
     LlmOutputInvalid,
 )
-from thenwhat.llm.ledger import record_usage, spent_this_month  # noqa: E402
+from thenwhat.llm.ledger import check_ceiling, record_usage  # noqa: E402
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,11 +81,7 @@ class Llm:
         ):
             if value is None:
                 raise LlmNotConfigured(f"{name} is not set, so no language model call was made.")
-        if spent_this_month(self._session, self._now()) >= settings.monthly_budget_usd:
-            raise BudgetExceeded(
-                f"The monthly ceiling of ${settings.monthly_budget_usd} for language model"
-                " calls has been reached. No call was made."
-            )
+        check_ceiling(self._session, self._now(), settings.monthly_budget_usd)
 
         assert settings.model is not None
         model = self._model or self._build_model(settings.model)

@@ -13,18 +13,19 @@ from sqlalchemy.orm import Session
 from thenwhat.claims.entities import (
     EntityNotFound,
     add_entity,
+    add_search_phrase,
     add_synonym,
     entities_of,
     set_origin_paper,
 )
-from thenwhat.claims.entry import DuplicateClaim, add_claim
+from thenwhat.claims.entry import DuplicateClaim, InvalidField, add_claim
 from thenwhat.db.models import Claim, DecisionLog, EntityMatch
 from thenwhat.decide.core import BackendAnswer, DecisionFailed
 from thenwhat.decide.steps import suggest_evidence_stage
 from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.resolve.service import resolve_claim
 from thenwhat.review.decisions import record_decision
-from thenwhat.sources.base import SourceRecord
+from thenwhat.sources.base import SourceRecord, UnsearchableTerm
 
 NOW = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
 DOI = "10.1000/example.2018.1"
@@ -55,6 +56,11 @@ class FakeTrials:
         self.searched.append(intervention)
         self.conditions.append(condition)
         return self.results.get(intervention, [])
+
+    def search_phrase(self, phrase: str, condition: str | None) -> list[SourceRecord]:
+        self.searched.append(phrase)
+        self.conditions.append(condition)
+        return self.results.get(phrase, []) if condition else []
 
 
 class FakeDois:
@@ -229,6 +235,30 @@ def test_each_search_term_contributes_its_trials(session: Session):
         ("clinicaltrials.gov", "NCT00000002"),
         ("clinicaltrials.gov", "NCT00000003"),
     ]
+
+
+def test_a_term_the_registry_cannot_search_for_is_reported_and_the_others_still_run(
+    session: Session,
+):
+    claim = new_claim(session)
+    add_synonym(session, "tooth-regrowth-ex1", "EX-1 antibody", "TRG-035")
+
+    class Refusing(FakeTrials):
+        def search_trials(self, intervention: str, condition: str | None = None):
+            if intervention == "EX-1 antibody":
+                raise UnsearchableTerm(intervention, "Too complicated query", "clinicaltrials.gov")
+            return super().search_trials(intervention, condition)
+
+    trials = Refusing({"TRG-035": [trial("NCT00000002")]})
+    reported: list[str] = []
+
+    added = resolve(session, claim, trials=trials, unsearchable=lambda t: reported.append(t.term))
+
+    assert [match.external_id for match in added] == ["NCT00000002"]
+    assert reported == ["EX-1 antibody"]
+    # Left to itself the failure is raised, never passed over in silence.
+    with pytest.raises(UnsearchableTerm):
+        resolve(session, claim, trials=trials)
 
 
 def test_trial_found_by_two_terms_is_one_candidate(session: Session):
@@ -590,3 +620,43 @@ def test_without_an_accept_threshold_nothing_is_approved_by_rule(session: Sessio
     resolve(session, claim, trials=found, backend=Scoring(0.99))
 
     assert matches(session)[0].review_state is ReviewState.PENDING
+
+
+# --- search phrases --------------------------------------------------------------
+
+
+def test_trial_found_only_by_a_search_phrase_becomes_a_candidate(session: Session):
+    """Scenario: Trial found only by a search phrase"""
+    device = "Wrist-worn median nerve stimulation device"
+    claim = new_claim(
+        session, slug="tics-wrist-stimulation", intervention=device, indication="Tourette syndrome"
+    )
+    add_search_phrase(session, claim.slug, device, "median nerve stimulation")
+    trials = FakeTrials(
+        {
+            device: [trial("NCT00000011", "A nausea band")],
+            "median nerve stimulation": [trial("NCT00000012", "Stimulation for tics")],
+        }
+    )
+
+    resolve(session, claim, trials=trials)
+
+    assert [match.external_id for match in matches(session)] == ["NCT00000011", "NCT00000012"]
+    assert trials.searched == [device, "median nerve stimulation"]
+
+
+def test_a_search_phrase_is_kept_apart_from_the_names(session: Session):
+    claim = new_claim(session)
+
+    entity = add_search_phrase(session, claim.slug, "EX-1 antibody", "tooth regrowth antibody")
+    add_search_phrase(session, claim.slug, "EX-1 antibody", "Tooth  regrowth antibody")
+
+    assert entity.search_phrases == ["tooth regrowth antibody"]
+    assert entity.synonyms == []
+
+
+def test_a_generic_word_is_refused_as_a_search_phrase(session: Session):
+    claim = new_claim(session)
+
+    with pytest.raises(InvalidField):
+        add_search_phrase(session, claim.slug, "EX-1 antibody", "the device")

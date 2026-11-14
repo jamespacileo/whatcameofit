@@ -2,16 +2,27 @@
 import "../styles/global.css";
 // Preloaded so the first paint is already in the site's face and headings do not reflow.
 import faceUrl from "@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2?url";
-import { SITE } from "../../site.config.mjs";
+import { EXTENSION_OFFERED, SITE } from "../../site.config.mjs";
+import Mark from "../components/Mark.astro";
 import { CARD_NOTICE } from "../lib/card";
+import { AUDIENCES } from "../lib/audiences";
+import { THEME_COLOR, brandAsset } from "../lib/brand";
 import { data, listedTopics } from "../lib/export";
 import { NOTICES, PREVIEW_NOTE } from "../lib/notices";
 // Stops a public build whose configured address is a local one.
 import "../lib/public-build";
-import { canonicalAddress } from "../lib/structured";
+import {
+  breadcrumbData,
+  canonicalAddress,
+  type Crumb,
+  type Structured,
+} from "../lib/structured";
 import { formatDate } from "../lib/timetable";
 
 interface Props {
+  /** Used by the server-rendered trial reader; ordinary pages keep their own path. */
+  canonicalPath?: string;
+  noindex?: boolean;
   title?: string;
   /** A shorter title for the browser tab and search results; the full one is still shared. */
   tabTitle?: string;
@@ -20,7 +31,13 @@ interface Props {
   imageAlt?: string;
   current?: "home" | "topics" | "approved";
   /** Structured data for search engines, written into the page as JSON-LD. */
-  structured?: Record<string, unknown>;
+  structured?: Structured | Structured[];
+  /** The pages above this one, below the home page, for search results' trail. */
+  breadcrumbs?: Crumb[];
+  /** A claim page is an article, dated by when it was first reported and last checked. */
+  article?: { published: string | null; modified: string | null };
+  /** Where a site that reads oEmbed finds this page's embed. */
+  oembed?: string;
 }
 
 const {
@@ -31,15 +48,27 @@ const {
   imageAlt,
   current,
   structured,
+  breadcrumbs,
+  article,
+  oembed,
 } = Astro.props;
-const canonical = canonicalAddress(Astro.url.pathname);
+const canonical = canonicalAddress(Astro.props.canonicalPath ?? Astro.url.pathname);
+const graph = [
+  ...(Array.isArray(structured) ? structured : structured ? [structured] : []),
+  ...(breadcrumbs ? [breadcrumbData(breadcrumbs)] : []),
+];
 // "<" is escaped so that no text in the data can close the script element.
-const structuredJson = structured ? JSON.stringify(structured).replace(/</g, "\\u003c") : null;
+const structuredJson =
+  graph.length > 0
+    ? JSON.stringify(graph.length === 1 ? graph[0] : graph).replace(/</g, "\\u003c")
+    : null;
+// Every card the site draws for a link preview is the wide shape.
+const IMAGE_SIZE = { width: 1200, height: 630 };
 // The name ends in its own punctuation, so the tagline follows it with a space.
 const pageTitle =
   (tabTitle ?? title) ? `${tabTitle ?? title} | ${SITE.name}` : `${SITE.name} ${SITE.tagline}`;
 // A page with no card of its own shares the site's: the mark, the name and the notice.
-const imageUrl = new URL(image ?? "/brand-card.png", Astro.site).href;
+const imageUrl = new URL(brandAsset(image ?? "/brand-card.png"), Astro.site).href;
 // What the site's own card says, for a reader who cannot see it.
 const imageText = image ? imageAlt : `${SITE.name} ${SITE.tagline}. ${CARD_NOTICE}.`;
 // One topic is linked by name. With several, the item leads to the list of them all.
@@ -53,34 +82,61 @@ const topicLink =
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-pagefind-ignore={Astro.props.noindex ? "all" : undefined}>
   <head>
     <!-- Checking the source? Same. Every record on this page links to its own. -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/x-icon" sizes="16x16 32x32 48x48" href={brandAsset("/favicon.ico")} />
     {/* For a browser or a search result that does not draw the vector icon. */}
-    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="48x48" href={brandAsset("/favicon-48.png")} />
+    <link rel="icon" type="image/svg+xml" sizes="any" href={brandAsset("/favicon.svg")} />
+    <link rel="apple-touch-icon" sizes="180x180" href={brandAsset("/apple-touch-icon.png")} />
+    <link rel="manifest" href={brandAsset("/manifest.webmanifest")} />
+    <meta name="theme-color" content={THEME_COLOR} />
     <link rel="preload" as="font" type="font/woff2" href={faceUrl} crossorigin />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
+    {Astro.props.noindex && <meta name="robots" content="noindex, follow" />}
     <link rel="canonical" href={canonical} />
+    <link
+      rel="alternate"
+      type="application/atom+xml"
+      title={`${SITE.name} Status changes`}
+      href="/changes.xml"
+    />
     <link
       rel="alternate"
       type="application/atom+xml"
       title={`${SITE.name} Anniversaries`}
       href="/anniversaries.xml"
     />
+    {
+      oembed && (
+        <link
+          rel="alternate"
+          type="application/json+oembed"
+          href={new URL(oembed, Astro.site).href}
+          title={title}
+        />
+      )
+    }
     {structuredJson && <script type="application/ld+json" is:inline set:html={structuredJson} />}
     <meta property="og:title" content={title ?? SITE.name} />
     <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content={SITE.name} />
-    <meta property="og:type" content="article" />
+    <meta property="og:locale" content="en_GB" />
+    <meta property="og:type" content={article ? "article" : "website"} />
+    {article?.published && <meta property="article:published_time" content={article.published} />}
+    {article?.modified && <meta property="article:modified_time" content={article.modified} />}
     <meta property="og:image" content={imageUrl} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content={String(IMAGE_SIZE.width)} />
+    <meta property="og:image:height" content={String(IMAGE_SIZE.height)} />
     {imageText && <meta property="og:image:alt" content={imageText} />}
     <meta name="twitter:card" content="summary_large_image" />
+    {imageText && <meta name="twitter:image:alt" content={imageText} />}
     {data.preview && <meta name="robots" content="noindex" />}
     {/* The name's animation plays on the first page of a visit only. */}
     <script is:inline>
@@ -95,7 +151,7 @@ const topicLink =
     <header class="masthead">
       <div class="wrap">
         <a class="name" href="/" aria-label={SITE.name}>
-          <img class="mark" src="/favicon.svg" alt="" width="26" height="26" />
+          <Mark />
           <span class="lead" aria-hidden="true">{SITE.wordmark[0]}</span>
           <span class="tail" aria-hidden="true">{SITE.wordmark[1]}</span>
           <svg class="ask" viewBox="0 0 20 30" aria-hidden="true">
@@ -140,6 +196,8 @@ const topicLink =
     }
 
     <main id="content">
+      {/* A page's opening band runs the full width, straight under the masthead. */}
+      <slot name="band" />
       <div class="wrap">
         <slot />
       </div>
@@ -152,10 +210,25 @@ const topicLink =
         </div>
         <nav class="more" aria-label="About this site">
           <a href="/how-it-works">How it works</a>
+          <a href="/guide">Guide</a>
+          {EXTENSION_OFFERED && <a href="/extension">Extension</a>}
+          <a href="/about">About</a>
           <a href="/anniversaries">Anniversaries</a>
           <a href="/data">Data</a>
           <a href="/privacy">Privacy</a>
         </nav>
+        {/* The pages made for one kind of reader each, named on one line. */}
+        <p class="for-readers">
+          For{" "}
+          {
+            AUDIENCES.map((audience, index) => (
+              <>
+                {index > 0 && (index === AUDIENCES.length - 1 ? " and " : ", ")}
+                <a href={`/for/${audience}`}>{audience}</a>
+              </>
+            ))
+          }
+        </p>
         <div class="details">
           <p>
             Data sources:{" "}

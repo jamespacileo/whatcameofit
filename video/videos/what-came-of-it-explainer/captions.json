@@ -1,0 +1,1788 @@
+{
+ "cues": [
+  {
+   "text": "New drug to regenerate lost teeth.",
+   "start": 0.45,
+   "end": 2.418,
+   "section": "hero"
+  },
+  {
+   "text": "Multiplying teeth.",
+   "start": 3.212,
+   "end": 4.324,
+   "section": "hero"
+  },
+  {
+   "text": "Regrowing teeth.",
+   "start": 5.122,
+   "end": 6.164,
+   "section": "hero"
+  },
+  {
+   "text": "Headlines like these travel fast.",
+   "start": 6.962,
+   "end": 8.756,
+   "section": "hero"
+  },
+  {
+   "text": "The follow-up rarely does.",
+   "start": 9.555,
+   "end": 10.886,
+   "section": "hero"
+  },
+  {
+   "text": "So, years later:",
+   "start": 11.685,
+   "end": 12.854,
+   "section": "hero"
+  },
+  {
+   "text": "what came of it?",
+   "start": 13.027,
+   "end": 13.78,
+   "section": "hero"
+  },
+  {
+   "text": "\u201cWhat came of it?\u201d is a public record of what",
+   "start": 14.43,
+   "end": 16.27,
+   "section": "claim"
+  },
+  {
+   "text": "followed reported medical breakthroughs.",
+   "start": 16.281,
+   "end": 18.226,
+   "section": "claim"
+  },
+  {
+   "text": "Each claim gets one page:",
+   "start": 19.021,
+   "end": 20.514,
+   "section": "claim"
+  },
+  {
+   "text": "one treatment, for one condition.",
+   "start": 20.722,
+   "end": 22.505,
+   "section": "claim"
+  },
+  {
+   "text": "At the top is where it stands now.",
+   "start": 23.303,
+   "end": 25.086,
+   "section": "claim"
+  },
+  {
+   "text": "This one, first reported in 2021,",
+   "start": 25.884,
+   "end": 28.326,
+   "section": "claim"
+  },
+  {
+   "text": "has reached a Phase 1 trial:",
+   "start": 28.558,
+   "end": 30.039,
+   "section": "claim"
+  },
+  {
+   "text": "an early trial in people,",
+   "start": 30.178,
+   "end": 31.451,
+   "section": "claim"
+  },
+  {
+   "text": "checking safety.",
+   "start": 31.625,
+   "end": 32.4,
+   "section": "claim"
+  },
+  {
+   "text": "Underneath are the dated records that say so.",
+   "start": 33.05,
+   "end": 35.365,
+   "section": "records"
+  },
+  {
+   "text": "A trial registered in October 2024.",
+   "start": 36.16,
+   "end": 38.637,
+   "section": "records"
+  },
+  {
+   "text": "The same trial shown as complete",
+   "start": 39.436,
+   "end": 41.033,
+   "section": "records"
+  },
+  {
+   "text": "in October 2025.",
+   "start": 41.044,
+   "end": 42.653,
+   "section": "records"
+  },
+  {
+   "text": "Every record links to the",
+   "start": 43.452,
+   "end": 44.517,
+   "section": "records"
+  },
+  {
+   "text": "registry that holds it,",
+   "start": 44.528,
+   "end": 45.547,
+   "section": "records"
+  },
+  {
+   "text": "so you can check it yourself.",
+   "start": 45.732,
+   "end": 47.005,
+   "section": "records"
+  },
+  {
+   "text": "And what was promised sits",
+   "start": 47.804,
+   "end": 48.903,
+   "section": "records"
+  },
+  {
+   "text": "beside what was recorded.",
+   "start": 48.915,
+   "end": 50.281,
+   "section": "records"
+  },
+  {
+   "text": "The status is set by fixed rules,",
+   "start": 50.931,
+   "end": 52.806,
+   "section": "rules"
+  },
+  {
+   "text": "from public registry records.",
+   "start": 52.991,
+   "end": 54.623,
+   "section": "rules"
+  },
+  {
+   "text": "No editor decides it,",
+   "start": 55.418,
+   "end": 56.61,
+   "section": "rules"
+  },
+  {
+   "text": "and no AI model does either.",
+   "start": 56.795,
+   "end": 58.438,
+   "section": "rules"
+  },
+  {
+   "text": "When nothing new has been recorded for years,",
+   "start": 59.237,
+   "end": 61.297,
+   "section": "rules"
+  },
+  {
+   "text": "the page says exactly that:",
+   "start": 61.471,
+   "end": 62.744,
+   "section": "rules"
+  },
+  {
+   "text": "no signal for ten years.",
+   "start": 62.929,
+   "end": 64.434,
+   "section": "rules"
+  },
+  {
+   "text": "That describes the records.",
+   "start": 65.232,
+   "end": 66.656,
+   "section": "rules"
+  },
+  {
+   "text": "It is not a verdict on the treatment.",
+   "start": 67.455,
+   "end": 69.191,
+   "section": "rules"
+  },
+  {
+   "text": "Seen a headline shared again?",
+   "start": 69.841,
+   "end": 71.23,
+   "section": "lookup"
+  },
+  {
+   "text": "Paste the article's link into",
+   "start": 72.025,
+   "end": 73.321,
+   "section": "lookup"
+  },
+  {
+   "text": "the box on the home page.",
+   "start": 73.332,
+   "end": 74.698,
+   "section": "lookup"
+  },
+  {
+   "text": "If the claim is tracked,",
+   "start": 75.497,
+   "end": 76.538,
+   "section": "lookup"
+  },
+  {
+   "text": "the answer comes back at once.",
+   "start": 76.631,
+   "end": 78.159,
+   "section": "lookup"
+  },
+  {
+   "text": "The link is compared inside your browser,",
+   "start": 78.957,
+   "end": 80.902,
+   "section": "lookup"
+  },
+  {
+   "text": "and sent nowhere.",
+   "start": 81.075,
+   "end": 81.851,
+   "section": "lookup"
+  },
+  {
+   "text": "There is also a browser extension,",
+   "start": 82.501,
+   "end": 84.191,
+   "section": "extension"
+  },
+  {
+   "text": "for Chrome and Safari.",
+   "start": 84.33,
+   "end": 85.475,
+   "section": "extension"
+  },
+  {
+   "text": "Open it on an article,",
+   "start": 86.27,
+   "end": 87.335,
+   "section": "extension"
+  },
+  {
+   "text": "and it shows the tracked claim's",
+   "start": 87.578,
+   "end": 88.817,
+   "section": "extension"
+  },
+  {
+   "text": "status right there.",
+   "start": 88.828,
+   "end": 89.754,
+   "section": "extension"
+  },
+  {
+   "text": "If the article is not tracked,",
+   "start": 90.553,
+   "end": 91.919,
+   "section": "extension"
+  },
+  {
+   "text": "it can search the trial registries live.",
+   "start": 92.138,
+   "end": 94.175,
+   "section": "extension"
+  },
+  {
+   "text": "Those results are marked automatic",
+   "start": 94.974,
+   "end": 96.629,
+   "section": "extension"
+  },
+  {
+   "text": "and unreviewed,",
+   "start": 96.641,
+   "end": 97.196,
+   "section": "extension"
+  },
+  {
+   "text": "and every match shows its confidence score.",
+   "start": 97.405,
+   "end": 99.419,
+   "section": "extension"
+  },
+  {
+   "text": "No medical advice.",
+   "start": 100.069,
+   "end": 101.261,
+   "section": "outro"
+  },
+  {
+   "text": "No verdicts.",
+   "start": 102.056,
+   "end": 103.039,
+   "section": "outro"
+  },
+  {
+   "text": "Only what the records show,",
+   "start": 103.838,
+   "end": 105.134,
+   "section": "outro"
+  },
+  {
+   "text": "and when.",
+   "start": 105.389,
+   "end": 105.887,
+   "section": "outro"
+  },
+  {
+   "text": "What came of it?",
+   "start": 106.685,
+   "end": 107.484,
+   "section": "outro"
+  },
+  {
+   "text": "Find out, at whatcameofit.com.",
+   "start": 108.282,
+   "end": 110.366,
+   "section": "outro"
+  }
+ ],
+ "words": [
+  {
+   "text": "New",
+   "start": 0.45,
+   "end": 0.751
+  },
+  {
+   "text": "drug",
+   "start": 0.762,
+   "end": 1.04
+  },
+  {
+   "text": "to",
+   "start": 1.052,
+   "end": 1.121
+  },
+  {
+   "text": "regenerate",
+   "start": 1.133,
+   "end": 1.677
+  },
+  {
+   "text": "lost",
+   "start": 1.688,
+   "end": 1.978
+  },
+  {
+   "text": "teeth.",
+   "start": 1.989,
+   "end": 2.418
+  },
+  {
+   "text": "Multiplying",
+   "start": 3.212,
+   "end": 3.861
+  },
+  {
+   "text": "teeth.",
+   "start": 3.872,
+   "end": 4.324
+  },
+  {
+   "text": "Regrowing",
+   "start": 5.122,
+   "end": 5.724
+  },
+  {
+   "text": "teeth.",
+   "start": 5.736,
+   "end": 6.164
+  },
+  {
+   "text": "Headlines",
+   "start": 6.962,
+   "end": 7.483
+  },
+  {
+   "text": "like",
+   "start": 7.495,
+   "end": 7.669
+  },
+  {
+   "text": "these",
+   "start": 7.68,
+   "end": 7.9
+  },
+  {
+   "text": "travel",
+   "start": 7.912,
+   "end": 8.224
+  },
+  {
+   "text": "fast.",
+   "start": 8.236,
+   "end": 8.756
+  },
+  {
+   "text": "The",
+   "start": 9.555,
+   "end": 9.682
+  },
+  {
+   "text": "follow-up",
+   "start": 9.694,
+   "end": 10.111
+  },
+  {
+   "text": "rarely",
+   "start": 10.122,
+   "end": 10.446
+  },
+  {
+   "text": "does.",
+   "start": 10.458,
+   "end": 10.886
+  },
+  {
+   "text": "So,",
+   "start": 11.685,
+   "end": 12.02
+  },
+  {
+   "text": "years",
+   "start": 12.229,
+   "end": 12.483
+  },
+  {
+   "text": "later:",
+   "start": 12.495,
+   "end": 12.854
+  },
+  {
+   "text": "what",
+   "start": 13.027,
+   "end": 13.189
+  },
+  {
+   "text": "came",
+   "start": 13.201,
+   "end": 13.421
+  },
+  {
+   "text": "of",
+   "start": 13.432,
+   "end": 13.537
+  },
+  {
+   "text": "it?",
+   "start": 13.548,
+   "end": 13.78
+  },
+  {
+   "text": "What",
+   "start": 14.43,
+   "end": 14.661
+  },
+  {
+   "text": "came",
+   "start": 14.673,
+   "end": 14.869
+  },
+  {
+   "text": "of",
+   "start": 14.881,
+   "end": 14.95
+  },
+  {
+   "text": "it",
+   "start": 14.962,
+   "end": 15.078
+  },
+  {
+   "text": "is",
+   "start": 15.089,
+   "end": 15.182
+  },
+  {
+   "text": "a",
+   "start": 15.194,
+   "end": 15.263
+  },
+  {
+   "text": "public",
+   "start": 15.275,
+   "end": 15.61
+  },
+  {
+   "text": "record",
+   "start": 15.622,
+   "end": 15.957
+  },
+  {
+   "text": "of",
+   "start": 15.969,
+   "end": 16.05
+  },
+  {
+   "text": "what",
+   "start": 16.062,
+   "end": 16.27
+  },
+  {
+   "text": "followed",
+   "start": 16.281,
+   "end": 16.617
+  },
+  {
+   "text": "reported",
+   "start": 16.629,
+   "end": 17.103
+  },
+  {
+   "text": "medical",
+   "start": 17.115,
+   "end": 17.485
+  },
+  {
+   "text": "breakthroughs.",
+   "start": 17.497,
+   "end": 18.226
+  },
+  {
+   "text": "Each",
+   "start": 19.021,
+   "end": 19.299
+  },
+  {
+   "text": "claim",
+   "start": 19.31,
+   "end": 19.588
+  },
+  {
+   "text": "gets",
+   "start": 19.6,
+   "end": 19.819
+  },
+  {
+   "text": "one",
+   "start": 19.831,
+   "end": 20.097
+  },
+  {
+   "text": "page:",
+   "start": 20.109,
+   "end": 20.514
+  },
+  {
+   "text": "one",
+   "start": 20.722,
+   "end": 20.942
+  },
+  {
+   "text": "treatment,",
+   "start": 20.954,
+   "end": 21.428
+  },
+  {
+   "text": "for",
+   "start": 21.59,
+   "end": 21.694
+  },
+  {
+   "text": "one",
+   "start": 21.706,
+   "end": 21.961
+  },
+  {
+   "text": "condition.",
+   "start": 21.972,
+   "end": 22.505
+  },
+  {
+   "text": "At",
+   "start": 23.303,
+   "end": 23.465
+  },
+  {
+   "text": "the",
+   "start": 23.477,
+   "end": 23.558
+  },
+  {
+   "text": "top",
+   "start": 23.569,
+   "end": 23.836
+  },
+  {
+   "text": "is",
+   "start": 23.847,
+   "end": 23.975
+  },
+  {
+   "text": "where",
+   "start": 23.986,
+   "end": 24.183
+  },
+  {
+   "text": "it",
+   "start": 24.194,
+   "end": 24.345
+  },
+  {
+   "text": "stands",
+   "start": 24.356,
+   "end": 24.75
+  },
+  {
+   "text": "now.",
+   "start": 24.762,
+   "end": 25.086
+  },
+  {
+   "text": "This",
+   "start": 25.884,
+   "end": 26.162
+  },
+  {
+   "text": "one,",
+   "start": 26.174,
+   "end": 26.451
+  },
+  {
+   "text": "first",
+   "start": 26.625,
+   "end": 26.914
+  },
+  {
+   "text": "reported",
+   "start": 26.926,
+   "end": 27.308
+  },
+  {
+   "text": "in",
+   "start": 27.319,
+   "end": 28.326
+  },
+  {
+   "text": "2021,",
+   "start": 27.319,
+   "end": 28.326
+  },
+  {
+   "text": "has",
+   "start": 28.558,
+   "end": 28.674
+  },
+  {
+   "text": "reached",
+   "start": 28.685,
+   "end": 28.963
+  },
+  {
+   "text": "a",
+   "start": 28.975,
+   "end": 29.021
+  },
+  {
+   "text": "Phase",
+   "start": 29.032,
+   "end": 29.368
+  },
+  {
+   "text": "1",
+   "start": 29.38,
+   "end": 29.611
+  },
+  {
+   "text": "trial:",
+   "start": 29.623,
+   "end": 30.039
+  },
+  {
+   "text": "an",
+   "start": 30.178,
+   "end": 30.282
+  },
+  {
+   "text": "early",
+   "start": 30.294,
+   "end": 30.514
+  },
+  {
+   "text": "trial",
+   "start": 30.525,
+   "end": 30.954
+  },
+  {
+   "text": "in",
+   "start": 30.965,
+   "end": 31.058
+  },
+  {
+   "text": "people,",
+   "start": 31.069,
+   "end": 31.451
+  },
+  {
+   "text": "checking",
+   "start": 31.625,
+   "end": 31.949
+  },
+  {
+   "text": "safety.",
+   "start": 31.961,
+   "end": 32.4
+  },
+  {
+   "text": "Underneath",
+   "start": 33.05,
+   "end": 33.537
+  },
+  {
+   "text": "are",
+   "start": 33.548,
+   "end": 33.629
+  },
+  {
+   "text": "the",
+   "start": 33.641,
+   "end": 33.745
+  },
+  {
+   "text": "dated",
+   "start": 33.756,
+   "end": 34.069
+  },
+  {
+   "text": "records",
+   "start": 34.081,
+   "end": 34.52
+  },
+  {
+   "text": "that",
+   "start": 34.532,
+   "end": 34.717
+  },
+  {
+   "text": "say",
+   "start": 34.729,
+   "end": 34.949
+  },
+  {
+   "text": "so.",
+   "start": 34.96,
+   "end": 35.365
+  },
+  {
+   "text": "A",
+   "start": 36.16,
+   "end": 36.299
+  },
+  {
+   "text": "trial",
+   "start": 36.311,
+   "end": 36.693
+  },
+  {
+   "text": "registered",
+   "start": 36.704,
+   "end": 37.109
+  },
+  {
+   "text": "in",
+   "start": 37.121,
+   "end": 37.213
+  },
+  {
+   "text": "October",
+   "start": 37.225,
+   "end": 38.637
+  },
+  {
+   "text": "2024.",
+   "start": 37.225,
+   "end": 38.637
+  },
+  {
+   "text": "The",
+   "start": 39.436,
+   "end": 39.586
+  },
+  {
+   "text": "same",
+   "start": 39.598,
+   "end": 39.841
+  },
+  {
+   "text": "trial",
+   "start": 39.852,
+   "end": 40.2
+  },
+  {
+   "text": "shown",
+   "start": 40.211,
+   "end": 40.524
+  },
+  {
+   "text": "as",
+   "start": 40.535,
+   "end": 40.628
+  },
+  {
+   "text": "complete",
+   "start": 40.639,
+   "end": 41.033
+  },
+  {
+   "text": "in",
+   "start": 41.044,
+   "end": 41.137
+  },
+  {
+   "text": "October",
+   "start": 41.149,
+   "end": 42.653
+  },
+  {
+   "text": "2025.",
+   "start": 41.149,
+   "end": 42.653
+  },
+  {
+   "text": "Every",
+   "start": 43.452,
+   "end": 43.73
+  },
+  {
+   "text": "record",
+   "start": 43.741,
+   "end": 44.112
+  },
+  {
+   "text": "links",
+   "start": 44.123,
+   "end": 44.32
+  },
+  {
+   "text": "to",
+   "start": 44.331,
+   "end": 44.412
+  },
+  {
+   "text": "the",
+   "start": 44.424,
+   "end": 44.517
+  },
+  {
+   "text": "registry",
+   "start": 44.528,
+   "end": 44.98
+  },
+  {
+   "text": "that",
+   "start": 44.991,
+   "end": 45.142
+  },
+  {
+   "text": "holds",
+   "start": 45.153,
+   "end": 45.385
+  },
+  {
+   "text": "it,",
+   "start": 45.396,
+   "end": 45.547
+  },
+  {
+   "text": "so",
+   "start": 45.732,
+   "end": 45.825
+  },
+  {
+   "text": "you",
+   "start": 45.836,
+   "end": 45.929
+  },
+  {
+   "text": "can",
+   "start": 45.94,
+   "end": 46.091
+  },
+  {
+   "text": "check",
+   "start": 46.102,
+   "end": 46.322
+  },
+  {
+   "text": "it",
+   "start": 46.334,
+   "end": 46.426
+  },
+  {
+   "text": "yourself.",
+   "start": 46.438,
+   "end": 47.005
+  },
+  {
+   "text": "And",
+   "start": 47.804,
+   "end": 47.977
+  },
+  {
+   "text": "what",
+   "start": 47.989,
+   "end": 48.174
+  },
+  {
+   "text": "was",
+   "start": 48.186,
+   "end": 48.301
+  },
+  {
+   "text": "promised",
+   "start": 48.313,
+   "end": 48.672
+  },
+  {
+   "text": "sits",
+   "start": 48.683,
+   "end": 48.903
+  },
+  {
+   "text": "beside",
+   "start": 48.915,
+   "end": 49.343
+  },
+  {
+   "text": "what",
+   "start": 49.355,
+   "end": 49.528
+  },
+  {
+   "text": "was",
+   "start": 49.54,
+   "end": 49.667
+  },
+  {
+   "text": "recorded.",
+   "start": 49.679,
+   "end": 50.281
+  },
+  {
+   "text": "The",
+   "start": 50.931,
+   "end": 51.081
+  },
+  {
+   "text": "status",
+   "start": 51.093,
+   "end": 51.521
+  },
+  {
+   "text": "is",
+   "start": 51.532,
+   "end": 51.671
+  },
+  {
+   "text": "set",
+   "start": 51.683,
+   "end": 51.891
+  },
+  {
+   "text": "by",
+   "start": 51.903,
+   "end": 52.053
+  },
+  {
+   "text": "fixed",
+   "start": 52.065,
+   "end": 52.377
+  },
+  {
+   "text": "rules,",
+   "start": 52.389,
+   "end": 52.806
+  },
+  {
+   "text": "from",
+   "start": 52.991,
+   "end": 53.141
+  },
+  {
+   "text": "public",
+   "start": 53.153,
+   "end": 53.512
+  },
+  {
+   "text": "registry",
+   "start": 53.523,
+   "end": 53.975
+  },
+  {
+   "text": "records.",
+   "start": 53.986,
+   "end": 54.623
+  },
+  {
+   "text": "No",
+   "start": 55.418,
+   "end": 55.719
+  },
+  {
+   "text": "editor",
+   "start": 55.73,
+   "end": 56.019
+  },
+  {
+   "text": "decides",
+   "start": 56.031,
+   "end": 56.459
+  },
+  {
+   "text": "it,",
+   "start": 56.471,
+   "end": 56.61
+  },
+  {
+   "text": "and",
+   "start": 56.795,
+   "end": 56.934
+  },
+  {
+   "text": "no",
+   "start": 56.945,
+   "end": 57.177
+  },
+  {
+   "text": "AI",
+   "start": 57.188,
+   "end": 57.547
+  },
+  {
+   "text": "model",
+   "start": 57.559,
+   "end": 57.848
+  },
+  {
+   "text": "does",
+   "start": 57.86,
+   "end": 58.022
+  },
+  {
+   "text": "either.",
+   "start": 58.033,
+   "end": 58.438
+  },
+  {
+   "text": "When",
+   "start": 59.237,
+   "end": 59.48
+  },
+  {
+   "text": "nothing",
+   "start": 59.492,
+   "end": 59.781
+  },
+  {
+   "text": "new",
+   "start": 59.793,
+   "end": 59.989
+  },
+  {
+   "text": "has",
+   "start": 60.001,
+   "end": 60.128
+  },
+  {
+   "text": "been",
+   "start": 60.14,
+   "end": 60.267
+  },
+  {
+   "text": "recorded",
+   "start": 60.279,
+   "end": 60.719
+  },
+  {
+   "text": "for",
+   "start": 60.73,
+   "end": 60.846
+  },
+  {
+   "text": "years,",
+   "start": 60.857,
+   "end": 61.297
+  },
+  {
+   "text": "the",
+   "start": 61.471,
+   "end": 61.552
+  },
+  {
+   "text": "page",
+   "start": 61.563,
+   "end": 61.864
+  },
+  {
+   "text": "says",
+   "start": 61.876,
+   "end": 62.073
+  },
+  {
+   "text": "exactly",
+   "start": 62.084,
+   "end": 62.501
+  },
+  {
+   "text": "that:",
+   "start": 62.513,
+   "end": 62.744
+  },
+  {
+   "text": "no",
+   "start": 62.929,
+   "end": 63.138
+  },
+  {
+   "text": "signal",
+   "start": 63.149,
+   "end": 63.519
+  },
+  {
+   "text": "for",
+   "start": 63.531,
+   "end": 63.635
+  },
+  {
+   "text": "ten",
+   "start": 63.647,
+   "end": 63.89
+  },
+  {
+   "text": "years.",
+   "start": 63.901,
+   "end": 64.434
+  },
+  {
+   "text": "That",
+   "start": 65.232,
+   "end": 65.418
+  },
+  {
+   "text": "describes",
+   "start": 65.429,
+   "end": 65.904
+  },
+  {
+   "text": "the",
+   "start": 65.915,
+   "end": 65.996
+  },
+  {
+   "text": "records.",
+   "start": 66.008,
+   "end": 66.656
+  },
+  {
+   "text": "It",
+   "start": 67.455,
+   "end": 67.628
+  },
+  {
+   "text": "is",
+   "start": 67.64,
+   "end": 67.756
+  },
+  {
+   "text": "not",
+   "start": 67.767,
+   "end": 67.952
+  },
+  {
+   "text": "a",
+   "start": 67.964,
+   "end": 68.01
+  },
+  {
+   "text": "verdict",
+   "start": 68.022,
+   "end": 68.427
+  },
+  {
+   "text": "on",
+   "start": 68.438,
+   "end": 68.519
+  },
+  {
+   "text": "the",
+   "start": 68.531,
+   "end": 68.6
+  },
+  {
+   "text": "treatment.",
+   "start": 68.612,
+   "end": 69.191
+  },
+  {
+   "text": "Seen",
+   "start": 69.841,
+   "end": 70.119
+  },
+  {
+   "text": "a",
+   "start": 70.13,
+   "end": 70.165
+  },
+  {
+   "text": "headline",
+   "start": 70.176,
+   "end": 70.582
+  },
+  {
+   "text": "shared",
+   "start": 70.593,
+   "end": 70.79
+  },
+  {
+   "text": "again?",
+   "start": 70.801,
+   "end": 71.23
+  },
+  {
+   "text": "Paste",
+   "start": 72.025,
+   "end": 72.337
+  },
+  {
+   "text": "the",
+   "start": 72.349,
+   "end": 72.441
+  },
+  {
+   "text": "article's",
+   "start": 72.453,
+   "end": 72.904
+  },
+  {
+   "text": "link",
+   "start": 72.916,
+   "end": 73.113
+  },
+  {
+   "text": "into",
+   "start": 73.124,
+   "end": 73.321
+  },
+  {
+   "text": "the",
+   "start": 73.332,
+   "end": 73.425
+  },
+  {
+   "text": "box",
+   "start": 73.437,
+   "end": 73.749
+  },
+  {
+   "text": "on",
+   "start": 73.761,
+   "end": 73.842
+  },
+  {
+   "text": "the",
+   "start": 73.853,
+   "end": 73.911
+  },
+  {
+   "text": "home",
+   "start": 73.923,
+   "end": 74.177
+  },
+  {
+   "text": "page.",
+   "start": 74.189,
+   "end": 74.698
+  },
+  {
+   "text": "If",
+   "start": 75.497,
+   "end": 75.682
+  },
+  {
+   "text": "the",
+   "start": 75.694,
+   "end": 75.775
+  },
+  {
+   "text": "claim",
+   "start": 75.786,
+   "end": 76.064
+  },
+  {
+   "text": "is",
+   "start": 76.075,
+   "end": 76.18
+  },
+  {
+   "text": "tracked,",
+   "start": 76.191,
+   "end": 76.538
+  },
+  {
+   "text": "the",
+   "start": 76.631,
+   "end": 76.77
+  },
+  {
+   "text": "answer",
+   "start": 76.782,
+   "end": 77.071
+  },
+  {
+   "text": "comes",
+   "start": 77.082,
+   "end": 77.36
+  },
+  {
+   "text": "back",
+   "start": 77.372,
+   "end": 77.615
+  },
+  {
+   "text": "at",
+   "start": 77.626,
+   "end": 77.696
+  },
+  {
+   "text": "once.",
+   "start": 77.707,
+   "end": 78.159
+  },
+  {
+   "text": "The",
+   "start": 78.957,
+   "end": 79.085
+  },
+  {
+   "text": "link",
+   "start": 79.096,
+   "end": 79.305
+  },
+  {
+   "text": "is",
+   "start": 79.316,
+   "end": 79.397
+  },
+  {
+   "text": "compared",
+   "start": 79.409,
+   "end": 79.802
+  },
+  {
+   "text": "inside",
+   "start": 79.814,
+   "end": 80.219
+  },
+  {
+   "text": "your",
+   "start": 80.231,
+   "end": 80.346
+  },
+  {
+   "text": "browser,",
+   "start": 80.358,
+   "end": 80.902
+  },
+  {
+   "text": "and",
+   "start": 81.075,
+   "end": 81.191
+  },
+  {
+   "text": "sent",
+   "start": 81.203,
+   "end": 81.434
+  },
+  {
+   "text": "nowhere.",
+   "start": 81.446,
+   "end": 81.851
+  },
+  {
+   "text": "There",
+   "start": 82.501,
+   "end": 82.686
+  },
+  {
+   "text": "is",
+   "start": 82.698,
+   "end": 82.848
+  },
+  {
+   "text": "also",
+   "start": 82.86,
+   "end": 83.149
+  },
+  {
+   "text": "a",
+   "start": 83.161,
+   "end": 83.23
+  },
+  {
+   "text": "browser",
+   "start": 83.242,
+   "end": 83.635
+  },
+  {
+   "text": "extension,",
+   "start": 83.647,
+   "end": 84.191
+  },
+  {
+   "text": "for",
+   "start": 84.33,
+   "end": 84.388
+  },
+  {
+   "text": "Chrome",
+   "start": 84.399,
+   "end": 84.769
+  },
+  {
+   "text": "and",
+   "start": 84.839,
+   "end": 84.943
+  },
+  {
+   "text": "Safari.",
+   "start": 84.955,
+   "end": 85.475
+  },
+  {
+   "text": "Open",
+   "start": 86.27,
+   "end": 86.571
+  },
+  {
+   "text": "it",
+   "start": 86.583,
+   "end": 86.675
+  },
+  {
+   "text": "on",
+   "start": 86.687,
+   "end": 86.791
+  },
+  {
+   "text": "an",
+   "start": 86.803,
+   "end": 86.872
+  },
+  {
+   "text": "article,",
+   "start": 86.884,
+   "end": 87.335
+  },
+  {
+   "text": "and",
+   "start": 87.578,
+   "end": 87.636
+  },
+  {
+   "text": "it",
+   "start": 87.648,
+   "end": 87.752
+  },
+  {
+   "text": "shows",
+   "start": 87.763,
+   "end": 88.053
+  },
+  {
+   "text": "the",
+   "start": 88.064,
+   "end": 88.134
+  },
+  {
+   "text": "tracked",
+   "start": 88.145,
+   "end": 88.435
+  },
+  {
+   "text": "claim's",
+   "start": 88.446,
+   "end": 88.817
+  },
+  {
+   "text": "status",
+   "start": 88.828,
+   "end": 89.187
+  },
+  {
+   "text": "right",
+   "start": 89.199,
+   "end": 89.476
+  },
+  {
+   "text": "there.",
+   "start": 89.488,
+   "end": 89.754
+  },
+  {
+   "text": "If",
+   "start": 90.553,
+   "end": 90.726
+  },
+  {
+   "text": "the",
+   "start": 90.738,
+   "end": 90.842
+  },
+  {
+   "text": "article",
+   "start": 90.854,
+   "end": 91.282
+  },
+  {
+   "text": "is",
+   "start": 91.294,
+   "end": 91.386
+  },
+  {
+   "text": "not",
+   "start": 91.398,
+   "end": 91.571
+  },
+  {
+   "text": "tracked,",
+   "start": 91.583,
+   "end": 91.919
+  },
+  {
+   "text": "it",
+   "start": 92.138,
+   "end": 92.185
+  },
+  {
+   "text": "can",
+   "start": 92.196,
+   "end": 92.335
+  },
+  {
+   "text": "search",
+   "start": 92.347,
+   "end": 92.671
+  },
+  {
+   "text": "the",
+   "start": 92.682,
+   "end": 92.775
+  },
+  {
+   "text": "trial",
+   "start": 92.787,
+   "end": 93.157
+  },
+  {
+   "text": "registries",
+   "start": 93.169,
+   "end": 93.689
+  },
+  {
+   "text": "live.",
+   "start": 93.701,
+   "end": 94.175
+  },
+  {
+   "text": "Those",
+   "start": 94.974,
+   "end": 95.263
+  },
+  {
+   "text": "results",
+   "start": 95.275,
+   "end": 95.645
+  },
+  {
+   "text": "are",
+   "start": 95.657,
+   "end": 95.75
+  },
+  {
+   "text": "marked",
+   "start": 95.761,
+   "end": 96.085
+  },
+  {
+   "text": "automatic",
+   "start": 96.097,
+   "end": 96.629
+  },
+  {
+   "text": "and",
+   "start": 96.641,
+   "end": 96.71
+  },
+  {
+   "text": "unreviewed,",
+   "start": 96.722,
+   "end": 97.196
+  },
+  {
+   "text": "and",
+   "start": 97.405,
+   "end": 97.567
+  },
+  {
+   "text": "every",
+   "start": 97.578,
+   "end": 97.81
+  },
+  {
+   "text": "match",
+   "start": 97.821,
+   "end": 98.088
+  },
+  {
+   "text": "shows",
+   "start": 98.099,
+   "end": 98.4
+  },
+  {
+   "text": "its",
+   "start": 98.412,
+   "end": 98.527
+  },
+  {
+   "text": "confidence",
+   "start": 98.539,
+   "end": 99.025
+  },
+  {
+   "text": "score.",
+   "start": 99.037,
+   "end": 99.419
+  },
+  {
+   "text": "No",
+   "start": 100.069,
+   "end": 100.312
+  },
+  {
+   "text": "medical",
+   "start": 100.323,
+   "end": 100.682
+  },
+  {
+   "text": "advice.",
+   "start": 100.694,
+   "end": 101.261
+  },
+  {
+   "text": "No",
+   "start": 102.056,
+   "end": 102.345
+  },
+  {
+   "text": "verdicts.",
+   "start": 102.357,
+   "end": 103.039
+  },
+  {
+   "text": "Only",
+   "start": 103.838,
+   "end": 104.116
+  },
+  {
+   "text": "what",
+   "start": 104.127,
+   "end": 104.313
+  },
+  {
+   "text": "the",
+   "start": 104.324,
+   "end": 104.394
+  },
+  {
+   "text": "records",
+   "start": 104.405,
+   "end": 104.822
+  },
+  {
+   "text": "show,",
+   "start": 104.833,
+   "end": 105.134
+  },
+  {
+   "text": "and",
+   "start": 105.389,
+   "end": 105.516
+  },
+  {
+   "text": "when.",
+   "start": 105.528,
+   "end": 105.887
+  },
+  {
+   "text": "What",
+   "start": 106.685,
+   "end": 106.905
+  },
+  {
+   "text": "came",
+   "start": 106.917,
+   "end": 107.137
+  },
+  {
+   "text": "of",
+   "start": 107.148,
+   "end": 107.241
+  },
+  {
+   "text": "it?",
+   "start": 107.252,
+   "end": 107.484
+  },
+  {
+   "text": "Find",
+   "start": 108.282,
+   "end": 108.641
+  },
+  {
+   "text": "out,",
+   "start": 108.653,
+   "end": 108.931
+  },
+  {
+   "text": "at",
+   "start": 109.093,
+   "end": 109.174
+  },
+  {
+   "text": "what",
+   "start": 109.185,
+   "end": 109.336
+  },
+  {
+   "text": "came",
+   "start": 109.347,
+   "end": 109.567
+  },
+  {
+   "text": "of",
+   "start": 109.579,
+   "end": 109.648
+  },
+  {
+   "text": "it",
+   "start": 109.66,
+   "end": 109.787
+  },
+  {
+   "text": "dot",
+   "start": 109.799,
+   "end": 109.995
+  },
+  {
+   "text": "com.",
+   "start": 110.007,
+   "end": 110.366
+  }
+ ]
+}

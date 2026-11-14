@@ -1,8 +1,10 @@
 """Proposing registry matches for a claim's entities. Behavior: openspec entity-resolution.
 
-Every candidate is stored pending. Only an operator can approve one.
+Every candidate is stored and scored. A rule rejects one scored near zero and approves
+a trial scored high for the claim's indication; the rest wait for review.
 """
 
+from collections.abc import Callable
 from datetime import datetime
 from typing import Protocol
 
@@ -10,12 +12,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entities import entities_of
-from thenwhat.db.models import Claim, DecisionLog, Entity, EntityMatch
+from thenwhat.db.models import Claim, Entity, EntityMatch
 from thenwhat.decide.core import Backend, DecisionFailed
-from thenwhat.decide.steps import ENTITY_MATCH, OTHER_INDICATION, score_matches
+from thenwhat.decide.steps import OTHER_INDICATION, latest_scoring, score_matches
 from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.review.decisions import record_decision
-from thenwhat.sources.base import SourceRecord
+from thenwhat.sources.base import SourceRecord, UnsearchableTerm
 
 MAX_SUMMARY_CHARACTERS = 400
 
@@ -67,6 +69,42 @@ class TrialSearch(Protocol):
         self, intervention: str, condition: str | None = None
     ) -> list[SourceRecord]: ...
 
+    def search_phrase(self, phrase: str, condition: str | None) -> list[SourceRecord]: ...
+
+
+def trials_of(
+    trials: TrialSearch,
+    entity: Entity,
+    indication: str | None,
+    unsearchable: Callable[[UnsearchableTerm], None] | None = None,
+) -> list[SourceRecord]:
+    """Every trial the registry holds under the intervention's name, its other names and
+    its search phrases. A phrase is searched within the indication only.
+
+    A term the registry cannot search for as written is passed to `unsearchable` and the
+    other terms are still searched: each term is its own search. Nothing simpler is
+    tried in its place. With no `unsearchable`, the failure is raised.
+    """
+    searches: list[Callable[[], list[SourceRecord]]] = [
+        *(
+            (lambda term=term: trials.search_trials(term, indication))
+            for term in [entity.name, *entity.synonyms]
+        ),
+        *(
+            (lambda phrase=phrase: trials.search_phrase(phrase, indication))
+            for phrase in entity.search_phrases
+        ),
+    ]
+    records: list[SourceRecord] = []
+    for search in searches:
+        try:
+            records += search()
+        except UnsearchableTerm as refused:
+            if unsearchable is None:
+                raise
+            unsearchable(refused)
+    return records
+
 
 class DoiLookup(Protocol):
     def work(self, doi: str) -> SourceRecord | None: ...
@@ -83,6 +121,7 @@ def resolve_claim(
     rescore: bool = False,
     reject_below: float = 0.0,
     accept_above: float = 0.0,
+    unsearchable: Callable[[UnsearchableTerm], None] | None = None,
 ) -> list[EntityMatch]:
     """Search the registries for the claim's interventions and papers and store each new
     hit as a scored, pending candidate. Returns the candidates this run added.
@@ -113,10 +152,11 @@ def resolve_claim(
 
     for entity in entities:
         if entity.type is EntityType.INTERVENTION:
-            for term in [entity.name, *entity.synonyms]:
-                for record in trials.search_trials(term, claim.indication):
-                    consider(entity, record)
+            for record in trials_of(trials, entity, claim.indication, unsearchable):
+                consider(entity, record)
         elif entity.type is EntityType.PAPER and entity.doi:
+            if any(key[0] == entity.id and key[2].lower() == entity.doi.lower() for key in seen):
+                continue  # Its DOI already has a match, such as an origin paper set by rule.
             record = dois.work(entity.doi)
             if record is not None:
                 consider(entity, record)
@@ -150,8 +190,8 @@ def resolve_claim(
             session.delete(match)
         session.flush()
         raise
-    _reject_near_zero(added, reject_below, now)
-    _approve_confident(session, added, accept_above, now)
+    reject_near_zero(added, reject_below, now)
+    approve_confident(session, added, accept_above, now)
     session.flush()
     if rescore:
         rescore_claim(
@@ -163,11 +203,12 @@ def resolve_claim(
             skip=added,
             reject_below=reject_below,
             accept_above=accept_above,
+            unsearchable=unsearchable,
         )
     return added
 
 
-def _reject_near_zero(scored: list[EntityMatch], reject_below: float, now: datetime) -> None:
+def reject_near_zero(scored: list[EntityMatch], reject_below: float, now: datetime) -> None:
     for match in scored:
         if match.review_state is ReviewState.PENDING and match.score < reject_below:
             record_decision(match, ReviewState.REJECTED, by=Decider.RULE, now=now)
@@ -176,21 +217,13 @@ def _reject_near_zero(scored: list[EntityMatch], reject_below: float, now: datet
 def _scored_for_the_indication(session: Session, match: EntityMatch) -> bool:
     """True when the latest scoring asked about the claim's indication and did not read
     the record as the same intervention for another indication."""
-    scored = session.scalars(
-        select(DecisionLog)
-        .where(
-            DecisionLog.step == ENTITY_MATCH,
-            DecisionLog.input_ref == f"entity_match:{match.id}",
-            DecisionLog.error.is_(None),
-        )
-        .order_by(DecisionLog.id.desc())
-    ).first()
+    scored = latest_scoring(session, match)
     if scored is None or scored.output is None:
         return False
     return OTHER_INDICATION in scored.options and scored.output.get("choice") != OTHER_INDICATION
 
 
-def _approve_confident(
+def approve_confident(
     session: Session, scored: list[EntityMatch], accept_above: float, now: datetime
 ) -> None:
     """Approve by rule the trial candidates scored for the indication at or above the
@@ -219,6 +252,7 @@ def rescore_claim(
     skip: list[EntityMatch] | None = None,
     reject_below: float = 0.0,
     accept_above: float = 0.0,
+    unsearchable: Callable[[UnsearchableTerm], None] | None = None,
 ) -> list[EntityMatch]:
     """Score again the pending trial candidates that the search still returns, and return
     them. For candidates scored before the indication was part of the question.
@@ -242,15 +276,14 @@ def rescore_claim(
             )
             if match.id not in just_scored
         }
-        for term in [entity.name, *entity.synonyms]:
-            for record in trials.search_trials(term, claim.indication):
-                match = pending.pop((record.source_name, record.external_id), None)
-                if match is not None:
-                    match.record_summary = what_it_says(record)
-                    again.append((entity, match, record))
+        for record in trials_of(trials, entity, claim.indication, unsearchable):
+            match = pending.pop((record.source_name, record.external_id), None)
+            if match is not None:
+                match.record_summary = what_it_says(record)
+                again.append((entity, match, record))
     score_matches(session, backend, claim=claim, candidates=again, now=now)
     rescored = [match for _, match, _ in again]
-    _reject_near_zero(rescored, reject_below, now)
-    _approve_confident(session, rescored, accept_above, now)
+    reject_near_zero(rescored, reject_below, now)
+    approve_confident(session, rescored, accept_above, now)
     session.flush()
     return rescored

@@ -17,8 +17,10 @@ from typer.testing import CliRunner, Result
 
 from thenwhat.claims.entry import claim_count, find_claim, promises_of
 from thenwhat.cli import app
+from thenwhat.decide.core import BackendAnswer
 from thenwhat.extract.retrieve import PasteNeeded, Retrieved
 from thenwhat.llm.client import Llm, LlmSettings
+from thenwhat.statements.service import StatementChecker
 
 URL = "https://news.example.org/2018/teeth"
 TEXT = "Synthetic article: an antibody called EX-1 regrew teeth in mice. Trials by 2025."
@@ -28,6 +30,23 @@ DRAFT: dict[str, Any] = {
     "intervention": "EX-1 antibody",
     "indication": "tooth agenesis",
     "promises": ["trials by 2025"],
+    "statements": [
+        {
+            "text": "EX-1 grew new teeth in mice.",
+            "kind": "effect",
+            "firmness": "fact",
+            "speaker": "article",
+            "basis": "animals",
+        },
+        {
+            # Nine words of the article in a row: refused as copied.
+            "text": "An antibody called EX-1 regrew teeth in mice.",
+            "kind": "effect",
+            "firmness": "fact",
+            "speaker": "article",
+            "basis": "animals",
+        },
+    ],
 }
 NEW = [
     "extract",
@@ -46,6 +65,23 @@ NEW = [
 ]
 
 
+class Checks:
+    """The statement check, answering that the article says each statement."""
+
+    name = "fake"
+
+    def answer_many(
+        self, step: str, intro: str, question: str, items: list[str], options: list[str]
+    ) -> list[BackendAnswer]:
+        return [
+            BackendAnswer(options[0], {o: 0.9 if o == options[0] else 0.05 for o in options})
+            for _ in items
+        ]
+
+    def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
+        raise AssertionError("Statements are checked together.")
+
+
 class FakeRetriever:
     def __init__(self, outcome: Retrieved | Exception) -> None:
         self.outcome = outcome
@@ -54,6 +90,14 @@ class FakeRetriever:
         if isinstance(self.outcome, Exception):
             raise self.outcome
         return self.outcome
+
+
+@pytest.fixture(autouse=True)
+def rules_off(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Approval by rule is on by default. These tests are about what happens without it,
+    unless one turns it on."""
+    monkeypatch.setenv("MATCH_ACCEPT_ABOVE", "0")
+    monkeypatch.setenv("APPROVE_DRAFTS_BY_RULE", "false")
 
 
 @pytest.fixture
@@ -78,6 +122,9 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setattr(
             "thenwhat.cli.extract.make_retriever", lambda: FakeRetriever(web or Retrieved(TEXT))
         )
+        monkeypatch.setattr(
+            "thenwhat.cli.extract.make_checker", lambda s: StatementChecker(Checks())
+        )
 
     NOW = datetime(2026, 11, 20, tzinfo=UTC)
     monkeypatch.setattr("thenwhat.cli.entry.open_session", test_session)
@@ -98,6 +145,12 @@ def test_extract_new_drafts_a_pending_claim(run, session: Session):
     assert result.exit_code == 0, result.output
     assert "tooth-regrowth-ex1" in result.output and "pending" in result.output
     assert find_claim(session, "tooth-regrowth-ex1") is not None
+    # Reported statements are proposed and checked in the same command, and a refused
+    # one is counted by its rule.
+    assert (
+        "Reported statements: 2 proposed, 1 approved by rule, 0 pending review,"
+        " 1 refused by rule (copies the article: 1)."
+    ) in " ".join(result.output.split())
 
 
 def test_extract_new_that_cannot_fetch_asks_for_pasted_text_and_exits_1(run, session: Session):

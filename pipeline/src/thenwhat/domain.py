@@ -19,7 +19,8 @@ class Decider(StrEnum):
     # Loaded as already reviewed from a checked-in seed file. Not an operator's decision.
     SEED = "seed"
     # Decided by an AI assistant working through the review queue. Not an operator's
-    # decision: anything it touched is kept out of the export unless a preview is asked for.
+    # decision: the claim is still published, and the export marks it as not checked by
+    # a person.
     ASSISTANT = "assistant"
 
 
@@ -31,6 +32,67 @@ class EntityType(StrEnum):
     COMPANY = "company"
 
 
+class NamedBy(StrEnum):
+    """Where an entity's name came from: a source article, a registry record (a trial's
+    lead sponsor), or both."""
+
+    ARTICLE = "article"
+    REGISTRY = "registry"
+
+
+class TermRole(StrEnum):
+    """What a subject term is proposed as for a claim."""
+
+    CONDITION = "condition"
+    INTERVENTION = "intervention"
+
+
+class TermFit(StrEnum):
+    """How a subject term was read against the claim: as the thing itself, or broader."""
+
+    EXACT = "exact"
+    BROADER = "broader"
+
+
+class StatementKind(StrEnum):
+    """What a reported statement is about (openspec reported-statements)."""
+
+    EFFECT = "effect"
+    SAFETY = "safety"
+    HOW_IT_WORKS = "how_it_works"
+    WHO_IT_COULD_HELP = "who_it_could_help"
+    # Compared with an existing treatment.
+    COMPARISON = "comparison"
+    WHAT_IT_COULD_LEAD_TO = "what_it_could_lead_to"
+
+
+class StatementFirmness(StrEnum):
+    """How firmly the article puts a reported statement."""
+
+    FACT = "fact"
+    POSSIBILITY = "possibility"
+
+
+class StatementSpeaker(StrEnum):
+    """Who the article has saying a reported statement: a role, never a name."""
+
+    ARTICLE = "article"
+    RESEARCHER = "researcher"
+    COMPANY = "company"
+    PATIENT = "patient"
+    OTHER_EXPERT = "other_expert"
+
+
+class StatementBasis(StrEnum):
+    """What the article says a reported statement rests on. The article's word, not a
+    registry's or a paper's."""
+
+    PEOPLE = "people"
+    ANIMALS = "animals"
+    LABORATORY = "laboratory"
+    NOT_SAID = "not_said"
+
+
 class EventType(StrEnum):
     FOLLOWUP_PAPER = "followup_paper"
     TRIAL_REGISTERED = "trial_registered"
@@ -40,6 +102,16 @@ class EventType(StrEnum):
     COMPANY_EVENT = "company_event"
     RETRACTION = "retraction"
     REGULATORY_DECISION = "regulatory_decision"
+
+
+# The event types that are about a trial.
+TRIAL_EVENT_TYPES = frozenset(
+    {
+        EventType.TRIAL_REGISTERED,
+        EventType.TRIAL_STATUS_CHANGE,
+        EventType.TRIAL_RESULTS_POSTED,
+    }
+)
 
 
 class TrialState(StrEnum):

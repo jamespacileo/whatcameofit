@@ -1,0 +1,79 @@
+---
+// Background cards: what an open vocabulary says of the claim's condition and
+// treatment. The label and definition are the source's; the site adds the credit, the
+// score and the reasons. Openspec site-publishing: "Background cards on the claim page".
+import ChevronDown from "@lucide/astro/icons/chevron-down";
+import {
+  BACKGROUND_NOTE,
+  DEFINITION_LABEL,
+  NO_DEFINITION,
+  NO_REASON,
+  cardKindText,
+  creditText,
+  reasonTexts,
+  type ExportedCard,
+  type ExportedCardSource,
+} from "../lib/background";
+import { confidenceLabel } from "../lib/confidence";
+
+interface Props {
+  cards: ExportedCard[];
+  sources: ExportedCardSource[];
+}
+
+const { cards, sources } = Astro.props;
+const sourceOf = (card: ExportedCard) => sources.find((source) => source.name === card.source)!;
+const day = (stamp: string) =>
+  new Date(stamp).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+---
+
+<section class="matched background" data-pagefind-ignore>
+  <h2 class="bar" id="background">Background</h2>
+  <p class="take-why">{BACKGROUND_NOTE}</p>
+  <ul class="plain match-list card-list">
+    {
+      cards.map((card) => (
+        <li>
+          <div class="match-record">
+            <span class="card-kind">{cardKindText(card)}</span>
+            <a class="card-label" href={card.url} rel="noopener">
+              {card.label}
+            </a>
+            <span class="entry-note">
+              <a href={sourceOf(card).url} rel="noopener">
+                {creditText(card, sourceOf(card))}
+              </a>
+              . Record read {day(card.read_at)}.
+            </span>
+            {card.definition ? (
+              <details class="card-words">
+                <summary>
+                  {DEFINITION_LABEL}
+                  <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+                </summary>
+                <blockquote cite={card.url}>{card.definition}</blockquote>
+              </details>
+            ) : (
+              <span class="entry-note">{NO_DEFINITION}</span>
+            )}
+          </div>
+          <details class="match-why">
+            <summary>
+              <strong>{confidenceLabel(card.score)}</strong>
+              <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+            </summary>
+            {reasonTexts(card).map((reason) => (
+              <p>{reason}</p>
+            ))}
+            {card.reasons.length === 0 && <p>{NO_REASON}</p>}
+          </details>
+        </li>
+      ))
+    }
+  </ul>
+</section>

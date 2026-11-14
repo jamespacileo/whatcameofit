@@ -51,7 +51,10 @@ extension-safari: extension
 PUBLIC_EXPORT := site/data/public-export.json
 
 # A normal export from the running pipeline: every approved, unarchived claim.
+# Outlets added since the last run are asked for their icon first; an outlet that
+# cannot be reached does not stop the export.
 public-export:
+	-docker compose exec -T pipeline thenwhat icons >&2
 	docker compose exec -T pipeline sh -c 'thenwhat export --out /tmp/public-export.json >&2 && cat /tmp/public-export.json' > $(PUBLIC_EXPORT).tmp
 	mv $(PUBLIC_EXPORT).tmp $(PUBLIC_EXPORT)
 
@@ -70,8 +73,8 @@ deploy-ci: site/node_modules
 deploy-check: site/node_modules public-export
 	EXPORT_FILE=data/public-export.json node site/scripts/deploy.mjs --dry-run
 
-# Publish to Cloudflare at SITE_URL's domain. Refuses a preview export, a claim not
-# checked by a person, and a local address.
+# Publish to Cloudflare at SITE_URL's domain. Refuses a preview export and a
+# local address.
 deploy: site/node_modules public-export
 	EXPORT_FILE=data/public-export.json node site/scripts/deploy.mjs
 

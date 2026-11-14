@@ -1,28 +1,35 @@
 ---
 import Base from "../layouts/Base.astro";
-import CalendarPlus from "@lucide/astro/icons/calendar-plus";
 import ChevronDown from "@lucide/astro/icons/chevron-down";
 import Clock from "@lucide/astro/icons/clock";
 import Copy from "@lucide/astro/icons/copy";
 import ExternalLink from "@lucide/astro/icons/external-link";
 import ImageDown from "@lucide/astro/icons/image-down";
 import Info from "@lucide/astro/icons/info";
-import Share2 from "@lucide/astro/icons/share-2";
+import Bookmark from "@lucide/astro/icons/bookmark";
+import ClockMark from "../components/ClockMark.astro";
 import BasisMark from "../components/BasisMark.astro";
 import ClaimTable from "../components/ClaimTable.astro";
+import FollowOffer from "../components/FollowOffer.astro";
+import LookupAgain from "../components/LookupAgain.astro";
 import Outlet from "../components/Outlet.astro";
 import KindIcon from "../components/KindIcon.astro";
 import Pop from "../components/Pop.astro";
+import SharePill from "../components/SharePill.astro";
+import Statements from "../components/Statements.astro";
 import StageTrack from "../components/StageTrack.astro";
 import TopicChip from "../components/TopicChip.astro";
+import TrialDetailsLink from "../components/TrialDetailsLink.astro";
 import { APPROACH_LABELS } from "../lib/approach";
-import { data, verticalTitle, type ExportedClaim } from "../lib/export";
+import { claimPaths, data, verticalTitle, type ExportedClaim } from "../lib/export";
+import { statusSlug } from "../lib/guide";
 import { UNCHECKED_NOTE } from "../lib/notices";
 import {
   EVIDENCE_STAGES,
   KIND_NAMES,
   STAGE_PATH,
   STATUS_LABELS,
+  STATUS_GLOSSES,
   STATUS_MEANINGS,
   eventKind,
   eventLabel,
@@ -32,16 +39,39 @@ import {
   type RecordKind,
 } from "../lib/status";
 import { cardAlt, clip, shareSentence } from "../lib/card";
-import { confidenceLabel, readingOf } from "../lib/confidence";
+import { embedSnippet, shareLinks } from "../lib/share";
+import { confidenceLabel } from "../lib/confidence";
+import MatchList from "../components/MatchList.astro";
+import Background from "../components/Background.astro";
+import Organisations from "../components/Organisations.astro";
+import { publisherOf, publisherText } from "../lib/organisations";
+import Paper from "../components/Paper.astro";
+import Trial from "../components/Trial.astro";
+import {
+  PAPERS_NOTE,
+  PAPERS_SHOWN,
+  countSubjects,
+  groupPapers,
+  subjectCountText,
+} from "../lib/paper-facts";
+import {
+  TRIALS_NOTE,
+  TRIALS_SHOWN,
+  countTrials,
+  isPaperMatch,
+  largestText,
+  orderTrials,
+  trialCountText,
+  withResults,
+} from "../lib/trial-facts";
+import { FOLLOWED_SHOWN, followedName, followedReports } from "../lib/reports";
 import { claimPageData } from "../lib/structured";
 import ReportError from "../components/ReportError.astro";
 import { SITE } from "../../site.config.mjs";
 import { cardFor } from "../lib/card-image";
 import { buildTimetable, dayAndMonth, formatDate, recordedLines } from "../lib/timetable";
 
-export function getStaticPaths() {
-  return data.claims.map((claim) => ({ params: { slug: claim.slug }, props: { claim } }));
-}
+export const getStaticPaths = claimPaths;
 
 interface Props {
   claim: ExportedClaim;
@@ -79,20 +109,63 @@ const inTopic = data.claims
   .filter((other) => other.vertical === claim.vertical && other.slug !== claim.slug)
   .sort((a, b) => ((a.first_reported_date ?? "") < (b.first_reported_date ?? "") ? 1 : -1));
 const others = inTopic.slice(0, 3);
-// Matched registry records, approved first, each with how sure the match is.
+// Matched records, approved first, each with how sure the match is. A paper is not a
+// registry record, so papers are listed and counted apart.
 const matched = claim.matches ?? [];
+// An export made before openspec paper-facts lists its papers among the matches.
+const papers = claim.papers ? [] : matched.filter(isPaperMatch);
+const paperGroups = groupPapers(claim.papers ?? []);
+const subjectCount = claim.papers ? subjectCountText(countSubjects(claim)) : null;
+const registryMatches = matched.filter((match) => !isPaperMatch(match));
+const counted = registryMatches.filter((match) => match.state === "approved").length;
+const candidates = registryMatches.filter((match) => match.state === "candidate");
+const possible = candidates.length;
+// Each trial once, furthest phase first, with the match that brought it to the claim.
+const trials = orderTrials(claim.trials ?? []);
+const trialIds = new Set(trials.map((trial) => trial.trial_id));
+// The fold says when it holds posted results, so a reader knows to open it.
+const foldedResults = withResults(trials.slice(TRIALS_SHOWN));
+const matchOf = (trialId: string) =>
+  registryMatches.find((match) => match.state === "approved" && match.external_id === trialId);
+const trialTally = countTrials(claim);
+// Who a report or a trial record says is behind the claim (openspec organisations), and
+// the organisation, if any, on whose website a report is.
+const organisations = claim.organisations ?? [];
+const publisherNote = (url: string) => {
+  const publisher = publisherOf(
+    organisations,
+    claim.articles.find((article) => article.url === url)?.published_by,
+  );
+  return publisher ? publisherText(publisher.name) : null;
+};
+// An approved record with no dated event yet has no trial entry, so it stays listed here.
+const untried = registryMatches.filter(
+  (match) => match.state === "approved" && !trialIds.has(match.external_id),
+);
+// A reader arrives from a headline, so the page names the reports it is about, newest first.
+const reports = followedReports(claim);
+const shownReports = reports.slice(0, FOLLOWED_SHOWN);
 const address = `${SITE.url}/${claim.slug}`;
 const sentence = shareSentence(claim, STATUS_LABELS[claim.status.code], data.last_checked_at, address);
 // Reminders: the dates a reader can save, which the browser turns into a calendar file.
 const promiseDue = latestPromise(claim)?.parsed_date ?? null;
 // The whole of what another site needs to show this claim's status.
-const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.headline.replaceAll('"', "&quot;")}" width="440" height="420" style="border:0;max-width:100%" loading="lazy"></iframe>`;
+const snippet = embedSnippet(SITE.url, claim.slug, claim.headline);
+// Prefilled posts carry the sentence and the address, and nothing of our own.
+const postText = shareSentence(claim, STATUS_LABELS[claim.status.code], data.last_checked_at, "").trim();
+const posts = shareLinks(postText, address, claim.headline);
 ---
 
 <Base
   title={claim.headline}
   tabTitle={tabTitle}
-  structured={claimPageData(claim, data.last_checked_at)}
+  structured={claimPageData(claim, data.last_checked_at, description)}
+  breadcrumbs={[
+    { name: topic, path: `/topic/${claim.vertical}` },
+    { name: claim.headline, path: `/${claim.slug}` },
+  ]}
+  article={{ published: claim.first_reported_date, modified: data.last_checked_at }}
+  oembed={`/oembed/${claim.slug}.json`}
   description={description}
   image={`/og/${claim.slug}.png`}
   imageAlt={imageAlt}
@@ -110,10 +183,24 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
           )
         }
       </div>
-      <button type="button" class="share" data-share hidden data-pagefind-ignore>
-        <Share2 size={16} stroke-width={1.9} aria-hidden="true" />
-        <span data-share-text>Share</span>
-      </button>
+      <div class="page-actions" data-pagefind-ignore>
+        {/* Following lists the claim on the home page, in this browser only. Shown by
+            the script, where the browser lets it keep the list. */}
+        <button
+          type="button"
+          class="share"
+          data-follow
+          data-slug={claim.slug}
+          data-headline={claim.headline}
+          data-status={STATUS_LABELS[claim.status.code]}
+          aria-pressed="false"
+          hidden
+        >
+          <Bookmark size={16} stroke-width={1.9} aria-hidden="true" />
+          <span data-follow-text>Follow</span>
+        </button>
+        <SharePill />
+      </div>
     </div>
     <h1 class:list={["title", { long: claim.headline.length > 70 }]}>
       {
@@ -129,10 +216,52 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
 
     {/* A reader arriving from a shared link has not seen the home page. */}
     <p class="what-this-is" data-pagefind-ignore>
-      A record of what followed this reported breakthrough. <a href="/how-it-works">How a status is set</a>
+      A record of what followed{" "}
+      {reports.length === 0
+        ? "this reported breakthrough"
+        : reports.length === 1
+          ? "this news report"
+          : "these news reports"}. <a href="/how-it-works">How a status is set</a>
     </p>
 
-    {!claim.checked_by_person && <p class="unchecked">{UNCHECKED_NOTE}</p>}
+    {
+      shownReports.length > 0 && (
+        <section class="reported" data-pagefind-ignore>
+          <h2 class="visually-hidden">
+            {reports.length === 1 ? "The news report this page follows" : "The news reports this page follows"}
+          </h2>
+          <ul class="plain">
+            {shownReports.map((report, index) => (
+              <li>
+                {/* The same name as the headline on the home page, so a reader who
+                    pressed it there sees it carried to this place. */}
+                <a
+                  class="reported-title followed"
+                  href={report.url}
+                  style={`view-transition-name: ${followedName(claim.slug, index)}`}
+                >
+                  “{report.title}”
+                  <ExternalLink class="out" size={14} stroke-width={1.9} aria-hidden="true" />
+                  <span class="visually-hidden">(at {report.outlet || "the outlet"})</span>
+                </a>
+                <span class="entry-note">
+                  <Outlet url={report.url} outlet={report.outlet} link={false} />{" "}
+                  <span class="unbroken">{formatDate(report.published_date)}</span>
+                </span>
+                {publisherNote(report.url) && (
+                  <span class="entry-note publisher">{publisherNote(report.url)}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+          {reports.length > shownReports.length && (
+            <p class="entry-note">
+              <a href="#timetable">All {reports.length} reports, by date</a>
+            </p>
+          )}
+        </section>
+      )
+    }
 
     <div class="digest">
       <div class="standing">
@@ -176,6 +305,11 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
               )
             }
             <p class="pop-note">
+              <a href={`/guide/${statusSlug(claim.status.code)}`}>
+                What “{STATUS_LABELS[claim.status.code]}” does and does not tell you
+              </a>
+            </p>
+            <p class="pop-note">
               <a href="/how-it-works#what-each-status-means">What each status means</a>
             </p>
             {
@@ -187,6 +321,7 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
             }
           </Pop>
         </div>
+        <p class="gloss">{STATUS_GLOSSES[claim.status.code]}</p>
         <StageTrack code={claim.status.code} ends />
         {
           overlay && (
@@ -202,6 +337,9 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                 </p>
                 <p class="pop-note">
                   <a href="/how-it-works#no-signal">How "no signal" is counted</a>
+                </p>
+                <p class="pop-note">
+                  <a href="/guide/no-signal">What “no signal” does not tell you</a>
                 </p>
               </Pop>
             </div>
@@ -223,6 +361,21 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
             "No record yet"
           )}
         </p>
+        {
+          claim.matches && (
+            <p class="changed" data-pagefind-ignore>
+              <a href={trials.length > 0 ? "#trials" : "#matched"}>
+                {registryMatches.length === 0
+                  ? "No registry record matched"
+                  : `${counted} registry ${counted === 1 ? "record" : "records"} matched`}
+              </a>
+              {possible > 0 && `, ${possible} possible`}
+            </p>
+          )
+        }
+        <p class="changed" data-pagefind-ignore hidden data-remind-link>
+          <a href="#check-again">Check again later</a>
+        </p>
       </div>
       <div class="says">
         {/* What the status means, in a sentence, beside the label it explains. */}
@@ -230,6 +383,19 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
         <p class="lede" data-pagefind-meta="summary">{claim.summary}</p>
       </div>
     </div>
+
+    {/* For a reader who follows this claim and last saw it at another status: filled in
+        by the script, so a change noted on the home page is confirmed where they land. */}
+    <p class="was-note" hidden data-follow-was data-pagefind-ignore></p>
+    <FollowOffer claim={claim} />
+
+    {
+      !claim.checked_by_person && (
+        <p class="unchecked">
+          {UNCHECKED_NOTE} <a href="/guide/checked-by-a-person">What “checked by a person” means</a>
+        </p>
+      )
+    }
 
     <dl class="facts">
       <div>
@@ -276,7 +442,40 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
           </div>
         )
       }
+      {
+        /* A count and the largest stated size: never a sum of people across trials. */
+        trialTally.count > 0 && (
+          <div>
+            <dt>Trials in people</dt>
+            <dd>
+              <a href="#trials">{trialCountText(trialTally)}</a>
+              {largestText(trialTally) && <span class="aka">{largestText(trialTally)}</span>}
+            </dd>
+          </div>
+        )
+      }
+      {
+        /* Counts of records, as the registries and the index file them: never that a
+           treatment does anything in people or in animals. */
+        subjectCount && (
+          <div>
+            <dt>Records of studies</dt>
+            <dd>
+              {subjectCount}
+              <span class="aka">Trials, and papers as Europe PMC files them</span>
+            </dd>
+          </div>
+        )
+      }
     </dl>
+
+    {
+      /* What the reports said, in the site's words: after the summary and before the
+         records, which never refer to it, so nothing holds the one against the other. */
+      (claim.reported_statements ?? []).length > 0 && (
+        <Statements statements={claim.reported_statements ?? []} articles={claim.articles} />
+      )
+    }
 
     <div class="bar-row">
       <h2 class="bar" id="timetable">{hasDatedPromise ? "Promised and recorded" : "Recorded"}</h2>
@@ -394,6 +593,9 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                                     <span class="unbroken">(<a href={line.archiveUrl}>archived copy</a>)</span>
                                   </>
                                 )}
+                                {publisherNote(line.url) && (
+                                  <span class="entry-note publisher">{publisherNote(line.url)}</span>
+                                )}
                               </span>
                             </li>
                           ) : (
@@ -424,6 +626,13 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                                           Date taken from: {entry.event.date_basis}.
                                         </p>
                                       )}
+                                      {entry.event.trial_id && trialIds.has(entry.event.trial_id) && (
+                                        <p class="pop-note">
+                                          <a href={`#trial-${entry.event.trial_id}`}>
+                                            This trial's size, design and posted results
+                                          </a>
+                                        </p>
+                                      )}
                                     </Pop>
                                   </span>
                                 </>
@@ -435,6 +644,17 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
                                     ? `, ${line.steps[0].event.trial_id}`
                                     : ""}
                                 </a>
+                                <TrialDetailsLink url={line.sourceUrl} />
+                                {
+                                  /* A record read from a registry is certain. One found by
+                                     rule, such as a follow-up paper, says how sure it is. */
+                                  typeof line.steps[0].event.confidence === "number" &&
+                                    line.steps[0].event.confidence < 1 && (
+                                      <span class="entry-note">
+                                        {confidenceLabel(line.steps[0].event.confidence)}
+                                      </span>
+                                    )
+                                }
                               </span>
                             </li>
                           ),
@@ -471,53 +691,119 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
     }
 
     {
-      matched.length > 0 && (
-        <section class="matched" data-pagefind-ignore>
-          <h2 class="bar" id="matched">Matched records</h2>
-          <p class="take-why">
-            Each record found for this treatment and condition, with how sure the match is. A
-            score is about the match, not about the treatment.
-          </p>
-          {[
-            { title: null, list: matched.filter((match) => match.state === "approved") },
-            {
-              title: "Possible records, not counted in the status",
-              list: matched.filter((match) => match.state === "candidate"),
-            },
-          ].map(
-            (group) =>
-              group.list.length > 0 && (
-                <>
-                  {group.title && <h3 class="matched-group">{group.title}</h3>}
-                  <ul class="plain match-list">
-                    {group.list.map((match) => (
-                      <li>
-                        <span class="match-record">
-                          {match.url ? (
-                            <a href={match.url} rel="noopener">
-                              {match.external_id}
-                            </a>
-                          ) : (
-                            match.external_id
-                          )}
-                          {match.summary && (
-                            <span class="entry-note">{match.summary.replace(`${match.external_id}: `, "")}</span>
-                          )}
-                        </span>
-                        <details class="match-why">
-                          <summary>
-                            <strong>{confidenceLabel(match.score)}</strong>
-                            <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
-                          </summary>
-                          <p>{readingOf(match.reading)}</p>
-                        </details>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ),
+      trials.length > 0 && (
+        <section class="trials" data-pagefind-ignore>
+          <h2 class="bar" id="trials">Trials on record</h2>
+          <p class="take-why">{TRIALS_NOTE}</p>
+          <ul class="plain trial-list">
+            {trials.slice(0, TRIALS_SHOWN).map((trial) => (
+              <Trial trial={trial} match={matchOf(trial.trial_id)} />
+            ))}
+          </ul>
+          {trials.length > TRIALS_SHOWN && (
+            <details class="trials-rest">
+              <summary>
+                The other {trials.length - TRIALS_SHOWN} of {trials.length} trials
+                {foldedResults > 0 && ` (${foldedResults} with results posted)`}
+                <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+              </summary>
+              <ul class="plain trial-list">
+                {trials.slice(TRIALS_SHOWN).map((trial) => (
+                  <Trial trial={trial} match={matchOf(trial.trial_id)} />
+                ))}
+              </ul>
+            </details>
           )}
         </section>
+      )
+    }
+
+    {
+      /* Registry records that are not trials on this page yet: approved ones with no
+         dated event, and candidates, which never count toward the status. When there
+         is no trial at all, the section says the registries were searched. */
+      claim.matches && (untried.length > 0 || candidates.length > 0 || trials.length === 0) && (
+        <section class="matched" data-pagefind-ignore>
+          <h2 class="bar" id="matched">
+            {untried.length > 0 || candidates.length === 0
+              ? "Matched registry records"
+              : "Possible registry records"}
+          </h2>
+          <p class="take-why">
+            {untried.length > 0
+              ? "Trial registry records found for this treatment and condition, with how sure each match is. A score is about the match, not about the treatment."
+              : candidates.length > 0
+                ? "Trial registry records that may be about this treatment and condition, with how sure each match is. They are not counted in the status. A score is about the match, not about the treatment."
+                : "The trial registries were searched for this treatment and condition. No record matched."}
+          </p>
+          {untried.length > 0 && <MatchList matches={untried} />}
+          {untried.length > 0 && candidates.length > 0 && (
+            <h3 class="matched-group">Possible records, not counted in the status</h3>
+          )}
+          {candidates.length > 0 && <MatchList matches={candidates} />}
+        </section>
+      )
+    }
+
+    {
+      paperGroups.length > 0 && (
+        <section class="papers" data-pagefind-ignore>
+          <h2 class="bar" id="papers">Papers on record</h2>
+          <p class="take-why">{PAPERS_NOTE}</p>
+          {paperGroups.map((group) => (
+            <>
+              <h3 class="matched-group">{group.heading}</h3>
+              <p class="entry-note paper-group-note">{group.note}</p>
+              <ul class="plain paper-list">
+                {group.papers.slice(0, PAPERS_SHOWN).map((paper) => (
+                  <Paper paper={paper} trialIds={trialIds} />
+                ))}
+              </ul>
+              {group.papers.length > PAPERS_SHOWN && (
+                <details class="papers-rest">
+                  <summary>
+                    The other {group.papers.length - PAPERS_SHOWN} of {group.papers.length} papers
+                    <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+                  </summary>
+                  <ul class="plain paper-list">
+                    {group.papers.slice(PAPERS_SHOWN).map((paper) => (
+                      <Paper paper={paper} trialIds={trialIds} />
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </>
+          ))}
+        </section>
+      )
+    }
+
+    {
+      papers.length > 0 && (
+        <section class="matched" data-pagefind-ignore>
+          <h2 class="bar" id="papers">Matched papers</h2>
+          <p class="take-why">
+            Papers matched to this claim, with how sure each match is. A paper is not a trial
+            record, and a score is about the match, not about the treatment.
+          </p>
+          <MatchList matches={papers} />
+        </section>
+      )
+    }
+
+    {
+      /* Who the reports and trial records name, each once, by role and then by name.
+         After the records and away from the status: an organisation is never evidence. */
+      organisations.length > 0 && (
+        <Organisations organisations={organisations} articles={claim.articles} trialIds={trialIds} />
+      )
+    }
+
+    {
+      /* What open vocabularies say of the claim's terms. After the records and away
+         from the status: a card describes a term, never the claim's evidence. */
+      (claim.background ?? []).length > 0 && (
+        <Background cards={claim.background ?? []} sources={data.card_sources ?? []} />
       )
     }
 
@@ -570,11 +856,74 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
           <ImageDown size={16} stroke-width={1.9} aria-hidden="true" />
           Tall image
         </a>
+        <button type="button" class="share" data-copy="page-address" hidden>
+          <Copy size={16} stroke-width={1.9} aria-hidden="true" />
+          <span data-copy-text>Copy link</span>
+        </button>
+        <span id="page-address" hidden>{address}</span>
       </div>
+      <details class="post-to">
+        <summary id="post-to">Post it to a network</summary>
+        <ul class="post-links" aria-labelledby="post-to">
+          {
+            posts.map((post) => (
+              <li>
+                <a
+                  class="share"
+                  href={post.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-network={post.network}
+                >
+                  {post.label}
+                </a>
+              </li>
+            ))
+          }
+          <li>
+            {/* Mastodon has no one address: the reader names their server. */}
+            <button
+              type="button"
+              class="share"
+              data-mastodon
+              data-text={postText}
+              data-url={address}
+              hidden
+            >
+              Mastodon
+            </button>
+          </li>
+        </ul>
+      </details>
+      <dialog class="mastodon" data-mastodon-dialog aria-labelledby="mastodon-title">
+        <form method="dialog">
+          <h3 id="mastodon-title">Post to Mastodon</h3>
+          <label for="mastodon-server">Your server</label>
+          <input
+            id="mastodon-server"
+            name="server"
+            type="text"
+            inputmode="url"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            placeholder="mastodon.social"
+            aria-describedby="mastodon-note"
+            required
+          />
+          <p class="entry-note" id="mastodon-note" data-mastodon-note aria-live="polite">
+            Kept in this browser only, so you are not asked again.
+          </p>
+          <div class="mastodon-actions">
+            <button type="submit" class="share" value="post">Open Mastodon</button>
+            <button type="submit" class="share quiet" value="cancel" formnovalidate>Cancel</button>
+          </div>
+        </form>
+      </dialog>
         </div>
       </div>
       <details class="embed-how">
-        <summary>Show this status on another site</summary>
+        <summary>Writing about this? Show the status on your own page</summary>
         <p class="entry-note">
           Paste this where the status should appear. It shows the current status and links back
           here; it loads nothing else and stores nothing.
@@ -609,28 +958,29 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
         {
           promiseDue && (
             <button type="button" class="share" data-when="promise">
-              <CalendarPlus size={16} stroke-width={1.9} aria-hidden="true" />
-              On the promised date, {formatDate(promiseDue)}
+              <ClockMark />
+              <span data-when-text>On the promised date, {formatDate(promiseDue)}</span>
             </button>
           )
         }
         <button type="button" class="share" data-when="six-months">
-          <CalendarPlus size={16} stroke-width={1.9} aria-hidden="true" />
-          In six months
+          <ClockMark />
+          <span data-when-text>In six months</span>
         </button>
         <button type="button" class="share" data-when="year">
-          <CalendarPlus size={16} stroke-width={1.9} aria-hidden="true" />
-          In a year
+          <ClockMark />
+          <span data-when-text>In a year</span>
         </button>
         {
           claim.first_reported_date && (
             <button type="button" class="share" data-when="anniversary">
-              <CalendarPlus size={16} stroke-width={1.9} aria-hidden="true" />
-              On the anniversary, {dayAndMonth(claim.first_reported_date)}
+              <ClockMark />
+              <span data-when-text>On the anniversary, {dayAndMonth(claim.first_reported_date)}</span>
             </button>
           )
         }
       </div>
+      <FollowOffer claim={claim} />
       {
         (claim.status.history?.length ?? 0) > 0 && (
           <p class="entry-note">
@@ -640,14 +990,69 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
         )
       }
     </section>
+
+    <LookupAgain />
   </article>
 </Base>
 
 <script>
   import { calendarFile, reminderDate, type ReminderChoice } from "../lib/calendar";
+  import { mastodonShare } from "../lib/share";
+  import { FOLLOWING_ENTRY, readFollowed } from "../lib/returning";
 
-  // Sharing uses the device's own share sheet where there is one, and copies the
-  // page address where there is not. The button only appears when it can work.
+  // A timetable entry leads to its trial, a trial to its papers and a paper back to its
+  // trial. An entry past the first five sits in a closed fold, which not every browser
+  // opens for a link, so it is opened here.
+  function showLinkedTrial() {
+    if (!/^#(trial|paper)-/.test(location.hash)) return;
+    const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    const fold = target?.closest<HTMLDetailsElement>("details.trials-rest, details.papers-rest");
+    if (!target || !fold || fold.open) return;
+    fold.open = true;
+    target.scrollIntoView();
+  }
+  showLinkedTrial();
+  addEventListener("hashchange", showLinkedTrial);
+
+  // Mastodon: the reader names their server once; it is kept in this browser only.
+  const mastodon = document.querySelector<HTMLButtonElement>("[data-mastodon]");
+  const dialog = document.querySelector<HTMLDialogElement>("[data-mastodon-dialog]");
+  if (mastodon && dialog && typeof dialog.showModal === "function") {
+    const KEY = "mastodon-server";
+    const input = dialog.querySelector<HTMLInputElement>("input")!;
+    const note = dialog.querySelector<HTMLElement>("[data-mastodon-note]")!;
+    const idleNote = note.textContent;
+    const { text, url } = mastodon.dataset as { text: string; url: string };
+    const open = (server: string) => {
+      const href = mastodonShare(server, text, url);
+      if (href) window.open(href, "_blank", "noopener,noreferrer");
+      return href;
+    };
+    mastodon.hidden = false;
+    // A remembered server is filled in, so posting is one more press and changing it is easy.
+    mastodon.addEventListener("click", () => {
+      let saved: string | null = null;
+      try {
+        saved = localStorage.getItem(KEY);
+      } catch {}
+      input.value = saved ?? "";
+      note.textContent = idleNote;
+      dialog.showModal();
+    });
+    dialog.querySelector("form")!.addEventListener("submit", (event) => {
+      if (event.submitter?.getAttribute("value") !== "post") return;
+      if (!open(input.value)) {
+        event.preventDefault();
+        note.textContent = "That is not a server's name. Try one like mastodon.social.";
+        input.focus();
+        return;
+      }
+      try {
+        localStorage.setItem(KEY, input.value.trim());
+      } catch {}
+    });
+  }
+
   // Copying: the button appears only where the clipboard can be written, says so when
   // it has copied, and otherwise leaves the text selected for the reader to copy.
   // A copy is confirmed three ways: the label changes, the site's blue dot lands in
@@ -658,6 +1063,22 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
     if (said) said.textContent = words;
     setTimeout(() => {
       control.classList.remove("done");
+      if (said) said.textContent = "";
+    }, 2000);
+  }
+
+  // A saved date is confirmed in its own pill: the clock's hand turns once, the words
+  // say it is saved, and a screen reader is told. Then the pill offers its date again.
+  function saved(choice: HTMLElement) {
+    const words = choice.querySelector<HTMLElement>("[data-when-text]")!;
+    if (choice.classList.contains("saved")) return;
+    const offer = words.textContent;
+    choice.classList.add("saved");
+    words.textContent = "Saved to your calendar";
+    if (said) said.textContent = "Calendar file saved";
+    setTimeout(() => {
+      choice.classList.remove("saved");
+      words.textContent = offer;
       if (said) said.textContent = "";
     }, 2000);
   }
@@ -712,30 +1133,93 @@ const snippet = `<iframe src="${SITE.url}/embed/${claim.slug}" title="${claim.he
         link.download = `${remind.dataset.slug}-${date}.ics`;
         link.click();
         setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-        confirm(choice, "Calendar file saved");
+        saved(choice);
       });
     }
     remind.hidden = false;
+    const link = document.querySelector<HTMLElement>("[data-remind-link]");
+    if (link) link.hidden = false;
   }
 
-  const button = document.querySelector<HTMLButtonElement>("[data-share]");
-  if (button && (navigator.share || navigator.clipboard)) {
-    const text = button.querySelector<HTMLElement>("[data-share-text]")!;
-    button.hidden = false;
-    button.addEventListener("click", async () => {
-      const url = location.origin + location.pathname;
-      try {
-        if (navigator.share) {
-          await navigator.share({ title: document.title, url });
-        } else {
-          await navigator.clipboard.writeText(url);
-          text.textContent = "Link copied";
-          confirm(button, "Link copied");
-          setTimeout(() => (text.textContent = "Share"), 2000);
+  // Following: the claim, its headline and its status in words are kept in this
+  // browser's storage and sent nowhere. The home page lists followed claims and notes
+  // a status that has changed. Opening this page is seeing the status, so a change is
+  // said here once and the kept status is brought up to date.
+  const follows = [...document.querySelectorAll<HTMLButtonElement>("[data-follow]")];
+  if (follows.length > 0) {
+    let store: Storage | null = null;
+    try {
+      localStorage.setItem("probe", "1");
+      localStorage.removeItem("probe");
+      store = localStorage;
+    } catch {}
+    if (store) {
+      const kept = store;
+      const { slug, headline, status } = follows[0].dataset as Record<string, string>;
+      const write = (followed: ReturnType<typeof readFollowed>) => {
+        try {
+          kept.setItem(FOLLOWING_ENTRY, JSON.stringify(followed));
+        } catch {}
+      };
+      // Every Follow control on the page says the same thing, and the words beside
+      // one change with it: what following does, then where the list is.
+      const show = (on: boolean) => {
+        for (const button of follows) {
+          button.setAttribute("aria-pressed", String(on));
+          button.querySelector<HTMLElement>("[data-follow-text]")!.textContent = on
+            ? "Following"
+            : "Follow";
         }
-      } catch {
-        // The reader closed the share sheet, or copying was refused: nothing to do.
+        for (const words of document.querySelectorAll<HTMLElement>("[data-follow-when]")) {
+          words.hidden = (words.dataset.followWhen === "on") !== on;
+        }
+      };
+      const followed = readFollowed(kept.getItem(FOLLOWING_ENTRY));
+      const before = followed[slug];
+      if (before) {
+        const was = document.querySelector<HTMLElement>("[data-follow-was]");
+        if (was && before.status !== status) {
+          const tag = document.createElement("span");
+          tag.className = "new-tag";
+          tag.textContent = "Changed";
+          was.append(tag, ` When you last looked: ${before.status}. Now: ${status}.`);
+          was.hidden = false;
+        }
+        followed[slug] = { ...before, headline, status };
+        write(followed);
       }
-    });
+      show(Boolean(before));
+      for (const button of follows) {
+        button.addEventListener("click", () => {
+          const now = readFollowed(kept.getItem(FOLLOWING_ENTRY));
+          const on = !now[slug];
+          if (on) {
+            const today = new Date();
+            const two = (value: number) => String(value).padStart(2, "0");
+            now[slug] = {
+              headline,
+              status,
+              since: `${today.getFullYear()}-${two(today.getMonth() + 1)}-${two(today.getDate())}`,
+            };
+          } else {
+            delete now[slug];
+          }
+          write(now);
+          show(on);
+          // The bookmark lands in the pill that was pressed, not when a followed page is opened.
+          for (const other of follows) other.classList.toggle("landed", on && other === button);
+          if (said) {
+            said.textContent = on
+              ? "Following. Listed on the home page, in this browser only."
+              : "No longer following.";
+            setTimeout(() => (said.textContent = ""), 3000);
+          }
+        });
+        button.hidden = false;
+      }
+      for (const offer of document.querySelectorAll<HTMLElement>("[data-follow-offer]")) {
+        offer.hidden = false;
+      }
+    }
   }
 </script>

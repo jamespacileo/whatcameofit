@@ -5,13 +5,12 @@
 // The answer carries codes and registry fields only. The site words them.
 import { PAPER, STATED, agreeing } from "./details.mjs";
 import { isAName, nameKey, partsOf } from "./names.mjs";
+import { LIKELY_FROM } from "../src/lib/live-lookup.mjs";
 
 const REGISTRY_NUMBER = /\bNCT\d{8}\b/gi;
 // The most records one lookup will ask the model about.
 const MAX_CANDIDATES = 60;
 const MAX_RECORD_CHARACTERS = 1500;
-// From this score a record reads as a trial of the treatment for the condition.
-export const LIKELY_FROM = 0.5;
 // The most linked papers one lookup asks about.
 const MAX_PAPERS = 3;
 
@@ -19,7 +18,7 @@ const unique = (items) => [...new Set(items)];
 const idOf = (study) => study.protocolSection.identificationModule.nctId;
 
 /** A registry record as it is shown to the model: what decides a match comes first. */
-export function candidateText(study) {
+function candidateText(study) {
   const section = study.protocolSection ?? {};
   const described = {
     title: section.identificationModule?.briefTitle,
@@ -80,7 +79,7 @@ async function paperNumbers(page, papers) {
  *   page?: object, papers?: object }} given `page` is what the article's page says of
  *   itself (worker/page.mjs) and `papers` looks up the trial of a linked paper.
  */
-export async function lookUp({ text, model, registry, index, page, papers, image, pageUrl }) {
+export async function lookUp({ text, model, registry, index, page, papers, research, image, pageUrl }) {
   const numbers = unique([
     ...(text.match(REGISTRY_NUMBER) ?? []).map((number) => number.toUpperCase()),
     ...(page?.registryNumbers ?? []),
@@ -93,6 +92,15 @@ export async function lookUp({ text, model, registry, index, page, papers, image
     inTurn(numbers, (number) => registry.fetch(number)),
   ]);
   if (!reading.about_a_treatment || !reading.intervention) return nothingFound(reading, numbers);
+
+  // Metadata enrichment runs alongside trial lookup. It adds no model calls and
+  // cannot change clinical candidates, their scores, or a tracked claim's status.
+  const related = research ? Promise.resolve().then(() => research.search({
+    intervention: reading.intervention,
+    indication: reading.indication,
+    searchPhrases: reading.search_phrases ?? [],
+    organisations: [...(Array.isArray(reading.organisations) ? reading.organisations : []), reading.sponsor].filter(Boolean),
+  })).catch(() => ({ papers: [], organisations: [], availability: { openalex: "unavailable", ror: "unavailable" } })) : null;
 
   const names = unique([reading.intervention, ...(reading.other_names ?? []).filter(isAName)]);
   // Names the model knows the treatment by. They widen the search; they are not from the text.
@@ -182,5 +190,6 @@ export async function lookUp({ text, model, registry, index, page, papers, image
     tracked,
     candidates,
     unscored: found.length - candidates.length,
+    ...(related ? { research: await related } : {}),
   };
 }

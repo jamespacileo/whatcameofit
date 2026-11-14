@@ -1,8 +1,8 @@
 ---
-// A status in a list: its place on the path, its label in words, and the no-signal note.
+// A status in a list: its place on the path, its label, the same in plain words, and the no-signal note.
 import Clock from "@lucide/astro/icons/clock";
 import type { ExportedClaim } from "../lib/export";
-import { STATUS_LABELS, overlayText } from "../lib/status";
+import { STATUS_GLOSSES, STATUS_LABELS, overlayText } from "../lib/status";
 import StageTrack from "./StageTrack.astro";
 
 interface Props {
@@ -17,6 +17,7 @@ const overlay = overlayText(status.overlay_years);
   <StageTrack code={status.code} />
   <strong class="status-name">{STATUS_LABELS[status.code]}</strong>
 </span>
+<span class="gloss">{STATUS_GLOSSES[status.code]}</span>
 {
   overlay && (
     <span class="quiet-note">

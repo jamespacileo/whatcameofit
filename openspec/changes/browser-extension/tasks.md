@@ -53,3 +53,9 @@ The six-row live test passed rows 1 and 6. Rows 2–5 remain unverified: X requi
 - [ ] 7.5 Verify the combined shared-confidence build visually and through actual automatic popup searches on varied public articles and social posts.
 - [ ] 7.6 Rebuild version 0.2.0 packages after integration. Store submission remains paused pending acceptance of this changed behavior.
 
+
+## 8. The site's own pages (2026-11-13)
+
+- [x] 8.1 On a claim page of the site show that claim from the lookup file; on any other page of the site ask for an article. No page read, no registry search, no entry in the reader's list.
+- [x] 8.2 Cover both in the lookup and controller tests.
+- [ ] 8.3 Confirm in Safari and Chrome on the published site after the next extension build is installed.

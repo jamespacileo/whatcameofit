@@ -44,6 +44,19 @@ test("an untracked page carries a registry endpoint only where the site answers 
   assert.equal(stateFor("news.example.org/1", offering).live, undefined);
 });
 
+test("the site's own claim page shows that claim, and its other pages ask for an article", () => {
+  const own = { index: { ...index, live: "/api/lookup", claims: { one: { ...claim("Claim one"), page: "/one" }, two: claim("Claim two") } }, savedAt: null };
+  const state = stateFor("site.example/one?from=home", own, "site.example");
+  assert.equal(state.kind, "tracked");
+  assert.deepEqual(state.claims.map((c) => c.headline), ["Claim one"]);
+  // Never a registry search of the site itself.
+  assert.equal(state.live, undefined);
+  assert.equal(stateFor("site.example", own, "site.example").kind, "no-page");
+  assert.equal(stateFor("site.example/how-it-works", own, "site.example").kind, "no-page");
+  // Another host that merely starts with the same letters is an ordinary page.
+  assert.equal(stateFor("site.example.org/one", own, "site.example").kind, "untracked");
+});
+
 test("a tab that is not a web page asks for an article", () => {
   assert.equal(stateFor(null, loaded).kind, "no-page");
 });

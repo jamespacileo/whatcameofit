@@ -20,15 +20,23 @@ const letter = (domain || name).charAt(0).toUpperCase();
 ---
 
 <span class="outlet">
-  {
-    icon ? (
+  <span class="outlet-name">
+    <span class="outlet-icon" aria-hidden="true">
+      <span class="tile">{letter}</span>
+      {icon && (
       <img class="tile" src={icon} alt="" width="17" height="17" loading="lazy" decoding="async" />
-    ) : (
-      <span class="tile" aria-hidden="true">
-        {letter}
-      </span>
-    )
-  }
-  {link ? <a href={url}>{name}</a> : <span>{name}</span>}
+      )}
+    </span>
+    {link ? <a href={url}>{name}</a> : <span>{name}</span>}
+  </span>
   {domain && domain !== name && <span class="domain">{domain}</span>}
 </span>
+
+<script>
+  // A failed image leaves the same-sized letter tile, never a broken-image glyph.
+  for (const icon of document.querySelectorAll<HTMLImageElement>(".outlet-icon img")) {
+    const fallback = () => icon.remove();
+    icon.addEventListener("error", fallback, { once: true });
+    if (icon.complete && !icon.naturalWidth) fallback();
+  }
+</script>

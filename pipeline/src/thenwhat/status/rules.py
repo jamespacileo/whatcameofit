@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from thenwhat.domain import (
+    TRIAL_EVENT_TYPES,
     ClaimStatus,
     EventType,
     EvidenceStage,
@@ -49,14 +50,6 @@ class Derivation:
     overlay_years: int | None
     explaining_event_ids: tuple[int, ...]
 
-
-TRIAL_EVENT_TYPES = frozenset(
-    {
-        EventType.TRIAL_REGISTERED,
-        EventType.TRIAL_STATUS_CHANGE,
-        EventType.TRIAL_RESULTS_POSTED,
-    }
-)
 
 # A trial in one of these states no longer stands.
 ENDED_WITHOUT_RESULT = frozenset({TrialState.TERMINATED, TrialState.WITHDRAWN})

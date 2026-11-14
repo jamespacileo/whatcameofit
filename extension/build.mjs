@@ -64,6 +64,8 @@ const { Resvg } = fromSite("@resvg/resvg-js");
 // The mark, and the same mark drawn for toolbar sizes, where a finer drawing blurs.
 const mark = fs.readFileSync(path.join(site, "public/mark.svg"));
 const small = fs.readFileSync(path.join(site, "public/favicon.svg"));
+// The popup's navy head carries the reverse mark, as the site's masthead does.
+fs.copyFileSync(path.join(site, "public/mark-reverse.svg"), path.join(dist, "icons", "mark-reverse.svg"));
 const sizes = [16, 32, 48, 96, 128, 256];
 for (const size of sizes) {
   const image = new Resvg(size <= 32 ? small : mark, { fitTo: { mode: "width", value: size } }).render();
@@ -74,7 +76,7 @@ const icons = Object.fromEntries(sizes.map((size) => [size, `icons/${size}.png`]
 const manifest = {
   manifest_version: 3,
   name: SITE.name,
-  version: "0.8.0",
+  version: "0.9.1",
   description: "See what happened to the medical breakthrough in the article you are reading.",
   icons,
   action: {

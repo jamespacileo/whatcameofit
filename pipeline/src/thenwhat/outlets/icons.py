@@ -17,11 +17,16 @@ import httpx
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat import __version__
 from thenwhat.db.models import OutletIcon, SourceArticle
-from thenwhat.sources.base import MissingContact, SystemTime, Time
+from thenwhat.sources.base import (
+    CLIENT_NAME,
+    Pacer,
+    SystemTime,
+    Time,
+    require_contact,
+    user_agent,
+)
 
-ROBOTS_NAME = "thenwhat"
 MAX_ICON_BYTES = 100_000
 MAX_PAGE_BYTES = 2_000_000
 MAX_ROBOTS_BYTES = 500_000
@@ -58,6 +63,42 @@ def image_type(content: bytes) -> str | None:
     return None
 
 
+def is_blank_icon(content: bytes) -> bool:
+    """True for an ICO file whose every image is marked fully transparent.
+
+    Some sites answer /favicon.ico with such a placeholder and name their real icon
+    on the home page. Only the plain bitmap images an ICO holds are read; a file
+    that holds a PNG, or cannot be read, is not called blank.
+    """
+    if not content.startswith(b"\x00\x00\x01\x00") or len(content) < 6:
+        return False
+    count = int.from_bytes(content[4:6], "little")
+    if count == 0:
+        return False
+    for index in range(count):
+        entry = content[6 + 16 * index : 22 + 16 * index]
+        if len(entry) < 16:
+            return False
+        size = int.from_bytes(entry[8:12], "little")
+        offset = int.from_bytes(entry[12:16], "little")
+        image = content[offset : offset + size]
+        # A bitmap starts with a 40-byte header; its height counts the colour rows
+        # and the transparency mask's rows together.
+        if len(image) < 40 or int.from_bytes(image[0:4], "little") != 40:
+            return False
+        width = int.from_bytes(image[4:8], "little")
+        height = int.from_bytes(image[8:12], "little") // 2
+        mask_row = (width + 31) // 32 * 4
+        mask = image[len(image) - mask_row * height :]
+        if width == 0 or height == 0 or len(mask) != mask_row * height:
+            return False
+        for row in range(height):
+            bits = int.from_bytes(mask[row * mask_row : (row + 1) * mask_row], "big")
+            if bits >> (mask_row * 8 - width) != (1 << width) - 1:
+                return False
+    return True
+
+
 @dataclass(frozen=True, slots=True)
 class FetchedIcon:
     """What asking one outlet gave. With no usable icon, only the time is set."""
@@ -80,19 +121,19 @@ class IconFetcher:
         self._time = time or SystemTime()
         self._client = httpx.Client(transport=transport, timeout=30.0, follow_redirects=False)
         self._robots: dict[str, RobotFileParser | None] = {}
-        self._next_request_at: float | None = None
+        self._pacer = Pacer()
 
     def fetch(self, site: str) -> FetchedIcon:
         """The icon of the outlet at `site`, an address such as https://www.example.org.
 
-        /favicon.ico is tried first, then the icons the home page names.
+        /favicon.ico is tried first, then the icons the home page names. A blank
+        placeholder is passed over like a file that is not an image.
         """
-        if not self._contact:
-            raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
+        require_contact(self._contact)
         for url in self._candidates(site):
             content = self._get(url, MAX_ICON_BYTES)
             media_type = image_type(content) if content else None
-            if content and media_type:
+            if content and media_type and not is_blank_icon(content):
                 return FetchedIcon(self._time.now(), url, media_type, content)
         return FetchedIcon(self._time.now())
 
@@ -110,7 +151,7 @@ class IconFetcher:
             if check_robots and not self._allowed(url):
                 return None
             self._wait_for_turn()
-            headers = {"User-Agent": f"{ROBOTS_NAME}/{__version__} (mailto:{self._contact})"}
+            headers = {"User-Agent": user_agent(self._contact)}
             try:
                 with self._client.stream("GET", url, headers=headers) as response:
                     if response.is_redirect and "location" in response.headers:
@@ -134,12 +175,12 @@ class IconFetcher:
         if origin not in self._robots:
             self._robots[origin] = self._rules(origin)
         rules = self._robots[origin]
-        return rules is not None and rules.can_fetch(ROBOTS_NAME, url)
+        return rules is not None and rules.can_fetch(CLIENT_NAME, url)
 
     def _rules(self, origin: str) -> RobotFileParser | None:
         """The host's robots.txt. None when its rules could not be learned: do not fetch."""
         self._wait_for_turn()
-        headers = {"User-Agent": f"{ROBOTS_NAME}/{__version__} (mailto:{self._contact})"}
+        headers = {"User-Agent": user_agent(self._contact)}
         rules = RobotFileParser()
         try:
             response = self._client.get(
@@ -158,11 +199,7 @@ class IconFetcher:
         return rules
 
     def _wait_for_turn(self) -> None:
-        now = self._time.monotonic()
-        if self._next_request_at is not None and now < self._next_request_at:
-            self._time.sleep(self._next_request_at - now)
-            now = self._time.monotonic()
-        self._next_request_at = now + SECONDS_BETWEEN_REQUESTS
+        self._pacer.wait(self._time, SECONDS_BETWEEN_REQUESTS)
 
 
 class _IconLinks(HTMLParser):
@@ -214,7 +251,8 @@ def fetch_outlet_icons(
     """Ask each outlet that has a source article for its icon, once.
 
     A domain asked before is left alone, whatever the answer was. With `retry_missing`,
-    domains that had no usable icon are asked again.
+    domains that had no usable icon, or whose kept icon is a blank placeholder, are
+    asked again.
     """
     sites: dict[str, str] = {}
     for url in session.scalars(select(SourceArticle.url).order_by(SourceArticle.id)):
@@ -226,7 +264,8 @@ def fetch_outlet_icons(
     run = IconRun()
     for domain, site in sorted(sites.items()):
         row = session.get(OutletIcon, domain)
-        if row is not None and (row.content is not None or not retry_missing):
+        usable = row is not None and row.content is not None and not is_blank_icon(row.content)
+        if row is not None and (usable or not retry_missing):
             run.already_asked += 1
             continue
         fetched = fetcher.fetch(site)

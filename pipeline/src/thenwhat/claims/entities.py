@@ -5,17 +5,18 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import (
-    ClaimNotFound,
     DuplicateClaim,
     EntryError,
     InvalidField,
     MissingField,
-    find_claim,
+    claim_by_slug,
     name_key,
     slug_of_claim_covering,
+    tidy,
 )
-from thenwhat.db.models import Claim, Entity
-from thenwhat.domain import EntityType
+from thenwhat.db.models import Claim, Entity, EntityArticle, EntityMatch, SourceArticle
+from thenwhat.domain import EntityType, NamedBy
+from thenwhat.extract.names import is_a_search_phrase
 
 
 class EntityNotFound(EntryError):
@@ -26,17 +27,108 @@ class DuplicateEntity(EntryError):
     pass
 
 
-def _claim(session: Session, slug: str) -> Claim:
-    claim = find_claim(session, slug)
-    if claim is None:
-        raise ClaimNotFound(f"No claim has the slug '{slug}'.")
-    return claim
-
-
 def entities_of(session: Session, claim: Claim) -> list[Entity]:
     return list(
         session.scalars(select(Entity).where(Entity.claim_id == claim.id).order_by(Entity.id))
     )
+
+
+def people(session: Session) -> list[tuple[Entity, Claim]]:
+    """Every stored person entity with its claim, in claim order, for the operator to
+    look through. Only researchers belong; anyone else is deleted with `delete_people`."""
+    rows = session.execute(
+        select(Entity, Claim)
+        .join(Claim, Claim.id == Entity.claim_id)
+        .where(Entity.type == EntityType.PERSON)
+        .order_by(Claim.slug, Entity.id)
+    )
+    return [(entity, claim) for entity, claim in rows]
+
+
+def delete_people(session: Session, entity_ids: list[int]) -> list[Entity]:
+    """Delete the person entities the operator marked. Nothing is deleted unless every
+    id is a person: an intervention, paper or organisation is never removed this way."""
+    marked: list[Entity] = []
+    for entity_id in dict.fromkeys(entity_ids):
+        entity = session.get(Entity, entity_id)
+        if entity is None or entity.type is not EntityType.PERSON:
+            raise EntityNotFound(f"There is no person entity with id {entity_id}.")
+        marked.append(entity)
+    for entity in marked:
+        # A person is never looked up, so one has no match; any left by hand goes too.
+        for match in session.scalars(select(EntityMatch).where(EntityMatch.entity_id == entity.id)):
+            session.delete(match)
+        session.flush()
+        session.delete(entity)
+    session.flush()
+    return marked
+
+
+ORGANISATION_TYPES = (EntityType.INSTITUTION, EntityType.COMPANY)
+
+
+def _organisation_named(session: Session, claim: Claim, name: str) -> Entity | None:
+    """The claim's institution or company known by this name or synonym."""
+    wanted = name_key(name)
+    for entity in entities_of(session, claim):
+        known = {name_key(entity.name), *(name_key(synonym) for synonym in entity.synonyms)}
+        if entity.type in ORGANISATION_TYPES and wanted in known:
+            return entity
+    return None
+
+
+def _mark(entity: Entity, named_by: NamedBy) -> bool:
+    if named_by in entity.named_by:
+        return False
+    entity.named_by = [*entity.named_by, named_by.value]
+    return True
+
+
+def note_named_organisation(
+    session: Session, claim: Claim, article: SourceArticle, name: str, type: EntityType
+) -> Entity:
+    """Record that a source article named an institution or company: as a new entity, or
+    on the one the claim already has under that name, which gains the article's mark."""
+    entity = _organisation_named(session, claim, name)
+    if entity is None:
+        entity = Entity(claim_id=claim.id, type=type, name=tidy(name))
+        session.add(entity)
+    else:
+        _mark(entity, NamedBy.ARTICLE)
+    session.flush()
+    if session.get(EntityArticle, (entity.id, article.id)) is None:
+        session.add(EntityArticle(entity_id=entity.id, source_article_id=article.id))
+        session.flush()
+    return entity
+
+
+def note_sponsor(session: Session, claim: Claim, name: str, *, industry: bool) -> Entity | None:
+    """Record a trial's lead sponsor as an organisation of the claim, named by a registry
+    record: a company when the registry classes it as industry, else an institution.
+    Openspec entity-resolution, "A trial's organisation sponsor becomes an entity".
+
+    An institution or company the claim already has under that name gains the mark and
+    is not recorded twice. Returns the entity this call created or marked, or None when
+    nothing changed. The caller passes only a sponsor that is not a person.
+    """
+    name = tidy(name)
+    if not name:
+        return None
+    entity = _organisation_named(session, claim, name)
+    if entity is not None:
+        if not _mark(entity, NamedBy.REGISTRY):
+            return None
+        session.flush()
+        return entity
+    entity = Entity(
+        claim_id=claim.id,
+        type=EntityType.COMPANY if industry else EntityType.INSTITUTION,
+        name=name,
+        named_by=[NamedBy.REGISTRY.value],
+    )
+    session.add(entity)
+    session.flush()
+    return entity
 
 
 def _find(session: Session, claim: Claim, name: str, type: EntityType | None = None) -> Entity:
@@ -53,8 +145,8 @@ def _find(session: Session, claim: Claim, name: str, type: EntityType | None = N
 def add_entity(
     session: Session, claim_slug: str, *, type: EntityType, name: str, doi: str | None = None
 ) -> Entity:
-    claim = _claim(session, claim_slug)
-    name = " ".join(name.split())
+    claim = claim_by_slug(session, claim_slug)
+    name = tidy(name)
     if not name:
         raise MissingField("name is required.")
     if type is EntityType.INTERVENTION:
@@ -75,9 +167,9 @@ def add_entity(
 
 def add_synonym(session: Session, claim_slug: str, entity_name: str, synonym: str) -> Entity:
     """Record another name for an entity. Registry searches use every name."""
-    claim = _claim(session, claim_slug)
+    claim = claim_by_slug(session, claim_slug)
     entity = _find(session, claim, entity_name)
-    synonym = " ".join(synonym.split())
+    synonym = tidy(synonym)
     if not synonym:
         raise MissingField("synonym is required.")
     known = {name_key(entity.name), *(name_key(existing) for existing in entity.synonyms)}
@@ -92,9 +184,34 @@ def add_synonym(session: Session, claim_slug: str, entity_name: str, synonym: st
     return entity
 
 
+def add_search_phrase(session: Session, claim_slug: str, entity_name: str, phrase: str) -> Entity:
+    """Record words a registry would use for an intervention that has no product name.
+    They are searched for within the claim's indication and never shown as a name."""
+    claim = claim_by_slug(session, claim_slug)
+    entity = _find(session, claim, entity_name)
+    if entity.type is not EntityType.INTERVENTION:
+        raise InvalidField("Only an intervention has search phrases.")
+    phrase = tidy(phrase)
+    if not phrase:
+        raise MissingField("phrase is required.")
+    if not is_a_search_phrase(phrase):
+        raise InvalidField(
+            f"'{phrase}' says what kind of thing it is, not which. Give the words a"
+            " registry would file it under."
+        )
+    known = {
+        name_key(entity.name),
+        *(name_key(existing) for existing in [*entity.synonyms, *entity.search_phrases]),
+    }
+    if name_key(phrase) not in known:
+        entity.search_phrases = [*entity.search_phrases, phrase]
+        session.flush()
+    return entity
+
+
 def set_origin_paper(session: Session, claim_slug: str, paper_name: str) -> Entity:
     """Mark one of the claim's papers as the origin paper, replacing any earlier one."""
-    claim = _claim(session, claim_slug)
+    claim = claim_by_slug(session, claim_slug)
     paper = _find(session, claim, paper_name, EntityType.PAPER)
     for entity in entities_of(session, claim):
         if entity.is_origin_paper and entity is not paper:

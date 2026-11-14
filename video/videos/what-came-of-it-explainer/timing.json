@@ -1,0 +1,79 @@
+{
+  "total_duration": 111.966,
+  "fps": 30,
+  "total_frames": 3359,
+  "speech_rate": "+8%",
+  "voice": "en-GB-RyanNeural",
+  "sections": [
+    {
+      "name": "hero",
+      "label": "hero",
+      "start_time": 0.0,
+      "end_time": 14.33,
+      "duration": 14.33,
+      "start_frame": 0,
+      "duration_frames": 430,
+      "is_silent": false
+    },
+    {
+      "name": "claim",
+      "label": "claim",
+      "start_time": 14.33,
+      "end_time": 32.95,
+      "duration": 18.621,
+      "start_frame": 430,
+      "duration_frames": 559,
+      "is_silent": false
+    },
+    {
+      "name": "records",
+      "label": "records",
+      "start_time": 32.95,
+      "end_time": 50.831,
+      "duration": 17.88,
+      "start_frame": 989,
+      "duration_frames": 536,
+      "is_silent": false
+    },
+    {
+      "name": "rules",
+      "label": "rules",
+      "start_time": 50.831,
+      "end_time": 69.741,
+      "duration": 18.91,
+      "start_frame": 1525,
+      "duration_frames": 567,
+      "is_silent": false
+    },
+    {
+      "name": "lookup",
+      "label": "lookup",
+      "start_time": 69.741,
+      "end_time": 82.401,
+      "duration": 12.66,
+      "start_frame": 2092,
+      "duration_frames": 380,
+      "is_silent": false
+    },
+    {
+      "name": "extension",
+      "label": "extension",
+      "start_time": 82.401,
+      "end_time": 99.969,
+      "duration": 17.568,
+      "start_frame": 2472,
+      "duration_frames": 527,
+      "is_silent": false
+    },
+    {
+      "name": "outro",
+      "label": "outro",
+      "start_time": 99.969,
+      "end_time": 111.966,
+      "duration": 11.997,
+      "start_frame": 2999,
+      "duration_frames": 360,
+      "is_silent": false
+    }
+  ]
+}

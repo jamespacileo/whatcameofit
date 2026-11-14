@@ -11,6 +11,24 @@
       "port": 4331
     },
     {
+      "name": "site-published",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd site && EXPORT_FILE=data/published-export.json npx astro dev --port 4334"
+      ],
+      "port": 4334
+    },
+    {
+      "name": "site-export",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd site && npx astro dev --port 4337"
+      ],
+      "port": 4337
+    },
+    {
       "name": "site-built",
       "runtimeExecutable": "sh",
       "runtimeArgs": [
@@ -18,6 +36,23 @@
         "cd site && npx astro preview --port 4332"
       ],
       "port": 4332
+    },
+    {
+      "name": "lookup-dev",
+      "runtimeExecutable": "make",
+      "runtimeArgs": [
+        "lookup-dev"
+      ],
+      "port": 8787
+    },
+    {
+      "name": "video-studio",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd video && npx remotion studio src/remotion/index.ts --public-dir videos/what-came-of-it-explainer/ --port 3123 --no-open"
+      ],
+      "port": 3123
     },
     {
       "name": "extension-states",
@@ -32,6 +67,29 @@
         "127.0.0.1"
       ],
       "port": 4333
+    },
+    {
+      "name": "site-extension",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd site && CHROME_STORE_URL=https://example.org/chrome-listing SAFARI_STORE_URL=https://example.org/safari-listing EXPORT_FILE=data/published-export.json npx astro dev --port 4336"
+      ],
+      "port": 4336
+    },
+    {
+      "name": "mocks",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4335",
+        "--directory",
+        ".impeccable/mocks",
+        "--bind",
+        "127.0.0.1"
+      ],
+      "port": 4335
     }
   ]
 }

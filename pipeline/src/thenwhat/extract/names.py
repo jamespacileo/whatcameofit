@@ -88,3 +88,15 @@ def is_a_name(text: str) -> bool:
     has_code = any(any(character.isdigit() for character in word) for word in words)
     ends_in_a_kind = len(words) > 1 and words[-1].lower() in KINDS
     return has_code or not ends_in_a_kind
+
+
+def is_a_search_phrase(text: str) -> bool:
+    """Whether the text says which treatment: words a registry would file it under.
+
+    "The device" or "new treatment" says only what kind of thing it is. Once the words
+    that open a description are set aside, something other than a kind must remain.
+    """
+    words = [word.lower() for word in text.split()]
+    while words and words[0] in OPENERS:
+        words = words[1:]
+    return any(word not in KINDS for word in words)

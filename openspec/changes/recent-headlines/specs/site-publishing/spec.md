@@ -3,7 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: Recent reports on the home page
-The home page SHALL list the most recently published source articles of published claims, newest first, at most ten. Each entry SHALL show the article's title as the outlet wrote it, marked as a quotation, with the outlet, the publication date and the claim's current status. The title SHALL link to the claim page and the outlet SHALL link to the article.
+The home page SHALL list the most recently published source articles of published claims, newest first (ten at a time: see change `browse-lists`). Each entry SHALL show the article's title as the outlet wrote it, marked as a quotation, with the outlet, the publication date and the claim's current status. The title SHALL link to the claim page and the outlet SHALL link to the article.
 
 #### Scenario: Reports from several claims
 - **WHEN** three published claims have four source articles between them
@@ -17,6 +17,21 @@ The home page SHALL list the most recently published source articles of publishe
 - **WHEN** a claim has not been approved in review
 - **THEN** none of its articles appears on the home page
 
+### Requirement: A claim page names the reports it follows
+A claim page SHALL show, directly under its title and above the status, the claim's source articles, newest first, at most three: each article's title as the outlet wrote it, marked as a quotation and linked to the article, with the outlet and the publication date. When the claim has more than three, the page SHALL link to the dated record of all of them. Where the export carries the claim's matches, the status panel SHALL state how many registry records count toward the status and how many are possible, linked to the list of matched records, and that list SHALL be present, saying that no record matched, when there is none.
+
+#### Scenario: Reader follows a headline from the home page
+- **WHEN** a reader opens a claim page from a headline on the home page
+- **THEN** the same headline, its outlet and its date are shown under the page's title, before the status
+
+#### Scenario: Claim with matched records
+- **WHEN** a claim has three approved matches and two pending candidates
+- **THEN** the status panel says three registry records matched and two are possible, and links to the list
+
+#### Scenario: Claim with no matched record
+- **WHEN** the export carries an empty list of matches for a claim
+- **THEN** the status panel says no registry record matched, and the list of matched records says the registries were searched and none matched
+
 ### Requirement: Topics are filed under groups
 The export SHALL carry, for each vertical, the group it is configured under, or none. When any listed topic has a group, the topic directory SHALL list topics under their groups' names, groups in alphabetical order and topics in alphabetical order within each, with topics that have no group last; its jump links SHALL lead to the groups, and its filter SHALL match a group's name as well as a topic's. When no listed topic has a group, the directory SHALL list topics under their first letters. The site SHALL NOT assign a topic to a group itself.
 
@@ -29,9 +44,9 @@ The export SHALL carry, for each vertical, the group it is configured under, or 
 - **THEN** the topic directory lists topics under their first letters, with a jump link for each letter
 
 ### Requirement: Outlets are shown with their own icon
-The pipeline SHALL fetch, at most once per outlet domain, the small icon that the outlet's own site serves, and store the image with its address and fetch time. An outlet domain is the host of a source article's URL without a leading `www.`. Before any request to a host the pipeline SHALL read that host's robots.txt and SHALL send nothing further when the rules refuse it or cannot be read. Every request SHALL identify the client with the contact address, and requests SHALL be spaced at least one second apart. Only a raster image (PNG, ICO, GIF, JPEG or WebP, told from the file's own bytes) of at most 100,000 bytes SHALL be stored; a domain with no such image SHALL be recorded as asked and not asked again unless the operator asks for a retry.
+The pipeline SHALL fetch, at most once per outlet domain, the small icon that the outlet's own site serves, and store the image with its address and fetch time. An outlet domain is the host of a source article's URL without a leading `www.`. Before any request to a host the pipeline SHALL read that host's robots.txt and SHALL send nothing further when the rules refuse it or cannot be read. Every request SHALL identify the client with the contact address, and requests SHALL be spaced at least one second apart. Only a raster image (PNG, ICO, GIF, JPEG or WebP, told from the file's own bytes) of at most 100,000 bytes SHALL be stored; a domain with no such image SHALL be recorded as asked and not asked again unless the operator asks for a retry. An ICO file whose every image is fully transparent is a blank placeholder: it SHALL NOT count as an icon, the icons the home page names SHALL be tried after it, and one stored earlier SHALL be left out of the export and asked for again on a retry. The export made for publishing SHALL first ask the outlets not yet asked, so an outlet added since the last run is not left without its icon.
 
-The export SHALL carry the stored image itself, as a data URI, for each outlet domain that has an exported article and an icon, and SHALL NOT carry an address for the site to fetch. Wherever the site names an outlet it SHALL show that icon, served as a file of the site, and SHALL draw a letter tile when the export has none. No page SHALL request an icon, or anything else it displays, from another host.
+The export SHALL carry the stored image itself, as a data URI, for each outlet domain that has an exported article and an icon, and SHALL NOT carry an address for the site to fetch. Wherever the site names an outlet it SHALL show that icon, served as a file of the site, SHALL show the icon of the nearest parent domain when the export has none for a subdomain (`ca.news.example.com` shows the icon of `news.example.com`, else of `example.com`), and SHALL draw a letter tile when the export has neither. No page SHALL request an icon, or anything else it displays, from another host.
 
 #### Scenario: Outlet with an icon
 - **WHEN** an outlet's robots.txt allows it and its site serves a small raster icon
@@ -45,6 +60,18 @@ The export SHALL carry the stored image itself, as a data URI, for each outlet d
 - **WHEN** the file an outlet serves is larger than the cap, or is not a raster image
 - **THEN** it is not stored
 
+#### Scenario: Blank placeholder icon
+- **WHEN** an outlet's `/favicon.ico` is an ICO file with every pixel transparent and its home page names a raster icon
+- **THEN** the named icon is stored and the placeholder is not
+
+#### Scenario: Blank placeholder stored earlier
+- **WHEN** a blank placeholder is already stored for an outlet
+- **THEN** the export leaves that outlet out, and a retry asks the outlet again
+
+#### Scenario: Outlet added since the last run
+- **WHEN** the export for publishing is made and a source article's outlet has never been asked
+- **THEN** that outlet is asked for its icon before the export is written
+
 #### Scenario: Outlet asked before
 - **WHEN** the icons command runs again
 - **THEN** no request is sent for a domain that was asked before
@@ -56,6 +83,10 @@ The export SHALL carry the stored image itself, as a data URI, for each outlet d
 #### Scenario: Outlet with a stored icon
 - **WHEN** a page names an outlet whose icon is in the export
 - **THEN** the page shows the icon from a file of the site itself
+
+#### Scenario: Outlet on a subdomain
+- **WHEN** a page names an outlet on a subdomain with no icon in the export, and the export has its parent domain's icon
+- **THEN** the page shows the parent domain's icon
 
 #### Scenario: Outlet with no stored icon
 - **WHEN** a page names an outlet with no icon in the export

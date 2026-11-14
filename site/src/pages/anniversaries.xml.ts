@@ -3,17 +3,10 @@
 import type { APIRoute } from "astro";
 import { SITE } from "../../site.config.mjs";
 import { recentAnniversaries } from "../lib/anniversaries";
+import { escapeXml } from "../lib/changes";
 import { data } from "../lib/export";
 import { STATUS_LABELS } from "../lib/status";
 import { formatDate } from "../lib/timetable";
-
-const escape = (text: string) =>
-  text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
 
 export const GET: APIRoute = () => {
   const items = recentAnniversaries(data.claims, data.generated_at);
@@ -26,11 +19,11 @@ export const GET: APIRoute = () => {
       `${years} ${years === 1 ? "year" : "years"} on: ${STATUS_LABELS[claim.status.code]}.`;
     return [
       "  <entry>",
-      `    <title>${escape(claim.headline)}</title>`,
-      `    <id>${escape(`${link}#anniversary-${date}`)}</id>`,
-      `    <link href="${escape(link)}"/>`,
+      `    <title>${escapeXml(claim.headline)}</title>`,
+      `    <id>${escapeXml(`${link}#anniversary-${date}`)}</id>`,
+      `    <link href="${escapeXml(link)}"/>`,
       `    <updated>${date}T00:00:00Z</updated>`,
-      `    <summary>${escape(summary)}</summary>`,
+      `    <summary>${escapeXml(summary)}</summary>`,
       "  </entry>",
     ].join("\n");
   });
@@ -38,10 +31,10 @@ export const GET: APIRoute = () => {
   const xml = [
     '<?xml version="1.0" encoding="utf-8"?>',
     '<feed xmlns="http://www.w3.org/2005/Atom">',
-    `  <title>${escape(`${SITE.name} Anniversaries`)}</title>`,
-    `  <id>${escape(`${SITE.url}/anniversaries.xml`)}</id>`,
-    `  <link rel="self" href="${escape(`${SITE.url}/anniversaries.xml`)}"/>`,
-    `  <link href="${escape(`${SITE.url}/anniversaries`)}"/>`,
+    `  <title>${escapeXml(`${SITE.name} Anniversaries`)}</title>`,
+    `  <id>${escapeXml(`${SITE.url}/anniversaries.xml`)}</id>`,
+    `  <link rel="self" href="${escapeXml(`${SITE.url}/anniversaries.xml`)}"/>`,
+    `  <link href="${escapeXml(`${SITE.url}/anniversaries`)}"/>`,
     `  <updated>${feedUpdated}</updated>`,
     ...entries,
     "</feed>",

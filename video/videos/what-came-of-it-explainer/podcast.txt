@@ -1,0 +1,20 @@
+[SECTION:hero]
+New drug to regenerate lost teeth. Multiplying teeth. Regrowing teeth. Headlines like these travel fast. The follow-up rarely does. So, years later: what came of it?
+
+[SECTION:claim]
+{What came of it|“What came of it?”} is a public record of what followed reported medical breakthroughs. Each claim gets one page: one treatment, for one condition. At the top is where it stands now. This one, first reported in 2021, has reached a Phase 1 trial: an early trial in people, checking safety.
+
+[SECTION:records]
+Underneath are the dated records that say so. A trial registered in October 2024. The same trial shown as complete in October 2025. Every record links to the registry that holds it, so you can check it yourself. And what was promised sits beside what was recorded.
+
+[SECTION:rules]
+The status is set by fixed rules, from public registry records. No editor decides it, and no AI model does either. When nothing new has been recorded for years, the page says exactly that: no signal for ten years. That describes the records. It is not a verdict on the treatment.
+
+[SECTION:lookup]
+Seen a headline shared again? Paste the article's link into the box on the home page. If the claim is tracked, the answer comes back at once. The link is compared inside your browser, and sent nowhere.
+
+[SECTION:extension]
+There is also a browser extension, for Chrome and Safari. Open it on an article, and it shows the tracked claim's status right there. If the article is not tracked, it can search the trial registries live. Those results are marked automatic and unreviewed, and every match shows its confidence score.
+
+[SECTION:outro]
+No medical advice. No verdicts. Only what the records show, and when. What came of it? Find out, at {what came of it dot com|whatcameofit.com}.

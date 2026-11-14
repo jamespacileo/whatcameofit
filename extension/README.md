@@ -8,6 +8,8 @@ For a page that is not tracked, and only after the reader enables automatic sear
 
 The extension reads nothing as you browse with the popup closed. A reviewed match and a non-web tab start no model request. Repeated actions share an in-flight lookup, and closing the popup cancels its pending fetch. Each candidate is grouped in a card with its registry link, phase, state, identifier and model-estimated match confidence. Confidence concerns the match to the report.
 
+Live answers can also include related paper metadata from OpenAlex and organisation identities from ROR, in collapsed sections. These are unreviewed search results, not evidence of effectiveness or an organisation's involvement. Only derived treatment/condition terms and explicitly named organisations go to these providers; page addresses, screenshots and article text do not. Public metadata is cached for seven days. Both integrations stay within their free allowances and can be unavailable without blocking the trial result.
+
 Following and recent checks work in Safari. Background notifications and extension reminder choices are offered only when the browser provides its notifications API; Safari currently does not. Its background refresh still updates followed claims for the next popup opening. Claim pages also offer calendar reminders.
 
 A post on X links out only through X's shortener (`t.co`), which the site's server may not follow. The popup opens such a link in the browser, as a click would, to learn which article it leads to, and sends that address. That is why the extension has permission for `t.co` as well as for the site.
@@ -57,6 +59,8 @@ To see what went wrong when something does, right-click inside the popup, choose
 
 To have an agent with computer use do this in your place, hand it [agent-test-brief.md](agent-test-brief.md).
 
+For a wider set of real pages (posts on each platform, paywalled, refused and non-English articles, pages that should not be read as treatment reports), with what the lookup service answered on each, see [test-corpus](test-corpus/README.md).
+
 ## Safari
 
 ```sh
@@ -75,6 +79,22 @@ For the local registry-search service, use `SITE_URL=http://localhost:8787 make 
 
 App Store distribution needs Apple Developer Program access, a registered bundle identifier and distribution signing. The script's unsigned build is for local testing. The production `extension/dist` resources can also be zipped for Apple's Safari Web Extension Packager in App Store Connect. Store submission and production screenshots remain separate release steps.
 
+### App Store release checks
+
+Use a stable Xcode release that App Store Connect accepts. A local build succeeding with a beta SDK does not mean Apple will accept its upload. On a machine with both installations, select the stable toolchain for **both conversion and archiving**, without changing the machine's global selection:
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer make extension-safari
+```
+
+Open the generated project with that same stable Xcode. Set the development team on the containing app and extension, select automatic signing, and use a new build number for both targets. Verify that their release versions match the extension manifest and their deployment targets remain macOS 12.0. Set the containing app's category to Reference and declare `ITSAppUsesNonExemptEncryption = NO` in both targets' Info.plist while the app uses only the existing HTTPS networking. Reassess the encryption declaration if that changes. The converter regenerates these files, so apply release settings after conversion.
+
+Archive the Release scheme for a generic Mac, validate its signatures and bundled extension resources, then distribute through App Store Connect. Wait for processing and explicitly select the new build in the store version; uploading does not replace an already selected build. Update the description and review instructions, inspect the privacy disclosures against actual data flows, and use screenshots of the installed release. Verify **Waiting for Review** after submitting.
+
+For 0.9.0 (9), Apple rejected an archive made with Xcode 27.2 beta (27B5019j), then accepted the same release built with stable Xcode 27.2 (27B52). The stable archive's extension resources matched the installed 0.9.0 build. A live Safari check of the University of Nottingham's `clinical-trial-tourettes` article returned five OpenAlex papers and two ROR identities; reopening reused the previous result. No new App Privacy category was needed for the derived searches, which are covered by the existing Search History disclosure.
+
+As of 13 November 2026, 0.9.0 (9) is Waiting for Review. The [0.9.1 preview](https://github.com/jamespacileo/whatcameofit/releases/tag/v0.9.1-preview.1) adds the saved-check wording correction and was installed and tested locally in Safari. It does not replace the submitted App Store build. The release provides extension resources and an Xcode project requiring your own signing; Chrome registration remains parked. See the [release verification](../openspec/changes/release-polish/verification.md) for test and deployment evidence.
+
 ## Layout
 
 - `src/lookup.js`: decides what to show. Pure, tested in `tests/`.
@@ -83,7 +103,15 @@ App Store distribution needs Apple Developer Program access, a registered bundle
 - `src/short-links.js`: learns where a link through X's shortener leads. Tested in `tests/`.
 - `src/controller.js`: owns one popup's automatic lookup, cache, cancellation and explicit retries.
 - `src/popup.js`: connects the controller to the active tab, shared readers and rendered view.
+- `src/kept.js`: the recently checked pages and followed claims the browser keeps. Pure, tested in `tests/`.
+- `src/results.js`: reuse of a previous answer for up to 24 hours. Pure.
+- `src/visual.js`: reads the visible content and captures the screenshot a visual lookup sends.
+- `src/watch.js`: decides which followed claims to tell the reader about and which reminders are due. Pure, tested in `tests/`.
+- `src/background.js`: the twice-daily check; wires `watch.js` to alarms and notifications.
+- `src/icons.js`: the icons the popup draws.
 - `build.mjs`: copies the above with what is shared with the site (the address comparison, how an address is told from a post, the page reader, the wording of an answer and the notices), the site's face and icon, and writes the manifest.
+- `safari.sh`: wraps the built extension in the Safari app; `sync-brand-icons.mjs` refreshes its artwork.
+- `test-corpus/`: public pages for checking lookups by hand (its own README).
 - `dev/`: a page showing every popup state side by side. `node extension/build.mjs --dev`, then serve `extension/dist` and open `states.html`.
 
 Tests run with `node --test extension/tests/*.test.mjs` after `npm --prefix site ci` (also part of `make check`). Synthetic YouTube fixtures use LinkeDOM to exercise real selectors without live network calls. The explicit glob discovers the test files on Node 24.

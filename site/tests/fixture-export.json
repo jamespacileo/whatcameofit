@@ -7,6 +7,14 @@
     {
       "name": "ClinicalTrials.gov",
       "url": "https://clinicaltrials.gov/"
+    },
+    {
+      "name": "Medical Subject Headings (MeSH)",
+      "url": "https://www.nlm.nih.gov/mesh/meshhome.html"
+    },
+    {
+      "name": "Research Organization Registry (ROR)",
+      "url": "https://ror.org/"
     }
   ],
   "verticals": [
@@ -60,14 +68,16 @@
           "outlet": "Example Outlet 1",
           "title": "Example report 1",
           "published_date": "2018-05-01",
-          "archive_url": null
+          "archive_url": null,
+          "published_by": null
         },
         {
           "url": "https://news.example.org/2",
           "outlet": "Example Outlet 2",
           "title": "Example report 2",
           "published_date": "2019-05-02",
-          "archive_url": "https://web.archive.org/web/2019/https://news.example.org/2"
+          "archive_url": "https://web.archive.org/web/2019/https://news.example.org/2",
+          "published_by": null
         }
       ],
       "promises": [
@@ -89,10 +99,47 @@
           "trial_id": null,
           "trial_phases": [],
           "trial_state": null,
-          "regulatory_outcome": null
+          "regulatory_outcome": null,
+          "confidence": 1
         }
       ],
-      "failure_flags": []
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "crossref",
+          "external_id": "10.5555/synthetic.1",
+          "url": "https://doi.org/10.5555/synthetic.1",
+          "score": 1,
+          "state": "approved",
+          "reading": null,
+          "decided_by": "seed",
+          "summary": "A synthetic paper about the quiet claim"
+        }
+      ],
+      "background": [],
+      "reported_statements": [
+        {
+          "text": "Synthetic statement: the treatment regrew tissue in mice.",
+          "kind": "effect",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "animals",
+          "confidence": 0.9,
+          "article_url": "https://news.example.org/1",
+          "read_on": "2026-11-14"
+        },
+        {
+          "text": "Synthetic statement: no harm was seen in the mice.",
+          "kind": "safety",
+          "firmness": "fact",
+          "speaker": "researcher",
+          "basis": "animals",
+          "confidence": 0.84,
+          "article_url": "https://news.example.org/2",
+          "read_on": "2026-11-14"
+        }
+      ],
+      "organisations": []
     },
     {
       "slug": "phase-claim",
@@ -133,11 +180,12 @@
       },
       "articles": [
         {
-          "url": "https://news.example.org/3",
+          "url": "https://uk.news.example.org/3",
           "outlet": "Example Outlet 3",
           "title": "Example report 3",
           "published_date": "2019-05-03",
-          "archive_url": null
+          "archive_url": null,
+          "published_by": null
         }
       ],
       "promises": [],
@@ -155,7 +203,8 @@
             "phase_2"
           ],
           "trial_state": null,
-          "regulatory_outcome": null
+          "regulatory_outcome": null,
+          "confidence": 1
         },
         {
           "id": 3,
@@ -170,7 +219,8 @@
             "phase_2"
           ],
           "trial_state": "started",
-          "regulatory_outcome": null
+          "regulatory_outcome": null,
+          "confidence": 1
         },
         {
           "id": 4,
@@ -183,7 +233,8 @@
           "trial_id": null,
           "trial_phases": [],
           "trial_state": null,
-          "regulatory_outcome": null
+          "regulatory_outcome": null,
+          "confidence": 0.6
         },
         {
           "id": 5,
@@ -198,7 +249,8 @@
             "phase_2"
           ],
           "trial_state": null,
-          "regulatory_outcome": null
+          "regulatory_outcome": null,
+          "confidence": 1
         }
       ],
       "failure_flags": [],
@@ -222,6 +274,510 @@
           "reading": "other_indication",
           "decided_by": null,
           "summary": "NCT00000077: Synthetic trial of phase-claim agent in another condition. Phase 1. Recruiting."
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT00000002",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://registry.example/record/5",
+          "title": "Synthetic trial of phase-claim agent in example condition",
+          "phases": [
+            "phase_2"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-10-03T08:00:00Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 83,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "double",
+            "comparators": [
+              "placebo"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Synthetic Institute",
+              "kind": "other"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Change in synthetic score",
+                "time_frame": "12 weeks"
+              },
+              {
+                "measure": "Second synthetic measure",
+                "time_frame": null
+              },
+              {
+                "measure": "Third synthetic measure",
+                "time_frame": "24 weeks"
+              }
+            ],
+            "primary_outcomes_total": 5,
+            "why_stopped": null,
+            "results": {
+              "outcomes_total": 2,
+              "outcomes": [
+                {
+                  "title": "Change in synthetic score",
+                  "time_frame": "12 weeks",
+                  "unit": "points on a scale",
+                  "measure": "mean",
+                  "spread_kind": "Standard Deviation",
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "Synthetic placebo",
+                      "analysed": "41",
+                      "value": "3.4",
+                      "spread": "1.1",
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "Synthetic treatment",
+                      "analysed": "42",
+                      "value": "1.9",
+                      "spread": "1.3",
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": [
+                    {
+                      "groups": [
+                        "Synthetic placebo",
+                        "Synthetic treatment"
+                      ],
+                      "p_value": "0.03",
+                      "method": "t-test, 2 sided",
+                      "test": "superiority"
+                    }
+                  ]
+                },
+                {
+                  "title": "Synthetic measure at four visits",
+                  "time_frame": "24 weeks",
+                  "unit": "participants",
+                  "measure": "count_of_participants",
+                  "spread_kind": null,
+                  "rows": 4,
+                  "groups": [],
+                  "comparisons": []
+                }
+              ]
+            }
+          },
+          "papers": [
+            "10.5555/synthetic.origin",
+            "10.5555/synthetic.results"
+          ]
+        },
+        {
+          "trial_id": "NCT00000030",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://registry.example/trial/30",
+          "title": "Synthetic later trial",
+          "phases": [
+            "phase_3"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-10-03T08:00:00Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 1200,
+              "basis": "planned"
+            },
+            "allocation": null,
+            "masking": null,
+            "comparators": [],
+            "healthy_volunteers": null,
+            "age_groups": [],
+            "sponsor": {
+              "name": null,
+              "kind": "individual"
+            },
+            "primary_outcomes": [],
+            "primary_outcomes_total": 0,
+            "why_stopped": null,
+            "results": null
+          },
+          "papers": [
+            "pmid:90000003"
+          ]
+        },
+        {
+          "trial_id": "jRCT0000000011",
+          "source_name": "jRCT",
+          "url": "https://registry.example/trial/11",
+          "title": null,
+          "phases": [
+            "phase_1"
+          ],
+          "state": "not_started",
+          "facts_as_of": null,
+          "facts": null,
+          "papers": []
+        },
+        {
+          "trial_id": "jRCT0000000012",
+          "source_name": "jRCT",
+          "url": "https://registry.example/trial/12",
+          "title": null,
+          "phases": [
+            "phase_1"
+          ],
+          "state": "not_started",
+          "facts_as_of": null,
+          "facts": null,
+          "papers": []
+        },
+        {
+          "trial_id": "jRCT0000000013",
+          "source_name": "jRCT",
+          "url": "https://registry.example/trial/13",
+          "title": null,
+          "phases": [
+            "phase_1"
+          ],
+          "state": "not_started",
+          "facts_as_of": null,
+          "facts": null,
+          "papers": []
+        },
+        {
+          "trial_id": "jRCT0000000014",
+          "source_name": "jRCT",
+          "url": "https://registry.example/trial/14",
+          "title": null,
+          "phases": [
+            "phase_1"
+          ],
+          "state": "not_started",
+          "facts_as_of": null,
+          "facts": null,
+          "papers": []
+        },
+        {
+          "trial_id": "jRCT0000000015",
+          "source_name": "jRCT",
+          "url": "https://registry.example/trial/15",
+          "title": null,
+          "phases": [
+            "phase_1"
+          ],
+          "state": "not_started",
+          "facts_as_of": null,
+          "facts": null,
+          "papers": []
+        }
+      ],
+      "papers": [
+        {
+          "identifier": "10.5555/synthetic.origin",
+          "url": "https://doi.org/10.5555/synthetic.origin",
+          "record_url": "https://index.example/MED/1001",
+          "roles": [
+            {
+              "role": "origin",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            },
+            {
+              "role": "trial_result",
+              "trial_id": "NCT00000002",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-10-03T08:00:00Z",
+          "facts": {
+            "title": "A synthetic compound in a mouse model",
+            "journal": "Journal of Synthetic Trials",
+            "year": 2019,
+            "kinds": [
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": [
+              "animals"
+            ]
+          }
+        },
+        {
+          "identifier": "10.5555/synthetic.results",
+          "url": "https://doi.org/10.5555/synthetic.results",
+          "record_url": "https://index.example/MED/1002",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT00000002",
+              "listed": "listed_by_sponsor",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-10-03T08:00:00Z",
+          "facts": {
+            "title": "Synthetic compound against placebo: a randomised trial",
+            "journal": "Journal of Synthetic Trials",
+            "year": 2023,
+            "kinds": [
+              "randomised_trial",
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "pmid:90000003",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/90000003/",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT00000030",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
+        },
+        {
+          "identifier": "10.5555/synthetic.followup",
+          "url": "https://doi.org/10.5555/synthetic.followup",
+          "record_url": "https://index.example/MED/1004",
+          "roles": [
+            {
+              "role": "follow_up",
+              "trial_id": null,
+              "listed": null,
+              "event_id": 4,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-10-03T08:00:00Z",
+          "facts": {
+            "title": "A later synthetic study",
+            "journal": "Journal of Synthetic Trials",
+            "year": 2024,
+            "kinds": [
+              "article"
+            ],
+            "open_access": false,
+            "retracted": true,
+            "studied_in": [
+              "people",
+              "animals"
+            ]
+          }
+        },
+        {
+          "identifier": "10.5555/synthetic.related",
+          "url": "https://doi.org/10.5555/synthetic.related",
+          "record_url": "https://index.example/PPR/1005",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 0.86,
+              "reasons": [
+                "named_in_title",
+                "indication_named"
+              ],
+              "decided_by": "rule",
+              "summary": "A synthetic preprint. 2025. preprint."
+            }
+          ],
+          "facts_as_of": "2026-10-03T08:00:00Z",
+          "facts": {
+            "title": "A synthetic preprint on the compound",
+            "journal": null,
+            "year": 2025,
+            "kinds": [
+              "preprint"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": []
+          }
+        }
+      ],
+      "background": [
+        {
+          "kind": "condition",
+          "fit": "broader",
+          "label": "Example Condition Group",
+          "definition": "A synthetic definition with CAPITALISED CROSS-REFERENCES, as the vocabulary writes them.",
+          "url": "https://vocabulary.example/D900001",
+          "source": "mesh",
+          "external_id": "D900001",
+          "version": "2026",
+          "score": 0.9,
+          "reasons": [
+            {
+              "code": "filed_by_registry",
+              "trials": 5,
+              "of": 6,
+              "name": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T09:00:00Z"
+        },
+        {
+          "kind": "intervention",
+          "fit": "exact",
+          "label": "Examplumab",
+          "definition": null,
+          "url": "https://vocabulary.example/D900002",
+          "source": "mesh",
+          "external_id": "D900002",
+          "version": "2026",
+          "score": 0.95,
+          "reasons": [
+            {
+              "code": "label_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "examplumab"
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T09:00:00Z"
+        }
+      ],
+      "reported_statements": [
+        {
+          "text": "Synthetic statement: examplumab eased the condition for most people in a small study.",
+          "kind": "effect",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "people",
+          "confidence": 0.93,
+          "article_url": "https://uk.news.example.org/3",
+          "read_on": "2026-11-14"
+        },
+        {
+          "text": "Synthetic statement: examplumab could one day replace surgery for the condition.",
+          "kind": "what_it_could_lead_to",
+          "firmness": "possibility",
+          "speaker": "researcher",
+          "basis": "not_said",
+          "confidence": 0.88,
+          "article_url": "https://uk.news.example.org/3",
+          "read_on": "2026-11-14"
+        },
+        {
+          "text": "Synthetic statement: examplumab blocks a protein on the surface of immune cells.",
+          "kind": "how_it_works",
+          "firmness": "fact",
+          "speaker": "company",
+          "basis": "laboratory",
+          "confidence": 0.81,
+          "article_url": "https://uk.news.example.org/3",
+          "read_on": "2026-11-14"
+        }
+      ],
+      "organisations": [
+        {
+          "name": "Example University",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "00example1",
+            "url": "https://ror.org/00example1",
+            "name": "Example University",
+            "kinds": [
+              "education",
+              "funder"
+            ],
+            "country": "United Kingdom",
+            "website": "https://www.example.ac.uk/",
+            "score": 0.97,
+            "read_at": "2026-11-14T09:00:00Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://uk.news.example.org/3"
+              ],
+              "trial_ids": []
+            },
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT00000002"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Zed Start-up",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://uk.news.example.org/3"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Synthetic Institute",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT00000002"
+              ]
+            }
+          ]
         }
       ]
     },
@@ -253,7 +809,8 @@
           "outlet": "Example Outlet 4",
           "title": "Example report 4",
           "published_date": "2017-05-04",
-          "archive_url": null
+          "archive_url": null,
+          "published_by": "https://ror.org/00example2"
         }
       ],
       "promises": [],
@@ -269,10 +826,75 @@
           "trial_id": null,
           "trial_phases": [],
           "trial_state": null,
-          "regulatory_outcome": "approved"
+          "regulatory_outcome": "approved",
+          "confidence": 1
         }
       ],
-      "failure_flags": []
+      "failure_flags": [],
+      "papers": [],
+      "background": [
+        {
+          "kind": "condition",
+          "fit": "exact",
+          "label": "Example Condition",
+          "definition": "A synthetic definition of the example condition.",
+          "url": "https://vocabulary.example/D900003",
+          "source": "mesh",
+          "external_id": "D900003",
+          "version": "2026",
+          "score": 0.97,
+          "reasons": [
+            {
+              "code": "filed_by_registry",
+              "trials": 1,
+              "of": 1,
+              "name": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T09:00:00Z"
+        }
+      ],
+      "reported_statements": [],
+      "organisations": [
+        {
+          "name": "Other Example Hospital",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "00example2",
+            "url": "https://ror.org/00example2",
+            "name": "Other Example Hospital",
+            "kinds": [
+              "healthcare"
+            ],
+            "country": "Ireland",
+            "website": "https://other.example.net",
+            "score": 1,
+            "read_at": "2026-11-14T09:00:00Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.other.example.net/4"
+              ],
+              "trial_ids": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "card_sources": [
+    {
+      "name": "mesh",
+      "title": "Medical Subject Headings (MeSH)",
+      "credit": "Medical Subject Headings (MeSH), U.S. National Library of Medicine",
+      "licence": "NLM terms and conditions for MeSH data",
+      "url": "https://www.nlm.nih.gov/mesh/meshhome.html",
+      "terms_url": "https://www.nlm.nih.gov/databases/download/terms_and_conditions_mesh.html",
+      "in_data_file": true
     }
   ]
 }
