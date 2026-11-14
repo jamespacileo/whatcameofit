@@ -105,11 +105,13 @@ State on 2026-11-14:
 
 ## 6. Drug and target cards
 
-- [ ] 6.1 Bring the share-alike question to the operator with the entry from 1.2, and record the decision as an ADR in `docs/adr/`; do not start 6.2 to 6.5 without it
-- [ ] 6.2 Add the drug part to the Open Targets client from 2a.14: a drug whose own name equals a given name, with kind of molecule and mechanisms, and a single-protein target's name, gene symbol and function description; verify on recorded fixtures a named drug with two mechanisms, a drug with none, and a procedure's name that returns nothing
-- [ ] 6.3 Export a drug card and, for exactly one single-protein target, a target card, each only as the ADR allows; verify a drug with one target, a drug with two, a drug's one target winning over an approved named gene, and that no phase, approval or indication is exported
-- [ ] 6.4 Word molecule kinds in the wording module, failing the build on an unworded one; show both cards on the claim page and keep share-alike facts out of the data file, naming the source left out; verify in the browser and by the open data test
-- [ ] 6.5 Run on the real database and record how many claims gained a drug card and a target card
+State on 2026-11-14: the operator answered 6.1 ("Yes, accept ChEMBL for drug cards", relayed by the coordinating session) and it is recorded as ADR 0002. 6.2 to 6.4 were built after that. Decided while building, for the proposer to confirm: a claim whose names equal several different drugs' names gets no drug link (a class whose other names are its members); a drug's own name is compared, never its synonyms or trade names; the target card a drug's record gives rests on a ChEMBL fact, so it is left out of the data file with the drug card; an unworded action code fails the build as an unworded molecule kind does. 6.5 is the coordinator's, with the next data publish.
+
+- [x] 6.1 Bring the share-alike question to the operator with the entry from 1.2, and record the decision as an ADR in `docs/adr/`; do not start 6.2 to 6.5 without it
+- [x] 6.2 Add the drug part to the Open Targets client from 2a.14: a drug whose own name equals a given name, with kind of molecule and mechanisms, and a single-protein target's name, gene symbol and function description; verify on recorded fixtures a named drug with two mechanisms, a drug with none, and a procedure's name that returns nothing
+- [x] 6.3 Export a drug card and, for exactly one single-protein target, a target card, each only as the ADR allows; verify a drug with one target, a drug with two, a drug's one target winning over an approved named gene, and that no phase, approval or indication is exported
+- [x] 6.4 Word molecule kinds in the wording module, failing the build on an unworded one; show both cards on the claim page and keep share-alike facts out of the data file, naming the source left out; verify in the browser and by the open data test
+- [x] 6.5 Run on the real database and record how many claims gained a drug card and a target card
 
 ## 7. Integration
 

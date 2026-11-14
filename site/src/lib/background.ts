@@ -26,9 +26,17 @@ export interface CardReason {
 }
 
 export interface ExportedCard {
-  /** What the term is to the claim: "condition", "intervention", or "target" for a gene
-   * named in the treatment's name. */
+  /** What the term is to the claim: "condition", "intervention", "drug" for a drug
+   * database's record of the treatment, or "target": the one protein a drug's record
+   * names, or else a gene named in the treatment's name. */
   kind: string;
+  /** For a drug: the kind of molecule, as a code. */
+  molecule_kind?: string | null;
+  /** For a drug: what its record says it does, each an action code and a target's name. */
+  mechanisms?: { action: string; target: string }[];
+  /** The name in `card_sources` of the source the card's facts are drawn from, when
+   * they are under another licence than the card's own source. */
+  facts_source?: string | null;
   /** For a target: the gene's approved name. Absent or null otherwise. */
   name?: string | null;
   /** The name in `card_sources` of the source the definition's words come from, when
@@ -46,7 +54,8 @@ export interface ExportedCard {
   external_id: string;
   /** The version of the vocabulary the record was read from. */
   version: string | null;
-  score: number;
+  /** Null for a card made by a rule a reader can check, such as an exact name. */
+  score: number | null;
   reasons: CardReason[];
   decided_by: string;
   read_at: string;
@@ -70,6 +79,62 @@ export const CARD_KIND_WORDS: Record<string, string> = {
   intervention: "The treatment",
   // Says where the gene comes from and nothing about how the treatment works.
   target: "A gene named in the treatment’s name",
+  drug: "The drug, as a drug database records it",
+};
+
+/** What a target card is about when it comes from a drug's record, not from a name. */
+export const DRUG_TARGET_WORDS = "What the drug acts on, as its record says";
+
+/** A drug's kind of molecule, by the drug source's code for it. */
+export const MOLECULE_KIND_WORDS: Record<string, string> = {
+  small_molecule: "Small molecule",
+  antibody: "Antibody",
+  antibody_drug_conjugate: "Antibody-drug conjugate",
+  protein: "Protein or peptide",
+  oligonucleotide: "Oligonucleotide",
+  oligosaccharide: "Oligosaccharide",
+  enzyme: "Enzyme",
+  cell: "Cell-based product",
+  gene: "Gene-based product",
+  unknown: "Kind of molecule not recorded",
+};
+
+/** What a drug's record says it does to a target, by the drug source's action code. */
+export const ACTION_WORDS: Record<string, (target: string) => string> = {
+  agonist: (target) => `Agonist of ${target}`,
+  partial_agonist: (target) => `Partial agonist of ${target}`,
+  inverse_agonist: (target) => `Inverse agonist of ${target}`,
+  antagonist: (target) => `Antagonist of ${target}`,
+  allosteric_antagonist: (target) => `Allosteric antagonist of ${target}`,
+  inhibitor: (target) => `Inhibitor of ${target}`,
+  blocker: (target) => `Blocker of ${target}`,
+  opener: (target) => `Opener of ${target}`,
+  activator: (target) => `Activator of ${target}`,
+  modulator: (target) => `Modulator of ${target}`,
+  positive_modulator: (target) => `Positive modulator of ${target}`,
+  negative_modulator: (target) => `Negative modulator of ${target}`,
+  positive_allosteric_modulator: (target) => `Positive allosteric modulator of ${target}`,
+  negative_allosteric_modulator: (target) => `Negative allosteric modulator of ${target}`,
+  binding_agent: (target) => `Binds to ${target}`,
+  releasing_agent: (target) => `Releasing agent for ${target}`,
+  substrate: (target) => `Substrate of ${target}`,
+  stabiliser: (target) => `Stabiliser of ${target}`,
+  degrader: (target) => `Degrader of ${target}`,
+  disrupting_agent: (target) => `Disrupting agent for ${target}`,
+  cross_linking_agent: (target) => `Cross-linking agent for ${target}`,
+  chelating_agent: (target) => `Chelating agent for ${target}`,
+  sequestering_agent: (target) => `Sequestering agent for ${target}`,
+  antisense_inhibitor: (target) => `Antisense inhibitor of ${target}`,
+  rnai_inhibitor: (target) => `RNA-interference inhibitor of ${target}`,
+  hydrolytic_enzyme: (target) => `Hydrolytic enzyme acting on ${target}`,
+  proteolytic_enzyme: (target) => `Proteolytic enzyme acting on ${target}`,
+  oxidative_enzyme: (target) => `Oxidative enzyme acting on ${target}`,
+  reducing_agent: (target) => `Reducing agent for ${target}`,
+  methylating_agent: (target) => `Methylating agent for ${target}`,
+  vaccine_antigen: (target) => `Vaccine antigen: ${target}`,
+  exogenous_protein: (target) => `Supplies the protein ${target}`,
+  exogenous_gene: (target) => `Supplies the gene for ${target}`,
+  other: (target) => `Acts on ${target}, in a way the record does not class`,
 };
 
 /** Who lists a synonym of a gene's symbol, by the target source's code for them. */
@@ -134,6 +199,10 @@ const REASON_WORDS: Record<string, (reason: CardReason) => string> = {
     trials === 1
       ? `The trial registry lists it as ${REGISTRY_TYPE_WORDS[type ?? ""]} in one of this claim’s trials.`
       : `The trial registry lists it as ${REGISTRY_TYPE_WORDS[type ?? ""]} in ${trials} of this claim’s trials.`,
+  drug_name_equals_name: ({ name }) =>
+    `The drug database’s own name for this drug is the same as “${name}”, a name this claim uses. Matched by that rule, so there is no percentage.`,
+  drug_record_names_target: ({ name }) =>
+    `The drug database’s record of ${name} names this as the one protein the drug acts on. Taken from that record, so there is no percentage.`,
   word_equals_symbol: ({ word }) =>
     `“${word}”, a word in the treatment’s name, is this gene’s symbol.`,
   word_equals_synonym: ({ word, sources }) =>
@@ -147,6 +216,49 @@ export const TARGET_NOTE =
   "A gene is shown because the treatment’s name names it. That does not say the treatment is known to work through that gene.";
 export const TARGET_DEFINITION_LABEL = "What this gene’s product does, in the source’s words";
 export const NO_TARGET_DEFINITION = "The source gives this gene no description.";
+
+/** What the section says, in addition, when one of its cards is for a drug. */
+export const DRUG_NOTE =
+  "What a drug acts on is its drug database’s record of the drug. It is not about this condition, and nothing here is a reason to start or stop a medicine.";
+export const NO_MECHANISM = "The record gives no mechanism for this drug.";
+/** What stands where a score would, on a card made by a rule and not scored. */
+export const RULE_LABELS: Record<string, string> = {
+  drug: "Matched by exact name",
+  target: "From the drug’s record",
+};
+
+/** Whether a target card comes from a drug's record and not from the treatment's name. */
+export function isDrugsTarget(card: Pick<ExportedCard, "kind" | "reasons">): boolean {
+  return (
+    card.kind === "target" &&
+    card.reasons.some((reason) => reason.code === "drug_record_names_target")
+  );
+}
+
+/** A drug's kind of molecule in words, or nothing when its record gives none. */
+export function moleculeKindText(card: Pick<ExportedCard, "molecule_kind">): string | null {
+  return card.molecule_kind ? MOLECULE_KIND_WORDS[card.molecule_kind] : null;
+}
+
+/** What a drug's record says it does, one phrase per mechanism. */
+export function mechanismTexts(card: Pick<ExportedCard, "mechanisms">): string[] {
+  return (card.mechanisms ?? []).map(({ action, target }) => ACTION_WORDS[action](target));
+}
+
+/** The score as a word and a percentage, or what stands for it on an unscored card. */
+export function scoreLabel(card: Pick<ExportedCard, "kind" | "score">, scored: (score: number) => string): string {
+  return card.score === null ? RULE_LABELS[card.kind] : scored(card.score);
+}
+
+/** Whose facts a card rests on when they are not its own source's, with the licence. */
+export function factsCreditText(
+  card: Pick<ExportedCard, "kind">,
+  source: Pick<ExportedCardSource, "credit" | "licence">,
+): string {
+  const what =
+    card.kind === "drug" ? "Kind of molecule and what it acts on" : "That the drug acts on it";
+  return `${what}: ${source.credit}, ${source.licence}`;
+}
 
 /** Who wrote a definition that is not the card's own source's, with its licence. */
 export function definitionCreditText(source: Pick<ExportedCardSource, "credit" | "licence">): string {
@@ -163,7 +275,10 @@ export const NO_REASON = "No reason was found by rule.";
 
 /** "The condition", or that the term is broader than the claim's, or that it is the
  * kind of treatment and not the treatment. */
-export function cardKindText(card: Pick<ExportedCard, "kind" | "fit">): string {
+export function cardKindText(
+  card: Pick<ExportedCard, "kind" | "fit"> & Partial<Pick<ExportedCard, "reasons">>,
+): string {
+  if (isDrugsTarget({ kind: card.kind, reasons: card.reasons ?? [] })) return DRUG_TARGET_WORDS;
   return FIT_WORDS[card.fit][card.kind];
 }
 
@@ -182,7 +297,8 @@ export function creditText(
 
 /** Card codes in the export that the site has no words for, as "kind: code". */
 export function unwordedCardCodes(
-  cards: Pick<ExportedCard, "kind" | "fit" | "reasons" | "source" | "definition_source">[],
+  cards: (Pick<ExportedCard, "kind" | "fit" | "reasons" | "source" | "definition_source"> &
+    Partial<Pick<ExportedCard, "molecule_kind" | "mechanisms" | "facts_source" | "score">>)[],
   sources: Pick<ExportedCardSource, "name">[],
 ): string[] {
   const missing = new Set<string>();
@@ -190,6 +306,19 @@ export function unwordedCardCodes(
   for (const card of cards) {
     if (card.definition_source && !known.has(card.definition_source)) {
       missing.add(`card source: ${card.definition_source}`);
+    }
+    if (card.facts_source && !known.has(card.facts_source)) {
+      missing.add(`card source: ${card.facts_source}`);
+    }
+    if (card.molecule_kind && !(card.molecule_kind in MOLECULE_KIND_WORDS)) {
+      missing.add(`card molecule kind: ${card.molecule_kind}`);
+    }
+    for (const mechanism of card.mechanisms ?? []) {
+      if (!(mechanism.action in ACTION_WORDS)) missing.add(`card action: ${mechanism.action}`);
+    }
+    // A card with no score needs words for what stands in its place.
+    if (card.score === null && !(card.kind in RULE_LABELS)) {
+      missing.add(`card without a score: ${card.kind}`);
     }
     if (!(card.kind in CARD_KIND_WORDS)) missing.add(`card kind: ${card.kind}`);
     if (!(card.fit in FIT_WORDS)) missing.add(`card fit: ${card.fit}`);
@@ -236,6 +365,14 @@ const SITE_WORDS = [
     }),
   ),
   definitionCreditText({ credit: "A Consortium", licence: "A licence" }),
+  factsCreditText({ kind: "drug" }, { credit: "A Database", licence: "A licence" }),
+  factsCreditText({ kind: "target" }, { credit: "A Database", licence: "A licence" }),
+  ...Object.values(MOLECULE_KIND_WORDS),
+  ...Object.values(ACTION_WORDS).map((word) => word("a named receptor")),
+  ...Object.values(RULE_LABELS),
+  DRUG_TARGET_WORDS,
+  DRUG_NOTE,
+  NO_MECHANISM,
   TARGET_NOTE,
   TARGET_DEFINITION_LABEL,
   NO_TARGET_DEFINITION,

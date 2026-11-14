@@ -108,8 +108,9 @@ _LISTED = (
     ),
     # The three below are read for target and drug cards. The operator accepted Open
     # Targets' own data and UniProt's function descriptions for the page and the data
-    # file on 2026-11-14 (knowledge-cards, 2a.18; docs/sources.md). ChEMBL's share-alike
-    # material is not accepted until the decision in knowledge-cards 6.1 is recorded.
+    # file on 2026-11-14 (knowledge-cards, 2a.18; docs/sources.md), and ChEMBL's
+    # share-alike facts for drug cards on claim pages, never in the data file, on the
+    # same day (knowledge-cards, 6.1; docs/adr/0002).
     SourceTerms(
         name="opentargets",
         title="Open Targets Platform",
@@ -134,7 +135,7 @@ _LISTED = (
         home_url="https://www.ebi.ac.uk/chembl/",
         terms_url="https://chembl.gitbook.io/chembl-interface-documentation/about",
         read_on=date(2026, 11, 14),
-        accepted=False,
+        accepted=True,
         # Share-alike, which the data file's licence is not.
         in_data_file=False,
     ),

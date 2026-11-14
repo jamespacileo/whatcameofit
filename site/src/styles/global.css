@@ -2979,6 +2979,34 @@ main ul:not([class]) li + li {
   overflow-wrap: anywhere;
 }
 
+/* A drug card's facts: its kind of molecule and what its record says it acts on, in the
+   same pale panel a definition uses, always open since they are short. */
+.card-facts {
+  margin-top: 0.3rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--panel);
+  border-radius: 0.65rem;
+  max-width: 62ch;
+  overflow-wrap: anywhere;
+}
+
+.card-facts p {
+  margin: 0;
+}
+
+.card-facts ul {
+  margin: 0.3rem 0 0;
+  padding-left: 1.1rem;
+}
+
+/* A mechanism is a plain bullet, not a row of the card list it sits inside. */
+.card-list .card-facts li {
+  display: list-item;
+  list-style: disc;
+  padding: 0;
+  border: 0;
+}
+
 .card-list .match-why p + p {
   margin-top: 0.4rem;
 }

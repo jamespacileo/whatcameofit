@@ -32,3 +32,15 @@ Article retrieval SHALL have a total deadline covering robots checks, response h
 #### Scenario: Response headers arrive but the body stalls
 - **WHEN** a publisher, paper or trial-registry response body fails to complete before its deadline
 - **THEN** the request is aborted and follows the same failure behavior as a header timeout
+
+### Requirement: A linked paper not looked up is said
+A linked paper that is not answered within its deadline, or whose lookup fails, SHALL be passed over, and the answer SHALL carry how many linked papers were not looked up. No registry number SHALL be guessed for such a paper. Where that count is above zero, the site and the extension SHALL say, beside the list of records and not folded away, that a linked paper could not be looked up and that a trial it reports may be missing from the list. An answer with a paper not looked up SHALL NOT be kept in the shared results library or in the extension's saved results, so the next lookup of that page asks again. When identification finds no specific treatment, the paper request in flight SHALL be ended and no further paper or stated record SHALL be asked for.
+
+#### Scenario: Linked paper not answered in time
+- **WHEN** the page links to two papers, the first paper's host does not answer within the deadline, and the second paper's abstract gives a ClinicalTrials.gov number
+- **THEN** the second paper's trial is among the candidates, and the answer says one linked paper was not looked up
+
+#### Scenario: Reader is told a linked paper was not looked up
+- **WHEN** an answer says one linked paper was not looked up
+- **THEN** the reader sees, beside the list, that a linked paper could not be looked up just now and a trial it reports may be missing
+- **AND** the answer is not saved for reuse

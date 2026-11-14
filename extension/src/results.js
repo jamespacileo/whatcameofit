@@ -6,7 +6,8 @@ export function reusable(entries, key, fingerprint, now) {
     entry.found?.about_a_treatment === true) ?? null;
 }
 export function remember(entries, key, fingerprint, found, now) {
-  if (!fingerprint || found?.about_a_treatment !== true) return entries;
+  // An answer that is missing a linked paper is not kept: opening the page again asks again.
+  if (!fingerprint || found?.about_a_treatment !== true || found.papers_unchecked > 0) return entries;
   return [{ version: 1, key, fingerprint, found, at: now }, ...(Array.isArray(entries) ? entries : [])
     .filter(entry => entry.key !== key && entry.at <= now && now - entry.at < RESULT_TTL)].slice(0, 10);
 }

@@ -331,6 +331,7 @@ def add_article(session: Session, claim: Claim) -> SourceArticle:
         ("intervention", "broader"),
         ("intervention", "kind"),
         ("target", "exact"),
+        ("drug", "exact"),
     ],
 )
 def test_term_link_of_every_role_and_fit_is_accepted(session: Session, role: str, fit: str):

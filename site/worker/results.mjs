@@ -21,6 +21,8 @@ export async function previousResult(store, address, now = Date.now()) {
 }
 export async function storeResult(store, address, found, publicVerified, now = Date.now()) {
   if (!store || !publicVerified || found.about_a_treatment !== true) return;
+  // An answer that is missing a linked paper is not kept: the next lookup asks again.
+  if (found.papers_unchecked > 0) return;
   const key = await keyFor(address);
   if (!key) return;
   // Explicit fields only. Never persist an uploaded request, copied text or model gist.

@@ -186,8 +186,47 @@
           "title": "Version"
         },
         "score": {
-          "title": "Score",
-          "type": "number"
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Score"
+        },
+        "molecule_kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Molecule Kind"
+        },
+        "mechanisms": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedMechanism"
+          },
+          "title": "Mechanisms",
+          "type": "array"
+        },
+        "facts_source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Facts Source"
         },
         "reasons": {
           "items": {
@@ -843,6 +882,26 @@
         "summary"
       ],
       "title": "ExportedMatch",
+      "type": "object"
+    },
+    "ExportedMechanism": {
+      "additionalProperties": false,
+      "description": "One thing a drug's record says the drug does. The site words the action.",
+      "properties": {
+        "action": {
+          "title": "Action",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "target"
+      ],
+      "title": "ExportedMechanism",
       "type": "object"
     },
     "ExportedOrganisation": {
@@ -2226,7 +2285,8 @@
       "enum": [
         "condition",
         "intervention",
-        "target"
+        "target",
+        "drug"
       ],
       "title": "TermRole",
       "type": "string"

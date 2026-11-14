@@ -145,6 +145,10 @@ test("no-match uncertainty and explicit first-use sharing stay visible", () => {
   const root = new Element("main");
   render(root, { kind: "answer", shown: { ...shown, none: "No matching record found. This does not rule out a trial." } }, site, actions);
   assert.match(visibleText(root), /No matching record found.*does not rule out/);
+  // A linked paper that was not looked up is said in the open, beside the list.
+  const unchecked = describeAnswer({ about_a_treatment: true, treatment: "EX-1", candidates: [], papers_unchecked: 1 }).papersUnchecked;
+  render(root, { kind: "answer", shown: { ...shown, papersUnchecked: unchecked } }, site, actions);
+  assert.match(visibleText(root), /A linked paper could not be looked up just now/);
   render(root, { kind: "sharing", enabled: false }, site, { ...actions, enableSharing() {}, disableSharing() {} });
   assert.match(visibleText(root), /text, links and cleaned address.*OpenAI.*screenshot automatically.*Allow and search.*Use reviewed claims only/s);
   assert.equal(elements(root, "details").length, 0);

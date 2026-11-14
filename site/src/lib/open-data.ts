@@ -208,6 +208,10 @@ export function openData(
       // Each background card the claim page shows, in its source's own words.
       background: (claim.background ?? [])
         .filter((card) => allowed.has(card.source))
+        // A card that rests on facts another source gives under a licence this file
+        // cannot carry is left out whole: the kind of molecule, the mechanisms, and
+        // that a drug's record names a target. The file names that source as left out.
+        .filter((card) => !card.facts_source || allowed.has(card.facts_source))
         .map((card) => ({
           kind: card.kind,
           fit: card.fit,
@@ -226,6 +230,9 @@ export function openData(
           external_id: card.external_id,
           version: card.version,
           score: card.score,
+          molecule_kind: card.molecule_kind ?? null,
+          mechanisms: (card.mechanisms ?? []).map(({ action, target }) => ({ action, target })),
+          facts_source: card.facts_source ?? null,
           reasons: card.reasons.map((reason) => ({ ...reason })),
           read_at: card.read_at,
         })),

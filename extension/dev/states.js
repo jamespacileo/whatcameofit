@@ -106,6 +106,7 @@ const states = [
     likely: [{ ...answer.likely[0], title: "A Study to Evaluate Physiologic Dentin Regeneration and Safety of EX-1 in the Treatment of Dental Caries", confidence: 62, confidenceLabel: "62% match confidence", why: null }],
   } }],
   ["No matching record", { kind: "answer", shown: { ...answer, likely: [], rest: null, none: "No matching trial record was found in ClinicalTrials.gov. That is not evidence that no trial exists: it may use another name or registry." } }],
+  ["Linked paper not looked up", { kind: "answer", shown: { ...answer, likely: answer.likely.slice(0, 1), papersUnchecked: "A linked paper could not be looked up just now, so a trial it reports may be missing from this list. Try again in a minute." } }],
   ["Not identifiable", { kind: "answer", shown: { ...answer, subject: null, lead: "A specific treatment and condition could not be identified from the content that could be read. The registry was not searched; nothing has been ruled out.", likely: [], trialSaid: null, rest: null } }],
   ["Too little read", { kind: "too-little" }],
   ["Search refused", { kind: "refused", code: "busy" }],
