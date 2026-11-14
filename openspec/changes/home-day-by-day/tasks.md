@@ -41,7 +41,7 @@
 ## 7. The whole page
 
 - [x] 7.1 Run `make check` and verify it passes.
-- [ ] 7.2 Build from the published export, measure the home page's compressed HTML, CSS and script before and after, and write the figures into `DESIGN.md` (design decision 11). Verify the figures are in the document with the day they were measured.
+- [x] 7.2 Build from the published export, measure the home page's compressed HTML, CSS and script before and after, and write the figures into `DESIGN.md` (design decision 11). Verify the figures are in the document with the day they were measured.
 - [ ] 7.3 Have the home page reviewed with Impeccable at 1280 and 375 pixels wide, with scripting off and in print, against this change's `proposal.md`, `design.md` and spec delta; make the fixes it asks for. Verify the review is saved under `.impeccable/critique/` and its open findings are none or are listed in this change's notes.
 - [x] 7.4 Bring `.impeccable/mocks/frontpage/directions.html` up to date with one line saying the direction was built and where. Verify the line names this change.
 

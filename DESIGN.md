@@ -203,6 +203,8 @@ Never on a claim page, a card, an embed or the extension, never about a conditio
 
 Weight, measured on the preview build: a claim page with 29 records is 5 KB of HTML, 6 KB of CSS and under 4 KB of script compressed, plus one 20 KB font file.
 
+The home page, built from the published export of 14 Nov 2026 (84 claims, 104 news reports) and measured compressed on 2026-11-14: 66 KB of HTML, 13 KB of CSS and 14 KB of script. The live site before the day-by-day list: 40 KB, 11 KB and 12 KB. Every row of that list is in the page as built (about 130 rows), so the page's HTML grows with the number of reports; the control that shows earlier headings changes what is in sight, not what is sent.
+
 ## Rules for every future page
 
 - Footer notices on every page: no medical advice; a registered trial is not a treatment option; data sources; last-checked date. A build check fails without them.
