@@ -17,6 +17,9 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `europepmc/citing_srep39654_page1.json` | `GET /search?query=CITES:28067250_MED&resultType=core&pageSize=3` |
 | `crossref/work_retracted_lancet_1998.json` | `GET /works/10.1016/S0140-6736(97)11096-0` |
 | `crossref/work_srep39654.json` | `GET /works/10.1038/srep39654` |
+| `clinicaltrials/list_page_{1,2}.json` | `GET /api/v2/studies?filter.advanced=<phase 3 drug or biological, migraine, updated since 2026-11-10>&pageSize=3&fields=…`, following `nextPageToken`: four trials over two pages (2026-11-14) |
+| `clinicaltrials/phase3_sample_trials.json` | the identifiers, conditions and interventions of the 200 phase 3 trials sampled on 2026-11-14 (`docs/research/phase3-article-hit-rate`), read from `GET /api/v2/studies?filter.ids=…` |
+| `mediacloud/story_list.json` | synthetic: the shape of `GET /api/search/story-list` as Media Cloud's own client reads it, with made-up stories. Never recorded from the service, so it holds no real headline |
 | `openalex/search_median_nerve_tourette.json` | `GET /works?search=("median nerve stimulation") AND "Tourette syndrome"&per_page=3&select=id,doi,title,publication_year,publication_date,type,primary_location,authorships,abstract_inverted_index,ids` (2026-11-14) |
 | `openalex/search_nothing.json` | the same search for made-up words that no paper holds (2026-11-14) |
 | `openalex/work_704541.json` | `GET /works/doi:10.64898/2026.02.07.704541?select=…` (2026-11-14) |
