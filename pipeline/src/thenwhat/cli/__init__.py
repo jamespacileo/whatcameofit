@@ -14,6 +14,7 @@ from thenwhat.cli.icons import icons_command
 from thenwhat.cli.lookup import lookup_command
 from thenwhat.cli.outlets import outlets_command
 from thenwhat.cli.prepare import prepare_command
+from thenwhat.cli.readings import readings_command
 from thenwhat.cli.resolve import entity_app, resolve_command
 from thenwhat.cli.review import review_app
 from thenwhat.cli.seed import seed_app
@@ -32,6 +33,7 @@ app.command("resolve")(resolve_command)
 app.command("prepare")(prepare_command)
 app.command("terms")(terms_command)
 app.command("statements")(statements_command)
+app.command("readings")(readings_command)
 app.command("lookup")(lookup_command)
 app.command("fetch")(fetch_command)
 app.add_typer(event_app, name="event")

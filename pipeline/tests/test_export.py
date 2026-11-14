@@ -497,6 +497,7 @@ def test_trial_with_four_approved_events_is_listed_once_with_its_facts(
         "state": "completed",
         "facts_as_of": "2026-10-03T08:00:00Z",
         "papers": ["pmid:26048637"],
+        "readings": [],
     }
     facts = trial["facts"]
     assert facts["participants"] == {"count": 20, "basis": "actual"}
@@ -574,6 +575,7 @@ def test_trial_entered_by_hand_is_listed_without_facts(session: Session):
             "facts_as_of": None,
             "facts": None,
             "papers": [],
+            "readings": [],
         },
         {
             "trial_id": "NCT2",
@@ -585,6 +587,7 @@ def test_trial_entered_by_hand_is_listed_without_facts(session: Session):
             "facts_as_of": None,
             "facts": None,
             "papers": [],
+            "readings": [],
         },
     ]
 
@@ -603,6 +606,7 @@ def test_seed_claims_jrct_trial_is_listed_without_facts(session: Session):
             "facts_as_of": None,
             "facts": None,
             "papers": [],
+            "readings": [],
         }
     ]
 

@@ -79,6 +79,17 @@ New package `pipeline/src/thenwhat/readings/`, built like `statements/`:
 - **Stored with:** the hash of the input fields, the instructions' version, the provider and model from the environment, the confidence, the decider `model`. A trial is read again only when the hash or the instructions' version changes.
 - **On the site:** only the largest trial's first primary outcome is used. With no usable reading (none stored, "other", or below the display threshold used for reported statements) answer 3 falls back to the registry's title, and says so. The question never vanishes.
 
+As built (2026-11-14):
+
+- Two tables. `trial_read` holds one row per trial (input hash, instructions' version, provider, model, refusals, when read); `reading` holds the readings that passed. With one table, a trial whose readings were all refused would be asked about again on every run.
+- A refusal is stored as outcome, kind and reason on `trial_read`, never the model's words. One more reason than planned: `repeated`, for a second reading of one kind for one outcome in one answer.
+- `reading.decided_by` is a new `ReadBy.MODEL`. `Decider` is untouched, because adding to it would change the review constraints on other tables.
+- The measure-code enum is `MeasureCode`; `MeasureKind` already names the statistic of a posted result.
+- The export's `read_on` is the same date and time as the trial's `facts_as_of`. The export carries a trial's readings only when their input hash matches the facts it shows.
+- The confidence is the model's own figure from the same structured answer. There is no second check of it, as reported statements have.
+- The rule checks that the number is in the words as digits of its own (4 is in "week 4", not in "week 14"). It does not check that the unit is in the words.
+- `thenwhat readings <slug>…` or `--all`; `thenwhat prepare` runs it as each claim's last step. The seed export carries empty readings: the seed loader cannot seed model-read rows.
+
 Repeatability is delivered by storing readings, not by trusting a model to repeat itself. The site never says the same records always give the same answers.
 
 Rejected: the model writing the plain phrase; reading the outcome description; a second model as checker.

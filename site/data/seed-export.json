@@ -318,7 +318,8 @@
           "state": "completed",
           "facts_as_of": null,
           "facts": null,
-          "papers": []
+          "papers": [],
+          "readings": []
         }
       ],
       "papers": [

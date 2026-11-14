@@ -20,6 +20,8 @@ EXPECTED_TABLES = {
     "reported_statement",
     "organisation_record",
     "entity_article",
+    "trial_read",
+    "reading",
 }
 
 # The migration that records where an entity was named (openspec organisations).

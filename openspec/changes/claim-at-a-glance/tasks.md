@@ -8,11 +8,11 @@
 
 ## 2. Readings in the pipeline
 
-- [ ] 2.1 Add the reading kinds, measure kinds and units to `pipeline/src/thenwhat/domain.py` and a readings table with a new migration; verify the migration applies to the test database and `ty` passes
-- [ ] 2.2 Add `pipeline/src/thenwhat/readings/rules.py` with the pure checks (words in the field, kind and unit in the lists, number in the words) and tests for "Words not in the record", "Number the words do not give" and "Code outside the list"; verify they pass with no database
-- [ ] 2.3 Add `pipeline/src/thenwhat/readings/service.py`: build the input from a trial's primary outcomes, ask the configured model for structured output, check, store with the input hash, the instructions' version and the decider `model`, and skip a trial whose hash and version are unchanged; verify against the test database with a recorded model response for "How long the main measure was followed", "What kind of measure", "Model returns a sentence", "Second run with nothing changed" and "Record fetched again with a new time frame"
-- [ ] 2.4 Add the CLI command and a step in `thenwhat prepare`, honouring the usage ledger and the spend ceiling; verify one success and one refusal test for the command, and "Spend ceiling reached"
-- [ ] 2.5 Export each trial's readings, regenerate `site/export.schema.json` and `site/data/seed-export.json`; verify "Trial with two readings", "Export with no network" and "Claim with and without readings" pass and the schema tests match
+- [x] 2.1 Add the reading kinds, measure kinds and units to `pipeline/src/thenwhat/domain.py` and a readings table with a new migration; verify the migration applies to the test database and `ty` passes
+- [x] 2.2 Add `pipeline/src/thenwhat/readings/rules.py` with the pure checks (words in the field, kind and unit in the lists, number in the words) and tests for "Words not in the record", "Number the words do not give" and "Code outside the list"; verify they pass with no database
+- [x] 2.3 Add `pipeline/src/thenwhat/readings/service.py`: build the input from a trial's primary outcomes, ask the configured model for structured output, check, store with the input hash, the instructions' version and the decider `model`, and skip a trial whose hash and version are unchanged; verify against the test database with a recorded model response for "How long the main measure was followed", "What kind of measure", "Model returns a sentence", "Second run with nothing changed" and "Record fetched again with a new time frame"
+- [x] 2.4 Add the CLI command and a step in `thenwhat prepare`, honouring the usage ledger and the spend ceiling; verify one success and one refusal test for the command, and "Spend ceiling reached"
+- [x] 2.5 Export each trial's readings, regenerate `site/export.schema.json` and `site/data/seed-export.json`; verify "Trial with two readings", "Export with no network" and "Claim with and without readings" pass and the schema tests match
 
 ## 3. Rule-read rows on the site
 
@@ -31,8 +31,8 @@
 
 ## 5. Record and check
 
-- [ ] 5.1 Record "The record in brief" under Components in `DESIGN.md`, update its Digest panel and Facts entries for the bridging sentence and the removed fact, add "reading" and "under way" to `GLOSSARY.md` if not there, and add the readings step to the README's commands if it lists pipeline steps; verify each file names the new element
-- [ ] 5.2 Run `make check` and verify ruff, ty, pytest, the site tests, the site build and the extension tests all pass
+- [x] 5.1 Record "The record in brief" under Components in `DESIGN.md`, update its Digest panel and Facts entries for the bridging sentence and the removed fact, add "reading" and "under way" to `GLOSSARY.md` if not there, and add the readings step to the README's commands if it lists pipeline steps; verify each file names the new element
+- [x] 5.2 Run `make check` and verify ruff, ty, pytest, the site tests, the site build and the extension tests all pass
 - [ ] 5.3 Run the readings step on the local database, rebuild the export, and open the Tourette claim, one preclinical claim and one approved claim in the browser preview; verify each answer matches the trials and papers listed lower on the page and each model-read answer's quoted words are in the linked registry record
 
 ## Workflow follow-up

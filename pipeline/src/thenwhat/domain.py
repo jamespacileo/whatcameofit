@@ -93,6 +93,55 @@ class StatementBasis(StrEnum):
     NOT_SAID = "not_said"
 
 
+class ReadingKind(StrEnum):
+    """What a record reading says of a planned primary outcome (openspec record-readings)."""
+
+    # How long after the start the outcome is measured: a number with a unit.
+    FOLLOW_UP = "follow_up"
+    # What kind of measure the outcome's title names: a code.
+    MEASURE = "measure"
+
+
+class ReadingField(StrEnum):
+    """The field of a planned primary outcome a reading's words are read from."""
+
+    TIME_FRAME = "time_frame"
+    MEASURE = "measure"
+
+
+class MeasureCode(StrEnum):
+    """The kinds of measure a reading may give. The site words each one; adding a code
+    is a change to its wording table too (docs/adr/0002)."""
+
+    SYMPTOM_SCORE = "symptom_score"
+    # How often something happens.
+    FREQUENCY = "frequency"
+    # A body measurement or a laboratory value.
+    BODY_MEASURE = "body_measure"
+    # A scan or image finding.
+    SCAN_FINDING = "scan_finding"
+    # Survival, or time to an event.
+    SURVIVAL = "survival"
+    SIDE_EFFECTS = "side_effects"
+    USE_OF_TREATMENT = "use_of_treatment"
+    QUALITY_OF_LIFE = "quality_of_life"
+    OTHER = "other"
+
+
+class FollowUpUnit(StrEnum):
+    DAYS = "days"
+    WEEKS = "weeks"
+    MONTHS = "months"
+    YEARS = "years"
+
+
+class ReadBy(StrEnum):
+    """Who decided a record reading. Always a model, checked by rule: never a person,
+    and not one of the review deciders."""
+
+    MODEL = "model"
+
+
 class EventType(StrEnum):
     FOLLOWUP_PAPER = "followup_paper"
     TRIAL_REGISTERED = "trial_registered"
