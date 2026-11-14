@@ -178,3 +178,327 @@ Limits: one claim, one run. A claim that is already decided is never read again,
 The three approvals: two trials for `dementia-lymphatic-venous-surgery`, which already stood at Phase 3, and one for `type-2-diabetes-remission-diet-exercise`, which already had a registered trial. Most of the 138 new candidates scored low: a phrase such as "bacteriophage therapy" within a condition brings back trials of other treatments of the same kind, and the score for the claim's indication sorts them out.
 
 Limits: one run, with one model. The phrases were not read one by one. Many are longer and more specific than a registry's own wording ("Autologous induced pluripotent stem cell-derived cardiomyocyte transplantation") and so found nothing; a shorter phrase might. Thirty-three claims were given none, most of them named drugs. The Tourette claim remains the only one whose status a phrase has changed.
+
+## Related papers: the first measured run (14 November 2026)
+
+`thenwhat resolve` was run on the real database for every approved claim whose status was "preclinical only" (43) or "No trial record found" (4): 47 claims, one after another, between 18:19 and 18:23 UTC, with the code at `main` 9a2e13b. Change `related-research`, tasks 8.1 and 8.2. A dump of the database from just before is kept outside the repository.
+
+| | |
+|---|---|
+| Claims run | 47 |
+| Completed | 46 |
+| Stopped before the paper search | 1 (`periodontal-3d-printed-scaffold`: ClinicalTrials.gov answered 400 to its registry search) |
+| Paper search found nothing | 25 |
+| Paper search found papers | 21 |
+| Paper candidates stored | 273 |
+| Approved by rule (0.8 or more) | 33 |
+| Rejected by rule (under 0.05) | 215 |
+| Left pending | 25 |
+| Approved with no reason found by rule | 4 |
+| **Claims that gained an approved paper** | **14**, all "preclinical only" |
+| **Claims that gained a trial candidate** | **0** |
+| Claims whose status changed | 0 |
+| Origin paper asked about | 6 claims |
+| Origin paper set by rule | 4 (`alzheimers-nano-eraser`, `lifespan-ampk-activator-991`, `multiple-sclerosis-kamuvudine-k-9`, `obesity-tofa`) |
+| Organisations matched in ROR | 110 of 179 institution and company entities, all pending |
+
+**Spend.** 46 OpenAlex searches, one per claim: 0.046 US dollars of the day's free dollar, with 0.947 left at the end. The model answered 293 paper decisions and 7 origin-paper decisions in 29 calls for 0.0173 US dollars; both figures include the trial claim below. No prepaid credit was drawn on.
+
+**What it shows.**
+
+- None of the four "No trial record found" claims gained a paper, and no claim gained a trial candidate, so the run moved no claim off its status.
+- Some approved papers report studies in people for claims whose status is "preclinical only": a first-in-human study for `dentine-regeneration-cpne7-peptide`, and a double-blind randomised trial for `periodontal-adipose-stem-cells`. Neither gave a registry number that Europe PMC's abstract holds, so neither became a trial candidate. A paper does not change a status; these two claims are worth the operator's look.
+- One approved paper is a retracted one: its title begins "RETRACTED:" (`periodontal-maresin-resolvin-stem-cells`). The score does not know about retraction. It was not chosen as an origin paper, so no retraction event follows from it.
+- Some approvals at 1.00 are about a neighbouring thing: papers on resolvin E1 alone for a claim about maresin and resolvin with stem cells, and a chitosan peptide paper for an amelogenin peptide claim. The titles were read once, by the assistant, not by the operator.
+- More than half the searches (25 of 46) found nothing. The search asks for the intervention's names and phrases as exact phrases together with the indication as an exact phrase, and many of these claims have a long descriptive name and no search phrase that a paper would use. The remedy is a better search phrase (`thenwhat entity phrase`), not a looser search.
+- Where papers were found, most were not about the claim: 215 of 273 scored under 0.05. Eleven claims had all twenty slots filled, mostly by rejected papers.
+- The four origin papers set by rule let `thenwhat fetch` look for follow-up papers and retractions for claims whose article gave no DOI. `fetch` was not run here.
+- The one claim that stopped did so in the registry search that comes first, on a term ClinicalTrials.gov refused. It has no paper candidates. That is a fault in the registry search, not in the paper search.
+
+**The claim that stopped, later the same day.** The cause was one search phrase of thirteen words, which ClinicalTrials.gov answers with "Too complicated query". With the fix that reports such a term and searches the rest, `periodontal-3d-printed-scaffold` resolved: 3 paper candidates (1 approved by rule, 1 rejected, 1 pending) and 1 organisation matched. It is a "No trial record found" claim, so with it 15 of the 47 claims have an approved paper, one of them among the four with that status; its status did not change. The figures in the table above are the run as it happened and do not include it. The long phrase is still on the claim, not yet reworded.
+
+**Before the run**, one claim was resolved alone to see the two new decision steps answer for the first time: `tourette-syndrome-wrist-nerve-stimulation`, whose status is "trial registered". It gained 20 paper candidates: 9 approved, 7 rejected and 4 pending. The reports of the Nottingham and Washington University trials scored 1.00; a commentary and unrelated neurophysiology papers were rejected. Its origin paper was left unset: "none" was the likeliest answer at 0.43.
+
+**Approved by rule, rejected afterwards (task 8.2).** The rule approved 33 papers on the run (42 with the trial claim). The operator has rejected none yet, because none has been looked at. When the run was made nothing from it was published. Since the related-papers section reached `main` the same day, an approved paper is exported with the role "related" and appears on the claim page with the next export; organisations are still not exported. So the papers the rule approved here, the retracted one and the near misses among them, are published unless the operator rejects them first.
+
+## Trial facts in the export (14 November 2026)
+
+Openspec `trial-facts`. The export was built from the real database with the new code and every write rolled back, so the database was not changed. No request was made: the facts are read from the registry records already stored with each trial's events.
+
+| | Count |
+| --- | --- |
+| Published claims | 84 |
+| Claims with at least one trial | 37 |
+| Trials listed | 222 |
+| Trials with facts | 221 (the other is the seed claim's jRCT trial, entered by hand) |
+| Trials with posted results for a primary outcome | 34 |
+| Posted primary outcomes carried | 56 |
+| Of those, reported in one row, so carried with their values | 43 |
+| Of those, with a posted comparison | 16 |
+| Registry records that raised no fact | 0 |
+| Trials that state no number of participants | 2 |
+| Lead sponsors that are a person, exported without a name | 14 |
+| Events with a confidence below 1 (follow-up papers) | 3 |
+| Export size before | 948,864 bytes |
+| Export size after | 1,365,759 bytes |
+
+What the trials state: 127 randomised, 25 not randomised, 69 with no allocation (one arm); 120 open label; 48 compared with placebo, 37 with another treatment, 18 with a sham procedure, 14 with no treatment, 1 with both a sham procedure and no treatment, and 103 with no comparator arm. State: 97 under way, 70 completed, 30 not started, 12 not given, 6 withdrawn, 4 terminated, 3 suspended. Sponsors: 108 companies, 95 universities, hospitals or other bodies, 14 individuals, 3 government bodies, 1 network.
+
+Checked by hand against the registry's records as fetched the same day, number by number: NCT04494425 (866 participants; median 13.2 against 8.1 months; "<0.0001" by log rank), NCT05870540 (196 participants; two outcomes; "0.0033" by mixed models) and NCT02412735 (404 participants; three groups; two comparisons posted with no p value). Every participant count, group title, number analysed, value, spread, interval, p value and method agreed. The 74 distinct names of sponsors classed "other" were read: none is a person's.
+
+Limits: the export grew by 44%, more than the quarter of a megabyte the design estimated. A trial's facts are as old as its newest stored record; the oldest was not measured. Thirteen of the 56 outcomes are reported in several rows and show a title and a row count only.
+
+## Paper facts: the first fetch (14 November 2026)
+
+Openspec `paper-facts`. Run on a copy of the real database made the same day (`thenwhat_paperfacts`), not on the real one: when it was run the change's migration was numbered 0009, as were two other branches' migrations, and the real database is shared between them (it is 0010 since the merge with `knowledge-cards`). The real database's `paper_record` table is filled by the first `thenwhat fetch` of each claim after this change is merged and migrated. The copy was fetched claim by claim, all 84 published claims, with the 24-hour HTTP cache as copied.
+
+| | Count |
+| --- | --- |
+| Published claims fetched | 84 (none failed) |
+| Paper records stored | 137 |
+| Of those, held by Europe PMC | 136 |
+| Of those, not held | 1 (an origin paper published in 2026, asked for by its DOI) |
+| Europe PMC requests for a paper's record | 123 |
+| Other Europe PMC requests in the run (citing papers of origin papers) | 6 |
+| Time for the whole fetch, registry and Crossref requests included | 101 seconds |
+| New evidence events the fetch also recorded | 4 |
+
+What the 136 held records state:
+
+| | Papers |
+| --- | --- |
+| Carry "Humans" or "Animals" | 108 (79%) |
+| "Humans" | 99 |
+| "Animals" | 30 |
+| Both | 21 |
+| Neither, or no subject headings yet | 28 |
+| First kind other than article | 59: randomised trial 28, review 18, clinical trial 8, comment 3, observational study 1, preprint 1 |
+| First kind article | 77 |
+| No kind at all | 0 |
+| Marked retracted | 0 |
+| Marked open access | 63 |
+
+More than half carry one of the two headings, so the claim page keeps its count of records in people and in animals as specified.
+
+What the export built from the copy lists: 134 papers on 38 of the 84 claims. By role: 124 results papers of trials (49 listed by a sponsor, 75 linked by the registry), 19 origin papers and 3 follow-up papers; 2 papers play two roles and are listed once. No related paper: the copy was made before the literature search was first run on the real database, later the same day. The claim with the most papers has 29, all named by its trials' records. The export grew from 1,365,759 to 1,524,788 bytes.
+
+Limits. Eight origin papers of claims with no trial are indexed with "Humans" as well as "Animals", which the index applies to work on human cells too: the page words the heading as how the index files the paper, not as a finding. A registry-linked paper may or may not be about its trial, in the registry's own words (`docs/sources.md`), and the page says so. The requests figure is lower than the papers stored because a DOI asked for in the last 24 hours was answered from the HTTP cache.
+
+### Five built entries against their index pages (14 November 2026)
+
+Openspec `paper-facts`, task 7.1, after `make check` passed. Five papers were picked from the export built from the copy, one for each of five first kinds, and each built entry was compared field by field with the paper's Europe PMC page and, for the fields that page does not display (publication types and subject headings), with its PubMed page, which shows the same NLM indexing.
+
+| Paper | Title | Journal and year | Kind shown | People or animals | Open access |
+| --- | --- | --- | --- | --- | --- |
+| PubMed 26048637 | same | Drug and alcohol dependence, 2015: same | Report of a randomised trial: "Randomized Controlled Trial" | people: "Humans" | not marked; the page offers free full text, which is not an open access licence |
+| PubMed 37499870 | same | Annals of oncology, 2023: same | Editorial, letter or comment: "Letter", "Comment" | people: "Humans" | not marked: none offered |
+| PubMed 41325201 | same | Journal of visualized experiments, 2025: same | Journal article | animals: "Animals" | not marked; free full text |
+| PubMed 33004510 | same | Science, 2020: same | Review: "Review" | both: "Animals", "Humans" | not marked; free full text |
+| PubMed 36778375 | same | medRxiv, 2023: same | Preprint: "Preprint" | nothing said: no subject headings | marked open access |
+
+No field differed, so no failing test was added. Two things a reader may notice: the entry gives a journal's name as the index record writes it ("Science (New York, N.Y.)", "Drug and alcohol dependence"), where the index's page capitalises or shortens it; and "open access" is the record's own mark, so a paper that is free to read at the index without an open access licence is not marked. None of the five is retracted, and none of the 136 records is, so the retracted mark was checked only on the recorded fixture of a known retracted paper.
+
+## Subject terms on the real database (14 November 2026)
+
+Openspec `knowledge-cards`, tasks 5.1 to 5.3. `thenwhat terms --missing` was run once on the real database, for the 84 published claims, with the decisions backend and the default thresholds (approve at 0.8, reject under 0.05, ten candidates a claim). It took 4 minutes 24 seconds. Nothing was exported or deployed.
+
+| | Count |
+| --- | --- |
+| Published claims | 84 |
+| Claims with at least one candidate | 45 |
+| Candidates gathered | 105 (94 filed by the registry, 16 with a label equal to a name, 5 both) |
+| Approved by rule, exact | 35 |
+| Approved by rule, broader | 13 |
+| Rejected by rule | 43 |
+| Left pending | 14 |
+| Candidates the backend gave no answer for | 0 |
+| Claims with a condition card | 32 of 84 (38%) |
+| Claims with an intervention card | 7, then 6 after the reading below |
+| Claims with any card | 36 |
+| Term records stored | 90, 10 of them with no definition |
+| Requests to MeSH | 445: 265 label lookups, 180 for records |
+| Model calls | 58, 39,001 input tokens, 0.0039 US dollars |
+
+The gate in task 5.1 is one claim in three with a condition card. 32 of 84 is above it, by four claims. The 39 claims with no candidate have no approved trial and no name a MeSH label equals.
+
+More requests were made than the design's estimate of about 170, because each claim's indication and each intervention name is looked up by label on every run (265 lookups). The record requests were as estimated.
+
+**Every approved link read beside its claim (task 5.2).** 48 links, 2 judged misleading and rejected, recorded as the assistant's decisions: "Tirzepatide" (0.96) and "Semaglutide" (0.91), both read as exact for the claim whose intervention is "GLP-1 receptor agonists". Each is one of that claim's other names, so its label equals a name, but one member drug would have stood on the page for a class. That is 1 in 24, under the 1 in 20 at which the threshold is to be raised, so it was not raised and the run was not repeated. Raising it would not have removed these two: the cause is a class-named intervention whose other names are its members, not a low score.
+
+Read as right but worth the operator's eye:
+
+- Four claims have only very broad condition terms, and the card takes the highest score, which is the broadest: "Metabolic Diseases" (0.95) ahead of "Lipid Metabolism Disorders" (0.85) for hard-to-treat high cholesterol, with "Dyslipidemias" pending at 0.64; "Musculoskeletal Diseases" (1.00) ahead of "Spinal Diseases" and "Pain" for chronic low back pain, with "Low Back Pain" and "Back Pain" pending at 0.51 and "Intervertebral Disc Degeneration" pending at 0.75. A broader card that is true and nearly useless is the cost of ordering by score alone.
+- "Infertility" (0.90) and "Alcoholism" (0.81) were read as exact for "Infertility after childhood chemotherapy" and "Binge drinking in alcohol use disorder". Both are the wider condition.
+- "Caloric Restriction" (0.99) was read as broader than "Intensive low-calorie diet with structured exercise". It covers the diet and not the exercise.
+- The endometrial cancer claim's Parkinson's disease term, the case in the proposal, was rejected by rule at zero. Its right term, "Endometrial Neoplasms", scored 0.77 and is pending, so that claim has no card.
+
+**Definitions read as a reader would (task 5.3).** All 42 distinct definitions of approved terms were read, not ten. None gives advice in the second person. These read as saying what a treatment is used for, or that something works, and are for the operator before release:
+
+| Term, on which claim | The words |
+| --- | --- |
+| Aspirin, on the claim about aspirin for dentine repair | "used in the treatment of mild to moderate pain", "used in the prevention of arterial and venous thrombosis" |
+| Caloric Restriction, on the claim about a diet for type 2 diabetes | "In experimental animals, caloric restriction has been shown to extend lifespan and enhance other physiological variables." |
+| Kidney Failure, Chronic, on the pig kidney transplant claim | "These patients generally require HEMODIALYSIS or KIDNEY TRANSPLANTATION." |
+| Ascorbic Acid, on the vitamin C claim | "an essential nutrient in human diets", "considered an antioxidant" |
+| Diabetes Mellitus, Type 2, on the claim about a weekly insulin | "not INSULIN-responsive or dependent (NIDDM)": dated wording that sits oddly beside a claim about an insulin |
+| Semaglutide and Tirzepatide (rejected above) | "used to enhance glycemic control of TYPE 2 DIABETES MELLITUS, and for OBESITY MANAGEMENT" |
+
+The operator's decision, 14 November 2026: these definitions are shown as they are. They stay the source's words, closed until asked for, under the section's note that cards describe terms and are not advice.
+
+Other things a reader would notice: several definitions are one line and say little ("Diseases affecting the eye.", "Diseases involving the SPINE."); "Alcoholism" is the vocabulary's own heading and its definition says "often progressive and fatal"; three supplementary records for new drugs (INNA-051, orforglipron, trastuzumab deruxtecan) have no definition, so their cards are a label and a link.
+
+How it was run: from a checkout of the branch against the database on its local port. This Mac's default resolver (Tailscale) gave no address for `id.nlm.nih.gov`, so that one name's address was taken from a public resolver for the run; the certificate was still checked against the name.
+
+## Reported statements: the first reads (14 November 2026)
+
+Openspec `reported-statements`, tasks 6.1 to 6.3. Run with `thenwhat statements` on a copy of the real database made the same day (`thenwhat_statements`, migrated to this change's 0011), not on the real one: the real database is at 0009 and is shared with branches whose migrations are not merged yet. The real database gets its statements by running `thenwhat statements --missing` once this change is merged and migrated. Model: the configured extraction model for proposing and the configured Decisions backend for the check, with the defaults: approved by rule at 0.8, six statements an article at most, eight words in a row refused as copied.
+
+### Ten articles first (task 6.1)
+
+Ten claims with one article each, from ten outlets: a press release, a video page and eight news reports, in people, animals and laboratory work.
+
+| | Count |
+| --- | --- |
+| Articles read | 10 |
+| Statements proposed | 50 |
+| Refused for copying eight words in a row | 4 |
+| Refused for a quotation mark | 0 |
+| Refused for naming a recorded person | 0 |
+| Refused for length | 0 |
+| Checked and stored | 46 |
+| Approved by rule (0.8 or more) | 23 |
+| Pending, unpublished | 23 |
+| Not checked (no usable answer) | 0 |
+| Model cost, proposing | $0.0057 (10 calls) |
+| Model cost, checking | $0.0035 (10 calls) |
+| Model cost for ten articles | $0.0091 |
+| Estimated cost of all 104 articles | about $0.095, under 1% of the $13 monthly budget (a quarter is $3.25) |
+
+The cost is well under a quarter of the budget, so the run went on.
+
+### Read beside their articles (task 6.2)
+
+Each of the 23 approved statements was read beside its article as fetched again that day.
+
+| | Statements |
+| --- | --- |
+| Misstate the article | 0 |
+| Stronger than the article | 0 |
+| Name someone | 0 |
+| Faithful | 23 |
+
+One in 23 has a speaker that could be read either way: a university's press release states a mouse result in its own voice, and the statement gives a researcher as its speaker. It is not counted as a misstatement. Fewer than one in ten misstate, so the threshold and the instructions stay as they are.
+
+What reading them showed besides:
+
+- The statements paraphrase closely. The copying rule allows up to seven words in a row, and several statements share six with their article. None repeats a sentence.
+- The check is cautious. Half the stored statements wait below 0.8. The pending ones read beside the same ten articles were mostly faithful too, numbers from a trial among them (a hair count was at 0.26). The check chose "says something weaker" for 6 of the 46, and its probabilities for "says this" are spread from 0.10 to 0.99.
+- Nine of the ten pages no longer matched the hash stored at their first read, mostly because of what the page shows around the article (related links, "published 2 days ago", other stories). The command's message was reworded to say so.
+
+### The rest (task 6.3)
+
+`thenwhat statements --missing` over the other 94 articles of the 84 published claims.
+
+| | Count |
+| --- | --- |
+| Articles | 94 |
+| Read | 90 |
+| Could not be read | 4: three from The US Sun and one from Queen's University Belfast, all refused by robots.txt with no archived copy; each needs pasted text |
+| Statements proposed | 447 |
+| Refused for copying | 47 |
+| Refused for any other rule | 0 |
+| Approved by rule | 218 |
+| Pending | 182 |
+| Not checked | 0 |
+| Pages that no longer matched their stored hash | 61 of 90 |
+| Model cost | $0.0868 (proposing $0.0553, checking $0.0315) |
+
+All 104 articles together:
+
+| | Count |
+| --- | --- |
+| Articles with statements | 100 of 104 |
+| Statements stored | 446 (241 approved, 205 pending) |
+| Most statements on one article | 6 |
+| Claims with at least one approved statement | 75 of 84 |
+| Published articles with no approved statement | 13 (the 4 not read, and 9 whose statements all wait) |
+| Model cost | $0.0959 |
+
+What the 446 are: effect 171, how it works 102, safety 51, what it could lead to 45, who it could help 41, comparison 36. As fact 301, as a possibility 145. Said by the article itself 264, a researcher 129, another expert 27, a company 25, a patient 1. Resting, as the article gives it, on a study in people 136, in animals 90, laboratory work 42, not said 178.
+
+Limits. One run, one model each for proposing and checking, and the 218 statements approved in task 6.3 were not read one by one. The model's cost was recorded in the copy's ledger, not the real database's, so the real ledger does not count these $0.10. Statements are of each page as read on 14 November; an article that gave no statement would be read again by a later `--missing` run, though here every article read gave at least one.
+
+## Organisations: the first measured run (14 November 2026)
+
+Openspec `organisations`, tasks 6.1 and 6.2. Run on a copy of the real database made the same day (`thenwhat_organisations`), migrated to this change's migration (numbered 0011 at the time, 0012 since `reported-statements` took 0011), not on the real one: the real database is shared with branches whose migrations are still being numbered. The real database gains sponsors and organisation matches from the first `thenwhat fetch` and `thenwhat resolve` of each claim after this change is merged and migrated. On the copy, `thenwhat fetch` was run for all 84 published claims, then the organisation step of `thenwhat resolve` alone (ROR lookups and the approval rule), so that no trial search or model call was repeated. The HTTP cache was as copied, and held ROR answers from the related-papers run earlier the same day.
+
+| | Count |
+| --- | --- |
+| Published claims fetched | 84 (none failed), 5 minutes 45 seconds |
+| Trials with approved events | 222 |
+| Sponsors recorded as entities | 122 on the claims' trials: 117 new (82 institutions, 35 companies) and 5 a report had already named |
+| Institution and company entities looked up | 430 (308 read from articles, 122 sponsors), 371 distinct names |
+| ROR requests sent | 209, in 1 minute 36 seconds; the rest were answered from the cache |
+| Entities identified (ROR's chosen record, approved by rule) | 269 (63%): 157 new matches and the 112 that `related-research` had stored pending |
+| Entities left unidentified | 161 |
+| Distinct ROR records kept | 217 |
+| Organisations exported | 419 on 80 of the 84 claims: 258 identified, 161 not. 11 identified names joined another name's record, so 430 entities make 419 entries |
+| Roles exported | 304 named in a report (55 with no address, on claims with several reports), 121 sponsor; 6 organisations play both |
+| Identified organisations with no https website | 66 (ROR gives an http address or none), shown without a website |
+| Source articles marked as on an organisation's website | 10 of 104: university and institute news pages (Plymouth, King's College London, Queen Mary, Washington, USC, Griffith, Forsyth, Tufts, Nottingham, RIKEN). None is a newspaper |
+| Export size | 1,602,517 bytes without organisations, 1,878,130 with |
+
+The claim with the most organisations lists 28 (knee osteoarthritis, genicular artery embolisation), 26 of them named in its one report.
+
+### Every name read once (task 6.2)
+
+All 430 names were read beside the ROR record they were matched to. None is a person. Read as wrong:
+
+| Claim | Name given | ROR record chosen | ROR id | Score |
+| --- | --- | --- | --- | --- |
+| cholesterol-crispr-ctx310 | CRISPR Therapeutics; CRISPR Therapeutics AG | Sprint PNS System (United States) | 020bbbm37 | 1.00 |
+| dentine-repair-dlk1 | European Regional Development Fund | Development Fund (Norway) | 01rkhv978 | 1.00 |
+| diffuse-midline-glioma-b-sync-car-t | Pediatric Neuro-Oncology Consortium (PNOC) | Montreal Neurological Institute and Hospital | 05ghs6f64 | 1.00 |
+| enamel-regeneration-protein-scaffold | Marie Curie (the EU's Marie Skłodowska-Curie Actions) | Marie Curie, the UK charity | 02aqv1x10 | 1.00 |
+| enamel-remineralisation-amelogenin-peptide | ACS Biomaterials Science and Engineering (a journal) | Matériaux Ingénierie et Science (France) | 01rnfhz46 | 1.00 |
+| malaria-cabamiquine-pyronaridine | PAMAfrica consortium | Authorised Association Consortium (Tanzania) | 01j5adv11 | 0.96 |
+| obesity-tofa | Ulster University | RK University (India) | 057ap5t09 | 0.96 |
+| ovarian-cancer-salpingectomy | Göteborg University | Godfrey Okoye University (Nigeria) | 04japw488 | 0.96 |
+| ovarian-cancer-salpingectomy | University College London Hospitals (an NHS trust) | University College London | 02jx3x895 | 1.00 |
+| pancreatic-cancer-daraxonrasib | Food and Drug Administration (the US agency) | Food and Drug Administration (Thailand) | 05hvrsg85 | 1.00 |
+| retinitis-pigmentosa-optogenetic-therapy | UPMC Eye Center | Eye Center (Saudi Arabia) | 02jecxg34 | 1.00 |
+| stiff-person-syndrome-car-t | Adicet Therapeutics | TG Therapeutics | 00pwykz63 | 0.97 |
+| tauopathy-cxcr3-antibody | Neuron (a journal) | NeurON : Interface Neuro-machine (France) | 00a8q8z31 | 1.00 |
+| type-2-diabetes-remission-diet-exercise | The Lancet Regional Health – Americas (a journal) | Regional Health (United States) | 01d1vqp66 | 1.00 |
+
+That is 15 of the 269 identified names (5.6%), in 14 entries. One more could not be settled from the names alone: "Axial Therapeutic Research" matched to Vertero Therapeutics (00yw4wq90, 0.97), which may be the same company renamed; with it, 16 (5.9%). **Either way it is more than one in twenty, the stop in task 6.2: this is reported to the operator before the site section ships.** The score does not separate them: ten of the wrong matches score 1.00, and no threshold on ROR's score would have caught them without dropping many right ones. The rule is ROR's own choice, as designed; ROR's affiliation matching chose these.
+
+Matched to a parent or partner rather than the organisation named, and not counted as wrong: a hospital to its university (Second Affiliated Hospital to Zhejiang University, Shanghai Ninth People's Hospital to Shanghai Jiao Tong University, Cliniques universitaires Saint-Luc to UCLouvain), an institute to its university (Wyss Institute to Harvard University, Michigan Medicine to the University of Michigan), and two joint bodies to one partner (the NIHR Biomedical Research Centre at Guy's and St Thomas' and King's College London to King's College London, the Harvard-MIT Division of Health Sciences and Technology to MIT). A school or department matched to its university (Washington University School of Medicine, Tohoku University Graduate School of Dentistry) was read as right.
+
+Not organisations in the sense the section's note gives ("universities, hospitals and companies"), recorded by extraction as institutions or companies: 24 journal names (The New England Journal of Medicine, The Lancet, Journal of Dental Research, Nature, Cell and others; three of them among the wrong matches above), and 6 news outlets and banks (The New York Times, Fox News, LADbible, China Daily, RBC Capital Markets, William Blair). Each is listed as "Named in the report", which is true. Five names are a group, laboratory, team or programme rather than an organisation (MRC Redox Metabolism Group; Molecular Laboratory for Gene Therapy and Tooth Regeneration in Beijing; Oriental Neurosurgery Evidence-Based-Study Team; EDCTP2 Programme; National Key Research and Development Program of China). Tightening what extraction records as an organisation is an extraction change, not part of this one.
+
+Left unidentified although ROR holds them, because ROR marked no record as chosen for the name as given: among others Harvard, UCLA, University of California San Francisco, University of Copenhagen, National Institutes of Health, Medical Research Council, Eli Lilly, Novo Nordisk, AstraZeneca, Pfizer, Novartis, Moderna and GSK. Each is listed by the name the report gave, saying it was not matched. No looser match is tried.
+
+**Rejecting the wrong matches.** They exist only on the copy until the real database is fetched and resolved. After that run, the same matches are approved by rule there too; each is then rejected with `thenwhat review reject match <id> --as-assistant` (or by the operator), finding its id by the claim, the name and the ROR id above, and a later run leaves it rejected. The organisation is then listed by the name its source gave, as not matched.
+
+### Raising the bar, and the run again (14 November 2026, later)
+
+The operator's decision on the figures above: raise the bar rather than reject by hand. A ROR match is now approved by rule only when ROR chose it, the name given is exactly one of the record's names, labels, aliases or acronyms (ignoring case, accents, punctuation, a leading "The" and a closing bracket), a one-word name matches letter for letter, the record is not typed as ROR's catch-all "other", the name is not a journal title held in the paper records, and a government body's name states its country. Anything else stays a pending match and the organisation unidentified, with no looser match tried. Extraction is also asked, from now on, not to record journals, news outlets, banks or investment analysts as organisations.
+
+The copy's 269 ROR matches were set back to pending and the organisation step was run again with the same ROR answers (from the cache; no request was sent).
+
+| | First rule | Stricter rule |
+| --- | --- | --- |
+| Names ROR chose a record for | 269 | 269 |
+| Approved by rule (identified) | 269 | 205 |
+| Of those, wrong | 15 (5.6%) | 1 (0.5%) |
+| Of those, doubtful | 1 | 0 |
+| Left pending, organisation unidentified | 0 | 64 |
+| Organisations exported | 419 (258 identified) | 430 (205 identified) |
+| Reports marked as on an organisation's website | 10 | 10 |
+
+The one wrong match left is "Marie Curie" on enamel-regeneration-protein-scaffold: the report meant the EU's Marie Skłodowska-Curie Actions, and ROR's chosen record is the UK charity whose name is exactly "Marie Curie". No rule on the name can tell them apart. It is rejected with `thenwhat review reject match <id>` after the real database's run, and stays rejected. Every other wrong match is now pending: CRISPR Therapeutics (both spellings), the European Regional Development Fund, PNOC, ACS Biomaterials Science and Engineering, PAMAfrica, Ulster University, Göteborg University, University College London Hospitals, UPMC Eye Center, Adicet Therapeutics, Neuron and The Lancet Regional Health – Americas by the exact-name test, the US FDA without its country by the government test, and the doubtful Axial Therapeutic Research too. 1 in 205 is under the one-in-twenty stop, so task 6.2 is met.
+
+Previously right matches the stricter rule leaves unidentified: 49 of the 253 read as right. 7 are the parent and partner matches listed above (a hospital to its university, a joint body to one partner). 8 are public bodies whose name does not state their country (NHS England twice, BBSRC, the European Research Council, the European Union, NHMRC, NICE twice). 2 are records typed "other": The New York Times and the European Society of Gynaecological Oncology. The other 32 are a school or department matched to its university (Washington University School of Medicine on four entities, Tufts University School of Dental Medicine, University of Pittsburgh School of Medicine on two, and others), and spellings that differ from every name on the record ("Copenhagen University Hospital, Rigshospitalet", "North American Science Associates Ltd.", "Veradermics" against "VeraDermics"). Each is listed by the name its source gave, as not matched to a registry record.
+
+Journals, news outlets and banks: of the 24 journal names and 6 outlets and banks recorded by extraction, none is identified under the stricter rule. Neuron is caught both as a journal title on record and by the one-word test; The New York Times by its "other" type; the rest had no chosen record or no exact name. A bank ROR held under exactly the name given, typed as a company, would still be identified; none was in this run.

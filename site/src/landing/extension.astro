@@ -1,0 +1,571 @@
+---
+// The extension's page (openspec landing-pages-and-guide). Its route is added in
+// astro.config.mjs only when a store lists the extension, so this file is never built
+// into a page that offers nothing. Every popup on it is drawn from the export: the
+// answers the extension gives today, dated, and rebuilt with the site.
+import ArrowUpRight from "@lucide/astro/icons/arrow-up-right";
+import InstallControls from "../components/InstallControls.astro";
+import PopupDemo from "../components/PopupDemo.astro";
+import SharePill from "../components/SharePill.astro";
+import Base from "../layouts/Base.astro";
+import { brandAsset } from "../lib/brand";
+import { data } from "../lib/export";
+import {
+  HOSTS,
+  LEDGER,
+  PERMISSIONS,
+  exampleClaim,
+  firstReport,
+  latestChange,
+  registryRecords,
+} from "../lib/extension-page";
+import { lookupClaim } from "../lib/lookup-claim";
+import { NOTICES } from "../lib/notices";
+import { formatDate } from "../lib/timetable";
+import { SITE } from "../../site.config.mjs";
+
+const example = exampleClaim(data.claims);
+const shown = example && lookupClaim(example);
+const report = example && firstReport(example);
+const records = example ? registryRecords(example) : [];
+const change = example && latestChange(example);
+const checked = data.last_checked_at ? formatDate(data.last_checked_at) : null;
+---
+
+<Base
+  title="Browser extension"
+  description="Press one button on a health story to see what came of the breakthrough it reports. What the extension reads, sends and keeps, and where to install it."
+  breadcrumbs={[{ name: "Browser extension", path: "/extension" }]}
+>
+  <section class="band" slot="band" aria-labelledby="extension-title">
+    <div class="wrap opening">
+      <div class="says">
+        <h1 class="title" id="extension-title">What came of it, from the article you are reading.</h1>
+        <p class="lede">
+          A browser extension. Press its button on a health story and it says what is on record.
+        </p>
+      </div>
+      <div class="get">
+        <InstallControls />
+        <p class="doubt"><a href="#what-it-sends">What it reads, sends and keeps</a></p>
+      </div>
+    </div>
+
+    {
+      shown && report && (
+        <ul class="answers">
+          <li class="answer">
+            <h2>On a report this site tracks</h2>
+            <p class="page">
+              <a class="quoted" href={report.url} rel="noopener">
+                “{report.title}”<ArrowUpRight size={15} stroke-width={1.9} aria-hidden="true" />
+              </a>
+              <span class="outlet">
+                {report.outlet}, {formatDate(report.published_date)}
+              </span>
+            </p>
+            <div class="toolbar" aria-hidden="true">
+              <img src={brandAsset("/favicon.svg")} alt="" width="26" height="26" />
+            </div>
+            <div class="shown">
+            <PopupDemo claim={shown} checked={checked} lands />
+            <p class="note">
+              The extension's answer for this report{checked && `, as the registries showed it on ${checked}`}.
+              It is found inside your browser: the page's address is sent nowhere.
+            </p>
+            </div>
+          </li>
+          {
+            records.length > 0 && (
+              <li class="answer">
+                <h2>On a page it does not track</h2>
+                <p class="page">
+                  Any other report of a treatment: a news story, a post, a video. An example,
+                  drawn with the trial records of the claim in the first answer.
+                </p>
+                <div class="toolbar" aria-hidden="true">
+                  <img src={brandAsset("/favicon.svg")} alt="" width="26" height="26" />
+                </div>
+                <div class="shown">
+                <PopupDemo
+                  kind="search"
+                  claim={shown}
+                  subject={{ treatment: example.intervention.name, condition: example.indication }}
+                  records={records}
+                />
+                <p class="note">
+                  A search of the trial registries, marked automatic and unreviewed; a real one
+                  names each trial by its registered title. The percentage is how closely a
+                  record matches the report, never how good a treatment is. It runs only once you
+                  allow it, because it sends the page's words to this site's service and to OpenAI.
+                </p>
+                </div>
+              </li>
+            )
+          }
+          {
+            change && (
+              <li class="answer">
+                <h2>When a claim you follow moves</h2>
+                <p class="page">
+                  Later, with no page open: a notification, then your list. An example, drawn
+                  with the same claim's last change of status on record.
+                </p>
+                <div class="toolbar" aria-hidden="true">
+                  <img src={brandAsset("/favicon.svg")} alt="" width="26" height="26" />
+                </div>
+                <div class="shown">
+                <PopupDemo kind="following" claim={shown} was={change.was} />
+                <p class="note">
+                  When a claim you follow moves, the extension tells you and marks it in your
+                  list. The list is kept in your browser only.
+                </p>
+                </div>
+              </li>
+            )
+          }
+        </ul>
+      )
+    }
+
+    {/* On a phone the popups come first: the extension is installed on a computer. */}
+    <div class="wrap get-after">
+      <p class="elsewhere">The extension runs in a computer's browser. Send this page there:</p>
+      <SharePill />
+      <InstallControls />
+      <p class="doubt"><a href="#what-it-sends">What it reads, sends and keeps</a></p>
+    </div>
+  </section>
+
+  <h2 class="bar" id="what-it-sends">What it reads, sends and keeps</h2>
+  <p>
+    The extension does nothing until you open it, and it reads only the tab you open it on. This
+    table is the short account. <a href="/privacy">The privacy page</a> is the full one.
+  </p>
+  <div class="table-frame">
+    <table role="table" class="ledger">
+      <caption class="visually-hidden">What the extension sends and keeps, by moment</caption>
+      <thead role="rowgroup">
+        <tr role="row">
+          <th role="columnheader" scope="col">When</th>
+          <th role="columnheader" scope="col">What leaves your browser</th>
+          <th role="columnheader" scope="col">Where it goes</th>
+          <th role="columnheader" scope="col">What is kept</th>
+        </tr>
+      </thead>
+      <tbody role="rowgroup">
+        {
+          LEDGER.map((row) => (
+            <tr role="row">
+              <th role="rowheader" scope="row">{row.when}</th>
+              <td role="cell" data-column="What leaves your browser">
+                {row.sent ? row.sent : <strong class="nothing">Nothing.</strong>}
+                <span class="aside">{row.sentNote}</span>
+              </td>
+              <td role="cell" data-column="Where it goes">{row.to}</td>
+              <td role="cell" data-column="What is kept">{row.kept}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+  <p class="entry-note">
+    It does not watch other tabs, and it searches nothing while it is closed. Removing the
+    extension removes everything it kept.
+  </p>
+
+  <h2 class="bar" id="what-it-asks">What it asks of your browser</h2>
+  <p>Your browser lists these when you install it. Each is here with what it is used for.</p>
+  <dl class="asks">
+    {
+      PERMISSIONS.map((permission) => (
+        <div>
+          <dt>{permission.plain}</dt>
+          <dd>{permission.use}</dd>
+        </div>
+      ))
+    }
+    <div>
+      <dt>Two addresses</dt>
+      <dd>
+        It may fetch from and send to {new URL(SITE.url).host}, and nowhere else but{" "}
+        {HOSTS.map((entry) => entry.host).join(", ")}. {HOSTS.map((entry) => entry.use).join(" ")}
+      </dd>
+    </div>
+  </dl>
+
+  <h2 class="bar" id="what-it-never-says">What it never says</h2>
+  <p>
+    It gives a status and the way to the records behind it. It never says whether a treatment
+    works, is safe or is available, and it gives no verdict on a report, an outlet or the people
+    behind a claim.
+  </p>
+  <ul class="never">
+    {NOTICES.map((notice) => <li>{notice}</li>)}
+  </ul>
+
+  <section class="closing">
+    <h2 class="bar" id="install">Install it</h2>
+    <p class="take-why">No account is needed, on this site or in the extension.</p>
+    <InstallControls />
+  </section>
+</Base>
+
+<style>
+  /* Title at the page's own width, so it lines up with the masthead. */
+  .opening {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.25rem 2.5rem;
+  }
+
+  .says {
+    flex: 1 1 22rem;
+    max-width: 36rem;
+  }
+
+  .opening .title {
+    max-width: 21ch;
+  }
+
+  .opening .lede {
+    max-width: 34rem;
+    margin-bottom: 0;
+  }
+
+  .get {
+    flex: none;
+    padding-bottom: 0.15rem;
+  }
+
+  .doubt {
+    margin: 0.7rem 0 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  /* The three answers: each popup at its real width, hanging from the toolbar button a
+     reader will look for. The row is wider than the page, on purpose: it is the page. */
+  .answers {
+    --between: 1.75rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 360px));
+    grid-auto-rows: auto;
+    justify-content: center;
+    gap: 2.5rem var(--between);
+    max-width: 74rem;
+    margin: clamp(1.5rem, 4vw, 2.1rem) auto 0;
+    padding: 0 var(--gutter);
+    list-style: none;
+  }
+
+  /* One situation: named, the page it happens on, the toolbar, the popup, a note.
+     The parts share rows across the three, so the popups hang from one line. */
+  .answer {
+    display: grid;
+    /* One column that never grows past its track, or a 360-pixel popup would widen it. */
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: subgrid;
+    grid-row: span 4;
+    row-gap: 0;
+    min-width: 0;
+  }
+
+  .answer h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  .answer p {
+    max-width: none;
+  }
+
+  .page {
+    margin: 0.4rem 0 0;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+
+  .quoted {
+    color: var(--ink);
+    font-weight: 600;
+    text-wrap: pretty;
+  }
+
+
+  .quoted svg {
+    margin-left: 0.2em;
+    vertical-align: -0.1em;
+    color: var(--muted);
+  }
+
+  .outlet {
+    display: block;
+    margin-top: 0.15rem;
+  }
+
+  /* The edge of the browser's toolbar, with the extension's own button on it. The line
+     runs through the space between columns, so three popups hang from one toolbar. */
+  .toolbar {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+    align-self: end;
+    margin-top: 0.9rem;
+    padding: 0 1.1rem 0.45rem;
+  }
+
+  .toolbar::after {
+    content: "";
+    position: absolute;
+    inset: auto calc(var(--between) / -2) 0;
+    height: 1px;
+    background: color-mix(in srgb, var(--muted) 38%, var(--panel));
+  }
+
+  /* The stem: each popup hangs from its own button, through the toolbar's edge. */
+  .toolbar::before {
+    content: "";
+    position: absolute;
+    inset: auto calc(1.1rem + 12px) -0.5rem auto;
+    width: 2px;
+    height: 0.95rem;
+    background: color-mix(in srgb, var(--muted) 38%, var(--panel));
+  }
+
+  .toolbar img {
+    border-radius: 6px;
+    background: var(--paper);
+    outline: 1px solid var(--rule);
+  }
+
+  .shown {
+    margin-top: 0.5rem;
+  }
+
+  .note {
+    margin: 0.9rem 0 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  /* The ledger: the timetable's frame, turned on the extension itself. */
+  .ledger {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .ledger th,
+  .ledger td {
+    padding: 0.8rem 0.9rem;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .ledger thead th {
+    background: var(--panel);
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .ledger tbody tr {
+    border-top: 1px solid var(--rule-soft);
+  }
+
+  .ledger tbody th {
+    width: 22%;
+    font-weight: 700;
+  }
+
+  .ledger td:nth-child(2) {
+    width: 30%;
+  }
+
+  .nothing {
+    display: block;
+    font-size: 1.45rem;
+    line-height: 1.2;
+  }
+
+  .aside {
+    display: block;
+    margin-top: 0.3rem;
+    color: var(--muted);
+    font-size: 0.88rem;
+  }
+
+  .asks {
+    max-width: var(--measure);
+    margin: 1rem 0 0;
+  }
+
+  .asks > div {
+    padding: 0.7rem 0;
+    border-top: 1px solid var(--rule-soft);
+  }
+
+  .asks dt {
+    font-weight: 700;
+  }
+
+  .asks dd {
+    margin: 0.15rem 0 0;
+  }
+
+  .never {
+    max-width: var(--measure);
+    margin: 0;
+    padding-left: 1.2rem;
+    font-weight: 600;
+  }
+
+  .never li + li {
+    margin-top: 0.35rem;
+  }
+
+  .get-after {
+    display: none;
+  }
+
+  .elsewhere {
+    margin: 0 0 0.6rem;
+    font-weight: 600;
+  }
+
+  .get-after :global(.share) {
+    min-height: 2.75rem;
+    margin-bottom: 0.9rem;
+    padding-inline: 1rem;
+    background: var(--paper);
+  }
+
+  @media (max-width: 40rem) {
+    .get {
+      display: none;
+    }
+
+    .get-after {
+      display: block;
+      margin-top: 2rem;
+    }
+
+    /* One column needs no shared rows. In the first answer the popup comes straight
+       under its situation, so the status is on the first screen, and the report it
+       answers for is named beneath it, where the note says "this report". Only the
+       drawn order changes, never the order a keyboard moves in. */
+    .answer {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .toolbar {
+      align-self: stretch;
+    }
+
+    .answer:first-child .shown {
+      display: contents;
+    }
+
+    /* The first answer's button sits at the end of its heading's line, so the popup
+       starts one row sooner. */
+    .answer:first-child h2 {
+      padding-right: 3.25rem;
+    }
+
+    .answer:first-child .toolbar {
+      order: 1;
+      margin-top: -1.55rem;
+    }
+
+    .band {
+      padding-top: 1.25rem;
+    }
+
+    .answers {
+      margin-top: 1.1rem;
+    }
+
+    .answer:first-child :global(.pp-popup) {
+      order: 2;
+      margin-top: 0.5rem;
+    }
+
+    .answer:first-child .page {
+      order: 3;
+      margin-top: 0.9rem;
+    }
+
+    .answer:first-child .note {
+      order: 4;
+      margin-top: 0.35rem;
+    }
+
+    /* A link on a line of its own is pressed like a button: 44 pixels. */
+    .doubt a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2.75rem;
+    }
+
+    .doubt {
+      margin-top: 0.25rem;
+    }
+
+    /* Stacked, each row is a block with its column named, as the site's tables are. */
+    .ledger thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+
+    .ledger,
+    .ledger tbody,
+    .ledger tr,
+    .ledger th,
+    .ledger td {
+      display: block;
+      width: auto;
+    }
+
+    .ledger tbody tr {
+      padding: 0.6rem 0;
+    }
+
+    .ledger tbody tr:first-child {
+      border-top: 0;
+    }
+
+    .ledger tbody th,
+    .ledger td,
+    .ledger td:nth-child(2) {
+      width: auto;
+      padding-block: 0.3rem;
+    }
+
+    .ledger td[data-column]::before {
+      content: attr(data-column);
+      display: block;
+      margin-bottom: 0.1rem;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+  }
+
+  @media print {
+    .toolbar,
+    .get {
+      display: none;
+    }
+  }
+</style>

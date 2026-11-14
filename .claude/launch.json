@@ -20,6 +20,15 @@
       "port": 4334
     },
     {
+      "name": "site-export",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd site && npx astro dev --port 4337"
+      ],
+      "port": 4337
+    },
+    {
       "name": "site-built",
       "runtimeExecutable": "sh",
       "runtimeArgs": [
@@ -58,6 +67,29 @@
         "127.0.0.1"
       ],
       "port": 4333
+    },
+    {
+      "name": "site-extension",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd site && CHROME_STORE_URL=https://example.org/chrome-listing SAFARI_STORE_URL=https://example.org/safari-listing EXPORT_FILE=data/published-export.json npx astro dev --port 4336"
+      ],
+      "port": 4336
+    },
+    {
+      "name": "mocks",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4335",
+        "--directory",
+        ".impeccable/mocks",
+        "--bind",
+        "127.0.0.1"
+      ],
+      "port": 4335
     }
   ]
 }

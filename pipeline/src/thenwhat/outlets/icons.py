@@ -17,11 +17,16 @@ import httpx
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat import __version__
 from thenwhat.db.models import OutletIcon, SourceArticle
-from thenwhat.sources.base import MissingContact, SystemTime, Time
+from thenwhat.sources.base import (
+    CLIENT_NAME,
+    Pacer,
+    SystemTime,
+    Time,
+    require_contact,
+    user_agent,
+)
 
-ROBOTS_NAME = "thenwhat"
 MAX_ICON_BYTES = 100_000
 MAX_PAGE_BYTES = 2_000_000
 MAX_ROBOTS_BYTES = 500_000
@@ -116,7 +121,7 @@ class IconFetcher:
         self._time = time or SystemTime()
         self._client = httpx.Client(transport=transport, timeout=30.0, follow_redirects=False)
         self._robots: dict[str, RobotFileParser | None] = {}
-        self._next_request_at: float | None = None
+        self._pacer = Pacer()
 
     def fetch(self, site: str) -> FetchedIcon:
         """The icon of the outlet at `site`, an address such as https://www.example.org.
@@ -124,8 +129,7 @@ class IconFetcher:
         /favicon.ico is tried first, then the icons the home page names. A blank
         placeholder is passed over like a file that is not an image.
         """
-        if not self._contact:
-            raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
+        require_contact(self._contact)
         for url in self._candidates(site):
             content = self._get(url, MAX_ICON_BYTES)
             media_type = image_type(content) if content else None
@@ -147,7 +151,7 @@ class IconFetcher:
             if check_robots and not self._allowed(url):
                 return None
             self._wait_for_turn()
-            headers = {"User-Agent": f"{ROBOTS_NAME}/{__version__} (mailto:{self._contact})"}
+            headers = {"User-Agent": user_agent(self._contact)}
             try:
                 with self._client.stream("GET", url, headers=headers) as response:
                     if response.is_redirect and "location" in response.headers:
@@ -171,12 +175,12 @@ class IconFetcher:
         if origin not in self._robots:
             self._robots[origin] = self._rules(origin)
         rules = self._robots[origin]
-        return rules is not None and rules.can_fetch(ROBOTS_NAME, url)
+        return rules is not None and rules.can_fetch(CLIENT_NAME, url)
 
     def _rules(self, origin: str) -> RobotFileParser | None:
         """The host's robots.txt. None when its rules could not be learned: do not fetch."""
         self._wait_for_turn()
-        headers = {"User-Agent": f"{ROBOTS_NAME}/{__version__} (mailto:{self._contact})"}
+        headers = {"User-Agent": user_agent(self._contact)}
         rules = RobotFileParser()
         try:
             response = self._client.get(
@@ -195,11 +199,7 @@ class IconFetcher:
         return rules
 
     def _wait_for_turn(self) -> None:
-        now = self._time.monotonic()
-        if self._next_request_at is not None and now < self._next_request_at:
-            self._time.sleep(self._next_request_at - now)
-            now = self._time.monotonic()
-        self._next_request_at = now + SECONDS_BETWEEN_REQUESTS
+        self._pacer.wait(self._time, SECONDS_BETWEEN_REQUESTS)
 
 
 class _IconLinks(HTMLParser):

@@ -1,0 +1,80 @@
+---
+// Reported statements: what each news report said about the treatment, in the site's
+// own words, framed as the report's and grouped under the report. Openspec
+// site-publishing: "Reported statements on the claim page". Between the summary and
+// the records, and never compared with a record.
+import ChevronDown from "@lucide/astro/icons/chevron-down";
+import ExternalLink from "@lucide/astro/icons/external-link";
+import Outlet from "./Outlet.astro";
+import type { ExportedClaim } from "../lib/export";
+import {
+  BASIS_WORDS,
+  KIND_WORDS,
+  attributionText,
+  confidenceMeaning,
+  statementConfidenceLabel,
+  statementsHeading,
+  statementsNote,
+  type ExportedStatement,
+} from "../lib/statements";
+import { formatDate } from "../lib/timetable";
+
+interface Props {
+  statements: ExportedStatement[];
+  articles: ExportedClaim["articles"];
+}
+
+const { statements, articles } = Astro.props;
+// Report by report, in the order the claim lists its reports; a report with no
+// approved statement is not listed.
+const groups = articles
+  .map((article) => ({
+    article,
+    statements: statements.filter((statement) => statement.article_url === article.url),
+  }))
+  .filter((group) => group.statements.length > 0);
+---
+
+<section class="matched statements" data-pagefind-ignore>
+  <h2 class="bar" id="reported-statements">{statementsHeading(groups.length)}</h2>
+  <p class="take-why">
+    {statementsNote(groups.length)} <a href="/how-it-works#what-a-report-said">How statements are found</a>
+  </p>
+  {
+    groups.map((group) => (
+      <>
+        <h3 class="matched-group statement-report">
+          <a class="statement-source" href={group.article.url} rel="noopener">
+            “{group.article.title}”
+            <ExternalLink class="out" size={14} stroke-width={1.9} aria-hidden="true" />
+          </a>
+          <span class="entry-note">
+            <Outlet url={group.article.url} outlet={group.article.outlet} link={false} />{" "}
+            <span class="unbroken">{formatDate(group.article.published_date)}</span>
+          </span>
+        </h3>
+        <ul class="plain match-list statement-list">
+          {group.statements.map((statement) => (
+            <li>
+              <div class="match-record">
+                <span class="card-kind">{KIND_WORDS[statement.kind]}</span>
+                <p class="statement">
+                  <span class="statement-said">{attributionText(statement)}</span>{" "}
+                  {statement.text}
+                </p>
+                <span class="entry-note">{BASIS_WORDS[statement.basis]}</span>
+              </div>
+              <details class="match-why">
+                <summary>
+                  <strong>{statementConfidenceLabel(statement.confidence)}</strong>
+                  <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+                </summary>
+                <p>{confidenceMeaning(formatDate(statement.read_on))}</p>
+              </details>
+            </li>
+          ))}
+        </ul>
+      </>
+    ))
+  }
+</section>

@@ -8,7 +8,7 @@
 
 ## 2. Ledger and steps
 
-- [x] 2.1 Add migration `0009` for the `work_entry` table with its unique key on record kind, record id, step and step version, together with the other tables this change adds (design decision 10); verify `alembic upgrade head` then `alembic downgrade -1` both succeed on the test database
+- [x] 2.1 Add migration `0013` for the `work_entry` table with its unique key on record kind, record id, step and step version, together with the other tables this change adds (design decision 10); verify `alembic upgrade head` then `alembic downgrade -1` both succeed on the test database
 - [x] 2.2 Add the `thenwhat/backfill` package with the step shape, the list of registered steps and the duplicate-name check; verify a test registers two steps with one name and the check refuses
 - [x] 2.3 Implement the due-work query (in scope, no finished entry at the current version, or a different fingerprint); verify tests against the test database cover finished records skipped, a changed fingerprint, a record out of scope, a new step and a raised version
 - [x] 2.4 Implement the runner: lock a due record with skip-locked, run the step, save the result and the entry together, commit per record; verify tests cover a failure on one record of ten, the attempt limit, and a step that raises part way leaving none of its partial result and an entry that records the failure
@@ -18,13 +18,13 @@
 ## 3. Source allowances
 
 - [x] 3.1 Add settings for each source's allowance (requests per period, least interval, pause when refused) to the configuration and `.env.example`; verify a step whose source has no allowance refuses to run and names the missing setting
-- [x] 3.2 Add the allowance use table to migration `0009`; verify upgrade and downgrade on the test database
+- [x] 3.2 Add the allowance use table to migration `0013`; verify upgrade and downgrade on the test database
 - [x] 3.3 Implement claiming a request against an allowance in one transaction, with spacing between requests; verify tests using two sessions and a fake clock show the shared count holds and no two requests are closer than the least interval
 - [x] 3.4 Implement the used-up and refused cases: stop asking, leave records due, do not count an attempt, record the pause; verify tests cover running out mid-run, a too-many-requests answer, and a restart within the same period
 
 ## 4. Registry corpus
 
-- [x] 4.1 Add the `registry_trial` table and the load state table to migration `0009`; verify upgrade and downgrade on the test database
+- [x] 4.1 Add the `registry_trial` table and the load state table to migration `0013`; verify upgrade and downgrade on the test database
 - [x] 4.2 Record fixtures of two list-endpoint pages with a generic client name; verify the fixtures contain no contact address
 - [x] 4.3 Implement the paged load with a condition, storing each trial once with its raw payload and fetch time; verify tests against the fixtures cover a first load, a repeat load that updates in place, and a load resumed after stopping on the second page
 - [x] 4.4 Implement loading changes since the previous completed load; verify a test shows the request carries the previous load's date and that an updated trial's fingerprint changes only when a field a step reads changed
@@ -40,7 +40,7 @@
 
 ## 6. News search step and article leads
 
-- [x] 6.1 Add the `article_lead` table, unique on trial and address, to migration `0009`; verify upgrade and downgrade on the test database
+- [x] 6.1 Add the `article_lead` table, unique on trial and address, to migration `0013`; verify upgrade and downgrade on the test database
 - [x] 6.2 Implement choosing the intervention name for a search (no placebo, comparator, dose, form, route or description) and the indication words; verify tests use the 200 sampled trials' registry fields as cases, including the ones the sample could not name
 - [x] 6.3 Write the client for the index chosen in 1.2, with removal of any excerpt, summary or text field before a result is stored or logged; verify tests use synthetic fixtures only and one asserts that a result carrying an excerpt is stored without it
 - [x] 6.4 Implement the news search step: scope, inputs, search, leads stored once per trial and address, outcome done or nothing found; verify tests cover coverage found, none found, the same article found twice, and one article found for two trials
@@ -59,7 +59,7 @@
 
 ## First run: what was done on 2026-11-14
 
-- **Where:** a separate database, `thenwhat_backfill`, on the Compose Postgres server. The operator's `thenwhat` database was not migrated: other worktrees share it, and they do not have migration `0009` until this branch is merged.
+- **Where:** a separate database, `thenwhat_backfill`, on the Compose Postgres server. The operator's `thenwhat` database was not migrated: other worktrees share it, and they do not have migration `0013` until this branch is merged.
 - **Load (7.2):** `thenwhat backfill load-trials` stored 43,320 trials in 44 requests, in 1 minute 44 seconds. The sampling frame was 43,320.
 - **Plan (7.2):** 40,006 of the 43,320 trials (92%) have a usable name and indication and are in the news search's scope. They need 40,006 requests: about 333 hours at 30 seconds apart, and 11 weekly allowances of 4,000.
 - **A fault the live run found:** `load-trials --changes-only` read the previous load's date after its transaction had closed. Fixed, with a test that runs the load on separate committed transactions.

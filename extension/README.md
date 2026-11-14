@@ -103,7 +103,15 @@ As of 13 November 2026, 0.9.0 (9) is Waiting for Review. The [0.9.1 preview](htt
 - `src/short-links.js`: learns where a link through X's shortener leads. Tested in `tests/`.
 - `src/controller.js`: owns one popup's automatic lookup, cache, cancellation and explicit retries.
 - `src/popup.js`: connects the controller to the active tab, shared readers and rendered view.
+- `src/kept.js`: the recently checked pages and followed claims the browser keeps. Pure, tested in `tests/`.
+- `src/results.js`: reuse of a previous answer for up to 24 hours. Pure.
+- `src/visual.js`: reads the visible content and captures the screenshot a visual lookup sends.
+- `src/watch.js`: decides which followed claims to tell the reader about and which reminders are due. Pure, tested in `tests/`.
+- `src/background.js`: the twice-daily check; wires `watch.js` to alarms and notifications.
+- `src/icons.js`: the icons the popup draws.
 - `build.mjs`: copies the above with what is shared with the site (the address comparison, how an address is told from a post, the page reader, the wording of an answer and the notices), the site's face and icon, and writes the manifest.
+- `safari.sh`: wraps the built extension in the Safari app; `sync-brand-icons.mjs` refreshes its artwork.
+- `test-corpus/`: public pages for checking lookups by hand (its own README).
 - `dev/`: a page showing every popup state side by side. `node extension/build.mjs --dev`, then serve `extension/dist` and open `states.html`.
 
 Tests run with `node --test extension/tests/*.test.mjs` after `npm --prefix site ci` (also part of `make check`). Synthetic YouTube fixtures use LinkeDOM to exercise real selectors without live network calls. The explicit glob discovers the test files on Node 24.

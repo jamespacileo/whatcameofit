@@ -109,7 +109,7 @@ A checked-in list maps domains to general news, trade press or press release; an
 
 ### 10. Migration
 
-One new Alembic migration, `0009`, adds all five tables (the ledger, allowance use, registry trials, the load state and article leads), so the models and the migrations never disagree part way through the change. The initial migration is not regenerated: databases with real claims exist.
+One new Alembic migration, `0013`, adds all five tables (the ledger, allowance use, registry trials, the load state and article leads), so the models and the migrations never disagree part way through the change. The initial migration is not regenerated: databases with real claims exist.
 
 ## Risks / Trade-offs
 

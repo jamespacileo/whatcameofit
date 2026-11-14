@@ -1,6 +1,5 @@
 ---
 import Base from "../layouts/Base.astro";
-import CalendarPlus from "@lucide/astro/icons/calendar-plus";
 import ChevronDown from "@lucide/astro/icons/chevron-down";
 import Clock from "@lucide/astro/icons/clock";
 import Copy from "@lucide/astro/icons/copy";
@@ -8,6 +7,7 @@ import ExternalLink from "@lucide/astro/icons/external-link";
 import ImageDown from "@lucide/astro/icons/image-down";
 import Info from "@lucide/astro/icons/info";
 import Bookmark from "@lucide/astro/icons/bookmark";
+import ClockMark from "../components/ClockMark.astro";
 import BasisMark from "../components/BasisMark.astro";
 import ClaimTable from "../components/ClaimTable.astro";
 import FollowOffer from "../components/FollowOffer.astro";
@@ -16,10 +16,13 @@ import Outlet from "../components/Outlet.astro";
 import KindIcon from "../components/KindIcon.astro";
 import Pop from "../components/Pop.astro";
 import SharePill from "../components/SharePill.astro";
+import Statements from "../components/Statements.astro";
 import StageTrack from "../components/StageTrack.astro";
 import TopicChip from "../components/TopicChip.astro";
+import TrialDetailsLink from "../components/TrialDetailsLink.astro";
 import { APPROACH_LABELS } from "../lib/approach";
-import { data, verticalTitle, type ExportedClaim } from "../lib/export";
+import { claimPaths, data, verticalTitle, type ExportedClaim } from "../lib/export";
+import { statusSlug } from "../lib/guide";
 import { UNCHECKED_NOTE } from "../lib/notices";
 import {
   EVIDENCE_STAGES,
@@ -37,7 +40,30 @@ import {
 } from "../lib/status";
 import { cardAlt, clip, shareSentence } from "../lib/card";
 import { embedSnippet, shareLinks } from "../lib/share";
-import { confidenceLabel, readingOf } from "../lib/confidence";
+import { confidenceLabel } from "../lib/confidence";
+import MatchList from "../components/MatchList.astro";
+import Background from "../components/Background.astro";
+import Organisations from "../components/Organisations.astro";
+import { publisherOf, publisherText } from "../lib/organisations";
+import Paper from "../components/Paper.astro";
+import Trial from "../components/Trial.astro";
+import {
+  PAPERS_NOTE,
+  PAPERS_SHOWN,
+  countSubjects,
+  groupPapers,
+  subjectCountText,
+} from "../lib/paper-facts";
+import {
+  TRIALS_NOTE,
+  TRIALS_SHOWN,
+  countTrials,
+  isPaperMatch,
+  largestText,
+  orderTrials,
+  trialCountText,
+  withResults,
+} from "../lib/trial-facts";
 import { FOLLOWED_SHOWN, followedName, followedReports } from "../lib/reports";
 import { claimPageData } from "../lib/structured";
 import ReportError from "../components/ReportError.astro";
@@ -45,9 +71,7 @@ import { SITE } from "../../site.config.mjs";
 import { cardFor } from "../lib/card-image";
 import { buildTimetable, dayAndMonth, formatDate, recordedLines } from "../lib/timetable";
 
-export function getStaticPaths() {
-  return data.claims.map((claim) => ({ params: { slug: claim.slug }, props: { claim } }));
-}
+export const getStaticPaths = claimPaths;
 
 interface Props {
   claim: ExportedClaim;
@@ -85,10 +109,39 @@ const inTopic = data.claims
   .filter((other) => other.vertical === claim.vertical && other.slug !== claim.slug)
   .sort((a, b) => ((a.first_reported_date ?? "") < (b.first_reported_date ?? "") ? 1 : -1));
 const others = inTopic.slice(0, 3);
-// Matched registry records, approved first, each with how sure the match is.
+// Matched records, approved first, each with how sure the match is. A paper is not a
+// registry record, so papers are listed and counted apart.
 const matched = claim.matches ?? [];
-const counted = matched.filter((match) => match.state === "approved").length;
-const possible = matched.length - counted;
+// An export made before openspec paper-facts lists its papers among the matches.
+const papers = claim.papers ? [] : matched.filter(isPaperMatch);
+const paperGroups = groupPapers(claim.papers ?? []);
+const subjectCount = claim.papers ? subjectCountText(countSubjects(claim)) : null;
+const registryMatches = matched.filter((match) => !isPaperMatch(match));
+const counted = registryMatches.filter((match) => match.state === "approved").length;
+const candidates = registryMatches.filter((match) => match.state === "candidate");
+const possible = candidates.length;
+// Each trial once, furthest phase first, with the match that brought it to the claim.
+const trials = orderTrials(claim.trials ?? []);
+const trialIds = new Set(trials.map((trial) => trial.trial_id));
+// The fold says when it holds posted results, so a reader knows to open it.
+const foldedResults = withResults(trials.slice(TRIALS_SHOWN));
+const matchOf = (trialId: string) =>
+  registryMatches.find((match) => match.state === "approved" && match.external_id === trialId);
+const trialTally = countTrials(claim);
+// Who a report or a trial record says is behind the claim (openspec organisations), and
+// the organisation, if any, on whose website a report is.
+const organisations = claim.organisations ?? [];
+const publisherNote = (url: string) => {
+  const publisher = publisherOf(
+    organisations,
+    claim.articles.find((article) => article.url === url)?.published_by,
+  );
+  return publisher ? publisherText(publisher.name) : null;
+};
+// An approved record with no dated event yet has no trial entry, so it stays listed here.
+const untried = registryMatches.filter(
+  (match) => match.state === "approved" && !trialIds.has(match.external_id),
+);
 // A reader arrives from a headline, so the page names the reports it is about, newest first.
 const reports = followedReports(claim);
 const shownReports = reports.slice(0, FOLLOWED_SHOWN);
@@ -195,6 +248,9 @@ const posts = shareLinks(postText, address, claim.headline);
                   <Outlet url={report.url} outlet={report.outlet} link={false} />{" "}
                   <span class="unbroken">{formatDate(report.published_date)}</span>
                 </span>
+                {publisherNote(report.url) && (
+                  <span class="entry-note publisher">{publisherNote(report.url)}</span>
+                )}
               </li>
             ))}
           </ul>
@@ -249,6 +305,11 @@ const posts = shareLinks(postText, address, claim.headline);
               )
             }
             <p class="pop-note">
+              <a href={`/guide/${statusSlug(claim.status.code)}`}>
+                What “{STATUS_LABELS[claim.status.code]}” does and does not tell you
+              </a>
+            </p>
+            <p class="pop-note">
               <a href="/how-it-works#what-each-status-means">What each status means</a>
             </p>
             {
@@ -277,6 +338,9 @@ const posts = shareLinks(postText, address, claim.headline);
                 <p class="pop-note">
                   <a href="/how-it-works#no-signal">How "no signal" is counted</a>
                 </p>
+                <p class="pop-note">
+                  <a href="/guide/no-signal">What “no signal” does not tell you</a>
+                </p>
               </Pop>
             </div>
           )
@@ -300,8 +364,8 @@ const posts = shareLinks(postText, address, claim.headline);
         {
           claim.matches && (
             <p class="changed" data-pagefind-ignore>
-              <a href="#matched">
-                {matched.length === 0
+              <a href={trials.length > 0 ? "#trials" : "#matched"}>
+                {registryMatches.length === 0
                   ? "No registry record matched"
                   : `${counted} registry ${counted === 1 ? "record" : "records"} matched`}
               </a>
@@ -325,7 +389,13 @@ const posts = shareLinks(postText, address, claim.headline);
     <p class="was-note" hidden data-follow-was data-pagefind-ignore></p>
     <FollowOffer claim={claim} />
 
-    {!claim.checked_by_person && <p class="unchecked">{UNCHECKED_NOTE}</p>}
+    {
+      !claim.checked_by_person && (
+        <p class="unchecked">
+          {UNCHECKED_NOTE} <a href="/guide/checked-by-a-person">What “checked by a person” means</a>
+        </p>
+      )
+    }
 
     <dl class="facts">
       <div>
@@ -372,7 +442,40 @@ const posts = shareLinks(postText, address, claim.headline);
           </div>
         )
       }
+      {
+        /* A count and the largest stated size: never a sum of people across trials. */
+        trialTally.count > 0 && (
+          <div>
+            <dt>Trials in people</dt>
+            <dd>
+              <a href="#trials">{trialCountText(trialTally)}</a>
+              {largestText(trialTally) && <span class="aka">{largestText(trialTally)}</span>}
+            </dd>
+          </div>
+        )
+      }
+      {
+        /* Counts of records, as the registries and the index file them: never that a
+           treatment does anything in people or in animals. */
+        subjectCount && (
+          <div>
+            <dt>Records of studies</dt>
+            <dd>
+              {subjectCount}
+              <span class="aka">Trials, and papers as Europe PMC files them</span>
+            </dd>
+          </div>
+        )
+      }
     </dl>
+
+    {
+      /* What the reports said, in the site's words: after the summary and before the
+         records, which never refer to it, so nothing holds the one against the other. */
+      (claim.reported_statements ?? []).length > 0 && (
+        <Statements statements={claim.reported_statements ?? []} articles={claim.articles} />
+      )
+    }
 
     <div class="bar-row">
       <h2 class="bar" id="timetable">{hasDatedPromise ? "Promised and recorded" : "Recorded"}</h2>
@@ -490,6 +593,9 @@ const posts = shareLinks(postText, address, claim.headline);
                                     <span class="unbroken">(<a href={line.archiveUrl}>archived copy</a>)</span>
                                   </>
                                 )}
+                                {publisherNote(line.url) && (
+                                  <span class="entry-note publisher">{publisherNote(line.url)}</span>
+                                )}
                               </span>
                             </li>
                           ) : (
@@ -520,6 +626,13 @@ const posts = shareLinks(postText, address, claim.headline);
                                           Date taken from: {entry.event.date_basis}.
                                         </p>
                                       )}
+                                      {entry.event.trial_id && trialIds.has(entry.event.trial_id) && (
+                                        <p class="pop-note">
+                                          <a href={`#trial-${entry.event.trial_id}`}>
+                                            This trial's size, design and posted results
+                                          </a>
+                                        </p>
+                                      )}
                                     </Pop>
                                   </span>
                                 </>
@@ -531,6 +644,17 @@ const posts = shareLinks(postText, address, claim.headline);
                                     ? `, ${line.steps[0].event.trial_id}`
                                     : ""}
                                 </a>
+                                <TrialDetailsLink url={line.sourceUrl} />
+                                {
+                                  /* A record read from a registry is certain. One found by
+                                     rule, such as a follow-up paper, says how sure it is. */
+                                  typeof line.steps[0].event.confidence === "number" &&
+                                    line.steps[0].event.confidence < 1 && (
+                                      <span class="entry-note">
+                                        {confidenceLabel(line.steps[0].event.confidence)}
+                                      </span>
+                                    )
+                                }
                               </span>
                             </li>
                           ),
@@ -567,54 +691,119 @@ const posts = shareLinks(postText, address, claim.headline);
     }
 
     {
-      claim.matches && (
-        <section class="matched" data-pagefind-ignore>
-          <h2 class="bar" id="matched">Matched registry records</h2>
-          <p class="take-why">
-            {matched.length > 0
-              ? "Each trial registry record found for this treatment and condition, with how sure the match is. A score is about the match, not about the treatment."
-              : "The trial registries were searched for this treatment and condition. No record matched."}
-          </p>
-          {[
-            { title: null, list: matched.filter((match) => match.state === "approved") },
-            {
-              title: "Possible records, not counted in the status",
-              list: matched.filter((match) => match.state === "candidate"),
-            },
-          ].map(
-            (group) =>
-              group.list.length > 0 && (
-                <>
-                  {group.title && <h3 class="matched-group">{group.title}</h3>}
-                  <ul class="plain match-list">
-                    {group.list.map((match) => (
-                      <li>
-                        <span class="match-record">
-                          {match.url ? (
-                            <a href={match.url} rel="noopener">
-                              {match.external_id}
-                            </a>
-                          ) : (
-                            match.external_id
-                          )}
-                          {match.summary && (
-                            <span class="entry-note">{match.summary.replace(`${match.external_id}: `, "")}</span>
-                          )}
-                        </span>
-                        <details class="match-why">
-                          <summary>
-                            <strong>{confidenceLabel(match.score)}</strong>
-                            <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
-                          </summary>
-                          <p>{readingOf(match.reading)}</p>
-                        </details>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ),
+      trials.length > 0 && (
+        <section class="trials" data-pagefind-ignore>
+          <h2 class="bar" id="trials">Trials on record</h2>
+          <p class="take-why">{TRIALS_NOTE}</p>
+          <ul class="plain trial-list">
+            {trials.slice(0, TRIALS_SHOWN).map((trial) => (
+              <Trial trial={trial} match={matchOf(trial.trial_id)} />
+            ))}
+          </ul>
+          {trials.length > TRIALS_SHOWN && (
+            <details class="trials-rest">
+              <summary>
+                The other {trials.length - TRIALS_SHOWN} of {trials.length} trials
+                {foldedResults > 0 && ` (${foldedResults} with results posted)`}
+                <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+              </summary>
+              <ul class="plain trial-list">
+                {trials.slice(TRIALS_SHOWN).map((trial) => (
+                  <Trial trial={trial} match={matchOf(trial.trial_id)} />
+                ))}
+              </ul>
+            </details>
           )}
         </section>
+      )
+    }
+
+    {
+      /* Registry records that are not trials on this page yet: approved ones with no
+         dated event, and candidates, which never count toward the status. When there
+         is no trial at all, the section says the registries were searched. */
+      claim.matches && (untried.length > 0 || candidates.length > 0 || trials.length === 0) && (
+        <section class="matched" data-pagefind-ignore>
+          <h2 class="bar" id="matched">
+            {untried.length > 0 || candidates.length === 0
+              ? "Matched registry records"
+              : "Possible registry records"}
+          </h2>
+          <p class="take-why">
+            {untried.length > 0
+              ? "Trial registry records found for this treatment and condition, with how sure each match is. A score is about the match, not about the treatment."
+              : candidates.length > 0
+                ? "Trial registry records that may be about this treatment and condition, with how sure each match is. They are not counted in the status. A score is about the match, not about the treatment."
+                : "The trial registries were searched for this treatment and condition. No record matched."}
+          </p>
+          {untried.length > 0 && <MatchList matches={untried} />}
+          {untried.length > 0 && candidates.length > 0 && (
+            <h3 class="matched-group">Possible records, not counted in the status</h3>
+          )}
+          {candidates.length > 0 && <MatchList matches={candidates} />}
+        </section>
+      )
+    }
+
+    {
+      paperGroups.length > 0 && (
+        <section class="papers" data-pagefind-ignore>
+          <h2 class="bar" id="papers">Papers on record</h2>
+          <p class="take-why">{PAPERS_NOTE}</p>
+          {paperGroups.map((group) => (
+            <>
+              <h3 class="matched-group">{group.heading}</h3>
+              <p class="entry-note paper-group-note">{group.note}</p>
+              <ul class="plain paper-list">
+                {group.papers.slice(0, PAPERS_SHOWN).map((paper) => (
+                  <Paper paper={paper} trialIds={trialIds} />
+                ))}
+              </ul>
+              {group.papers.length > PAPERS_SHOWN && (
+                <details class="papers-rest">
+                  <summary>
+                    The other {group.papers.length - PAPERS_SHOWN} of {group.papers.length} papers
+                    <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+                  </summary>
+                  <ul class="plain paper-list">
+                    {group.papers.slice(PAPERS_SHOWN).map((paper) => (
+                      <Paper paper={paper} trialIds={trialIds} />
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </>
+          ))}
+        </section>
+      )
+    }
+
+    {
+      papers.length > 0 && (
+        <section class="matched" data-pagefind-ignore>
+          <h2 class="bar" id="papers">Matched papers</h2>
+          <p class="take-why">
+            Papers matched to this claim, with how sure each match is. A paper is not a trial
+            record, and a score is about the match, not about the treatment.
+          </p>
+          <MatchList matches={papers} />
+        </section>
+      )
+    }
+
+    {
+      /* Who the reports and trial records name, each once, by role and then by name.
+         After the records and away from the status: an organisation is never evidence. */
+      organisations.length > 0 && (
+        <Organisations organisations={organisations} articles={claim.articles} trialIds={trialIds} />
+      )
+    }
+
+    {
+      /* What open vocabularies say of the claim's terms. After the records and away
+         from the status: a card describes a term, never the claim's evidence. */
+      (claim.background ?? []).length > 0 && (
+        <Background cards={claim.background ?? []} sources={data.card_sources ?? []} />
       )
     }
 
@@ -769,24 +958,24 @@ const posts = shareLinks(postText, address, claim.headline);
         {
           promiseDue && (
             <button type="button" class="share" data-when="promise">
-              <CalendarPlus size={16} stroke-width={1.9} aria-hidden="true" />
-              On the promised date, {formatDate(promiseDue)}
+              <ClockMark />
+              <span data-when-text>On the promised date, {formatDate(promiseDue)}</span>
             </button>
           )
         }
         <button type="button" class="share" data-when="six-months">
-          <CalendarPlus size={16} stroke-width={1.9} aria-hidden="true" />
-          In six months
+          <ClockMark />
+          <span data-when-text>In six months</span>
         </button>
         <button type="button" class="share" data-when="year">
-          <CalendarPlus size={16} stroke-width={1.9} aria-hidden="true" />
-          In a year
+          <ClockMark />
+          <span data-when-text>In a year</span>
         </button>
         {
           claim.first_reported_date && (
             <button type="button" class="share" data-when="anniversary">
-              <CalendarPlus size={16} stroke-width={1.9} aria-hidden="true" />
-              On the anniversary, {dayAndMonth(claim.first_reported_date)}
+              <ClockMark />
+              <span data-when-text>On the anniversary, {dayAndMonth(claim.first_reported_date)}</span>
             </button>
           )
         }
@@ -810,6 +999,20 @@ const posts = shareLinks(postText, address, claim.headline);
   import { calendarFile, reminderDate, type ReminderChoice } from "../lib/calendar";
   import { mastodonShare } from "../lib/share";
   import { FOLLOWING_ENTRY, readFollowed } from "../lib/returning";
+
+  // A timetable entry leads to its trial, a trial to its papers and a paper back to its
+  // trial. An entry past the first five sits in a closed fold, which not every browser
+  // opens for a link, so it is opened here.
+  function showLinkedTrial() {
+    if (!/^#(trial|paper)-/.test(location.hash)) return;
+    const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    const fold = target?.closest<HTMLDetailsElement>("details.trials-rest, details.papers-rest");
+    if (!target || !fold || fold.open) return;
+    fold.open = true;
+    target.scrollIntoView();
+  }
+  showLinkedTrial();
+  addEventListener("hashchange", showLinkedTrial);
 
   // Mastodon: the reader names their server once; it is kept in this browser only.
   const mastodon = document.querySelector<HTMLButtonElement>("[data-mastodon]");
@@ -850,8 +1053,6 @@ const posts = shareLinks(postText, address, claim.headline);
     });
   }
 
-  // Sharing uses the device's own share sheet where there is one, and copies the
-  // page address where there is not. The button only appears when it can work.
   // Copying: the button appears only where the clipboard can be written, says so when
   // it has copied, and otherwise leaves the text selected for the reader to copy.
   // A copy is confirmed three ways: the label changes, the site's blue dot lands in
@@ -862,6 +1063,22 @@ const posts = shareLinks(postText, address, claim.headline);
     if (said) said.textContent = words;
     setTimeout(() => {
       control.classList.remove("done");
+      if (said) said.textContent = "";
+    }, 2000);
+  }
+
+  // A saved date is confirmed in its own pill: the clock's hand turns once, the words
+  // say it is saved, and a screen reader is told. Then the pill offers its date again.
+  function saved(choice: HTMLElement) {
+    const words = choice.querySelector<HTMLElement>("[data-when-text]")!;
+    if (choice.classList.contains("saved")) return;
+    const offer = words.textContent;
+    choice.classList.add("saved");
+    words.textContent = "Saved to your calendar";
+    if (said) said.textContent = "Calendar file saved";
+    setTimeout(() => {
+      choice.classList.remove("saved");
+      words.textContent = offer;
       if (said) said.textContent = "";
     }, 2000);
   }
@@ -916,7 +1133,7 @@ const posts = shareLinks(postText, address, claim.headline);
         link.download = `${remind.dataset.slug}-${date}.ics`;
         link.click();
         setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-        confirm(choice, "Calendar file saved");
+        saved(choice);
       });
     }
     remind.hidden = false;
@@ -989,6 +1206,8 @@ const posts = shareLinks(postText, address, claim.headline);
           }
           write(now);
           show(on);
+          // The bookmark lands in the pill that was pressed, not when a followed page is opened.
+          for (const other of follows) other.classList.toggle("landed", on && other === button);
           if (said) {
             said.textContent = on
               ? "Following. Listed on the home page, in this browser only."

@@ -10,11 +10,9 @@ from urllib.robotparser import RobotFileParser
 
 import httpx
 
-from thenwhat import __version__
 from thenwhat.extract.page import Page, read_page
-from thenwhat.sources.base import MissingContact
+from thenwhat.sources.base import CLIENT_NAME, require_contact, user_agent
 
-ROBOTS_NAME = "thenwhat"
 WAYBACK_AVAILABLE = "https://archive.org/wayback/available"
 # How a site answered when asked for one article.
 ALLOWED = "allowed"
@@ -56,8 +54,7 @@ class ArticleRetriever:
     def retrieve(self, url: str) -> Retrieved:
         """The article as plain text: from the site if robots.txt allows it, else from
         an archived snapshot. Raises PasteNeeded when neither is possible."""
-        if not self._contact:
-            raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
+        require_contact(self._contact)
         if not self._allowed(url):
             raise PasteNeeded(
                 f"The robots.txt of {urlsplit(url).netloc} does not allow fetching {url}."
@@ -77,15 +74,13 @@ class ArticleRetriever:
 
     def allowed(self, url: str) -> bool:
         """Whether the site's own rules let this client fetch the address."""
-        if not self._contact:
-            raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
+        require_contact(self._contact)
         return self._allowed(url)
 
     def json(self, url: str) -> Any:
         """The JSON a platform's own interface for software serves at this address, or
         None when it does not answer with any."""
-        if not self._contact:
-            raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
+        require_contact(self._contact)
         response = self._get(url)
         if response is None or response.status_code != 200:
             return None
@@ -97,8 +92,7 @@ class ArticleRetriever:
     def probe(self, url: str) -> Probe:
         """Ask the site itself for one article and say how it answered. No archive is tried:
         the question is whether this outlet can be read."""
-        if not self._contact:
-            raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
+        require_contact(self._contact)
         if not self._allowed(url):
             return Probe(REFUSED_BY_ROBOTS)
         response = self._get(url)
@@ -108,7 +102,7 @@ class ArticleRetriever:
         return Probe(ALLOWED, response.status_code, page)
 
     def _get(self, url: str, params: dict[str, str] | None = None) -> httpx.Response | None:
-        headers = {"User-Agent": f"{ROBOTS_NAME}/{__version__} (mailto:{self._contact})"}
+        headers = {"User-Agent": user_agent(self._contact)}
         try:
             return self._client.get(url, params=params, headers=headers)
         except httpx.TransportError:
@@ -120,7 +114,7 @@ class ArticleRetriever:
         if site not in self._rules:
             self._rules[site] = self._rules_of(site)
         rules = self._rules[site]
-        return rules if isinstance(rules, bool) else rules.can_fetch(ROBOTS_NAME, url)
+        return rules if isinstance(rules, bool) else rules.can_fetch(CLIENT_NAME, url)
 
     def _rules_of(self, site: str) -> RobotFileParser | bool:
         """A site's rules, or one answer for every address when it has none to parse."""

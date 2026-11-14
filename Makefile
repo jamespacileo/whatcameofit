@@ -73,8 +73,8 @@ deploy-ci: site/node_modules
 deploy-check: site/node_modules public-export
 	EXPORT_FILE=data/public-export.json node site/scripts/deploy.mjs --dry-run
 
-# Publish to Cloudflare at SITE_URL's domain. Refuses a preview export, a claim not
-# checked by a person, and a local address.
+# Publish to Cloudflare at SITE_URL's domain. Refuses a preview export and a
+# local address.
 deploy: site/node_modules public-export
 	EXPORT_FILE=data/public-export.json node site/scripts/deploy.mjs
 

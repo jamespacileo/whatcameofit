@@ -10,7 +10,7 @@ import { LIVE, describeAnswer, refusalMessage, textWouldHelp } from "../src/lib/
 
 // Exercise the actual home-page submit handler, with only its network boundary
 // controlled. No real article text or live provider requests are used.
-const source = fs.readFileSync(new URL("../src/pages/index.astro", import.meta.url), "utf8")
+const source = fs.readFileSync(new URL("../src/components/Lookup.astro", import.meta.url), "utf8")
   .match(/<script>([\s\S]*?)<\/script>/)[1]
   .replace(/^\s*import .*;\s*$/gm, "");
 const script = stripTypeScriptTypes(source);

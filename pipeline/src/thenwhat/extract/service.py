@@ -1,34 +1,42 @@
 """Drafting a claim from the text of a news article. Behavior: openspec claim-extraction.
 
 The text is passed in, shown to the model, hashed and dropped. Nothing here
-stores, caches or logs it.
+stores, caches or logs it. While it is in memory, the reported statements the model
+proposes are checked against it (openspec reported-statements).
 """
 
 import hashlib
-from datetime import date, datetime
+from dataclasses import dataclass
+from datetime import UTC, date, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from thenwhat.claims.entities import ORGANISATION_TYPES, note_named_organisation
 from thenwhat.claims.entry import (
     ArticleNotFound,
-    ClaimNotFound,
     EntryError,
     add_article,
     add_claim,
     add_promise,
     check_new_claim,
+    claim_by_slug,
     find_article,
-    find_claim,
     name_key,
     promises_of,
 )
 from thenwhat.db.models import Claim, Entity, SourceArticle
 from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.extract.names import is_a_name, is_a_search_phrase
-from thenwhat.extract.schema import Draft
+from thenwhat.extract.schema import MAX_SEARCH_PHRASES, Draft
 from thenwhat.llm.client import Llm
 from thenwhat.review.decisions import record_decision
+from thenwhat.statements.service import (
+    StatementChecker,
+    StatementsRun,
+    keep_statements,
+    statement_rules,
+)
 
 INSTRUCTIONS = """\
 You read one news article about a medical research claim and return structured fields.
@@ -37,19 +45,31 @@ Write the headline and summary in your own neutral words; never copy sentences f
 Keep the summary under 500 characters.
 When the article gives the treatment no product name, give up to three search phrases:
 the words a trial registry or a paper would use for it.
+Record a person only when the article names them as carrying out or leading the research.
+Never record a patient, a relative, a reporter or a commentator, by full name or by first name.
+Record an institution or company only for a university, hospital, research institute, company,
+funder or public body. A journal, a news outlet, a bank or an investment analyst is none of these.
 Give a DOI only if the article states it. List a promised timeline only if the article states one.
 """
-
-MAX_SEARCH_PHRASES = 3
 
 
 class ClaimNotPending(EntryError):
     pass
 
 
+@dataclass(frozen=True, slots=True)
+class Extracted:
+    """A claim drafted or added to from an article, and what became of the article's
+    reported statements."""
+
+    claim: Claim
+    statements: StatementsRun
+
+
 def draft_claim_from_article(
     session: Session,
     llm: Llm,
+    checker: StatementChecker,
     *,
     text: str,
     slug: str,
@@ -60,16 +80,19 @@ def draft_claim_from_article(
     published_date: date,
     archive_url: str | None = None,
     decide_by_rule_at: datetime | None = None,
-) -> Claim:
-    """Create a pending claim, with its article, entities and promises, from article text.
+    now: datetime | None = None,
+) -> Extracted:
+    """Create a pending claim, with its article, entities, promises and reported
+    statements, from article text.
 
     Nothing is saved if the model's output never validates or an entry rule refuses it.
+    A statement the check cannot answer for is not stored; the claim still is.
     With `decide_by_rule_at`, the draft is decided by rule at that time (openspec
     auto-publish): approved when the intervention it names is a name, else rejected and
     kept for the operator, since a description would be searched for as if it were one.
     """
     check_new_claim(session, slug, vertical)
-    draft = _extract(llm, text)
+    draft = _extract(llm, text, checker)
     with session.begin_nested():
         claim = add_claim(
             session,
@@ -87,25 +110,34 @@ def draft_claim_from_article(
         if decide_by_rule_at is not None:
             state = ReviewState.APPROVED if is_a_name(draft.intervention) else ReviewState.REJECTED
             record_decision(claim, state, by=Decider.RULE, now=decide_by_rule_at)
-    return claim
+        statements = keep_statements(
+            session,
+            checker,
+            article=article,
+            text=text,
+            proposed=draft.statements,
+            now=now or datetime.now(UTC),
+        )
+    return Extracted(claim, statements)
 
 
 def extract_into_claim(
     session: Session,
     llm: Llm,
+    checker: StatementChecker,
     *,
     claim_slug: str,
     article_url: str,
     text: str,
     archive_url: str | None = None,
-) -> Claim:
-    """Add what an article says to a claim that is still pending.
+    now: datetime | None = None,
+) -> Extracted:
+    """Add what an article says to a claim that is still pending, its reported statements
+    included.
 
     What the operator already entered is kept: the headline always, the summary if set.
     """
-    claim = find_claim(session, claim_slug)
-    if claim is None:
-        raise ClaimNotFound(f"No claim has the slug '{claim_slug}'.")
+    claim = claim_by_slug(session, claim_slug)
     if claim.review_state is not ReviewState.PENDING:
         raise ClaimNotPending(
             f"Claim '{claim_slug}' has already been reviewed. Add to it by hand instead."
@@ -114,15 +146,28 @@ def extract_into_claim(
     if article is None:
         raise ArticleNotFound(f"Claim '{claim_slug}' has no article {article_url}.")
 
-    draft = _extract(llm, text)
+    draft = _extract(llm, text, checker)
     if not claim.summary:
         claim.summary = draft.summary
     _apply(session, claim, article, draft, text, archive_url)
-    return claim
+    statements = keep_statements(
+        session,
+        checker,
+        article=article,
+        text=text,
+        proposed=draft.statements,
+        now=now or datetime.now(UTC),
+    )
+    return Extracted(claim, statements)
 
 
-def _extract(llm: Llm, text: str) -> Draft:
-    return llm.run("extraction", instructions=INSTRUCTIONS, prompt=text, output_type=Draft)
+def _extract(llm: Llm, text: str, checker: StatementChecker) -> Draft:
+    return llm.run(
+        "extraction",
+        instructions=INSTRUCTIONS + statement_rules(checker.per_article),
+        prompt=text,
+        output_type=Draft,
+    )
 
 
 def _apply(
@@ -176,7 +221,10 @@ def _apply(
 
     for named in draft.entities:
         entity_type = EntityType(named.type)
-        if (entity_type, name_key(named.name)) not in known:
+        if entity_type in ORGANISATION_TYPES:
+            # Kept with the article that named it, once per organisation of the claim.
+            note_named_organisation(session, claim, article, named.name, entity_type)
+        elif (entity_type, name_key(named.name)) not in known:
             known.add((entity_type, name_key(named.name)))
             session.add(Entity(claim_id=claim.id, type=entity_type, name=named.name))
 

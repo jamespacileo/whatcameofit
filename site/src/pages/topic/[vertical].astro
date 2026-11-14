@@ -2,9 +2,14 @@
 import Base from "../../layouts/Base.astro";
 import ClaimTable from "../../components/ClaimTable.astro";
 import LookupAgain from "../../components/LookupAgain.astro";
+import CopyButton from "../../components/CopyButton.astro";
 import SharePill from "../../components/SharePill.astro";
+import { topicCardAlt } from "../../lib/card";
+import { topicCardFor } from "../../lib/card-image";
 import { data, type StatusCode } from "../../lib/export";
+import { topicSentence } from "../../lib/share";
 import { topicSummary } from "../../lib/status";
+import { canonicalAddress } from "../../lib/structured";
 
 export function getStaticPaths() {
   return data.verticals.map((vertical) => ({
@@ -21,18 +26,29 @@ const claims = data.claims
 const counts = new Map<StatusCode, number>();
 for (const claim of claims) counts.set(claim.status.code, (counts.get(claim.status.code) ?? 0) + 1);
 const summary = topicSummary(counts);
+// A topic with a claim has a link-preview card of its own, built from the same summary.
+const card = claims.length > 0 ? `/og/topic/${vertical.slug}.png` : undefined;
+const sentence =
+  summary && topicSentence(summary, data.last_checked_at, canonicalAddress(`/topic/${vertical.slug}`));
 ---
 
 <Base
   title={vertical.title}
   description={`Reported breakthroughs in ${vertical.title.toLowerCase()} and where each stands now.`}
   current="topics"
+  image={card}
+  imageAlt={card && topicCardAlt(topicCardFor(vertical, claims))}
   breadcrumbs={[
     { name: "Topics", path: "/topics" },
     { name: vertical.title, path: `/topic/${vertical.slug}` },
   ]}
 >
   <h1 class="title">{vertical.title}</h1>
+  {/* A reader arriving from a shared link has not seen the home page. */}
+  <p class="what-this-is" data-pagefind-ignore>
+    Reported breakthroughs in {vertical.title.toLowerCase()}, and where the public records show each
+    stands now. <a href="/how-it-works">How a status is set</a>
+  </p>
   <p class="lede">
     {summary ?? "0 reported breakthroughs tracked."}
     {claims.length > 1 && " Newest first."}
@@ -43,16 +59,20 @@ const summary = topicSummary(counts);
       <p>No claims are tracked in this topic yet.</p>
     ) : (
       <>
-        <h2 class="visually-hidden">Claims in {vertical.title.toLowerCase()}</h2>
-        <ClaimTable claims={claims} caption={`Claims in ${vertical.title}`} filter />
-        {/* Ways to pass the topic on and to hear when one of its claims moves. */}
-        <div class="page-foot">
+        {/* Ways to pass the topic on and to hear when one of its claims moves, before
+            the list: a reader from a forum meets them without scrolling past it. */}
+        <div class="page-foot" data-pagefind-ignore>
           <SharePill />
+          <CopyButton source="topic-sentence" label="Copy sentence" />
           <p class="entry-note">
             For a feed reader:{" "}
             <a href={`/changes/topic/${vertical.slug}.xml`}>status changes in this topic</a>.
           </p>
+          {/* What "Copy sentence" copies: the summary above, dated, with this page's address. */}
+          <span id="topic-sentence" hidden>{sentence}</span>
         </div>
+        <h2 class="visually-hidden">Claims in {vertical.title.toLowerCase()}</h2>
+        <ClaimTable claims={claims} caption={`Claims in ${vertical.title}`} filter />
       </>
     )
   }

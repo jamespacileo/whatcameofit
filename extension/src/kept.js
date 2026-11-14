@@ -60,12 +60,6 @@ export function candidatesOf(entry, site) {
   ];
 }
 
-const sameClaim = (page) => (kept) => kept.page === page;
-
-export function isFollowed(follows, page) {
-  return (follows ?? []).some(sameClaim(page));
-}
-
 /** The followed list with this claim in it, remembered as it stands now. */
 export function follow(follows, claim) {
   const { headline, page, status, place = null } = claim;

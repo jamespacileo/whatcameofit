@@ -192,6 +192,28 @@ test("the lists are offered under an answer, and not while the page is being rea
   assert.doesNotMatch(root.textContent, /Recently checked|Keep me up to date/);
 });
 
+test("a wait is one line: the mark, then what is being waited for", () => {
+  const root = new Element("main");
+  for (const state of [{ kind: "checking" }, { kind: "searching" }, { kind: "capturing" }]) {
+    render(root, state, site, listActions, kept);
+    const line = root.children[0];
+    assert.equal(line.className, "checking");
+    assert.equal(line.children[0].attributes.class, "wait-mark");
+    assert.equal(typeof line.children[1], "string");
+  }
+});
+
+test("the tick is drawn for the claim just followed, and only for it", () => {
+  const root = new Element("main");
+  const mark = () => elements(root, "span").find((span) => span.className?.startsWith("followed-mark"));
+  render(root, trackedState, site, listActions, { ...kept, followed: ["/reviewed"], fresh: "/reviewed" });
+  assert.equal(mark().className, "followed-mark drawn");
+  assert.equal(mark().children[0].children[0].attributes.pathLength, "1");
+
+  render(root, trackedState, site, listActions, { ...kept, followed: ["/reviewed"], fresh: null });
+  assert.equal(mark().className, "followed-mark");
+});
+
 test("a followed claim that moved says what it was, in words", () => {
   const root = new Element("main");
   render(root, trackedState, site, listActions, { ...kept, followed: ["/reviewed"], was: { "/reviewed": "Trial registered" } });

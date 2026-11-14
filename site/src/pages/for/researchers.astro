@@ -1,0 +1,204 @@
+---
+// For people who study what follows the news: the data file itself, with its licence,
+// the day it was built and its fields. Openspec landing-pages-and-guide.
+import Download from "@lucide/astro/icons/download";
+import { SITE } from "../../../site.config.mjs";
+import Audience from "../../layouts/Audience.astro";
+import { CLAIM_FIELDS } from "../../lib/audiences";
+import { CORRECTION_SUBJECT, contactLink } from "../../lib/contact.mjs";
+import { data, listedTopics } from "../../lib/export";
+import { DATA_LICENCE, DATA_LICENCE_URL, dataCredit, openData } from "../../lib/open-data";
+import { formatDate } from "../../lib/timetable";
+
+const file = openData(
+  data,
+  DATA_LICENCE,
+  dataCredit(SITE.name, SITE.url),
+  `${SITE.url}/how-it-works`,
+);
+// The fields are read from the file as built, so the list cannot name one it lacks.
+const fields = Object.keys(file.claims[0] ?? CLAIM_FIELDS);
+const corrections = contactLink(SITE.correctionsUrl, "", CORRECTION_SUBJECT);
+const count = data.claims.length;
+---
+
+<Audience
+  audience="researchers"
+  title="Studying what follows the news?"
+  lede="Every published claim, with its status, the records behind it, its news reports and its promises, as one file you can download, cite and build on."
+  description="The open data file of reported medical breakthroughs and what the public records show since: its licence, the day it was built and its fields."
+>
+  <div class="file" slot="tool">
+    <a class="get" href="/data/claims.json" download>
+      <Download size={18} stroke-width={1.9} aria-hidden="true" />
+      Download claims.json
+    </a>
+    <dl class="about-file">
+      <div>
+        <dt>Holds</dt>
+        <dd>
+          {count}
+          {count === 1 ? "claim" : "claims"} in {listedTopics.length}{" "}
+          {listedTopics.length === 1 ? "topic" : "topics"}, as JSON
+        </dd>
+      </div>
+      <div>
+        <dt>Built</dt>
+        <dd>{formatDate(data.generated_at)}</dd>
+      </div>
+      {
+        data.last_checked_at && (
+          <div>
+            <dt>Registries checked</dt>
+            <dd>{formatDate(data.last_checked_at)}</dd>
+          </div>
+        )
+      }
+      <div>
+        <dt>Licence</dt>
+        <dd>
+          <a href={DATA_LICENCE_URL}>{DATA_LICENCE}</a>
+        </dd>
+      </div>
+    </dl>
+  </div>
+
+  <h2 class="bar" id="fields">What each claim holds</h2>
+  <dl class="fields">
+    {
+      fields.map((field) => (
+        <div>
+          <dt>
+            <code>{field}</code>
+          </dt>
+          <dd>{CLAIM_FIELDS[field] ?? "Described on the data page."}</dd>
+        </div>
+      ))
+    }
+  </dl>
+  <p>
+    The file leaves out article text, claims not approved in review, and outlet icons.{" "}
+    <a href="/data">The data page</a> gives the credit line to use.
+  </p>
+
+  <h2 class="bar">How a status is set</h2>
+  <p>
+    By fixed rules, applied in order, from the approved records in the <code>events</code> field.
+    No model and no editor decides one, and <code>status.explained_by</code> names the records
+    that produced it. <a href="/how-it-works#how-a-status-is-set">The rules, in order</a>
+  </p>
+
+  <h2 class="bar">What a match's confidence is, and is not</h2>
+  <p>
+    Each entry in <code>matches</code> carries a score from 0 to 1: an automatic estimate that a
+    registry record concerns the claim's treatment for its condition. It is not a measured
+    probability and says nothing about the treatment or the trial's quality.{" "}
+    <a href="/guide/match-and-confidence">Match and confidence, in the guide</a>
+  </p>
+
+  <h2 class="bar">Feeds, and reporting a wrong match</h2>
+  <p>
+    For a feed reader: <a href="/changes.xml">every status change</a> and{" "}
+    <a href="/anniversaries.xml">anniversaries of first reports</a>. Each claim page and each topic
+    page links a feed of its own.
+  </p>
+  <p>
+    {
+      corrections ? (
+        <>
+          A match that links the wrong record:{" "}
+          <a href={corrections.href}>report it (opens {corrections.opens})</a>, with the record's
+          identifier. A wrong match is removed and the rules then set the status again.
+        </>
+      ) : (
+        <>
+          Each claim page says how to report an error in it. A wrong match is removed and the rules
+          then set the status again.
+        </>
+      )
+    }
+  </p>
+
+  <Fragment slot="limits">
+    <p>
+      The claims are not a sample of medical news. They are the reports this site has been given or
+      has found, so counts across them describe this collection and nothing wider.
+    </p>
+    <p>
+      Matches are made by software and published by rule; <code>checked_by_person</code> says
+      whether a person has reviewed a claim. A real trial can be missed, and a status can lag a
+      registry.
+    </p>
+    <p>
+      No outlet, researcher or company is ranked or scored, and the file holds no article text.
+    </p>
+  </Fragment>
+</Audience>
+
+<style>
+  .file {
+    margin-top: 1.5rem;
+    max-width: 46rem;
+  }
+
+  .get {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-height: 3.2rem;
+    padding: 0 1.4rem;
+    border-radius: 0.65rem;
+    background: var(--blue);
+    color: var(--paper);
+    font-size: 1.08rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .get:hover {
+    background: var(--footer);
+  }
+
+  .about-file,
+  .fields {
+    margin: 1.1rem 0 0;
+  }
+
+  .about-file div,
+  .fields div {
+    display: grid;
+    grid-template-columns: 11rem 1fr;
+    gap: 0.1rem 1.25rem;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .about-file dt,
+  .fields dt {
+    font-weight: 600;
+  }
+
+  .about-file dt {
+    color: var(--muted);
+  }
+
+  .about-file dd,
+  .fields dd {
+    margin: 0;
+  }
+
+  .fields {
+    max-width: var(--measure);
+  }
+
+  .fields code {
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 40rem) {
+    .about-file div,
+    .fields div {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,13 @@
+---
+import { trialDetailsPath } from "../lib/trial-links.mjs";
+interface Props { url: string | null | undefined }
+const local = trialDetailsPath(Astro.props.url);
+const id = local?.split("/").at(-1);
+---
+{local && <a class="trial-alternative" href={local} aria-label={`View trial details here: ${id}`}>View trial details here</a>}
+<style>
+  .trial-alternative { display: inline-block; font-size: 0.8rem; margin-inline-start: 0.65em; }
+  @media (max-width: 40rem) {
+    .trial-alternative { display: flex; align-items: center; min-height: 44px; margin-inline-start: 0; }
+  }
+</style>

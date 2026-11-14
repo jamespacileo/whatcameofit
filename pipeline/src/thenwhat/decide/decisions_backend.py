@@ -7,12 +7,10 @@ are the model's own estimate, like the other backend's, and are not calibrated.
 
 import re
 
-from thenwhat.decide.core import BackendAnswer
+from thenwhat.decide.core import BackendAnswer, rescaled
 from thenwhat.llm.decisions import MAX_QUESTIONS, Choice, Chosen, Decisions
 
 NAME = "openai-decisions"
-# A sum this far from 1 is rescaled; further off, the answer is left for the caller to refuse.
-RESCALE_WITHIN = 0.1
 
 
 class DecisionsBackend:
@@ -47,13 +45,9 @@ class DecisionsBackend:
         return [None if one is None else self._as_answer(one) for one in chosen]
 
     def _as_answer(self, chosen: Chosen) -> BackendAnswer:
-        probabilities = chosen.probabilities
-        total = sum(probabilities.values())
-        if total > 0 and abs(total - 1) <= RESCALE_WITHIN:
-            probabilities = {option: value / total for option, value in probabilities.items()}
         return BackendAnswer(
             chosen.choice,
-            probabilities,
+            rescaled(chosen.probabilities),
             confidence=chosen.confidence,
             model=self._decisions.model_name,
         )

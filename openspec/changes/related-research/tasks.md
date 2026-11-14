@@ -14,43 +14,43 @@
 
 ## 2. People
 
-- [ ] 2.1 Limit extraction's people to researchers and drop single given names; verify the test for an article naming a reporter, a patient and a professor
-- [ ] 2.2 List stored person entities with their claim for the operator, and delete those the operator marks; verify one success and one refusal of the command
+- [x] 2.1 Limit extraction's people to researchers and drop single given names; verify the test for an article naming a reporter, a patient and a professor
+- [x] 2.2 List stored person entities with their claim for the operator, and delete those the operator marks; verify one success and one refusal of the command
 
 ## 3. Literature search
 
-- [ ] 3.1 Read OpenAlex's current terms, key rules, allowance and headers and add its entry to `docs/sources.md`; add `OPENALEX_API_KEY` to `.env.example`
-- [ ] 3.2 Write the OpenAlex client: search by words with a limit, refusal without a key, a stop when the allowance is used up, the key kept out of cache keys and logs; verify on recorded fixtures with a generic client name and replaced abstracts
-- [ ] 3.3 Store up to twenty paper candidates per claim on the intervention entity with a one-line record; verify the resolution tests for a claim with no DOI, a paper found twice and a search that finds nothing
+- [x] 3.1 Read OpenAlex's current terms, key rules, allowance and headers and add its entry to `docs/sources.md`; add `OPENALEX_API_KEY` to `.env.example`
+- [x] 3.2 Write the OpenAlex client: search by words with a limit, refusal without a key, a stop when the allowance is used up, the key kept out of cache keys and logs; verify on recorded fixtures with a generic client name and replaced abstracts
+- [x] 3.3 Store up to twenty paper candidates per claim on the intervention entity with a one-line record; verify the resolution tests for a claim with no DOI, a paper found twice and a search that finds nothing
 
 ## 4. Scoring, reasons and rules
 
-- [ ] 4.1 Add the `paper_match` step with its four options through `decide_many`; verify one backend call and one log entry per paper
-- [ ] 4.2 Write the pure function that gives a candidate's reason codes; verify each code and the no-reason case
-- [ ] 4.3 Apply `MATCH_REJECT_BELOW` and `MATCH_ACCEPT_ABOVE` to paper candidates, approving every one at or above the threshold; verify three confident papers are all approved by rule and one below stays pending
-- [ ] 4.4 Show paper candidates in the review queue with kind, year, reasons and an another-indication label; verify the queue test
-- [ ] 4.5 Add "Related paper" to `GLOSSARY.md`
+- [x] 4.1 Add the `paper_match` step with its four options through `decide_many`; verify one backend call and one log entry per paper
+- [x] 4.2 Write the pure function that gives a candidate's reason codes; verify each code and the no-reason case
+- [x] 4.3 Apply `MATCH_REJECT_BELOW` and `MATCH_ACCEPT_ABOVE` to paper candidates, approving every one at or above the threshold; verify three confident papers are all approved by rule and one below stays pending
+- [x] 4.4 Show paper candidates in the review queue with kind, year, reasons and an another-indication label; verify the queue test
+- [x] 4.5 Add "Related paper" to `GLOSSARY.md`
 
 ## 5. Papers to trials and origin paper
 
-- [ ] 5.1 On approval of a paper, look its registry numbers up through Europe PMC and add trial candidates, none when it states more than three; verify both cases on fixtures
-- [ ] 5.2 Add the `origin_paper` step over approved papers dated on or before the first report, setting the origin paper by rule at or above the threshold; verify a confident choice, an unsure one, and that it is skipped when the claim has an origin paper or no paper qualifies
+- [x] 5.1 On approval of a paper, look its registry numbers up through Europe PMC and add trial candidates, none when it states more than three; verify both cases on fixtures
+- [x] 5.2 Add the `origin_paper` step over approved papers dated on or before the first report, setting the origin paper by rule at or above the threshold; verify a confident choice, an unsure one, and that it is skipped when the claim has an origin paper or no paper qualifies
 
 ## 6. Organisations
 
-- [ ] 6.1 Read ROR's terms and limits and add its entry to `docs/sources.md`
-- [ ] 6.2 Write the ROR client and store a candidate match for each institution and company entity, scored by ROR's own measure; verify a known and an unknown name on fixtures, and that a person entity causes no request
+- [x] 6.1 Read ROR's terms and limits and add its entry to `docs/sources.md`
+- [x] 6.2 Write the ROR client and store a candidate match for each institution and company entity, scored by ROR's own measure; verify a known and an unknown name on fixtures, and that a person entity causes no request
 
 ## 7. Export and site
 
-- [ ] 7.1 Export approved papers as `related_research` with title, year, kind, link, score and reason codes and no abstract; regenerate `site/export.schema.json` and `site/data/seed-export.json`; verify the export tests
-- [ ] 7.2 Add the related research section to the claim page with the site's wording for each reason and the note that a paper is not a trial record; verify the build fails on an unknown reason code and that a claim with no paper shows no section
-- [ ] 7.3 Describe the section on the method page; verify the site build
+- [x] 7.1 Export approved papers into each claim's `papers` (openspec `paper-facts`) with the role "related", carrying title, year, kind, link, score and reason codes and no abstract; regenerate `site/export.schema.json` and `site/data/seed-export.json`; verify the export tests
+- [x] 7.2 Show related papers as a group of "Papers on record" on the claim page, with the site's wording for each reason and the note that a paper is not a trial record; verify the build fails on an unknown reason code and that a claim with no paper shows no section
+- [x] 7.3 Describe the section on the method page; verify the site build
 
 ## 8. Measurement
 
-- [ ] 8.1 Run paper search on every claim whose status is "No trial record found" or "preclinical only", and record in `docs/lookup.md` how many gained an approved paper, how many gained a trial candidate, and the spend
-- [ ] 8.2 Record how many papers the rule approved on that run and how many the operator rejected afterwards
+- [x] 8.1 Run paper search on every claim whose status is "No trial record found" or "preclinical only", and record in `docs/lookup.md` how many gained an approved paper, how many gained a trial candidate, and the spend (2026-11-14: 47 claims, 46 completed; 14 gained an approved paper, none a trial candidate, no status changed; 0.046 US dollars of OpenAlex's free allowance and under 0.02 of model spend)
+- [ ] 8.2 Record how many papers the rule approved on that run and how many the operator rejected afterwards (2026-11-14: the rule approved 33; the operator has rejected none yet, so this stays open until the operator has looked)
 
 ## Workflow follow-up
 
