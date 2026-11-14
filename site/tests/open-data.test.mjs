@@ -45,7 +45,51 @@ const claim = (slug, extra = {}) => ({
       trial_phases: ["PHASE1"],
       trial_state: "recruiting",
       regulatory_outcome: null,
+      confidence: 0.6,
       raw_payload: { secret: true },
+    },
+  ],
+  trials: [
+    {
+      trial_id: "NCT0",
+      source_name: "registry",
+      url: "https://registry.example/1",
+      title: "A trial",
+      phases: ["phase_1"],
+      state: "completed",
+      facts_as_of: "2024-06-01T00:00:00Z",
+      raw_payload: { secret: true },
+      facts: {
+        study_kind: "interventional",
+        participants: { count: 20, basis: "actual" },
+        allocation: "randomised",
+        masking: "double",
+        comparators: ["placebo"],
+        healthy_volunteers: true,
+        age_groups: ["adult"],
+        sponsor: { name: "A hospital", kind: "other" },
+        primary_outcomes: [{ measure: "A measure", time_frame: "Study end" }],
+        primary_outcomes_total: 1,
+        why_stopped: null,
+        description: "The sponsor's own conclusion",
+        results: {
+          outcomes_total: 1,
+          outcomes: [
+            {
+              title: "A measure",
+              time_frame: "Study end",
+              unit: "units",
+              measure: "mean",
+              spread_kind: "Standard Deviation",
+              rows: 1,
+              groups: [
+                { title: "Placebo", analysed: "10", value: "3.4", spread: "1.1", lower: null, upper: null, description: "It did well" },
+              ],
+              comparisons: [{ groups: ["Placebo"], p_value: "0.03", method: "t-test", test: null }],
+            },
+          ],
+        },
+      },
     },
   ],
   failure_flags: [],
@@ -100,6 +144,29 @@ test("the file holds the given claims, the licence and the sources, and no icons
   const names = everyKey(out);
   assert.ok(!names.some((name) => /icon|outlets|body|text|payload|failure/i.test(name)), names.join());
   assert.ok(!everyString(out).some((text) => text.startsWith("data:")));
+});
+
+test("Scenario: Claim with a trial that has posted results", () => {
+  const out = openData(exported(), LICENCE, CREDIT, METHOD);
+  const [trial] = out.claims[0].trials;
+  assert.equal(trial.facts_as_of, "2024-06-01T00:00:00Z");
+  assert.deepEqual(trial.facts.participants, { count: 20, basis: "actual" });
+  assert.equal(trial.facts.masking, "double");
+  assert.deepEqual(trial.facts.primary_outcomes, [{ measure: "A measure", time_frame: "Study end" }]);
+  const [outcome] = trial.facts.results.outcomes;
+  assert.equal(outcome.groups[0].value, "3.4");
+  assert.equal(outcome.comparisons[0].p_value, "0.03");
+  assert.equal(out.claims[0].events[0].confidence, 0.6);
+});
+
+test("Scenario: Registry record", () => {
+  // Only the fields the claim page shows are copied: no record, and no free text
+  // that an export might one day carry beside them.
+  const out = openData(exported(), LICENCE, CREDIT, METHOD);
+  assert.ok(!everyKey(out).some((name) => /payload/i.test(name)));
+  const names = everyKey(out.claims[0].trials);
+  assert.ok(!names.some((name) => /payload|description/i.test(name)), names.join());
+  assert.ok(!everyString(out).some((text) => /conclusion|did well/.test(text)));
 });
 
 test("a preview export gives a preview file", () => {

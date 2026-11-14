@@ -178,3 +178,30 @@ Limits: one claim, one run. A claim that is already decided is never read again,
 The three approvals: two trials for `dementia-lymphatic-venous-surgery`, which already stood at Phase 3, and one for `type-2-diabetes-remission-diet-exercise`, which already had a registered trial. Most of the 138 new candidates scored low: a phrase such as "bacteriophage therapy" within a condition brings back trials of other treatments of the same kind, and the score for the claim's indication sorts them out.
 
 Limits: one run, with one model. The phrases were not read one by one. Many are longer and more specific than a registry's own wording ("Autologous induced pluripotent stem cell-derived cardiomyocyte transplantation") and so found nothing; a shorter phrase might. Thirty-three claims were given none, most of them named drugs. The Tourette claim remains the only one whose status a phrase has changed.
+
+## Trial facts in the export (14 November 2026)
+
+Openspec `trial-facts`. The export was built from the real database with the new code and every write rolled back, so the database was not changed. No request was made: the facts are read from the registry records already stored with each trial's events.
+
+| | Count |
+| --- | --- |
+| Published claims | 84 |
+| Claims with at least one trial | 37 |
+| Trials listed | 222 |
+| Trials with facts | 221 (the other is the seed claim's jRCT trial, entered by hand) |
+| Trials with posted results for a primary outcome | 34 |
+| Posted primary outcomes carried | 56 |
+| Of those, reported in one row, so carried with their values | 43 |
+| Of those, with a posted comparison | 16 |
+| Registry records that raised no fact | 0 |
+| Trials that state no number of participants | 2 |
+| Lead sponsors that are a person, exported without a name | 14 |
+| Events with a confidence below 1 (follow-up papers) | 3 |
+| Export size before | 948,864 bytes |
+| Export size after | 1,365,759 bytes |
+
+What the trials state: 127 randomised, 25 not randomised, 69 with no allocation (one arm); 120 open label; 48 compared with placebo, 37 with another treatment, 18 with a sham procedure, 14 with no treatment, 1 with both a sham procedure and no treatment, and 103 with no comparator arm. State: 97 under way, 70 completed, 30 not started, 12 not given, 6 withdrawn, 4 terminated, 3 suspended. Sponsors: 108 companies, 95 universities, hospitals or other bodies, 14 individuals, 3 government bodies, 1 network.
+
+Checked by hand against the registry's records as fetched the same day, number by number: NCT04494425 (866 participants; median 13.2 against 8.1 months; "<0.0001" by log rank), NCT05870540 (196 participants; two outcomes; "0.0033" by mixed models) and NCT02412735 (404 participants; three groups; two comparisons posted with no p value). Every participant count, group title, number analysed, value, spread, interval, p value and method agreed. The 74 distinct names of sponsors classed "other" were read: none is a person's.
+
+Limits: the export grew by 44%, more than the quarter of a megabyte the design estimated. A trial's facts are as old as its newest stored record; the oldest was not measured. Thirteen of the 56 outcomes are reported in several rows and show a title and a row count only.
