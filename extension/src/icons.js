@@ -267,6 +267,34 @@ const nodes = {
   ]
 };
 
+/**
+ * The mark for a wait: the glass over the capsule, as on the site, with the capsule
+ * held inside the lens so that it can pass beneath the glass while the reader waits.
+ * The drawing is the site's public/mark-symbol.svg.
+ */
+export function waitMark() {
+  const ns = "http://www.w3.org/2000/svg";
+  const make = (tag, attributes, children = []) => {
+    const node = document.createElementNS(ns, tag);
+    for (const [key, value] of Object.entries(attributes)) node.setAttribute(key, value);
+    node.append(...children);
+    return node;
+  };
+  return make("svg", { viewBox: "8 9 48 48", "aria-hidden": "true", focusable: "false", class: "wait-mark" }, [
+    make("clipPath", { id: "wait-lens" }, [make("circle", { cx: "31", cy: "32", r: "16.65" })]),
+    make("g", { fill: "none", stroke: "#16477d", "stroke-linecap": "round" }, [
+      make("path", { d: "M44.5 45.5 51.5 52.5", "stroke-width": "8" }),
+      make("circle", { cx: "31", cy: "32", r: "19.5", "stroke-width": "5.7" }),
+    ]),
+    make("g", { "clip-path": "url(#wait-lens)" }, [
+      make("g", { class: "capsule" }, [
+        make("path", { d: "M30.4 25h-6.9a7 7 0 0 0 0 14h6.9z", fill: "#f28a62" }),
+        make("path", { d: "M31.6 25h6.9a7 7 0 0 1 0 14h-6.9z", fill: "#1687da" }),
+      ]),
+    ]),
+  ]);
+}
+
 export function icon(name) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   for (const [key, value] of Object.entries({ viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true", focusable: "false", class: "icon" })) svg.setAttribute(key, value);

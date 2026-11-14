@@ -34,6 +34,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
   // One reminder per claim, each a day to look again; the background check shows it.
   let reminders = [];
   let follows = [];
+  let justFollowed = null;
   let pageState = null;
   let results = [];
   let visual = null;
@@ -54,6 +55,8 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
       following: follows.length,
       changed: now.filter((claim) => claim.changed).length,
       followed: follows.map((claim) => claim.page),
+      // The claim followed by the press being answered now, so its tick is drawn once.
+      fresh: justFollowed,
       was: Object.fromEntries(now.filter((claim) => claim.changed).map((claim) => [claim.page, claim.was])),
       reminders: Object.fromEntries(reminders.map((reminder) => [reminder.page, reminder.date])),
     };
@@ -278,7 +281,9 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
   function follow(claim) {
     follows = withFollowed(follows, claim);
     save({ follows });
+    justFollowed = claim.page;
     if (pageState) show(pageState);
+    justFollowed = null;
   }
 
   // Stopping from the list keeps the reader in the list.
