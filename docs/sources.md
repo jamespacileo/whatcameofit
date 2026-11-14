@@ -9,6 +9,7 @@ Terms, authentication and rate limits for each external source. Check an entry a
 - **Checked:** 2026-11-11
 - **Terms:** <https://clinicaltrials.gov/about-site/terms-conditions> (last updated 31 January 2023)
 - **API:** <https://clinicaltrials.gov/data-api/api>
+- **Local trial reader (2026-11-14):** the server reuses the single-study public API, with the configured contact identity, an eight-second deadline, a dedicated 60-per-minute request limit per Cloudflare location, and a 24-hour fresh cache. Only identifiers cited by the published export are read. The reader labels its formatted selection, retrieval date and registry update date; a copy up to seven days old is shown only during a transient outage and is labelled as older. Visitor cookies and credentials are never forwarded. The registry's browser-only internal API is not used.
 - **Authentication:** none. Requests without a key succeed (observed).
 - **Rate limit:** not stated on the pages read. The client defaults to 2 requests per second, below the roughly 3 per second in `SPEC.md`.
 - **Terms that bind the site:** attribute the data to ClinicalTrials.gov; keep it current; clearly display the date the data were processed by ClinicalTrials.gov; state any modifications; do not claim proprietary rights or present it as anything other than a United States Government database; do not use email addresses from it for promotion.

@@ -18,6 +18,7 @@ import Pop from "../components/Pop.astro";
 import SharePill from "../components/SharePill.astro";
 import StageTrack from "../components/StageTrack.astro";
 import TopicChip from "../components/TopicChip.astro";
+import TrialDetailsLink from "../components/TrialDetailsLink.astro";
 import { APPROACH_LABELS } from "../lib/approach";
 import { claimPaths, data, verticalTitle, type ExportedClaim } from "../lib/export";
 import { statusSlug } from "../lib/guide";
@@ -616,6 +617,7 @@ const posts = shareLinks(postText, address, claim.headline);
                                     ? `, ${line.steps[0].event.trial_id}`
                                     : ""}
                                 </a>
+                                <TrialDetailsLink url={line.sourceUrl} />
                                 {
                                   /* A record read from a registry is certain. One found by
                                      rule, such as a follow-up paper, says how sure it is. */
