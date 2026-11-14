@@ -1,5 +1,7 @@
 # Proposal
 
+> Since 2026-11-13 (change `auto-publish`, ADR 0001) the export no longer leaves assistant-decided claims out, and the pipeline writes no preview export. Every approved claim is published and says whether a person checked it. The requirements archived with this change state that later behaviour; the text below is the proposal as written on 2026-11-11.
+
 ## Why
 
 On 2026-11-11 the operator left for an hour or two and asked the assistant to keep going and make decisions until the proof of concept was complete. The proof of concept needs claims with statuses on the local site, and statuses come only from reviewed matches and events. The project's rule is that a model's decision is never recorded as a person's, and nothing unreviewed reaches the public site. There was no honest way to do both.
