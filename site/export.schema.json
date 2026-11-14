@@ -408,6 +408,14 @@
           },
           "title": "Background",
           "type": "array"
+        },
+        "reported_statements": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedStatement"
+          },
+          "title": "Reported Statements",
+          "type": "array"
         }
       },
       "required": [
@@ -1370,6 +1378,53 @@
       "title": "ExportedSponsor",
       "type": "object"
     },
+    "ExportedStatement": {
+      "additionalProperties": false,
+      "description": "A reported statement (openspec reported-statements): what an article said, in the\npipeline's own words and never a quotation. Not a record and not a finding: the site\nwords every code and frames the text as its report's statement.",
+      "properties": {
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/StatementKind"
+        },
+        "firmness": {
+          "$ref": "#/$defs/StatementFirmness"
+        },
+        "speaker": {
+          "$ref": "#/$defs/StatementSpeaker"
+        },
+        "basis": {
+          "$ref": "#/$defs/StatementBasis"
+        },
+        "confidence": {
+          "title": "Confidence",
+          "type": "number"
+        },
+        "article_url": {
+          "title": "Article Url",
+          "type": "string"
+        },
+        "read_on": {
+          "format": "date",
+          "title": "Read On",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "kind",
+        "firmness",
+        "speaker",
+        "basis",
+        "confidence",
+        "article_url",
+        "read_on"
+      ],
+      "title": "ExportedStatement",
+      "type": "object"
+    },
     "ExportedStatus": {
       "additionalProperties": false,
       "properties": {
@@ -1729,6 +1784,51 @@
         "refused"
       ],
       "title": "RegulatoryOutcome",
+      "type": "string"
+    },
+    "StatementBasis": {
+      "description": "What the article says a reported statement rests on. The article's word, not a\nregistry's or a paper's.",
+      "enum": [
+        "people",
+        "animals",
+        "laboratory",
+        "not_said"
+      ],
+      "title": "StatementBasis",
+      "type": "string"
+    },
+    "StatementFirmness": {
+      "description": "How firmly the article puts a reported statement.",
+      "enum": [
+        "fact",
+        "possibility"
+      ],
+      "title": "StatementFirmness",
+      "type": "string"
+    },
+    "StatementKind": {
+      "description": "What a reported statement is about (openspec reported-statements).",
+      "enum": [
+        "effect",
+        "safety",
+        "how_it_works",
+        "who_it_could_help",
+        "comparison",
+        "what_it_could_lead_to"
+      ],
+      "title": "StatementKind",
+      "type": "string"
+    },
+    "StatementSpeaker": {
+      "description": "Who the article has saying a reported statement: a role, never a name.",
+      "enum": [
+        "article",
+        "researcher",
+        "company",
+        "patient",
+        "other_expert"
+      ],
+      "title": "StatementSpeaker",
       "type": "string"
     },
     "TermFit": {

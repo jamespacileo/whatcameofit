@@ -88,6 +88,7 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
       <li><a href="#how-a-status-is-set">How a status is set</a></li>
       <li><a href="#what-each-status-means">What each status means</a></li>
       <li><a href="#no-signal">No signal</a></li>
+      <li><a href="#what-a-report-said">What a report said</a></li>
       <li><a href="#what-a-trial-entry-shows">What a trial entry shows</a></li>
       <li><a href="#what-this-site-never-says">What this site never says</a></li>
       <li><a href="#where-the-data-comes-from">Where the data comes from</a></li>
@@ -166,6 +167,30 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
   <p>
     It says nothing about work that has not been published or registered, and it is not a status.
     A new record removes it.
+  </p>
+
+  <h2 class="bar" id="what-a-report-said">What a report said</h2>
+  <p>
+    A claim page can show, before its records, what the news reports said about the treatment.
+    An AI model reads each report and lists up to six things it says beyond its timeline: an
+    effect, the treatment’s safety, how it acts, who it could help, how it compares with existing
+    treatment, or what it could lead to. Each is written in this site’s own words. A statement
+    that repeats eight or more of the report’s words in a row, carries a quotation mark or names a
+    person is dropped before it is kept, and the report’s text is never stored.
+  </p>
+  <p>
+    A second automatic step then checks each statement against its report and answers one
+    question: does the report say this, as firmly as it is put here, say something weaker, or not
+    say it? The percentage beside a statement is how sure that check was that the report says it.
+    A statement is shown once the check is sure enough; the rest wait unseen until a person looks
+    at them. Beside each statement the page says how firmly the report put it, who the report had
+    saying it, by role and never by name, and what the report said it rests on.
+  </p>
+  <p>
+    A statement is what a report said, not what is on record, and this site does not say whether
+    the report was right. Nothing on the page sets a statement against a trial or a paper, and
+    statements never change a status. A statement that misreads its report is removed by a
+    person{SITE.correctionsUrl ? <>: <a href="#report-an-error">report an error</a></> : ""}.
   </p>
 
   <h2 class="bar" id="what-a-trial-entry-shows">What a trial entry shows</h2>

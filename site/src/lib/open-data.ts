@@ -219,6 +219,19 @@ export function openData(
           reasons: card.reasons.map((reason) => ({ ...reason })),
           read_at: card.read_at,
         })),
+      // Each approved reported statement the claim page shows: what a report said, in
+      // this site's words, with how sure the check is. Never a quotation, never a
+      // pending statement. Openspec reported-statements.
+      reported_statements: (claim.reported_statements ?? []).map((statement) => ({
+        text: statement.text,
+        kind: statement.kind,
+        firmness: statement.firmness,
+        speaker: statement.speaker,
+        basis: statement.basis,
+        confidence: statement.confidence,
+        article_url: statement.article_url,
+        read_on: statement.read_on,
+      })),
       checked_by_person: claim.checked_by_person,
     })),
   };

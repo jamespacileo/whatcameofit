@@ -342,3 +342,44 @@ test("an export made before background cards gives a file with none", () => {
   assert.deepEqual(out.left_out, []);
   assert.deepEqual(out.claims[0].background, []);
 });
+
+// --- reported statements (openspec open-data: "Reported statements in the download") ---
+
+const reportedStatement = (text, confidence = 0.9) => ({
+  text,
+  kind: "effect",
+  firmness: "fact",
+  speaker: "article",
+  basis: "people",
+  confidence,
+  article_url: "https://news.example/a",
+  read_on: "2026-11-14",
+});
+
+test("Scenario: Claim with approved statements", () => {
+  const data = exported();
+  data.claims[0].reported_statements = [reportedStatement("It eased pain in a study.", 0.93)];
+
+  const out = openData(data, LICENCE, CREDIT, METHOD);
+
+  assert.deepEqual(out.claims[0].reported_statements, [
+    {
+      text: "It eased pain in a study.",
+      kind: "effect",
+      firmness: "fact",
+      speaker: "article",
+      basis: "people",
+      confidence: 0.93,
+      article_url: "https://news.example/a",
+      read_on: "2026-11-14",
+    },
+  ]);
+  assert.deepEqual(out.claims[1].reported_statements, []);
+});
+
+test("Scenario: Pending statement, and an export made before statements", () => {
+  // The export carries approved statements only, so a claim whose statements all wait,
+  // or an export from before reported statements, gives a file with none.
+  const out = openData(exported(), LICENCE, CREDIT, METHOD);
+  for (const claim of out.claims) assert.deepEqual(claim.reported_statements, []);
+});

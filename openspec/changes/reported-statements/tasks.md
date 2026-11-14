@@ -26,9 +26,9 @@
 
 ## 5. Review and export
 
-- [ ] 5.1 List pending statements in the review queue with their article's outlet and date, and allow approve and reject; verify the queue test and that a decision sets the log record's human label
-- [ ] 5.2 Export approved statements on each claim with text, kind, firmness, speaker, basis, confidence and article address; verify export tests for mixed review states and that status, explaining events and evidence stage are unchanged
-- [ ] 5.3 Regenerate `site/export.schema.json` and `site/data/seed-export.json`, and verify the checked-in `site/data/published-export.json` still validates
+- [x] 5.1 List pending statements in the review queue with their article's outlet and date, and allow approve and reject; verify the queue test and that a decision sets the log record's human label
+- [x] 5.2 Export approved statements on each claim with text, kind, firmness, speaker, basis, confidence and article address; verify export tests for mixed review states and that status, explaining events and evidence stage are unchanged
+- [x] 5.3 Regenerate `site/export.schema.json` and `site/data/seed-export.json`, and verify the checked-in `site/data/published-export.json` still validates
 
 ## 6. Measurement before the page
 
@@ -38,15 +38,15 @@
 
 ## 7. Site
 
-- [ ] 7.1 Add the statement types to `site/src/lib/export.ts` and a wording module for kinds, firmness, speaker and basis that composes the attribution sentence, with a function naming any unworded code; verify a site test fails the build on an unknown kind and that the wording passes the verdict check
-- [ ] 7.2 Add "What the report said" to the claim page to `DESIGN.md`, between the summary and the records, grouped by report, each statement with its confidence and its report's link, and the note that a statement is not a record; verify in the browser at phone and desktop widths on a claim with one report and a claim with several
-- [ ] 7.3 Verify by site test that a page with a statement of an effect and a trial with posted results shows no word comparing them, and that a claim with no approved statement has no section
-- [ ] 7.4 Carry statements into the open data file; verify approved statements are present and a pending one is not
-- [ ] 7.5 Explain reported statements on the method page; verify the site build and the verdict-wording test
+- [x] 7.1 Add the statement types to `site/src/lib/export.ts` and a wording module for kinds, firmness, speaker and basis that composes the attribution sentence, with a function naming any unworded code; verify a site test fails the build on an unknown kind and that the wording passes the verdict check
+- [x] 7.2 Add "What the report said" to the claim page to `DESIGN.md`, between the summary and the records, grouped by report, each statement with its confidence and its report's link, and the note that a statement is not a record; verify in the browser at phone and desktop widths on a claim with one report and a claim with several
+- [x] 7.3 Verify by site test that a page with a statement of an effect and a trial with posted results shows no word comparing them, and that a claim with no approved statement has no section
+- [x] 7.4 Carry statements into the open data file; verify approved statements are present and a pending one is not
+- [x] 7.5 Explain reported statements on the method page; verify the site build and the verdict-wording test
 
 ## 8. Integration
 
-- [ ] 8.1 Run `make check` and confirm no test, fixture, log or cache holds article text
+- [x] 8.1 Run `make check` and confirm no test, fixture, log or cache holds article text
 
 ## Workflow follow-up
 

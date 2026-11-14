@@ -29,6 +29,8 @@ export const CLAIM_FIELDS: Record<string, string> = {
   matches: "Each registry record matched to the claim, with its score and whether it counts.",
   background:
     "Each background card: a vocabulary term for the condition or the treatment, its definition in its source's words, its source and edition, its score and when its record was read.",
+  reported_statements:
+    "Each statement a news report made about the treatment, in this site's words and never quoted: its kind, how firmly the report put it, who it had saying it, what it said it rests on, how sure the check is that the report says it, and the report's address. What a report said, not a record.",
   checked_by_person: "Whether a person has reviewed the page.",
 };
 

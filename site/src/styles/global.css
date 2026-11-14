@@ -2983,6 +2983,38 @@ main ul:not([class]) li + li {
   margin-top: 0.4rem;
 }
 
+/* Reported statements: under each report, what it said, framed as the report's, with
+   how sure the check is one press away. Openspec reported-statements. */
+.statement-report {
+  display: grid;
+  gap: 0.15rem;
+  color: var(--ink);
+}
+
+.statement-source {
+  width: fit-content;
+  font-weight: 600;
+  text-wrap: pretty;
+}
+
+.statement-report .entry-note {
+  font-weight: 400;
+}
+
+.statement-list li + li {
+  margin-top: 1.1rem;
+}
+
+.statement {
+  margin: 0;
+  max-width: 62ch;
+  text-wrap: pretty;
+}
+
+.statement-said {
+  color: var(--muted);
+}
+
 /* On a phone the record keeps the width; how sure the match is goes under it. */
 @media (max-width: 40rem) {
   .match-list li {

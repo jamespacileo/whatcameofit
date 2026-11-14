@@ -22,6 +22,8 @@ from thenwhat.db.models import (
     EntityMatch,
     EvidenceEvent,
     PaperRecord,
+    ReportedStatement,
+    SourceArticle,
     TermRecord,
 )
 from thenwhat.domain import (
@@ -30,6 +32,10 @@ from thenwhat.domain import (
     EventType,
     EvidenceStage,
     ReviewState,
+    StatementBasis,
+    StatementFirmness,
+    StatementKind,
+    StatementSpeaker,
     TermFit,
     TermRole,
     TrialPhase,
@@ -1115,3 +1121,85 @@ def test_cards_do_not_change_the_status_or_what_explains_it(session: Session):
 
     assert len(exported(session)["claims"][0]["background"]) == 1
     assert decided() == before
+
+
+# --- reported statements (openspec reported-statements) --------------------------------
+
+
+def add_statement(
+    session: Session, claim: Claim, text: str, state: ReviewState, confidence: float = 0.9
+) -> ReportedStatement:
+    [article] = session.scalars(select(SourceArticle).where(SourceArticle.claim_id == claim.id))
+    statement = ReportedStatement(
+        claim_id=claim.id,
+        source_article_id=article.id,
+        text=text,
+        text_key=text.casefold(),
+        kind=StatementKind.EFFECT,
+        firmness=StatementFirmness.FACT,
+        speaker=StatementSpeaker.ARTICLE,
+        basis=StatementBasis.PEOPLE,
+        confidence=confidence,
+        decision_ref=f"source_article:{article.id}:statement:{len(text)}",
+        article_read_at=EARLIER,
+    )
+    if state is not ReviewState.PENDING:
+        record_decision(statement, state, by=Decider.RULE, now=EARLIER)
+    session.add(statement)
+    session.flush()
+    return statement
+
+
+def test_claim_carries_its_approved_statements_only(session: Session):
+    """Scenarios: Claim with four approved and two pending statements; Pending statement"""
+    claim = new_claim(session)
+    for n in range(4):
+        add_statement(session, claim, f"Approved statement {n}.", ReviewState.APPROVED, 0.91)
+    for n in range(2):
+        add_statement(session, claim, f"Pending statement {n}.", ReviewState.PENDING, 0.6)
+    add_statement(session, claim, "Rejected statement.", ReviewState.REJECTED)
+
+    statements = claim_in(exported(session))["reported_statements"]
+
+    assert [s["text"] for s in statements] == [f"Approved statement {n}." for n in range(4)]
+    assert statements[0] == {
+        "text": "Approved statement 0.",
+        "kind": "effect",
+        "firmness": "fact",
+        "speaker": "article",
+        "basis": "people",
+        "confidence": 0.91,
+        "article_url": ARTICLE,
+        "read_on": "2026-11-19",
+    }
+
+
+def test_statements_leave_status_explaining_events_and_evidence_stage_unchanged(
+    session: Session,
+):
+    """Scenario: Statement with a basis in people"""
+    claim = new_claim(session)
+    confirm_stage(session, SLUG, EvidenceStage.ANIMAL, now=EARLIER)
+    add_event(session)
+    before = claim_in(exported(session))
+
+    add_statement(session, claim, "It eased symptoms in a study in people.", ReviewState.APPROVED)
+    after = claim_in(exported(session))
+
+    assert len(after["reported_statements"]) == 1
+    for field in ("status", "evidence_stage", "events"):
+        assert after[field] == before[field]
+
+
+def test_a_statement_decided_by_the_assistant_says_no_person_checked_the_claim(
+    session: Session,
+):
+    claim = new_claim(session)
+    statement = add_statement(session, claim, "It eased symptoms.", ReviewState.PENDING)
+    assert claim_in(exported(session))["checked_by_person"] is True
+
+    decide_item(
+        session, "statement", statement.id, ReviewState.APPROVED, now=NOW, by=Decider.ASSISTANT
+    )
+
+    assert claim_in(exported(session))["checked_by_person"] is False
