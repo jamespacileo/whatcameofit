@@ -3,6 +3,7 @@
 Scenario names are from openspec source-clients.
 """
 
+import json
 from datetime import timedelta
 
 import httpx
@@ -27,6 +28,9 @@ class Demo(Source):
 
     def get(self, path: str, *, force: bool = False):
         return self._get(f"https://demo.test/{path}", force=force)
+
+    def post(self, path: str, body: dict):
+        return self._post(f"https://demo.test/{path}", body)
 
 
 class Unread(Demo):
@@ -80,6 +84,58 @@ def test_source_with_no_recorded_terms_is_not_asked(session: Session, fake_time)
 
     with pytest.raises(TermsNotRecorded, match="'unread' are not recorded"):
         unread.get("thing")
+
+    assert server.requests == []
+
+
+# --- a request sent with a body --------------------------------------------------
+
+
+def test_two_bodies_at_one_address_get_their_own_answers(session: Session, fake_time):
+    """Scenario: Two queries to one address"""
+    server = Server(ok({"n": 1}), ok({"n": 2}))
+    demo = client(session, fake_time, server)
+
+    first = demo.post("graphql", {"query": "one", "variables": {"word": "a"}})
+    second = demo.post("graphql", {"query": "one", "variables": {"word": "b"}})
+
+    assert first is not None and second is not None
+    assert (first.payload, second.payload) == ({"n": 1}, {"n": 2})
+    assert [request.method for request in server.requests] == ["POST", "POST"]
+    assert server.requests[0].headers["user-agent"].startswith("thenwhat/")
+    assert "mailto:ops@thenwhat.test" in server.requests[0].headers["user-agent"]
+    assert json.loads(server.requests[1].content) == {"query": "one", "variables": {"word": "b"}}
+    # Asked again, each is served its own stored answer.
+    assert demo.post("graphql", {"query": "one", "variables": {"word": "a"}}).payload == {"n": 1}
+    assert len(server.requests) == 2
+
+
+def test_same_body_twice_sends_one_request(session: Session, fake_time):
+    """Scenario: Same query twice"""
+    server = Server(ok({"n": 1}))
+    demo = client(session, fake_time, server)
+
+    first = demo.post("graphql", {"query": "one", "variables": {"word": "a"}})
+    fake_time.advance(timedelta(hours=1))
+    # The same body with its keys in another order is the same request.
+    second = demo.post("graphql", {"variables": {"word": "a"}, "query": "one"})
+
+    assert len(server.requests) == 1
+    assert first is not None and second is not None
+    assert second.fetched_at == first.fetched_at
+
+
+def test_post_to_a_source_with_no_recorded_terms_is_refused(session: Session, fake_time):
+    server = Server(ok())
+    unread = Unread(
+        session,
+        contact_email="ops@thenwhat.test",
+        transport=httpx.MockTransport(server),
+        time=fake_time,
+    )
+
+    with pytest.raises(TermsNotRecorded, match="unread"):
+        unread.post("graphql", {"query": "one"})
 
     assert server.requests == []
 

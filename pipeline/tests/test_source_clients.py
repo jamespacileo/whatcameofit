@@ -4,6 +4,7 @@
 Scenario names are from openspec source-clients.
 """
 
+import json
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -13,13 +14,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.db.models import HttpCache
-from thenwhat.sources import mesh, openalex, ror
+from thenwhat.sources import mesh, openalex, opentargets, ror
 from thenwhat.sources.base import AllowanceUsedUp, MissingKey, SourceError, UnsearchableTerm
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref, Notice
 from thenwhat.sources.europepmc import EuropePmc, describe
 from thenwhat.sources.mesh import Mesh
 from thenwhat.sources.openalex import OpenAlex
+from thenwhat.sources.opentargets import OpenTargets
 from thenwhat.sources.ror import Ror
 
 CONTACT = "ops@thenwhat.test"
@@ -859,7 +861,11 @@ def test_label_that_only_contains_the_name_is_not_equal_to_it(
 ):
     """Scenario: Name contained in a longer label"""
     exact = fixture_json("mesh/label_obesity.json")
-    source, replay = vocabulary(session, fake_time, lambda request: exact)
+    source, replay = vocabulary(
+        session,
+        fake_time,
+        lambda request: exact if request.url.path.endswith("/lookup/descriptor") else [],
+    )
 
     assert source.terms_labelled("obesity") == [mesh.LabelledTerm("D009765", "Obesity")]
     assert dict(replay.requests[0].url.params) == {
@@ -873,7 +879,11 @@ def test_label_that_only_contains_the_name_is_not_equal_to_it(
     # Agents" first, only the equal label is returned.
     containing = fixture_json("mesh/label_obesity_contains.json")
     assert containing[0]["label"] == "Anti-Obesity Agents"
-    loose, _ = vocabulary(session, fake_time, lambda request: containing)
+    loose, _ = vocabulary(
+        session,
+        fake_time,
+        lambda request: containing if request.url.path.endswith("/lookup/descriptor") else [],
+    )
 
     assert loose.terms_labelled("Obesity ") == [mesh.LabelledTerm("D009765", "Obesity")]
 
@@ -883,3 +893,248 @@ def test_name_no_label_equals_returns_no_term(session: Session, fake_time, fixtu
     source, _ = vocabulary(session, fake_time, lambda request: nothing)
 
     assert source.terms_labelled("Knee osteoarthritis pain") == []
+
+
+def mesh_route(fixture_json, lookups: dict[str, str], owners: str | None = None, records=None):
+    """Answers the two exact lookups from the fixtures named for them, the owner query
+    from `owners`, and a record's address from `records` (identifier to fixture)."""
+
+    def route(request: httpx.Request):
+        path = request.url.path
+        for kind, name in lookups.items():
+            if path.endswith(f"/lookup/{kind}"):
+                return fixture_json(f"mesh/{name}.json")
+        if path.endswith("/sparql"):
+            assert owners is not None, "No owner query was expected."
+            return fixture_json(f"mesh/{owners}.json")
+        for identifier, name in (records or {}).items():
+            if path.endswith(f"/{identifier}.json"):
+                return fixture_json(f"mesh/{name}.json")
+        raise AssertionError(f"Unexpected request: {request.url}")
+
+    return route
+
+
+def test_name_equal_to_an_entry_term_only_returns_the_term_it_belongs_to(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Name equal to an entry term only"""
+    source, replay = vocabulary(
+        session,
+        fake_time,
+        mesh_route(
+            fixture_json,
+            {"descriptor": "label_none", "term": "term_ketogenic_diet"},
+            "owner_ketogenic_diet",
+        ),
+    )
+
+    assert source.terms_labelled("ketogenic diet") == [
+        mesh.LabelledTerm("D055423", "Diet, Ketogenic", "Ketogenic Diet")
+    ]
+    assert source.unresolved_entry_terms("ketogenic diet") == []
+    lookup, owner = replay.requests[1], replay.requests[2]
+    assert lookup.url.path == "/mesh/lookup/term"
+    assert dict(lookup.url.params) == {
+        "label": "ketogenic diet",
+        "match": "exact",
+        "limit": "10",
+        "year": "2026",
+    }
+    asked = dict(owner.url.params)
+    assert owner.url.path == "/mesh/sparql"
+    assert (asked["format"], asked["year"], asked["inference"]) == ("JSON", "2026", "false")
+    assert "VALUES ?term { mesh:T713007 }" in asked["query"]
+    # Both lookups and the owner query are stored: asking again sends nothing.
+    assert len(replay.requests) == 3
+
+
+def test_entry_term_of_a_supplementary_record_returns_it_with_its_note_as_definition(
+    session: Session, fake_time, fixture_json
+):
+    """Scenarios: Entry term of a supplementary record, Supplementary record's
+    definition"""
+    source, _ = vocabulary(
+        session,
+        fake_time,
+        mesh_route(
+            fixture_json,
+            {"descriptor": "label_none", "term": "term_orforglipron"},
+            "owner_orforglipron",
+            {"C000729680": "supplementary_orforglipron", "M000766720": "concept_orforglipron"},
+        ),
+    )
+
+    # The record's own label equals the name, so no entry term is named.
+    assert source.terms_labelled("Orforglipron") == [
+        mesh.LabelledTerm("C000729680", "orforglipron")
+    ]
+
+    record = source.term("C000729680")
+
+    assert record is not None
+    assert record.url == "https://id.nlm.nih.gov/mesh/C000729680"
+    term = mesh.describe(record)
+    assert (term.label, term.version) == ("orforglipron", "2026")
+    assert term.definition == "An oral, non-peptide glucagon-like peptide-1 receptor agonist"
+    # The record names the paper NLM took it from; the client reads none of it.
+    assert record.payload["term"]["source"]["@value"].startswith("Nature")
+    assert "Nature" not in str(term)
+
+
+def test_term_found_by_label_and_by_entry_term_is_returned_once(
+    session: Session, fake_time, fixture_json
+):
+    source, _ = vocabulary(
+        session,
+        fake_time,
+        mesh_route(
+            fixture_json, {"descriptor": "label_obesity", "term": "term_obesity"}, "owner_obesity"
+        ),
+    )
+
+    assert source.terms_labelled("Obesity") == [mesh.LabelledTerm("D009765", "Obesity")]
+
+
+def test_entry_term_whose_owner_is_not_returned_gives_nothing(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Entry term whose record cannot be found (the client's part)"""
+    source, _ = vocabulary(
+        session,
+        fake_time,
+        mesh_route(
+            fixture_json, {"descriptor": "label_none", "term": "term_ketogenic_diet"}, "owner_none"
+        ),
+    )
+
+    assert source.terms_labelled("Ketogenic Diet") == []
+    assert source.unresolved_entry_terms("Ketogenic Diet") == ["Ketogenic Diet"]
+
+
+def test_name_contained_in_a_longer_entry_term_returns_nothing(
+    session: Session, fake_time, fixture_json
+):
+    source, replay = vocabulary(
+        session,
+        fake_time,
+        mesh_route(fixture_json, {"descriptor": "label_none", "term": "term_ketogenic_word"}),
+    )
+
+    assert fixture_json("mesh/term_ketogenic_word.json") == []
+    assert source.terms_labelled("Ketogenic") == []
+
+    # Even if the service answered with the longer entry term, it is not equal.
+    loose, loose_replay = vocabulary(
+        session,
+        fake_time,
+        mesh_route(fixture_json, {"descriptor": "label_none", "term": "term_ketogenic_diet"}),
+    )
+
+    assert loose.terms_labelled("Ketogenic  ") == []
+    assert loose.unresolved_entry_terms("Ketogenic") == []
+    assert all(not r.url.path.endswith("/sparql") for r in replay.requests + loose_replay.requests)
+
+
+# --- Open Targets ------------------------------------------------------------------
+
+
+def targets(session: Session, fake_time, route) -> tuple[OpenTargets, Replay]:
+    replay = Replay(route)
+    source = OpenTargets(
+        session, contact_email=CONTACT, transport=httpx.MockTransport(replay), time=fake_time
+    )
+    return source, replay
+
+
+def test_word_equal_to_an_approved_symbol_returns_that_gene(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Word equal to an approved symbol"""
+    found = fixture_json("opentargets/search_cxcr3.json")
+    source, replay = targets(session, fake_time, lambda request: found)
+
+    assert source.targets_named("cxcr3") == [
+        opentargets.NamedTarget(
+            "ENSG00000186810", "CXCR3", "C-X-C motif chemokine receptor 3", "symbol"
+        )
+    ]
+    [request] = replay.requests
+    assert request.method == "POST"
+    assert str(request.url) == "https://api.platform.opentargets.org/api/v4/graphql"
+    sent = json.loads(request.content)
+    assert sent["variables"] == {"word": "cxcr3"}
+    assert 'entityNames: ["target"]' in sent["query"]
+    # Only target fields are asked for: nothing drawn from the share-alike drug data.
+    assert "drug" not in sent["query"].lower() and "mechanism" not in sent["query"].lower()
+
+
+def test_word_equal_to_a_listed_synonym_says_so_with_the_source_that_gives_it(
+    session: Session, fake_time, fixture_json
+):
+    found = fixture_json("opentargets/search_usag_1.json")
+    source, _ = targets(session, fake_time, lambda request: found)
+
+    assert source.targets_named("USAG-1") == [
+        opentargets.NamedTarget(
+            "ENSG00000171243", "SOSTDC1", "sclerostin domain containing 1", "synonym", ("uniprot",)
+        )
+    ]
+
+
+def test_word_whose_hits_are_all_unequal_returns_nothing(session: Session, fake_time, fixture_json):
+    """Scenario: Word the search answers with unrelated genes"""
+    unequal = fixture_json("opentargets/search_tmsb1.json")
+    source, _ = targets(session, fake_time, lambda request: unequal)
+
+    assert len(unequal["data"]["search"]["hits"]) == 7
+    assert source.targets_named("TMSB1") == []
+
+    nothing = fixture_json("opentargets/search_ctx310.json")
+    none, _ = targets(session, fake_time, lambda request: nothing)
+
+    assert none.targets_named("CTX310") == []
+
+
+def test_synonym_shared_by_two_genes_returns_both_and_no_gene_that_only_starts_with_it(
+    session: Session, fake_time, fixture_json
+):
+    found = fixture_json("opentargets/search_tms.json")
+    source, _ = targets(session, fake_time, lambda request: found)
+
+    assert [(t.symbol, t.equal, t.synonym_sources) for t in source.targets_named("TMS")] == [
+        ("TYMS", "synonym", ("HGNC", "NCBI_entrez")),
+        ("PYCARD", "synonym", ("NCBI_entrez",)),
+    ]
+
+
+def test_target_record_keeps_every_function_description_and_gives_the_first(
+    session: Session, fake_time, fixture_json
+):
+    answered = fixture_json("opentargets/target_cxcr3.json")
+    source, replay = targets(session, fake_time, lambda request: answered)
+
+    record = source.target("ENSG00000186810")
+
+    assert record is not None
+    assert (record.source_name, record.external_id) == ("opentargets", "ENSG00000186810")
+    assert record.url == "https://platform.opentargets.org/target/ENSG00000186810"
+    assert record.payload == answered["data"]["target"]
+    assert record.fetched_at == fake_time.now()
+    target = opentargets.describe(record)
+    assert (target.symbol, target.name) == ("CXCR3", "C-X-C motif chemokine receptor 3")
+    assert len(target.descriptions) == 3
+    assert target.definition is not None
+    assert target.definition == answered["data"]["target"]["functionDescriptions"][0]
+    assert target.definition.startswith("[Isoform 1]: Receptor for the C-X-C chemokines")
+    assert json.loads(replay.requests[0].content)["variables"] == {"id": "ENSG00000186810"}
+
+
+def test_unknown_target_identifier_returns_nothing(session: Session, fake_time, fixture_json):
+    unknown = fixture_json("opentargets/target_unknown.json")
+    source, replay = targets(session, fake_time, lambda request: unknown)
+
+    assert unknown == {"data": {"target": None}}
+    assert source.target("ENSG00000000000") is None
+    assert source.target("CXCR3") is None
+    assert len(replay.requests) == 1

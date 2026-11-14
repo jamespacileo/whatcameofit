@@ -1997,10 +1997,11 @@
       "type": "string"
     },
     "TermFit": {
-      "description": "How a subject term was read against the claim: as the thing itself, or broader.",
+      "description": "How a subject term fits the claim: the thing itself, broader than it, or the\nkind of intervention it is. The order is the order a card is chosen in.",
       "enum": [
         "exact",
-        "broader"
+        "broader",
+        "kind"
       ],
       "title": "TermFit",
       "type": "string"
@@ -2009,7 +2010,8 @@
       "description": "What a subject term is proposed as for a claim.",
       "enum": [
         "condition",
-        "intervention"
+        "intervention",
+        "target"
       ],
       "title": "TermRole",
       "type": "string"

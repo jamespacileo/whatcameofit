@@ -45,13 +45,17 @@ class TermRole(StrEnum):
 
     CONDITION = "condition"
     INTERVENTION = "intervention"
+    # A gene named in the intervention, proposed as what it acts on or is made from.
+    TARGET = "target"
 
 
 class TermFit(StrEnum):
-    """How a subject term was read against the claim: as the thing itself, or broader."""
+    """How a subject term fits the claim: the thing itself, broader than it, or the
+    kind of intervention it is. The order is the order a card is chosen in."""
 
     EXACT = "exact"
     BROADER = "broader"
+    KIND = "kind"
 
 
 class StatementKind(StrEnum):

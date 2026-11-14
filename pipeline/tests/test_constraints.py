@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from thenwhat.db.models import (
     Claim,
+    ClaimTerm,
     Entity,
     EntityMatch,
     EvidenceEvent,
@@ -24,6 +25,8 @@ from thenwhat.domain import (
     StatementFirmness,
     StatementKind,
     StatementSpeaker,
+    TermFit,
+    TermRole,
     TrialState,
 )
 
@@ -319,6 +322,46 @@ def add_article(session: Session, claim: Claim) -> SourceArticle:
     session.add(row)
     session.flush()
     return row
+
+
+@pytest.mark.parametrize(
+    ("role", "fit"),
+    [
+        ("condition", "exact"),
+        ("intervention", "broader"),
+        ("intervention", "kind"),
+        ("target", "exact"),
+    ],
+)
+def test_term_link_of_every_role_and_fit_is_accepted(session: Session, role: str, fit: str):
+    claim = add_claim(session)
+
+    session.add(
+        ClaimTerm(
+            claim_id=claim.id,
+            role=TermRole(role),
+            source_name="mesh",
+            external_id="D000001",
+            label="t",
+            fit=TermFit(fit),
+        )
+    )
+    session.flush()
+
+
+@pytest.mark.parametrize("column", ["role", "fit"])
+def test_term_link_with_an_unknown_role_or_fit_is_refused(session: Session, column: str):
+    claim = add_claim(session)
+    values = {"role": "condition", "fit": "exact"} | {column: "narrower"}
+
+    with pytest.raises(IntegrityError, match=f"ck_claim_term_{column}"):
+        session.execute(
+            text(
+                "INSERT INTO claim_term (claim_id, role, source_name, external_id, label, fit)"
+                " VALUES (:claim, :role, 'mesh', 'D000001', 't', :fit)"
+            ),
+            {"claim": claim.id} | values,
+        )
 
 
 def test_statement_without_an_article_is_refused(session: Session):

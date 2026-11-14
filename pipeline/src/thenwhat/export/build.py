@@ -80,12 +80,12 @@ from thenwhat.events.trial_facts import (
 )
 from thenwhat.export.organisations import ExportedOrganisation, organisations_of, publisher_of
 from thenwhat.outlets.icons import is_blank_icon, outlet_domain
-from thenwhat.sources import mesh
-from thenwhat.sources.base import SourceRecord, record_url
+from thenwhat.sources.base import record_url
 from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.ror import Ror
 from thenwhat.sources.terms import SOURCES as LISTED_SOURCES
 from thenwhat.terms.candidates import REASON_CODES
+from thenwhat.terms.records import read_record
 
 SCHEMA_VERSION = 1
 # Registries the clients read. Always listed, as their terms ask for attribution.
@@ -804,8 +804,8 @@ def _background(session: Session, claim: Claim) -> list[ExportedCard]:
         )
     )
     cards: list[ExportedCard] = []
-    for role in TermRole:
-        for fit in TermFit:  # exact before broader
+    for role in (TermRole.CONDITION, TermRole.INTERVENTION):
+        for fit in (TermFit.EXACT, TermFit.BROADER):  # exact before broader
             card = next(
                 (
                     made
@@ -827,11 +827,7 @@ def _card(session: Session, term: ClaimTerm) -> ExportedCard | None:
     if listed is None or not listed.accepted or record is None:
         return None
     assert term.fit is not None and term.score is not None and term.reviewed_by is not None
-    read = mesh.describe(
-        SourceRecord(
-            record.source_name, record.external_id, record.url, record.payload, record.fetched_at
-        )
-    )
+    read = read_record(record)
     return ExportedCard(
         kind=term.role,
         fit=term.fit,

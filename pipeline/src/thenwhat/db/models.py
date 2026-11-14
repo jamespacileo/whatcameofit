@@ -268,7 +268,8 @@ class EntityMatch(Reviewed, Base):
 
 
 class ClaimTerm(Reviewed, Base):
-    """A subject term proposed for a claim's condition or intervention (GLOSSARY.md).
+    """A subject term proposed for a claim's condition or intervention, the term of its
+    intervention kind, or a gene named in its intervention (GLOSSARY.md).
     Behavior: openspec knowledge-cards."""
 
     __tablename__ = "claim_term"
@@ -293,8 +294,9 @@ class ClaimTerm(Reviewed, Base):
     label: Mapped[str] = mapped_column(Text)
     # Empty until the term check has an answer for the candidate.
     score: Mapped[float | None]
-    # Whether it was read as the claim's own condition or intervention, or as broader.
-    # Empty when it was read as something else, or not read yet.
+    # Whether it was read as the claim's own condition or intervention, or as broader,
+    # or is the term of the intervention's kind. Empty when it was read as something
+    # else, or not read yet.
     fit: Mapped[TermFit | None] = mapped_column(_enum(TermFit, "fit"))
     # Why the term is a candidate, found by rule: each a code with its counts or name.
     reasons: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list, server_default="[]")
