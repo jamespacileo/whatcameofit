@@ -151,6 +151,11 @@ export const listedTopics = data.verticals.filter((vertical) =>
   data.claims.some((claim) => claim.vertical === vertical.slug),
 );
 
+/** One address per published claim, each given its claim: getStaticPaths for every claim route. */
+export function claimPaths() {
+  return data.claims.map((claim) => ({ params: { slug: claim.slug }, props: { claim } }));
+}
+
 export function verticalTitle(slug: string): string {
   return data.verticals.find((vertical) => vertical.slug === slug)?.title ?? slug;
 }

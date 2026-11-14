@@ -4,7 +4,7 @@ import "../styles/global.css";
 import faceUrl from "@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2?url";
 import { SITE } from "../../site.config.mjs";
 import { CARD_NOTICE } from "../lib/card";
-import { brandAsset } from "../lib/brand";
+import { THEME_COLOR, brandAsset } from "../lib/brand";
 import { data, listedTopics } from "../lib/export";
 import { NOTICES, PREVIEW_NOTE } from "../lib/notices";
 // Stops a public build whose configured address is a local one.
@@ -88,7 +88,7 @@ const topicLink =
     <link rel="icon" type="image/svg+xml" sizes="any" href={brandAsset("/favicon.svg")} />
     <link rel="apple-touch-icon" sizes="180x180" href={brandAsset("/apple-touch-icon.png")} />
     <link rel="manifest" href={brandAsset("/manifest.webmanifest")} />
-    <meta name="theme-color" content="#0b2545" />
+    <meta name="theme-color" content={THEME_COLOR} />
     <link rel="preload" as="font" type="font/woff2" href={faceUrl} crossorigin />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />

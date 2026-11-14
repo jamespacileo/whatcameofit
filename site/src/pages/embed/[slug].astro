@@ -5,13 +5,11 @@ import "../../styles/global.css";
 import StatusCell from "../../components/StatusCell.astro";
 import { SITE } from "../../../site.config.mjs";
 import { CARD_NOTICE, clip, monthAndYear } from "../../lib/card";
-import { data, type ExportedClaim } from "../../lib/export";
+import { claimPaths, data, type ExportedClaim } from "../../lib/export";
 import { NOTICES } from "../../lib/notices";
 import { formatDate } from "../../lib/timetable";
 
-export function getStaticPaths() {
-  return data.claims.map((claim) => ({ params: { slug: claim.slug }, props: { claim } }));
-}
+export const getStaticPaths = claimPaths;
 
 interface Props {
   claim: ExportedClaim;

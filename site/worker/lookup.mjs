@@ -5,13 +5,12 @@
 // The answer carries codes and registry fields only. The site words them.
 import { PAPER, STATED, agreeing } from "./details.mjs";
 import { isAName, nameKey, partsOf } from "./names.mjs";
+import { LIKELY_FROM } from "../src/lib/live-lookup.mjs";
 
 const REGISTRY_NUMBER = /\bNCT\d{8}\b/gi;
 // The most records one lookup will ask the model about.
 const MAX_CANDIDATES = 60;
 const MAX_RECORD_CHARACTERS = 1500;
-// From this score a record reads as a trial of the treatment for the condition.
-export const LIKELY_FROM = 0.5;
 // The most linked papers one lookup asks about.
 const MAX_PAPERS = 3;
 
@@ -19,7 +18,7 @@ const unique = (items) => [...new Set(items)];
 const idOf = (study) => study.protocolSection.identificationModule.nctId;
 
 /** A registry record as it is shown to the model: what decides a match comes first. */
-export function candidateText(study) {
+function candidateText(study) {
   const section = study.protocolSection ?? {};
   const described = {
     title: section.identificationModule?.briefTitle,

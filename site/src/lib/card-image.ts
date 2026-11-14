@@ -383,7 +383,3 @@ export async function sitePng(): Promise<Uint8Array> {
   const svg = await satori(card as never, { width, height, fonts });
   return new Uint8Array(new Resvg(svg, { fitTo: { mode: "width", value: width } }).render().asPng());
 }
-
-export function cardPaths() {
-  return data.claims.map((claim) => ({ params: { slug: claim.slug }, props: { claim } }));
-}

@@ -3009,6 +3009,7 @@ main ul:not([class]) li + li {
     background: none;
     color: var(--ink);
     border-top: 1px solid var(--ink);
+    break-inside: avoid;
   }
 
   .colophon a {
@@ -3073,10 +3074,6 @@ main ul:not([class]) li + li {
     flex-basis: 100%;
     background: none;
     margin-bottom: 0.4rem;
-  }
-
-  .colophon {
-    break-inside: avoid;
   }
 
   .pop-trigger.more {

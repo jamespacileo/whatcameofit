@@ -5,7 +5,7 @@
 
 const MAX_PAGE_CHARACTERS = 1_500_000;
 // A body shorter than this is a teaser, not the article.
-export const BODY_FROM = 500;
+const BODY_FROM = 500;
 // The most papers and registry numbers one page is taken to report.
 const MAX_LINKED = 5;
 const ENTITIES = { nbsp: " ", amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };

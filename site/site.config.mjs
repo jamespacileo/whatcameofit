@@ -13,13 +13,13 @@ export const SITE = {
   tagline: "What happened after the headline?",
   description:
     "Each reported breakthrough gets a page showing where it stands now and the dated, sourced records that say so.",
+  // Where a registry search for an untracked article is asked for: "/api/lookup" when
+  // the site is deployed with its lookup service. Unset (null), no search is offered.
+  lookupUrl: env.LOOKUP_URL || null,
   // Where a reader suggests a headline to track, and where they report an error on a
   // claim page. Each may be a `mailto:` address or the address of a public issue form,
   // and is chosen at deployment. Unset (null), no link to it is drawn. The environment
   // variables SUGGEST_URL and CORRECTIONS_URL override them, for tests and deployment.
-  // Where a registry search for an untracked article is asked for: "/api/lookup" when
-  // the site is deployed with its lookup service. Unset (null), no search is offered.
-  lookupUrl: env.LOOKUP_URL || null,
   suggestUrl: env.SUGGEST_URL || null,
   correctionsUrl: env.CORRECTIONS_URL || null,
 };

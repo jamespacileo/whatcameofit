@@ -476,10 +476,10 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
   import { LIVE, describeAnswer, refusalMessage, textWouldHelp } from "../lib/live-lookup.mjs";
   import { calendarFile, reminderDate, type ReminderChoice } from "../lib/calendar";
   import { SITE as BRAND } from "../../site.config.mjs";
-  const SITE_NAME = BRAND.name;
   import { closestClaims, readAddress } from "../lib/lookup-match.mjs";
   import { nextAnniversaryDay } from "../lib/anniversaries";
 
+  const SITE_NAME = BRAND.name;
   const form = document.querySelector<HTMLFormElement>("#search")!;
   const input = document.querySelector<HTMLInputElement>("#query")!;
   const results = document.querySelector<HTMLDivElement>("#results")!;
