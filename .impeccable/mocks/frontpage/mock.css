@@ -179,9 +179,10 @@ footer .small { color: #c9d9ee; }
 .ed-head h2 { font-size: clamp(1.5rem, 4.4vw, 2rem); line-height: 1.15; font-weight: 700; }
 .ed-head p { margin-top: 0.4rem; max-width: 40rem; }
 .week { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid var(--rule); border-radius: 0.85rem; overflow: hidden; margin-top: 1.2rem; }
-.week button { border: 0; border-left: 1px solid var(--rule); background: #fff; padding: 0.55rem 0.3rem 0.6rem; text-align: center; line-height: 1.25; min-height: 2.75rem; }
-.week button:first-child { border-left: 0; }
-.week button[aria-current] { background: var(--tint); }
+.week > * { border: 0; border-left: 1px solid var(--rule); background: #fff; padding: 0.55rem 0.3rem 0.6rem; text-align: center; line-height: 1.25; min-height: 2.75rem; color: var(--ink); text-decoration: none; }
+.week > :first-child { border-left: 0; }
+.week > [aria-current] { background: var(--tint); }
+.week a:hover { background: var(--panel); }
 .week .wd { display: block; font-size: 0.75rem; color: var(--muted); }
 .week .dn { display: block; font-size: 1.15rem; font-weight: 700; }
 .week .ct { display: block; font-size: 0.72rem; color: var(--muted); }
@@ -199,6 +200,29 @@ footer .small { color: #c9d9ee; }
 .side-col .promise { margin: 0.35rem 0; }
 .caught { margin-top: 3rem; padding: 1.4rem 1.2rem; background: var(--panel); border-radius: 0.85rem; }
 .caught p + p { margin-top: 0.3rem; }
+
+/* ---------- A. briefing, then stream ---------- */
+.brief3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--rule); border-radius: 0.85rem; margin-top: 1.2rem; }
+.brief3 > div { padding: 0.9rem 1.1rem 1rem; border-left: 1px solid var(--rule); min-width: 0; }
+.brief3 > div:first-child { border-left: 0; }
+.brief3 h2 { font-size: 0.95rem; font-weight: 700; }
+.brief3 li:last-child { border-bottom: 0; }
+.brief3 .note { margin-top: 0.2rem; }
+.brief3 + .stream .tabs { margin-top: 1.8rem; }
+.jumps { display: none; }
+
+/* ---------- B. day by day ---------- */
+.daylist section { scroll-margin-top: 3.4rem; }
+.daylist .day { flex-wrap: wrap; gap: 0.1rem 0.7rem; }
+.daylist .rest { border: 0; background: none; padding: 0.7rem 0; color: var(--blue); font-weight: 600; text-decoration: underline; text-underline-offset: 0.16em; font-size: 0.9rem; min-height: 2.75rem; }
+.recrow { background: var(--panel); border-radius: 0.85rem; padding: 0.8rem 1rem 0.85rem; margin: 1rem 0; }
+.rr-now { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.7rem; margin-top: 0.3rem; font-size: 0.95rem; }
+.prow { padding: 1.1rem 0 1.2rem; border-bottom: 1px solid var(--rule); }
+.prow h3 { font-size: 1.05rem; font-weight: 700; line-height: 1.3; margin: 0.3rem 0 0.6rem; text-wrap: balance; }
+.prow .promise { margin-bottom: 0.6rem; }
+.quiet { padding: 1rem 0; color: var(--muted); border-bottom: 1px solid var(--rule); }
+.lead { padding-top: 1.2rem; }
+.lead + .item { padding-top: 0.5rem; }
 
 /* ---------- 4. said and recorded ---------- */
 .ledger-head { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr) minmax(0, 1fr); gap: 0 1.5rem; padding: 1.6rem 0 0.5rem; border-bottom: 1px solid var(--rule); font-size: 0.85rem; font-weight: 700; color: var(--muted); position: sticky; top: 3.4rem; background: #fff; z-index: 1; }
@@ -286,6 +310,21 @@ footer .small { color: #c9d9ee; }
   .day { top: 3.4rem; }
   .week .ct { display: none; }
   .side-col { margin-top: 2.6rem; }
+  /* On a phone the headlines come before the briefing: one line says it is there and leads to it. */
+  .mix-a { display: flex; flex-direction: column; }
+  .mix-a .stream { order: 2; }
+  .mix-a .brief3 { order: 3; margin-top: 2rem; grid-template-columns: minmax(0, 1fr); scroll-margin-top: 4rem; }
+  .mix-a .brief3 > div { border-left: 0; border-top: 1px solid var(--rule); }
+  .mix-a .brief3 > div:first-child { border-top: 0; }
+  .jumps { display: block; margin-top: 0.7rem; font-size: 0.9rem; line-height: 2; }
+  .jumps a { font-weight: 600; }
+  /* The dated head already says what is new, so the mixes drop the "since" box on a phone. */
+  .mix-a .rail, .daylist + .rail { display: none; }
+  .brief3 + .stream .tabs { margin-top: 0.6rem; }
+  .ed-head { padding-top: 1.2rem; }
+  .ed-head h2 { font-size: 1.3rem; }
+  .ed-head p { font-size: 0.9rem; }
+  .week { margin-top: 0.8rem; }
   .ledger-head { display: none; }
   .due { grid-template-columns: 1fr; }
   .due .yr { display: flex; align-items: baseline; gap: 0.7rem; padding: 1.2rem 0 0; }

@@ -171,8 +171,7 @@
   };
 
   // ---------- 1. Then and now: a stream ----------
-  function stream() {
-    const item = (c) => {
+  const streamItem = (c) => {
       const facts = learnedBesideStage(c).slice(0, 2).join(" ");
       return `<li class="item">
         <div class="src">${outlet(c.art)}<span>${fmt(c.art.d)}, ${ago(c.art.d)}</span>${moreReports(c)}${chip(c)}${newTag(c.art.d)}</div>
@@ -186,12 +185,9 @@
         <div class="foot"><span class="claim">${esc(c.iv)} · ${esc(c.ind)}</span><a href="${c.url}" target="_blank" rel="noopener">See the records</a>${followPill()}</div>
       </li>`;
     };
-    const sorts = {
-      "Newest": newestFirst,
-      "Lately on record": claims.filter((c) => c.latest).sort((a, b) => (a.latest.date < b.latest.date ? 1 : -1)),
-      "Longest quiet": claims.filter((c) => c.quiet).sort((a, b) => b.quiet - a.quiet || (a.first < b.first ? -1 : 1)),
-      "Promised": claims.filter((c) => c.promise).sort((a, b) => ((a.promise.date ?? "9") < (b.promise.date ?? "9") ? -1 : 1)),
-    };
+  function stream() {
+    const item = streamItem;
+    const sorts = streamSorts();
     const reportsSince = claims.flatMap((c) => c.arts).filter((a) => isNew(a.d)).length;
     const recordsSince = M.recent.filter((r) => isNew(r.date)).length;
     const topics = Object.entries(claims.reduce((a, c) => ((a[c.topic] = (a[c.topic] ?? 0) + 1), a), {})).sort((a, b) => b[1] - a[1]).slice(0, 9);
@@ -265,25 +261,10 @@
       <h3>${quote(c)}</h3>
       <div class="now"><span class="status">${LABEL[c.status]}</span><span class="muted">${GLOSS[c.status]}</span>${track(c.status)}</div>
       <p>${learned(c).slice(0, 2).join(" ")}</p></li>`;
-    const weekStart = shift(TODAY, -6);
-    const thisWeek = newestFirst.filter((c) => c.art.d >= weekStart);
-    const reportsOn = (d) => claims.flatMap((c) => c.arts).filter((a) => a.d === d).length;
-    const week = Array.from({ length: 7 }, (_, i) => shift(weekStart, i));
-    const dated = claims.filter((c) => c.promise?.date).sort((a, b) => (a.promise.date < b.promise.date ? -1 : 1));
-    const passed = dated.filter((c) => c.promise.date < TODAY), next = dated.filter((c) => c.promise.date >= TODAY).slice(0, 3);
-    const older = claims.filter((c) => c.first < "2022").sort((a, b) => (a.first < b.first ? -1 : 1));
-    const dayOfYear = daysBetween(TODAY.slice(0, 4) + "-01-01", TODAY);
-    const back = older[dayOfYear % older.length];
-    const md = TODAY.slice(5);
-    const anniv = older.map((c) => ({ c, md: c.first.slice(5) })).sort((a, b) => ((a.md < md ? "1" : "0") + a.md < (b.md < md ? "1" : "0") + b.md ? -1 : 1))[0];
-    const promised = (c) => `<li><span class="when">${esc(c.iv)} · ${esc(c.ind)}</span><p class="promise">${promiseText(c.promise)}</p><span class="status">${LABEL[c.status]}</span> <span class="muted">${GLOSS[c.status]}</span></li>`;
-    const d = new Date(TODAY);
+    const e = editionData();
+    const { thisWeek, next, passed, back, anniv } = e;
     shell("Today’s edition", false, `<div class="wrap">
-      <div class="ed-head">
-        <h2>${DAYS[d.getUTCDay()]} ${d.getUTCDate()} November 2026</h2>
-        <p>${plural(thisWeek.length, "headline")} reported in the last seven days, ${plural(M.recent.filter((r) => r.date >= shift(TODAY, -30)).length, "registry record")} dated in the last thirty. Registries checked this morning.</p>
-        <div class="week">${week.map((day) => { const n = reportsOn(day), w = new Date(day); return `<button type="button"${day === TODAY ? ' aria-current="date"' : ""}><span class="wd">${DAYS[w.getUTCDay()].slice(0, 3)}</span><span class="dn">${w.getUTCDate()}</span><span class="ct">${n ? plural(n, "report") : "none"}</span></button>`; }).join("")}</div>
-      </div>
+      ${editionHead(e)}
       <div class="edition">
         <div>
           <section><h2 class="h2">Reported this week, and where each stands</h2><ol>${thisWeek.slice(0, 6).map(brief).join("")}</ol>
@@ -293,8 +274,8 @@
         </div>
         <div class="side-col">
           <section><h2 class="h2">Dated on the registries lately</h2><ul>${M.recent.slice(0, 7).map((r) => `<li><span class="when">${fmt(r.date)}${r.id ? ` · ${r.id}` : ""}</span><b>${r.label}.</b> <a href="${SITE + r.slug}" target="_blank" rel="noopener">${esc(bySlug[r.slug].iv)}</a> · ${esc(bySlug[r.slug].ind)}</li>`).join("")}</ul></section>
-          <section><h2 class="h2">Promised dates coming up</h2><ul>${next.map(promised).join("")}</ul></section>
-          ${passed.length ? `<section><h2 class="h2">A promised date now passed</h2><ul>${passed.map(promised).join("")}</ul></section>` : ""}
+          <section><h2 class="h2">Promised dates coming up</h2><ul>${next.map(promisedItem).join("")}</ul></section>
+          ${passed.length ? `<section><h2 class="h2">A promised date now passed</h2><ul>${passed.map(promisedItem).join("")}</ul></section>` : ""}
           <section><h2 class="h2">Next anniversary</h2><ul><li><span class="when">${+anniv.md.slice(3)} ${MONTHS[+anniv.md.slice(0, 2) - 1]}, first reported ${anniv.c.first.slice(0, 4)}</span>${quote(anniv.c)}<br><span class="status">${LABEL[anniv.c.status]}</span> <span class="muted">${anniv.c.quiet ? `No signal for ${anniv.c.quiet} years` : GLOSS[anniv.c.status]}</span></li></ul></section>
         </div>
       </div></div>`);
@@ -390,5 +371,125 @@
     });
   }
 
-  ({ stream, wire, edition, promises, path, guess })[document.body.dataset.page]();
+  // ---------- shared by the stream, the edition and the two mixes ----------
+  const FULL_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const dayName = (d) => { const w = new Date(d); return `${DAYS[w.getUTCDay()]} ${w.getUTCDate()} ${FULL_MONTHS[w.getUTCMonth()]}`; };
+  const streamSorts = () => ({
+    "Newest": newestFirst,
+    "Lately on record": claims.filter((c) => c.latest).sort((a, b) => (a.latest.date < b.latest.date ? 1 : -1)),
+    "Longest quiet": claims.filter((c) => c.quiet).sort((a, b) => b.quiet - a.quiet || (a.first < b.first ? -1 : 1)),
+    "Promised": claims.filter((c) => c.promise).sort((a, b) => ((a.promise.date ?? "9") < (b.promise.date ?? "9") ? -1 : 1)),
+  });
+  function editionData() {
+    const weekStart = shift(TODAY, -6);
+    const thisWeek = newestFirst.filter((c) => c.art.d >= weekStart);
+    const reportsOn = (d) => claims.flatMap((c) => c.arts).filter((a) => a.d === d).length;
+    const week = Array.from({ length: 7 }, (_, i) => shift(weekStart, i));
+    const dated = claims.filter((c) => c.promise?.date).sort((a, b) => (a.promise.date < b.promise.date ? -1 : 1));
+    const upcoming = dated.filter((c) => c.promise.date >= TODAY);
+    const older = claims.filter((c) => c.first < "2022").sort((a, b) => (a.first < b.first ? -1 : 1));
+    const back = older[daysBetween(TODAY.slice(0, 4) + "-01-01", TODAY) % older.length];
+    const md = TODAY.slice(5);
+    const anniv = older.map((c) => ({ c, md: c.first.slice(5) })).sort((a, b) => ((a.md < md ? "1" : "0") + a.md < (b.md < md ? "1" : "0") + b.md ? -1 : 1))[0];
+    return { week, thisWeek, reportsOn, dated, upcoming, next: upcoming.slice(0, 3), passed: dated.filter((c) => c.promise.date < TODAY), back, anniv };
+  }
+  // The dated head. With `jump`, each day of the strip leads to that day's part of the page.
+  const editionHead = (e, jump = false) => `<div class="ed-head">
+      <h2>${dayName(TODAY)} ${TODAY.slice(0, 4)}</h2>
+      <p>${plural(e.thisWeek.length, "headline")} reported in the last seven days, ${plural(M.recent.filter((r) => r.date >= shift(TODAY, -30)).length, "registry record")} dated in the last thirty. Registries checked this morning.</p>
+      <div class="week">${e.week.map((day) => {
+        const n = e.reportsOn(day), w = new Date(day), current = day === TODAY ? ' aria-current="date"' : "";
+        const inner = `<span class="wd">${DAYS[w.getUTCDay()].slice(0, 3)}</span><span class="dn">${w.getUTCDate()}</span><span class="ct">${n ? plural(n, "report") : "none"}</span>`;
+        return jump ? `<a href="#d-${day}"${current}>${inner}</a>` : `<button type="button"${current}>${inner}</button>`;
+      }).join("")}</div></div>`;
+  const promisedItem = (c) => `<li><span class="when">${esc(c.iv)} · ${esc(c.ind)}</span><p class="promise">${promiseText(c.promise)}</p><span class="status">${LABEL[c.status]}</span> <span class="muted">${GLOSS[c.status]}</span></li>`;
+  const recordLine = (r) => `<li><span class="when">${fmt(r.date)}${r.id ? ` · ${r.id}` : ""}</span><b>${r.label}.</b> <a href="${SITE + r.slug}" target="_blank" rel="noopener">${esc(bySlug[r.slug].iv)}</a> · ${esc(bySlug[r.slug].ind)}</li>`;
+  function rail() {
+    const reportsSince = claims.flatMap((c) => c.arts).filter((a) => isNew(a.d)).length;
+    const recordsSince = M.recent.filter((r) => isNew(r.date)).length;
+    const topics = Object.entries(claims.reduce((a, c) => ((a[c.topic] = (a[c.topic] ?? 0) + 1), a), {})).sort((a, b) => b[1] - a[1]).slice(0, 9);
+    return `<aside class="rail">
+      <div class="since"><h2>Since your last visit on 7 Nov 2026</h2><p>${plural(reportsSince, "news report")}, marked <span class="tagged">New</span>. ${recordsSince ? plural(recordsSince, "registry record") : "No registry record"} dated since.</p></div>
+      <div><h2>Topics</h2><div class="chips">${topics.map(([t, n]) => `<a class="chip" href="#">${esc(t)} ${n}</a>`).join("")}</div></div>
+    </aside>`;
+  }
+
+  // ---------- A. Briefing, then stream: the edition is the head, the stream is the body ----------
+  function briefing() {
+    const e = editionData();
+    const sorts = { "This week": e.thisWeek, ...streamSorts() };
+    const back = e.back;
+    shell("Briefing, then stream", false, `<div class="wrap mix-a">
+      ${editionHead(e)}
+      <p class="jumps">Also today: <a href="#brief">${M.recent.length} registry records</a>, <a href="#brief">${e.upcoming.length} promised dates</a> and <a href="#brief">one from before</a>.</p>
+      <section id="brief" class="brief3 side-col" aria-label="Today’s briefing">
+        <div><h2>Dated on the registries lately</h2><ul>${M.recent.slice(0, 3).map(recordLine).join("")}</ul><p class="note"><a href="#">All ${M.recent.length} from the last 45 days</a></p></div>
+        <div><h2>Promised dates coming up</h2><ul>${e.next.slice(0, 1).map(promisedItem).join("")}</ul><p class="note"><a href="#">All ${e.upcoming.length} with a date to come</a></p></div>
+        <div><h2>One from before</h2><ul><li><span class="when">Picked by the date. First reported ${ago(back.first)}.</span>${quote(back)}<br><span class="status">${LABEL[back.status]}</span> <span class="muted">${back.quiet ? `No signal for ${back.quiet} years` : GLOSS[back.status]}</span></li></ul><p class="note">A different one each day.</p></div>
+      </section>
+      <div class="stream">
+        <div>
+          <div class="tabs" role="tablist">${Object.entries(sorts).map(([k, v], i) => `<button role="tab" aria-selected="${i === 0}">${k}<span>${v.length}</span></button>`).join("")}</div>
+          <ol id="list"></ol><button class="pill more" type="button"></button>
+          <div class="caught" id="end"><p><b>That is this week.</b></p><p>The registries are read again tomorrow morning. A claim you follow is listed first when its status changes.</p><p style="margin-top:.8rem"><button class="pill" type="button" id="earlier">Show earlier headlines</button></p></div>
+        </div>
+        ${rail()}
+      </div></div>`);
+    const list = document.getElementById("list"), end = document.getElementById("end");
+    const tabs = [...document.querySelectorAll(".tabs button")];
+    const pick = (i) => {
+      tabs.forEach((t, j) => t.setAttribute("aria-selected", i === j));
+      showMore(list, Object.values(sorts)[i], streamItem, 12);
+      end.hidden = i !== 0;
+    };
+    tabs.forEach((t, i) => (t.onclick = () => pick(i)));
+    document.getElementById("earlier").onclick = () => { pick(1); tabs[1].scrollIntoView({ block: "start" }); };
+    pick(0);
+  }
+
+  // ---------- B. Day by day: one list of everything dated, with what is promised ahead of today ----------
+  function days() {
+    const e = editionData();
+    const statusLine = (c) => `<p class="rr-now"><span class="status">${LABEL[c.status]}</span><span class="muted">${c.quiet ? `No signal for ${c.quiet} years` : GLOSS[c.status]}</span>${track(c.status)}</p>`;
+    const rows = claims.map((c) => ({ date: c.art.d, order: 0, kind: "report", html: streamItem(c) }));
+    for (const r of M.recent) {
+      const c = bySlug[r.slug], i = c.hist.findIndex((h) => h.on === r.date);
+      const changed = i > 0 ? `<span class="tagged">Changed</span><span>Was: ${LABEL[c.hist[i - 1].code]}. Now: ${LABEL[c.hist[i].code]}.</span>` : `<span>Status now: <span class="status">${LABEL[c.status]}</span></span>`;
+      rows.push({ date: r.date, order: 1, kind: "record", html: `<li class="recrow"><div class="lab">Registry record${r.id ? ` · ${r.id}` : ""}</div>
+        <p><b>${r.label}.</b> <a href="${c.url}" target="_blank" rel="noopener">${esc(c.iv)}</a> · ${esc(c.ind)}</p>
+        <p class="rr-now">${changed}${track(i > 0 ? c.hist[i].code : c.status)}</p></li>` });
+    }
+    for (const c of e.dated) rows.push({ date: c.promise.date, order: 2, kind: "promise", html: `<li class="prow"><div class="lab">Promised by ${c.promise.date.slice(0, 4)} · ${esc(c.art.o)}, ${fmt(c.art.d)}</div>
+        <h3>${quote(c)}</h3><p class="promise">${promiseText(c.promise)}</p>${statusLine(c)}</li>` });
+    const a = e.anniv, annivYear = a.md >= TODAY.slice(5) ? +TODAY.slice(0, 4) : +TODAY.slice(0, 4) + 1;
+    rows.push({ date: `${annivYear}-${a.md}`, order: 3, kind: "anniversary", html: `<li class="prow"><div class="lab">${+a.md.slice(3)} ${MONTHS[+a.md.slice(0, 2) - 1]} ${annivYear} · ${annivYear - +a.c.first.slice(0, 4)} years since the first report</div>
+        <h3>${quote(a.c)}</h3>${statusLine(a.c)}</li>` });
+    for (const day of e.week) if (!rows.some((r) => r.date === day)) rows.push({ date: day, order: 4, kind: "quiet", html: `<li class="quiet">Nothing is dated this day. The registries were read that morning.</li>` });
+    rows.push({ date: TODAY, order: 5, kind: "before", html: `<li class="lead"><p class="note">One from before, picked by the date: a different one each day. First reported ${ago(e.back.first)}.</p></li>${streamItem(e.back)}` });
+
+    const twoWeeks = shift(TODAY, -13);
+    const keyOf = (d) => (d >= twoWeeks ? d : d.slice(0, 4) === TODAY.slice(0, 4) ? d.slice(0, 7) : d.slice(0, 4));
+    const titleOf = (k) => k.length === 10 ? (k === TODAY ? "Today, " : k === shift(TODAY, -1) ? "Yesterday, " : "") + dayName(k) : k.length === 7 ? `${FULL_MONTHS[+k.slice(5) - 1]} ${k.slice(0, 4)}` : k;
+    const counted = (items) => [["report", "report"], ["record", "registry record"], ["promise", "promised date"]]
+      .map(([kind, word]) => [items.filter((r) => r.kind === kind).length, word]).filter(([n]) => n).map(([n, word]) => plural(n, word)).join(", ");
+    const ahead = rows.filter((r) => r.date > TODAY).sort((x, y) => (x.date < y.date ? -1 : 1));
+    const groups = [];
+    for (const row of rows.filter((r) => r.date <= TODAY).sort((x, y) => (x.date === y.date ? x.order - y.order : x.date < y.date ? 1 : -1))) {
+      const key = keyOf(row.date), last = groups[groups.length - 1];
+      if (last && last.key === key) last.items.push(row); else groups.push({ key, items: [row] });
+    }
+    shell("Day by day", false, `<div class="wrap">
+      ${editionHead(e, true)}
+      <div class="stream">
+        <div class="daylist">
+          <section><div class="day"><h2>Ahead</h2><span>${plural(ahead.length, "date")} that reports promised or that mark a year. A promise is what a report said, not a record.</span></div>
+            <p class="note" style="padding-top:.6rem">Next: ${fmt(ahead[0].date)}.</p><button class="rest" type="button">Show the ${ahead.length} dates ahead</button><ol hidden>${ahead.map((r) => r.html).join("")}</ol></section>
+          ${groups.map((g) => `<section id="d-${g.key}"><div class="day"><h2>${titleOf(g.key)}</h2><span>${counted(g.items) || "Nothing dated"}</span></div><ol>${g.items.map((r) => r.html).join("")}</ol></section>`).join("")}
+        </div>
+        ${rail()}
+      </div></div>`);
+    document.querySelectorAll(".rest").forEach((b) => (b.onclick = () => { b.nextElementSibling.hidden = false; b.remove(); }));
+  }
+
+  ({ stream, wire, edition, promises, path, guess, briefing, days })[document.body.dataset.page]();
 })();
