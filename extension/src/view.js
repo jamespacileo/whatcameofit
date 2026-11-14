@@ -57,13 +57,14 @@ const text = {
   noneThen: "No saved trial match. Open the page to check again.",
   openPage: "Open the page",
   clear: "Clear this list",
-  follow: "Follow this claim",
+  follow: "Keep me up to date",
   remindMe: "Remind me to look again:",
   inSixMonths: "in six months",
   inAYear: "in a year",
   remindOn: (date) => `Reminder set for ${date}.`,
   removeReminder: "Remove",
   followingThis: "You follow this claim.",
+  opens: "(opens in a new tab)",
   stop: "Stop following",
   followingEmpty: "You follow no claims yet. Open a tracked report and choose Follow.",
   changed: "Changed",
@@ -98,6 +99,12 @@ function link(label, href, className, onOpen) {
   return node;
 }
 
+// A button that opens a page in a new tab says so: an arrow after its words, and the
+// same in words for a screen reader.
+function opening(label) {
+  return [el("span", null, label), icon("external"), el("span", "visually-hidden", ` ${text.opens}`)];
+}
+
 // A name such as "USAG-1" must not break at its hyphen.
 function headline(words) {
   const parts = words.split(" ").flatMap((word, index) => [
@@ -126,12 +133,12 @@ function followControl(claim, kept, actions) {
   if (!kept || !actions.follow) return null;
   if (kept.followed.includes(claim.page)) {
     return el("p", "small followed", [
-      text.followingThis,
+      el("span", "followed-mark", [icon("check"), text.followingThis]),
       " ",
       press(text.stop, "text-button", () => actions.unfollow(claim.page)),
     ]);
   }
-  return press(text.follow, "button quiet", () => actions.follow(claim));
+  return press([icon("bell"), text.follow], "pill", () => actions.follow(claim));
 }
 
 /** A day to look at this claim again, shown as a notification on that day. */
@@ -140,13 +147,13 @@ function reminderControl(claim, kept, actions) {
   const set = kept.reminders?.[claim.page];
   if (set) {
     return el("p", "small followed", [
-      text.remindOn(spokenDay(set)),
+      el("span", "followed-mark", [icon("clock"), text.remindOn(spokenDay(set))]),
       " ",
       press(text.removeReminder, "text-button", () => actions.forget(claim.page)),
     ]);
   }
   return el("p", "small followed", [
-    text.remindMe,
+    el("span", "followed-mark", [icon("clock"), text.remindMe]),
     " ",
     press(text.inSixMonths, "text-button", () => actions.remindLater(claim, "six-months")),
     " · ",
@@ -177,7 +184,7 @@ function claimBlock(claim, site, actions, places, kept) {
       claim.first_reported && fact(text.firstReported, claim.first_reported),
       claim.latest_promise && fact(text.latestPromise, claim.latest_promise, "promise"),
     ]),
-    link(text.open, site.url + claim.page, "button", actions.open),
+    link(opening(text.open), site.url + claim.page, "button", actions.open),
     followControl(claim, kept, actions),
     reminderControl(claim, kept, actions),
   ]);
@@ -318,7 +325,7 @@ function recentCard(entry, actions) {
     el("p", "small", text.checkedOn(entry.outlet, day.format(new Date(entry.at)))),
     entry.answer.unreviewed && el("p", "small", entry.answer.unreviewed),
     candidates.length === 1 && only.status && el("p", "kept-status", only.status),
-    candidates.length === 1 && link(only.status ? text.open : only.title, only.url, "button quiet", actions.open),
+    candidates.length === 1 && link(opening(only.status ? text.open : only.title), only.url, "button quiet", actions.open),
     candidates.length > 1 && press(text.possible(candidates.length), "button quiet", () => actions.showEntry(entry.key)),
     candidates.length === 0 && el("p", "small", entry.answer.limitation || text.noneThen),
   ]);
@@ -354,7 +361,7 @@ function entryView(state, actions) {
         ]),
       ),
     ),
-    link(text.openPage, entry.url, "button quiet", actions.open),
+    link(opening(text.openPage), entry.url, "button quiet", actions.open),
   ];
 }
 
