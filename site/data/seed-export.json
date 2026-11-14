@@ -272,7 +272,8 @@
             "phase_1"
           ],
           "trial_state": null,
-          "regulatory_outcome": null
+          "regulatory_outcome": null,
+          "confidence": 1.0
         },
         {
           "id": 2,
@@ -287,7 +288,8 @@
             "phase_1"
           ],
           "trial_state": "completed",
-          "regulatory_outcome": null
+          "regulatory_outcome": null,
+          "confidence": 1.0
         }
       ],
       "failure_flags": [],
@@ -301,6 +303,20 @@
           "reading": null,
           "decided_by": "seed",
           "summary": null
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "jRCT2051240154",
+          "source_name": "jRCT",
+          "url": "https://jrct.mhlw.go.jp/en-latest-detail/jRCT2051240154",
+          "title": null,
+          "phases": [
+            "phase_1"
+          ],
+          "state": "completed",
+          "facts_as_of": null,
+          "facts": null
         }
       ]
     }

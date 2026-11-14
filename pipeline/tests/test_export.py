@@ -1,6 +1,7 @@
 """The export that feeds the site, tested through `build_export` and `write_export`
-on a real database. Scenario names are from openspec site-publishing."""
+on a real database. Scenario names are from openspec site-publishing and trial-facts."""
 
+import copy
 import json
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -23,9 +24,13 @@ from thenwhat.domain import (
     TrialPhase,
     TrialState,
 )
+from thenwhat.events.fetch import event_row
 from thenwhat.events.manual import add_manual_event
+from thenwhat.events.trial import trial_events
 from thenwhat.export.build import SCHEMA_VERSION, build_export, export_json_schema, write_export
 from thenwhat.review.queue import confirm_stage, decide_item
+from thenwhat.seed.load import load_seed
+from thenwhat.sources.base import SourceRecord
 
 EARLIER = datetime(2026, 11, 19, 9, 0, tzinfo=UTC)
 NOW = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
@@ -73,6 +78,40 @@ def add_event(
     if approve:
         decide_item(session, "event", event.id, ReviewState.APPROVED, now=EARLIER)
     return event
+
+
+def add_registry_events(
+    session: Session,
+    claim: Claim,
+    study: dict[str, Any],
+    *,
+    fetched_at: datetime = EARLIER,
+    approve: bool = True,
+) -> list[EvidenceEvent]:
+    """Store the events a fetch of `study` creates, each keeping the record as its
+    payload. As in a real fetch, a fact the claim already has gets no second event."""
+    nct_id = study["protocolSection"]["identificationModule"]["nctId"]
+    record = SourceRecord(
+        "clinicaltrials.gov",
+        nct_id,
+        f"https://clinicaltrials.gov/study/{nct_id}",
+        study,
+        fetched_at,
+    )
+    held = set(
+        session.scalars(select(EvidenceEvent.dedupe_key).where(EvidenceEvent.claim_id == claim.id))
+    )
+    stored: list[EvidenceEvent] = []
+    for draft in trial_events(record):
+        if draft.dedupe_key in held:
+            continue
+        event = event_row(claim, draft)
+        session.add(event)
+        session.flush()
+        if approve:
+            decide_item(session, "event", event.id, ReviewState.APPROVED, now=EARLIER)
+        stored.append(event)
+    return stored
 
 
 def exported(session: Session, now: datetime = NOW) -> dict[str, Any]:
@@ -220,16 +259,25 @@ def test_exported_claim_carries_what_its_page_shows(session: Session):
         "trial_phases": ["phase_1"],
         "trial_state": None,
         "regulatory_outcome": None,
+        "confidence": 1.0,
     }
 
 
-def test_export_never_carries_raw_payloads_or_review_internals(session: Session):
-    new_claim(session)
+def test_scores_are_shown_as_items_publish_by_rule_but_payloads_and_reviews_are_not(
+    session: Session, fixture_json
+):
+    """Since docs/adr/0001-publish-by-rule-archive-to-remove.md the score is the
+    disclosure, so every event's confidence is exported. Stored registry records and
+    who reviewed what stay private (openspec open-data: no registry record)."""
+    claim = new_claim(session)
     add_event(session)
+    add_registry_events(session, claim, fixture_json("clinicaltrials/study_NCT02586935.json"))
 
     text = json.dumps(exported(session))
 
-    assert "raw_payload" not in text and "confidence" not in text and "review_state" not in text
+    assert '"confidence": 1.0' in text
+    assert "raw_payload" not in text and "review_state" not in text and "reviewed_by" not in text
+    assert "protocolSection" not in text and "Holland Bloorview" in text
 
 
 def test_export_states_when_it_was_made_and_when_data_was_last_checked(session: Session):
@@ -392,3 +440,193 @@ def test_export_carries_retired_verticals_with_their_successors(
     export = exported(session)
 
     assert export["retired_verticals"] == [{"slug": "teeth", "successor": "mouth-and-teeth"}]
+
+
+# --- trials and their facts (openspec trial-facts) -----------------------------------
+
+MARCH = datetime(2026, 3, 9, 8, 0, tzinfo=UTC)
+OCTOBER = datetime(2026, 10, 3, 8, 0, tzinfo=UTC)
+SEED_FILE = Path(__file__).resolve().parents[2] / "data" / "seed" / "tooth-regrowth-usag1.json"
+
+
+def study(fixture_json, name: str) -> dict[str, Any]:
+    return copy.deepcopy(fixture_json(f"clinicaltrials/{name}.json"))
+
+
+def test_trial_with_four_approved_events_is_listed_once_with_its_facts(
+    session: Session, fixture_json
+):
+    """Scenario: Trial with four approved events"""
+    claim = new_claim(session)
+    record = study(fixture_json, "study_NCT01596231_results")
+    # The recorded start date carries no type, so it is marked actual to give a started event.
+    record["protocolSection"]["statusModule"]["startDateStruct"]["type"] = "ACTUAL"
+    events = add_registry_events(session, claim, record, fetched_at=OCTOBER)
+    assert len(events) == 4
+
+    export = exported(session)
+    [trial] = claim_in(export)["trials"]
+
+    assert {key: trial[key] for key in trial if key != "facts"} == {
+        "trial_id": "NCT01596231",
+        "source_name": "clinicaltrials.gov",
+        "url": "https://clinicaltrials.gov/study/NCT01596231",
+        "title": "Kudzu Treatment for Alcohol Abuse",
+        "phases": ["phase_2"],
+        "state": "completed",
+        "facts_as_of": "2026-10-03T08:00:00Z",
+    }
+    facts = trial["facts"]
+    assert facts["participants"] == {"count": 20, "basis": "actual"}
+    assert (facts["allocation"], facts["masking"]) == ("randomised", "double")
+    assert facts["sponsor"] == {"name": "Mclean Hospital", "kind": "other"}
+    [outcome] = facts["results"]["outcomes"]
+    assert [(group["title"], group["analysed"], group["value"]) for group in outcome["groups"]] == [
+        ("Placebo", "10", "3.4"),
+        ("Kudzu", "10", "1.9"),
+    ]
+    assert "significantly reduced" not in json.dumps(export)
+    jsonschema.validate(export, export_json_schema())
+
+
+def test_facts_are_read_from_the_most_recently_fetched_record(session: Session, fixture_json):
+    """Scenario: Two stored records for one trial"""
+    claim = new_claim(session)
+    earlier = study(fixture_json, "study_NCT02586935")
+    earlier["protocolSection"]["statusModule"]["overallStatus"] = "RECRUITING"
+    earlier["protocolSection"]["designModule"]["enrollmentInfo"] = {
+        "count": 100,
+        "type": "ESTIMATED",
+    }
+    registered = add_registry_events(session, claim, earlier, fetched_at=MARCH)
+    completed = add_registry_events(
+        session, claim, study(fixture_json, "study_NCT02586935"), fetched_at=OCTOBER
+    )
+    assert [event.fetched_at for event in registered] == [MARCH, MARCH]
+    assert [event.trial_state for event in completed] == [TrialState.COMPLETED]
+
+    [trial] = claim_in(exported(session))["trials"]
+
+    assert trial["facts_as_of"] == "2026-10-03T08:00:00Z"
+    assert trial["facts"]["participants"] == {"count": 83, "basis": "actual"}
+    assert trial["state"] == "completed"
+
+
+def test_trial_whose_events_are_all_pending_or_rejected_is_not_listed(
+    session: Session, fixture_json
+):
+    """Scenario: Trial whose events are all pending"""
+    claim = new_claim(session)
+    add_event(session)
+    add_registry_events(session, claim, study(fixture_json, "study_NCT02586935"), approve=False)
+    rejected = add_event(session, approve=False, external_id="NCT9", summary="Another trial.")
+    decide_item(session, "event", rejected.id, ReviewState.REJECTED, now=EARLIER)
+
+    assert [trial["trial_id"] for trial in claim_in(exported(session))["trials"]] == ["NCT1"]
+
+
+def test_trial_entered_by_hand_is_listed_without_facts(session: Session):
+    """Scenario: Trial entered by hand from a registry with no client"""
+    new_claim(session)
+    add_event(session)
+    add_event(
+        session,
+        type=EventType.TRIAL_STATUS_CHANGE,
+        trial_state=TrialState.STARTED,
+        event_date=date(2024, 10, 1),
+        summary="Trial started.",
+        source_url="https://registry.example/NCT1/history",
+    )
+    add_event(session, external_id="NCT2", source_url="https://registry.example/NCT2")
+
+    trials = claim_in(exported(session))["trials"]
+
+    assert trials == [
+        {
+            "trial_id": "NCT1",
+            "source_name": "manual entry",
+            "url": "https://registry.example/NCT1/history",
+            "title": None,
+            "phases": ["phase_1"],
+            "state": "under_way",
+            "facts_as_of": None,
+            "facts": None,
+        },
+        {
+            "trial_id": "NCT2",
+            "source_name": "manual entry",
+            "url": "https://registry.example/NCT2",
+            "title": None,
+            "phases": ["phase_1"],
+            "state": "not_started",
+            "facts_as_of": None,
+            "facts": None,
+        },
+    ]
+
+
+def test_seed_claims_jrct_trial_is_listed_without_facts(session: Session):
+    load_seed(session, json.loads(SEED_FILE.read_text()), now=EARLIER)
+
+    assert claim_in(exported(session), "tooth-regrowth-usag1")["trials"] == [
+        {
+            "trial_id": "jRCT2051240154",
+            "source_name": "jRCT",
+            "url": "https://jrct.mhlw.go.jp/en-latest-detail/jRCT2051240154",
+            "title": None,
+            "phases": ["phase_1"],
+            "state": "completed",
+            "facts_as_of": None,
+            "facts": None,
+        }
+    ]
+
+
+def test_every_event_carries_its_confidence(session: Session, fixture_json):
+    claim = new_claim(session)
+    add_event(session)
+    paper = add_event(
+        session,
+        type=EventType.FOLLOWUP_PAPER,
+        external_id="10.1000/a",
+        trial_phases=[],
+        summary="A follow-up paper.",
+    )
+    paper.confidence = 0.612345
+    add_registry_events(session, claim, study(fixture_json, "study_NCT02586935"))
+    session.flush()
+
+    events = claim_in(exported(session))["events"]
+
+    assert {event["summary"]: event["confidence"] for event in events} == {
+        "Phase 1 trial registered.": 1.0,
+        "A follow-up paper.": 0.6123,
+        "Trial NCT02586935 registered (Phase 2).": 1.0,
+        "Trial NCT02586935 started.": 1.0,
+        "Trial NCT02586935 completed.": 1.0,
+    }
+
+
+def test_posted_result_with_a_high_p_value_leaves_the_status_unchanged(
+    session: Session, fixture_json
+):
+    """Scenario: Posted result with a high p value"""
+    claim = new_claim(session)
+    record = study(fixture_json, "study_NCT04951479_comparison")
+    measures = record["resultsSection"]["outcomeMeasuresModule"]["outcomeMeasures"]
+    measures[0]["analyses"][0]["pValue"] = "0.6"
+    events = add_registry_events(session, claim, record)
+
+    with_results = claim_in(exported(session))
+    [comparison] = with_results["trials"][0]["facts"]["results"]["outcomes"][0]["comparisons"]
+    assert comparison["p_value"] == "0.6"
+
+    without = {key: value for key, value in record.items() if key != "resultsSection"}
+    for event in events:
+        event.raw_payload = without
+    session.flush()
+    without_results = claim_in(exported(session))
+
+    assert without_results["trials"][0]["facts"]["results"] is None
+    assert without_results["status"]["code"] == with_results["status"]["code"]
+    assert without_results["status"]["explained_by"] == with_results["status"]["explained_by"]

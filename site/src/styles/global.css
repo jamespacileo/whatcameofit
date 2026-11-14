@@ -2778,6 +2778,187 @@ main ul:not([class]) li + li {
   }
 }
 
+/* Trials on record: each trial once. What it is and how far it got are on the lines a
+   reader sees; what it set out to measure and what it posted are one press away.
+   Openspec trial-facts. */
+.trials {
+  margin-top: 2rem;
+}
+
+.trial {
+  display: grid;
+  gap: 0.15rem;
+  scroll-margin-top: 1.25rem;
+}
+
+.trial > p {
+  margin: 0;
+}
+
+.trial:target {
+  background: var(--tint);
+  outline: 0.3rem solid var(--tint);
+  border-radius: 2px;
+}
+
+.trial-name {
+  overflow-wrap: anywhere;
+}
+
+.trial-name a {
+  font-weight: 700;
+}
+
+.trial-name .out {
+  margin-left: 0.15rem;
+  vertical-align: -0.05em;
+}
+
+.trial-standing {
+  font-weight: 600;
+}
+
+/* Notes about the entry, in one muted line that wraps between notes, not inside them.
+   A gap parts them, so a wrapped line never starts with a mark. */
+.trial-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+}
+
+.trial-more summary,
+.trials-rest > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: fit-content;
+  cursor: pointer;
+  list-style: none;
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.trial-more summary {
+  font-size: 0.9rem;
+  margin-top: 0.2rem;
+}
+
+.trial-more summary::-webkit-details-marker,
+.trials-rest > summary::-webkit-details-marker {
+  display: none;
+}
+
+.trial-more[open] > summary svg,
+.trials-rest[open] > summary svg {
+  transform: rotate(180deg);
+}
+
+.trials-rest {
+  max-width: var(--measure);
+}
+
+.trials-rest > summary {
+  margin-top: 0.9rem;
+}
+
+.trial-facts {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0.6rem 0 0.3rem;
+  padding: 0.8rem 1rem;
+  background: var(--panel);
+  border-radius: 0.65rem;
+}
+
+.trial-facts dt {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.trial-facts dd {
+  margin: 0.1rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.trial-measures,
+.result-groups {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+/* These lists sit inside a row of the trial list and take none of its rules. */
+.trial-list .trial-measures li,
+.trial-list .result-groups li {
+  padding: 0;
+  border: 0;
+}
+
+.result + .result {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--rule);
+}
+
+.result-title {
+  margin: 0 0 0.35rem;
+  font-weight: 600;
+}
+
+.result-title .entry-note {
+  font-weight: 400;
+}
+
+/* One group on one line: its name, its number, and how many were analysed under it. */
+.result-groups li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 1rem;
+  align-items: baseline;
+}
+
+.result-value {
+  font-variant-numeric: tabular-nums lining-nums;
+  text-align: right;
+}
+
+.result-groups .entry-note {
+  grid-column: 1 / -1;
+}
+
+.result-comparison {
+  margin: 0.45rem 0 0;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+@media (max-width: 40rem) {
+  .trial-more summary,
+  .trials-rest > summary {
+    min-height: 2.75rem;
+  }
+
+  .result-groups li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .result-value {
+    text-align: left;
+  }
+}
+
+@media print {
+  .trial {
+    break-inside: avoid;
+  }
+
+  .trial-more summary svg,
+  .trials-rest > summary svg {
+    display: none;
+  }
+}
+
 .index td.claim a {
   font-weight: 700;
 }
