@@ -1,0 +1,189 @@
+---
+// One trial, once: what it is and how far it got on the lines a reader sees, and what
+// it set out to measure and what it posted one press away. Openspec trial-facts: the
+// numbers are the registry's, and no word here says how the trial turned out, where
+// it takes place or who may take part.
+import ChevronDown from "@lucide/astro/icons/chevron-down";
+import ExternalLink from "@lucide/astro/icons/external-link";
+import { confidenceLabel, readingOf } from "../lib/confidence";
+import type { ExportedMatch, ExportedTrial } from "../lib/export";
+import { sourceName } from "../lib/status";
+import { formatDate } from "../lib/timetable";
+import {
+  STUDY_KIND_WORDS,
+  TRIAL_STATE_WORDS,
+  comparisonText,
+  designText,
+  groupValueText,
+  measureText,
+  participantsText,
+  phaseText,
+  sponsorText,
+  studiedText,
+} from "../lib/trial-facts";
+
+interface Props {
+  trial: ExportedTrial;
+  /** The approved match that brought the trial to the claim, when there is one. */
+  match?: ExportedMatch;
+}
+
+const { trial, match } = Astro.props;
+const facts = trial.facts;
+const registry = sourceName(trial.source_name);
+// What the trial is, in the order a reader asks: how far, in what state, how big.
+const standing = [phaseText(trial.phases), TRIAL_STATE_WORDS[trial.state], participantsText(facts)]
+  .filter(Boolean)
+  .join(" · ");
+const design = designText(facts);
+const studied = studiedText(facts);
+const sponsor = sponsorText(facts);
+// An interventional trial is the usual kind and is not named; the others are.
+const kind =
+  facts?.study_kind && facts.study_kind !== "interventional"
+    ? STUDY_KIND_WORDS[facts.study_kind]
+    : null;
+const results = facts?.results ?? null;
+const planned = facts?.primary_outcomes ?? [];
+const morePlanned = (facts?.primary_outcomes_total ?? 0) - planned.length;
+const morePosted = results ? results.outcomes_total - results.outcomes.length : 0;
+const hasMore = Boolean(
+  studied || sponsor || kind || planned.length > 0 || facts?.why_stopped || results || match,
+);
+---
+
+<li class="trial" id={`trial-${trial.trial_id}`}>
+  <p class="trial-name">
+    <a href={trial.url} rel="noopener">
+      {trial.trial_id}
+      <ExternalLink class="out" size={13} stroke-width={1.9} aria-hidden="true" />
+      <span class="visually-hidden">(at {registry})</span>
+    </a>
+    {trial.title && <span class="entry-note">{trial.title}</span>}
+  </p>
+  <p class="trial-standing">{standing}</p>
+  {design && <p class="trial-design">{design}</p>}
+  <p class="entry-note trial-meta">
+    {results && <span class="unbroken">Results posted</span>}
+    {match && <span class="unbroken">{confidenceLabel(match.score)}</span>}
+    {
+      trial.facts_as_of && (
+        <span>
+          {registry} record read <span class="unbroken">{formatDate(trial.facts_as_of)}</span>
+        </span>
+      )
+    }
+  </p>
+  {
+    hasMore && (
+      <details class="trial-more">
+        <summary>
+          {results ? "Planned measures and posted results" : "Planned measures and details"}
+          <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+        </summary>
+        <dl class="trial-facts">
+          {kind && (
+            <div>
+              <dt>Kind of study</dt>
+              <dd>{kind}</dd>
+            </div>
+          )}
+          {studied && (
+            <div>
+              <dt>Studied in</dt>
+              <dd>{studied}</dd>
+            </div>
+          )}
+          {sponsor && (
+            <div>
+              <dt>Sponsor</dt>
+              <dd>{sponsor}</dd>
+            </div>
+          )}
+          {planned.length > 0 && (
+            <div>
+              <dt>Main measures planned</dt>
+              <dd>
+                <ul class="trial-measures">
+                  {planned.map((outcome) => (
+                    <li>
+                      {outcome.measure}
+                      {outcome.time_frame && <span class="entry-note">{outcome.time_frame}</span>}
+                    </li>
+                  ))}
+                </ul>
+                {morePlanned > 0 && (
+                  <span class="entry-note">
+                    {morePlanned} more in the {registry} record.
+                  </span>
+                )}
+              </dd>
+            </div>
+          )}
+          {facts?.why_stopped && (
+            <div>
+              <dt>Reason the record gives for stopping</dt>
+              <dd>“{facts.why_stopped}”</dd>
+            </div>
+          )}
+          {results && (
+            <div class="trial-results">
+              <dt>Results posted for the main measures</dt>
+              <dd>
+                {results.outcomes.map((outcome) => (
+                  <div class="result">
+                    <p class="result-title">
+                      {outcome.title}
+                      <span class="entry-note">
+                        {[outcome.time_frame, measureText(outcome)].filter(Boolean).join(" · ")}
+                      </span>
+                    </p>
+                    {outcome.rows === 1 ? (
+                      <ul class="result-groups">
+                        {outcome.groups.map((group) => (
+                          <li>
+                            <span class="result-group">{group.title}</span>
+                            <span class="result-value">{groupValueText(group, outcome)}</span>
+                            {group.analysed && (
+                              <span class="entry-note">{group.analysed} analysed</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p class="entry-note">
+                        Posted in {outcome.rows} rows of values, which are in the {registry} record.
+                      </p>
+                    )}
+                    {outcome.comparisons.map((comparison) => (
+                      <p class="result-comparison">
+                        {comparisonText(comparison)}
+                        {comparison.groups.length > 0 && (
+                          <span class="entry-note">Posted for: {comparison.groups.join(", ")}</span>
+                        )}
+                      </p>
+                    ))}
+                  </div>
+                ))}
+                {morePosted > 0 && (
+                  <span class="entry-note">
+                    {morePosted} more in the {registry} record.
+                  </span>
+                )}
+              </dd>
+            </div>
+          )}
+          {match && (
+            <div>
+              <dt>How sure the match is</dt>
+              <dd>
+                {confidenceLabel(match.score)}
+                <span class="entry-note">{readingOf(match.reading)}</span>
+              </dd>
+            </div>
+          )}
+        </dl>
+      </details>
+    )
+  }
+</li>
