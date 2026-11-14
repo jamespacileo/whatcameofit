@@ -24,6 +24,15 @@ Observed on 2026-11-14 with a generic client name and no key, on six varied clai
 
 Details that matter below: MeSH's first hit for "Obesity" was "Anti-Obesity Agents"; a MeSH definition is on the term's concept record, a second request; Wikidata's description of a new drug was "chemical compound" and none of the three drug items carried a ChEMBL or MeSH identifier; ChEMBL returned 316 unrelated drugs for a procedure's name and an error after a minute for a diet; ChEMBL's indications for one drug did not include the claim's condition; Open Targets gave one drug two mechanisms with targets and another none, and a field had been renamed since older documentation.
 
+Measured read-only on the real database after tasks 2.1 to 2.7 had run for every published claim, 2026-11-14, with a generic client name and no key:
+
+- Links stored: 28 claims with an approved exact condition term and 7 more with only a broader one; 5 claims with an approved exact intervention term and 1 with only a broader one. So 35 of 84 claims would carry a condition card and 6 an intervention card.
+- The 84 interventions have 108 other names and 130 search phrases. One intervention's name equals a MeSH descriptor's label. Ten equal an entry term (`lookup/term`, `match=exact`), and 17 claims have a name or other name that does; search phrases add no claim. "Ketogenic Diet" is an entry term of a descriptor labelled otherwise and `lookup/descriptor` answers `[]` for it; "orforglipron" is found as a term and not as a descriptor; "Baxdrostat" is found as neither. For conditions, 11 indications equal a descriptor's label and 20 equal an entry term.
+- 67 interventions have no entry under any of their names. They are phrases in the report's words: "Comb-shaped electrical stimulation device", "Deep cervical lymphatic-venous anastomosis surgery", "Dental pulp stem cells in GelMA hydrogel", "CTX310".
+- The registry gives each intervention of a trial a type. Across the 36 claims with a stored trial, the types carried are DRUG (27 claims), OTHER (11), PROCEDURE (9), BIOLOGICAL (8), DEVICE (7), BEHAVIORAL (4), DIETARY_SUPPLEMENT (3), DIAGNOSTIC_TEST (3), COMBINATION_PRODUCT (2), RADIATION (1). For 25 claims a trial lists an intervention whose name equals the claim's intervention name or another of its names: DRUG 21, BIOLOGICAL 3, PROCEDURE 2, DIETARY_SUPPLEMENT 2, DEVICE 1, COMBINATION_PRODUCT 1. The other types on a claim's trials belong to comparators and co-administered treatments.
+- 28 general MeSH descriptors were checked by exact label and all exist, among them "Equipment and Supplies" (D004864), "Prostheses and Implants" (D019736), "Electric Stimulation Therapy" (D004599), "Surgical Procedures, Operative" (D013514), "Genetic Therapy" (D015316), "Gene Editing" (D000072669), "Cell- and Tissue-Based Therapy" (D064987), "Antibodies, Monoclonal" (D000911), "Diet Therapy" (D004035), "Tissue Engineering" (D023822) and "Biocompatible Materials" (D001672).
+- 55 words in the interventions' names look like a gene symbol (a letter, then two to nine letters, digits or hyphens with a capital or a digit among them, after "anti-" and endings such as "-derived" are removed). Open Targets' target search returned, for words on 13 claims, a target whose approved symbol or listed symbol synonym equals the word. Seven are the gene meant or its receptor (GFAP, CXCR3, CPNE7, DLK1, APOE for "APOE4", SOSTDC1 for "USAG-1", GLP1R for "GLP-1" on two claims). Five are coincidences: "TMS" (magnetic stimulation) is a synonym of TYMS, "TOFA" of BTG3, "CSR" of SCARA3, "ASI" of ARSI, "Mar1" of RTL1.
+
 ## Goals / Non-Goals
 
 **Goals:**
@@ -31,10 +40,13 @@ Details that matter below: MeSH's first hit for "Obesity" was "Anti-Obesity Agen
 - A card never rests on a search result alone or on the registry's filing alone.
 - Every word of a definition is its source's, attributed in the source's terms.
 - The fewest new sources that give a card for a condition, an intervention and a target.
+- Every kind of intervention can get a card: a drug, a device, a procedure, a diet, a cell or gene therapy, a code-named candidate. When the vocabulary does not hold the thing itself, the card is for the kind of thing it is, and says so.
 
 **Non-Goals:**
 
-- Coverage. A procedure, a diet or a code-named candidate with no vocabulary term gets no card, and the page says nothing in its place.
+- A card for every claim. An intervention that fits no kind on the list, or whose kind is not chosen with enough confidence, gets no card, and the page says nothing in its place.
+- A second source for devices. A regulator's device classification names product types for one country's market and matches a report's wording no better than MeSH does.
+- Gene variants. "APOE4" is an allele; the card is for the gene, and no source here defines the allele in a sentence the site could show.
 - Plain-language rewriting. A definition written for indexers is less friendly than one a model could write, and it is the only kind the site can stand behind.
 - A knowledge graph. Cards are not linked to each other, to other claims or to papers.
 - A source's opinion of a drug's progress. ChEMBL's "max phase" and indications disagree with the registry often enough to contradict the status on the same page.
@@ -45,9 +57,53 @@ Details that matter below: MeSH's first hit for "Obesity" was "Anti-Obesity Agen
 
 **Candidates come from the registry's filing and from exact labels only.** The registry's condition and intervention terms for a claim's approved trials, each with the count of trials carrying it; and MeSH terms whose label equals the indication, the intervention's name or another of its names, compared case-insensitively. A lookup's "contains" results are never candidates: the wrong first hit for "Obesity" is the reason. Terms carried by fewer than half the claim's trials are dropped before the check, which removes most of a large claim's long tail.
 
+**Entry terms count as labels.** A MeSH descriptor lists entry terms, the other wordings NLM files under it. A name equal to an entry term is as checkable as one equal to the main label, and it is the vocabulary's own statement that the two mean the same. The candidate carries which entry term was equal. This is what finds "Ketogenic Diet", "Salpingectomy" and "Deep Brain Stimulation", and it reaches supplementary records, where NLM files compounds that have no descriptor yet. Search phrases are not compared: they were written for searching the registry, are looser than names, and added no claim when measured. Alternative considered: `match=contains`. Rejected for the reason above.
+
+**A supplementary record gives a card like any term.** It has a label and may have a note, and the note is shown as the definition. Task 2a.1 observes what its record holds; if it has no note the card carries the label and link, as for any term with no definition.
+
 **Every candidate is checked, including the registry's.** A new step, `term_match`, with three options: the term is the claim's condition or intervention, it is broader, it is something else. The endometrial cancer claim is why the registry's count is a reason and not a rule; the co-administered drugs among intervention terms are why the check sees the claim's intervention names. Alternative considered: approve a registry term by rule when most trials carry it. Rejected on the evidence above.
 
 **"Broader" is an answer, not a failure.** A claim about hard-to-treat high cholesterol has no exact term; "Dyslipidemias" is still useful background. A broader link is approved on its own score and the card says it is broader. An exact link always wins over a broader one.
+
+**An intervention with no exact term gets its kind, by a decision over a fixed list.** A new step, `intervention_kind`, with one option per kind and "none of these". The state judged is the claim's headline, summary and intervention names. The chosen kind's probability is the score, and the same two thresholds decide it. Each kind is tied in the code to one MeSH descriptor identifier, so the card is that term's record with NLM's definition, and the site writes nothing. The list is checked in and starts as:
+
+| Kind code | MeSH descriptor |
+| --- | --- |
+| `drug` | Pharmaceutical Preparations |
+| `antibody` | Antibodies, Monoclonal |
+| `peptide` | Peptides |
+| `oligonucleotide` | Oligonucleotides |
+| `messenger_rna` | RNA, Messenger |
+| `vaccine` | Vaccines |
+| `gene_therapy` | Genetic Therapy |
+| `gene_editing` | Gene Editing |
+| `cell_therapy` | Cell- and Tissue-Based Therapy |
+| `stem_cell_transplant` | Stem Cell Transplantation |
+| `transplant` | Transplantation |
+| `tissue_engineering` | Tissue Engineering |
+| `biomaterial` | Biocompatible Materials |
+| `device` | Equipment and Supplies |
+| `implant` | Prostheses and Implants |
+| `electrical_stimulation` | Electric Stimulation Therapy |
+| `surgical_procedure` | Surgical Procedures, Operative |
+| `radiotherapy` | Radiotherapy |
+| `phage_therapy` | Phage Therapy |
+| `probiotic` | Probiotics |
+| `diet` | Diet Therapy |
+| `dietary_supplement` | Dietary Supplements |
+| `exercise` | Exercise Therapy |
+
+All were found by exact label on the day measured. A kind is added by adding a row; a test asserts every row's identifier has a stored record. The step runs only for a claim with no approved exact intervention term, because an exact term always wins and the decision would be paid for and unused. Alternatives considered: (a) a glossary of kinds written by the site. Rejected: it is the site explaining a treatment, which this change rules out, and the vocabulary already defines each kind. (b) Walking up the MeSH tree from a term. Rejected: 67 interventions have no term to start from. (c) The registry's intervention type as the kind. Rejected as the rule: it exists for 25 of 84 claims, its commonest values are DRUG and OTHER, and it has no definition. It is kept as a reason.
+
+**A kind is a third way a link fits, below exact and broader.** `claim_term` gains the value `kind` beside `exact` and `broader`. A broader term the registry filed or a label gave ("Dyslipidemias") is nearer the claim than a kind ("Pharmaceutical Preparations"), so the card is chosen exact, then broader, then kind. The card says "the kind of treatment this is", not "broader".
+
+**The registry's type is a reason on a kind link.** When an approved trial lists an intervention whose name equals one of the claim's intervention names, its type and the number of such trials are carried as a reason code with the registry's own type code, worded by the site ("the registry lists it as a device in three of this claim's trials"). Types on the trial's other interventions are not read. It does not change the score.
+
+**A named gene or protein is a candidate target, checked like a term.** Words in the intervention's name and other names are compared with human gene symbols: a target whose approved symbol or listed symbol synonym equals the word, without regard to case, is a candidate. Words are taken after removing a leading "anti-" and a trailing "-derived", "-mediated", "-targeting", "-based" or "-to-…". Each candidate goes to a step, `target_match`, with two options: the intervention acts on this gene's product or is made from it, or the word means something else. The five coincidences measured are why equality alone is not enough, and "GLP-1" matching the receptor's gene is why the reasons state that the word equals a synonym, not the symbol. The link is stored in `claim_term` with the role `target`, source Open Targets, the target's identifier, and the usual score, reasons and review columns.
+
+**One target card, and the drug source's own target wins.** A drug whose record names exactly one single-protein target gets that target's card by rule, unscored, as before. Otherwise the approved named-gene link with the highest score gives the card, scored. The card's content is the same either way: the protein's name, the gene symbol and the function description with its origin.
+
+**The named-gene card does not wait for the share-alike decision.** It reads Open Targets' target record only. The platform's own data is CC0 and the function description is UniProt's under CC BY 4.0, which the data file's licence can carry with credit. Its source record is marked accepted on its own line in the list, apart from the ChEMBL-derived mechanisms.
 
 **Links live in `claim_term`; records in `term_record`.** `claim_term`: claim, role (condition or intervention), source, identifier, whether exact or broader, score, reasons, and the review columns; unique on claim, role, source and identifier. `term_record`: source, identifier, payload, fetched time. A condition is not an entity, so `entity_match` cannot hold these links. Alternative considered: make the condition an entity. Rejected: it changes what a claim's identity is made of, which is a larger change than a card deserves.
 
@@ -69,7 +125,11 @@ Details that matter below: MeSH's first hit for "Obesity" was "Anti-Obesity Agen
 
 - [A definition mentions uses or treatments and reads as advice] → it is shown as the source's words, closed by default, under the section's note and away from the status; the footer notice stands on every page.
 - [The check approves a subtly wrong term] → the card shows the score, the reasons and the source's link; the operator rejects it and it stays rejected; task 5.2 reads every approved link once before the page ships.
-- [Coverage is low and uneven: drugs get three cards, procedures none] → the section is absent when empty and no card is a placeholder; task 5.1 measures coverage and the change is not worth shipping below one claim in three with a condition card.
+- [Coverage is uneven: a named drug gets three cards, a procedure one for its kind] → the section is absent when empty and no card is a placeholder; task 5.1 measures coverage and the change is not worth shipping below one claim in three with a condition card.
+- [A kind card is too general to help: "Pharmaceutical Preparations" for a code-named compound] → it is the last choice after exact and broader, it is worded as the kind and not the thing, and task 5.4 reads every kind card beside its claim; a kind whose cards read as empty is removed from the list.
+- [The kind decision picks a plausible wrong kind: a hydrogel carrying cells read as a biomaterial or as a cell therapy] → the score and reasons are shown, the operator rejects it, and a claim that fits two kinds equally scores below the threshold for both and gets none.
+- [A word in a name equals a gene symbol by coincidence] → never shown on equality alone; the check reads the claim, a coincidence scores zero and is rejected by rule; task 5.5 reads every approved named-gene link.
+- [A target card suggests the intervention is known to work through that gene] → the card describes the gene's product and says the report names it; it does not state a mechanism, which only the drug card does and only from its source.
 - [A source renames a field or goes down] → clients are tolerant and store the record as fetched; cards are derived from stored records, so an outage leaves existing cards in place.
 - [MeSH's rate limit is not stated] → the client's default of two requests a second; about 170 requests for today's terms; refreshed no more than every ninety days.
 - [Open Targets' drug mechanisms are share-alike] → gated on the operator's decision as above; the condition and intervention cards do not depend on it.
@@ -79,11 +139,14 @@ Details that matter below: MeSH's first hit for "Obesity" was "Anti-Obesity Agen
 
 1. `docs/sources.md` entries first, then the MeSH client, the candidate rules, the step, the two tables and one migration, then the export.
 2. Run for every published claim; measure; read the approved links.
-3. Site with condition and intervention cards. An export without cards builds as today.
-4. Drug and target cards after the operator's licence decision, as a second deploy.
-5. Rollback: revert the site deploy. Stored links and records can stay; nothing else reads them.
+3. Entry terms, the kind step and the named-gene check, with one further migration for the `kind` value and the `target` role. `claim_term` holds real links by now, so this is a new migration and not a rewrite of the first. Run again for every published claim; a link an operator rejected stays rejected.
+4. Site with condition, intervention, kind and named-gene target cards. An export without cards builds as today.
+5. Drug cards, and the target card a drug's record gives, after the operator's licence decision, as a second deploy.
+6. Rollback: revert the site deploy. Stored links and records can stay; nothing else reads them.
 
 ## Open Questions
 
 - Whether a card should link to the term's Wikipedia article. Wikidata can map a MeSH identifier to an article title under CC0 and a link copies no text, but it is a third source and a link to a page the site cannot vouch for. Deferrable: it adds one optional field to a card.
-- Whether a site-written glossary of a dozen general terms ("monoclonal antibody", "gene therapy") would serve readers better than vocabulary definitions for interventions with no term. It would be site wording, reviewed by the operator, and is a separate change.
+- Whether a site-written glossary of a dozen general terms ("monoclonal antibody", "gene therapy") would serve readers better than the vocabulary's definitions of the kinds. The kind card answers the need with the source's words; task 5.4 reads them as a reader would. If they read badly, a glossary is site wording reviewed by the operator, and a separate change.
+- Whether a condition with no term should get a kind as an intervention does. Not done: a claim already carries a health area, which is the site's own answer to "what kind of condition", and 35 of 84 claims have a condition card against 6 with an intervention card.
+- Whether the registry's type should be shown on the claim page when there is no card at all. It is a code with no definition, so it would be a line and not a card. Deferrable.

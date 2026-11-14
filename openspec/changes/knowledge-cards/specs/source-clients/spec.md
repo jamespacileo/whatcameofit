@@ -3,7 +3,22 @@
 ## ADDED Requirements
 
 ### Requirement: A subject term is looked up by identifier and by label
-The vocabulary client SHALL return a term's record, with its label and definition, for the term's identifier, and SHALL return the terms whose label equals a given name. A label that only contains the name SHALL NOT be returned as equal. An unknown identifier SHALL return nothing.
+The vocabulary client SHALL return a term's record, with its label and definition, for the term's identifier, and SHALL return the terms whose label, or one of whose entry terms, equals a given name, each with the entry term that was equal when it was not the label. A label or entry term that only contains the name SHALL NOT be returned as equal. An unknown identifier SHALL return nothing.
+
+#### Scenario: Name equal to an entry term only
+- **WHEN** the client is asked for terms equal to "Ketogenic Diet" and no term has that label but one lists it as an entry term
+- **THEN** that term is returned with its own label and the entry term that was equal
+
+### Requirement: A gene is looked up by symbol
+The target client SHALL return, for a word, each human gene whose approved symbol or a listed synonym of it equals the word without regard to case, saying which of the two was equal, with the protein's name and function description. A gene whose symbol or synonyms only resemble the word SHALL NOT be returned.
+
+#### Scenario: Word equal to an approved symbol
+- **WHEN** the client is asked for "CXCR3"
+- **THEN** it returns the gene with that approved symbol and says the symbol was equal
+
+#### Scenario: Word the search answers with unrelated genes
+- **WHEN** the client is asked for a word and the source's search returns genes whose symbols and synonyms are all different from it
+- **THEN** it returns nothing
 
 #### Scenario: Known identifier
 - **WHEN** the client is asked for a term by an identifier the vocabulary holds

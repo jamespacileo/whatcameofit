@@ -3,7 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: Background cards on the claim page
-A claim page SHALL show the claim's background cards under their own heading, after the records: at most one for the condition, one for the intervention, one for what a drug is and acts on, and one for a drug's target. Each card SHALL show its label, and its definition one press away, with the source's name, a link to the source's record and the date the record was read. A claim with no card SHALL show no such section.
+A claim page SHALL show the claim's background cards under their own heading, after the records: at most one for the condition, one for the intervention or its kind, one for what a drug is and acts on, and one for a target. Each card SHALL show its label, and its definition one press away, with the source's name, a link to the source's record and the date the record was read. A claim with no card SHALL show no such section.
 
 #### Scenario: Claim with a condition card only
 - **WHEN** a reader opens a claim that has a card for its condition and none for its intervention
@@ -14,7 +14,19 @@ A claim page SHALL show the claim's background cards under their own heading, af
 - **THEN** the page shows no background section and no placeholder for one
 
 ### Requirement: A card shows how sure its link is
-Each card made from a scored link SHALL show the score as a word and a percentage, with its reasons in the site's words available on request, and SHALL say when its term is broader than the claim's condition or intervention.
+Each card made from a scored link SHALL show the score as a word and a percentage, with its reasons in the site's words available on request, and SHALL say when its term is broader than the claim's condition or intervention, when it is the kind of intervention and not the intervention itself, and when a target is one the report names and not one a drug's record gives.
+
+#### Scenario: Kind card
+- **WHEN** an intervention card is made from a kind link with a score of 0.9
+- **THEN** the card says its term is the kind of treatment this is, not the treatment itself, and shows "High match · 90%"
+
+#### Scenario: Registry type as a reason
+- **WHEN** a reader asks why a kind card's term was chosen and the registry lists the intervention as a device in three of the claim's trials
+- **THEN** the card says so in the site's words
+
+#### Scenario: Target the report names
+- **WHEN** a target card is made from a gene named in the intervention
+- **THEN** the card says the gene is named in the intervention's name, shows the score, and does not say the intervention works through it
 
 #### Scenario: Broader term
 - **WHEN** a condition card is made from a broader term with a score of 0.9
@@ -25,7 +37,7 @@ Each card made from a scored link SHALL show the score as a word and a percentag
 - **THEN** the card says the registry files five of the claim's six trials under it
 
 ### Requirement: A card's words are its source's
-A definition SHALL be shown as its source wrote it, marked as the source's words, and SHALL NOT be reworded by the site. The site SHALL add no explanation of a condition or a treatment of its own. The site SHALL word each card kind, reason and molecule kind code itself and SHALL fail the build on a code it has no wording for.
+A definition SHALL be shown as its source wrote it, marked as the source's words, and SHALL NOT be reworded by the site. The site SHALL add no explanation of a condition or a treatment of its own. The site SHALL word each card kind, reason, registry type and molecule kind code itself and SHALL fail the build on a code it has no wording for.
 
 #### Scenario: Definition in the vocabulary's style
 - **WHEN** a definition uses the vocabulary's own capitalised cross-references
