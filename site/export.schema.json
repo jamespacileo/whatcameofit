@@ -90,6 +90,18 @@
             }
           ],
           "title": "Archive Url"
+        },
+        "published_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published By"
         }
       },
       "required": [
@@ -407,6 +419,14 @@
             "$ref": "#/$defs/ExportedCard"
           },
           "title": "Background",
+          "type": "array"
+        },
+        "organisations": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedOrganisation"
+          },
+          "title": "Organisations",
           "type": "array"
         }
       },
@@ -728,6 +748,151 @@
         "summary"
       ],
       "title": "ExportedMatch",
+      "type": "object"
+    },
+    "ExportedOrganisation": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "identified": {
+          "title": "Identified",
+          "type": "boolean"
+        },
+        "record": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedOrganisationRecord"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "roles": {
+          "items": {
+            "$ref": "#/$defs/ExportedOrganisationRole"
+          },
+          "title": "Roles",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "identified",
+        "record",
+        "roles"
+      ],
+      "title": "ExportedOrganisation",
+      "type": "object"
+    },
+    "ExportedOrganisationRecord": {
+      "additionalProperties": false,
+      "description": "What the organisation registry's record says, and how the name was matched to it.\nNo other field of the record is carried (docs/sources.md).",
+      "properties": {
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "external_id": {
+          "title": "External Id",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "kinds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Kinds",
+          "type": "array"
+        },
+        "country": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Country"
+        },
+        "website": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Website"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "read_at": {
+          "format": "date-time",
+          "title": "Read At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "external_id",
+        "url",
+        "name",
+        "kinds",
+        "country",
+        "website",
+        "score",
+        "read_at"
+      ],
+      "title": "ExportedOrganisationRecord",
+      "type": "object"
+    },
+    "ExportedOrganisationRole": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "enum": [
+            "named_in_report",
+            "sponsor"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "article_urls": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Article Urls",
+          "type": "array"
+        },
+        "trial_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Trial Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "role"
+      ],
+      "title": "ExportedOrganisationRole",
       "type": "object"
     },
     "ExportedOutlet": {

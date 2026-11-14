@@ -11,11 +11,14 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.entities import entities_of, note_named_organisation
-from thenwhat.claims.entry import add_article, add_claim
+from thenwhat.claims.entities import entities_of, note_named_organisation, note_sponsor
+from thenwhat.claims.entry import add_article, add_claim, articles_of
 from thenwhat.db.models import Claim, Entity, EntityArticle, EntityMatch, OrganisationRecord
 from thenwhat.domain import Decider, EntityType, NamedBy, ReviewState
-from thenwhat.events.fetch import fetch_claim
+from thenwhat.events.fetch import event_row, fetch_claim
+from thenwhat.events.trial import trial_events
+from thenwhat.export.build import build_export
+from thenwhat.export.organisations import is_on_website
 from thenwhat.resolve.organisations import match_organisations
 from thenwhat.review.decisions import record_decision
 from thenwhat.review.queue import decide_item, pending_items
@@ -34,6 +37,7 @@ def new_claim(session: Session) -> Claim:
         vertical="mouth-and-teeth",
         intervention="EX-1 antibody",
         indication="tooth agenesis",
+        summary="An antibody restored missing teeth in mice.",
     )
 
 
@@ -375,3 +379,303 @@ def test_an_entity_is_named_by_an_article_or_a_registry(session: Session, named_
             Entity(claim_id=claim.id, type=EntityType.INSTITUTION, name="X", named_by=named_by)
         )
         session.flush()
+
+
+# --- the export -----------------------------------------------------------------------
+
+REPORT = "https://www.nottingham.ac.uk/news/teeth"
+NEWSPAPER = "https://www.example-times.co.uk/health/teeth"
+
+
+def published_claim(session: Session, *, reports: tuple[str, ...] = (REPORT,)) -> Claim:
+    claim = new_claim(session)
+    for n, url in enumerate(reports, start=1):
+        add_article(
+            session,
+            SLUG,
+            url=url,
+            outlet="Example",
+            title="Teeth regrown",
+            published_date=date(2026, 1, n),
+        )
+    decide_item(session, "claim", claim.id, ReviewState.APPROVED, now=NOW)
+    return claim
+
+
+def article_of(session: Session, claim: Claim, url: str):
+    return next(article for article in articles_of(session, claim) if article.url == url)
+
+
+def registry_trial(session: Session, claim: Claim, study: dict[str, Any]) -> None:
+    """Store, approved, the events a fetch of `study` creates, each keeping the record."""
+    nct_id = study["protocolSection"]["identificationModule"]["nctId"]
+    record = SourceRecord(
+        "clinicaltrials.gov", nct_id, f"https://clinicaltrials.gov/study/{nct_id}", study, NOW
+    )
+    for draft in trial_events(record):
+        event = event_row(claim, draft)
+        session.add(event)
+        session.flush()
+        decide_item(session, "event", event.id, ReviewState.APPROVED, now=NOW)
+
+
+def trial_numbered(study: dict[str, Any], nct_id: str) -> dict[str, Any]:
+    changed = copy.deepcopy(study)
+    changed["protocolSection"]["identificationModule"]["nctId"] = nct_id
+    return changed
+
+
+def nottingham(fixture_json) -> SourceRecord:
+    return ror_record(
+        next(
+            item
+            for item in affiliation_items(fixture_json, "affiliation_university_of_nottingham.json")
+            if item["chosen"]
+        )
+    )
+
+
+def exported_claim(session: Session):
+    [claim] = build_export(session, now=NOW).claims
+    return claim
+
+
+def test_two_spellings_matched_to_one_record_are_one_organisation(session: Session, fixture_json):
+    """Scenario: Same organisation under two spellings; Identified university;
+    University press release"""
+    claim = published_claim(session)
+    note_named_organisation(
+        session,
+        claim,
+        article_of(session, claim, REPORT),
+        "University of Nottingham",
+        EntityType.INSTITUTION,
+    )
+    registry_trial(
+        session,
+        claim,
+        sponsored_by(
+            fixture_json("clinicaltrials/study_NCT02586935.json"),
+            "The University of Nottingham",
+            "OTHER",
+        ),
+    )
+    note_sponsor(session, claim, "The University of Nottingham", industry=False)
+    record = nottingham(fixture_json)
+    slightly_less = SourceRecord(
+        record.source_name,
+        record.external_id,
+        record.url,
+        record.payload | {"score": 0.97},
+        record.fetched_at,
+    )
+    match_organisations(
+        session,
+        claim,
+        registry=Registry(
+            {
+                "University of Nottingham": [record],
+                "The University of Nottingham": [slightly_less],
+            }
+        ),
+        now=NOW,
+    )
+
+    exported = exported_claim(session)
+
+    [organisation] = exported.organisations
+    assert organisation.model_dump(mode="json") == {
+        "name": "University of Nottingham",
+        "identified": True,
+        "record": {
+            "source": "ror",
+            "external_id": "01ee9ar58",
+            "url": "https://ror.org/01ee9ar58",
+            "name": "University of Nottingham",
+            "kinds": ["education", "funder"],
+            "country": "United Kingdom",
+            "website": "https://www.nottingham.ac.uk/",
+            "score": 0.97,
+            "read_at": "2026-11-20T10:00:00Z",
+        },
+        "roles": [
+            {"role": "named_in_report", "article_urls": [REPORT], "trial_ids": []},
+            {"role": "sponsor", "article_urls": [], "trial_ids": ["NCT02586935"]},
+        ],
+    }
+    # The report is on the university's own website.
+    assert [article.published_by for article in exported.articles] == ["https://ror.org/01ee9ar58"]
+    export = build_export(session, now=NOW)
+    assert ("Research Organization Registry (ROR)", "https://ror.org/") in [
+        (source.name, source.url) for source in export.sources
+    ]
+
+
+def test_sponsor_of_three_trials_is_listed_once(session: Session, fixture_json):
+    """Scenario: Sponsor of three trials; Name the registry does not know"""
+    claim = published_claim(session, reports=(NEWSPAPER,))
+    study = sponsored_by(
+        fixture_json("clinicaltrials/study_NCT02586935.json"), "Example Pharma Ltd", "INDUSTRY"
+    )
+    for nct_id in ("NCT00000003", "NCT00000001", "NCT00000002"):
+        registry_trial(session, claim, trial_numbered(study, nct_id))
+    note_sponsor(session, claim, "Example Pharma Ltd", industry=True)
+    note_named_organisation(
+        session,
+        claim,
+        article_of(session, claim, NEWSPAPER),
+        "Zzqxv Bio",
+        EntityType.COMPANY,
+    )
+    match_organisations(session, claim, registry=Registry({}), now=NOW)
+
+    exported = exported_claim(session)
+
+    assert [organisation.model_dump(mode="json") for organisation in exported.organisations] == [
+        {
+            "name": "Zzqxv Bio",
+            "identified": False,
+            "record": None,
+            "roles": [{"role": "named_in_report", "article_urls": [NEWSPAPER], "trial_ids": []}],
+        },
+        {
+            "name": "Example Pharma Ltd",
+            "identified": False,
+            "record": None,
+            "roles": [
+                {
+                    "role": "sponsor",
+                    "article_urls": [],
+                    "trial_ids": ["NCT00000001", "NCT00000002", "NCT00000003"],
+                }
+            ],
+        },
+    ]
+    # A newspaper's report, and organisations not identified: no mark.
+    assert [article.published_by for article in exported.articles] == [None]
+    assert "Research Organization Registry (ROR)" not in [
+        source.name for source in build_export(session, now=NOW).sources
+    ]
+
+
+def test_person_sponsor_is_no_organisation(session: Session, fixture_json):
+    """Scenario: Sponsor-investigator; Person sponsor"""
+    claim = published_claim(session)
+    registry_trial(session, claim, fixture_json("clinicaltrials/study_NCT04951479_comparison.json"))
+
+    export = build_export(session, now=NOW)
+
+    assert export.claims[0].organisations == []
+    assert "Example Investigator" not in export.model_dump_json()
+
+
+def test_organisation_named_as_a_person_of_the_claim_is_not_exported(session: Session):
+    """Scenario: a report's person recorded as an institution"""
+    claim = published_claim(session)
+    session.add(Entity(claim_id=claim.id, type=EntityType.PERSON, name="Ada Example"))
+    note_named_organisation(
+        session, claim, article_of(session, claim, REPORT), "Ada Example", EntityType.INSTITUTION
+    )
+    note_named_organisation(
+        session,
+        claim,
+        article_of(session, claim, REPORT),
+        "University of Nottingham",
+        EntityType.INSTITUTION,
+    )
+
+    exported = exported_claim(session)
+
+    assert [organisation.name for organisation in exported.organisations] == [
+        "University of Nottingham"
+    ]
+    assert "Ada Example" not in exported.model_dump_json()
+
+
+def test_organisation_whose_registry_name_is_a_person_of_the_claim_is_not_exported(
+    session: Session, fixture_json
+):
+    claim = published_claim(session)
+    session.add(Entity(claim_id=claim.id, type=EntityType.PERSON, name="University of Nottingham"))
+    note_named_organisation(
+        session, claim, article_of(session, claim, REPORT), "Nottingham Uni", EntityType.INSTITUTION
+    )
+    match_organisations(
+        session,
+        claim,
+        registry=Registry({"Nottingham Uni": [nottingham(fixture_json)]}),
+        now=NOW,
+    )
+
+    assert exported_claim(session).organisations == []
+
+
+@pytest.mark.parametrize(
+    ("article", "website", "marked"),
+    [
+        ("https://news.nottingham.ac.uk/2026/teeth", "https://www.nottingham.ac.uk/", True),
+        ("https://WWW.Nottingham.ac.uk/news", "https://nottingham.ac.uk", True),
+        ("https://www.example-times.co.uk/health", "https://www.nottingham.ac.uk/", False),
+        ("https://notnottingham.ac.uk/news", "https://www.nottingham.ac.uk/", False),
+        ("https://nottingham.ac.uk.example.org/", "https://www.nottingham.ac.uk/", False),
+        ("https://news.nottingham.ac.uk/", None, False),
+    ],
+)
+def test_article_is_on_an_organisation_website_only_by_its_host(
+    article: str, website: str | None, marked: bool
+):
+    """Scenarios: University press release; Newspaper report; a host that merely ends
+    with the same letters"""
+    assert is_on_website(article, website) is marked
+
+
+def test_report_on_the_site_of_an_unidentified_organisation_has_no_mark(session: Session):
+    """Scenario: Organisation not identified"""
+    claim = published_claim(session)
+    note_named_organisation(
+        session,
+        claim,
+        article_of(session, claim, REPORT),
+        "University of Nottingham",
+        EntityType.INSTITUTION,
+    )
+
+    exported = exported_claim(session)
+
+    assert [organisation.identified for organisation in exported.organisations] == [False]
+    assert [article.published_by for article in exported.articles] == [None]
+
+
+def test_organisations_do_not_change_the_status(session: Session, fixture_json):
+    """Scenario: Claim gains an industry sponsor"""
+    claim = published_claim(session)
+    registry_trial(
+        session,
+        claim,
+        sponsored_by(
+            fixture_json("clinicaltrials/study_NCT02586935.json"), "Example Pharma Ltd", "INDUSTRY"
+        ),
+    )
+    before = exported_claim(session).status
+
+    note_sponsor(session, claim, "Example Pharma Ltd", industry=True)
+    note_named_organisation(
+        session,
+        claim,
+        article_of(session, claim, REPORT),
+        "University of Nottingham",
+        EntityType.INSTITUTION,
+    )
+    match_organisations(
+        session,
+        claim,
+        registry=Registry({"University of Nottingham": [nottingham(fixture_json)]}),
+        now=NOW,
+    )
+    after = exported_claim(session)
+
+    assert len(after.organisations) == 2
+    assert (after.status.code, after.status.explained_by) == (
+        before.code,
+        before.explained_by,
+    )

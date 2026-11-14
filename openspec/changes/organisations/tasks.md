@@ -18,11 +18,11 @@
 
 ## 4. Export
 
-- [ ] 4.1 Export `organisations` on each claim: one per approved registry record or, with no approved match, per entity; roles "named in a report" with article addresses and "sponsor" with trial identifiers; the five registry fields, score and date read when identified; verify export tests for two spellings matched to one record, a sponsor of three trials, an unidentified start-up, and a person sponsor
-- [ ] 4.2 Refuse to export an organisation whose name equals a person entity of the claim; verify by test
-- [ ] 4.3 Add a pure function that says whether an article's host is an organisation's website host or a subdomain of it, and mark each article published by an identified organisation of its claim; verify a press office on a subdomain, a newspaper, a host that merely ends with the same letters, and an organisation that is not identified
-- [ ] 4.4 Verify by test that status and explaining events are the same with and without organisations
-- [ ] 4.5 Regenerate `site/export.schema.json` and `site/data/seed-export.json`, and verify the checked-in `site/data/published-export.json` still validates
+- [x] 4.1 Export `organisations` on each claim: one per approved registry record or, with no approved match, per entity; roles "named in a report" with article addresses and "sponsor" with trial identifiers; the five registry fields, score and date read when identified; verify export tests for two spellings matched to one record, a sponsor of three trials, an unidentified start-up, and a person sponsor
+- [x] 4.2 Refuse to export an organisation whose name equals a person entity of the claim; verify by test
+- [x] 4.3 Add a pure function that says whether an article's host is an organisation's website host or a subdomain of it, and mark each article published by an identified organisation of its claim; verify a press office on a subdomain, a newspaper, a host that merely ends with the same letters, and an organisation that is not identified
+- [x] 4.4 Verify by test that status and explaining events are the same with and without organisations
+- [x] 4.5 Regenerate `site/export.schema.json` and `site/data/seed-export.json`, and verify the checked-in `site/data/published-export.json` still validates
 
 ## 5. Site
 

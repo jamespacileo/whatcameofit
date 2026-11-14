@@ -1,7 +1,8 @@
 """The JSON export the site is built from. Behavior: openspec site-publishing.
 
 Only approved, unarchived claims are exported, with their approved events, their
-approved matches, a few candidates still awaiting review and their background cards.
+approved matches, a few candidates still awaiting review, their background cards and
+the organisations they name.
 The file is the single interface between pipeline and site; its schema is checked in at
 site/export.schema.json.
 """
@@ -71,6 +72,7 @@ from thenwhat.events.trial_facts import (
     read_trial,
     reported_state,
 )
+from thenwhat.export.organisations import ExportedOrganisation, organisations_of, publisher_of
 from thenwhat.outlets.icons import is_blank_icon, outlet_domain
 from thenwhat.sources import mesh
 from thenwhat.sources.base import SourceRecord, record_url
@@ -88,6 +90,8 @@ SOURCES = [
 ]
 # Registries with no client yet, listed only when an exported event came from one.
 OTHER_REGISTRIES = {"jRCT": "https://jrct.mhlw.go.jp/"}
+# The organisation registry, listed only when an exported organisation is identified.
+ORGANISATION_REGISTRY = ("Research Organization Registry (ROR)", "https://ror.org/")
 
 
 class Strict(BaseModel):
@@ -156,6 +160,10 @@ class ExportedArticle(Strict):
     title: str
     published_date: date
     archive_url: str | None
+    # The registry record address (an `organisations` entry's `record.url`) of the
+    # identified organisation of the claim on whose website the article is. None for an
+    # article on any other site (openspec organisations).
+    published_by: str | None = None
 
 
 class ExportedPromise(Strict):
@@ -435,6 +443,9 @@ class ExportedClaim(Strict):
     papers: list[ExportedPaper] = []
     # At most one card for the condition, then one for the intervention.
     background: list[ExportedCard] = []
+    # Each organisation the claim names, once, ordered by role and then by name
+    # (openspec organisations). Never an input to the status.
+    organisations: list[ExportedOrganisation] = []
 
 
 class ExportedArchived(Strict):
@@ -863,6 +874,16 @@ def build_export(session: Session, *, now: datetime, no_signal_years: int = 3) -
         papers = _Papers(session)
         _collect_papers(session, claim, events, papers)
         trials = _trials(events, papers)
+        organisations = organisations_of(
+            session,
+            claim,
+            articles=articles,
+            sponsors={
+                trial.trial_id: trial.facts.sponsor.name
+                for trial in trials
+                if trial.facts and trial.facts.sponsor and trial.facts.sponsor.name
+            },
+        )
         claims.append(
             ExportedClaim(
                 slug=claim.slug,
@@ -894,6 +915,7 @@ def build_export(session: Session, *, now: datetime, no_signal_years: int = 3) -
                         title=article.title,
                         published_date=article.published_date,
                         archive_url=article.archive_url,
+                        published_by=publisher_of(article.url, organisations),
                     )
                     for article in articles
                 ],
@@ -926,6 +948,7 @@ def build_export(session: Session, *, now: datetime, no_signal_years: int = 3) -
                 trials=trials,
                 papers=papers.listed(),
                 background=_background(session, claim),
+                organisations=organisations,
                 failure_flags=[
                     ExportedFailureFlag(trial_id=flag.trial_external_id, source_url=flag.source_url)
                     for flag in session.scalars(
@@ -953,6 +976,11 @@ def build_export(session: Session, *, now: datetime, no_signal_years: int = 3) -
                 ),
                 # A source a published card comes from is credited like the registries.
                 *((source.title, source.url) for source in card_sources),
+                *(
+                    [ORGANISATION_REGISTRY]
+                    if any(org.identified for claim in claims for org in claim.organisations)
+                    else []
+                ),
             ]
         ],
         verticals=[
