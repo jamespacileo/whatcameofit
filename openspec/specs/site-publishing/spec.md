@@ -395,15 +395,11 @@ Above its lists, the home page SHALL show how many published claims are at each 
 - **THEN** no topic choice is shown
 
 ### Requirement: Trials on the claim page
-A claim page SHALL list each of the claim's trials once, under its own heading, with its registry identifier linked to the record, its state, the facts the export carries for it, and the score of its match. An entry SHALL show the trial's phase when the registry gives one, and SHALL say inside its fold when the registry gives none. Trials SHALL be ordered furthest phase first and, within a phase, those with posted results first. Each trial event in the timetable SHALL lead to its trial. A claim with no trial SHALL show no such section.
+A claim page SHALL list each of the claim's trials once, under its own heading, with its registry identifier linked to the record, phase, state, the facts the export carries for it, and the score of its match. Trials SHALL be ordered furthest phase first and, within a phase, those with posted results first. Each trial event in the timetable SHALL lead to its trial. A claim with no trial SHALL show no such section.
 
 #### Scenario: Claim with one completed Phase 2 trial
 - **WHEN** a reader opens a claim whose one trial enrolled 83 participants, was randomised and has posted results
-- **THEN** the page shows that trial once with its identifier, "Phase 2", that it has finished, 83 people, that people were assigned at random, and its posted primary outcome
-
-#### Scenario: Trial with no phase
-- **WHEN** a trial's registry record gives no phase
-- **THEN** the entry's visible lines name no phase, and its fold says the registry gives none
+- **THEN** the page shows that trial once with its identifier, "Phase 2", its state, 83 participants, its design and its posted primary outcome
 
 #### Scenario: Reader follows a timetable entry
 - **WHEN** a reader presses a trial's "results posted" entry in the timetable
@@ -425,15 +421,15 @@ When a claim has more than five trials, the claim page SHALL show the first five
 - **THEN** the control that opens them says that three have results posted
 
 ### Requirement: The claim page counts its trials
-A claim page for a claim with at least one trial SHALL state, in "The record in brief", how many trials are on record and the largest number of participants any of them states, with whether that number is actual or planned when the answer is opened. The statement SHALL be a count and SHALL NOT add participants across trials. The facts under the digest SHALL NOT repeat it.
+A claim page for a claim with at least one trial SHALL state, among its facts, how many trials are on record and the largest number of participants any of them states, with whether that number is actual or planned. The statement SHALL be a count and SHALL NOT add participants across trials.
 
 #### Scenario: Three trials, the largest of 1,200
 - **WHEN** a claim has three trials and the largest states 1,200 actual participants
-- **THEN** the section states three trials on record and 1,200 people in the largest, and the facts under the digest do not
+- **THEN** the page states three trials on record and the largest with 1,200 participants
 
 #### Scenario: Trials that state no number
 - **WHEN** none of a claim's trials states a number of participants
-- **THEN** the section states the number of trials and no size
+- **THEN** the page states the number of trials and no size
 
 ### Requirement: Trial facts are worded without a verdict
 The site SHALL word each trial fact code itself and SHALL fail the build on a code it has no wording for. It SHALL show a posted result as the registry's numbers and SHALL NOT label an outcome as met, missed, significant, successful or failed, nor a trial as having worked. The trials section SHALL say that the numbers are as posted by the trial's sponsor to the registry.
@@ -621,194 +617,3 @@ A claim page, and the extension's view of a claim, SHALL say when no person has 
 #### Scenario: Older preview export
 - **WHEN** the site is built from an export that calls itself a preview
 - **THEN** every page carries the preview note and a noindex tag
-
-### Requirement: A trial entry leads with plain words
-A trial's entry SHALL lead with a heading that states how many people the trial enrolled or plans to enrol and, where its record names what it was compared with, that comparison. The heading SHALL state only what the record states. The registry's own title SHALL be shown inside the entry's fold. Every trial SHALL be drawn at the same size and weight.
-
-#### Scenario: Trial with a named comparison
-- **WHEN** a device trial enrolled 135 participants and its record names a sham comparator and no treatment
-- **THEN** its heading reads "135 people, compared with a sham device and with no treatment"
-
-#### Scenario: Trial whose record names no comparison
-- **WHEN** a trial enrolled 34 participants and its record names no comparator
-- **THEN** its heading reads "34 people" and says nothing about a comparison
-
-#### Scenario: Planned size
-- **WHEN** a trial not yet started plans to enrol 400 participants
-- **THEN** its heading says 400 people are planned, not that 400 took part
-
-#### Scenario: Trial that states no size
-- **WHEN** a trial's record states no number of participants
-- **THEN** its heading is the registry's title, and the title is not repeated in the fold
-
-### Requirement: A trial's design and state are said in plain words
-Under its heading a trial's entry SHALL say, in the site's fixed plain wording, how people were assigned, whether the trial was blinded or open label, its state with the date it finished when it has finished, and that results are posted with the date they were posted. The registry's exact terms for the design SHALL be shown inside the fold. No wording SHALL say that a trial is open to participants or how it turned out.
-
-#### Scenario: Randomised, quadruple-blind, completed, results posted
-- **WHEN** a trial is randomised and quadruple-blind, completed on 5 March 2023 and posted results on 30 June 2026
-- **THEN** the entry reads that people were assigned at random, that it was blinded, that it finished on 5 March 2023 and that results were posted on 30 June 2026, and its fold gives "Randomised, quadruple-blind" in the registry's terms
-
-#### Scenario: Open-label trial
-- **WHEN** a trial's masking is none
-- **THEN** the entry says it was open label and says what that means in a few words
-
-#### Scenario: Trial under way
-- **WHEN** a trial is under way
-- **THEN** the entry says it is under way, with no finishing date, and nothing says it is recruiting
-
-#### Scenario: Design the record does not state
-- **WHEN** a trial's record states neither allocation nor masking
-- **THEN** the entry says nothing about how people were assigned or whether it was blinded
-
-### Requirement: A trial entry says what it measured where a reading allows
-Where a trial's first main measure has a usable reading of its kind, the entry SHALL say in one sentence what the trial measured, in the same fixed wording "The record in brief" uses for that kind, with how long it was followed when that reading is usable too. The entry SHALL say that a model read that sentence and that it was checked against the record. With no usable reading the entry SHALL have no such sentence, and the measures SHALL remain listed in the registry's words inside the fold.
-
-#### Scenario: Symptom score followed for four weeks
-- **WHEN** a trial's first main measure has a measure reading of symptom score, a title that names a change, and a follow-up reading of 4 weeks
-- **THEN** the entry says it measured the change in a symptom score over 4 weeks, and says a model read that and it was checked against the record
-
-#### Scenario: Measure of a trial that has not ended
-- **WHEN** a trial that has not ended and has posted no results has a usable reading of its first main measure
-- **THEN** the entry says what it sets out to measure, and does not say that it measured anything
-
-#### Scenario: Time until an event, followed for years
-- **WHEN** a trial's first main measure is read as a time until an event with a follow-up of 4 years
-- **THEN** the entry says people were followed for 4 years, and does not say the event was measured "over" 4 years
-
-#### Scenario: Same wording as the record in brief
-- **WHEN** the claim's largest trial has a measure sentence in its entry
-- **THEN** the words for the measure are the same as in the brief's answer about what the largest trial measured
-
-#### Scenario: No usable reading
-- **WHEN** a trial has no reading, a reading too unsure to use, or a reading of a kind the site has no words for
-- **THEN** the entry has no measure sentence and its fold lists the planned measures in the registry's words
-
-### Requirement: Posted results are a table that says what its numbers are
-Inside a trial's fold, a posted main measure with one value for each group SHALL be shown as a table with a row for each group, its value as the registry wrote it and how many were analysed, under a caption that names the measure and says what the numbers are. No figure SHALL be larger than body text, and nothing SHALL draw a result. The entry SHALL say that the registry record states what the measure runs from and to, and SHALL link to the record. The fold's control SHALL say whether posted results are inside.
-
-#### Scenario: Three groups with a mean change
-- **WHEN** a trial posted a mean change with a standard deviation for each of three groups, each with 39 analysed
-- **THEN** the fold shows a table of three rows with the group, the mean change, the standard deviation and 39 analysed
-
-#### Scenario: Measure that is a change
-- **WHEN** the posted measure's title names a change and a group's value is below zero
-- **THEN** a line under the table says a minus number is a fall
-
-#### Scenario: Posted comparison
-- **WHEN** the record gives a p value for a comparison of two groups
-- **THEN** it is shown under the table as the record states it, naming the two groups, with no word on whether the measure was met
-
-#### Scenario: Outcome posted in several rows
-- **WHEN** a posted main measure gives several rows of values for each group
-- **THEN** no table is shown for it, and the entry says the values are in the registry record
-
-#### Scenario: Fold with no results
-- **WHEN** a trial has posted no results
-- **THEN** the fold's control does not mention results
-
-#### Scenario: Narrow screen
-- **WHEN** a reader opens a trial's results on a screen 320 pixels wide
-- **THEN** the table is readable without the page being widened, and every control is at least 44 pixels tall
-
-### Requirement: A claim page answers fixed questions from its records
-Every claim page SHALL show a section, "The record in brief", of at most six fixed questions, each with a short answer. An answer SHALL be fixed wording filled only with counts, sizes, dates and names from the records the page shows, or from a reading the export carries. No person SHALL write an answer, and no model SHALL write the words of one.
-
-#### Scenario: Claim with trials
-- **WHEN** a reader opens a claim with 3 trials on record, the largest stating 135 participants
-- **THEN** the section answers "In 3 trials. 135 people in the largest", and the answer does not begin with "Yes"
-
-#### Scenario: Comparison group
-- **WHEN** 1 of the claim's 3 trials names a sham comparator and the claim's approach is a device
-- **THEN** the section asks whether it was compared with a dummy device and answers that one record names a dummy device, and the opened answer says the other two records name no comparison
-
-#### Scenario: What the largest trial measured
-- **WHEN** the largest trial's main measure has a measure reading of symptom score and a follow-up reading of 4 weeks
-- **THEN** the section answers with the site's fixed phrase for a symptom score, worded as a change when the registry's title names a change, and "over 4 weeks"
-
-#### Scenario: Measure with no reading
-- **WHEN** the largest trial's main measure has no stored reading
-- **THEN** the answer is the registry's title for the measure in quotation marks, and the opened answer says it is in the registry's words
-
-#### Scenario: Results posted
-- **WHEN** all 3 of the claim's trials have results posted, the latest on 30 June 2026
-- **THEN** the section says results were posted by all 3 trials and gives that date, and a link under the answer, shown without opening it, leads to the trials' posted results on the page
-
-#### Scenario: Trial with no stated enrolment
-- **WHEN** no trial of the claim states how many participants it enrolled
-- **THEN** the answer about testing in people gives the number of trials and no size
-
-### Requirement: Each question has one fixed place
-The questions SHALL be shown in a fixed order in two groups: how the treatment was tested, then where the records stand now. A question's place SHALL NOT depend on its answer. A question that has nothing to ask about, because the claim has no trial, SHALL be left out, and the others SHALL keep their order. An answer that a kind of record is absent SHALL say "None on record" in the question's own place, with the date of the last record of that kind where the rule has one. No heading, mark, colour or order SHALL say that an answer counts for or against the treatment. No answer SHALL say why a record is absent, predict, advise, or say that a trial is open to participants.
-
-#### Scenario: Same questions, opposite answers
-- **WHEN** one claim has a trial under way and an approval, and another has neither
-- **THEN** both pages show "A trial under way?" and "Approved by a regulator?" in the same group and the same order
-
-#### Scenario: No trial under way
-- **WHEN** a claim has trials on record and none is under way
-- **THEN** the answer is "None on record" with the date the last one completed
-
-#### Scenario: A trial under way
-- **WHEN** 2 of a claim's trials are under way
-- **THEN** the answer says 2 are under way, and does not say a trial is recruiting or open to participants
-
-#### Scenario: Approved claim
-- **WHEN** a reader opens a claim whose status is Approved
-- **THEN** the answer names the regulator and the date of the approval and says, without being opened, that an approval is not advice to take a treatment
-
-#### Scenario: Approval entered by hand
-- **WHEN** the approval's record names no regulator as its source
-- **THEN** the answer gives the date of the approval and the same caution, and names no regulator
-
-#### Scenario: Claim with no trial on record
-- **WHEN** a reader opens a claim with no trial on record
-- **THEN** the section says no trial in people is on record, says what the first report was about, answers the approval question, and has no question about a comparison, a measure, posted results or a trial under way
-
-#### Scenario: Wording with a verdict
-- **WHEN** the site is built and a question, an answer or a group name contains the word "abandoned"
-- **THEN** the build fails and quotes the wording
-
-### Requirement: Every answer shows the record it was read from
-Each answer SHALL open to show the record it was read from as a link, what was read from it, whether it was read directly from the record or by a model, and the date the record was read. An answer read by a model SHALL also show the exact words it was read from and how sure the reading is, as a word and a percentage. An answer that counts trials SHALL link to them on the page. The section SHALL say that its answers are read from the records on the page, that they describe the records and not the treatment, and that they are not advice.
-
-#### Scenario: Answer read directly
-- **WHEN** a reader opens the answer about a comparison group
-- **THEN** it names the trial by its registry identifier as a link, gives the design as the registry states it, and gives the date the record was read
-
-#### Scenario: Answer read by a model
-- **WHEN** a reader opens an answer that rests on a reading
-- **THEN** it shows the words the reading was read from in quotation marks, says a model read them and that they were checked against the record, and says how sure the reading is
-
-#### Scenario: Reading the model is certain of
-- **WHEN** a reading's confidence is 1
-- **THEN** the opened answer says how sure the reading is as 99%, never 100%
-
-#### Scenario: Every answer opens to something
-- **WHEN** a reader opens any answer in the section
-- **THEN** it shows at least the record or records it was read from and the date they were read
-
-#### Scenario: Without scripting
-- **WHEN** a reader opens a claim page with scripting turned off
-- **THEN** every answer can still be opened
-
-#### Scenario: Narrow screen
-- **WHEN** a reader opens a claim page on a screen 320 pixels wide
-- **THEN** each question is above its answer, every row and every link in an opened answer is at least 44 pixels tall, and the page is not widened
-
-### Requirement: The brief carries no result values
-The section SHALL NOT show a trial's posted result values or a posted comparison. The answer about what the largest trial measured SHALL link to that trial's entry on the page, where its posted results are.
-
-#### Scenario: Largest trial with posted values
-- **WHEN** the largest trial has posted a value for each of three groups and a p value
-- **THEN** the section shows none of those numbers, and the opened answer links to the trial's entry
-
-### Requirement: The digest says when trials state no phase
-When a claim's status is Trial registered and it has trials on record, the digest panel SHALL say, after what the status means, how many trials are on record, how many of them have finished, and that the registry gives none a phase.
-
-#### Scenario: Three trials with no phase
-- **WHEN** a reader opens a claim whose status is Trial registered and which has 3 trials on record, none stating a phase
-- **THEN** the digest says 3 trials are on record and all have finished, and that the registry gives none a phase
-
-#### Scenario: Status with a phase
-- **WHEN** a reader opens a claim whose status is Phase 2 trial
-- **THEN** the digest has no such sentence
