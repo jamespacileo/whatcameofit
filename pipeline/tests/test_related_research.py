@@ -92,6 +92,13 @@ class FakePapers:
         self.results = results or {}
         self.searched: list[tuple[list[str], str]] = []
         self.looked_up: list[str] = []
+        self.searched_at: list[tuple[list[str], str, date | None]] = []
+
+    def search_papers_at(
+        self, terms: list[str], organisation: str, reported: date | None = None
+    ) -> list[SourceRecord]:
+        self.searched_at.append((terms, organisation, reported))
+        return list(self.results.get(f"at {organisation}", []))
 
     def search_papers(
         self, terms: list[str], condition: str, limit: int = 20
@@ -231,6 +238,53 @@ def test_paper_found_by_two_terms_is_one_candidate(session: Session):
     assert [m.external_id for m in added] == ["10.1000/p1", "10.1000/p2"]
     assert find(session, claim, papers) == []
     assert len(paper_matches(session)) == 2
+
+
+def test_papers_by_authors_at_named_organisations_come_before_the_keyword_results(
+    session: Session,
+):
+    """Scenario: The paper's title shares few words with the report"""
+    claim = new_claim(session)
+    for name, ror, state in [
+        ("Example University", "01example1", ReviewState.APPROVED),
+        ("Second University", "02example2", ReviewState.PENDING),
+        ("Wrong University", "03example3", ReviewState.REJECTED),
+    ]:
+        named = add_entity(session, SLUG, type=EntityType.INSTITUTION, name=name)
+        match = EntityMatch(entity_id=named.id, source_name="ror", external_id=ror, score=1.0)
+        session.add(match)
+        session.flush()
+        if state is not ReviewState.PENDING:
+            record_decision(match, state, by=Decider.RULE, now=NOW)
+    session.flush()
+    both, one, by_keyword = paper("10.1000/both"), paper("10.1000/one"), paper("10.1000/kw")
+    papers = FakePapers(
+        {
+            PHRASE_SEARCH: [by_keyword, one],
+            "at 01example1": [one, both],
+            "at 02example2": [both],
+        }
+    )
+
+    added = find(session, claim, papers)
+
+    # Found under two organisations, then under one, then by the condition's wording.
+    assert [m.external_id for m in added] == ["10.1000/both", "10.1000/one", "10.1000/kw"]
+    terms = ["Wrist-worn stimulation device", "median nerve stimulation"]
+    assert papers.searched_at == [
+        (terms, "01example1", claim.first_reported_date),
+        (terms, "02example2", claim.first_reported_date),
+    ]
+
+
+def test_a_claim_with_no_identified_organisation_sends_only_the_keyword_search(session: Session):
+    claim = new_claim(session)
+    add_entity(session, SLUG, type=EntityType.INSTITUTION, name="Example University")
+    papers = FakePapers({PHRASE_SEARCH: FOUR})
+
+    find(session, claim, papers)
+
+    assert papers.searched_at == []
 
 
 def test_search_that_finds_nothing_stores_no_candidate(session: Session):

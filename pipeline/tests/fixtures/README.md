@@ -22,6 +22,7 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `mediacloud/story_list.json` | synthetic: the shape of `GET /api/search/story-list` as Media Cloud's own client reads it, with made-up stories. Never recorded from the service, so it holds no real headline |
 | `openalex/search_median_nerve_tourette.json` | `GET /works?search=("median nerve stimulation") AND "Tourette syndrome"&per_page=3&select=id,doi,title,publication_year,publication_date,type,primary_location,authorships,abstract_inverted_index,ids` (2026-11-14) |
 | `openalex/search_nothing.json` | the same search for made-up words that no paper holds (2026-11-14) |
+| `openalex/search_at_kings_college_london.json` | `GET /works?search="Lab-grown teeth" OR "tooth regeneration"&filter=authorships.institutions.ror:https://ror.org/0220mzb33,from_publication_date:2023-04-14,to_publication_date:2025-05-15&per_page=3&select=…`: papers on the terms with an author at King's College London (2026-11-14) |
 | `openalex/work_704541.json` | `GET /works/doi:10.64898/2026.02.07.704541?select=…` (2026-11-14) |
 | `ror/affiliation_university_of_nottingham.json` | `GET /v2/organizations?affiliation=University of Nottingham` (2026-11-14) |
 | `ror/affiliation_unknown.json` | the same for a made-up name: ROR lists near misses and marks none as chosen (2026-11-14) |

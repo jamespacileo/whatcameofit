@@ -5,7 +5,7 @@ The rules are tested in test_resolution.py and test_decide.py.
 
 from collections.abc import Generator
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import httpx
@@ -59,6 +59,11 @@ class Papers:
         return [
             SourceRecord("openalex", "10.1000/found", "https://doi.org/10.1000/found", payload, NOW)
         ]
+
+    def search_papers_at(
+        self, terms: list[str], organisation: str, reported: date | None = None
+    ) -> list[SourceRecord]:
+        return []
 
     def paper(self, external_id: str) -> SourceRecord | None:
         return None
