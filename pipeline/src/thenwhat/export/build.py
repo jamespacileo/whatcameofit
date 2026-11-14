@@ -20,14 +20,13 @@ from thenwhat.claims.status import refresh_status, status_history
 from thenwhat.claims.verticals import GROUPS, RETIRED_VERTICALS, VERTICAL_GROUPS, VERTICALS
 from thenwhat.db.models import (
     Claim,
-    DecisionLog,
     Entity,
     EntityMatch,
     EvidenceEvent,
     FailureFlag,
     OutletIcon,
 )
-from thenwhat.decide.steps import ENTITY_MATCH
+from thenwhat.decide.steps import latest_scoring
 from thenwhat.domain import (
     TRIAL_EVENT_TYPES,
     ClaimStatus,
@@ -246,15 +245,7 @@ CANDIDATES_SHOWN = 5
 
 
 def _reading(session: Session, match: EntityMatch) -> str | None:
-    scored = session.scalars(
-        select(DecisionLog)
-        .where(
-            DecisionLog.step == ENTITY_MATCH,
-            DecisionLog.input_ref == f"entity_match:{match.id}",
-            DecisionLog.error.is_(None),
-        )
-        .order_by(DecisionLog.id.desc())
-    ).first()
+    scored = latest_scoring(session, match)
     if scored is None or scored.output is None:
         return None
     choice = scored.output.get("choice")

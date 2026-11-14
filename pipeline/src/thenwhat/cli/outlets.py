@@ -27,8 +27,7 @@ def make_measure():
     from thenwhat.cli.session import open_session, settings_or_exit
     from thenwhat.decide.core import DecisionFailed
     from thenwhat.llm.errors import LlmError
-    from thenwhat.lookup.details import STATED
-    from thenwhat.lookup.service import LIKELY_FROM, look_up
+    from thenwhat.lookup.service import look_up
     from thenwhat.sources.base import Pacer, SourceError
     from thenwhat.sources.clinicaltrials import ClinicalTrials
     from thenwhat.sources.europepmc import EuropePmc
@@ -51,11 +50,7 @@ def make_measure():
                 )
         except (SourceError, LlmError, DecisionFailed):
             return None
-        likely = [
-            candidate.external_id
-            for candidate in found.candidates
-            if candidate.score >= LIKELY_FROM or STATED in candidate.agrees
-        ]
+        likely = [candidate.external_id for candidate in found.candidates if candidate.likely]
         return Measured(
             found=bool(set(likely) & set(approved)), first=bool(likely) and likely[0] in approved
         )

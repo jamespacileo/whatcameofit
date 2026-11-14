@@ -28,6 +28,8 @@ from thenwhat.decide.steps import (
     MATCH,
     NOT_A_MATCH,
     OTHER_INDICATION,
+    latest_scoring,
+    match_ref,
 )
 from thenwhat.domain import Decider, EntityType, EvidenceStage, ReviewState
 from thenwhat.review.decisions import record_decision
@@ -144,15 +146,7 @@ def _score_note(session: Session, match: EntityMatch, entity: Entity) -> str:
     """What the reviewer should know about how a trial candidate's score was reached."""
     if entity.type is not EntityType.INTERVENTION:
         return ""
-    scored = session.scalars(
-        select(DecisionLog)
-        .where(
-            DecisionLog.step == ENTITY_MATCH,
-            DecisionLog.input_ref == f"entity_match:{match.id}",
-            DecisionLog.error.is_(None),
-        )
-        .order_by(DecisionLog.id.desc())
-    ).first()
+    scored = latest_scoring(session, match)
     if scored is None or scored.output is None:
         return ""
     if OTHER_INDICATION not in scored.options:
@@ -197,7 +191,7 @@ def decide_item(
         record_decision(match, state, by=by, now=now)
         if by is Decider.HUMAN:
             label = MATCH if state is ReviewState.APPROVED else NOT_A_MATCH
-            _label(session, ENTITY_MATCH, f"entity_match:{match.id}", label)
+            _label(session, ENTITY_MATCH, match_ref(match.id), label)
         entity = session.get(Entity, match.entity_id)
         assert entity is not None
         claim = session.get(Claim, entity.claim_id)

@@ -9,7 +9,6 @@ import base64
 from datetime import date, datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -28,11 +27,9 @@ from thenwhat.domain import (
     TrialState,
 )
 from thenwhat.events.manual import add_manual_event
+from thenwhat.export.build import Strict
 from thenwhat.review.decisions import record_decision
-
-
-class Strict(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+from thenwhat.sources.crossref import Crossref
 
 
 class SeedClaim(Strict):
@@ -151,7 +148,7 @@ def load_seed(session: Session, content: dict[str, Any], *, now: datetime) -> Cl
         set_origin_paper(session, slug, seed.origin_paper.title)
         match = EntityMatch(
             entity_id=paper.id,
-            source_name="crossref",
+            source_name=Crossref.name,
             external_id=seed.origin_paper.doi.lower(),
             score=1.0,
         )

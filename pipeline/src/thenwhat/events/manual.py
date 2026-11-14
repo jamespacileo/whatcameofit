@@ -16,6 +16,7 @@ from thenwhat.claims.entry import (
     InvalidUrl,
     MissingField,
     claim_by_slug,
+    tidy,
 )
 from thenwhat.db.models import EvidenceEvent
 from thenwhat.domain import (
@@ -54,7 +55,7 @@ def add_manual_event(
     source_url = source_url.strip()
     if not source_url.startswith(("http://", "https://")):
         raise InvalidUrl("An event needs a source link starting with http:// or https://.")
-    summary = " ".join(summary.split())
+    summary = tidy(summary)
     if not summary:
         raise MissingField("summary is required.")
     external_id = (external_id or "").strip()

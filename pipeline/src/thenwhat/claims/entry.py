@@ -79,17 +79,18 @@ class DuplicateClaim(EntryError):
         )
 
 
-def _tidy(text: str) -> str:
+def tidy(text: str) -> str:
+    """The text with every run of whitespace made one space, and none at either end."""
     return " ".join(text.split())
 
 
 def name_key(text: str) -> str:
     """Form used to compare names: spacing and letter case do not matter."""
-    return _tidy(text).casefold()
+    return tidy(text).casefold()
 
 
 def _required(field: str, value: str) -> str:
-    value = _tidy(value)
+    value = tidy(value)
     if not value:
         raise MissingField(f"{field} is required.")
     return value
@@ -177,7 +178,7 @@ def add_claim(
     claim = Claim(
         slug=slug,
         headline=headline,
-        summary=_tidy(summary),
+        summary=tidy(summary),
         vertical=vertical,
         approach=approach,
         indication=indication,

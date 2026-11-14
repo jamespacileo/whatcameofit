@@ -32,6 +32,24 @@ TRIAL_QUESTION = (
 )
 
 
+def match_ref(match_id: int) -> str:
+    """The decision log's reference to a candidate match."""
+    return f"{ENTITY_MATCH}:{match_id}"
+
+
+def latest_scoring(session: Session, match: EntityMatch) -> DecisionLog | None:
+    """The latest decision that scored the candidate without an error, if any."""
+    return session.scalars(
+        select(DecisionLog)
+        .where(
+            DecisionLog.step == ENTITY_MATCH,
+            DecisionLog.input_ref == match_ref(match.id),
+            DecisionLog.error.is_(None),
+        )
+        .order_by(DecisionLog.id.desc())
+    ).first()
+
+
 def candidate_text(record: SourceRecord) -> str:
     """A registry record as it is shown to the backend."""
     return (
@@ -120,9 +138,7 @@ def score_matches(
                 f"{_claim_text(session, claim)}\n\nEntity to match ({entity.type}): {entity.name}"
             ),
             question=question,
-            items=[
-                (f"entity_match:{match.id}", candidate_text(record)) for _, match, record in group
-            ],
+            items=[(match_ref(match.id), candidate_text(record)) for _, match, record in group],
             options=options,
             now=now,
         )

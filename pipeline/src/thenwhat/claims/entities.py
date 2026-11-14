@@ -12,6 +12,7 @@ from thenwhat.claims.entry import (
     claim_by_slug,
     name_key,
     slug_of_claim_covering,
+    tidy,
 )
 from thenwhat.db.models import Claim, Entity
 from thenwhat.domain import EntityType
@@ -47,7 +48,7 @@ def add_entity(
     session: Session, claim_slug: str, *, type: EntityType, name: str, doi: str | None = None
 ) -> Entity:
     claim = claim_by_slug(session, claim_slug)
-    name = " ".join(name.split())
+    name = tidy(name)
     if not name:
         raise MissingField("name is required.")
     if type is EntityType.INTERVENTION:
@@ -70,7 +71,7 @@ def add_synonym(session: Session, claim_slug: str, entity_name: str, synonym: st
     """Record another name for an entity. Registry searches use every name."""
     claim = claim_by_slug(session, claim_slug)
     entity = _find(session, claim, entity_name)
-    synonym = " ".join(synonym.split())
+    synonym = tidy(synonym)
     if not synonym:
         raise MissingField("synonym is required.")
     known = {name_key(entity.name), *(name_key(existing) for existing in entity.synonyms)}
@@ -92,7 +93,7 @@ def add_search_phrase(session: Session, claim_slug: str, entity_name: str, phras
     entity = _find(session, claim, entity_name)
     if entity.type is not EntityType.INTERVENTION:
         raise InvalidField("Only an intervention has search phrases.")
-    phrase = " ".join(phrase.split())
+    phrase = tidy(phrase)
     if not phrase:
         raise MissingField("phrase is required.")
     if not is_a_search_phrase(phrase):

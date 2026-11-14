@@ -11,9 +11,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entities import entities_of
-from thenwhat.db.models import Claim, DecisionLog, Entity, EntityMatch
+from thenwhat.db.models import Claim, Entity, EntityMatch
 from thenwhat.decide.core import Backend, DecisionFailed
-from thenwhat.decide.steps import ENTITY_MATCH, OTHER_INDICATION, score_matches
+from thenwhat.decide.steps import OTHER_INDICATION, latest_scoring, score_matches
 from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord
@@ -191,15 +191,7 @@ def _reject_near_zero(scored: list[EntityMatch], reject_below: float, now: datet
 def _scored_for_the_indication(session: Session, match: EntityMatch) -> bool:
     """True when the latest scoring asked about the claim's indication and did not read
     the record as the same intervention for another indication."""
-    scored = session.scalars(
-        select(DecisionLog)
-        .where(
-            DecisionLog.step == ENTITY_MATCH,
-            DecisionLog.input_ref == f"entity_match:{match.id}",
-            DecisionLog.error.is_(None),
-        )
-        .order_by(DecisionLog.id.desc())
-    ).first()
+    scored = latest_scoring(session, match)
     if scored is None or scored.output is None:
         return False
     return OTHER_INDICATION in scored.options and scored.output.get("choice") != OTHER_INDICATION

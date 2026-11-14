@@ -25,7 +25,7 @@ from thenwhat.claims.entry import (
 from thenwhat.db.models import Claim, Entity, SourceArticle
 from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.extract.names import is_a_name, is_a_search_phrase
-from thenwhat.extract.schema import Draft
+from thenwhat.extract.schema import MAX_SEARCH_PHRASES, Draft
 from thenwhat.llm.client import Llm
 from thenwhat.review.decisions import record_decision
 
@@ -38,8 +38,6 @@ When the article gives the treatment no product name, give up to three search ph
 the words a trial registry or a paper would use for it.
 Give a DOI only if the article states it. List a promised timeline only if the article states one.
 """
-
-MAX_SEARCH_PHRASES = 3
 
 
 class ClaimNotPending(EntryError):
