@@ -74,7 +74,7 @@ New package `pipeline/src/thenwhat/readings/`, built like `statements/`:
 
 - **Input:** for one trial, the titles and time frames of its planned primary outcomes, as `trial-facts` already carries them. Nothing else from the record, so no sponsor description reaches the model.
 - **Output, per outcome:** `follow_up` as a number and a unit from `{days, weeks, months, years}` with the time-frame words it read; `measure` as one code from a fixed list with the title words it read.
-- **Measure kinds (first list, the operator to confirm in task 1.2):** symptom score, how often something happens, a body measurement or lab value, a scan or image finding, survival or time to an event, side effects, use of the treatment, quality of life, other.
+- **Measure kinds (accepted by the operator on 2026-11-14):** symptom score, how often something happens, a body measurement or lab value, a scan or image finding, survival or time to an event, side effects, use of the treatment, quality of life, other.
 - **Checks in `rules.py` (pure):** the words are a substring of the named field; the kind and unit are in the lists; for `follow_up`, the number appears in the words. "Other" is stored and yields no plain phrase.
 - **Stored with:** the hash of the input fields, the instructions' version, the provider and model from the environment, the confidence, the decider `model`. A trial is read again only when the hash or the instructions' version changes.
 - **On the site:** only the largest trial's first primary outcome is used. With no usable reading (none stored, "other", or below the display threshold used for reported statements) answer 3 falls back to the registry's title, and says so. The question never vanishes.
@@ -130,4 +130,4 @@ Its requirement "A claim page answers three fixed questions by rule" is removed 
 - Export shape change: schema and seed must be regenerated, and tests fail until both match.
 - The pipeline work serves one answer in six. Accepted by the operator, who asked for model-read interpretation in this change; the readings are also what a later trial-highlights change would use.
 - The bridging sentence is a patch on a status that can look out of step with completed, unphased trials. A status-rule change would remove the need for it.
-- Open for the operator: the measure-kind list and their fixed phrases (task 1.2).
+- The operator accepted ADR 0002, the question table and the measure-kind list with their phrases as written, on 2026-11-14.
