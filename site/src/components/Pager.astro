@@ -1,0 +1,112 @@
+---
+// Steps through the rows of the table just before it, a page at a time. Every row is
+// in the page: without JavaScript the whole list is shown, and search engines and
+// print see all of it. The table marks rows after the first page with "data-later", which
+// the stylesheet hides from the first paint where scripts run.
+import { pageLine, pageOf } from "../lib/paging";
+
+interface Props {
+  /** Names the list in the page's address ("?headlines=3"), so a page can be returned to. */
+  name: string;
+  total: number;
+  size: number;
+  /** What a row is: "headline", "headlines". */
+  one: string;
+  many: string;
+}
+
+const { name, total, size, one, many } = Astro.props;
+const first = pageOf(total, size, 1);
+---
+
+<nav
+  class="pager"
+  aria-label={`Pages of ${many}`}
+  data-pager={name}
+  data-size={size}
+  data-one={one}
+  data-many={many}
+  hidden
+>
+  <button type="button" data-step="-1" aria-disabled="true">Previous</button>
+  <span class="pager-at" aria-live="polite" data-at>{pageLine(first, total, one, many)}</span>
+  <button type="button" data-step="1">Next</button>
+</nav>
+
+<script>
+  import { pageLine, pageOf } from "../lib/paging";
+
+  for (const nav of document.querySelectorAll<HTMLElement>("[data-pager]")) {
+    const frame = nav.previousElementSibling as HTMLElement | null;
+    const table = frame?.querySelector("table");
+    if (!frame || !table) continue;
+    const rows = [...table.tBodies[0].rows];
+    const name = nav.dataset.pager!;
+    const size = Number(nav.dataset.size);
+    const line = nav.querySelector<HTMLElement>("[data-at]")!;
+    const steps = [...nav.querySelectorAll<HTMLButtonElement>("button[data-step]")];
+
+    let page = Number(new URL(location.href).searchParams.get(name) ?? 1);
+    let printing = false;
+
+    // Each filter marks the rows it leaves out ("data-out", "data-out-topic"); the pager
+    // pages the rows no filter has marked.
+    const out = (row: HTMLTableRowElement) =>
+      row.getAttributeNames().some((name) => name.startsWith("data-out"));
+    const listed = () => rows.filter((row) => !out(row));
+
+    const draw = () => {
+      const list = listed();
+      const at = pageOf(list.length, size, page);
+      page = at.page;
+      const shown = new Set(printing ? list : list.slice(at.from - 1, at.to));
+      for (const row of rows) {
+        row.hidden = !shown.has(row);
+        row.removeAttribute("data-later");
+      }
+      nav.hidden = at.pages === 1;
+      line.textContent = pageLine(at, list.length, nav.dataset.one!, nav.dataset.many!);
+      for (const step of steps) {
+        const to = page + Number(step.dataset.step);
+        step.setAttribute("aria-disabled", String(to < 1 || to > at.pages));
+      }
+    };
+
+    // The page is kept in the address, so "back" from a claim returns to the same rows.
+    const remember = () => {
+      const url = new URL(location.href);
+      if (page > 1) url.searchParams.set(name, String(page));
+      else url.searchParams.delete(name);
+      history.replaceState(history.state, "", url);
+    };
+
+    for (const step of steps) {
+      step.addEventListener("click", () => {
+        if (step.getAttribute("aria-disabled") === "true") return;
+        page += Number(step.dataset.step);
+        draw();
+        remember();
+        // A shorter last page must not leave the reader looking at the footer.
+        if (frame.getBoundingClientRect().top < 0) frame.scrollIntoView({ block: "start" });
+      });
+    }
+
+    table.addEventListener("paged:refresh", () => {
+      page = 1;
+      draw();
+      remember();
+    });
+
+    // Paper gets the whole list.
+    addEventListener("beforeprint", () => {
+      printing = true;
+      draw();
+    });
+    addEventListener("afterprint", () => {
+      printing = false;
+      draw();
+    });
+
+    draw();
+  }
+</script>

@@ -1906,6 +1906,160 @@ main nav.contents ul li + li {
   text-decoration-thickness: 2px;
 }
 
+/* Under a long table: step through it a page at a time. Rows after the first page
+   are in the document; where scripts run they are out of sight until asked for. */
+@media (scripting: enabled) {
+  tr[data-later] {
+    display: none;
+  }
+}
+
+.table-frame {
+  scroll-margin-top: 1rem;
+}
+
+/* The home page's lists: one shown at a time, picked by a tab. Where scripts run,
+   only the first is in sight until the tabs take over. */
+@media (scripting: enabled) {
+  .feed:not(.tabbed) .feed-panel ~ .feed-panel {
+    display: none;
+  }
+}
+
+/* Above the lists: where every tracked claim stands, and a topic to narrow to. */
+.scoreboard {
+  margin-top: 1rem;
+}
+
+.topic-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.8rem 0 0;
+  font-size: 0.92rem;
+}
+
+.topic-filter label {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.topic-filter select {
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--ring);
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.6rem;
+  max-width: 100%;
+}
+
+/* Today's anniversaries of first reports, or the next day with one. */
+.on-this-day .calendar {
+  margin-top: 0.3rem;
+}
+
+.on-this-day .calendar .day:first-child,
+.on-this-day .calendar .day {
+  border-top: 0;
+}
+
+.feed-panel .none {
+  margin-top: 0.7rem;
+  color: var(--muted);
+}
+
+.feed-tabs {
+  display: flex;
+  gap: 0.25rem 1.4rem;
+  margin-top: clamp(1.5rem, 5vw, 2.25rem);
+  border-bottom: 1px solid var(--rule);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.feed-tabs [role="tab"] {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  padding: 0.65rem 0.1rem 0.5rem;
+  cursor: pointer;
+}
+
+.feed-tabs [role="tab"]:hover {
+  color: var(--blue);
+}
+
+.feed-tabs [role="tab"][aria-selected="true"] {
+  color: var(--ink);
+  border-bottom-color: var(--blue);
+}
+
+.feed-tabs .count {
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  background: var(--tint);
+  border-radius: 999px;
+  padding: 0 0.45rem;
+}
+
+.feed.tabbed .feed-panel > .bar {
+  margin-top: 1.1rem;
+  font-size: 1rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.pager {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.pager-at {
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.pager button {
+  font: inherit;
+  font-weight: 600;
+  color: var(--blue);
+  background: none;
+  border: 0;
+  padding: 0.55rem 0.2rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.pager button:hover {
+  text-decoration-thickness: 2px;
+}
+
+.pager button[aria-disabled="true"] {
+  color: var(--muted);
+  text-decoration: none;
+  cursor: default;
+  opacity: 0.6;
+}
+
 /* The topic directory: dense, lettered, narrowed by typing. */
 .directory {
   margin-top: 1.5rem;
