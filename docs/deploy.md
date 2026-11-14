@@ -6,7 +6,7 @@ The public site is https://whatcameofit.com, served by the `thenwhat` Cloudflare
 
 Changes to `main` run the complete test suite and a public deployment rehearsal in GitHub Actions. Only after those pass does GitHub deploy production and check the live home, method, sitemap and claim pages. Pull requests run the checks without deployment credentials and do not create public previews. The Actions page also offers a manual run for `main`.
 
-To publish newly reviewed claims, finish the human review locally and run:
+To publish newly approved claims, run:
 
 ```sh
 make publish-data
