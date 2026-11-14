@@ -1,11 +1,10 @@
 // Draws every popup state in its own frame, using the real stylesheet and view code.
 import { SITE } from "./config.js";
 import { render } from "./view.js";
+import { LIVE } from "./live-lookup.js";
+import { NOTICES } from "./notices.js";
 
-const notices = [
-  "This site gives no medical advice and recommends no treatment.",
-  "A registered clinical trial is not a treatment option. Talk to a clinician about your own care.",
-];
+const notices = [...NOTICES];
 const claim = {
   headline: "Antibody against USAG-1 regrows teeth in mice",
   page: "/tooth-regrowth-usag1",
@@ -42,15 +41,15 @@ const long = {
 // A registry search's answer, as the site's own wording module returns it.
 const answer = {
   marked:
-    "Automatic search. This list was made by software just now from a public registry. It has not been checked by a person and is not a status.",
+    LIVE.marked,
   lead: "This appears to report divalent small interfering RNA for Prion disease.",
   subject: { treatment: "Divalent small interfering RNA", condition: "Prion disease" },
   source: "Read by your browser from the post on X you have open, and the article it links to at example.org.",
   searchedAlso: null,
   trialSaid: "Of the trial itself, the article says: it is called PRiSM and 30 people took part.",
   tracked: [],
-  likelyLead: "Registry records that read as trials of this treatment for this condition, likeliest first:",
-  confidenceMeaning: "Match confidence is the model's estimate that this record concerns the reported treatment and condition. It is not a verified probability or a rating of treatment effectiveness or trial quality.",
+  likelyLead: LIVE.likelyLead,
+  confidenceMeaning: LIVE.confidenceMeaning,
   likely: [
     {
       title: "PrP-targeting siRNA Safety & Mechanism Study",
@@ -73,7 +72,7 @@ const answer = {
   ],
   rest: "3 other records were found and read as not being trials of this treatment for this condition.",
   none: null,
-  notices: [notices[1], "Source of the records: ClinicalTrials.gov."],
+  notices: [notices[1], LIVE.source],
 };
 const tracked = (claims, savedAt = null) => ({
   kind: "tracked",
@@ -107,6 +106,7 @@ const states = [
     likely: [{ ...answer.likely[0], title: "A Study to Evaluate Physiologic Dentin Regeneration and Safety of EX-1 in the Treatment of Dental Caries", confidence: 62, confidenceLabel: "62% match confidence", why: null }],
   } }],
   ["No matching record", { kind: "answer", shown: { ...answer, likely: [], rest: null, none: "No matching trial record was found in ClinicalTrials.gov. That is not evidence that no trial exists: it may use another name or registry." } }],
+  ["Linked paper not looked up", { kind: "answer", shown: { ...answer, likely: answer.likely.slice(0, 1), papersUnchecked: "A linked paper could not be looked up just now, so a trial it reports may be missing from this list. Try again in a minute." } }],
   ["Not identifiable", { kind: "answer", shown: { ...answer, subject: null, lead: "A specific treatment and condition could not be identified from the content that could be read. The registry was not searched; nothing has been ruled out.", likely: [], trialSaid: null, rest: null } }],
   ["Too little read", { kind: "too-little" }],
   ["Search refused", { kind: "refused", code: "busy" }],
@@ -121,6 +121,12 @@ const states = [
     "Tracked, followed and changed",
     tracked([claim]),
     { recent: 3, following: 1, changed: 0, followed: [claim.page], was: { [claim.page]: "Trial registered" }, reminders: { [claim.page]: "2027-05-13" } },
+  ],
+  // The moment after "Keep me up to date" is pressed: the tick is drawn.
+  [
+    "Tracked, just followed",
+    tracked([claim]),
+    { recent: 3, following: 1, changed: 0, followed: [claim.page], was: {}, fresh: claim.page },
   ],
   [
     "Recently checked",
@@ -157,6 +163,11 @@ const states = [
       ],
     },
   ],
+  ["Recently checked, registry not searched", { kind: "recent", entries: [{
+    key: "news.example.org/image-post", url: "https://news.example.org/image-post",
+    title: "An image post without enough readable detail", outlet: "news.example.org", at: Date.UTC(2026, 10, 13),
+    answer: { kind: "searched", limitation: LIVE.notATreatment }, candidates: [],
+  }] }],
   ["Recently checked, empty", { kind: "recent", entries: [] }],
   [
     "One check's candidates",
@@ -190,9 +201,9 @@ const states = [
 const board = document.querySelector("#board");
 const log = (name) => (...args) => console.log(name, ...args);
 const actions = {
-  open: (address) => console.log("open", address),
-  retry: () => console.log("retry"),
-  search: () => console.log("search"),
+  open: log("open"),
+  retry: log("retry"),
+  search: log("search"),
   enableSharing: log("enableSharing"),
   disableSharing: log("disableSharing"),
   sharingView: log("sharingView"),
@@ -218,7 +229,7 @@ for (const [label, state, kept = null] of states) {
   const frame = document.createElement("iframe");
   frame.title = label;
   frame.scrolling = "no";
-  frame.srcdoc = `<!doctype html><html lang="en"><head><base href="${location.href}"><link rel="stylesheet" href="popup.css"></head><body><header class="masthead"><img class="mark" src="icons/32.png" width="20" height="20" alt=""><span class="name">${SITE.name}</span></header><main id="view"></main></body></html>`;
+  frame.srcdoc = `<!doctype html><html lang="en"><head><base href="${location.href}"><link rel="stylesheet" href="popup.css"></head><body><header class="masthead"><img class="mark" src="icons/mark-reverse.svg" width="20" height="20" alt=""><span class="name">${SITE.name}</span></header><main id="view"></main></body></html>`;
   frame.addEventListener("load", () => {
     // Nodes are made with this page's document and adopted by the frame when inserted,
     // so the frame's own stylesheet applies to them.

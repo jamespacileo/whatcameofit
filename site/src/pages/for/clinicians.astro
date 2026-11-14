@@ -1,0 +1,79 @@
+---
+// For a clinician asked about a headline: the lookup, whose answer comes with the
+// dated sentence to copy and the card. Openspec landing-pages-and-guide.
+import Lookup from "../../components/Lookup.astro";
+import Audience from "../../layouts/Audience.astro";
+import { data } from "../../lib/export";
+import { exampleClaim } from "../../lib/extension-page";
+import { statusSlug } from "../../lib/guide";
+import { NOTICES } from "../../lib/notices";
+import { STATUS_LABELS } from "../../lib/status";
+
+const example = exampleClaim(data.claims);
+---
+
+<Audience
+  audience="clinicians"
+  title="Asked about a headline?"
+  lede="Paste the link to the article, or type the treatment. If the claim is tracked, the answer is where it stands in the public records, with a dated sentence to copy into your reply."
+  description="Look up a reported breakthrough a patient or relative has asked about: its status in the public records, and a dated sentence to copy."
+>
+  <Lookup
+    slot="tool"
+    sentences
+    label="Paste the link to the article you were asked about, or type the treatment"
+  />
+
+  <h2 class="bar">A claim page prints cleanly</h2>
+  <p>
+    Each claim page prints as one document: the status, what it means, the dated records with
+    their sources, and the two notices. Menus and buttons are left off the paper.
+    {
+      example && (
+        <>
+          {" "}
+          An example to print: <a href={`/${example.slug}`}>{example.intervention.name}</a>.
+        </>
+      )
+    }
+  </p>
+
+  <h2 class="bar">The two notices, in full</h2>
+  <p>They are on every page, in the footer, and go with every status that leaves the site.</p>
+  <ul class="plain">
+    {NOTICES.map((notice) => <li>{notice}</li>)}
+  </ul>
+
+  <h2 class="bar">What a status does not say</h2>
+  <p>
+    Each status has an entry in the guide that says what it rests on and what it does not tell
+    you. Three that are often misread:
+  </p>
+  <ul class="plain">
+    {
+      (["phase_3", "preclinical_only", "trial_registered"] as const).map((code) => (
+        <li>
+          <a href={`/guide/${statusSlug(code)}`}>{STATUS_LABELS[code]}</a>
+        </li>
+      ))
+    }
+    <li><a href="/guide">Every entry in the guide</a></li>
+  </ul>
+
+  <Fragment slot="limits">
+    <p>
+      It gives no medical advice and recommends no treatment. It does not say whether a treatment
+      works, whether it is safe, or whether it is available anywhere.
+    </p>
+    <p>
+      It lists trials as records, not as places to be treated.{" "}
+      <a href="/guide/registered-trial-not-treatment-option">
+        Why a registered trial is not a treatment option
+      </a>
+    </p>
+    <p>
+      A status is derived by fixed rules from registry records. It is not a clinical appraisal of
+      the evidence, and a page says when no person has checked it.
+    </p>
+  </Fragment>
+</Audience>

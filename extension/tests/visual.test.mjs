@@ -70,6 +70,8 @@ test("failed or negative lookups cannot poison a reusable answer; changed conten
  assert.equal(reusable(entries,"page","different",now+1),null);
  assert.equal(reusable(entries,"page","fingerprint",now+RESULT_TTL),null);
  assert.deepEqual(remember([],"page","f",{about_a_treatment:false},now),[]);
+ // An answer missing a linked paper is not kept: the page is looked up again.
+ assert.deepEqual(remember([],"page","f",{...found,papers_unchecked:1},now),[]);
 });
 test("capture uses the requested window and rejects tab switches before transmitting pixels",async()=>{
  let active={...tab};let captures=0;

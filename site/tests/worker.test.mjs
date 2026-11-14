@@ -155,10 +155,30 @@ test("Scenario: Page that links to the paper it reports", async () => {
 
   const found = await lookUp({ text: TEXT, model: fakeModel(), registry, index: INDEX, page, papers });
 
-  // A paper that cannot be looked up is passed over.
+  // A paper that cannot be looked up is passed over, and the answer counts it.
   assert.deepEqual(asked, [{ doi: "10.1234/example.2026.0042" }, { pubmedId: "31234567" }]);
   assert.deepEqual(found.paper_numbers, ["NCT07654321"]);
+  assert.equal(found.papers_unchecked, 1);
   assert.deepEqual(found.candidates.map((c) => [c.id, c.agrees]), [["NCT07654321", ["paper"]]]);
+});
+
+test("Scenario: Linked paper not answered in time", async () => {
+  // The first paper's host never answers; the second paper's does.
+  const fetch = (address, { signal }) =>
+    new URL(address).searchParams.get("query") === 'DOI:"10.1/slow"'
+      ? new Promise((_, reject) => signal.addEventListener("abort", () => reject(signal.reason)))
+      : Promise.resolve(Response.json({ resultList: { result: [{ abstractText: "Registered as NCT07654321." }] } }));
+  const papers = makePapers({ fetch, contact: "ops@example.org", timeoutMs: 20 });
+  const registry = fakeRegistry({}, { NCT07654321: study("NCT07654321", "EX-1 in tooth agenesis, second study") });
+  const page = { registryNumbers: [], dois: ["10.1/slow", "10.1/quick"], pubmedIds: [] };
+
+  await assert.rejects(papers.trialNumbers({ doi: "10.1/slow" }), { code: "timeout" });
+  const found = await lookUp({ text: TEXT, model: fakeModel(), registry, index: INDEX, page, papers });
+
+  // The lookup went on to the next paper, and says one was not looked up.
+  assert.equal(found.papers_unchecked, 1);
+  assert.deepEqual(found.paper_numbers, ["NCT07654321"]);
+  assert.equal((await lookUp({ text: TEXT, model: fakeModel(), registry, index: INDEX })).papers_unchecked, 0);
 });
 
 test("a registry number in a link on the page is first, whatever its score", async () => {
@@ -576,6 +596,44 @@ test("the model reads the text while linked papers and stated numbers are looked
   assert.deepEqual(started, ["read", "papers", "registry NCT01234567"]);
   reading(READING);
   assert.deepEqual((await looking).candidates.map((c) => c.id), ["NCT01234567"]);
+});
+
+test("a non-treatment answer ends the paper request in flight and asks nothing further", async () => {
+  // The papers' host never answers; only ending the request settles it.
+  const asked = [];
+  const papers = {
+    trialNumbers: (paper, { signal }) => {
+      asked.push(paper);
+      return new Promise((_, reject) => signal.addEventListener("abort", () => reject(signal.reason)));
+    },
+  };
+  const fetched = [];
+  const registry = { ...fakeRegistry({}), fetch: async (id) => (fetched.push(id), new Promise(() => {})) };
+  const page = { registryNumbers: ["NCT01234567", "NCT07654321"], dois: ["10.1/first", "10.1/second"], pubmedIds: [] };
+  const model = fakeModel({ ...READING, about_a_treatment: false, intervention: null });
+
+  const found = await Promise.race([
+    lookUp({ text: TEXT, model, registry, index: INDEX, page, papers }),
+    new Promise((resolve) => setTimeout(() => resolve("still waiting"), 200)),
+  ]);
+
+  assert.equal(found.about_a_treatment, false);
+  assert.deepEqual(found.registry_numbers, ["NCT01234567", "NCT07654321"]);
+  // The paper being asked about was let go, and nothing further was asked of either host.
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  assert.deepEqual(asked, [{ doi: "10.1/first" }]);
+  assert.deepEqual(fetched, ["NCT01234567"]);
+});
+
+test("a paper's request ends when the lookup no longer needs it", async () => {
+  const fetch = (_address, { signal }) =>
+    new Promise((_, reject) => signal.addEventListener("abort", () => reject(signal.reason)));
+  const stop = new AbortController();
+  const asking = makePapers({ fetch, contact: "ops@example.org" }).trialNumbers({ doi: "10.1/slow" }, { signal: stop.signal });
+
+  stop.abort();
+
+  await assert.rejects(asking, { name: "AbortError" });
 });
 
 test("a record the model leaves out, or answers unusably, has no score", async () => {

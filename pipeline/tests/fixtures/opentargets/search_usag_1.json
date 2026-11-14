@@ -1,0 +1,109 @@
+{
+  "data": {
+    "search": {
+      "hits": [
+        {
+          "id": "ENSG00000171243",
+          "entity": "target",
+          "object": {
+            "id": "ENSG00000171243",
+            "approvedSymbol": "SOSTDC1",
+            "approvedName": "sclerostin domain containing 1",
+            "biotype": "protein_coding",
+            "symbolSynonyms": [
+              {
+                "label": "Ectodin",
+                "source": "uniprot"
+              },
+              {
+                "label": "USAG-1",
+                "source": "uniprot"
+              },
+              {
+                "label": "SOSTDC1",
+                "source": "uniprot"
+              },
+              {
+                "label": "USAG1",
+                "source": "uniprot"
+              },
+              {
+                "label": "CDA019",
+                "source": "uniprot"
+              },
+              {
+                "label": "DKFZp564D206",
+                "source": "HGNC"
+              },
+              {
+                "label": "USAG1",
+                "source": "HGNC"
+              },
+              {
+                "label": "DAND7",
+                "source": "HGNC"
+              },
+              {
+                "label": "CDA019",
+                "source": "NCBI_entrez"
+              },
+              {
+                "label": "DAND7",
+                "source": "NCBI_entrez"
+              },
+              {
+                "label": "ECTODIN",
+                "source": "NCBI_entrez"
+              },
+              {
+                "label": "USAG1",
+                "source": "NCBI_entrez"
+              },
+              {
+                "label": "SOSTDC1",
+                "source": "NCBI_entrez"
+              }
+            ],
+            "functionDescriptions": [
+              "May be involved in the onset of endometrial receptivity for implantation/sensitization for the decidual cell reaction Enhances Wnt signaling and inhibits TGF-beta signaling (By similarity). Directly antagonizes activity of BMP2, BMP4, BMP6 and BMP7 in a dose-dependent manner. ."
+            ],
+            "proteinIds": [
+              {
+                "id": "Q6X4U4",
+                "source": "uniprot_swissprot"
+              },
+              {
+                "id": "A4D125",
+                "source": "uniprot_trembl"
+              },
+              {
+                "id": "ENSP00000304930",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000379889",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000805742",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "A8MUA6",
+                "source": "uniprot_obsolete"
+              },
+              {
+                "id": "Q96HJ7",
+                "source": "uniprot_obsolete"
+              },
+              {
+                "id": "Q9Y3U3",
+                "source": "uniprot_obsolete"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

@@ -4,6 +4,11 @@ import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import { unlabelledApproaches } from "./approach";
+import { unlabelledPaperCodes } from "./paper-facts";
+import { unwordedCardCodes, type ExportedCard, type ExportedCardSource } from "./background";
+import { unwordedStatementCodes, type ExportedStatement } from "./statements";
+import { unlabelledTrialCodes } from "./trial-facts";
+import { unwordedOrganisationCodes, type ExportedOrganisation } from "./organisations";
 
 export type StatusCode =
   | "preclinical_only"
@@ -29,6 +34,137 @@ export interface ExportedEvent {
   trial_phases: string[];
   trial_state: string | null;
   regulatory_outcome: string | null;
+  /** 0 to 1: how sure the pipeline is of the event. Absent or null in an export made
+   * before openspec trial-facts; shown only when below 1. */
+  confidence?: number | null;
+}
+
+/** One group's posted numbers for an outcome, each as the registry wrote it. */
+export interface ExportedResultGroup {
+  title: string;
+  analysed: string | null;
+  value: string | null;
+  spread: string | null;
+  lower: string | null;
+  upper: string | null;
+}
+
+export interface ExportedComparison {
+  /** Titles of the groups compared. */
+  groups: string[];
+  p_value: string | null;
+  method: string | null;
+  test: string | null;
+}
+
+export interface ExportedResultOutcome {
+  title: string;
+  time_frame: string | null;
+  unit: string | null;
+  measure: string | null;
+  /** What the spread is, in the registry's words, such as "Standard Deviation". */
+  spread_kind: string | null;
+  /** How many rows of values the registry posts. Groups are carried only for one. */
+  rows: number;
+  groups: ExportedResultGroup[];
+  comparisons: ExportedComparison[];
+}
+
+/** What a trial's registry record states, as codes and the registry's own text. */
+export interface ExportedTrialFacts {
+  study_kind: string | null;
+  participants: { count: number; basis: "actual" | "planned" } | null;
+  allocation: string | null;
+  masking: string | null;
+  comparators: string[];
+  healthy_volunteers: boolean | null;
+  age_groups: string[];
+  /** The name is absent when the sponsor is a person. */
+  sponsor: { name: string | null; kind: string | null } | null;
+  primary_outcomes: { measure: string; time_frame: string | null }[];
+  primary_outcomes_total: number;
+  why_stopped: string | null;
+  results: { outcomes: ExportedResultOutcome[]; outcomes_total: number } | null;
+}
+
+/** One trial behind a claim's approved events. Openspec trial-facts. */
+/** Something a model read from a trial's stored registry record into a fixed code, with
+ * the words it read (openspec record-readings). A rule checked the words are in the
+ * record before it was stored. The site words the code; the model writes nothing shown. */
+export interface ExportedReading {
+  kind: "follow_up" | "measure";
+  /** Which of the trial's `facts.primary_outcomes` it is about, counted from 0. */
+  outcome: number;
+  field: "time_frame" | "measure";
+  /** The record's own words, exactly as read. */
+  words: string;
+  number: number | null;
+  unit: "days" | "weeks" | "months" | "years" | null;
+  code: string | null;
+  /** 0 to 1: how sure the reading is. */
+  confidence: number;
+  read_on: string;
+}
+
+export interface ExportedTrial {
+  trial_id: string;
+  source_name: string;
+  url: string;
+  title: string | null;
+  phases: string[];
+  state: string;
+  /** When the registry record the facts were read from was fetched. */
+  facts_as_of: string | null;
+  /** Null for a trial entered by hand, which has no registry record. */
+  facts: ExportedTrialFacts | null;
+  /** Identifiers of the papers the trial's registry record names, each an entry in the
+   * claim's `papers`. Absent from an export made before openspec paper-facts. */
+  papers?: string[];
+  /** Absent from an export made before openspec record-readings. */
+  readings?: ExportedReading[];
+}
+
+/** One role a paper plays for a claim. Openspec paper-facts. */
+export interface ExportedPaperRole {
+  /** "origin", "trial_result", "follow_up" or "related". */
+  role: string;
+  /** For a trial's results paper: the trial, and how its record came to name the paper. */
+  trial_id?: string | null;
+  listed?: string | null;
+  /** For a follow-up paper: the evidence event it is behind. */
+  event_id?: number | null;
+  /** For a related paper: the match score, the reasons as codes, and what the search
+   * source says of the paper in one line. */
+  score?: number | null;
+  reasons?: string[];
+  decided_by?: string | null;
+  summary?: string | null;
+}
+
+/** What a paper's index record states of the paper, as codes and the record's own text. */
+export interface ExportedPaperFacts {
+  title: string | null;
+  journal: string | null;
+  year: number | null;
+  /** Every kind the record gives, most specific first. */
+  kinds: string[];
+  open_access: boolean | null;
+  retracted: boolean;
+  /** "people", "animals", both or neither, from the record's subject headings. */
+  studied_in: string[];
+}
+
+/** One paper a claim page lists, once, whatever brought it there. */
+export interface ExportedPaper {
+  /** The DOI, else "pmid:<number>", else the search source's own identifier. */
+  identifier: string;
+  url: string;
+  /** The index record the facts were read from. */
+  record_url: string | null;
+  roles: ExportedPaperRole[];
+  facts_as_of: string | null;
+  /** Null when the index does not hold the paper. */
+  facts: ExportedPaperFacts | null;
 }
 
 export interface ExportedMatch {
@@ -72,12 +208,33 @@ export interface ExportedClaim {
     title: string;
     published_date: string;
     archive_url: string | null;
+    /** The registry record address of the claim's identified organisation on whose
+     * website the report is. Absent or null for any other report, and in an export made
+     * before openspec organisations. */
+    published_by?: string | null;
   }[];
   promises: { description: string; parsed_date: string | null; article_url: string }[];
   events: ExportedEvent[];
   /** Registry records matched to the claim, approved first, each with its score. Absent
    * from an export made before openspec auto-publish. */
   matches?: ExportedMatch[];
+  /** The claim's trials, one per registry identifier. Absent from an export made before
+   * openspec trial-facts. */
+  trials?: ExportedTrial[];
+  /** Each paper the page lists, once. Absent from an export made before openspec
+   * paper-facts, which lists its papers among `matches` instead. */
+  papers?: ExportedPaper[];
+  /** Background cards: at most one for the condition, then one for the intervention.
+   * Each says how its term fits: "exact", "broader", or "kind" when it is the term of
+   * the kind of treatment and not of the treatment itself (an intervention card only).
+   * Absent from an export made before openspec knowledge-cards. */
+  background?: ExportedCard[];
+  /** Each organisation the claim names, once. Absent from an export made before
+   * openspec organisations. */
+  organisations?: ExportedOrganisation[];
+  /** Approved reported statements, report by report. Absent from an export made before
+   * openspec reported-statements. */
+  reported_statements?: ExportedStatement[];
   failure_flags: { trial_id: string; source_url: string }[];
 }
 
@@ -92,7 +249,8 @@ export interface Export {
   schema_version: number;
   generated_at: string;
   last_checked_at: string | null;
-  // True when the export holds claims an AI assistant decided. Never for the public site.
+  // Always false since the auto-publish decision. Kept so that an older export, which
+  // could be a preview, is still read and refused for the public site.
   preview: boolean;
   sources: { name: string; url: string }[];
   verticals: ExportedVertical[];
@@ -101,6 +259,8 @@ export interface Export {
   claims: ExportedClaim[];
   /** Claims the operator took down. Each address answers 410; the reason is never exported. */
   archived?: { slug: string; on: string }[];
+  /** The sources of the claims' background cards, each once. */
+  card_sources?: ExportedCardSource[];
 }
 
 const SUPPORTED_SCHEMA_VERSION = 1;
@@ -113,6 +273,15 @@ function exportPath(): string {
   return fs.existsSync(live) ? live : path.resolve("data/seed-export.json");
 }
 
+/** The value at a JSON pointer such as "/claims/1/kind". */
+function valueAt(content: unknown, pointer: string): unknown {
+  return pointer
+    .split("/")
+    .slice(1)
+    .map((part) => part.replace(/~1/g, "/").replace(/~0/g, "~"))
+    .reduce<unknown>((value, part) => (value as Record<string, unknown> | undefined)?.[part], content);
+}
+
 function load(): Export {
   const file = exportPath();
   const content = JSON.parse(fs.readFileSync(file, "utf8"));
@@ -123,7 +292,12 @@ function load(): Export {
   if (!validate(content)) {
     const problems = (validate.errors ?? [])
       .slice(0, 10)
-      .map((error) => `  ${error.instancePath || "/"} ${error.message}`)
+      .map((error) => {
+        // A code outside a fixed list is named, so the build says which code it was.
+        const given =
+          error.keyword === "enum" ? ` (it is ${JSON.stringify(valueAt(content, error.instancePath))})` : "";
+        return `  ${error.instancePath || "/"} ${error.message}${given}`;
+      })
       .join("\n");
     throw new Error(`The export at ${file} does not match export.schema.json:\n${problems}`);
   }
@@ -140,6 +314,47 @@ function load(): Export {
       `The export at ${file} has approaches the site has no words for: ${unlabelled.join(", ")}. Add them to src/lib/approach.ts.`,
     );
   }
+  const unworded = unlabelledTrialCodes(
+    (content as Export).claims.flatMap((claim) => claim.trials ?? []),
+  );
+  if (unworded.length > 0) {
+    throw new Error(
+      `The export at ${file} has trial fact codes the site has no words for: ${unworded.join(", ")}. Add them to src/lib/trial-facts.ts.`,
+    );
+  }
+  const unwordedPapers = unlabelledPaperCodes(
+    (content as Export).claims.flatMap((claim) => claim.papers ?? []),
+  );
+  if (unwordedPapers.length > 0) {
+    throw new Error(
+      `The export at ${file} has paper codes the site has no words for: ${unwordedPapers.join(", ")}. Add them to src/lib/paper-facts.ts.`,
+    );
+  }
+  const unwordedCards = unwordedCardCodes(
+    (content as Export).claims.flatMap((claim) => claim.background ?? []),
+    (content as Export).card_sources ?? [],
+  );
+  if (unwordedCards.length > 0) {
+    throw new Error(
+      `The export at ${file} has background card codes the site has no words for: ${unwordedCards.join(", ")}. Add them to src/lib/background.ts.`,
+    );
+  }
+  const unwordedOrganisations = unwordedOrganisationCodes(
+    (content as Export).claims.flatMap((claim) => claim.organisations ?? []),
+  );
+  if (unwordedOrganisations.length > 0) {
+    throw new Error(
+      `The export at ${file} has organisation codes the site has no words for: ${unwordedOrganisations.join(", ")}. Add them to src/lib/organisations.ts.`,
+    );
+  }
+  const unwordedStatements = unwordedStatementCodes(
+    (content as Export).claims.flatMap((claim) => claim.reported_statements ?? []),
+  );
+  if (unwordedStatements.length > 0) {
+    throw new Error(
+      `The export at ${file} has reported statement codes the site has no words for: ${unwordedStatements.join(", ")}. Add them to src/lib/statements.ts.`,
+    );
+  }
   return content as Export;
 }
 
@@ -149,6 +364,11 @@ export const data: Export = load();
 export const listedTopics = data.verticals.filter((vertical) =>
   data.claims.some((claim) => claim.vertical === vertical.slug),
 );
+
+/** One address per published claim, each given its claim: getStaticPaths for every claim route. */
+export function claimPaths() {
+  return data.claims.map((claim) => ({ params: { slug: claim.slug }, props: { claim } }));
+}
 
 export function verticalTitle(slug: string): string {
   return data.verticals.find((vertical) => vertical.slug === slug)?.title ?? slug;

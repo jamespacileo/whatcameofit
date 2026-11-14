@@ -8,7 +8,7 @@ is a ranked list of candidates, not a reviewed status.
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Annotated, Protocol
+from typing import Protocol
 
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -21,8 +21,10 @@ from thenwhat.decide.steps import MATCH, TRIAL_OPTIONS, TRIAL_QUESTION, candidat
 from thenwhat.domain import EntityType
 from thenwhat.extract.names import is_a_name
 from thenwhat.extract.page import Page
+from thenwhat.extract.schema import MAX_SEARCH_PHRASES, ShortText
 from thenwhat.llm.client import Llm
 from thenwhat.lookup.details import PAPER, STATED, Details, agreeing
+from thenwhat.resolve.codes import Substances, codes_for
 from thenwhat.resolve.service import what_it_says
 from thenwhat.sources.base import SourceError, SourceRecord
 
@@ -36,7 +38,6 @@ LIKELY_FROM = 0.5
 # The most linked papers one lookup asks about.
 MAX_PAPERS = 3
 
-ShortText = Annotated[str, Field(min_length=1, max_length=200)]
 
 INSTRUCTIONS = """\
 You read one news article or social media post and say which medical treatment it is about.
@@ -81,7 +82,7 @@ class Reading(BaseModel):
     )
     search_phrases: list[ShortText] = Field(
         default_factory=list,
-        max_length=3,
+        max_length=MAX_SEARCH_PHRASES,
         description=(
             "Up to three short phrases a clinical trial registry would use for this treatment"
             " when it has no product name, most specific first, for example 'median nerve"
@@ -142,6 +143,12 @@ class Candidate:
     # Why it is ranked where it is, beyond the score: codes from thenwhat.lookup.details.
     agrees: list[str] = field(default_factory=list)
 
+    @property
+    def likely(self) -> bool:
+        """Whether the record reads as a trial of the treatment for the condition, or the
+        text itself names it."""
+        return self.score >= LIKELY_FROM or STATED in self.agrees
+
 
 @dataclass(frozen=True, slots=True)
 class Lookup:
@@ -152,6 +159,11 @@ class Lookup:
     names: list[str] = field(default_factory=list)
     # Names the model knows the treatment by. They widen the search; they are not from the text.
     known_names: list[str] = field(default_factory=list)
+    # Development codes a registry of substances lists for the treatment, or for a part
+    # of a combination. They widen the search; they are not from the text or a model.
+    codes: list[str] = field(default_factory=list)
+    # Why the registry of substances could not be asked, when it could not.
+    codes_not_looked_up: str | None = None
     registry_numbers: list[str] = field(default_factory=list)
     # Registry numbers given by a paper the page links to.
     paper_numbers: list[str] = field(default_factory=list)
@@ -172,13 +184,16 @@ def look_up(
     now: datetime,
     page: Page | None = None,
     papers: Papers | None = None,
+    substances: Substances | None = None,
 ) -> Lookup:
     """Read the text, search the registry for what it reports, and rank what is found.
 
     Registry numbers stated in the text, or in a link on the page, are looked up directly;
     so are the numbers given by a paper the page links to. Each name the text gives, each
     name the model knows the treatment by, and each search phrase is searched within the
-    reported condition, and a trial the text names is searched for by that name. Every
+    reported condition, and so is each development code a registry of substances lists
+    for the treatment under a name the text gives. A trial the text names is searched
+    for by that name. Every
     record found is scored by the backend with the question used for a claim's candidates.
     Among the records that read as trials of the treatment, those that agree with what the
     text says of the trial (its name, its size, who ran it) come first. Nothing is stored.
@@ -214,12 +229,14 @@ def look_up(
             records.setdefault(record.external_id, record)
     # A combination is registered under its parts as often as under the pair.
     parts = [part for name in names for part in _parts(name)]
-    for term in dict.fromkeys([*names, *parts, *known, *reading.search_phrases]):
+    codes, codes_not_looked_up = _codes(substances, names, parts)
+    for term in dict.fromkeys([*names, *parts, *known, *codes, *reading.search_phrases]):
         for record in trials.search_trials(term, reading.indication):
             records.setdefault(record.external_id, record)
     found = list(records.values())[:MAX_CANDIDATES]
 
-    also = f" (also known as: {', '.join([*names[1:], *known])})" if [*names[1:], *known] else ""
+    others = [*names[1:], *known, *codes]
+    also = f" (also known as: {', '.join(others)})" if others else ""
     decisions = decide_many(
         session,
         backend,
@@ -265,12 +282,38 @@ def look_up(
         reading.indication,
         names=names,
         known_names=known,
+        codes=codes,
+        codes_not_looked_up=codes_not_looked_up,
         registry_numbers=numbers,
         paper_numbers=from_papers,
         details=details,
         tracked=_tracked(session, names),
         candidates=candidates,
     )
+
+
+def _codes(
+    substances: Substances | None, names: list[str], parts: list[str]
+) -> tuple[list[str], str | None]:
+    """The development codes the registry of substances lists for the treatment, and for
+    each part of a combination, with the reason when it could not be asked.
+
+    The names the text gives must lead to one substance; each part is its own. A name
+    the registry does not list gives no code, and no name from the model is asked about.
+    """
+    if substances is None:
+        return [], None
+    taken = {name_key(name) for name in [*names, *parts]}
+    codes: list[str] = []
+    try:
+        for asked in [names, *([part] for part in parts)]:
+            for code in codes_for(substances, asked).codes:
+                if name_key(code) not in taken:
+                    taken.add(name_key(code))
+                    codes.append(code)
+    except SourceError as failed:
+        return [], str(failed)
+    return codes, None
 
 
 def _paper_numbers(page: Page | None, papers: Papers | None) -> list[str]:

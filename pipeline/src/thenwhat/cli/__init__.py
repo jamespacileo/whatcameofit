@@ -5,6 +5,7 @@ from sqlalchemy.exc import OperationalError
 
 from thenwhat import __version__
 from thenwhat.cli.archive import archive_command, unarchive_command
+from thenwhat.cli.backfill import backfill_app
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import article_app, claim_app, promise_app
 from thenwhat.cli.events import event_app, fetch_command
@@ -14,10 +15,13 @@ from thenwhat.cli.icons import icons_command
 from thenwhat.cli.lookup import lookup_command
 from thenwhat.cli.outlets import outlets_command
 from thenwhat.cli.prepare import prepare_command
+from thenwhat.cli.readings import readings_command
 from thenwhat.cli.resolve import entity_app, resolve_command
 from thenwhat.cli.review import review_app
 from thenwhat.cli.seed import seed_app
 from thenwhat.cli.session import settings_or_exit
+from thenwhat.cli.statements import statements_command
+from thenwhat.cli.terms import terms_command
 from thenwhat.db.session import make_engine, ping
 
 app = typer.Typer(no_args_is_help=True)
@@ -28,6 +32,9 @@ app.add_typer(extract_app, name="extract")
 app.add_typer(entity_app, name="entity")
 app.command("resolve")(resolve_command)
 app.command("prepare")(prepare_command)
+app.command("terms")(terms_command)
+app.command("statements")(statements_command)
+app.command("readings")(readings_command)
 app.command("lookup")(lookup_command)
 app.command("fetch")(fetch_command)
 app.add_typer(event_app, name="event")
@@ -38,6 +45,7 @@ app.command("export")(export_command)
 app.command("archive")(archive_command)
 app.command("unarchive")(unarchive_command)
 app.add_typer(seed_app, name="seed")
+app.add_typer(backfill_app, name="backfill")
 
 
 @app.callback()

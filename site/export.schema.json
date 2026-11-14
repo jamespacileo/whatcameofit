@@ -90,6 +90,18 @@
             }
           ],
           "title": "Archive Url"
+        },
+        "published_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published By"
         }
       },
       "required": [
@@ -100,6 +112,313 @@
         "archive_url"
       ],
       "title": "ExportedArticle",
+      "type": "object"
+    },
+    "ExportedCard": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/TermRole"
+        },
+        "fit": {
+          "$ref": "#/$defs/TermFit"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "definition": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Definition"
+        },
+        "definition_source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Definition Source"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "external_id": {
+          "title": "External Id",
+          "type": "string"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Version"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Score"
+        },
+        "molecule_kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Molecule Kind"
+        },
+        "mechanisms": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedMechanism"
+          },
+          "title": "Mechanisms",
+          "type": "array"
+        },
+        "facts_source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Facts Source"
+        },
+        "reasons": {
+          "items": {
+            "$ref": "#/$defs/ExportedCardReason"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "decided_by": {
+          "title": "Decided By",
+          "type": "string"
+        },
+        "read_at": {
+          "format": "date-time",
+          "title": "Read At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "fit",
+        "label",
+        "definition",
+        "url",
+        "source",
+        "external_id",
+        "version",
+        "score",
+        "reasons",
+        "decided_by",
+        "read_at"
+      ],
+      "title": "ExportedCard",
+      "type": "object"
+    },
+    "ExportedCardReason": {
+      "additionalProperties": false,
+      "description": "Why the term was a candidate, found by rule. The site owns the wording.",
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "trials": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trials"
+        },
+        "of": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Of"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "entry_term": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Entry Term"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kind"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        },
+        "word": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Word"
+        },
+        "sources": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sources"
+        }
+      },
+      "required": [
+        "code"
+      ],
+      "title": "ExportedCardReason",
+      "type": "object"
+    },
+    "ExportedCardSource": {
+      "additionalProperties": false,
+      "description": "A source a published card comes from, with what its terms ask for.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "credit": {
+          "title": "Credit",
+          "type": "string"
+        },
+        "licence": {
+          "title": "Licence",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "terms_url": {
+          "title": "Terms Url",
+          "type": "string"
+        },
+        "in_data_file": {
+          "title": "In Data File",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "title",
+        "credit",
+        "licence",
+        "url",
+        "terms_url",
+        "in_data_file"
+      ],
+      "title": "ExportedCardSource",
       "type": "object"
     },
     "ExportedClaim": {
@@ -203,6 +522,46 @@
           },
           "title": "Matches",
           "type": "array"
+        },
+        "trials": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedTrial"
+          },
+          "title": "Trials",
+          "type": "array"
+        },
+        "papers": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedPaper"
+          },
+          "title": "Papers",
+          "type": "array"
+        },
+        "background": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedCard"
+          },
+          "title": "Background",
+          "type": "array"
+        },
+        "organisations": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedOrganisation"
+          },
+          "title": "Organisations",
+          "type": "array"
+        },
+        "reported_statements": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedStatement"
+          },
+          "title": "Reported Statements",
+          "type": "array"
         }
       },
       "required": [
@@ -223,6 +582,64 @@
         "failure_flags"
       ],
       "title": "ExportedClaim",
+      "type": "object"
+    },
+    "ExportedComparison": {
+      "additionalProperties": false,
+      "properties": {
+        "groups": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Groups",
+          "type": "array"
+        },
+        "p_value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "P Value"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Method"
+        },
+        "test": {
+          "anyOf": [
+            {
+              "enum": [
+                "superiority",
+                "non_inferiority",
+                "equivalence"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Test"
+        }
+      },
+      "required": [
+        "groups",
+        "p_value",
+        "method",
+        "test"
+      ],
+      "title": "ExportedComparison",
       "type": "object"
     },
     "ExportedEvent": {
@@ -300,6 +717,18 @@
               "type": "null"
             }
           ]
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
         }
       },
       "required": [
@@ -455,6 +884,171 @@
       "title": "ExportedMatch",
       "type": "object"
     },
+    "ExportedMechanism": {
+      "additionalProperties": false,
+      "description": "One thing a drug's record says the drug does. The site words the action.",
+      "properties": {
+        "action": {
+          "title": "Action",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "target"
+      ],
+      "title": "ExportedMechanism",
+      "type": "object"
+    },
+    "ExportedOrganisation": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "identified": {
+          "title": "Identified",
+          "type": "boolean"
+        },
+        "record": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedOrganisationRecord"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "roles": {
+          "items": {
+            "$ref": "#/$defs/ExportedOrganisationRole"
+          },
+          "title": "Roles",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "identified",
+        "record",
+        "roles"
+      ],
+      "title": "ExportedOrganisation",
+      "type": "object"
+    },
+    "ExportedOrganisationRecord": {
+      "additionalProperties": false,
+      "description": "What the organisation registry's record says, and how the name was matched to it.\nNo other field of the record is carried (docs/sources.md).",
+      "properties": {
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "external_id": {
+          "title": "External Id",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "kinds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Kinds",
+          "type": "array"
+        },
+        "country": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Country"
+        },
+        "website": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Website"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "read_at": {
+          "format": "date-time",
+          "title": "Read At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "external_id",
+        "url",
+        "name",
+        "kinds",
+        "country",
+        "website",
+        "score",
+        "read_at"
+      ],
+      "title": "ExportedOrganisationRecord",
+      "type": "object"
+    },
+    "ExportedOrganisationRole": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "enum": [
+            "named_in_report",
+            "sponsor"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "article_urls": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Article Urls",
+          "type": "array"
+        },
+        "trial_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Trial Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "role"
+      ],
+      "title": "ExportedOrganisationRole",
+      "type": "object"
+    },
     "ExportedOutlet": {
       "additionalProperties": false,
       "description": "An outlet's own icon, stored by the pipeline so that no page fetches it.",
@@ -480,6 +1074,318 @@
         "fetched_at"
       ],
       "title": "ExportedOutlet",
+      "type": "object"
+    },
+    "ExportedPaper": {
+      "additionalProperties": false,
+      "properties": {
+        "identifier": {
+          "title": "Identifier",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "record_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Record Url"
+        },
+        "roles": {
+          "items": {
+            "$ref": "#/$defs/ExportedPaperRole"
+          },
+          "title": "Roles",
+          "type": "array"
+        },
+        "facts_as_of": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Facts As Of"
+        },
+        "facts": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedPaperFacts"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "identifier",
+        "url",
+        "record_url",
+        "roles",
+        "facts_as_of",
+        "facts"
+      ],
+      "title": "ExportedPaper",
+      "type": "object"
+    },
+    "ExportedPaperFacts": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Title"
+        },
+        "journal": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Journal"
+        },
+        "year": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Year"
+        },
+        "kinds": {
+          "items": {
+            "enum": [
+              "randomised_trial",
+              "clinical_trial",
+              "meta_analysis",
+              "systematic_review",
+              "review",
+              "observational_study",
+              "case_report",
+              "preprint",
+              "comment",
+              "correction",
+              "retraction_notice",
+              "article"
+            ],
+            "type": "string"
+          },
+          "title": "Kinds",
+          "type": "array"
+        },
+        "open_access": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Open Access"
+        },
+        "retracted": {
+          "title": "Retracted",
+          "type": "boolean"
+        },
+        "studied_in": {
+          "items": {
+            "enum": [
+              "people",
+              "animals"
+            ],
+            "type": "string"
+          },
+          "title": "Studied In",
+          "type": "array"
+        }
+      },
+      "required": [
+        "title",
+        "journal",
+        "year",
+        "kinds",
+        "open_access",
+        "retracted",
+        "studied_in"
+      ],
+      "title": "ExportedPaperFacts",
+      "type": "object"
+    },
+    "ExportedPaperRole": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "enum": [
+            "origin",
+            "trial_result",
+            "follow_up",
+            "related"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "trial_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trial Id"
+        },
+        "listed": {
+          "anyOf": [
+            {
+              "enum": [
+                "listed_by_sponsor",
+                "linked_by_registry"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Listed"
+        },
+        "event_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Event Id"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Score"
+        },
+        "reasons": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "decided_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Decided By"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        }
+      },
+      "required": [
+        "role"
+      ],
+      "title": "ExportedPaperRole",
+      "type": "object"
+    },
+    "ExportedParticipants": {
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "title": "Count",
+          "type": "integer"
+        },
+        "basis": {
+          "enum": [
+            "actual",
+            "planned"
+          ],
+          "title": "Basis",
+          "type": "string"
+        }
+      },
+      "required": [
+        "count",
+        "basis"
+      ],
+      "title": "ExportedParticipants",
+      "type": "object"
+    },
+    "ExportedPlannedOutcome": {
+      "additionalProperties": false,
+      "properties": {
+        "measure": {
+          "title": "Measure",
+          "type": "string"
+        },
+        "time_frame": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Time Frame"
+        }
+      },
+      "required": [
+        "measure",
+        "time_frame"
+      ],
+      "title": "ExportedPlannedOutcome",
       "type": "object"
     },
     "ExportedPromise": {
@@ -512,6 +1418,271 @@
         "article_url"
       ],
       "title": "ExportedPromise",
+      "type": "object"
+    },
+    "ExportedReading": {
+      "additionalProperties": false,
+      "description": "A record reading (openspec record-readings): what a model read from one field of\none of the trial's planned primary outcomes, as a code or a number with a unit, with\nthe words it read. A rule checked it against the stored record. Codes only; the site\nowns the wording.",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/ReadingKind"
+        },
+        "outcome": {
+          "title": "Outcome",
+          "type": "integer"
+        },
+        "field": {
+          "$ref": "#/$defs/ReadingField"
+        },
+        "words": {
+          "title": "Words",
+          "type": "string"
+        },
+        "number": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Number"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FollowUpUnit"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "code": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MeasureCode"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "read_on": {
+          "format": "date-time",
+          "title": "Read On",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "outcome",
+        "field",
+        "words",
+        "number",
+        "unit",
+        "code",
+        "confidence",
+        "read_on"
+      ],
+      "title": "ExportedReading",
+      "type": "object"
+    },
+    "ExportedResultGroup": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "analysed": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Analysed"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        },
+        "spread": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Spread"
+        },
+        "lower": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Lower"
+        },
+        "upper": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Upper"
+        }
+      },
+      "required": [
+        "title",
+        "analysed",
+        "value",
+        "spread",
+        "lower",
+        "upper"
+      ],
+      "title": "ExportedResultGroup",
+      "type": "object"
+    },
+    "ExportedResultOutcome": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "time_frame": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Time Frame"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Unit"
+        },
+        "measure": {
+          "anyOf": [
+            {
+              "enum": [
+                "mean",
+                "median",
+                "number",
+                "count_of_participants",
+                "count_of_units",
+                "geometric_mean",
+                "least_squares_mean",
+                "geometric_least_squares_mean",
+                "log_mean"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Measure"
+        },
+        "spread_kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Spread Kind"
+        },
+        "rows": {
+          "title": "Rows",
+          "type": "integer"
+        },
+        "groups": {
+          "items": {
+            "$ref": "#/$defs/ExportedResultGroup"
+          },
+          "title": "Groups",
+          "type": "array"
+        },
+        "comparisons": {
+          "items": {
+            "$ref": "#/$defs/ExportedComparison"
+          },
+          "title": "Comparisons",
+          "type": "array"
+        }
+      },
+      "required": [
+        "title",
+        "time_frame",
+        "unit",
+        "measure",
+        "spread_kind",
+        "rows",
+        "groups",
+        "comparisons"
+      ],
+      "title": "ExportedResultOutcome",
+      "type": "object"
+    },
+    "ExportedResults": {
+      "additionalProperties": false,
+      "properties": {
+        "outcomes": {
+          "items": {
+            "$ref": "#/$defs/ExportedResultOutcome"
+          },
+          "title": "Outcomes",
+          "type": "array"
+        },
+        "outcomes_total": {
+          "title": "Outcomes Total",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "outcomes",
+        "outcomes_total"
+      ],
+      "title": "ExportedResults",
       "type": "object"
     },
     "ExportedRetiredVertical": {
@@ -551,6 +1722,93 @@
         "url"
       ],
       "title": "ExportedSource",
+      "type": "object"
+    },
+    "ExportedSponsor": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Name"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "industry",
+                "government",
+                "individual",
+                "network",
+                "other"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Kind"
+        }
+      },
+      "required": [
+        "name",
+        "kind"
+      ],
+      "title": "ExportedSponsor",
+      "type": "object"
+    },
+    "ExportedStatement": {
+      "additionalProperties": false,
+      "description": "A reported statement (openspec reported-statements): what an article said, in the\npipeline's own words and never a quotation. Not a record and not a finding: the site\nwords every code and frames the text as its report's statement.",
+      "properties": {
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/StatementKind"
+        },
+        "firmness": {
+          "$ref": "#/$defs/StatementFirmness"
+        },
+        "speaker": {
+          "$ref": "#/$defs/StatementSpeaker"
+        },
+        "basis": {
+          "$ref": "#/$defs/StatementBasis"
+        },
+        "confidence": {
+          "title": "Confidence",
+          "type": "number"
+        },
+        "article_url": {
+          "title": "Article Url",
+          "type": "string"
+        },
+        "read_on": {
+          "format": "date",
+          "title": "Read On",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "kind",
+        "firmness",
+        "speaker",
+        "basis",
+        "confidence",
+        "article_url",
+        "read_on"
+      ],
+      "title": "ExportedStatement",
       "type": "object"
     },
     "ExportedStatus": {
@@ -627,6 +1885,263 @@
       "title": "ExportedStatusChange",
       "type": "object"
     },
+    "ExportedTrial": {
+      "additionalProperties": false,
+      "description": "One trial behind the claim's approved events. Its match, if any, is the entry in\n`matches` with the same identifier.",
+      "properties": {
+        "trial_id": {
+          "title": "Trial Id",
+          "type": "string"
+        },
+        "source_name": {
+          "title": "Source Name",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Title"
+        },
+        "phases": {
+          "items": {
+            "$ref": "#/$defs/TrialPhase"
+          },
+          "title": "Phases",
+          "type": "array"
+        },
+        "state": {
+          "enum": [
+            "not_started",
+            "under_way",
+            "completed",
+            "suspended",
+            "terminated",
+            "withdrawn",
+            "unknown"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "facts_as_of": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Facts As Of"
+        },
+        "facts": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedTrialFacts"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "papers": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Papers",
+          "type": "array"
+        },
+        "readings": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedReading"
+          },
+          "title": "Readings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "trial_id",
+        "source_name",
+        "url",
+        "title",
+        "phases",
+        "state",
+        "facts_as_of",
+        "facts"
+      ],
+      "title": "ExportedTrial",
+      "type": "object"
+    },
+    "ExportedTrialFacts": {
+      "additionalProperties": false,
+      "properties": {
+        "study_kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "interventional",
+                "observational",
+                "expanded_access"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Study Kind"
+        },
+        "participants": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedParticipants"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "allocation": {
+          "anyOf": [
+            {
+              "enum": [
+                "randomised",
+                "non_randomised"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Allocation"
+        },
+        "masking": {
+          "anyOf": [
+            {
+              "enum": [
+                "none",
+                "single",
+                "double",
+                "triple",
+                "quadruple"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Masking"
+        },
+        "comparators": {
+          "items": {
+            "enum": [
+              "placebo",
+              "sham",
+              "active",
+              "no_treatment"
+            ],
+            "type": "string"
+          },
+          "title": "Comparators",
+          "type": "array"
+        },
+        "healthy_volunteers": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Healthy Volunteers"
+        },
+        "age_groups": {
+          "items": {
+            "enum": [
+              "child",
+              "adult",
+              "older_adult"
+            ],
+            "type": "string"
+          },
+          "title": "Age Groups",
+          "type": "array"
+        },
+        "sponsor": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedSponsor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "primary_outcomes": {
+          "items": {
+            "$ref": "#/$defs/ExportedPlannedOutcome"
+          },
+          "title": "Primary Outcomes",
+          "type": "array"
+        },
+        "primary_outcomes_total": {
+          "title": "Primary Outcomes Total",
+          "type": "integer"
+        },
+        "why_stopped": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Why Stopped"
+        },
+        "results": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedResults"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "study_kind",
+        "participants",
+        "allocation",
+        "masking",
+        "comparators",
+        "healthy_volunteers",
+        "age_groups",
+        "sponsor",
+        "primary_outcomes",
+        "primary_outcomes_total",
+        "why_stopped",
+        "results"
+      ],
+      "title": "ExportedTrialFacts",
+      "type": "object"
+    },
     "ExportedVertical": {
       "additionalProperties": false,
       "properties": {
@@ -657,12 +2172,123 @@
       "title": "ExportedVertical",
       "type": "object"
     },
+    "FollowUpUnit": {
+      "enum": [
+        "days",
+        "weeks",
+        "months",
+        "years"
+      ],
+      "title": "FollowUpUnit",
+      "type": "string"
+    },
+    "MeasureCode": {
+      "description": "The kinds of measure a reading may give. The site words each one; adding a code\nis a change to its wording table too (docs/adr/0003).",
+      "enum": [
+        "symptom_score",
+        "frequency",
+        "body_measure",
+        "scan_finding",
+        "survival",
+        "side_effects",
+        "use_of_treatment",
+        "physical_test",
+        "quality_of_life",
+        "other"
+      ],
+      "title": "MeasureCode",
+      "type": "string"
+    },
+    "ReadingField": {
+      "description": "The field of a planned primary outcome a reading's words are read from.",
+      "enum": [
+        "time_frame",
+        "measure"
+      ],
+      "title": "ReadingField",
+      "type": "string"
+    },
+    "ReadingKind": {
+      "description": "What a record reading says of a planned primary outcome (openspec record-readings).",
+      "enum": [
+        "follow_up",
+        "measure"
+      ],
+      "title": "ReadingKind",
+      "type": "string"
+    },
     "RegulatoryOutcome": {
       "enum": [
         "approved",
         "refused"
       ],
       "title": "RegulatoryOutcome",
+      "type": "string"
+    },
+    "StatementBasis": {
+      "description": "What the article says a reported statement rests on. The article's word, not a\nregistry's or a paper's.",
+      "enum": [
+        "people",
+        "animals",
+        "laboratory",
+        "not_said"
+      ],
+      "title": "StatementBasis",
+      "type": "string"
+    },
+    "StatementFirmness": {
+      "description": "How firmly the article puts a reported statement.",
+      "enum": [
+        "fact",
+        "possibility"
+      ],
+      "title": "StatementFirmness",
+      "type": "string"
+    },
+    "StatementKind": {
+      "description": "What a reported statement is about (openspec reported-statements).",
+      "enum": [
+        "effect",
+        "safety",
+        "how_it_works",
+        "who_it_could_help",
+        "comparison",
+        "what_it_could_lead_to"
+      ],
+      "title": "StatementKind",
+      "type": "string"
+    },
+    "StatementSpeaker": {
+      "description": "Who the article has saying a reported statement: a role, never a name.",
+      "enum": [
+        "article",
+        "researcher",
+        "company",
+        "patient",
+        "other_expert"
+      ],
+      "title": "StatementSpeaker",
+      "type": "string"
+    },
+    "TermFit": {
+      "description": "How a subject term fits the claim: the thing itself, broader than it, or the\nkind of intervention it is. The order is the order a card is chosen in.",
+      "enum": [
+        "exact",
+        "broader",
+        "kind"
+      ],
+      "title": "TermFit",
+      "type": "string"
+    },
+    "TermRole": {
+      "description": "What a subject term is proposed as for a claim.",
+      "enum": [
+        "condition",
+        "intervention",
+        "target",
+        "drug"
+      ],
+      "title": "TermRole",
       "type": "string"
     },
     "TrialPhase": {
@@ -760,6 +2386,14 @@
         "$ref": "#/$defs/ExportedArchived"
       },
       "title": "Archived",
+      "type": "array"
+    },
+    "card_sources": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ExportedCardSource"
+      },
+      "title": "Card Sources",
       "type": "array"
     }
   },

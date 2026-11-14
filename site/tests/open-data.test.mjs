@@ -45,7 +45,76 @@ const claim = (slug, extra = {}) => ({
       trial_phases: ["PHASE1"],
       trial_state: "recruiting",
       regulatory_outcome: null,
+      confidence: 0.6,
       raw_payload: { secret: true },
+    },
+  ],
+  trials: [
+    {
+      trial_id: "NCT0",
+      source_name: "registry",
+      url: "https://registry.example/1",
+      title: "A trial",
+      phases: ["phase_1"],
+      state: "completed",
+      facts_as_of: "2024-06-01T00:00:00Z",
+      papers: ["10.5555/results"],
+      raw_payload: { secret: true },
+      facts: {
+        study_kind: "interventional",
+        participants: { count: 20, basis: "actual" },
+        allocation: "randomised",
+        masking: "double",
+        comparators: ["placebo"],
+        healthy_volunteers: true,
+        age_groups: ["adult"],
+        sponsor: { name: "A hospital", kind: "other" },
+        primary_outcomes: [{ measure: "A measure", time_frame: "Study end" }],
+        primary_outcomes_total: 1,
+        why_stopped: null,
+        description: "The sponsor's own conclusion",
+        results: {
+          outcomes_total: 1,
+          outcomes: [
+            {
+              title: "A measure",
+              time_frame: "Study end",
+              unit: "units",
+              measure: "mean",
+              spread_kind: "Standard Deviation",
+              rows: 1,
+              groups: [
+                { title: "Placebo", analysed: "10", value: "3.4", spread: "1.1", lower: null, upper: null, description: "It did well" },
+              ],
+              comparisons: [{ groups: ["Placebo"], p_value: "0.03", method: "t-test", test: null }],
+            },
+          ],
+        },
+      },
+    },
+  ],
+  papers: [
+    {
+      identifier: "10.5555/results",
+      url: "https://doi.org/10.5555/results",
+      record_url: "https://index.example/MED/1",
+      roles: [
+        { role: "trial_result", trial_id: "NCT0", listed: "listed_by_sponsor", decided_by: "rule" },
+      ],
+      facts_as_of: "2024-06-02T00:00:00Z",
+      authors: ["Example A"],
+      facts: {
+        title: "A report of the trial",
+        journal: "Journal of Examples",
+        year: 2024,
+        kinds: ["randomised_trial", "article"],
+        open_access: true,
+        retracted: false,
+        studied_in: ["people"],
+        authorString: "Example A, Sample B.",
+        abstractText: "The abstract of the paper",
+        affiliation: "A hospital department",
+      },
     },
   ],
   failure_flags: [],
@@ -93,6 +162,7 @@ test("the file holds the given claims, the licence and the sources, and no icons
   assert.deepEqual(Object.keys(out.claims[0].articles[0]).sort(), [
     "archive_url",
     "outlet",
+    "published_by",
     "published_date",
     "title",
     "url",
@@ -100,6 +170,57 @@ test("the file holds the given claims, the licence and the sources, and no icons
   const names = everyKey(out);
   assert.ok(!names.some((name) => /icon|outlets|body|text|payload|failure/i.test(name)), names.join());
   assert.ok(!everyString(out).some((text) => text.startsWith("data:")));
+});
+
+test("Scenario: Claim with a trial that has posted results", () => {
+  const out = openData(exported(), LICENCE, CREDIT, METHOD);
+  const [trial] = out.claims[0].trials;
+  assert.equal(trial.facts_as_of, "2024-06-01T00:00:00Z");
+  assert.deepEqual(trial.facts.participants, { count: 20, basis: "actual" });
+  assert.equal(trial.facts.masking, "double");
+  assert.deepEqual(trial.facts.primary_outcomes, [{ measure: "A measure", time_frame: "Study end" }]);
+  const [outcome] = trial.facts.results.outcomes;
+  assert.equal(outcome.groups[0].value, "3.4");
+  assert.equal(outcome.comparisons[0].p_value, "0.03");
+  assert.equal(out.claims[0].events[0].confidence, 0.6);
+});
+
+test("Scenario: Registry record", () => {
+  // Only the fields the claim page shows are copied: no record, and no free text
+  // that an export might one day carry beside them.
+  const out = openData(exported(), LICENCE, CREDIT, METHOD);
+  assert.ok(!everyKey(out).some((name) => /payload/i.test(name)));
+  const names = everyKey(out.claims[0].trials);
+  assert.ok(!names.some((name) => /payload|description/i.test(name)), names.join());
+  assert.ok(!everyString(out).some((text) => /conclusion|did well/.test(text)));
+});
+
+test("Scenario: Claim with a results paper", () => {
+  const out = openData(exported(), LICENCE, CREDIT, METHOD);
+  const [paper] = out.claims[0].papers;
+  const [trial] = out.claims[0].trials;
+  assert.equal(paper.identifier, "10.5555/results");
+  assert.deepEqual(
+    [paper.facts.title, paper.facts.journal, paper.facts.year, paper.facts.kinds],
+    ["A report of the trial", "Journal of Examples", 2024, ["randomised_trial", "article"]],
+  );
+  assert.equal(paper.facts_as_of, "2024-06-02T00:00:00Z");
+  // The paper names the trial it reports, and the trial lists the paper.
+  assert.deepEqual([paper.roles[0].trial_id, paper.roles[0].listed], [trial.trial_id, "listed_by_sponsor"]);
+  assert.deepEqual(trial.papers, [paper.identifier]);
+});
+
+test("Scenario: Authors", () => {
+  const out = openData(exported(), LICENCE, CREDIT, METHOD);
+  const names = everyKey(out.claims[0].papers);
+  assert.ok(!names.some((name) => /author|abstract|affiliation|payload/i.test(name)), names.join());
+  assert.ok(!everyString(out).some((text) => /Example A|The abstract|hospital department/.test(text)));
+});
+
+test("an export made before paper facts gives a file with no papers", () => {
+  const before = exported();
+  for (const entry of before.claims) delete entry.papers;
+  assert.deepEqual(openData(before, LICENCE, CREDIT, METHOD).claims[0].papers, []);
 });
 
 test("a preview export gives a preview file", () => {
@@ -139,4 +260,283 @@ test("the built file and page", () => {
   assert.equal(previewBuild.status, 0, previewBuild.stdout + previewBuild.stderr);
   const previewData = JSON.parse(fs.readFileSync(path.join(directory, "dist/data/claims.json"), "utf8"));
   assert.equal(previewData.preview, true);
+});
+
+// --- background cards (openspec open-data: "Background cards in the download") ---
+
+const cardSource = (name, in_data_file, licence = "A licence") => ({
+  name,
+  title: `Source ${name}`,
+  credit: `Credit ${name}`,
+  licence,
+  url: `https://${name}.example`,
+  terms_url: `https://${name}.example/terms`,
+  in_data_file,
+});
+
+const card = (source, label) => ({
+  kind: "condition",
+  fit: "exact",
+  label,
+  definition: "The source's own words.",
+  url: `https://${source}.example/term`,
+  source,
+  external_id: "T1",
+  version: "2026",
+  score: 0.9,
+  reasons: [{ code: "filed_by_registry", trials: 5, of: 6, name: null }],
+  decided_by: "rule",
+  read_at: "2026-11-14T09:00:00Z",
+});
+
+test("Scenario: Card from a public-domain source", () => {
+  const data = exported();
+  data.card_sources = [cardSource("open", true)];
+  data.claims[0].background = [card("open", "A term")];
+
+  const out = openData(data, LICENCE, CREDIT, METHOD);
+
+  assert.deepEqual(out.claims[0].background, [
+    {
+      kind: "condition",
+      fit: "exact",
+      label: "A term",
+      name: null,
+      definition: "The source's own words.",
+      definition_source: null,
+      url: "https://open.example/term",
+      source: "open",
+      external_id: "T1",
+      version: "2026",
+      score: 0.9,
+      molecule_kind: null,
+      mechanisms: [],
+      facts_source: null,
+      reasons: [{ code: "filed_by_registry", trials: 5, of: 6, name: null }],
+      read_at: "2026-11-14T09:00:00Z",
+    },
+  ]);
+  assert.deepEqual(out.card_sources, [
+    { name: "open", title: "Source open", credit: "Credit open", licence: "A licence", url: "https://open.example" },
+  ]);
+  assert.deepEqual(out.left_out, []);
+  assert.deepEqual(out.claims[1].background, []);
+});
+
+test("Scenario: Fact from a share-alike source", () => {
+  const data = exported();
+  data.card_sources = [cardSource("open", true), cardSource("alike", false, "CC BY-SA 3.0")];
+  data.claims[0].background = [card("open", "A term"), card("alike", "A mechanism")];
+
+  const out = openData(data, LICENCE, CREDIT, METHOD);
+
+  assert.deepEqual(out.claims[0].background.map((c) => c.label), ["A term"]);
+  assert.deepEqual(out.card_sources.map((source) => source.name), ["open"]);
+  assert.deepEqual(out.left_out, [
+    {
+      source: "Source alike",
+      licence: "CC BY-SA 3.0",
+      reason: "Its licence (CC BY-SA 3.0) does not allow its material to be offered under this file’s licence.",
+    },
+  ]);
+  assert.ok(!everyString(out).includes("A mechanism"));
+});
+
+test("Scenario: Target card from a named gene", () => {
+  const data = exported();
+  data.card_sources = [cardSource("genes", true, "CC0 1.0"), cardSource("proteins", true, "CC BY 4.0")];
+  const target = {
+    ...card("genes", "ABC1"),
+    kind: "target",
+    name: "example gene 1",
+    definition: "What the gene's product does, as its source says.",
+    definition_source: "proteins",
+    version: null,
+    reasons: [{ code: "word_equals_synonym", word: "EX-1", sources: ["uniprot"] }],
+  };
+  data.claims[0].background = [target];
+
+  const out = openData(data, LICENCE, CREDIT, METHOD);
+
+  const [held] = out.claims[0].background;
+  assert.equal(held.kind, "target");
+  assert.equal(held.name, "example gene 1");
+  assert.equal(held.definition, "What the gene's product does, as its source says.");
+  assert.equal(held.definition_source, "proteins");
+  assert.equal(held.score, 0.9);
+  assert.deepEqual(held.reasons, [{ code: "word_equals_synonym", word: "EX-1", sources: ["uniprot"] }]);
+  // The description's source is credited in the file with its licence.
+  assert.deepEqual(
+    out.card_sources.map((source) => [source.name, source.credit, source.licence]),
+    [["genes", "Credit genes", "CC0 1.0"], ["proteins", "Credit proteins", "CC BY 4.0"]],
+  );
+  assert.deepEqual(out.left_out, []);
+
+  // Were the description's licence not to allow it, the card stays without those words.
+  data.card_sources = [cardSource("genes", true, "CC0 1.0"), cardSource("proteins", false, "A closed licence")];
+  const without = openData(data, LICENCE, CREDIT, METHOD);
+  assert.equal(without.claims[0].background[0].definition, null);
+  assert.equal(without.claims[0].background[0].definition_source, null);
+  assert.ok(!everyString(without).includes("What the gene's product does"));
+  assert.deepEqual(without.left_out.map((left) => left.source), ["Source proteins"]);
+});
+
+test("a drug card and the target its record names are left out, and their source is named", () => {
+  const data = exported();
+  data.card_sources = [
+    cardSource("genes", true, "CC0 1.0"),
+    cardSource("alike", false, "CC BY-SA 3.0 Unported"),
+    cardSource("proteins", true, "CC BY 4.0"),
+  ];
+  const drug = {
+    ...card("genes", "EXAMPLUTIDE"),
+    kind: "drug",
+    definition: null,
+    version: null,
+    score: null,
+    molecule_kind: "protein",
+    mechanisms: [{ action: "agonist", target: "Example receptor" }],
+    facts_source: "alike",
+    reasons: [{ code: "drug_name_equals_name", name: "Examplutide" }],
+  };
+  const itsTarget = {
+    ...card("genes", "EXR1"),
+    kind: "target",
+    name: "example receptor 1",
+    definition: "What the receptor does, as its source says.",
+    definition_source: "proteins",
+    version: null,
+    score: null,
+    facts_source: "alike",
+    reasons: [{ code: "drug_record_names_target", name: "EXAMPLUTIDE" }],
+  };
+  data.claims[0].background = [card("genes", "A term"), drug, itsTarget];
+
+  const out = openData(data, LICENCE, CREDIT, METHOD);
+
+  assert.deepEqual(out.claims[0].background.map((held) => held.label), ["A term"]);
+  const strings = everyString(out);
+  for (const kept of ["EXAMPLUTIDE", "agonist", "Example receptor", "EXR1", "What the receptor does"]) {
+    assert.ok(!strings.includes(kept), kept);
+  }
+  assert.deepEqual(out.left_out, [
+    {
+      source: "Source alike",
+      licence: "CC BY-SA 3.0 Unported",
+      reason:
+        "Its licence (CC BY-SA 3.0 Unported) does not allow its material to be offered under this file’s licence.",
+    },
+  ]);
+  assert.ok(!out.card_sources.some((source) => source.name === "alike"));
+});
+
+test("an export made before background cards gives a file with none", () => {
+  const out = openData(exported(), LICENCE, CREDIT, METHOD);
+  assert.deepEqual(out.card_sources, []);
+  assert.deepEqual(out.left_out, []);
+  assert.deepEqual(out.claims[0].background, []);
+});
+
+// --- organisations (openspec open-data: "Organisations in the download") ---
+
+const sponsor = {
+  name: "Example Pharma",
+  identified: true,
+  record: {
+    source: "ror",
+    external_id: "00example9",
+    url: "https://ror.org/00example9",
+    name: "Example Pharma",
+    kinds: ["company"],
+    country: "Switzerland",
+    website: "https://www.pharma.example/",
+    score: 0.95,
+    read_at: "2026-11-14T09:00:00Z",
+    payload: { relationships: ["never carried"] },
+  },
+  roles: [{ role: "sponsor", article_urls: [], trial_ids: ["NCT0"] }],
+};
+
+test("Scenario: Claim with an identified sponsor", () => {
+  const data = exported();
+  data.claims[0].organisations = [sponsor];
+  data.claims[0].articles[0].published_by = "https://ror.org/00example9";
+
+  const out = openData(data, LICENCE, CREDIT, METHOD);
+
+  assert.deepEqual(out.claims[0].organisations, [
+    {
+      name: "Example Pharma",
+      identified: true,
+      record: {
+        source: "ror",
+        external_id: "00example9",
+        url: "https://ror.org/00example9",
+        name: "Example Pharma",
+        kinds: ["company"],
+        country: "Switzerland",
+        website: "https://www.pharma.example/",
+        score: 0.95,
+        read_at: "2026-11-14T09:00:00Z",
+      },
+      roles: [{ role: "sponsor", article_urls: [], trial_ids: ["NCT0"] }],
+    },
+  ]);
+  assert.equal(out.claims[0].articles[0].published_by, "https://ror.org/00example9");
+  assert.ok(!everyString(out).includes("never carried"));
+});
+
+test("Scenario: Person sponsor", () => {
+  // A trial whose sponsor is a person: the export holds no name and no organisation.
+  const data = exported();
+  data.claims[0].trials[0].facts.sponsor = { name: null, kind: "individual" };
+  data.claims[0].organisations = [];
+
+  const out = openData(data, LICENCE, CREDIT, METHOD);
+
+  assert.deepEqual(out.claims[0].organisations, []);
+  assert.equal(out.claims[0].trials[0].facts.sponsor.name, null);
+  assert.deepEqual(out.claims[1].organisations, []);
+  assert.equal(out.claims[1].articles[0].published_by, null);
+});
+
+// --- reported statements (openspec open-data: "Reported statements in the download") ---
+
+const reportedStatement = (text, confidence = 0.9) => ({
+  text,
+  kind: "effect",
+  firmness: "fact",
+  speaker: "article",
+  basis: "people",
+  confidence,
+  article_url: "https://news.example/a",
+  read_on: "2026-11-14",
+});
+
+test("Scenario: Claim with approved statements", () => {
+  const data = exported();
+  data.claims[0].reported_statements = [reportedStatement("It eased pain in a study.", 0.93)];
+
+  const out = openData(data, LICENCE, CREDIT, METHOD);
+
+  assert.deepEqual(out.claims[0].reported_statements, [
+    {
+      text: "It eased pain in a study.",
+      kind: "effect",
+      firmness: "fact",
+      speaker: "article",
+      basis: "people",
+      confidence: 0.93,
+      article_url: "https://news.example/a",
+      read_on: "2026-11-14",
+    },
+  ]);
+  assert.deepEqual(out.claims[1].reported_statements, []);
+});
+
+test("Scenario: Pending statement, and an export made before statements", () => {
+  // The export carries approved statements only, so a claim whose statements all wait,
+  // or an export from before reported statements, gives a file with none.
+  const out = openData(exported(), LICENCE, CREDIT, METHOD);
+  for (const claim of out.claims) assert.deepEqual(claim.reported_statements, []);
 });

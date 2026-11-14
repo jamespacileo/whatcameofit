@@ -121,7 +121,8 @@ export function buildTimetable(claim: ExportedClaim, generatedAt: string): Timet
 
 // A date is read as one thing, so it never breaks across two lines.
 const NBSP = "\u00a0";
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** The months as the site's dates and the status card write them. */
+export const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function formatDate(isoDate: string | null): string {
   if (!isoDate) return "";

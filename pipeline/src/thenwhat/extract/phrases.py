@@ -10,12 +10,11 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entities import entities_of
-from thenwhat.claims.entry import name_key
+from thenwhat.claims.entry import name_key, tidy
 from thenwhat.db.models import Claim, Entity
 from thenwhat.domain import EntityType
 from thenwhat.extract.names import is_a_search_phrase
-from thenwhat.extract.schema import ShortText
-from thenwhat.extract.service import MAX_SEARCH_PHRASES
+from thenwhat.extract.schema import MAX_SEARCH_PHRASES, ShortText
 from thenwhat.llm.client import Llm
 
 INSTRUCTIONS = """\
@@ -69,7 +68,7 @@ def backfill_search_phrases(session: Session, llm: Llm, claim: Claim) -> list[st
     }
     kept: list[str] = []
     for phrase in answer.search_phrases:
-        phrase = " ".join(phrase.split())
+        phrase = tidy(phrase)
         if is_a_search_phrase(phrase) and name_key(phrase) not in taken:
             taken.add(name_key(phrase))
             kept.append(phrase)

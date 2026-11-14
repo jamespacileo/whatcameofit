@@ -1,0 +1,107 @@
+---
+// The organisations a claim names: who a report or a trial record says is behind it,
+// in what role, and what an open registry's record says each one is. Openspec
+// site-publishing: "Organisations on the claim page". Stated, never judged: no rank,
+// no count of other claims, no description of standing.
+import {
+  NOT_IDENTIFIED,
+  ORGANISATIONS_NOTE,
+  identifiedText,
+  kindsText,
+  orderOrganisations,
+  roleText,
+  websiteHost,
+  type ExportedOrganisation,
+} from "../lib/organisations";
+import type { ExportedClaim } from "../lib/export";
+
+interface Props {
+  organisations: ExportedOrganisation[];
+  articles: ExportedClaim["articles"];
+  /** The trials the page lists, so that a sponsor's trials link to their entries. */
+  trialIds: Set<string>;
+}
+
+const { organisations, articles, trialIds } = Astro.props;
+const reportOf = (url: string) => articles.find((article) => article.url === url);
+const day = (stamp: string) =>
+  new Date(stamp).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+---
+
+<section class="matched organisations" data-pagefind-ignore>
+  <h2 class="bar" id="organisations">Organisations named</h2>
+  <p class="take-why">{ORGANISATIONS_NOTE}</p>
+  <ul class="plain match-list organisation-list">
+    {
+      orderOrganisations(organisations).map((organisation) => (
+        <li>
+          <div class="match-record">
+            <span class="organisation-name">{organisation.name}</span>
+            {organisation.record && (
+              <span class="entry-note organisation-facts">
+                {[kindsText(organisation.record.kinds), organisation.record.country]
+                  .filter(Boolean)
+                  .join(" · ")}
+                {organisation.record.website && (
+                  <>
+                    {organisation.record.kinds.length > 0 || organisation.record.country
+                      ? " · "
+                      : ""}
+                    <a href={organisation.record.website} rel="noopener">
+                      {websiteHost(organisation.record.website)}
+                    </a>
+                  </>
+                )}
+              </span>
+            )}
+            <ul class="plain organisation-roles">
+              {organisation.roles.map((role) => (
+                <li>
+                  {roleText(role)}
+                  {/* With one report on the page, "the report" needs no title. */}
+                  {role.role === "named_in_report" &&
+                    articles.length > 1 &&
+                    role.article_urls.map((url, index) => (
+                      <>
+                        {index === 0 ? ": " : ", "}
+                        <a href={url} rel="noopener">
+                          “{reportOf(url)?.title ?? url}”
+                        </a>
+                      </>
+                    ))}
+                  {role.role === "sponsor" &&
+                    role.trial_ids.map((trialId, index) => (
+                      <>
+                        {index === 0 ? ": " : ", "}
+                        {trialIds.has(trialId) ? (
+                          <a href={`#trial-${trialId}`}>{trialId}</a>
+                        ) : (
+                          trialId
+                        )}
+                      </>
+                    ))}
+                </li>
+              ))}
+            </ul>
+            {organisation.record ? (
+              <span class="entry-note">
+                {identifiedText(organisation.record)}{" "}
+                <a href={organisation.record.url} rel="noopener">
+                  Its registry record
+                </a>
+                , read {day(organisation.record.read_at)}.
+              </span>
+            ) : (
+              <span class="entry-note">{NOT_IDENTIFIED}</span>
+            )}
+          </div>
+        </li>
+      ))
+    }
+  </ul>
+</section>

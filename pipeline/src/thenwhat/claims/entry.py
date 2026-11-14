@@ -79,20 +79,18 @@ class DuplicateClaim(EntryError):
         )
 
 
-def _tidy(text: str) -> str:
+def tidy(text: str) -> str:
+    """The text with every run of whitespace made one space, and none at either end."""
     return " ".join(text.split())
 
 
-def _key(text: str) -> str:
+def name_key(text: str) -> str:
     """Form used to compare names: spacing and letter case do not matter."""
-    return _tidy(text).casefold()
-
-
-name_key = _key
+    return tidy(text).casefold()
 
 
 def _required(field: str, value: str) -> str:
-    value = _tidy(value)
+    value = tidy(value)
     if not value:
         raise MissingField(f"{field} is required.")
     return value
@@ -127,14 +125,14 @@ def find_claim(session: Session, slug: str) -> Claim | None:
     return session.scalars(select(Claim).where(Claim.slug == slug)).one_or_none()
 
 
-def _claim(session: Session, slug: str) -> Claim:
+def claim_by_slug(session: Session, slug: str) -> Claim:
     claim = find_claim(session, slug)
     if claim is None:
         raise ClaimNotFound(f"No claim has the slug '{slug}'.")
     return claim
 
 
-def _slug_of_claim_covering(session: Session, intervention: str, indication: str) -> str | None:
+def slug_of_claim_covering(session: Session, intervention: str, indication: str) -> str | None:
     """Slug of the claim for this intervention and indication, if one exists.
 
     The intervention matches on its entity's name or any synonym.
@@ -144,11 +142,11 @@ def _slug_of_claim_covering(session: Session, intervention: str, indication: str
         .join(Entity, Entity.claim_id == Claim.id)
         .where(Entity.type == EntityType.INTERVENTION)
     )
-    wanted = (_key(intervention), _key(indication))
+    wanted = (name_key(intervention), name_key(indication))
     indications = dict(session.execute(select(Claim.slug, Claim.indication)).all())
     for slug, name, synonyms in candidates:
-        known_names = {_key(name), *(_key(synonym) for synonym in synonyms)}
-        if wanted[0] in known_names and _key(indications[slug]) == wanted[1]:
+        known_names = {name_key(name), *(name_key(synonym) for synonym in synonyms)}
+        if wanted[0] in known_names and name_key(indications[slug]) == wanted[1]:
             return slug
     return None
 
@@ -173,14 +171,14 @@ def add_claim(
     approach = _approach(approach)
     if find_claim(session, slug) is not None:
         raise SlugTaken(f"Slug '{slug}' is already taken.")
-    existing = _slug_of_claim_covering(session, intervention, indication)
+    existing = slug_of_claim_covering(session, intervention, indication)
     if existing is not None:
         raise DuplicateClaim(existing)
 
     claim = Claim(
         slug=slug,
         headline=headline,
-        summary=_tidy(summary),
+        summary=tidy(summary),
         vertical=vertical,
         approach=approach,
         indication=indication,
@@ -202,13 +200,13 @@ def add_article(
     published_date: date,
 ) -> SourceArticle:
     """Attach a news article to a claim. Only its reference is stored, never its text."""
-    claim = _claim(session, claim_slug)
+    claim = claim_by_slug(session, claim_slug)
     url = url.strip()
     if not url.startswith(("http://", "https://")):
         raise InvalidUrl(f"Article URL must start with http:// or https://, got '{url}'.")
     outlet = _required("outlet", outlet)
     title = _required("title", title)
-    if _find_article(session, claim, url) is not None:
+    if find_article(session, claim, url) is not None:
         raise DuplicateArticle(f"Claim '{claim.slug}' already has the article {url}.")
 
     article = SourceArticle(
@@ -221,14 +219,10 @@ def add_article(
     return article
 
 
-def _find_article(session: Session, claim: Claim, url: str) -> SourceArticle | None:
+def find_article(session: Session, claim: Claim, url: str) -> SourceArticle | None:
     return session.scalars(
         select(SourceArticle).where(SourceArticle.claim_id == claim.id, SourceArticle.url == url)
     ).one_or_none()
-
-
-find_article = _find_article
-slug_of_claim_covering = _slug_of_claim_covering
 
 
 def check_new_claim(session: Session, slug: str, vertical: str) -> None:
@@ -253,7 +247,7 @@ def edit_claim(
     """Correct a claim's own fields. Changing its identity is checked against other claims.
 
     An empty approach clears it."""
-    claim = _claim(session, slug)
+    claim = claim_by_slug(session, slug)
     entity = session.scalars(
         select(Entity).where(Entity.claim_id == claim.id, Entity.type == EntityType.INTERVENTION)
     ).first()
@@ -275,7 +269,7 @@ def edit_claim(
         new_indication = _required("indication", indication or claim.indication)
         entity.name, old_name = "", entity.name  # so the claim does not match itself
         session.flush()
-        other = _slug_of_claim_covering(session, new_intervention, new_indication)
+        other = slug_of_claim_covering(session, new_intervention, new_indication)
         if other is not None and other != claim.slug:
             entity.name = old_name
             raise DuplicateClaim(other)
@@ -297,8 +291,8 @@ def add_promise(
 
     The date is read from the wording unless the operator supplies one.
     """
-    claim = _claim(session, claim_slug)
-    article = _find_article(session, claim, article_url.strip())
+    claim = claim_by_slug(session, claim_slug)
+    article = find_article(session, claim, article_url.strip())
     if article is None:
         raise ArticleNotFound(f"Claim '{claim.slug}' has no article {article_url}.")
     description = _required("description", description)
@@ -316,7 +310,7 @@ def add_promise(
 
 def rename_slug(session: Session, slug: str, new_slug: str) -> Claim:
     """Change a claim's slug. Refused once the claim has been published, so links stay valid."""
-    claim = _claim(session, slug)
+    claim = claim_by_slug(session, slug)
     if claim.published_at is not None:
         raise SlugLocked(f"Claim '{slug}' has been published, so its slug can no longer change.")
     _check_slug(new_slug)
@@ -356,7 +350,7 @@ def claim_count(session: Session) -> int:
 
 def archive_claim(session: Session, slug: str, *, reason: str, now: datetime) -> Claim:
     """Take a claim off the public site from the next export on. Nothing is deleted."""
-    claim = _claim(session, slug)
+    claim = claim_by_slug(session, slug)
     if claim.archived_at is not None:
         raise ArchiveRefused(f"Claim '{slug}' is already archived.")
     if not reason.strip():
@@ -369,7 +363,7 @@ def archive_claim(session: Session, slug: str, *, reason: str, now: datetime) ->
 
 def unarchive_claim(session: Session, slug: str) -> Claim:
     """Put an archived claim back on the public site from the next export on."""
-    claim = _claim(session, slug)
+    claim = claim_by_slug(session, slug)
     if claim.archived_at is None:
         raise ArchiveRefused(f"Claim '{slug}' is not archived.")
     claim.archived_at = None

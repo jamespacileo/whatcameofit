@@ -23,10 +23,10 @@ from thenwhat.extract.page import BODY_FROM, Page
 from thenwhat.extract.retrieve import REFUSED_BY_ROBOTS, ArticleRetriever
 from thenwhat.outlets.icons import outlet_domain
 from thenwhat.sources.base import SystemTime, Time
+from thenwhat.sources.clinicaltrials import ClinicalTrials
 
 # One outlet is asked at most this often.
 SECONDS_BETWEEN_REQUESTS = 1.0
-REGISTRY = "clinicaltrials.gov"
 # What a page can carry that a lookup uses, in the order the report shows them.
 SIGNALS = ("headline", "summary", "date", "structured article", "paper link", "registry number")
 
@@ -250,14 +250,14 @@ def _signals(page: Page) -> list[str]:
 
 
 def _approved_trials(session: Session) -> dict[str, list[str]]:
-    """Per claim, the registry trials approved in review."""
+    """Per claim, the registry trials approved, by rule or in review."""
     approved: dict[str, list[str]] = {}
     rows = session.execute(
         select(Claim.slug, EntityMatch.external_id)
         .join(Entity, Entity.claim_id == Claim.id)
         .join(EntityMatch, EntityMatch.entity_id == Entity.id)
         .where(
-            EntityMatch.source_name == REGISTRY,
+            EntityMatch.source_name == ClinicalTrials.name,
             EntityMatch.review_state == ReviewState.APPROVED,
         )
         .order_by(Claim.slug, EntityMatch.external_id)

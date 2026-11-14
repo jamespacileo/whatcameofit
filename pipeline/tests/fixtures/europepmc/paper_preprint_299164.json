@@ -1,0 +1,117 @@
+{
+  "version": "6.9",
+  "hitCount": 1,
+  "request": {
+    "queryString": "DOI:\"10.1101/2020.09.15.299164\"",
+    "resultType": "core",
+    "cursorMark": "*",
+    "pageSize": 25,
+    "sort": "",
+    "synonym": false
+  },
+  "resultList": {
+    "result": [
+      {
+        "id": "PPR215811",
+        "source": "PPR",
+        "fullTextIdList": {
+          "fullTextId": [
+            "PPR215811"
+          ]
+        },
+        "doi": "10.1101/2020.09.15.299164",
+        "title": "Ebselen, disulfiram, carmofur, PX-12, tideglusib, and shikonin are non-specific promiscuous SARS-CoV-2 main protease inhibitors",
+        "authorString": "Ma C, Hu Y, Townsend JA, Lagarias PI, Marty MT, Kolocouris A, Wang J.",
+        "authorList": {
+          "author": [
+            {
+              "fullName": "Ma C",
+              "lastName": "Ma",
+              "firstName": "Chunlong",
+              "initials": "C",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Pharmacology and Toxicology, College of Pharmacy, The University of Arizona, Tucson, Arizona 85721, United States"
+                  }
+                ]
+              }
+            },
+            {
+              "fullName": "Hu Y",
+              "lastName": "Hu",
+              "firstName": "Yanmei",
+              "initials": "Y",
+              "authorAffiliationDetailsList": {
+                "authorAffiliation": [
+                  {
+                    "affiliation": "Department of Pharmacology and Toxicology, College of Pharmacy, The University of Arizona, Tucson, Arizona 85721, United States"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "pubYear": "2020",
+        "abstractText": "Abstract replaced in this fixture. The recorded text is not kept.",
+        "pubTypeList": {
+          "pubType": [
+            "Preprint"
+          ]
+        },
+        "bookOrReportDetails": {
+          "publisher": "bioRxiv",
+          "yearOfPublication": 2020
+        },
+        "fullTextUrlList": {
+          "fullTextUrl": [
+            {
+              "availability": "Free",
+              "availabilityCode": "F",
+              "documentStyle": "doi",
+              "site": "DOI",
+              "url": "https://doi.org/10.1101/2020.09.15.299164"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "html",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/article/PPR/PPR215811"
+            },
+            {
+              "availability": "Open access",
+              "availabilityCode": "OA",
+              "documentStyle": "pdf",
+              "site": "Europe_PMC",
+              "url": "https://europepmc.org/api/fulltextRepo?pprId=PPR215811&type=FILE&fileName=EMS96075-pdf.pdf&mimeType=application/pdf"
+            }
+          ]
+        },
+        "isOpenAccess": "Y",
+        "inEPMC": "Y",
+        "inPMC": "N",
+        "citedByCount": 0,
+        "hasReferences": "Y",
+        "hasTextMinedTerms": "Y",
+        "hasDbCrossReferences": "N",
+        "hasPDF": "Y",
+        "hasBook": "N",
+        "hasSuppl": "N",
+        "hasLabsLinks": "Y",
+        "hasData": "Y",
+        "license": "cc by-nd",
+        "authMan": "N",
+        "epmcAuthMan": "Y",
+        "nihAuthMan": "N",
+        "manuscriptId": "EMS96075",
+        "hasTMAccessionNumbers": "Y",
+        "dateOfCreation": "2020-09-23",
+        "firstPublicationDate": "2020-09-16",
+        "firstIndexDate": "2020-09-23",
+        "fullTextReceivedDate": "2020-10-23",
+        "hasEvaluations": "N"
+      }
+    ]
+  }
+}

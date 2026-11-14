@@ -1,0 +1,13 @@
+{
+  "head": {
+    "vars": [
+      "term",
+      "record",
+      "label",
+      "type"
+    ]
+  },
+  "results": {
+    "bindings": []
+  }
+}

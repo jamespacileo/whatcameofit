@@ -101,3 +101,16 @@ const paths = drawing ? DRAWN[drawing] : undefined;
     )
   }
 </Tag>
+
+<script>
+  // On hover a chip's drawing is drawn again, line by line. Each line is counted as
+  // one unit long, so a short line and a long one take the same time, and is given
+  // its place in the order. One technique for every topic: none has a gesture of its own.
+  for (const drawing of document.querySelectorAll<SVGElement>("a.chip > svg")) {
+    [...drawing.children].forEach((line, index) => {
+      line.setAttribute("pathLength", "1");
+      (line as SVGElement).style.setProperty("--i", String(index));
+    });
+    drawing.classList.add("lines");
+  }
+</script>

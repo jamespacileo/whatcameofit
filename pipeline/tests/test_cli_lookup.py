@@ -64,6 +64,7 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
     llm = Llm(session, settings, model=FunctionModel(respond, model_name="scripted"))
     monkeypatch.setattr("thenwhat.cli.entry.open_session", test_session)
     monkeypatch.setattr("thenwhat.cli.lookup.make_tools", lambda s: (llm, Backend(), Trials()))
+    monkeypatch.setattr("thenwhat.cli.lookup.make_substances", lambda s: None)
     runner = CliRunner()
     return lambda *arguments, text="": runner.invoke(
         app, list(arguments), input=text, env={"COLUMNS": "200"}

@@ -1,10 +1,19 @@
 """ClinicalTrials.gov API v2. Terms and limits: docs/sources.md."""
 
 import re
-from datetime import datetime
+from dataclasses import dataclass
+from datetime import date, datetime
 from typing import Any
 
-from thenwhat.sources.base import Source, SourceRecord
+import httpx
+
+from thenwhat.sources.base import (
+    MissingContact,
+    Source,
+    SourceError,
+    SourceRecord,
+    UnsearchableTerm,
+)
 
 API = "https://clinicaltrials.gov/api/v2"
 NCT_ID = re.compile(r"NCT\d{8}")
@@ -15,6 +24,24 @@ SEARCH_FIELDS = (
     "NCTId,BriefTitle,OfficialTitle,InterventionName,LeadSponsorName,Phase,OverallStatus,Condition"
     ",Acronym,EnrollmentCount,CollaboratorName"
 )
+# What a bulk load keeps of each trial. No free text beyond the title.
+LIST_FIELDS = (
+    "NCTId,BriefTitle,Condition,InterventionType,InterventionName,InterventionOtherName"
+    ",Phase,OverallStatus,StartDate,LeadSponsorClass"
+)
+# The most trials the registry returns in one page.
+LIST_PAGE_SIZE = 1000
+
+
+@dataclass(frozen=True, slots=True)
+class TrialPage:
+    """One page of the registry's list: the trials as returned, and where the next page starts."""
+
+    studies: list[dict[str, Any]]
+    next_token: str | None
+    fetched_at: datetime
+
+
 # A trial's name that this many trials carry does not identify one.
 MAX_NAMED_TRIALS = 20
 # A name with more trials than this is a class or a common substance, not one product.
@@ -74,6 +101,20 @@ GENERIC_CONDITION_WORDS = frozenset(
         "people",
     ]
 )
+
+
+# How the registry begins its answer when it cannot read a search as written, for
+# example "Error parsing query in Intervention / treatment: Too complicated query".
+UNREADABLE_QUERY = re.compile(r"Error parsing query in (?P<field>[^:]+): (?P<reason>.+)", re.DOTALL)
+
+
+class _UnreadableQuery(SourceError):
+    """The registry could not read one field of a search."""
+
+    def __init__(self, field: str, reason: str) -> None:
+        super().__init__(reason)
+        self.field = field
+        self.reason = reason
 
 
 class ClinicalTrials(Source):
@@ -138,7 +179,7 @@ class ClinicalTrials(Source):
 
     def named_trials(self, name: str) -> list[SourceRecord]:
         """The trials that carry this name in their acronym or title, such as SURMOUNT-5.
-        None when so many do that the name does not identify a trial."""
+        Empty when so many do that the name does not identify a trial."""
         phrase = name.replace('"', " ").strip()
         if not phrase:
             return []
@@ -148,13 +189,48 @@ class ClinicalTrials(Source):
             "fields": SEARCH_FIELDS,
             "countTotal": "true",
         }
-        fetched = self._get(f"{API}/studies", params)
+        try:
+            fetched = self._get(f"{API}/studies", params)
+        except _UnreadableQuery as unreadable:
+            raise UnsearchableTerm(name, unreadable.reason, self.name) from None
         if fetched is None:
             return []
         studies = fetched.payload.get("studies", [])
         if fetched.payload.get("totalCount", len(studies)) > MAX_NAMED_TRIALS:
             return []
         return [self._record(study, fetched.fetched_at) for study in studies]
+
+    def list_page(
+        self,
+        condition: str,
+        *,
+        page_token: str | None = None,
+        updated_since: date | None = None,
+        page_size: int = LIST_PAGE_SIZE,
+    ) -> TrialPage:
+        """One page of the trials that meet a condition written in the registry's own
+        expression language, optionally only those the registry updated since a date.
+
+        For bulk loads: up to a thousand trials per request, not one request per trial.
+        The answer is not cached, because a page is large and is stored trial by trial.
+        """
+        if not self._contact:
+            raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
+        expression = condition
+        if updated_since is not None:
+            expression = (
+                f"({condition}) AND AREA[LastUpdatePostDate]RANGE[{updated_since.isoformat()},MAX]"
+            )
+        params = {
+            "filter.advanced": expression,
+            "fields": LIST_FIELDS,
+            "pageSize": str(page_size),
+        }
+        if page_token:
+            params["pageToken"] = page_token
+        response = self._request(f"{API}/studies", params)
+        payload = response.json() if response is not None else {}
+        return TrialPage(payload.get("studies", []), payload.get("nextPageToken"), self._time.now())
 
     def _page(
         self, intervention: str, condition: str | None, page_token: str | None
@@ -170,13 +246,26 @@ class ClinicalTrials(Source):
             params["query.cond"] = condition
         if page_token:
             params["pageToken"] = page_token
-        fetched = self._get(f"{API}/studies", params)
+        try:
+            fetched = self._get(f"{API}/studies", params)
+        except _UnreadableQuery as unreadable:
+            # The registry names the field it could not read: the treatment or the condition.
+            at_fault = intervention if unreadable.field.startswith("Intervention") else condition
+            raise UnsearchableTerm(at_fault or intervention, unreadable.reason, self.name) from None
         if fetched is None:
             return [], 0, None
         studies = fetched.payload.get("studies", [])
         records = [self._record(study, fetched.fetched_at) for study in studies]
         total = fetched.payload.get("totalCount", len(studies))
         return records, total, fetched.payload.get("nextPageToken")
+
+    def _heed(self, response: httpx.Response) -> None:
+        """A search the registry cannot read is its own failure, with the registry's
+        reason, so the term can be reported and reworded. Nothing simpler is sent."""
+        if response.status_code == 400:
+            unreadable = UNREADABLE_QUERY.match(response.text.strip())
+            if unreadable:
+                raise _UnreadableQuery(unreadable["field"].strip(), unreadable["reason"].strip())
 
     def _record(self, study: dict[str, Any], fetched_at: datetime) -> SourceRecord:
         nct_id = study["protocolSection"]["identificationModule"]["nctId"]

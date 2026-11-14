@@ -53,10 +53,12 @@ def prepare_command(
     ] = 4,
 ) -> None:
     """Get claims ready for review: read their unread articles, search the registries,
-    and read the registries for matches already approved.
+    read the registries for matches already approved, and read the stored trial records
+    into record readings.
 
     Claims are worked on side by side. A step that fails is reported and the claim's
-    other steps still run. Nothing is approved here.
+    other steps still run. Nothing is approved here beyond what those steps approve by
+    rule.
     """
     if not slugs and not pending:
         err.print("Name the claims to prepare, or use --pending for every claim awaiting review.")

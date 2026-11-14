@@ -1,0 +1,189 @@
+{
+  "number_of_results": 10,
+  "items": [
+    {
+      "score": 0.96,
+      "chosen": true,
+      "substring": "Göteborg University",
+      "organization": {
+        "id": "https://ror.org/04japw488",
+        "admin": {
+          "created": {
+            "date": "2018-11-14",
+            "schema_version": "1.0"
+          },
+          "last_modified": {
+            "date": "2024-12-11",
+            "schema_version": "2.1"
+          }
+        },
+        "links": [
+          {
+            "type": "website",
+            "value": "https://www.gouni.edu.ng/"
+          },
+          {
+            "type": "wikipedia",
+            "value": "https://en.wikipedia.org/wiki/Godfrey_Okoye_University"
+          }
+        ],
+        "names": [
+          {
+            "lang": "en",
+            "types": [
+              "alias"
+            ],
+            "value": "GO University"
+          },
+          {
+            "lang": "en",
+            "types": [
+              "ror_display",
+              "label"
+            ],
+            "value": "Godfrey Okoye University"
+          }
+        ],
+        "types": [
+          "education"
+        ],
+        "status": "active",
+        "domains": [],
+        "locations": [
+          {
+            "geonames_id": 2343279,
+            "geonames_details": {
+              "lat": 6.44132,
+              "lng": 7.49883,
+              "name": "Enugu",
+              "country_code": "NG",
+              "country_name": "Nigeria",
+              "continent_code": "AF",
+              "continent_name": "Africa",
+              "country_subdivision_code": "EN",
+              "country_subdivision_name": "Enugu State"
+            }
+          }
+        ],
+        "established": 2009,
+        "external_ids": [
+          {
+            "all": [
+              "grid.448896.f"
+            ],
+            "type": "grid",
+            "preferred": "grid.448896.f"
+          },
+          {
+            "all": [
+              "0000 0004 1791 8061"
+            ],
+            "type": "isni",
+            "preferred": null
+          },
+          {
+            "all": [
+              "Q13601184"
+            ],
+            "type": "wikidata",
+            "preferred": null
+          }
+        ],
+        "relationships": []
+      },
+      "matching_type": "SINGLE SEARCH"
+    },
+    {
+      "score": 0.92,
+      "chosen": false,
+      "substring": "Göteborg University",
+      "organization": {
+        "id": "https://ror.org/057ap5t09",
+        "admin": {
+          "created": {
+            "date": "2018-11-14",
+            "schema_version": "1.0"
+          },
+          "last_modified": {
+            "date": "2024-12-11",
+            "schema_version": "2.1"
+          }
+        },
+        "links": [
+          {
+            "type": "website",
+            "value": "http://rku.ac.in/"
+          },
+          {
+            "type": "wikipedia",
+            "value": "https://en.wikipedia.org/wiki/RK_University"
+          }
+        ],
+        "names": [
+          {
+            "lang": "en",
+            "types": [
+              "ror_display",
+              "label"
+            ],
+            "value": "RK University"
+          },
+          {
+            "lang": null,
+            "types": [
+              "acronym"
+            ],
+            "value": "RKU"
+          }
+        ],
+        "types": [
+          "education"
+        ],
+        "status": "active",
+        "domains": [],
+        "locations": [
+          {
+            "geonames_id": 1258847,
+            "geonames_details": {
+              "lat": 22.29161,
+              "lng": 70.79322,
+              "name": "Rajkot",
+              "country_code": "IN",
+              "country_name": "India",
+              "continent_code": "AS",
+              "continent_name": "Asia",
+              "country_subdivision_code": "GJ",
+              "country_subdivision_name": "Gujarat"
+            }
+          }
+        ],
+        "established": 2011,
+        "external_ids": [
+          {
+            "all": [
+              "grid.449487.2"
+            ],
+            "type": "grid",
+            "preferred": "grid.449487.2"
+          },
+          {
+            "all": [
+              "0000 0004 1768 8083"
+            ],
+            "type": "isni",
+            "preferred": null
+          },
+          {
+            "all": [
+              "Q7276931"
+            ],
+            "type": "wikidata",
+            "preferred": null
+          }
+        ],
+        "relationships": []
+      },
+      "matching_type": "SINGLE SEARCH"
+    }
+  ]
+}

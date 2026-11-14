@@ -5,7 +5,7 @@
 
 const MAX_PAGE_CHARACTERS = 1_500_000;
 // A body shorter than this is a teaser, not the article.
-export const BODY_FROM = 500;
+const BODY_FROM = 500;
 // The most papers and registry numbers one page is taken to report.
 const MAX_LINKED = 5;
 const ENTITIES = { nbsp: " ", amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
@@ -33,7 +33,7 @@ const tidy = (text) => String(text).replace(/\s+/g, " ").trim();
 const unique = (items) => [...new Set(items)].slice(0, MAX_LINKED);
 const captured = (text, pattern) => [...text.matchAll(pattern)].map((match) => match[1]);
 
-function decoded(text) {
+export function decoded(text) {
   return text
     .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
     .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCodePoint(parseInt(code, 16)))

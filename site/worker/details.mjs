@@ -6,9 +6,9 @@
 // Why a record is ranked where it is, as codes, in the order they are listed.
 export const STATED = "stated"; // the text or the page gives this record's registry number
 export const PAPER = "paper"; // a paper the page links to gives it
-export const TRIAL_NAME = "trial_name";
-export const PARTICIPANTS = "participants";
-export const SPONSOR = "sponsor";
+const TRIAL_NAME = "trial_name";
+const PARTICIPANTS = "participants";
+const SPONSOR = "sponsor";
 
 // How far a reported number of participants may be from the registered one: articles
 // round, and report the people analysed rather than the people enrolled.

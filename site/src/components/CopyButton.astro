@@ -1,0 +1,63 @@
+---
+// A pill that copies the text of another element, as the claim page's do. Hidden until
+// the script finds the clipboard can be written.
+import Copy from "@lucide/astro/icons/copy";
+
+interface Props {
+  /** The id of the element whose text is copied. */
+  source: string;
+  label: string;
+}
+
+const { source, label } = Astro.props;
+---
+
+<button type="button" class="share" data-copy={source} hidden>
+  <Copy size={16} stroke-width={1.9} aria-hidden="true" />
+  <span data-copy-text>{label}</span>
+</button>
+
+<script>
+  // Copying: the button appears only where the clipboard can be written, says so when
+  // it has copied, and otherwise leaves the text selected for the reader to copy.
+  // A copy is confirmed three ways: the label changes, the site's blue dot lands in
+  // place of the icon, and a screen reader is told.
+  if (navigator.clipboard) {
+    const copiers = [...document.querySelectorAll<HTMLButtonElement>("[data-copy]")];
+    // A page with no status line of its own is given one, so a copy is still said.
+    let said = document.querySelector<HTMLElement>("[data-said]");
+    if (copiers.length > 0 && !said) {
+      said = document.createElement("p");
+      said.className = "visually-hidden";
+      said.setAttribute("role", "status");
+      said.dataset.said = "";
+      document.body.append(said);
+    }
+    const confirm = (control: HTMLElement, words: string) => {
+      control.classList.add("done");
+      if (said) said.textContent = words;
+      setTimeout(() => {
+        control.classList.remove("done");
+        if (said) said.textContent = "";
+      }, 2000);
+    };
+    for (const copier of copiers) {
+      const source = document.getElementById(copier.dataset.copy!);
+      const label = copier.querySelector<HTMLElement>("[data-copy-text]");
+      // Nothing to copy: the button stays out of sight.
+      if (!source || !label) continue;
+      const idle = label.textContent;
+      copier.hidden = false;
+      copier.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(source.textContent!.trim());
+          label.textContent = "Copied";
+          confirm(copier, "Copied");
+          setTimeout(() => (label.textContent = idle), 2000);
+        } catch {
+          getSelection()?.selectAllChildren(source);
+        }
+      });
+    }
+  }
+</script>

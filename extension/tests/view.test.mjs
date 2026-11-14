@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, test } from "node:test";
 import { render } from "../src/view.js";
+import { answerOf, candidatesOf } from "../src/kept.js";
+import { describeAnswer, LIVE } from "../../site/src/lib/live-lookup.mjs";
 
 // Record the standard DOM operations the renderer emits. Layout is checked in Chrome.
 class Element {
@@ -42,6 +44,20 @@ const shown = {
   likely: [],
   notices: ["A registered clinical trial is not a treatment option."],
 };
+
+test("search and privacy controls announce that their destination opens in a new tab", () => {
+  for (const [state, label, path] of [
+    [{ kind: "untracked" }, "Search tracked claims", "/"],
+    [{ kind: "sharing", enabled: false }, "Privacy", "/privacy"],
+  ]) {
+    const root = new Element("main");
+    render(root, state, site, actions);
+    const link = elements(root, "a").find((item) => item.href === site.url + path);
+    assert.ok(link);
+    assert.equal(link.textContent, `${label} (opens in a new tab)`);
+    assert.equal(elements(link, "svg").length, 1);
+  }
+});
 
 test("each candidate card owns its title, confidence, record details and source link", () => {
   const root = new Element("main");
@@ -129,6 +145,10 @@ test("no-match uncertainty and explicit first-use sharing stay visible", () => {
   const root = new Element("main");
   render(root, { kind: "answer", shown: { ...shown, none: "No matching record found. This does not rule out a trial." } }, site, actions);
   assert.match(visibleText(root), /No matching record found.*does not rule out/);
+  // A linked paper that was not looked up is said in the open, beside the list.
+  const unchecked = describeAnswer({ about_a_treatment: true, treatment: "EX-1", candidates: [], papers_unchecked: 1 }).papersUnchecked;
+  render(root, { kind: "answer", shown: { ...shown, papersUnchecked: unchecked } }, site, actions);
+  assert.match(visibleText(root), /A linked paper could not be looked up just now/);
   render(root, { kind: "sharing", enabled: false }, site, { ...actions, enableSharing() {}, disableSharing() {} });
   assert.match(visibleText(root), /text, links and cleaned address.*OpenAI.*screenshot automatically.*Allow and search.*Use reviewed claims only/s);
   assert.equal(elements(root, "details").length, 0);
@@ -167,13 +187,35 @@ test("the lists are offered under an answer, and not while the page is being rea
   const root = new Element("main");
   render(root, trackedState, site, listActions, kept);
   assert.match(root.textContent, /Recently checked.*Following.*1 changed/);
-  assert.match(root.textContent, /Follow this claim/);
+  assert.match(root.textContent, /Keep me up to date/);
 
   render(root, { kind: "searching" }, site, listActions, kept);
   assert.doesNotMatch(root.textContent, /Recently checked/);
 
   render(root, trackedState, site, actions);
-  assert.doesNotMatch(root.textContent, /Recently checked|Follow this claim/);
+  assert.doesNotMatch(root.textContent, /Recently checked|Keep me up to date/);
+});
+
+test("a wait is one line: the mark, then what is being waited for", () => {
+  const root = new Element("main");
+  for (const state of [{ kind: "checking" }, { kind: "searching" }, { kind: "capturing" }]) {
+    render(root, state, site, listActions, kept);
+    const line = root.children[0];
+    assert.equal(line.className, "checking");
+    assert.equal(line.children[0].attributes.class, "wait-mark");
+    assert.equal(typeof line.children[1], "string");
+  }
+});
+
+test("the tick is drawn for the claim just followed, and only for it", () => {
+  const root = new Element("main");
+  const mark = () => elements(root, "span").find((span) => span.className?.startsWith("followed-mark"));
+  render(root, trackedState, site, listActions, { ...kept, followed: ["/reviewed"], fresh: "/reviewed" });
+  assert.equal(mark().className, "followed-mark drawn");
+  assert.equal(mark().children[0].children[0].attributes.pathLength, "1");
+
+  render(root, trackedState, site, listActions, { ...kept, followed: ["/reviewed"], fresh: null });
+  assert.equal(mark().className, "followed-mark");
 });
 
 test("a followed claim that moved says what it was, in words", () => {
@@ -181,7 +223,7 @@ test("a followed claim that moved says what it was, in words", () => {
   render(root, trackedState, site, listActions, { ...kept, followed: ["/reviewed"], was: { "/reviewed": "Trial registered" } });
   assert.match(root.textContent, /Changed since you last looked\. Was: Trial registered\./);
   assert.match(root.textContent, /You follow this claim\..*Stop following/);
-  assert.doesNotMatch(root.textContent, /Follow this claim/);
+  assert.doesNotMatch(root.textContent, /Keep me up to date/);
 });
 
 test("a checked page leads to its one claim, its candidates, or back to the page", () => {
@@ -206,7 +248,7 @@ test("a checked page leads to its one claim, its candidates, or back to the page
   assert.match(cards[1].textContent, /Not checked by a person.*2 possible records/);
   elements(cards[1], "button")[0].listeners.click();
   assert.equal(asked, "news.example.org/a");
-  assert.match(cards[2].textContent, /No record was found when this was checked/);
+  assert.match(cards[2].textContent, /No saved trial match/);
   assert.match(root.textContent, /Kept in this browser only.*Clear this list/);
 
   render(root, { kind: "recent", entries: [] }, site, listActions, kept);
@@ -226,3 +268,18 @@ test("the following list says what changed and what is no longer published", () 
   assert.doesNotMatch(cards[1].textContent, /Phase 2 trial/);
   assert.equal(elements(cards[1], "a").length, 0);
 });
+
+for (const identified of [false, true]) {
+  test(`recent checks preserve whether the registry was searched (${identified})`, () => {
+    const answer = answerOf({ kind: "answer", shown: describeAnswer({
+      about_a_treatment: identified, treatment: identified ? "EX-1" : null,
+      condition: "tooth agenesis", candidates: [], tracked: [],
+    }) });
+    const entry = { key: "news.example.org/check", url: "https://news.example.org/check",
+      title: "Synthetic report", outlet: "news.example.org", at: Date.UTC(2026, 10, 13), answer };
+    const root = new Element("main");
+    render(root, { kind: "recent", entries: [{ ...entry, candidates: candidatesOf(entry, site) }] }, site, listActions, kept);
+    assert.ok(root.textContent.includes(identified ? LIVE.none : LIVE.notATreatment));
+    assert.doesNotMatch(root.textContent, /No record was found when this was checked/);
+  });
+}

@@ -86,3 +86,14 @@ An operator SHALL be able to approve or reject several items by id in one comman
 #### Scenario: Clearing the noise
 - **WHEN** an operator rejects a claim's candidates scored under 0.1
 - **THEN** only that claim's pending candidates under 0.1 are rejected, each recorded as the operator's decision
+
+### Requirement: Assistant decisions
+An AI assistant working through the review queue SHALL record its decisions with the decider "assistant". A decision made by the assistant SHALL NOT be recorded as the operator's and SHALL NOT be stored as a human label. A rule SHALL NOT be nameable as the decider of a queue decision.
+
+#### Scenario: Assistant approves a match
+- **WHEN** the assistant approves a candidate match that a decision step had scored
+- **THEN** the match is approved with the decider "assistant" and the score's human label stays empty
+
+#### Scenario: Operator takes over a decision
+- **WHEN** the operator approves an item the assistant had approved
+- **THEN** the decider becomes the operator and the human label is recorded

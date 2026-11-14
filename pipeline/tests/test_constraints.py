@@ -9,13 +9,26 @@ from sqlalchemy.orm import Session
 
 from thenwhat.db.models import (
     Claim,
+    ClaimTerm,
     Entity,
     EntityMatch,
     EvidenceEvent,
     FailureFlag,
+    ReportedStatement,
     SourceArticle,
 )
-from thenwhat.domain import EntityType, EventType, RegulatoryOutcome, TrialState
+from thenwhat.domain import (
+    EntityType,
+    EventType,
+    RegulatoryOutcome,
+    StatementBasis,
+    StatementFirmness,
+    StatementKind,
+    StatementSpeaker,
+    TermFit,
+    TermRole,
+    TrialState,
+)
 
 NOW = datetime(2026, 1, 1, tzinfo=UTC)
 
@@ -284,9 +297,112 @@ def test_second_failure_flag_for_one_trial_is_refused(session: Session):
     assert_refused(session, "uq_failure_flag_claim_trial")
 
 
+# --- reported statement ----------------------------------------------------
+
+
+def statement(claim: Claim, source: SourceArticle | None, **overrides) -> ReportedStatement:
+    values = {
+        "claim_id": claim.id,
+        "source_article_id": source.id if source else None,
+        "text": "EX-1 regrew teeth in mice.",
+        "text_key": "ex 1 regrew teeth in mice",
+        "kind": StatementKind.EFFECT,
+        "firmness": StatementFirmness.FACT,
+        "speaker": StatementSpeaker.ARTICLE,
+        "basis": StatementBasis.ANIMALS,
+        "confidence": 0.9,
+        "decision_ref": "source_article:1:statement:1",
+        "article_read_at": NOW,
+    }
+    return ReportedStatement(**(values | overrides))
+
+
+def add_article(session: Session, claim: Claim) -> SourceArticle:
+    row = article(claim)
+    session.add(row)
+    session.flush()
+    return row
+
+
+@pytest.mark.parametrize(
+    ("role", "fit"),
+    [
+        ("condition", "exact"),
+        ("intervention", "broader"),
+        ("intervention", "kind"),
+        ("target", "exact"),
+        ("drug", "exact"),
+    ],
+)
+def test_term_link_of_every_role_and_fit_is_accepted(session: Session, role: str, fit: str):
+    claim = add_claim(session)
+
+    session.add(
+        ClaimTerm(
+            claim_id=claim.id,
+            role=TermRole(role),
+            source_name="mesh",
+            external_id="D000001",
+            label="t",
+            fit=TermFit(fit),
+        )
+    )
+    session.flush()
+
+
+@pytest.mark.parametrize("column", ["role", "fit"])
+def test_term_link_with_an_unknown_role_or_fit_is_refused(session: Session, column: str):
+    claim = add_claim(session)
+    values = {"role": "condition", "fit": "exact"} | {column: "narrower"}
+
+    with pytest.raises(IntegrityError, match=f"ck_claim_term_{column}"):
+        session.execute(
+            text(
+                "INSERT INTO claim_term (claim_id, role, source_name, external_id, label, fit)"
+                " VALUES (:claim, :role, 'mesh', 'D000001', 't', :fit)"
+            ),
+            {"claim": claim.id} | values,
+        )
+
+
+def test_statement_without_an_article_is_refused(session: Session):
+    """Scenario: Statement with no article"""
+    session.add(statement(add_claim(session), None))
+
+    with pytest.raises(IntegrityError) as raised:
+        session.flush()
+    assert "source_article_id" in str(raised.value.orig)
+
+
+def test_same_statement_twice_for_one_article_is_refused(session: Session):
+    claim = add_claim(session)
+    source = add_article(session, claim)
+    session.add(statement(claim, source))
+    session.flush()
+    session.add(statement(claim, source, text="EX-1 regrew teeth in mice!"))
+
+    assert_refused(session, "uq_reported_statement_article_text_key")
+
+
+@pytest.mark.parametrize(
+    ("overrides", "constraint"),
+    [
+        ({"text": "x" * 201}, "ck_reported_statement_text_length"),
+        ({"confidence": 1.2}, "ck_reported_statement_confidence_range"),
+    ],
+)
+def test_overlong_or_out_of_range_statement_is_refused(
+    session: Session, overrides: dict, constraint: str
+):
+    claim = add_claim(session)
+    session.add(statement(claim, add_article(session, claim), **overrides))
+
+    assert_refused(session, constraint)
+
+
 # --- review columns ------------------------------------------------------
 
-REVIEWED_TABLES = ["claim", "entity_match", "evidence_event"]
+REVIEWED_TABLES = ["claim", "entity_match", "evidence_event", "reported_statement"]
 
 
 @pytest.fixture
@@ -295,6 +411,8 @@ def reviewed_rows(session: Session) -> None:
     claim = add_claim(session)
     match = add_match(session, add_entity(session, claim))
     add_event(session, claim, entity_match_id=match.id)
+    session.add(statement(claim, add_article(session, claim)))
+    session.flush()
 
 
 @pytest.mark.parametrize("table", REVIEWED_TABLES)

@@ -1,0 +1,106 @@
+{
+  "number_of_results": 1,
+  "items": [
+    {
+      "score": 1.0,
+      "chosen": true,
+      "substring": "Neuron",
+      "organization": {
+        "id": "https://ror.org/00a8q8z31",
+        "admin": {
+          "created": {
+            "date": "2023-12-07",
+            "schema_version": "1.0"
+          },
+          "last_modified": {
+            "date": "2026-09-22",
+            "schema_version": "2.1"
+          }
+        },
+        "links": [
+          {
+            "type": "website",
+            "value": "https://q-medecine.sorbonne-universite.fr/en/structures-de-recherche/neuron"
+          }
+        ],
+        "names": [
+          {
+            "lang": "fr",
+            "types": [
+              "alias"
+            ],
+            "value": "GRC 23"
+          },
+          {
+            "lang": "fr",
+            "types": [
+              "alias"
+            ],
+            "value": "GRC NeurON"
+          },
+          {
+            "lang": "fr",
+            "types": [
+              "alias"
+            ],
+            "value": "NeurON"
+          },
+          {
+            "lang": "fr",
+            "types": [
+              "ror_display",
+              "label"
+            ],
+            "value": "NeurON : Interface Neuro-machine"
+          },
+          {
+            "lang": "en",
+            "types": [
+              "alias"
+            ],
+            "value": "NeurON: Neuro-machine Interface"
+          }
+        ],
+        "types": [
+          "facility"
+        ],
+        "status": "active",
+        "domains": [],
+        "locations": [
+          {
+            "geonames_id": 2988507,
+            "geonames_details": {
+              "lat": 48.85341,
+              "lng": 2.3488,
+              "name": "Paris",
+              "country_code": "FR",
+              "country_name": "France",
+              "continent_code": "EU",
+              "continent_name": "Europe",
+              "country_subdivision_code": "IDF",
+              "country_subdivision_name": "Île-de-France"
+            }
+          }
+        ],
+        "established": 2019,
+        "external_ids": [
+          {
+            "all": [
+              "Q123694982"
+            ],
+            "type": "wikidata",
+            "preferred": "Q123694982"
+          }
+        ],
+        "relationships": [
+          {
+            "id": "https://ror.org/02en5vm52",
+            "type": "parent",
+            "label": "Sorbonne Université"
+          }
+        ]
+      },
+      "matching_type": "SINGLE SEARCH"
+    }
+  ]
+}

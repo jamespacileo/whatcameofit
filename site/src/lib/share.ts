@@ -68,3 +68,21 @@ export function mastodonShare(server: string, text: string, url: string): string
   if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+(:\d+)?$/.test(host)) return null;
   return `https://${host}/share?${new URLSearchParams({ text: `${text} ${url}` })}`;
 }
+
+/** "November 2026": the month a date falls in, in full, for a sentence a reader passes on. */
+export function checkedMonth(isoDate: string): string {
+  return new Date(`${isoDate.slice(0, 7)}-01T00:00:00Z`).toLocaleDateString("en-GB", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+/**
+ * What "Copy sentence" copies on a topic page: where the topic's claims stand, the
+ * month the registries were checked, and the page's address. Dated, so it stays true.
+ */
+export function topicSentence(summary: string, lastCheckedAt: string | null, address: string): string {
+  const checked = lastCheckedAt ? ` Checked ${checkedMonth(lastCheckedAt)}.` : "";
+  return `${summary}${checked} ${address}`;
+}

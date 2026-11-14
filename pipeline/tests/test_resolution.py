@@ -19,13 +19,14 @@ from thenwhat.claims.entities import (
     set_origin_paper,
 )
 from thenwhat.claims.entry import DuplicateClaim, InvalidField, add_claim
-from thenwhat.db.models import Claim, DecisionLog, EntityMatch
+from thenwhat.db.models import Claim, DecisionLog, EntityMatch, EntitySubstance
 from thenwhat.decide.core import BackendAnswer, DecisionFailed
 from thenwhat.decide.steps import suggest_evidence_stage
 from thenwhat.domain import Decider, EntityType, ReviewState
+from thenwhat.resolve.codes import Listing, give_development_codes
 from thenwhat.resolve.service import resolve_claim
 from thenwhat.review.decisions import record_decision
-from thenwhat.sources.base import SourceRecord
+from thenwhat.sources.base import SourceRecord, UnsearchableTerm
 
 NOW = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
 DOI = "10.1000/example.2018.1"
@@ -235,6 +236,30 @@ def test_each_search_term_contributes_its_trials(session: Session):
         ("clinicaltrials.gov", "NCT00000002"),
         ("clinicaltrials.gov", "NCT00000003"),
     ]
+
+
+def test_a_term_the_registry_cannot_search_for_is_reported_and_the_others_still_run(
+    session: Session,
+):
+    claim = new_claim(session)
+    add_synonym(session, "tooth-regrowth-ex1", "EX-1 antibody", "TRG-035")
+
+    class Refusing(FakeTrials):
+        def search_trials(self, intervention: str, condition: str | None = None):
+            if intervention == "EX-1 antibody":
+                raise UnsearchableTerm(intervention, "Too complicated query", "clinicaltrials.gov")
+            return super().search_trials(intervention, condition)
+
+    trials = Refusing({"TRG-035": [trial("NCT00000002")]})
+    reported: list[str] = []
+
+    added = resolve(session, claim, trials=trials, unsearchable=lambda t: reported.append(t.term))
+
+    assert [match.external_id for match in added] == ["NCT00000002"]
+    assert reported == ["EX-1 antibody"]
+    # Left to itself the failure is raised, never passed over in silence.
+    with pytest.raises(UnsearchableTerm):
+        resolve(session, claim, trials=trials)
 
 
 def test_trial_found_by_two_terms_is_one_candidate(session: Session):
@@ -636,3 +661,128 @@ def test_a_generic_word_is_refused_as_a_search_phrase(session: Session):
 
     with pytest.raises(InvalidField):
         add_search_phrase(session, claim.slug, "EX-1 antibody", "the device")
+
+
+# --- development codes -------------------------------------------------------------
+
+
+def substance(identifier: str, name: str, *listed: tuple[str, str]) -> SourceRecord:
+    """A substance as the registry of substances returns it: its names, each with a kind."""
+    payload = {
+        "substance": {"uuid": identifier, "_name": name, "approvalID": "UNII000001"},
+        "names": [{"name": listed_name, "type": kind} for listed_name, kind in listed],
+    }
+    return SourceRecord("gsrs", identifier, f"https://gsrs.test/{identifier}", payload, NOW)
+
+
+class FakeSubstances:
+    """A registry of substances that answers each exact name from a table."""
+
+    name = "gsrs"
+
+    def __init__(self, by_name: dict[str, list[SourceRecord]]) -> None:
+        self.by_name = by_name
+        self.asked: list[str] = []
+
+    def substances_named(self, name: str) -> list[SourceRecord]:
+        self.asked.append(name)
+        return self.by_name.get(name, [])
+
+
+EX1 = substance(
+    "s-1", "Exampletinib", ("exampletinib", "of"), ("Toothgrow", "bn"), ("ABC-123", "cd")
+)
+
+
+def test_development_codes_are_kept_with_their_source_and_searched_in_the_indication(
+    session: Session,
+):
+    """Scenario: Trial filed under a development code"""
+    claim = add_claim(
+        session,
+        slug="tooth-regrowth",
+        headline="Drug regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="exampletinib",
+        indication="tooth agenesis",
+    )
+    registry = FakeSubstances({"exampletinib": [EX1]})
+    trials = FakeTrials({"ABC-123": [trial("NCT00000007", "ABC-123 in adults")]})
+    backend = Scoring(0.9)
+
+    answer = give_development_codes(session, claim, substances=registry)
+    added = resolve_claim(
+        session, claim, trials=trials, dois=FakeDois(set()), backend=backend, now=NOW
+    )
+
+    assert answer is not None and answer.listing is Listing.ONE_SUBSTANCE
+    assert answer.codes == ["ABC-123"]
+    [intervention] = entities_of(session, claim)
+    kept = session.get(EntitySubstance, intervention.id)
+    assert kept is not None
+    assert (kept.source_name, kept.external_id, kept.codes) == ("gsrs", "s-1", ["ABC-123"])
+    assert kept.payload == EX1.payload and kept.fetched_at == NOW
+    # The code is not a name: it is not shown as one, and is searched like a phrase.
+    assert intervention.synonyms == [] and intervention.search_phrases == []
+    assert trials.searched == ["exampletinib", "ABC-123"]
+    assert trials.conditions[-1] == "tooth agenesis"
+    assert [match.external_id for match in added] == ["NCT00000007"]
+    # The backend is told the code, so a record that gives only the code can be read.
+    assert "development codes: ABC-123" in backend.states[0]
+
+
+def test_an_intervention_the_registry_does_not_list_gets_no_code(session: Session):
+    """Scenario: Intervention the substance registry does not list"""
+    claim = add_claim(
+        session,
+        slug="tooth-regrowth",
+        headline="Device regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="Tooth regrowth device",
+        indication="tooth agenesis",
+    )
+    registry = FakeSubstances({})
+
+    answer = give_development_codes(session, claim, substances=registry)
+
+    assert answer is not None and answer.listing is Listing.NOT_LISTED
+    assert answer.codes == []
+    assert registry.asked == ["Tooth regrowth device"]
+    assert session.scalars(select(EntitySubstance)).all() == []
+
+
+def test_names_listed_under_two_substances_give_no_code(session: Session):
+    """Scenario: Names listed under more than one substance"""
+    claim = add_claim(
+        session,
+        slug="tooth-regrowth",
+        headline="Drug regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="exampletinib",
+        indication="tooth agenesis",
+    )
+    add_synonym(session, claim.slug, "exampletinib", "Toothgrow")
+    salt = substance("s-2", "Exampletinib mesylate", ("Toothgrow", "bn"), ("XYZ-9", "cd"))
+    registry = FakeSubstances({"exampletinib": [EX1], "Toothgrow": [salt]})
+
+    answer = give_development_codes(session, claim, substances=registry)
+
+    assert answer is not None and answer.listing is Listing.SEVERAL_SUBSTANCES
+    assert answer.codes == []
+    assert session.scalars(select(EntitySubstance)).all() == []
+
+
+def test_a_substance_no_longer_listed_loses_its_codes(session: Session):
+    claim = add_claim(
+        session,
+        slug="tooth-regrowth",
+        headline="Drug regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="exampletinib",
+        indication="tooth agenesis",
+    )
+    give_development_codes(session, claim, substances=FakeSubstances({"exampletinib": [EX1]}))
+
+    give_development_codes(session, claim, substances=FakeSubstances({}))
+
+    assert session.scalars(select(EntitySubstance)).all() == []
