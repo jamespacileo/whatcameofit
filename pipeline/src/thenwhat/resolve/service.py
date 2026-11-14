@@ -1,6 +1,7 @@
 """Proposing registry matches for a claim's entities. Behavior: openspec entity-resolution.
 
-Every candidate is stored pending. Only an operator can approve one.
+Every candidate is stored and scored. A rule rejects one scored near zero and approves
+a trial scored high for the claim's indication; the rest wait for review.
 """
 
 from datetime import datetime

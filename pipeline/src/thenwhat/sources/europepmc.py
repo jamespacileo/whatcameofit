@@ -56,7 +56,7 @@ class EuropePmc(Source):
     def trial_numbers(self, *, doi: str | None = None, pubmed_id: str | None = None) -> list[str]:
         """The ClinicalTrials.gov numbers a paper's abstract gives for its own trial.
 
-        None when Europe PMC does not have the paper, when its abstract gives no number,
+        Empty when Europe PMC does not have the paper, when its abstract gives no number,
         or when it gives so many that the paper is a review and not a trial's report.
         """
         if doi:

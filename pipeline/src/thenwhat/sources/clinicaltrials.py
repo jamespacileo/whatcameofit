@@ -138,7 +138,7 @@ class ClinicalTrials(Source):
 
     def named_trials(self, name: str) -> list[SourceRecord]:
         """The trials that carry this name in their acronym or title, such as SURMOUNT-5.
-        None when so many do that the name does not identify a trial."""
+        Empty when so many do that the name does not identify a trial."""
         phrase = name.replace('"', " ").strip()
         if not phrase:
             return []

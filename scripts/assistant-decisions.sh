@@ -1,7 +1,8 @@
 #!/bin/sh
 # Lists what an AI assistant decided on one claim, so that the operator can repeat the
-# decisions they agree with. A claim stays out of the public export while any assistant
-# decision stands on it, its matches or its events.
+# decisions they agree with. A claim is published either way; the export marks it as
+# not checked by a person while any assistant decision stands on it, its matches or its
+# events.
 #
 #   sh scripts/assistant-decisions.sh <claim-slug>
 #

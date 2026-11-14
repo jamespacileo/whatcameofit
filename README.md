@@ -83,7 +83,7 @@ thenwhat event add example-enamel --type regulatory_decision --date 2026-03-01 \
 
 `fetch` reads the registries for the claim's approved matches only. Each trial gives up to four events from the dated fields of its current record: registered, started, a current end state, and results posted. Papers that cite the origin paper become follow-up events when they share an author with it or name the intervention. Retraction notices become retraction events. Fetching again records nothing twice.
 
-Trial events from a match you approved are approved by rule; follow-up papers and events entered by hand always wait for review. Set `REVIEW_CONFIDENCE_THRESHOLD` above 1 to review everything yourself.
+Trial events from an approved match are approved by rule. A follow-up paper is approved by rule when its confidence reaches `REVIEW_CONFIDENCE_THRESHOLD`, and waits for review otherwise. Events entered by hand always wait for review. Set `REVIEW_CONFIDENCE_THRESHOLD` above 1 to review everything yourself.
 
 Use `event add` for what no client covers yet: approvals, company events, and trials in registries other than ClinicalTrials.gov. A trial event needs `--id` and `--phase`; a status change needs `--state` (and a `started` event is what moves a claim to its phase); a regulatory decision needs `--outcome`.
 

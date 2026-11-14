@@ -12,14 +12,13 @@ from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import (
     ArticleNotFound,
-    ClaimNotFound,
     EntryError,
     add_article,
     add_claim,
     add_promise,
     check_new_claim,
+    claim_by_slug,
     find_article,
-    find_claim,
     name_key,
     promises_of,
 )
@@ -103,9 +102,7 @@ def extract_into_claim(
 
     What the operator already entered is kept: the headline always, the summary if set.
     """
-    claim = find_claim(session, claim_slug)
-    if claim is None:
-        raise ClaimNotFound(f"No claim has the slug '{claim_slug}'.")
+    claim = claim_by_slug(session, claim_slug)
     if claim.review_state is not ReviewState.PENDING:
         raise ClaimNotPending(
             f"Claim '{claim_slug}' has already been reviewed. Add to it by hand instead."

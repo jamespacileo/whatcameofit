@@ -13,7 +13,7 @@ from thenwhat.claims.entities import (
     add_synonym,
     set_origin_paper,
 )
-from thenwhat.claims.entry import ClaimNotFound, EntryError, find_claim
+from thenwhat.claims.entry import EntryError, claim_by_slug
 from thenwhat.cli import extract
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
@@ -119,9 +119,7 @@ def entity_phrases(
         if slugs:
             claims = []
             for slug in slugs:
-                claim = find_claim(session, slug)
-                if claim is None:
-                    raise ClaimNotFound(f"No claim has the slug '{slug}'.")
+                claim = claim_by_slug(session, slug)
                 claims.append(claim)
         else:
             claims = list(session.scalars(select(Claim).order_by(Claim.slug)))
@@ -160,13 +158,12 @@ def resolve_command(
 ) -> None:
     """Search the registries for a claim's interventions and papers.
 
-    Every hit becomes a pending candidate match for you to approve or reject. A trial
+    Every hit becomes a scored candidate match. A rule rejects one scored near zero and
+    approves a trial scored high; the rest wait for you to approve or reject. A trial
     scores as a match only when it tests the intervention for the claim's indication.
     """
     with entry_session() as session:
-        claim = find_claim(session, claim_slug)
-        if claim is None:
-            raise ClaimNotFound(f"No claim has the slug '{claim_slug}'.")
+        claim = claim_by_slug(session, claim_slug)
         backend = make_backend(session)
         trials, dois = make_registries(session)
         now = datetime.now(UTC)

@@ -250,7 +250,7 @@ def _signals(page: Page) -> list[str]:
 
 
 def _approved_trials(session: Session) -> dict[str, list[str]]:
-    """Per claim, the registry trials approved in review."""
+    """Per claim, the registry trials approved, by rule or in review."""
     approved: dict[str, list[str]] = {}
     rows = session.execute(
         select(Claim.slug, EntityMatch.external_id)

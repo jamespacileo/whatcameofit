@@ -69,7 +69,8 @@ def extract_new(
     ],
     paste: Annotated[bool, typer.Option("--paste", help=PASTE_HELP)] = False,
 ) -> None:
-    """Draft a new claim from an article. The draft stays pending until you approve it."""
+    """Draft a new claim from an article. The draft is decided by rule, or stays pending
+    until you approve it when the rule is switched off."""
     from thenwhat.extract.service import draft_claim_from_article
 
     by_rule = settings_or_exit().approve_drafts_by_rule

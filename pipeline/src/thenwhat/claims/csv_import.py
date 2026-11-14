@@ -17,7 +17,6 @@ from thenwhat.claims.entry import EntryError, add_article, add_claim, add_promis
 CLAIM_COLUMNS = ("headline", "vertical", "intervention", "indication")
 ARTICLE_COLUMNS = ("article_url", "outlet", "article_title", "published_date")
 REQUIRED_COLUMNS = ("slug", *CLAIM_COLUMNS, *ARTICLE_COLUMNS)
-OPTIONAL_COLUMNS = ("summary", "approach", "promise", "promise_date")
 
 
 @dataclass(frozen=True, slots=True)

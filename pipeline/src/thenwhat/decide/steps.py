@@ -92,7 +92,8 @@ def score_matches(
     now: datetime,
 ) -> None:
     """Set each candidate's score: the probability that its registry record is evidence
-    for the claim. Scores order the review queue; they approve nothing.
+    for the claim. Scores order the review queue, and the resolver's rules approve or
+    reject on them; this function decides nothing.
 
     A claim is one intervention for one indication, so a trial is a match only when it
     tests that intervention for that indication. The same intervention in another

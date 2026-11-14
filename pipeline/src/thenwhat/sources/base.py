@@ -26,6 +26,13 @@ class SourceRecord:
     fetched_at: datetime
 
 
+# Where a reader can open a record, by registry name.
+RECORD_URLS = {
+    "clinicaltrials.gov": "https://clinicaltrials.gov/study/{}",
+    "crossref": "https://doi.org/{}",
+}
+
+
 class SourceError(Exception):
     """A registry could not be read."""
 

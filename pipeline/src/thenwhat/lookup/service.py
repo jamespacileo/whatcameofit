@@ -8,7 +8,7 @@ is a ranked list of candidates, not a reviewed status.
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Annotated, Protocol
+from typing import Protocol
 
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -21,6 +21,7 @@ from thenwhat.decide.steps import MATCH, TRIAL_OPTIONS, TRIAL_QUESTION, candidat
 from thenwhat.domain import EntityType
 from thenwhat.extract.names import is_a_name
 from thenwhat.extract.page import Page
+from thenwhat.extract.schema import ShortText
 from thenwhat.llm.client import Llm
 from thenwhat.lookup.details import PAPER, STATED, Details, agreeing
 from thenwhat.resolve.service import what_it_says
@@ -36,7 +37,6 @@ LIKELY_FROM = 0.5
 # The most linked papers one lookup asks about.
 MAX_PAPERS = 3
 
-ShortText = Annotated[str, Field(min_length=1, max_length=200)]
 
 INSTRUCTIONS = """\
 You read one news article or social media post and say which medical treatment it is about.
