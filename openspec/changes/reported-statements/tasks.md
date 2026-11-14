@@ -32,9 +32,9 @@
 
 ## 6. Measurement before the page
 
-- [ ] 6.1 Run the command on ten articles of the real database and record in `docs/lookup.md`: statements proposed, refused by each rule, approved, pending, and the model cost against the monthly budget. Stop and report if the cost of all 104 articles would pass a quarter of the budget
-- [ ] 6.2 Read the approved statements of those ten beside their articles and record how many misstate the article, are stronger than it, or name someone. If more than one in ten does, raise the threshold or tighten the instructions and run the ten again before the rest
-- [ ] 6.3 Run the remaining articles and record the same figures, and which outlets could not be read
+- [x] 6.1 Run the command on ten articles of the real database and record in `docs/lookup.md`: statements proposed, refused by each rule, approved, pending, and the model cost against the monthly budget. Stop and report if the cost of all 104 articles would pass a quarter of the budget
+- [x] 6.2 Read the approved statements of those ten beside their articles and record how many misstate the article, are stronger than it, or name someone. If more than one in ten does, raise the threshold or tighten the instructions and run the ten again before the rest
+- [x] 6.3 Run the remaining articles and record the same figures, and which outlets could not be read
 
 ## 7. Site
 
