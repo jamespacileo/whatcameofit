@@ -4,6 +4,7 @@ import StageTrack from "../components/StageTrack.astro";
 import StatusMade from "../components/StatusMade.astro";
 import { brandAsset } from "../lib/brand";
 import { data } from "../lib/export";
+import { statusSlug } from "../lib/guide";
 import { SITE } from "../../site.config.mjs";
 import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS, overlayText } from "../lib/status";
 
@@ -143,13 +144,17 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
         <div>
           <dt>
             {STAGE_PATH.includes(code) && <StageTrack code={code} />}
-            {STATUS_LABELS[code]}
+            <a href={`/guide/${statusSlug(code)}`}>{STATUS_LABELS[code]}</a>
           </dt>
           <dd>{STATUS_MEANINGS[code]}</dd>
         </div>
       ))
     }
   </dl>
+  <p class="entry-note">
+    Each status links to its entry in <a href="/guide">the guide</a>, which says what it rests on
+    and what it does not tell you.
+  </p>
 
   <h2 class="bar" id="no-signal">No signal</h2>
   <p>
