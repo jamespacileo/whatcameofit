@@ -48,6 +48,10 @@ The questions SHALL be shown in a fixed order in two groups: how the treatment w
 - **WHEN** a reader opens a claim whose status is Approved
 - **THEN** the answer names the regulator and the date of the approval and says, without being opened, that an approval is not advice to take a treatment
 
+#### Scenario: Approval entered by hand
+- **WHEN** the approval's record names no regulator as its source
+- **THEN** the answer gives the date of the approval and the same caution, and names no regulator
+
 #### Scenario: Claim with no trial on record
 - **WHEN** a reader opens a claim with no trial on record
 - **THEN** the section says no trial in people is on record, says what the first report was about, answers the approval question, and has no question about a comparison, a measure, posted results or a trial under way

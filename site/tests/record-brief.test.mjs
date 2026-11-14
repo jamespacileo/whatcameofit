@@ -252,6 +252,14 @@ test("Scenario: Approved claim", () => {
   assert.equal(row.source.records[0].url, "https://regulator.example/approval");
 });
 
+test("Scenario: Approval entered by hand", () => {
+  const byHand = claim({
+    events: [event("regulatory_decision", { regulatory_outcome: "approved", source_name: "manual entry", event_date: "2024-04-01" })],
+  });
+  const row = rowOf(recordBrief(byHand, null), "approved");
+  assert.equal(plain(row.answer), "On 1 Apr 2024. An approval is not advice to take a treatment");
+});
+
 test("Scenario: Claim that is not approved", () => {
   const row = rowOf(recordBrief(device, "2026-11-14T08:00:00Z"), "approved");
   assert.equal(row.answer, NONE);
