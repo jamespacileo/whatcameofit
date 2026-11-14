@@ -46,7 +46,7 @@ const READING = {
   additionalProperties: false,
   required: [
     "about_a_treatment", "gist", "intervention", "other_names", "known_names", "search_phrases", "indication",
-    "trial_name", "participants", "sponsor", "organisations",
+    "trial_name", "participants", "sponsor", "organisations", "paper_queries", "researchers",
   ],
   properties: {
     about_a_treatment: { type: "boolean", description: "Whether the text reports a specific treatment for a specific condition." },
@@ -60,6 +60,8 @@ const READING = {
     participants: { type: ["integer", "null"], description: "How many people took part in the trial the text reports, as the text says. Null if it does not say." },
     sponsor: { type: ["string", "null"], description: "The company, university or hospital the text says ran or paid for the trial, by its name alone. Null if the text names none." },
     organisations: names("Up to three universities, hospitals or companies explicitly named in the supplied report as involved in this research. Names only. Do not infer from authors, affiliations or your own knowledge. Empty when none are named."),
+    paper_queries: names("Up to two literature search queries for the research paper behind the report, each two to four meaningful words supported by the report, about the actual research subject or experimental method, not a hoped-for clinical benefit or indication. No people, institutions, journal, publication title, identifiers, Boolean operators or invented detail. Empty when the report does not describe the research."),
+    researchers: names("Up to two researchers the report explicitly names as involved in the study, its authors first, by full name without titles. Not journalists, patients or commentators who were not involved, and never names you infer. Empty when none are named."),
   },
 };
 const probability = { type: "number" };
