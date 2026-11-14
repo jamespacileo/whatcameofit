@@ -1,0 +1,451 @@
+{
+  "data": {
+    "search": {
+      "hits": [
+        {
+          "id": "ENSG00000231728",
+          "entity": "target",
+          "object": {
+            "id": "ENSG00000231728",
+            "approvedSymbol": "TMSB15B-AS1",
+            "approvedName": "TMSB15B antisense RNA 1",
+            "biotype": "lncRNA",
+            "symbolSynonyms": [],
+            "functionDescriptions": [],
+            "proteinIds": []
+          }
+        },
+        {
+          "id": "ENSG00000158164",
+          "entity": "target",
+          "object": {
+            "id": "ENSG00000158164",
+            "approvedSymbol": "TMSB15A",
+            "approvedName": "thymosin beta 15A",
+            "biotype": "protein_coding",
+            "symbolSynonyms": [
+              {
+                "label": "TMSB15A",
+                "source": "uniprot"
+              },
+              {
+                "label": "TMSL8",
+                "source": "uniprot"
+              },
+              {
+                "label": "TMSNB",
+                "source": "uniprot"
+              },
+              {
+                "label": "TMSNB",
+                "source": "HGNC"
+              },
+              {
+                "label": "TMSB15",
+                "source": "NCBI_entrez"
+              },
+              {
+                "label": "TMSL8",
+                "source": "NCBI_entrez"
+              },
+              {
+                "label": "TMSNB",
+                "source": "NCBI_entrez"
+              },
+              {
+                "label": "Tb15",
+                "source": "NCBI_entrez"
+              },
+              {
+                "label": "TbNB",
+                "source": "NCBI_entrez"
+              },
+              {
+                "label": "TMSB15A",
+                "source": "NCBI_entrez"
+              }
+            ],
+            "functionDescriptions": [
+              "Plays an important role in the organization of the cytoskeleton. Binds to and sequesters actin monomers (G actin) and therefore inhibits actin polymerization. ."
+            ],
+            "proteinIds": [
+              {
+                "id": "P0CG34",
+                "source": "uniprot_swissprot"
+              },
+              {
+                "id": "ENSP00000289373",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000594208",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000594209",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000594210",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000762128",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000804732",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "A8K614",
+                "source": "uniprot_obsolete"
+              },
+              {
+                "id": "Q99406",
+                "source": "uniprot_obsolete"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ENSG00000034510",
+          "entity": "target",
+          "object": {
+            "id": "ENSG00000034510",
+            "approvedSymbol": "TMSB10",
+            "approvedName": "thymosin beta 10",
+            "biotype": "protein_coding",
+            "symbolSynonyms": [
+              {
+                "label": "TMSB10",
+                "source": "uniprot"
+              },
+              {
+                "label": "PTMB10",
+                "source": "uniprot"
+              },
+              {
+                "label": "THYB10",
+                "source": "uniprot"
+              },
+              {
+                "label": "TB10",
+                "source": "HGNC"
+              },
+              {
+                "label": "MIG12",
+                "source": "NCBI_entrez"
+              },
+              {
+                "label": "TB10",
+                "source": "NCBI_entrez"
+              },
+              {
+                "label": "TMSB10",
+                "source": "NCBI_entrez"
+              }
+            ],
+            "functionDescriptions": [
+              "Plays an important role in the organization of the cytoskeleton. Binds to and sequesters actin monomers (G actin) and therefore inhibits actin polymerization (By similarity). ."
+            ],
+            "proteinIds": [
+              {
+                "id": "P63313",
+                "source": "uniprot_swissprot"
+              },
+              {
+                "id": "ENSP00000233143",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000547346",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000547347",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000547348",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000599581",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000599582",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000599583",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000599584",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000599585",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000768808",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000768809",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000768810",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000768811",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000768812",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000768813",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000768814",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000768815",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000768816",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000768817",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000768818",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000768819",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000795132",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000802074",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "P13472",
+                "source": "uniprot_obsolete"
+              },
+              {
+                "id": "Q596K9",
+                "source": "uniprot_obsolete"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ENSG00000269226",
+          "entity": "target",
+          "object": {
+            "id": "ENSG00000269226",
+            "approvedSymbol": "TMSB15C",
+            "approvedName": "thymosin beta 15C",
+            "biotype": "protein_coding",
+            "symbolSynonyms": [
+              {
+                "label": "TMSB15C",
+                "source": "uniprot"
+              },
+              {
+                "label": "TMSB15C",
+                "source": "NCBI_entrez"
+              }
+            ],
+            "functionDescriptions": [
+              "Plays an important role in the organization of the cytoskeleton. Binds to and sequesters actin monomers (G-actin) and therefore inhibits actin polymerization. ."
+            ],
+            "proteinIds": [
+              {
+                "id": "P0DX04",
+                "source": "uniprot_swissprot"
+              },
+              {
+                "id": "A0A087X1C1",
+                "source": "uniprot_trembl"
+              },
+              {
+                "id": "ENSP00000472749",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000484052",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000551710",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000583489",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000583490",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000583491",
+                "source": "ensembl_PRO"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ENSG00000158427",
+          "entity": "target",
+          "object": {
+            "id": "ENSG00000158427",
+            "approvedSymbol": "TMSB15B",
+            "approvedName": "thymosin beta 15B",
+            "biotype": "protein_coding",
+            "symbolSynonyms": [
+              {
+                "label": "TMSB15B",
+                "source": "uniprot"
+              },
+              {
+                "label": "MGC39900",
+                "source": "HGNC"
+              },
+              {
+                "label": "TMSL8",
+                "source": "NCBI_entrez"
+              },
+              {
+                "label": "Tbeta15b",
+                "source": "NCBI_entrez"
+              },
+              {
+                "label": "TMSB15B",
+                "source": "NCBI_entrez"
+              }
+            ],
+            "functionDescriptions": [
+              "Plays an important role in the organization of the cytoskeleton. Binds to and sequesters actin monomers (G actin) and therefore inhibits actin polymerization (By similarity). May be involved in cell migration (PubMed:19296525). ."
+            ],
+            "proteinIds": [
+              {
+                "id": "P0CG35",
+                "source": "uniprot_swissprot"
+              },
+              {
+                "id": "H3BU88",
+                "source": "uniprot_trembl"
+              },
+              {
+                "id": "ENSP00000455371",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000455771",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000456121",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000457057",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000457524",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000547117",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000610804",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000610805",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000610806",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000610807",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000614740",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000765141",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "ENSP00000814177",
+                "source": "ensembl_PRO"
+              },
+              {
+                "id": "A8K614",
+                "source": "uniprot_obsolete"
+              },
+              {
+                "id": "Q99406",
+                "source": "uniprot_obsolete"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ENSG00000228499",
+          "entity": "target",
+          "object": {
+            "id": "ENSG00000228499",
+            "approvedSymbol": "TMSB10P1",
+            "approvedName": "thymosin beta 10 pseudogene 1",
+            "biotype": "processed_pseudogene",
+            "symbolSynonyms": [],
+            "functionDescriptions": [],
+            "proteinIds": []
+          }
+        },
+        {
+          "id": "ENSG00000235211",
+          "entity": "target",
+          "object": {
+            "id": "ENSG00000235211",
+            "approvedSymbol": "TMSB10P2",
+            "approvedName": "thymosin beta 10 pseudogene 2",
+            "biotype": "processed_pseudogene",
+            "symbolSynonyms": [],
+            "functionDescriptions": [],
+            "proteinIds": []
+          }
+        }
+      ]
+    }
+  }
+}

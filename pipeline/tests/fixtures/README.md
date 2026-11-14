@@ -43,6 +43,22 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `gsrs/names_baxdrostat.json` | `GET /api/v1/substances(d050debb-84b5-4703-90a9-afc4fd2c21c6)/names`: twelve names, three of the kind `cd` (2026-11-14) |
 | `gsrs/search_cin_107_spaced.json` | the search for `"^cin 107$"`, which GSRS answers with the substance coded "CIN-107"; the client refuses it (2026-11-14) |
 | `gsrs/search_nothing.json` | the search for `"^faecal microbiota transplant$"`: `total` 0 (2026-11-14) |
+| `mesh/term_ketogenic_diet.json` | `GET /mesh/lookup/term?label=Ketogenic Diet&match=exact&limit=10&year=2026`: an entry term of a descriptor labelled otherwise (2026-11-14) |
+| `mesh/term_orforglipron.json`, `mesh/term_obesity.json` | the same lookup for "orforglipron" (the term of a supplementary record) and "Obesity" (2026-11-14) |
+| `mesh/term_tirzepatide.json`, `mesh/owner_tirzepatide.json` | the term lookup and the owner query for "tirzepatide": the term belongs to a descriptor and to a withdrawn supplementary record labelled "[OBSOLETE] tirzepatide", whose own address answers an empty object (2026-11-14) |
+| `mesh/term_ketogenic_word.json` | the same lookup for "Ketogenic", a word contained in an entry term: `[]` (2026-11-14) |
+| `mesh/owner_ketogenic_diet.json`, `mesh/owner_orforglipron.json`, `mesh/owner_obesity.json` | `GET /mesh/sparql?query=…&format=JSON&year=2026&inference=false`, the query in `docs/sources.md` for one term each: the descriptor or supplementary record the term belongs to (2026-11-14) |
+| `mesh/owners_three_terms.json` | the same query for the three terms at once (2026-11-14) |
+| `mesh/owner_none.json` | the same query for a term identifier the vocabulary does not hold (`T999999999`): no row (2026-11-14) |
+| `mesh/supplementary_orforglipron.json` | `GET /mesh/2026/C000729680.json`: a supplementary record, with its `note` and the `source` it was taken from (2026-11-14) |
+| `mesh/concept_orforglipron.json` | `GET /mesh/2026/M000766720.json`, its preferred concept, which holds no definition (2026-11-14) |
+| `opentargets/search_cxcr3.json` | `POST api.platform.opentargets.org/api/v4/graphql` with the target search in `sources/opentargets.py` for the word "CXCR3": equal to an approved symbol (2026-11-14) |
+| `opentargets/search_usag_1.json`, `opentargets/search_apoe4.json` | the same for "USAG-1" and "APOE4": each equal to a listed synonym of one gene (2026-11-14) |
+| `opentargets/search_tms.json` | the same for "TMS": a synonym of two genes, among eight genes whose symbols only start with it (2026-11-14) |
+| `opentargets/search_tmsb1.json` | the same for "TMSB1": seven hits, none with an equal symbol or synonym (2026-11-14) |
+| `opentargets/search_ctx310.json` | the same for "CTX310": no hit (2026-11-14) |
+| `opentargets/target_cxcr3.json` | the same address with the target query for `ENSG00000186810`: three function descriptions (2026-11-14) |
+| `opentargets/target_unknown.json` | the target query for `ENSG00000000000`, which the platform does not hold (2026-11-14) |
 
 Changes made to the recordings, for copyright and size:
 
@@ -52,6 +68,7 @@ Changes made to the recordings, for copyright and size:
 - OpenAlex works: each `abstract_inverted_index` is replaced by a placeholder sentence. The key was sent in a header and is in no recording.
 - MeSH: none. The records are NLM's own and are kept whole, re-indented.
 - GSRS: none. The data is CC0 and the records are kept whole, re-indented.
+- Open Targets: none. The answers are kept whole, re-indented. Function descriptions are UniProt's (CC BY 4.0).
 - ROR: only the first two items of each answer are kept.
 - Crossref works: `abstract` removed; `reference` removed from `work_srep39654.json`.
 - `openai/decisions_three_records.json`: the model's name is replaced by `example-model` in the request and the response. The input is synthetic.

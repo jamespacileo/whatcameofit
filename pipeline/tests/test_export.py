@@ -953,6 +953,7 @@ def add_term(
     definition: str | None = "The vocabulary's OWN WORDS for the term.",
     state: ReviewState = ReviewState.APPROVED,
     record: bool = True,
+    reasons: list[dict[str, Any]] | None = None,
 ) -> ClaimTerm:
     """A scored link between the claim and a vocabulary term, with the term's record."""
     term = ClaimTerm(
@@ -963,12 +964,12 @@ def add_term(
         label=label,
         fit=fit,
         score=score,
-        reasons=[{"code": "filed_by_registry", "trials": 5, "of": 6}],
+        reasons=reasons or [{"code": "filed_by_registry", "trials": 5, "of": 6}],
     )
     if state is not ReviewState.PENDING:
         record_decision(term, state, by=Decider.RULE, now=EARLIER)
     session.add(term)
-    if record:
+    if record and session.get(TermRecord, ("mesh", identifier)) is None:
         session.add(
             TermRecord(
                 source_name="mesh",
@@ -1004,13 +1005,27 @@ def test_exact_term_makes_the_card_when_a_broader_one_is_approved_too(session: S
             "kind": "condition",
             "fit": "exact",
             "label": "Anodontia",
+            "name": None,
             "definition": "The vocabulary's OWN WORDS for the term.",
+            "definition_source": None,
             "url": "https://id.nlm.nih.gov/mesh/D000002",
             "source": "mesh",
             "external_id": "D000002",
             "version": "2026",
             "score": 0.9,
-            "reasons": [{"code": "filed_by_registry", "trials": 5, "of": 6, "name": None}],
+            "reasons": [
+                {
+                    "code": "filed_by_registry",
+                    "trials": 5,
+                    "of": 6,
+                    "name": None,
+                    "entry_term": None,
+                    "kind": None,
+                    "type": None,
+                    "word": None,
+                    "sources": None,
+                }
+            ],
             "decided_by": "rule",
             "read_at": "2026-11-19T09:00:00Z",
         }
@@ -1098,6 +1113,303 @@ def test_source_not_marked_accepted_gives_no_card(
 
     assert data["claims"][0]["background"] == []
     assert data["card_sources"] == []
+
+
+KIND_REASONS = [
+    {"code": "kind_chosen", "kind": "antibody"},
+    {"code": "registry_lists_type", "type": "BIOLOGICAL", "trials": 2},
+]
+
+
+def add_kind(session: Session, claim: Claim, score: float = 0.9) -> ClaimTerm:
+    return add_term(
+        session,
+        claim,
+        "D000911",
+        "Antibodies, Monoclonal",
+        fit=TermFit.KIND,
+        score=score,
+        role=TermRole.INTERVENTION,
+        reasons=KIND_REASONS,
+    )
+
+
+def add_named_gene(
+    session: Session,
+    claim: Claim,
+    fixture_json,
+    *,
+    identifier: str = "ENSG00000186810",
+    score: float = 0.95,
+    reasons: list[dict[str, Any]] | None = None,
+) -> ClaimTerm:
+    """An approved link to a gene named in the intervention, with the gene's record."""
+    target = fixture_json("opentargets/target_cxcr3.json")["data"]["target"]
+    link = ClaimTerm(
+        claim_id=claim.id,
+        role=TermRole.TARGET,
+        source_name="opentargets",
+        external_id=identifier,
+        label="CXCR3" if identifier == target["id"] else "OTHER1",
+        fit=TermFit.EXACT,
+        score=score,
+        reasons=reasons or [{"code": "word_equals_symbol", "word": "CXCR3"}],
+    )
+    record_decision(link, ReviewState.APPROVED, by=Decider.RULE, now=EARLIER)
+    session.add(link)
+    session.add(
+        TermRecord(
+            source_name="opentargets",
+            external_id=identifier,
+            url=f"https://platform.opentargets.org/target/{identifier}",
+            payload=target
+            if identifier == target["id"]
+            else {"id": identifier, "approvedSymbol": "OTHER1", "approvedName": "another gene"},
+            fetched_at=EARLIER,
+        )
+    )
+    session.flush()
+    return link
+
+
+def test_broader_term_makes_the_intervention_card_when_a_kind_is_approved_too(session: Session):
+    """Scenario: Broader term and kind both approved"""
+    claim = new_claim(session)
+    add_kind(session, claim, score=0.99)
+    add_term(
+        session,
+        claim,
+        "D000009",
+        "Antibodies",
+        fit=TermFit.BROADER,
+        score=0.85,
+        role=TermRole.INTERVENTION,
+    )
+
+    cards = exported(session)["claims"][0]["background"]
+
+    assert [(card["kind"], card["fit"], card["label"]) for card in cards] == [
+        ("intervention", "broader", "Antibodies")
+    ]
+
+
+def test_only_a_kind_makes_a_card_marked_as_the_kind_of_intervention(session: Session):
+    """Scenario: Only a kind"""
+    claim = new_claim(session)
+    add_kind(session, claim)
+
+    [card] = exported(session)["claims"][0]["background"]
+
+    assert (card["kind"], card["fit"], card["label"]) == (
+        "intervention",
+        "kind",
+        "Antibodies, Monoclonal",
+    )
+    assert card["score"] == 0.9 and card["decided_by"] == "rule"
+    assert card["definition"] == "The vocabulary's OWN WORDS for the term."
+    assert [
+        {name: value for name, value in reason.items() if value is not None}
+        for reason in card["reasons"]
+    ] == KIND_REASONS
+
+
+def test_entry_term_reason_is_exported_with_the_entry_term_and_the_name(session: Session):
+    claim = new_claim(session)
+    reason = {
+        "code": "entry_term_equals_name",
+        "entry_term": "Tooth Agenesis",
+        "name": "tooth agenesis",
+    }
+    add_term(session, claim, "D000002", "Anodontia", reasons=[reason])
+
+    [card] = exported(session)["claims"][0]["background"]
+
+    assert [
+        {name: value for name, value in given.items() if value is not None}
+        for given in card["reasons"]
+    ] == [reason]
+
+
+def test_supplementary_records_note_is_the_definition_and_its_paper_is_not_exported(
+    session: Session, fixture_json
+):
+    """Scenario: Supplementary record"""
+    claim = new_claim(session)
+    add_term(
+        session,
+        claim,
+        "C000729680",
+        "orforglipron",
+        role=TermRole.INTERVENTION,
+        record=False,
+        reasons=[{"code": "label_equals_name", "name": "Orforglipron"}],
+    )
+    supplementary = fixture_json("mesh/supplementary_orforglipron.json")
+    session.add(
+        TermRecord(
+            source_name="mesh",
+            external_id="C000729680",
+            url="https://id.nlm.nih.gov/mesh/C000729680",
+            payload={
+                "term": supplementary,
+                "concept": fixture_json("mesh/concept_orforglipron.json"),
+            },
+            fetched_at=EARLIER,
+        )
+    )
+    session.flush()
+
+    data = exported(session)
+
+    [card] = data["claims"][0]["background"]
+    assert card["definition"] == "An oral, non-peptide glucagon-like peptide-1 receptor agonist"
+    assert (card["label"], card["version"], card["fit"]) == ("orforglipron", "2026", "exact")
+    # The paper NLM took the record from is in the stored record and nowhere in the export.
+    assert supplementary["source"]["@value"].startswith("Nature")
+    assert "Nature" not in json.dumps(data)
+
+
+def test_named_gene_with_no_drug_record_gives_a_target_card_in_its_sources_words(
+    session: Session, fixture_json
+):
+    """Scenario: Named gene and no drug record"""
+    claim = new_claim(session)
+    add_kind(session, claim)
+    add_named_gene(session, claim, fixture_json)
+    # A second approved gene with a lower score gives no second card.
+    lower = add_named_gene(session, claim, fixture_json, identifier="ENSG00000171243", score=0.85)
+
+    data = exported(session)
+
+    kind, target = data["claims"][0]["background"]
+    assert kind["fit"] == "kind"
+    described = fixture_json("opentargets/target_cxcr3.json")["data"]["target"]
+    assert target == {
+        "kind": "target",
+        "fit": "exact",
+        "label": "CXCR3",
+        "name": "C-X-C motif chemokine receptor 3",
+        # The first function description, word for word, with its isoform prefix and
+        # its inline citations, and UniProt named as where the words are from.
+        "definition": described["functionDescriptions"][0],
+        "definition_source": "uniprot",
+        "url": "https://platform.opentargets.org/target/ENSG00000186810",
+        "source": "opentargets",
+        "external_id": "ENSG00000186810",
+        "version": None,
+        "score": 0.95,
+        "reasons": [
+            {
+                "code": "word_equals_symbol",
+                "trials": None,
+                "of": None,
+                "name": None,
+                "entry_term": None,
+                "kind": None,
+                "type": None,
+                "word": "CXCR3",
+                "sources": None,
+            }
+        ],
+        "decided_by": "rule",
+        "read_at": "2026-11-19T09:00:00Z",
+    }
+    assert target["definition"].startswith("[Isoform 1]: ") and "(PubMed:" in target["definition"]
+    assert described["functionDescriptions"][1] not in json.dumps(data)
+    assert lower.review_state is ReviewState.APPROVED
+    # Both sources are credited, Open Targets with the citation it asks for.
+    credits = {source["name"]: source for source in data["card_sources"]}
+    assert list(credits) == ["mesh", "opentargets", "uniprot"]
+    assert "Buniello, A. et al. (2025)" in credits["opentargets"]["credit"]
+    assert (credits["uniprot"]["licence"], credits["uniprot"]["in_data_file"]) == (
+        "CC BY 4.0",
+        True,
+    )
+    assert [source["name"] for source in data["sources"]][-2:] == [
+        "Open Targets Platform",
+        "UniProt, through Open Targets Platform",
+    ]
+
+
+def test_synonym_reason_carries_the_word_and_the_sources_that_give_it(
+    session: Session, fixture_json
+):
+    claim = new_claim(session)
+    add_named_gene(
+        session,
+        claim,
+        fixture_json,
+        reasons=[{"code": "word_equals_synonym", "word": "USAG-1", "sources": ["uniprot"]}],
+    )
+
+    [card] = exported(session)["claims"][0]["background"]
+
+    assert [
+        {name: value for name, value in reason.items() if value is not None}
+        for reason in card["reasons"]
+    ] == [{"code": "word_equals_synonym", "word": "USAG-1", "sources": ["uniprot"]}]
+
+
+def test_target_description_is_left_out_while_its_origin_is_not_accepted(
+    session: Session, fixture_json, monkeypatch: pytest.MonkeyPatch
+):
+    claim = new_claim(session)
+    add_named_gene(session, claim, fixture_json)
+    monkeypatch.setitem(
+        LISTED_SOURCES, "uniprot", dataclasses.replace(LISTED_SOURCES["uniprot"], accepted=False)
+    )
+
+    data = exported(session)
+
+    [card] = data["claims"][0]["background"]
+    assert (card["label"], card["definition"], card["definition_source"]) == ("CXCR3", None, None)
+    assert [source["name"] for source in data["card_sources"]] == ["opentargets"]
+    assert "Receptor for the C-X-C chemokines" not in json.dumps(data)
+
+
+def test_approved_named_gene_gives_no_card_while_its_source_is_not_accepted(
+    session: Session, fixture_json, monkeypatch: pytest.MonkeyPatch
+):
+    """Scenario: Target source not yet accepted"""
+    claim = new_claim(session)
+    link = add_named_gene(session, claim, fixture_json)
+    monkeypatch.setitem(
+        LISTED_SOURCES,
+        "opentargets",
+        dataclasses.replace(LISTED_SOURCES["opentargets"], accepted=False),
+    )
+
+    data = exported(session)
+
+    assert data["claims"][0]["background"] == []
+    assert data["card_sources"] == []
+    assert "CXCR3" not in json.dumps(data)
+    # The link and the gene's record stay stored.
+    assert link.review_state is ReviewState.APPROVED
+    assert session.get(TermRecord, ("opentargets", "ENSG00000186810")) is not None
+
+
+def test_kind_and_named_gene_links_do_not_change_the_status_or_what_explains_it(
+    session: Session, fixture_json
+):
+    claim = new_claim(session)
+    add_event(session)
+    confirm_stage(session, SLUG, EvidenceStage.ANIMAL, now=EARLIER)
+
+    def decided() -> tuple[Any, Any, Any]:
+        [shown] = exported(session)["claims"]
+        return shown["status"], shown["evidence_stage"], shown["events"]
+
+    before = decided()
+    add_kind(session, claim)
+    add_named_gene(session, claim, fixture_json)
+
+    cards = exported(session)["claims"][0]["background"]
+    assert [(card["kind"], card["fit"]) for card in cards] == [
+        ("intervention", "kind"),
+        ("target", "exact"),
+    ]
+    assert decided() == before
 
 
 def test_cards_do_not_change_the_status_or_what_explains_it(session: Session):

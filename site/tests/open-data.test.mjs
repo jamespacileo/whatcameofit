@@ -301,7 +301,9 @@ test("Scenario: Card from a public-domain source", () => {
       kind: "condition",
       fit: "exact",
       label: "A term",
+      name: null,
       definition: "The source's own words.",
+      definition_source: null,
       url: "https://open.example/term",
       source: "open",
       external_id: "T1",
@@ -335,6 +337,45 @@ test("Scenario: Fact from a share-alike source", () => {
     },
   ]);
   assert.ok(!everyString(out).includes("A mechanism"));
+});
+
+test("Scenario: Target card from a named gene", () => {
+  const data = exported();
+  data.card_sources = [cardSource("genes", true, "CC0 1.0"), cardSource("proteins", true, "CC BY 4.0")];
+  const target = {
+    ...card("genes", "ABC1"),
+    kind: "target",
+    name: "example gene 1",
+    definition: "What the gene's product does, as its source says.",
+    definition_source: "proteins",
+    version: null,
+    reasons: [{ code: "word_equals_synonym", word: "EX-1", sources: ["uniprot"] }],
+  };
+  data.claims[0].background = [target];
+
+  const out = openData(data, LICENCE, CREDIT, METHOD);
+
+  const [held] = out.claims[0].background;
+  assert.equal(held.kind, "target");
+  assert.equal(held.name, "example gene 1");
+  assert.equal(held.definition, "What the gene's product does, as its source says.");
+  assert.equal(held.definition_source, "proteins");
+  assert.equal(held.score, 0.9);
+  assert.deepEqual(held.reasons, [{ code: "word_equals_synonym", word: "EX-1", sources: ["uniprot"] }]);
+  // The description's source is credited in the file with its licence.
+  assert.deepEqual(
+    out.card_sources.map((source) => [source.name, source.credit, source.licence]),
+    [["genes", "Credit genes", "CC0 1.0"], ["proteins", "Credit proteins", "CC BY 4.0"]],
+  );
+  assert.deepEqual(out.left_out, []);
+
+  // Were the description's licence not to allow it, the card stays without those words.
+  data.card_sources = [cardSource("genes", true, "CC0 1.0"), cardSource("proteins", false, "A closed licence")];
+  const without = openData(data, LICENCE, CREDIT, METHOD);
+  assert.equal(without.claims[0].background[0].definition, null);
+  assert.equal(without.claims[0].background[0].definition_source, null);
+  assert.ok(!everyString(without).includes("What the gene's product does"));
+  assert.deepEqual(without.left_out.map((left) => left.source), ["Source proteins"]);
 });
 
 test("an export made before background cards gives a file with none", () => {

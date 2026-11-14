@@ -1,0 +1,33 @@
+{
+  "head": {
+    "vars": [
+      "term",
+      "record",
+      "label",
+      "type"
+    ]
+  },
+  "results": {
+    "bindings": [
+      {
+        "term": {
+          "type": "uri",
+          "value": "http://id.nlm.nih.gov/mesh/T713007"
+        },
+        "record": {
+          "type": "uri",
+          "value": "http://id.nlm.nih.gov/mesh/D055423"
+        },
+        "label": {
+          "type": "literal",
+          "xml:lang": "en",
+          "value": "Diet, Ketogenic"
+        },
+        "type": {
+          "type": "uri",
+          "value": "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+        }
+      }
+    ]
+  }
+}

@@ -62,6 +62,8 @@ class Settings(BaseSettings):
     match_accept_above: float = 0.8
     # How many candidate subject terms are kept for a claim (openspec knowledge-cards).
     term_candidates_max: int = 10
+    # How many genes named in a claim's intervention are kept as candidate targets.
+    target_candidates_max: int = 3
     # Reported statements (openspec reported-statements). A statement the statement check
     # gives this probability or more that its article says it is approved by rule and
     # published; one below it waits, unpublished. 0 turns the rule off.

@@ -2,8 +2,8 @@
 clock or model. Behavior: openspec knowledge-cards, "Candidate terms are gathered by rule".
 
 A candidate comes from two places only: the terms the trial registry files the claim's
-approved trials under, and vocabulary terms whose label equals one of the claim's own
-names. A search's near misses are never candidates.
+approved trials under, and vocabulary terms whose label, or one of whose entry terms,
+equals one of the claim's own names. A search's near misses are never candidates.
 """
 
 from collections.abc import Iterable, Mapping, Sequence
@@ -17,8 +17,10 @@ MESH = "mesh"
 FILED_BY_REGISTRY = "filed_by_registry"
 # The term's label equals this name of the claim.
 LABEL_EQUALS_NAME = "label_equals_name"
+# This entry term of the term equals this name of the claim.
+ENTRY_TERM_EQUALS_NAME = "entry_term_equals_name"
 # Every reason code, in the order they are given.
-REASON_CODES = (FILED_BY_REGISTRY, LABEL_EQUALS_NAME)
+REASON_CODES = (FILED_BY_REGISTRY, LABEL_EQUALS_NAME, ENTRY_TERM_EQUALS_NAME)
 
 # Where a stored trial record lists the terms the registry derived for it.
 _MODULES = {
@@ -29,13 +31,16 @@ _MODULES = {
 
 @dataclass(frozen=True, slots=True)
 class LabelMatch:
-    """A vocabulary term whose label equals a name of the claim."""
+    """A vocabulary term whose label, or one of whose entry terms, equals a name of
+    the claim."""
 
     role: TermRole
     identifier: str
     label: str
-    # The claim's name the label equals, as the claim writes it.
+    # The claim's name that was equal, as the claim writes it.
     name: str
+    # The entry term the name equals, when it is not the label itself.
+    entry_term: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,9 +87,10 @@ def gather_candidates(
 
     `trial_payloads` are the stored registry records of the claim's approved trials; a
     trial stored with several of its events counts once. A term the registry files fewer
-    than half of those trials under is left out. Terms whose label equals a name come
-    first, then terms by the number of trials that carry them, so the cap drops the
-    least carried.
+    than half of those trials under is left out. Terms whose label or entry term equals
+    a name come first, then terms by the number of trials that carry them, so the cap
+    drops the least carried. A term found by its label and by an entry term carries the
+    label's reason only.
     """
     trials: dict[str, Mapping[str, Any]] = {}
     for payload in trial_payloads:
@@ -95,7 +101,7 @@ def gather_candidates(
     labels: dict[tuple[TermRole, str], str] = {}
     counts: dict[tuple[TermRole, str], int] = {}
     for payload in trials.values():
-        for role in TermRole:
+        for role in _MODULES:
             for identifier, label in _filed_under(payload, role).items():
                 labels.setdefault((role, identifier), label)
                 counts[(role, identifier)] = counts.get((role, identifier), 0) + 1
@@ -105,12 +111,22 @@ def gather_candidates(
         if count * 2 >= len(trials):
             reasons[key] = [{"code": FILED_BY_REGISTRY, "trials": count, "of": len(trials)}]
     equal: set[tuple[TermRole, str]] = set()
-    for match in label_matches:
+    # Label matches first, so that a term found both ways is a label match.
+    for match in sorted(label_matches, key=lambda match: match.entry_term is not None):
         key = (match.role, match.identifier)
         labels.setdefault(key, match.label)
-        if key not in equal:
-            equal.add(key)
-            reasons.setdefault(key, []).append({"code": LABEL_EQUALS_NAME, "name": match.name})
+        if key in equal:
+            continue
+        equal.add(key)
+        if match.entry_term is None:
+            reason = {"code": LABEL_EQUALS_NAME, "name": match.name}
+        else:
+            reason = {
+                "code": ENTRY_TERM_EQUALS_NAME,
+                "entry_term": match.entry_term,
+                "name": match.name,
+            }
+        reasons.setdefault(key, []).append(reason)
 
     roles = list(TermRole)
     ordered = sorted(

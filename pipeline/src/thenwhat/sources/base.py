@@ -1,8 +1,11 @@
 """What every registry client shares: the record contract, cache, rate limit,
 client identification and retry. Behavior: openspec source-clients."""
 
+import hashlib
+import json
 import threading
 import time as system_time
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
@@ -33,6 +36,7 @@ RECORD_URLS = {
     "crossref": "https://doi.org/{}",
     "ror": "https://ror.org/{}",
     "mesh": "https://id.nlm.nih.gov/mesh/{}",
+    "opentargets": "https://platform.opentargets.org/target/{}",
 }
 
 
@@ -152,7 +156,8 @@ class Fetched:
 
 class Source:
     """Base for registry clients. Subclasses set `name` and `default_rate_per_second`
-    and build their lookups on `_get`."""
+    and build their lookups on `_get`, or on `_post` for a source that is asked with a
+    request body."""
 
     name: str
     default_rate_per_second: float
@@ -193,14 +198,45 @@ class Source:
         fetch time, unless `force` is set. `ttl` keeps this answer for longer or
         shorter than the client's usual time.
         """
-        require_recorded(self.name)
         key = f"{self.name} GET {httpx.URL(url, params=params)}"
+        return self._kept(key, lambda: self._request(url, params), force=force, ttl=ttl)
+
+    def _post(
+        self,
+        url: str,
+        body: dict[str, Any],
+        *,
+        force: bool = False,
+        ttl: timedelta | None = None,
+    ) -> Fetched | None:
+        """The JSON answered to `body` sent to `url` as JSON, or None for not-found.
+
+        The answer is kept under the source, the address and the body together, so two
+        bodies sent to one address never share an answer. Everything else is as for
+        `_get`: the cache, the pacing, the retries, the client's name and the refusal
+        for a source whose terms are not recorded.
+        """
+        sent = json.dumps(body, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+        digest = hashlib.sha256(sent.encode()).hexdigest()
+        key = f"{self.name} POST {httpx.URL(url)} {digest}"
+        return self._kept(key, lambda: self._request(url, None, body=body), force=force, ttl=ttl)
+
+    def _kept(
+        self,
+        key: str,
+        ask: Callable[[], httpx.Response | None],
+        *,
+        force: bool,
+        ttl: timedelta | None,
+    ) -> Fetched | None:
+        """The answer stored under `key` while it is fresh, else what `ask` fetches."""
+        require_recorded(self.name)
         cached = self._session.get(HttpCache, key)
         if cached is not None and not force and cached.expires_at > self._time.now():
             return Fetched(cached.payload, cached.fetched_at)
 
         require_contact(self._contact)
-        response = self._request(url, params)
+        response = ask()
         if response is None:
             return None
 
@@ -222,14 +258,20 @@ class Source:
             self._session.refresh(cached)
         return fetched
 
-    def _request(self, url: str, params: dict[str, str] | None) -> httpx.Response | None:
-        """One GET with bounded retries. None means the registry said not-found."""
+    def _request(
+        self, url: str, params: dict[str, str] | None, *, body: dict[str, Any] | None = None
+    ) -> httpx.Response | None:
+        """One GET, or one POST of `body` as JSON, with bounded retries. None means the
+        registry said not-found."""
         headers = {"User-Agent": user_agent(self._contact)} | self._extra_headers()
         for attempt in range(self._max_attempts):
             self._wait_for_turn()
             stated_delay = 0.0
             try:
-                response = self._client.get(url, params=params, headers=headers)
+                if body is None:
+                    response = self._client.get(url, params=params, headers=headers)
+                else:
+                    response = self._client.post(url, json=body, headers=headers)
             except httpx.TransportError:
                 response = None
             if response is not None:

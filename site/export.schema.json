@@ -127,6 +127,18 @@
           "title": "Label",
           "type": "string"
         },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
         "definition": {
           "anyOf": [
             {
@@ -137,6 +149,18 @@
             }
           ],
           "title": "Definition"
+        },
+        "definition_source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Definition Source"
         },
         "url": {
           "title": "Url",
@@ -242,6 +266,69 @@
           ],
           "default": null,
           "title": "Name"
+        },
+        "entry_term": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Entry Term"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kind"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        },
+        "word": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Word"
+        },
+        "sources": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sources"
         }
       },
       "required": [
@@ -1997,10 +2084,11 @@
       "type": "string"
     },
     "TermFit": {
-      "description": "How a subject term was read against the claim: as the thing itself, or broader.",
+      "description": "How a subject term fits the claim: the thing itself, broader than it, or the\nkind of intervention it is. The order is the order a card is chosen in.",
       "enum": [
         "exact",
-        "broader"
+        "broader",
+        "kind"
       ],
       "title": "TermFit",
       "type": "string"
@@ -2009,7 +2097,8 @@
       "description": "What a subject term is proposed as for a claim.",
       "enum": [
         "condition",
-        "intervention"
+        "intervention",
+        "target"
       ],
       "title": "TermRole",
       "type": "string"
