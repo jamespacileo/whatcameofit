@@ -66,7 +66,7 @@ const text = {
   followingThis: "You follow this claim.",
   opens: "(opens in a new tab)",
   stop: "Stop following",
-  followingEmpty: "You follow no claims yet. Open a tracked report and choose “Keep me up to date”.",
+  followingEmpty: "You follow no claims yet. Open a tracked report and choose Keep me up to date.",
   changed: "Changed",
   wasNow: (was, now) => `Was: ${was}. Now: ${now}.`,
   wasSince: (was) => `Changed since you last looked. Was: ${was}.`,
@@ -429,7 +429,7 @@ export function render(root, state, site, actions, kept = null) {
       message(
         text.untrackedTitle,
         text.untrackedBody(site.name),
-        link(text.search, `${site.url}/`, "button quiet", actions.open),
+        link(opening(text.search), `${site.url}/`, "button quiet", actions.open),
       ),
       savedNote(state, site) && el("footer", "notices", [savedNote(state, site)]),
     ];
@@ -442,7 +442,7 @@ export function render(root, state, site, actions, kept = null) {
       el("h1", null, state.enabled ? "Automatic search is on" : "Allow automatic search?"),
       el("p", null, `When you open this extension on an untracked page, its text, links and cleaned address go to ${site.name} and OpenAI to identify the reported treatment. If text is insufficient, visible image content is sent as a screenshot automatically.`),
       el("p", "small", "Screenshots can include usernames or other visible personal information. Use public reports only. Nothing is read in the background. OpenAI may retain inputs for safety checks. We store no screenshots or article text; public search results may be reused for 24 hours."),
-      link(text.privacy, `${site.url}/privacy`, "text-button", actions.open),
+      link(opening(text.privacy), `${site.url}/privacy`, "text-button", actions.open),
       state.enabled ? press("Turn off automatic search", "button quiet", actions.disableSharing) : press("Allow and search", "button", actions.enableSharing),
       !state.enabled && press("Use reviewed claims only", "button quiet", actions.disableSharing)];
   } else if (state.kind === "capturing") {

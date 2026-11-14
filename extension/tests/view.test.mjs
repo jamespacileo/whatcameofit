@@ -45,6 +45,20 @@ const shown = {
   notices: ["A registered clinical trial is not a treatment option."],
 };
 
+test("search and privacy controls announce that their destination opens in a new tab", () => {
+  for (const [state, label, path] of [
+    [{ kind: "untracked" }, "Search tracked claims", "/"],
+    [{ kind: "sharing", enabled: false }, "Privacy", "/privacy"],
+  ]) {
+    const root = new Element("main");
+    render(root, state, site, actions);
+    const link = elements(root, "a").find((item) => item.href === site.url + path);
+    assert.ok(link);
+    assert.equal(link.textContent, `${label} (opens in a new tab)`);
+    assert.equal(elements(link, "svg").length, 1);
+  }
+});
+
 test("each candidate card owns its title, confidence, record details and source link", () => {
   const root = new Element("main");
   render(root, { kind: "answer", shown: { ...shown, likely: [

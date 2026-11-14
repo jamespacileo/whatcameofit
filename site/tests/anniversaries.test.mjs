@@ -5,7 +5,11 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { calendarByMonth, recentAnniversaries } from "../src/lib/anniversaries.ts";
+import {
+  calendarByMonth,
+  nextAnniversaryDay,
+  recentAnniversaries,
+} from "../src/lib/anniversaries.ts";
 
 const claim = (slug, first) => ({ slug, headline: `Headline ${slug}`, first_reported_date: first });
 
@@ -123,4 +127,45 @@ test("Scenario: the built page lists a claim under its date and the feed dates a
   assert.match(xml, /<summary>First reported 5 Nov 2021\. 5 years on: Phase 2 trial\.<\/summary>/);
   assert.match(xml, /<link href="[^"]+\/phase-claim"\/>/);
   assert.ok(!xml.includes("&nbsp;"));
+});
+
+test("Scenario: An anniversary today", () => {
+  const entries = [
+    { id: "11-13", year: 2021 },
+    { id: "11-20", year: 2019 },
+  ];
+  assert.deepEqual(nextAnniversaryDay(entries, "2026-11-13"), {
+    ids: ["11-13"],
+    date: "2026-11-13",
+    today: true,
+  });
+});
+
+test("Scenario: No anniversary today", () => {
+  // A report from this year has no anniversary yet: the next day that has one is shown.
+  const entries = [
+    { id: "11-13", year: 2026 },
+    { id: "11-20", year: 2019 },
+  ];
+  assert.deepEqual(nextAnniversaryDay(entries, "2026-11-13"), {
+    ids: ["11-20"],
+    date: "2026-11-20",
+    today: false,
+  });
+  // Past the end of the year, this year's reports have theirs.
+  assert.deepEqual(nextAnniversaryDay([{ id: "03-01", year: 2026 }], "2026-11-13"), {
+    ids: ["03-01"],
+    date: "2027-03-01",
+    today: false,
+  });
+  assert.equal(nextAnniversaryDay([], "2026-11-13"), null);
+});
+
+test("Scenario: A leap-day report in a common year", () => {
+  assert.deepEqual(nextAnniversaryDay([{ id: "02-29", year: 2020 }], "2027-02-28"), {
+    ids: ["02-28", "02-29"],
+    date: "2027-02-28",
+    today: true,
+  });
+  assert.deepEqual(nextAnniversaryDay([{ id: "02-29", year: 2020 }], "2028-02-28").date, "2028-02-29");
 });

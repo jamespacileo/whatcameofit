@@ -159,6 +159,62 @@ test("Scenario: Home lists the newest reports", () => {
   assert.match(html, /<a href="https:\/\/uk\.news\.example\.org\/3">Example Outlet 3<\/a>/);
 });
 
+test("Scenario: A list that fits one page", () => {
+  // Four reports and two status changes: every row is on the first page, with a pager that
+  // stays out of sight under each list.
+  const html = page("index.html");
+  assert.doesNotMatch(html, /<tr[^>]*data-later/);
+  assert.match(html, /<nav class="pager"[^>]*data-pager="headlines"[^>]*hidden/);
+  assert.match(html, /<nav class="pager"[^>]*data-pager="moved"[^>]*hidden/);
+  assert.match(page("topic/gum-disease/index.html"), /data-pager="claims"/);
+});
+
+test("Scenario: Lists on the home page", () => {
+  const html = page("index.html");
+  // One tab per list that has rows, in a fixed order.
+  const tabs = [...html.matchAll(/role="tab"[^>]*data-view="(\w+)"/g)].map((match) => match[1]);
+  assert.deepEqual(tabs, ["headlines", "moved", "promised", "quiet"]);
+  // A change names the status from that day and the one before, in the site's wording.
+  const moved = html.slice(html.indexOf('id="feed-moved"'), html.indexOf('id="feed-promised"'));
+  assert.equal(count(moved, "<tr role=\"row\""), 3, "two changes under one header row");
+  assert.ok(moved.indexOf("Was: Trial registered") < moved.indexOf("Was: Preclinical only"));
+  // A dated promise sits beside the status now; the no-signal list holds the quiet claim.
+  const promised = html.slice(html.indexOf('id="feed-promised"'), html.indexOf('id="feed-quiet"'));
+  assert.match(promised, /human trials by <strong>2025<\/strong>/);
+  assert.match(promised, /Preclinical only/);
+  assert.match(html.slice(html.indexOf('id="feed-quiet"')), /No signal for 6 years/);
+});
+
+test("Scenario: Counts on the path", () => {
+  const html = page("index.html");
+  const strip = html.slice(html.indexOf("data-stage-filter"), html.indexOf('class="feed"'));
+  // Three claims: one preclinical, one in phase 2, one approved. The strip narrows
+  // every list under it and keeps the pick in the address.
+  assert.match(strip, /data-scope="\[data-feed\]"/);
+  assert.match(strip, /data-param="status"/);
+  for (const [code, number] of [["preclinical_only", 1], ["phase_2", 1], ["approved", 1]]) {
+    assert.match(strip, new RegExp(`data-status="${code}"[^>]*>.*?<strong>${number}</strong>`, "s"));
+  }
+  assert.match(strip, /data-status="phase_1"[^>]*disabled/);
+  // Each row carries what the strip and the topic choice narrow by.
+  assert.match(html, /<tr[^>]*data-status="phase_2"[^>]*data-topic="gum-disease"/);
+});
+
+test("Scenario: Anniversaries on the home page", () => {
+  const html = page("index.html");
+  const block = html.slice(html.indexOf("data-on-this-day"), html.indexOf('id="topics"'));
+  // Out of sight until the reader's date picks a day; every day with a report is there.
+  assert.match(html, /<section class="on-this-day"[^>]*hidden/);
+  for (const day of ["05-01", "05-03", "05-04"]) assert.ok(block.includes(`data-day="${day}"`), day);
+  assert.match(block, /data-year="2019"/);
+  assert.match(block, /href="\/anniversaries"/);
+});
+
+test("Scenario: One topic", () => {
+  // With a single listed topic there is nothing to choose between.
+  assert.doesNotMatch(page("index.html"), /data-topic-filter/);
+});
+
 test("Scenario: Article of a published claim", () => {
   const lookup = JSON.parse(page("lookup.json"));
   // Each article address, in comparison form, names its claim.
