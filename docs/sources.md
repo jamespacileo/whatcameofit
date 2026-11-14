@@ -26,6 +26,8 @@ Terms, authentication and rate limits for each external source. Check an entry a
   - `DERIVED` is not in the sponsor's definitions: the registry adds it. A study's own page (<https://clinicaltrials.gov/study/NCT01596231>, "Publications") heads these "From PubMed" and says: "These publications are automatically filled in from PubMed, a public database of scientific and medical articles, and may or may not be about the study." The one `DERIVED` reference in that record is the paper whose PubMed record carries the trial's number.
   - **What follows for wording:** `RESULT` may be worded as listed by the sponsor as reporting the study's results. `DERIVED` may be worded only as linked by the registry from PubMed, and the site says the registry's own caution that such a paper may or may not be about the study. Neither is called "the results" by the site. `BACKGROUND` references are not read. The `citation` string names authors and is read nowhere.
 
+- **Bulk loads through the list endpoint (observed 2026-11-14):** `GET /studies` accepts `pageSize` up to 1,000 with a chosen list of `fields` and a `filter.advanced` expression, and pages with `nextPageToken`. The 43,320 phase 3 interventional trials of a drug or biological came back in 44 requests; the whole registry (611,771 studies) is about 620. `thenwhat backfill load-trials` uses this instead of one request per trial, at the same 2 requests per second, and counts its requests against the registry's allowance (`SOURCE_ALLOWANCES`). A load of changes adds `AREA[LastUpdatePostDate]RANGE[<date>,MAX]` to the expression. The loaded trials are kept in the private database only and are not exported.
+
 ## Europe PMC RESTful web service
 
 - **Checked:** 2026-11-11
@@ -241,3 +243,33 @@ Read for the drug and target cards (openspec `knowledge-cards`, task 1.2). No cl
 - **What follows for the site:** the data file is offered under CC BY 4.0. A CC BY 4.0 fact can enter it with credit. A CC BY-SA 3.0 fact cannot enter it without making the file share-alike, and whether such a fact may be shown on a page at all is the operator's decision (task 6.1). Until that decision the list of sources in `pipeline/src/thenwhat/sources/terms.py` marks Open Targets, ChEMBL and UniProt as not accepted, so nothing from them is exported.
 - **UniProt's disclaimer (same page):** its medical information is "for research, educational and informational purposes only" and is no substitute for professional advice. A target card would sit under the site's own notice that cards are not advice.
 - **Not checked:** which field of the GraphQL schema gives the function description and whether each description names its own origin. Check both, and this entry again, before the client is written (task 6.2).
+
+## News indexes for the registry-first backfill
+
+Read on 2026-11-14 for the change `backfill-work-ledger`, to choose where the news search step asks which articles name a trial's intervention and indication. The step needs an address, outlet, title and date for each article and must never receive or keep article text. Items marked unconfirmed were not found on the pages read.
+
+### Media Cloud (chosen)
+
+- **Checked:** 2026-11-14. [Terms of use](https://www.mediacloud.org/legal/media-cloud-terms-of-use) (effective 16 May 2023), [FAQ](https://mediacloud.org/documentation/faqs), [story guide](https://www.mediacloud.org/documentation/story-guide), [query guide](https://www.mediacloud.org/documentation/query-guide), [API client](https://github.com/mediacloud/api-client).
+- **Terms:** any lawful use; the terms say the platform is not designed as a commercial tool. Access and keys may not be sold or sublicensed. Attribution is recommended, not required. No rights are granted over the stories' own content. The FAQ says lists of story addresses may be downloaded.
+- **Authentication:** a free account and an API key. **The operator's step:** the account is created and the terms accepted by the operator, and the key goes in `.env` as `MEDIACLOUD_API_KEY`. No request is sent while it is empty.
+- **Rate limit:** 4,000 API requests a week by default; some endpoints allow 2 requests a minute. More is given on request by email. The pipeline's allowance is set to 4,000 a week with 30 seconds between requests. On the first live run (2026-11-14) Media Cloud answered "too many requests" once, after 136 searches sent 30 seconds apart; after the hour's pause the remaining 61 went through at the same spacing. Sixteen of 197 searches got no answer within 60 seconds.
+- **What a search returns:** story id, outlet name and address, title, publication date and the story's address, for a query with AND, phrases and proximity. Full text is never released, so none can reach the pipeline. Confirmed on a live answer on 2026-11-14: the fields are `id`, `indexed_date`, `language`, `media_name`, `media_url`, `publish_date`, `title` and `url`.
+- **What is searched:** a search must name at least one collection (`cs`) or one outlet (`ss`) by its directory id; with neither it is refused with status 422. Both may be given and are searched together. Set in `.env` as `MEDIACLOUD_COLLECTION_IDS` and `MEDIACLOUD_SOURCE_IDS`.
+- **Coverage:** over 200 million stories; an outlet is covered only from when its feed was first collected. The archive's start date is unconfirmed. Checked in the directory on 2026-11-14: there is no collection of health or clinical trade outlets. The national collections are `34412234` (United States, 246 outlets) and `34412476` (United Kingdom, 90 outlets). Trade outlets are listed one by one, and many are no longer collected: healio.com, onclive.com, medscape.com, fiercepharma.com, fiercebiotech.com, endpts.com, targetedonc.com and pharmatimes.com show no stories a week; statnews.com, biospace.com, medpagetoday.com, news-medical.net, ajmc.com and drugs.com are collected. In the first run biospace.com alone gave about two thirds of the trade press leads.
+- **Size of the job:** one request per trial. The 43,320 phase 3 trials take at least 11 weeks at the default allowance.
+
+### GDELT bulk datasets (not used)
+
+- **Checked:** 2026-11-14. [Terms](https://www.gdeltproject.org/about.html#termsofuse), [data](https://www.gdeltproject.org/data.html), [Web NGrams 3.0](https://blog.gdeltproject.org/announcing-the-new-web-news-ngrams-3-0-dataset/), [BigQuery pricing](https://cloud.google.com/bigquery/pricing).
+- **Terms:** open for academic, commercial and governmental use, with redistribution allowed. Any use must cite GDELT and link to gdeltproject.org.
+- **Authentication and cost:** none for the raw files. BigQuery needs a Google Cloud project: the first 1 TiB scanned each month is free, then $6.25 per TiB.
+- **Rate limit:** not stated for file downloads.
+- **What is searchable:** the Global Knowledge Graph (from April 2013) holds GDELT's extracted themes, names and organisations, not free keywords. Web NGrams 3.0 (from January 2020) holds one record per word with the article's address and a few words of context; two keywords are matched by a join, and title, outlet and date come from a second table. The context words are fragments of article text and must be discarded if this is ever used.
+- **Coverage:** nothing before April 2013; keyword matching only from 2020. Whether the trade press is included is unconfirmed.
+- **The live DOC 2.0 interface:** searches back to January 2017 and answers "too many requests" above one request every five seconds. It refused every request from the operator's address on 2026-11-14, including single ones 40 minutes apart. No higher allowance is published; GDELT's posts send high-volume users to the datasets above.
+
+### Common Crawl news crawl (ruled out)
+
+- **Checked:** 2026-11-14. [Terms of use](https://commoncrawl.org/terms-of-use) (updated 7 March 2024), [news crawl data](https://data.commoncrawl.org/crawl-data/CC-NEWS/index.html).
+- **Why not:** there is no keyword search. The files hold full article pages, about 47 TiB for 2016 to 2025, so using it means downloading and holding article text, which this project never does.
