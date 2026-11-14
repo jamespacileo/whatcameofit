@@ -381,8 +381,10 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
     Read <a href="/privacy">what is sent and how the providers handle it</a> before searching.
   </p>
   <p>
-    Related papers come from OpenAlex searches for the treatment and condition. ROR identifies
-    organisations explicitly named in the report. These sections open when you need them.
+    Related papers come from OpenAlex searches using the experiment described in the report,
+    its named researchers and its publication date when available. Broader topic searches
+    provide additional candidates, and cited DOI or PubMed links are also looked up directly.
+    ROR identifies organisations explicitly named in the report. These sections open when you need them.
     A paper result does not establish that a treatment works, and an organisation record does
     not verify involvement or endorsement. Neither provider receives the article text, page
     address or screenshot. Public paper and organisation metadata may be cached for seven days.
