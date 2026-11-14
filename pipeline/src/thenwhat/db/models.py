@@ -29,6 +29,7 @@ from thenwhat.domain import (
     EventType,
     EvidenceStage,
     NamedBy,
+    OutletKind,
     RegulatoryOutcome,
     ReviewState,
     StatementBasis,
@@ -38,6 +39,7 @@ from thenwhat.domain import (
     TermFit,
     TermRole,
     TrialState,
+    WorkOutcome,
 )
 
 NAMING_CONVENTION = {
@@ -481,4 +483,120 @@ class OutletIcon(Base):
     icon_url: Mapped[str | None] = mapped_column(Text)
     media_type: Mapped[str | None] = mapped_column(Text)
     content: Mapped[bytes | None] = mapped_column(LargeBinary)
+    fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+
+
+class WorkEntry(Base):
+    """One step finished, or failed, for one record at one version of the step.
+
+    The record is named by its kind and id, not by a foreign key: a step can apply to
+    any table. Behavior: openspec work-ledger.
+    """
+
+    __tablename__ = "work_entry"
+    __table_args__ = (
+        UniqueConstraint(
+            "record_kind",
+            "record_id",
+            "step",
+            "step_version",
+            name="uq_work_entry_record_step_version",
+        ),
+        CheckConstraint("(outcome = 'failed') = (error IS NOT NULL)", name="failure_has_error"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    record_kind: Mapped[str] = mapped_column(Text)
+    record_id: Mapped[int]
+    step: Mapped[str] = mapped_column(Text)
+    step_version: Mapped[int]
+    outcome: Mapped[WorkOutcome] = mapped_column(_enum(WorkOutcome, "outcome"))
+    attempts: Mapped[int]
+    requests_used: Mapped[int]
+    # A hash of the fields the step read. When the record's fields change, the entry is
+    # marked stale and the record is due again.
+    fingerprint: Mapped[str] = mapped_column(Text)
+    stale: Mapped[bool] = mapped_column(default=False, server_default="false")
+    error: Mapped[str | None] = mapped_column(Text)
+    last_attempt_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+
+
+class SourceAllowanceUse(Base):
+    """How much of a source's allowance is used in the current period, for every process
+    that asks that source. Behavior: openspec source-allowances."""
+
+    __tablename__ = "source_allowance_use"
+
+    source_name: Mapped[str] = mapped_column(Text, primary_key=True)
+    period_start: Mapped[datetime] = mapped_column(TIMESTAMP)
+    requests_used: Mapped[int]
+    last_request_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
+    # Set when the source answered "too many requests": nothing is asked before this time.
+    paused_until: Mapped[datetime | None] = mapped_column(TIMESTAMP)
+    refusals: Mapped[int] = mapped_column(default=0, server_default="0")
+
+
+class RegistryTrial(Base):
+    """A trial as a registry lists it, kept whether or not any claim refers to it.
+    Not an evidence event and never exported. Behavior: openspec registry-corpus."""
+
+    __tablename__ = "registry_trial"
+    __table_args__ = (
+        UniqueConstraint(
+            "registry_name", "external_id", name="uq_registry_trial_registry_external"
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    registry_name: Mapped[str] = mapped_column(Text)
+    external_id: Mapped[str] = mapped_column(Text)
+    title: Mapped[str] = mapped_column(Text)
+    conditions: Mapped[list[str]] = mapped_column(ARRAY(Text))
+    # Each intervention as the registry gives it: type, name and other names.
+    interventions: Mapped[list[dict[str, Any]]] = mapped_column(JSONB)
+    phases: Mapped[list[str]] = mapped_column(ARRAY(Text))
+    overall_status: Mapped[str | None] = mapped_column(Text)
+    # As the registry writes it, which can be a month without a day.
+    start_date: Mapped[str | None] = mapped_column(Text)
+    sponsor_class: Mapped[str | None] = mapped_column(Text)
+    # The intervention under test as a name alone, and the indication's telling words.
+    # Worked out by rule on load; empty when the registry gives no usable name.
+    search_name: Mapped[str | None] = mapped_column(Text)
+    search_indication: Mapped[str | None] = mapped_column(Text)
+    raw_payload: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+
+
+class RegistryLoad(Base):
+    """When trials matching a condition were last loaded in full, so that the next load
+    can ask only for what changed since."""
+
+    __tablename__ = "registry_load"
+
+    registry_name: Mapped[str] = mapped_column(Text, primary_key=True)
+    condition: Mapped[str] = mapped_column(Text, primary_key=True)
+    # The start of the last load that completed: changes are asked for from this time.
+    loaded_from: Mapped[datetime] = mapped_column(TIMESTAMP)
+    completed_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+
+
+class ArticleLead(Base):
+    """A news article a search found for a registry trial. Unreviewed, never a source
+    article and never exported. Its text is never stored. Behavior: openspec article-leads."""
+
+    __tablename__ = "article_lead"
+    __table_args__ = (
+        UniqueConstraint("registry_trial_id", "url", name="uq_article_lead_trial_url"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    registry_trial_id: Mapped[int] = mapped_column(ForeignKey("registry_trial.id"), index=True)
+    url: Mapped[str] = mapped_column(Text)
+    outlet: Mapped[str] = mapped_column(Text)
+    title: Mapped[str] = mapped_column(Text)
+    published_date: Mapped[date | None]
+    outlet_kind: Mapped[OutletKind] = mapped_column(_enum(OutletKind, "outlet_kind"))
+    source_name: Mapped[str] = mapped_column(Text)
+    search_query: Mapped[str] = mapped_column(Text)
+    raw_result: Mapped[dict[str, Any]] = mapped_column(JSONB)
     fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)

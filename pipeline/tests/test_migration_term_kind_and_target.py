@@ -1,4 +1,4 @@
-"""Migration 0014 lets a subject term link be a kind link or a named-gene link, keeps
+"""Migration 0015 lets a subject term link be a kind link or a named-gene link, keeps
 the links already stored, and refuses to go back while a row holds a new value."""
 
 from collections.abc import Iterator
@@ -32,7 +32,7 @@ def _links(engine: Engine) -> list[tuple[str, str]]:
 @pytest.fixture
 def stored_link(engine: Engine, alembic_config: Config) -> Iterator[None]:
     """A claim with one link, stored under the schema before this migration."""
-    command.downgrade(alembic_config, "0013")
+    command.downgrade(alembic_config, "0014")
     with engine.begin() as connection:
         connection.execute(
             text(
@@ -58,7 +58,7 @@ def test_upgrade_keeps_stored_links_and_allows_the_new_values(
         with pytest.raises(IntegrityError), engine.begin() as connection:
             connection.execute(text(LINK), new)
 
-    command.upgrade(alembic_config, "0014")
+    command.upgrade(alembic_config, "0015")
 
     with engine.begin() as connection:
         connection.execute(text(LINK), KIND)
@@ -70,22 +70,22 @@ def test_upgrade_keeps_stored_links_and_allows_the_new_values(
 def test_downgrade_refuses_while_a_row_holds_a_new_value_and_reverses_without(
     engine: Engine, alembic_config: Config
 ):
-    command.upgrade(alembic_config, "0014")
+    command.upgrade(alembic_config, "0015")
     with engine.begin() as connection:
         connection.execute(text(LINK), KIND)
 
     with pytest.raises(RuntimeError, match=r"1 row\(s\) of claim_term hold fit kind"):
-        command.downgrade(alembic_config, "0013")
+        command.downgrade(alembic_config, "0014")
 
     with engine.begin() as connection:
         connection.execute(text("DELETE FROM claim_term WHERE fit = 'kind'"))
         connection.execute(text(LINK), GENE | {"fit": None})
     with pytest.raises(RuntimeError, match=r"1 row\(s\) of claim_term hold role target"):
-        command.downgrade(alembic_config, "0013")
+        command.downgrade(alembic_config, "0014")
 
     with engine.begin() as connection:
         connection.execute(text("DELETE FROM claim_term WHERE role = 'target'"))
-    command.downgrade(alembic_config, "0013")
+    command.downgrade(alembic_config, "0014")
 
     assert _links(engine) == [("condition", "exact")]
     with pytest.raises(IntegrityError), engine.begin() as connection:

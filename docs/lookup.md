@@ -505,7 +505,7 @@ Journals, news outlets and banks: of the 24 journal names and 6 outlets and bank
 
 ## Entry terms, kinds and named genes on a copy of the real database (14 November 2026)
 
-Openspec `knowledge-cards`, tasks 5a.10 to 5a.13. Run on a copy of the real database made the same evening (`thenwhat_knowledgecards`), not on the real one: the change's migration (0014, numbered 0013 when the copy was made) was not merged and the real database is shared between branches. `thenwhat terms --all` was run for the 84 published claims with the decisions backend and the default thresholds (approve at 0.8, reject under 0.05, ten term candidates and three named genes a claim). The first run took 5 minutes 53 seconds. Nothing was exported or deployed. After the merge the real database needs `alembic upgrade head`, one `thenwhat terms --all`, and the rejections below made again.
+Openspec `knowledge-cards`, tasks 5a.10 to 5a.13. Run on a copy of the real database made the same evening (`thenwhat_knowledgecards`), not on the real one: the change's migration (0015, numbered 0013 when the copy was made) was not merged and the real database is shared between branches. `thenwhat terms --all` was run for the 84 published claims with the decisions backend and the default thresholds (approve at 0.8, reject under 0.05, ten term candidates and three named genes a claim). The first run took 5 minutes 53 seconds. Nothing was exported or deployed. After the merge the real database needs `alembic upgrade head`, one `thenwhat terms --all`, and the rejections below made again.
 
 | | Count |
 | --- | --- |

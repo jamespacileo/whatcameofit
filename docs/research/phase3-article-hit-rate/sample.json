@@ -1,0 +1,5819 @@
+{
+ "frame": "phase 3 interventional, drug or biological",
+ "frame_size": 43320,
+ "seed": 20261114,
+ "drawn": "2026-11-14",
+ "trials": [
+  {
+   "nct": "NCT07502118",
+   "title": "NexCAR19 (Talikabtagene Autoleucel) in Relapsed/Refractory B-Cell Malignancies (NexCAR19)",
+   "status": "RECRUITING",
+   "start": "2025-09-11",
+   "sponsor_class": "OTHER_GOV",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "Relapsed/Refractory B-cell Acute Lymphoblastic Leukemia (B-ALL)",
+    "Relapsed/Refractory Non-Hodgkin Lymphoma",
+    "Diffuse Large B-Cell Lymphoma (DLBCL)",
+    "High-grade B-cell Lymphoma (HGBCL)",
+    "Follicular Lymphoma ( FL)"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "Talikabtagene Autoleucel"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT04565015",
+   "title": "Study of Immune Globulin Intravenous (Human) GC5107 in Pediatric Subjects With Primary Humoral Immunodeficiency",
+   "status": "ACTIVE_NOT_RECRUITING",
+   "start": "2020-12-21",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Primary Immune Deficiency"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "GC5107",
+     "otherNames": [
+      "GCC 10% IGIV",
+      "Immune Globulin Intravenous (Human), 10% Liquid"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01997268",
+   "title": "The Efficacy of EPA+DHA (SC401B) for Lowering Triglyceride Levels (≥ 500 mg/dL)",
+   "status": "WITHDRAWN",
+   "start": null,
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Severe Hypertriglyceridemia"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    },
+    {
+     "type": "DRUG",
+     "name": "SC401B 2 capsules"
+    },
+    {
+     "type": "DRUG",
+     "name": "SC401B 4 capsules"
+    },
+    {
+     "type": "DRUG",
+     "name": "SC401B 6 capsules"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01305655",
+   "title": "Glucarpidase Effect on Severe Delayed HDM-clearance in Children Treated With High-dose Mtx in ALL",
+   "status": "COMPLETED",
+   "start": "2008-07",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Acute Lymphoblastic Leukemia (ALL)"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Glucarpidase",
+     "otherNames": [
+      "VORAXAZE®"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT03650114",
+   "title": "Long-term Safety, Tolerability and Effectiveness Study of Ofatumumab in Patients With Relapsing MS",
+   "status": "ACTIVE_NOT_RECRUITING",
+   "start": "2018-12-28",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Relapsing Multiple Sclerosis"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "Ofatumumab"
+    },
+    {
+     "type": "BIOLOGICAL",
+     "name": "Tetanus toxoid (TT) containing vaccine (Td, Tdap)"
+    },
+    {
+     "type": "BIOLOGICAL",
+     "name": "13-valent pneumococcal conjugate vaccine (13-PCV)"
+    },
+    {
+     "type": "BIOLOGICAL",
+     "name": "23-valent pneumococcal polysaccharide vaccine (23-PPV)"
+    },
+    {
+     "type": "BIOLOGICAL",
+     "name": "Seasonal Quadrivalent influenza vaccine"
+    },
+    {
+     "type": "BIOLOGICAL",
+     "name": "Keyhole limpet hemocyanin (KLH) neo-antigen"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT06904261",
+   "title": "A Study of Migalastat in Pediatric Subjects (2 to <12 Yrs) With Fabry Disease and Amenable GLA Variants",
+   "status": "RECRUITING",
+   "start": "2026-01-08",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Fabry Disease"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Migalastat HCl 20 mg",
+     "otherNames": [
+      "AT1001",
+      "Galafold"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT06000982",
+   "title": "Comparison of Different Dose of Post-transplantation Cyclophosphamide as Graft Versus Host Disease Prophylaxis",
+   "status": "UNKNOWN",
+   "start": "2023-10-01",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "GVHD"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "PTCY"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT07782996",
+   "title": "A Study to Investigate the Efficacy and Safety of GSK5784283 Compared With Placebo in Participants With Uncontrolled Asthma (PERSIST ASTHMA-2)",
+   "status": "RECRUITING",
+   "start": "2026-08-27",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Asthma"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "GSK5784283"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    },
+    {
+     "type": "DRUG",
+     "name": "Standard of care"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT04819113",
+   "title": "Study to Evaluate the Safety and Immunogenicity of Nimenrix (Registered) in Healthy Infants, Given at 3 and 12 Months of Age",
+   "status": "COMPLETED",
+   "start": "2021-04-09",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Meningococcal Vaccine"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "Nimenrix"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT05543928",
+   "title": "Phase 3 Safety and Efficacy Study of CTAP101 Extended-release Capsules in Children With Secondary Hyperparathyroidism",
+   "status": "TERMINATED",
+   "start": "2023-01-31",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Chronic Kidney Disease stage3",
+    "Chronic Kidney Disease stage4",
+    "Vitamin d Deficiency",
+    "Secondary Hyperparathyroidism"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "CTAP101"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT03275922",
+   "title": "Efficacy & Safety Of Zomig Nasal Spray For Acute Migraine Treatment In Subjects 6 To 11 Years, With OLE",
+   "status": "COMPLETED",
+   "start": "2017-11-27",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Migraine"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Placebo ZNS",
+     "otherNames": [
+      "Placebo"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "ZNS"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01066689",
+   "title": "Impact of Treatment With Rituximab on the Progression of Humoral Acute Rejection After Renal Transplantation",
+   "status": "UNKNOWN",
+   "start": "2008-10",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Graft Rejection"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "MabThera",
+     "otherNames": [
+      "rituximab"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Physiological serum (Sodium Chloride, sodium citrate)"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00281918",
+   "title": "Fludarabine and Cyclophosphamide With or Without Rituximab in Patients With Previously Untreated Chronic B-Cell Lymphocytic Leukemia",
+   "status": "COMPLETED",
+   "start": "2003-07",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Leukemia"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Rituximab"
+    },
+    {
+     "type": "DRUG",
+     "name": "Cyclophosphamide"
+    },
+    {
+     "type": "DRUG",
+     "name": "Fludarabine Phosphate"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00650689",
+   "title": "Ezetimibe Plus Atorvastatin Versus Atorvastatin in Untreated Subjects With Primary Hypercholesterolemia and Coronary Heart Disease (P03396)",
+   "status": "COMPLETED",
+   "start": "2003-05",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Hypercholesterolemia",
+    "Atherosclerosis",
+    "Coronary Artery Disease"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Ezetimibe + Atorvastatin",
+     "otherNames": [
+      "SCH 58235",
+      "Zetia",
+      "Lipitor"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Atorvastatin",
+     "otherNames": [
+      "Lipitor"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00084240",
+   "title": "Azithromycin Plus Chloroquine Versus Sulfadoxine-Pyrimethamine Plus Chloroquine For The Treatment Of Uncomplicated, Symptomatic Falciparum Malaria In Southeast Asia",
+   "status": "TERMINATED",
+   "start": "2004-03",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "Malaria, Falciparum"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Azithromycin/Chloroquine"
+    },
+    {
+     "type": "DRUG",
+     "name": "Sulfadoxine-Pyrimethamine/Chloroquine"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT07801599",
+   "title": "Huayu Jiedu Formula (FTFY-919) Granules Versus Traditional Decoction for Acute Hypertensive Intracerebral Hemorrhage",
+   "status": "NOT_YET_RECRUITING",
+   "start": "2026-09",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Intracerebral Hemorrhage",
+    "Hypertension"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Huayu Jiedu Formula (FTFY-919) Granules"
+    },
+    {
+     "type": "DRUG",
+     "name": "Huayu Jiedu Formula (FTFY-919) Traditional Decoction"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo Granules"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT06439225",
+   "title": "Platinum and Taxane Chemo in Met Castration Resistant Prostate Cancer Patients With Alterations in DNA Damage Response Genes",
+   "status": "RECRUITING",
+   "start": "2024-12-30",
+   "sponsor_class": "NETWORK",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Metastatic Castration-resistant Prostate Cancer",
+    "Metastatic Prostate Cancer"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Docetaxel"
+    },
+    {
+     "type": "DRUG",
+     "name": "Carboplatin"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT04952051",
+   "title": "Enalapril Folic Acid Tablets Combined With CCB or Diuretic to Prevent Stroke in Patients With Type H Hypertension",
+   "status": "COMPLETED",
+   "start": "2014-07-01",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Hypertension"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Enalapril Folic Acid Tablets Combined With amlodipine"
+    },
+    {
+     "type": "DRUG",
+     "name": "Enalapril Folic Acid Tablets Combined With hydrochlorothiazide"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT06970743",
+   "title": "A Study of BGB-16673 Compared to Investigator's Choice in Participants With Relapsed/Refractory Chronic Lymphocytic Leukemia or Small Lymphocytic Lymphoma Previously Exposed to Covalent Bruton Tyrosine Kinase (BTK) Inhibitors",
+   "status": "ACTIVE_NOT_RECRUITING",
+   "start": "2025-05-29",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Chronic Lymphocytic Leukemia",
+    "Small Lymphocytic Lymphoma"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "BGB-16673",
+     "otherNames": [
+      "Tacabrutideg"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Bendamustine"
+    },
+    {
+     "type": "DRUG",
+     "name": "Rituximab"
+    },
+    {
+     "type": "DRUG",
+     "name": "Methylprednisolone"
+    },
+    {
+     "type": "DRUG",
+     "name": "Chlorambucil"
+    },
+    {
+     "type": "DRUG",
+     "name": "Obinutuzumab"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00932542",
+   "title": "Eutectic Mixture for Hemorrhoidectomy Postoperative",
+   "status": "UNKNOWN",
+   "start": "2010-04",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "Hemorrhoidectomy"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Eutectic mixture"
+    },
+    {
+     "type": "DRUG",
+     "name": "placebo"
+    },
+    {
+     "type": "DRUG",
+     "name": "lidocaine 2,5%; prilocaine 2,5%"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01451203",
+   "title": "Efficacy Confirmation Study of CDP870 in Early Rheumatoid Arthritis",
+   "status": "COMPLETED",
+   "start": "2011-10-11",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Rheumatoid Arthritis"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    },
+    {
+     "type": "DRUG",
+     "name": "CZP",
+     "otherNames": [
+      "CDP870",
+      "certolizumab pegol",
+      "Cimzia®"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "methotrexate (MTX)"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00561821",
+   "title": "Efficacy and Safety Study of Org 50081 (Esmirtazapine) in Elderly Participants (P05709)",
+   "status": "COMPLETED",
+   "start": "2007-11-20",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Insomnia",
+    "Sleep Initiation and Maintenance Disorders",
+    "Mental Disorders",
+    "Dyssomnias",
+    "Sleep Disorders"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Esmirtazapine"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT05771896",
+   "title": "Darolutamide With Radium-223 or Placebo and the Effect on Radiological Progression-Free Survival for Patients With mCSPC",
+   "status": "WITHDRAWN",
+   "start": "2023-09",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Metastatic Prostate Cancer"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Darolutamide",
+     "otherNames": [
+      "Nubeqa"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Radium-223",
+     "otherNames": [
+      "Xofigo"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01788020",
+   "title": "Efficacy of First Line DRC +/- Bortezomib for Patients With Waldenström's Macroglobulinemia",
+   "status": "COMPLETED",
+   "start": "2013-11",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Waldenström's Macroglobulinemia"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Dexamethasone, Rituximab, Cyclophosphamide"
+    },
+    {
+     "type": "DRUG",
+     "name": "Dexamethasone, Rituximab, Cyclophosphamide, Bortezomib"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT03902691",
+   "title": "Study of the Efficacy and Safety of Pegol-Sihematide for Anemia in Patients With Chronic Kidney Disease on Dialysis",
+   "status": "COMPLETED",
+   "start": "2019-05-15",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Chronic Kidney Diseases"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Pegol-Sihematide"
+    },
+    {
+     "type": "DRUG",
+     "name": "ESPO"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00538850",
+   "title": "Fentanyl Sublingual Spray in Treating Patients With Breakthrough Cancer Pain",
+   "status": "COMPLETED",
+   "start": "2007-10",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Cancer"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Fentanyl sublingual spray",
+     "otherNames": [
+      "SUBSYS"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT03659929",
+   "title": "Adult Attention Deficit Hyperactivity Disorder (ADHD) Study With Amphetamine Sulfate",
+   "status": "COMPLETED",
+   "start": "2018-09-18",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Attention Deficit Hyperactivity Disorder"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Amphetamine Sulfate",
+     "otherNames": [
+      "AR19"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo",
+     "otherNames": [
+      "inactive drug"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT02752113",
+   "title": "Effects of Empagliflozin + Linagliptin vs Metformin + Insulin Glargine on Renal and Vascular Changes in Type 2 Diabetes",
+   "status": "COMPLETED",
+   "start": "2016-04",
+   "sponsor_class": "NETWORK",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Diabetes Mellitus Type 2"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Empagliflozin and Linagliptin",
+     "otherNames": [
+      "Jardiance, Trajenta"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Metformin and Insulin sc",
+     "otherNames": [
+      "Siofor, Lantus"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT04618939",
+   "title": "To Evaluate the Immunogenicity and Safety of 'BR-TD-1001' Administered Intramuscularly in Healthy Children",
+   "status": "COMPLETED",
+   "start": "2016-10-20",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Diphtheria",
+    "Tetanus"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "BR-TD-1001"
+    },
+    {
+     "type": "BIOLOGICAL",
+     "name": "Td-pur inj"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00074906",
+   "title": "Venticute in Patients With Pneumonia or Aspiration of Gastric Contents and Intubation/Ventilation/Oxygenation Impairment (BY2001/M1-007)",
+   "status": "COMPLETED",
+   "start": "2003-11",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Pneumonia"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Venticute"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT05229965",
+   "title": "Paracetamol Vs Caffeine Vs Codeine in the Management of Post Traumatic Pain in Emergencies",
+   "status": "COMPLETED",
+   "start": "2022-11-01",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Acute Pain Due to Trauma"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Paracetamol",
+     "otherNames": [
+      "1000mg"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Paracetamol Codeine",
+     "otherNames": [
+      "500mg/ 30mg"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Paracetamol caféine",
+     "otherNames": [
+      "500mg/ 65mg"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00698061",
+   "title": "Immunogenicity and Safety of an Adjuvanted HBV Vaccine Compared to Engerix™-B, in a Non-responder Population ≥ 15y",
+   "status": "COMPLETED",
+   "start": "1999-11",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Hepatitis B"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "HBV-MPL vaccine 208129"
+    },
+    {
+     "type": "BIOLOGICAL",
+     "name": "Engerix™-B"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT07284394",
+   "title": "Liver-directed Chemotherapy After Surgery of Liver Metastases of Colorectal Cancer in Patients With High Risk of Recurrence of Their Disease",
+   "status": "NOT_YET_RECRUITING",
+   "start": "2026-07",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Colorectal Adenocarcinoma Metastatic in the Liver",
+    "Colorectal Cancer"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Arterial catheter infusion chemotherapy"
+    },
+    {
+     "type": "DRUG",
+     "name": "IV Chemotherapy (Regimen 1)"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01489111",
+   "title": "Evaluating the Haemostatic Effect of NNC 0129-0000-1003 During Surgical Procedures in Subjects With Haemophilia A.",
+   "status": "COMPLETED",
+   "start": "2012-08-03",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Congenital Bleeding Disorder",
+    "Haemophilia A"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "turoctocog alfa pegol",
+     "otherNames": [
+      "NNC 0129-0000-1003"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT04219982",
+   "title": "DPI 386 Nasal Gel for the Prevention of Nausea Associated With Motion Sickness",
+   "status": "TERMINATED",
+   "start": "2018-06-29",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "Motion Sickness"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "DPI-386 Nasal Gel"
+    },
+    {
+     "type": "DRUG",
+     "name": "DPI-386 Placebo Nasal Gel"
+    },
+    {
+     "type": "DRUG",
+     "name": "Transderm Scop®"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00240695",
+   "title": "A Follow-up Study to Assess Safety and Tolerability of Galantamine Treatment in Individuals With Mild Cognitive Impairment",
+   "status": "COMPLETED",
+   "start": "2003-05",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Cognition Disorder",
+    "Nervous System Diseases",
+    "Mental Disorders",
+    "Brain Diseases"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "galantamine hydrobromide"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00981409",
+   "title": "The Treatment of Acute Pulmonary Thromboembolism (PE) of GSK576428 (Fondaparinux Sodium) in Japanese Patients",
+   "status": "COMPLETED",
+   "start": "2007-07",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Embolism, Pulmonary"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Fondaparinux sodium",
+     "otherNames": [
+      "GSK576428"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "unfractionated heparin (UFH)"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00731120",
+   "title": "Study of Efficacy and Safety of Vortioxetine (Lu AA21004) in Treating Generalized Anxiety Disorder",
+   "status": "COMPLETED",
+   "start": "2008-06",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Generalized Anxiety Disorder"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Vortioxetine",
+     "otherNames": [
+      "Lu AA21004",
+      "Brintellix®"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT01469182",
+   "title": "A Study of Ragweed (Ambrosia Artemisiifolia) Allergy Immunotherapy Tablet in Adults With Ragweed Allergies (P05751)",
+   "status": "COMPLETED",
+   "start": "2011-11",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Allergy"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "SCH 39641",
+     "otherNames": [
+      "MK-3641"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo for SCH 39641"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT03043872",
+   "title": "Durvalumab ± Tremelimumab in Combination With Platinum Based Chemotherapy in Untreated Extensive-Stage Small Cell Lung Cancer (CASPIAN)",
+   "status": "ACTIVE_NOT_RECRUITING",
+   "start": "2017-03-27",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Small Cell Lung Carcinoma Extensive Disease"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Durvalumab"
+    },
+    {
+     "type": "DRUG",
+     "name": "Tremelimumab"
+    },
+    {
+     "type": "DRUG",
+     "name": "Carboplatin"
+    },
+    {
+     "type": "DRUG",
+     "name": "Cisplatin"
+    },
+    {
+     "type": "DRUG",
+     "name": "Etoposide"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT03309007",
+   "title": "A Double-Blind, Placebo-Controlled Trial of Anti-Aging, Pro-Autophagy Effects of Metformin in Adults With Prediabetes",
+   "status": "COMPLETED",
+   "start": "2017-09-01",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "PreDiabetes",
+    "Aging"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Metformin",
+     "otherNames": [
+      "Glucophage"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo Oral Tablet",
+     "otherNames": [
+      "Calcium Carbonate"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT07384377",
+   "title": "JSKN003 Versus Physician Choiced Treatment in Patients With HER2-positive and Advanced Colorectal Cancer Who Had Failed to Respond to Oxaliplatin, 5-Fu, and Irinotecan",
+   "status": "NOT_YET_RECRUITING",
+   "start": "2026-02-06",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "HER2-positive Colorectal Cancer"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "JSKN003"
+    },
+    {
+     "type": "DRUG",
+     "name": "Physician choiced treatment, include: TAS-102, Regorafenib, Fruquintinib."
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT03787992",
+   "title": "Alflutinib Mesylate Versus Gefitinib in Patients With Locally Advanced or Metastatic Non-small Cell Lung Cancer （FLAG）",
+   "status": "ACTIVE_NOT_RECRUITING",
+   "start": "2019-05-30",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Locally Advanced or Metastatic EGFR Sensitising Mutation Positive Non-small Cell Lung Cancer"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Alflutinib Mesylate (AST2818) 80mg//40 mg+ placebo"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo Gefitinib 250 mg"
+    },
+    {
+     "type": "DRUG",
+     "name": "Gefitinib 250 mg"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo AST2818 80mg//40 mg"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT07538284",
+   "title": "MInimizing Delirium With Nasal Dexmedetomidine-InducEd Sleep (MIDDIES)",
+   "status": "NOT_YET_RECRUITING",
+   "start": "2026-05-01",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "Major Abdominal Surgery",
+    "Postoperative Delirium (POD)",
+    "Sleep Disturbances",
+    "Intranasal Dexmedetomidine"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Dexmedetomidine"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT05967130",
+   "title": "Treatment Chronic UTI Post Kidney Transplant",
+   "status": "TERMINATED",
+   "start": "2023-07-01",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Urinary Tract Infections",
+    "Transplant-Related Disorder"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "Phage"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT04184505",
+   "title": "Feasibility of Allogeneic Stem Cell Transplantation in Higher-risk-MDS (ACROBAT)",
+   "status": "RECRUITING",
+   "start": "2020-11-27",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "High-risk MDS"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Azacitidine",
+     "otherNames": [
+      "AZA"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Standard Chemotherapy",
+     "otherNames": [
+      "STD CHT"
+     ]
+    },
+    {
+     "type": "PROCEDURE",
+     "name": "Allogeneic stem cell transplantation",
+     "otherNames": [
+      "HSCT"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01299857",
+   "title": "Long-term Clinical and Biological Evaluation of Patients With Severe Forms of Pemphigus Treated by Rituximab",
+   "status": "COMPLETED",
+   "start": "2011-06",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Pemphigus"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Rituximab",
+     "otherNames": [
+      "Mabthéra"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00989235",
+   "title": "Substudy - Low Dose of Abatacept in Subjects With Rheumatoid Arthritis",
+   "status": "COMPLETED",
+   "start": "2007-04",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Rheumatoid Arthritis"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Abatacept",
+     "otherNames": [
+      "BMS-188667"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Abatacept",
+     "otherNames": [
+      "BMS-188667"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT01222247",
+   "title": "Antenatal Late Preterm Steroids (ALPS): A Randomized Placebo-Controlled Trial",
+   "status": "COMPLETED",
+   "start": "2010-10",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Pregnancy",
+    "Respiratory Distress Syndrome",
+    "Pregnancy Outcomes",
+    "Preterm Birth"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Betamethasone",
+     "otherNames": [
+      "Corticosteroid"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT02892149",
+   "title": "Efficacy and Safety Study to Evaluate Vadadustat for the Maintenance Treatment of Anemia in Participants With Dialysis-dependent Chronic Kidney Disease (DD-CKD)",
+   "status": "COMPLETED",
+   "start": "2016-08",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Anemia",
+    "Dialysis-Dependent Chronic Kidney Disease"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Vadadustat",
+     "otherNames": [
+      "AKB-6548"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Darbepoetin alfa",
+     "otherNames": [
+      "Aranesp"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT03905304",
+   "title": "Efficacy and Safety of MEDITOXIN® in Cervical Dystonia",
+   "status": "COMPLETED",
+   "start": "2013-01-09",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Cervical Dystonia"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "Medytoxin",
+     "otherNames": [
+      "botulinum type A toxin"
+     ]
+    },
+    {
+     "type": "BIOLOGICAL",
+     "name": "Botox",
+     "otherNames": [
+      "botulinum type A toxin"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00942435",
+   "title": "A Study to Assess the Effect of YM150 for Prevention of Venous Thromboembolism in Patients Undergoing Major Abdominal Surgery",
+   "status": "COMPLETED",
+   "start": "2009-06",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Venous Thromboembolism"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "YM150"
+    },
+    {
+     "type": "PROCEDURE",
+     "name": "mechanical prophylaxis"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT04754789",
+   "title": "Effect of Upstream Treatment With High Intensity Statin on the Outcomes of STMI Patients Treated With PPCI",
+   "status": "UNKNOWN",
+   "start": "2021-02-20",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "ST Elevation Myocardial Infarction"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Atorvastatin",
+     "otherNames": [
+      "aspirin",
+      "ticagrelor"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Aspirin",
+     "otherNames": [
+      "ticagrelor"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT03686254",
+   "title": "The Effects of RFA in Combination With Second-line Chemotherapy and Bevacizumab on Unresectable CRLM",
+   "status": "UNKNOWN",
+   "start": "2018-07-16",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "Colorectal Neoplasms Malignant"
+   ],
+   "interventions": [
+    {
+     "type": "COMBINATION_PRODUCT",
+     "name": "RFA, bevacizumab and second-line chemotherapy"
+    },
+    {
+     "type": "DRUG",
+     "name": "Bevacizumab and second-line chemotherapy"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT02832544",
+   "title": "INVestIgation of rheumatiC AF Treatment Using Vitamin K Antagonists, Rivaroxaban or Aspirin Studies, Non-Inferiority",
+   "status": "COMPLETED",
+   "start": "2016-08-22",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Rheumatic Heart Disease"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Rivaroxaban (20 mg)",
+     "otherNames": [
+      "Xarelto"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Vitamin K antagonists (VKA)",
+     "otherNames": [
+      "Warfarin"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT06997497",
+   "title": "A Clinical Study of Calderasib (MK-1084) With Targeted Therapy and Chemotherapy in People With Colorectal Cancer (MK-1084-012/KANDLELIT-012)",
+   "status": "RECRUITING",
+   "start": "2025-07-16",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Colon Adenocarcinoma",
+    "Rectal Adenocarcinoma"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Calderasib",
+     "otherNames": [
+      "MK-1084"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Oxaliplatin"
+    },
+    {
+     "type": "DRUG",
+     "name": "Leucovorin/levofolinate calcium"
+    },
+    {
+     "type": "DRUG",
+     "name": "5-Fluorouracil"
+    },
+    {
+     "type": "BIOLOGICAL",
+     "name": "Cetuximab",
+     "otherNames": [
+      "Erbitux"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Bevacizumab",
+     "otherNames": [
+      "Avastin"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Bevacizumab biosimilar",
+     "otherNames": [
+      "MVASI"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT06820645",
+   "title": "Calcium Administration in Life-saving Management During Massive Hemorrhage",
+   "status": "NOT_YET_RECRUITING",
+   "start": "2025-05-01",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "Massive Hemorrhage",
+    "Trauma",
+    "Hypocalcemia"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "calcium gluconate",
+     "otherNames": [
+      "Calcium"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Control: Placebo",
+     "otherNames": [
+      "saline"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT04745728",
+   "title": "Different Immunosuppressive Treatment in iMN",
+   "status": "RECRUITING",
+   "start": "2021-04-14",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Idiopathic Membranous Nephropathy"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Prednisone"
+    },
+    {
+     "type": "DRUG",
+     "name": "Cyclophosphamide",
+     "otherNames": [
+      "CTX"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Rituximab",
+     "otherNames": [
+      "CD20 antibody"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT05289557",
+   "title": "The Efficacy and Safety of Bonjesta® for Nausea and Vomiting of Pregnancy in Pregnant Adolescents",
+   "status": "SUSPENDED",
+   "start": "2022-05-01",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Morning Sickness"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Bonjesta"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT06858280",
+   "title": "Patiromer and Diet/hrQoL in Chronic Dialysis",
+   "status": "RECRUITING",
+   "start": "2025-07-08",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Hyperkalaemia",
+    "Chronic Kidney Disease Stage 3 and 4",
+    "Dietary Intervention"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Patiromer 8400 MG [Veltassa]"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT05292586",
+   "title": "A Study Testing the Superiority of CHF 1535 pMDI 800/24µg Total Daily Dose Compared With CHF 718 pMDI 800µg Total Daily Dose in Adults With Asthma on Medium or High-Dose Inhaled Corticosteroid",
+   "status": "COMPLETED",
+   "start": "2022-08-31",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Asthma"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Beclomethasone Dipropionate/Formoterol Fumarate",
+     "otherNames": [
+      "BDP/FF"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Beclomethasone Dipropionate",
+     "otherNames": [
+      "BDP"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT07398846",
+   "title": "Efficacy of a Stannous Fluoride Toothpaste, Cetylpyridinium Chloride Mouthwash, and Battery Toothbrush Regimen in Reducing Established Dental Plaque and Gingivitis.",
+   "status": "COMPLETED",
+   "start": "2026-01-26",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Plaque"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "0.454%Stannous fluoride toothpaste"
+    },
+    {
+     "type": "DRUG",
+     "name": "0.075% Cetylpyridinium Chloride (CPC) and 0.28% zinc lactatmouthwashe"
+    },
+    {
+     "type": "DRUG",
+     "name": "0.76% Sodium Monofluorophosphate (Na MFP) toothpaste"
+    },
+    {
+     "type": "DRUG",
+     "name": "0.022% Sodium Fluoride mouthwash"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT04657497",
+   "title": "A Study of FOY-305 in Patients With SARS-Cov-2 Infection (COVID-19)",
+   "status": "COMPLETED",
+   "start": "2020-11-09",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "SARS-CoV-2 Infection (COVID-19)"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "FOY-305"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT03001960",
+   "title": "Dual AntiPlatelet Therapies for Prevention of Periinterventional Embolic Events in TAVI",
+   "status": "UNKNOWN",
+   "start": "2017-03",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Aortic Valve Stenosis",
+    "Transcatheter Aortic Valve Replacement",
+    "Intracranial Embolism"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Preloading before TAVI",
+     "otherNames": [
+      "ASS, Plavix"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Postloading after TAVI",
+     "otherNames": [
+      "ASS, Plavix"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT02492087",
+   "title": "Topical Tranexamic Acid in Caesarean Section",
+   "status": "UNKNOWN",
+   "start": "2015-08",
+   "sponsor_class": "OTHER_GOV",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Postpartum Haemorrhage"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Topical tranexamic acid",
+     "otherNames": [
+      "TXA group"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Normal saline 0.9%",
+     "otherNames": [
+      "Control group"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT02745392",
+   "title": "Safety and Efficacy of ZP-Zolmitriptan Intracutaneous Microneedle Systems for the Acute Treatment of Migraine",
+   "status": "COMPLETED",
+   "start": "2016-06",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "Acute Migraine"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "ZP-Zolmitriptan"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT03911505",
+   "title": "ZIP Study-OL Study of Safety, PK, Efficacy, PD, Immunogenicity of ATB200/AT2221 in Pediatrics Aged 0 to < 18 y.o. w/LOPD",
+   "status": "ACTIVE_NOT_RECRUITING",
+   "start": "2020-02-13",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Pompe Disease (Late-onset)"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "Cipaglucosidase Alfa",
+     "otherNames": [
+      "ATB200"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Miglustat",
+     "otherNames": [
+      "AT2221"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00735241",
+   "title": "FOLFOX6 Plus Sir-Spheres Microspheres Plus Avastin in Patients With Nonresectable Liver Metastases From Colorectal Carcinoma",
+   "status": "WITHDRAWN",
+   "start": "2008-07",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "Colorectal Carcinoma",
+    "Liver Metastases"
+   ],
+   "interventions": [
+    {
+     "type": "DEVICE",
+     "name": "SIR-Spheres microspheres"
+    },
+    {
+     "type": "DRUG",
+     "name": "FOLFOX6 cycles 1-3",
+     "otherNames": [
+      "Eloxatin",
+      "Folinic acid",
+      "5-FU"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "FOLFOX6 cycles 4 onwards",
+     "otherNames": [
+      "Eloxatin",
+      "Folinic acid",
+      "5-FU"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Bevacizumab cycles 3 onwards",
+     "otherNames": [
+      "Avastin"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT04516278",
+   "title": "A 3-month Study to Assess the Safety of ONS-5010 in Subjects With Visual Impairment Due to Retinal Disorders",
+   "status": "COMPLETED",
+   "start": "2020-10-01",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Age-related Macular Degeneration",
+    "Neovascular Age-related Macular Degeneration",
+    "Wet Macular Degeneration",
+    "BRVO - Branch Retinal Vein Occlusion",
+    "Diabetic Macular Edema"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "bevacizumab",
+     "otherNames": [
+      "ONS-5010"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00644553",
+   "title": "Comparative Study of the Safety and Efficacy of Clarithromycin Extended-Release Tablets Versus Amoxicillin-Clavulanate for the Treatment of Acute Bacterial Sinusitis",
+   "status": "COMPLETED",
+   "start": "2003-05",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Acute Bacterial Sinusitis (ABS)"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Clarithromycin",
+     "otherNames": [
+      "ABT-268",
+      "Biaxin"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Amoxicillin",
+     "otherNames": [
+      "amoxicillin-clavulanate"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00703781",
+   "title": "Efficacy and Safety of Bromfenac Ophthalmic Solution in Cataract Surgery",
+   "status": "COMPLETED",
+   "start": "2008-06",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Cataract"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "bromfenac ophthalmic solution"
+    },
+    {
+     "type": "DRUG",
+     "name": "placebo"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00952341",
+   "title": "Aprepitant/MK0869 for Prevention of Chemotherapy Induced Nausea and Vomiting Associated With Cisplatin (0869-169)(COMPLETED)",
+   "status": "COMPLETED",
+   "start": "2009-08-25",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Chemotherapy-induced Nausea and Vomiting (CINV)"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "aprepitant"
+    },
+    {
+     "type": "DRUG",
+     "name": "Comparator: Placebo to aprepitant"
+    },
+    {
+     "type": "DRUG",
+     "name": "dexamethasone"
+    },
+    {
+     "type": "DRUG",
+     "name": "granisetron"
+    },
+    {
+     "type": "DRUG",
+     "name": "dexamethasone"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT01509651",
+   "title": "Sugammadex and Heart Failure",
+   "status": "COMPLETED",
+   "start": "2012-01",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Postoperative Neuromuscular Block"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Sugammadex"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01723345",
+   "title": "Does Omega-3 Polyunsaturated Fatty Acids (PUFAs) Pretreatment Improve Outcomes in Patients Undergoing Percutaneous Coronary Intervention (PCI)?",
+   "status": "UNKNOWN",
+   "start": "2012-02",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Coronary Arteriosclerosis"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "omega 3",
+     "otherNames": [
+      "fish oil"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT03715166",
+   "title": "Efficacy and Safety of Bumetanide Oral Liquid Formulation in Children and Adolescents Aged From 7 to Less Than 18 Years Old With Autism Spectrum Disorder",
+   "status": "TERMINATED",
+   "start": "2018-09-24",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Autism Spectrum Disorder (ASD)"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Bumetanide Oral Solution"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT04269200",
+   "title": "Durvalumab With or Without Olaparib as Maintenance Therapy After First-Line Treatment of Advanced and Recurrent Endometrial Cancer",
+   "status": "ACTIVE_NOT_RECRUITING",
+   "start": "2020-05-05",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Endometrial Neoplasms"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "olaparib"
+    },
+    {
+     "type": "BIOLOGICAL",
+     "name": "durvalumab"
+    },
+    {
+     "type": "DRUG",
+     "name": "durvalumab placebo"
+    },
+    {
+     "type": "DRUG",
+     "name": "olaparib placebo"
+    },
+    {
+     "type": "DRUG",
+     "name": "Carboplatin"
+    },
+    {
+     "type": "DRUG",
+     "name": "Paclitaxel"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT01174004",
+   "title": "A Study of the Safety and Efficacy of Pimavanserin in Patients With Parkinson's Disease Psychosis",
+   "status": "COMPLETED",
+   "start": "2010-07",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Parkinson's Disease Psychosis"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "pimavanserin tartrate",
+     "otherNames": [
+      "ACP-103"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "placebo"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT02931539",
+   "title": "Efficacy and Safety Study of Maribavir Treatment Compared to Investigator-assigned Treatment in Transplant Recipients With Cytomegalovirus (CMV) Infections That Are Refractory or Resistant to Treatment With Ganciclovir, Valganciclovir, Foscarnet, or Cidofovir",
+   "status": "COMPLETED",
+   "start": "2016-12-22",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Cytomegalovirus (CMV)"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Maribavir",
+     "otherNames": [
+      "SHP620"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Ganciclovir"
+    },
+    {
+     "type": "DRUG",
+     "name": "Valganciclovir"
+    },
+    {
+     "type": "DRUG",
+     "name": "Foscarnet"
+    },
+    {
+     "type": "DRUG",
+     "name": "Cidofovir"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT01153685",
+   "title": "Immunogenicity & Safety Study of Fluviral® (2010 - 2011 Season) in Adults Aged 18 to 60 Years and Over 60 Years",
+   "status": "COMPLETED",
+   "start": "2010-07-09",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Influenza"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "Fluviral®"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT06788535",
+   "title": "REVEAL - Research With I-124 EVuzamitide to Elucidate Cardiac AmyLoidosis",
+   "status": "COMPLETED",
+   "start": "2025-01-14",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Cardiac Amyloidosis"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "I-124 evuzamitide",
+     "otherNames": [
+      "AT-01"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00229008",
+   "title": "Ceftobiprole in Hospital Acquired Pneumonia",
+   "status": "COMPLETED",
+   "start": "2005-11",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Pneumonia"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "ceftobiprole plus placebo"
+    },
+    {
+     "type": "DRUG",
+     "name": "linezolid plus ceftazidime"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00529087",
+   "title": "Study Evaluating Subcutaneous MOA-728 for the Treatment of Opioid-Induced Constipation (OIC) in Subjects With Chronic Non-Malignant Pain",
+   "status": "COMPLETED",
+   "start": "2007-08",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Constipation"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "N-methylnaltrexone bromide (MOA-728)"
+    },
+    {
+     "type": "OTHER",
+     "name": "placebo"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT05161221",
+   "title": "Post Operative Pain Management Through Adductor Canal Block With Bupivacaine for ACL Reconstruction",
+   "status": "UNKNOWN",
+   "start": "2021-12-06",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Pain, Postoperative",
+    "ACL"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "OxyCODONE 5 mg Oral Tablet"
+    },
+    {
+     "type": "DRUG",
+     "name": "Naproxen 500 Mg"
+    },
+    {
+     "type": "DRUG",
+     "name": "Tylenol Pill"
+    },
+    {
+     "type": "DRUG",
+     "name": "Liposomal bupivacaine",
+     "otherNames": [
+      "Exparel"
+     ]
+    },
+    {
+     "type": "PROCEDURE",
+     "name": "Femoral Nerve Catheter",
+     "otherNames": [
+      "Femoral Nerve Block"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT07487142",
+   "title": "Prevalence of Asymptomatic H Pylori Infection Among Patients Undergoing PCI and Impact of Its Eradication on Occurrence of GIT Symptoms and Bleeding\"",
+   "status": "COMPLETED",
+   "start": "2024-06-10",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "H Pylori Infection"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "BISMUTH TETRACYCLINE METRONIDAZOLE OMEPRAZOLE"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00696631",
+   "title": "European Trial of Dronedarone in Moderate to Severe Congestive Heart Failure",
+   "status": "TERMINATED",
+   "start": "2002-06",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Congestive Heart Failure"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Dronedarone (SR33589)",
+     "otherNames": [
+      "Multaq®"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00463541",
+   "title": "Open-label Study of the Efficacy and Safety of VESIcare® in Patients With Overactive Bladder Symptoms",
+   "status": "COMPLETED",
+   "start": "2004-06",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Urinary Bladder, Overactive"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "solifenacin succinate",
+     "otherNames": [
+      "VESIcare (R)",
+      "YM905"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01622361",
+   "title": "Premenopausal Patient With Hormone Responsive, HER2 Negative, Lymph Node Positive Breast Cancer",
+   "status": "UNKNOWN",
+   "start": "2012-06",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Breast Cancer"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Adriamycin+Cyclophosphamide>Docetaxel",
+     "otherNames": [
+      "Chemotherapy"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "GnRHa with Tamoxifen",
+     "otherNames": [
+      "Endocrine Therapy"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01355367",
+   "title": "High Dose BAYA1040 CR: a Long Term Extension Study",
+   "status": "COMPLETED",
+   "start": "2011-01",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Hypertension"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Nifedipine (Adalat, BAYA1040)"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT06022224",
+   "title": "A 2nd Generation E1/E2B/E3-Deleted Adenoviral COVID-19 Vaccine: The TCELL VACCINE TRIAL",
+   "status": "TERMINATED",
+   "start": "2020-12-09",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "COVID-19"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "hAd5-S-Fusion+N-ETSD"
+    },
+    {
+     "type": "BIOLOGICAL",
+     "name": "Placebo (0.9% (w/v) saline)"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT05064059",
+   "title": "A Study of Coformulated Favezelimab/Pembrolizumab (MK-4280A) Versus Standard of Care in Subjects With Previously Treated Metastatic PD-L1 Positive Colorectal Cancer (MK-4280A-007)",
+   "status": "COMPLETED",
+   "start": "2021-11-10",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Colorectal Cancer"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "favezelimab/pembrolizumab",
+     "otherNames": [
+      "MK-4280A"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "regorafenib",
+     "otherNames": [
+      "STIVARGA®",
+      "REGONIX®"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "TAS-102",
+     "otherNames": [
+      "LONSURF®"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT02343744",
+   "title": "An Efficacy and Safety Study of CNTO1959 (Guselkumab) in the Treatment of Participants With Generalized Pustular Psoriasis or Erythrodermic Psoriasis",
+   "status": "COMPLETED",
+   "start": "2015-01-19",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Pustular Psoriasis"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Guselkumab",
+     "otherNames": [
+      "CNTO 1959"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00705744",
+   "title": "Dermacyd Femina (Lactic Acid) - Photo Dermatological Evaluation of the Irritation and Sensitivity Potential.",
+   "status": "COMPLETED",
+   "start": "2008-04",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Hygiene"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Lactic acid (Dermacyd Femina)"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT03213639",
+   "title": "Esomeprazole in Treatment of Early Onset Preeclampsia (ESOPE Trial)",
+   "status": "COMPLETED",
+   "start": "2018-03-15",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "Preeclampsia"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Esomeprazole 40 mg Oral Tablet",
+     "otherNames": [
+      "Nexium"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo Oral Tablet",
+     "otherNames": [
+      "inert"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT04948333",
+   "title": "Asciminib Treatment Optimization in ≥ 3rd Line CML-CP",
+   "status": "COMPLETED",
+   "start": "2021-10-13",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Chronic Myelogenous Leukemia"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "ABL001 40mg BID",
+     "otherNames": [
+      "asciminib"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "ABL001 80mg QD",
+     "otherNames": [
+      "asciminib"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "ABL001 200mg QD",
+     "otherNames": [
+      "asciminib"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00690430",
+   "title": "Efficacy and Safety of Pasireotide Long Acting Release vs. Octreotide Long Acting Release in Patients With Metastatic Carcinoid Disease",
+   "status": "COMPLETED",
+   "start": "2008-04",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Symptomatic Refractory Resistant Carcinoid Disease"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Pasireotide",
+     "otherNames": [
+      "SOM230"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Octreotide",
+     "otherNames": [
+      "Sadostatin LAR"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT02477618",
+   "title": "A Study With SAGE-547 for Super-Refractory Status Epilepticus",
+   "status": "COMPLETED",
+   "start": "2015-06",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Super-Refractory Status Epilepticus"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "SAGE-547"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00920816",
+   "title": "Axitinib (AG-013736) For the Treatment of Metastatic Renal Cell Cancer",
+   "status": "COMPLETED",
+   "start": "2009-08-25",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Kidney Neoplasms"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Axitinib (AG-013736)"
+    },
+    {
+     "type": "DRUG",
+     "name": "Sorafenib"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT01898923",
+   "title": "Evaluate the Efficacy and Safety of ON101 Cream for the Treatment of Chronic Diabetic Foot Ulcers",
+   "status": "COMPLETED",
+   "start": "2012-11-23",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Diabetic Foot"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "ON101 Cream",
+     "otherNames": [
+      "WH-1"
+     ]
+    },
+    {
+     "type": "OTHER",
+     "name": "Aquacel® Hydrofiber® dressing"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT02815267",
+   "title": "A Study to Compare the Efficacy and Safety of Topical Administration of FMX-101 for Treatment of Moderate-to-Severe Acne",
+   "status": "COMPLETED",
+   "start": "2016-05",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Acne Vulgaris"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "FMX-101, 4% minocycline foam"
+    },
+    {
+     "type": "DRUG",
+     "name": "Vehicle Foam"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT02709564",
+   "title": "Sublingual Misoprostol in Decreasing Blood Loss Prior to Myomectomy",
+   "status": "COMPLETED",
+   "start": "2016-12",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Blood Loss in Myomectomy"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Misoprostol 400 sublingual"
+    },
+    {
+     "type": "DRUG",
+     "name": "placebo 400 sublingual"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT07524738",
+   "title": "Telemedicine XR-B for Individuals in Jail",
+   "status": "COMPLETED",
+   "start": "2025-06-01",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Opioid Use Disorder"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Extended Release Buprenorphine"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01874717",
+   "title": "Midazolam Sedation in Dentally Anxious Patients",
+   "status": "COMPLETED",
+   "start": "2005-06",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Dental Anxiety"
+   ],
+   "interventions": [
+    {
+     "type": "OTHER",
+     "name": "Conscious sedation for dental care"
+    },
+    {
+     "type": "DRUG",
+     "name": "midazolam"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT03995901",
+   "title": "A Safety and Efficacy Study of FCR001 vs Standard of Care in de Novo Living Donor Kidney Transplantation",
+   "status": "TERMINATED",
+   "start": "2019-10-25",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Transplanted Organ Rejection"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "FCR001",
+     "otherNames": [
+      "Cell based therapy",
+      "Allogeneic stem cell transplant"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT04096066",
+   "title": "A Trial That Compare Two Treatments in Newly Diagnosed Myeloma Patients Not Eligible for Transplant",
+   "status": "ACTIVE_NOT_RECRUITING",
+   "start": "2019-07-01",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Multiple Myeloma",
+    "New Diagnosis Tumor"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Carfilzomib",
+     "otherNames": [
+      "Kyprolis"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Lenalidomide",
+     "otherNames": [
+      "Revlimid"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Dexamethasone"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT04870073",
+   "title": "Retrograde Autologous Priming and Mannitol for Reducing Hemodilution in Cardiac Surgery",
+   "status": "WITHDRAWN",
+   "start": "2022-09-21",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Hemodilution",
+    "Coronary Artery Disease",
+    "Fluid Overload"
+   ],
+   "interventions": [
+    {
+     "type": "PROCEDURE",
+     "name": "Retrograde autologous priming",
+     "otherNames": [
+      "RAP"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Mannitol"
+    },
+    {
+     "type": "PROCEDURE",
+     "name": "Conventional Priming"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01043991",
+   "title": "Intracoronary Injection of Epo After Myocardial Infarct \"Intra-CO-EpoMI\"",
+   "status": "COMPLETED",
+   "start": "2008-12",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Acute Myocardial Infarct"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Darbepoetin alfa"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT04779307",
+   "title": "A Study of Vedolizumab in Children and Teenagers With Moderate to Severe Ulcerative Colitis (UC)",
+   "status": "COMPLETED",
+   "start": "2021-10-19",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Colitis, Ulcerative"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Vedolizumab",
+     "otherNames": [
+      "MLN0002",
+      "ENTYVIO",
+      "KYNTELES"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00213200",
+   "title": "Intravenous and Topical Analgesics for Procedural Pain in Neonates",
+   "status": "COMPLETED",
+   "start": "2003-07",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Pain",
+    "Infant, Newborn"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "morphine, amethocaine"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT03924193",
+   "title": "Cognitive-Behavioral and Pharmacologic (LDX) Treatment of Binge-Eating Disorder and Obesity: Acute Treatment",
+   "status": "COMPLETED",
+   "start": "2019-03-25",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Binge-Eating Disorder",
+    "Obesity"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Lisdexamfetamine Dimesylate"
+    },
+    {
+     "type": "BEHAVIORAL",
+     "name": "Cognitive-Behavioral Therapy"
+    },
+    {
+     "type": "OTHER",
+     "name": "Combination LDX and Cognitive-Behavioral Therapy"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT03112174",
+   "title": "Study of Ibrutinib Combined With Venetoclax in Subjects With Mantle Cell Lymphoma (MCL)",
+   "status": "COMPLETED",
+   "start": "2017-06-19",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Mantle-Cell Lymphoma"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Ibrutinib"
+    },
+    {
+     "type": "DRUG",
+     "name": "Venetoclax"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo Oral tablet to match Venetoclax"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT07873801",
+   "title": "A Study of Lebrikizumab in Adults and Adolescents With Face and Neck Atopic Dermatitis",
+   "status": "NOT_YET_RECRUITING",
+   "start": "2026-11",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Atopic Dermatitis"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Lebrikizumab"
+    },
+    {
+     "type": "OTHER",
+     "name": "Placebo"
+    },
+    {
+     "type": "DRUG",
+     "name": "Lebrikizumab"
+    },
+    {
+     "type": "DRUG",
+     "name": "Lebrikizumab"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01178996",
+   "title": "Thymosin Alpha-1 in Combination With Peg-Interferon Alfa- 2a and Ribavirin for the Therapy of Chronic Hepatitis C Nonresponsive to the Combination of IFN and Ribavirin.",
+   "status": "COMPLETED",
+   "start": "2004-12",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Chronic Hepatitis C"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "Thymosin alpha 1",
+     "otherNames": [
+      "Zadaxin"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Ribavirin",
+     "otherNames": [
+      "Copegus"
+     ]
+    },
+    {
+     "type": "BIOLOGICAL",
+     "name": "PEGinterferon alfa2a",
+     "otherNames": [
+      "Pegasys"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00849056",
+   "title": "Safety and Efficacy of Albiglutide in Type 2 Diabetes",
+   "status": "COMPLETED",
+   "start": "2009-01",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Diabetes Mellitus, Type 2"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "albiglutide"
+    },
+    {
+     "type": "DRUG",
+     "name": "placebo"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT01650701",
+   "title": "A Phase 3 Open Label Randomized Study to Compare the Efficacy and Safety of Rituximab Plus Lenalidomide (CC-5013) Versus Rituximab Plus Chemotherapy Followed by Rituximab in Subjects With Previously Untreated Follicular Lymphoma",
+   "status": "COMPLETED",
+   "start": "2012-02",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Follicular Lymphoma"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Rituximab",
+     "otherNames": [
+      "mabthera",
+      "rituxan"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Lenalidomide",
+     "otherNames": [
+      "Revlimid"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Rituximab - CHOP"
+    },
+    {
+     "type": "DRUG",
+     "name": "Rituximab - CVP"
+    },
+    {
+     "type": "DRUG",
+     "name": "Rituximab - Bendamustine"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT05165290",
+   "title": "Prospective, Double-masked, Randomized, Multi-center, Active-controlled, Parallel-group, 3-month Study Assessing the Safety & Ocular Hypotensive Efficacy of TC-002 Ophthalmic Solution Compared to Latanoprost Ophthalmic Solution 0.005% in Subjects With Elevated Intraocular Pressure",
+   "status": "UNKNOWN",
+   "start": "2021-11-29",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Elevated Intraocular Pressure"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Latanoprost ophthalmic solution, 0.005%"
+    },
+    {
+     "type": "DRUG",
+     "name": "TC-002 latanoprost ophthalmic solution, 0.005%"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00006132",
+   "title": "Phase III Randomized Study of Oral Acyclovir in Infants With Herpes Simplex Virus Infection Involving the Central Nervous System",
+   "status": "UNKNOWN",
+   "start": "1997-06",
+   "sponsor_class": "NIH",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Herpes Simplex"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "acyclovir"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT02671500",
+   "title": "Efficacy and Safety of Sofosbuvir/Velpatasvir Fixed Dose Combination for 12 Weeks in Participants With Chronic HCV",
+   "status": "COMPLETED",
+   "start": "2016-04-19",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Hepatitis C Virus Infection"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "SOF/VEL",
+     "otherNames": [
+      "GS-7977/GS-5816",
+      "Epclusa®"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT03829657",
+   "title": "Phase 3 Clinical Effect Durability of TD-9855 for Treating Symptomatic nOH in Subjects With Primary Autonomic Failure",
+   "status": "TERMINATED",
+   "start": "2019-02-22",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Symptomatic Neurogenic Orthostatic Hypotension",
+    "MSA",
+    "Parkinson's Disease (PD)",
+    "Pure Autonomic Failure (PAF)"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "ampreloxetine",
+     "otherNames": [
+      "TD-9855"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT03428022",
+   "title": "Apatinib Combined With EGFR-TKI for Advanced Slow-progressed EGFR-TKI Resistant NSCLC",
+   "status": "UNKNOWN",
+   "start": "2017-12-01",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "NSCLC",
+    "Apatinib",
+    "EGFR-TKI"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Apatinib（Tab. 500mg/d） combined with EGFR-TKI（as previously）"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00444418",
+   "title": "Medication and Counseling for Controlled Drinking (Project SMART)",
+   "status": "COMPLETED",
+   "start": "2006-04",
+   "sponsor_class": "NIH",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Alcohol-related Disorders",
+    "Alcohol Drinking",
+    "Alcoholism",
+    "Alcohol Abuse"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Naltrexone",
+     "otherNames": [
+      "Naloxone, Revia, Depade"
+     ]
+    },
+    {
+     "type": "BEHAVIORAL",
+     "name": "Modified Behavioral Self-Control Psychotherapy"
+    },
+    {
+     "type": "BEHAVIORAL",
+     "name": "Brief Behavioral Compliance Enhancement Therapy"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00486083",
+   "title": "Comparison Atomoxetine Hydrochloride and Comparator in Pediatric Outpatients With ADHD",
+   "status": "COMPLETED",
+   "start": "2003-12",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Attention Deficit Hyperactivity Disorder"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Atomoxetine Hydrochloride"
+    },
+    {
+     "type": "DRUG",
+     "name": "Methylphenidate Hydrochloride"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00654069",
+   "title": "Safety/Efficacy Study of Oxycodone HCl/Niacin to Treat Pain After Bunionectomy",
+   "status": "COMPLETED",
+   "start": "2007-09",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Pain"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Placebo",
+     "otherNames": [
+      "Placebo Tablet"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Acurox 5/30 mg",
+     "otherNames": [
+      "oxycodone/niacin 5/30mg"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Acurox 7.5/30",
+     "otherNames": [
+      "oxycodone/niacin 7.5/30mg"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00208221",
+   "title": "Higher Dose of Ramipril Versus Addition of Telmisartan-Ramipril in Hypertension and Diabetes",
+   "status": "TERMINATED",
+   "start": "2006-08",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Hypertension",
+    "Type 2 Diabetes",
+    "Albuminuria"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "ramipril"
+    },
+    {
+     "type": "DRUG",
+     "name": "ramipril-telmisartan"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT02869971",
+   "title": "Prostatic Artery Embolization Versus Medical Treatment in Symptomatic Benign Prostatic Hyperplasia",
+   "status": "COMPLETED",
+   "start": "2016-08",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Benign Prostatic Hyperplasia"
+   ],
+   "interventions": [
+    {
+     "type": "DEVICE",
+     "name": "Embosphere® (Prostatic Arteries Embolization)"
+    },
+    {
+     "type": "DRUG",
+     "name": "Drug therapy"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01796665",
+   "title": "A Study to Compare Clindamycin Phosphate and Benzoyl Peroxide Topical Gel 1.2%/2.5% to Acanya® Topical Gel in the Treatment of Acne Vulgaris",
+   "status": "COMPLETED",
+   "start": "2012-02",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Acne"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Clindamycin Phosphate and Benzoyl Peroxide Topical Gel 1.2%/2.5%",
+     "otherNames": [
+      "Test product"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Acanya Gel",
+     "otherNames": [
+      "Reference product"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo of Clindamycin Phosphate and Benzoyl Peroxide Topical Gel 1.2%/2.5% product",
+     "otherNames": [
+      "Placebo product"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT05450458",
+   "title": "Hyaluronic Acid in Overuse Knee Pain",
+   "status": "COMPLETED",
+   "start": "2023-02-01",
+   "sponsor_class": "OTHER_GOV",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "Overuse Injury",
+    "Body Mass Index in Athletes"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "KNEE JOINT INFILTRATION WITH HYALURONIC ACID WITH SORBITOL SYNOLIS VA",
+     "otherNames": [
+      "VISCOSUPPLEMENTATION WITH SYNOLIS VA"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00536666",
+   "title": "A Study of Iron Oligosaccharide in Chronic Kidney Disease Patients",
+   "status": "COMPLETED",
+   "start": "2007-05",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Chronic Kidney Disease",
+    "Anemia, Iron-Deficiency"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Iron oligosaccharide",
+     "otherNames": [
+      "MonoFer"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00918346",
+   "title": "Pharmacodynamics of Tafluprost 0.0015% Eye Drops: a Comparison Between the Preserved and Unpreserved Formulation",
+   "status": "COMPLETED",
+   "start": "2005-09",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Open-Angle Glaucoma",
+    "Ocular Hypertension"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Tafluprost 0.0015%"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00685841",
+   "title": "A Pivotal Study of the Safety and Effectiveness of Arformoterol in Subjects With Chronic Obstructive Pulmonary Disease (COPD)",
+   "status": "COMPLETED",
+   "start": "2002-02",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "COPD"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Arformoterol tartrate inhalation solution",
+     "otherNames": [
+      "(R,R-)formoterol",
+      "Brovana"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Arformoterol tartrate inhalation solution",
+     "otherNames": [
+      "(R,R)-formoterol",
+      "Brovana"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Arformoterol tartrate inhalation solution",
+     "otherNames": [
+      "(R,R)-formoterol",
+      "Brovana"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Salmeterol MDI",
+     "otherNames": [
+      "Serevent"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT04181060",
+   "title": "Osimertinib With or Without Bevacizumab as Initial Treatment for Patients With EGFR-Mutant Lung Cancer",
+   "status": "RECRUITING",
+   "start": "2020-12-28",
+   "sponsor_class": "NIH",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Advanced Lung Non-Squamous Non-Small Cell Carcinoma",
+    "Metastatic Lung Non-Squamous Non-Small Cell Carcinoma",
+    "Recurrent Lung Non-Squamous Non-Small Cell Carcinoma",
+    "Stage IIIB Lung Cancer AJCC v8",
+    "Stage IV Lung Cancer AJCC v8"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "Bevacizumab",
+     "otherNames": [
+      "ABP 215",
+      "ABP-215",
+      "ABP215",
+      "Alymsys",
+      "Anti-VEGF",
+      "Anti-VEGF Humanized Monoclonal Antibody",
+      "Anti-VEGF Monoclonal Antibody SIBP04",
+      "Anti-VEGF rhuMAb",
+      "Avastin",
+      "Avegra",
+      "Avzivi",
+      "Aybintio",
+      "BAT 1706",
+      "BAT-1706",
+      "BAT1706",
+      "BAT1706 Biosimilar",
+      "Bevacizumab awwb",
+      "Bevacizumab Biosimilar ABP 215",
+      "Bevacizumab Biosimilar BAT1706",
+      "Bevacizumab Biosimilar BEVZ92",
+      "Bevacizumab Biosimilar BI 695502",
+      "Bevacizumab Biosimilar CBT 124",
+      "Bevacizumab Biosimilar CT-P16",
+      "Bevacizumab Biosimilar FKB238",
+      "Bevacizumab Biosimilar GB-222",
+      "Bevacizumab Biosimilar HD204",
+      "Bevacizumab Biosimilar HLX04",
+      "Bevacizumab Biosimilar IBI305",
+      "Bevacizumab Biosimilar LY01008",
+      "Bevacizumab Biosimilar MB02",
+      "Bevacizumab Biosimilar MIL60",
+      "Bevacizumab Biosimilar Mvasi",
+      "Bevacizumab Biosimilar MYL-1402O",
+      "Bevacizumab Biosimilar QL 1101",
+      "Bevacizumab Biosimilar QL1101",
+      "Bevacizumab Biosimilar RPH-001",
+      "Bevacizumab Biosimilar SCT501",
+      "Bevacizumab Biosimilar Zirabev",
+      "Bevacizumab-adcd",
+      "Bevacizumab-aveg",
+      "Bevacizumab-awwb",
+      "Bevacizumab-aybi",
+      "Bevacizumab-bvzr",
+      "Bevacizumab-byva",
+      "Bevacizumab-equi",
+      "Bevacizumab-maly",
+      "Bevacizumab-nwgd",
+      "Bevacizumab-onbe",
+      "Bevacizumab-tnjn",
+      "BP102",
+      "BP102 Biosimilar",
+      "Byvasda",
+      "CT P16",
+      "CT-P16",
+      "CTP16",
+      "Equidacent",
+      "FKB 238",
+      "FKB-238",
+      "FKB238",
+      "HD204",
+      "IBI 305",
+      "IBI-305",
+      "IBI305",
+      "Immunoglobulin G1 (Human-Mouse Monoclonal rhuMab-VEGF Gamma-Chain Anti-Human Vascular Endothelial Growth Factor), Disulfide With Human-Mouse Monoclonal rhuMab-VEGF Light Chain, Dimer",
+      "Jobevne",
+      "MB 02",
+      "MB-02",
+      "MB02",
+      "Mvasi",
+      "MYL-1402O",
+      "Onbevzi",
+      "Oyavas",
+      "PF 06439535",
+      "PF-06439535",
+      "PF06439535",
+      "QL1101",
+      "Recombinant Humanized Anti-VEGF Monoclonal Antibody",
+      "rhuMab-VEGF",
+      "SCT501",
+      "SIBP 04",
+      "SIBP-04",
+      "SIBP04",
+      "Vegzelma",
+      "Zirabev"
+     ]
+    },
+    {
+     "type": "PROCEDURE",
+     "name": "Biospecimen Collection",
+     "otherNames": [
+      "Biological Sample Collection",
+      "Biospecimen Collected",
+      "Sample Collection",
+      "Specimen Collection"
+     ]
+    },
+    {
+     "type": "PROCEDURE",
+     "name": "Computed Tomography",
+     "otherNames": [
+      "CAT",
+      "CAT Scan",
+      "Computed Axial Tomography",
+      "Computerized Axial Tomography",
+      "Computerized axial tomography (procedure)",
+      "Computerized Tomography",
+      "Computerized Tomography (CT) scan",
+      "CT",
+      "CT Scan",
+      "Diagnostic CAT Scan",
+      "Diagnostic CAT Scan Service Type",
+      "tomography"
+     ]
+    },
+    {
+     "type": "PROCEDURE",
+     "name": "Echocardiography Test",
+     "otherNames": [
+      "EC",
+      "Echocardiography"
+     ]
+    },
+    {
+     "type": "PROCEDURE",
+     "name": "Magnetic Resonance Imaging",
+     "otherNames": [
+      "Magnetic Resonance",
+      "Magnetic Resonance Imaging (MRI)",
+      "Magnetic resonance imaging (procedure)",
+      "Magnetic Resonance Imaging Scan",
+      "Medical Imaging, Magnetic Resonance / Nuclear Magnetic Resonance",
+      "MR",
+      "MR Imaging",
+      "MRI",
+      "MRI Scan",
+      "MRIs",
+      "NMR Imaging",
+      "NMRI",
+      "Nuclear Magnetic Resonance Imaging",
+      "sMRI",
+      "Structural MRI"
+     ]
+    },
+    {
+     "type": "PROCEDURE",
+     "name": "Multigated Acquisition Scan",
+     "otherNames": [
+      "Blood Pool Scan",
+      "Equilibrium Radionuclide Angiography",
+      "Gated Blood Pool Imaging",
+      "Gated Heart Pool Scan",
+      "MUGA",
+      "MUGA Scan",
+      "Multi-Gated Acquisition Scan",
+      "Radionuclide Ventriculogram Scan",
+      "Radionuclide Ventriculography",
+      "RNV Scan",
+      "RNVG",
+      "SYMA Scanning",
+      "Synchronized Multigated Acquisition Scanning"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Osimertinib",
+     "otherNames": [
+      "AZD 9291",
+      "AZD-9291",
+      "AZD9291",
+      "Mereletinib"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00679380",
+   "title": "(CB-01-02/02) Randomized Placebo Controlled Trial of Budesonide-multi-matrix System (MMX™) 6 mg and 9 mg in Patients With Ulcerative Colitis",
+   "status": "COMPLETED",
+   "start": "2008-06",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Ulcerative Colitis"
+   ],
+   "interventions": [
+    {
+     "type": "PROCEDURE",
+     "name": "Blood sampling, endoscopy"
+    },
+    {
+     "type": "DRUG",
+     "name": "Budesonide MMX® 6 mg"
+    },
+    {
+     "type": "DRUG",
+     "name": "Budesonide MMX® 9 mg"
+    },
+    {
+     "type": "DRUG",
+     "name": "Entocort EC® 3 mg"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT06972459",
+   "title": "A Study of Orforglipron (LY3502970) in Participants With Obesity or Overweight and at Least One Weight-Related Comorbidity",
+   "status": "ACTIVE_NOT_RECRUITING",
+   "start": "2025-05-15",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Obesity",
+    "Overweight"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Orforglipron",
+     "otherNames": [
+      "LY3502970"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT02946684",
+   "title": "Effect of Addition of Aromatase Inhibitor to Ovarian Stimulation Therapy in IVF Treatment",
+   "status": "COMPLETED",
+   "start": "2017-02-01",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "Infertility"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Letrozole",
+     "otherNames": [
+      "Aromatase Inhibitor"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo",
+     "otherNames": [
+      "Lactose Monohydrate"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT02028884",
+   "title": "Efficacy and Safety Study of Satralizumab (SA237) as Add-on Therapy to Treat Participants With Neuromyelitis Optica (NMO) and NMO Spectrum Disorder (NMOSD)",
+   "status": "COMPLETED",
+   "start": "2014-02-20",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Neuromyelitis Optica (NMO)",
+    "NMO Spectrum Disorder (NMOSD)"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Satralizumab",
+     "otherNames": [
+      "SA237",
+      "RG6168",
+      "RO5333787"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    },
+    {
+     "type": "DRUG",
+     "name": "Baseline Treatment"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT03715556",
+   "title": "Control Versus Liberal Cardiac Frequency in Patients in Sepse With Atrial Fibrillation of High Ventricular Response",
+   "status": "UNKNOWN",
+   "start": "2018-12-01",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Sepsis",
+    "Septic Shock",
+    "Atrial Fibrillation",
+    "Ventricular Fibrillation",
+    "Atrial Fibrillation Rapid"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Amiodarone"
+    },
+    {
+     "type": "DRUG",
+     "name": "0.9% physiological solution"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00735007",
+   "title": "12-week Study to Evaluate RebiSmart™ Suitability for Self Injection in Relapsing Multiple Sclerosis.",
+   "status": "COMPLETED",
+   "start": "2008-07",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Multiple Sclerosis"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Rebif® New Formulation (RNF) using RebiSmartTM"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00432614",
+   "title": "Efficacy and Safety of SR58611A co-Administered With Escitalopram in Adults With Major Depressive Disorder",
+   "status": "COMPLETED",
+   "start": "2007-01",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Major Depressive Disorder"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "SR58611A"
+    },
+    {
+     "type": "DRUG",
+     "name": "escitalopram"
+    },
+    {
+     "type": "DRUG",
+     "name": "placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00275314",
+   "title": "WP16302 A Bioequivalence Study Comparing Ganciclovir From the Valganciclovir Syrup Formulation and the Commercial Valganciclovir 450mg Tablet (Valcyte®) at a Dose of 900mg in Kidney Transplant Recipients",
+   "status": "TERMINATED",
+   "start": "2006-02",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Kidney Transplant"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Valganciclovir"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT02365493",
+   "title": "Combination Antibiotic Therapy for Methicillin Resistant Staphylococcus Aureus Infection",
+   "status": "TERMINATED",
+   "start": "2015-08-26",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Methicillin-Resistant Staphylococcus Aureus"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Beta-Lactam",
+     "otherNames": [
+      "flucloxacillin",
+      "cloxacillin",
+      "cephazolin"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01443130",
+   "title": "Chloroquine for Malaria in Pregnancy",
+   "status": "COMPLETED",
+   "start": "2012-02",
+   "sponsor_class": "NIH",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Malaria"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Chloroquine"
+    },
+    {
+     "type": "DRUG",
+     "name": "Sulfadoxine-pyrimethamine"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT03823521",
+   "title": "Observational Study to Investigate the Effects of Training on the Administration of Cardioplexol™",
+   "status": "COMPLETED",
+   "start": "2018-11-20",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Coronary Artery Bypass Surgery",
+    "Valve Surgery"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Cardioplegia Solution",
+     "otherNames": [
+      "Cardioplexol™"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00092430",
+   "title": "Study to Evaluate Frozen Versus Refrigerated MMRV (Combined Measles, Mumps, Rubella, and Varicella) Investigational Vaccine (V221-016)",
+   "status": "COMPLETED",
+   "start": "2002-09-26",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Measles",
+    "Mumps",
+    "Rubella",
+    "Varicella"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "V221, measles, mumps, rubella and varicella (Oka/Merck) virus vaccine live / Duration of Treatment: 12 weeks"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT06669611",
+   "title": "Nab-TPC vs GP Combined With Camrelizumab in the Treatment of Recurrent/Metastatic Nasopharyngeal Carcinoma",
+   "status": "RECRUITING",
+   "start": "2024-11-27",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Nasopharyngeal Cancinoma (NPC)"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Camrelizumab combined GP chemotherapy",
+     "otherNames": [
+      "Camrelizumab, cisplatin and gemcitabine"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Camrelizumab combined TPC chemotherapy",
+     "otherNames": [
+      "camrelizumab plus nab-TPC chemotherapy, nab-paclitaxel, cisplatin and capecitabine"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT04993339",
+   "title": "Clinical Outcomes of ACL Reconstruction Augmented by an Injectable Osteoconductive/Osteoinductive Compound",
+   "status": "COMPLETED",
+   "start": "2016-10-24",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "ACL Injury"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "OOC",
+     "otherNames": [
+      "StimuBlast"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT07863856",
+   "title": "Efficacy of Botulinum Toxin A Versus Nanofat in the Treatment of Androgenetic Alopecia: A Comparative Clinical Trial",
+   "status": "NOT_YET_RECRUITING",
+   "start": "2026-12",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "Androgenetic Alopecia"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Botulinum Toxin Type A"
+    },
+    {
+     "type": "PROCEDURE",
+     "name": "Autologous Nanofat Injection"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00878826",
+   "title": "Prophylactic Enoxaparin Dosing for Prevention of Venous Thromboembolism in Pregnancy.",
+   "status": "COMPLETED",
+   "start": "2009-05",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "Venous Thrombosis"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Enoxaparin"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT01085266",
+   "title": "An Extension of the HORIZON Protocol Evaluating the Safety of Dimebon (Latrepirdine) in Subjects With Huntington Disease",
+   "status": "TERMINATED",
+   "start": "2010-02",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Huntington Disease"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Dimebon (latrepirdine)"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT02402530",
+   "title": "Efficacy and Safety of Intravenous Neridronic Acid in CRPS-I",
+   "status": "COMPLETED",
+   "start": "2015-04",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "Complex Regional Pain Syndrome, Type I"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    },
+    {
+     "type": "DRUG",
+     "name": "Neridronic acid 62.5 mg"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT03942419",
+   "title": "Microdosed Atropine 0.1% and 0.01% Ophthalmic Solutions for Reduction of Pediatric Myopia Progression",
+   "status": "TERMINATED",
+   "start": "2019-06-03",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Myopia"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Atropine 0.1% Ophthalmic Solution"
+    },
+    {
+     "type": "DRUG",
+     "name": "Atropine 0.01% Ophthalmic Solution"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo Ophthalmic Solution"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00092014",
+   "title": "A Study to Evaluate and Compare Alendronate and Risedronate on Bone Mineral Density in Women With Postmenopausal Osteoporosis (MK-0217-211)",
+   "status": "COMPLETED",
+   "start": "2002-09-01",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Postmenopausal Osteoporosis"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Alendronate",
+     "otherNames": [
+      "MK-0217",
+      "FOSAMAX®"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Risedronate 35 mg",
+     "otherNames": [
+      "Actonel®",
+      "Atelvia®"
+     ]
+    },
+    {
+     "type": "DIETARY_SUPPLEMENT",
+     "name": "Elemental Calcium"
+    },
+    {
+     "type": "DIETARY_SUPPLEMENT",
+     "name": "Vitamin D"
+    },
+    {
+     "type": "DRUG",
+     "name": "Risendronate placebo"
+    },
+    {
+     "type": "DRUG",
+     "name": "Alendronate placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT06248008",
+   "title": "A Study to Evaluate Safety of ASC40 Tablets in Patients With Moderate to Severe Acne Vulgaris",
+   "status": "COMPLETED",
+   "start": "2024-04-18",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Acne"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "ASC40"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01447212",
+   "title": "Study to Assess Longer-term Opioid Medication Effectiveness (SALOME)",
+   "status": "COMPLETED",
+   "start": "2011-12",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Opioid Dependence",
+    "Heroin Dependence"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Hydromorphone, Injectable"
+    },
+    {
+     "type": "DRUG",
+     "name": "Diacetylmorphine, injectable"
+    },
+    {
+     "type": "DRUG",
+     "name": "Hydromorphone, liquid oral"
+    },
+    {
+     "type": "DRUG",
+     "name": "Diacetylmorphine, liquid oral"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00924989",
+   "title": "A Study of OSI-906 in Patients With Locally Advanced or Metastatic Adrenocortical Carcinoma",
+   "status": "COMPLETED",
+   "start": "2009-12-01",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Adrenocortical Carcinoma"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "OSI-906",
+     "otherNames": [
+      "linsitinib"
+     ]
+    },
+    {
+     "type": "OTHER",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01805726",
+   "title": "Sedation During Bronchoscopy:Dexmedetomidine vs Alfentanil",
+   "status": "COMPLETED",
+   "start": "2013-02",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Bronchoscopy",
+    "Conscious Sedation"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "xylocain",
+     "otherNames": [
+      "Xylocain only"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Alfentanil",
+     "otherNames": [
+      "Alfentanil as morphinics short acting"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Dexmedetomidine",
+     "otherNames": [
+      "Dexmedetomidine as awake sedation"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT04665856",
+   "title": "Study of Atezolizumab Plus Carboplatin and Etoposide With or Without Tiragolumab in Participants With Untreated Extensive-Stage Small Cell Lung Cancer",
+   "status": "COMPLETED",
+   "start": "2020-12-21",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Small Cell Lung Carcinoma"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Tiragolumab",
+     "otherNames": [
+      "MTIG7192A"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Atezolizumab",
+     "otherNames": [
+      "Tecentriq"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Carboplatin"
+    },
+    {
+     "type": "DRUG",
+     "name": "Etoposide"
+    },
+    {
+     "type": "DRUG",
+     "name": "Tiragolumab Matching Placebo"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT07916922",
+   "title": "Assessment of The Potential Therapeutic Effects of Trimetazidine on Aluminium Phosphide-Induced Cardiotoxicity as an Adjuvant Therapy: A Pilot Study",
+   "status": "RECRUITING",
+   "start": "2026-05-05",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Aluminum Phosphide Poisoning"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Trimetazidine"
+    },
+    {
+     "type": "DRUG",
+     "name": "Standard Treatment"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01591122",
+   "title": "Study of Abiraterone Acetate Plus Prednisone in Patients With Chemo-naive Metastatic Castration-Resistant Prostate Cancer",
+   "status": "COMPLETED",
+   "start": "2012-03-27",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Prostate Cancer"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Placebo and prednisone"
+    },
+    {
+     "type": "DRUG",
+     "name": "Abiraterone acetate and prednisone"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT07392060",
+   "title": "A Phase III Clinical Study of WX390 Combined With Toripalimab Versus Investigator's Choice of Therapy in Patients With Recurrent or Metastatic Cervical Cancer Who Have Failed Prior Platinum-Based Treatment",
+   "status": "NOT_YET_RECRUITING",
+   "start": "2026-02-28",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Cervical Cancer Metastatic"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "WX390 1.1mg + Toripalimab 240mg"
+    },
+    {
+     "type": "DRUG",
+     "name": "Investigator's Choice of Chemotherapy"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT02166476",
+   "title": "Efficacy/Safety of Meropenem-Vaborbactam Compared to Piperacillin-Tazobactam in Adults With cUTI and AP",
+   "status": "COMPLETED",
+   "start": "2014-11-20",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Urinary Tract Infection Complicated",
+    "Acute Pyelonephritis"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Meropenem-Vaborbactam",
+     "otherNames": [
+      "Combination vaborbactam and meropenem",
+      "beta-lactamase inhibitor and carbapenem antibiotic",
+      "Carbavance",
+      "Vabomere",
+      "Meropenem 2 g-Vaborbactam 2 g"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Piperacillin-Tazobactam",
+     "otherNames": [
+      "Piperacillin 4 g-Tazobactam 0.5 g"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Levofloxacin",
+     "otherNames": [
+      "Levo"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Saline"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00411684",
+   "title": "Safety and Efficacy of CDB-2914 for Emergency Contraception",
+   "status": "COMPLETED",
+   "start": "2006-11",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Emergency Contraception"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "CDB-2914"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT01732796",
+   "title": "IFN-free Combination Therapy in HCV-infected Patients Treatment-naive:HCVerso1",
+   "status": "COMPLETED",
+   "start": "2012-12",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Hepatitis C, Chronic"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Ribavirin (RBV)"
+    },
+    {
+     "type": "DRUG",
+     "name": "BI 201335 (Faldaprevir)"
+    },
+    {
+     "type": "DRUG",
+     "name": "Ribavirin (RBV)"
+    },
+    {
+     "type": "DRUG",
+     "name": "BI 207127"
+    },
+    {
+     "type": "DRUG",
+     "name": "BI 201335 (Faldaprevir)"
+    },
+    {
+     "type": "DRUG",
+     "name": "Ribavirin (RBV)"
+    },
+    {
+     "type": "DRUG",
+     "name": "BI 207127"
+    },
+    {
+     "type": "DRUG",
+     "name": "Faldaprevir (BI 201335)"
+    },
+    {
+     "type": "DRUG",
+     "name": "BI 207127"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT06037408",
+   "title": "The Effect of N115 on Coughing in IPF Patients",
+   "status": "COMPLETED",
+   "start": "2023-08-15",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Idiopathic Pulmonary Fibrosis"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "20mM sodium pyruvate nasal spray"
+    },
+    {
+     "type": "OTHER",
+     "name": "Saline Placebo control nasal spray"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT01111552",
+   "title": "Study to Evaluate the Efficacy, Safety and Tolerability of an Oral Aripiprazole/Escitalopram Combination Therapy in Participants With Major Depressive Disorder (MDD)",
+   "status": "TERMINATED",
+   "start": "2010-07-29",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Major Depressive Disorder (MDD)"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Escitalopram"
+    },
+    {
+     "type": "DRUG",
+     "name": "Aripiprazole",
+     "otherNames": [
+      "OPC-14597"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00911144",
+   "title": "Booster Vaccination Study With a Pneumococcal Vaccine in Children Primed With the Same Vaccine",
+   "status": "COMPLETED",
+   "start": "2009-06-11",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Infections, Streptococcal"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "GSK Biologicals' Synflorix™ (Pneumococcal vaccine GSK1024850A)",
+     "otherNames": [
+      "Pneumococcal vaccine GSK1024850A"
+     ]
+    },
+    {
+     "type": "BIOLOGICAL",
+     "name": "Wyeth-Lederle's Prevenar™"
+    },
+    {
+     "type": "BIOLOGICAL",
+     "name": "GSK Biologicals' Hiberix™",
+     "otherNames": [
+      "Hib"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT01165424",
+   "title": "A Study of Long-term Administration of Mometasone Furoate Nasal Spray in Pediatric Subjects With Perennial Allergic Rhinitis (Study P06333AM1)",
+   "status": "COMPLETED",
+   "start": "2010-04",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Rhinitis, Allergic, Perennial"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "mometasone furoate",
+     "otherNames": [
+      "Nasonex"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00003260",
+   "title": "Combination Chemotherapy in Treating Patients With Recurrent Metastatic Colorectal Cancer",
+   "status": "UNKNOWN",
+   "start": "1998-01",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Colorectal Cancer"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "FOLFIRI regimen"
+    },
+    {
+     "type": "DRUG",
+     "name": "FOLFOX regimen"
+    },
+    {
+     "type": "DRUG",
+     "name": "fluorouracil"
+    },
+    {
+     "type": "DRUG",
+     "name": "irinotecan hydrochloride"
+    },
+    {
+     "type": "DRUG",
+     "name": "leucovorin calcium"
+    },
+    {
+     "type": "DRUG",
+     "name": "oxaliplatin"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT05047523",
+   "title": "Study of ALXN1840 Versus Standard of Care in Pediatric Participants With Wilson Disease",
+   "status": "TERMINATED",
+   "start": "2021-09-13",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Wilson Disease"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "ALXN1840",
+     "otherNames": [
+      "Formerly WTX101"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Standard of Care"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00133406",
+   "title": "Long-term Impact and Intervention for Diarrhea in Brazil",
+   "status": "UNKNOWN",
+   "start": "2006-06",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Diarrheal Disorder"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Glutamine"
+    },
+    {
+     "type": "DRUG",
+     "name": "Vitamin A"
+    },
+    {
+     "type": "DRUG",
+     "name": "glycine"
+    },
+    {
+     "type": "DRUG",
+     "name": "zinc"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT04147871",
+   "title": "Study Evaluating Patients With Cystinuria and Efficacy and Safety Exploratory Study in the Youngest Children",
+   "status": "WITHDRAWN",
+   "start": "2024-03-01",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "Cystinuria"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "ADV7103"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT05816226",
+   "title": "Topical Treatment for TMJ Arthralgia",
+   "status": "RECRUITING",
+   "start": "2023-06-01",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "TMJ Pain"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Hydrocortisone 2.5%"
+    },
+    {
+     "type": "DRUG",
+     "name": "Diclofenac 1% topical"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01987011",
+   "title": "Phase III Study to Evaluate the Immunogenicity and Safety of MG1109 in Healthy Adult Volunteers",
+   "status": "COMPLETED",
+   "start": "2013-08",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Influenza"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "MG1109"
+    },
+    {
+     "type": "BIOLOGICAL",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT03833362",
+   "title": "Efficacy and Safety of Narlaprevir Used in Combination With Ritonavir in Treatment-Naïve and Failed Prior Treatment With Pegylated Interferon/Ribavirin Patients With Chronic Hepatitis C Genotype 1 (PIONEER - Study)",
+   "status": "COMPLETED",
+   "start": "2014-05-07",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Hepatitis C"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Narlaprevir"
+    },
+    {
+     "type": "DRUG",
+     "name": "Ritonavir",
+     "otherNames": [
+      "Norvir"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo Narlaprevir"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo Ritonavir"
+    },
+    {
+     "type": "DRUG",
+     "name": "Pegylated interferon alfa-2a/ Pegylated interferon alfa-2b",
+     "otherNames": [
+      "Pegasys",
+      "PegIntron"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Ribavirin",
+     "otherNames": [
+      "Rebetol"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00048945",
+   "title": "Efficacy and Safety Study of Pegasys in the Treatment of Chronic Hepatitis B",
+   "status": "COMPLETED",
+   "start": "2002-01",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Chronic Hepatitis B"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "PEGASYS"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT03397134",
+   "title": "Study to Evaluate Efficacy and Safety of Roluperidone (MIN-101) in Adult Patients With Negative Symptoms of Schizophrenia",
+   "status": "COMPLETED",
+   "start": "2017-12-15",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Negative Symptoms of Schizophrenia"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Placebo Oral Tablet"
+    },
+    {
+     "type": "DRUG",
+     "name": "Roluperidone 32 mg"
+    },
+    {
+     "type": "DRUG",
+     "name": "Roluperidone 64 mg"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00127647",
+   "title": "An Approved Drug to Study a New Indication for Allergic Rhinitis (0476-327)",
+   "status": "COMPLETED",
+   "start": "2004-11",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Rhinitis, Allergic, Seasonal"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "montelukast sodium",
+     "otherNames": [
+      "MK0476",
+      "Singulair"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Comparator: pranlukast"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT02847429",
+   "title": "Randomized Trial of Crenolanib in Subjects With D842V Mutated GIST",
+   "status": "UNKNOWN",
+   "start": "2016-08",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "GIST With D842V Mutated PDGFRA Gene"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Crenolanib",
+     "otherNames": [
+      "Crenolanib Besylate"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT06248619",
+   "title": "A Trial to Investigate Teprotumumab Subcutaneous Administration Compared With Placebo in Male and Female Adult Participants With Moderate-to-severe Active Thyroid Eye Disease",
+   "status": "ACTIVE_NOT_RECRUITING",
+   "start": "2024-07-05",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Thyroid Eye Disease"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "Teprotumumab"
+    },
+    {
+     "type": "OTHER",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00981201",
+   "title": "Celecoxib as a Chemopreventive Agent in Current and Former Smokers",
+   "status": "COMPLETED",
+   "start": "2001-11",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Smoking",
+    "Prevention"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Celecoxib",
+     "otherNames": [
+      "Celebrex"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Celecoxib",
+     "otherNames": [
+      "Celebrex"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT06630585",
+   "title": "GIP/GLP-1RA as Adjunctive to Automated Insulin Delivery in Adults With Type 1 Diabetes",
+   "status": "RECRUITING",
+   "start": "2025-02-14",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Type 1 Diabetes (T1D)"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Tirzepatide",
+     "otherNames": [
+      "GIP/GLP-1RA"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00464269",
+   "title": "Double-blind, Randomized Study Evaluating the Efficacy and Safety of Brivaracetam in Adults With Partial Onset Seizures",
+   "status": "COMPLETED",
+   "start": "2007-09",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Epilepsy"
+   ],
+   "interventions": [
+    {
+     "type": "OTHER",
+     "name": "Placebo"
+    },
+    {
+     "type": "DRUG",
+     "name": "Brivaracetam 2.5 mg"
+    },
+    {
+     "type": "DRUG",
+     "name": "Brivaracetam 10 mg"
+    },
+    {
+     "type": "DRUG",
+     "name": "Brivaracetam 25 mg"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT01652534",
+   "title": "Efficacy Study of Amantadine to Treat Gait Dysfunction and Freezing in Parkinson's Disease",
+   "status": "TERMINATED",
+   "start": "2011-06",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Parkinson's Disease"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Amantadine",
+     "otherNames": [
+      "Symmetrel"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo",
+     "otherNames": [
+      "Sugar Pill"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT01609010",
+   "title": "A Study of MabThera/Rituxan (Rituximab) Alone and in Combination With Roferon-A in Patients With Follicular or Other CD20+ Low-Grade (Indolent) Lymphoma",
+   "status": "COMPLETED",
+   "start": "2002-10",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Lymphoma"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "rituximab",
+     "otherNames": [
+      "MabThera",
+      "Rituxan"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "interferon-a-2a",
+     "otherNames": [
+      "Roferon-A"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT03837184",
+   "title": "Single-Dose Gene Replacement Therapy Using for Patients With Spinal Muscular Atrophy Type 1 With One or Two SMN2 Copies",
+   "status": "COMPLETED",
+   "start": "2019-05-31",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Spinal Muscular Atrophy Type I"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "Onasemnogene Abeparvovec-xioi",
+     "otherNames": [
+      "Zolgensma"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT07276542",
+   "title": "Clinical Trial Exploring the Outpatient Treatment of Phantom Limb Pain With Ketamine Administration in a Six Month Study With a Minimum Remission Period of 7 Days Between Treatment Session. 25-30 Subjects With an Ongoing History of Significant PLP.--FDA and IRB Approved.",
+   "status": "RECRUITING",
+   "start": "2026-01-15",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "Phantom Limb Syndrome With Pain"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "IM ketamine in dose finding and then continuation"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT07768371",
+   "title": "A 52-week Study of Remibrutinib in IgE-mediated Food Allergy",
+   "status": "RECRUITING",
+   "start": "2026-08-27",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "IgE-Mediated Food Allergy",
+    "Peanut Allergy",
+    "Cow Milk Allergy",
+    "Egg Allergy"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Remibrutinib",
+     "otherNames": [
+      "LOU064"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00802672",
+   "title": "Safety and Equivalence of a Generic Ciclopirox Olamine Cream Compared to the Reference Ciclopirox Cream 0.77% for the Treatment of Tinea Pedis",
+   "status": "COMPLETED",
+   "start": "2003-12",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Tinea Pedis"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Ciclopirox Olamine Cream"
+    },
+    {
+     "type": "DRUG",
+     "name": "Loprox Cream 0.77%",
+     "otherNames": [
+      "Loprox Cream"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT04571164",
+   "title": "A Study to Evaluate the Effectiveness and Safety of LY03003 in Patients With Early Primary PD",
+   "status": "COMPLETED",
+   "start": "2020-05-11",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Parkinson Disease"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "LY03003(Rotigotine,extended-release microspheres)"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo,extended-release microspheres"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00348140",
+   "title": "Rosiglitazone (Extended Release Tablets) As Adjunctive Therapy In Subjects With Mild To Moderate Alzheimer's Disease",
+   "status": "COMPLETED",
+   "start": "2006-07-12",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Alzheimer's Disease"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Rosiglitazone Extended Release 2mg"
+    },
+    {
+     "type": "DRUG",
+     "name": "Rosiglitazone Extended Release 8mg"
+    },
+    {
+     "type": "OTHER",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00113594",
+   "title": "Olanzapine Treated Adolescents With Schizophrenia or Bipolar I Disorder",
+   "status": "COMPLETED",
+   "start": "2005-06",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Schizophrenia",
+    "Bipolar Disorder"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Olanzapine"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT03016000",
+   "title": "Thalidomide Maintenance Treatment in DLBCL",
+   "status": "UNKNOWN",
+   "start": "2017-07-26",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Lymphoma, Large B-Cell, Diffuse"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Thalidomide",
+     "otherNames": [
+      "Thalomid"
+     ]
+    },
+    {
+     "type": "OTHER",
+     "name": "Observation"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT02011841",
+   "title": "Rifaximin for the Secondary Prevention of Spontaneous Bacterial Peritonitis Recurrence in Cirrhotic Patients",
+   "status": "WITHDRAWN",
+   "start": "2014-01",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Spontaneous Bacterial Peritonitis"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Rifaximin",
+     "otherNames": [
+      "Normix"
+     ]
+    },
+    {
+     "type": "DRUG",
+     "name": "Ciprofloxacin"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT02051348",
+   "title": "Study of Pylopass Versus Placebo in Subjects Who Are Helicobacter Pylori Carriers and With Mild Indigestion",
+   "status": "COMPLETED",
+   "start": "2014-01",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "HELICOBACTER INFECTION"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "Pylopass"
+    },
+    {
+     "type": "BIOLOGICAL",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT05828758",
+   "title": "Amoxicillin for Enteral Nutrition Intolerance in Pediatric Intensive Care Unit",
+   "status": "UNKNOWN",
+   "start": "2023-04-24",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE2",
+    "PHASE3"
+   ],
+   "conditions": [
+    "Enteral Feeding Intolerance"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Amoxicillin"
+    },
+    {
+     "type": "OTHER",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT02104947",
+   "title": "Reversal of Dabigatran Anticoagulant Effect With Idarucizumab",
+   "status": "COMPLETED",
+   "start": "2014-05-06",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Hemorrhage"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "idarucizumab"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT05335876",
+   "title": "Long-term Follow-up of Patients With Spinal Muscular Atrophy Treated With OAV101 in Clinical Trials",
+   "status": "ACTIVE_NOT_RECRUITING",
+   "start": "2022-12-19",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Spinal Muscular Atrophy (SMA)"
+   ],
+   "interventions": [
+    {
+     "type": "BIOLOGICAL",
+     "name": "onasemnogene abeparvovec",
+     "otherNames": [
+      "Zolgensma"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT00097708",
+   "title": "Experimental Medication For the Treatment of Generalized Anxiety Disorder",
+   "status": "COMPLETED",
+   "start": "2004-11",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Anxiety Disorder"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "experimental anti-anxiety drug"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT02975323",
+   "title": "Doppler Ultrasound Hepatic Vein Waveform as a Non-invasive Tool in the Assessment of Severity of Portal Hypertension",
+   "status": "UNKNOWN",
+   "start": "2014-12",
+   "sponsor_class": "OTHER",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Portal Hypertension"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "Carvedilol",
+     "otherNames": [
+      "carveda"
+     ]
+    }
+   ],
+   "has_results": false
+  },
+  {
+   "nct": "NCT01772316",
+   "title": "A Long-Term Extension Study of WA22763 and NA25220 of Subcutaneous RoActemra/Actemra (Tocilizumab) in Patients With Moderate to Severe Rheumatoid Arthritis",
+   "status": "COMPLETED",
+   "start": "2012-12",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Rheumatoid Arthritis"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "tocilizumab",
+     "otherNames": [
+      "Roactemra"
+     ]
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT02136914",
+   "title": "ADS-5102 for the Treatment of Levodopa Induced Dyskinesia (EASE LID Study)",
+   "status": "COMPLETED",
+   "start": "2014-05",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Dyskinesia",
+    "Levodopa Induced Dyskinesia (LID)",
+    "Parkinson's Disease"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "ADS-5102",
+     "otherNames": [
+      "amantadine HCl extended release"
+     ]
+    },
+    {
+     "type": "OTHER",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": true
+  },
+  {
+   "nct": "NCT00152009",
+   "title": "Safety and Efficacy of SPD503 in Treating Attention-Deficit/Hyperactivity Disorder (ADHD) in Children Aged 6-17",
+   "status": "COMPLETED",
+   "start": "2003-01-29",
+   "sponsor_class": "INDUSTRY",
+   "phases": [
+    "PHASE3"
+   ],
+   "conditions": [
+    "Attention Deficit Disorder With Hyperactivity"
+   ],
+   "interventions": [
+    {
+     "type": "DRUG",
+     "name": "SPD503 (Guanfacine hydrochloride) (2 mg)"
+    },
+    {
+     "type": "DRUG",
+     "name": "SPD503 (3 mg)"
+    },
+    {
+     "type": "DRUG",
+     "name": "SPD503 (4 mg)"
+    },
+    {
+     "type": "DRUG",
+     "name": "Placebo"
+    }
+   ],
+   "has_results": true
+  }
+ ]
+}

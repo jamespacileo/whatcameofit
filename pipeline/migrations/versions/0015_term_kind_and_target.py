@@ -1,14 +1,14 @@
 """a subject term link can be a kind link, and can be for a named gene
 
-Revision ID: 0014
-Revises: 0013
+Revision ID: 0015
+Revises: 0014
 """
 
 import sqlalchemy as sa
 from alembic import op
 
-revision = "0014"
-down_revision = "0013"
+revision = "0015"
+down_revision = "0014"
 branch_labels = None
 depends_on = None
 
