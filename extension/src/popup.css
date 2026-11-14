@@ -301,8 +301,8 @@ h1 + p {
   background: var(--panel);
 }
 
-.pill:active {
-  transform: translateY(1px);
+@media (prefers-reduced-motion: no-preference) {
+  .pill:active { transform: translateY(1px); }
 }
 
 /* A line that says what is already set, with its drawing ahead of the words. */

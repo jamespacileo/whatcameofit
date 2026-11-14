@@ -75,6 +75,35 @@ test("a fresh cached index still starts the page search", async () => {
   assert.equal(calls.fetch[0].options.method, "POST");
 });
 
+test("changing automatic search settings preserves own-site pages without reading or saving them", async () => {
+  const claim = { headline: "Reviewed claim", page: "/reviewed", status: "Phase 1 trial" };
+  const lookup = { ...index, claims: { reviewed: claim } };
+  for (const path of ["", "/privacy", "/reviewed"]) {
+    for (const enabled of [false, true]) {
+      const writes = [];
+      const { controller, calls } = setup({
+        requiresSharingConsent: true,
+        readTab: async () => ({ id: 9, key: `whatcameofit.example${path}`, url: `https://whatcameofit.example${path}` }),
+        storage: {
+          get: async () => ({ lookup: { version: 2, index: lookup, savedAt: Date.now() }, sharing: { version: 1, enabled } }),
+          set: async (values) => { writes.push(values); },
+        },
+      });
+      await controller.open();
+      const original = calls.states.at(-1);
+      for (const setting of [!enabled, enabled]) {
+        controller.sharingView();
+        await (setting ? controller.enableSharing() : controller.disableSharing());
+        assert.deepEqual(calls.states.at(-1), original, `${path || "home"}: setting ${setting}`);
+      }
+      assert.equal(calls.read.length, 0);
+      assert.equal(calls.fetch.length, 0);
+      assert.ok(writes.every((values) => !Object.hasOwn(values, "recent")));
+      controller.close();
+    }
+  }
+});
+
 test("concurrent opening calls and search actions share the running request", async () => {
   const reading = deferred();
   const started = deferred();
