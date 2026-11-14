@@ -4,7 +4,7 @@
 - [x] Reproduce settings and new-tab-indicator defects before fixing them.
 - [x] Run all 119 extension tests and inspect the 33 popup preview states for overflow.
 - [x] Recheck the fixes in independent specification and standards reviews.
-- [ ] Build and verify Safari 0.9.1 with stable Xcode and a new Apple build number.
+- [x] Build and verify Safari 0.9.1 (10) with stable Xcode 27.2 (27B52); signatures and bundled resources match the reviewed source.
 - [ ] Install the release resources locally, test own-site pages/settings and capture current screenshots.
 - [ ] Upload and select the build, update listing copy, and verify privacy declarations remain accurate.
 - [ ] Submit 0.9.1 and record Apple's resulting status.
