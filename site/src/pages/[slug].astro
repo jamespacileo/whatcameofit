@@ -40,7 +40,15 @@ import { cardAlt, clip, shareSentence } from "../lib/card";
 import { embedSnippet, shareLinks } from "../lib/share";
 import { confidenceLabel } from "../lib/confidence";
 import MatchList from "../components/MatchList.astro";
+import Paper from "../components/Paper.astro";
 import Trial from "../components/Trial.astro";
+import {
+  PAPERS_NOTE,
+  PAPERS_SHOWN,
+  countSubjects,
+  groupPapers,
+  subjectCountText,
+} from "../lib/paper-facts";
 import {
   TRIALS_NOTE,
   TRIALS_SHOWN,
@@ -99,7 +107,10 @@ const others = inTopic.slice(0, 3);
 // Matched records, approved first, each with how sure the match is. A paper is not a
 // registry record, so papers are listed and counted apart.
 const matched = claim.matches ?? [];
-const papers = matched.filter(isPaperMatch);
+// An export made before openspec paper-facts lists its papers among the matches.
+const papers = claim.papers ? [] : matched.filter(isPaperMatch);
+const paperGroups = groupPapers(claim.papers ?? []);
+const subjectCount = claim.papers ? subjectCountText(countSubjects(claim)) : null;
 const registryMatches = matched.filter((match) => !isPaperMatch(match));
 const counted = registryMatches.filter((match) => match.state === "approved").length;
 const candidates = registryMatches.filter((match) => match.state === "candidate");
@@ -425,6 +436,19 @@ const posts = shareLinks(postText, address, claim.headline);
           </div>
         )
       }
+      {
+        /* Counts of records, as the registries and the index file them: never that a
+           treatment does anything in people or in animals. */
+        subjectCount && (
+          <div>
+            <dt>Records of studies</dt>
+            <dd>
+              {subjectCount}
+              <span class="aka">Trials, and papers as Europe PMC files them</span>
+            </dd>
+          </div>
+        )
+      }
     </dl>
 
     <div class="bar-row">
@@ -692,6 +716,39 @@ const posts = shareLinks(postText, address, claim.headline);
     }
 
     {
+      paperGroups.length > 0 && (
+        <section class="papers" data-pagefind-ignore>
+          <h2 class="bar" id="papers">Papers on record</h2>
+          <p class="take-why">{PAPERS_NOTE}</p>
+          {paperGroups.map((group) => (
+            <>
+              <h3 class="matched-group">{group.heading}</h3>
+              <p class="entry-note paper-group-note">{group.note}</p>
+              <ul class="plain paper-list">
+                {group.papers.slice(0, PAPERS_SHOWN).map((paper) => (
+                  <Paper paper={paper} trialIds={trialIds} />
+                ))}
+              </ul>
+              {group.papers.length > PAPERS_SHOWN && (
+                <details class="papers-rest">
+                  <summary>
+                    The other {group.papers.length - PAPERS_SHOWN} of {group.papers.length} papers
+                    <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+                  </summary>
+                  <ul class="plain paper-list">
+                    {group.papers.slice(PAPERS_SHOWN).map((paper) => (
+                      <Paper paper={paper} trialIds={trialIds} />
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </>
+          ))}
+        </section>
+      )
+    }
+
+    {
       papers.length > 0 && (
         <section class="matched" data-pagefind-ignore>
           <h2 class="bar" id="papers">Matched papers</h2>
@@ -897,12 +954,13 @@ const posts = shareLinks(postText, address, claim.headline);
   import { mastodonShare } from "../lib/share";
   import { FOLLOWING_ENTRY, readFollowed } from "../lib/returning";
 
-  // A timetable entry leads to its trial. A trial past the first five sits in a closed
-  // fold, which not every browser opens for a link, so it is opened here.
+  // A timetable entry leads to its trial, a trial to its papers and a paper back to its
+  // trial. An entry past the first five sits in a closed fold, which not every browser
+  // opens for a link, so it is opened here.
   function showLinkedTrial() {
-    if (!location.hash.startsWith("#trial-")) return;
+    if (!/^#(trial|paper)-/.test(location.hash)) return;
     const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
-    const fold = target?.closest<HTMLDetailsElement>("details.trials-rest");
+    const fold = target?.closest<HTMLDetailsElement>("details.trials-rest, details.papers-rest");
     if (!target || !fold || fold.open) return;
     fold.open = true;
     target.scrollIntoView();

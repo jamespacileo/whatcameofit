@@ -38,6 +38,9 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch, fixture_json):
         def paper(self, doi: str) -> None:
             return None
 
+        def paper_by_pubmed_id(self, pubmed_id: str) -> None:
+            return None
+
         def citing_papers(self, paper: SourceRecord) -> list[SourceRecord]:
             return []
 

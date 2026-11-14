@@ -47,6 +47,9 @@ class Settings(BaseSettings):
     # (openspec auto-publish).
     approve_drafts_by_rule: bool = True
     no_signal_years: int = 3
+    # A stored paper record older than this is asked for again at fetch; a younger one
+    # causes no request (openspec paper-facts).
+    paper_record_max_age_days: int = 30
 
 
 def load_settings() -> Settings:
