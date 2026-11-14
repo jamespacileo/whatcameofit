@@ -28,11 +28,11 @@
 
 ## 4. Screening
 
-- [ ] 4.1 Implement the `link_screen` step with the outlet rule and the already-tracked check through the address key; verify tests cover a listed outlet, an unlisted domain, and an address that is a claim's source article with a tracking parameter added
-- [ ] 4.2 Implement the links to stored records with their reasons and the cap per lead; verify tests cover an address stored as an article lead, a title naming a claim's intervention, a name inside a longer word, and a trial's name without a word of its indication
-- [ ] 4.3 Verify with a test that a screening run sends no request, calls no model and records no spend
-- [ ] 4.4 Add `thenwhat backfill links`, the screening report with the top unlisted domains; verify one test of its counts on seeded leads and one of its message when nothing is screened
-- [ ] 4.5 Describe loading and screening in the README's pipeline section; verify the documented commands run as written against the Compose stack
+- [x] 4.1 Implement the `link_screen` step with the outlet rule and the already-tracked check through the address key; verify tests cover a listed outlet, an unlisted domain, and an address that is a claim's source article with a tracking parameter added
+- [x] 4.2 Implement the links to stored records with their reasons and the cap per lead; verify tests cover an address stored as an article lead, a title naming a claim's intervention, a name inside a longer word, and a trial's name without a word of its indication
+- [x] 4.3 Verify with a test that a screening run sends no request, calls no model and records no spend
+- [x] 4.4 Add `thenwhat backfill links`, the screening report with the top unlisted domains; verify one test of its counts on seeded leads and one of its message when nothing is screened
+- [x] 4.5 Describe loading and screening in the README's pipeline section; verify the documented commands run as written against the Compose stack. Run on 2026-11-14 with synthetic files against a throwaway database on the Compose Postgres server, through `uv`, then dropped. The pipeline image was not rebuilt and the operator's `thenwhat` database was not migrated: other worktrees share it
 
 ## 5. Triage
 

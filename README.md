@@ -247,6 +247,23 @@ thenwhat backfill leads                       # how many searched trials have an
 
 The sample that sized this is in `docs/research/phase3-article-hit-rate`.
 
+### Backfill from shared links
+
+A second backfill starts from the articles people shared. It reads bulk files of posts that you have downloaded (`docs/sources.md`, "Link datasets for the social-link backfill") and keeps one link lead per article address, with where and when it was shared. It never reads who shared a link, the post's text or its comments, and it sends no request to any platform.
+
+```sh
+thenwhat backfill load-links hackernews 2019-05.parquet        # one month of Hacker News items
+thenwhat backfill load-links reddit science_submissions.zst    # one community's submissions
+thenwhat backfill run link_screen                              # rules and stored data only
+thenwhat backfill links                                        # what was loaded, by where it was shared
+```
+
+- A Reddit load takes only the communities named in `LINK_LEAD_SUBREDDITS` and refuses while that is empty.
+- Loading a file again adds nothing, so a load that was stopped is simply run again.
+- `link_screen` sends no request and calls no model. A lead goes on only if its outlet is on the list in `backfill/outlet_kinds.py`; a lead whose address is already a source article is marked as tracked; the rest are linked to the claims and registry trials the database already holds for them.
+- `links` lists the unlisted domains with the most leads. Add a domain that belongs on the outlet list, raise the version of `link_screen`, and run it again: it costs nothing.
+- A link lead creates no claim, changes no status and never reaches the export.
+
 ## Development
 
 Needs [uv](https://docs.astral.sh/uv/), Node 22.23.4 or later, make and Docker.

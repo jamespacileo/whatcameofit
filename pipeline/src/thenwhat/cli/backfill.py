@@ -18,6 +18,7 @@ from thenwhat.backfill.leads import hit_rates
 from thenwhat.backfill.ledger import count
 from thenwhat.backfill.link_load import load_links
 from thenwhat.backfill.link_readers import posts_of
+from thenwhat.backfill.link_report import IN_SCOPE_KINDS, screening_report
 from thenwhat.backfill.mediacloud import MediaCloud
 from thenwhat.backfill.registered import registered_steps
 from thenwhat.backfill.registry_load import (
@@ -405,3 +406,50 @@ def leads_command() -> None:
             f"  {number:,} ({rates.share(number)}%) have one from {KIND_WORDS[kind]}",
             markup=False,
         )
+
+
+@backfill_app.command("links")
+def links_command() -> None:
+    """Show what the loaded link leads are, by where they were shared: how many are on
+    a listed outlet, already tracked, and linked to stored claims and trials.
+
+    Sends no request and changes nothing.
+    """
+    settings_or_exit()
+    with refusals(), open_session() as session:
+        report = screening_report(session)
+    if report.screened == 0:
+        out.print(
+            "No link lead has been screened yet. Load a file with "
+            "`thenwhat backfill load-links`, then run `thenwhat backfill run link_screen`."
+        )
+        return
+    for place in report.places:
+        where = (
+            place.platform
+            if place.community == place.platform
+            else f"{place.platform} / {place.community}"
+        )
+        out.print(
+            f"{where}: {place.loaded:,} link leads loaded, {place.screened:,} screened",
+            markup=False,
+        )
+        kinds = ", ".join(f"{place.in_scope[kind]:,} {KIND_WORDS[kind]}" for kind in IN_SCOPE_KINDS)
+        out.print(
+            f"  in scope: {place.in_scope_total:,} ({place.share(place.in_scope_total)}%): {kinds}",
+            markup=False,
+        )
+        out.print(
+            f"  on an unlisted outlet: {place.unlisted:,} ({place.share(place.unlisted)}%)"
+            f"  already tracked: {place.already_tracked:,}",
+            markup=False,
+        )
+        out.print(
+            f"  linked to a claim: {place.linked_to_claim:,}"
+            f"  linked to a registry trial: {place.linked_to_trial:,}",
+            markup=False,
+        )
+    if report.unlisted_domains:
+        out.print("The unlisted domains with the most link leads:", markup=False)
+        for domain, number in report.unlisted_domains:
+            out.print(f"  {domain}  {number:,}", markup=False)

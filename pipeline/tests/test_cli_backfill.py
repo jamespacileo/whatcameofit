@@ -243,7 +243,7 @@ def test_an_unknown_step_lists_the_steps_and_processes_nothing(run, session: Ses
     result = run("run", "no-such-step")
 
     assert result.exit_code == 1
-    assert "No step is named 'no-such-step'. Steps: news_search." in result.output
+    assert "No step is named 'no-such-step'. Steps: link_screen, news_search." in result.output
     assert session.scalars(select(WorkEntry)).all() == []
 
 
@@ -391,3 +391,36 @@ def test_a_reddit_load_is_refused_while_no_community_is_configured(
     assert result.exit_code == 1
     assert "LINK_LEAD_SUBREDDITS" in result.output
     assert session.scalars(select(LinkLead)).all() == []
+
+
+# --- links -------------------------------------------------------------------------------
+
+
+def test_links_reports_the_screened_leads_and_the_unlisted_domains(
+    run, session: Session, tmp_path: Path
+):
+    """Scenario: After a load and a screening run"""
+    run("load-links", "hackernews", str(stories_file(tmp_path)))
+    screened = run("run", "link_screen")
+
+    result = run("links")
+
+    assert screened.exit_code == 0, screened.output
+    assert "link_screen: 3 done, 0 found nothing, 0 failed; 0 still due." in screened.output
+    assert result.exit_code == 0, result.output
+    assert "hackernews: 3 link leads loaded, 3 screened" in result.output
+    assert "in scope: 2 (67%): 2 general news, 0 health or clinical trade press" in result.output
+    assert "on an unlisted outlet: 1 (33%)  already tracked: 0" in result.output
+    assert "The unlisted domains with the most link leads:" in result.output
+    assert "github.com  1" in result.output
+
+
+def test_links_says_so_when_nothing_is_screened(run, session: Session, tmp_path: Path):
+    """Scenario: Nothing screened yet"""
+    run("load-links", "hackernews", str(stories_file(tmp_path)))
+
+    result = run("links")
+
+    assert result.exit_code == 0, result.output
+    assert "No link lead has been screened yet." in result.output
+    assert "%" not in result.output

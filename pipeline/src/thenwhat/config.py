@@ -101,6 +101,10 @@ class Settings(BaseSettings):
     # loaded, separated by commas, without "r/". A Reddit load refuses while it is empty.
     link_lead_subreddits: str = ""
 
+    # At most this many stored claims and registry trials are linked to one link lead
+    # by screening (openspec lead-screening).
+    lead_links_max: int = 10
+
     def chosen_subreddits(self) -> frozenset[str]:
         return frozenset(
             name.strip().removeprefix("r/")
