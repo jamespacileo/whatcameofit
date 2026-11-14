@@ -27,7 +27,7 @@ before(() => {
 
 test("the home page draws the lookup in its band, in the same order", () => {
   const html = page("index.html");
-  const band = html.slice(html.indexOf('<section class="band"'), html.indexOf('class="front"'));
+  const band = html.slice(html.indexOf('<section class="band home"'), html.indexOf('class="front"'));
   const parts = [
     '<h1 class="title" id="lookup-title">',
     '<form class="search lookup" role="search" id="search">',

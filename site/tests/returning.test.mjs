@@ -6,6 +6,7 @@ import {
   changedParts,
   followedRows,
   isSince,
+  lastVisitIndex,
   nextVisit,
   readFollowed,
   sinceOf,
@@ -85,4 +86,34 @@ test("Scenario: A followed claim has changed status", () => {
     // A claim the site no longer lists keeps its stored headline and has no page.
     { slug: "gone", headline: "Claim taken down", page: null, status: null, was: null },
   ]);
+});
+
+// Openspec home-day-by-day: one line across the day-by-day list at the reader's last
+// visit. The rows' days are given newest first, as the list holds them.
+const DAYS = ["2026-11-12", "2026-11-09", "2026-11-07", "2026-11-06", "2026-10-30"];
+const sinceVisit = (stored, today = "2026-11-14") => sinceOf(nextVisit(stored, today), today);
+
+test("Scenario: A later visit draws the line under the rows dated from that day on", () => {
+  const since = sinceVisit(JSON.stringify({ current: "2026-11-07", previous: null }));
+  // The row of 7 November is above the line: the since line counts that day too.
+  assert.equal(lastVisitIndex(DAYS, since, "2026-11-14"), 3);
+});
+
+test("Scenario: A first visit draws no line", () => {
+  assert.equal(lastVisitIndex(DAYS, sinceVisit(null), "2026-11-14"), null);
+});
+
+test("Scenario: Nothing dated in the span draws no line", () => {
+  const since = sinceVisit(JSON.stringify({ current: "2026-11-13", previous: null }));
+  assert.equal(lastVisitIndex(DAYS, since, "2026-11-14"), null);
+});
+
+test("Scenario: No row older than the visit draws no line", () => {
+  const since = sinceVisit(JSON.stringify({ current: "2026-10-01", previous: null }));
+  assert.equal(lastVisitIndex(DAYS, since, "2026-11-14"), null);
+});
+
+test("Scenario: A kept value in the wrong shape draws no line", () => {
+  assert.equal(lastVisitIndex(DAYS, sinceVisit("{not json"), "2026-11-14"), null);
+  assert.equal(lastVisitIndex(DAYS, sinceVisit(JSON.stringify({ current: 7 })), "2026-11-14"), null);
 });
