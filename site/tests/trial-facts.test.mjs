@@ -8,17 +8,14 @@ import {
   TRIAL_STATE_WORDS,
   assertNoOutcomeVerdict,
   comparisonText,
-  countTrials,
   designText,
   groupValueText,
   isPaperMatch,
-  largestText,
   measureText,
   orderTrials,
   participantsText,
   sponsorText,
   studiedText,
-  trialCountText,
   unlabelledTrialCodes,
   withResults,
 } from "../src/lib/trial-facts.ts";
@@ -147,28 +144,6 @@ test("trials are ordered furthest phase first, then posted results, then size, t
     ["NCT4", "NCT5", "NCT1", "NCT2", "NCT3", "NCT0"],
   );
   assert.equal(withResults(ordered), 1);
-});
-
-test("Scenario: Three trials, the largest of 1,200", () => {
-  const claim = {
-    trials: [
-      trial("NCT1", ["phase_1"], { facts: facts({ participants: { count: 30, basis: "actual" } }) }),
-      trial("NCT2", ["phase_3"], { facts: facts({ participants: { count: 1200, basis: "actual" } }) }),
-      trial("NCT3", ["phase_2"], { facts: facts() }),
-    ],
-  };
-  // A count and the largest: never 30 + 1,200 + 83.
-  const tally = countTrials(claim);
-  assert.equal(trialCountText(tally), "3 on record");
-  assert.equal(largestText(tally), "The largest, 1,200 participants enrolled");
-  assert.equal(largestText(countTrials({ trials: claim.trials.slice(0, 1) })), "30 participants enrolled");
-});
-
-test("Scenario: Trials that state no number", () => {
-  const claim = { trials: [trial("NCT1", ["phase_1"]), trial("NCT2", ["phase_1"])] };
-  assert.equal(trialCountText(countTrials(claim)), "2 on record");
-  assert.equal(largestText(countTrials(claim)), null);
-  assert.equal(countTrials({}).count, 0);
 });
 
 test("a paper is not a registry record", () => {

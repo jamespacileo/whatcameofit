@@ -2,7 +2,8 @@
 
 Only approved, unarchived claims are exported, with their approved events, their
 approved matches, a few candidates still awaiting review, their background cards,
-their approved reported statements and the organisations they name.
+their approved reported statements, the organisations they name and their trials'
+record readings.
 The file is the single interface between pipeline and site; its schema is checked in at
 site/export.schema.json.
 """
@@ -42,6 +43,10 @@ from thenwhat.domain import (
     EntityType,
     EventType,
     EvidenceStage,
+    FollowUpUnit,
+    MeasureCode,
+    ReadingField,
+    ReadingKind,
     RegulatoryOutcome,
     ReviewState,
     StatementBasis,
@@ -74,12 +79,14 @@ from thenwhat.events.trial_facts import (
     StudyKind,
     TestKind,
     TrialStateCode,
-    is_registry_record,
     read_trial,
     reported_state,
 )
+from thenwhat.events.trial_records import newest_registry_record
 from thenwhat.export.organisations import ExportedOrganisation, organisations_of, publisher_of
 from thenwhat.outlets.icons import is_blank_icon, outlet_domain
+from thenwhat.readings.rules import Outcome
+from thenwhat.readings.service import readings_for
 from thenwhat.sources import opentargets
 from thenwhat.sources.base import SourceRecord, record_url
 from thenwhat.sources.openalex import OpenAlex
@@ -314,6 +321,29 @@ class ExportedTrialFacts(Strict):
     results: ExportedResults | None
 
 
+class ExportedReading(Strict):
+    """A record reading (openspec record-readings): what a model read from one field of
+    one of the trial's planned primary outcomes, as a code or a number with a unit, with
+    the words it read. A rule checked it against the stored record. Codes only; the site
+    owns the wording."""
+
+    kind: ReadingKind
+    # The place of the outcome in the trial's `facts.primary_outcomes`, counted from 0.
+    outcome: int
+    # The field of that outcome the words are in, character for character.
+    field: ReadingField
+    words: str
+    # A follow-up's number and unit; None for a measure.
+    number: int | None
+    unit: FollowUpUnit | None
+    # A measure's kind; None for a follow-up.
+    code: MeasureCode | None
+    # How sure the model said it was of the reading.
+    confidence: float = Field(ge=0, le=1)
+    # When the record that was read was fetched: the trial's `facts_as_of`.
+    read_on: datetime
+
+
 class ExportedTrial(Strict):
     """One trial behind the claim's approved events. Its match, if any, is the entry in
     `matches` with the same identifier."""
@@ -333,6 +363,9 @@ class ExportedTrial(Strict):
     # The identifiers of the papers the trial's registry record names for it, each an
     # entry in the claim's `papers`. Empty for a trial with no registry record.
     papers: list[str] = []
+    # Stored readings of the record the facts were read from. Empty when it has not
+    # been read, or no reading passed the rules.
+    readings: list[ExportedReading] = []
 
 
 # Papers (openspec paper-facts): each paper a claim page lists, once, with the roles it
@@ -797,10 +830,12 @@ def _collect_papers(
             )
 
 
-def _trials(events: list[EvidenceEvent], papers: _Papers) -> list[ExportedTrial]:
+def _trials(session: Session, events: list[EvidenceEvent], papers: _Papers) -> list[ExportedTrial]:
     """One entry per registry identifier among the claim's approved trial events, given
     oldest first. Openspec trial-facts: the facts are read from the most recently fetched
-    registry record those events hold; a trial with none is listed without facts."""
+    registry record those events hold; a trial with none is listed without facts.
+    Openspec record-readings: the trial's stored readings are carried beside its facts,
+    and are no input to them."""
     by_trial: dict[str, list[EvidenceEvent]] = {}
     for event in events:
         if event.type in TRIAL_EVENT_TYPES:
@@ -808,20 +843,36 @@ def _trials(events: list[EvidenceEvent], papers: _Papers) -> list[ExportedTrial]
     trials: list[ExportedTrial] = []
     for trial_id, held in sorted(by_trial.items()):
         newest = held[-1]
-        record = max(
-            (event for event in held if is_registry_record(event.raw_payload)),
-            key=lambda event: (event.fetched_at, event.id),
-            default=None,
-        )
+        record = newest_registry_record(held)
         if record is None:
             changes = [event for event in held if event.type is EventType.TRIAL_STATUS_CHANGE]
             state = reported_state(changes[-1].trial_state if changes else None)
             title, facts, facts_as_of = None, None, None
             results: list[str] = []
+            readings: list[ExportedReading] = []
         else:
             read = read_trial(record.raw_payload)
             state, title, facts_as_of = read.state, read.title, record.fetched_at
             facts = ExportedTrialFacts.model_validate(asdict(read.facts))
+            readings = [
+                ExportedReading(
+                    kind=reading.kind,
+                    outcome=reading.outcome,
+                    field=reading.field,
+                    words=reading.words,
+                    number=reading.number,
+                    unit=reading.unit,
+                    code=reading.code,
+                    confidence=round(reading.confidence, 4),
+                    read_on=record.fetched_at,
+                )
+                for reading in readings_for(
+                    session,
+                    record.source_name,
+                    trial_id,
+                    [Outcome(o.measure, o.time_frame) for o in read.facts.primary_outcomes],
+                )
+            ]
             results = [
                 key
                 for paper in read.results_papers
@@ -845,6 +896,7 @@ def _trials(events: list[EvidenceEvent], papers: _Papers) -> list[ExportedTrial]
                 facts_as_of=facts_as_of,
                 facts=facts,
                 papers=list(dict.fromkeys(results)),
+                readings=readings,
             )
         )
     return trials
@@ -1107,7 +1159,7 @@ def build_export(session: Session, *, now: datetime, no_signal_years: int = 3) -
         assert intervention is not None, "every claim is created with its intervention entity"
         papers = _Papers(session)
         _collect_papers(session, claim, events, papers)
-        trials = _trials(events, papers)
+        trials = _trials(session, events, papers)
         organisations = organisations_of(
             session,
             claim,

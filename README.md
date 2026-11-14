@@ -134,6 +134,13 @@ thenwhat statements --missing           # every published claim with such an art
 thenwhat statements claim-one --again   # read them again; pending statements are replaced
 ```
 
+Record readings are what the configured model reads from a trial's stored registry record into fixed codes: for each planned primary outcome, how long it was followed and what kind of measure it is, each with the words read (`docs/adr/0003-a-model-reads-records-into-fixed-codes.md`). A rule checks every reading against the record before it is kept, a trial whose record has not changed is not read again, and the run stops at the monthly spend ceiling. `thenwhat prepare` runs it as its last step:
+
+```sh
+thenwhat readings claim-one             # the trials of the named claims
+thenwhat readings --all                 # every published claim
+```
+
 Then review. `review list` shows what each registry record says, so most candidates can be judged without opening the link. Several items can be decided at once:
 
 ```sh

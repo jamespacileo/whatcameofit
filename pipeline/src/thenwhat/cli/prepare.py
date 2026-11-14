@@ -53,7 +53,8 @@ def prepare_command(
     ] = 4,
 ) -> None:
     """Get claims ready for review: read their unread articles, search the registries,
-    and read the registries for matches already approved.
+    read the registries for matches already approved, and read the stored trial records
+    into record readings.
 
     Claims are worked on side by side. A step that fails is reported and the claim's
     other steps still run. Nothing is approved here beyond what those steps approve by

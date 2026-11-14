@@ -15,6 +15,7 @@ import LookupAgain from "../components/LookupAgain.astro";
 import Outlet from "../components/Outlet.astro";
 import KindIcon from "../components/KindIcon.astro";
 import Pop from "../components/Pop.astro";
+import RecordBrief from "../components/RecordBrief.astro";
 import SharePill from "../components/SharePill.astro";
 import Statements from "../components/Statements.astro";
 import StageTrack from "../components/StageTrack.astro";
@@ -23,6 +24,7 @@ import TrialDetailsLink from "../components/TrialDetailsLink.astro";
 import { APPROACH_LABELS } from "../lib/approach";
 import { claimPaths, data, verticalTitle, type ExportedClaim } from "../lib/export";
 import { statusSlug } from "../lib/guide";
+import { digestBridge } from "../lib/record-brief";
 import { UNCHECKED_NOTE } from "../lib/notices";
 import {
   EVIDENCE_STAGES,
@@ -57,11 +59,8 @@ import {
 import {
   TRIALS_NOTE,
   TRIALS_SHOWN,
-  countTrials,
   isPaperMatch,
-  largestText,
   orderTrials,
-  trialCountText,
   withResults,
 } from "../lib/trial-facts";
 import { FOLLOWED_SHOWN, followedName, followedReports } from "../lib/reports";
@@ -127,7 +126,7 @@ const trialIds = new Set(trials.map((trial) => trial.trial_id));
 const foldedResults = withResults(trials.slice(TRIALS_SHOWN));
 const matchOf = (trialId: string) =>
   registryMatches.find((match) => match.state === "approved" && match.external_id === trialId);
-const trialTally = countTrials(claim);
+const bridge = digestBridge(claim);
 // Who a report or a trial record says is behind the claim (openspec organisations), and
 // the organisation, if any, on whose website a report is.
 const organisations = claim.organisations ?? [];
@@ -380,6 +379,12 @@ const posts = shareLinks(postText, address, claim.headline);
       <div class="says">
         {/* What the status means, in a sentence, beside the label it explains. */}
         <p class="means">{STATUS_MEANINGS[claim.status.code]}</p>
+        {
+          /* Trials on record with no phase: said here, so the status is not read as
+             contradicting the trials the page lists. No link in it: on a phone it is drawn
+             ahead of the path, and nothing drawn out of order may be pressed. */
+          bridge && <p class="bridge">{bridge}</p>
+        }
         <p class="lede" data-pagefind-meta="summary">{claim.summary}</p>
       </div>
     </div>
@@ -396,6 +401,10 @@ const posts = shareLinks(postText, address, claim.headline);
         </p>
       )
     }
+
+    {/* How the claim was tested and where its records stand, before the facts and the
+        records themselves. The count of trials and the largest size are said here, once. */}
+    <RecordBrief claim={claim} lastChecked={data.last_checked_at} />
 
     <dl class="facts">
       <div>
@@ -439,18 +448,6 @@ const posts = shareLinks(postText, address, claim.headline);
           <div>
             <dt>Evidence when first reported</dt>
             <dd>{EVIDENCE_STAGES[claim.evidence_stage] ?? claim.evidence_stage}</dd>
-          </div>
-        )
-      }
-      {
-        /* A count and the largest stated size: never a sum of people across trials. */
-        trialTally.count > 0 && (
-          <div>
-            <dt>Trials in people</dt>
-            <dd>
-              <a href="#trials">{trialCountText(trialTally)}</a>
-              {largestText(trialTally) && <span class="aka">{largestText(trialTally)}</span>}
-            </dd>
           </div>
         )
       }

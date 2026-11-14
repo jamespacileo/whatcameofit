@@ -88,6 +88,24 @@ export interface ExportedTrialFacts {
 }
 
 /** One trial behind a claim's approved events. Openspec trial-facts. */
+/** Something a model read from a trial's stored registry record into a fixed code, with
+ * the words it read (openspec record-readings). A rule checked the words are in the
+ * record before it was stored. The site words the code; the model writes nothing shown. */
+export interface ExportedReading {
+  kind: "follow_up" | "measure";
+  /** Which of the trial's `facts.primary_outcomes` it is about, counted from 0. */
+  outcome: number;
+  field: "time_frame" | "measure";
+  /** The record's own words, exactly as read. */
+  words: string;
+  number: number | null;
+  unit: "days" | "weeks" | "months" | "years" | null;
+  code: string | null;
+  /** 0 to 1: how sure the reading is. */
+  confidence: number;
+  read_on: string;
+}
+
 export interface ExportedTrial {
   trial_id: string;
   source_name: string;
@@ -102,6 +120,8 @@ export interface ExportedTrial {
   /** Identifiers of the papers the trial's registry record names, each an entry in the
    * claim's `papers`. Absent from an export made before openspec paper-facts. */
   papers?: string[];
+  /** Absent from an export made before openspec record-readings. */
+  readings?: ExportedReading[];
 }
 
 /** One role a paper plays for a claim. Openspec paper-facts. */

@@ -26,6 +26,8 @@ EXPECTED_TABLES = {
     "registry_load",
     "article_lead",
     "entity_substance",
+    "trial_read",
+    "reading",
 }
 
 # The migration that records where an entity was named (openspec organisations).

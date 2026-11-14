@@ -284,35 +284,6 @@ function spaced(written: string): string {
   return written.replace(/^([<>=≤≥]=?)\s*/, "$1 ");
 }
 
-export interface TrialCount {
-  count: number;
-  /** The largest number of participants any trial states. Never a sum across trials. */
-  largest: { count: number; basis: string } | null;
-}
-
-export function countTrials(claim: Pick<ExportedClaim, "trials">): TrialCount {
-  const trials = claim.trials ?? [];
-  const stated = trials
-    .map((trial) => trial.facts?.participants)
-    .filter((entry): entry is { count: number; basis: "actual" | "planned" } => Boolean(entry));
-  const largest = stated.sort((a, b) => b.count - a.count)[0] ?? null;
-  return { count: trials.length, largest };
-}
-
-/** "3 on record". */
-export function trialCountText(tally: TrialCount): string {
-  return `${number(tally.count)} on record`;
-}
-
-/** "The largest, 1,200 participants enrolled", or the one trial's size. Null when no
- * trial states a number. */
-export function largestText(tally: TrialCount): string | null {
-  if (!tally.largest) return null;
-  const people = tally.largest.count === 1 ? "participant" : "participants";
-  const size = `${number(tally.largest.count)} ${people} ${BASIS_WORDS[tally.largest.basis] ?? tally.largest.basis}`;
-  return tally.count === 1 ? size : `The largest, ${size}`;
-}
-
 // The sources whose records are papers. Every other matched record is a trial registry's.
 const PAPER_SOURCES = new Set(["crossref", "europepmc", "openalex"]);
 

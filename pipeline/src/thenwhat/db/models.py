@@ -28,8 +28,13 @@ from thenwhat.domain import (
     EntityType,
     EventType,
     EvidenceStage,
+    FollowUpUnit,
+    MeasureCode,
     NamedBy,
     OutletKind,
+    ReadBy,
+    ReadingField,
+    ReadingKind,
     RegulatoryOutcome,
     ReviewState,
     StatementBasis,
@@ -403,6 +408,79 @@ class FailureFlag(Base):
     trial_external_id: Mapped[str] = mapped_column(Text)
     evidence_event_id: Mapped[int] = mapped_column(ForeignKey("evidence_event.id"))
     source_url: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
+
+
+class TrialRead(Base):
+    """One read of a trial's stored registry record by a model (openspec
+    record-readings): what the model was shown, by its hash, under which instructions,
+    which model it was, and what the rules refused.
+
+    One per trial. A trial is read again only when the hash or the instructions'
+    version changes, and the new read replaces this one and its readings.
+    """
+
+    __tablename__ = "trial_read"
+    __table_args__ = (UniqueConstraint("source_name", "trial_id", name="uq_trial_read_trial"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source_name: Mapped[str] = mapped_column(Text)
+    # The registry's identifier of the trial.
+    trial_id: Mapped[str] = mapped_column(Text)
+    # Of the fields shown to the model: the titles and time frames of the planned
+    # primary outcomes, as the trial's facts carry them.
+    input_hash: Mapped[str] = mapped_column(Text)
+    instructions_version: Mapped[str] = mapped_column(Text)
+    # As named by the environment.
+    provider: Mapped[str] = mapped_column(Text)
+    model: Mapped[str] = mapped_column(Text)
+    # Readings the rules refused: the outcome, the kind and the reason. Never the
+    # words the model gave.
+    refusals: Mapped[list[dict[str, Any]]] = mapped_column(JSONB)
+    # When the model read the record.
+    read_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
+
+
+class Reading(Base):
+    """A record reading (openspec record-readings): a code, or a number
+    with a unit, that a model read from one field of a planned primary outcome, with
+    the exact words read. Stored only once the rules have checked it against the record.
+    Never a sentence, and never an input to a status, a match score or a trial's facts.
+    """
+
+    __tablename__ = "reading"
+    __table_args__ = (
+        UniqueConstraint("trial_read_id", "outcome", "kind", name="uq_reading_outcome_kind"),
+        CheckConstraint("confidence >= 0 AND confidence <= 1", name="confidence_range"),
+        CheckConstraint("outcome >= 0", name="outcome_index"),
+        CheckConstraint("char_length(words) > 0", name="words_present"),
+        CheckConstraint(
+            "(kind = 'follow_up') = (number IS NOT NULL)"
+            " AND (kind = 'follow_up') = (unit IS NOT NULL)"
+            " AND (kind = 'measure') = (code IS NOT NULL)",
+            name="value_fits_kind",
+        ),
+        CheckConstraint("(kind = 'follow_up') = (field = 'time_frame')", name="field_fits_kind"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    trial_read_id: Mapped[int] = mapped_column(
+        ForeignKey("trial_read.id", ondelete="CASCADE"), index=True
+    )
+    # The place of the outcome among the planned primary outcomes of the trial's
+    # facts, counted from 0.
+    outcome: Mapped[int]
+    kind: Mapped[ReadingKind] = mapped_column(_enum(ReadingKind, "kind"))
+    field: Mapped[ReadingField] = mapped_column(_enum(ReadingField, "field"))
+    # The words read, character for character as the field has them.
+    words: Mapped[str] = mapped_column(Text)
+    number: Mapped[int | None]
+    unit: Mapped[FollowUpUnit | None] = mapped_column(_enum(FollowUpUnit, "unit"))
+    code: Mapped[MeasureCode | None] = mapped_column(_enum(MeasureCode, "code"))
+    # How sure the model said it was of the reading.
+    confidence: Mapped[float]
+    decided_by: Mapped[ReadBy] = mapped_column(_enum(ReadBy, "decided_by"))
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
 
 

@@ -50,9 +50,11 @@ def plan_claims(session: Session, slugs: list[str] | None) -> list[ClaimPlan]:
 
 def steps_for(plan: ClaimPlan) -> list[list[str]]:
     """The commands that prepare one claim, in order: read its unread articles, search the
-    registries, then read the registries for whatever matches are already approved."""
+    registries, read the registries for whatever matches are already approved, then have
+    the stored trial records read into record readings."""
     return [
         *(["extract", "article", plan.slug, "--article-url", url] for url in plan.unread_articles),
         ["resolve", plan.slug],
         ["fetch", plan.slug],
+        ["readings", plan.slug],
     ]
