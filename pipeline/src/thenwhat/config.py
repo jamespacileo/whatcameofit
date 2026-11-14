@@ -97,6 +97,17 @@ class Settings(BaseSettings):
     # At most this many article leads are kept for one trial.
     leads_per_trial: int = 20
 
+    # Link leads (openspec link-leads). The Reddit communities whose submissions are
+    # loaded, separated by commas, without "r/". A Reddit load refuses while it is empty.
+    link_lead_subreddits: str = ""
+
+    def chosen_subreddits(self) -> frozenset[str]:
+        return frozenset(
+            name.strip().removeprefix("r/")
+            for name in self.link_lead_subreddits.split(",")
+            if name.strip()
+        )
+
     def allowances(self) -> dict[str, SourceAllowance]:
         return {**DEFAULT_ALLOWANCES, **self.source_allowances}
 

@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from decimal import Decimal
+from pathlib import Path
 from typing import Annotated, Any
 
 import typer
@@ -15,6 +16,8 @@ from thenwhat.backfill.allowance import Allowances, AllowanceStatus
 from thenwhat.backfill.errors import BackfillError, SourceStop
 from thenwhat.backfill.leads import hit_rates
 from thenwhat.backfill.ledger import count
+from thenwhat.backfill.link_load import load_links
+from thenwhat.backfill.link_readers import posts_of
 from thenwhat.backfill.mediacloud import MediaCloud
 from thenwhat.backfill.registered import registered_steps
 from thenwhat.backfill.registry_load import (
@@ -341,6 +344,43 @@ def load_trials_command(
         f"requests: {report.added:,} new, {report.updated:,} already stored.",
         markup=False,
     )
+
+
+@backfill_app.command("load-links")
+def load_links_command(
+    platform: Annotated[
+        str, typer.Argument(help="Where the links were shared: hackernews or reddit.")
+    ],
+    file: Annotated[
+        Path,
+        typer.Argument(
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="A bulk file of that platform's posts, already on this machine.",
+        ),
+    ],
+) -> None:
+    """Load the article addresses people shared, from a bulk file of posts.
+
+    One link lead is kept per article address, with where and when it was shared. Who
+    shared it, the post's text and its comments are never read. No request is sent to
+    any platform or outlet, and nothing reaches the export. Loading a file again adds
+    nothing, so a load that was stopped is simply run again.
+    """
+    settings = settings_or_exit()
+    with refusals():
+        steps = steps_for(settings)
+        posts = posts_of(platform, file, communities=settings.chosen_subreddits())
+        report = load_links(open_session, platform, posts, steps)
+    out.print(
+        f"Read {report.read:,} posts from {file.name}: {report.new_leads:,} new link leads, "
+        f"{report.added_shares:,} more shares of leads already stored, "
+        f"{report.already_stored:,} already stored.",
+        markup=False,
+    )
+    for reason, number in sorted(report.skipped.items()):
+        out.print(f"  skipped, {reason.value}: {number:,}", markup=False)
 
 
 @backfill_app.command("leads")

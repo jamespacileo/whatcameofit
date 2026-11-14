@@ -6,6 +6,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from decimal import Decimal
+from pathlib import Path
 
 import httpx
 import pytest
@@ -20,7 +21,7 @@ from thenwhat.backfill.news_search import query_for
 from thenwhat.cli import app
 from thenwhat.cli.backfill import _hours
 from thenwhat.config import SourceAllowance
-from thenwhat.db.models import ArticleLead, LlmUsage, RegistryTrial, WorkEntry
+from thenwhat.db.models import ArticleLead, LinkLead, LinkShare, LlmUsage, RegistryTrial, WorkEntry
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 
 
@@ -319,3 +320,74 @@ def test_leads_with_nothing_searched_says_so(run, session: Session):
 
     assert result.exit_code == 0
     assert "No trial has been searched yet." in result.output
+
+
+# --- load-links --------------------------------------------------------------------------
+
+
+def stories_file(folder: Path) -> Path:
+    """A synthetic parquet file of five Hacker News items: three link stories, a text
+    story and a comment."""
+    import pyarrow as pa
+    import pyarrow.parquet as parquet
+
+    when = datetime(2019, 5, 4, 10, 30, tzinfo=UTC)
+    rows = [
+        {"id": 1, "type": 1, "url": "https://www.theguardian.com/science/a", "title": "One"},
+        {"id": 2, "type": 1, "url": "https://www.statnews.com/2019/b", "title": "Two"},
+        {"id": 3, "type": 1, "url": "https://github.com/example/c", "title": "Three"},
+        {"id": 4, "type": 1, "url": "", "title": "Ask: a text story"},
+        {"id": 5, "type": 2, "url": None, "title": None},
+    ]
+    full = [
+        {**row, "time": when, "score": 10, "dead": 0, "deleted": 0, "by": "synthetic_author"}
+        for row in rows
+    ]
+    path = folder / "2019-05.parquet"
+    parquet.write_table(pa.Table.from_pylist(full), path)
+    return path
+
+
+def test_a_load_reports_its_counts_and_a_second_load_adds_nothing(
+    run, session: Session, tmp_path: Path
+):
+    """Scenarios: A file of stories, The same file loaded twice"""
+    path = stories_file(tmp_path)
+
+    first = run("load-links", "hackernews", str(path))
+    second = run("load-links", "hackernews", str(path))
+
+    assert first.exit_code == 0, first.output
+    assert "Read 4 posts from 2019-05.parquet: 3 new link leads" in first.output
+    assert "skipped, no link: 1" in first.output
+    assert "0 new link leads, 0 more shares of leads already stored, 3 already stored" in (
+        second.output
+    )
+    assert len(session.scalars(select(LinkLead)).all()) == 3
+    assert len(session.scalars(select(LinkShare)).all()) == 3
+
+
+def test_a_load_for_an_unknown_platform_is_refused(run, session: Session, tmp_path: Path):
+    """Scenario: A platform with no reader"""
+    path = stories_file(tmp_path)
+
+    result = run("load-links", "bluesky", str(path))
+
+    assert result.exit_code == 1
+    assert "Platforms: hackernews, reddit" in result.output
+    assert session.scalars(select(LinkLead)).all() == []
+
+
+def test_a_reddit_load_is_refused_while_no_community_is_configured(
+    run, session: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """Scenario: No community configured"""
+    monkeypatch.delenv("LINK_LEAD_SUBREDDITS", raising=False)
+    path = tmp_path / "science_submissions.zst"
+    path.write_bytes(b"")
+
+    result = run("load-links", "reddit", str(path))
+
+    assert result.exit_code == 1
+    assert "LINK_LEAD_SUBREDDITS" in result.output
+    assert session.scalars(select(LinkLead)).all() == []
