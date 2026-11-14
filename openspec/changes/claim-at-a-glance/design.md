@@ -125,7 +125,7 @@ A list of rows, each a native disclosure (`details`/`summary`), so it opens with
 
 ### 10. An ADR records the model's part
 
-`docs/adr/0002`: a model may read a stored record into a fixed code with the words it read; a rule checks it; the site words it; it never decides a status and never writes a sentence a reader sees.
+`docs/adr/0003`: a model may read a stored record into a fixed code with the words it read; a rule checks it; the site words it; it never decides a status and never writes a sentence a reader sees.
 
 ### 11. `plain-claim-page`
 
@@ -139,4 +139,4 @@ Its requirement "A claim page answers three fixed questions by rule" is removed 
 - Export shape change: schema and seed must be regenerated, and tests fail until both match.
 - The pipeline work serves one answer in six. Accepted by the operator, who asked for model-read interpretation in this change; the readings are also what a later trial-highlights change would use.
 - The bridging sentence is a patch on a status that can look out of step with completed, unphased trials. A status-rule change would remove the need for it.
-- The operator accepted ADR 0002, the question table and the measure-kind list with their phrases as written, on 2026-11-14.
+- The operator accepted ADR 0003, the question table and the measure-kind list with their phrases as written, on 2026-11-14.

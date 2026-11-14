@@ -117,7 +117,7 @@ class ReadingField(StrEnum):
 
 class MeasureCode(StrEnum):
     """The kinds of measure a reading may give. The site words each one; adding a code
-    is a change to its wording table too (docs/adr/0002)."""
+    is a change to its wording table too (docs/adr/0003)."""
 
     SYMPTOM_SCORE = "symptom_score"
     # How often something happens.
