@@ -179,6 +179,48 @@ The three approvals: two trials for `dementia-lymphatic-venous-surgery`, which a
 
 Limits: one run, with one model. The phrases were not read one by one. Many are longer and more specific than a registry's own wording ("Autologous induced pluripotent stem cell-derived cardiomyocyte transplantation") and so found nothing; a shorter phrase might. Thirty-three claims were given none, most of them named drugs. The Tourette claim remains the only one whose status a phrase has changed.
 
+## Related papers: the first measured run (14 November 2026)
+
+`thenwhat resolve` was run on the real database for every approved claim whose status was "preclinical only" (43) or "No trial record found" (4): 47 claims, one after another, between 18:19 and 18:23 UTC, with the code at `main` 9a2e13b. Change `related-research`, tasks 8.1 and 8.2. A dump of the database from just before is kept outside the repository.
+
+| | |
+|---|---|
+| Claims run | 47 |
+| Completed | 46 |
+| Stopped before the paper search | 1 (`periodontal-3d-printed-scaffold`: ClinicalTrials.gov answered 400 to its registry search) |
+| Paper search found nothing | 25 |
+| Paper search found papers | 21 |
+| Paper candidates stored | 273 |
+| Approved by rule (0.8 or more) | 33 |
+| Rejected by rule (under 0.05) | 215 |
+| Left pending | 25 |
+| Approved with no reason found by rule | 4 |
+| **Claims that gained an approved paper** | **14**, all "preclinical only" |
+| **Claims that gained a trial candidate** | **0** |
+| Claims whose status changed | 0 |
+| Origin paper asked about | 6 claims |
+| Origin paper set by rule | 4 (`alzheimers-nano-eraser`, `lifespan-ampk-activator-991`, `multiple-sclerosis-kamuvudine-k-9`, `obesity-tofa`) |
+| Organisations matched in ROR | 110 of 179 institution and company entities, all pending |
+
+**Spend.** 46 OpenAlex searches, one per claim: 0.046 US dollars of the day's free dollar, with 0.947 left at the end. The model answered 293 paper decisions and 7 origin-paper decisions in 29 calls for 0.0173 US dollars; both figures include the trial claim below. No prepaid credit was drawn on.
+
+**What it shows.**
+
+- None of the four "No trial record found" claims gained a paper, and no claim gained a trial candidate, so the run moved no claim off its status.
+- Some approved papers report studies in people for claims whose status is "preclinical only": a first-in-human study for `dentine-regeneration-cpne7-peptide`, and a double-blind randomised trial for `periodontal-adipose-stem-cells`. Neither gave a registry number that Europe PMC's abstract holds, so neither became a trial candidate. A paper does not change a status; these two claims are worth the operator's look.
+- One approved paper is a retracted one: its title begins "RETRACTED:" (`periodontal-maresin-resolvin-stem-cells`). The score does not know about retraction. It was not chosen as an origin paper, so no retraction event follows from it.
+- Some approvals at 1.00 are about a neighbouring thing: papers on resolvin E1 alone for a claim about maresin and resolvin with stem cells, and a chitosan peptide paper for an amelogenin peptide claim. The titles were read once, by the assistant, not by the operator.
+- More than half the searches (25 of 46) found nothing. The search asks for the intervention's names and phrases as exact phrases together with the indication as an exact phrase, and many of these claims have a long descriptive name and no search phrase that a paper would use. The remedy is a better search phrase (`thenwhat entity phrase`), not a looser search.
+- Where papers were found, most were not about the claim: 215 of 273 scored under 0.05. Eleven claims had all twenty slots filled, mostly by rejected papers.
+- The four origin papers set by rule let `thenwhat fetch` look for follow-up papers and retractions for claims whose article gave no DOI. `fetch` was not run here.
+- The one claim that stopped did so in the registry search that comes first, on a term ClinicalTrials.gov refused. It has no paper candidates. That is a fault in the registry search, not in the paper search.
+
+**The claim that stopped, later the same day.** The cause was one search phrase of thirteen words, which ClinicalTrials.gov answers with "Too complicated query". With the fix that reports such a term and searches the rest, `periodontal-3d-printed-scaffold` resolved: 3 paper candidates (1 approved by rule, 1 rejected, 1 pending) and 1 organisation matched. It is a "No trial record found" claim, so with it 15 of the 47 claims have an approved paper, one of them among the four with that status; its status did not change. The figures in the table above are the run as it happened and do not include it. The long phrase is still on the claim, not yet reworded.
+
+**Before the run**, one claim was resolved alone to see the two new decision steps answer for the first time: `tourette-syndrome-wrist-nerve-stimulation`, whose status is "trial registered". It gained 20 paper candidates: 9 approved, 7 rejected and 4 pending. The reports of the Nottingham and Washington University trials scored 1.00; a commentary and unrelated neurophysiology papers were rejected. Its origin paper was left unset: "none" was the likeliest answer at 0.43.
+
+**Approved by rule, rejected afterwards (task 8.2).** The rule approved 33 papers on the run (42 with the trial claim). The operator has rejected none yet, because none has been looked at. When the run was made nothing from it was published. Since the related-papers section reached `main` the same day, an approved paper is exported with the role "related" and appears on the claim page with the next export; organisations are still not exported. So the papers the rule approved here, the retracted one and the near misses among them, are published unless the operator rejects them first.
+
 ## Trial facts in the export (14 November 2026)
 
 Openspec `trial-facts`. The export was built from the real database with the new code and every write rolled back, so the database was not changed. No request was made: the facts are read from the registry records already stored with each trial's events.
@@ -255,6 +297,57 @@ Openspec `paper-facts`, task 7.1, after `make check` passed. Five papers were pi
 | PubMed 36778375 | same | medRxiv, 2023: same | Preprint: "Preprint" | nothing said: no subject headings | marked open access |
 
 No field differed, so no failing test was added. Two things a reader may notice: the entry gives a journal's name as the index record writes it ("Science (New York, N.Y.)", "Drug and alcohol dependence"), where the index's page capitalises or shortens it; and "open access" is the record's own mark, so a paper that is free to read at the index without an open access licence is not marked. None of the five is retracted, and none of the 136 records is, so the retracted mark was checked only on the recorded fixture of a known retracted paper.
+
+## Subject terms on the real database (14 November 2026)
+
+Openspec `knowledge-cards`, tasks 5.1 to 5.3. `thenwhat terms --missing` was run once on the real database, for the 84 published claims, with the decisions backend and the default thresholds (approve at 0.8, reject under 0.05, ten candidates a claim). It took 4 minutes 24 seconds. Nothing was exported or deployed.
+
+| | Count |
+| --- | --- |
+| Published claims | 84 |
+| Claims with at least one candidate | 45 |
+| Candidates gathered | 105 (94 filed by the registry, 16 with a label equal to a name, 5 both) |
+| Approved by rule, exact | 35 |
+| Approved by rule, broader | 13 |
+| Rejected by rule | 43 |
+| Left pending | 14 |
+| Candidates the backend gave no answer for | 0 |
+| Claims with a condition card | 32 of 84 (38%) |
+| Claims with an intervention card | 7, then 6 after the reading below |
+| Claims with any card | 36 |
+| Term records stored | 90, 10 of them with no definition |
+| Requests to MeSH | 445: 265 label lookups, 180 for records |
+| Model calls | 58, 39,001 input tokens, 0.0039 US dollars |
+
+The gate in task 5.1 is one claim in three with a condition card. 32 of 84 is above it, by four claims. The 39 claims with no candidate have no approved trial and no name a MeSH label equals.
+
+More requests were made than the design's estimate of about 170, because each claim's indication and each intervention name is looked up by label on every run (265 lookups). The record requests were as estimated.
+
+**Every approved link read beside its claim (task 5.2).** 48 links, 2 judged misleading and rejected, recorded as the assistant's decisions: "Tirzepatide" (0.96) and "Semaglutide" (0.91), both read as exact for the claim whose intervention is "GLP-1 receptor agonists". Each is one of that claim's other names, so its label equals a name, but one member drug would have stood on the page for a class. That is 1 in 24, under the 1 in 20 at which the threshold is to be raised, so it was not raised and the run was not repeated. Raising it would not have removed these two: the cause is a class-named intervention whose other names are its members, not a low score.
+
+Read as right but worth the operator's eye:
+
+- Four claims have only very broad condition terms, and the card takes the highest score, which is the broadest: "Metabolic Diseases" (0.95) ahead of "Lipid Metabolism Disorders" (0.85) for hard-to-treat high cholesterol, with "Dyslipidemias" pending at 0.64; "Musculoskeletal Diseases" (1.00) ahead of "Spinal Diseases" and "Pain" for chronic low back pain, with "Low Back Pain" and "Back Pain" pending at 0.51 and "Intervertebral Disc Degeneration" pending at 0.75. A broader card that is true and nearly useless is the cost of ordering by score alone.
+- "Infertility" (0.90) and "Alcoholism" (0.81) were read as exact for "Infertility after childhood chemotherapy" and "Binge drinking in alcohol use disorder". Both are the wider condition.
+- "Caloric Restriction" (0.99) was read as broader than "Intensive low-calorie diet with structured exercise". It covers the diet and not the exercise.
+- The endometrial cancer claim's Parkinson's disease term, the case in the proposal, was rejected by rule at zero. Its right term, "Endometrial Neoplasms", scored 0.77 and is pending, so that claim has no card.
+
+**Definitions read as a reader would (task 5.3).** All 42 distinct definitions of approved terms were read, not ten. None gives advice in the second person. These read as saying what a treatment is used for, or that something works, and are for the operator before release:
+
+| Term, on which claim | The words |
+| --- | --- |
+| Aspirin, on the claim about aspirin for dentine repair | "used in the treatment of mild to moderate pain", "used in the prevention of arterial and venous thrombosis" |
+| Caloric Restriction, on the claim about a diet for type 2 diabetes | "In experimental animals, caloric restriction has been shown to extend lifespan and enhance other physiological variables." |
+| Kidney Failure, Chronic, on the pig kidney transplant claim | "These patients generally require HEMODIALYSIS or KIDNEY TRANSPLANTATION." |
+| Ascorbic Acid, on the vitamin C claim | "an essential nutrient in human diets", "considered an antioxidant" |
+| Diabetes Mellitus, Type 2, on the claim about a weekly insulin | "not INSULIN-responsive or dependent (NIDDM)": dated wording that sits oddly beside a claim about an insulin |
+| Semaglutide and Tirzepatide (rejected above) | "used to enhance glycemic control of TYPE 2 DIABETES MELLITUS, and for OBESITY MANAGEMENT" |
+
+The operator's decision, 14 November 2026: these definitions are shown as they are. They stay the source's words, closed until asked for, under the section's note that cards describe terms and are not advice.
+
+Other things a reader would notice: several definitions are one line and say little ("Diseases affecting the eye.", "Diseases involving the SPINE."); "Alcoholism" is the vocabulary's own heading and its definition says "often progressive and fatal"; three supplementary records for new drugs (INNA-051, orforglipron, trastuzumab deruxtecan) have no definition, so their cards are a label and a link.
+
+How it was run: from a checkout of the branch against the database on its local port. This Mac's default resolver (Tailscale) gave no address for `id.nlm.nih.gov`, so that one name's address was taken from a public resolver for the run; the certificate was still checked against the name.
 
 ## Reported statements: the first reads (14 November 2026)
 

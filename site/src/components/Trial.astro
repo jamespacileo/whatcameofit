@@ -22,6 +22,7 @@ import {
   sponsorText,
   studiedText,
 } from "../lib/trial-facts";
+import TrialDetailsLink from "./TrialDetailsLink.astro";
 
 interface Props {
   trial: ExportedTrial;
@@ -62,6 +63,7 @@ const hasMore = Boolean(
       <ExternalLink class="out" size={13} stroke-width={1.9} aria-hidden="true" />
       <span class="visually-hidden">(at {registry})</span>
     </a>
+    <TrialDetailsLink url={trial.url} />
     {trial.title && <span class="entry-note">{trial.title}</span>}
   </p>
   <p class="trial-standing">{standing}</p>

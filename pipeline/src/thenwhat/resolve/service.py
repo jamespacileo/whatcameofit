@@ -4,6 +4,7 @@ Every candidate is stored and scored. A rule rejects one scored near zero and ap
 a trial scored high for the claim's indication; the rest wait for review.
 """
 
+from collections.abc import Callable
 from datetime import datetime
 from typing import Protocol
 
@@ -16,7 +17,7 @@ from thenwhat.decide.core import Backend, DecisionFailed
 from thenwhat.decide.steps import OTHER_INDICATION, latest_scoring, score_matches
 from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.review.decisions import record_decision
-from thenwhat.sources.base import SourceRecord
+from thenwhat.sources.base import SourceRecord, UnsearchableTerm
 
 MAX_SUMMARY_CHARACTERS = 400
 
@@ -71,16 +72,37 @@ class TrialSearch(Protocol):
     def search_phrase(self, phrase: str, condition: str | None) -> list[SourceRecord]: ...
 
 
-def trials_of(trials: TrialSearch, entity: Entity, indication: str | None) -> list[SourceRecord]:
+def trials_of(
+    trials: TrialSearch,
+    entity: Entity,
+    indication: str | None,
+    unsearchable: Callable[[UnsearchableTerm], None] | None = None,
+) -> list[SourceRecord]:
     """Every trial the registry holds under the intervention's name, its other names and
-    its search phrases. A phrase is searched within the indication only."""
-    records = [
-        record
-        for term in [entity.name, *entity.synonyms]
-        for record in trials.search_trials(term, indication)
+    its search phrases. A phrase is searched within the indication only.
+
+    A term the registry cannot search for as written is passed to `unsearchable` and the
+    other terms are still searched: each term is its own search. Nothing simpler is
+    tried in its place. With no `unsearchable`, the failure is raised.
+    """
+    searches: list[Callable[[], list[SourceRecord]]] = [
+        *(
+            (lambda term=term: trials.search_trials(term, indication))
+            for term in [entity.name, *entity.synonyms]
+        ),
+        *(
+            (lambda phrase=phrase: trials.search_phrase(phrase, indication))
+            for phrase in entity.search_phrases
+        ),
     ]
-    for phrase in entity.search_phrases:
-        records += trials.search_phrase(phrase, indication)
+    records: list[SourceRecord] = []
+    for search in searches:
+        try:
+            records += search()
+        except UnsearchableTerm as refused:
+            if unsearchable is None:
+                raise
+            unsearchable(refused)
     return records
 
 
@@ -99,6 +121,7 @@ def resolve_claim(
     rescore: bool = False,
     reject_below: float = 0.0,
     accept_above: float = 0.0,
+    unsearchable: Callable[[UnsearchableTerm], None] | None = None,
 ) -> list[EntityMatch]:
     """Search the registries for the claim's interventions and papers and store each new
     hit as a scored, pending candidate. Returns the candidates this run added.
@@ -129,7 +152,7 @@ def resolve_claim(
 
     for entity in entities:
         if entity.type is EntityType.INTERVENTION:
-            for record in trials_of(trials, entity, claim.indication):
+            for record in trials_of(trials, entity, claim.indication, unsearchable):
                 consider(entity, record)
         elif entity.type is EntityType.PAPER and entity.doi:
             if any(key[0] == entity.id and key[2].lower() == entity.doi.lower() for key in seen):
@@ -180,6 +203,7 @@ def resolve_claim(
             skip=added,
             reject_below=reject_below,
             accept_above=accept_above,
+            unsearchable=unsearchable,
         )
     return added
 
@@ -228,6 +252,7 @@ def rescore_claim(
     skip: list[EntityMatch] | None = None,
     reject_below: float = 0.0,
     accept_above: float = 0.0,
+    unsearchable: Callable[[UnsearchableTerm], None] | None = None,
 ) -> list[EntityMatch]:
     """Score again the pending trial candidates that the search still returns, and return
     them. For candidates scored before the indication was part of the question.
@@ -251,7 +276,7 @@ def rescore_claim(
             )
             if match.id not in just_scored
         }
-        for record in trials_of(trials, entity, claim.indication):
+        for record in trials_of(trials, entity, claim.indication, unsearchable):
             match = pending.pop((record.source_name, record.external_id), None)
             if match is not None:
                 match.record_summary = what_it_says(record)

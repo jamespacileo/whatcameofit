@@ -187,10 +187,18 @@ test("every page states its own canonical address", () => {
   for (const [file, address] of Object.entries(expected)) {
     assert.ok(page(file).includes(`<link rel="canonical" href="${address}">`), file);
   }
-  // Embed pages are framed inside other sites and are not listed or indexed.
+  // Embeds are not indexed. The private trial template receives its canonical ID
+  // from the Worker; the public route is checked in trials.test.mjs.
   for (const file of htmlFiles(dist)) {
     const relative = path.relative(dist, file);
     if (relative.startsWith(`embed${path.sep}`)) continue;
+    if (relative === path.join("trial-reader", "index.html")) {
+      const html = fs.readFileSync(file, "utf8");
+      assert.match(html, /name="robots" content="noindex, follow"/);
+      assert.match(html, /data-pagefind-ignore="all"/);
+      assert.ok(html.includes(`${ORIGIN}/trials/__TRIAL_ID__`));
+      continue;
+    }
     const own = `/${relative.replace(/(\/?index)?\.html$/, "").split(path.sep).join("/")}`;
     const found = [...fs.readFileSync(file, "utf8").matchAll(/<link rel="canonical" href="([^"]+)">/g)];
     assert.equal(found.length, 1, relative);
@@ -385,8 +393,8 @@ test("the sitemap lists every public page and no embed", () => {
   });
   for (const address of listed) assert.ok(built.includes(address), `${address} is listed but not built`);
   const unlisted = built.filter(
-    // The 404 page, embeds, and topics with no published claim, which nothing links to.
-    (address) => !listed.includes(address) && !/\/404$|\/embed\/|\/topic\/empty-topic$/.test(address),
+    // Error pages, embeds, the private trial template, and empty topics are unlisted.
+    (address) => !listed.includes(address) && !/\/404$|\/embed\/|\/trial-reader$|\/topic\/empty-topic$/.test(address),
   );
   assert.deepEqual(unlisted, []);
 });

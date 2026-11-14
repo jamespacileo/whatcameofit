@@ -37,6 +37,7 @@ from thenwhat.resolve.papers import (
     trials_from_papers,
 )
 from thenwhat.resolve.service import DoiLookup, TrialSearch, rescore_claim, resolve_claim
+from thenwhat.sources.base import UnsearchableTerm
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref
 from thenwhat.sources.europepmc import EuropePmc
@@ -383,6 +384,15 @@ def resolve_command(
         settings = settings_or_exit()
         reject_below = settings.match_reject_below
         accept_above = settings.match_accept_above
+        refused: dict[str, str] = {}
+
+        def unsearchable(term: UnsearchableTerm) -> None:
+            """Say once that the registry cannot search for a term, and go on with the
+            claim's other terms. The term is left for the operator to reword."""
+            if term.term not in refused:
+                refused[term.term] = term.reason
+                err.print(f"Not searched for: {term}", markup=False)
+
         try:
             added = resolve_claim(
                 session,
@@ -393,6 +403,7 @@ def resolve_command(
                 now=now,
                 reject_below=reject_below,
                 accept_above=accept_above,
+                unsearchable=unsearchable,
             )
             again = (
                 rescore_claim(
@@ -404,6 +415,7 @@ def resolve_command(
                     skip=added,
                     reject_below=reject_below,
                     accept_above=accept_above,
+                    unsearchable=unsearchable,
                 )
                 if rescore
                 else []
@@ -438,6 +450,13 @@ def resolve_command(
             out.print(
                 f"{len(rejected)} rejected by rule for scoring under {reject_below:g}."
                 " See them with `review list --by-rule`.",
+                markup=False,
+            )
+        if refused:
+            terms = "; ".join(f"'{term}'" for term in refused)
+            out.print(
+                f"{len(refused)} term(s) the registry could not search for, and nothing was"
+                f" searched in their place: {terms}. Reword them and resolve again.",
                 markup=False,
             )
         for match in sorted(added, key=lambda m: m.score, reverse=True):
