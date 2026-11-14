@@ -99,6 +99,8 @@ A lookup of ScienceAlert's [tinnitus biomarker report](https://www.sciencealert.
 
 The correction in `openspec/changes/visible-content-lookup` returns a non-treatment identification without waiting for paper or stated-record requests. Publisher, paper and registry calls have deadlines covering headers and bodies. Independent public verification has a shorter deadline; if it fails, browser text can still be read, but its result stays private to that reader. The popup has a 45-second overall lookup deadline and an explicit retry, including page reading and automatic screenshot fallback. Timeout means an incomplete search, never that no research exists.
 
+A linked paper that passes its deadline, or fails, is not dropped in silence. The answer counts the papers not looked up, the site and the popup say beside the list that a trial such a paper reports may be missing, and that answer is kept out of the shared results library and the popup's saved results, so the next lookup asks again. Europe PMC answered the same papers in under 0.3 seconds a minute after taking 17 to 25 seconds over them.
+
 The diagnostic tests use stalled synthetic sources, including sources that ignore cancellation, and check that late completions cannot update the popup or its saved results. The fix must be deployed with an updated Safari extension before installed users receive all of these protections.
 
 ## Posts on social media
@@ -663,3 +665,32 @@ Limits:
 - A GSRS "Code" is any code, not only a development code. Vitamin C's six include "E-300" and "FEMA NO. 2109", and aspirin's include two National Service Center numbers. They are searched within the indication and found nothing here.
 - A combination, a class and a method are not substances, so 61 of 84 claims are untouched. That is the empty state, said in the command's output, and nothing looser is tried.
 - The lookup (`thenwhat lookup`) now asks GSRS about the names an article gives, and searches the codes too. It was not measured again here: that waits for the reviewed test set (task 4.5). The site's Worker does not ask GSRS; that is decision 6 in the change's design.
+
+## The registry-first backfill: the full news search (started 14 November 2026)
+
+The operator decided on 2026-11-14 to run the news search over every phase 3 trial in scope (openspec `backfill-work-ledger`, task 7.5). This is what was set going and how to follow it.
+
+What was done before the first search:
+
+- **Backup:** `pg_dump` of the real database to `~/Library/Caches/devcache.noindex/thenwhat/db-backups/thenwhat-before-backfill-20261114T2130Z.dump` (14.6 MB), at migration `0015`.
+- **Trial load:** `thenwhat backfill load-trials` stored 43,320 trials in 44 requests to ClinicalTrials.gov, in 1 minute 40 seconds. 40,006 have a usable name and indication and are in the news search's scope.
+- **What is searched:** Media Cloud's United States and United Kingdom national collections (`34412234`, `34412476`) and twenty clinical trade outlets by id, in one search per trial, as in the limited run.
+- **Allowance:** 3,750 searches in 168 hours, 30 seconds apart. Media Cloud publishes 4,000 a week; the job is held below that because searches made by hand in the same week (its directory, the limited run) are not in this database's count. At that rate the 40,006 trials take eleven weekly allowances: into the last week of January 2027.
+
+How it keeps going: `scripts/backfill-job.sh` is installed as the launchd agent `com.thenwhat.backfill`. It starts `thenwhat backfill run news_search` every half hour from the worktree `~/Projects/worktrees/thenwhat/ops-backfill-run`. A run ends on its own when the week's allowance is used, when Media Cloud answers "too many requests" (it then waits an hour), or when nothing is due. The next start that finds allowance carries on from the ledger. It runs only while the operator is logged in and the Mac is awake.
+
+To follow, stop and resume it:
+
+- `sh scripts/backfill-job.sh status` prints the ledger's counts (`backfill plan`) and the log's last lines. `thenwhat backfill leads` prints the share of searched trials with a lead, by outlet kind.
+- `sh scripts/backfill-job.sh pause` ends the run in hand and stops new ones; `resume` lets it start again. Each record is committed on its own, so ending a run loses at most the search in hand, and that record stays due.
+- The log is `~/Library/Logs/thenwhat/backfill.log`. It holds times, counts and reasons, never a title or an address.
+
+What it writes: `registry_trial`, `registry_load`, `work_entry`, `source_allowance_use` and `article_lead`, one short transaction per record. No claim, match or evidence event is written, nothing reaches the export, and no other source is asked when Media Cloud finds nothing: that trial's entry says nothing was found.
+
+Limits known before it started, from the limited run on the sample's trials:
+
+- A lead is any story that holds the intervention's name and one word of the indication. Nobody has judged whether it reports the intervention for the indication: 82% of the sample's trials got a lead, 24% one from a news or trade outlet with the intervention's name in its title.
+- About one search in twelve got no answer within 60 seconds. Such a record is tried again on a later run, three times in all, and is then listed by `backfill plan` as needing attention.
+- Media Cloud no longer collects several of the trade titles that reported most trials in the sample (healio.com, onclive.com, fiercepharma.com, endpts.com).
+
+The first allowance's figures are added here when it has been used.

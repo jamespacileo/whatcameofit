@@ -90,6 +90,12 @@
 - **Requests:** 197 by the pipeline, and about 30 more by hand to read the directory and one refusal, which the pipeline's count does not include.
 - **For the operator (7.5):** the full run is 40,006 trials, one search each: 11 weekly allowances at the default, longer if Media Cloud refuses again at 30 seconds apart. It has not been started and waits for the operator's decision. Open points for that decision: about 8% of searches time out at 60 seconds and are retried; the trade press that reported most trials in the sample is largely not collected by Media Cloud; and a lead is not checked for relevance by this change.
 
+## Full run: started on 2026-11-14
+
+- **Decision:** the operator chose to run the news search over every trial in scope.
+- **Set going:** the real database was backed up, 43,320 trials were loaded (40,006 in scope), and the launchd agent `com.thenwhat.backfill` (`scripts/backfill-job.sh`) was installed to start the run every half hour. The allowance is 3,750 searches a week, 30 seconds apart: eleven weeks.
+- **Where to follow it:** `docs/lookup.md`, "The registry-first backfill: the full news search", which also takes the first allowance's figures when it has been used.
+
 ## Workflow follow-up
 
 - Archive the change after the operator has decided on the full run.

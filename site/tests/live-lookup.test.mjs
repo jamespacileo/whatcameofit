@@ -118,6 +118,19 @@ test("no record found is not worded as no trial existing", () => {
   assert.match(shown.none, /not evidence that no trial exists/);
 });
 
+test("Scenario: Reader is told a linked paper was not looked up", () => {
+  assert.equal(describeAnswer(answer()).papersUnchecked, null);
+  assert.equal(describeAnswer(answer({ papers_unchecked: 0 })).papersUnchecked, null);
+  const one = describeAnswer(answer({ papers_unchecked: 1 })).papersUnchecked;
+  const two = describeAnswer(answer({ papers_unchecked: 2 })).papersUnchecked;
+
+  assert.equal(one, "A linked paper could not be looked up just now, so a trial it reports may be missing from this list. Try again in a minute.");
+  assert.match(two, /^2 linked papers could not be looked up just now, so trials they report may be missing/);
+  assertNeutral([one, two]);
+  // Nothing was searched for a text with no treatment, so nothing is said to be missing.
+  assert.equal(describeAnswer(answer({ about_a_treatment: false, treatment: null, papers_unchecked: 0 })).papersUnchecked, null);
+});
+
 test("papers and organisation identities have no clinical confidence or status", () => {
   const result=describeAnswer(answer({research:{
     papers:[{title:"Synthetic research",year:2024,kind:"article",journal:"Example Journal",url:"https://doi.org/10.1234/example"}],
