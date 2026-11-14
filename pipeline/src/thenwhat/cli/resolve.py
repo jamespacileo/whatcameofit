@@ -22,7 +22,7 @@ from thenwhat.cli import extract
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
-from thenwhat.db.models import Claim, EntityMatch
+from thenwhat.db.models import Claim, Entity, EntityMatch
 from thenwhat.decide.core import Backend, DecisionFailed, UnknownBackend, backend_named
 from thenwhat.decide.steps import has_stage_suggestion, suggest_evidence_stage
 from thenwhat.domain import Decider, EntityType, ReviewState
@@ -246,7 +246,7 @@ def _related_research(
             ),
         )
         if found is not None:
-            _say_papers(found, accept_above, reject_below)
+            _say_papers(found, accept_above, reject_below, _has_papers(session, claim))
         if rescore:
             again = _step(
                 session,
@@ -294,6 +294,8 @@ def _related_research(
         )
         if origin is not None:
             out.print(f"Origin paper set by rule: {origin.name}.", markup=False)
+    if isinstance(papers, OpenAlex):
+        out.print(papers.usage.line(), markup=False)
 
 
 def _step[T](session: Session, what_failed: str, work: Callable[[], T]) -> T | None:
@@ -311,7 +313,28 @@ def _step[T](session: Session, what_failed: str, work: Callable[[], T]) -> T | N
         return None
 
 
-def _say_papers(found: list[EntityMatch], accept_above: float, reject_below: float) -> None:
+def _has_papers(session: Session, claim: Claim) -> bool:
+    """Whether the claim has any paper candidate, in any state."""
+    return (
+        session.scalars(
+            select(EntityMatch.id)
+            .join(Entity, Entity.id == EntityMatch.entity_id)
+            .where(Entity.claim_id == claim.id, EntityMatch.source_name == OpenAlex.name)
+        ).first()
+        is not None
+    )
+
+
+def _say_papers(
+    found: list[EntityMatch], accept_above: float, reject_below: float, has_papers: bool
+) -> None:
+    if not found and not has_papers:
+        # Said as it is, and left at that: no looser search is tried in its place.
+        out.print(
+            "The paper search found nothing for this claim. It has no related paper."
+            " Give the intervention a search phrase with `entity phrase` to search again."
+        )
+        return
     if not found:
         out.print("No new related paper was found.")
         return

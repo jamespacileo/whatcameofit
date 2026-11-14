@@ -4,7 +4,7 @@
 Scenario names are from openspec source-clients.
 """
 
-from datetime import date
+from datetime import date, timedelta
 
 import httpx
 import pytest
@@ -426,7 +426,18 @@ def test_search_phrase_that_is_broad_within_the_condition_finds_nothing(
 # --- OpenAlex --------------------------------------------------------------------
 
 OPENALEX_KEY = "test-key-not-a-real-one"
-SOME_LEFT = {"X-RateLimit-Cost-USD": "0.001", "X-RateLimit-Remaining-USD": "0.998"}
+TERMS = ["median nerve stimulation"]
+CONDITION = "Tourette syndrome"
+
+
+def allowance(remaining: str = "0.994", prepaid: str = "0", reset: str = "3600") -> dict[str, str]:
+    """The headers OpenAlex sends with every answer to a search."""
+    return {
+        "X-RateLimit-Cost-USD": "0.001",
+        "X-RateLimit-Remaining-USD": remaining,
+        "X-RateLimit-Prepaid-Remaining-USD": prepaid,
+        "X-RateLimit-Reset": reset,
+    }
 
 
 def papers(
@@ -443,31 +454,58 @@ def papers(
     return source, replay
 
 
+def found_with(fixture_json, **stated: str) -> httpx.Response:
+    return httpx.Response(
+        200,
+        json=fixture_json("openalex/search_median_nerve_tourette.json"),
+        headers=allowance(**stated),
+    )
+
+
+def searches(replay: Replay) -> list[str]:
+    return [r.url.params["search"] for r in replay.requests if r.url.path == "/works"]
+
+
 def test_literature_search_returns_papers_most_relevant_first(
     session: Session, fake_time, fixture_json
 ):
     """Scenario: Search with results"""
-    found = fixture_json("openalex/search_median_nerve_tourette.json")
-    source, replay = papers(session, fake_time, lambda request: found)
+    source, replay = papers(session, fake_time, lambda request: found_with(fixture_json))
 
-    records = source.search_papers("median nerve stimulation Tourette syndrome")
+    records = source.search_papers(TERMS, CONDITION)
 
     assert [record.external_id for record in records] == [
         "10.5281/zenodo.19046790",
-        "10.1177/27546330261423083",
-        "10.64898/2026.02.07.704541",
+        "10.3390/jcm12072514",
+        "10.1016/j.cub.2020.04.044",
     ]
     assert records[0].url == "https://doi.org/10.5281/zenodo.19046790"
-    preprint = openalex.describe(records[2])
-    assert preprint.title.startswith("Low-intensity sub-threshold rhythmic 10Hz median nerve")
-    assert (preprint.kind, preprint.year) == ("preprint", 2026)
-    assert preprint.published_date == date(2026, 2, 10)
-    assert preprint.journal == "bioRxiv (Cold Spring Harbor Laboratory)"
-    assert preprint.abstract == "Abstract replaced in this fixture."
-    assert len(preprint.authors) == 3
-    editorial = openalex.describe(records[1])
-    assert editorial.authors[0].institutions == (("Durham University", "01v29qb04"),)
-    assert replay.requests[0].url.params["search"] == "median nerve stimulation Tourette syndrome"
+    trial = openalex.describe(records[1])
+    assert trial.title.startswith("Median Nerve Stimulation for Treatment of Tics: Randomized")
+    assert (trial.kind, trial.year) == ("article", 2023)
+    assert trial.published_date == date(2023, 3, 27)
+    assert trial.journal == "Journal of Clinical Medicine"
+    assert trial.pubmed_id == "37048598"
+    assert trial.abstract == "Abstract replaced in this fixture."
+    assert len(trial.authors) == 8
+    assert trial.authors[0].institutions == (("Washington University in St. Louis", "01yc7t268"),)
+    assert searches(replay) == ['("median nerve stimulation") AND "Tourette syndrome"']
+
+
+def test_every_name_and_phrase_of_a_claim_goes_into_one_search(
+    session: Session, fake_time, fixture_json
+):
+    source, replay = papers(session, fake_time, lambda request: found_with(fixture_json))
+
+    source.search_papers(
+        ['Wrist-worn "device" (new)', "median nerve stimulation", "median nerve stimulation"],
+        CONDITION,
+    )
+
+    assert searches(replay) == [
+        '("Wrist-worn device new" OR "median nerve stimulation") AND "Tourette syndrome"'
+    ]
+    assert source.usage.searches_sent == 1
 
 
 def test_literature_search_asks_for_no_page_beyond_the_limit(
@@ -475,21 +513,48 @@ def test_literature_search_asks_for_no_page_beyond_the_limit(
 ):
     """Scenario: Search with more results than the limit"""
     found = fixture_json("openalex/search_median_nerve_tourette.json")
-    source, replay = papers(session, fake_time, lambda request: found)
+    source, replay = papers(session, fake_time, lambda request: found_with(fixture_json))
 
-    records = source.search_papers("median nerve stimulation Tourette syndrome", limit=2)
+    records = source.search_papers(TERMS, CONDITION, limit=2)
 
-    assert found["meta"]["count"] > 900
+    assert found["meta"]["count"] > 20
     assert len(records) == 2
     assert [request.url.params["per_page"] for request in replay.requests] == ["2"]
 
 
-def test_literature_search_that_finds_nothing_is_empty(session: Session, fake_time, fixture_json):
-    source, _ = papers(
-        session, fake_time, lambda request: fixture_json("openalex/search_nothing.json")
+def test_search_that_finds_nothing_is_empty_and_no_looser_search_is_sent(
+    session: Session, fake_time, fixture_json
+):
+    nothing = httpx.Response(
+        200, json=fixture_json("openalex/search_nothing.json"), headers=allowance()
+    )
+    source, replay = papers(session, fake_time, lambda request: nothing)
+
+    assert source.search_papers(["Wrist-worn stimulation device", "a phrase"], CONDITION) == []
+    assert searches(replay) == [
+        '("Wrist-worn stimulation device" OR "a phrase") AND "Tourette syndrome"'
+    ]
+    # The empty answer is kept like any other, so a later run sees it without asking.
+    again, _ = papers(session, fake_time, replay)
+    assert again.search_papers(["Wrist-worn stimulation device", "a phrase"], CONDITION) == []
+    assert len(replay.requests) == 1
+
+
+def test_a_search_is_answered_from_the_cache_for_a_week(session: Session, fake_time, fixture_json):
+    source, replay = papers(session, fake_time, lambda request: found_with(fixture_json))
+    source.search_papers(TERMS, CONDITION)
+
+    fake_time.advance(timedelta(days=6))
+    again, _ = papers(session, fake_time, replay)
+    assert len(again.search_papers(TERMS, CONDITION)) == 3
+    assert (again.usage.searches_sent, again.usage.searches_from_cache) == (0, 1)
+    assert again.usage.line() == (
+        "OpenAlex: 0 searches sent ($0.000), 1 answered from the week's cache."
     )
 
-    assert source.search_papers("no such treatment") == []
+    fake_time.advance(timedelta(days=2))
+    again.search_papers(TERMS, CONDITION)
+    assert len(replay.requests) == 2
 
 
 def test_one_paper_is_looked_up_by_its_doi(session: Session, fake_time, fixture_json):
@@ -503,6 +568,7 @@ def test_one_paper_is_looked_up_by_its_doi(session: Session, fake_time, fixture_
     assert replay.requests[0].url.path == "/works/doi:10.64898/2026.02.07.704541"
     assert source.paper("not an identifier") is None
     assert len(replay.requests) == 1
+    assert source.usage.searches_sent == 0
 
 
 def test_literature_search_without_a_key_sends_nothing_and_names_the_setting(
@@ -512,18 +578,17 @@ def test_literature_search_without_a_key_sends_nothing_and_names_the_setting(
     source, replay = papers(session, fake_time, lambda request: {}, api_key=None)
 
     with pytest.raises(MissingKey, match="OPENALEX_API_KEY"):
-        source.search_papers("median nerve stimulation")
+        source.search_papers(TERMS, CONDITION)
     assert replay.requests == []
 
 
 def test_the_key_is_sent_in_a_header_and_kept_out_of_the_cache(
     session: Session, fake_time, fixture_json, caplog
 ):
-    found = fixture_json("openalex/search_median_nerve_tourette.json")
-    source, replay = papers(session, fake_time, lambda request: found)
+    source, replay = papers(session, fake_time, lambda request: found_with(fixture_json))
 
     with caplog.at_level("DEBUG"):
-        source.search_papers("median nerve stimulation Tourette syndrome")
+        source.search_papers(TERMS, CONDITION)
 
     [request] = replay.requests
     assert request.headers["Authorization"] == f"Bearer {OPENALEX_KEY}"
@@ -531,48 +596,91 @@ def test_the_key_is_sent_in_a_header_and_kept_out_of_the_cache(
     cached = session.scalars(select(HttpCache)).all()
     assert cached and all(OPENALEX_KEY not in f"{row.request_key} {row.payload}" for row in cached)
     assert OPENALEX_KEY not in caplog.text
+    assert OPENALEX_KEY not in source.usage.line()
+
+
+def test_a_run_reports_what_it_sent_what_it_cost_and_what_is_left(
+    session: Session, fake_time, fixture_json
+):
+    source, _ = papers(session, fake_time, lambda request: found_with(fixture_json))
+
+    source.search_papers(TERMS, CONDITION)
+
+    assert source.usage.line() == (
+        "OpenAlex: 1 search sent ($0.001), $0.994 of the free allowance left today."
+    )
 
 
 def test_used_up_allowance_stops_the_run_without_a_retry(session: Session, fake_time):
     """Scenario: Allowance used up"""
-    refused = httpx.Response(429, json={}, headers={"X-RateLimit-Remaining-USD": "0"})
+    refused = httpx.Response(429, json={}, headers=allowance(remaining="0"))
     source, replay = papers(session, fake_time, lambda request: refused)
 
     with pytest.raises(AllowanceUsedUp, match="used up"):
-        source.search_papers("first")
+        source.search_papers(["first"], CONDITION)
     with pytest.raises(AllowanceUsedUp):
-        source.search_papers("second")
+        source.search_papers(["second"], CONDITION)
 
     assert len(replay.requests) == 1
     assert fake_time.slept == []
+    assert "used up" in source.usage.line()
 
 
-def test_the_last_search_of_the_allowance_is_used_and_no_other_is_sent(
+def test_the_last_search_of_the_allowance_stops_every_client_until_it_resets(
     session: Session, fake_time, fixture_json
 ):
-    found = fixture_json("openalex/search_median_nerve_tourette.json")
-    last = httpx.Response(
-        200, json=found, headers={"X-RateLimit-Cost-USD": "0.001", "X-RateLimit-Remaining-USD": "0"}
-    )
+    last = found_with(fixture_json, remaining="0", reset="3600")
     source, replay = papers(session, fake_time, lambda request: last)
 
-    assert len(source.search_papers("first")) == 3
-    with pytest.raises(AllowanceUsedUp):
-        source.search_papers("second")
+    assert len(source.search_papers(["first"], CONDITION)) == 3
+    # Another process, or a later run of the day, reads the same stop from the database.
+    other, _ = papers(session, fake_time, replay)
+    with pytest.raises(AllowanceUsedUp, match="used up"):
+        other.search_papers(["second"], CONDITION)
+    # What was already answered is still served, and one paper is still looked up.
+    assert len(other.search_papers(["first"], CONDITION)) == 3
+    assert len(replay.requests) == 1
+
+    fake_time.advance(timedelta(seconds=3601))
+    assert len(other.search_papers(["second"], CONDITION)) == 3
+
+
+def test_prepaid_credit_on_the_account_stops_searches_so_none_is_spent(
+    session: Session, fake_time, fixture_json
+):
+    source, replay = papers(
+        session, fake_time, lambda request: found_with(fixture_json, prepaid="5")
+    )
+
+    assert len(source.search_papers(["first"], CONDITION)) == 3
+    with pytest.raises(AllowanceUsedUp, match="prepaid credit"):
+        source.search_papers(["second"], CONDITION)
+
+    assert len(replay.requests) == 1
+    assert "prepaid credit" in source.usage.line()
+
+
+def test_an_allowance_the_source_does_not_state_stops_further_searches(
+    session: Session, fake_time, fixture_json
+):
+    unstated = httpx.Response(200, json=fixture_json("openalex/search_median_nerve_tourette.json"))
+    source, replay = papers(session, fake_time, lambda request: unstated)
+
+    assert len(source.search_papers(["first"], CONDITION)) == 3
+    with pytest.raises(AllowanceUsedUp, match="did not say"):
+        source.search_papers(["second"], CONDITION)
     assert len(replay.requests) == 1
 
 
 def test_one_paper_is_still_looked_up_once_the_searches_are_spent(
     session: Session, fake_time, fixture_json
 ):
-    found = fixture_json("openalex/search_median_nerve_tourette.json")
-    spent = {"X-RateLimit-Cost-USD": "0.001", "X-RateLimit-Remaining-USD": "0"}
     answers = [
-        httpx.Response(200, json=found, headers=spent),
-        httpx.Response(200, json=fixture_json("openalex/work_704541.json"), headers=spent),
+        found_with(fixture_json, remaining="0"),
+        httpx.Response(200, json=fixture_json("openalex/work_704541.json")),
     ]
     source, _ = papers(session, fake_time, lambda request: answers.pop(0))
-    source.search_papers("first")
+    source.search_papers(["first"], CONDITION)
 
     assert source.paper("10.64898/2026.02.07.704541") is not None
 
@@ -580,12 +688,12 @@ def test_one_paper_is_still_looked_up_once_the_searches_are_spent(
 def test_a_brief_rate_limit_with_allowance_left_is_retried(
     session: Session, fake_time, fixture_json
 ):
-    found = fixture_json("openalex/search_median_nerve_tourette.json")
-    answers = [httpx.Response(429, json={}, headers=SOME_LEFT), found]
+    answers = [httpx.Response(429, json={}, headers=allowance()), found_with(fixture_json)]
     source, replay = papers(session, fake_time, lambda request: answers.pop(0))
 
-    assert len(source.search_papers("median nerve stimulation")) == 3
+    assert len(source.search_papers(TERMS, CONDITION)) == 3
     assert len(replay.requests) == 2
+    assert source.usage.searches_sent == 1
 
 
 # --- ROR -------------------------------------------------------------------------
