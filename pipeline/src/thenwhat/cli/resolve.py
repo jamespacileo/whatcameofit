@@ -256,6 +256,7 @@ def _related_research(
             registry=research.registry,
             backend=backend,
             now=now,
+            papers=papers,
             **thresholds,
         ),
     )

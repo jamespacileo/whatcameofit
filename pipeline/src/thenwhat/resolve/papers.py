@@ -199,6 +199,7 @@ def trials_from_papers(
     registry: TrialRegistry,
     backend: Backend,
     now: datetime,
+    papers: PaperSearch | None = None,
     reject_below: float = 0.0,
     accept_above: float = 0.0,
 ) -> list[EntityMatch]:
@@ -206,9 +207,12 @@ def trials_from_papers(
     papers state. Returns the candidates this run added.
 
     Every approved paper is read, so one the operator approved since the last run is
-    covered too. A paper that states more than three numbers is a review and contributes
-    none. A trial the claim already has a candidate for is left as it is. Each new one is
-    scored and decided by rule exactly as a trial the registry search found.
+    covered too. A paper is asked for by its DOI. One that has none is asked for by its
+    PubMed number, read from the literature source's record of it; without that source,
+    or without a PubMed number, it is not looked up. A paper that states more than three
+    numbers is a review and contributes none. A trial the claim already has a candidate
+    for is left as it is. Each new one is scored and decided by rule exactly as a trial
+    the registry search found.
     """
     intervention = _intervention(session, claim)
     if intervention is None:
@@ -223,9 +227,13 @@ def trials_from_papers(
     )
     found: list[tuple[Entity, SourceRecord]] = []
     for paper in _paper_matches(session, intervention, ReviewState.APPROVED):
-        if not paper.external_id.startswith("10."):
-            continue  # Europe PMC is asked by DOI; a paper without one is not looked up.
-        for number in numbers.trial_numbers(doi=paper.external_id):
+        if paper.external_id.startswith("10."):
+            stated = numbers.trial_numbers(doi=paper.external_id)
+        else:
+            record = papers.paper(paper.external_id) if papers is not None else None
+            pubmed_id = openalex.describe(record).pubmed_id if record is not None else None
+            stated = numbers.trial_numbers(pubmed_id=pubmed_id) if pubmed_id else []
+        for number in stated:
             if number in had:
                 continue
             had.add(number)

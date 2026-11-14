@@ -56,6 +56,7 @@ def paper(
     abstract: str = "A made-up abstract about Tourette syndrome.",
     institution: tuple[str, str] | None = ("Example University", "https://ror.org/01example9"),
     work: str = "W1",
+    pubmed_id: str | None = None,
 ) -> SourceRecord:
     """A made-up paper in the shape OpenAlex returns."""
     authorship: dict[str, Any] = {"author": {"display_name": "Ada Example"}, "institutions": []}
@@ -71,6 +72,7 @@ def paper(
         "primary_location": {"source": {"display_name": "Journal of Examples"}},
         "authorships": [authorship],
         "abstract_inverted_index": {word: [n] for n, word in enumerate(abstract.split())},
+        "ids": {"pmid": f"https://pubmed.ncbi.nlm.nih.gov/{pubmed_id}"} if pubmed_id else {},
     }
     return SourceRecord(
         "openalex", doi or work, f"https://doi.org/{doi}" if doi else payload["id"], payload, NOW
@@ -566,6 +568,45 @@ def test_a_number_the_registry_answers_with_a_trial_the_claim_has_adds_nothing(
             return super().fetch_trial("NCT09999999")
 
     assert from_papers(session, claim, numbers, Renumbered()) == []
+
+
+def test_paper_without_a_doi_is_asked_for_by_its_pubmed_number(
+    session: Session, fake_time, fixture_json
+):
+    claim = new_claim(session)
+    indexed = paper(None, work="W77", pubmed_id="35658024")
+    unindexed = paper(None, "Another paper", work="W78")
+    papers = FakePapers({PHRASE_SEARCH: [indexed, unindexed]})
+    find(session, claim, papers, accept_above=0.8)
+    asked: list[str] = []
+
+    def answer(request: httpx.Request) -> httpx.Response:
+        asked.append(request.url.params["query"])
+        return httpx.Response(200, json=fixture_json("europepmc/paper_nejmoa2206038.json"))
+
+    numbers = EuropePmc(
+        session, contact_email=CONTACT, transport=httpx.MockTransport(answer), time=fake_time
+    )
+
+    def read(source: FakePapers | None) -> list[EntityMatch]:
+        return trials_from_papers(
+            session,
+            claim,
+            numbers=numbers,
+            registry=Registry(),
+            backend=Reading(default=0.7),
+            now=NOW,
+            papers=source,
+            accept_above=0.8,
+        )
+
+    # Without the literature source there is no PubMed number to ask by.
+    assert read(None) == []
+    [candidate] = read(papers)
+
+    assert candidate.external_id == "NCT04184622"
+    assert asked == ["EXT_ID:35658024 AND SRC:MED"]
+    assert papers.looked_up == ["W77", "W78"]
 
 
 def test_a_pending_paper_is_not_read_for_registry_numbers(
