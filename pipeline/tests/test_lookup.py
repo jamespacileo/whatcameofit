@@ -20,7 +20,7 @@ from thenwhat.decide.core import BackendAnswer
 from thenwhat.extract.page import Page
 from thenwhat.llm.client import Llm, LlmSettings
 from thenwhat.lookup.service import look_up
-from thenwhat.sources.base import SourceRecord
+from thenwhat.sources.base import SourceRecord, SourceUnavailable
 
 NOW = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
 TEXT = "Scientists say EX-1, also called Toothgrow, regrew teeth in people born without them."
@@ -339,3 +339,67 @@ def test_the_model_is_shown_the_text(session: Session):
     look_up(session, model, ByCondition(), FakeTrials({}), text=TEXT, now=NOW)
 
     assert TEXT in prompts[0]
+
+
+# --- development codes -------------------------------------------------------------
+
+
+class FakeSubstances:
+    name = "gsrs"
+
+    def __init__(self, by_name: dict[str, list[SourceRecord]], broken: bool = False) -> None:
+        self.by_name = by_name
+        self.broken = broken
+        self.asked: list[str] = []
+
+    def substances_named(self, name: str) -> list[SourceRecord]:
+        if self.broken:
+            raise SourceUnavailable("gsrs did not answer after 4 attempts.")
+        self.asked.append(name)
+        return self.by_name.get(name, [])
+
+
+def substance(identifier: str, *listed: tuple[str, str]) -> SourceRecord:
+    payload = {
+        "substance": {"uuid": identifier, "_name": listed[0][0]},
+        "names": [{"name": name, "type": kind} for name, kind in listed],
+    }
+    return SourceRecord("gsrs", identifier, f"https://gsrs.test/{identifier}", payload, NOW)
+
+
+def test_a_trial_filed_under_a_development_code_is_found(session: Session):
+    """Scenario: Trial filed under a development code"""
+    model, _ = llm(session, READING | {"other_names": [], "search_phrases": []})
+    coded = trial("NCT00000009", "ABC-123 for missing teeth")
+    trials = FakeTrials({"ABC-123": [coded]})
+    registry = FakeSubstances({"EX-1": [substance("s-1", ("EX-1", "of"), ("ABC-123", "cd"))]})
+
+    found = look_up(session, model, ByCondition(), trials, text=TEXT, now=NOW, substances=registry)
+
+    assert found.codes == ["ABC-123"]
+    assert found.codes_not_looked_up is None
+    assert ("ABC-123", "tooth agenesis") in trials.searched
+    assert [candidate.external_id for candidate in found.candidates] == ["NCT00000009"]
+    # Only the names the text gives are asked about, never a name from the model.
+    assert registry.asked == ["EX-1"]
+    assert found.names == ["EX-1"]
+
+
+def test_a_lookup_says_when_the_substance_registry_could_not_be_asked(session: Session):
+    """Scenario: Substance registry cannot be asked"""
+    model, _ = llm(session, READING)
+    trials = FakeTrials({"EX-1": [trial("NCT00000001", "EX-1 in people")]})
+
+    found = look_up(
+        session,
+        model,
+        ByCondition(),
+        trials,
+        text=TEXT,
+        now=NOW,
+        substances=FakeSubstances({}, broken=True),
+    )
+
+    assert found.codes == []
+    assert found.codes_not_looked_up == "gsrs did not answer after 4 attempts."
+    assert [candidate.external_id for candidate in found.candidates] == ["NCT00000001"]

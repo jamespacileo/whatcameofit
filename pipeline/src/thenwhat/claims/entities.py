@@ -14,7 +14,7 @@ from thenwhat.claims.entry import (
     slug_of_claim_covering,
     tidy,
 )
-from thenwhat.db.models import Claim, Entity, EntityMatch
+from thenwhat.db.models import Claim, Entity, EntityMatch, EntitySubstance
 from thenwhat.domain import EntityType
 from thenwhat.extract.names import is_a_search_phrase
 
@@ -31,6 +31,13 @@ def entities_of(session: Session, claim: Claim) -> list[Entity]:
     return list(
         session.scalars(select(Entity).where(Entity.claim_id == claim.id).order_by(Entity.id))
     )
+
+
+def development_codes(session: Session, entity: Entity) -> list[str]:
+    """The codes a registry of substances lists for the intervention's substance. Empty
+    when the registry does not list it under one substance, or was never asked."""
+    kept = session.get(EntitySubstance, entity.id)
+    return list(kept.codes) if kept is not None else []
 
 
 def people(session: Session) -> list[tuple[Entity, Claim]]:

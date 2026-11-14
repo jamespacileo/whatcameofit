@@ -18,6 +18,7 @@ EXPECTED_TABLES = {
     "claim_term",
     "term_record",
     "reported_statement",
+    "entity_substance",
 }
 
 

@@ -95,6 +95,17 @@ _LISTED = (
         accepted=True,
         in_data_file=True,
     ),
+    SourceTerms(
+        name="gsrs",
+        title="Global Substance Registration System (GSRS)",
+        licence="CC0 1.0",
+        credit="Global Substance Registration System, FDA and NCATS",
+        home_url="https://gsrs.ncats.nih.gov/",
+        terms_url="https://gsrs.ncats.nih.gov/licensing",
+        read_on=date(2026, 11, 14),
+        accepted=True,
+        in_data_file=True,
+    ),
     # The three below are read for drug and target cards. None is accepted until the
     # operator's decision on share-alike material is recorded (knowledge-cards, 6.1).
     SourceTerms(
