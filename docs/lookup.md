@@ -711,3 +711,16 @@ Limits known before it started, from the limited run on the sample's trials:
 - Media Cloud no longer collects several of the trade titles that reported most trials in the sample (healio.com, onclive.com, fiercepharma.com, endpts.com).
 
 The first allowance's figures are added here when it has been used.
+
+## Finding a report's paper (14 November 2026)
+
+A King's College London report on lab-grown teeth linked to its paper on PubMed, and the lookup did not list the paper. The keyword search could not find it: the report's words ("lab-grown teeth") are not in the paper's title ("Generating Tooth Organoids Using Defined Bioorthogonally Cross-Linked Hydrogels"), and OpenAlex's search needs every word.
+
+The lookup now also fetches the papers a page links to by identifier, and searches the treatment's terms among works whose authors are at each organisation the report names, published around the report's date. For this report the second search alone puts the paper second, found under both King's College London and Imperial College London. Without the report's date it was not in the first five.
+
+Each such report is a case in `site/tests/fixtures/research/cases`: the article's address and the DOI of its paper. Two checks use them.
+
+- `make smoke-research` reads each article, asks the model, OpenAlex and ROR for real, and fails when the paper is not among the first five results with the page's links left out, or not first with them. It costs a model call and up to five searches per case and is run by hand.
+- `make smoke-research RECORD=1` also writes what the model read (never the article's text) and what the providers answered into the case file. `site/tests/research-cases.test.mjs` replays that in `make check`, with no network.
+
+To add a case, write a file with `article` and `expected_doi` and record it.
