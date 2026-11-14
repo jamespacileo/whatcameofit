@@ -32,6 +32,7 @@ def export_command(
             out_path,
             now=datetime.now(UTC),
             no_signal_years=settings.no_signal_years,
+            reading_accept_above=settings.reading_accept_above,
         )
         noun = "claim" if len(export.claims) == 1 else "claims"
         out.print(f"Exported {len(export.claims)} {noun} to {out_path}.", markup=False)
