@@ -179,6 +179,48 @@ The three approvals: two trials for `dementia-lymphatic-venous-surgery`, which a
 
 Limits: one run, with one model. The phrases were not read one by one. Many are longer and more specific than a registry's own wording ("Autologous induced pluripotent stem cell-derived cardiomyocyte transplantation") and so found nothing; a shorter phrase might. Thirty-three claims were given none, most of them named drugs. The Tourette claim remains the only one whose status a phrase has changed.
 
+## Related papers: the first measured run (14 November 2026)
+
+`thenwhat resolve` was run on the real database for every approved claim whose status was "preclinical only" (43) or "No trial record found" (4): 47 claims, one after another, between 18:19 and 18:23 UTC, with the code at `main` 9a2e13b. Change `related-research`, tasks 8.1 and 8.2. A dump of the database from just before is kept outside the repository.
+
+| | |
+|---|---|
+| Claims run | 47 |
+| Completed | 46 |
+| Stopped before the paper search | 1 (`periodontal-3d-printed-scaffold`: ClinicalTrials.gov answered 400 to its registry search) |
+| Paper search found nothing | 25 |
+| Paper search found papers | 21 |
+| Paper candidates stored | 273 |
+| Approved by rule (0.8 or more) | 33 |
+| Rejected by rule (under 0.05) | 215 |
+| Left pending | 25 |
+| Approved with no reason found by rule | 4 |
+| **Claims that gained an approved paper** | **14**, all "preclinical only" |
+| **Claims that gained a trial candidate** | **0** |
+| Claims whose status changed | 0 |
+| Origin paper asked about | 6 claims |
+| Origin paper set by rule | 4 (`alzheimers-nano-eraser`, `lifespan-ampk-activator-991`, `multiple-sclerosis-kamuvudine-k-9`, `obesity-tofa`) |
+| Organisations matched in ROR | 110 of 179 institution and company entities, all pending |
+
+**Spend.** 46 OpenAlex searches, one per claim: 0.046 US dollars of the day's free dollar, with 0.947 left at the end. The model answered 293 paper decisions and 7 origin-paper decisions in 29 calls for 0.0173 US dollars; both figures include the trial claim below. No prepaid credit was drawn on.
+
+**What it shows.**
+
+- None of the four "No trial record found" claims gained a paper, and no claim gained a trial candidate, so the run moved no claim off its status.
+- Some approved papers report studies in people for claims whose status is "preclinical only": a first-in-human study for `dentine-regeneration-cpne7-peptide`, and a double-blind randomised trial for `periodontal-adipose-stem-cells`. Neither gave a registry number that Europe PMC's abstract holds, so neither became a trial candidate. A paper does not change a status; these two claims are worth the operator's look.
+- One approved paper is a retracted one: its title begins "RETRACTED:" (`periodontal-maresin-resolvin-stem-cells`). The score does not know about retraction. It was not chosen as an origin paper, so no retraction event follows from it.
+- Some approvals at 1.00 are about a neighbouring thing: papers on resolvin E1 alone for a claim about maresin and resolvin with stem cells, and a chitosan peptide paper for an amelogenin peptide claim. The titles were read once, by the assistant, not by the operator.
+- More than half the searches (25 of 46) found nothing. The search asks for the intervention's names and phrases as exact phrases together with the indication as an exact phrase, and many of these claims have a long descriptive name and no search phrase that a paper would use. The remedy is a better search phrase (`thenwhat entity phrase`), not a looser search.
+- Where papers were found, most were not about the claim: 215 of 273 scored under 0.05. Eleven claims had all twenty slots filled, mostly by rejected papers.
+- The four origin papers set by rule let `thenwhat fetch` look for follow-up papers and retractions for claims whose article gave no DOI. `fetch` was not run here.
+- The one claim that stopped did so in the registry search that comes first, on a term ClinicalTrials.gov refused. It has no paper candidates. That is a fault in the registry search, not in the paper search.
+
+**The claim that stopped, later the same day.** The cause was one search phrase of thirteen words, which ClinicalTrials.gov answers with "Too complicated query". With the fix that reports such a term and searches the rest, `periodontal-3d-printed-scaffold` resolved: 3 paper candidates (1 approved by rule, 1 rejected, 1 pending) and 1 organisation matched. It is a "No trial record found" claim, so with it 15 of the 47 claims have an approved paper, one of them among the four with that status; its status did not change. The figures in the table above are the run as it happened and do not include it. The long phrase is still on the claim, not yet reworded.
+
+**Before the run**, one claim was resolved alone to see the two new decision steps answer for the first time: `tourette-syndrome-wrist-nerve-stimulation`, whose status is "trial registered". It gained 20 paper candidates: 9 approved, 7 rejected and 4 pending. The reports of the Nottingham and Washington University trials scored 1.00; a commentary and unrelated neurophysiology papers were rejected. Its origin paper was left unset: "none" was the likeliest answer at 0.43.
+
+**Approved by rule, rejected afterwards (task 8.2).** The rule approved 33 papers on the run (42 with the trial claim). The operator has rejected none yet, because none has been looked at. When the run was made nothing from it was published. Since the related-papers section reached `main` the same day, an approved paper is exported with the role "related" and appears on the claim page with the next export; organisations are still not exported. So the papers the rule approved here, the retracted one and the near misses among them, are published unless the operator rejects them first.
+
 ## Trial facts in the export (14 November 2026)
 
 Openspec `trial-facts`. The export was built from the real database with the new code and every write rolled back, so the database was not changed. No request was made: the facts are read from the registry records already stored with each trial's events.

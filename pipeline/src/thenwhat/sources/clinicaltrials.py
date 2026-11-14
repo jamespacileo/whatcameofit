@@ -4,7 +4,9 @@ import re
 from datetime import datetime
 from typing import Any
 
-from thenwhat.sources.base import Source, SourceRecord
+import httpx
+
+from thenwhat.sources.base import Source, SourceError, SourceRecord, UnsearchableTerm
 
 API = "https://clinicaltrials.gov/api/v2"
 NCT_ID = re.compile(r"NCT\d{8}")
@@ -74,6 +76,20 @@ GENERIC_CONDITION_WORDS = frozenset(
         "people",
     ]
 )
+
+
+# How the registry begins its answer when it cannot read a search as written, for
+# example "Error parsing query in Intervention / treatment: Too complicated query".
+UNREADABLE_QUERY = re.compile(r"Error parsing query in (?P<field>[^:]+): (?P<reason>.+)", re.DOTALL)
+
+
+class _UnreadableQuery(SourceError):
+    """The registry could not read one field of a search."""
+
+    def __init__(self, field: str, reason: str) -> None:
+        super().__init__(reason)
+        self.field = field
+        self.reason = reason
 
 
 class ClinicalTrials(Source):
@@ -148,7 +164,10 @@ class ClinicalTrials(Source):
             "fields": SEARCH_FIELDS,
             "countTotal": "true",
         }
-        fetched = self._get(f"{API}/studies", params)
+        try:
+            fetched = self._get(f"{API}/studies", params)
+        except _UnreadableQuery as unreadable:
+            raise UnsearchableTerm(name, unreadable.reason, self.name) from None
         if fetched is None:
             return []
         studies = fetched.payload.get("studies", [])
@@ -170,13 +189,26 @@ class ClinicalTrials(Source):
             params["query.cond"] = condition
         if page_token:
             params["pageToken"] = page_token
-        fetched = self._get(f"{API}/studies", params)
+        try:
+            fetched = self._get(f"{API}/studies", params)
+        except _UnreadableQuery as unreadable:
+            # The registry names the field it could not read: the treatment or the condition.
+            at_fault = intervention if unreadable.field.startswith("Intervention") else condition
+            raise UnsearchableTerm(at_fault or intervention, unreadable.reason, self.name) from None
         if fetched is None:
             return [], 0, None
         studies = fetched.payload.get("studies", [])
         records = [self._record(study, fetched.fetched_at) for study in studies]
         total = fetched.payload.get("totalCount", len(studies))
         return records, total, fetched.payload.get("nextPageToken")
+
+    def _heed(self, response: httpx.Response) -> None:
+        """A search the registry cannot read is its own failure, with the registry's
+        reason, so the term can be reported and reworded. Nothing simpler is sent."""
+        if response.status_code == 400:
+            unreadable = UNREADABLE_QUERY.match(response.text.strip())
+            if unreadable:
+                raise _UnreadableQuery(unreadable["field"].strip(), unreadable["reason"].strip())
 
     def _record(self, study: dict[str, Any], fetched_at: datetime) -> SourceRecord:
         nct_id = study["protocolSection"]["identificationModule"]["nctId"]

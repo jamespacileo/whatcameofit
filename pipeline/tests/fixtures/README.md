@@ -9,6 +9,7 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `clinicaltrials/search_broad_count.json` | `GET /api/v2/studies?query.intr=CAR-T cell therapy&pageSize=3&countTotal=true&fields=…` |
 | `clinicaltrials/search_broad_with_condition.json` | the same with `query.cond=Stiff person syndrome` |
 | `clinicaltrials/titles_surmount5.json` | `GET /api/v2/studies?query.titles="SURMOUNT-5"&pageSize=20&countTotal=true&fields=…` (2026-11-12) |
+| `clinicaltrials/search_too_complicated.txt` | the body of the 400 answer to `GET /api/v2/studies?query.intr=<a thirteen-word search phrase>&query.cond=Periodontal bone defect` (2026-11-14) |
 | `clinicaltrials/study_NCT06497504_conditions.json` | `GET /api/v2/studies/NCT06497504` as stored by the pipeline on 2026-11-11, trimmed to its identification, conditions and condition MeSH terms |
 | `europepmc/paper_nejmoa2206038.json` | `GET /search?query=DOI:"10.1056/NEJMoa2206038"&resultType=core` (2026-11-12) |
 | `openai/decisions_three_records.json` | `POST /v1/decisions` with three made-up trial records as questions; the request and its response (2026-11-12) |

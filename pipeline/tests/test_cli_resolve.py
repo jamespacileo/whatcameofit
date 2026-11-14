@@ -24,7 +24,7 @@ from thenwhat.db.models import DecisionLog, EntityMatch
 from thenwhat.decide.core import BackendAnswer
 from thenwhat.domain import Decider
 from thenwhat.llm.client import Llm, LlmSettings
-from thenwhat.sources.base import SourceRecord
+from thenwhat.sources.base import SourceRecord, UnsearchableTerm
 from thenwhat.sources.openalex import OpenAlex
 
 NOW = datetime(2026, 11, 20, tzinfo=UTC)
@@ -394,6 +394,27 @@ def test_resolve_says_how_many_candidates_the_rule_rejected(
     assert "1 rejected by rule" in result.output and "review list --by-rule" in result.output
     [match] = session.scalars(select(EntityMatch)).all()
     assert match.reviewed_by is Decider.RULE
+
+
+def test_resolve_names_a_term_the_registry_could_not_search_for_and_carries_on(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    class Refusing(Trials):
+        def search_phrase(self, phrase: str, condition: str | None) -> list[SourceRecord]:
+            raise UnsearchableTerm(phrase, "Too complicated query", "clinicaltrials.gov")
+
+    monkeypatch.setattr("thenwhat.cli.resolve.make_registries", lambda s: (Refusing(), Dois()))
+    run("entity", "phrase", SLUG, "EX-1 antibody", "a very long phrase about tooth regrowth")
+
+    result = run("resolve", SLUG)
+
+    assert result.exit_code == 0, result.output
+    assert (
+        "Not searched for: clinicaltrials.gov cannot search for"
+        " 'a very long phrase about tooth regrowth': Too complicated query" in result.output
+    )
+    assert "nothing was searched in their place" in result.output
+    assert session.scalars(select(EntityMatch)).one().external_id == "NCT00000001"
 
 
 def test_resolve_of_an_unknown_claim_explains_and_exits_1(run):
