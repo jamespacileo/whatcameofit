@@ -148,6 +148,8 @@ Pages read: for X, `docs.x.com/x-for-websites/oembed-api`, `docs.x.com/developer
 
 For every platform in this table the site names the platform, asks nothing of it, and offers to take the post's text or the article's address.
 
+Reddit submission dumps published by third parties are a separate matter, decided by the operator on 2026-11-14: see "Link datasets for the social-link backfill" at the end of this file. Reddit itself is still asked nothing.
+
 ### YouTube in the reader's browser
 
 - **Checked:** 2026-11-13. [YouTube transcript help](https://support.google.com/youtube/answer/15930243?co=GENIE.Platform%3DDesktop&hl=en) explains that videos with captions offer **Show transcript** from the description. [Captions download API](https://developers.google.com/youtube/v3/docs/captions/download) requires OAuth and permission to edit the video; it is not a general transcript service for arbitrary videos.
@@ -297,3 +299,19 @@ Read on 2026-11-14 for the change `backfill-work-ledger`, to choose where the ne
 
 - **Checked:** 2026-11-14. [Terms of use](https://commoncrawl.org/terms-of-use) (updated 7 March 2024), [news crawl data](https://data.commoncrawl.org/crawl-data/CC-NEWS/index.html).
 - **Why not:** there is no keyword search. The files hold full article pages, about 47 TiB for 2016 to 2025, so using it means downloading and holding article text, which this project never does.
+
+## Link datasets for the social-link backfill
+
+Read on 2026-11-14 for a proposed backfill that starts from article addresses people shared, not from registry trials. No loader exists yet. Before one is written, re-read the primary pages named here: most of what follows about Reddit's own rules comes from secondary reports, because Reddit's pages sit behind a bot check.
+
+### Reddit submission dumps (operator's decision: use, links only)
+
+- **Checked:** 2026-11-14. [Arctic Shift download links](https://github.com/ArthurHeitmann/arctic_shift/blob/master/download_links.md), read directly. Reddit's Data API Terms and Public Content Policy were not re-read on this date; the reading of 2026-11-12 is in the table under "Platforms whose posts are not read".
+- **What exists (observed):** monthly dumps of all submissions and comments are listed on Academic Torrents from 2024-04 to 2026-10, and the 2026-07 listing answered on this date. The single archive for 2005-06 to 2025-12 is struck through on Academic Torrents and offered by magnet link only, at about 3.8 TB. A per-subreddit release for the top 40,000 subreddits covers 2005-06 to 2023-12, so chosen subreddits can be taken without the whole archive.
+- **Reported, not confirmed:** that the 2005 to 2025 archive was removed from Academic Torrents at Reddit's request from 30 July 2026; that Reddit stopped taking new public API requests on 31 October 2026 and ends public access in March 2027. Both come from third-party posts. The struck-through listing is consistent with the first.
+- **Terms:** the dumps are published by third parties, not by Reddit, and carry no licence from Reddit. Reddit's Public Content Policy (May 2024) says use of its public content needs an agreement with Reddit and must respect deletions. A dump cannot respect a deletion made after it was taken. The supply may end without notice.
+- **Operator's decision (2026-11-14):** asked whether to skip Reddit, use the dumps for links only, or wait. Answer: "the information is public domain and fair use, especially for educational and academic content like this app". Reddit dumps are used.
+- **Limits applied to that decision (proposed by the assistant, not yet confirmed line by line):** what is kept from a submission is the address of the article it links to, the subreddit, the date and the score. The submission's title is shown to the triage decision and dropped, as a post's text is in a live lookup. The author, the post's id and address, its text and its comments are never read out of the file or kept. Nothing in the export says an article was found through Reddit. Only link submissions are read; comment files are not downloaded.
+- **Not a legal reading:** the decision rests on the operator's own view. Two points for whoever revisits it: the question Reddit raises is its terms of access, not copyright, and "fair use" is a United States doctrine while the operator is in the United Kingdom. Addresses and dates are facts, which is why only they are kept.
+- **Rate limit and authentication:** none; the files are downloaded once by torrent and read locally.
+- **Crossref Event Data's Reddit events:** allowed under the same decision and the same limits, if that archive is used.
