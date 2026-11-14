@@ -711,3 +711,25 @@ Limits known before it started, from the limited run on the sample's trials:
 - Media Cloud no longer collects several of the trade titles that reported most trials in the sample (healio.com, onclive.com, fiercepharma.com, endpts.com).
 
 The first allowance's figures are added here when it has been used.
+
+## Record readings on the real database (14 November 2026)
+
+Openspec `claim-at-a-glance`, under ADR 0003. A backup was taken first. The database was migrated from 0016 to 0017 with `main` at 677e0c7. `thenwhat readings` was then run for each published claim on its own: 943 seconds, with no failures.
+
+| | Count |
+| --- | --- |
+| Trials read | 235 |
+| Readings stored (each checked by rule) | 722: 342 follow-up lengths and 380 measure kinds |
+| Measure kinds | body measure 82, frequency 78, symptom score 75, side effects 56, survival 38, other 32, scan finding 9, use of treatment 5, quality of life 3, physical test 2 |
+| Below 0.8 confidence | 15 |
+| Exported at or above the bar (`READING_ACCEPT_ABOVE` 0.8, PR #102) | 707, on 234 of 237 trials |
+
+**Checked again, independently of the rule, against each trial's stored record.** All 722 readings found their record. Every reading's words are in the named field character for character, and every follow-up's number is in its words. Two follow-ups do not spell their unit: "24 M" for 24 months, and "16 mounths", the registry's own spelling.
+
+**Read by hand.** All 15 readings under 0.8 were read, and a random sample of 25 above it. The 25 were all right. 4 of the 15 were wrong:
+- NCT05953168: "every 9 weeks" read as a follow-up length. It is how often response was assessed.
+- NCT00274820: "at least 4 weeks after" read as the follow-up of a measure taken at 6 months.
+- NCT04757922: "Menopausal age" read as survival.
+- NCT02850068: "Patient Function" read as quality of life.
+
+A single reading cannot be rejected, by design. So the operator chose the bar, and none of the 15 is exported. For those answers, the page gives the registry's own words.
