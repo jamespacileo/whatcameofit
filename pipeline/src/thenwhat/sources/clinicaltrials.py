@@ -7,7 +7,13 @@ from typing import Any
 
 import httpx
 
-from thenwhat.sources.base import MissingContact, Source, SourceError, SourceRecord, UnsearchableTerm
+from thenwhat.sources.base import (
+    MissingContact,
+    Source,
+    SourceError,
+    SourceRecord,
+    UnsearchableTerm,
+)
 
 API = "https://clinicaltrials.gov/api/v2"
 NCT_ID = re.compile(r"NCT\d{8}")
