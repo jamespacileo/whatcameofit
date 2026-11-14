@@ -11,6 +11,10 @@
     {
       "name": "Medical Subject Headings (MeSH)",
       "url": "https://www.nlm.nih.gov/mesh/meshhome.html"
+    },
+    {
+      "name": "Research Organization Registry (ROR)",
+      "url": "https://ror.org/"
     }
   ],
   "verticals": [
@@ -64,14 +68,16 @@
           "outlet": "Example Outlet 1",
           "title": "Example report 1",
           "published_date": "2018-05-01",
-          "archive_url": null
+          "archive_url": null,
+          "published_by": null
         },
         {
           "url": "https://news.example.org/2",
           "outlet": "Example Outlet 2",
           "title": "Example report 2",
           "published_date": "2019-05-02",
-          "archive_url": "https://web.archive.org/web/2019/https://news.example.org/2"
+          "archive_url": "https://web.archive.org/web/2019/https://news.example.org/2",
+          "published_by": null
         }
       ],
       "promises": [
@@ -94,7 +100,7 @@
           "trial_phases": [],
           "trial_state": null,
           "regulatory_outcome": null,
-          "confidence": 1.0
+          "confidence": 1
         }
       ],
       "failure_flags": [],
@@ -103,7 +109,7 @@
           "source_name": "crossref",
           "external_id": "10.5555/synthetic.1",
           "url": "https://doi.org/10.5555/synthetic.1",
-          "score": 1.0,
+          "score": 1,
           "state": "approved",
           "reading": null,
           "decided_by": "seed",
@@ -132,7 +138,8 @@
           "article_url": "https://news.example.org/2",
           "read_on": "2026-11-14"
         }
-      ]
+      ],
+      "organisations": []
     },
     {
       "slug": "phase-claim",
@@ -177,7 +184,8 @@
           "outlet": "Example Outlet 3",
           "title": "Example report 3",
           "published_date": "2019-05-03",
-          "archive_url": null
+          "archive_url": null,
+          "published_by": null
         }
       ],
       "promises": [],
@@ -196,7 +204,7 @@
           ],
           "trial_state": null,
           "regulatory_outcome": null,
-          "confidence": 1.0
+          "confidence": 1
         },
         {
           "id": 3,
@@ -212,7 +220,7 @@
           ],
           "trial_state": "started",
           "regulatory_outcome": null,
-          "confidence": 1.0
+          "confidence": 1
         },
         {
           "id": 4,
@@ -242,7 +250,7 @@
           ],
           "trial_state": null,
           "regulatory_outcome": null,
-          "confidence": 1.0
+          "confidence": 1
         }
       ],
       "failure_flags": [],
@@ -707,6 +715,70 @@
           "article_url": "https://uk.news.example.org/3",
           "read_on": "2026-11-14"
         }
+      ],
+      "organisations": [
+        {
+          "name": "Example University",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "00example1",
+            "url": "https://ror.org/00example1",
+            "name": "Example University",
+            "kinds": [
+              "education",
+              "funder"
+            ],
+            "country": "United Kingdom",
+            "website": "https://www.example.ac.uk/",
+            "score": 0.97,
+            "read_at": "2026-11-14T09:00:00Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://uk.news.example.org/3"
+              ],
+              "trial_ids": []
+            },
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT00000002"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Zed Start-up",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://uk.news.example.org/3"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Synthetic Institute",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT00000002"
+              ]
+            }
+          ]
+        }
       ]
     },
     {
@@ -737,7 +809,8 @@
           "outlet": "Example Outlet 4",
           "title": "Example report 4",
           "published_date": "2017-05-04",
-          "archive_url": null
+          "archive_url": null,
+          "published_by": "https://ror.org/00example2"
         }
       ],
       "promises": [],
@@ -754,7 +827,7 @@
           "trial_phases": [],
           "trial_state": null,
           "regulatory_outcome": "approved",
-          "confidence": 1.0
+          "confidence": 1
         }
       ],
       "failure_flags": [],
@@ -782,7 +855,35 @@
           "read_at": "2026-11-14T09:00:00Z"
         }
       ],
-      "reported_statements": []
+      "reported_statements": [],
+      "organisations": [
+        {
+          "name": "Other Example Hospital",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "00example2",
+            "url": "https://ror.org/00example2",
+            "name": "Other Example Hospital",
+            "kinds": [
+              "healthcare"
+            ],
+            "country": "Ireland",
+            "website": "https://other.example.net",
+            "score": 1,
+            "read_at": "2026-11-14T09:00:00Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.other.example.net/4"
+              ],
+              "trial_ids": []
+            }
+          ]
+        }
+      ]
     }
   ],
   "card_sources": [

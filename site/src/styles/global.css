@@ -2983,6 +2983,36 @@ main ul:not([class]) li + li {
   margin-top: 0.4rem;
 }
 
+/* Organisations named: each once, its name, what the registry says it is, and the part
+   each source gives it. One column at every width: nothing sits beside a name to rank it. */
+.organisation-list li {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.organisation-list > li + li {
+  margin-top: 1.1rem;
+}
+
+.organisation-name {
+  font-weight: 600;
+}
+
+.organisation-list .organisation-roles {
+  margin: 0.15rem 0;
+}
+
+.organisation-list .organisation-roles li {
+  display: block;
+  border: 0;
+  padding: 0;
+  overflow-wrap: anywhere;
+}
+
+.reported .publisher,
+.origin .publisher {
+  display: block;
+}
+
 /* Reported statements: under each report, what it said, framed as the report's, with
    how sure the check is one press away. Openspec reported-statements. */
 .statement-report {

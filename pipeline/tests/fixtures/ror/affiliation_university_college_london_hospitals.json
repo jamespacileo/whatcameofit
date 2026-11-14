@@ -1,0 +1,396 @@
+{
+  "number_of_results": 10,
+  "items": [
+    {
+      "score": 1.0,
+      "chosen": true,
+      "substring": "University College London Hospitals",
+      "organization": {
+        "id": "https://ror.org/02jx3x895",
+        "admin": {
+          "created": {
+            "date": "2018-11-14",
+            "schema_version": "1.0"
+          },
+          "last_modified": {
+            "date": "2026-10-06",
+            "schema_version": "2.1"
+          }
+        },
+        "links": [
+          {
+            "type": "website",
+            "value": "http://www.ucl.ac.uk/"
+          },
+          {
+            "type": "wikipedia",
+            "value": "http://en.wikipedia.org/wiki/University_College_London"
+          }
+        ],
+        "names": [
+          {
+            "lang": "cy",
+            "types": [
+              "label"
+            ],
+            "value": "Coleg Prifysgol Llundain"
+          },
+          {
+            "lang": "en",
+            "types": [
+              "alias"
+            ],
+            "value": "London University"
+          },
+          {
+            "lang": null,
+            "types": [
+              "acronym"
+            ],
+            "value": "UCL"
+          },
+          {
+            "lang": "en",
+            "types": [
+              "ror_display",
+              "label"
+            ],
+            "value": "University College London"
+          },
+          {
+            "lang": "en",
+            "types": [
+              "alias"
+            ],
+            "value": "University College, London"
+          }
+        ],
+        "types": [
+          "education",
+          "funder"
+        ],
+        "status": "active",
+        "domains": [
+          "ucl.ac.uk"
+        ],
+        "locations": [
+          {
+            "geonames_id": 2643743,
+            "geonames_details": {
+              "lat": 51.50853,
+              "lng": -0.12574,
+              "name": "London",
+              "country_code": "GB",
+              "country_name": "United Kingdom",
+              "continent_code": "EU",
+              "continent_name": "Europe",
+              "country_subdivision_code": "ENG",
+              "country_subdivision_name": "England"
+            }
+          }
+        ],
+        "established": 1826,
+        "external_ids": [
+          {
+            "all": [
+              "501100000765",
+              "501100000685",
+              "501100008538",
+              "501100001285",
+              "501100006154",
+              "501100001299",
+              "501100001283",
+              "501100006637",
+              "501100001281",
+              "501100001282",
+              "501100000845",
+              "501100013915",
+              "501100013270",
+              "501100013818",
+              "501100014052",
+              "501100019910",
+              "501100020810",
+              "501100022596"
+            ],
+            "type": "fundref",
+            "preferred": "501100000765"
+          },
+          {
+            "all": [
+              "grid.83440.3b"
+            ],
+            "type": "grid",
+            "preferred": "grid.83440.3b"
+          },
+          {
+            "all": [
+              "0000 0001 2190 1201"
+            ],
+            "type": "isni",
+            "preferred": null
+          },
+          {
+            "all": [
+              "Q193196"
+            ],
+            "type": "wikidata",
+            "preferred": null
+          }
+        ],
+        "relationships": [
+          {
+            "id": "https://ror.org/047d2d387",
+            "type": "child",
+            "label": "Centre for the Observation and Modelling of Earthquakes, Volcanoes and Tectonics"
+          },
+          {
+            "id": "https://ror.org/05wsetc54",
+            "type": "child",
+            "label": "Institute of Structural and Molecular Biology"
+          },
+          {
+            "id": "https://ror.org/001mm6w73",
+            "type": "child",
+            "label": "MRC Clinical Trials Unit at UCL"
+          },
+          {
+            "id": "https://ror.org/00fv61j67",
+            "type": "child",
+            "label": "MRC Laboratory for Molecular Cell Biology"
+          },
+          {
+            "id": "https://ror.org/043j90n04",
+            "type": "child",
+            "label": "MRC Prion Unit"
+          },
+          {
+            "id": "https://ror.org/03kpvby98",
+            "type": "child",
+            "label": "MRC Unit for Lifelong Health and Ageing"
+          },
+          {
+            "id": "https://ror.org/004hydx84",
+            "type": "child",
+            "label": "NIHR Moorfields Biomedical Research Centre"
+          },
+          {
+            "id": "https://ror.org/05s21y527",
+            "type": "child",
+            "label": "Sierra Leone Urban Research Centre"
+          },
+          {
+            "id": "https://ror.org/03r9qc142",
+            "type": "child",
+            "label": "UCL Biomedical Research Centre"
+          },
+          {
+            "id": "https://ror.org/0078bd381",
+            "type": "child",
+            "label": "University College London Qatar"
+          },
+          {
+            "id": "https://ror.org/03r42r570",
+            "type": "child",
+            "label": "Wellcome / EPSRC Centre for Interventional and Surgical Sciences"
+          },
+          {
+            "id": "https://ror.org/02704qw51",
+            "type": "child",
+            "label": "Wellcome Centre for Human Neuroimaging"
+          },
+          {
+            "id": "https://ror.org/05mz0pr34",
+            "type": "child",
+            "label": "UCL Hospitals Charitable Foundation"
+          },
+          {
+            "id": "https://ror.org/04kjqkz56",
+            "type": "child",
+            "label": "Sainsbury Wellcome Centre"
+          },
+          {
+            "id": "https://ror.org/0370htr03",
+            "type": "child",
+            "label": "UCL Queen Square Institute of Neurology"
+          },
+          {
+            "id": "https://ror.org/0269epf40",
+            "type": "child",
+            "label": "Gatsby Computational Neuroscience Unit"
+          },
+          {
+            "id": "https://ror.org/01zna6t55",
+            "type": "child",
+            "label": "UCL School of Pharmacy"
+          },
+          {
+            "id": "https://ror.org/04cw6st05",
+            "type": "parent",
+            "label": "University of London"
+          },
+          {
+            "id": "https://ror.org/00zn2c847",
+            "type": "related",
+            "label": "Great Ormond Street Hospital"
+          },
+          {
+            "id": "https://ror.org/03tb37539",
+            "type": "related",
+            "label": "Moorfields Eye Hospital"
+          },
+          {
+            "id": "https://ror.org/048b34d51",
+            "type": "related",
+            "label": "National Hospital for Neurology and Neurosurgery"
+          },
+          {
+            "id": "https://ror.org/043j9bc42",
+            "type": "related",
+            "label": "Royal National Orthopaedic Hospital"
+          },
+          {
+            "id": "https://ror.org/03dx46b94",
+            "type": "related",
+            "label": "Royal National Orthopaedic Hospital NHS Trust"
+          },
+          {
+            "id": "https://ror.org/01ge67z96",
+            "type": "related",
+            "label": "The Royal Free Hospital"
+          },
+          {
+            "id": "https://ror.org/00wrevg56",
+            "type": "related",
+            "label": "University College Hospital"
+          },
+          {
+            "id": "https://ror.org/02pkrn365",
+            "type": "related",
+            "label": "University College Hospital at Westmoreland Street"
+          },
+          {
+            "id": "https://ror.org/05d64cx77",
+            "type": "related",
+            "label": "Wellcome Trust Centre for the History of Medicine"
+          },
+          {
+            "id": "https://ror.org/01ckbq028",
+            "type": "related",
+            "label": "Whittington Hospital"
+          },
+          {
+            "id": "https://ror.org/00b31g692",
+            "type": "related",
+            "label": "Barts Health NHS Trust"
+          }
+        ]
+      },
+      "matching_type": "SINGLE SEARCH"
+    },
+    {
+      "score": 1.0,
+      "chosen": false,
+      "substring": "University College London Hospitals",
+      "organization": {
+        "id": "https://ror.org/019my5047",
+        "admin": {
+          "created": {
+            "date": "2018-11-14",
+            "schema_version": "1.0"
+          },
+          "last_modified": {
+            "date": "2024-12-11",
+            "schema_version": "2.1"
+          }
+        },
+        "links": [
+          {
+            "type": "website",
+            "value": "https://www.bartshealth.nhs.uk/the-royal-london"
+          },
+          {
+            "type": "wikipedia",
+            "value": "https://en.wikipedia.org/wiki/Royal_London_Hospital"
+          }
+        ],
+        "names": [
+          {
+            "lang": "en",
+            "types": [
+              "alias"
+            ],
+            "value": "London Hospital"
+          },
+          {
+            "lang": "en",
+            "types": [
+              "alias"
+            ],
+            "value": "London Infirmary"
+          },
+          {
+            "lang": "en",
+            "types": [
+              "ror_display",
+              "label"
+            ],
+            "value": "Royal London Hospital"
+          }
+        ],
+        "types": [
+          "healthcare"
+        ],
+        "status": "active",
+        "domains": [],
+        "locations": [
+          {
+            "geonames_id": 2643743,
+            "geonames_details": {
+              "lat": 51.50853,
+              "lng": -0.12574,
+              "name": "London",
+              "country_code": "GB",
+              "country_name": "United Kingdom",
+              "continent_code": "EU",
+              "continent_name": "Europe",
+              "country_subdivision_code": "ENG",
+              "country_subdivision_name": "England"
+            }
+          }
+        ],
+        "established": 1740,
+        "external_ids": [
+          {
+            "all": [
+              "grid.416041.6"
+            ],
+            "type": "grid",
+            "preferred": "grid.416041.6"
+          },
+          {
+            "all": [
+              "0000 0001 0738 5466"
+            ],
+            "type": "isni",
+            "preferred": null
+          },
+          {
+            "all": [
+              "Q7374421"
+            ],
+            "type": "wikidata",
+            "preferred": null
+          }
+        ],
+        "relationships": [
+          {
+            "id": "https://ror.org/00b31g692",
+            "type": "parent",
+            "label": "Barts Health NHS Trust"
+          }
+        ]
+      },
+      "matching_type": "SINGLE SEARCH"
+    }
+  ]
+}

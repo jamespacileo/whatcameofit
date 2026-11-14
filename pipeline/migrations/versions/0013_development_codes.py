@@ -1,10 +1,7 @@
 """the substance an intervention is listed under, with its development codes
 
 Revision ID: 0013
-Revises: 0011
-
-Numbered 0013 because the organisations change holds 0012 and is not merged yet. When
-it is, this revision is re-chained onto 0012.
+Revises: 0012
 """
 
 import sqlalchemy as sa
@@ -12,7 +9,7 @@ from alembic import op
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 
 revision = "0013"
-down_revision = "0011"
+down_revision = "0012"
 branch_labels = None
 depends_on = None
 

@@ -22,6 +22,9 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `openalex/work_704541.json` | `GET /works/doi:10.64898/2026.02.07.704541?select=…` (2026-11-14) |
 | `ror/affiliation_university_of_nottingham.json` | `GET /v2/organizations?affiliation=University of Nottingham` (2026-11-14) |
 | `ror/affiliation_unknown.json` | the same for a made-up name: ROR lists near misses and marks none as chosen (2026-11-14) |
+| `ror/affiliation_crispr_therapeutics.json`, `affiliation_ulster_university.json`, `affiliation_goteborg_university.json`, `affiliation_university_college_london_hospitals.json` | the same for names ROR answered with a chosen record that is another organisation (2026-11-14, openspec organisations task 6.2) |
+| `ror/affiliation_food_and_drug_administration.json`, `affiliation_us_food_and_drug_administration.json` | the same for the US agency's name without and with its country: without it, ROR chose Thailand's agency, whose name is exactly "Food and Drug Administration" (2026-11-14) |
+| `ror/affiliation_neuron.json`, `affiliation_the_new_york_times.json` | the same for a journal and a newspaper a report named: ROR chose "NeurON : Interface Neuro-machine" and "New York Times", typed "other" (2026-11-14) |
 | `europepmc/pmid_35658024_trial_report.json` | `GET /search?query=EXT_ID:35658024 AND SRC:MED&resultType=core`: a Phase 3 randomised trial's report, with its subject headings (2026-11-14) |
 | `europepmc/pmid_9500320_retracted.json` | the same for 9500320, a paper the index marks "Retracted Publication" (2026-11-14) |
 | `europepmc/pmid_41363554_humans_animals.json` | the same for 41363554, a review indexed with both "Humans" and "Animals" (2026-11-14) |

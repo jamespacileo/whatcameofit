@@ -18,6 +18,17 @@ class Organisation:
     name_match: float
 
 
+def is_chosen(record: SourceRecord) -> bool:
+    """Whether ROR marks this record as its chosen answer for the name it was asked."""
+    return record.payload.get("chosen") is True
+
+
+def organisation_of(record: SourceRecord) -> dict[str, Any]:
+    """The organisation's own record within an affiliation match."""
+    organisation = record.payload.get("organization")
+    return organisation if isinstance(organisation, dict) else {}
+
+
 def describe(record: SourceRecord) -> Organisation:
     """The details of a ROR affiliation match that the pipeline uses."""
     organisation = record.payload.get("organization") or {}

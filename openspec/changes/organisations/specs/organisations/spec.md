@@ -42,6 +42,10 @@ An organisation with no approved match SHALL be marked as not identified and SHA
 - **WHEN** a report names a start-up the registry returns no chosen match for
 - **THEN** the organisation is listed by the report's name, marked not identified, with no kind, country or website
 
+#### Scenario: Name the rule does not accept
+- **WHEN** the registry chooses a record whose names do not include the name the report gave
+- **THEN** the organisation is listed by the report's name, marked not identified, and no other record is tried
+
 ### Requirement: A person is never an organisation
 A trial sponsor that is a person SHALL NOT become an organisation. No organisation SHALL carry the name of a person recorded for the claim.
 

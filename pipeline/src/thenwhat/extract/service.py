@@ -12,6 +12,7 @@ from datetime import UTC, date, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from thenwhat.claims.entities import ORGANISATION_TYPES, note_named_organisation
 from thenwhat.claims.entry import (
     ArticleNotFound,
     EntryError,
@@ -46,6 +47,8 @@ When the article gives the treatment no product name, give up to three search ph
 the words a trial registry or a paper would use for it.
 Record a person only when the article names them as carrying out or leading the research.
 Never record a patient, a relative, a reporter or a commentator, by full name or by first name.
+Record an institution or company only for a university, hospital, research institute, company,
+funder or public body. A journal, a news outlet, a bank or an investment analyst is none of these.
 Give a DOI only if the article states it. List a promised timeline only if the article states one.
 """
 
@@ -218,7 +221,10 @@ def _apply(
 
     for named in draft.entities:
         entity_type = EntityType(named.type)
-        if (entity_type, name_key(named.name)) not in known:
+        if entity_type in ORGANISATION_TYPES:
+            # Kept with the article that named it, once per organisation of the claim.
+            note_named_organisation(session, claim, article, named.name, entity_type)
+        elif (entity_type, name_key(named.name)) not in known:
             known.add((entity_type, name_key(named.name)))
             session.add(Entity(claim_id=claim.id, type=entity_type, name=named.name))
 

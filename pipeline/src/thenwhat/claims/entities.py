@@ -14,8 +14,15 @@ from thenwhat.claims.entry import (
     slug_of_claim_covering,
     tidy,
 )
-from thenwhat.db.models import Claim, Entity, EntityMatch, EntitySubstance
-from thenwhat.domain import EntityType
+from thenwhat.db.models import (
+    Claim,
+    Entity,
+    EntityArticle,
+    EntityMatch,
+    EntitySubstance,
+    SourceArticle,
+)
+from thenwhat.domain import EntityType, NamedBy
 from thenwhat.extract.names import is_a_search_phrase
 
 
@@ -69,6 +76,73 @@ def delete_people(session: Session, entity_ids: list[int]) -> list[Entity]:
         session.delete(entity)
     session.flush()
     return marked
+
+
+ORGANISATION_TYPES = (EntityType.INSTITUTION, EntityType.COMPANY)
+
+
+def _organisation_named(session: Session, claim: Claim, name: str) -> Entity | None:
+    """The claim's institution or company known by this name or synonym."""
+    wanted = name_key(name)
+    for entity in entities_of(session, claim):
+        known = {name_key(entity.name), *(name_key(synonym) for synonym in entity.synonyms)}
+        if entity.type in ORGANISATION_TYPES and wanted in known:
+            return entity
+    return None
+
+
+def _mark(entity: Entity, named_by: NamedBy) -> bool:
+    if named_by in entity.named_by:
+        return False
+    entity.named_by = [*entity.named_by, named_by.value]
+    return True
+
+
+def note_named_organisation(
+    session: Session, claim: Claim, article: SourceArticle, name: str, type: EntityType
+) -> Entity:
+    """Record that a source article named an institution or company: as a new entity, or
+    on the one the claim already has under that name, which gains the article's mark."""
+    entity = _organisation_named(session, claim, name)
+    if entity is None:
+        entity = Entity(claim_id=claim.id, type=type, name=tidy(name))
+        session.add(entity)
+    else:
+        _mark(entity, NamedBy.ARTICLE)
+    session.flush()
+    if session.get(EntityArticle, (entity.id, article.id)) is None:
+        session.add(EntityArticle(entity_id=entity.id, source_article_id=article.id))
+        session.flush()
+    return entity
+
+
+def note_sponsor(session: Session, claim: Claim, name: str, *, industry: bool) -> Entity | None:
+    """Record a trial's lead sponsor as an organisation of the claim, named by a registry
+    record: a company when the registry classes it as industry, else an institution.
+    Openspec entity-resolution, "A trial's organisation sponsor becomes an entity".
+
+    An institution or company the claim already has under that name gains the mark and
+    is not recorded twice. Returns the entity this call created or marked, or None when
+    nothing changed. The caller passes only a sponsor that is not a person.
+    """
+    name = tidy(name)
+    if not name:
+        return None
+    entity = _organisation_named(session, claim, name)
+    if entity is not None:
+        if not _mark(entity, NamedBy.REGISTRY):
+            return None
+        session.flush()
+        return entity
+    entity = Entity(
+        claim_id=claim.id,
+        type=EntityType.COMPANY if industry else EntityType.INSTITUTION,
+        name=name,
+        named_by=[NamedBy.REGISTRY.value],
+    )
+    session.add(entity)
+    session.flush()
+    return entity
 
 
 def _find(session: Session, claim: Claim, name: str, type: EntityType | None = None) -> Entity:
