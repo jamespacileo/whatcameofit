@@ -29,3 +29,7 @@ Status is derived only by the pure rules in `pipeline/src/thenwhat/status`, from
 - Repeatability comes from storing readings, not from a model repeating itself. The site does not promise that the same records always give the same answers.
 - The fixed lists are product wording decisions. Adding a code is a change to the site's wording table and to this pipeline step together.
 - This narrows what a model may do on this site to a pattern that can be checked. A proposal to let a model summarise, rank or compare is outside it and needs its own decision.
+
+## Amendment, 14 November 2026
+
+The operator set a bar after the first run on the real database. 4 of 722 readings were read as wrong, all of them under 0.8 confidence. A reading the model gives less than `READING_ACCEPT_ABOVE` (0.8 by default, the same as the match and statement bars) is not exported, so the page and the data file give the registry's own words for that answer instead. There is no person review of single readings: the bar is the rule, and a wrong reading at or above it is still removed by archiving under ADR 0001.

@@ -59,12 +59,16 @@ Readings SHALL NOT be inputs to a claim's status, to a match's score, or to a tr
 - **THEN** every claim's status and every trial's facts are identical
 
 ### Requirement: Readings are exported with their trial
-The export SHALL carry each trial's stored readings: kind, value, the field and words read, how sure the reading is, and the date the record was read. A trial with no reading SHALL carry an empty list. The export SHALL be buildable with no network.
+The export SHALL carry each trial's stored readings that the model gave at least `READING_ACCEPT_ABOVE` confidence (0.8 by default): kind, value, the field and words read, how sure the reading is, and the date the record was read. A reading below the bar SHALL NOT be exported, so the page and the data file give the registry's own words for that answer, with no looser reading in its place. A trial with no reading SHALL carry an empty list. The export SHALL be buildable with no network.
 
 #### Scenario: Trial with two readings
-- **WHEN** a published claim's trial has a follow-up reading and a measure reading
+- **WHEN** a published claim's trial has a follow-up reading and a measure reading, both at or above the bar
 - **THEN** the exported trial carries both, each with its words and how sure it is
+
+#### Scenario: Reading below the bar
+- **WHEN** a trial's follow-up reading was given 0.79 and its measure reading 0.9
+- **THEN** the exported trial carries the measure reading only, and the page gives the registry's own time frame
 
 #### Scenario: Export with no network
 - **WHEN** the export is built on a machine with the database and no network
-- **THEN** every stored reading is present
+- **THEN** every stored reading at or above the bar is present
