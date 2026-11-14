@@ -32,6 +32,11 @@ class MissingKey(BackfillError):
     """No Media Cloud key is configured, so no request may be sent."""
 
 
+class NothingToSearch(BackfillError):
+    """No collection or outlet is named. Media Cloud refuses a search that names
+    neither, so no request may be sent."""
+
+
 class SourceRejectedKey(SourceStop):
     """Media Cloud did not accept the key. Every record would fail the same way, so
     the run ends without counting an attempt against any of them."""
@@ -61,15 +66,15 @@ class MediaCloud:
         contact_email: str | None,
         allowances: Allowances,
         collection_ids: str = "",
+        source_ids: str = "",
         transport: httpx.BaseTransport | None = None,
         time: Time | None = None,
     ) -> None:
         self._key = (api_key or "").strip()
         self._contact = (contact_email or "").strip()
         self._allowances = allowances
-        self._collections = ",".join(
-            part.strip() for part in collection_ids.split(",") if part.strip()
-        )
+        self._collections = _ids(collection_ids)
+        self._sources = _ids(source_ids)
         self._time = time or SystemTime()
         self._client = httpx.Client(transport=transport, timeout=60.0)
         self.requests_made = 0
@@ -83,6 +88,12 @@ class MediaCloud:
             )
         if not self._contact:
             raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
+        if not (self._collections or self._sources):
+            raise NothingToSearch(
+                "Neither MEDIACLOUD_COLLECTION_IDS nor MEDIACLOUD_SOURCE_IDS is set, so no "
+                "search was sent. Media Cloud searches only the collections and outlets "
+                "it is given; take their ids from its directory (docs/sources.md)."
+            )
 
     def search(self, query: str, *, limit: int) -> list[Story]:
         """The stories that match a query, newest window first as Media Cloud orders
@@ -99,6 +110,8 @@ class MediaCloud:
         }
         if self._collections:
             params["cs"] = self._collections
+        if self._sources:
+            params["ss"] = self._sources
         headers = {
             "Authorization": f"Token {self._key}",
             "Accept": "application/json",
@@ -134,6 +147,10 @@ class MediaCloud:
                 )
             )
         return stories
+
+
+def _ids(written: str) -> str:
+    return ",".join(part.strip() for part in written.split(",") if part.strip())
 
 
 def _day(written: Any) -> date | None:

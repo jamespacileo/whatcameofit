@@ -218,6 +218,7 @@ thenwhat backfill leads                       # how many searched trials have an
 - `plan` sends nothing. Run it before `run`: it shows how many records are due, how many requests they need, and how much of the source's allowance is left.
 - `run` stops when nothing is due, at `--limit`, or when the source's allowance is used up. Each source's allowance is counted in the database and shared by every process (`SOURCE_ALLOWANCES` in `.env`).
 - The news search needs a Media Cloud key in `MEDIACLOUD_API_KEY`. Create the account and accept its terms yourself; `docs/sources.md` has the terms and the weekly limit.
+- It also needs something to search: collection ids in `MEDIACLOUD_COLLECTION_IDS`, outlet ids in `MEDIACLOUD_SOURCE_IDS`, or both, taken from Media Cloud's directory. Media Cloud refuses a search that names neither.
 - What a search finds is stored as an article lead: an address, outlet, title and date, never text. A lead is not a source article. Loaded trials and leads create no claim, change no status and never reach the export.
 
 The sample that sized this is in `docs/research/phase3-article-hit-rate`.

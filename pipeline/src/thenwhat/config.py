@@ -66,10 +66,12 @@ class Settings(BaseSettings):
     source_allowances: dict[str, SourceAllowance] = {}
     # A record that failed this many times is skipped and reported.
     backfill_attempt_limit: int = 3
-    # Media Cloud key and the collections to search, as comma-separated ids. The news
-    # search refuses to run while the key is empty.
+    # Media Cloud key, and the collections and single outlets to search, as
+    # comma-separated ids from its directory. The news search refuses to run while the
+    # key is empty or while neither list names anything.
     mediacloud_api_key: str | None = None
     mediacloud_collection_ids: str = ""
+    mediacloud_source_ids: str = ""
     # At most this many article leads are kept for one trial.
     leads_per_trial: int = 20
 

@@ -85,6 +85,7 @@ def make_client(step: Step, settings: Settings, allowances: Allowances) -> Any:
             contact_email=settings.contact_email,
             allowances=allowances,
             collection_ids=settings.mediacloud_collection_ids,
+            source_ids=settings.mediacloud_source_ids,
         )
         client.check_ready()
         return client

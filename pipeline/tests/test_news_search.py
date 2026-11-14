@@ -11,7 +11,13 @@ from thenwhat.backfill.allowance import Allowances
 from thenwhat.backfill.errors import SourcePaused
 from thenwhat.backfill.leads import hit_rates
 from thenwhat.backfill.ledger import count
-from thenwhat.backfill.mediacloud import MediaCloud, MissingKey, SourceRejectedKey, Story
+from thenwhat.backfill.mediacloud import (
+    MediaCloud,
+    MissingKey,
+    NothingToSearch,
+    SourceRejectedKey,
+    Story,
+)
 from thenwhat.backfill.news_search import NewsSearch, query_for
 from thenwhat.backfill.outlet_kinds import kind_of, outlet_of
 from thenwhat.backfill.runner import run_step
@@ -233,6 +239,7 @@ class Service:
 def media_cloud(session: Session, fake_time, service: Service, **options) -> MediaCloud:
     options.setdefault("api_key", "synthetic-key")
     options.setdefault("contact_email", "ops@thenwhat.test")
+    options.setdefault("collection_ids", "34412234")
     return MediaCloud(
         allowances=Allowances(same_session(session), ALLOWED, fake_time),
         transport=httpx.MockTransport(service),
@@ -245,7 +252,9 @@ def test_a_search_asks_for_stories_and_returns_address_outlet_title_and_date(
     session: Session, fake_time, fixture_json
 ):
     service = Service(httpx.Response(200, json=fixture_json("mediacloud/story_list.json")))
-    client = media_cloud(session, fake_time, service, collection_ids="34412234, 9272347")
+    client = media_cloud(
+        session, fake_time, service, collection_ids="34412234, 9272347", source_ids=" 236253"
+    )
 
     stories = client.search('"Exampletrep" AND (migraine)', limit=20)
 
@@ -255,7 +264,8 @@ def test_a_search_asks_for_stories_and_returns_address_outlet_title_and_date(
     assert params["q"] == '"Exampletrep" AND (migraine)'
     assert (params["start"], params["end"]) == ("2010-01-01", fake_time.now().date().isoformat())
     assert (params["platform"], params["page_size"]) == ("onlinenews-mediacloud", "20")
-    assert params["cs"] == "34412234,9272347" and "expanded" not in params
+    assert (params["cs"], params["ss"]) == ("34412234,9272347", "236253")
+    assert "expanded" not in params
     assert request.headers["Authorization"] == "Token synthetic-key"
     assert "mailto:ops@thenwhat.test" in request.headers["User-Agent"]
     assert client.requests_made == 1
@@ -295,13 +305,17 @@ def test_any_text_field_is_removed_before_a_result_is_kept(session: Session, fak
     assert made_up not in str(lead.raw_result)
 
 
-def test_no_search_is_sent_without_a_key_or_a_contact_address(session: Session, fake_time):
+def test_no_search_is_sent_without_a_key_a_contact_address_or_anything_to_search(
+    session: Session, fake_time
+):
     service = Service(httpx.Response(200, json={"stories": []}))
 
     with pytest.raises(MissingKey, match="MEDIACLOUD_API_KEY"):
         media_cloud(session, fake_time, service, api_key=None).search("q", limit=5)
     with pytest.raises(MissingContact, match="CONTACT_EMAIL"):
         media_cloud(session, fake_time, service, contact_email=None).search("q", limit=5)
+    with pytest.raises(NothingToSearch, match="MEDIACLOUD_COLLECTION_IDS"):
+        media_cloud(session, fake_time, service, collection_ids=" ").search("q", limit=5)
     assert service.requests == []
 
 
