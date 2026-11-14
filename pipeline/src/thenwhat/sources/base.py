@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from thenwhat import __version__
 from thenwhat.db.models import HttpCache
+from thenwhat.sources.terms import SOURCES
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,6 +32,7 @@ RECORD_URLS = {
     "clinicaltrials.gov": "https://clinicaltrials.gov/study/{}",
     "crossref": "https://doi.org/{}",
     "ror": "https://ror.org/{}",
+    "mesh": "https://id.nlm.nih.gov/mesh/{}",
 }
 
 
@@ -65,6 +67,20 @@ class MissingKey(SourceError):
 
 class AllowanceUsedUp(SourceError):
     """The source's allowance for the day is used up. It is not asked again this run."""
+
+
+class TermsNotRecorded(SourceError):
+    """The source is not in the list of sources, so no request may be sent."""
+
+
+def require_recorded(source_name: str) -> None:
+    """Refuse to ask a source whose terms, licence and date read are not recorded."""
+    if source_name not in SOURCES:
+        raise TermsNotRecorded(
+            f"The terms of '{source_name}' are not recorded in the list of sources, so no"
+            " request was sent. Read them, add an entry to docs/sources.md and to the list"
+            " in sources/terms.py, then run this again."
+        )
 
 
 # The name this client goes by, in its User-Agent and when reading a site's robots.txt.
@@ -117,7 +133,8 @@ class Pacer:
 
 @dataclass(frozen=True, slots=True)
 class Fetched:
-    payload: dict[str, Any]
+    # What the source answered: an object, or a list from a source that answers one.
+    payload: Any
     fetched_at: datetime
 
 
@@ -158,6 +175,7 @@ class Source:
         Answers come from the cache while they are fresh, keeping their original
         fetch time, unless `force` is set.
         """
+        require_recorded(self.name)
         key = f"{self.name} GET {httpx.URL(url, params=params)}"
         cached = self._session.get(HttpCache, key)
         if cached is not None and not force and cached.expires_at > self._time.now():
