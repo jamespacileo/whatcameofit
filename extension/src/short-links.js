@@ -6,7 +6,8 @@
 // go on to the article. It has permission for the shortener's host and no other.
 
 // The shorteners that answer a browser with a page naming the address, and that the
-// extension's manifest has permission for. Keep in step with build.mjs.
+// extension's manifest has permission for. build.mjs reads this list for the
+// manifest's host permissions.
 export const RESOLVABLE = ["t.co"];
 // The most shortened links opened for one search.
 const AT_MOST = 3;

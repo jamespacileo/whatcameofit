@@ -145,7 +145,7 @@ SITE_URL=https://whatcameofit.com make deploy-check   # checks and builds, publi
 SITE_URL=https://whatcameofit.com make deploy
 ```
 
-A deploy is refused if the export is a preview or any claim in it has not been checked by a person.
+A deploy is refused if the export is a preview.
 
 ### Looking up an article that is not tracked
 
@@ -210,7 +210,7 @@ Needs [uv](https://docs.astral.sh/uv/), Node 22.23.4 or later, make and Docker.
 make check
 ```
 
-This runs ruff, ty, pytest, the site's tests and the site build. CI runs the same command. The tests start the Compose database and use a throwaway `thenwhat_test` database in it, which is dropped and rebuilt from the migrations on every run.
+This runs ruff, ty, pytest, the site's tests, the site build and the extension's tests and build. CI runs the same command. The tests start the Compose database and use a throwaway `thenwhat_test` database in it, which is dropped and rebuilt from the migrations on every run.
 
 Database migrations live in `pipeline/migrations` and are applied each time the `pipeline` container starts. After changing a model, generate a migration with the database running:
 
@@ -225,7 +225,10 @@ DATABASE_URL=postgresql+psycopg://thenwhat:thenwhat@127.0.0.1:5433/thenwhat uv r
 |---|---|
 | `pipeline/` | Python pipeline and CLI |
 | `site/` | Astro static site, built from the pipeline's JSON export |
+| `extension/` | Browser extension for Chrome and Safari |
+| `video/` | Remotion project for explainer videos |
 | `data/seed/` | Seed claims |
+| `scripts/` | Operator helper scripts |
 | `openspec/` | Specifications and the active change |
 | `docs/` | Architecture decisions and data source notes |
 | `SPEC.md` | Original product specification |

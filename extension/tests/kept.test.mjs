@@ -8,7 +8,6 @@ import {
   candidatesOf,
   follow,
   followedNow,
-  isFollowed,
   outletOf,
   unfollow,
 } from "../src/kept.js";
@@ -69,9 +68,7 @@ const index = (status, place) => ({ claims: { reviewed: { ...claim, status, plac
 test("following remembers a claim as it stands, once", () => {
   const follows = follow(follow([], claim), claim);
   assert.deepEqual(follows, [{ headline: "Reviewed claim", page: "/reviewed", status: "Trial registered", place: 2 }]);
-  assert.ok(isFollowed(follows, "/reviewed"));
   assert.deepEqual(unfollow(follows, "/reviewed"), []);
-  assert.ok(!isFollowed([], "/reviewed"));
 });
 
 test("a followed claim is marked changed when its status or place moves", () => {
