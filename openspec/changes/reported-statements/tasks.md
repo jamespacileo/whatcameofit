@@ -26,9 +26,9 @@
 
 ## 5. Review and export
 
-- [ ] 5.1 List pending statements in the review queue with their article's outlet and date, and allow approve and reject; verify the queue test and that a decision sets the log record's human label
-- [ ] 5.2 Export approved statements on each claim with text, kind, firmness, speaker, basis, confidence and article address; verify export tests for mixed review states and that status, explaining events and evidence stage are unchanged
-- [ ] 5.3 Regenerate `site/export.schema.json` and `site/data/seed-export.json`, and verify the checked-in `site/data/published-export.json` still validates
+- [x] 5.1 List pending statements in the review queue with their article's outlet and date, and allow approve and reject; verify the queue test and that a decision sets the log record's human label
+- [x] 5.2 Export approved statements on each claim with text, kind, firmness, speaker, basis, confidence and article address; verify export tests for mixed review states and that status, explaining events and evidence stage are unchanged
+- [x] 5.3 Regenerate `site/export.schema.json` and `site/data/seed-export.json`, and verify the checked-in `site/data/published-export.json` still validates
 
 ## 6. Measurement before the page
 

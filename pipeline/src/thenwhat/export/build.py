@@ -1,7 +1,8 @@
 """The JSON export the site is built from. Behavior: openspec site-publishing.
 
 Only approved, unarchived claims are exported, with their approved events, their
-approved matches, a few candidates still awaiting review and their background cards.
+approved matches, a few candidates still awaiting review, their background cards and
+their approved reported statements.
 The file is the single interface between pipeline and site; its schema is checked in at
 site/export.schema.json.
 """
@@ -29,6 +30,8 @@ from thenwhat.db.models import (
     FailureFlag,
     OutletIcon,
     PaperRecord,
+    ReportedStatement,
+    SourceArticle,
     TermRecord,
 )
 from thenwhat.decide.steps import latest_scoring
@@ -41,6 +44,10 @@ from thenwhat.domain import (
     EvidenceStage,
     RegulatoryOutcome,
     ReviewState,
+    StatementBasis,
+    StatementFirmness,
+    StatementKind,
+    StatementSpeaker,
     TermFit,
     TermRole,
     TrialPhase,
@@ -162,6 +169,25 @@ class ExportedPromise(Strict):
     description: str
     parsed_date: date | None
     article_url: str
+
+
+class ExportedStatement(Strict):
+    """A reported statement (openspec reported-statements): what an article said, in the
+    pipeline's own words and never a quotation. Not a record and not a finding: the site
+    words every code and frames the text as its report's statement."""
+
+    text: str
+    kind: StatementKind
+    firmness: StatementFirmness
+    # A role, never a name.
+    speaker: StatementSpeaker
+    # What the article said the statement rests on.
+    basis: StatementBasis
+    # The statement check's probability that the article says it.
+    confidence: float
+    article_url: str
+    # When the article was read for it: the statement is of the article as read then.
+    read_on: date
 
 
 class ExportedEvent(Strict):
@@ -435,6 +461,8 @@ class ExportedClaim(Strict):
     papers: list[ExportedPaper] = []
     # At most one card for the condition, then one for the intervention.
     background: list[ExportedCard] = []
+    # Approved reported statements, article by article in date order.
+    reported_statements: list[ExportedStatement] = []
 
 
 class ExportedArchived(Strict):
@@ -474,7 +502,7 @@ def export_json_schema() -> dict[str, Any]:
 
 def _decided_by_assistant(session: Session, claim: Claim) -> bool:
     """Whether the assistant made any decision that still stands on the claim, its
-    matches or its events."""
+    matches, its events or its reported statements."""
     if claim.reviewed_by is Decider.ASSISTANT:
         return True
     match_ids = select(EntityMatch.id).join(Entity).where(Entity.claim_id == claim.id)
@@ -490,7 +518,38 @@ def _decided_by_assistant(session: Session, claim: Claim) -> bool:
                 EvidenceEvent.reviewed_by == Decider.ASSISTANT,
             )
         )
+        or session.scalar(
+            select(ReportedStatement.id).where(
+                ReportedStatement.claim_id == claim.id,
+                ReportedStatement.reviewed_by == Decider.ASSISTANT,
+            )
+        )
     )
+
+
+def _statements(session: Session, claim: Claim) -> list[ExportedStatement]:
+    """The claim's approved reported statements. Pending and rejected ones are left out."""
+    return [
+        ExportedStatement(
+            text=statement.text,
+            kind=statement.kind,
+            firmness=statement.firmness,
+            speaker=statement.speaker,
+            basis=statement.basis,
+            confidence=round(statement.confidence, 4),
+            article_url=article.url,
+            read_on=statement.article_read_at.date(),
+        )
+        for statement, article in session.execute(
+            select(ReportedStatement, SourceArticle)
+            .join(SourceArticle, SourceArticle.id == ReportedStatement.source_article_id)
+            .where(
+                ReportedStatement.claim_id == claim.id,
+                ReportedStatement.review_state == ReviewState.APPROVED,
+            )
+            .order_by(SourceArticle.published_date, SourceArticle.id, ReportedStatement.id)
+        )
+    ]
 
 
 CANDIDATES_SHOWN = 5
@@ -926,6 +985,7 @@ def build_export(session: Session, *, now: datetime, no_signal_years: int = 3) -
                 trials=trials,
                 papers=papers.listed(),
                 background=_background(session, claim),
+                reported_statements=_statements(session, claim),
                 failure_flags=[
                     ExportedFailureFlag(trial_id=flag.trial_external_id, source_url=flag.source_url)
                     for flag in session.scalars(
