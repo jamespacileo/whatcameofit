@@ -10,6 +10,9 @@ import type {
   ExportedTrial,
   ExportedTrialFacts,
 } from "./export";
+import type { ExportedEvent } from "./export";
+import { assertNeutral } from "./status.ts";
+import { formatDate } from "./timetable.ts";
 
 export const TRIAL_STATE_WORDS: Record<string, string> = {
   not_started: "Not started",
@@ -294,3 +297,165 @@ export function isPaperMatch(match: { source_name: string }): boolean {
 
 /** How many trials the page shows before the rest go behind one press. */
 export const TRIALS_SHOWN = 5;
+
+// A trial's entry in plain words (openspec site-publishing, change plain-trial-entries):
+// a heading a lay reader can read, the design and state said plainly, and posted results
+// as a table. The registry's exact terms stay one press away, in the entry's fold.
+
+/** How people were assigned, said plainly. The registry's term is in the fold. */
+export const PLAIN_ALLOCATION: Record<string, string> = {
+  randomised: "Assigned at random",
+  non_randomised: "Not assigned at random",
+};
+
+/** Whether anyone was kept unaware of who had what. Every level reads "Blinded": the
+ * levels differ in who was kept unaware, which the fold gives in the registry's term. */
+export const PLAIN_MASKING: Record<string, string> = {
+  none: "Open label: everyone knew what they had",
+  single: "Blinded",
+  double: "Blinded",
+  triple: "Blinded",
+  quadruple: "Blinded",
+};
+
+/** A trial's state, said plainly. Never that a trial is open to join. */
+export const PLAIN_STATE: Record<string, string> = { ...TRIAL_STATE_WORDS, completed: "Finished" };
+
+export const RESULTS_POSTED = "Results posted";
+
+/** How an entry introduces what a trial measures: in the past only once the trial has
+ * ended or has posted results, so a trial not yet started is not said to have measured anything. */
+export const MEASURE_LEADS = { ended: "It measured", planned: "It sets out to measure" } as const;
+
+export function measureLead(trial: ExportedTrial): string {
+  const ended = trial.state === "completed" || trial.state === "terminated";
+  return ended || trial.facts?.results ? MEASURE_LEADS.ended : MEASURE_LEADS.planned;
+}
+
+/** What the fold's control says is inside. */
+export const FOLD_LABELS = {
+  results: "Who took part, who ran it, and the posted results",
+  planned: "Who took part, who ran it, and what it planned to measure",
+  record: "More from its record",
+} as const;
+
+/** What stands under a table of posted results. */
+export const RESULT_NOTES = {
+  fall: "A minus number is a fall.",
+  scale: "The registry record says what this measure runs from and to, and which way is better.",
+  no_phase: "None given.",
+} as const;
+
+/** What a trial was compared with, as a heading says it. A sham is a device for a
+ * device and a procedure otherwise. */
+function comparatorWords(code: string, approach: string | null): string {
+  if (code === "sham") return approach === "device" ? "a sham device" : "a sham procedure";
+  if (code === "placebo") return "a placebo";
+  return COMPARATOR_WORDS[code] ?? code;
+}
+
+/** "135 people, compared with a sham device and with no treatment". States only what the
+ * record states. With no stated size the heading is the registry's title. */
+export function trialHeading(
+  trial: ExportedTrial,
+  approach: string | null,
+): { text: string; isTitle: boolean } {
+  const stated = trial.facts?.participants;
+  if (!stated) return { text: trial.title ?? `Trial ${trial.trial_id}`, isTitle: true };
+  const people = `${number(stated.count)} ${stated.count === 1 ? "person" : "people"}`;
+  const size = stated.basis === "planned" ? `${people} planned` : people;
+  const compared = (trial.facts?.comparators ?? []).map((code) => comparatorWords(code, approach));
+  const text = compared.length > 0 ? `${size}, compared with ${compared.join(" and with ")}` : size;
+  return { text, isTitle: false };
+}
+
+export interface TrialDates {
+  /** The day the registry says the trial was completed. */
+  finished: string | null;
+  /** The day results were last posted. */
+  posted: string | null;
+}
+
+/** A trial's dates, from the claim's events for it. */
+export function trialDates(events: ExportedEvent[], trialId: string): TrialDates {
+  const latest = (found: ExportedEvent[]) => found.map((event) => event.event_date).sort().pop() ?? null;
+  const own = events.filter((event) => event.trial_id === trialId);
+  return {
+    finished: latest(own.filter((event) => event.type === "trial_status_change" && event.trial_state === "completed")),
+    posted: latest(own.filter((event) => event.type === "trial_results_posted")),
+  };
+}
+
+/** A date that never breaks across two lines. */
+const day = (isoDate: string) => formatDate(isoDate).replace(/ /g, "\u00a0");
+
+/** The line under the heading: how people were assigned, blinded or open label, the state
+ * with its date, results posted with their date, and the phase when the registry gives
+ * one. A code the record does not state yields nothing. */
+export function plainFacts(trial: ExportedTrial, dates: TrialDates): string[] {
+  const facts = trial.facts;
+  const state = PLAIN_STATE[trial.state] ?? null;
+  const phased = trial.phases.filter((code) => code !== "not_applicable");
+  return [
+    facts?.allocation ? (PLAIN_ALLOCATION[facts.allocation] ?? null) : null,
+    facts?.masking ? (PLAIN_MASKING[facts.masking] ?? null) : null,
+    state && trial.state === "completed" && dates.finished ? `${state} ${day(dates.finished)}` : state,
+    facts?.results ? (dates.posted ? `${RESULTS_POSTED} ${day(dates.posted)}` : RESULTS_POSTED) : null,
+    phased.length > 0 ? phaseText(phased) : null,
+  ].filter((part): part is string => part !== null);
+}
+
+/** What the fold's control says is inside it. */
+export function foldLabel(trial: ExportedTrial): string {
+  const facts = trial.facts;
+  if (facts?.results) return FOLD_LABELS.results;
+  if (facts && (facts.primary_outcomes.length > 0 || facts.sponsor || facts.age_groups.length > 0)) {
+    return FOLD_LABELS.planned;
+  }
+  return FOLD_LABELS.record;
+}
+
+export interface ResultTable {
+  /** What the numbers are: "Mean", or "Value" when the record does not say. */
+  statistic: string;
+  /** What the spread is, when any group has one: "Standard Deviation". */
+  spread: string | null;
+  rows: { group: string; value: string; spread: string | null; analysed: string | null }[];
+  /** The measure is a change and a value is below zero. */
+  fall: boolean;
+}
+
+/** A posted outcome with one value for each group, as rows to read down. Null for an
+ * outcome posted in several rows, which carries no values. The numbers are the registry's text. */
+export function resultTable(outcome: ExportedResultOutcome): ResultTable | null {
+  if (outcome.rows !== 1) return null;
+  const rows = outcome.groups.map((group) => ({
+    group: group.title,
+    value: group.value ?? "No value posted",
+    spread:
+      group.lower !== null && group.upper !== null ? `${group.lower} to ${group.upper}` : group.spread,
+    analysed: group.analysed,
+  }));
+  const anySpread = rows.some((entry) => entry.spread !== null);
+  return {
+    statistic: (outcome.measure ? MEASURE_WORDS[outcome.measure] : null) ?? "Value",
+    spread: anySpread ? (outcome.spread_kind ?? "Spread") : null,
+    rows,
+    fall: /\bchange\b/i.test(outcome.title) && rows.some((entry) => /^[-−]/.test(entry.value.trim())),
+  };
+}
+
+const PLAIN_WORDING = [
+  ...Object.values(PLAIN_ALLOCATION),
+  ...Object.values(PLAIN_MASKING),
+  ...Object.values(PLAIN_STATE),
+  ...Object.values(FOLD_LABELS),
+  ...Object.values(RESULT_NOTES),
+  RESULTS_POSTED,
+  ...Object.values(MEASURE_LEADS),
+  "a sham device",
+  "a sham procedure",
+  "a placebo",
+];
+assertNeutral(PLAIN_WORDING);
+assertNoOutcomeVerdict(PLAIN_WORDING);

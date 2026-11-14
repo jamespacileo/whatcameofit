@@ -59,6 +59,7 @@ import {
 import {
   TRIALS_NOTE,
   TRIALS_SHOWN,
+  trialDates,
   isPaperMatch,
   orderTrials,
   withResults,
@@ -694,7 +695,12 @@ const posts = shareLinks(postText, address, claim.headline);
           <p class="take-why">{TRIALS_NOTE}</p>
           <ul class="plain trial-list">
             {trials.slice(0, TRIALS_SHOWN).map((trial) => (
-              <Trial trial={trial} match={matchOf(trial.trial_id)} />
+              <Trial
+                trial={trial}
+                match={matchOf(trial.trial_id)}
+                approach={claim.approach}
+                dates={trialDates(claim.events, trial.trial_id)}
+              />
             ))}
           </ul>
           {trials.length > TRIALS_SHOWN && (
@@ -706,7 +712,12 @@ const posts = shareLinks(postText, address, claim.headline);
               </summary>
               <ul class="plain trial-list">
                 {trials.slice(TRIALS_SHOWN).map((trial) => (
-                  <Trial trial={trial} match={matchOf(trial.trial_id)} />
+                  <Trial
+                trial={trial}
+                match={matchOf(trial.trial_id)}
+                approach={claim.approach}
+                dates={trialDates(claim.events, trial.trial_id)}
+              />
                 ))}
               </ul>
             </details>

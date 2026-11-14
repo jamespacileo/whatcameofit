@@ -633,11 +633,21 @@ test("Scenario: Claim with one completed Phase 2 trial", () => {
   const html = page("phase-claim/index.html");
   assert.equal(count(html, 'id="trial-NCT00000002"'), 1);
   const trials = sectionOf(html, "trials");
-  assert.match(trials, /Phase 2 · Completed · 83 participants enrolled/);
-  assert.match(trials, /Randomised, double-blind, compared with placebo/);
+  const entry = wordsOf(trials.slice(trials.indexOf('id="trial-NCT00000002"'))).replace(/\u00a0|&nbsp;/g, " ");
+  // In plain words first: how many people and what it was compared with, what it
+  // measured, then the design and state said plainly.
+  assert.match(entry, /83 people, compared with a placebo/);
+  assert.match(entry, /It measured the change in a symptom score over 12 weeks\./);
+  assert.match(entry, /Assigned at random\s+Blinded\s+Finished\s+Results posted 1 Sep 2025\s+Phase 2/);
+  assert.match(entry, /What it measured was read by a model and checked against the record/);
+  // The registry's own terms are inside the fold.
+  assert.match(entry, /Design, in the registry's terms\s+Randomised, double-blind, compared with placebo/);
   assert.match(trials, /Change in synthetic score/);
-  assert.match(trials, /3\.4 \(Standard Deviation 1\.1\)/);
-  assert.match(trials, /41 analysed/);
+  // Posted results are a table: a row for each group, the registry's numbers.
+  const table = trials.match(/<table class="result-table"[\s\S]*?<\/table>/)[0];
+  assert.match(wordsOf(table), /Group\s+Mean\s+Standard Deviation\s+People analysed/);
+  assert.match(wordsOf(table), /3\.4\s+Standard Deviation 1\.1\s+1\.1\s+41/);
+  assert.match(trials, /The registry record says what this measure runs from and to/);
   assert.match(trials, /High match · 94%/);
   // Three of five planned measures are shown, and the page says where the rest are.
   assert.match(trials, /2 more in the ClinicalTrials\.gov record/);
@@ -750,6 +760,20 @@ test("Scenario: Narrow screen", () => {
   assert.match(styles, /\.brief-link a\{[^}]*min-height:2\.75rem/);
 });
 
+test("Scenario: Narrow screen, a trial's results", () => {
+  const styles = fs
+    .readdirSync(path.join(dist, "_astro"))
+    .filter((name) => name.endsWith(".css"))
+    .map((name) => fs.readFileSync(path.join(dist, "_astro", name), "utf8"))
+    .join("");
+  // Under 40rem the spread leaves its column and sits under its value, so the table
+  // keeps three columns; the links on lines of their own are 44 pixels tall.
+  assert.match(styles, /\.result-table \.spread\{display:none\}/);
+  assert.match(styles, /\.result-table \.spread-inline\{[^}]*display:block/);
+  assert.match(styles, /\.trial-name a\{[^}]*min-height:2\.75rem/);
+  assert.match(styles, /\.result-scale a\{[^}]*min-height:2\.75rem/);
+});
+
 test("Scenario: Posted comparison with a p value", () => {
   const trials = wordsOf(sectionOf(page("phase-claim/index.html"), "trials"));
   assert.match(trials, /p = 0\.03, t-test, 2 sided \(superiority test\)/);
@@ -765,7 +789,8 @@ test("Scenario: Outcome reported at four time points", () => {
 
 test("Scenario: Trial the registry shows as recruiting", () => {
   const trials = wordsOf(sectionOf(page("phase-claim/index.html"), "trials"));
-  assert.match(trials, /Phase 3 · Under way · 1,200 participants planned/);
+  assert.match(trials, /1,200 people planned/);
+  assert.match(trials, /Under way\s+Phase 3/);
   assert.doesNotMatch(trials, /recruit|eligib|contact|location|take part|join/i);
 });
 

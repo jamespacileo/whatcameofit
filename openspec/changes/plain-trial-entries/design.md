@@ -39,6 +39,8 @@
 | Fold control | "Who took part, who ran it, and the posted results" / "…and what it planned to measure" | whether `results` |
 | Grey notes | Match score; record read; papers named by its record; "read by a model and checked against the record" when the measure sentence is shown | as today, plus the reading |
 
+As built: the grey notes stand above the fold's control, as they did before, so an opened fold does not push them out of sight. The fold lists every posted main measure, each as its own table. The scale line and its link to the record stand once, after the last table.
+
 The comparators are worded with `COMPARATOR_WORDS`, except that a sham is "a sham device" for a device and "a sham procedure" otherwise, and each is joined with "and with" so the heading reads as a sentence.
 
 ### 2. Plain wording for design and state
@@ -58,11 +60,13 @@ The comparators are worded with `COMPARATOR_WORDS`, except that a sham is "a sha
 
 A code the record does not state yields nothing. Dates come from the claim's events for that trial: the latest `trial_status_change` to `completed`, and the latest `trial_results_posted`. A date never breaks across lines. All strings go through `assertNeutral` and `assertNoOutcomeVerdict`.
 
-"Blinded" covers every level because the difference between levels is who was kept unaware, which the fold states in the registry's term. The operator to confirm this table (task 1.1).
+"Blinded" covers every level because the difference between levels is who was kept unaware, which the fold states in the registry's term. The operator accepted this table and the fold's labels as written on 2026-11-14.
 
 ### 3. The measure sentence shares the brief's words
 
 `MEASURE_PHRASES`, the change rule, `READING_SHOWN_FROM` and `readingConfidenceLabel` move from `record-brief.ts` to a small module both import (`site/src/lib/readings.ts`), with a function `measureWords(trial, outcomeIndex)` returning the phrase, the follow-up and the confidence, or null. The brief's answer and the entry's sentence are built from it, so they cannot disagree. In the sentence the phrase starts in lower case.
+
+As built, after seeing a claim with 13 trials: the sentence opens "It measured" only for a trial that has ended (completed or stopped early) or has posted results, and "It sets out to measure" otherwise; a change is worded as a noun ("the change in a symptom score") so it reads after either opening, and a time until an event takes ", followed for {period}" where other measures take " over {period}". Both apply to the brief's answer through the shared module.
 
 Only the first main measure is worded. A trial with several main measures lists them all in the fold, in the registry's words, as today.
 

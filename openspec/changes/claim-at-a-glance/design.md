@@ -41,7 +41,7 @@
 | 1 | How it was tested | Tested in people? | always | "In {n} trials. {max} people in the largest" / "In {n} trials" / "None on record" | directly |
 | 2 | How it was tested | Compared with a dummy device / a placebo / another treatment? | any trial states a design | "{k} records name {a dummy device}" ("One record names …") / "No record names one" | directly |
 | 2′ | How it was tested | What was the first report about? | no trial, `evidence_stage` known | fixed phrase per stage | directly |
-| 3 | How it was tested | What did the largest trial measure? | the largest trial has a primary outcome | fixed phrase per measure kind ("How much a symptom score changed" when the title names a change, else "A symptom score") + " over {follow-up}"; else the registry's title in quotation marks | model, else directly |
+| 3 | How it was tested | What did the largest trial measure? | the largest trial has a primary outcome | fixed phrase per measure kind ("The change in a symptom score" when the title names a change, else "A symptom score") + " over {follow-up}"; else the registry's title in quotation marks | model, else directly |
 | 4 | Where the records stand now | Results posted to the registry? | any trial | "By {k} of {n} trials. The latest on {date}" / "By all {n} trials…" / "None on record" | directly |
 | 5 | Where the records stand now | A trial under way? | any trial | "{n} under way" / "None on record. The last finished on {date}" | directly |
 | 6 | Where the records stand now | Approved by a regulator? | always | "By {regulator} on {date}. An approval is not advice to take a treatment" / "None on record" | directly |
@@ -90,14 +90,14 @@ As built (2026-11-14):
 - The rule checks that the number is in the words as digits of its own (4 is in "week 4", not in "week 14"). It does not check that the unit is in the words.
 - `thenwhat readings <slug>…` or `--all`; `thenwhat prepare` runs it as each claim's last step. The seed export carries empty readings: the seed loader cannot seed model-read rows.
 
-First run (2026-11-14), on a copy of the local database (`thenwhat_readings`), not the shared one: main had moved to migration 0015, so this change's migration was renumbered 0016 after merging main. Four claims, 17 trials read in 17 calls, 49 readings stored, none refused by rule, a second run read nothing. Seen on the built pages: the largest Tourette trial reads "How much a symptom score changed over 4 weeks", with its quoted words in the record. What the run showed:
+First run (2026-11-14), on a copy of the local database (`thenwhat_readings`), not the shared one: main had moved to migration 0015, so this change's migration was renumbered 0016 after merging main. Four claims, 17 trials read in 17 calls, 49 readings stored, none refused by rule, a second run read nothing. Seen on the built pages: the largest Tourette trial reads "The change in a symptom score over 4 weeks", with its quoted words in the record. What the run showed:
 
 - 13 of 49 readings came back with a confidence of 1.0, shown as "very likely · 100%". The figure is the model's own and says more than a reading can.
 - A walking test was read as `other`, so its answer fell back to the registry's title. The list has no kind for a test of physical function.
 - "Progression-Free Survival" was read as `survival` and worded "How long until an event, such as a relapse". The event in that trial is the illness getting worse or death, so "such as a relapse" is not exact.
 - A trial whose time frame gives no number has no follow-up, and its answer names the measure alone.
 
-Second run (2026-11-14), after the three fixes, on a fresh copy: the same 17 trials, 49 readings stored, and this time 4 refused by rule (a unit outside the list three times, a number not in the words once). The model did not answer as it had an hour before; the rules and the stored readings are what make the page repeatable. Seen on the built pages: the walking test reads "How much a test of what the body can do, such as walking, changed over 61 weeks"; progression-free survival reads "How long until an event, such as the illness getting worse or death"; every model-read answer says "very likely · 99%".
+Second run (2026-11-14), after the three fixes, on a fresh copy: the same 17 trials, 49 readings stored, and this time 4 refused by rule (a unit outside the list three times, a number not in the words once). The model did not answer as it had an hour before; the rules and the stored readings are what make the page repeatable. Seen on the built pages: the walking test reads "The change in a test of what the body can do, such as walking over 61 weeks"; progression-free survival reads "How long until an event, such as the illness getting worse or death"; every model-read answer says "very likely · 99%".
 
 Repeatability is delivered by storing readings, not by trusting a model to repeat itself. The site never says the same records always give the same answers.
 

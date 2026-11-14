@@ -379,6 +379,30 @@
           "papers": [
             "10.5555/synthetic.origin",
             "10.5555/synthetic.results"
+          ],
+          "readings": [
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "synthetic score",
+              "number": null,
+              "unit": null,
+              "code": "symptom_score",
+              "confidence": 0.93,
+              "read_on": "2026-10-03T08:00:00Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "12 weeks",
+              "number": 12,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 0.97,
+              "read_on": "2026-10-03T08:00:00Z"
+            }
           ]
         },
         {
@@ -413,7 +437,8 @@
           },
           "papers": [
             "pmid:90000003"
-          ]
+          ],
+          "readings": []
         },
         {
           "trial_id": "jRCT0000000011",
@@ -426,7 +451,8 @@
           "state": "not_started",
           "facts_as_of": null,
           "facts": null,
-          "papers": []
+          "papers": [],
+          "readings": []
         },
         {
           "trial_id": "jRCT0000000012",
@@ -439,7 +465,8 @@
           "state": "not_started",
           "facts_as_of": null,
           "facts": null,
-          "papers": []
+          "papers": [],
+          "readings": []
         },
         {
           "trial_id": "jRCT0000000013",
@@ -452,7 +479,8 @@
           "state": "not_started",
           "facts_as_of": null,
           "facts": null,
-          "papers": []
+          "papers": [],
+          "readings": []
         },
         {
           "trial_id": "jRCT0000000014",
@@ -465,7 +493,8 @@
           "state": "not_started",
           "facts_as_of": null,
           "facts": null,
-          "papers": []
+          "papers": [],
+          "readings": []
         },
         {
           "trial_id": "jRCT0000000015",
@@ -478,7 +507,8 @@
           "state": "not_started",
           "facts_as_of": null,
           "facts": null,
-          "papers": []
+          "papers": [],
+          "readings": []
         }
       ],
       "papers": [
