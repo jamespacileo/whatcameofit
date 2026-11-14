@@ -63,6 +63,8 @@ Wide: Claim 29%, First reported 14%, Tested 21%, Promise 16%, Status 20%; with n
 
 Home tabs become five. On a phone they wrap to a second line where a row cannot hold them, which `DESIGN.md` already allows.
 
+As built: with the column, the status takes 21% of the row, the tested column 18%, a promise 16% and the date only what it needs, which leaves the claim the widest share. These are set where a table has the column, and released under 40rem.
+
 ### 5. No change to data
 
 Every value is in the export already (`trials`, `facts.participants`, `facts.results`, `evidence_stage`). The Claims list is static HTML; the status and topic controls and the pager are the scripts already on the page.

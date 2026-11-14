@@ -10,6 +10,7 @@ import PromiseText from "../components/PromiseText.astro";
 import StageFilter from "../components/StageFilter.astro";
 import StageTrack from "../components/StageTrack.astro";
 import StatusCell from "../components/StatusCell.astro";
+import TestedCell from "../components/TestedCell.astro";
 import TopicChip from "../components/TopicChip.astro";
 import { EXTENSION_OFFERED, SITE } from "../../site.config.mjs";
 import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
@@ -23,6 +24,7 @@ import {
 } from "../lib/feed";
 import { followedNameFor, recentReports } from "../lib/reports";
 import { siteData } from "../lib/structured";
+import { TESTED_WORDS } from "../lib/record-brief";
 import { STATUS_LABELS, latestPromise } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 
@@ -61,8 +63,19 @@ const approvals = data.claims.filter((claim) => claim.status.code === "approved"
 const moves = statusMoves(data.claims);
 const promised = promisesByDate(data.claims);
 const quiet = longestWithoutSignal(data.claims);
+// Every published claim once, by the day it was first reported, newest first; a claim
+// with no day comes last, by name. A date, never a rank.
+const everyClaim = [...data.claims].sort((a, b) => {
+  if (a.first_reported_date && b.first_reported_date && a.first_reported_date !== b.first_reported_date) {
+    return a.first_reported_date < b.first_reported_date ? 1 : -1;
+  }
+  if (a.first_reported_date !== b.first_reported_date) return a.first_reported_date ? -1 : 1;
+  return a.intervention.name.localeCompare(b.intervention.name);
+});
+const anyClaimPromise = everyClaim.some((claim) => latestPromise(claim) !== null);
 const views = [
   { id: "headlines", tab: "Headlines", count: reports.length },
+  { id: "claims", tab: "Claims", count: everyClaim.length },
   { id: "moved", tab: "Status changes", count: moves.length },
   { id: "promised", tab: "Promises", count: promised.length },
   { id: "quiet", tab: "No signal", count: quiet.length },
@@ -251,6 +264,65 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
     )
   }
   </section>
+
+  {
+    everyClaim.length > 0 && (
+      <section class="feed-panel" id="feed-claims" data-view="claims">
+      <h2 class="bar">Every claim tracked</h2>
+      <p class="entry-note tested-note">
+        One row for each reported breakthrough, newest report first. {TESTED_WORDS.note}
+      </p>
+      <div class="table-frame">
+      <table role="table" class="index">
+        <caption class="visually-hidden">
+          Every tracked claim, when it was first reported, how much it has been tested in people, and its status now.
+        </caption>
+        <thead role="rowgroup">
+          <tr role="row">
+            <th role="columnheader" scope="col">Claim</th>
+            <th role="columnheader" scope="col">First reported</th>
+            <th role="columnheader" scope="col">{TESTED_WORDS.column}</th>
+            {anyClaimPromise && <th role="columnheader" scope="col" class="promise">Promised</th>}
+            <th role="columnheader" scope="col">Status now</th>
+          </tr>
+        </thead>
+        <tbody role="rowgroup">
+          {everyClaim.map((claim, index) => {
+            const promise = latestPromise(claim);
+            return (
+              <tr role="row" data-status={claim.status.code} data-topic={claim.vertical} data-on={claim.first_reported_date ?? undefined} data-later={index >= PAGE_SIZE ? "" : undefined}>
+                <td role="cell" class="claim">
+                  <ClaimName claim={claim} />
+                </td>
+                <td role="cell" class="when" data-column="First reported">
+                  {claim.first_reported_date ? (
+                    formatDate(claim.first_reported_date)
+                  ) : (
+                    <span class="visually-hidden">Not recorded</span>
+                  )}
+                </td>
+                <td role="cell" class="tested" data-column={TESTED_WORDS.column}>
+                  <TestedCell claim={claim} />
+                </td>
+                {anyClaimPromise && (
+                  <td role="cell" class:list={["promise", { none: !promise }]} data-column="Promised">
+                    {promise ? <PromiseText promise={promise} /> : <span class="visually-hidden">None with a date</span>}
+                  </td>
+                )}
+                <td role="cell" class="status" data-column="Status now">
+                  <StatusCell claim={claim} />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      </div>
+      <Pager name="claims" total={everyClaim.length} size={PAGE_SIZE} one="claim" many="claims" />
+      <p class="none" data-none hidden>Nothing in this list for that choice.</p>
+      </section>
+    )
+  }
 
   {
     moves.length > 0 && (
