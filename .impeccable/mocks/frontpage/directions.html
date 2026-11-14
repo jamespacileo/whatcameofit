@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Front page directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  :root { --paper: #ffffff; --ink: #0f1f38; --blue: #14427f; --muted: #46566b; --panel: #f1f5fb; --rule: #d9e2ee; --ring: #7f90a3; --select: #d6e2f2; }
+  /* The overview follows the reader's theme. The mocks inside the phones stay light: the site is light only. */
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --paper: #0b1626; --ink: #e8eef7; --blue: #8ec1f5; --muted: #a9b9cd; --panel: #12233b; --rule: #24384f; --ring: #6f8299; --select: #24507f; } }
+  :root[data-theme="dark"] { --paper: #0b1626; --ink: #e8eef7; --blue: #8ec1f5; --muted: #a9b9cd; --panel: #12233b; --rule: #24384f; --ring: #6f8299; --select: #24507f; }
+  * { box-sizing: border-box; }
+  html { font-size: 106.25%; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 400 1rem/1.55 Figtree, "Helvetica Neue", Arial, sans-serif; font-variant-numeric: tabular-nums lining-nums; }
+  a { color: var(--blue); text-underline-offset: 0.16em; }
+  :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+  ::selection { background: var(--select); }
+  h1, h2, h3, p, ul, dl, dd { margin: 0; }
+  ul { padding: 0; list-style: none; }
+  .wrap { max-width: 78rem; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2rem); }
+  header { background: var(--panel); border-bottom: 1px solid var(--rule); padding: 2.2rem 0 2rem; }
+  h1 { font-size: clamp(1.9rem, 5.2vw, 2.5rem); line-height: 1.12; text-wrap: balance; }
+  header p { max-width: 44rem; margin-top: 0.7rem; }
+  .item-anatomy { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 2.5rem; padding: 2rem 0 0.5rem; }
+  .item-anatomy h2 { font-size: 1.2rem; margin-bottom: 0.4rem; }
+  .item-anatomy p { max-width: 34rem; }
+  .item-anatomy li { padding: 0.45rem 0; border-top: 1px solid var(--rule); }
+  .item-anatomy li b { display: block; }
+  .round { padding-top: 2.5rem; margin-top: 2rem; border-top: 1px solid var(--rule); }
+  .round h2 { font-size: 1.5rem; line-height: 1.2; text-wrap: balance; }
+  .round p { max-width: 44rem; margin-top: 0.5rem; }
+  .dirs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3rem 2.2rem; padding: 1.8rem 0 2rem; }
+  .dirs.two { grid-template-columns: repeat(2, minmax(0, 390px)); }
+  .dirs:last-child { padding-bottom: 4rem; }
+  .dir h2 { font-size: 1.35rem; line-height: 1.25; }
+  .dir h2 a { text-decoration: none; }
+  .dir h2 a:hover { text-decoration: underline; }
+  .dir .thesis { margin-top: 0.3rem; min-height: 4.7rem; }
+  .phone { margin-top: 0.9rem; border: 1px solid var(--ring); border-radius: 1.4rem; overflow: hidden; height: 34rem; background: #fff; }
+  .phone iframe { width: 390px; height: calc(34rem / var(--s)); border: 0; transform: scale(var(--s)); transform-origin: 0 0; display: block; }
+  dl { margin-top: 1rem; font-size: 0.92rem; }
+  dt { font-weight: 700; margin-top: 0.7rem; }
+  dd { color: var(--muted); }
+  .risk { border: 1px dashed var(--ring); border-radius: 0.65rem; padding: 0.5rem 0.7rem; margin-top: 0.9rem; font-size: 0.9rem; }
+  .open { display: inline-block; margin-top: 0.9rem; font-weight: 700; }
+  footer { border-top: 1px solid var(--rule); padding: 1.5rem 0 3rem; font-size: 0.9rem; color: var(--muted); }
+  footer p { max-width: 50rem; }
+  footer p + p { margin-top: 0.5rem; }
+  @media (max-width: 62rem) { .dirs, .dirs.two, .item-anatomy { grid-template-columns: 1fr; } .dir .thesis { min-height: 0; } .item-anatomy > * + * { margin-top: 1.6rem; } .phone { max-width: 390px; } }
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>Directions for the front page</h1>
+  <p>The lookup stays the first thing on the page in every mock. What changes is everything under it: how a headline and its record are shown together, how much of the answer is on the page before any press, and what gives a reader a reason to open the page again on Thursday.</p>
+  <p>Each mock is a working page built from the published export of 13 Nov 2026: 84 claims, 104 news reports. Sorting, filters, “show more” and the lookup work. The only made-up value is the reader’s last visit (7 Nov). Scroll the phones here, or open a page at full size.</p>
+</div></header>
+
+<div class="wrap">
+  <div class="item-anatomy">
+    <div>
+      <h2>What makes a list worth scrolling</h2>
+      <p>On Reddit the title opens a question and the row closes it without a press: a score, a flair, a top comment. The outcome differs from row to row, so the next one is worth a look. Here the quoted headline is the question, and the record is the answer.</p>
+    </div>
+    <div>
+      <h2>What a row can teach, from records we hold</h2>
+      <ul>
+        <li><b>How long the idea has been in trials.</b> “Scientists discover £20-a-month plant pill”: first trial registered in 2012, 14 years before the report.</li>
+        <li><b>What the report was of.</b> An animal study, laboratory work, an early or late human study.</li>
+        <li><b>What the registries hold.</b> 5 trials on record, 3 completed, 2 with results posted.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>What brings a reader back</h2>
+      <ul>
+        <li><b>New headlines.</b> 9 reports in the last seven days, about 40 in thirty.</li>
+        <li><b>Records that move.</b> 11 registry records dated in the last 45 days, 2 approvals since September.</li>
+        <li><b>Dates that arrive.</b> 10 promises name a date; one falls due on 31 Dec 2026.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="round">
+    <h2>Second round: two mixes of “Then and now” and “Today’s edition”</h2>
+    <p>Both keep the stream’s row (the small digest panel under each headline) and the edition’s dated head with its seven-day strip. They differ in where the edition’s other parts go: above the stream as a briefing, or into the stream as rows of their own.</p>
+  </div>
+  <div class="dirs two" id="mixes"></div>
+
+  <div class="round">
+    <h2>First round: six directions</h2>
+  </div>
+  <div class="dirs" id="dirs"></div>
+</div>
+
+<footer><div class="wrap">
+  <p>Every mock keeps DESIGN.md as it stands: the navy masthead, the pale blue band, one face, pale amber for a promise only, no colour for a status, the outlet’s title in quotation marks, the stage track as a position and never a meter. No mock adds status wording; labels and glosses are copied from <code>site/src/lib/status.ts</code>.</p>
+  <p>Sentences under “what the records add” are new wording and are proposals, not agreed copy. Regenerate the data with <code>node .impeccable/mocks/frontpage/build-data.mjs</code>.</p>
+</div></footer>
+
+<script>
+  const dirs = [
+    { page: "stream", name: "Then and now", thesis: "A stream of headlines, each answered on the spot by a small digest panel: the evidence when it was reported beside what is on record now.",
+      learn: "One or two sentences the records add, and the promise on amber when there was one.",
+      back: "“New” since your last visit, four orders to read it in, and a side list of records dated lately.",
+      risk: "The tallest row of the six: about two headlines per phone screen." },
+    { page: "wire", name: "The wire", thesis: "A dense list in the manner of Hacker News. The gutter that would hold a score holds the headline’s age; one grey line carries the status and one fact.",
+      learn: "Many small answers per screen. Reading down the status words is itself the lesson.",
+      back: "Month dividers with counts show what is new at a glance; filter pills by where claims stand.",
+      risk: "Least room for a promise or a second fact. The lookup band is cut to one row to start the list early." },
+    { page: "edition", name: "Today’s edition", thesis: "A dated page that ends. This week’s headlines with where each stands, records dated lately, promised dates coming up, one older claim picked by the date.",
+      learn: "The whole picture in two minutes, with a different older claim each day.",
+      back: "A new edition every morning and a seven-day strip to catch up. Suits a habit and, later, an email.",
+      risk: "Needs something true to say on a quiet day. The pipeline must run daily for the date to be honest." },
+    { page: "promises", name: "Said and recorded", thesis: "The claim page’s own comparison, as the front page: what a report promised, by the year it was promised for, beside what the registries hold.",
+      learn: "Each row is a before and after. The reader compares; the site does not conclude.",
+      back: "Dates arrive: “by the end of this year” becomes “the date has passed”.",
+      risk: "Only 35 of 84 claims carry a promise and 10 a date, so most headlines are left off this page." },
+    { page: "path", name: "The path", thesis: "A board with a column for each place from preclinical to approved, and every headline in the column the records put it in today.",
+      learn: "The shape of the whole: 42 of 84 sit in the first column. No other direction shows that without a sentence.",
+      back: "A claim that changes place is listed first in its new column for ninety days, with “Was: X. Now: Y.”",
+      risk: "A board can read as progress, which the stage track must not. On a phone it is a sideways scroll." },
+    { page: "guess", name: "Guess first", thesis: "The headline alone, then a question: where do the records put this today? The reader picks a place, and the record answers.",
+      learn: "Calibration. After ten headlines a reader knows how far a typical report is from a trial in people.",
+      back: "The strongest pull of the six, and the easiest to share. A tally kept in the browser only.",
+      risk: "Closest to a game, on a site whose voice is plain and unexcited. Scores the reader, never a treatment; needs the operator’s view before any build." },
+  ];
+  const mixes = [
+    { page: "mix-briefing", name: "Briefing, then stream", thesis: "The edition is the head and the stream is the body. A dated line, the week, a three-part briefing, then this week’s headlines, which end; earlier ones are one press away.",
+      learn: "The stream’s full row. The briefing adds what moved on the registries, the next promised date and one older claim.",
+      back: "A page that is finished by default (“That is this week”) and endless by choice. The date and the briefing change daily.",
+      risk: "The briefing stands between the lookup and the first headline on a wide screen. On a phone it moves under the week’s headlines, behind one line of links." },
+    { page: "mix-days", name: "Day by day (chosen, refined, built)", thesis: "Built on 14 Nov 2026 as the OpenSpec change home-day-by-day (site/src/components/DayList.astro); where the two differ, the change's design.md says why. One list of everything dated, newest first: days for a fortnight, then weeks, then years. Reports, registry records and promised dates are rows of three kinds; what is promised lies ahead of today.",
+      learn: "White is reported, pale blue is recorded, amber is promised; the three pills that filter the list are also its key. A registry row carries the headline it belongs to, and says “Was: X. Now: Y.” when it changed a status.",
+      back: "A line across the list marks the last visit: everything above it is new. Today is always the first group; on a day with nothing dated it says so and shows one older claim.",
+      risk: "Registry rows need the pipeline to keep every record’s date, as it does now. The “one from before” repeats a claim that is also further down the list." },
+  ];
+  const card = (d, mark) => `
+    <section class="dir">
+      <h2><a href="${d.page}.html">${mark}. ${d.name}</a></h2>
+      <p class="thesis">${d.thesis}</p>
+      <div class="phone"><iframe src="${d.page}.html" title="${d.name}, at phone width" loading="lazy"></iframe></div>
+      <dl><dt>What a row teaches</dt><dd>${d.learn}</dd><dt>Why come back</dt><dd>${d.back}</dd></dl>
+      <p class="risk"><b>Risk.</b> ${d.risk}</p>
+      <a class="open" href="${d.page}.html">Open at full size</a>
+    </section>`;
+  document.getElementById("mixes").innerHTML = mixes.map((d, i) => card(d, "AB"[i])).join("");
+  document.getElementById("dirs").innerHTML = dirs.map((d, i) => card(d, i + 1)).join("");
+  const fit = () => document.querySelectorAll(".dir").forEach((dir) => dir.style.setProperty("--s", Math.min(1, dir.clientWidth / 390)));
+  fit(); addEventListener("resize", fit);
+</script>
+</body>
+</html>
