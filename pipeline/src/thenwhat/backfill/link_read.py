@@ -10,6 +10,7 @@ ordinary claim, decided by the rules that govern any other.
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import ColumnElement, and_, exists, func, select
@@ -34,12 +35,13 @@ from thenwhat.db.models import Claim, LinkLead, LinkLeadLink, LinkShare, SourceA
 from thenwhat.decide.core import Backend, DecisionFailed
 from thenwhat.decide.steps import choose_vertical, lead_ref
 from thenwhat.domain import ReadOutcome, ScreenOutcome, WorkOutcome
-from thenwhat.extract.page import published_day
+from thenwhat.extract.page import Page, published_day
 from thenwhat.extract.retrieve import ArticleRetriever, PasteNeeded
 from thenwhat.extract.service import article_from_draft, claim_from_draft, read_article
 from thenwhat.llm.client import Llm
 from thenwhat.llm.errors import BudgetExceeded, LlmError
-from thenwhat.sources.base import SystemTime, Time
+from thenwhat.resolve.named import candidates_named_in_article
+from thenwhat.sources.base import SourceError, SystemTime, Time
 from thenwhat.statements.service import StatementChecker
 
 NO_NAME = "its outlet has no display name"
@@ -67,6 +69,9 @@ class ReadClient:
     make_llm: Callable[[Session], Llm]
     make_checker: Callable[[Session], StatementChecker]
     make_backend: Callable[[Session], Backend]
+    # The registry and the literature source, read by identifier for the trials and
+    # papers a page names. None leaves what a page names unrecorded.
+    make_research: Callable[[Session], Any] | None = None
     requests_made: int = 0
 
 
@@ -92,6 +97,8 @@ class LinkRead:
         reads_per_claim: int,
         vertical_accept_above: float,
         approve_drafts_by_rule: bool,
+        match_reject_below: float = 0.0,
+        match_accept_above: float = 0.0,
         time: Time | None = None,
     ) -> None:
         self.pass_above = pass_above
@@ -101,6 +108,9 @@ class LinkRead:
         self.reads_per_claim = reads_per_claim
         self.vertical_accept_above = vertical_accept_above
         self.approve_drafts_by_rule = approve_drafts_by_rule
+        # The rules `thenwhat resolve` decides candidates by, for those a page names.
+        self.match_reject_below = match_reject_below
+        self.match_accept_above = match_accept_above
         self._time = time or SystemTime()
 
     # --- which leads, and in what order ---------------------------------------------
@@ -192,6 +202,38 @@ class LinkRead:
             held.append(claim.slug)
         return f"the claim it names has enough articles: {', '.join(held)}"
 
+    def _named_on_the_page(
+        self, session: Session, claim: Claim, page: Page | None, client: ReadClient, now: datetime
+    ) -> str | None:
+        """Record the trials and papers the article's page names as candidates of the
+        claim, read by their identifiers and decided by the resolver's own rules. Being
+        named approves nothing. Returns why they were not recorded, when they were not:
+        the claim and its article stand either way."""
+        if page is None or client.make_research is None:
+            return None
+        if not (page.registry_numbers or page.dois):
+            return None
+        research = client.make_research(session)
+        try:
+            candidates_named_in_article(
+                session,
+                claim,
+                registry_numbers=page.registry_numbers,
+                # With no literature source configured, papers are left unrecorded.
+                dois=page.dois if research.papers is not None else (),
+                registry=research.registry,
+                papers=research.papers,
+                backend=client.make_backend(session),
+                now=now,
+                reject_below=self.match_reject_below,
+                accept_trial_above=self.match_accept_above,
+                accept_paper_above=self.match_accept_above,
+            )
+        except (DecisionFailed, SourceError) as failure:
+            session.flush()
+            return f"the records its page names were not recorded: {failure}"
+        return None
+
     def run(self, session: Session, record: LinkLead, client: ReadClient) -> WorkOutcome | Failed:
         now = self._time.now()
         claim_id = self._tracked_claim(session, record)
@@ -257,7 +299,8 @@ class LinkRead:
                     now=now,
                 )
                 record.claim_id, record.source_article_id = claim.id, article.id
-                return self._finish(record, ReadOutcome.ADDED_TO_CLAIM)
+                note = self._named_on_the_page(session, claim, page, client, now)
+                return self._finish(record, ReadOutcome.ADDED_TO_CLAIM, note)
 
             slug = free_slug_for(session, draft.intervention, draft.indication)
             vertical, probability = choose_vertical(
@@ -297,4 +340,5 @@ class LinkRead:
         article = find_article(session, extracted.claim, address)
         record.claim_id = extracted.claim.id
         record.source_article_id = article.id if article else None
-        return self._finish(record, ReadOutcome.NEW_CLAIM)
+        note = self._named_on_the_page(session, extracted.claim, page, client, now)
+        return self._finish(record, ReadOutcome.NEW_CLAIM, note)

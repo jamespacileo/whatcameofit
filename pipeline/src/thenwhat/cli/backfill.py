@@ -138,6 +138,7 @@ def make_client(step: Step, settings: Settings, allowances: Allowances) -> Any:
             make_llm=extract.make_llm,
             make_checker=extract.make_checker,
             make_backend=resolve.make_backend,
+            make_research=resolve.make_research,
         )
     if step.source == MediaCloud.name:
         client = MediaCloud(

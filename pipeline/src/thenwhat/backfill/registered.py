@@ -22,5 +22,7 @@ def registered_steps(settings: Settings) -> list[Step]:
             reads_per_claim=settings.lead_reads_per_claim,
             vertical_accept_above=settings.vertical_accept_above,
             approve_drafts_by_rule=settings.approve_drafts_by_rule,
+            match_reject_below=settings.match_reject_below,
+            match_accept_above=settings.match_accept_above,
         ),
     ]

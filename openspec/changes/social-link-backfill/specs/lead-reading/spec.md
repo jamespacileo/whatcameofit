@@ -118,11 +118,15 @@ When no existing claim covers what the read names, a claim SHALL be drafted from
 - **THEN** no claim is created and the lead's failure names the slug
 
 ### Requirement: Registry numbers and papers the page gives
-Registry numbers and paper identifiers that the article's own page gives SHALL be recorded for the claim as candidates, with the reason that the article names them, without a search. Each SHALL be scored and decided as any candidate is, for the claim's indication.
+Registry numbers and paper DOIs that the article's own page gives SHALL be recorded for the claim as candidates, with the reason that the article names them, without a search. Each SHALL be scored and decided as any candidate is, for the claim's indication. A paper the page gives only by its PubMed number SHALL NOT be recorded. When what the page names cannot be read or scored, the claim and its article SHALL stand, and the lead SHALL say that they were not recorded.
 
 #### Scenario: An article that links its trial
 - **WHEN** an article's page gives a registry number
 - **THEN** that trial is a candidate match of the claim, scored for the claim's indication, and is not approved by having been named
+
+#### Scenario: The registry cannot be reached
+- **WHEN** a lead's article is read into a claim and the registry does not answer for the number its page names
+- **THEN** the claim and its source article are kept, and the lead's detail says the named records were not recorded
 
 ### Requirement: Enough articles for one claim
 A lead linked by its title to a claim that already has the configured number of source articles SHALL be held and not read, unless it was first shared before the claim's first reported date.

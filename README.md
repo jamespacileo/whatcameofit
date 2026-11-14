@@ -313,6 +313,7 @@ thenwhat backfill funnel                        # where every lead stands, and w
 - A lead is read once, with the same extraction as `thenwhat extract new`. If a claim already covers what the article reports, the article is added to it and nothing you reviewed changes. Otherwise a claim is drafted and decided by the rule for drafts; its slug is made by rule and its vertical is chosen by a decision, accepted at `VERTICAL_ACCEPT_ABOVE`.
 - Everything that can be settled without the model is settled first, and costs no model call: an article that has become tracked, a claim that already has `LEAD_READS_PER_CLAIM` articles, an outlet with no display name in `backfill/outlet_kinds.py`, a page the outlet's robots.txt forbids, and a page that gives no publication date or no headline.
 - The article's date and title come from its own page. The date a link was shared and the title it was shared under are never published, and the published address carries no parameter that says where it was shared.
+- A trial or a paper's DOI that the article's page names is read from its registry or index by that identifier and becomes a candidate of the claim, decided by the same rules as one `thenwhat resolve` finds. Being named approves nothing.
 - No outlet is asked for two articles less than `OUTLET_INTERVAL_SECONDS` apart, across every process.
 - `funnel` lists the outlets whose pages gave no date. That list is how the page reader learns an outlet's markup.
 

@@ -590,3 +590,41 @@ def test_the_funnel_counts_each_outcome_and_the_cost_of_reading(session: Session
     after = len(reader.web.asked)
     funnel(session, pass_above=0.7, reject_below=0.2)
     assert len(reader.web.asked) == after > asked
+
+
+# --- what the page names ---------------------------------------------------------------
+
+
+def test_a_trial_the_page_names_becomes_a_scored_candidate_and_is_not_approved_by_it(
+    session: Session, fake_time
+):
+    """Scenario: An article that links its trial"""
+    from types import SimpleNamespace
+
+    from test_related_research import Registry
+    from thenwhat.db.models import Entity, EntityMatch
+    from thenwhat.resolve.reasons import NAMED_IN_ARTICLE
+
+    reader = Reader(session, fake_time)
+    registry = Registry()
+    reader.client.make_research = lambda at: SimpleNamespace(registry=registry, papers=None)
+    linked = page().replace(
+        "</main>",
+        '<a href="https://clinicaltrials.gov/study/NCT04184622">the trial</a>'
+        '<a href="https://doi.org/10.1000/named">the paper</a></main>',
+    )
+    lead = reader.lead(serves=linked)
+
+    reader.read()
+
+    assert (lead.read_outcome, lead.read_detail) == (ReadOutcome.NEW_CLAIM, None)
+    [match] = session.scalars(
+        select(EntityMatch)
+        .join(Entity, Entity.id == EntityMatch.entity_id)
+        .where(Entity.claim_id == lead.claim_id)
+    )
+    assert (match.external_id, match.reasons) == ("NCT04184622", [NAMED_IN_ARTICLE])
+    # Scored like any candidate; with no accept rule set it stays pending.
+    assert match.score == pytest.approx(0.9) and match.review_state is ReviewState.PENDING
+    # No literature source is configured, so the paper is left unrecorded.
+    assert registry.fetched == ["NCT04184622"]
