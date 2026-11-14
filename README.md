@@ -247,6 +247,21 @@ thenwhat backfill leads                       # how many searched trials have an
 
 The sample that sized this is in `docs/research/phase3-article-hit-rate`.
 
+A step that needs more requests than its source allows in one period runs for weeks. `scripts/backfill-job.sh` keeps it going without anyone watching: it starts the run again every half hour, and the run stops itself whenever the allowance is used up or the source asks it to wait.
+
+```sh
+sh scripts/backfill-job.sh install   # set the job up for the news search; it starts at once
+sh scripts/backfill-job.sh status    # what is done and due, and the last lines of the log
+sh scripts/backfill-job.sh pause     # stop now and do not start again
+sh scripts/backfill-job.sh resume    # let it start again
+sh scripts/backfill-job.sh remove    # take the job out; the work done is kept
+```
+
+- The job is a launchd agent of the logged-in user on a Mac. It runs from the checkout the script is in, so keep that checkout in place.
+- It reads the operator's `.env` (`THENWHAT_ENV_FILE`) and then `~/Library/Application Support/thenwhat/backfill.env`, which holds this job's own settings: the database, what to search, and its allowance.
+- Its log is `~/Library/Logs/thenwhat/backfill.log`: start and end times, counts and reasons for stopping. No title or address is written to it.
+- Each record is its own short transaction, so other commands can use the database while it runs.
+
 ## Development
 
 Needs [uv](https://docs.astral.sh/uv/), Node 22.23.4 or later, make and Docker.
