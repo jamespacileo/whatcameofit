@@ -1,5 +1,6 @@
 """Commands for a claim's entities and for proposing registry matches."""
 
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Annotated
 
@@ -20,13 +21,26 @@ from thenwhat.cli import extract
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
-from thenwhat.db.models import Claim
+from thenwhat.db.models import Claim, EntityMatch
 from thenwhat.decide.core import Backend, DecisionFailed, UnknownBackend, backend_named
 from thenwhat.decide.steps import has_stage_suggestion, suggest_evidence_stage
 from thenwhat.domain import Decider, EntityType, ReviewState
+from thenwhat.resolve.organisations import OrganisationRegistry, match_organisations
+from thenwhat.resolve.papers import (
+    PaperSearch,
+    RegistryNumbers,
+    TrialRegistry,
+    choose_origin,
+    find_papers,
+    trials_from_papers,
+)
 from thenwhat.resolve.service import DoiLookup, TrialSearch, rescore_claim, resolve_claim
+from thenwhat.sources.base import SourceError
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref
+from thenwhat.sources.europepmc import EuropePmc
+from thenwhat.sources.openalex import OpenAlex
+from thenwhat.sources.ror import Ror
 
 entity_app = typer.Typer(help="Add entities, synonyms and the origin paper.", no_args_is_help=True)
 
@@ -56,6 +70,32 @@ def make_registries(session: Session) -> tuple[TrialSearch, DoiLookup]:
     return (
         ClinicalTrials(session, contact_email=contact),
         Crossref(session, contact_email=contact),
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class Research:
+    """The sources behind related papers and organisations."""
+
+    # None while OPENALEX_API_KEY is empty: paper search is then off.
+    papers: PaperSearch | None
+    numbers: RegistryNumbers
+    registry: TrialRegistry
+    organisations: OrganisationRegistry
+
+
+def make_research(session: Session) -> Research:
+    settings = settings_or_exit()
+    contact = settings.contact_email
+    return Research(
+        papers=(
+            OpenAlex(session, contact_email=contact, api_key=settings.openalex_api_key)
+            if settings.openalex_api_key
+            else None
+        ),
+        numbers=EuropePmc(session, contact_email=contact),
+        registry=ClinicalTrials(session, contact_email=contact),
+        organisations=Ror(session, contact_email=contact),
     )
 
 
@@ -170,6 +210,79 @@ def entity_origin_paper(
         out.print(f"Origin paper of {claim_slug}: {paper.name}.", markup=False)
 
 
+def _related_research(
+    session: Session,
+    claim: Claim,
+    research: Research,
+    backend: Backend,
+    now: datetime,
+    reject_below: float,
+    accept_above: float,
+) -> None:
+    """Organisations, related papers, the trials those papers name and the origin paper,
+    with a line on each. A source that cannot be read is reported and the rest goes on:
+    the trial candidates found before this stand either way."""
+    try:
+        matched = match_organisations(session, claim, registry=research.organisations)
+        if matched:
+            out.print(f"Matched {len(matched)} organisation(s) in ROR. They are pending review.")
+    except SourceError as failed:
+        err.print(f"Organisations were not looked up: {failed}", markup=False)
+
+    thresholds = {"reject_below": reject_below, "accept_above": accept_above}
+    if research.papers is None:
+        out.print("Paper search is off: OPENALEX_API_KEY is not set.")
+    else:
+        try:
+            found = find_papers(
+                session, claim, papers=research.papers, backend=backend, now=now, **thresholds
+            )
+            _say_papers(found, accept_above, reject_below)
+        except (SourceError, DecisionFailed) as failed:
+            err.print(f"Papers were not searched for: {failed}", markup=False)
+    try:
+        from_papers = trials_from_papers(
+            session,
+            claim,
+            numbers=research.numbers,
+            registry=research.registry,
+            backend=backend,
+            now=now,
+            **thresholds,
+        )
+        if from_papers:
+            ids = ", ".join(match.external_id for match in from_papers)
+            out.print(f"Trial candidates from approved papers: {ids}.", markup=False)
+        if research.papers is not None:
+            origin = choose_origin(
+                session,
+                claim,
+                papers=research.papers,
+                backend=backend,
+                now=now,
+                accept_above=accept_above,
+            )
+            if origin is not None:
+                out.print(f"Origin paper set by rule: {origin.name}.", markup=False)
+    except (SourceError, DecisionFailed) as failed:
+        err.print(f"Approved papers were not followed up: {failed}", markup=False)
+
+
+def _say_papers(found: list[EntityMatch], accept_above: float, reject_below: float) -> None:
+    if not found:
+        out.print("No new related paper was found.")
+        return
+    approved = [m for m in found if m.review_state is ReviewState.APPROVED]
+    rejected = [m for m in found if m.review_state is ReviewState.REJECTED]
+    noun = "paper" if len(found) == 1 else "papers"
+    out.print(
+        f"Found {len(found)} related {noun}: {len(approved)} approved by rule for scoring"
+        f" {accept_above:g} or more, {len(rejected)} rejected by rule for scoring under"
+        f" {reject_below:g}, {len(found) - len(approved) - len(rejected)} pending review.",
+        markup=False,
+    )
+
+
 def resolve_command(
     claim_slug: Annotated[str, typer.Argument(help="Slug of the claim.")],
     rescore: Annotated[
@@ -185,11 +298,18 @@ def resolve_command(
     Every hit becomes a scored candidate match. A rule rejects one scored near zero and
     approves a trial scored high; the rest wait for you to approve or reject. A trial
     scores as a match only when it tests the intervention for the claim's indication.
+
+    The literature is then searched for papers about the intervention and indication.
+    Each is scored, carries the reasons found by rule, and is approved by rule when it
+    scores high. A registry number an approved paper states becomes a trial candidate,
+    and a paper that is confidently the one first reported on becomes the origin paper.
+    Institutions and companies are looked up in the organisation registry.
     """
     with entry_session() as session:
         claim = claim_by_slug(session, claim_slug)
         backend = make_backend(session)
         trials, dois = make_registries(session)
+        research = make_research(session)
         now = datetime.now(UTC)
         settings = settings_or_exit()
         reject_below = settings.match_reject_below
@@ -222,6 +342,7 @@ def resolve_command(
             if claim.evidence_stage is None and not has_stage_suggestion(session, claim):
                 stage = suggest_evidence_stage(session, backend, claim, now=now)
                 out.print(f"Suggested evidence stage: {stage.choice}. Confirm it in review.")
+            _related_research(session, claim, research, backend, now, reject_below, accept_above)
         except DecisionFailed as failed:
             # Leave through a clean exit so the logged failure is committed with the session.
             err.print(str(failed), markup=False)

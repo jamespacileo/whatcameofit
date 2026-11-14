@@ -70,6 +70,10 @@ thenwhat resolve example-enamel
 
 `resolve` searches ClinicalTrials.gov for the intervention under every name it has, looks up each paper's DOI at Crossref, and stores every hit as a candidate match with a score. A trial scores as a match only when it tests the intervention for the claim's indication; the same intervention in another condition scores low and is labelled. A broad name (more than 100 trials) is searched within the indication, and a name that is still broad there contributes nothing. The score orders the review queue, and a candidate scored under `MATCH_REJECT_BELOW` (0.05) is rejected by rule so it does not wait for you; `review list --by-rule` shows those, and you can approve any of them. A trial candidate scored at or above `MATCH_ACCEPT_ABOVE` (0.8) for the claim's indication is approved by rule; the rest wait for you. It also suggests the stage of evidence at announcement, which stays unset until you confirm it. Compound names change over time, so add synonyms before resolving. `resolve --rescore` scores pending candidates again.
 
+`resolve` then searches OpenAlex for papers about the intervention and the indication, under each name and search phrase, and keeps up to twenty per claim as related papers. Each is scored, carries the reasons found by rule (named in the title, indication named, from an institution the article named, published by the first report), and is approved by rule at or above `MATCH_ACCEPT_ABOVE`, with or without a reason. A related paper is never an evidence event and never changes the status. A registry number an approved paper states becomes a trial candidate, and an approved paper that is confidently the one first reported on becomes the origin paper. Institutions and companies are looked up in ROR; people never are. Paper search needs `OPENALEX_API_KEY` and is off without it. Related papers and organisations are not in the export yet.
+
+`thenwhat entity people` lists every stored person with their claim. Only researchers belong: remove anyone else with `thenwhat entity delete-people ID...`.
+
 ### Evidence
 
 ```sh

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from thenwhat.db.models import Claim, DecisionLog, Entity, EntityMatch
 from thenwhat.decide.core import Backend, Decision, decide, decide_many
 from thenwhat.domain import EntityType, EvidenceStage
+from thenwhat.sources import openalex
 from thenwhat.sources.base import SourceRecord
 
 EVIDENCE_STAGE = "evidence_stage"
@@ -31,6 +32,28 @@ TRIAL_QUESTION = (
     f"- {NOT_A_MATCH}: it is not a trial of this intervention."
 )
 
+PAPER_MATCH = "paper_match"
+REVIEW_OR_COMMENTARY = "review_or_commentary"
+UNRELATED = "unrelated"
+MAX_PAPER_CHARACTERS = 3000
+# What is asked about a paper a literature search found. The first two options are the
+# ones asked about a trial, so a paper's score and its another-indication label are read
+# the way a trial's are.
+PAPER_OPTIONS = [MATCH, OTHER_INDICATION, REVIEW_OR_COMMENTARY, UNRELATED]
+PAPER_QUESTION = (
+    "What is this paper to the claim?\n"
+    f"- {MATCH}: it reports a study of the claim's intervention for the claim's"
+    " indication.\n"
+    f"- {OTHER_INDICATION}: it reports a study of this intervention for a different"
+    " condition.\n"
+    f"- {REVIEW_OR_COMMENTARY}: it is a review, an editorial or a commentary, not a"
+    " report of one study.\n"
+    f"- {UNRELATED}: it is not about this intervention."
+)
+
+ORIGIN_PAPER = "origin_paper"
+NO_PAPER = "none"
+
 
 def match_ref(match_id: int) -> str:
     """The decision log's reference to a candidate match."""
@@ -42,7 +65,7 @@ def latest_scoring(session: Session, match: EntityMatch) -> DecisionLog | None:
     return session.scalars(
         select(DecisionLog)
         .where(
-            DecisionLog.step == ENTITY_MATCH,
+            DecisionLog.step.in_([ENTITY_MATCH, PAPER_MATCH]),
             DecisionLog.input_ref == match_ref(match.id),
             DecisionLog.error.is_(None),
         )
@@ -144,6 +167,87 @@ def score_matches(
         )
         for (_, match, _), decision in zip(group, decisions, strict=True):
             match.score = decision.probabilities[MATCH]
+
+
+def paper_text(record: SourceRecord) -> str:
+    """A paper as it is shown to the backend: title, year, kind, journal and abstract.
+    The abstract goes no further than the question; the decision log keeps none of it."""
+    paper = openalex.describe(record)
+    lines = [
+        f"Candidate paper ({record.external_id}):",
+        f"Title: {paper.title}",
+        f"Year: {paper.year or 'not given'}",
+        f"Kind: {paper.kind or 'not given'}",
+        f"Journal: {paper.journal or 'not given'}",
+        f"Abstract: {paper.abstract or 'not given'}",
+    ]
+    return "\n".join(lines)[:MAX_PAPER_CHARACTERS]
+
+
+def score_papers(
+    session: Session,
+    backend: Backend,
+    *,
+    claim: Claim,
+    candidates: list[tuple[EntityMatch, SourceRecord]],
+    now: datetime,
+) -> None:
+    """Set each paper candidate's score: the probability that it reports a study of the
+    claim's intervention for the claim's indication. This function decides nothing."""
+    decisions = decide_many(
+        session,
+        backend,
+        step=PAPER_MATCH,
+        intro=_claim_text(session, claim),
+        question=PAPER_QUESTION,
+        items=[(match_ref(match.id), paper_text(record)) for match, record in candidates],
+        options=PAPER_OPTIONS,
+        now=now,
+    )
+    for (match, _), decision in zip(candidates, decisions, strict=True):
+        match.score = decision.probabilities[MATCH]
+
+
+def has_origin_choice(session: Session, claim: Claim, offered: list[str]) -> bool:
+    """Whether the origin paper was already asked about with exactly these papers."""
+    asked = session.scalars(
+        select(DecisionLog)
+        .where(
+            DecisionLog.step == ORIGIN_PAPER,
+            DecisionLog.input_ref == f"claim:{claim.id}",
+            DecisionLog.error.is_(None),
+        )
+        .order_by(DecisionLog.id.desc())
+    ).first()
+    return asked is not None and asked.options == [*offered, NO_PAPER]
+
+
+def choose_origin_paper(
+    session: Session,
+    backend: Backend,
+    claim: Claim,
+    *,
+    offered: list[tuple[str, str]],
+    now: datetime,
+) -> Decision:
+    """Ask which of the offered papers, given as (identifier, one line about it), is the
+    one the first reports were about, or none of them. The caller applies the rule."""
+    listed = "\n".join(f"- {identifier}: {line}" for identifier, line in offered)
+    reported = claim.first_reported_date.isoformat() if claim.first_reported_date else "unknown"
+    return decide(
+        session,
+        backend,
+        step=ORIGIN_PAPER,
+        state=(
+            f"{_claim_text(session, claim)}\nFirst reported: {reported}.\n\n"
+            f"Papers published by then:\n{listed}\n\n"
+            "Which paper is the one those first reports were about? Answer with its"
+            f" identifier, or '{NO_PAPER}' if it is none of them or you cannot tell."
+        ),
+        options=[*(identifier for identifier, _ in offered), NO_PAPER],
+        input_ref=f"claim:{claim.id}",
+        now=now,
+    )
 
 
 def _describe(candidate: SourceRecord) -> str:

@@ -18,6 +18,7 @@ from typer.testing import CliRunner, Result
 from thenwhat.claims.entities import entities_of
 from thenwhat.claims.entry import add_claim
 from thenwhat.cli import app
+from thenwhat.cli.resolve import Research
 from thenwhat.db.models import DecisionLog, EntityMatch
 from thenwhat.decide.core import BackendAnswer
 from thenwhat.domain import Decider
@@ -40,6 +41,40 @@ class Trials:
 class Dois:
     def work(self, doi: str) -> SourceRecord | None:
         return None
+
+
+class Papers:
+    def search_papers(self, words: str, limit: int = 20) -> list[SourceRecord]:
+        payload = {
+            "id": "https://openalex.org/W1",
+            "doi": "https://doi.org/10.1000/found",
+            "title": "EX-1 antibody in tooth agenesis",
+            "publication_year": 2019,
+            "type": "article",
+        }
+        return [
+            SourceRecord("openalex", "10.1000/found", "https://doi.org/10.1000/found", payload, NOW)
+        ]
+
+    def paper(self, external_id: str) -> SourceRecord | None:
+        return None
+
+
+class Nothing:
+    """Europe PMC, the trial registry and ROR, with nothing to say."""
+
+    def trial_numbers(self, *, doi: str | None = None, pubmed_id: str | None = None) -> list[str]:
+        return []
+
+    def fetch_trial(self, nct_id: str) -> SourceRecord | None:
+        return None
+
+    def organisations(self, name: str) -> list[SourceRecord]:
+        return []
+
+
+def research(papers: Papers | None = None) -> Research:
+    return Research(papers=papers, numbers=Nothing(), registry=Nothing(), organisations=Nothing())
 
 
 class Backend:
@@ -76,6 +111,7 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("MATCH_REJECT_BELOW", raising=False)
     monkeypatch.setattr("thenwhat.cli.resolve.make_registries", lambda s: (Trials(), Dois()))
     monkeypatch.setattr("thenwhat.cli.resolve.make_backend", lambda s: Backend())
+    monkeypatch.setattr("thenwhat.cli.resolve.make_research", lambda s: research())
     add_claim(
         session,
         slug=SLUG,
@@ -223,6 +259,28 @@ def test_resolve_approves_a_confident_candidate_by_rule_by_default(
     assert "1 approved by rule" in result.output
     [match] = session.scalars(select(EntityMatch)).all()
     assert match.reviewed_by is Decider.RULE
+
+
+def test_resolve_stores_the_related_papers_it_finds(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr("thenwhat.cli.resolve.make_research", lambda s: research(Papers()))
+    monkeypatch.setenv("MATCH_ACCEPT_ABOVE", "0.8")
+
+    result = run("resolve", SLUG)
+
+    assert result.exit_code == 0, result.output
+    assert "Found 1 related paper: 1 approved by rule" in result.output
+    paper = session.scalars(select(EntityMatch).where(EntityMatch.source_name == "openalex")).one()
+    assert paper.reviewed_by is Decider.RULE
+
+
+def test_resolve_without_the_literature_key_says_paper_search_is_off(run, session: Session):
+    result = run("resolve", SLUG)
+
+    assert result.exit_code == 0, result.output
+    assert "Paper search is off: OPENALEX_API_KEY is not set." in result.output
+    assert session.scalars(select(EntityMatch)).one().source_name == "clinicaltrials.gov"
 
 
 def test_resolve_rescore_scores_the_pending_candidates_again(run, session: Session):

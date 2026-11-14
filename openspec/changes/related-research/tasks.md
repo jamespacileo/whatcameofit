@@ -20,26 +20,26 @@
 ## 3. Literature search
 
 - [x] 3.1 Read OpenAlex's current terms, key rules, allowance and headers and add its entry to `docs/sources.md`; add `OPENALEX_API_KEY` to `.env.example`
-- [ ] 3.2 Write the OpenAlex client: search by words with a limit, refusal without a key, a stop when the allowance is used up, the key kept out of cache keys and logs; verify on recorded fixtures with a generic client name and replaced abstracts
-- [ ] 3.3 Store up to twenty paper candidates per claim on the intervention entity with a one-line record; verify the resolution tests for a claim with no DOI, a paper found twice and a search that finds nothing
+- [x] 3.2 Write the OpenAlex client: search by words with a limit, refusal without a key, a stop when the allowance is used up, the key kept out of cache keys and logs; verify on recorded fixtures with a generic client name and replaced abstracts
+- [x] 3.3 Store up to twenty paper candidates per claim on the intervention entity with a one-line record; verify the resolution tests for a claim with no DOI, a paper found twice and a search that finds nothing
 
 ## 4. Scoring, reasons and rules
 
-- [ ] 4.1 Add the `paper_match` step with its four options through `decide_many`; verify one backend call and one log entry per paper
-- [ ] 4.2 Write the pure function that gives a candidate's reason codes; verify each code and the no-reason case
-- [ ] 4.3 Apply `MATCH_REJECT_BELOW` and `MATCH_ACCEPT_ABOVE` to paper candidates, approving every one at or above the threshold; verify three confident papers are all approved by rule and one below stays pending
-- [ ] 4.4 Show paper candidates in the review queue with kind, year, reasons and an another-indication label; verify the queue test
-- [ ] 4.5 Add "Related paper" to `GLOSSARY.md`
+- [x] 4.1 Add the `paper_match` step with its four options through `decide_many`; verify one backend call and one log entry per paper
+- [x] 4.2 Write the pure function that gives a candidate's reason codes; verify each code and the no-reason case
+- [x] 4.3 Apply `MATCH_REJECT_BELOW` and `MATCH_ACCEPT_ABOVE` to paper candidates, approving every one at or above the threshold; verify three confident papers are all approved by rule and one below stays pending
+- [x] 4.4 Show paper candidates in the review queue with kind, year, reasons and an another-indication label; verify the queue test
+- [x] 4.5 Add "Related paper" to `GLOSSARY.md`
 
 ## 5. Papers to trials and origin paper
 
-- [ ] 5.1 On approval of a paper, look its registry numbers up through Europe PMC and add trial candidates, none when it states more than three; verify both cases on fixtures
-- [ ] 5.2 Add the `origin_paper` step over approved papers dated on or before the first report, setting the origin paper by rule at or above the threshold; verify a confident choice, an unsure one, and that it is skipped when the claim has an origin paper or no paper qualifies
+- [x] 5.1 On approval of a paper, look its registry numbers up through Europe PMC and add trial candidates, none when it states more than three; verify both cases on fixtures
+- [x] 5.2 Add the `origin_paper` step over approved papers dated on or before the first report, setting the origin paper by rule at or above the threshold; verify a confident choice, an unsure one, and that it is skipped when the claim has an origin paper or no paper qualifies
 
 ## 6. Organisations
 
 - [x] 6.1 Read ROR's terms and limits and add its entry to `docs/sources.md`
-- [ ] 6.2 Write the ROR client and store a candidate match for each institution and company entity, scored by ROR's own measure; verify a known and an unknown name on fixtures, and that a person entity causes no request
+- [x] 6.2 Write the ROR client and store a candidate match for each institution and company entity, scored by ROR's own measure; verify a known and an unknown name on fixtures, and that a person entity causes no request
 
 ## 7. Export and site
 

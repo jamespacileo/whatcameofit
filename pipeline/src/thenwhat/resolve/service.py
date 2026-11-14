@@ -132,6 +132,8 @@ def resolve_claim(
             for record in trials_of(trials, entity, claim.indication):
                 consider(entity, record)
         elif entity.type is EntityType.PAPER and entity.doi:
+            if any(key[0] == entity.id and key[2].lower() == entity.doi.lower() for key in seen):
+                continue  # Its DOI already has a match, such as an origin paper set by rule.
             record = dois.work(entity.doi)
             if record is not None:
                 consider(entity, record)
@@ -165,8 +167,8 @@ def resolve_claim(
             session.delete(match)
         session.flush()
         raise
-    _reject_near_zero(added, reject_below, now)
-    _approve_confident(session, added, accept_above, now)
+    reject_near_zero(added, reject_below, now)
+    approve_confident(session, added, accept_above, now)
     session.flush()
     if rescore:
         rescore_claim(
@@ -182,7 +184,7 @@ def resolve_claim(
     return added
 
 
-def _reject_near_zero(scored: list[EntityMatch], reject_below: float, now: datetime) -> None:
+def reject_near_zero(scored: list[EntityMatch], reject_below: float, now: datetime) -> None:
     for match in scored:
         if match.review_state is ReviewState.PENDING and match.score < reject_below:
             record_decision(match, ReviewState.REJECTED, by=Decider.RULE, now=now)
@@ -197,7 +199,7 @@ def _scored_for_the_indication(session: Session, match: EntityMatch) -> bool:
     return OTHER_INDICATION in scored.options and scored.output.get("choice") != OTHER_INDICATION
 
 
-def _approve_confident(
+def approve_confident(
     session: Session, scored: list[EntityMatch], accept_above: float, now: datetime
 ) -> None:
     """Approve by rule the trial candidates scored for the indication at or above the
@@ -256,7 +258,7 @@ def rescore_claim(
                 again.append((entity, match, record))
     score_matches(session, backend, claim=claim, candidates=again, now=now)
     rescored = [match for _, match, _ in again]
-    _reject_near_zero(rescored, reject_below, now)
-    _approve_confident(session, rescored, accept_above, now)
+    reject_near_zero(rescored, reject_below, now)
+    approve_confident(session, rescored, accept_above, now)
     session.flush()
     return rescored

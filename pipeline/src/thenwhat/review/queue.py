@@ -28,12 +28,14 @@ from thenwhat.decide.steps import (
     MATCH,
     NOT_A_MATCH,
     OTHER_INDICATION,
+    PAPER_MATCH,
     latest_scoring,
     match_ref,
 )
 from thenwhat.domain import Decider, EntityType, EvidenceStage, ReviewState
 from thenwhat.review.decisions import record_decision
-from thenwhat.sources.base import RECORD_URLS
+from thenwhat.sources.base import record_url
+from thenwhat.sources.openalex import OpenAlex
 
 Kind = Literal["claim", "match", "event"]
 
@@ -52,6 +54,8 @@ class QueueItem:
     score: float | None
     # For a candidate match: what the registry record says, when that was kept.
     detail: str | None = None
+    # For a paper candidate: the reason codes found by rule. Empty when it shows none.
+    reasons: tuple[str, ...] = ()
 
 
 def pending_items(
@@ -107,17 +111,36 @@ def pending_items(
 
 
 def _match_item(session: Session, claim: Claim, match: EntityMatch, entity: Entity) -> QueueItem:
-    template = RECORD_URLS.get(match.source_name)
+    link = record_url(match.source_name, match.external_id)
+    if _is_paper_candidate(match, entity):
+        # Its detail line carries the title, year, kind of paper and journal.
+        found = ", ".join(match.reasons) if match.reasons else "none found by rule"
+        return QueueItem(
+            "match",
+            match.id,
+            claim.slug,
+            f"related paper {match.external_id} for {entity.type.value} '{entity.name}'"
+            f"{_score_note(session, match, entity)}. Reasons: {found}",
+            link,
+            match.score,
+            match.record_summary,
+            tuple(match.reasons),
+        )
     return QueueItem(
         "match",
         match.id,
         claim.slug,
         f"{entity.type.value} '{entity.name}' is {match.source_name}"
         f" record {match.external_id}{_score_note(session, match, entity)}",
-        template.format(match.external_id) if template else None,
+        link,
         match.score,
         match.record_summary,
     )
+
+
+def _is_paper_candidate(match: EntityMatch, entity: Entity) -> bool:
+    """A paper the literature search found for the claim's intervention."""
+    return entity.type is EntityType.INTERVENTION and match.source_name == OpenAlex.name
 
 
 def rejected_by_rule(session: Session, *, claim_slug: str | None = None) -> list[QueueItem]:
@@ -191,7 +214,8 @@ def decide_item(
         record_decision(match, state, by=by, now=now)
         if by is Decider.HUMAN:
             label = MATCH if state is ReviewState.APPROVED else NOT_A_MATCH
-            _label(session, ENTITY_MATCH, match_ref(match.id), label)
+            for step in (ENTITY_MATCH, PAPER_MATCH):
+                _label(session, step, match_ref(match.id), label)
         entity = session.get(Entity, match.entity_id)
         assert entity is not None
         claim = session.get(Claim, entity.claim_id)
