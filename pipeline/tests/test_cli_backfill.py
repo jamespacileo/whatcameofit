@@ -477,9 +477,16 @@ def test_labels_are_recorded_and_the_report_gives_precision_and_recall(
     by = {label.link_lead_id: label.labelled_by for label in session.scalars(select(LinkLeadLabel))}
     assert by == {guardian.id: Decider.HUMAN, statnews.id: Decider.ASSISTANT}
     assert result.exit_code == 0, result.output
-    assert "Triage version 1: 1 leads carry a label of yours." in result.output
+    assert (
+        "Triage version 1: 2 leads carry a label that counts: 1 yours, 1 an assistant's."
+        in result.output
+    )
+    assert "You have checked none of the assistant's labels yet." in result.output
     assert "pass at or above   precision   recall   leads passed" in result.output
-    assert "1 leads have only an assistant's label" in result.output
+    spot = run("spot-check-leads")
+    [listed] = [line for line in spot.output.splitlines() if "statnews.com" in line]
+    assert listed.split()[:2] == [str(statnews.id), "not_health"]
+    assert "0.15" not in spot.output
 
 
 def test_a_label_that_is_not_an_option_is_refused_by_the_command(
@@ -502,7 +509,7 @@ def test_the_report_says_so_when_nothing_is_labelled(run, session: Session, tmp_
     result = run("evaluate-leads")
 
     assert result.exit_code == 0, result.output
-    assert "No link lead has a label of yours yet" in result.output
+    assert "No link lead has a label yet" in result.output
     assert "precision" not in result.output
 
 
@@ -563,3 +570,24 @@ def test_the_funnel_reports_where_the_leads_stand(run, session: Session, tmp_pat
     assert "undecided: 2 (set LEAD_PASS_ABOVE and LEAD_REJECT_BELOW to pass any)" in result.output
     assert "read by the model: 0" in result.output
     assert "model cost recorded for triage: $0.00" in result.output
+
+
+def test_labels_from_a_file_are_recorded_and_a_bad_file_records_nothing(
+    run, session: Session, tmp_path: Path
+):
+    """Scenarios: A file of 200 labels, One bad line"""
+    guardian, statnews, _ = scored_leads(run, session, tmp_path)
+    good = tmp_path / "labels.tsv"
+    good.write_text(f"{guardian.id}\ttreatment_report\n{statnews.id}\tnot_health\n")
+    bad = tmp_path / "bad.tsv"
+    bad.write_text(f"{guardian.id}\ttreatment_report\n{statnews.id}\tbreakthrough\n")
+
+    refused = run("label-leads", str(bad), "--as-assistant")
+    recorded = run("label-leads", str(good), "--as-assistant")
+
+    assert refused.exit_code == 1 and "Line 2" in refused.output
+    assert recorded.exit_code == 0, recorded.output
+    assert "Recorded 2 labels from labels.tsv, as an assistant's." in recorded.output
+    assert {label.labelled_by for label in session.scalars(select(LinkLeadLabel))} == {
+        Decider.ASSISTANT
+    }

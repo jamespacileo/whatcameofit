@@ -49,6 +49,9 @@
 - [x] 6.4 Add the gate to the reading step's start (labels at the current triage version, both thresholds set) with `LEAD_EVALUATION_MIN_LABELS`; verify tests cover too few labels, a threshold unset, and labels counting again after a version is raised and the leads rescored
 - [x] 6.5 Verify with a test that the export is the same before and after labelling
 
+- [x] 6.6 Count an assistant's label where no person has labelled, in the figures, the sample and the gate, and say in the report how many labels are a person's, how many an assistant's, and where both exist on how many they agree (operator's decision, 2026-11-14); verify tests cover an assistant's label counting, a person's label overriding it, and the agreement figures
+- [x] 6.7 Add `thenwhat backfill spot-check-leads` and `thenwhat backfill label-leads`; verify tests cover the disagreements and the random draw without scores, the same seed drawing again, a lead leaving the list once the operator labels it, a file recorded as an assistant's, and a bad line recording nothing and being named
+
 ## 7. Reading
 
 The article's date is decided: from the page only (`specs/lead-reading/spec.md`, "The article's date"). The outlet's name is decided: from a checked-in list of display names ("The outlet's name", "The article's title").

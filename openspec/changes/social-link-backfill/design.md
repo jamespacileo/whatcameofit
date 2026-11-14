@@ -171,6 +171,16 @@ Groups 1 to 6 are built. Before the reading step is written, two things the spec
 
    **Decided on 2026-11-14: a list of display names.** `OUTLET_NAMES` in `backfill/outlet_kinds.py` names all 111 listed outlets, in the form entered articles already use; the operator reviews the names. A lead whose outlet has no name there is not fetched or read. The same reasoning settles the title: a source article's title is its page's own headline, never the title a link was shared under, which for Reddit is a person's words and stays private. They are `specs/lead-reading/spec.md`, "The outlet's name" and "The article's title".
 
+## Decided by the operator on 2026-11-14: an assistant's labels count, and the operator spot-checks them
+
+The gate before reading first required 200 labels given by the operator. Asked whether an assistant's 200 labels may open it with the operator spot-checking, the operator answered yes. What follows from that:
+
+- A label is still stored as what it is, a person's or an assistant's. Nothing an assistant labels is ever recorded as a person's.
+- The label that counts for a lead is the person's when there is one and otherwise the assistant's. The figures, the sample (which no longer draws a lead anyone has labelled) and the gate all use the label that counts.
+- `spot-check-leads` lists, without scores, the leads only an assistant has labelled where its label and the score disagree most, and a random 30 of the rest. The random draw is there because where the assistant and triage agree, both can be wrong, and a list of disagreements cannot show that. The operator labels what they check; their label then counts, and the report says how many they checked and on how many they agreed with the assistant.
+- The spot-check is the operator's to do and is not enforced by a count: the gate opens on 200 labels that count. That is the trade the operator chose: triage quality is then measured largely by one model judging another, and the report says how many labels are an assistant's so the figures can be read for what they are.
+- `label-leads` records a file of labels at once, all or none, because 200 commands is no way to label.
+
 ## Open Questions
 
 - How long leads that are unlisted or rejected are kept. They are small and hold no text.

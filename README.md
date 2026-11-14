@@ -293,11 +293,14 @@ thenwhat backfill plan                               # what triage would cost, b
 thenwhat backfill run link_triage                    # twenty headlines to a call; fetches nothing
 thenwhat backfill sample-leads --size 200            # leads to label, from every tenth of the score range
 thenwhat backfill label-lead 4182 treatment_report   # or health_other, or not_health
+thenwhat backfill spot-check-leads                   # an assistant's labels for you to check
 thenwhat backfill evaluate-leads                     # precision and recall at each threshold
 ```
 
 - The score is the probability that the headline reports a specific treatment for a specific condition. It creates and changes nothing.
-- `sample-leads` does not show the scores, so a label cannot lean on them. A label belongs to the lead and holds for every later version of triage. A label an assistant gives is recorded with `--as-assistant` and never counted as yours.
+- `sample-leads` does not show the scores, so a label cannot lean on them. A label belongs to the lead and holds for every later version of triage.
+- An assistant can label the sample: `thenwhat backfill label-leads labels.tsv --as-assistant` records a file with a lead's number and a label on each line. Such a label is stored as an assistant's, never as yours, and counts only where you have not labelled the lead yourself.
+- `thenwhat backfill spot-check-leads` lists what you should then look at: where the assistant's label and the score disagree most, and a random 30 of the rest. Label those yourself; your label counts in place of the assistant's, and the report says on how many you agreed.
 - `evaluate-leads` weights each tenth of the score range by how many leads it holds. Use it to set `LEAD_PASS_ABOVE` and `LEAD_REJECT_BELOW`, which have no default: until both are set, no lead is passed.
 - To reword the triage question, change it, raise the version of `link_triage` and run it again. Your labels count for the new version without being given again.
 
@@ -309,7 +312,7 @@ thenwhat backfill run link_read --limit 200     # always with a limit: what it m
 thenwhat backfill funnel                        # where every lead stands, and what the model calls cost
 ```
 
-- `link_read` refuses to run until 200 leads carry a label of yours at the current version of triage (`LEAD_EVALUATION_MIN_LABELS`) and both thresholds are set.
+- `link_read` refuses to run until 200 leads carry a label, yours or an assistant's, at the current version of triage (`LEAD_EVALUATION_MIN_LABELS`) and both thresholds are set.
 - A lead is read once, with the same extraction as `thenwhat extract new`. If a claim already covers what the article reports, the article is added to it and nothing you reviewed changes. Otherwise a claim is drafted and decided by the rule for drafts; its slug is made by rule and its vertical is chosen by a decision, accepted at `VERTICAL_ACCEPT_ABOVE`.
 - Everything that can be settled without the model is settled first, and costs no model call: an article that has become tracked, a claim that already has `LEAD_READS_PER_CLAIM` articles, an outlet with no display name in `backfill/outlet_kinds.py`, a page the outlet's robots.txt forbids, and a page that gives no publication date or no headline.
 - The article's date and title come from its own page. The date a link was shared and the title it was shared under are never published, and the published address carries no parameter that says where it was shared.

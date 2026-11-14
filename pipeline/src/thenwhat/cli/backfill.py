@@ -21,7 +21,9 @@ from thenwhat.backfill.link_evaluation import (
     Figures,
     evaluate,
     label_lead,
+    label_leads,
     sample_leads,
+    spot_check,
 )
 from thenwhat.backfill.link_funnel import funnel
 from thenwhat.backfill.link_load import load_links
@@ -613,20 +615,27 @@ def evaluate_leads_command() -> None:
         evaluation = evaluate(session, version=version)
     if evaluation.overall.labels == 0:
         out.print(
-            "No link lead has a label of yours yet at this version of triage. Draw leads "
-            "with `thenwhat backfill sample-leads` and label them with "
-            "`thenwhat backfill label-lead`."
+            "No link lead has a label yet at this version of triage. Draw leads with "
+            "`thenwhat backfill sample-leads` and label them with `thenwhat backfill "
+            "label-lead` or `label-leads`."
         )
-        if evaluation.assistant_only:
-            out.print(
-                f"{evaluation.assistant_only:,} leads have only an assistant's label, "
-                "which is not counted."
-            )
         return
     out.print(
-        f"Triage version {version}: {evaluation.overall.labels:,} leads carry a label of yours.",
+        f"Triage version {version}: {evaluation.overall.labels:,} leads carry a label that "
+        f"counts: {evaluation.by_person:,} yours, {evaluation.by_assistant:,} an assistant's.",
         markup=False,
     )
+    if evaluation.by_assistant:
+        checked = (
+            f"You have labelled {evaluation.checked:,} of the leads an assistant labelled "
+            f"and agree on {evaluation.agreed:,}."
+            if evaluation.checked
+            else "You have checked none of the assistant's labels yet."
+        )
+        out.print(
+            f"{checked} See what to check with `thenwhat backfill spot-check-leads`.",
+            markup=False,
+        )
     for line in _figures_lines(evaluation.overall):
         out.print(line, markup=False)
     for platform, figures in evaluation.by_platform.items():
@@ -635,7 +644,7 @@ def evaluate_leads_command() -> None:
             for line in _figures_lines(figures):
                 out.print(line, markup=False)
     if evaluation.disagreements:
-        out.print("Where your label and the score disagree most:", markup=False)
+        out.print("Where the label and the score disagree most:", markup=False)
         for case in evaluation.disagreements:
             out.print(
                 f"  {case.lead_id}  score {case.score:.2f}  labelled {case.label.value}  "
@@ -643,12 +652,71 @@ def evaluate_leads_command() -> None:
                 markup=False,
                 soft_wrap=True,
             )
-    if evaluation.assistant_only:
-        out.print(
-            f"{evaluation.assistant_only:,} leads have only an assistant's label. They are "
-            "not counted in any figure above.",
-            markup=False,
-        )
+
+
+@backfill_app.command("label-leads")
+def label_leads_command(
+    file: Annotated[
+        Path,
+        typer.Argument(
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="A file with a lead's number and a label on each line.",
+        ),
+    ],
+    as_assistant: Annotated[
+        bool,
+        typer.Option(
+            "--as-assistant",
+            help="Record the labels as an assistant's. They are never stored as a person's.",
+        ),
+    ] = False,
+) -> None:
+    """Record the labels in a file: a lead's number and a label on each line, separated
+    by a tab, a comma or spaces.
+
+    All of them or none: a line that cannot be used fails the whole file and is named.
+    Blank lines and lines that start with # are passed over.
+    """
+    settings_or_exit()
+    by = Decider.ASSISTANT if as_assistant else Decider.HUMAN
+    with refusals(), open_session() as session:
+        number = label_leads(session, file.read_text().splitlines(), by=by, now=datetime.now(UTC))
+    whose = "an assistant's" if as_assistant else "yours"
+    out.print(f"Recorded {number:,} labels from {file.name}, as {whose}.", markup=False)
+
+
+@backfill_app.command("spot-check-leads")
+def spot_check_leads_command(
+    seed: Annotated[str, typer.Option(help="The same seed draws the same random leads.")] = "1",
+) -> None:
+    """List the leads that only an assistant has labelled and that you should look at:
+    where its label and the score disagree most, and a random draw of the rest.
+
+    The assistant's label is shown and the score is not. Label a lead yourself with
+    `thenwhat backfill label-lead` and your label counts in place of the assistant's.
+    """
+    settings = settings_or_exit()
+    with refusals(), open_session() as session:
+        found = spot_check(session, version=_triage_version(settings), seed=seed)
+    if not found.disagreements and not found.random:
+        out.print("No lead has only an assistant's label: there is nothing to check.")
+        return
+    for heading, leads in (
+        ("Where the assistant's label and the score disagree most:", found.disagreements),
+        ("A random draw of the other leads an assistant labelled:", found.random),
+    ):
+        if not leads:
+            continue
+        out.print(heading, markup=False)
+        for lead in leads:
+            out.print(
+                f"  {lead.lead_id}\t{lead.assistants_label.value}\t{lead.outlet}\t{lead.title}"
+                f"\t{lead.url}",
+                markup=False,
+                soft_wrap=True,
+            )
 
 
 @backfill_app.command("funnel")
