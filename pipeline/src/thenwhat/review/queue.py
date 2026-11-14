@@ -21,6 +21,7 @@ from thenwhat.db.models import (
     EntityMatch,
     EvidenceEvent,
     FailureFlag,
+    ReportedStatement,
     SourceArticle,
 )
 from thenwhat.decide.steps import (
@@ -32,7 +33,9 @@ from thenwhat.decide.steps import (
     OTHER_INDICATION,
     PAPER_MATCH,
     SAME,
+    SAYS_THIS,
     SOMETHING_ELSE,
+    STATEMENT_CHECK,
     TERM_MATCH,
     latest_scoring,
     match_ref,
@@ -43,7 +46,7 @@ from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import record_url
 from thenwhat.sources.openalex import OpenAlex
 
-Kind = Literal["claim", "match", "event", "term"]
+Kind = Literal["claim", "match", "event", "term", "statement"]
 
 
 class ItemNotFound(EntryError):
@@ -69,7 +72,8 @@ def pending_items(
 ) -> list[QueueItem]:
     """What awaits review, claim by claim: the draft claim, then candidate matches
     (most likely first), then events (oldest first), then candidate subject terms (most
-    likely first, those without a score last)."""
+    likely first, those without a score last), then reported statements (most likely
+    first)."""
     claims = list(session.scalars(select(Claim).order_by(Claim.id)))
     if claim_slug is not None:
         claims = [claim for claim in claims if claim.slug == claim_slug]
@@ -120,7 +124,34 @@ def pending_items(
             .order_by(ClaimTerm.score.desc().nulls_last(), ClaimTerm.id)
         ):
             items.append(_term_item(claim, term))
+        for statement, article in session.execute(
+            select(ReportedStatement, SourceArticle)
+            .join(SourceArticle, SourceArticle.id == ReportedStatement.source_article_id)
+            .where(
+                ReportedStatement.claim_id == claim.id,
+                ReportedStatement.review_state == ReviewState.PENDING,
+            )
+            .order_by(ReportedStatement.confidence.desc(), ReportedStatement.id)
+        ):
+            items.append(_statement_item(claim, statement, article))
     return [item for item in items if kind is None or item.kind == kind]
+
+
+def _statement_item(
+    claim: Claim, statement: ReportedStatement, article: SourceArticle
+) -> QueueItem:
+    """A reported statement, with how its article puts it and which article it is."""
+    return QueueItem(
+        "statement",
+        statement.id,
+        claim.slug,
+        f"reported statement ({statement.kind.value}, as {statement.firmness.value},"
+        f" said by {statement.speaker.value}, resting on {statement.basis.value}):"
+        f" {statement.text}",
+        article.url,
+        statement.confidence,
+        f"{article.outlet}, {article.published_date}, as read {statement.article_read_at:%Y-%m-%d}",
+    )
 
 
 def _match_item(session: Session, claim: Claim, match: EntityMatch, entity: Entity) -> QueueItem:
@@ -233,7 +264,8 @@ def decide_item(
     """Approve or reject an item, or change an earlier decision.
 
     The decider is the operator unless the assistant is named. A decision on an event
-    re-derives the claim's status; one on a subject term never touches it. The
+    re-derives the claim's status; one on a subject term or a reported statement never
+    touches it. The
     operator's decision on a match is recorded as the human label for the score it was
     given; the assistant's is not, because a label is a person's answer. Rejecting a
     match also rejects the events read from it.
@@ -289,6 +321,16 @@ def decide_item(
                 label = {TermFit.EXACT: SAME, TermFit.BROADER: BROADER}.get(term.fit)
             if label is not None:
                 _label(session, TERM_MATCH, term_ref(term), label)
+    elif kind == "statement":
+        statement = session.get(ReportedStatement, item_id)
+        if statement is None:
+            raise ItemNotFound(f"There is no reported statement with id {item_id}.")
+        record_decision(statement, state, by=by, now=now)
+        if by is Decider.HUMAN and state is ReviewState.APPROVED:
+            # An approval says the article says it. A rejection does not say which of
+            # the other answers was right, or may be for another reason, so it labels
+            # nothing.
+            _label(session, STATEMENT_CHECK, statement.decision_ref, SAYS_THIS)
     else:
         event = session.get(EvidenceEvent, item_id)
         if event is None:
