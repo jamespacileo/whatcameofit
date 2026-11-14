@@ -196,7 +196,7 @@ test("Scenario: Lists on the home page", () => {
   const html = page("index.html");
   // One tab per list that has rows, in a fixed order.
   const tabs = [...html.matchAll(/role="tab"[^>]*data-view="(\w+)"/g)].map((match) => match[1]);
-  assert.deepEqual(tabs, ["headlines", "moved", "promised", "quiet"]);
+  assert.deepEqual(tabs, ["headlines", "claims", "moved", "promised", "quiet"]);
   // A change names the status from that day and the one before, in the site's wording.
   const moved = html.slice(html.indexOf('id="feed-moved"'), html.indexOf('id="feed-promised"'));
   assert.equal(count(moved, "<tr role=\"row\""), 3, "two changes under one header row");
@@ -206,6 +206,113 @@ test("Scenario: Lists on the home page", () => {
   assert.match(promised, /human trials by <strong>2025<\/strong>/);
   assert.match(promised, /Preclinical only/);
   assert.match(html.slice(html.indexOf('id="feed-quiet"')), /No signal for 6 years/);
+});
+
+// Openspec site-publishing, change home-claims-list: the claims themselves, as a list.
+const claimsPanel = () => {
+  const html = page("index.html");
+  return html.slice(html.indexOf('id="feed-claims"'), html.indexOf('id="feed-moved"'));
+};
+const rowsOf = (panel) => panel.split('<tr role="row"').slice(2);
+
+test("Scenario: Every claim once", () => {
+  const html = page("index.html");
+  const headlines = html.slice(html.indexOf('id="feed-headlines"'), html.indexOf('id="feed-claims"'));
+  // A claim with several reports has a row for each under Headlines and one under Claims.
+  assert.ok(count(headlines, 'href="/phase-claim/"') + count(headlines, 'href="/phase-claim"') >= 1);
+  const rows = rowsOf(claimsPanel());
+  assert.equal(rows.length, 3);
+  for (const slug of ["phase-claim", "quiet-claim", "approved-claim"]) {
+    assert.equal(rows.filter((row) => row.includes(`href="/${slug}`)).length, 1, slug);
+  }
+  assert.match(claimsPanel(), /<span class="count">3<\/span>|1–3 of 3|3 claims/);
+});
+
+test("Scenario: Claims in order of first report", () => {
+  const order = rowsOf(claimsPanel()).map((row) => row.match(/href="\/([\w-]+)/)[1]);
+  // 2019, then 2018, then 2017: a date, whatever the status or the testing.
+  assert.deepEqual(order, ["phase-claim", "quiet-claim", "approved-claim"]);
+});
+
+test("Scenario: Narrowed to a status", () => {
+  // The home page's own status counts and topic choice narrow every list by these marks.
+  for (const row of rowsOf(claimsPanel())) {
+    assert.match(row, /data-status="\w+"/);
+    assert.match(row, /data-topic="gum-disease"/);
+  }
+  assert.match(claimsPanel(), /data-none hidden>Nothing in this list for that choice\./);
+});
+
+test("Scenario: Narrowed to a topic", () => {
+  // Every row names its topic, which the home page's topic choice narrows by.
+  const rows = rowsOf(claimsPanel());
+  assert.equal(rows.filter((row) => /data-topic="[\w-]+"/.test(row)).length, rows.length);
+});
+
+test("Scenario: A list named in the address", () => {
+  const html = page("index.html");
+  // The tab names the panel it shows; the page's script records the one in view as
+  // "view" in the address. Without scripting the tabs stay hidden and every list is
+  // shown under its own heading, Claims after Headlines.
+  assert.match(html, /role="tab"[^>]*aria-controls="feed-claims"[^>]*data-view="claims"/);
+  assert.match(html, /role="tablist" aria-label="Lists of tracked claims" hidden/);
+  assert.match(claimsPanel(), /<h2 class="bar">\s*Every claim tracked\s*<\/h2>/);
+  assert.ok(html.indexOf('id="feed-headlines"') < html.indexOf('id="feed-claims"'));
+});
+
+test("Scenario: More claims than a page holds", () => {
+  const panel = claimsPanel();
+  // The list's own pager, which says which rows of the total are in view.
+  assert.match(panel, /data-pager="claims"/);
+  assert.match(wordsOf(panel), /3 claims/);
+});
+
+test("Scenario: Narrow screen, a list of claims", () => {
+  const styles = fs
+    .readdirSync(path.join(dist, "_astro"))
+    .filter((name) => name.endsWith(".css"))
+    .map((name) => fs.readFileSync(path.join(dist, "_astro", name), "utf8"))
+    .join("");
+  // Under 40rem each claim is a block: no cell keeps a column's share of the width.
+  assert.match(styles, /\.index td\.tested,[^{]*\.index:has\(\.tested\) \.status[^{]*\{width:auto\}/);
+  assert.match(claimsPanel(), /class="tested" data-column="Tested in people"/);
+});
+
+test("Scenario: Promise beside the record", () => {
+  const panel = claimsPanel();
+  const heads = [...panel.matchAll(/<th role="columnheader"[^>]*>([^<]+)</g)].map((match) => match[1].trim());
+  assert.deepEqual(heads, ["Claim", "First reported", "Tested in people", "Promised", "Status now"]);
+  const quiet = rowsOf(panel).find((row) => row.includes('href="/quiet-claim'));
+  // The promise, on the promise colour, between how much it was tested and its status.
+  assert.ok(quiet.indexOf('class="tested"') < quiet.indexOf('class="promise"'));
+  assert.ok(quiet.indexOf('class="promise"') < quiet.indexOf('class="status"'));
+  assert.match(quiet, /<strong>2025<\/strong>/);
+});
+
+test("Scenario: Claim with three trials", () => {
+  const words = (slug) => wordsOf(rowsOf(claimsPanel()).find((row) => row.includes(`href="/${slug}`)));
+  // The count, the largest size and whether results are posted: never what was found.
+  assert.match(words("phase-claim"), /In 7 trials\s+1,200 people in the largest\. Results posted by 1 of 7/);
+  assert.match(words("quiet-claim"), /None on record\s+The first report was about a study in animals/);
+  assert.match(claimsPanel(), /counts the trials on record; it does not say what they found\./);
+  assert.doesNotMatch(wordsOf(claimsPanel()), /p\s*[=<]|\d\.\d/);
+});
+
+test("Scenario: Same words as the claim page", () => {
+  const row = wordsOf(rowsOf(claimsPanel()).find((entry) => entry.includes('href="/phase-claim')));
+  const brief = wordsOf(sectionOf(page("phase-claim/index.html"), "brief"));
+  assert.match(brief, /In 7 trials\. 1,200 people in the largest/);
+  assert.match(row, /In 7 trials/);
+  assert.match(row, /1,200 people in the largest/);
+});
+
+test("Scenario: Topic page", () => {
+  const html = page("topic/gum-disease/index.html");
+  const heads = [...html.matchAll(/<th role="columnheader"[^>]*>([^<]+)</g)].map((match) => match[1].trim());
+  assert.ok(heads.includes("Tested in people"), heads.join(", "));
+  assert.equal(count(html, 'class="tested"'), 3);
+  // Under 40rem the cell is a labelled line of its block.
+  assert.match(html, /class="tested" data-column="Tested in people"/);
 });
 
 test("Scenario: Counts on the path", () => {
