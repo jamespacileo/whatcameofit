@@ -427,3 +427,22 @@ All 104 articles together:
 What the 446 are: effect 171, how it works 102, safety 51, what it could lead to 45, who it could help 41, comparison 36. As fact 301, as a possibility 145. Said by the article itself 264, a researcher 129, another expert 27, a company 25, a patient 1. Resting, as the article gives it, on a study in people 136, in animals 90, laboratory work 42, not said 178.
 
 Limits. One run, one model each for proposing and checking, and the 218 statements approved in task 6.3 were not read one by one. The model's cost was recorded in the copy's ledger, not the real database's, so the real ledger does not count these $0.10. Statements are of each page as read on 14 November; an article that gave no statement would be read again by a later `--missing` run, though here every article read gave at least one.
+
+### On the real database (14 November 2026, later)
+
+After #81 merged, the real database was copied to `thenwhat_pre_0011`, migrated from 0010 to 0011, and given its statements with `thenwhat statements --missing`. The articles were read again that evening, so the figures differ a little from the copy's.
+
+| | Count |
+| --- | --- |
+| Articles | 104 |
+| Read | 100 |
+| Need pasted text | 4: three from The US Sun and one from Queen's University Belfast (robots.txt) |
+| Statements proposed | 509 |
+| Refused for copying | 52 |
+| Refused for any other rule | 0 |
+| Approved by rule | 235 |
+| Pending | 222 |
+| Not checked | 0 |
+| Claims with at least one approved statement | 77 of 84 |
+| Pages that no longer matched their stored hash | 70 of 100 |
+| Model cost | $0.0973 (proposing $0.0620, checking $0.0353); this month's ledger then stood at $0.86 of $13 |
