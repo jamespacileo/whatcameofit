@@ -64,13 +64,23 @@ before(() => {
 });
 
 test("Scenario: Checked on the reader's own date", () => {
-  assert.match(dated, /Registries last checked\s+<span class="unbroken on-wide">Wednesday 10 September 2025<\/span>/);
+  // Read without its styles the heading is the long date, once: a phone leaves out the
+  // weekday and the end of the month's name, and nothing is said twice.
+  const title = dated.slice(dated.indexOf('id="days-title"'), dated.indexOf("</h2>", dated.indexOf('id="days-title"')));
+  assert.equal(
+    title.slice(title.indexOf(">") + 1).replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim(),
+    "Registries last checked Wednesday 10 September 2025",
+  );
+  assert.match(title, /<span class="on-wide">Wednesday <\/span>10 Sep<span class="on-wide">tember<\/span> 2025/);
   // The seven days up to it, each leading to its heading.
   for (const day of ["04", "05", "06", "07", "08", "09", "10"]) {
     assert.ok(dated.includes(`<a href="#d-2025-09-${day}"`), `no link to 2025-09-${day}`);
     assert.ok(dated.includes(`id="d-2025-09-${day}"`), `no heading for 2025-09-${day}`);
   }
-  assert.match(dated, /<a href="#d-2025-09-10" aria-current="date"/);
+  // The day of the last check is marked as that. Which day is today is the reader's
+  // browser's to say: the built page calls no day the current date.
+  assert.match(dated, /<a href="#d-2025-09-10" data-checked-day/);
+  assert.ok(!dated.includes('aria-current="date"'));
   // No heading is dated after the last check, and none says "Today" as built: that
   // word is the reader's browser's to add.
   const days = [...dated.matchAll(/id="d-(\d{4}-\d{2}-\d{2})"/g)].map(([, day]) => day);

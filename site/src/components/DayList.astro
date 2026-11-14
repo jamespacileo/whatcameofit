@@ -28,15 +28,21 @@ const KINDS = [
   { kind: "promise", name: "Promised" },
 ] as const;
 const earlier = list.headings.filter((heading) => heading.span !== "day");
+// "Saturday 14 November", in its parts.
+const [checkedWeekday, checkedNumber, checkedMonth] = dayName(list.checked).split(" ");
+const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checkedMonth };
 ---
 
 <section class="days" aria-labelledby="days-title" data-days data-checked={list.checked}>
   <div class="days-head">
     <h2 class="days-title" id="days-title">
       Registries last checked{" "}
-      <span class="unbroken on-wide">{dayName(list.checked)} {list.checked.slice(0, 4)}</span>
-      {/* A phone has one line for it; the row of days under it gives the weekday. */}
-      <span class="unbroken on-phone">{formatDate(list.checked)}</span>
+      {/* A phone has one line for it, so the weekday and the end of the month's name are
+          not drawn there; the row of days under it gives the weekday. Read without its
+          styles the heading is the long date, once. */}
+      <span class="unbroken">
+        <span class="on-wide">{checkedDay.weekday} </span>{checkedDay.day} {checkedDay.month.slice(0, 3)}<span class="on-wide">{checkedDay.month.slice(3)}</span> {list.checked.slice(0, 4)}
+      </span>
     </h2>
     <slot name="tally" />
     {/* The seven days up to the last check. Each leads to its heading below. */}
@@ -44,7 +50,9 @@ const earlier = list.headings.filter((heading) => heading.span !== "day");
       {
         list.week.map((day) => (
           <li>
-            <a href={`#d-${day.date}`} aria-current={day.date === list.checked ? "date" : undefined}>
+            {/* The day of the last check is marked as that, not as today: a page can be
+                read after the day it was built. The script says which day is today. */}
+            <a href={`#d-${day.date}`} data-checked-day={day.date === list.checked ? "" : undefined}>
               <span class="week-day">{weekday(day.date)}</span>
               <span class="week-date">{Number(day.date.slice(8))}</span>
               <span class="week-count">
@@ -61,8 +69,7 @@ const earlier = list.headings.filter((heading) => heading.span !== "day");
       Shown by the script: without it there is nothing to pick. */}
   <div class="kinds" role="group" aria-label="Show rows of one kind" hidden data-kinds>
     <button type="button" class="share" aria-pressed="true" data-kind-pick="all">
-      <span class="on-wide">Everything</span><span class="on-phone">All</span>
-      <span class="kind-count">{rows.length + list.toCome.length}</span>
+      All <span class="kind-count">{rows.length + list.toCome.length}</span>
     </button>
     {
       KINDS.filter(({ kind }) => totals[kind] > 0).map(({ kind, name }) => (
@@ -220,6 +227,8 @@ const earlier = list.headings.filter((heading) => heading.span !== "day");
     const line = document.createElement("p");
     line.className = "last-visit";
     line.id = "last-visit";
+    // Set further down, once the list can be opened as far as a heading.
+    let toLastVisit = () => {};
     const drawLastVisit = () => {
       line.remove();
       if (visitNote) visitNote.hidden = true;
@@ -243,11 +252,39 @@ const earlier = list.headings.filter((heading) => heading.span !== "day");
         const link = document.createElement("a");
         link.href = "#last-visit";
         link.textContent = "Go to where you left off";
+        // A second press changes no address, so the press itself leads there.
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          toLastVisit();
+        });
         visitNote.replaceChildren(
-          `${index} ${index === 1 ? "row is" : "rows are"} dated since your last visit on ${day}. `,
+          `Dated since your last visit on ${day}: ${countsText(kindsOf(dated.slice(0, index)))}. `,
           link,
         );
         visitNote.hidden = false;
+      }
+    };
+
+    // The seven days: a cell says how many reports are left under its heading, and
+    // leads there only while the heading is shown.
+    const cells = [...root.querySelectorAll<HTMLAnchorElement>(".week a")].map((cell) => ({
+      cell,
+      count: cell.querySelector<HTMLElement>(".week-count")!,
+      all: cell.querySelector<HTMLElement>(".week-count")!.textContent!,
+      href: cell.getAttribute("href")!,
+      group: groups.find((group) => `#${group.id}` === cell.getAttribute("href")),
+    }));
+    for (const { cell, group } of cells) {
+      // Said to be the current date only when it is the reader's own.
+      if (group?.dataset.date === today) cell.setAttribute("aria-current", "date");
+    }
+    const drawWeek = (narrowed: boolean) => {
+      for (const { cell, count, all, href, group } of cells) {
+        if (!group) continue;
+        const left = rowsIn(group).filter((row) => !out(row) && !isPicked(row) && row.dataset.kind === "report").length;
+        count.textContent = !narrowed ? all : left === 0 ? "none" : `${left} ${left === 1 ? "report" : "reports"}`;
+        if (group.hidden) cell.removeAttribute("href");
+        else cell.setAttribute("href", href);
       }
     };
 
@@ -279,6 +316,7 @@ const earlier = list.headings.filter((heading) => heading.span !== "day");
         shown += left.length;
       }
       if (pickedNote) pickedNote.hidden = !picked || out(picked);
+      drawWeek(narrowed);
       none.hidden = shown > 0;
       if (control) {
         control.hidden = later === 0;
@@ -301,19 +339,32 @@ const earlier = list.headings.filter((heading) => heading.span !== "day");
       refresh();
     };
     control?.querySelector("button")!.addEventListener("click", () => reveal(BATCH));
-    const revealTo = (id: string) => {
-      const target = groups.find((group) => group.id === id);
-      if (!target) return;
+    const openTo = (target: HTMLElement) => {
+      if (!target.hasAttribute("data-earlier")) return;
       for (const group of groups) {
         group.removeAttribute("data-earlier");
         if (group === target) break;
       }
       refresh();
+    };
+    const revealTo = (id: string) => {
+      const target = groups.find((group) => group.id === id);
+      if (!target) return;
+      openTo(target);
       target.scrollIntoView({ block: "start" });
+    };
+    // The line can stand under a heading that is not yet shown: the list is opened as
+    // far as it first.
+    toLastVisit = () => {
+      if (!line.isConnected) return;
+      const group = line.closest<HTMLElement>("[data-group]") ?? (line.nextElementSibling as HTMLElement | null);
+      if (group) openTo(group);
+      line.scrollIntoView({ block: "center" });
     };
     const fromAddress = () => {
       const id = decodeURIComponent(location.hash.slice(1));
-      if (/^[dwy]-/.test(id)) revealTo(id);
+      if (id === "last-visit") toLastVisit();
+      else if (/^[dwy]-/.test(id)) revealTo(id);
     };
     addEventListener("hashchange", fromAddress);
     // Paper gets the whole list.
@@ -382,11 +433,6 @@ const earlier = list.headings.filter((heading) => heading.span !== "day");
     text-wrap: balance;
   }
 
-  /* Wording that has a shorter form on a phone. One of the two is drawn. */
-  .days .on-phone {
-    display: none;
-  }
-
   .days-head .tally {
     margin: 0.4rem 0 0;
     font-size: 0.95rem;
@@ -424,8 +470,12 @@ const earlier = list.headings.filter((heading) => heading.span !== "day");
     background: var(--panel);
   }
 
-  .week a[aria-current] {
+  .week a[data-checked-day] {
     background: var(--tint);
+  }
+
+  .week a:not([href]) {
+    color: var(--muted);
   }
 
   .week a:focus-visible {
@@ -870,8 +920,15 @@ const earlier = list.headings.filter((heading) => heading.span !== "day");
       display: none;
     }
 
-    .days .on-phone {
-      display: inline;
+    .week-count,
+    .kinds .kind-count {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
     }
 
     .days-title {
@@ -888,10 +945,6 @@ const earlier = list.headings.filter((heading) => heading.span !== "day");
 
     .week a {
       padding-block: 0.3rem 0.35rem;
-    }
-
-    .week-count {
-      display: none;
     }
 
     .kinds {
@@ -914,8 +967,9 @@ const earlier = list.headings.filter((heading) => heading.span !== "day");
       height: 0.7rem;
     }
 
-    .kinds .kind-count {
-      display: none;
+    .week a,
+    .kinds .share {
+      position: relative;
     }
 
     .days .scoreboard {
@@ -929,6 +983,14 @@ const earlier = list.headings.filter((heading) => heading.span !== "day");
 
     .row-source {
       align-items: center;
+      /* A topic that wraps under the outlet keeps clear of the headline. */
+      margin-bottom: 0.35rem;
+    }
+
+    /* A headline of one line is still 44 pixels to press. */
+    .row-title a {
+      display: inline-block;
+      min-height: 2.75rem;
     }
 
     /* The outlet's name is enough on a phone; its domain is on the claim page. */
@@ -1004,11 +1066,53 @@ const earlier = list.headings.filter((heading) => heading.span !== "day");
     }
   }
 
+  /* A narrow phone: the four kinds take two rows rather than widen the page. */
+  @media (max-width: 22rem) {
+    .kinds {
+      flex-wrap: wrap;
+    }
+  }
+
+  /* A forced palette drops fills: what is picked gains an outline, a registry row and
+     the "on record" cell an edge, and the three swatches are told apart by their edge. */
+  @media (forced-colors: active) {
+    .kinds .share[aria-pressed="true"],
+    .topic-pick[aria-pressed="true"],
+    .week a[data-checked-day] {
+      outline: 2px solid CanvasText;
+      outline-offset: -2px;
+    }
+
+    .record-row,
+    .row-promise,
+    .visit-note {
+      border: 1px solid CanvasText;
+    }
+
+    .swatch.record {
+      border-width: 3px;
+    }
+
+    .last-visit::before,
+    .last-visit::after {
+      border-top-color: CanvasText;
+    }
+  }
+
   @media print {
     .kinds,
     .earlier,
     .days-side {
       display: none;
+    }
+
+    /* A row is never split across sheets, and a heading stays with its first row. */
+    .day-row {
+      break-inside: avoid;
+    }
+
+    .day-head {
+      break-after: avoid;
     }
 
     .day-group[data-earlier] {

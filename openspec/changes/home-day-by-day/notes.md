@@ -44,3 +44,16 @@ The site's tests run in Node and cannot lay a page out, so these were measured i
 - "Today" and "Yesterday" were seen on the reader's own date. The case of a page built before the reader's date was not driven in the browser; it is the same comparison, and the built page carries no such word (a page test).
 
 Not captured: keyboard focus, hover, print and a forced palette.
+
+## The finish review (task 7.3)
+
+Saved as `.impeccable/critique/2026-11-14T23-04-38Z__site-src-pages-index-astro.md`: no P0, four P1, six P2. Eight were fixed and checked in the preview (the dead "Go to where you left off", a 24 px headline on a phone, the kind controls at 320 px, the checked day announced as today, the seven days while the list is narrowed, a forced palette and print, counts dropped on a phone and wording doubled without styles, a topic touching the headline).
+
+Open, and the operator's to decide:
+
+1. **The sentence wording** (task 2.3, above). One point the reviewer raised: "none with results posted" states a zero, while a zero of completed trials is left out. Either both zeros are said ("1 trial on record, none completed, none with results posted") or neither ("1 trial on record.").
+2. **A status beside a count that seems to contradict it.** Four published claims stand at "Trial registered" ("A trial in people is registered") while their row says, for one of them, "3 trials on record, 3 completed, 3 with results posted": `tourette-syndrome-wrist-nerve-stimulation`, `ptsd-personalised-magnetic-stimulation`, `ovarian-cancer-salpingectomy`, `type-2-diabetes-remission-diet-exercise`. Both lines rest on the same approved records. The trials have no phase (devices, procedures, a diet), and the status rule counts a trial as started only when it has a phase. Before this change the two facts were on different parts of a claim page; the row now sets them side by side. This is a question about the status rule or its gloss, not about this change, and nothing was altered.
+
+Also open: on paper with scripting off, the promises to come stay inside their folded section. Not seen: keyboard focus, hover, print and a forced palette.
+
+After the review's fixes: 480 site tests pass. `make check` passed before them and was not run again in full; the site's tests and a build from the published export were.
