@@ -61,24 +61,44 @@ export const isSince = (day: string, from: string, today: string) => day >= from
 export interface ChangedPart {
   /** The list on the home page that holds these rows. */
   view: "headlines" | "moved" | "promised";
+  /** How many rows are dated in the span; none is said in words, not left out. */
+  count: number;
   text: string;
 }
 
-const counted = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
+type Counts = { reports: number; moves: number; promises: number };
 
-/** The counts as words, in the order of the lists. A count of none is left out. */
-export function changedParts(counts: { reports: number; moves: number; promises: number }): ChangedPart[] {
+const ofTotal = (count: number, total: number, one: string, many: string) =>
+  `${count === 0 ? "none" : count} of ${total} ${total === 1 ? one : many}`;
+
+/**
+ * The counts as words, each beside the total its list shows, so "1 status change" is
+ * never read against a tab that says 38. Status changes are what only this site has,
+ * so their none is said; a list with none of the others is left out. With nothing
+ * dated in the span at all there are no parts, and the page says so in a sentence.
+ */
+export function changedParts(counts: Counts, totals: Counts): ChangedPart[] {
+  if (counts.reports + counts.moves + counts.promises === 0) return [];
   const parts: ChangedPart[] = [];
   if (counts.reports > 0) {
-    parts.push({ view: "headlines", text: counted(counts.reports, "news report", "news reports") });
+    parts.push({
+      view: "headlines",
+      count: counts.reports,
+      text: ofTotal(counts.reports, totals.reports, "news report", "news reports"),
+    });
   }
-  if (counts.moves > 0) {
-    parts.push({ view: "moved", text: counted(counts.moves, "status change", "status changes") });
+  if (totals.moves > 0) {
+    parts.push({
+      view: "moved",
+      count: counts.moves,
+      text: ofTotal(counts.moves, totals.moves, "status change", "status changes"),
+    });
   }
   if (counts.promises > 0) {
     parts.push({
       view: "promised",
-      text: counted(counts.promises, "promised date reached", "promised dates reached"),
+      count: counts.promises,
+      text: ofTotal(counts.promises, totals.promises, "promised date reached", "promised dates reached"),
     });
   }
   return parts;

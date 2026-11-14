@@ -437,7 +437,7 @@ a.chip:hover {
   font-weight: 600;
   color: var(--blue);
   background: none;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--ring);
   border-radius: 999px;
   padding: 0.2rem 0.8rem;
   cursor: pointer;
@@ -460,6 +460,56 @@ a.share {
 
 .share[aria-pressed="true"] svg {
   fill: currentColor;
+}
+
+/* Follow with its words: the pill, then what it does and where the list is kept. */
+.follow-offer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.9rem;
+  margin-top: 0.9rem;
+}
+
+.follow-offer .share {
+  flex: none;
+}
+
+.follow-offer .entry-note {
+  flex: 1 1 16rem;
+  margin: 0;
+  max-width: 52ch;
+}
+
+.again .follow-offer {
+  margin-top: 1.1rem;
+}
+
+/* For a reader who follows the claim and last saw another status. */
+.was-note {
+  margin: 0.9rem 0 0;
+  font-weight: 600;
+}
+
+/* How to hear of a change without looking for one. */
+.keep-up p {
+  max-width: var(--measure);
+}
+
+.keep-feed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.9rem;
+  margin-top: 0.7rem;
+}
+
+.keep-feed .entry-note {
+  margin: 0;
+}
+
+.closing .suggest {
+  margin-top: 1.1rem;
 }
 
 /* Follow and Share, together at the title's far side. */
@@ -555,7 +605,7 @@ a.share {
   .record .origin a,
   .record > span > a,
   .index .claim a {
-    padding-block: 0.6rem;
+    padding-block: 0.75rem;
   }
 
   /* A headline is a box of its own, so its padding is taken back out of the page. */
@@ -1987,6 +2037,11 @@ main nav.contents ul li + li {
   text-decoration-thickness: 2px;
 }
 
+.text-control[aria-pressed="true"] {
+  color: var(--ink);
+  text-decoration-thickness: 2px;
+}
+
 /* One word on a row dated since the reader's last visit, or on a followed claim whose
    status has changed. The words beside it say what; the tag never stands alone. */
 .new-tag {
@@ -2040,7 +2095,7 @@ main nav.contents ul li + li {
   font-weight: 600;
   color: var(--blue);
   background: none;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--ring);
   border-radius: 999px;
   min-height: 2.75rem;
   padding: 0 1rem;
@@ -2154,17 +2209,81 @@ main nav.contents ul li + li {
   padding: 0 0.45rem;
 }
 
+/* On a phone the order drawn is: what is dated since the last visit, the tabs, the
+   control that narrows, the list; then the tally. A keyboard still moves in the
+   order of the page. The tabs lose their counts to fit one row, and wrap where they
+   cannot; the list's heading is left to the tab that names it. */
 @media (max-width: 40rem) {
-  .feed-tabs {
+  .front {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .front > .following {
+    order: 1;
+  }
+
+  .front > .since {
+    order: 2;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+  }
+
+  .front > .feed {
+    order: 3;
+  }
+
+  .front > .tally {
+    order: 4;
+    margin-top: 1.4rem;
+  }
+
+  .feed {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .feed > .feed-tabs {
+    order: 1;
     flex-wrap: wrap;
-    gap: 0 1rem;
+    justify-content: space-between;
+    gap: 0 0.5rem;
+    margin-top: 0.7rem;
     overflow-x: visible;
   }
 
+  .feed > .scoreboard {
+    order: 2;
+    margin-top: 0.7rem;
+  }
+
+  .feed > .feed-panel {
+    order: 3;
+  }
+
   .feed-tabs [role="tab"] {
-    flex: 1 1 40%;
-    justify-content: flex-start;
+    flex: 0 1 auto;
+    font-size: 0.85rem;
     min-height: 2.75rem;
+    padding-inline: 0;
+  }
+
+  .feed-tabs .count {
+    display: none;
+  }
+
+  .feed.tabbed .feed-panel > .bar {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .feed.tabbed .feed-panel > .bar + * {
+    margin-top: 0.8rem;
   }
 }
 
@@ -2184,10 +2303,20 @@ main nav.contents ul li + li {
   table.index td.claim .entry-note a,
   .more-topics a,
   .on-this-day .bar-row a,
-  .feed-link a,
-  .page-foot .entry-note a {
+  .page-foot .entry-note a,
+  .following .text-control,
+  .about-page a {
     display: inline-block;
     padding-block: 0.65rem;
+  }
+
+  .post-to summary,
+  .embed-how summary {
+    padding-block: 0.65rem;
+  }
+
+  .follow-offer .entry-note {
+    flex-basis: 100%;
   }
 }
 

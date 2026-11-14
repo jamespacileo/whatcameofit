@@ -1,6 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
 import ClaimTable from "../../components/ClaimTable.astro";
+import LookupAgain from "../../components/LookupAgain.astro";
 import SharePill from "../../components/SharePill.astro";
 import { data, type StatusCode } from "../../lib/export";
 import { topicSummary } from "../../lib/status";
@@ -55,4 +56,5 @@ const summary = topicSummary(counts);
       </>
     )
   }
+  <LookupAgain />
 </Base>

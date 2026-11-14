@@ -13,22 +13,24 @@ interface Props {
   /** What a row is: "headline", "headlines". */
   one: string;
   many: string;
+  /** What the pager's rows are, when two lists on a page share the same noun. */
+  label?: string;
 }
 
-const { name, total, size, one, many } = Astro.props;
+const { name, total, size, one, many, label = many } = Astro.props;
 const first = pageOf(total, size, 1);
 ---
 
 <nav
   class="pager"
-  aria-label={`Pages of ${many}`}
+  aria-label={`Pages of ${label}`}
   data-pager={name}
   data-size={size}
   data-one={one}
   data-many={many}
   hidden
 >
-  <button type="button" data-step="-1" aria-disabled="true">Previous</button>
+  <button type="button" data-step="-1" aria-disabled="true" tabindex="-1">Previous</button>
   <span class="pager-at" aria-live="polite" data-at>{pageLine(first, total, one, many)}</span>
   <button type="button" data-step="1">Next</button>
 </nav>
@@ -68,7 +70,11 @@ const first = pageOf(total, size, 1);
       line.textContent = pageLine(at, list.length, nav.dataset.one!, nav.dataset.many!);
       for (const step of steps) {
         const to = page + Number(step.dataset.step);
-        step.setAttribute("aria-disabled", String(to < 1 || to > at.pages));
+        const off = to < 1 || to > at.pages;
+        step.setAttribute("aria-disabled", String(off));
+        // A step that leads nowhere is passed over by the Tab key. It keeps the focus
+        // it already has, so pressing Next to the last page does not drop the reader.
+        step.tabIndex = off ? -1 : 0;
       }
     };
 
