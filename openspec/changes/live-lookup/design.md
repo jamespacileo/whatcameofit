@@ -8,6 +8,10 @@ The engine takes text, not an address. Where the text comes from is the open par
 
 Since 2026-11-12 the engine also takes what the article's page says of itself (`thenwhat.extract.page`, `site/worker/page.mjs`): the headline, summary and date from its tags, the article from its structured data, and the papers and registry records it links to. A linked paper's trial is looked up through Europe PMC, which the pipeline already uses; no new source was added. The model is also asked what the text says of the trial itself (its name, its size, who ran it), and each record is compared with that by rule (`thenwhat.lookup.details`, `site/worker/details.mjs`). Records the article points to by number, and records that agree with more of those details, are ranked first among the ones that read as trials of the treatment.
 
+Since 2026-11-14 a drug's development codes come from the Global Substance Registration System (`thenwhat.sources.gsrs`, `thenwhat.resolve.codes`). A code is taken only from the one substance GSRS lists under the names given, letter for letter, and only from the names GSRS itself marks as codes. For a claim, the substance's record and codes are kept in `entity_substance` and `resolve` searches each code within the indication. A lookup asks about the names the text gives and keeps nothing. No model supplies a code; the names a model knows (task 4.1) stay apart and are not asked about.
+
+The codes are not written into the intervention's `search_phrases`, though they are searched the same way. That column is cut to three phrases whenever an article is read, and it also feeds the paper search, where a code would change every drug claim's one paid search. Kept in their own table, the codes carry their source and reach only the trial registry.
+
 `thenwhat outlets` records which outlets can be read and which of these signals their pages carry (`docs/outlets.md`).
 
 ## Decided
@@ -34,6 +38,8 @@ These change what readers see or what the project promises. The first is decided
 3. **How a blocked article is read.** Measured on 2026-11-12: The Telegraph, Reuters, Sky News and The Times refuse or paywall automated reading; the Daily Mail varies. Options: (a) the browser extension reads the page the reader already has open and sends its title and text to the lookup; (b) a page-to-text service, which reaches more sites, sees every address, and may ignore a site's robots.txt; (c) accept the gap and ask the reader to paste the headline. The project rule today is to respect robots.txt.
 4. **Social media posts by address.** X, Reddit, Facebook and others do not serve a post to an automated reader, and their terms restrict it. The engine already accepts a post's text. Reading a post by its address needs each platform's terms checked first.
 5. **What the site says it sends.** Until now a pasted link never left the reader's browser. A registry search sends it to the site's server, and the article's text to the model's provider. The words beside the button say so; the method page's "What is counted" section should say it too. (An earlier draft of this point misread the scenario "Pasted link is not tracked" as a privacy promise. It means a link the site does not track.)
+
+6. **May the public lookup ask the substance registry?** (2026-11-14) The pipeline's lookup now finds a trial filed under a development code; the Worker does not, so the two differ until this is decided. For the Worker to do the same it would send the treatment's name, from the reader's search, to `gsrs.ncats.nih.gov` (a United States government host, CC0 data, no key), up to two requests a name. The words beside the search button and the method page's "What is counted" would have to say so. Until then the Worker's parity with the pipeline (task 5.7) is measured without codes.
 
 ## Risks
 

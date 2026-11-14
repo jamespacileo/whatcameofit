@@ -20,7 +20,7 @@ from thenwhat.claims.entities import entities_of
 from thenwhat.claims.entry import add_claim
 from thenwhat.cli import app
 from thenwhat.cli.resolve import Research
-from thenwhat.db.models import DecisionLog, EntityMatch
+from thenwhat.db.models import DecisionLog, EntityMatch, EntitySubstance
 from thenwhat.decide.core import BackendAnswer
 from thenwhat.domain import Decider
 from thenwhat.llm.client import Llm, LlmSettings
@@ -81,6 +81,21 @@ def research(papers: Papers | OpenAlex | None = None) -> Research:
     return Research(papers=papers, numbers=Nothing(), registry=Nothing(), organisations=Nothing())
 
 
+class Substances:
+    """A registry of substances that lists one drug, with one code."""
+
+    name = "gsrs"
+
+    def substances_named(self, name: str) -> list[SourceRecord]:
+        if name != "exampletinib":
+            return []
+        payload = {
+            "substance": {"uuid": "s-1", "_name": "Exampletinib", "approvalID": "UNII000001"},
+            "names": [{"name": "exampletinib", "type": "of"}, {"name": "ABC-123", "type": "cd"}],
+        }
+        return [SourceRecord("gsrs", "s-1", "https://gsrs.test/s-1", payload, NOW)]
+
+
 class Backend:
     name = "fake"
 
@@ -116,6 +131,7 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr("thenwhat.cli.resolve.make_registries", lambda s: (Trials(), Dois()))
     monkeypatch.setattr("thenwhat.cli.resolve.make_backend", lambda s: Backend())
     monkeypatch.setattr("thenwhat.cli.resolve.make_research", lambda s: research())
+    monkeypatch.setattr("thenwhat.cli.resolve.make_substances", lambda s: Substances())
     add_claim(
         session,
         slug=SLUG,
@@ -204,6 +220,36 @@ def test_entity_phrases_refuses_without_claims_or_missing(run, session: Session)
 
     assert result.exit_code == 1
     assert "--missing" in result.output
+
+
+def test_entity_codes_keeps_the_codes_the_substance_registry_lists(run, session: Session):
+    add_claim(
+        session,
+        slug="coded-drug",
+        headline="Drug regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="exampletinib",
+        indication="tooth agenesis",
+    )
+
+    result = run("entity", "codes", "coded-drug", SLUG)
+
+    assert result.exit_code == 0, result.output
+    said = " ".join(result.output.split())
+    assert "coded-drug: GSRS lists 'exampletinib' as Exampletinib (UNII UNII000001)" in said
+    assert "ABC-123" in said
+    # An intervention the registry does not list is said to have no code.
+    assert f"{SLUG}: GSRS lists no substance named 'EX-1 antibody'" in said
+    assert "2 claims: GSRS lists the intervention of 1 under one substance" in said
+    [kept] = session.scalars(select(EntitySubstance)).all()
+    assert kept.codes == ["ABC-123"]
+
+
+def test_entity_codes_refuses_without_claims_or_all(run):
+    result = run("entity", "codes")
+
+    assert result.exit_code == 1
+    assert "Name the claims" in result.output
 
 
 def test_entity_people_lists_and_delete_people_removes_the_marked(run, session: Session):

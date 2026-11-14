@@ -1,0 +1,204 @@
+{
+    "created": 1794685440240,
+    "etag": "f5f9c4200687d8c4",
+    "path": "",
+    "uri": "https://gsrs.ncats.nih.gov/api/v1/substances/search?q=root_names_name%3a%22%5ecin+107%24%22&top=5&fdim=0",
+    "method": "GET",
+    "sha1": "39ea70bfe56c3f933ee858a3a223f239062879bd",
+    "total": 1,
+    "count": 1,
+    "skip": 0,
+    "top": 5,
+    "query": "fdim=0&q=root_names_name:\"^cin 107$\"&top=5",
+    "sideway": [],
+    "facets": [
+        {
+            "name": "root_lastEdited",
+            "values": [
+                {
+                    "label": "Today",
+                    "count": 0
+                },
+                {
+                    "label": "This week",
+                    "count": 0
+                },
+                {
+                    "label": "This month",
+                    "count": 0
+                },
+                {
+                    "label": "Past 6 months",
+                    "count": 1
+                },
+                {
+                    "label": "Past 1 year",
+                    "count": 0
+                },
+                {
+                    "label": "Past 2 years",
+                    "count": 0
+                },
+                {
+                    "label": "Older than 2 years",
+                    "count": 0
+                }
+            ],
+            "enhanced": false,
+            "prefix": "",
+            "_self": "https://gsrs.ncats.nih.gov/api/v1/substances/search/@facets?defaultField=identifiers&wait=false&kind=ix.ginas.models.v1.Substance&skip=0&promoteSpecialMatches=true&fdim=0&includeFacets=true&qSkip=0&simpleSearchOnly=false&qTop=10&q=root_names_name%3A%22%5Ecin+107%24%22&sideway=true&field=root_lastEdited&top=5&fskip=0&fetch=100&includeBreakdown=true"
+        },
+        {
+            "name": "root_approved",
+            "values": [
+                {
+                    "label": "Today",
+                    "count": 0
+                },
+                {
+                    "label": "This week",
+                    "count": 0
+                },
+                {
+                    "label": "This month",
+                    "count": 0
+                },
+                {
+                    "label": "Past 6 months",
+                    "count": 0
+                },
+                {
+                    "label": "Past 1 year",
+                    "count": 0
+                },
+                {
+                    "label": "Past 2 years",
+                    "count": 0
+                },
+                {
+                    "label": "Older than 2 years",
+                    "count": 0
+                }
+            ],
+            "enhanced": false,
+            "prefix": "",
+            "_self": "https://gsrs.ncats.nih.gov/api/v1/substances/search/@facets?defaultField=identifiers&wait=false&kind=ix.ginas.models.v1.Substance&skip=0&promoteSpecialMatches=true&fdim=0&includeFacets=true&qSkip=0&simpleSearchOnly=false&qTop=10&q=root_names_name%3A%22%5Ecin+107%24%22&sideway=true&field=root_approved&top=5&fskip=0&fetch=100&includeBreakdown=true"
+        },
+        {
+            "name": "root_created",
+            "values": [
+                {
+                    "label": "Today",
+                    "count": 0
+                },
+                {
+                    "label": "This week",
+                    "count": 0
+                },
+                {
+                    "label": "This month",
+                    "count": 0
+                },
+                {
+                    "label": "Past 6 months",
+                    "count": 1
+                },
+                {
+                    "label": "Past 1 year",
+                    "count": 0
+                },
+                {
+                    "label": "Past 2 years",
+                    "count": 0
+                },
+                {
+                    "label": "Older than 2 years",
+                    "count": 0
+                }
+            ],
+            "enhanced": false,
+            "prefix": "",
+            "_self": "https://gsrs.ncats.nih.gov/api/v1/substances/search/@facets?defaultField=identifiers&wait=false&kind=ix.ginas.models.v1.Substance&skip=0&promoteSpecialMatches=true&fdim=0&includeFacets=true&qSkip=0&simpleSearchOnly=false&qTop=10&q=root_names_name%3A%22%5Ecin+107%24%22&sideway=true&field=root_created&top=5&fskip=0&fetch=100&includeBreakdown=true"
+        }
+    ],
+    "exactMatches": [],
+    "narrowSearchSuggestions": [],
+    "content": [
+        {
+            "created": 1786408332872,
+            "createdBy": "ADMIN",
+            "lastEdited": 1786408332872,
+            "lastEditedBy": "ADMIN",
+            "deprecated": false,
+            "uuid": "d050debb-84b5-4703-90a9-afc4fd2c21c6",
+            "definitionType": "PRIMARY",
+            "definitionLevel": "COMPLETE",
+            "substanceClass": "chemical",
+            "status": "approved",
+            "version": "25",
+            "approvedBy": "FDA_SRS",
+            "approvalID": "NF3P9Z8J5Y",
+            "structure": {
+                "id": "7b5b29bf-57e2-e8a2-f74d-2f2c5660ead6",
+                "created": 1786408332873,
+                "lastEdited": 1786408332878,
+                "deprecated": false,
+                "digest": "1b2343e04740b89ee2b746e4e736c8a25c2525f6",
+                "molfile": "Propanamide, N-[(8R)-5,6,7,8-tetrahydro-4-(1,2,3,4-tetrahydro-1-methyl-2-oxo-...\n  Marvin  01132106242D          \n\n 27 30  0  0  1  0            999 V2000\n   18.9197   -2.0626    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n   19.6343   -1.6500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   20.3487   -2.0626    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   21.0631   -1.6500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   19.6343   -0.8250    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n   18.9197   -2.8876    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0\n   18.2053   -3.3000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   18.2053   -4.1250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   17.4908   -4.5376    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   16.7763   -4.1250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   16.7763   -3.3000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n   17.4908   -2.8876    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   17.4908   -5.3626    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   16.7763   -5.7750    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   16.7763   -6.6000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   17.4908   -7.0126    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   18.2053   -6.6000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   18.2053   -5.7750    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   17.4907   -7.8376    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n   18.2053   -8.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   16.7763   -8.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   16.0619   -7.8376    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   16.0619   -7.0126    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   16.7763   -9.0750    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n   18.9197   -4.5376    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   19.6343   -4.1250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   19.6343   -3.3000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0  0  0  0\n  2  3  1  0  0  0  0\n  3  4  1  0  0  0  0\n  2  5  2  0  0  0  0\n  6  1  1  6  0  0  0\n  6  7  1  0  0  0  0\n  7  8  1  0  0  0  0\n  8  9  2  0  0  0  0\n  9 10  1  0  0  0  0\n 11 10  2  0  0  0  0\n 12 11  1  0  0  0  0\n  7 12  2  0  0  0  0\n  9 13  1  0  0  0  0\n 13 14  1  0  0  0  0\n 14 15  2  0  0  0  0\n 15 16  1  0  0  0  0\n 17 16  2  0  0  0  0\n 18 17  1  0  0  0  0\n 13 18  2  0  0  0  0\n 16 19  1  0  0  0  0\n 19 20  1  0  0  0  0\n 19 21  1  0  0  0  0\n 22 21  1  0  0  0  0\n 23 22  1  0  0  0  0\n 15 23  1  0  0  0  0\n 21 24  2  0  0  0  0\n  8 25  1  0  0  0  0\n 26 25  1  0  0  0  0\n 27 26  1  0  0  0  0\n  6 27  1  0  0  0  0\nM  END",
+                "smiles": "CCC(=O)N[C@@H]1CCCc2c(cncc21)-c3ccc4c(CCC(=O)N4C)c3",
+                "formula": "C22H25N3O2",
+                "opticalActivity": "( + )",
+                "atropisomerism": "No",
+                "stereoCenters": 1,
+                "definedStereo": 1,
+                "ezCenters": 0,
+                "charge": 0,
+                "mwt": 363.4536,
+                "count": 1,
+                "createdBy": "ADMIN",
+                "lastEditedBy": "ADMIN",
+                "stereochemistry": "ABSOLUTE",
+                "access": [],
+                "references": [
+                    "8abe50e6-c0e6-c5cf-4b5c-9c88d1fd4202",
+                    "85674f6d-93a4-f261-e9c6-d205b72d9e6c"
+                ],
+                "_inchiKey": "VDEUDSRUMNAXJG-LJQANCHMSA-N",
+                "_inchi": "InChI=1S/C22H25N3O2/c1-3-21(26)24-19-6-4-5-16-17(12-23-13-18(16)19)14-7-9-20-15(11-14)8-10-22(27)25(20)2/h7,9,11-13,19H,3-6,8,10H2,1-2H3,(H,24,26)/t19-/m1/s1",
+                "hash": "VDEUDSRUMNAXJG_LJQANCHMSA_N"
+            },
+            "_name": "Baxdrostat",
+            "_approvalIDDisplay": "NF3P9Z8J5Y",
+            "access": [],
+            "_self": "https://gsrs.ncats.nih.gov/api/v1/substances(d050debb-84b5-4703-90a9-afc4fd2c21c6)?view=full",
+            "_moieties": {
+                "count": 1,
+                "url": "https://gsrs.ncats.nih.gov/api/v1/substances(d050debb-84b5-4703-90a9-afc4fd2c21c6)/moieties"
+            },
+            "_names": {
+                "count": 12,
+                "url": "https://gsrs.ncats.nih.gov/api/v1/substances(d050debb-84b5-4703-90a9-afc4fd2c21c6)/names"
+            },
+            "_codes": {
+                "count": 8,
+                "url": "https://gsrs.ncats.nih.gov/api/v1/substances(d050debb-84b5-4703-90a9-afc4fd2c21c6)/codes"
+            },
+            "_modifications": {
+                "count": 0,
+                "url": "https://gsrs.ncats.nih.gov/api/v1/substances(d050debb-84b5-4703-90a9-afc4fd2c21c6)/modifications"
+            },
+            "_properties": {
+                "count": 0,
+                "url": "https://gsrs.ncats.nih.gov/api/v1/substances(d050debb-84b5-4703-90a9-afc4fd2c21c6)/properties"
+            },
+            "_relationships": {
+                "count": 1,
+                "url": "https://gsrs.ncats.nih.gov/api/v1/substances(d050debb-84b5-4703-90a9-afc4fd2c21c6)/relationships"
+            },
+            "_references": {
+                "count": 9,
+                "url": "https://gsrs.ncats.nih.gov/api/v1/substances(d050debb-84b5-4703-90a9-afc4fd2c21c6)/references"
+            }
+        }
+    ]
+}

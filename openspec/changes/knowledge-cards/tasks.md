@@ -88,7 +88,7 @@ State on 2026-11-14, after group 2a was built:
 
 - Built for kind cards, entry terms and supplementary records: the parts of 5a.1, 5a.3 and 5a.6 to 5a.9 that do not concern a target card. Each stays unticked until its target-card part is built.
 - Not built: the target card from a named gene (in 5a.1, 5a.3, 5a.6, 5a.7, 5a.8, 5a.9). It waits for the operator's answer to task 2a.18, which was asked on this date. Named-gene links are gathered, checked and stored meanwhile, and 5a.2's test holds.
-- 5a.10 to 5a.13 were done once on a copy of the real database (`thenwhat_knowledgecards`), because migration 0013 was not yet merged and the real database is shared. The figures and every decision made while reading are in `docs/lookup.md`. They stay unticked until the run and the rejections are repeated on the real database after the merge.
+- 5a.10 to 5a.13 were done once on a copy of the real database (`thenwhat_knowledgecards`), because the change's migration (now 0014) was not yet merged and the real database is shared. The figures and every decision made while reading are in `docs/lookup.md`. They stay unticked until the run and the rejections are repeated on the real database after the merge.
 
 - [ ] 5a.1 Export the intervention's card exact before broader before kind, a kind card marked as the kind of intervention, and at most one target card from an approved named-gene link with its score and reasons; verify export tests for broader and kind both approved, only a kind, and a named gene with no drug record
 - [x] 5a.2 Export no target card while its source is not accepted, the approved link staying stored; verify by test with the target source marked not accepted

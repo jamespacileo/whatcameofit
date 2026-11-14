@@ -26,6 +26,7 @@ from thenwhat.db.models import Claim, Entity, EntityMatch
 from thenwhat.decide.core import Backend, DecisionFailed, UnknownBackend, backend_named
 from thenwhat.decide.steps import has_stage_suggestion, suggest_evidence_stage
 from thenwhat.domain import Decider, EntityType, ReviewState
+from thenwhat.resolve.codes import Codes, Listing, Substances, give_development_codes
 from thenwhat.resolve.organisations import OrganisationRegistry, match_organisations
 from thenwhat.resolve.papers import (
     PaperSearch,
@@ -41,6 +42,7 @@ from thenwhat.sources.base import UnsearchableTerm
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref
 from thenwhat.sources.europepmc import EuropePmc
+from thenwhat.sources.gsrs import Gsrs
 from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.ror import Ror
 
@@ -73,6 +75,34 @@ def make_registries(session: Session) -> tuple[TrialSearch, DoiLookup]:
         ClinicalTrials(session, contact_email=contact),
         Crossref(session, contact_email=contact),
     )
+
+
+def make_substances(session: Session) -> Substances:
+    return Gsrs(session, contact_email=settings_or_exit().contact_email)
+
+
+def say_codes(slug: str, answer: Codes) -> None:
+    """One line on what the registry of substances lists for a claim's intervention.
+    An intervention it does not list is said to have no code; none is guessed."""
+    name = answer.asked
+    if answer.listing is Listing.NOT_LISTED:
+        said = f"GSRS lists no substance named '{name}'. No development code was added."
+    elif answer.listing is Listing.SEVERAL_SUBSTANCES:
+        said = (
+            f"GSRS lists the names of '{name}' under more than one substance"
+            f" ({'; '.join(answer.substances)}). No development code was added."
+        )
+    elif answer.codes:
+        said = (
+            f"GSRS lists '{name}' as {answer.substances[0]}, with the development"
+            f" code(s): {', '.join(answer.codes)}. Each is searched within the indication."
+        )
+    else:
+        said = (
+            f"GSRS lists '{name}' as {answer.substances[0]}, with no development code"
+            " beyond its names."
+        )
+    out.print(f"{slug}: {said}", markup=False)
 
 
 @dataclass(frozen=True, slots=True)
@@ -177,6 +207,42 @@ def entity_phrases(
                 given += 1
                 out.print(f"{claim.slug}: {', '.join(phrases)}", markup=False)
         out.print(f"{given} of {len(claims)} claims were given search phrases.")
+
+
+@entity_app.command("codes")
+def entity_codes(
+    slugs: Annotated[list[str] | None, typer.Argument(help="Slugs of the claims.")] = None,
+    every: Annotated[bool, typer.Option("--all", help="Every claim.")] = False,
+) -> None:
+    """Look each claim's intervention up in the substance registry (GSRS) and keep the
+    development codes it lists, such as CIN-107 for baxdrostat.
+
+    A code is kept only when the registry lists the intervention's names, letter for
+    letter, under exactly one substance. Nothing is matched loosely and no model is
+    asked. `resolve` does this itself; use this to do it for many claims, then resolve.
+    """
+    if not slugs and not every:
+        err.print("Name the claims, or use --all for every claim.")
+        raise typer.Exit(code=1)
+    with entry_session() as session:
+        if slugs:
+            claims = [claim_by_slug(session, slug) for slug in slugs]
+        else:
+            claims = list(session.scalars(select(Claim).order_by(Claim.slug)))
+        substances = make_substances(session)
+        listed = coded = 0
+        for claim in claims:
+            answer = give_development_codes(session, claim, substances=substances)
+            if answer is None:
+                out.print(f"{claim.slug}: the claim has no intervention.", markup=False)
+                continue
+            say_codes(claim.slug, answer)
+            listed += answer.listing is Listing.ONE_SUBSTANCE
+            coded += bool(answer.codes)
+        out.print(
+            f"{len(claims)} claims: GSRS lists the intervention of {listed} under one"
+            f" substance, and gave {coded} of them at least one development code."
+        )
 
 
 @entity_app.command("people")
@@ -369,6 +435,10 @@ def resolve_command(
 ) -> None:
     """Search the registries for a claim's interventions and papers.
 
+    The intervention is first looked up in the substance registry, and the development
+    codes it lists for that one substance are searched for as well, within the claim's
+    indication.
+
     Every hit becomes a scored candidate match. A rule rejects one scored near zero and
     approves a trial scored high; the rest wait for you to approve or reject. A trial
     scores as a match only when it tests the intervention for the claim's indication.
@@ -396,6 +466,14 @@ def resolve_command(
             if term.term not in refused:
                 refused[term.term] = term.reason
                 err.print(f"Not searched for: {term}", markup=False)
+
+        codes = _step(
+            session,
+            "Development codes were not looked up",
+            lambda: give_development_codes(session, claim, substances=make_substances(session)),
+        )
+        if codes is not None:
+            say_codes(claim.slug, codes)
 
         try:
             added = resolve_claim(

@@ -36,6 +36,10 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `mesh/label_obesity.json` | `GET /mesh/lookup/descriptor?label=Obesity&match=exact&limit=10&year=2026` (2026-11-14) |
 | `mesh/label_obesity_contains.json` | the same with `match=contains`, which the client never asks; it lists "Anti-Obesity Agents" first (2026-11-14) |
 | `mesh/label_none.json` | the exact lookup for "Knee osteoarthritis pain", which no label equals (2026-11-14) |
+| `gsrs/search_baxdrostat.json` | `GET gsrs.ncats.nih.gov/api/v1/substances/search?q=root_names_name:"^baxdrostat$"&top=5&fdim=0` (2026-11-14) |
+| `gsrs/names_baxdrostat.json` | `GET /api/v1/substances(d050debb-84b5-4703-90a9-afc4fd2c21c6)/names`: twelve names, three of the kind `cd` (2026-11-14) |
+| `gsrs/search_cin_107_spaced.json` | the search for `"^cin 107$"`, which GSRS answers with the substance coded "CIN-107"; the client refuses it (2026-11-14) |
+| `gsrs/search_nothing.json` | the search for `"^faecal microbiota transplant$"`: `total` 0 (2026-11-14) |
 | `mesh/term_ketogenic_diet.json` | `GET /mesh/lookup/term?label=Ketogenic Diet&match=exact&limit=10&year=2026`: an entry term of a descriptor labelled otherwise (2026-11-14) |
 | `mesh/term_orforglipron.json`, `mesh/term_obesity.json` | the same lookup for "orforglipron" (the term of a supplementary record) and "Obesity" (2026-11-14) |
 | `mesh/term_tirzepatide.json`, `mesh/owner_tirzepatide.json` | the term lookup and the owner query for "tirzepatide": the term belongs to a descriptor and to a withdrawn supplementary record labelled "[OBSOLETE] tirzepatide", whose own address answers an empty object (2026-11-14) |
@@ -60,6 +64,7 @@ Changes made to the recordings, for copyright and size:
 - The five Europe PMC recordings of 2026-11-14: `abstractText` is replaced by a placeholder sentence, all but two authors are removed from `authorList`, and grants, chemicals, keywords, data links and comment lists are removed. `authorString` and `affiliation` are kept so that a test can show they are not stored.
 - OpenAlex works: each `abstract_inverted_index` is replaced by a placeholder sentence. The key was sent in a header and is in no recording.
 - MeSH: none. The records are NLM's own and are kept whole, re-indented.
+- GSRS: none. The data is CC0 and the records are kept whole, re-indented.
 - Open Targets: none. The answers are kept whole, re-indented. Function descriptions are UniProt's (CC BY 4.0).
 - ROR: only the first two items of each answer are kept.
 - Crossref works: `abstract` removed; `reference` removed from `work_srep39654.json`.

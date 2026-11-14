@@ -7,6 +7,7 @@ from datetime import datetime
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from thenwhat.claims.entities import development_codes
 from thenwhat.db.models import Claim, ClaimTerm, DecisionLog, Entity, EntityMatch
 from thenwhat.decide.core import Backend, Decision, DecisionFailed, decide, decide_many
 from thenwhat.domain import EntityType, EvidenceStage, TermRole
@@ -156,7 +157,9 @@ def _intervention_text(session: Session, claim: Claim) -> str:
         also = (
             f" (also known as: {', '.join(intervention.synonyms)})" if intervention.synonyms else ""
         )
-        names = f"\nIntervention: {intervention.name}{also}."
+        codes = development_codes(session, intervention)
+        coded = f" (development codes: {', '.join(codes)})" if codes else ""
+        names = f"\nIntervention: {intervention.name}{also}{coded}."
     summary = f"\n{claim.summary}" if claim.summary else ""
     return f"Claim: {claim.headline}{summary}{names}"
 
