@@ -509,8 +509,10 @@ RESULTS_PMID = "35658024"
 class Index(Literature):
     """An index that also answers by PubMed number, and counts what it is asked."""
 
-    def __init__(self, by_pubmed_id: dict[str, SourceRecord], **options: Any) -> None:
-        super().__init__(**{"citing": []} | options)
+    def __init__(
+        self, by_pubmed_id: dict[str, SourceRecord], citing: list[SourceRecord] | None = None
+    ) -> None:
+        super().__init__(citing or [])
         self.by_pubmed_id = by_pubmed_id
         self.asked: list[str] = []
 
