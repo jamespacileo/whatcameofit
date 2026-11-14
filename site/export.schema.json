@@ -102,6 +102,187 @@
       "title": "ExportedArticle",
       "type": "object"
     },
+    "ExportedCard": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/TermRole"
+        },
+        "fit": {
+          "$ref": "#/$defs/TermFit"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "definition": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Definition"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "external_id": {
+          "title": "External Id",
+          "type": "string"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Version"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "reasons": {
+          "items": {
+            "$ref": "#/$defs/ExportedCardReason"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "decided_by": {
+          "title": "Decided By",
+          "type": "string"
+        },
+        "read_at": {
+          "format": "date-time",
+          "title": "Read At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "fit",
+        "label",
+        "definition",
+        "url",
+        "source",
+        "external_id",
+        "version",
+        "score",
+        "reasons",
+        "decided_by",
+        "read_at"
+      ],
+      "title": "ExportedCard",
+      "type": "object"
+    },
+    "ExportedCardReason": {
+      "additionalProperties": false,
+      "description": "Why the term was a candidate, found by rule. The site owns the wording.",
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "trials": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trials"
+        },
+        "of": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Of"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        }
+      },
+      "required": [
+        "code"
+      ],
+      "title": "ExportedCardReason",
+      "type": "object"
+    },
+    "ExportedCardSource": {
+      "additionalProperties": false,
+      "description": "A source a published card comes from, with what its terms ask for.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "credit": {
+          "title": "Credit",
+          "type": "string"
+        },
+        "licence": {
+          "title": "Licence",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "terms_url": {
+          "title": "Terms Url",
+          "type": "string"
+        },
+        "in_data_file": {
+          "title": "In Data File",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "title",
+        "credit",
+        "licence",
+        "url",
+        "terms_url",
+        "in_data_file"
+      ],
+      "title": "ExportedCardSource",
+      "type": "object"
+    },
     "ExportedClaim": {
       "additionalProperties": false,
       "properties": {
@@ -218,6 +399,14 @@
             "$ref": "#/$defs/ExportedPaper"
           },
           "title": "Papers",
+          "type": "array"
+        },
+        "background": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedCard"
+          },
+          "title": "Background",
           "type": "array"
         }
       },
@@ -1542,6 +1731,24 @@
       "title": "RegulatoryOutcome",
       "type": "string"
     },
+    "TermFit": {
+      "description": "How a subject term was read against the claim: as the thing itself, or broader.",
+      "enum": [
+        "exact",
+        "broader"
+      ],
+      "title": "TermFit",
+      "type": "string"
+    },
+    "TermRole": {
+      "description": "What a subject term is proposed as for a claim.",
+      "enum": [
+        "condition",
+        "intervention"
+      ],
+      "title": "TermRole",
+      "type": "string"
+    },
     "TrialPhase": {
       "description": "Phases as stored on trial events, whatever spelling the registry uses.",
       "enum": [
@@ -1637,6 +1844,14 @@
         "$ref": "#/$defs/ExportedArchived"
       },
       "title": "Archived",
+      "type": "array"
+    },
+    "card_sources": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ExportedCardSource"
+      },
+      "title": "Card Sources",
       "type": "array"
     }
   },

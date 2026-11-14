@@ -1,8 +1,9 @@
 """The JSON export the site is built from. Behavior: openspec site-publishing.
 
 Only approved, unarchived claims are exported, with their approved events, their
-approved matches and a few candidates still awaiting review. The file is the single
-interface between pipeline and site; its schema is checked in at site/export.schema.json.
+approved matches, a few candidates still awaiting review and their background cards.
+The file is the single interface between pipeline and site; its schema is checked in at
+site/export.schema.json.
 """
 
 import base64
@@ -21,12 +22,14 @@ from thenwhat.claims.status import refresh_status, status_history
 from thenwhat.claims.verticals import GROUPS, RETIRED_VERTICALS, VERTICAL_GROUPS, VERTICALS
 from thenwhat.db.models import (
     Claim,
+    ClaimTerm,
     Entity,
     EntityMatch,
     EvidenceEvent,
     FailureFlag,
     OutletIcon,
     PaperRecord,
+    TermRecord,
 )
 from thenwhat.decide.steps import latest_scoring
 from thenwhat.domain import (
@@ -38,6 +41,8 @@ from thenwhat.domain import (
     EvidenceStage,
     RegulatoryOutcome,
     ReviewState,
+    TermFit,
+    TermRole,
     TrialPhase,
     TrialState,
 )
@@ -67,9 +72,12 @@ from thenwhat.events.trial_facts import (
     reported_state,
 )
 from thenwhat.outlets.icons import is_blank_icon, outlet_domain
-from thenwhat.sources.base import record_url
+from thenwhat.sources import mesh
+from thenwhat.sources.base import SourceRecord, record_url
 from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.ror import Ror
+from thenwhat.sources.terms import SOURCES as LISTED_SOURCES
+from thenwhat.terms.candidates import REASON_CODES
 
 SCHEMA_VERSION = 1
 # Registries the clients read. Always listed, as their terms ask for attribution.
@@ -343,6 +351,62 @@ class ExportedPaper(Strict):
     facts: ExportedPaperFacts | None
 
 
+# Background cards (openspec knowledge-cards): what an open vocabulary says of a term
+# tied to the claim. Never an input to the status.
+
+
+class ExportedCardReason(Strict):
+    """Why the term was a candidate, found by rule. The site owns the wording."""
+
+    # "filed_by_registry" or "label_equals_name".
+    code: str
+    # For "filed_by_registry": how many of the claim's approved trials carry the term,
+    # and how many trials there were.
+    trials: int | None = None
+    of: int | None = None
+    # For "label_equals_name": the claim's name the term's label equals.
+    name: str | None = None
+
+
+class ExportedCard(Strict):
+    # What the term is to the claim: its condition or its intervention.
+    kind: TermRole
+    # "exact" when the term is the claim's own condition or intervention, "broader"
+    # when it names a wider group that includes it.
+    fit: TermFit
+    label: str
+    # The vocabulary publisher's own words, never reworded. None when it gives none.
+    definition: str | None
+    # The term's record at its source.
+    url: str
+    # The source's name in `card_sources`.
+    source: str
+    external_id: str
+    # The version of the vocabulary the record was read from, such as a year.
+    version: str | None
+    # The probability, 0 to 1, of the answer the term check chose for this term.
+    score: float
+    reasons: list[ExportedCardReason]
+    # Who approved the link: "rule", "human" or "assistant".
+    decided_by: str
+    # When the term's record was read.
+    read_at: datetime
+
+
+class ExportedCardSource(Strict):
+    """A source a published card comes from, with what its terms ask for."""
+
+    name: str
+    title: str
+    # How the source asks to be credited.
+    credit: str
+    licence: str
+    url: str
+    terms_url: str
+    # Whether its cards may be offered in the open data file under that file's licence.
+    in_data_file: bool
+
+
 class ExportedClaim(Strict):
     slug: str
     headline: str
@@ -369,6 +433,8 @@ class ExportedClaim(Strict):
     # Each paper the page lists, once: the origin paper, results papers of the trials
     # above, papers behind approved follow-up events, and approved related papers.
     papers: list[ExportedPaper] = []
+    # At most one card for the condition, then one for the intervention.
+    background: list[ExportedCard] = []
 
 
 class ExportedArchived(Strict):
@@ -393,6 +459,8 @@ class Export(Strict):
     outlets: list[ExportedOutlet]
     claims: list[ExportedClaim]
     archived: list[ExportedArchived] = []
+    # The sources of the cards in `background`, each once.
+    card_sources: list[ExportedCardSource] = []
 
 
 def _group_of(vertical: str) -> ExportedGroup | None:
@@ -647,6 +715,91 @@ def _trials(events: list[EvidenceEvent], papers: _Papers) -> list[ExportedTrial]
     return trials
 
 
+def _background(session: Session, claim: Claim) -> list[ExportedCard]:
+    """At most one card for the claim's condition and one for its intervention: the
+    approved exact link with the highest score or, with none, the approved broader one.
+
+    A link whose source is not accepted in the list of sources gives no card, nor does
+    one whose term has no stored record, since a card states when its record was read.
+    """
+    approved = list(
+        session.scalars(
+            select(ClaimTerm)
+            .where(
+                ClaimTerm.claim_id == claim.id,
+                ClaimTerm.review_state == ReviewState.APPROVED,
+                ClaimTerm.fit.is_not(None),
+                ClaimTerm.score.is_not(None),
+            )
+            .order_by(ClaimTerm.score.desc(), ClaimTerm.id)
+        )
+    )
+    cards: list[ExportedCard] = []
+    for role in TermRole:
+        for fit in TermFit:  # exact before broader
+            card = next(
+                (
+                    made
+                    for term in approved
+                    if term.role is role and term.fit is fit
+                    if (made := _card(session, term)) is not None
+                ),
+                None,
+            )
+            if card is not None:
+                cards.append(card)
+                break
+    return cards
+
+
+def _card(session: Session, term: ClaimTerm) -> ExportedCard | None:
+    listed = LISTED_SOURCES.get(term.source_name)
+    record = session.get(TermRecord, (term.source_name, term.external_id))
+    if listed is None or not listed.accepted or record is None:
+        return None
+    assert term.fit is not None and term.score is not None and term.reviewed_by is not None
+    read = mesh.describe(
+        SourceRecord(
+            record.source_name, record.external_id, record.url, record.payload, record.fetched_at
+        )
+    )
+    return ExportedCard(
+        kind=term.role,
+        fit=term.fit,
+        label=read.label or term.label,
+        definition=read.definition,
+        url=record.url,
+        source=term.source_name,
+        external_id=term.external_id,
+        version=read.version,
+        score=round(term.score, 4),
+        reasons=[
+            ExportedCardReason.model_validate(reason)
+            for reason in term.reasons
+            if reason.get("code") in REASON_CODES
+        ],
+        decided_by=term.reviewed_by.value,
+        read_at=record.fetched_at,
+    )
+
+
+def _card_sources(claims: list[ExportedClaim]) -> list[ExportedCardSource]:
+    used = {card.source for claim in claims for card in claim.background}
+    return [
+        ExportedCardSource(
+            name=listed.name,
+            title=listed.title,
+            credit=listed.credit,
+            licence=listed.licence,
+            url=listed.home_url,
+            terms_url=listed.terms_url,
+            in_data_file=listed.in_data_file,
+        )
+        for listed in LISTED_SOURCES.values()
+        if listed.name in used
+    ]
+
+
 def _outlets(session: Session, claims: list[ExportedClaim]) -> list[ExportedOutlet]:
     domains = {outlet_domain(article.url) for claim in claims for article in claim.articles}
     return [
@@ -772,6 +925,7 @@ def build_export(session: Session, *, now: datetime, no_signal_years: int = 3) -
                 matches=_matches(session, claim),
                 trials=trials,
                 papers=papers.listed(),
+                background=_background(session, claim),
                 failure_flags=[
                     ExportedFailureFlag(trial_id=flag.trial_external_id, source_url=flag.source_url)
                     for flag in session.scalars(
@@ -783,6 +937,7 @@ def build_export(session: Session, *, now: datetime, no_signal_years: int = 3) -
             )
         )
     session.flush()
+    card_sources = _card_sources(claims)
     return Export(
         schema_version=SCHEMA_VERSION,
         generated_at=now,
@@ -796,6 +951,8 @@ def build_export(session: Session, *, now: datetime, no_signal_years: int = 3) -
                     for name, url in OTHER_REGISTRIES.items()
                     if any(event.source_name == name for claim in claims for event in claim.events)
                 ),
+                # A source a published card comes from is credited like the registries.
+                *((source.title, source.url) for source in card_sources),
             ]
         ],
         verticals=[
@@ -817,6 +974,7 @@ def build_export(session: Session, *, now: datetime, no_signal_years: int = 3) -
             )
             if claim.archived_at is not None
         ],
+        card_sources=card_sources,
     )
 
 

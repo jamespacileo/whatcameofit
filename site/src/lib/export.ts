@@ -5,6 +5,7 @@ import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import { unlabelledApproaches } from "./approach";
 import { unlabelledPaperCodes } from "./paper-facts";
+import { unwordedCardCodes, type ExportedCard, type ExportedCardSource } from "./background";
 import { unlabelledTrialCodes } from "./trial-facts";
 
 export type StatusCode =
@@ -197,6 +198,9 @@ export interface ExportedClaim {
   /** Each paper the page lists, once. Absent from an export made before openspec
    * paper-facts, which lists its papers among `matches` instead. */
   papers?: ExportedPaper[];
+  /** Background cards: at most one for the condition, then one for the intervention.
+   * Absent from an export made before openspec knowledge-cards. */
+  background?: ExportedCard[];
   failure_flags: { trial_id: string; source_url: string }[];
 }
 
@@ -221,6 +225,8 @@ export interface Export {
   claims: ExportedClaim[];
   /** Claims the operator took down. Each address answers 410; the reason is never exported. */
   archived?: { slug: string; on: string }[];
+  /** The sources of the claims' background cards, each once. */
+  card_sources?: ExportedCardSource[];
 }
 
 const SUPPORTED_SCHEMA_VERSION = 1;
@@ -274,6 +280,15 @@ function load(): Export {
   if (unwordedPapers.length > 0) {
     throw new Error(
       `The export at ${file} has paper codes the site has no words for: ${unwordedPapers.join(", ")}. Add them to src/lib/paper-facts.ts.`,
+    );
+  }
+  const unwordedCards = unwordedCardCodes(
+    (content as Export).claims.flatMap((claim) => claim.background ?? []),
+    (content as Export).card_sources ?? [],
+  );
+  if (unwordedCards.length > 0) {
+    throw new Error(
+      `The export at ${file} has background card codes the site has no words for: ${unwordedCards.join(", ")}. Add them to src/lib/background.ts.`,
     );
   }
   return content as Export;

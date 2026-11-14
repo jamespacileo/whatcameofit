@@ -19,30 +19,30 @@
 
 ## 3. Export
 
-- [ ] 3.1 Export at most one card for the condition and one for the intervention, exact before broader, highest score first, with label, definition word for word, link, source, vocabulary version, score, reasons and date read; verify export tests for exact and broader both approved, only a broader term, and a term with no definition
-- [ ] 3.2 Export a fact only from a source the list marks accepted, and no card that would then be empty; verify by test with a source marked not accepted
-- [ ] 3.3 Verify by test that status, explaining events and evidence stage are the same with and without cards
-- [ ] 3.4 Regenerate `site/export.schema.json` and `site/data/seed-export.json`, and verify the checked-in `site/data/published-export.json` still validates
+- [x] 3.1 Export at most one card for the condition and one for the intervention, exact before broader, highest score first, with label, definition word for word, link, source, vocabulary version, score, reasons and date read; verify export tests for exact and broader both approved, only a broader term, and a term with no definition
+- [x] 3.2 Export a fact only from a source the list marks accepted, and no card that would then be empty; verify by test with a source marked not accepted
+- [x] 3.3 Verify by test that status, explaining events and evidence stage are the same with and without cards
+- [x] 3.4 Regenerate `site/export.schema.json` and `site/data/seed-export.json`, and verify the checked-in `site/data/published-export.json` still validates
 
 ## 4. Site
 
-- [ ] 4.1 Add the card types to `site/src/lib/export.ts` and a wording module for card kinds, reasons and molecule kinds with a function naming any unworded code; verify a site test fails the build on an unknown code
-- [ ] 4.2 Add "Background" to the claim page to `DESIGN.md`, after the records: each card's label, its definition in a disclosure marked as the source's words, the source's credit and version, the score and reasons, the date read, and the section's note that cards describe terms and are not advice or evidence; verify in the browser at phone and desktop widths on a claim with one card and a claim with two, and that a claim with none has no section
-- [ ] 4.3 Add each card source to the footer's data sources from the export, and carry cards into the open data file with the sources left out named; verify the footer test and the open data test
-- [ ] 4.4 Explain background cards on the method page: where they come from, how a term is chosen and scored, and that the words are the source's; verify the site build and the verdict-wording test
+- [x] 4.1 Add the card types to `site/src/lib/export.ts` and a wording module for card kinds and reasons with a function naming any unworded code; verify a site test fails the build on an unknown code (molecule kinds are worded in 6.4, when the export first carries one)
+- [x] 4.2 Add "Background" to the claim page to `DESIGN.md`, after the records: each card's label, its definition in a disclosure marked as the source's words, the source's credit and version, the score and reasons, the date read, and the section's note that cards describe terms and are not advice or evidence; verify in the browser at phone and desktop widths on a claim with one card and a claim with two, and that a claim with none has no section
+- [x] 4.3 Add each card source to the footer's data sources from the export, and carry cards into the open data file with the sources left out named; verify the footer test and the open data test
+- [x] 4.4 Explain background cards on the method page: where they come from, how a term is chosen and scored, and that the words are the source's; verify the site build and the verdict-wording test
 
 ## 5. Measurement before release
 
-- [ ] 5.1 Run `thenwhat terms --missing` on the real database and record in `docs/lookup.md`: candidates gathered, approved exact, approved broader, rejected, claims with a condition card, claims with an intervention card, model cost and requests made. If fewer than one claim in three has a condition card, stop and report before the site tasks ship
-- [ ] 5.2 Read every approved link beside its claim and record how many are wrong or misleading; reject those. If more than one in twenty is wrong, raise the threshold and run again
-- [ ] 5.3 Read ten definitions as a reader would and record any that read as advice or as a statement that a treatment works; bring those to the operator before release
+- [x] 5.1 Run `thenwhat terms --missing` on the real database and record in `docs/lookup.md`: candidates gathered, approved exact, approved broader, rejected, claims with a condition card, claims with an intervention card, model cost and requests made. If fewer than one claim in three has a condition card, stop and report before the site tasks ship
+- [x] 5.2 Read every approved link beside its claim and record how many are wrong or misleading; reject those. If more than one in twenty is wrong, raise the threshold and run again
+- [x] 5.3 Read ten definitions as a reader would and record any that read as advice or as a statement that a treatment works; bring those to the operator before release
 
 ## 6. Drug and target cards
 
 - [ ] 6.1 Bring the share-alike question to the operator with the entry from 1.2, and record the decision as an ADR in `docs/adr/`; do not start 6.2 to 6.5 without it
 - [ ] 6.2 Write the Open Targets client: a drug whose own name equals a given name, with kind of molecule and mechanisms, and a single-protein target's name, gene symbol and function description; verify on recorded fixtures a named drug with two mechanisms, a drug with none, and a procedure's name that returns nothing
 - [ ] 6.3 Export a drug card and, for exactly one single-protein target, a target card, each only as the ADR allows; verify a drug with one target, a drug with two, and that no phase, approval or indication is exported
-- [ ] 6.4 Show both cards on the claim page and keep share-alike facts out of the data file, naming the source left out; verify in the browser and by the open data test
+- [ ] 6.4 Word molecule kinds in the wording module, failing the build on an unworded one; show both cards on the claim page and keep share-alike facts out of the data file, naming the source left out; verify in the browser and by the open data test
 - [ ] 6.5 Run on the real database and record how many claims gained a drug card and a target card
 
 ## 7. Integration

@@ -350,8 +350,10 @@
             "studied_in": []
           }
         }
-      ]
+      ],
+      "background": []
     }
   ],
-  "archived": []
+  "archived": [],
+  "card_sources": []
 }

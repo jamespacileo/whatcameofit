@@ -40,6 +40,7 @@ import { cardAlt, clip, shareSentence } from "../lib/card";
 import { embedSnippet, shareLinks } from "../lib/share";
 import { confidenceLabel } from "../lib/confidence";
 import MatchList from "../components/MatchList.astro";
+import Background from "../components/Background.astro";
 import Paper from "../components/Paper.astro";
 import Trial from "../components/Trial.astro";
 import {
@@ -758,6 +759,14 @@ const posts = shareLinks(postText, address, claim.headline);
           </p>
           <MatchList matches={papers} />
         </section>
+      )
+    }
+
+    {
+      /* What open vocabularies say of the claim's terms. After the records and away
+         from the status: a card describes a term, never the claim's evidence. */
+      (claim.background ?? []).length > 0 && (
+        <Background cards={claim.background ?? []} sources={data.card_sources ?? []} />
       )
     }
 
