@@ -638,7 +638,10 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
         ),
     )
     runner = CliRunner()
-    return lambda *arguments: runner.invoke(app, list(arguments), env={"COLUMNS": "200"})
+    # Wide and plain, so that what is asserted is the words and not how a terminal, or a
+    # CI runner that forces colour, would wrap or style them.
+    plain = {"COLUMNS": "200", "NO_COLOR": "1", "TERM": "dumb"}
+    return lambda *arguments: runner.invoke(app, list(arguments), env=plain)
 
 
 def test_terms_proposes_and_decides_a_claims_subject_terms(
