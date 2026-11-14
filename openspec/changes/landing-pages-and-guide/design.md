@@ -229,7 +229,8 @@ The address, the table and the stage filter are unchanged.
   researchers".
 - Home page: when the extension can be installed, a closing section of its own, before
   "Not here yet?", so the page still ends on the suggestion.
-- Claim page, "Another headline?": the same sentence and link.
+- "Another headline?", the last section of a claim page and, since the `invite-back`
+  change, of a topic page: one sentence and the link, under "Look up another".
 - Sitemap and structured data cover every new page; a guide entry is a defined term.
 
 ## Constraints

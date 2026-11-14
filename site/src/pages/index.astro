@@ -1,5 +1,6 @@
 ---
 import CalendarPlus from "@lucide/astro/icons/calendar-plus";
+import Rss from "@lucide/astro/icons/rss";
 import SlidersHorizontal from "@lucide/astro/icons/sliders-horizontal";
 import Base from "../layouts/Base.astro";
 import ClaimName from "../components/ClaimName.astro";
@@ -116,6 +117,7 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
     </div>
   </section>
 
+  <div class="front">
   {/* The tally opens the lists, under the band: the band holds only the lookup. */}
   {
     data.claims.length > 0 && (
@@ -135,13 +137,18 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
   }
 
   {/* The claims this reader follows, read from this browser's own storage by the script. */}
-  <section class="following" hidden data-following>
+  <section class="following" id="following" hidden data-following>
     <h2 class="bar">Following</h2>
     <ul class="plain" data-following-list></ul>
     <p class="entry-note">Kept in this browser only.</p>
     <p class="visually-hidden" role="status" data-following-said></p>
   </section>
 
+  {/* Filled in by the script from the dates on the rows below: what is dated since this
+      reader's last visit, or in the last thirty days on a first one. */}
+  <p class="since" hidden data-since></p>
+
+  <div class="feed" data-feed>
   {
     data.claims.length > 0 && (
       <div class="scoreboard" data-scoreboard>
@@ -177,12 +184,6 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
       </div>
     )
   }
-
-  {/* Filled in by the script from the dates on the rows below: what is dated since this
-      reader's last visit, or in the last thirty days on a first one. */}
-  <p class="since" hidden data-since></p>
-
-  <div class="feed" data-feed>
     {/* Shown by the script: without it the lists follow one another, each under its heading. */}
     <div class="feed-tabs" role="tablist" aria-label="Lists of tracked claims" hidden>
       {views.map((view, index) => (
@@ -312,9 +313,6 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
       </div>
       <Pager name="moved" total={moves.length} size={PAGE_SIZE} one="change" many="changes" />
       <p class="none" data-none hidden>Nothing in this list for that choice.</p>
-      <p class="entry-note feed-link">
-        For a feed reader: <a href="/changes.xml">every status change</a>.
-      </p>
       </section>
     )
   }
@@ -352,7 +350,7 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
         </tbody>
       </table>
       </div>
-      <Pager name="promised" total={promised.length} size={PAGE_SIZE} one="claim" many="claims" />
+      <Pager name="promised" total={promised.length} size={PAGE_SIZE} one="claim" many="claims" label="claims with a dated promise" />
       <p class="none" data-none hidden>Nothing in this list for that choice.</p>
       </section>
     )
@@ -395,12 +393,32 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
         </tbody>
       </table>
       </div>
-      <Pager name="quiet" total={quiet.length} size={PAGE_SIZE} one="claim" many="claims" />
+      <Pager name="quiet" total={quiet.length} size={PAGE_SIZE} one="claim" many="claims" label="claims with no signal" />
       <p class="none" data-none hidden>Nothing in this list for that choice.</p>
       </section>
     )
   }
   </div>
+
+  </div>
+
+  {/* How to hear of a change without looking for one. The first line is for a reader who
+      follows nothing yet, and is shown only where this browser can keep a list. */}
+  <section class="keep-up">
+    <h2 class="bar">Keep up</h2>
+    <p class="keep-hint" hidden data-follow-hint>
+      Follow a claim from its page and it is listed at the top of this page, with a note when
+      its status changes. This page also notes the day you open it, so next time it can say
+      what is dated since. Both are kept in this browser only: no account, nothing sent.
+    </p>
+    <div class="keep-feed">
+      <a class="share" href="/changes.xml">
+        <Rss size={16} stroke-width={1.9} aria-hidden="true" />
+        Subscribe to status changes
+      </a>
+      <span class="entry-note">A feed of every status change, for a feed reader.</span>
+    </div>
+  </section>
 
   {/* Shown by the script, which knows the reader's date: today's anniversaries of first
       reports, or the next day that has one. */}
@@ -1163,35 +1181,70 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
       store?.setItem(VISIT_ENTRY, JSON.stringify(visit));
     } catch {}
     const since = sinceOf(visit, today);
+    const views = ["headlines", "moved", "promised"] as const;
     const rowsOf = (view: string) => [
       ...feed.querySelectorAll<HTMLTableRowElement>(`#feed-${view} tbody tr[data-on]`),
     ];
     const dated = (view: string) =>
       rowsOf(view).filter((row) => isSince(row.dataset.on!, since.from, today));
-    const parts = changedParts({
-      reports: dated("headlines").length,
-      moves: dated("moved").length,
-      promises: dated("promised").length,
-    });
+    const parts = changedParts(
+      { reports: dated("headlines").length, moves: dated("moved").length, promises: dated("promised").length },
+      { reports: rowsOf("headlines").length, moves: rowsOf("moved").length, promises: rowsOf("promised").length },
+    );
+
+    // Pressing a count narrows its list to the rows dated in the span; pressing it
+    // again, or "Show all", brings the rest back. One list is narrowed at a time.
+    const counts: HTMLButtonElement[] = [];
+    const showAll = document.createElement("button");
+    showAll.type = "button";
+    showAll.className = "text-control";
+    showAll.textContent = "Show all";
+    showAll.hidden = true;
+    const narrow = (picked: string | null) => {
+      for (const view of views) {
+        const keep = new Set(view === picked ? dated(view) : rowsOf(view));
+        for (const row of rowsOf(view)) row.toggleAttribute("data-out-since", !keep.has(row));
+        feed.querySelector(`#feed-${view} table`)?.dispatchEvent(new Event("paged:refresh"));
+      }
+      for (const count of counts) {
+        count.setAttribute("aria-pressed", String(count.dataset.view === picked));
+      }
+      showAll.hidden = picked === null;
+    };
+    showAll.addEventListener("click", () => narrow(null));
 
     line.append(
       since.visited ? `Since your last visit on ${formatDate(since.from)}: ` : "In the last 30 days: ",
     );
     parts.forEach((part, index) => {
       if (index > 0) line.append(", ");
-      // Each count opens the list that holds its rows.
+      // None of something is said in words; there is nothing to open.
+      if (part.count === 0) {
+        line.append(part.text);
+        return;
+      }
       const open = document.createElement("button");
       open.type = "button";
       open.className = "text-control";
       open.textContent = part.text;
+      open.dataset.view = part.view;
+      open.setAttribute("aria-pressed", "false");
       open.addEventListener("click", () => {
-        const tab = document.getElementById(`tab-${part.view}`);
-        tab?.click();
-        (tab ?? feed).scrollIntoView({ block: "nearest" });
+        const on = open.getAttribute("aria-pressed") !== "true";
+        narrow(on ? part.view : null);
+        if (on) {
+          document.getElementById(`tab-${part.view}`)?.click();
+          feed.scrollIntoView({ block: "nearest" });
+        }
       });
+      counts.push(open);
       line.append(open);
     });
-    line.append(parts.length > 0 ? "." : "nothing new on record.");
+    line.append(parts.length > 0 ? "." : "nothing new on record.", " ", showAll);
+    // Filled in below, once the followed claims have been compared with their statuses now.
+    const followedNote = document.createElement("span");
+    followedNote.dataset.sinceFollowed = "";
+    line.append(followedNote);
     line.hidden = false;
 
     // A row dated since the last visit says so in a word. Not on a first visit: with
@@ -1213,6 +1266,8 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
     const list = following.querySelector<HTMLElement>("[data-following-list]")!;
     const said = following.querySelector<HTMLElement>("[data-following-said]")!;
     const followed = readFollowed(store.getItem(FOLLOWING_ENTRY));
+    const hint = document.querySelector<HTMLElement>("[data-follow-hint]");
+    if (hint) hint.hidden = Object.keys(followed).length > 0;
     const element = (tag: string, text?: string, className?: string) => {
       const node = document.createElement(tag);
       if (text) node.textContent = text;
@@ -1256,6 +1311,19 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
         }),
       );
       following.hidden = rows.length === 0;
+      if (hint) hint.hidden = rows.length > 0;
+      // A changed followed claim is the news a reader came back for: the line above says so.
+      const note = document.querySelector<HTMLElement>("[data-since-followed]");
+      const changed = rows.filter((row) => row.was !== null).length;
+      if (note) {
+        note.replaceChildren();
+        if (changed > 0) {
+          const link = document.createElement("a");
+          link.href = "#following";
+          link.textContent = `${changed} followed ${changed === 1 ? "claim has" : "claims have"} changed`;
+          note.append(" ", link, ".");
+        }
+      }
     };
     if (Object.keys(followed).length > 0) {
       fetch("/lookup.json")

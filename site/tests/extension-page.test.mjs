@@ -126,7 +126,8 @@ test("Scenario: One store is configured", () => {
 });
 
 test("Scenario: The extension is installable", () => {
-  for (const file of ["index.html", "quiet-claim/index.html", "how-it-works/index.html"]) {
+  const topic = `topic/${fixture.claims[0].vertical}/index.html`;
+  for (const file of ["index.html", "quiet-claim/index.html", topic, "how-it-works/index.html"]) {
     assert.ok(chrome.page(file).includes('href="/extension"'), `${file} does not link the extension page`);
   }
 });

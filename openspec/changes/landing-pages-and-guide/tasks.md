@@ -26,7 +26,7 @@
 
 - [ ] 3.1 Add the "what this is" line; move Share and the feed under the summary; add "Copy sentence"; verify the copied text and the order at 375 px
 - [ ] 3.2 Build the topic card from the card description the claim cards use; verify with one claim, seven claims and a topic with no drawing
-- [ ] 3.3 End the page with "Not here?" where a suggestion address is set
+- [x] 3.3 End the page with "Not here?" where a suggestion address is set (done by the `invite-back` change: a topic page ends with "Another headline?" and the link to suggest one)
 
 ## 4. About page
 

@@ -82,8 +82,8 @@ The site SHALL publish a page for journalists, one for clinicians and one for re
 - **THEN** the page says so and offers to suggest a headline, where a suggestion address is configured
 
 ### Requirement: The new pages are linked from the footer
-The footer SHALL link the guide and the about page, the extension page when it is published, and the three audience pages. When the extension page is published, the home page SHALL name it once in a closing section before the link to suggest a headline, and a claim page SHALL name it once in its last section.
+The footer SHALL link the guide and the about page, the extension page when it is published, and the three audience pages. When the extension page is published, the home page SHALL name it once in a closing section before the link to suggest a headline, and a claim page and a topic page SHALL each name it once in their last section.
 
 #### Scenario: The extension is installable
 - **WHEN** a store address is configured
-- **THEN** the footer, a closing section of the home page and a claim page's last section each link the extension page
+- **THEN** the footer, a closing section of the home page, and the last section of a claim page and of a topic page each link the extension page

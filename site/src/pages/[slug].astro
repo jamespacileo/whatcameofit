@@ -8,9 +8,10 @@ import ExternalLink from "@lucide/astro/icons/external-link";
 import ImageDown from "@lucide/astro/icons/image-down";
 import Info from "@lucide/astro/icons/info";
 import Bookmark from "@lucide/astro/icons/bookmark";
-import Search from "@lucide/astro/icons/search";
 import BasisMark from "../components/BasisMark.astro";
 import ClaimTable from "../components/ClaimTable.astro";
+import FollowOffer from "../components/FollowOffer.astro";
+import LookupAgain from "../components/LookupAgain.astro";
 import Outlet from "../components/Outlet.astro";
 import KindIcon from "../components/KindIcon.astro";
 import Pop from "../components/Pop.astro";
@@ -40,7 +41,7 @@ import { confidenceLabel, readingOf } from "../lib/confidence";
 import { FOLLOWED_SHOWN, followedName, followedReports } from "../lib/reports";
 import { claimPageData } from "../lib/structured";
 import ReportError from "../components/ReportError.astro";
-import { EXTENSION_OFFERED, SITE } from "../../site.config.mjs";
+import { SITE } from "../../site.config.mjs";
 import { cardFor } from "../lib/card-image";
 import { buildTimetable, dayAndMonth, formatDate, recordedLines } from "../lib/timetable";
 
@@ -318,6 +319,11 @@ const posts = shareLinks(postText, address, claim.headline);
         <p class="lede" data-pagefind-meta="summary">{claim.summary}</p>
       </div>
     </div>
+
+    {/* For a reader who follows this claim and last saw it at another status: filled in
+        by the script, so a change noted on the home page is confirmed where they land. */}
+    <p class="was-note" hidden data-follow-was data-pagefind-ignore></p>
+    <FollowOffer claim={claim} />
 
     {!claim.checked_by_person && <p class="unchecked">{UNCHECKED_NOTE}</p>}
 
@@ -728,7 +734,7 @@ const posts = shareLinks(postText, address, claim.headline);
         </div>
       </div>
       <details class="embed-how">
-        <summary>Show this status on another site</summary>
+        <summary>Writing about this? Show the status on your own page</summary>
         <p class="entry-note">
           Paste this where the status should appear. It shows the current status and links back
           here; it loads nothing else and stores nothing.
@@ -785,10 +791,7 @@ const posts = shareLinks(postText, address, claim.headline);
           )
         }
       </div>
-      <p class="entry-note" hidden data-follow-note>
-        Or follow this claim, at the top of this page: it is then listed on the home page with
-        a note when its status changes. Kept in this browser only.
-      </p>
+      <FollowOffer claim={claim} />
       {
         (claim.status.history?.length ?? 0) > 0 && (
           <p class="entry-note">
@@ -799,23 +802,7 @@ const posts = shareLinks(postText, address, claim.headline);
       }
     </section>
 
-    <section class="closing" data-pagefind-ignore>
-      <h2 class="bar">Another headline?</h2>
-      <p class="take-why">
-        Paste a link to a news report, or type a treatment or a condition, to see what is on record.
-      </p>
-      <a class="share" href="/#search">
-        <Search size={16} stroke-width={1.9} aria-hidden="true" />
-        Look up another
-      </a>
-      {
-        EXTENSION_OFFERED && (
-          <p class="entry-note">
-            Or check a report where you read it, with <a href="/extension">the browser extension</a>.
-          </p>
-        )
-      }
-    </section>
+    <LookupAgain />
   </article>
 </Base>
 
@@ -939,10 +926,10 @@ const posts = shareLinks(postText, address, claim.headline);
 
   // Following: the claim, its headline and its status in words are kept in this
   // browser's storage and sent nowhere. The home page lists followed claims and notes
-  // a status that has changed. Opening this page is seeing the status, so the kept
-  // one is brought up to date here.
-  const follow = document.querySelector<HTMLButtonElement>("[data-follow]");
-  if (follow) {
+  // a status that has changed. Opening this page is seeing the status, so a change is
+  // said here once and the kept status is brought up to date.
+  const follows = [...document.querySelectorAll<HTMLButtonElement>("[data-follow]")];
+  if (follows.length > 0) {
     let store: Storage | null = null;
     try {
       localStorage.setItem("probe", "1");
@@ -951,49 +938,69 @@ const posts = shareLinks(postText, address, claim.headline);
     } catch {}
     if (store) {
       const kept = store;
-      const { slug, headline, status } = follow.dataset as Record<string, string>;
-      const label = follow.querySelector<HTMLElement>("[data-follow-text]")!;
+      const { slug, headline, status } = follows[0].dataset as Record<string, string>;
       const write = (followed: ReturnType<typeof readFollowed>) => {
         try {
           kept.setItem(FOLLOWING_ENTRY, JSON.stringify(followed));
         } catch {}
       };
+      // Every Follow control on the page says the same thing, and the words beside
+      // one change with it: what following does, then where the list is.
       const show = (on: boolean) => {
-        follow.setAttribute("aria-pressed", String(on));
-        label.textContent = on ? "Following" : "Follow";
+        for (const button of follows) {
+          button.setAttribute("aria-pressed", String(on));
+          button.querySelector<HTMLElement>("[data-follow-text]")!.textContent = on
+            ? "Following"
+            : "Follow";
+        }
+        for (const words of document.querySelectorAll<HTMLElement>("[data-follow-when]")) {
+          words.hidden = (words.dataset.followWhen === "on") !== on;
+        }
       };
       const followed = readFollowed(kept.getItem(FOLLOWING_ENTRY));
-      if (followed[slug]) {
-        followed[slug] = { ...followed[slug], headline, status };
+      const before = followed[slug];
+      if (before) {
+        const was = document.querySelector<HTMLElement>("[data-follow-was]");
+        if (was && before.status !== status) {
+          const tag = document.createElement("span");
+          tag.className = "new-tag";
+          tag.textContent = "Changed";
+          was.append(tag, ` When you last looked: ${before.status}. Now: ${status}.`);
+          was.hidden = false;
+        }
+        followed[slug] = { ...before, headline, status };
         write(followed);
       }
-      show(Boolean(followed[slug]));
-      follow.addEventListener("click", () => {
-        const now = readFollowed(kept.getItem(FOLLOWING_ENTRY));
-        const on = !now[slug];
-        if (on) {
-          const today = new Date();
-          const two = (value: number) => String(value).padStart(2, "0");
-          now[slug] = {
-            headline,
-            status,
-            since: `${today.getFullYear()}-${two(today.getMonth() + 1)}-${two(today.getDate())}`,
-          };
-        } else {
-          delete now[slug];
-        }
-        write(now);
-        show(on);
-        if (said) {
-          said.textContent = on
-            ? "Following. Listed on the home page, in this browser only."
-            : "No longer following.";
-          setTimeout(() => (said.textContent = ""), 3000);
-        }
-      });
-      follow.hidden = false;
-      const note = document.querySelector<HTMLElement>("[data-follow-note]");
-      if (note) note.hidden = false;
+      show(Boolean(before));
+      for (const button of follows) {
+        button.addEventListener("click", () => {
+          const now = readFollowed(kept.getItem(FOLLOWING_ENTRY));
+          const on = !now[slug];
+          if (on) {
+            const today = new Date();
+            const two = (value: number) => String(value).padStart(2, "0");
+            now[slug] = {
+              headline,
+              status,
+              since: `${today.getFullYear()}-${two(today.getMonth() + 1)}-${two(today.getDate())}`,
+            };
+          } else {
+            delete now[slug];
+          }
+          write(now);
+          show(on);
+          if (said) {
+            said.textContent = on
+              ? "Following. Listed on the home page, in this browser only."
+              : "No longer following.";
+            setTimeout(() => (said.textContent = ""), 3000);
+          }
+        });
+        button.hidden = false;
+      }
+      for (const offer of document.querySelectorAll<HTMLElement>("[data-follow-offer]")) {
+        offer.hidden = false;
+      }
     }
   }
 </script>
