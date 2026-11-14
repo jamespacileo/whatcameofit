@@ -98,6 +98,21 @@ def test_a_sample_takes_equal_numbers_from_each_tenth_and_shows_no_score(session
     assert sample.leads[0].title.startswith("A synthetic headline")
 
 
+def test_a_samples_order_does_not_give_away_the_scores(session: Session):
+    """Scenario: A sample of 200. Found on the first real run: the sample was listed
+    lowest tenth first, so a lead's place told its score."""
+    spread(session, 25)
+
+    sample = sample_leads(session, size=200, seed="1", version=1)
+
+    ids = [one.lead_id for one in sample.leads]
+    scores = dict(session.execute(select(LinkLead.id, LinkLead.triage_score)).all())
+    tenths = [tenth_of(scores[lead_id] or 0.0) for lead_id in ids]
+    assert tenths != sorted(tenths)
+    # No run of the first twenty is one tenth.
+    assert len(set(tenths[:20])) > 3
+
+
 def test_a_thin_tenth_gives_what_it_has_and_is_reported_short(session: Session):
     """Scenario: A thin tenth"""
     for number in range(30):

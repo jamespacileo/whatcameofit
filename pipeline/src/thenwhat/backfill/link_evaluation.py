@@ -8,6 +8,7 @@ assistant's: the operator decided on 2026-11-14 that an assistant's labels count
 condition that the operator spot-checks them (`spot_check`).
 """
 
+import hashlib
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import date, datetime
@@ -152,6 +153,11 @@ def sample_leads(session: Session, *, size: int, seed: str, version: int) -> Sam
             Sampled(lead.id, lead.title, lead.outlet, lead.first_shared_at.date(), lead.url)
             for lead in chosen.values()
         )
+    # The tenths were drawn in order. Listed that way, a lead's place would give away its
+    # score, so the leads are put in an order the seed fixes and the score has no part in.
+    sample.leads.sort(
+        key=lambda lead: hashlib.sha256(f"{seed}:{lead.lead_id}".encode()).hexdigest()
+    )
     return sample
 
 
