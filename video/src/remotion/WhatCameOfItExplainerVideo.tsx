@@ -32,7 +32,7 @@ const SCENES: Record<string, FC<SceneProps>> = {
   outro: Outro,
 };
 
-/** The masthead holds still while the scenes change under it. */
+/** The site's masthead, deep navy with white lettering. It holds still while the scenes change under it. */
 const Masthead: FC<{ v: boolean; from: number; to: number }> = ({ v, from, to }) => {
   const frame = useCurrentFrame();
   const opacity = interpolate(frame, [from, from + 10, to - 8, to], [0, 1, 1, 0], {
@@ -51,13 +51,12 @@ const Masthead: FC<{ v: boolean; from: number; to: number }> = ({ v, from, to })
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        background: C.paper,
-        borderBottom: `2px solid ${C.rule}`,
+        background: C.footer,
         opacity,
       }}
     >
-      <Lockup size={v ? 34 : 32} />
-      <span style={{ fontSize: 24, color: C.muted }}>Not medical advice</span>
+      <Lockup size={v ? 34 : 32} reverse />
+      <span style={{ fontSize: 24, fontWeight: 600, color: C.paper }}>Not medical advice</span>
     </div>
   );
 };

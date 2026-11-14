@@ -16,6 +16,9 @@ export const C = {
   promise: "#fff7df",
   promiseRule: "#d9c88a",
   ring: "#7f90a3",
+  footer: "#0b2545",
+  // The accent, lifted to read on navy: the name's dot in the masthead.
+  onNavy: "#8ec1f5",
 } as const;
 
 export const FACE = '"Figtree Variable", "Helvetica Neue", Arial, sans-serif';
