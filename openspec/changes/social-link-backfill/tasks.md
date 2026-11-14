@@ -46,7 +46,7 @@
 - [x] 6.1 Add `thenwhat backfill sample-leads` drawing equal numbers per tenth of the score range across platforms, by seed, without showing scores; verify tests cover a full sample, a thin tenth reported as short, the same seed giving the same sample, and labelled leads left out
 - [x] 6.2 Add `thenwhat backfill label-lead` with `--as-assistant`; verify one test of a person's label, one of an assistant's label stored as an assistant's, and one of the refusal for a label that is not an option
 - [x] 6.3 Add `thenwhat backfill evaluate-leads` with precision, recall and leads passed per threshold, weighted by each tenth's population, overall and by platform, and the strongest disagreements; verify a test checks the weighted figures by hand for a small seeded set, and one checks that assistants' labels do not enter them
-- [ ] 6.4 (the gate's rule and its three tests are written, in `backfill/link_evaluation.py`; it is not yet called, because the reading step does not exist until 7.5) Add the gate to the reading step's start (labels at the current triage version, both thresholds set) with `LEAD_EVALUATION_MIN_LABELS`; verify tests cover too few labels, a threshold unset, and labels counting again after a version is raised and the leads rescored
+- [x] 6.4 Add the gate to the reading step's start (labels at the current triage version, both thresholds set) with `LEAD_EVALUATION_MIN_LABELS`; verify tests cover too few labels, a threshold unset, and labels counting again after a version is raised and the leads rescored
 - [x] 6.5 Verify with a test that the export is the same before and after labelling
 
 ## 7. Reading
@@ -58,14 +58,14 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 
 - [x] 7.1 Split drafting so the model call comes first and returns the draft, keeping `thenwhat extract new` and `extract article` behaving as before; verify the existing extraction tests pass unchanged
 - [x] 7.2 Add the slug rule from intervention and indication; verify tests cover a long name cut at 60 characters, characters outside the allowed set, and a slug already taken by another claim
-- [ ] 7.3 (the decision, its setting and tests of a confident choice, an unsure one and the retired verticals are written; "creating no claim" is tested with the reading step, 7.5) Add the vertical decision among the configured verticals with `VERTICAL_ACCEPT_ABOVE`; verify tests cover a confident choice, a choice below the setting creating no claim, and a retired vertical never offered
+- [x] 7.3 Add the vertical decision among the configured verticals with `VERTICAL_ACCEPT_ABOVE`; verify tests cover a confident choice, a choice below the setting creating no claim, and a retired vertical never offered
 - [x] 7.4 Add outlet spacing through the allowance table under `outlet:<domain>` with `OUTLET_INTERVAL_SECONDS` and the robots.txt delay; verify a test with two sessions and a fake clock shows two fetches of one outlet are never closer than the interval, and a longer robots.txt delay is used
-- [ ] 7.5 Implement the `link_read` step: scope and order, the already-tracked check, fetch or snapshot, one read, and the outcomes cannot be read, added to a claim, new claim, and needs a vertical; verify tests with a fake model and fake outlets cover each outcome, a lead held because its claim has enough articles, and an earlier article read despite that
-- [ ] 7.6 Verify with a test that adding an article to an approved claim leaves its headline, summary, intervention, indication, vertical and review state unchanged and moves its first reported date when the article is earlier
-- [ ] 7.7 Record registry numbers and paper identifiers from the page as candidates with their reason, scored for the claim's indication; verify a test shows such a candidate is pending until scored and is not approved by having been named
-- [ ] 7.8 Verify with a test that after a read the article's text is in no table, log or cache, and that a second run does not read the lead again
-- [ ] 7.9 Add `thenwhat backfill funnel`; verify one test of its counts and costs on a seeded database and that it sends no request
-- [ ] 7.10 Document triage, evaluation and reading in the README's pipeline section and add the new settings to `.env.example`; verify `make check` passes
+- [x] 7.5 Implement the `link_read` step: scope and order, the already-tracked check, fetch or snapshot, one read, and the outcomes cannot be read, added to a claim, new claim, and needs a vertical; verify tests with a fake model and fake outlets cover each outcome, a lead held because its claim has enough articles, and an earlier article read despite that
+- [x] 7.6 Verify with a test that adding an article to an approved claim leaves its headline, summary, intervention, indication, vertical and review state unchanged and moves its first reported date when the article is earlier
+- [ ] 7.7 (not done: a match's reason is a code the site words, and an unknown code fails the site build, so "the article names it" needs a new code, its wording on the site and the export schema regenerated; a claim made from a lead is still searched for in the registry by `thenwhat prepare` as any claim is) Record registry numbers and paper identifiers from the page as candidates with their reason, scored for the claim's indication; verify a test shows such a candidate is pending until scored and is not approved by having been named
+- [x] 7.8 Verify with a test that after a read the article's text is in no table, log or cache, and that a second run does not read the lead again
+- [x] 7.9 Add `thenwhat backfill funnel`; verify one test of its counts and costs on a seeded database and that it sends no request
+- [x] 7.10 Document triage, evaluation and reading in the README's pipeline section and add the new settings to `.env.example`; verify `make check` passes
 
 ## 8. First runs
 

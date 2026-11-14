@@ -7,7 +7,7 @@ makes them disagree fails a test. Change both together.
 """
 
 import re
-from urllib.parse import parse_qsl, quote, urlsplit
+from urllib.parse import parse_qsl, quote, urlsplit, urlunsplit
 
 # Parameters that describe how a reader arrived, not which article this is.
 TRACKING = re.compile(
@@ -106,3 +106,19 @@ def article_key(address: str) -> str | None:
         f"{quote(name, safe=UNRESERVED)}={quote(value, safe=UNRESERVED)}" for name, value in kept
     )
     return host + path + (f"?{rest}" if rest else "")
+
+
+def without_tracking(address: str) -> str:
+    """An address as it is published with a source article: the address as shared, less
+    its fragment and the parameters that say how a reader arrived. Those parameters can
+    name the platform a link was shared on, which the export must not say."""
+    parts = urlsplit(address.strip())
+    kept = [
+        (name, value)
+        for name, value in parse_qsl(parts.query, keep_blank_values=True)
+        if not TRACKING.match(name)
+    ]
+    query = "&".join(
+        f"{quote(name, safe=UNRESERVED)}={quote(value, safe=UNRESERVED)}" for name, value in kept
+    )
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, query, ""))

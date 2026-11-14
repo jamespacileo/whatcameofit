@@ -279,6 +279,21 @@ thenwhat backfill evaluate-leads                     # precision and recall at e
 - `evaluate-leads` weights each tenth of the score range by how many leads it holds. Use it to set `LEAD_PASS_ABOVE` and `LEAD_REJECT_BELOW`, which have no default: until both are set, no lead is passed.
 - To reword the triage question, change it, raise the version of `link_triage` and run it again. Your labels count for the new version without being given again.
 
+Once triage is measured and both thresholds are set, the passed leads can be read:
+
+```sh
+thenwhat backfill plan                          # the pages reading would ask for, and its cost
+thenwhat backfill run link_read --limit 200     # always with a limit: what it makes is published
+thenwhat backfill funnel                        # where every lead stands, and what the model calls cost
+```
+
+- `link_read` refuses to run until 200 leads carry a label of yours at the current version of triage (`LEAD_EVALUATION_MIN_LABELS`) and both thresholds are set.
+- A lead is read once, with the same extraction as `thenwhat extract new`. If a claim already covers what the article reports, the article is added to it and nothing you reviewed changes. Otherwise a claim is drafted and decided by the rule for drafts; its slug is made by rule and its vertical is chosen by a decision, accepted at `VERTICAL_ACCEPT_ABOVE`.
+- Everything that can be settled without the model is settled first, and costs no model call: an article that has become tracked, a claim that already has `LEAD_READS_PER_CLAIM` articles, an outlet with no display name in `backfill/outlet_kinds.py`, a page the outlet's robots.txt forbids, and a page that gives no publication date or no headline.
+- The article's date and title come from its own page. The date a link was shared and the title it was shared under are never published, and the published address carries no parameter that says where it was shared.
+- No outlet is asked for two articles less than `OUTLET_INTERVAL_SECONDS` apart, across every process.
+- `funnel` lists the outlets whose pages gave no date. That list is how the page reader learns an outlet's markup.
+
 ## Development
 
 Needs [uv](https://docs.astral.sh/uv/), Node 22.23.4 or later, make and Docker.

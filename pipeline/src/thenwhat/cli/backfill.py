@@ -23,10 +23,12 @@ from thenwhat.backfill.link_evaluation import (
     label_lead,
     sample_leads,
 )
+from thenwhat.backfill.link_funnel import funnel
 from thenwhat.backfill.link_load import load_links
+from thenwhat.backfill.link_read import LinkRead, ReadClient
 from thenwhat.backfill.link_readers import posts_of
 from thenwhat.backfill.link_report import IN_SCOPE_KINDS, screening_report
-from thenwhat.backfill.link_triage import DecisionClient, LinkTriage
+from thenwhat.backfill.link_triage import DecisionClient, LinkTriage, Standing
 from thenwhat.backfill.mediacloud import MediaCloud
 from thenwhat.backfill.registered import registered_steps
 from thenwhat.backfill.registry_load import (
@@ -127,6 +129,16 @@ def make_client(step: Step, settings: Settings, allowances: Allowances) -> Any:
         from thenwhat.cli.resolve import make_backend
 
         return DecisionClient(make_backend)
+    if isinstance(step, LinkRead):
+        from thenwhat.cli import extract, resolve
+
+        return ReadClient(
+            retriever=extract.make_retriever(),
+            allowances=allowances,
+            make_llm=extract.make_llm,
+            make_checker=extract.make_checker,
+            make_backend=resolve.make_backend,
+        )
     if step.source == MediaCloud.name:
         client = MediaCloud(
             api_key=settings.mediacloud_api_key,
@@ -235,6 +247,13 @@ def plan_command() -> None:
                             f"{allowance.period_hours:g} hours",
                             markup=False,
                         )
+                elif step.requests_per_record:
+                    pages = counts.due * step.requests_per_record
+                    out.print(
+                        f"  asks outlets for {pages:,} pages, each outlet at least "
+                        f"{settings.outlet_interval_seconds:g} seconds apart",
+                        markup=False,
+                    )
                 else:
                     out.print("  asks no source: the due records need 0 requests", markup=False)
                 spend = model_spend_of(step)
@@ -280,6 +299,15 @@ def run_command(
     settings = settings_or_exit()
     with refusals():
         step = find_step(steps_for(settings), step_name)
+        if getattr(step, "needs_limit", False) and limit is None:
+            raise BackfillError(
+                f"`{step.name}` publishes what it makes, so a run says how many records it "
+                "may process. Run it again with --limit."
+            )
+        check_ready = getattr(step, "check_ready", None)
+        if check_ready is not None:
+            with open_session() as session:
+                check_ready(session)
         allowances = make_allowances(settings)
         if asks_a_source(step):
             allowances.of(step.source)
@@ -620,3 +648,58 @@ def evaluate_leads_command() -> None:
             "not counted in any figure above.",
             markup=False,
         )
+
+
+@backfill_app.command("funnel")
+def funnel_command() -> None:
+    """Show where the link leads stand, from loading to a claim, and what the model
+    calls for them have cost.
+
+    Sends no request and changes nothing.
+    """
+    settings = settings_or_exit()
+    with refusals(), open_session() as session:
+        found = funnel(
+            session, pass_above=settings.lead_pass_above, reject_below=settings.lead_reject_below
+        )
+    standing = found.standing
+    lines = [
+        f"loaded: {found.loaded:,}",
+        f"in scope after screening: {found.in_scope:,}",
+        f"scored by triage: {found.scored:,}",
+    ]
+    if standing[Standing.UNDECIDED]:
+        lines.append(
+            f"  undecided: {standing[Standing.UNDECIDED]:,} (set LEAD_PASS_ABOVE and "
+            "LEAD_REJECT_BELOW to pass any)"
+        )
+    else:
+        lines.append(
+            f"  passed: {standing[Standing.PASSED]:,}  held: {standing[Standing.HELD]:,}"
+            f"  rejected: {standing[Standing.REJECTED]:,}"
+        )
+    lines += [
+        f"read by the model: {found.read:,}",
+        f"  added to a claim that existed: {found.added_to_claim:,}",
+        f"  new claim, approved by rule: {found.new_approved_by_rule:,}",
+        f"  new claim, rejected by rule: {found.new_rejected_by_rule:,}",
+    ]
+    if found.new_otherwise:
+        lines.append(f"  new claim, decided otherwise or pending: {found.new_otherwise:,}")
+    lines += [
+        f"  needs a vertical, no claim made: {found.needs_vertical:,}",
+        f"held, the claim has enough articles: {found.enough_articles:,}",
+        f"could not be read: {sum(found.cannot_be_read.values()):,}",
+    ]
+    lines += [f"  {reason}: {number:,}" for reason, number in found.cannot_be_read.items()]
+    if found.undated_outlets:
+        lines.append("outlets whose pages gave no publication date:")
+        lines += [f"  {outlet}  {number:,}" for outlet, number in found.undated_outlets]
+    lines += [
+        f"model cost recorded for triage: {_dollars(found.triage_cost_usd)}",
+        f"model cost recorded for reading: {_dollars(found.reading_cost_usd)} "
+        "(the reads and the vertical decisions; checks of reported statements are "
+        "recorded with all statement checks)",
+    ]
+    for line in lines:
+        out.print(line, markup=False)

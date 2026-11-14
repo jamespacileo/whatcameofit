@@ -7,10 +7,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backfill_support import NOW, add_trials, same_session
+from thenwhat.backfill import outlet_kinds
 from thenwhat.backfill.allowance import Allowances
 from thenwhat.backfill.errors import SourcePaused
 from thenwhat.backfill.leads import hit_rates
-from thenwhat.backfill import outlet_kinds
 from thenwhat.backfill.ledger import count
 from thenwhat.backfill.mediacloud import (
     MediaCloud,

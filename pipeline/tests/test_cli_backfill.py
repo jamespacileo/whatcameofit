@@ -504,3 +504,62 @@ def test_the_report_says_so_when_nothing_is_labelled(run, session: Session, tmp_
     assert result.exit_code == 0, result.output
     assert "No link lead has a label of yours yet" in result.output
     assert "precision" not in result.output
+
+
+# --- link_read: a limit, and the gate ------------------------------------------------------
+
+
+def test_reading_is_refused_without_a_limit(run, session: Session):
+    result = run("run", "link_read")
+
+    assert result.exit_code == 1
+    assert "Run it again with --limit" in result.output
+
+
+def test_reading_is_refused_until_triage_is_measured(
+    run, session: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """Scenario: Too few labels"""
+    monkeypatch.setenv("LEAD_PASS_ABOVE", "0.7")
+    monkeypatch.setenv("LEAD_REJECT_BELOW", "0.2")
+    scored_leads(run, session, tmp_path)
+
+    result = run("run", "link_read", "--limit", "5")
+
+    assert result.exit_code == 1
+    assert "Triage has not been measured yet: 0 of the 200 labels needed" in result.output
+    assert session.scalars(select(WorkEntry).where(WorkEntry.step == "link_read")).all() == []
+
+
+def test_the_plan_says_what_reading_would_ask_and_cost(
+    run, session: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setenv("LEAD_PASS_ABOVE", "0.7")
+    monkeypatch.setenv("LEAD_REJECT_BELOW", "0.2")
+    monkeypatch.setenv("LLM_INPUT_USD_PER_MTOK", "1")
+    monkeypatch.setenv("LLM_OUTPUT_USD_PER_MTOK", "5")
+    monkeypatch.setenv("LLM_MONTHLY_BUDGET_USD", "13")
+    scored_leads(run, session, tmp_path)
+
+    result = run("plan")
+
+    assert result.exit_code == 0, result.output
+    reading = result.output.split("link_read (version 1)")[1]
+    # One lead of the three is scored at or above 0.7.
+    assert "in scope: 1 of 3 link_lead records" in reading
+    assert "asks outlets for 1 pages, each outlet at least 10 seconds apart" in reading
+    # 3,000 tokens in at $1 and 700 out at $5 a million is $0.0065 a lead.
+    assert "calls a model: the due records need about $0.01" in reading
+
+
+def test_the_funnel_reports_where_the_leads_stand(run, session: Session, tmp_path: Path):
+    """Scenario: After a limited run"""
+    scored_leads(run, session, tmp_path)
+
+    result = run("funnel")
+
+    assert result.exit_code == 0, result.output
+    assert "loaded: 3" in result.output and "in scope after screening: 2" in result.output
+    assert "undecided: 2 (set LEAD_PASS_ABOVE and LEAD_REJECT_BELOW to pass any)" in result.output
+    assert "read by the model: 0" in result.output
+    assert "model cost recorded for triage: $0.00" in result.output

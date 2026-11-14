@@ -53,6 +53,10 @@ Give a DOI only if the article states it. List a promised timeline only if the a
 """
 
 
+# The name an article's read is recorded under in the usage ledger.
+EXTRACTION = "extraction"
+
+
 class ClaimNotPending(EntryError):
     pass
 
@@ -109,10 +113,13 @@ def draft_claim_from_article(
     )
 
 
-def read_article(llm: Llm, checker: StatementChecker, text: str) -> Draft:
+def read_article(
+    llm: Llm, checker: StatementChecker, text: str, *, purpose: str = EXTRACTION
+) -> Draft:
     """What the model reads out of an article's text: the one model call of extraction.
-    Nothing is saved, and the text is kept nowhere."""
-    return _extract(llm, text, checker)
+    Nothing is saved, and the text is kept nowhere. `purpose` is the name the call's
+    cost is recorded under."""
+    return _extract(llm, text, checker, purpose)
 
 
 def claim_from_draft(
@@ -239,9 +246,9 @@ def extract_into_claim(
     return Extracted(claim, statements)
 
 
-def _extract(llm: Llm, text: str, checker: StatementChecker) -> Draft:
+def _extract(llm: Llm, text: str, checker: StatementChecker, purpose: str = EXTRACTION) -> Draft:
     return llm.run(
-        "extraction",
+        purpose,
         instructions=INSTRUCTIONS + statement_rules(checker.per_article),
         prompt=text,
         output_type=Draft,
