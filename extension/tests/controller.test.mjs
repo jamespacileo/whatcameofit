@@ -40,7 +40,8 @@ test("opening an untracked page automatically performs one search without a seco
   assert.deepEqual(calls.read, [tab]);
   assert.equal(calls.fetch.length, 2);
   assert.equal(calls.fetch[1].url, "https://whatcameofit.example/api/lookup");
-  assert.deepEqual(JSON.parse(calls.fetch[1].options.body), request);
+  // The page's words and links as read, asking for a staged answer the service may decline.
+  assert.deepEqual(JSON.parse(calls.fetch[1].options.body), { ...request, stream: true });
   assert.equal(calls.states.at(-1).shown, answer);
 });
 
