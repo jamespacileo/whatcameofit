@@ -30,6 +30,7 @@
   // These counters apply per Cloudflare location, not globally. They slow bursts;
   // the dedicated OpenAI project's enforced monthly limit controls model spending.
   "ratelimits": [
+    { "name": "TRIAL_RECORD_READS", "namespace_id": "4103", "simple": { "limit": 60, "period": 60 } },
     { "name": "LOOKUP_PER_READER", "namespace_id": "4101", "simple": { "limit": 5, "period": 60 } },
     { "name": "LOOKUP_IN_ALL", "namespace_id": "4102", "simple": { "limit": 30, "period": 60 } }
   ]

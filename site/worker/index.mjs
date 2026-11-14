@@ -1,4 +1,4 @@
-// The site's Worker. Every address but one is a file of the built site. /api/lookup
+// The site's Worker. Static pages, readable trial records, and /api/lookup, which
 // answers a reader's question about an article the site does not track, or about a post
 // that links to one: which trial records is this about? Behaviour: openspec live-lookup.
 //
@@ -18,6 +18,7 @@ import { followShort } from "./short.mjs";
 import { readBody, sourceUrl, validateImage } from "./visual.mjs";
 import { previousResult, storeResult } from "./results.mjs";
 import { makeResearch } from "./research.mjs";
+import { handleTrial } from "./trials.mjs";
 
 const PATH = "/api/lookup";
 // What a reader's browser may send with text it read: this many links, each this long.
@@ -114,6 +115,11 @@ async function withLinkedArticle(platform, post, index, { fetch, contact }) {
 /** @param {{ model: object, registry: object, papers?: object, fetch?: Function } | undefined} tools stand-ins, for tests */
 export async function handle(request, env, tools) {
   const here = new URL(request.url);
+  if (here.pathname.startsWith("/trials/")) return handleTrial(request, env, tools?.trial);
+  // The built reader is a server template, never a public page of placeholders.
+  if (/^\/trial-reader(?:\/|\.html|\/index(?:\.html)?)?$/.test(here.pathname)) {
+    return new Response("Not found", { status: 404, headers: { "Cache-Control": "no-store" } });
+  }
   if (here.pathname !== PATH) {
     // A page the operator archived answers 410; everything else is a file of the site.
     const slug = here.pathname.replace(/^\/+|\/+$/g, "");

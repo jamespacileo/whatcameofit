@@ -18,6 +18,9 @@ import {
 import { formatDate } from "../lib/timetable";
 
 interface Props {
+  /** Used by the server-rendered trial reader; ordinary pages keep their own path. */
+  canonicalPath?: string;
+  noindex?: boolean;
   title?: string;
   /** A shorter title for the browser tab and search results; the full one is still shared. */
   tabTitle?: string;
@@ -47,7 +50,7 @@ const {
   article,
   oembed,
 } = Astro.props;
-const canonical = canonicalAddress(Astro.url.pathname);
+const canonical = canonicalAddress(Astro.props.canonicalPath ?? Astro.url.pathname);
 const graph = [
   ...(Array.isArray(structured) ? structured : structured ? [structured] : []),
   ...(breadcrumbs ? [breadcrumbData(breadcrumbs)] : []),
@@ -77,7 +80,7 @@ const topicLink =
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-pagefind-ignore={Astro.props.noindex ? "all" : undefined}>
   <head>
     <!-- Checking the source? Same. Every record on this page links to its own. -->
     <meta charset="utf-8" />
@@ -92,6 +95,7 @@ const topicLink =
     <link rel="preload" as="font" type="font/woff2" href={faceUrl} crossorigin />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
+    {Astro.props.noindex && <meta name="robots" content="noindex, follow" />}
     <link rel="canonical" href={canonical} />
     <link
       rel="alternate"

@@ -1,0 +1,44 @@
+---
+import Base from "../layouts/Base.astro";
+---
+<Base title="__TRIAL_TITLE__" canonicalPath="/trials/__TRIAL_ID__" noindex
+  description="Selected trial details from ClinicalTrials.gov, with the source and dates.">
+  <article class="trial-reader" data-pagefind-ignore>__TRIAL_CONTENT__</article>
+</Base>
+<style is:global>
+  .trial-reader { max-width: var(--measure); margin-inline: auto; padding-block: 0.5rem 2rem; }
+  .trial-reader h1 { font-size: clamp(1.45rem, 3.5vw, 2rem); line-height: 1.22; margin-block: 1.1rem 0.8rem; }
+  .trial-reader h2 { font-size: 1.2rem; margin-block: 2.3rem 0.8rem; }
+  .trial-reader h3 { font-size: 1rem; margin-block: 1.3rem 0.5rem; }
+  .trial-reader .trial-source { color: var(--muted); font-size: 0.88rem; }
+  .trial-reader .trial-source a { display: inline-block; }
+  .trial-reader .trial-number { font-weight: 700; color: var(--ink); white-space: nowrap; }
+  .trial-reader .trial-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem 2rem; margin-block: 1.5rem 0; padding-block: 1.3rem; border-block: 1px solid var(--rule); }
+  .trial-reader dt { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.25rem; }
+  .trial-reader dd { margin: 0; }
+  .trial-reader .trial-notice { background: var(--panel); padding: 1rem 1.2rem; border-radius: var(--radius); margin-block: 1.4rem; }
+  .trial-reader .trial-notice p:last-child { margin-bottom: 0; }
+  .trial-reader .trial-dates { display: grid; grid-template-columns: minmax(8rem, 1fr) 1fr; gap: 0.65rem 1.4rem; }
+  .trial-reader .trial-dates dt { font-size: 0.9rem; margin: 0; }
+  .trial-reader .trial-dates dd { font-size: 0.9rem; }
+  .trial-reader .trial-links { padding-inline-start: 1.2rem; }
+  .trial-reader .trial-links li { margin-block: 0.6rem; }
+  .trial-reader .trial-list { padding-inline-start: 1.2rem; }
+  .trial-reader .trial-list li { margin-block: 0.45rem; }
+  .trial-reader .trial-date { white-space: nowrap; }
+  .trial-reader summary { cursor: pointer; padding-block: 0.35rem; }
+  @media (max-width: 40rem) {
+    .trial-reader .trial-facts { gap: 1rem; }
+    .trial-reader .trial-dates { grid-template-columns: 1fr; gap: 0.2rem; }
+    .trial-reader .trial-dates dd { margin-bottom: 0.8rem; }
+    .trial-reader a { display: inline-flex; align-items: center; min-height: 44px; }
+    .trial-reader .trial-source a { display: inline-flex; }
+    .trial-reader summary { min-height: 44px; }
+  }
+  @media print {
+    .trial-reader { max-width: none; }
+    .trial-reader .trial-notice { background: transparent; border: 1px solid var(--rule); }
+    .trial-reader h2 { break-after: avoid; }
+    .trial-reader .trial-facts > div { break-inside: avoid; }
+  }
+</style>
