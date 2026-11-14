@@ -64,7 +64,9 @@ class MissingKey(SourceError):
 
 
 class AllowanceUsedUp(SourceError):
-    """The source's allowance for the day is used up. It is not asked again this run."""
+    """The source's free allowance cannot be drawn on: it is used up for the day, or the
+    source did not say what is left, or asking again would spend paid credit. The source
+    is not asked again until the allowance resets."""
 
 
 # The name this client goes by, in its User-Agent and when reading a site's robots.txt.
@@ -151,12 +153,18 @@ class Source:
         self._client = httpx.Client(transport=transport, timeout=30.0, follow_redirects=True)
 
     def _get(
-        self, url: str, params: dict[str, str] | None = None, *, force: bool = False
+        self,
+        url: str,
+        params: dict[str, str] | None = None,
+        *,
+        force: bool = False,
+        ttl: timedelta | None = None,
     ) -> Fetched | None:
         """The JSON at `url`, or None when the registry answers not-found.
 
         Answers come from the cache while they are fresh, keeping their original
-        fetch time, unless `force` is set.
+        fetch time, unless `force` is set. `ttl` keeps this answer for longer or
+        shorter than the client's usual time.
         """
         key = f"{self.name} GET {httpx.URL(url, params=params)}"
         cached = self._session.get(HttpCache, key)
@@ -173,7 +181,7 @@ class Source:
             "source_name": self.name,
             "payload": fetched.payload,
             "fetched_at": fetched.fetched_at,
-            "expires_at": fetched.fetched_at + self._cache_ttl,
+            "expires_at": fetched.fetched_at + (ttl or self._cache_ttl),
         }
         # Written in one statement that also replaces an entry another session wrote in
         # the meantime, so two lookups at once cannot collide on the same request.

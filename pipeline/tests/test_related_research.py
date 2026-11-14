@@ -85,16 +85,24 @@ def paper(
 
 
 class FakePapers:
-    """A literature search that answers each search from a table."""
+    """A literature search that answers from a table, by term and condition as one line.
+    Like the real one, it takes every term of a claim in one search."""
 
     def __init__(self, results: dict[str, list[SourceRecord]] | None = None) -> None:
         self.results = results or {}
-        self.searched: list[str] = []
+        self.searched: list[tuple[list[str], str]] = []
         self.looked_up: list[str] = []
 
-    def search_papers(self, words: str, limit: int = 20) -> list[SourceRecord]:
-        self.searched.append(words)
-        return self.results.get(words, [])[:limit]
+    def search_papers(
+        self, terms: list[str], condition: str, limit: int = 20
+    ) -> list[SourceRecord]:
+        self.searched.append((terms, condition))
+        found = {
+            record.external_id: record
+            for term in terms
+            for record in self.results.get(f"{term} {condition}", [])
+        }
+        return list(found.values())[:limit]
 
     def paper(self, external_id: str) -> SourceRecord | None:
         self.looked_up.append(external_id)
@@ -204,7 +212,9 @@ def test_claim_whose_article_gave_no_doi_gets_paper_candidates(session: Session)
     added = find(session, claim, papers)
 
     assert [m.external_id for m in added] == [f"10.1000/p{n}" for n in range(1, 5)]
-    assert papers.searched == [NAME_SEARCH, PHRASE_SEARCH]
+    assert papers.searched == [
+        (["Wrist-worn stimulation device", "median nerve stimulation"], "Tourette syndrome")
+    ]
     [intervention] = entities_of(session, claim)
     assert all(m.entity_id == intervention.id and m.source_name == "openalex" for m in added)
     assert added[0].record_summary == "Paper 1. 2023. article. Journal of Examples"
@@ -241,15 +251,17 @@ def test_paper_without_a_doi_is_known_by_the_sources_identifier(session: Session
     assert added.external_id == "W77"
 
 
-def test_a_claim_keeps_at_most_twenty_papers_in_turn_from_each_term(session: Session):
+def test_a_claim_keeps_at_most_twenty_papers_in_the_sources_order(session: Session):
     claim = new_claim(session)
-    by_name = [paper(f"10.1/n{n}", work=f"W1{n:02}") for n in range(20)]
-    by_phrase = [paper(f"10.1/p{n}", work=f"W2{n:02}") for n in range(20)]
+    many = [paper(f"10.1/p{n:02}", work=f"W1{n:02}") for n in range(25)]
 
-    added = find(session, claim, FakePapers({NAME_SEARCH: by_name, PHRASE_SEARCH: by_phrase}))
+    class Unbounded(FakePapers):
+        def search_papers(self, terms: list[str], condition: str, limit: int = 20):
+            return many
 
-    assert len(added) == 20
-    assert [m.external_id for m in added[:4]] == ["10.1/n0", "10.1/p0", "10.1/n1", "10.1/p1"]
+    added = find(session, claim, Unbounded())
+
+    assert [m.external_id for m in added] == [f"10.1/p{n:02}" for n in range(20)]
     assert find(session, claim, FakePapers({NAME_SEARCH: [paper("10.1/new")]})) == []
 
 
@@ -277,7 +289,9 @@ def test_rejected_papers_leave_room_for_others_and_are_not_added_again(session: 
 
 def test_allowance_used_up_before_any_paper_is_found_is_the_reason_given(session: Session):
     class UsedUp(FakePapers):
-        def search_papers(self, words: str, limit: int = 20) -> list[SourceRecord]:
+        def search_papers(
+            self, terms: list[str], condition: str, limit: int = 20
+        ) -> list[SourceRecord]:
             raise AllowanceUsedUp("used up")
 
     with pytest.raises(AllowanceUsedUp):
@@ -499,7 +513,7 @@ def test_pending_papers_are_scored_again_with_their_reasons_brought_up_to_date(s
     # Decided papers keep the score they were decided on, and no search is spent.
     assert approved.score == pytest.approx(0.9) and rejected.score == pytest.approx(0.01)
     assert papers.looked_up == ["10.1000/p2", "10.1000/p3"]
-    assert len(papers.searched) == 2
+    assert len(papers.searched) == 1
 
 
 def test_a_paper_the_source_no_longer_has_or_just_scored_is_left_as_it_is(session: Session):

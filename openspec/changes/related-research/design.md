@@ -84,3 +84,15 @@ The operator requested working OpenAlex/ROR integrations in the deployed app. Th
 After the existing extraction call identifies a treatment and condition, search at most two OpenAlex term/condition combinations, ten results each, and at most three explicitly named organisations through ROR affiliation matching. This adds no model calls. Only ROR chosen matches are displayed. Both providers run alongside the clinical search and fail independently. The site and next extension build share the wording; deployed 0.8 extensions ignore the optional response field safely.
 
 Store only normalized public metadata for seven days under hashed search keys. Do not retain article text, abstracts, screenshots or API keys. Every charged OpenAlex request requires a successful free allowance check, <=$1/day free budget, >=$0.01 reserve after its reported search price, and zero prepaid balance. The provider's free account cap enforces the global ceiling; KV is not an atomic counter. Unknown limits, paid credit, 402 or exhausted allowance fail closed, with no anonymous fallback. ROR is free; bound calls and pause on 429. Existing OpenAI $13/month controls are unchanged.
+
+## Fewer searches, and an allowance that cannot be overspent (2026-11-14)
+
+The operator asked that the pipeline handle the allowance correctly, say what it did, and do more with fewer searches.
+
+**One search per claim.** The first build sent one search per name, other name and search phrase. OpenAlex takes `("a" OR "b") AND "condition"` in `search`, so every term goes into one search. Checked 2026-11-14 for the Tourette claim: the two separate searches matched 23 and 948 works; the combined one matched 97, with the two Washington University trial reports and the Nottingham sham-controlled trial in the first six. It is both cheaper and more exact, because each term is a phrase. A description that matches nothing as a phrase gets one loose search of the first name with the indication. Alternative considered: keep one search per term and cache longer. Rejected: it still costs up to five searches for a new claim.
+
+**A search's answer is kept for seven days**, as the Worker keeps its own. Lookups of one work stay at 24 hours and cost nothing.
+
+**The stop is shared.** The client keeps, in `http_cache`, that no search may be sent and until when. It reads this before every search, so the processes `thenwhat prepare` runs side by side and any later run of the day all stop. It stops on a used-up allowance, on an answer that does not state the allowance, and on prepaid credit, which the Worker already refuses to draw on. A refusal that arrives as an error inside a failed step is not kept, because the step is undone; the next process learns it from its own refused request, which costs nothing.
+
+**The run says what it did.** `resolve` ends with one line: searches sent, cost, answers from the cache, what is left, and why searches stopped if they did. The pipeline has no log file; command output is where the operator looks. `prepare` shows only a command's last line, so the line appears when `resolve` is run for one claim.

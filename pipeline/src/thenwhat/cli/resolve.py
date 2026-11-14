@@ -294,6 +294,8 @@ def _related_research(
         )
         if origin is not None:
             out.print(f"Origin paper set by rule: {origin.name}.", markup=False)
+    if isinstance(papers, OpenAlex):
+        out.print(papers.usage.line(), markup=False)
 
 
 def _step[T](session: Session, what_failed: str, work: Callable[[], T]) -> T | None:

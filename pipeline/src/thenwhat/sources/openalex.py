@@ -1,11 +1,13 @@
 """OpenAlex literature search. Terms, key rules and allowance: docs/sources.md."""
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any
 
 import httpx
+from sqlalchemy.dialects.postgresql import insert
 
+from thenwhat.db.models import HttpCache
 from thenwhat.sources.base import AllowanceUsedUp, MissingKey, Source, SourceRecord
 
 API = "https://api.openalex.org"
@@ -20,6 +22,44 @@ DOI_PREFIX = "https://doi.org/"
 WORK_PREFIX = "https://openalex.org/"
 # What a search costs when the source's answer does not say.
 SEARCH_COST_USD = 0.001
+# The literature changes slowly and every search is charged, so a search's answer is
+# kept for a week. A claim resolved again within the week spends nothing.
+SEARCH_TTL = timedelta(days=7)
+# Where it is kept, for every run and process, that no search may be sent for now.
+PAUSE_KEY = "openalex searches paused"
+
+USED_UP = "OpenAlex's free allowance for the day is used up."
+NOT_STATED = (
+    "OpenAlex did not say what is left of the day's allowance, so no further search is sent today."
+)
+PAID_CREDIT = (
+    "The OpenAlex account holds prepaid credit. The pipeline draws on the free allowance"
+    " only, so no further search is sent today. Remove the credit to search again."
+)
+
+
+@dataclass(slots=True)
+class Usage:
+    """What one run asked of OpenAlex's search, for the operator to see."""
+
+    searches_sent: int = 0
+    searches_from_cache: int = 0
+    spent_usd: float = 0.0
+    # What the source last said is left of the day's free allowance.
+    remaining_usd: float | None = None
+    # Why no further search is sent, once that is so.
+    stopped: str | None = None
+
+    def line(self) -> str:
+        """One line for the operator: what was sent, what it cost and what is left."""
+        sent = "search" if self.searches_sent == 1 else "searches"
+        parts = [f"OpenAlex: {self.searches_sent} {sent} sent (${self.spent_usd:.3f})"]
+        if self.searches_from_cache:
+            parts.append(f"{self.searches_from_cache} answered from the week's cache")
+        if self.remaining_usd is not None:
+            parts.append(f"${self.remaining_usd:.3f} of the free allowance left today")
+        line = ", ".join(parts) + "."
+        return f"{line} {self.stopped}" if self.stopped else line
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,18 +138,40 @@ class OpenAlex(Source):
     def __init__(self, *args: Any, api_key: str | None, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._key = (api_key or "").strip()
-        self._used_up = False
+        self.usage = Usage()
 
-    def search_papers(self, words: str, limit: int = MAX_RESULTS) -> list[SourceRecord]:
-        """Papers about these words, most relevant first, up to the limit. One request:
-        no second page is asked for."""
+    def search_papers(
+        self, terms: list[str], condition: str, limit: int = MAX_RESULTS
+    ) -> list[SourceRecord]:
+        """Papers that name any of the terms together with the condition, most relevant
+        first, up to the limit.
+
+        All the terms go into one search, so a claim costs one search however many names
+        and phrases its intervention has. Each term and the condition is searched for as
+        a phrase. Only when that finds nothing is the first term searched for loosely,
+        word by word, with the condition: a second search at most. No second page is
+        asked for.
+        """
         self._require_key()
-        if self._used_up:
-            raise AllowanceUsedUp(_USED_UP)
         limit = max(1, min(limit, MAX_RESULTS))
+        phrases = list(dict.fromkeys(_phrase(term) for term in terms if _phrase(term)))
+        about = _phrase(condition)
+        if not phrases or not about:
+            return []
+        records = self._search(f"({' OR '.join(phrases)}) AND {about}", limit)
+        if not records:
+            records = self._search(f"{_words(terms[0])} {_words(condition)}", limit)
+        return records
+
+    def _search(self, query: str, limit: int) -> list[SourceRecord]:
+        sent = self.usage.searches_sent
         fetched = self._get(
-            f"{API}/works", {"search": words, "per_page": str(limit), "select": FIELDS}
+            f"{API}/works",
+            {"search": query, "per_page": str(limit), "select": FIELDS},
+            ttl=SEARCH_TTL,
         )
+        if self.usage.searches_sent == sent:
+            self.usage.searches_from_cache += 1
         results = fetched.payload.get("results", []) if fetched else []
         return [
             record
@@ -153,23 +215,86 @@ class OpenAlex(Source):
     def _extra_headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self._key}"}
 
+    def _request(self, url: str, params: dict[str, str] | None) -> httpx.Response | None:
+        """A search is sent only while none is paused. An answer still in the cache never
+        reaches here, and a lookup of one work is free and is always sent."""
+        if url == f"{API}/works":
+            paused = self._paused()
+            if paused:
+                self.usage.stopped = paused
+                raise AllowanceUsedUp(paused)
+        return super()._request(url, params)
+
     def _heed(self, response: httpx.Response) -> None:
-        remaining = _amount(response.headers.get("X-RateLimit-Remaining-USD"))
-        cost = _amount(response.headers.get("X-RateLimit-Cost-USD")) or SEARCH_COST_USD
-        nothing_left = remaining is not None and remaining < max(cost, SEARCH_COST_USD)
+        """Read what the answer says of the allowance. Searches stop, for every run until
+        the allowance resets, when it is used up, when it is not stated, or when the
+        account holds prepaid credit that a further search could spend."""
+        headers = response.headers
+        remaining = _amount(headers.get("X-RateLimit-Remaining-USD"))
+        cost = _amount(headers.get("X-RateLimit-Cost-USD"))
+        prepaid = _amount(headers.get("X-RateLimit-Prepaid-Remaining-USD"))
+        reset = _amount(headers.get("X-RateLimit-Reset"))
+        nothing_left = remaining is not None and remaining < SEARCH_COST_USD
         if response.status_code == 402 or (
             response.status_code == 429 and (remaining is None or nothing_left)
         ):
-            self._used_up = True
-            raise AllowanceUsedUp(_USED_UP)
-        if nothing_left:
-            # This answer is good; the next search would not be, so it is not sent.
-            self._used_up = True
+            self._pause(USED_UP, reset)
+            raise AllowanceUsedUp(USED_UP)
+        if not response.is_success or response.request.url.path != "/works":
+            return
+        self.usage.searches_sent += 1
+        self.usage.spent_usd += cost if cost is not None else SEARCH_COST_USD
+        self.usage.remaining_usd = remaining
+        # This answer is good. Whether the next search may be sent is settled now.
+        if prepaid is not None and prepaid > 0:
+            self._pause(PAID_CREDIT, reset)
+        elif remaining is None or prepaid is None:
+            self._pause(NOT_STATED, reset)
+        elif nothing_left:
+            self._pause(USED_UP, reset)
+
+    def _paused(self) -> str | None:
+        """Why no search may be sent now, or None when one may."""
+        pause = self._session.get(HttpCache, PAUSE_KEY)
+        if pause is None or pause.expires_at <= self._time.now():
+            return None
+        return str(pause.payload.get("reason") or USED_UP)
+
+    def _pause(self, reason: str, reset_in_seconds: float | None) -> None:
+        """Stop searches until the allowance resets: at the time the source gave, or at
+        the next midnight UTC. Kept in the database, so every process and later run of the
+        day stops too."""
+        now = self._time.now()
+        if reset_in_seconds is not None and reset_in_seconds > 0:
+            until = now + timedelta(seconds=reset_in_seconds)
+        else:
+            until = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        kept = {
+            "source_name": self.name,
+            "payload": {"reason": reason},
+            "fetched_at": now,
+            "expires_at": until,
+        }
+        self._session.execute(
+            insert(HttpCache)
+            .values(request_key=PAUSE_KEY, **kept)
+            .on_conflict_do_update(index_elements=[HttpCache.request_key], set_=kept)
+        )
+        held = self._session.get(HttpCache, PAUSE_KEY)
+        if held is not None:
+            self._session.refresh(held)
+        self.usage.stopped = reason
 
 
-_USED_UP = (
-    "OpenAlex's allowance for the day is used up. No more papers are searched for in this run."
-)
+def _words(text: str) -> str:
+    """The text with what the search would read as an instruction taken out."""
+    return " ".join(text.replace('"', " ").replace("(", " ").replace(")", " ").split())
+
+
+def _phrase(text: str) -> str:
+    """The text as one quoted phrase, or nothing when it has no words."""
+    words = _words(text)
+    return f'"{words}"' if words else ""
 
 
 def _amount(header: str | None) -> float | None:

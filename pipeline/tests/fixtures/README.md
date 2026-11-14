@@ -16,7 +16,7 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `europepmc/citing_srep39654_page1.json` | `GET /search?query=CITES:28067250_MED&resultType=core&pageSize=3` |
 | `crossref/work_retracted_lancet_1998.json` | `GET /works/10.1016/S0140-6736(97)11096-0` |
 | `crossref/work_srep39654.json` | `GET /works/10.1038/srep39654` |
-| `openalex/search_median_nerve_tourette.json` | `GET /works?search=median nerve stimulation Tourette syndrome&per_page=3&select=id,doi,title,publication_year,publication_date,type,primary_location,authorships,abstract_inverted_index,ids` (2026-11-14) |
+| `openalex/search_median_nerve_tourette.json` | `GET /works?search=("median nerve stimulation") AND "Tourette syndrome"&per_page=3&select=id,doi,title,publication_year,publication_date,type,primary_location,authorships,abstract_inverted_index,ids` (2026-11-14) |
 | `openalex/search_nothing.json` | the same search for made-up words that no paper holds (2026-11-14) |
 | `openalex/work_704541.json` | `GET /works/doi:10.64898/2026.02.07.704541?select=…` (2026-11-14) |
 | `ror/affiliation_university_of_nottingham.json` | `GET /v2/organizations?affiliation=University of Nottingham` (2026-11-14) |

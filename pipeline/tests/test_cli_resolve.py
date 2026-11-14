@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from decimal import Decimal
 
+import httpx
 import pytest
 from pydantic_ai.messages import ModelResponse, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
@@ -24,6 +25,7 @@ from thenwhat.decide.core import BackendAnswer
 from thenwhat.domain import Decider
 from thenwhat.llm.client import Llm, LlmSettings
 from thenwhat.sources.base import SourceRecord
+from thenwhat.sources.openalex import OpenAlex
 
 NOW = datetime(2026, 11, 20, tzinfo=UTC)
 SLUG = "tooth-regrowth-ex1"
@@ -44,7 +46,9 @@ class Dois:
 
 
 class Papers:
-    def search_papers(self, words: str, limit: int = 20) -> list[SourceRecord]:
+    def search_papers(
+        self, terms: list[str], condition: str, limit: int = 20
+    ) -> list[SourceRecord]:
         payload = {
             "id": "https://openalex.org/W1",
             "doi": "https://doi.org/10.1000/found",
@@ -73,7 +77,7 @@ class Nothing:
         return []
 
 
-def research(papers: Papers | None = None) -> Research:
+def research(papers: Papers | OpenAlex | None = None) -> Research:
     return Research(papers=papers, numbers=Nothing(), registry=Nothing(), organisations=Nothing())
 
 
@@ -276,12 +280,44 @@ def test_resolve_stores_the_related_papers_it_finds(
     assert paper.reviewed_by is Decider.RULE
 
 
+def test_resolve_says_what_the_paper_search_sent_and_what_is_left(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch, fixture_json, fake_time
+):
+    answer = httpx.Response(
+        200,
+        json=fixture_json("openalex/search_median_nerve_tourette.json"),
+        headers={
+            "X-RateLimit-Cost-USD": "0.001",
+            "X-RateLimit-Remaining-USD": "0.994",
+            "X-RateLimit-Prepaid-Remaining-USD": "0",
+        },
+    )
+    client = OpenAlex(
+        session,
+        contact_email="ops@thenwhat.test",
+        api_key="test-key-not-a-real-one",
+        transport=httpx.MockTransport(lambda request: answer),
+        time=fake_time,
+    )
+    monkeypatch.setattr("thenwhat.cli.resolve.make_research", lambda s: research(client))
+
+    result = run("resolve", SLUG)
+
+    assert result.exit_code == 0, result.output
+    assert "Found 3 related papers" in result.output
+    assert (
+        "OpenAlex: 1 search sent ($0.001), $0.994 of the free allowance left today."
+        in result.output
+    )
+    assert "test-key" not in result.output
+
+
 def test_resolve_rescore_scores_the_pending_papers_again(
     run, session: Session, monkeypatch: pytest.MonkeyPatch
 ):
     class Known(Papers):
         def paper(self, external_id: str) -> SourceRecord | None:
-            return self.search_papers("")[0]
+            return self.search_papers([], "")[0]
 
     monkeypatch.setattr("thenwhat.cli.resolve.make_research", lambda s: research(Known()))
     run("resolve", SLUG)
@@ -296,7 +332,9 @@ def test_resolve_keeps_its_trial_candidates_when_the_paper_search_breaks(
     run, session: Session, monkeypatch: pytest.MonkeyPatch
 ):
     class BrokenPapers(Papers):
-        def search_papers(self, words: str, limit: int = 20) -> list[SourceRecord]:
+        def search_papers(
+            self, terms: list[str], condition: str, limit: int = 20
+        ) -> list[SourceRecord]:
             raise KeyError("results")
 
     monkeypatch.setattr("thenwhat.cli.resolve.make_research", lambda s: research(BrokenPapers()))
