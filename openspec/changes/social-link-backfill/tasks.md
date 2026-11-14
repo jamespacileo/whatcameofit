@@ -51,8 +51,9 @@
 
 ## 7. Reading
 
-The article's date is decided: from the page only (`specs/lead-reading/spec.md`, "The article's date"). The outlet's name on a source article is still the operator's to decide, and 7.5 waits on it (`design.md`, "Found while applying").
+The article's date is decided: from the page only (`specs/lead-reading/spec.md`, "The article's date"). The outlet's name is decided: from a checked-in list of display names ("The outlet's name", "The article's title").
 
+- [x] 7.00 Name every listed outlet in `OUTLET_NAMES`; verify a test fails when a listed domain has no name or a name is for an unlisted one, and one covers a subdomain, a domain listed by its ending and an unlisted domain
 - [x] 7.0 Read a date that a page shows in words in an element known to hold it, and the day from a date as a page gives it; verify tests with synthetic pages cover a date in a tag, a date in words, the tag preferred, and a date that cannot be read
 
 - [x] 7.1 Split drafting so the model call comes first and returns the draft, keeping `thenwhat extract new` and `extract article` behaving as before; verify the existing extraction tests pass unchanged

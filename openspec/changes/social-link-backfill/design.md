@@ -169,7 +169,7 @@ Groups 1 to 6 are built. Before the reading step is written, two things the spec
 
 2. **The outlet's name on a source article.** Entered articles carry a name a person typed ("The Guardian"). A lead knows only the domain. The choices are to show the domain as the outlet, or to add a display name to each listed outlet in `backfill/outlet_kinds.py` and refuse a lead whose outlet has none.
 
-Neither is in `specs/lead-reading/spec.md` yet. Whichever is chosen becomes a requirement there before task group 7 starts.
+   **Decided on 2026-11-14: a list of display names.** `OUTLET_NAMES` in `backfill/outlet_kinds.py` names all 111 listed outlets, in the form entered articles already use; the operator reviews the names. A lead whose outlet has no name there is not fetched or read. The same reasoning settles the title: a source article's title is its page's own headline, never the title a link was shared under, which for Reddit is a person's words and stays private. They are `specs/lead-reading/spec.md`, "The outlet's name" and "The article's title".
 
 ## Open Questions
 

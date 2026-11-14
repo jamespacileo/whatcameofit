@@ -65,6 +65,28 @@ A source article made from a lead SHALL carry the publication date that the arti
 - **WHEN** a lead's page gives a date in a form the page reader does not know
 - **THEN** the lead is treated as a page with no date, and its outlet is counted among those with no date
 
+### Requirement: The outlet's name
+A source article made from a lead SHALL carry its outlet's display name from the checked-in list of outlets. No model names an outlet, and no name SHALL be made from a domain. A lead whose outlet has no display name SHALL NOT be fetched or read: its outcome SHALL be cannot be read, with the reason that its outlet has no name.
+
+#### Scenario: A listed outlet
+- **WHEN** a lead on theguardian.com is read
+- **THEN** its source article's outlet is "The Guardian"
+
+#### Scenario: An outlet with no display name
+- **WHEN** a lead's outlet is in scope by its kind and has no display name
+- **THEN** no article is fetched, no model is called, and the lead's outcome is cannot be read with the reason that its outlet has no name
+
+### Requirement: The article's title
+A source article made from a lead SHALL carry the headline its own page gives as its title. The title a link was shared under SHALL NOT become a source article's title or reach the export. A lead whose page gives no headline SHALL NOT be read by the model: its outcome SHALL be cannot be read, with that reason.
+
+#### Scenario: A shared title that differs from the headline
+- **WHEN** a lead was shared under a title a person wrote
+- **THEN** the source article's title is the page's headline, and the shared title is not in the export
+
+#### Scenario: A page with no headline
+- **WHEN** a lead's page gives no headline
+- **THEN** no model is called and the lead's outcome is cannot be read with that reason
+
 ### Requirement: An article for a claim that exists
 When the read names an intervention and an indication that an existing claim covers, the article SHALL be added to that claim as a source article, with its content hash, any archive address and its reported statements, which are checked and approved by the existing rule. The claim's headline, summary, intervention, indication, vertical and review state SHALL NOT change.
 
