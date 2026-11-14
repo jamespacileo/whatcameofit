@@ -18,11 +18,22 @@ export interface CardReason {
   kind?: string | null;
   /** For "registry_lists_type": the trial registry's own code, such as "DEVICE". */
   type?: string | null;
+  /** For "word_equals_symbol" and "word_equals_synonym": the word of the treatment's
+   * name that equals the gene's symbol or a listed synonym of it. */
+  word?: string | null;
+  /** For "word_equals_synonym": the target source's codes for who lists the synonym. */
+  sources?: string[] | null;
 }
 
 export interface ExportedCard {
-  /** What the term is to the claim: "condition" or "intervention". */
+  /** What the term is to the claim: "condition", "intervention", or "target" for a gene
+   * named in the treatment's name. */
   kind: string;
+  /** For a target: the gene's approved name. Absent or null otherwise. */
+  name?: string | null;
+  /** The name in `card_sources` of the source the definition's words come from, when
+   * that is not the card's own source. */
+  definition_source?: string | null;
   /** How the term fits the claim: "exact", "broader", or "kind" for the term of the
    * kind of treatment this is. */
   fit: string;
@@ -57,7 +68,22 @@ export interface ExportedCardSource {
 export const CARD_KIND_WORDS: Record<string, string> = {
   condition: "The condition",
   intervention: "The treatment",
+  // Says where the gene comes from and nothing about how the treatment works.
+  target: "A gene named in the treatment’s name",
 };
+
+/** Who lists a synonym of a gene's symbol, by the target source's code for them. */
+export const SYNONYM_SOURCE_WORDS: Record<string, string> = {
+  uniprot: "UniProt",
+  HGNC: "the HUGO Gene Nomenclature Committee",
+  NCBI_entrez: "NCBI Gene",
+};
+const SYNONYM_SOURCES = Object.entries(SYNONYM_SOURCE_WORDS).map(([code]) => code);
+
+function listed(words: string[]): string {
+  if (words.length <= 1) return words.join("");
+  return `${words.slice(0, -1).join(", ")} and ${words[words.length - 1]}`;
+}
 
 /** What a card is about, when its term is wider than the claim's. */
 export const BROADER_WORDS: Record<string, string> = {
@@ -108,7 +134,24 @@ const REASON_WORDS: Record<string, (reason: CardReason) => string> = {
     trials === 1
       ? `The trial registry lists it as ${REGISTRY_TYPE_WORDS[type ?? ""]} in one of this claim’s trials.`
       : `The trial registry lists it as ${REGISTRY_TYPE_WORDS[type ?? ""]} in ${trials} of this claim’s trials.`,
+  word_equals_symbol: ({ word }) =>
+    `“${word}”, a word in the treatment’s name, is this gene’s symbol.`,
+  word_equals_synonym: ({ word, sources }) =>
+    `“${word}”, a word in the treatment’s name, is another name for this gene, listed by ${listed(
+      (sources ?? []).map((code) => SYNONYM_SOURCE_WORDS[code]),
+    )}. It is not the gene’s symbol.`,
 };
+
+/** What the section says, in addition, when one of its cards is for a named gene. */
+export const TARGET_NOTE =
+  "A gene is shown because the treatment’s name names it. That does not say the treatment is known to work through that gene.";
+export const TARGET_DEFINITION_LABEL = "What this gene’s product does, in the source’s words";
+export const NO_TARGET_DEFINITION = "The source gives this gene no description.";
+
+/** Who wrote a definition that is not the card's own source's, with its licence. */
+export function definitionCreditText(source: Pick<ExportedCardSource, "credit" | "licence">): string {
+  return `Description by ${source.credit}, ${source.licence}`;
+}
 
 /** What the section says of itself, once, above the cards. */
 export const BACKGROUND_NOTE =
@@ -139,12 +182,15 @@ export function creditText(
 
 /** Card codes in the export that the site has no words for, as "kind: code". */
 export function unwordedCardCodes(
-  cards: Pick<ExportedCard, "kind" | "fit" | "reasons" | "source">[],
+  cards: Pick<ExportedCard, "kind" | "fit" | "reasons" | "source" | "definition_source">[],
   sources: Pick<ExportedCardSource, "name">[],
 ): string[] {
   const missing = new Set<string>();
   const known = new Set(sources.map((source) => source.name));
   for (const card of cards) {
+    if (card.definition_source && !known.has(card.definition_source)) {
+      missing.add(`card source: ${card.definition_source}`);
+    }
     if (!(card.kind in CARD_KIND_WORDS)) missing.add(`card kind: ${card.kind}`);
     if (!(card.fit in FIT_WORDS)) missing.add(`card fit: ${card.fit}`);
     // A fit the site words for one kind of card only, such as a kind of treatment.
@@ -156,6 +202,12 @@ export function unwordedCardCodes(
       if (!(reason.code in REASON_WORDS)) missing.add(`card reason: ${reason.code}`);
       else if (reason.code === "registry_lists_type" && !REGISTRY_TYPES.includes(reason.type ?? "")) {
         missing.add(`card registry type: ${reason.type}`);
+      } else if (reason.code === "word_equals_synonym") {
+        // A synonym with no source named cannot be worded either.
+        if (!reason.sources?.length) missing.add("card synonym source: none given");
+        for (const code of reason.sources ?? []) {
+          if (!SYNONYM_SOURCES.includes(code)) missing.add(`card synonym source: ${code}`);
+        }
       }
     }
   }
@@ -172,8 +224,21 @@ const SITE_WORDS = [
     [1, 3].map((trials) => REASON_WORDS.registry_lists_type({ code: "", type, trials })),
   ),
   ...Object.values(REASON_WORDS).map((word) =>
-    word({ code: "", trials: 2, of: 3, name: "a name", entry_term: "a wording", type: "DRUG" }),
+    word({
+      code: "",
+      trials: 2,
+      of: 3,
+      name: "a name",
+      entry_term: "a wording",
+      type: "DRUG",
+      word: "ABC1",
+      sources: SYNONYM_SOURCES,
+    }),
   ),
+  definitionCreditText({ credit: "A Consortium", licence: "A licence" }),
+  TARGET_NOTE,
+  TARGET_DEFINITION_LABEL,
+  NO_TARGET_DEFINITION,
   BACKGROUND_NOTE,
   DEFINITION_LABEL,
   NO_DEFINITION,

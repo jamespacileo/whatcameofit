@@ -282,6 +282,16 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
     registry’s type never decides the kind. A treatment that fits no kind on the list has no card.
   </p>
   <p>
+    Some treatments are named after a gene or the protein it makes, such as an antibody against a
+    named receptor. When a word in the treatment’s name is the same as a human gene’s symbol, or
+    another name a gene database lists for it, that gene is a candidate, and an AI model reads it
+    beside the claim: does the word mean this gene here, or something else, such as the
+    abbreviation of a procedure. A gene scored high gets a card with its name and a description
+    of what its product does, in UniProt’s words as Open Targets Platform gives them. The card
+    means the report names the gene. It does not mean the treatment is known to work through it,
+    and the site states no mechanism.
+  </p>
+  <p>
     A card describes a term. It is not about a claim’s evidence, it never changes a status, and it
     is not medical advice. A claim whose terms are in no vocabulary has no Background section.
   </p>

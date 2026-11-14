@@ -6,8 +6,10 @@ import { test } from "node:test";
 
 import {
   BACKGROUND_NOTE,
+  TARGET_NOTE,
   cardKindText,
   creditText,
+  definitionCreditText,
   reasonTexts,
   unwordedCardCodes,
 } from "../src/lib/background.ts";
@@ -90,6 +92,54 @@ test("an unknown fit, a kind fit on a condition and an unknown registry type are
   );
 });
 
+test("Scenario: Target the report names. The card says where the gene comes from and no more", () => {
+  const target = card({
+    kind: "target",
+    source: "opentargets",
+    definition_source: "uniprot",
+    version: null,
+    reasons: [{ code: "word_equals_symbol", word: "CXCR3" }],
+  });
+  assert.equal(cardKindText(target), "A gene named in the treatment’s name");
+  assert.deepEqual(reasonTexts(target), [
+    "“CXCR3”, a word in the treatment’s name, is this gene’s symbol.",
+  ]);
+  assert.deepEqual(
+    reasonTexts(card({ reasons: [{ code: "word_equals_synonym", word: "TMS", sources: ["HGNC", "NCBI_entrez"] }] })),
+    [
+      "“TMS”, a word in the treatment’s name, is another name for this gene, listed by the HUGO Gene Nomenclature Committee and NCBI Gene. It is not the gene’s symbol.",
+    ],
+  );
+  assert.equal(
+    definitionCreditText({ credit: "UniProt Consortium", licence: "CC BY 4.0" }),
+    "Description by UniProt Consortium, CC BY 4.0",
+  );
+  assert.match(TARGET_NOTE, /does not say the treatment is known to work through that gene/);
+  // No word of the site's about a target says how the treatment works.
+  for (const words of [cardKindText(target), ...reasonTexts(target), TARGET_NOTE]) {
+    assert.doesNotMatch(words, /acts on|targets|works by|mechanism|inhibit|block/i);
+  }
+  const sources = [{ name: "opentargets" }, { name: "uniprot" }];
+  assert.deepEqual(unwordedCardCodes([target], sources), []);
+  assert.deepEqual(
+    unwordedCardCodes(
+      [
+        target,
+        card({ kind: "target", fit: "broader", source: "opentargets" }),
+        card({ source: "opentargets", reasons: [{ code: "word_equals_synonym", word: "X1", sources: ["a_blog"] }] }),
+        card({ source: "opentargets", reasons: [{ code: "word_equals_synonym", word: "X1" }] }),
+      ],
+      [{ name: "opentargets" }],
+    ),
+    [
+      "card fit: broader for target",
+      "card source: uniprot",
+      "card synonym source: a_blog",
+      "card synonym source: none given",
+    ],
+  );
+});
+
 test("the credit states the vocabulary's edition when the record gives it", () => {
   const source = { credit: "A Vocabulary, Its Publisher" };
   assert.equal(creditText(card(), source), "A Vocabulary, Its Publisher, 2026 edition");
@@ -102,14 +152,14 @@ test("codes with no wording are named, and worded ones are not", () => {
   assert.deepEqual(
     unwordedCardCodes(
       [
-        card({ kind: "target" }),
+        card({ kind: "organ" }),
         card({ fit: "close" }),
         card({ source: "elsewhere" }),
         card({ reasons: [{ code: "sounds_right" }] }),
       ],
       sources,
     ),
-    ["card fit: close", "card kind: target", "card reason: sounds_right", "card source: elsewhere"],
+    ["card fit: close", "card kind: organ", "card reason: sounds_right", "card source: elsewhere"],
   );
 });
 

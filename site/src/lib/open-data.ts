@@ -212,7 +212,15 @@ export function openData(
           kind: card.kind,
           fit: card.fit,
           label: card.label,
-          definition: card.definition,
+          name: card.name ?? null,
+          // Words another source wrote are in the file only when that source's licence
+          // allows it too, and then with that source named.
+          definition:
+            card.definition_source && !allowed.has(card.definition_source) ? null : card.definition,
+          definition_source:
+            card.definition_source && allowed.has(card.definition_source)
+              ? card.definition_source
+              : null,
           url: card.url,
           source: card.source,
           external_id: card.external_id,

@@ -80,11 +80,13 @@ from thenwhat.events.trial_facts import (
 )
 from thenwhat.export.organisations import ExportedOrganisation, organisations_of, publisher_of
 from thenwhat.outlets.icons import is_blank_icon, outlet_domain
-from thenwhat.sources.base import record_url
+from thenwhat.sources import opentargets
+from thenwhat.sources.base import SourceRecord, record_url
 from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.ror import Ror
 from thenwhat.sources.terms import SOURCES as LISTED_SOURCES
 from thenwhat.terms.candidates import REASON_CODES
+from thenwhat.terms.genes import TARGET_REASON_CODES
 from thenwhat.terms.kinds import KIND_REASON_CODES
 from thenwhat.terms.records import read_record
 
@@ -390,14 +392,17 @@ class ExportedPaper(Strict):
 
 
 # The reasons a card can carry: those of a vocabulary term and those of a kind link.
-CARD_REASON_CODES = (*REASON_CODES, *KIND_REASON_CODES)
+CARD_REASON_CODES = (*REASON_CODES, *KIND_REASON_CODES, *TARGET_REASON_CODES)
+# Whose words a target's function description is: the source in the list of sources
+# that the target source draws it from (docs/sources.md).
+TARGET_DESCRIPTIONS_FROM = "uniprot"
 
 
 class ExportedCardReason(Strict):
     """Why the term was a candidate, found by rule. The site owns the wording."""
 
-    # "filed_by_registry", "label_equals_name", "entry_term_equals_name", "kind_chosen"
-    # or "registry_lists_type".
+    # "filed_by_registry", "label_equals_name", "entry_term_equals_name", "kind_chosen",
+    # "registry_lists_type", "word_equals_symbol" or "word_equals_synonym".
     code: str
     # For "filed_by_registry": how many of the claim's approved trials carry the term,
     # and how many trials there were. For "registry_lists_type": how many of them list
@@ -414,18 +419,30 @@ class ExportedCardReason(Strict):
     # For "registry_lists_type": the registry's own code for the intervention's type,
     # such as "DEVICE".
     type: str | None = None
+    # For "word_equals_symbol" and "word_equals_synonym": the word of the
+    # intervention's name that equals the gene's symbol or a listed synonym of it.
+    word: str | None = None
+    # For "word_equals_synonym": each source the target source says gives the synonym.
+    sources: list[str] | None = None
 
 
 class ExportedCard(Strict):
-    # What the term is to the claim: its condition or its intervention.
+    # What the term is to the claim: its condition, its intervention, or a target: a
+    # gene named in the intervention's name. A target card states no mechanism.
     kind: TermRole
     # "exact" when the term is the claim's own condition or intervention, "broader"
     # when it names a wider group that includes it, "kind" when it is the term of the
     # kind of intervention this is and not the intervention itself.
     fit: TermFit
     label: str
+    # For a target: the gene's approved name, which names its protein. None otherwise.
+    name: str | None = None
     # The vocabulary publisher's own words, never reworded. None when it gives none.
+    # For a target, the first function description its source gives, exactly as given.
     definition: str | None
+    # The name in `card_sources` of the source the definition's words come from, when
+    # that is not the card's own source. None otherwise.
+    definition_source: str | None = None
     # The term's record at its source.
     url: str
     # The source's name in `card_sources`.
@@ -804,7 +821,8 @@ def _trials(events: list[EvidenceEvent], papers: _Papers) -> list[ExportedTrial]
 def _background(session: Session, claim: Claim) -> list[ExportedCard]:
     """At most one card for the claim's condition and one for its intervention: the
     approved exact link with the highest score or, with none, the approved broader one
-    or, for the intervention with neither, the approved kind link.
+    or, for the intervention with neither, the approved kind link. Then at most one
+    target card, from the approved named-gene link with the highest score.
 
     A link whose source is not accepted in the list of sources gives no card, nor does
     one whose term has no stored record, since a card states when its record was read.
@@ -822,7 +840,7 @@ def _background(session: Session, claim: Claim) -> list[ExportedCard]:
         )
     )
     cards: list[ExportedCard] = []
-    for role in (TermRole.CONDITION, TermRole.INTERVENTION):
+    for role in TermRole:  # a named gene is only ever read as exact
         for fit in TermFit:  # exact before broader before kind
             card = next(
                 (
@@ -846,11 +864,23 @@ def _card(session: Session, term: ClaimTerm) -> ExportedCard | None:
         return None
     assert term.fit is not None and term.score is not None and term.reviewed_by is not None
     read = read_record(record)
+    name, definition, definition_source = None, read.definition, None
+    if term.role is TermRole.TARGET:
+        name = opentargets.describe(_source_record(record)).name or None
+        # The description is UniProt's, carried by the target source. It is exported
+        # only while UniProt is accepted, and then names UniProt as where it is from.
+        described = LISTED_SOURCES.get(TARGET_DESCRIPTIONS_FROM)
+        if definition is not None and (described is None or not described.accepted):
+            definition = None
+        if definition is not None:
+            definition_source = TARGET_DESCRIPTIONS_FROM
     return ExportedCard(
         kind=term.role,
         fit=term.fit,
         label=read.label or term.label,
-        definition=read.definition,
+        name=name,
+        definition=definition,
+        definition_source=definition_source,
         url=record.url,
         source=term.source_name,
         external_id=term.external_id,
@@ -866,8 +896,20 @@ def _card(session: Session, term: ClaimTerm) -> ExportedCard | None:
     )
 
 
+def _source_record(record: TermRecord) -> SourceRecord:
+    return SourceRecord(
+        record.source_name, record.external_id, record.url, record.payload, record.fetched_at
+    )
+
+
 def _card_sources(claims: list[ExportedClaim]) -> list[ExportedCardSource]:
-    used = {card.source for claim in claims for card in claim.background}
+    used = {
+        name
+        for claim in claims
+        for card in claim.background
+        for name in (card.source, card.definition_source)
+        if name
+    }
     return [
         ExportedCardSource(
             name=listed.name,
