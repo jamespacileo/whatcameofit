@@ -12,7 +12,7 @@ import StageFilter from "../components/StageFilter.astro";
 import StageTrack from "../components/StageTrack.astro";
 import StatusCell from "../components/StatusCell.astro";
 import TopicChip from "../components/TopicChip.astro";
-import { SITE } from "../../site.config.mjs";
+import { EXTENSION_OFFERED, SITE } from "../../site.config.mjs";
 import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
 import { calendarByMonth } from "../lib/anniversaries";
 import { data, listedTopics } from "../lib/export";
@@ -491,6 +491,18 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
           ))}
         </ul>
       </>
+    )
+  }
+  {/* Where the question arises is the article itself: the extension answers there. */}
+  {
+    EXTENSION_OFFERED && (
+      <section class="closing">
+        <h2 class="bar">Reading it somewhere else?</h2>
+        <p class="suggest">
+          The browser extension shows what came of a report from the article itself:{" "}
+          <a href="/extension">Get the extension</a>
+        </p>
+      </section>
     )
   }
   {/* The page ends on something to do: the one way a reader adds to what is tracked. */}

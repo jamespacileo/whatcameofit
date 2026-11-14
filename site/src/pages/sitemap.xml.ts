@@ -6,6 +6,7 @@ import { data, listedTopics } from "../lib/export";
 import "../lib/public-build";
 import { sourcesOf } from "../lib/sources";
 import { canonicalAddress } from "../lib/structured";
+import { EXTENSION_OFFERED } from "../../site.config.mjs";
 
 function publicPages(): string[] {
   const years = new Set(
@@ -21,6 +22,7 @@ function publicPages(): string[] {
     ...sourcesOf(data.claims).map((source) => `/source/${source.slug}`),
     "/it-happened",
     "/how-it-works",
+    ...(EXTENSION_OFFERED ? ["/extension"] : []),
     "/privacy",
     "/anniversaries",
     "/data",

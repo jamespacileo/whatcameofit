@@ -22,4 +22,12 @@ export const SITE = {
   lookupUrl: env.LOOKUP_URL || null,
   suggestUrl: env.SUGGEST_URL || null,
   correctionsUrl: env.CORRECTIONS_URL || null,
+  // The browser extension's listing in each store, set once that store has published
+  // it. With neither set the extension page is not built and nothing links to it.
+  // The environment variables CHROME_STORE_URL and SAFARI_STORE_URL set them.
+  chromeStoreUrl: env.CHROME_STORE_URL || null,
+  safariStoreUrl: env.SAFARI_STORE_URL || null,
 };
+
+/** Whether the extension can be installed from a store, so the site may offer it. */
+export const EXTENSION_OFFERED = Boolean(SITE.chromeStoreUrl || SITE.safariStoreUrl);

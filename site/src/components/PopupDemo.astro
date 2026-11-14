@@ -1,0 +1,633 @@
+---
+// The extension's popup, drawn in a page at its real 360 pixels from a claim as the
+// lookup file words it: the answer a reader gets, not a picture of it, so it is rebuilt
+// with the site and never goes stale. Its sizes are the popup's own, in pixels
+// (extension/src/popup.css). Nothing in it can be pressed: the controls are drawn, and
+// hidden from a screen reader, which is told the answer by the words themselves.
+import { SITE } from "../../site.config.mjs";
+import { brandAsset } from "../lib/brand";
+import {
+  POPUP_LINES,
+  POPUP_WORDS,
+  lastChecked,
+  possibleMatches,
+  wasNow,
+  type RegistryRecord,
+} from "../lib/extension-page";
+import type { LookupClaim } from "../lib/lookup-claim";
+import { NOTICES } from "../lib/notices";
+import { STAGE_PATH } from "../lib/status";
+
+interface Props {
+  /**
+   * Which of the popup's answers is drawn: a tracked claim's status, an automatic
+   * search of an untracked page, or the reader's list of followed claims.
+   */
+  kind?: "claim" | "search" | "following";
+  claim: LookupClaim;
+  /** For a search: what the report was read as being about, and the records found. */
+  subject?: { treatment: string; condition: string };
+  records?: RegistryRecord[];
+  /** For the followed list: the status the reader last saw. */
+  was?: string;
+  /** The day the registries were last checked, as the lookup file gives it. */
+  checked?: string | null;
+  /** The marker lands once, as on a claim page. One popup a page. */
+  lands?: boolean;
+}
+
+const { kind = "claim", claim, subject, records = [], was, checked, lands = false } = Astro.props;
+const places = STAGE_PATH.length;
+---
+
+<div class:list={["pp-popup", { "pp-lands": lands }]}>
+  <div class="pp-head">
+    <img src={brandAsset("/mark-reverse.svg")} alt="" width="20" height="20" />
+    <span>{SITE.name}</span>
+  </div>
+  <div class="pp-body">
+    {
+      kind === "claim" && (
+        <>
+          <p class="pp-headline">{claim.headline}</p>
+          <dl class="pp-digest">
+            <dt>{POPUP_WORDS.standing}</dt>
+            <dd class="pp-status">{claim.status}</dd>
+            {claim.place && (
+              <dd class="pp-track">
+                <span
+                  class="pp-steps"
+                  role="img"
+                  aria-label={`Place ${claim.place} of ${places} on the path from preclinical to approved`}
+                >
+                  {Array.from({ length: places }, (_, index) => (
+                    <span class:list={["pp-step", { "pp-here": index + 1 === claim.place }]} />
+                  ))}
+                </span>
+              </dd>
+            )}
+            {claim.no_signal && <dd class="pp-no-signal">{claim.no_signal}</dd>}
+            <dd class="pp-meaning">{claim.meaning}</dd>
+          </dl>
+          {claim.unchecked && <p class="pp-unchecked">{claim.unchecked}</p>}
+          <dl class="pp-facts">
+            {claim.first_reported && (
+              <div>
+                <dt>{POPUP_WORDS.firstReported}</dt>
+                <dd>{claim.first_reported}</dd>
+              </div>
+            )}
+            {claim.latest_promise && (
+              <div class="pp-promise">
+                <dt>{POPUP_WORDS.latestPromise}</dt>
+                <dd>{claim.latest_promise}</dd>
+              </div>
+            )}
+          </dl>
+          <a class="pp-button" href={claim.page}>
+            {POPUP_WORDS.open}
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+            </svg>
+          </a>
+          <p class="pp-pill" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.268 21a2 2 0 0 0 3.464 0M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" />
+            </svg>
+            {POPUP_WORDS.follow}
+          </p>
+          <p class="pp-remind" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v6l4 2" />
+            </svg>
+            <span>
+              {POPUP_WORDS.remindMe} <span class="pp-link">{POPUP_WORDS.inSixMonths}</span> ·{" "}
+              <span class="pp-link">{POPUP_WORDS.inAYear}</span>
+            </span>
+          </p>
+          <div class="pp-notices">
+            {NOTICES.map((notice) => <p>{notice}</p>)}
+            {checked && <p>{lastChecked(checked)}</p>}
+          </div>
+          <p class="pp-text" aria-hidden="true">{POPUP_LINES.settings}</p>
+          <p class="pp-kept" aria-hidden="true">
+            <span class="pp-link">{POPUP_WORDS.recent}</span>
+            <span class="pp-link">{POPUP_WORDS.following}</span>
+          </p>
+        </>
+      )
+    }
+    {
+      kind === "search" && subject && (
+        <>
+          <p class="pp-provenance">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            {POPUP_LINES.automatic}
+            <svg class="pp-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </p>
+          <p class="pp-headline pp-lead">{subject.treatment}</p>
+          <p class="pp-indication">{subject.condition}</p>
+          <p class="pp-listed">{possibleMatches(records.length)}</p>
+          <ul class="pp-records">
+            {records.map((record) => (
+              <li class="pp-card">
+                <p class="pp-record-title">
+                  {record.url ? <a href={record.url} rel="noopener">{record.id}</a> : record.id}
+                </p>
+                <p class="pp-tags">
+                  {record.phase && <span class="pp-chip">{record.phase}</span>}
+                  {record.state && <span class="pp-chip">{record.state}</span>}
+                </p>
+                <p class="pp-match">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" />
+                    <circle cx="12" cy="12" r="6" />
+                    <circle cx="12" cy="12" r="2" />
+                  </svg>
+                  {record.confidence}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <p class="pp-fold" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4M12 8h.01" />
+            </svg>
+            {POPUP_LINES.sources}
+            <svg class="pp-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </p>
+          <p class="pp-medical">{POPUP_LINES.medical}</p>
+          <p class="pp-actions" aria-hidden="true">
+            <span class="pp-link">{POPUP_WORDS.again}</span>
+            <span class="pp-link">{POPUP_LINES.answerSettings}</span>
+          </p>
+          <p class="pp-kept" aria-hidden="true">
+            <span class="pp-link">{POPUP_WORDS.recent}</span>
+            <span class="pp-link">{POPUP_WORDS.following}</span>
+          </p>
+        </>
+      )
+    }
+    {
+      kind === "following" && (
+        <>
+          <p class="pp-text pp-back" aria-hidden="true">{POPUP_WORDS.back}</p>
+          <p class="pp-headline">{POPUP_WORDS.following}</p>
+          <ul class="pp-records">
+            <li class="pp-card">
+              <p class="pp-record-title">
+                <a href={claim.page}>{claim.headline}</a>
+              </p>
+              <p class="pp-kept-status">{claim.status}</p>
+              {was && (
+                <p class="pp-moved">
+                  <span class="pp-tag">{POPUP_WORDS.changed}</span> {wasNow(was, claim.status)}
+                </p>
+              )}
+              <p class="pp-text" aria-hidden="true">{POPUP_WORDS.stop}</p>
+            </li>
+          </ul>
+          <p class="pp-notices">{POPUP_WORDS.keptHere}</p>
+        </>
+      )
+    }
+  </div>
+</div>
+
+<style>
+  .pp-popup {
+    width: 360px;
+    max-width: 100%;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.5;
+    text-align: left;
+    /* The one soft shadow the site has, the popover's: a popup is one. */
+    box-shadow:
+      0 10px 28px -8px rgb(15 31 56 / 0.2),
+      0 2px 6px -2px rgb(15 31 56 / 0.1);
+  }
+
+  /* The page's own paragraph spacing and measure stop at the popup's edge. Kept at
+     the lowest weight, so each part below sets its own space. */
+  :where(.pp-popup) :where(p, dl, dd, ul) {
+    margin: 0;
+    max-width: none;
+  }
+
+  .pp-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--footer);
+    color: var(--paper);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .pp-body {
+    padding: 16px;
+  }
+
+  .pp-headline {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+  }
+
+  .pp-provenance {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 32px;
+    padding: 0 8px;
+    border-radius: 6px;
+    background: var(--panel);
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  .pp-lead {
+    margin-top: 12px;
+  }
+
+  .pp-indication {
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .pp-listed {
+    margin-top: 16px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .pp-records {
+    display: grid;
+    gap: 12px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pp-card {
+    padding: 14px;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    overflow-wrap: anywhere;
+  }
+
+  /* A record's title is a link in the popup, and here: to the record itself. */
+  .pp-record-title {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .pp-record-title a {
+    text-underline-offset: 2px;
+  }
+
+  .pp-chevron {
+    margin-left: auto;
+    color: var(--muted);
+  }
+
+  /* The popup's folded "Sources & privacy": drawn closed, as it opens. */
+  .pp-fold {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 36px;
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  .pp-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin-top: 8px;
+  }
+
+  .pp-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 7px;
+  }
+
+  .pp-chip {
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--panel);
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+
+  .pp-match {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 4px 7px;
+    border-radius: 5px;
+    background: var(--tag);
+    color: var(--blue);
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  .pp-medical {
+    margin-top: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .pp-text {
+    width: fit-content;
+    margin-top: 10px;
+    color: var(--blue);
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.3;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
+
+  .pp-back {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 8px;
+    font-size: 13px;
+  }
+
+  .pp-back::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    margin-left: 2px;
+    border-left: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    rotate: 45deg;
+  }
+
+  .pp-kept-status {
+    margin-top: 8px;
+    color: var(--blue);
+    font-weight: 700;
+  }
+
+  .pp-moved {
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  /* The popup's "Changed" is filled; it is always beside the words that say what changed. */
+  .pp-tag {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--blue);
+    color: var(--paper);
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+
+  .pp-notices {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--rule);
+    color: var(--muted);
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+
+  .pp-digest {
+    margin-top: 12px;
+    padding: 12px 14px 13px;
+    border-radius: 13px;
+    background: var(--panel);
+  }
+
+  .pp-digest dt,
+  .pp-facts dt {
+    color: var(--muted);
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  .pp-status {
+    margin-top: 1px;
+    color: var(--blue);
+    font-size: 23px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .pp-track {
+    margin-top: 9px;
+  }
+
+  .pp-steps {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 150px;
+    height: 12px;
+    background: linear-gradient(var(--rule), var(--rule)) center / 100% 1.5px no-repeat;
+  }
+
+  .pp-step {
+    width: 7px;
+    height: 7px;
+    border: 1.5px solid var(--ring);
+    border-radius: 50%;
+    background: var(--paper);
+  }
+
+  .pp-step.pp-here {
+    position: relative;
+    width: 12px;
+    height: 12px;
+    border-color: var(--blue);
+    background: var(--blue);
+  }
+
+  .pp-no-signal {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 2px 9px;
+    border: 1px dashed var(--muted);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .pp-meaning {
+    margin-top: 7px;
+    font-size: 13.5px;
+    line-height: 1.45;
+  }
+
+  .pp-unchecked {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border: 1px dashed var(--muted);
+    border-radius: 10px;
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+
+  .pp-facts {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .pp-facts dd {
+    font-size: 14px;
+  }
+
+  .pp-facts > div:not(.pp-promise) {
+    padding-inline: 14px;
+  }
+
+  .pp-promise {
+    padding: 9px 14px 10px;
+    border-radius: 13px;
+    background: var(--promise);
+  }
+
+  .pp-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 14px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--blue);
+    color: var(--paper);
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color 120ms ease-out;
+  }
+
+  a.pp-button:hover {
+    background: var(--footer);
+  }
+
+  .pp-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    width: fit-content;
+    min-height: 34px;
+    margin-top: 10px;
+    padding: 5px 14px 5px 11px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    color: var(--blue);
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .pp-remind {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+
+  .pp-remind svg {
+    flex: none;
+    margin-top: 2px;
+  }
+
+  /* A text control in the popup: drawn, not pressed. */
+  .pp-link {
+    color: var(--blue);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
+
+  .pp-notices p + p {
+    margin-top: 5px;
+  }
+
+  .pp-kept {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 4px 16px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--rule);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .pp-lands .pp-step.pp-here {
+      animation: mark-land 0.6s var(--ease-out) both;
+    }
+
+    .pp-lands .pp-step.pp-here::after {
+      content: "";
+      position: absolute;
+      inset: -1.5px;
+      border: 1.5px solid var(--blue);
+      border-radius: 50%;
+      animation: mark-ring 0.9s var(--ease-out) 0.3s both;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .pp-step.pp-here {
+      background: CanvasText;
+      border-color: CanvasText;
+    }
+
+    .pp-digest,
+    .pp-promise {
+      outline: 1px solid CanvasText;
+    }
+  }
+
+  @media print {
+    .pp-popup {
+      box-shadow: none;
+    }
+  }
+</style>
