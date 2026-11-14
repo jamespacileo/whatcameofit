@@ -71,11 +71,11 @@ A news report's row SHALL show the outlet's title in quotation marks with the ou
 - **THEN** it has a row under each date
 
 ### Requirement: A report row says what the records add
-Under the status, a report row SHALL carry at most two sentences built by fixed rules from the claim's records: the first two that apply, in one fixed order of preference. Each SHALL state a count, a date or a kind only. A sentence whose count the export does not hold SHALL be left out, never estimated.
+Under the status, a report row SHALL carry at most two sentences built by fixed rules from the claim's records: the first two that apply, in one fixed order of preference. Each SHALL state a count or a date only. A sentence whose count the export does not hold SHALL be left out, never estimated.
 
 #### Scenario: The order of preference
 - **WHEN** more than two sentences apply to a claim
-- **THEN** the row carries the first two of: a regulator's decision with its date; the year of the first registered trial, when it is two or more calendar years before the report; how many trials are on record, how many are completed and how many have posted results; that no registry record is dated since the report, with the no-signal years; the kind of study the report was of
+- **THEN** the row carries the first two of: a regulator's decision with its date; the year of the first registered trial, when it is two or more calendar years before the report; how many trials are on record, how many are completed and how many have posted results; that no record is dated since the first report, with the no-signal years
 
 #### Scenario: A trial registered long before the report
 - **WHEN** a claim reported in 2026 has five trials on record, the first registered in 2012, three completed and two with results posted
@@ -83,7 +83,11 @@ Under the status, a report row SHALL carry at most two sentences built by fixed 
 
 #### Scenario: Nothing since the report
 - **WHEN** a claim reported in 2017 from laboratory work has no trial and carries "No signal for 9 years"
-- **THEN** the row says no registry record is dated in the 9 years since the report, and that the report was of laboratory work
+- **THEN** the row says no record is dated in the 9 years since the first report
+
+#### Scenario: Nothing to add
+- **WHEN** a claim reported from an animal study has no trial, no regulator’s decision and no no-signal note
+- **THEN** the row carries no sentence: the evidence when first reported is already in the row
 
 #### Scenario: An approval
 - **WHEN** a claim has a regulator's approval dated 3 September 2026
