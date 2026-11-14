@@ -125,13 +125,22 @@ page is rebuilt with the site.
    the browser and sends no page address. The automatic search and its screenshot
    fallback get their own rows, with OpenAI named, and the setting that turns them off.
    Every row is true to the privacy page, which is linked.
-4. *What it asks of your browser.* The permissions in plain words: this site's host,
-   `t.co`, alarms, notifications.
+4. *What it asks of your browser.* Every permission and host in the manifest, in plain
+   words: the active tab, reading the open page, storage, a timer, notifications, this
+   site's host and `t.co`. A site test compares the list with the manifest.
 5. *The two notices*, in full, in the body and not only the footer.
 6. *Install*, again.
 
 **Signature.** The marker lands on the claim's place in the drawn popup, once, as it does
 on a claim page. Nothing else moves.
+
+**As built (2026-11-14).** The operator chose "Three answers" from three first-viewport
+sketches: the popup three times, each hanging from the toolbar button, so the second
+section above is the first viewport. The untracked answer is drawn with the registry
+records matched to the example claim, by their registry identifiers, because the export
+holds no trial titles; its note says so. The followed answer uses the claim's real latest
+change of status. The popup is the site's own component, since the site is built without
+the extension's files; a site test holds its labels to the extension's.
 
 **States.** A store address is a deployment setting, as the suggest address is. With
 neither store configured the page is not built and nothing links to it. With one, only
@@ -218,8 +227,8 @@ The address, the table and the stage filter are unchanged.
 - Footer: Guide, Extension (when installable), About join How it works, Anniversaries,
   Data and Privacy. The audience pages are one line: "For journalists, clinicians and
   researchers".
-- Home page, last section: when the extension can be installed, one sentence and a link
-  beside "Not here yet?".
+- Home page: when the extension can be installed, a closing section of its own, before
+  "Not here yet?", so the page still ends on the suggestion.
 - Claim page, "Another headline?": the same sentence and link.
 - Sitemap and structured data cover every new page; a guide entry is a defined term.
 

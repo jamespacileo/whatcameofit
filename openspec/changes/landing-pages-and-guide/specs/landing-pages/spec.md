@@ -12,7 +12,7 @@ A landing page SHALL show the site at work on published claims taken from the ex
 - **THEN** the landing page shows the new status and the new checked month
 
 ### Requirement: The extension has a page once it can be installed
-When the address of at least one store listing is configured, the site SHALL publish `/extension`. The page SHALL show the popup's answer for a published claim, drawn in the page from the claim's record, and a control that opens each configured store listing. With scripting on, the control for the reader's own browser SHALL come first. When no store address is configured the page SHALL NOT be built and nothing SHALL link to it.
+When the address of at least one store listing is configured, the site SHALL publish `/extension` with a control that opens each configured store listing. With scripting on, the control for the reader's own browser SHALL come first. When no store address is configured the page SHALL NOT be built and nothing SHALL link to it.
 
 #### Scenario: One store is configured
 - **WHEN** only the Chrome listing's address is set
@@ -21,6 +21,17 @@ When the address of at least one store listing is configured, the site SHALL pub
 #### Scenario: No store is configured
 - **WHEN** neither address is set
 - **THEN** no extension page is built and the footer, home page and claim pages hold no link to one
+
+### Requirement: The extension page shows the popup's answers from the export
+The extension page SHALL draw the popup's answers in the page from a published claim's record: its status; the registry records matched to it, as an automatic search lists them; and its latest change of status, as the followed list shows one. An answer SHALL be drawn only when the export holds what it shows. The page SHALL say that the search answer is drawn with the example claim's records, and SHALL date the status answer by the day the registries were checked.
+
+#### Scenario: A claim with matched trials and a change of status
+- **WHEN** the example claim has matched trial records and its status has changed once
+- **THEN** the page draws three answers, the third reading "Was: X. Now: Y." with the claim's own statuses
+
+#### Scenario: A claim with neither
+- **WHEN** the example claim has no matched trial record and no change of status
+- **THEN** the page draws the status answer alone
 
 ### Requirement: The extension page says what leaves the browser
 The extension page SHALL say, in a table, what the extension reads, what it sends, when, to whom, and what it keeps and for how long. An answer given inside the browser and an automatic search that sends page content SHALL be separate rows, the second naming every service that receives it and the setting that turns it off. The page SHALL link the privacy page and SHALL state nothing about data that the privacy page does not.
@@ -34,11 +45,15 @@ The extension page SHALL say, in a table, what the extension reads, what it send
 - **THEN** they can read, without leaving it, that opening the popup on an untracked page may send page content to the site's service and to OpenAI, and how to turn that off
 
 ### Requirement: The extension page names each permission
-The extension page SHALL list every permission the extension asks the browser for, each with what it is used for in plain words.
+The extension page SHALL list every permission and every host in the extension's manifest, each with what it is used for in plain words, and SHALL list no other. A site test SHALL compare the list with the manifest.
 
 #### Scenario: Permissions are listed
-- **WHEN** the extension asks for this site's host, `t.co`, alarms and notifications
-- **THEN** the page lists those four, each with its use, and lists no other
+- **WHEN** the manifest asks for the active tab, scripting, storage, alarms and notifications, and for this site's host and `t.co`
+- **THEN** the page lists those, each with its use, and lists no other
+
+#### Scenario: The manifest gains a permission
+- **WHEN** a permission is added to the manifest and not to the page
+- **THEN** the site's tests fail
 
 ### Requirement: A page says why the site exists and who runs it
 `/about` SHALL state the gap between a reported breakthrough and its follow-up with a linked source for the finding it cites, what the site does, what it does not do (advice, verdicts, grades, ranking of outlets), who operates it, and where its data and method can be checked. It SHALL show one published claim as a headline beside its status now. It SHALL end with the lookup. It SHALL NOT restate how a status is set; it SHALL link the method page.
@@ -67,8 +82,8 @@ The site SHALL publish a page for journalists, one for clinicians and one for re
 - **THEN** the page says so and offers to suggest a headline, where a suggestion address is configured
 
 ### Requirement: The new pages are linked from the footer
-The footer SHALL link the guide and the about page, the extension page when it is published, and the three audience pages. When the extension page is published, the home page's last section and the last section of a claim page SHALL each name it once.
+The footer SHALL link the guide and the about page, the extension page when it is published, and the three audience pages. When the extension page is published, the home page SHALL name it once in a closing section before the link to suggest a headline, and a claim page SHALL name it once in its last section.
 
 #### Scenario: The extension is installable
 - **WHEN** a store address is configured
-- **THEN** the footer, the home page's last section and a claim page's last section each link the extension page
+- **THEN** the footer, a closing section of the home page and a claim page's last section each link the extension page

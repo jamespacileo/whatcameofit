@@ -40,7 +40,7 @@ import { confidenceLabel, readingOf } from "../lib/confidence";
 import { FOLLOWED_SHOWN, followedName, followedReports } from "../lib/reports";
 import { claimPageData } from "../lib/structured";
 import ReportError from "../components/ReportError.astro";
-import { SITE } from "../../site.config.mjs";
+import { EXTENSION_OFFERED, SITE } from "../../site.config.mjs";
 import { cardFor } from "../lib/card-image";
 import { buildTimetable, dayAndMonth, formatDate, recordedLines } from "../lib/timetable";
 
@@ -808,6 +808,13 @@ const posts = shareLinks(postText, address, claim.headline);
         <Search size={16} stroke-width={1.9} aria-hidden="true" />
         Look up another
       </a>
+      {
+        EXTENSION_OFFERED && (
+          <p class="entry-note">
+            Or check a report where you read it, with <a href="/extension">the browser extension</a>.
+          </p>
+        )
+      }
     </section>
   </article>
 </Base>

@@ -4,12 +4,12 @@
 
 ## 1. Extension page
 
-- [ ] 1.1 Add the two store addresses to the site's settings, unset by default; verify the site builds with no `/extension` page and no link to one
-- [ ] 1.2 Run the structure round for the first viewport (`/impeccable` on the page) and record the chosen direction in a surface brief
-- [ ] 1.3 Draw the popup's tracked-claim answer in the page from the export, sharing the popup's wording; verify it matches the popup states page for the same claim
-- [ ] 1.4 Write the reads, sends and keeps table and the permissions list from the privacy page; verify every row against `privacy.astro` and the extension's manifest
-- [ ] 1.5 Install controls: the reader's browser first with scripting on, both without; verify with one store set, both set, and at 375 px
-- [ ] 1.6 Correct the extension lines in `PRODUCT.md` (what is sent, store status)
+- [x] 1.1 Add the two store addresses to the site's settings, unset by default; verify the site builds with no `/extension` page and no link to one
+- [x] 1.2 Run the structure round for the first viewport (`/impeccable` on the page) and record the chosen direction in a surface brief
+- [x] 1.3 Draw the popup's tracked-claim answer in the page from the export, sharing the popup's wording; verify it matches the popup states page for the same claim
+- [x] 1.4 Write the reads, sends and keeps table and the permissions list from the privacy page; verify every row against `privacy.astro` and the extension's manifest
+- [x] 1.5 Install controls: the reader's browser first with scripting on, both without; verify with one store set, both set, and at 375 px
+- [x] 1.6 Correct the extension lines in `PRODUCT.md` (what is sent, store status)
 
 ## 2. Guide
 
@@ -44,7 +44,8 @@
 
 ## 6. Ways in and records
 
-- [ ] 6.1 Footer links; the extension line on the home page and at the end of a claim page, drawn only when the extension page is published
+- [x] 6.1a The extension link in the footer, on the home page and at the end of a claim page, drawn only when the extension page is published
+- [ ] 6.1b Footer links for the guide, the about page and the audience pages
 - [ ] 6.2 Update `PRODUCT.md` capabilities and `DESIGN.md` components for each part as it ships
 - [ ] 6.3 Add the audience pages to "Where to say it" in `docs/launch.md`
 - [ ] 6.4 Verify `make check` passes

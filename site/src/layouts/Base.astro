@@ -2,7 +2,7 @@
 import "../styles/global.css";
 // Preloaded so the first paint is already in the site's face and headings do not reflow.
 import faceUrl from "@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2?url";
-import { SITE } from "../../site.config.mjs";
+import { EXTENSION_OFFERED, SITE } from "../../site.config.mjs";
 import { CARD_NOTICE } from "../lib/card";
 import { brandAsset } from "../lib/brand";
 import { data, listedTopics } from "../lib/export";
@@ -204,6 +204,7 @@ const topicLink =
         </div>
         <nav class="more" aria-label="About this site">
           <a href="/how-it-works">How it works</a>
+          {EXTENSION_OFFERED && <a href="/extension">Extension</a>}
           <a href="/anniversaries">Anniversaries</a>
           <a href="/data">Data</a>
           <a href="/privacy">Privacy</a>
