@@ -962,3 +962,106 @@ test("Scenario: Code without site wording", () => {
     /background card codes the site has no words for: card reason: sounds_right/,
   );
 });
+
+// --- reported statements (openspec reported-statements, site-publishing) ---
+
+const statementsOf = (html) => html.match(/<section class="matched statements"[\s\S]*?<\/section>/)?.[0];
+const plainText = (html) => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+
+test("Scenario: Claim with three statements from one report", () => {
+  const html = page("phase-claim/index.html");
+  const section = statementsOf(html);
+  assert.ok(section, "no statements section");
+  assert.match(section, /<h2 class="bar" id="reported-statements">What the report said<\/h2>/);
+  // One report, named by its title, outlet and date, with the three statements under it.
+  assert.equal(count(section, 'class="matched-group statement-report"'), 1);
+  assert.match(section, /href="https:\/\/uk\.news\.example\.org\/3"[^>]*>\s*“Example report 3”/);
+  assert.match(plainText(section), /Example Outlet 3 uk\.news\.example\.org 3 May 2019/);
+  assert.equal(count(section, 'class="statement"'), 3);
+  // Each with its kind and how sure the check is, as a word and a percentage.
+  assert.match(plainText(section), /Effect The report said: Synthetic statement: examplumab eased/);
+  for (const label of ["Very likely in the report · 93%", "Very likely in the report · 88%", "Very likely in the report · 81%"]) {
+    assert.ok(section.includes(label), `no "${label}"`);
+  }
+  // A report's statement is not a record, and the records follow it.
+  assert.match(section, /A report’s statement is not a record: the records follow\./);
+  assert.match(section, /href="\/how-it-works#what-a-report-said"/);
+  assert.ok(html.indexOf('id="reported-statements"') > html.indexOf('class="lede"'));
+  assert.ok(html.indexOf('id="reported-statements"') < html.indexOf('id="timetable"'));
+  // Not inside the status panel.
+  const digest = html.match(/<div class="digest">[\s\S]*?<p class="lede"/)[0];
+  assert.ok(!digest.includes("statement"));
+});
+
+test("Scenario: Possibility voiced by a researcher, and the basis as the report gave it", () => {
+  const text = plainText(statementsOf(page("phase-claim/index.html")));
+  assert.match(text, /The report had a researcher saying this could be so: Synthetic statement: examplumab could one day/);
+  assert.match(text, /The report had the company saying: Synthetic statement: examplumab blocks/);
+  assert.match(text, /The report gave a study in people as its basis\./);
+  assert.match(text, /The report did not say what this rests on\./);
+  assert.match(text, /The report gave laboratory work as its basis\./);
+});
+
+test("Scenario: Effect reported from a mouse study, on a claim with several reports", () => {
+  const section = statementsOf(page("quiet-claim/index.html"));
+  assert.match(section, /What the reports said/);
+  assert.match(section, /What the news reports said about the treatment/);
+  assert.equal(count(section, 'class="matched-group statement-report"'), 2);
+  assert.match(plainText(section), /“Example report 1”.*regrew tissue in mice.*“Example report 2”.*no harm was seen/);
+  assert.match(plainText(section), /The report gave a study in animals as its basis\./);
+});
+
+test("Scenario: Claim with no statement", () => {
+  const html = page("approved-claim/index.html");
+  assert.ok(!html.includes('id="reported-statements"'));
+  assert.ok(!html.includes("statement-list"));
+  assert.ok(!html.includes("What the report said"));
+});
+
+test("Scenario: Statement beside a trial result", () => {
+  // phase-claim has a statement of an effect and a trial with posted results. Both are
+  // shown, in their own sections, and no word compares them.
+  const html = page("phase-claim/index.html");
+  const statements = statementsOf(html);
+  const trials = html.match(/<section class="trials"[\s\S]*?<\/section>/)[0];
+  assert.match(plainText(trials), /results posted|Results posted/i);
+  const comparing =
+    /\b(confirm\w*|contradict\w*|consistent|inconsistent|held up|borne out|refut\w*|disprove\w*|verif\w*|accurate|inaccurate|true|false|correct|wrong|support(s|ed)?|as reported|matches the report)\b/i;
+  assert.doesNotMatch(plainText(statements), comparing);
+  assert.doesNotMatch(plainText(trials), /report said|statement/i);
+  // Neither section points at the other.
+  assert.ok(!statements.includes('href="#trials"') && !statements.includes("NCT0"));
+  assert.ok(!trials.includes("reported-statements"));
+});
+
+test("Scenario: Kind code without site wording", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.claims.find((claim) => claim.slug === "phase-claim").reported_statements[0].kind = "miracle";
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-statement-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+
+  const result = build(file, path.join(directory, "dist"));
+
+  // The export's schema lists the kinds the pipeline knows, so an unknown one stops the
+  // build there, named. A kind the schema gains before the site words it is named by the
+  // site's own check (tests/statements.test.mjs).
+  assert.notEqual(result.status, 0);
+  assert.match(
+    result.stdout + result.stderr,
+    /\/claims\/1\/reported_statements\/0\/kind must be equal to one of the allowed values \(it is "miracle"\)/,
+  );
+});
+
+test("Scenario: Reader doubts a statement", () => {
+  const html = page("how-it-works/index.html");
+  assert.match(html, /<a href="#what-a-report-said">What a report said<\/a>/);
+  const part = plainText(html.split('id="what-a-report-said"')[1].split('id="what-a-trial-entry-shows"')[0]);
+  assert.match(part, /An AI model reads each report/);
+  assert.match(part, /written in this site’s own words/);
+  assert.match(part, /checks each statement against its report/);
+  assert.match(part, /how sure that check was that the report says it/);
+  assert.match(part, /is what a report said, not what is on record/);
+  assert.match(part, /statements never change a status/);
+  assert.match(part, /removed by a person/);
+});

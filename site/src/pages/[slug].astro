@@ -16,6 +16,7 @@ import Outlet from "../components/Outlet.astro";
 import KindIcon from "../components/KindIcon.astro";
 import Pop from "../components/Pop.astro";
 import SharePill from "../components/SharePill.astro";
+import Statements from "../components/Statements.astro";
 import StageTrack from "../components/StageTrack.astro";
 import TopicChip from "../components/TopicChip.astro";
 import TrialDetailsLink from "../components/TrialDetailsLink.astro";
@@ -452,6 +453,14 @@ const posts = shareLinks(postText, address, claim.headline);
         )
       }
     </dl>
+
+    {
+      /* What the reports said, in the site's words: after the summary and before the
+         records, which never refer to it, so nothing holds the one against the other. */
+      (claim.reported_statements ?? []).length > 0 && (
+        <Statements statements={claim.reported_statements ?? []} articles={claim.articles} />
+      )
+    }
 
     <div class="bar-row">
       <h2 class="bar" id="timetable">{hasDatedPromise ? "Promised and recorded" : "Recorded"}</h2>

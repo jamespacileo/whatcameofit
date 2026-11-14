@@ -6,6 +6,7 @@ import addFormats from "ajv-formats";
 import { unlabelledApproaches } from "./approach";
 import { unlabelledPaperCodes } from "./paper-facts";
 import { unwordedCardCodes, type ExportedCard, type ExportedCardSource } from "./background";
+import { unwordedStatementCodes, type ExportedStatement } from "./statements";
 import { unlabelledTrialCodes } from "./trial-facts";
 
 export type StatusCode =
@@ -201,6 +202,9 @@ export interface ExportedClaim {
   /** Background cards: at most one for the condition, then one for the intervention.
    * Absent from an export made before openspec knowledge-cards. */
   background?: ExportedCard[];
+  /** Approved reported statements, report by report. Absent from an export made before
+   * openspec reported-statements. */
+  reported_statements?: ExportedStatement[];
   failure_flags: { trial_id: string; source_url: string }[];
 }
 
@@ -239,6 +243,15 @@ function exportPath(): string {
   return fs.existsSync(live) ? live : path.resolve("data/seed-export.json");
 }
 
+/** The value at a JSON pointer such as "/claims/1/kind". */
+function valueAt(content: unknown, pointer: string): unknown {
+  return pointer
+    .split("/")
+    .slice(1)
+    .map((part) => part.replace(/~1/g, "/").replace(/~0/g, "~"))
+    .reduce<unknown>((value, part) => (value as Record<string, unknown> | undefined)?.[part], content);
+}
+
 function load(): Export {
   const file = exportPath();
   const content = JSON.parse(fs.readFileSync(file, "utf8"));
@@ -249,7 +262,12 @@ function load(): Export {
   if (!validate(content)) {
     const problems = (validate.errors ?? [])
       .slice(0, 10)
-      .map((error) => `  ${error.instancePath || "/"} ${error.message}`)
+      .map((error) => {
+        // A code outside a fixed list is named, so the build says which code it was.
+        const given =
+          error.keyword === "enum" ? ` (it is ${JSON.stringify(valueAt(content, error.instancePath))})` : "";
+        return `  ${error.instancePath || "/"} ${error.message}${given}`;
+      })
       .join("\n");
     throw new Error(`The export at ${file} does not match export.schema.json:\n${problems}`);
   }
@@ -289,6 +307,14 @@ function load(): Export {
   if (unwordedCards.length > 0) {
     throw new Error(
       `The export at ${file} has background card codes the site has no words for: ${unwordedCards.join(", ")}. Add them to src/lib/background.ts.`,
+    );
+  }
+  const unwordedStatements = unwordedStatementCodes(
+    (content as Export).claims.flatMap((claim) => claim.reported_statements ?? []),
+  );
+  if (unwordedStatements.length > 0) {
+    throw new Error(
+      `The export at ${file} has reported statement codes the site has no words for: ${unwordedStatements.join(", ")}. Add them to src/lib/statements.ts.`,
     );
   }
   return content as Export;

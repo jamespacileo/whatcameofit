@@ -38,11 +38,11 @@
 
 ## 7. Site
 
-- [ ] 7.1 Add the statement types to `site/src/lib/export.ts` and a wording module for kinds, firmness, speaker and basis that composes the attribution sentence, with a function naming any unworded code; verify a site test fails the build on an unknown kind and that the wording passes the verdict check
-- [ ] 7.2 Add "What the report said" to the claim page to `DESIGN.md`, between the summary and the records, grouped by report, each statement with its confidence and its report's link, and the note that a statement is not a record; verify in the browser at phone and desktop widths on a claim with one report and a claim with several
-- [ ] 7.3 Verify by site test that a page with a statement of an effect and a trial with posted results shows no word comparing them, and that a claim with no approved statement has no section
-- [ ] 7.4 Carry statements into the open data file; verify approved statements are present and a pending one is not
-- [ ] 7.5 Explain reported statements on the method page; verify the site build and the verdict-wording test
+- [x] 7.1 Add the statement types to `site/src/lib/export.ts` and a wording module for kinds, firmness, speaker and basis that composes the attribution sentence, with a function naming any unworded code; verify a site test fails the build on an unknown kind and that the wording passes the verdict check
+- [x] 7.2 Add "What the report said" to the claim page to `DESIGN.md`, between the summary and the records, grouped by report, each statement with its confidence and its report's link, and the note that a statement is not a record; verify in the browser at phone and desktop widths on a claim with one report and a claim with several
+- [x] 7.3 Verify by site test that a page with a statement of an effect and a trial with posted results shows no word comparing them, and that a claim with no approved statement has no section
+- [x] 7.4 Carry statements into the open data file; verify approved statements are present and a pending one is not
+- [x] 7.5 Explain reported statements on the method page; verify the site build and the verdict-wording test
 
 ## 8. Integration
 
