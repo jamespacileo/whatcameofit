@@ -514,3 +514,145 @@ test("Scenario: Reader follows a headline from the home page", () => {
     assert.ok(at < html.indexOf('class="digest"'), `${slug} names its report after the status`);
   }
 });
+
+// Openspec trial-facts: each trial once, with what its registry record states.
+// A section runs from its heading to the next section heading.
+function sectionOf(html, id) {
+  const start = html.indexOf(`id="${id}"`);
+  assert.ok(start > 0, `no section with id ${id}`);
+  const next = html.indexOf('<h2 class="bar"', start);
+  return html.slice(start, next > 0 ? next : undefined);
+}
+
+// What a reader reads of a section: no markup, so a drawing's attributes are not words.
+const wordsOf = (html) => html.replace(/<[^>]*>/g, " ").replace(/&#39;/g, "'").replace(/\s+/g, " ");
+
+test("Scenario: Claim with one completed Phase 2 trial", () => {
+  const html = page("phase-claim/index.html");
+  assert.equal(count(html, 'id="trial-NCT00000002"'), 1);
+  const trials = sectionOf(html, "trials");
+  assert.match(trials, /Phase 2 · Completed · 83 participants enrolled/);
+  assert.match(trials, /Randomised, double-blind, compared with placebo/);
+  assert.match(trials, /Change in synthetic score/);
+  assert.match(trials, /3\.4 \(Standard Deviation 1\.1\)/);
+  assert.match(trials, /41 analysed/);
+  assert.match(trials, /High match · 94%/);
+  // Three of five planned measures are shown, and the page says where the rest are.
+  assert.match(trials, /2 more in the ClinicalTrials\.gov record/);
+});
+
+test("Scenario: Record read on 3 October 2026", () => {
+  const trials = wordsOf(sectionOf(page("phase-claim/index.html"), "trials"));
+  assert.match(trials, /record read[\s\S]{0,80}3\s+Oct\s+2026/);
+  assert.match(trials, /a selection, unaltered, from the trial's registry record/);
+});
+
+test("Scenario: Reader follows a timetable entry", () => {
+  const html = page("phase-claim/index.html");
+  const timetable = sectionOf(html, "timetable");
+  assert.ok(timetable.includes('href="#trial-NCT00000002"'), "no timetable entry leads to its trial");
+});
+
+test("Scenario: Claim with no trial", () => {
+  const html = page("quiet-claim/index.html");
+  assert.ok(!html.includes('id="trials"'));
+  assert.ok(!html.includes("Trials in people"));
+});
+
+test("Scenario: Claim with thirty-three trials", () => {
+  // Seven here: five shown, furthest phase first, the other two one press away.
+  const trials = sectionOf(page("phase-claim/index.html"), "trials");
+  const [shown, rest] = trials.split('class="trials-rest"');
+  assert.equal(count(shown, 'class="trial"'), 5);
+  assert.equal(count(rest, 'class="trial"'), 2);
+  assert.ok(shown.indexOf("NCT00000030") < shown.indexOf("NCT00000002"), "Phase 3 is not first");
+  assert.match(rest, /The other 2 of 7 trials/);
+});
+
+test("Scenario: Three trials, the largest of 1,200", () => {
+  const html = page("phase-claim/index.html");
+  assert.match(html, /Trials in people/);
+  assert.match(html, /7 on record/);
+  assert.match(html, /The largest, 1,200 participants planned/);
+});
+
+test("Scenario: Posted comparison with a p value", () => {
+  const trials = wordsOf(sectionOf(page("phase-claim/index.html"), "trials"));
+  assert.match(trials, /p = 0\.03, t-test, 2 sided \(superiority test\)/);
+  assert.match(trials, /numbers the trial's sponsor posted to the registry/);
+  // The numbers are shown; nothing says what they mean for the treatment.
+  assert.doesNotMatch(trials, /\b(met|missed|significan\w*|success\w*|fail\w*|worked|proven)\b/i);
+});
+
+test("Scenario: Outcome reported at four time points", () => {
+  const trials = sectionOf(page("phase-claim/index.html"), "trials");
+  assert.match(trials, /Posted in 4 rows of values/);
+});
+
+test("Scenario: Trial the registry shows as recruiting", () => {
+  const trials = wordsOf(sectionOf(page("phase-claim/index.html"), "trials"));
+  assert.match(trials, /Phase 3 · Under way · 1,200 participants planned/);
+  assert.doesNotMatch(trials, /recruit|eligib|contact|location|take part|join/i);
+});
+
+test("Scenario: Sponsor who is a person", () => {
+  const trials = sectionOf(page("phase-claim/index.html"), "trials");
+  assert.match(trials, /An individual researcher/);
+});
+
+test("Scenario: Claim with one matched paper and no trial", () => {
+  const html = page("quiet-claim/index.html");
+  const papers = sectionOf(html, "papers");
+  assert.match(papers, /Matched papers/);
+  assert.ok(papers.includes("10.5555/synthetic.1"));
+  assert.match(papers, /A paper is not a trial\s+record/);
+  assert.match(html, /No registry record matched/);
+  const registry = sectionOf(html, "matched");
+  assert.match(registry, /No record matched/);
+  assert.ok(!registry.includes("10.5555/synthetic.1"), "a paper is listed as a registry record");
+});
+
+test("Scenario: Follow-up paper scored 0.6", () => {
+  const timetable = sectionOf(page("phase-claim/index.html"), "timetable");
+  assert.match(timetable, /Medium match · 60%/);
+});
+
+test("Scenario: Trial event read from a registry record", () => {
+  const timetable = sectionOf(page("phase-claim/index.html"), "timetable");
+  assert.doesNotMatch(timetable, /match · 100%/);
+});
+
+test("Scenario: Fact code without site wording", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.claims[1].trials[0].facts.masking = "sextuple";
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-trial-code-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+
+  const result = build(file, path.join(directory, "dist"));
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout + result.stderr, /masking/);
+});
+
+test("an export made before trial facts still builds, with the matched records as before", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  for (const claim of fixture.claims) {
+    delete claim.trials;
+    for (const event of claim.events) delete event.confidence;
+  }
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-no-trials-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+  const out = path.join(directory, "dist");
+
+  const result = build(file, out);
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const html = fs.readFileSync(path.join(out, "phase-claim/index.html"), "utf8");
+  assert.ok(!html.includes('id="trials"'));
+  const registry = sectionOf(html, "matched");
+  assert.match(registry, /Matched registry records/);
+  assert.ok(registry.includes("NCT00000002"));
+  assert.match(registry, /High match · 94%/);
+});
