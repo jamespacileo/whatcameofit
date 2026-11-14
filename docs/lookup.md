@@ -205,3 +205,52 @@ What the trials state: 127 randomised, 25 not randomised, 69 with no allocation 
 Checked by hand against the registry's records as fetched the same day, number by number: NCT04494425 (866 participants; median 13.2 against 8.1 months; "<0.0001" by log rank), NCT05870540 (196 participants; two outcomes; "0.0033" by mixed models) and NCT02412735 (404 participants; three groups; two comparisons posted with no p value). Every participant count, group title, number analysed, value, spread, interval, p value and method agreed. The 74 distinct names of sponsors classed "other" were read: none is a person's.
 
 Limits: the export grew by 44%, more than the quarter of a megabyte the design estimated. A trial's facts are as old as its newest stored record; the oldest was not measured. Thirteen of the 56 outcomes are reported in several rows and show a title and a row count only.
+
+## Subject terms on the real database (14 November 2026)
+
+Openspec `knowledge-cards`, tasks 5.1 to 5.3. `thenwhat terms --missing` was run once on the real database, for the 84 published claims, with the decisions backend and the default thresholds (approve at 0.8, reject under 0.05, ten candidates a claim). It took 4 minutes 24 seconds. Nothing was exported or deployed.
+
+| | Count |
+| --- | --- |
+| Published claims | 84 |
+| Claims with at least one candidate | 45 |
+| Candidates gathered | 105 (94 filed by the registry, 16 with a label equal to a name, 5 both) |
+| Approved by rule, exact | 35 |
+| Approved by rule, broader | 13 |
+| Rejected by rule | 43 |
+| Left pending | 14 |
+| Candidates the backend gave no answer for | 0 |
+| Claims with a condition card | 32 of 84 (38%) |
+| Claims with an intervention card | 7, then 6 after the reading below |
+| Claims with any card | 36 |
+| Term records stored | 90, 10 of them with no definition |
+| Requests to MeSH | 445: 265 label lookups, 180 for records |
+| Model calls | 58, 39,001 input tokens, 0.0039 US dollars |
+
+The gate in task 5.1 is one claim in three with a condition card. 32 of 84 is above it, by four claims. The 39 claims with no candidate have no approved trial and no name a MeSH label equals.
+
+More requests were made than the design's estimate of about 170, because each claim's indication and each intervention name is looked up by label on every run (265 lookups). The record requests were as estimated.
+
+**Every approved link read beside its claim (task 5.2).** 48 links, 2 judged misleading and rejected, recorded as the assistant's decisions: "Tirzepatide" (0.96) and "Semaglutide" (0.91), both read as exact for the claim whose intervention is "GLP-1 receptor agonists". Each is one of that claim's other names, so its label equals a name, but one member drug would have stood on the page for a class. That is 1 in 24, under the 1 in 20 at which the threshold is to be raised, so it was not raised and the run was not repeated. Raising it would not have removed these two: the cause is a class-named intervention whose other names are its members, not a low score.
+
+Read as right but worth the operator's eye:
+
+- Four claims have only very broad condition terms, and the card takes the highest score, which is the broadest: "Metabolic Diseases" (0.95) ahead of "Lipid Metabolism Disorders" (0.85) for hard-to-treat high cholesterol, with "Dyslipidemias" pending at 0.64; "Musculoskeletal Diseases" (1.00) ahead of "Spinal Diseases" and "Pain" for chronic low back pain, with "Low Back Pain" and "Back Pain" pending at 0.51 and "Intervertebral Disc Degeneration" pending at 0.75. A broader card that is true and nearly useless is the cost of ordering by score alone.
+- "Infertility" (0.90) and "Alcoholism" (0.81) were read as exact for "Infertility after childhood chemotherapy" and "Binge drinking in alcohol use disorder". Both are the wider condition.
+- "Caloric Restriction" (0.99) was read as broader than "Intensive low-calorie diet with structured exercise". It covers the diet and not the exercise.
+- The endometrial cancer claim's Parkinson's disease term, the case in the proposal, was rejected by rule at zero. Its right term, "Endometrial Neoplasms", scored 0.77 and is pending, so that claim has no card.
+
+**Definitions read as a reader would (task 5.3).** All 42 distinct definitions of approved terms were read, not ten. None gives advice in the second person. These read as saying what a treatment is used for, or that something works, and are for the operator before release:
+
+| Term, on which claim | The words |
+| --- | --- |
+| Aspirin, on the claim about aspirin for dentine repair | "used in the treatment of mild to moderate pain", "used in the prevention of arterial and venous thrombosis" |
+| Caloric Restriction, on the claim about a diet for type 2 diabetes | "In experimental animals, caloric restriction has been shown to extend lifespan and enhance other physiological variables." |
+| Kidney Failure, Chronic, on the pig kidney transplant claim | "These patients generally require HEMODIALYSIS or KIDNEY TRANSPLANTATION." |
+| Ascorbic Acid, on the vitamin C claim | "an essential nutrient in human diets", "considered an antioxidant" |
+| Diabetes Mellitus, Type 2, on the claim about a weekly insulin | "not INSULIN-responsive or dependent (NIDDM)": dated wording that sits oddly beside a claim about an insulin |
+| Semaglutide and Tirzepatide (rejected above) | "used to enhance glycemic control of TYPE 2 DIABETES MELLITUS, and for OBESITY MANAGEMENT" |
+
+Other things a reader would notice: several definitions are one line and say little ("Diseases affecting the eye.", "Diseases involving the SPINE."); "Alcoholism" is the vocabulary's own heading and its definition says "often progressive and fatal"; three supplementary records for new drugs (INNA-051, orforglipron, trastuzumab deruxtecan) have no definition, so their cards are a label and a link.
+
+How it was run: from a checkout of the branch against the database on its local port. This Mac's default resolver (Tailscale) gave no address for `id.nlm.nih.gov`, so that one name's address was taken from a public resolver for the run; the certificate was still checked against the name.

@@ -33,9 +33,9 @@
 
 ## 5. Measurement before release
 
-- [ ] 5.1 Run `thenwhat terms --missing` on the real database and record in `docs/lookup.md`: candidates gathered, approved exact, approved broader, rejected, claims with a condition card, claims with an intervention card, model cost and requests made. If fewer than one claim in three has a condition card, stop and report before the site tasks ship
-- [ ] 5.2 Read every approved link beside its claim and record how many are wrong or misleading; reject those. If more than one in twenty is wrong, raise the threshold and run again
-- [ ] 5.3 Read ten definitions as a reader would and record any that read as advice or as a statement that a treatment works; bring those to the operator before release
+- [x] 5.1 Run `thenwhat terms --missing` on the real database and record in `docs/lookup.md`: candidates gathered, approved exact, approved broader, rejected, claims with a condition card, claims with an intervention card, model cost and requests made. If fewer than one claim in three has a condition card, stop and report before the site tasks ship
+- [x] 5.2 Read every approved link beside its claim and record how many are wrong or misleading; reject those. If more than one in twenty is wrong, raise the threshold and run again
+- [x] 5.3 Read ten definitions as a reader would and record any that read as advice or as a statement that a treatment works; bring those to the operator before release
 
 ## 6. Drug and target cards
 
