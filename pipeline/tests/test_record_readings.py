@@ -22,6 +22,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import add_article, add_claim
+from thenwhat.config import Settings
 from thenwhat.db.models import Claim, EvidenceEvent, LlmUsage, Reading, TrialRead
 from thenwhat.domain import (
     Decider,
@@ -598,6 +599,28 @@ def test_an_exported_trial_carries_its_readings_with_words_and_confidence(
         },
     ]
     assert trial["facts_as_of"] == "2026-11-10T09:00:00Z"
+
+
+def test_a_reading_below_the_bar_is_not_exported(session: Session, claim: Claim):
+    """Scenario: Reading below the bar"""
+    outcome = dict(ANSWER["outcomes"][0])
+    outcome["follow_up"] = {**outcome["follow_up"], "confidence": 0.79}
+    read(session, claim, Scripted({"outcomes": [outcome]}))
+
+    [trial] = exported(session)["claims"][0]["trials"]
+    assert [reading["kind"] for reading in trial["readings"]] == ["measure"]
+
+    every = json.loads(build_export(session, now=NOW, reading_accept_above=0).model_dump_json())
+    assert [reading["kind"] for reading in every["claims"][0]["trials"][0]["readings"]] == [
+        "follow_up",
+        "measure",
+    ]
+
+
+def test_the_reading_bar_has_its_default(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.delenv("READING_ACCEPT_ABOVE", raising=False)
+
+    assert Settings(database_url="postgresql://example").reading_accept_above == 0.8
 
 
 def test_the_export_is_built_from_the_database_alone(session: Session, claim: Claim):
