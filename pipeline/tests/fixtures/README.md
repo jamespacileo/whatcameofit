@@ -58,6 +58,12 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `opentargets/search_tmsb1.json` | the same for "TMSB1": seven hits, none with an equal symbol or synonym (2026-11-14) |
 | `opentargets/search_ctx310.json` | the same for "CTX310": no hit (2026-11-14) |
 | `opentargets/target_cxcr3.json` | the same address with the target query for `ENSG00000186810`: three function descriptions (2026-11-14) |
+| `opentargets/drugs_tirzepatide.json` | the same address with the drug search in `sources/opentargets.py` for "tirzepatide": one drug, two mechanisms (2026-11-14) |
+| `opentargets/drugs_orforglipron.json` | the same for "orforglipron": the drug with no mechanism, and a salt of it under another name (2026-11-14) |
+| `opentargets/drugs_semaglutide.json` | the same for "semaglutide": the drug with one mechanism naming one protein, and another drug of its class (2026-11-14) |
+| `opentargets/drugs_trastuzumab_deruxtecan.json` | the same for "Trastuzumab deruxtecan": two mechanisms, one with a target that is no human gene product (2026-11-14) |
+| `opentargets/drugs_salpingectomy.json` | the same for "Salpingectomy", a procedure: no hit (2026-11-14) |
+| `opentargets/drug_tirzepatide.json`, `opentargets/drug_unknown.json` | the drug query for `CHEMBL4297839`, and for `CHEMBL0000000`, which the platform does not hold (2026-11-14) |
 | `opentargets/target_unknown.json` | the target query for `ENSG00000000000`, which the platform does not hold (2026-11-14) |
 
 Changes made to the recordings, for copyright and size:
@@ -68,7 +74,7 @@ Changes made to the recordings, for copyright and size:
 - OpenAlex works: each `abstract_inverted_index` is replaced by a placeholder sentence. The key was sent in a header and is in no recording.
 - MeSH: none. The records are NLM's own and are kept whole, re-indented.
 - GSRS: none. The data is CC0 and the records are kept whole, re-indented.
-- Open Targets: none. The answers are kept whole, re-indented. Function descriptions are UniProt's (CC BY 4.0).
+- Open Targets: none. The answers are kept whole, re-indented. Function descriptions are UniProt's (CC BY 4.0); a drug's kind of molecule and mechanisms are ChEMBL's (CC BY-SA 3.0 Unported).
 - ROR: only the first two items of each answer are kept.
 - Crossref works: `abstract` removed; `reference` removed from `work_srep39654.json`.
 - `openai/decisions_three_records.json`: the model's name is replaced by `example-model` in the request and the response. The input is synthetic.

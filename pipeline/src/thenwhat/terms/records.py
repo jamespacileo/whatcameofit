@@ -31,7 +31,10 @@ def _mesh(record: SourceRecord) -> RecordText:
 
 
 def _target(record: SourceRecord) -> RecordText:
-    """An Open Targets target: the gene's symbol and its first function description."""
+    """An Open Targets target: the gene's symbol and its first function description. A
+    drug's record gives the drug's name as the source writes it and no definition."""
+    if opentargets.DRUG_IDENTIFIER.match(record.external_id):
+        return RecordText(opentargets.describe_drug(record).name, None, None)
     target = opentargets.describe(record)
     return RecordText(target.symbol, target.definition, None)
 
