@@ -223,6 +223,16 @@ export function headingTitle(heading: Pick<Heading, "span" | "date">): string {
   return `Week of ${date.getUTCDate()} ${MONTH_NAMES[date.getUTCMonth()]}`;
 }
 
+/** The line that opens the promised dates after the last check. */
+export function toComeText(count: number): string {
+  return `${count} promised ${count === 1 ? "date" : "dates"} to come.`;
+}
+
+/** What the control under the list says is still out of sight. */
+export function earlierText(rows: number): string {
+  return `${rows} earlier ${rows === 1 ? "row" : "rows"}`;
+}
+
 const KIND_WORDS: [RowKind, string, string][] = [
   ["report", "report", "reports"],
   ["record", "registry record", "registry records"],

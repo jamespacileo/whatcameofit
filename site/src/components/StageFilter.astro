@@ -80,9 +80,12 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
     const tables = scope
       ? [...document.querySelectorAll<HTMLTableElement>(`${scope} table`)]
       : [following()].filter((table) => table !== null);
-    const rows = tables.flatMap((table) => [
-      ...table.querySelectorAll<HTMLTableRowElement>("tbody tr[data-status]"),
-    ]);
+    // Within a scope, the rows of a day-by-day list are narrowed with the tables' rows.
+    const dayList = scope ? document.querySelector<HTMLElement>(`${scope} [data-day-list]`) : null;
+    const rows: HTMLElement[] = [
+      ...tables.flatMap((table) => [...table.querySelectorAll<HTMLElement>("tbody tr[data-status]")]),
+      ...(dayList?.querySelectorAll<HTMLElement>("[data-day-row]") ?? []),
+    ];
     const buttons = [...filter.querySelectorAll<HTMLButtonElement>("button[data-status]")];
     const shown = filter.querySelector<HTMLElement>("[data-shown]")!;
     const shownText = filter.querySelector<HTMLElement>("[data-shown-text]")!;
@@ -106,6 +109,7 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
         ? `Showing only: ${label}.`
         : `Showing ${visible} of ${rows.length} claims.`;
       for (const table of tables) table.dispatchEvent(new Event("paged:refresh"));
+      dayList?.dispatchEvent(new Event("paged:refresh"));
       if (param) {
         const url = new URL(location.href);
         if (picked) url.searchParams.set(param, picked);

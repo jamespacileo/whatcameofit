@@ -1,0 +1,1024 @@
+---
+// The home page's day-by-day list (openspec home-day-by-day): everything dated for the
+// published claims, newest first, under dated headings. The page is dated by the day
+// the registries were last checked. Every row is in the page as built; the script only
+// hides, counts and marks.
+import type { DayList } from "../lib/day-list";
+import { countKinds, countsText, dayName, earlierText, headingTitle, toComeText } from "../lib/day-list";
+import { formatDate } from "../lib/timetable";
+import DayPromise from "./DayPromise.astro";
+import DayRecord from "./DayRecord.astro";
+import DayReport from "./DayReport.astro";
+
+interface Props {
+  list: DayList;
+  /** Every listed topic, for a row's topic name and the side column's choice. */
+  topics: { slug: string; title: string; count: number }[];
+}
+
+const { list, topics } = Astro.props;
+const topicTitle = new Map(topics.map((topic) => [topic.slug, topic.title]));
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const weekday = (day: string) => WEEKDAYS[new Date(`${day}T00:00:00Z`).getUTCDay()];
+const rows = list.headings.flatMap((heading) => heading.rows);
+const totals = countKinds(rows.concat(list.toCome));
+const KINDS = [
+  { kind: "report", name: "Reported" },
+  { kind: "record", name: "Recorded" },
+  { kind: "promise", name: "Promised" },
+] as const;
+const earlier = list.headings.filter((heading) => heading.span !== "day");
+---
+
+<section class="days" aria-labelledby="days-title" data-days data-checked={list.checked}>
+  <div class="days-head">
+    <h2 class="days-title" id="days-title">
+      Registries last checked{" "}
+      <span class="unbroken on-wide">{dayName(list.checked)} {list.checked.slice(0, 4)}</span>
+      {/* A phone has one line for it; the row of days under it gives the weekday. */}
+      <span class="unbroken on-phone">{formatDate(list.checked)}</span>
+    </h2>
+    <slot name="tally" />
+    {/* The seven days up to the last check. Each leads to its heading below. */}
+    <ol class="week" aria-label="The seven days up to the last check">
+      {
+        list.week.map((day) => (
+          <li>
+            <a href={`#d-${day.date}`} aria-current={day.date === list.checked ? "date" : undefined}>
+              <span class="week-day">{weekday(day.date)}</span>
+              <span class="week-date">{Number(day.date.slice(8))}</span>
+              <span class="week-count">
+                {day.reports === 0 ? "none" : `${day.reports} ${day.reports === 1 ? "report" : "reports"}`}
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+
+  {/* The three kinds of row. The controls are also the key to the three grounds.
+      Shown by the script: without it there is nothing to pick. */}
+  <div class="kinds" role="group" aria-label="Show rows of one kind" hidden data-kinds>
+    <button type="button" class="share" aria-pressed="true" data-kind-pick="all">
+      <span class="on-wide">Everything</span><span class="on-phone">All</span>
+      <span class="kind-count">{rows.length + list.toCome.length}</span>
+    </button>
+    {
+      KINDS.filter(({ kind }) => totals[kind] > 0).map(({ kind, name }) => (
+        <button type="button" class="share" aria-pressed="false" data-kind-pick={kind}>
+          <span class:list={["swatch", kind]} aria-hidden="true" />
+          {name} <span class="kind-count">{totals[kind]}</span>
+        </button>
+      ))
+    }
+  </div>
+
+  <slot name="narrow" />
+
+  <div class="days-body">
+    <div class="day-list" data-day-list>
+      {
+        list.toCome.length > 0 && (
+          <details class="to-come" data-to-come>
+            <summary>
+              <strong>Ahead.</strong> <span data-to-come-count>{toComeText(list.toCome.length)}</span>{" "}
+              Next: <span data-to-come-next>{formatDate(list.toCome[0].date)}</span>.{" "}
+              <span class="text-control">Show them</span>
+            </summary>
+            <p class="entry-note">
+              A promise is what a report said, not a record. Each is listed by the date it was promised for.
+            </p>
+            <ol>
+              {list.toCome.map((row) => <DayPromise row={row} />)}
+            </ol>
+          </details>
+        )
+      }
+      {
+        list.headings.map((heading) => {
+          const isChecked = heading.span === "day" && heading.date === list.checked;
+          const picked = isChecked ? list.older : null;
+          return (
+            <section
+              class="day-group"
+              id={heading.id}
+              data-group
+              data-span={heading.span}
+              data-date={heading.date}
+              data-earlier={heading.span === "day" ? undefined : ""}
+            >
+              <div class="day-head">
+                <h3 data-group-title>{headingTitle(heading)}</h3>
+                <span data-says>{countsText(countKinds(heading.rows))}</span>
+              </div>
+              <ol>
+                {heading.rows.map((row) =>
+                  row.kind === "report" ? (
+                    <DayReport row={row} topic={topicTitle.get(row.claim.vertical) ?? ""} />
+                  ) : row.kind === "record" ? (
+                    <DayRecord row={row} />
+                  ) : (
+                    <DayPromise row={row} />
+                  ),
+                )}
+                {picked && (
+                  <li class="picked-note" data-picked-note>
+                    One older claim, picked by the date.
+                  </li>
+                )}
+                {picked && <DayReport row={picked} topic={topicTitle.get(picked.claim.vertical) ?? ""} picked />}
+              </ol>
+            </section>
+          );
+        })
+      }
+      {
+        earlier.length > 0 && (
+          <p class="earlier" hidden data-earlier-control>
+            <button type="button" class="share">Show earlier</button>
+            <span class="entry-note" data-earlier-left>
+              {earlierText(earlier.reduce((sum, heading) => sum + heading.rows.length, 0))}
+            </span>
+          </p>
+        )
+      }
+      <p class="none" hidden data-days-none>Nothing in this list for that choice.</p>
+    </div>
+
+    {/* Beside the list on a wide screen: where the reader left off, and one topic to
+        narrow to. Both are the script's; without it the column is not drawn. */}
+    <aside class="days-side" hidden data-days-side>
+      <p class="visit-note" hidden data-visit-note></p>
+      {
+        topics.length > 1 && (
+          <div class="side-topics">
+            <h3>Topics</h3>
+            <ul>
+              {topics.map((topic) => (
+                <li>
+                  <button type="button" class="topic-pick" aria-pressed="false" data-topic-pick={topic.slug}>
+                    {topic.title} <span class="kind-count">{topic.count}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+    </aside>
+  </div>
+</section>
+
+<script>
+  import { countKinds, countsText, earlierText, toComeText, type RowKind } from "../lib/day-list";
+  import { VISIT_ENTRY, lastVisitIndex, nextVisit, sinceOf } from "../lib/returning";
+  import { formatDate } from "../lib/timetable";
+
+  const root = document.querySelector<HTMLElement>("[data-days]");
+  if (root) {
+    const list = root.querySelector<HTMLElement>("[data-day-list]")!;
+    const groups = [...list.querySelectorAll<HTMLElement>("[data-group]")];
+    const toCome = list.querySelector<HTMLDetailsElement>("[data-to-come]");
+    const control = list.querySelector<HTMLElement>("[data-earlier-control]");
+    const none = list.querySelector<HTMLElement>("[data-days-none]")!;
+    const side = root.querySelector<HTMLElement>("[data-days-side]");
+    const visitNote = root.querySelector<HTMLElement>("[data-visit-note]");
+    const allRows = [...list.querySelectorAll<HTMLElement>("[data-day-row]")];
+    const rowsIn = (element: Element) => [...element.querySelectorAll<HTMLElement>("[data-day-row]")];
+    // Each filter marks the rows it leaves out, as on the tables further down the page.
+    const out = (row: Element) => row.getAttributeNames().some((name) => name.startsWith("data-out"));
+    const kindsOf = (rows: HTMLElement[]) => countKinds(rows.map((row) => ({ kind: row.dataset.kind as RowKind })));
+    // The older claim after the day of the last check is not dated that day.
+    const picked = list.querySelector<HTMLElement>("[data-picked]");
+    const pickedNote = list.querySelector<HTMLElement>("[data-picked-note]");
+    const isPicked = (row: HTMLElement) => row === picked;
+
+    const two = (value: number) => String(value).padStart(2, "0");
+    const iso = (date: Date) => `${date.getFullYear()}-${two(date.getMonth() + 1)}-${two(date.getDate())}`;
+    const now = new Date();
+    const today = iso(now);
+    const yesterday = iso(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+
+    // "Today" and "Yesterday" are said only when they are so on the reader's own date.
+    for (const group of groups) {
+      if (group.dataset.span !== "day") continue;
+      const word = group.dataset.date === today ? "Today" : group.dataset.date === yesterday ? "Yesterday" : null;
+      const title = group.querySelector<HTMLElement>("[data-group-title]")!;
+      if (word) title.textContent = `${word}, ${title.textContent}`;
+    }
+
+    // The reader's last visit, as the since line further down reads it. Kept in this
+    // browser only; where storage is refused there is no line.
+    const since = (() => {
+      try {
+        return sinceOf(nextVisit(localStorage.getItem(VISIT_ENTRY), today), today);
+      } catch {
+        return null;
+      }
+    })();
+    const line = document.createElement("p");
+    line.className = "last-visit";
+    line.id = "last-visit";
+    const drawLastVisit = () => {
+      line.remove();
+      if (visitNote) visitNote.hidden = true;
+      if (!since) return;
+      const dated = groups.flatMap((group) => rowsIn(group).filter((row) => !out(row) && !isPicked(row)));
+      const index = lastVisitIndex(dated.map((row) => row.dataset.on!), since, today);
+      if (index === null) return;
+      const day = formatDate(since.from);
+      line.textContent = `Your last visit, ${day}. Everything above is dated from that day on.`;
+      const row = dated[index];
+      const group = row.closest<HTMLElement>("[data-group]")!;
+      // Between two headings where the visit falls between them; else inside the one.
+      if (rowsIn(group).filter((entry) => !out(entry))[0] === row) group.before(line);
+      else {
+        const item = document.createElement("li");
+        item.className = "last-visit-item";
+        item.append(line);
+        row.before(item);
+      }
+      if (visitNote) {
+        const link = document.createElement("a");
+        link.href = "#last-visit";
+        link.textContent = "Go to where you left off";
+        visitNote.replaceChildren(
+          `${index} ${index === 1 ? "row is" : "rows are"} dated since your last visit on ${day}. `,
+          link,
+        );
+        visitNote.hidden = false;
+      }
+    };
+
+    const refresh = () => {
+      list.querySelectorAll(".last-visit-item").forEach((item) => item.remove());
+      const narrowed = allRows.some(out);
+      let shown = 0;
+      let later = 0;
+      for (const group of groups) {
+        const rows = rowsIn(group);
+        const left = rows.filter((row) => !out(row));
+        for (const row of rows) row.hidden = out(row);
+        const dated = left.filter((row) => !isPicked(row));
+        const says = group.querySelector<HTMLElement>("[data-says]")!;
+        says.textContent = countsText(kindsOf(dated));
+        // A heading with nothing under it is kept only when nothing narrows the list.
+        group.hidden = narrowed && left.length === 0;
+        shown += left.length;
+        if (group.hasAttribute("data-earlier")) later += left.length;
+      }
+      if (toCome) {
+        const left = rowsIn(toCome).filter((row) => !out(row));
+        for (const row of rowsIn(toCome)) row.hidden = out(row);
+        toCome.hidden = left.length === 0;
+        if (left.length > 0) {
+          toCome.querySelector("[data-to-come-count]")!.textContent = toComeText(left.length);
+          toCome.querySelector("[data-to-come-next]")!.textContent = formatDate(left[0].dataset.on!);
+        }
+        shown += left.length;
+      }
+      if (pickedNote) pickedNote.hidden = !picked || out(picked);
+      none.hidden = shown > 0;
+      if (control) {
+        control.hidden = later === 0;
+        control.querySelector("[data-earlier-left]")!.textContent = earlierText(later);
+      }
+      drawLastVisit();
+    };
+
+    // Earlier headings are shown a batch at a time, or as far as one named in the address.
+    const BATCH = 8;
+    const hiddenGroups = () => groups.filter((group) => group.hasAttribute("data-earlier"));
+    const reveal = (count: number) => {
+      // A heading narrowed to nothing does not use up the batch.
+      let opened = 0;
+      for (const group of hiddenGroups()) {
+        if (opened >= count) break;
+        group.removeAttribute("data-earlier");
+        if (!group.hidden) opened += 1;
+      }
+      refresh();
+    };
+    control?.querySelector("button")!.addEventListener("click", () => reveal(BATCH));
+    const revealTo = (id: string) => {
+      const target = groups.find((group) => group.id === id);
+      if (!target) return;
+      for (const group of groups) {
+        group.removeAttribute("data-earlier");
+        if (group === target) break;
+      }
+      refresh();
+      target.scrollIntoView({ block: "start" });
+    };
+    const fromAddress = () => {
+      const id = decodeURIComponent(location.hash.slice(1));
+      if (/^[dwy]-/.test(id)) revealTo(id);
+    };
+    addEventListener("hashchange", fromAddress);
+    // Paper gets the whole list.
+    addEventListener("beforeprint", () => {
+      for (const group of groups) group.removeAttribute("data-earlier");
+      if (toCome) toCome.open = true;
+      refresh();
+    });
+
+    // One kind at a time, or every kind. The pick is kept in the page's address.
+    const picks = [...root.querySelectorAll<HTMLButtonElement>("[data-kind-pick]")];
+    const pick = (kind: string, remember = true) => {
+      for (const button of picks) button.setAttribute("aria-pressed", String(button.dataset.kindPick === kind));
+      for (const row of allRows) row.toggleAttribute("data-out-kind", kind !== "all" && row.dataset.kind !== kind);
+      refresh();
+      if (!remember) return;
+      const url = new URL(location.href);
+      if (kind === "all") url.searchParams.delete("kind");
+      else url.searchParams.set("kind", kind);
+      history.replaceState(history.state, "", url);
+    };
+    for (const button of picks) button.addEventListener("click", () => pick(button.dataset.kindPick!));
+    root.querySelector<HTMLElement>("[data-kinds]")!.hidden = false;
+
+    // The status path and the topic choice narrow these rows too, and say so here.
+    list.addEventListener("paged:refresh", refresh);
+
+    // On a wide screen the topic is chosen from the side column; it drives the same
+    // field the phone's control does, so there is one choice and one place it is kept.
+    const choice = document.querySelector<HTMLSelectElement>("#feed-topic");
+    const topicPicks = [...root.querySelectorAll<HTMLButtonElement>("[data-topic-pick]")];
+    if (side) {
+      const sync = () => {
+        for (const button of topicPicks) {
+          button.setAttribute("aria-pressed", String(choice?.value === button.dataset.topicPick));
+        }
+      };
+      for (const button of topicPicks) {
+        button.addEventListener("click", () => {
+          if (!choice) return;
+          choice.value = choice.value === button.dataset.topicPick ? "" : button.dataset.topicPick!;
+          choice.dispatchEvent(new Event("change"));
+        });
+      }
+      choice?.addEventListener("change", sync);
+      sync();
+      side.hidden = false;
+    }
+
+    const asked = new URL(location.href).searchParams.get("kind");
+    pick(picks.some((button) => button.dataset.kindPick === asked) ? asked! : "all", false);
+    fromAddress();
+  }
+</script>
+
+<style is:global>
+  /* Global, as the home page's own styles are: rows are counted and marked by script. */
+  .days {
+    margin-top: clamp(1.5rem, 5vw, 2.25rem);
+  }
+
+  .days-title {
+    font-size: clamp(1.35rem, 3.8vw, 1.75rem);
+    line-height: 1.2;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  /* Wording that has a shorter form on a phone. One of the two is drawn. */
+  .days .on-phone {
+    display: none;
+  }
+
+  .days-head .tally {
+    margin: 0.4rem 0 0;
+    font-size: 0.95rem;
+    max-width: var(--measure);
+  }
+
+  .week {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    list-style: none;
+    padding: 0;
+    margin: 1.1rem 0 0;
+    max-width: none;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .week li + li {
+    border-left: 1px solid var(--rule);
+  }
+
+  .week a {
+    display: block;
+    min-height: 2.75rem;
+    padding: 0.5rem 0.2rem 0.55rem;
+    text-align: center;
+    line-height: 1.25;
+    color: var(--ink);
+    text-decoration: none;
+    transition: background-color 120ms;
+  }
+
+  .week a:hover {
+    background: var(--panel);
+  }
+
+  .week a[aria-current] {
+    background: var(--tint);
+  }
+
+  .week a:focus-visible {
+    outline-offset: -3px;
+  }
+
+  .week-day,
+  .week-count {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .week-date {
+    display: block;
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The kinds of row: each control carries the ground its rows are drawn on. */
+  .kinds {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 1.1rem;
+  }
+
+  .kinds .share {
+    min-height: 2.1rem;
+    color: var(--ink);
+  }
+
+  .kinds .share[aria-pressed="true"] {
+    background: var(--tint);
+  }
+
+  .kind-count {
+    font-weight: 400;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .swatch {
+    width: 0.8rem;
+    height: 0.8rem;
+    border-radius: 0.2rem;
+    border: 1px solid var(--ring);
+    background: var(--paper);
+    flex: none;
+  }
+
+  .swatch.record {
+    background: var(--tag);
+  }
+
+  .swatch.promise {
+    background: var(--promise);
+    border: 1px dashed #a8924a;
+  }
+
+  .days-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0 2.6rem;
+    align-items: start;
+  }
+
+  @media (min-width: 56rem) and (scripting: enabled) {
+    .days-body {
+      grid-template-columns: minmax(0, 1fr) 16rem;
+    }
+
+    /* The side column holds the topic choice there; the field is for narrower screens. */
+    .days .topic-filter {
+      display: none;
+    }
+  }
+
+  /* Promised dates after the last check: one line until opened. */
+  .to-come {
+    margin-top: 1.2rem;
+  }
+
+  .to-come summary {
+    list-style: none;
+    cursor: pointer;
+    max-width: var(--measure);
+  }
+
+  .to-come summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .to-come[open] summary .text-control {
+    display: none;
+  }
+
+  .to-come > .entry-note {
+    margin: 0.5rem 0 0;
+  }
+
+  .day-list ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .day-group {
+    scroll-margin-top: 0.5rem;
+  }
+
+  .day-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.1rem 0.7rem;
+    padding: 1.6rem 0 0.45rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .day-head h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .day-head span {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  /* Earlier headings are in the page; where scripts run they wait for the control. */
+  @media (scripting: enabled) {
+    .day-group[data-earlier] {
+      display: none;
+    }
+  }
+
+  .earlier {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.9rem;
+    margin: 1.6rem 0 0;
+  }
+
+  .earlier .share {
+    min-height: 2.75rem;
+    padding-inline: 1.1rem;
+    font-size: 0.95rem;
+  }
+
+  .day-list .none {
+    margin-top: 1.2rem;
+    color: var(--muted);
+  }
+
+  /* Rows. What was reported is on white, what is on record on the panel blue, what
+     was promised on pale amber. Each row also says its kind in words. */
+  .day-row {
+    padding: 1.4rem 0 1.3rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .row-source {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.2rem 0.75rem;
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .row-source .when {
+    white-space: nowrap;
+  }
+
+  .row-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .row-topic {
+    background: var(--tint);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 0.05rem 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .row-title {
+    font-size: clamp(1.12rem, 3.2vw, 1.3rem);
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 0.45rem 0 0.8rem;
+    text-wrap: balance;
+  }
+
+  .row-title a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .row-title a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+  }
+
+  .then-now {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .then-now > div {
+    padding: 0.65rem 0.95rem 0.8rem;
+  }
+
+  .then-now .now {
+    background: var(--panel);
+    border-left: 1px solid var(--rule);
+  }
+
+  .then-now .row-label,
+  .then-now strong {
+    display: block;
+  }
+
+  .then-now strong {
+    font-size: 1.08rem;
+    line-height: 1.3;
+  }
+
+  .then-now .status-name,
+  .row-status .status-name {
+    color: var(--blue);
+  }
+
+  .then-now .track {
+    margin-top: 0.45rem;
+  }
+
+  .row-adds {
+    margin: 0.75rem 0 0;
+    max-width: var(--measure);
+  }
+
+  .row-promise {
+    margin: 0.7rem 0 0;
+    padding: 0.45rem 0.7rem;
+    background: var(--promise);
+    border-block: 1px dashed var(--promise-rule);
+    font-size: 0.95rem;
+  }
+
+  .row-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.3rem 1rem;
+    margin: 0.8rem 0 0;
+    font-size: 0.9rem;
+  }
+
+  .row-claim {
+    flex: 1 1 14rem;
+    color: var(--muted);
+  }
+
+  .row-foot a {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .record-row {
+    background: var(--panel);
+    border-bottom: 0;
+    border-radius: var(--radius);
+    padding: 0.8rem 1rem 0.85rem;
+    margin: 1rem 0;
+  }
+
+  .row-what,
+  .row-detail {
+    margin: 0.2rem 0 0;
+  }
+
+  .row-detail {
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+
+  .row-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.2rem 0.7rem;
+    margin: 0.35rem 0 0;
+    font-size: 0.95rem;
+  }
+
+  .promise-status .gloss {
+    display: inline;
+  }
+
+  .row-about {
+    margin: 0.5rem 0 0;
+    padding-top: 0.45rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+
+  .row-about a {
+    font-weight: 600;
+  }
+
+  .promise-row .row-title {
+    font-size: 1.05rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .promise-row .row-promise {
+    margin-top: 0;
+  }
+
+  .picked-note {
+    padding-top: 1.1rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  .picked-note + .day-row {
+    padding-top: 0.5rem;
+  }
+
+  /* The reader's last visit: one line across the list. */
+  .last-visit {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin: 1.8rem 0 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-align: center;
+    scroll-margin-top: 1rem;
+  }
+
+  .last-visit::before,
+  .last-visit::after {
+    content: "";
+    flex: 1;
+    min-width: 1rem;
+    border-top: 2px solid var(--blue);
+  }
+
+  .last-visit-item .last-visit {
+    margin: 0 0 0.2rem;
+    padding-top: 1.4rem;
+  }
+
+  /* Beside the list on a wide screen. */
+  .days-side {
+    display: none;
+  }
+
+  @media (min-width: 56rem) {
+    .days-side:not([hidden]) {
+      display: grid;
+      gap: 1.5rem;
+      position: sticky;
+      top: 1rem;
+      padding-top: 1.6rem;
+      font-size: 0.9rem;
+    }
+  }
+
+  .visit-note {
+    margin: 0;
+    padding: 0.85rem 1rem;
+    background: var(--panel);
+    border-radius: var(--radius);
+  }
+
+  .visit-note a {
+    display: block;
+    margin-top: 0.3rem;
+    font-weight: 600;
+  }
+
+  .side-topics h3 {
+    font-size: 0.95rem;
+    margin: 0 0 0.4rem;
+  }
+
+  .side-topics ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .topic-pick {
+    font: inherit;
+    font-size: 0.82rem;
+    color: var(--ink);
+    background: var(--tint);
+    border: 1px solid var(--tint);
+    border-radius: 999px;
+    padding: 0.15rem 0.65rem;
+    cursor: pointer;
+    transition: background-color 120ms;
+  }
+
+  .topic-pick:hover {
+    border-color: var(--blue);
+  }
+
+  .topic-pick[aria-pressed="true"] {
+    background: var(--paper);
+    border-color: var(--blue);
+    font-weight: 700;
+  }
+
+  /* A phone: the head on one line, the kinds without their counts in one row, and
+     the promises to come after the first heading's rows, so that a row starts on
+     the first screen. Only the drawn order changes. */
+  @media (max-width: 40rem) {
+    .days {
+      margin-top: 1.1rem;
+    }
+
+    .days .on-wide {
+      display: none;
+    }
+
+    .days .on-phone {
+      display: inline;
+    }
+
+    .days-title {
+      font-size: 1.05rem;
+    }
+
+    .days-head .tally {
+      display: none;
+    }
+
+    .week {
+      margin-top: 0.6rem;
+    }
+
+    .week a {
+      padding-block: 0.3rem 0.35rem;
+    }
+
+    .week-count {
+      display: none;
+    }
+
+    .kinds {
+      flex-wrap: nowrap;
+      gap: 0.25rem;
+      margin-top: 0.6rem;
+    }
+
+    .kinds .share {
+      flex: 1 1 auto;
+      justify-content: center;
+      gap: 0.25rem;
+      min-height: 2.75rem;
+      padding-inline: 0.3rem;
+      font-size: 0.8rem;
+    }
+
+    .kinds .swatch {
+      width: 0.7rem;
+      height: 0.7rem;
+    }
+
+    .kinds .kind-count {
+      display: none;
+    }
+
+    .days .scoreboard {
+      margin-top: 0.5rem;
+    }
+
+    .row-source a {
+      display: inline-block;
+      padding-block: 0.68rem;
+    }
+
+    .row-source {
+      align-items: center;
+    }
+
+    /* The outlet's name is enough on a phone; its domain is on the claim page. */
+    .row-source .domain {
+      display: none;
+    }
+
+    .day-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .day-list > * {
+      order: 2;
+    }
+
+    .day-list > .day-group:first-of-type {
+      order: 0;
+    }
+
+    .day-list > .to-come {
+      order: 1;
+    }
+
+    .day-head {
+      padding-top: 0.7rem;
+    }
+
+    .day-row,
+    .picked-note + .day-row {
+      padding-top: 0.3rem;
+    }
+
+    .record-row {
+      padding-top: 0.5rem;
+    }
+
+    .row-title {
+      margin-top: 0;
+    }
+
+    .picked-note {
+      padding-top: 0.5rem;
+    }
+
+    /* Rows are parted by their rule and the space under it. */
+    .day-row + .day-row {
+      padding-top: 1rem;
+    }
+
+    .to-come summary .text-control {
+      display: inline-block;
+      padding-block: 0.6rem;
+    }
+
+    .then-now {
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    }
+
+    .then-now > div {
+      padding: 0.55rem 0.7rem 0.7rem;
+    }
+
+    .then-now strong {
+      font-size: 1rem;
+    }
+
+    .row-foot a,
+    .row-about a,
+    .record-row .row-what a {
+      display: inline-block;
+      padding-block: 0.65rem;
+    }
+  }
+
+  @media print {
+    .kinds,
+    .earlier,
+    .days-side {
+      display: none;
+    }
+
+    .day-group[data-earlier] {
+      display: block;
+    }
+
+    .record-row,
+    .then-now .now {
+      background: none;
+      border: 1px solid var(--rule);
+    }
+  }
+</style>
