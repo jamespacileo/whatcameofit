@@ -6,6 +6,7 @@
 import ArrowUpRight from "@lucide/astro/icons/arrow-up-right";
 import InstallControls from "../components/InstallControls.astro";
 import PopupDemo from "../components/PopupDemo.astro";
+import SharePill from "../components/SharePill.astro";
 import Base from "../layouts/Base.astro";
 import { brandAsset } from "../lib/brand";
 import { data } from "../lib/export";
@@ -78,7 +79,10 @@ const checked = data.last_checked_at ? formatDate(data.last_checked_at) : null;
             records.length > 0 && (
               <li class="answer">
                 <h2>On a page it does not track</h2>
-                <p class="page">Any other report of a treatment: a news story, a post, a video.</p>
+                <p class="page">
+                  Any other report of a treatment: a news story, a post, a video. An example,
+                  drawn with the trial records of the claim in the first answer.
+                </p>
                 <div class="toolbar" aria-hidden="true">
                   <img src={brandAsset("/favicon.svg")} alt="" width="26" height="26" />
                 </div>
@@ -90,11 +94,10 @@ const checked = data.last_checked_at ? formatDate(data.last_checked_at) : null;
                   records={records}
                 />
                 <p class="note">
-                  A search of the trial registries, marked automatic and unreviewed. Each record
-                  carries how closely it matches the report, never how good a treatment is. It
-                  runs only once you allow it, because it sends the page's words to this site's
-                  service and to OpenAI. Drawn here with records matched to the claim beside it;
-                  a search names each trial by its registered title.
+                  A search of the trial registries, marked automatic and unreviewed; a real one
+                  names each trial by its registered title. The percentage is how closely a
+                  record matches the report, never how good a treatment is. It runs only once you
+                  allow it, because it sends the page's words to this site's service and to OpenAI.
                 </p>
                 </div>
               </li>
@@ -104,16 +107,18 @@ const checked = data.last_checked_at ? formatDate(data.last_checked_at) : null;
             change && (
               <li class="answer">
                 <h2>When a claim you follow moves</h2>
-                <p class="page">Later, with no page open: a notification, then your list.</p>
+                <p class="page">
+                  Later, with no page open: a notification, then your list. An example, drawn
+                  with the same claim's last change of status on record.
+                </p>
                 <div class="toolbar" aria-hidden="true">
                   <img src={brandAsset("/favicon.svg")} alt="" width="26" height="26" />
                 </div>
                 <div class="shown">
                 <PopupDemo kind="following" claim={shown} was={change.was} />
                 <p class="note">
-                  The same claim's status changed on {formatDate(change.on)}. When a claim you
-                  follow moves like that, the extension tells you and marks it in your list. The
-                  list is kept in your browser only.
+                  When a claim you follow moves, the extension tells you and marks it in your
+                  list. The list is kept in your browser only.
                 </p>
                 </div>
               </li>
@@ -122,6 +127,14 @@ const checked = data.last_checked_at ? formatDate(data.last_checked_at) : null;
         </ul>
       )
     }
+
+    {/* On a phone the popups come first: the extension is installed on a computer. */}
+    <div class="wrap get-after">
+      <p class="elsewhere">The extension runs in a computer's browser. Send this page there:</p>
+      <SharePill />
+      <InstallControls quiet />
+      <p class="doubt"><a href="#what-it-sends">What it reads, sends and keeps</a></p>
+    </div>
   </section>
 
   <h2 class="bar" id="what-it-sends">What it reads, sends and keeps</h2>
@@ -283,16 +296,6 @@ const checked = data.last_checked_at ? formatDate(data.last_checked_at) : null;
     text-wrap: pretty;
   }
 
-  /* Three across, the report's title is held to two lines so the popups stay on the
-     first screen; stacked, it is shown in full. */
-  @media (min-width: 75rem) {
-    .quoted {
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2;
-      overflow: hidden;
-    }
-  }
 
   .quoted svg {
     margin-left: 0.2em;
@@ -321,6 +324,16 @@ const checked = data.last_checked_at ? formatDate(data.last_checked_at) : null;
     position: absolute;
     inset: auto calc(var(--between) / -2) 0;
     height: 1px;
+    background: color-mix(in srgb, var(--muted) 38%, var(--panel));
+  }
+
+  /* The stem: each popup hangs from its own button, through the toolbar's edge. */
+  .toolbar::before {
+    content: "";
+    position: absolute;
+    inset: auto calc(1.1rem + 12px) -0.5rem auto;
+    width: 2px;
+    height: 0.95rem;
     background: color-mix(in srgb, var(--muted) 38%, var(--panel));
   }
 
@@ -418,9 +431,30 @@ const checked = data.last_checked_at ? formatDate(data.last_checked_at) : null;
     margin-top: 0.35rem;
   }
 
+  .get-after {
+    display: none;
+  }
+
+  .elsewhere {
+    margin: 0 0 0.6rem;
+    font-weight: 600;
+  }
+
+  .get-after :global(.share) {
+    min-height: 2.75rem;
+    margin-bottom: 0.9rem;
+    padding-inline: 1rem;
+    background: var(--paper);
+  }
+
   @media (max-width: 40rem) {
     .get {
-      width: 100%;
+      display: none;
+    }
+
+    .get-after {
+      display: block;
+      margin-top: 2rem;
     }
 
     /* A link on a line of its own is pressed like a button: 44 pixels. */

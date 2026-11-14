@@ -5,6 +5,12 @@
 // both are shown alike. Nothing is recorded when one is pressed.
 import { SITE } from "../../site.config.mjs";
 
+interface Props {
+  /** Outlined controls, for a phone: the extension runs in a computer's browser. */
+  quiet?: boolean;
+}
+
+const { quiet = false } = Astro.props;
 const stores = [
   SITE.chromeStoreUrl && { id: "chrome", href: SITE.chromeStoreUrl, label: "Add to Chrome" },
   SITE.safariStoreUrl && { id: "safari", href: SITE.safariStoreUrl, label: "Get it for Safari" },
@@ -17,7 +23,7 @@ const fits =
       : "For Safari on a Mac. The Chrome version is not yet available.";
 ---
 
-<div class="install">
+<div class:list={["install", { quiet }]}>
   <p class="stores" data-install>
     {
       stores.map((store) => (
@@ -107,6 +113,28 @@ const fits =
     margin-top: 0.55rem;
     color: var(--muted);
     font-size: 0.9rem;
+  }
+
+  /* Where nothing can be installed, neither control is the page's main action. */
+  .quiet .store {
+    background: var(--paper);
+    color: var(--blue);
+    font-size: 1rem;
+  }
+
+  .quiet .store:hover {
+    background: var(--tint);
+    border-color: var(--footer);
+    color: var(--footer);
+  }
+
+  .quiet .stores[data-known] .store[data-mine] {
+    background: var(--blue);
+    color: var(--paper);
+  }
+
+  .quiet .fits {
+    color: var(--ink);
   }
 
   @media print {

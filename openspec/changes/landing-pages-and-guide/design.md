@@ -265,7 +265,8 @@ The operator confirmed this brief on 2026-11-14, with these answers.
    sentence on funding is the operator's to word (task 4.4).
 4. **Store buttons.** The site's own controls. No store's badge image is loaded.
 5. **The example claim** on the extension and about pages is chosen by a rule from the
-   export: a status on the path, a dated promise, then the most news reports. It is not
-   named in the settings.
+   export: a status on the path, a dated promise, matched registry records and a change of
+   status on record (so all three of the popup's answers can be drawn), then the most
+   news reports. It is not named in the settings.
 6. **Composition of `/extension` and `/about`.** The structures above are the lead. Each
    gets a round of three first-viewport sketches to choose from when it is built.

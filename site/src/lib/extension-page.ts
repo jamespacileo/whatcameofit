@@ -10,12 +10,16 @@ import { STAGE_PATH, STATUS_LABELS, latestPromise } from "./status.ts";
 /**
  * The claim a landing page shows at work. Chosen by rule, never by hand: it must have
  * a news report to quote; then a status on the path comes first, then a dated promise,
- * then the most news reports. The slug settles a tie, so a rebuild picks the same one.
+ * then matched registry records and a change of status on record (so the extension page
+ * can draw all three of the popup's answers), then the most news reports. The slug
+ * settles a tie, so a rebuild picks the same one.
  */
 export function exampleClaim(claims: readonly ExportedClaim[]): ExportedClaim | null {
   const rank = (claim: ExportedClaim) => [
     STAGE_PATH.includes(claim.status.code) ? 0 : 1,
     latestPromise(claim) ? 0 : 1,
+    registryRecords(claim).length > 0 ? 0 : 1,
+    latestChange(claim) ? 0 : 1,
     -claim.articles.length,
   ];
   const reported = claims.filter((claim) => claim.articles.length > 0);
@@ -41,6 +45,7 @@ export const POPUP_WORDS = {
   latestPromise: "Latest promise",
   open: "See the evidence",
   follow: "Keep me up to date",
+  again: "Search again",
   remindMe: "Remind me to look again:",
   inSixMonths: "in six months",
   inAYear: "in a year",
@@ -57,6 +62,8 @@ export const POPUP_LINES = {
   automatic: "Automatic · Unreviewed",
   medical: "Not medical advice. A trial is not a treatment option.",
   settings: "Automatic search settings",
+  sources: "Sources & privacy",
+  answerSettings: "Settings",
 } as const;
 
 /** The line under the notices, in the extension's words. */
@@ -72,6 +79,8 @@ export const possibleMatches = (count: number) =>
 export interface RegistryRecord {
   /** The registry's own identifier: the export holds no trial titles. */
   id: string;
+  /** The record in its registry. */
+  url: string | null;
   phase: string | null;
   state: string | null;
   confidence: string;
@@ -101,6 +110,7 @@ export function registryRecords(claim: ExportedClaim, atMost = 2): RegistryRecor
         furthest,
         record: {
           id: match.external_id,
+          url: match.url,
           phase: phaseWords(phases),
           state: states[0]?.trial_state ? stateWords(states[0].trial_state) : null,
           confidence: confidenceLabel(match.score),

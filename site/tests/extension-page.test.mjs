@@ -77,6 +77,16 @@ test("the example claim is on the path, then has a dated promise, then the most 
   assert.equal(exampleClaim(claims.filter((c) => c.slug !== "also-two")).slug, "chosen");
 });
 
+test("a claim whose three answers can all be drawn comes before one with more reports", () => {
+  const drawable = {
+    ...claim("drawable", "phase_3", 1, true),
+    status: { code: "phase_3", history: [{ on: "2020-01-01", code: "phase_2" }, { on: "2024-01-01", code: "phase_3" }] },
+    matches: [{ external_id: "NCT1", score: 0.9, url: "https://clinicaltrials.gov/study/NCT1" }],
+    events: [{ trial_id: "NCT1", trial_phases: ["phase_3"], trial_state: "started", event_date: "2024-01-01" }],
+  };
+  assert.equal(exampleClaim([claim("many-reports", "phase_3", 9, true), drawable]).slug, "drawable");
+});
+
 test("a claim with no news report is never the example", () => {
   assert.equal(exampleClaim([claim("unreported", "phase_3", 0, true)]), null);
   assert.equal(exampleClaim([]), null);
@@ -163,9 +173,9 @@ test("Scenario: A claim with matched trials and a change of status", () => {
   const moved = {
     status: { code: "phase_3", history: [{ on: "2019-12-02", code: "phase_2" }, { on: "2024-09-20", code: "phase_3" }] },
     matches: [
-      { external_id: "NCT1", score: 0.99 },
-      { external_id: "NCT2", score: 0.62 },
-      { external_id: "NCT-unseen", score: 0.9 },
+      { external_id: "NCT1", score: 0.99, url: "https://clinicaltrials.gov/study/NCT1" },
+      { external_id: "NCT2", score: 0.62, url: null },
+      { external_id: "NCT-unseen", score: 0.9, url: null },
     ],
     events: [
       { trial_id: "NCT1", trial_phases: ["phase_2"], trial_state: "completed", event_date: "2021-01-01" },
@@ -176,8 +186,8 @@ test("Scenario: A claim with matched trials and a change of status", () => {
   assert.deepEqual(latestChange(moved), { was: "Phase 2 trial", now: "Phase 3 trial", on: "2024-09-20" });
   // Furthest phase first; a match with no record in the export is not drawn.
   assert.deepEqual(registryRecords(moved), [
-    { id: "NCT2", phase: "Phase 3", state: "Started", confidence: "Medium match · 62%" },
-    { id: "NCT1", phase: "Phase 2", state: "Completed", confidence: "High match · 99%" },
+    { id: "NCT2", url: null, phase: "Phase 3", state: "Started", confidence: "Medium match · 62%" },
+    { id: "NCT1", url: "https://clinicaltrials.gov/study/NCT1", phase: "Phase 2", state: "Completed", confidence: "High match · 99%" },
   ]);
 });
 
