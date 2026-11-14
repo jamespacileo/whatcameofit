@@ -1,10 +1,11 @@
 """ClinicalTrials.gov API v2. Terms and limits: docs/sources.md."""
 
 import re
-from datetime import datetime
+from dataclasses import dataclass
+from datetime import date, datetime
 from typing import Any
 
-from thenwhat.sources.base import Source, SourceRecord
+from thenwhat.sources.base import MissingContact, Source, SourceRecord
 
 API = "https://clinicaltrials.gov/api/v2"
 NCT_ID = re.compile(r"NCT\d{8}")
@@ -15,6 +16,24 @@ SEARCH_FIELDS = (
     "NCTId,BriefTitle,OfficialTitle,InterventionName,LeadSponsorName,Phase,OverallStatus,Condition"
     ",Acronym,EnrollmentCount,CollaboratorName"
 )
+# What a bulk load keeps of each trial. No free text beyond the title.
+LIST_FIELDS = (
+    "NCTId,BriefTitle,Condition,InterventionType,InterventionName,InterventionOtherName"
+    ",Phase,OverallStatus,StartDate,LeadSponsorClass"
+)
+# The most trials the registry returns in one page.
+LIST_PAGE_SIZE = 1000
+
+
+@dataclass(frozen=True, slots=True)
+class TrialPage:
+    """One page of the registry's list: the trials as returned, and where the next page starts."""
+
+    studies: list[dict[str, Any]]
+    next_token: str | None
+    fetched_at: datetime
+
+
 # A trial's name that this many trials carry does not identify one.
 MAX_NAMED_TRIALS = 20
 # A name with more trials than this is a class or a common substance, not one product.
@@ -155,6 +174,38 @@ class ClinicalTrials(Source):
         if fetched.payload.get("totalCount", len(studies)) > MAX_NAMED_TRIALS:
             return []
         return [self._record(study, fetched.fetched_at) for study in studies]
+
+    def list_page(
+        self,
+        condition: str,
+        *,
+        page_token: str | None = None,
+        updated_since: date | None = None,
+        page_size: int = LIST_PAGE_SIZE,
+    ) -> TrialPage:
+        """One page of the trials that meet a condition written in the registry's own
+        expression language, optionally only those the registry updated since a date.
+
+        For bulk loads: up to a thousand trials per request, not one request per trial.
+        The answer is not cached, because a page is large and is stored trial by trial.
+        """
+        if not self._contact:
+            raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
+        expression = condition
+        if updated_since is not None:
+            expression = (
+                f"({condition}) AND AREA[LastUpdatePostDate]RANGE[{updated_since.isoformat()},MAX]"
+            )
+        params = {
+            "filter.advanced": expression,
+            "fields": LIST_FIELDS,
+            "pageSize": str(page_size),
+        }
+        if page_token:
+            params["pageToken"] = page_token
+        response = self._request(f"{API}/studies", params)
+        payload = response.json() if response is not None else {}
+        return TrialPage(payload.get("studies", []), payload.get("nextPageToken"), self._time.now())
 
     def _page(
         self, intervention: str, condition: str | None, page_token: str | None

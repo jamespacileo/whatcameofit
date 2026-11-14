@@ -24,34 +24,34 @@
 
 ## 4. Registry corpus
 
-- [ ] 4.1 Add the `registry_trial` table and the load state table to migration `0009`; verify upgrade and downgrade on the test database
-- [ ] 4.2 Record fixtures of two list-endpoint pages with a generic client name; verify the fixtures contain no contact address
-- [ ] 4.3 Implement the paged load with a condition, storing each trial once with its raw payload and fetch time; verify tests against the fixtures cover a first load, a repeat load that updates in place, and a load resumed after stopping on the second page
-- [ ] 4.4 Implement loading changes since the previous completed load; verify a test shows the request carries the previous load's date and that an updated trial's fingerprint changes only when a field a step reads changed
-- [ ] 4.5 Add `thenwhat backfill load-trials`; verify one test of a successful load and one of the refusal when no contact address is configured
-- [ ] 4.6 Verify with a test that the export is byte-for-byte the same before and after a load
+- [x] 4.1 Add the `registry_trial` table and the load state table to migration `0009`; verify upgrade and downgrade on the test database
+- [x] 4.2 Record fixtures of two list-endpoint pages with a generic client name; verify the fixtures contain no contact address
+- [x] 4.3 Implement the paged load with a condition, storing each trial once with its raw payload and fetch time; verify tests against the fixtures cover a first load, a repeat load that updates in place, and a load resumed after stopping on the second page
+- [x] 4.4 Implement loading changes since the previous completed load; verify a test shows the request carries the previous load's date and that an updated trial's fingerprint changes only when a field a step reads changed
+- [x] 4.5 Add `thenwhat backfill load-trials`; verify one test of a successful load and one of the refusal when no contact address is configured
+- [x] 4.6 Verify with a test that the export is byte-for-byte the same before and after a load
 - [ ] 4.7 Add registry trial to `GLOSSARY.md` and describe the load in the README's pipeline section; verify the documented command runs as written against the Compose stack
 
 ## 5. Plan and run commands
 
-- [ ] 5.1 Add `thenwhat backfill steps` and `thenwhat backfill plan`, reporting per step the records in scope, done, nothing found, failed, due, requests needed, allowance left and hours; verify a test checks the figures for a seeded database and that no request is sent
-- [ ] 5.2 Add `thenwhat backfill run <step>` with a record limit and a worker count; verify one test of a limited run reporting what remains due and one of the refusal for an unknown step
-- [ ] 5.3 Verify with a test that a run stopped after some records and started again repeats none of them
+- [x] 5.1 Add `thenwhat backfill steps` and `thenwhat backfill plan`, reporting per step the records in scope, done, nothing found, failed, due, requests needed, allowance left and hours; verify a test checks the figures for a seeded database and that no request is sent
+- [x] 5.2 Add `thenwhat backfill run <step>` with a record limit and a worker count; verify one test of a limited run reporting what remains due and one of the refusal for an unknown step
+- [x] 5.3 Verify with a test that a run stopped after some records and started again repeats none of them
 
 ## 6. News search step and article leads
 
-- [ ] 6.1 Add the `article_lead` table, unique on trial and address, to migration `0009`; verify upgrade and downgrade on the test database
-- [ ] 6.2 Implement choosing the intervention name for a search (no placebo, comparator, dose, form, route or description) and the indication words; verify tests use the 200 sampled trials' registry fields as cases, including the ones the sample could not name
-- [ ] 6.3 Write the client for the index chosen in 1.2, with removal of any excerpt, summary or text field before a result is stored or logged; verify tests use synthetic fixtures only and one asserts that a result carrying an excerpt is stored without it
-- [ ] 6.4 Implement the news search step: scope, inputs, search, leads stored once per trial and address, outcome done or nothing found; verify tests cover coverage found, none found, the same article found twice, and one article found for two trials
-- [ ] 6.5 Check whether the outlet list behind `docs/outlets.md` can carry an outlet kind, add the kind there or in one new checked-in list, and set each lead's kind by rule from its domain; verify tests cover a general outlet, a trade outlet, a press release wire and an unlisted domain
-- [ ] 6.6 Add `thenwhat backfill leads`, the hit rate report by outlet kind; verify one test of the report's counts and percentages on seeded leads and one of its message when no trial has been processed
-- [ ] 6.7 Verify with a test that the export is the same before and after leads are stored
-- [ ] 6.8 Add article lead to `GLOSSARY.md`, stating that a lead is not a source article; verify the entry and the spec use the same words
+- [x] 6.1 Add the `article_lead` table, unique on trial and address, to migration `0009`; verify upgrade and downgrade on the test database
+- [x] 6.2 Implement choosing the intervention name for a search (no placebo, comparator, dose, form, route or description) and the indication words; verify tests use the 200 sampled trials' registry fields as cases, including the ones the sample could not name
+- [x] 6.3 Write the client for the index chosen in 1.2, with removal of any excerpt, summary or text field before a result is stored or logged; verify tests use synthetic fixtures only and one asserts that a result carrying an excerpt is stored without it
+- [x] 6.4 Implement the news search step: scope, inputs, search, leads stored once per trial and address, outcome done or nothing found; verify tests cover coverage found, none found, the same article found twice, and one article found for two trials
+- [x] 6.5 Check whether the outlet list behind `docs/outlets.md` can carry an outlet kind, add the kind there or in one new checked-in list, and set each lead's kind by rule from its domain; verify tests cover a general outlet, a trade outlet, a press release wire and an unlisted domain
+- [x] 6.6 Add `thenwhat backfill leads`, the hit rate report by outlet kind; verify one test of the report's counts and percentages on seeded leads and one of its message when no trial has been processed
+- [x] 6.7 Verify with a test that the export is the same before and after leads are stored
+- [x] 6.8 Add article lead to `GLOSSARY.md`, stating that a lead is not a source article; verify the entry and the spec use the same words
 
 ## 7. First run
 
-- [ ] 7.1 Run `make check`; verify ruff, ty, pytest and the site build pass
+- [x] 7.1 Run `make check`; verify ruff, ty, pytest and the site build pass
 - [ ] 7.2 Load the phase 3 drug and biological trials on the operator's machine and run `backfill plan`; verify the trial count is close to 43,320 and record the plan's figures in this change
 - [ ] 7.3 Run the news search with a limit of 200 and `backfill leads`; verify the hit rate is recorded here beside the sample's 31% overall and 16% trial-specific, with the split by outlet kind
 - [ ] 7.4 Stop a second limited run part way and start it again; verify the report shows no record processed twice

@@ -37,3 +37,6 @@ Domain terms for thenwhat. Behavior is specified in `openspec/`; this file only 
 | **Work ledger** | The record of which step has been completed for which record at which version. A run processes only what the ledger does not show as finished. |
 | **Due** | A record is due for a step when it is in the step's scope and the ledger has no finished entry for it at the step's current version, or the fields the step reads have changed since. |
 | **Allowance** | How many requests a source may receive in a period and how far apart, shared by every process that asks that source. |
+| **Registry trial** | A trial as a registry lists it, loaded in bulk and kept whether or not any claim refers to it. Not an evidence event and never exported. |
+| **Article lead** | A news article that a search found for a registry trial, stored as address, outlet, title and date. Unreviewed and never published. Not a source article: it belongs to no claim until a later step makes it one. |
+| **Outlet kind** | Whether an article lead's outlet is general news, health or clinical trade press, a press release wire, or on no list. Set by rule from the outlet's domain. |

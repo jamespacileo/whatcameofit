@@ -1,0 +1,302 @@
+"""The backfill commands: load registry trials, see what is due, and run a step."""
+
+from collections.abc import Generator
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
+from datetime import UTC, datetime
+from typing import Annotated, Any
+
+import typer
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
+from thenwhat.backfill.allowance import Allowances, AllowanceStatus
+from thenwhat.backfill.errors import BackfillError, SourceStop
+from thenwhat.backfill.leads import hit_rates
+from thenwhat.backfill.ledger import count
+from thenwhat.backfill.mediacloud import MediaCloud
+from thenwhat.backfill.registered import registered_steps
+from thenwhat.backfill.registry_load import (
+    PHASE_3_DRUG_OR_BIOLOGICAL,
+    TrialList,
+    load_trials,
+)
+from thenwhat.backfill.runner import RunReport, run_step
+from thenwhat.backfill.steps import Step, by_name, find_step
+from thenwhat.cli import session as cli_session
+from thenwhat.cli.console import err, out
+from thenwhat.cli.session import settings_or_exit
+from thenwhat.config import Settings, SourceAllowance
+from thenwhat.domain import OutletKind
+from thenwhat.sources.base import SourceError
+from thenwhat.sources.clinicaltrials import ClinicalTrials
+
+backfill_app = typer.Typer(
+    help="Work through many records: load trials, see what is due, run a step.",
+    no_args_is_help=True,
+)
+
+KIND_WORDS = {
+    OutletKind.GENERAL_NEWS: "general news",
+    OutletKind.TRADE_PRESS: "health or clinical trade press",
+    OutletKind.PRESS_RELEASE: "press release",
+    OutletKind.UNKNOWN: "an outlet on no list",
+}
+
+
+@contextmanager
+def open_session() -> Generator[Session]:
+    """One transaction, committed when it ends. Looked up at call time so that tests
+    can stand in their own session."""
+    with cli_session.open_session() as session:
+        yield session
+
+
+@contextmanager
+def refusals() -> Generator[None]:
+    """A refused command is explained to the operator and exits with 1."""
+    try:
+        yield
+    except (BackfillError, SourceError, SourceStop) as error:
+        err.print(str(error), markup=False)
+        raise typer.Exit(code=1) from None
+
+
+def steps_for(settings: Settings) -> list[Step]:
+    steps = registered_steps(settings)
+    by_name(steps)  # refuses two steps with one name before anything runs
+    return steps
+
+
+def make_allowances(settings: Settings) -> Allowances:
+    return Allowances(open_session, settings.allowances())
+
+
+def make_registry(session: Session, settings: Settings) -> TrialList:
+    return ClinicalTrials(session, contact_email=settings.contact_email)
+
+
+def make_client(step: Step, settings: Settings, allowances: Allowances) -> Any:
+    """What a step asks its source through. Refuses here, before any record is
+    touched, when the source could not be asked at all."""
+    if step.source == MediaCloud.name:
+        client = MediaCloud(
+            api_key=settings.mediacloud_api_key,
+            contact_email=settings.contact_email,
+            allowances=allowances,
+            collection_ids=settings.mediacloud_collection_ids,
+        )
+        client.check_ready()
+        return client
+    raise BackfillError(f"No client is set up for the source '{step.source}'.")
+
+
+def _hours(requests: int, allowance: SourceAllowance) -> str:
+    hours = requests * allowance.interval_seconds / 3600
+    if hours < 1:
+        return f"about {max(round(hours * 60), 1)} minutes"
+    return f"about {round(hours):,} hours"
+
+
+def _allowance_line(source: str, allowance: SourceAllowance, status: AllowanceStatus) -> str:
+    period = f"{allowance.period_hours:g} hours"
+    line = (
+        f"  {source}: {allowance.requests:,} requests in {period}, "
+        f"{allowance.interval_seconds:g} seconds apart; "
+        f"{status.used:,} used, {status.left:,} left"
+    )
+    if status.paused_until is not None:
+        line += f"; paused until {status.paused_until:%Y-%m-%d %H:%M} UTC"
+    return line
+
+
+@backfill_app.command("steps")
+def steps_command() -> None:
+    """List the steps a backfill can run."""
+    with refusals():
+        for step in steps_for(settings_or_exit()):
+            out.print(
+                f"{step.name}  version {step.version}  records: {step.record_kind}  "
+                f"source: {step.source}  requests per record: {step.requests_per_record}",
+                markup=False,
+            )
+
+
+@backfill_app.command("plan")
+def plan_command() -> None:
+    """Show what each step has done and has left to do, and what the rest would take.
+
+    Sends no request and changes nothing.
+    """
+    settings = settings_or_exit()
+    with refusals():
+        allowances = make_allowances(settings)
+        with open_session() as session:
+            for step in steps_for(settings):
+                counts = count(session, step, settings.backfill_attempt_limit)
+                total = session.scalar(select(func.count()).select_from(step.model)) or 0
+                allowance = allowances.of(step.source)
+                status = allowances.status(session, step.source)
+                requests = counts.due * step.requests_per_record
+                out.print(f"{step.name} (version {step.version})", markup=False)
+                out.print(
+                    f"  in scope: {counts.in_scope:,} of {total:,} {step.record_kind} records"
+                    f"  done: {counts.done:,}  nothing found: {counts.nothing_found:,}"
+                    f"  failed: {counts.failed:,}  due: {counts.due:,}",
+                    markup=False,
+                )
+                out.print(
+                    f"  the due records need {requests:,} requests, "
+                    f"{_hours(requests, allowance)} at the source's rate",
+                    markup=False,
+                )
+                out.print(_allowance_line(step.source, allowance, status), markup=False)
+                if requests > status.left:
+                    covered = status.left // step.requests_per_record
+                    periods = -(-(requests - status.left) // allowance.requests)
+                    out.print(
+                        f"  the allowance left covers {covered:,} of the {counts.due:,} due "
+                        f"records; the rest needs {periods:,} more "
+                        f"{'period' if periods == 1 else 'periods'} of "
+                        f"{allowance.period_hours:g} hours",
+                        markup=False,
+                    )
+                if counts.needs_attention:
+                    out.print(
+                        f"  {counts.needs_attention:,} failed "
+                        f"{settings.backfill_attempt_limit} times and are skipped: "
+                        "they need attention",
+                        markup=False,
+                    )
+
+
+def _merge(reports: list[RunReport]) -> RunReport:
+    merged = RunReport(errors=[])
+    for report in reports:
+        merged.done += report.done
+        merged.nothing_found += report.nothing_found
+        merged.failed += report.failed
+        merged.stopped = merged.stopped or report.stopped
+        merged.errors = (merged.errors or []) + (report.errors or [])
+    merged.remaining_due = min(report.remaining_due for report in reports)
+    return merged
+
+
+@backfill_app.command("run")
+def run_command(
+    step_name: Annotated[str, typer.Argument(help="Name of the step, from `backfill steps`.")],
+    limit: Annotated[
+        int | None, typer.Option(min=1, help="Process at most this many records.")
+    ] = None,
+    workers: Annotated[
+        int, typer.Option(min=1, max=4, help="How many records to work on at once.")
+    ] = 1,
+) -> None:
+    """Process the records that are due for a step.
+
+    Stops when none is due, at the limit, or when the source's allowance is used up.
+    It can be stopped at any point and started again: a finished record is never
+    processed twice, and several runs at once never take the same record.
+    """
+    settings = settings_or_exit()
+    with refusals():
+        step = find_step(steps_for(settings), step_name)
+        allowances = make_allowances(settings)
+        allowances.of(step.source)
+        clients = [make_client(step, settings, allowances) for _ in range(workers)]
+        share = None if limit is None else -(-limit // workers)
+
+        def work(client: Any) -> RunReport:
+            return run_step(
+                open_session,
+                step,
+                client,
+                now=lambda: datetime.now(UTC),
+                attempt_limit=settings.backfill_attempt_limit,
+                limit=share,
+            )
+
+        if workers == 1:
+            report = work(clients[0])
+        else:
+            with ThreadPoolExecutor(max_workers=workers) as pool:
+                report = _merge(list(pool.map(work, clients)))
+    out.print(
+        f"{step.name}: {report.done:,} done, {report.nothing_found:,} found nothing, "
+        f"{report.failed:,} failed; {report.remaining_due:,} still due.",
+        markup=False,
+    )
+    for error in (report.errors or [])[:10]:
+        out.print(f"  failed: {error}", markup=False)
+    if report.stopped:
+        out.print(f"Stopped: {report.stopped}", markup=False)
+
+
+@backfill_app.command("load-trials")
+def load_trials_command(
+    condition: Annotated[
+        str,
+        typer.Option(
+            help="Which trials to load, in the registry's own expression language. "
+            "The default is phase 3 interventional trials of a drug or biological."
+        ),
+    ] = PHASE_3_DRUG_OR_BIOLOGICAL,
+    changes_only: Annotated[
+        bool,
+        typer.Option(
+            "--changes-only",
+            help="Ask only for trials the registry updated since the last completed load.",
+        ),
+    ] = False,
+) -> None:
+    """Load trials from ClinicalTrials.gov in bulk, a thousand per request.
+
+    The trials are kept whether or not any claim refers to them. They are not evidence
+    events and never reach the export. Loading again updates each trial in place.
+    """
+    settings = settings_or_exit()
+    with refusals():
+        steps = steps_for(settings)
+        allowances = make_allowances(settings)
+        with open_session() as lookups:
+            registry = make_registry(lookups, settings)
+            allowances.of(registry.name)
+            report = load_trials(
+                open_session,
+                registry,
+                steps,
+                condition=condition,
+                changes_only=changes_only,
+                now=lambda: datetime.now(UTC),
+                before_request=lambda: allowances.claim(registry.name),
+            )
+    since = f" updated since {report.changes_since}" if report.changes_since else ""
+    out.print(
+        f"Loaded {report.added + report.updated:,} trials{since} in {report.requests:,} "
+        f"requests: {report.added:,} new, {report.updated:,} already stored.",
+        markup=False,
+    )
+
+
+@backfill_app.command("leads")
+def leads_command() -> None:
+    """Show how many searched trials have a news article, in all and by kind of outlet."""
+    settings = settings_or_exit()
+    with refusals():
+        step = find_step(steps_for(settings), "news_search")
+        with open_session() as session:
+            rates = hit_rates(session, step)
+    if rates.processed == 0:
+        out.print("No trial has been searched yet. Run `thenwhat backfill run news_search`.")
+        return
+    out.print(
+        f"{rates.with_a_lead:,} of {rates.processed:,} searched trials "
+        f"({rates.share(rates.with_a_lead)}%) have at least one article lead.",
+        markup=False,
+    )
+    for kind in OutletKind:
+        number = rates.by_kind[kind]
+        out.print(
+            f"  {number:,} ({rates.share(number)}%) have one from {KIND_WORDS[kind]}",
+            markup=False,
+        )
