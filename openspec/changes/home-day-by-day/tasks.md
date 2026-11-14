@@ -11,7 +11,7 @@
 
 - [x] 2.1 Add the module that holds the four sentence templates and their order of preference (design decision 4), counting trials as the claim page does and leaving the count sentence out when the export carries no trials for the claim. Verify with tests for the three scenarios of "A report row says what the records add" and for a claim with no `trials` field.
 - [x] 2.2 Guard the templates at module load with `assertNeutral`, `assertNoOutcomeVerdict` and the new check for words that characterise an interval or a count. Verify with a test that a template reworded with "still" or "only" throws and names the sentence, and that `make site-build` passes with the templates as written.
-- [ ] 2.3 Show the operator the four templates rendered for five published claims and record their agreement, or the wording they change, in this change's notes. Verify the notes file names the day and the final wording.
+- [x] 2.3 Show the operator the four templates rendered for five published claims and record their agreement, or the wording they change, in this change's notes. Verify the notes file names the day and the final wording.
 
 ## 3. The list on the page
 

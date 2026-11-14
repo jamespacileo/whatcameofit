@@ -23,7 +23,7 @@ On published claims:
 | "SNUDH to commercialize world's 1st treatment for teeth sensitive to cold" (Korea Biomedical Review) | No record is dated in the 7 years since the first report. |
 | "Gene switch therapy could prevent AND treat Alzheimer's" (Daily Mail) | none |
 
-**Open: the operator has not yet read and agreed this wording.** Task 2.3 stays unticked until they do.
+**Agreed by the operator on 2026-11-14**, as worded above, after the finish review had raised that a zero is said for results ("none with results posted") and left out for completed trials. The operator was offered both zeros or neither and answered "Agree wording": the wording stands as it is. Task 2.3 is done.
 
 ## Departures from the artifacts, made while building
 
@@ -51,7 +51,7 @@ Saved as `.impeccable/critique/2026-11-14T23-04-38Z__site-src-pages-index-astro.
 
 Open, and the operator's to decide:
 
-1. **The sentence wording** (task 2.3, above). One point the reviewer raised: "none with results posted" states a zero, while a zero of completed trials is left out. Either both zeros are said ("1 trial on record, none completed, none with results posted") or neither ("1 trial on record.").
+1. **The sentence wording** (task 2.3, above; since agreed as it stands). One point the reviewer raised: "none with results posted" states a zero, while a zero of completed trials is left out. Either both zeros are said ("1 trial on record, none completed, none with results posted") or neither ("1 trial on record.").
 2. **A status beside a count that seems to contradict it.** Four published claims stand at "Trial registered" ("A trial in people is registered") while their row says, for one of them, "3 trials on record, 3 completed, 3 with results posted": `tourette-syndrome-wrist-nerve-stimulation`, `ptsd-personalised-magnetic-stimulation`, `ovarian-cancer-salpingectomy`, `type-2-diabetes-remission-diet-exercise`. Both lines rest on the same approved records. The trials have no phase (devices, procedures, a diet), and the status rule counts a trial as started only when it has a phase. Before this change the two facts were on different parts of a claim page; the row now sets them side by side. This is a question about the status rule or its gloss, not about this change, and nothing was altered.
 
 Also open: on paper with scripting off, the promises to come stay inside their folded section. Not seen: keyboard focus, hover, print and a forced palette.
