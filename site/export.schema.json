@@ -2133,6 +2133,7 @@
         "survival",
         "side_effects",
         "use_of_treatment",
+        "physical_test",
         "quality_of_life",
         "other"
       ],

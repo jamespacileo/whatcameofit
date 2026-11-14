@@ -128,6 +128,8 @@ class MeasureCode(StrEnum):
     SURVIVAL = "survival"
     SIDE_EFFECTS = "side_effects"
     USE_OF_TREATMENT = "use_of_treatment"
+    # A timed or scored test of what the body can do: walking, grip, balance.
+    PHYSICAL_TEST = "physical_test"
     QUALITY_OF_LIFE = "quality_of_life"
     OTHER = "other"
 

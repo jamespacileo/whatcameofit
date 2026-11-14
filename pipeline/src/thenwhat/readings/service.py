@@ -64,6 +64,7 @@ survival (survival, or the time until an event),
 side_effects (side effects, safety or tolerability),
 use_of_treatment (how much or how long the treatment is used),
 quality_of_life (quality of life or daily functioning),
+physical_test (a timed or scored test of what the body can do, such as walking, grip or balance),
 other (none of these, or not clear from the title).
 `words` is the part of the title you read it from, copied character for character.
 

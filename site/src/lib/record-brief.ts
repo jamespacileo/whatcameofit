@@ -118,10 +118,17 @@ export const MEASURE_PHRASES: Record<string, { plain: string; change: string }> 
     change: "The change in a body measurement or lab value",
   },
   scan_finding: { plain: "What a scan or image showed", change: "The change in what a scan or image showed" },
-  survival: { plain: "How long until an event, such as a relapse", change: "How long until an event, such as a relapse" },
+  survival: {
+    plain: "How long until an event, such as the illness getting worse or death",
+    change: "How long until an event, such as the illness getting worse or death",
+  },
   side_effects: { plain: "Side effects", change: "The change in side effects" },
   use_of_treatment: { plain: "How much the treatment was used", change: "How much the treatment was used" },
   quality_of_life: { plain: "A quality-of-life score", change: "How much a quality-of-life score changed" },
+  physical_test: {
+    plain: "A test of what the body can do, such as walking",
+    change: "How much a test of what the body can do, such as walking, changed",
+  },
 };
 
 /** A reading less sure than this is not used; the answer gives the registry's own title. */
@@ -132,11 +139,15 @@ const READING_BANDS = [
   { from: 0.8, word: "very likely" },
 ] as const;
 
+/** A reading is a model's, and its confidence is the model's own figure: it is never
+ * shown as certain, whatever the model says. */
+const MOST_SURE = 99;
+
 /** "very likely · 92%": how sure a reading is. Never how sure a result is. */
 export function readingConfidenceLabel(confidence: number): string {
   let word: string = READING_BANDS[0].word;
   for (const band of READING_BANDS) if (confidence >= band.from) word = band.word;
-  return `${word} · ${Math.round(confidence * 100)}%`;
+  return `${word} · ${Math.min(MOST_SURE, Math.round(confidence * 100))}%`;
 }
 
 const SMALL = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];

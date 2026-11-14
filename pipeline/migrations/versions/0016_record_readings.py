@@ -61,6 +61,7 @@ def upgrade() -> None:
                 "side_effects",
                 "use_of_treatment",
                 "quality_of_life",
+                "physical_test",
                 "other",
             ),
             nullable=True,

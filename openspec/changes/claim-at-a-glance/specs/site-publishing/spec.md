@@ -71,6 +71,10 @@ Each answer SHALL open to show the record it was read from as a link, what was r
 - **WHEN** a reader opens an answer that rests on a reading
 - **THEN** it shows the words the reading was read from in quotation marks, says a model read them and that they were checked against the record, and says how sure the reading is
 
+#### Scenario: Reading the model is certain of
+- **WHEN** a reading's confidence is 1
+- **THEN** the opened answer says how sure the reading is as 99%, never 100%
+
 #### Scenario: Every answer opens to something
 - **WHEN** a reader opens any answer in the section
 - **THEN** it shows at least the record or records it was read from and the date they were read

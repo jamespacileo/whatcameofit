@@ -193,6 +193,29 @@ test("Scenario: Answer read by a model", () => {
   assert.match(plain(words.after), /How sure the reading is: very likely · 92%\. Record read 13 Nov 2026\.$/);
 });
 
+test("Scenario: Reading the model is certain of", () => {
+  const certain = structuredClone(device);
+  for (const reading of certain.trials[0].readings) reading.confidence = 1;
+  const words = sourceWords(rowOf(recordBrief(certain, null), "measure").source);
+  // The figure is the model's own: never shown as certain.
+  assert.match(words.after, /very likely · 99%/);
+  assert.doesNotMatch(words.after, /100%/);
+});
+
+test("the kinds of measure are worded exactly", () => {
+  const worded = (code, title) => {
+    const subject = structuredClone(device);
+    subject.trials[0].facts.primary_outcomes[0].measure = title;
+    subject.trials[0].readings[0].code = code;
+    subject.trials[0].readings.pop();
+    return rowOf(recordBrief(subject, null), "measure").answer;
+  };
+  // The event can be death, so the phrase does not name a relapse alone.
+  assert.equal(worded("survival", "Progression-Free Survival"), "How long until an event, such as the illness getting worse or death");
+  assert.equal(worded("physical_test", "Percent Change from Baseline in the 10-Metre Walk Test"), "How much a test of what the body can do, such as walking, changed");
+  assert.equal(worded("physical_test", "10-Metre Walk Test"), "A test of what the body can do, such as walking");
+});
+
 test("Scenario: Answer read directly", () => {
   const words = sourceWords(rowOf(recordBrief(device, null), "comparison").source);
   assert.equal(words.before, "Read directly from ");

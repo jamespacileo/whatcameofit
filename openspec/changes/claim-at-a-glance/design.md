@@ -74,7 +74,7 @@ New package `pipeline/src/thenwhat/readings/`, built like `statements/`:
 
 - **Input:** for one trial, the titles and time frames of its planned primary outcomes, as `trial-facts` already carries them. Nothing else from the record, so no sponsor description reaches the model.
 - **Output, per outcome:** `follow_up` as a number and a unit from `{days, weeks, months, years}` with the time-frame words it read; `measure` as one code from a fixed list with the title words it read.
-- **Measure kinds (accepted by the operator on 2026-11-14):** symptom score, how often something happens, a body measurement or lab value, a scan or image finding, survival or time to an event, side effects, use of the treatment, quality of life, other.
+- **Measure kinds (accepted by the operator on 2026-11-14):** symptom score, how often something happens, a body measurement or lab value, a scan or image finding, survival or time to an event, side effects, use of the treatment, quality of life, a physical test (walking, grip, balance; added after the first run), other.
 - **Checks in `rules.py` (pure):** the words are a substring of the named field; the kind and unit are in the lists; for `follow_up`, the number appears in the words. "Other" is stored and yields no plain phrase.
 - **Stored with:** the hash of the input fields, the instructions' version, the provider and model from the environment, the confidence, the decider `model`. A trial is read again only when the hash or the instructions' version changes.
 - **On the site:** only the largest trial's first primary outcome is used. With no usable reading (none stored, "other", or below the display threshold used for reported statements) answer 3 falls back to the registry's title, and says so. The question never vanishes.
@@ -86,7 +86,7 @@ As built (2026-11-14):
 - `reading.decided_by` is a new `ReadBy.MODEL`. `Decider` is untouched, because adding to it would change the review constraints on other tables.
 - The measure-code enum is `MeasureCode`; `MeasureKind` already names the statistic of a posted result.
 - The export's `read_on` is the same date and time as the trial's `facts_as_of`. The export carries a trial's readings only when their input hash matches the facts it shows.
-- The confidence is the model's own figure from the same structured answer. There is no second check of it, as reported statements have.
+- The confidence is the model's own figure from the same structured answer. There is no second check of it, as reported statements have. The site therefore never shows a reading as certain: the percentage stops at 99.
 - The rule checks that the number is in the words as digits of its own (4 is in "week 4", not in "week 14"). It does not check that the unit is in the words.
 - `thenwhat readings <slug>…` or `--all`; `thenwhat prepare` runs it as each claim's last step. The seed export carries empty readings: the seed loader cannot seed model-read rows.
 
