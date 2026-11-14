@@ -9,14 +9,18 @@ const REGISTRY_NUMBER = /NCT\d{8}/gi;
 // A paper that reports a trial gives its number, sometimes two. One that lists more is a
 // review of many trials and identifies none.
 const MAX_TRIALS_OF_ONE_PAPER = 3;
+// How long one paper may take, its body included. Europe PMC answers a record it has
+// served lately in under a second and one it has not in up to half a minute.
+const PAPER_DEADLINE_MS = 10_000;
 
-export function makePapers({ fetch, contact }) {
+export function makePapers({ fetch, contact, timeoutMs = PAPER_DEADLINE_MS }) {
   const headers = { "User-Agent": `thenwhat-lookup/${VERSION} (mailto:${contact})`, Accept: "application/json" };
 
   return {
     /**
      * The ClinicalTrials.gov numbers the paper's abstract gives for its own trial.
-     * Aborting `signal` ends the request: the caller no longer needs the answer.
+     * Aborting `signal` ends the request: the caller no longer needs the answer. A paper
+     * not answered within the deadline is refused with a TimeoutError, never guessed at.
      */
     async trialNumbers({ doi, pubmedId }, { signal } = {}) {
       let query;
@@ -27,7 +31,8 @@ export function makePapers({ fetch, contact }) {
       for (const [name, value] of Object.entries({ query, format: "json", resultType: "core" })) {
         url.searchParams.set(name, value);
       }
-      const response = await fetch(url.href, { headers, signal });
+      const deadline = AbortSignal.timeout(timeoutMs);
+      const response = await fetch(url.href, { headers, signal: signal ? AbortSignal.any([signal, deadline]) : deadline });
       if (!response.ok) throw new Error(`papers ${response.status}`);
       const paper = (await response.json())?.resultList?.result?.[0];
       const found = String(paper?.abstractText ?? "").match(REGISTRY_NUMBER) ?? [];

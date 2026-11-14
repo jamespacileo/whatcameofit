@@ -45,6 +45,7 @@ function nothingFound(reading, numbers) {
     known_names: [],
     registry_numbers: numbers,
     paper_numbers: [],
+    papers_unchecked: 0,
     details: { trial_name: null, participants: null, sponsor: null },
     tracked: [],
     candidates: [],
@@ -62,21 +63,27 @@ async function inTurn(items, ask, signal) {
   return answers;
 }
 
-/** The registry numbers given by the papers the page links to. A paper that cannot be
- * looked up is passed over: the lookup goes on without it. Aborting `signal` ends the
- * request in flight and asks about no further paper. */
+/** The registry numbers given by the papers the page links to, and how many of those
+ * papers could not be looked up: one that failed, or that its host did not answer in
+ * time. The lookup goes on without such a paper and its answer says how many there
+ * were. Aborting `signal` ends the request in flight and asks about no further paper. */
 async function paperNumbers(page, papers, signal) {
-  if (!page || !papers) return [];
+  if (!page || !papers) return { numbers: [], unchecked: 0 };
   const linked = [
     ...(page.dois ?? []).map((doi) => ({ doi })),
     ...(page.pubmedIds ?? []).map((pubmedId) => ({ pubmedId })),
   ].slice(0, MAX_PAPERS);
   const found = [];
+  let unchecked = 0;
   for (const paper of linked) {
     if (signal?.aborted) break;
-    found.push(...(await papers.trialNumbers(paper, { signal }).catch(() => [])));
+    try {
+      found.push(...(await papers.trialNumbers(paper, { signal })));
+    } catch {
+      unchecked += 1;
+    }
   }
-  return unique(found);
+  return { numbers: unique(found), unchecked };
 }
 
 /**
@@ -112,7 +119,7 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
     others.abort();
     return nothingFound(reading, numbers);
   }
-  const [linked, stated] = await Promise.all([linking, stating]);
+  const [{ numbers: linked, unchecked: papersUnchecked }, stated] = await Promise.all([linking, stating]);
 
   // Metadata enrichment runs alongside trial lookup. It adds no model calls and
   // cannot change clinical candidates, their scores, or a tracked claim's status.
@@ -207,6 +214,8 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
     known_names: known,
     registry_numbers: numbers,
     paper_numbers: fromPapers,
+    // Linked papers that could not be looked up: a trial one of them reports may be missing.
+    papers_unchecked: papersUnchecked,
     details,
     tracked,
     candidates,

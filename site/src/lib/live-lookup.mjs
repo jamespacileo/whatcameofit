@@ -168,12 +168,20 @@ function describeResearch(research) {
   };
 }
 
+/** That the list may be short of a trial: linked papers that could not be looked up. Null when all were. */
+function papersUnchecked(count) {
+  if (!Number.isInteger(count) || count < 1) return null;
+  return count === 1
+    ? "A linked paper could not be looked up just now, so a trial it reports may be missing from this list. Try again in a minute."
+    : `${count} linked papers could not be looked up just now, so trials they report may be missing from this list. Try again in a minute.`;
+}
+
 /**
  * A lookup answer in the site's words.
  * @returns {{ marked: string | null, lead: string, subject: { treatment: string, condition: string | null } | null, source: string | null, searchedAlso: string | null, trialSaid: string | null,
  *   tracked: { slug: string, headline: string, page: string }[],
  *   likely: { title: string, url: string, detail: string, phase: string, state: string, registryId: string, why: string | null, confidence: number | null, confidenceLabel: string }[],
- *   rest: string | null, none: string | null, notices: string[] }}
+ *   rest: string | null, none: string | null, papersUnchecked: string | null, notices: string[] }}
  */
 export function describeAnswer(answer) {
   const marked = answer.cache?.checkedAt
@@ -183,7 +191,7 @@ export function describeAnswer(answer) {
   const source = answer.source?.kind === "screenshot"
     ? "Read from the visible screenshot and caption. A video contributes only its current frame, not its audio. This identifies what the post claims; it does not establish that the claim is true."
     : sourceOf(answer.post);
-  const nothing = { subject: null, searchedAlso: null, trialSaid: null, tracked: [], likely: [], rest: null, none: null, research: null };
+  const nothing = { subject: null, searchedAlso: null, trialSaid: null, tracked: [], likely: [], rest: null, none: null, papersUnchecked: null, research: null };
   // A post that links to an article the site tracks: its reviewed page is the answer,
   // and no automatic search was made, so nothing is marked as one.
   if (answer.article_tracked) {
@@ -224,6 +232,7 @@ export function describeAnswer(answer) {
         ? `${others} other ${others === 1 ? "record was" : "records were"} found and read as not being trials of this treatment for this condition.`
         : null,
     none: likely.length === 0 ? LIVE.none : null,
+    papersUnchecked: papersUnchecked(answer.papers_unchecked),
     notices,
     research: describeResearch(answer.research),
   };

@@ -152,10 +152,30 @@ test("Scenario: Page that links to the paper it reports", async () => {
 
   const found = await lookUp({ text: TEXT, model: fakeModel(), registry, index: INDEX, page, papers });
 
-  // A paper that cannot be looked up is passed over.
+  // A paper that cannot be looked up is passed over, and the answer counts it.
   assert.deepEqual(asked, [{ doi: "10.1234/example.2026.0042" }, { pubmedId: "31234567" }]);
   assert.deepEqual(found.paper_numbers, ["NCT07654321"]);
+  assert.equal(found.papers_unchecked, 1);
   assert.deepEqual(found.candidates.map((c) => [c.id, c.agrees]), [["NCT07654321", ["paper"]]]);
+});
+
+test("Scenario: Linked paper not answered in time", async () => {
+  // The first paper's host never answers; the second paper's does.
+  const fetch = (address, { signal }) =>
+    new URL(address).searchParams.get("query") === 'DOI:"10.1/slow"'
+      ? new Promise((_, reject) => signal.addEventListener("abort", () => reject(signal.reason)))
+      : Promise.resolve(Response.json({ resultList: { result: [{ abstractText: "Registered as NCT07654321." }] } }));
+  const papers = makePapers({ fetch, contact: "ops@example.org", timeoutMs: 20 });
+  const registry = fakeRegistry({}, { NCT07654321: study("NCT07654321", "EX-1 in tooth agenesis, second study") });
+  const page = { registryNumbers: [], dois: ["10.1/slow", "10.1/quick"], pubmedIds: [] };
+
+  await assert.rejects(papers.trialNumbers({ doi: "10.1/slow" }), { name: "TimeoutError" });
+  const found = await lookUp({ text: TEXT, model: fakeModel(), registry, index: INDEX, page, papers });
+
+  // The lookup went on to the next paper, and says one was not looked up.
+  assert.equal(found.papers_unchecked, 1);
+  assert.deepEqual(found.paper_numbers, ["NCT07654321"]);
+  assert.equal((await lookUp({ text: TEXT, model: fakeModel(), registry, index: INDEX })).papers_unchecked, 0);
 });
 
 test("a registry number in a link on the page is first, whatever its score", async () => {
