@@ -7,12 +7,15 @@ import Copy from "@lucide/astro/icons/copy";
 import ExternalLink from "@lucide/astro/icons/external-link";
 import ImageDown from "@lucide/astro/icons/image-down";
 import Info from "@lucide/astro/icons/info";
-import Share2 from "@lucide/astro/icons/share-2";
+import Bookmark from "@lucide/astro/icons/bookmark";
 import BasisMark from "../components/BasisMark.astro";
 import ClaimTable from "../components/ClaimTable.astro";
+import FollowOffer from "../components/FollowOffer.astro";
+import LookupAgain from "../components/LookupAgain.astro";
 import Outlet from "../components/Outlet.astro";
 import KindIcon from "../components/KindIcon.astro";
 import Pop from "../components/Pop.astro";
+import SharePill from "../components/SharePill.astro";
 import StageTrack from "../components/StageTrack.astro";
 import TopicChip from "../components/TopicChip.astro";
 import { APPROACH_LABELS } from "../lib/approach";
@@ -125,10 +128,24 @@ const posts = shareLinks(postText, address, claim.headline);
           )
         }
       </div>
-      <button type="button" class="share" data-share hidden data-pagefind-ignore>
-        <Share2 size={16} stroke-width={1.9} aria-hidden="true" />
-        <span data-share-text>Share</span>
-      </button>
+      <div class="page-actions" data-pagefind-ignore>
+        {/* Following lists the claim on the home page, in this browser only. Shown by
+            the script, where the browser lets it keep the list. */}
+        <button
+          type="button"
+          class="share"
+          data-follow
+          data-slug={claim.slug}
+          data-headline={claim.headline}
+          data-status={STATUS_LABELS[claim.status.code]}
+          aria-pressed="false"
+          hidden
+        >
+          <Bookmark size={16} stroke-width={1.9} aria-hidden="true" />
+          <span data-follow-text>Follow</span>
+        </button>
+        <SharePill />
+      </div>
     </div>
     <h1 class:list={["title", { long: claim.headline.length > 70 }]}>
       {
@@ -187,8 +204,6 @@ const posts = shareLinks(postText, address, claim.headline);
         </section>
       )
     }
-
-    {!claim.checked_by_person && <p class="unchecked">{UNCHECKED_NOTE}</p>}
 
     <div class="digest">
       <div class="standing">
@@ -292,6 +307,9 @@ const posts = shareLinks(postText, address, claim.headline);
             </p>
           )
         }
+        <p class="changed" data-pagefind-ignore hidden data-remind-link>
+          <a href="#check-again">Check again later</a>
+        </p>
       </div>
       <div class="says">
         {/* What the status means, in a sentence, beside the label it explains. */}
@@ -299,6 +317,13 @@ const posts = shareLinks(postText, address, claim.headline);
         <p class="lede" data-pagefind-meta="summary">{claim.summary}</p>
       </div>
     </div>
+
+    {/* For a reader who follows this claim and last saw it at another status: filled in
+        by the script, so a change noted on the home page is confirmed where they land. */}
+    <p class="was-note" hidden data-follow-was data-pagefind-ignore></p>
+    <FollowOffer claim={claim} />
+
+    {!claim.checked_by_person && <p class="unchecked">{UNCHECKED_NOTE}</p>}
 
     <dl class="facts">
       <div>
@@ -640,9 +665,14 @@ const posts = shareLinks(postText, address, claim.headline);
           <ImageDown size={16} stroke-width={1.9} aria-hidden="true" />
           Tall image
         </a>
+        <button type="button" class="share" data-copy="page-address" hidden>
+          <Copy size={16} stroke-width={1.9} aria-hidden="true" />
+          <span data-copy-text>Copy link</span>
+        </button>
+        <span id="page-address" hidden>{address}</span>
       </div>
-      <div class="post-to">
-        <h3 class="post-label" id="post-to">Post it</h3>
+      <details class="post-to">
+        <summary id="post-to">Post it to a network</summary>
         <ul class="post-links" aria-labelledby="post-to">
           {
             posts.map((post) => (
@@ -672,15 +702,8 @@ const posts = shareLinks(postText, address, claim.headline);
               Mastodon
             </button>
           </li>
-          <li>
-            <button type="button" class="share" data-copy="page-address" hidden>
-              <Copy size={16} stroke-width={1.9} aria-hidden="true" />
-              <span data-copy-text>Copy link</span>
-            </button>
-            <span id="page-address" hidden>{address}</span>
-          </li>
         </ul>
-      </div>
+      </details>
       <dialog class="mastodon" data-mastodon-dialog aria-labelledby="mastodon-title">
         <form method="dialog">
           <h3 id="mastodon-title">Post to Mastodon</h3>
@@ -709,7 +732,7 @@ const posts = shareLinks(postText, address, claim.headline);
         </div>
       </div>
       <details class="embed-how">
-        <summary>Show this status on another site</summary>
+        <summary>Writing about this? Show the status on your own page</summary>
         <p class="entry-note">
           Paste this where the status should appear. It shows the current status and links back
           here; it loads nothing else and stores nothing.
@@ -766,6 +789,7 @@ const posts = shareLinks(postText, address, claim.headline);
           )
         }
       </div>
+      <FollowOffer claim={claim} />
       {
         (claim.status.history?.length ?? 0) > 0 && (
           <p class="entry-note">
@@ -775,12 +799,15 @@ const posts = shareLinks(postText, address, claim.headline);
         )
       }
     </section>
+
+    <LookupAgain />
   </article>
 </Base>
 
 <script>
   import { calendarFile, reminderDate, type ReminderChoice } from "../lib/calendar";
   import { mastodonShare } from "../lib/share";
+  import { FOLLOWING_ENTRY, readFollowed } from "../lib/returning";
 
   // Mastodon: the reader names their server once; it is kept in this browser only.
   const mastodon = document.querySelector<HTMLButtonElement>("[data-mastodon]");
@@ -889,28 +916,87 @@ const posts = shareLinks(postText, address, claim.headline);
       });
     }
     remind.hidden = false;
+    const link = document.querySelector<HTMLElement>("[data-remind-link]");
+    if (link) link.hidden = false;
   }
 
-  // Sharing uses the device's own share sheet where there is one, and copies the
-  // page address where there is not. The button only appears when it can work.
-  const button = document.querySelector<HTMLButtonElement>("[data-share]");
-  if (button && (navigator.share || navigator.clipboard)) {
-    const text = button.querySelector<HTMLElement>("[data-share-text]")!;
-    button.hidden = false;
-    button.addEventListener("click", async () => {
-      const url = location.origin + location.pathname;
-      try {
-        if (navigator.share) {
-          await navigator.share({ title: document.title, url });
-        } else {
-          await navigator.clipboard.writeText(url);
-          text.textContent = "Link copied";
-          confirm(button, "Link copied");
-          setTimeout(() => (text.textContent = "Share"), 2000);
+  // Following: the claim, its headline and its status in words are kept in this
+  // browser's storage and sent nowhere. The home page lists followed claims and notes
+  // a status that has changed. Opening this page is seeing the status, so a change is
+  // said here once and the kept status is brought up to date.
+  const follows = [...document.querySelectorAll<HTMLButtonElement>("[data-follow]")];
+  if (follows.length > 0) {
+    let store: Storage | null = null;
+    try {
+      localStorage.setItem("probe", "1");
+      localStorage.removeItem("probe");
+      store = localStorage;
+    } catch {}
+    if (store) {
+      const kept = store;
+      const { slug, headline, status } = follows[0].dataset as Record<string, string>;
+      const write = (followed: ReturnType<typeof readFollowed>) => {
+        try {
+          kept.setItem(FOLLOWING_ENTRY, JSON.stringify(followed));
+        } catch {}
+      };
+      // Every Follow control on the page says the same thing, and the words beside
+      // one change with it: what following does, then where the list is.
+      const show = (on: boolean) => {
+        for (const button of follows) {
+          button.setAttribute("aria-pressed", String(on));
+          button.querySelector<HTMLElement>("[data-follow-text]")!.textContent = on
+            ? "Following"
+            : "Follow";
         }
-      } catch {
-        // The reader closed the share sheet, or copying was refused: nothing to do.
+        for (const words of document.querySelectorAll<HTMLElement>("[data-follow-when]")) {
+          words.hidden = (words.dataset.followWhen === "on") !== on;
+        }
+      };
+      const followed = readFollowed(kept.getItem(FOLLOWING_ENTRY));
+      const before = followed[slug];
+      if (before) {
+        const was = document.querySelector<HTMLElement>("[data-follow-was]");
+        if (was && before.status !== status) {
+          const tag = document.createElement("span");
+          tag.className = "new-tag";
+          tag.textContent = "Changed";
+          was.append(tag, ` When you last looked: ${before.status}. Now: ${status}.`);
+          was.hidden = false;
+        }
+        followed[slug] = { ...before, headline, status };
+        write(followed);
       }
-    });
+      show(Boolean(before));
+      for (const button of follows) {
+        button.addEventListener("click", () => {
+          const now = readFollowed(kept.getItem(FOLLOWING_ENTRY));
+          const on = !now[slug];
+          if (on) {
+            const today = new Date();
+            const two = (value: number) => String(value).padStart(2, "0");
+            now[slug] = {
+              headline,
+              status,
+              since: `${today.getFullYear()}-${two(today.getMonth() + 1)}-${two(today.getDate())}`,
+            };
+          } else {
+            delete now[slug];
+          }
+          write(now);
+          show(on);
+          if (said) {
+            said.textContent = on
+              ? "Following. Listed on the home page, in this browser only."
+              : "No longer following.";
+            setTimeout(() => (said.textContent = ""), 3000);
+          }
+        });
+        button.hidden = false;
+      }
+      for (const offer of document.querySelectorAll<HTMLElement>("[data-follow-offer]")) {
+        offer.hidden = false;
+      }
+    }
   }
 </script>
