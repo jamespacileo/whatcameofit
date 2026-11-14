@@ -187,7 +187,7 @@ test("Scenario: Lists on the home page", () => {
 
 test("Scenario: Counts on the path", () => {
   const html = page("index.html");
-  const strip = html.slice(html.indexOf("data-stage-filter"), html.indexOf('class="feed"'));
+  const strip = html.slice(html.indexOf("data-stage-filter"), html.indexOf('role="tablist"'));
   // Three claims: one preclinical, one in phase 2, one approved. The strip narrows
   // every list under it and keeps the pick in the address.
   assert.match(strip, /data-scope="\[data-feed\]"/);
@@ -208,6 +208,84 @@ test("Scenario: Anniversaries on the home page", () => {
   for (const day of ["05-01", "05-03", "05-04"]) assert.ok(block.includes(`data-day="${day}"`), day);
   assert.match(block, /data-year="2019"/);
   assert.match(block, /href="\/anniversaries"/);
+});
+
+test("Scenario: A returning reader's home page", () => {
+  const html = page("index.html");
+  // Filled in by the reader's browser: nothing about a visit is in the built page.
+  assert.match(html, /<p class="since"[^>]*hidden/);
+  assert.match(html, /<section class="following"[^>]*hidden/);
+  assert.match(html, /Kept in this browser only\./);
+  // Each dated row carries its day, so the browser can count what is dated since a visit.
+  assert.match(html, /<tr[^>]*data-on="2019-05-03"/);
+  const moved = html.slice(html.indexOf('id="feed-moved"'), html.indexOf('id="feed-promised"'));
+  assert.match(moved, /data-on="2023-02-01"/);
+  // How to keep up is said in the open, under the lists: the feed by a plain name, and,
+  // for a reader who follows nothing yet, what following is (shown by their browser).
+  const keep = html.slice(html.indexOf('class="keep-up"'), html.indexOf("data-on-this-day"));
+  assert.match(keep, /<a class="share" href="\/changes\.xml">/);
+  assert.match(keep, /Subscribe to status changes/);
+  assert.match(keep, /<p class="keep-hint" hidden data-follow-hint>/);
+  // The counts and the topic choice are part of the lists they narrow.
+  const feed = html.slice(html.indexOf("data-feed"));
+  assert.ok(feed.indexOf("data-scoreboard") < feed.indexOf('role="tablist"'));
+  // A step that leads nowhere is passed over by the Tab key.
+  assert.match(html, /<button type="button" data-step="-1" aria-disabled="true" tabindex="-1">Previous<\/button>/);
+  // The tally says when the registries were last checked.
+  assert.match(html, /Registries last checked <span class="unbroken">/);
+  // On a phone the counts wait behind one control.
+  assert.match(html, /<button[^>]*class="narrow-toggle"[^>]*aria-expanded="false"[^>]*hidden/);
+});
+
+test("Scenario: Following from a claim page", () => {
+  const html = page("phase-claim/index.html");
+  // The pill carries what the browser keeps: the claim, its headline, its status in words.
+  assert.match(
+    html,
+    /<button[^>]*data-follow[^>]*data-slug="phase-claim"[^>]*data-status="Phase 2 trial"[^>]*aria-pressed="false"[^>]*hidden/,
+  );
+  // Under the answer and again beside the reminders, Follow comes with its words: what
+  // it does, and where the list is once followed.
+  assert.equal(count(html, '<div class="follow-offer"'), 2);
+  const offer = html.slice(html.indexOf("data-follow-offer"), html.indexOf('class="facts"'));
+  assert.match(offer, /Lists this claim on the home page, with a note when its status changes\./);
+  assert.match(offer, /<a href="\/#following">the home page<\/a>/);
+  // A change since the reader last looked is said on the page they land on.
+  assert.match(html, /<p class="was-note" hidden data-follow-was/);
+  assert.ok(html.indexOf('class="digest"') < html.indexOf('class="was-note"'));
+  // A way back beside the answer, and a next step at the end of the page.
+  const digest = html.slice(html.indexOf('class="digest"'), html.indexOf('class="facts"'));
+  assert.match(digest, /<a href="#check-again">Check again later<\/a>/);
+  assert.match(html, /<a class="share" href="\/#search">/);
+  // The networks open on request; copying the link does not wait behind them.
+  assert.match(html, /<details class="post-to">/);
+  const actions = html.slice(html.indexOf('class="take-actions"'), html.indexOf('class="post-to"'));
+  assert.match(actions, /data-copy="page-address"/);
+});
+
+test("Scenario: A topic's status changes as a feed", () => {
+  const html = page("topic/gum-disease/index.html");
+  assert.match(html, /href="\/changes\/topic\/gum-disease\.xml"/);
+  assert.match(html, /data-share/);
+  // A topic page ends on a next step too, and its rows carry the day first reported,
+  // so a reader's browser can mark those reported since their last visit.
+  assert.match(html, /Another headline\?/);
+  assert.match(html, /<tr[^>]*data-first="2019-05-03"/);
+  const feed = page("changes/topic/gum-disease.xml");
+  assert.match(feed, /<feed xmlns="http:\/\/www\.w3\.org\/2005\/Atom">/);
+  // The fixture's one moving claim changed twice after its first status.
+  assert.equal(count(feed, "<entry>"), 3);
+});
+
+test("Scenario: Ways to keep up", () => {
+  const html = page("how-it-works/index.html");
+  assert.match(html, /<a href="#ways-to-keep-up">Ways to keep up<\/a>/);
+  const section = html.slice(html.indexOf('id="ways-to-keep-up"'), html.indexOf('id="what-is-counted"'));
+  for (const way of ["Follow a claim.", "Since your last visit.", "Check again later.", "Feeds.", "On your own page."]) {
+    assert.ok(section.includes(way), way);
+  }
+  // Said plainly: none of them needs an account.
+  assert.match(section, /None of these needs an account/);
 });
 
 test("Scenario: One topic", () => {
@@ -269,6 +347,9 @@ test("Scenario: Preview build", () => {
     assert.match(built(file), /<meta name="robots" content="noindex"/, file);
   }
   assert.match(built("phase-claim/index.html"), /has not yet been checked by a person/);
+  // The answer comes first: the notice sits under the status panel, not above it.
+  const claimPage = built("phase-claim/index.html");
+  assert.ok(claimPage.indexOf('class="digest"') < claimPage.indexOf('class="unchecked"'));
   assert.doesNotMatch(built("quiet-claim/index.html"), /has not yet been checked by a person/);
   const lookup = JSON.parse(built("lookup.json"));
   assert.equal(lookup.preview, true);
