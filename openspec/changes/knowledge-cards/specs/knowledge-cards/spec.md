@@ -7,11 +7,11 @@ Ties a claim's condition, intervention and target to entries in open vocabularie
 ## ADDED Requirements
 
 ### Requirement: Candidate terms are gathered by rule
-For each claim, candidate subject terms SHALL be gathered without a model from two places: the terms the registry files the claim's approved trials under, each with the number of those trials that carry it, and vocabulary terms whose label equals the claim's indication, its intervention's name or one of the intervention's other names. No more than the configured number of candidates, ten by default, SHALL be kept for a claim.
+For each claim, candidate subject terms SHALL be gathered without a model from two places: the terms the registry files at least half of the claim's approved trials under, each with the number of those trials that carry it, and vocabulary terms whose label equals the claim's indication, its intervention's name or one of the intervention's other names. No more than the configured number of candidates, ten by default, SHALL be kept for a claim.
 
 #### Scenario: Claim with trials
-- **WHEN** a claim has six approved trials, five filed under "Osteoarthritis, Knee" and one under "Pain"
-- **THEN** both terms are candidates for its condition, with counts of five and one
+- **WHEN** a claim has six approved trials, five filed under "Osteoarthritis, Knee", three under "Pain" and one under "Fibromyalgia"
+- **THEN** the first two terms are candidates for its condition, with counts of five and three, and the third is not a candidate
 
 #### Scenario: Claim with no trial and a named drug
 - **WHEN** a claim has no trial and its intervention's name equals a vocabulary term's label

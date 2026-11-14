@@ -32,6 +32,20 @@ class EntityType(StrEnum):
     COMPANY = "company"
 
 
+class TermRole(StrEnum):
+    """What a subject term is proposed as for a claim."""
+
+    CONDITION = "condition"
+    INTERVENTION = "intervention"
+
+
+class TermFit(StrEnum):
+    """How a subject term was read against the claim: as the thing itself, or broader."""
+
+    EXACT = "exact"
+    BROADER = "broader"
+
+
 class EventType(StrEnum):
     FOLLOWUP_PAPER = "followup_paper"
     TRIAL_REGISTERED = "trial_registered"

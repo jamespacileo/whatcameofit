@@ -15,6 +15,7 @@ from thenwhat.claims.entry import ClaimNotFound, EntryError, InvalidUrl, claim_b
 from thenwhat.claims.status import refresh_status
 from thenwhat.db.models import (
     Claim,
+    ClaimTerm,
     DecisionLog,
     Entity,
     EntityMatch,
@@ -23,21 +24,26 @@ from thenwhat.db.models import (
     SourceArticle,
 )
 from thenwhat.decide.steps import (
+    BROADER,
     ENTITY_MATCH,
     EVIDENCE_STAGE,
     MATCH,
     NOT_A_MATCH,
     OTHER_INDICATION,
     PAPER_MATCH,
+    SAME,
+    SOMETHING_ELSE,
+    TERM_MATCH,
     latest_scoring,
     match_ref,
+    term_ref,
 )
-from thenwhat.domain import Decider, EntityType, EvidenceStage, ReviewState
+from thenwhat.domain import Decider, EntityType, EvidenceStage, ReviewState, TermFit
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import record_url
 from thenwhat.sources.openalex import OpenAlex
 
-Kind = Literal["claim", "match", "event"]
+Kind = Literal["claim", "match", "event", "term"]
 
 
 class ItemNotFound(EntryError):
@@ -62,7 +68,8 @@ def pending_items(
     session: Session, *, claim_slug: str | None = None, kind: Kind | None = None
 ) -> list[QueueItem]:
     """What awaits review, claim by claim: the draft claim, then candidate matches
-    (most likely first), then events (oldest first)."""
+    (most likely first), then events (oldest first), then candidate subject terms (most
+    likely first, those without a score last)."""
     claims = list(session.scalars(select(Claim).order_by(Claim.id)))
     if claim_slug is not None:
         claims = [claim for claim in claims if claim.slug == claim_slug]
@@ -107,6 +114,12 @@ def pending_items(
                     event.confidence,
                 )
             )
+        for term in session.scalars(
+            select(ClaimTerm)
+            .where(ClaimTerm.claim_id == claim.id, ClaimTerm.review_state == ReviewState.PENDING)
+            .order_by(ClaimTerm.score.desc().nulls_last(), ClaimTerm.id)
+        ):
+            items.append(_term_item(claim, term))
     return [item for item in items if kind is None or item.kind == kind]
 
 
@@ -136,6 +149,34 @@ def _match_item(session: Session, claim: Claim, match: EntityMatch, entity: Enti
         match.score,
         match.record_summary,
     )
+
+
+def _term_item(claim: Claim, term: ClaimTerm) -> QueueItem:
+    if term.score is None:
+        read = "not scored yet: run `terms` for the claim"
+    elif term.fit is None:
+        read = "read as something else"
+    else:
+        read = f"read as {term.fit.value}"
+    told = "; ".join(_reason_line(reason) for reason in term.reasons) or "none found by rule"
+    return QueueItem(
+        "term",
+        term.id,
+        claim.slug,
+        f"subject term '{term.label}' ({term.source_name} {term.external_id}) for the"
+        f" claim's {term.role.value}, {read}. Reasons: {told}",
+        record_url(term.source_name, term.external_id),
+        term.score,
+        reasons=tuple(str(reason.get("code")) for reason in term.reasons),
+    )
+
+
+def _reason_line(reason: dict) -> str:
+    if "trials" in reason:
+        return f"{reason.get('code')} ({reason['trials']} of {reason.get('of')} trials)"
+    if "name" in reason:
+        return f"{reason.get('code')} ('{reason['name']}')"
+    return str(reason.get("code"))
 
 
 def _is_paper_candidate(match: EntityMatch, entity: Entity) -> bool:
@@ -192,9 +233,10 @@ def decide_item(
     """Approve or reject an item, or change an earlier decision.
 
     The decider is the operator unless the assistant is named. A decision on an event
-    re-derives the claim's status. The operator's decision on a match is recorded as
-    the human label for the score it was given; the assistant's is not, because a
-    label is a person's answer. Rejecting a match also rejects the events read from it.
+    re-derives the claim's status; one on a subject term never touches it. The
+    operator's decision on a match is recorded as the human label for the score it was
+    given; the assistant's is not, because a label is a person's answer. Rejecting a
+    match also rejects the events read from it.
     """
     if by not in (Decider.HUMAN, Decider.ASSISTANT):
         raise ValueError("A review decision is made by the operator or the assistant.")
@@ -234,6 +276,19 @@ def decide_item(
             refresh_status(
                 session, claim, as_of=now.date(), now=now, no_signal_years=no_signal_years
             )
+    elif kind == "term":
+        term = session.get(ClaimTerm, item_id)
+        if term is None:
+            raise ItemNotFound(f"There is no subject term link with id {item_id}.")
+        record_decision(term, state, by=by, now=now)
+        if by is Decider.HUMAN:
+            # An approval says the reading was right; a rejection, that the term is
+            # something else. An approval of a term never read as either labels nothing.
+            label = SOMETHING_ELSE
+            if state is ReviewState.APPROVED:
+                label = {TermFit.EXACT: SAME, TermFit.BROADER: BROADER}.get(term.fit)
+            if label is not None:
+                _label(session, TERM_MATCH, term_ref(term), label)
     else:
         event = session.get(EvidenceEvent, item_id)
         if event is None:

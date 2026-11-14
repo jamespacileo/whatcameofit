@@ -40,6 +40,8 @@ class Settings(BaseSettings):
     # A related paper scored at or above it is approved by rule too (openspec
     # related-research), and one scored under `match_reject_below` is rejected.
     match_accept_above: float = 0.8
+    # How many candidate subject terms are kept for a claim (openspec knowledge-cards).
+    term_candidates_max: int = 10
     # Decide new drafts by rule: approved, and published, when the intervention is a
     # name; rejected and kept otherwise. On by default: approval needs no person
     # (openspec auto-publish).
