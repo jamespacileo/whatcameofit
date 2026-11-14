@@ -1,6 +1,7 @@
 """The JSON export the site is built from. Behavior: openspec site-publishing.
 
-Only approved claims and their approved events are exported. The file is the single
+Only approved, unarchived claims are exported, with their approved events, their
+approved matches and a few candidates still awaiting review. The file is the single
 interface between pipeline and site; its schema is checked in at site/export.schema.json.
 """
 
@@ -20,15 +21,15 @@ from thenwhat.claims.status import refresh_status, status_history
 from thenwhat.claims.verticals import GROUPS, RETIRED_VERTICALS, VERTICAL_GROUPS, VERTICALS
 from thenwhat.db.models import (
     Claim,
-    DecisionLog,
     Entity,
     EntityMatch,
     EvidenceEvent,
     FailureFlag,
     OutletIcon,
 )
-from thenwhat.decide.steps import ENTITY_MATCH
+from thenwhat.decide.steps import latest_scoring
 from thenwhat.domain import (
+    TRIAL_EVENT_TYPES,
     ClaimStatus,
     Decider,
     EntityType,
@@ -39,7 +40,6 @@ from thenwhat.domain import (
     TrialPhase,
     TrialState,
 )
-from thenwhat.events.manual import TRIAL_TYPES
 from thenwhat.events.trial_facts import (
     AgeGroup,
     Allocation,
@@ -56,6 +56,7 @@ from thenwhat.events.trial_facts import (
     reported_state,
 )
 from thenwhat.outlets.icons import is_blank_icon, outlet_domain
+from thenwhat.sources.base import RECORD_URLS
 
 SCHEMA_VERSION = 1
 # Registries the clients read. Always listed, as their terms ask for attribution.
@@ -284,7 +285,8 @@ class ExportedClaim(Strict):
     indication: str
     first_reported_date: date | None
     evidence_stage: EvidenceStage | None
-    # False for a claim loaded from a seed file or decided by the assistant.
+    # True only when a person approved the claim and no assistant decision stands on
+    # it, its matches or its events.
     checked_by_person: bool
     status: ExportedStatus
     articles: list[ExportedArticle]
@@ -352,22 +354,10 @@ def _decided_by_assistant(session: Session, claim: Claim) -> bool:
 
 
 CANDIDATES_SHOWN = 5
-RECORD_URLS = {
-    "clinicaltrials.gov": "https://clinicaltrials.gov/study/{}",
-    "crossref": "https://doi.org/{}",
-}
 
 
 def _reading(session: Session, match: EntityMatch) -> str | None:
-    scored = session.scalars(
-        select(DecisionLog)
-        .where(
-            DecisionLog.step == ENTITY_MATCH,
-            DecisionLog.input_ref == f"entity_match:{match.id}",
-            DecisionLog.error.is_(None),
-        )
-        .order_by(DecisionLog.id.desc())
-    ).first()
+    scored = latest_scoring(session, match)
     if scored is None or scored.output is None:
         return None
     choice = scored.output.get("choice")
@@ -419,7 +409,7 @@ def _trials(events: list[EvidenceEvent]) -> list[ExportedTrial]:
     registry record those events hold; a trial with none is listed without facts."""
     by_trial: dict[str, list[EvidenceEvent]] = {}
     for event in events:
-        if event.type in TRIAL_TYPES:
+        if event.type in TRIAL_EVENT_TYPES:
             by_trial.setdefault(event.external_id, []).append(event)
     trials: list[ExportedTrial] = []
     for trial_id, held in sorted(by_trial.items()):
@@ -563,7 +553,7 @@ def build_export(session: Session, *, now: datetime, no_signal_years: int = 3) -
                         summary=event.summary,
                         source_name=event.source_name,
                         source_url=event.source_url,
-                        trial_id=event.external_id if event.type in TRIAL_TYPES else None,
+                        trial_id=event.external_id if event.type in TRIAL_EVENT_TYPES else None,
                         trial_phases=[TrialPhase(phase) for phase in event.trial_phases or []],
                         trial_state=event.trial_state,
                         regulatory_outcome=event.regulatory_outcome,

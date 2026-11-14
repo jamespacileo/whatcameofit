@@ -1,7 +1,9 @@
 // What must be true before the site is deployed. Pure: no files, no network.
 // Behaviour: openspec deployment.
 
-const LOCAL_HOST = /^(localhost|.+\.localhost|.+\.test|127(\.\d{1,3}){3}|0\.0\.0\.0|\[::1\])$/i;
+// Hosts that are never a public address: this machine, and names kept for local use
+// and testing. The public-build check in src/lib/public-build.ts refuses the same.
+export const LOCAL_HOST = /^(localhost|.+\.localhost|.+\.test|127(\.\d{1,3}){3}|0\.0\.0\.0|\[::1\])$/i;
 
 function addressProblem(siteUrl) {
   if (!siteUrl) {
@@ -37,7 +39,7 @@ export function deployProblems({ data, siteUrl }) {
 
   if (data.preview) {
     problems.push(
-      "The export is a preview: it holds claims decided by the assistant. A preview is never deployed. Write a normal export first (make public-export).",
+      "The export is a preview. A preview is never deployed. Write a normal export first (make public-export).",
     );
   }
 

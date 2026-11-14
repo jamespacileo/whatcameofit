@@ -5,14 +5,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import (
-    ClaimNotFound,
     DuplicateClaim,
     EntryError,
     InvalidField,
     MissingField,
-    find_claim,
+    claim_by_slug,
     name_key,
     slug_of_claim_covering,
+    tidy,
 )
 from thenwhat.db.models import Claim, Entity
 from thenwhat.domain import EntityType
@@ -25,13 +25,6 @@ class EntityNotFound(EntryError):
 
 class DuplicateEntity(EntryError):
     pass
-
-
-def _claim(session: Session, slug: str) -> Claim:
-    claim = find_claim(session, slug)
-    if claim is None:
-        raise ClaimNotFound(f"No claim has the slug '{slug}'.")
-    return claim
 
 
 def entities_of(session: Session, claim: Claim) -> list[Entity]:
@@ -54,8 +47,8 @@ def _find(session: Session, claim: Claim, name: str, type: EntityType | None = N
 def add_entity(
     session: Session, claim_slug: str, *, type: EntityType, name: str, doi: str | None = None
 ) -> Entity:
-    claim = _claim(session, claim_slug)
-    name = " ".join(name.split())
+    claim = claim_by_slug(session, claim_slug)
+    name = tidy(name)
     if not name:
         raise MissingField("name is required.")
     if type is EntityType.INTERVENTION:
@@ -76,9 +69,9 @@ def add_entity(
 
 def add_synonym(session: Session, claim_slug: str, entity_name: str, synonym: str) -> Entity:
     """Record another name for an entity. Registry searches use every name."""
-    claim = _claim(session, claim_slug)
+    claim = claim_by_slug(session, claim_slug)
     entity = _find(session, claim, entity_name)
-    synonym = " ".join(synonym.split())
+    synonym = tidy(synonym)
     if not synonym:
         raise MissingField("synonym is required.")
     known = {name_key(entity.name), *(name_key(existing) for existing in entity.synonyms)}
@@ -96,11 +89,11 @@ def add_synonym(session: Session, claim_slug: str, entity_name: str, synonym: st
 def add_search_phrase(session: Session, claim_slug: str, entity_name: str, phrase: str) -> Entity:
     """Record words a registry would use for an intervention that has no product name.
     They are searched for within the claim's indication and never shown as a name."""
-    claim = _claim(session, claim_slug)
+    claim = claim_by_slug(session, claim_slug)
     entity = _find(session, claim, entity_name)
     if entity.type is not EntityType.INTERVENTION:
         raise InvalidField("Only an intervention has search phrases.")
-    phrase = " ".join(phrase.split())
+    phrase = tidy(phrase)
     if not phrase:
         raise MissingField("phrase is required.")
     if not is_a_search_phrase(phrase):
@@ -120,7 +113,7 @@ def add_search_phrase(session: Session, claim_slug: str, entity_name: str, phras
 
 def set_origin_paper(session: Session, claim_slug: str, paper_name: str) -> Entity:
     """Mark one of the claim's papers as the origin paper, replacing any earlier one."""
-    claim = _claim(session, claim_slug)
+    claim = claim_by_slug(session, claim_slug)
     paper = _find(session, claim, paper_name, EntityType.PAPER)
     for entity in entities_of(session, claim):
         if entity.is_origin_paper and entity is not paper:

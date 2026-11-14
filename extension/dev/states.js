@@ -2,11 +2,9 @@
 import { SITE } from "./config.js";
 import { render } from "./view.js";
 import { LIVE } from "./live-lookup.js";
+import { NOTICES } from "./notices.js";
 
-const notices = [
-  "This site gives no medical advice and recommends no treatment.",
-  "A registered clinical trial is not a treatment option. Talk to a clinician about your own care.",
-];
+const notices = [...NOTICES];
 const claim = {
   headline: "Antibody against USAG-1 regrows teeth in mice",
   page: "/tooth-regrowth-usag1",
@@ -43,15 +41,15 @@ const long = {
 // A registry search's answer, as the site's own wording module returns it.
 const answer = {
   marked:
-    "Automatic search. This list was made by software just now from a public registry. It has not been checked by a person and is not a status.",
+    LIVE.marked,
   lead: "This appears to report divalent small interfering RNA for Prion disease.",
   subject: { treatment: "Divalent small interfering RNA", condition: "Prion disease" },
   source: "Read by your browser from the post on X you have open, and the article it links to at example.org.",
   searchedAlso: null,
   trialSaid: "Of the trial itself, the article says: it is called PRiSM and 30 people took part.",
   tracked: [],
-  likelyLead: "Registry records that read as trials of this treatment for this condition, likeliest first:",
-  confidenceMeaning: "Match confidence is the model's estimate that this record concerns the reported treatment and condition. It is not a verified probability or a rating of treatment effectiveness or trial quality.",
+  likelyLead: LIVE.likelyLead,
+  confidenceMeaning: LIVE.confidenceMeaning,
   likely: [
     {
       title: "PrP-targeting siRNA Safety & Mechanism Study",
@@ -74,7 +72,7 @@ const answer = {
   ],
   rest: "3 other records were found and read as not being trials of this treatment for this condition.",
   none: null,
-  notices: [notices[1], "Source of the records: ClinicalTrials.gov."],
+  notices: [notices[1], LIVE.source],
 };
 const tracked = (claims, savedAt = null) => ({
   kind: "tracked",
@@ -202,9 +200,9 @@ const states = [
 const board = document.querySelector("#board");
 const log = (name) => (...args) => console.log(name, ...args);
 const actions = {
-  open: (address) => console.log("open", address),
-  retry: () => console.log("retry"),
-  search: () => console.log("search"),
+  open: log("open"),
+  retry: log("retry"),
+  search: log("search"),
   enableSharing: log("enableSharing"),
   disableSharing: log("disableSharing"),
   sharingView: log("sharingView"),

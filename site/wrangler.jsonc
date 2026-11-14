@@ -1,7 +1,7 @@
 // Cloudflare Workers. Every address is a file of the built site except /api/lookup,
 // which runs worker/index.mjs: the registry search for an article the site does not
 // track. Deploy with `make deploy` (see docs/deploy.md), never with `wrangler deploy`
-// alone: the make target refuses a preview export and unreviewed claims first.
+// alone: the make target refuses a preview export first.
 {
   "name": "thenwhat",
   // Not newer than the installed Wrangler supports, or `wrangler dev` will not start.
@@ -36,6 +36,7 @@
   // Settings the lookup needs, given at deployment and never written here:
   //   LLM_MODEL, CONTACT_EMAIL, optionally LLM_BASE_URL   (plain values)
   //   optionally DECISION_BACKEND=openai-decisions         (scores records in one fast call)
+  //   optionally DECISIONS_MODEL                           (the model that backend asks)
   //   OPENAI_API_KEY                                       (a secret: `wrangler secret put`)
   //   OPENALEX_API_KEY                                     (optional secret: free literature search)
   // ROR is a public API and needs no key. Both use LOOKUP_RESULTS for metadata caching.

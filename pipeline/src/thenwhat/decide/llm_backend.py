@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import create_model
 
-from thenwhat.decide.core import BackendAnswer
+from thenwhat.decide.core import BackendAnswer, rescaled
 
 if TYPE_CHECKING:
     from thenwhat.llm.client import Llm
@@ -24,8 +24,6 @@ give your probability for every option, as numbers from 0 to 1 that sum to 1.
 Judge each item on its own, only from the information given about it. Do not add
 outside knowledge about the subject.
 """
-# Models often return probabilities that sum to 0.98 or 1.01; that much is rescaled.
-RESCALE_WITHIN = 0.1
 
 
 class LlmBackend:
@@ -86,7 +84,4 @@ class LlmBackend:
         return answers
 
     def _as_answer(self, choice: str, probabilities: dict[str, float]) -> BackendAnswer:
-        total = sum(probabilities.values())
-        if total > 0 and abs(total - 1) <= RESCALE_WITHIN:
-            probabilities = {option: value / total for option, value in probabilities.items()}
-        return BackendAnswer(choice, probabilities, model=self._llm.model_name)
+        return BackendAnswer(choice, rescaled(probabilities), model=self._llm.model_name)

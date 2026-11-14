@@ -152,7 +152,7 @@ p {
 .masthead .name {
   display: inline-flex;
   align-items: baseline;
-  gap: 0.26em;
+  gap: 0;
   font-size: 1.25rem;
   letter-spacing: -0.01em;
   color: var(--paper);
@@ -164,20 +164,13 @@ p {
 }
 
 .masthead .name .tail {
+  margin-left: 0.26em;
   font-weight: 800;
 }
 
 /* The name's question mark is drawn, not typed, so that its dot can be the solid
    blue marker: the question, and under it where a claim stands. On a first visit
    the hook is drawn and the dot lands. */
-.masthead .name {
-  gap: 0;
-}
-
-.masthead .name .tail {
-  margin-left: 0.26em;
-}
-
 .masthead .name .ask {
   height: 0.94em;
   width: auto;
@@ -3741,7 +3734,7 @@ main ul:not([class]) li + li {
 
   /* The white glass keeps a navy tile of its own, whatever ground the system gives. */
   .masthead .name .mark {
-    background: #0b2545;
+    background: var(--footer);
     border-radius: 22%;
     padding: 0.12em;
     forced-color-adjust: none;
@@ -3804,6 +3797,7 @@ main ul:not([class]) li + li {
     background: none;
     color: var(--ink);
     border-top: 1px solid var(--ink);
+    break-inside: avoid;
   }
 
   .colophon a {
@@ -3870,10 +3864,6 @@ main ul:not([class]) li + li {
     margin-bottom: 0.4rem;
   }
 
-  .colophon {
-    break-inside: avoid;
-  }
-
   .pop-trigger.more {
     text-decoration: none;
   }
@@ -3915,9 +3905,9 @@ main ul:not([class]) li + li {
   padding-block: 0.55rem;
 }
 
-/* On a claim page that came from a seed file or from an assistant's decisions. */
+/* On a claim page no person checked: approved by rule, seeded or decided by an assistant. */
 .unchecked {
-  max-width: 66ch;
+  max-width: var(--measure);
   margin-top: 1rem;
   padding: 0.6rem 0.85rem;
   border: 1px dashed var(--muted);

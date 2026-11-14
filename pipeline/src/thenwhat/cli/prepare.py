@@ -56,7 +56,8 @@ def prepare_command(
     and read the registries for matches already approved.
 
     Claims are worked on side by side. A step that fails is reported and the claim's
-    other steps still run. Nothing is approved here.
+    other steps still run. Nothing is approved here beyond what those steps approve by
+    rule.
     """
     if not slugs and not pending:
         err.print("Name the claims to prepare, or use --pending for every claim awaiting review.")

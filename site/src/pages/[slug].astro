@@ -19,7 +19,7 @@ import SharePill from "../components/SharePill.astro";
 import StageTrack from "../components/StageTrack.astro";
 import TopicChip from "../components/TopicChip.astro";
 import { APPROACH_LABELS } from "../lib/approach";
-import { data, verticalTitle, type ExportedClaim } from "../lib/export";
+import { claimPaths, data, verticalTitle, type ExportedClaim } from "../lib/export";
 import { UNCHECKED_NOTE } from "../lib/notices";
 import {
   EVIDENCE_STAGES,
@@ -57,9 +57,7 @@ import { SITE } from "../../site.config.mjs";
 import { cardFor } from "../lib/card-image";
 import { buildTimetable, dayAndMonth, formatDate, recordedLines } from "../lib/timetable";
 
-export function getStaticPaths() {
-  return data.claims.map((claim) => ({ params: { slug: claim.slug }, props: { claim } }));
-}
+export const getStaticPaths = claimPaths;
 
 interface Props {
   claim: ExportedClaim;
@@ -936,8 +934,6 @@ const posts = shareLinks(postText, address, claim.headline);
     });
   }
 
-  // Sharing uses the device's own share sheet where there is one, and copies the
-  // page address where there is not. The button only appears when it can work.
   // Copying: the button appears only where the clipboard can be written, says so when
   // it has copied, and otherwise leaves the text selected for the reader to copy.
   // A copy is confirmed three ways: the label changes, the site's blue dot lands in

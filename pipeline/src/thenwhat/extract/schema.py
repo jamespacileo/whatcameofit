@@ -5,6 +5,8 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field
 
 ShortText = Annotated[str, Field(min_length=1, max_length=200)]
+# The most search phrases a treatment is given or kept.
+MAX_SEARCH_PHRASES = 3
 
 
 class NamedEntity(BaseModel):
@@ -32,7 +34,7 @@ class Draft(BaseModel):
     )
     intervention_search_phrases: list[ShortText] = Field(
         default_factory=list,
-        max_length=3,
+        max_length=MAX_SEARCH_PHRASES,
         description=(
             "Up to three short phrases a clinical trial registry or a paper would use for"
             " this treatment when the article gives it no product name, most specific first,"

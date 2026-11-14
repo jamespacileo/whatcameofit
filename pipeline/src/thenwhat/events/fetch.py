@@ -19,10 +19,9 @@ from thenwhat.events.papers import follow_up_confidence, follow_up_event, retrac
 from thenwhat.events.trial import trial_events
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord
+from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Notice
 from thenwhat.sources.europepmc import describe
-
-TRIAL_REGISTRY = "clinicaltrials.gov"
 
 
 class TrialRegistry(Protocol):
@@ -74,7 +73,7 @@ def fetch_claim(
         if entity.type is not EntityType.INTERVENTION:
             continue
         for match in approved.get(entity.id, []):
-            if match.source_name != TRIAL_REGISTRY:
+            if match.source_name != ClinicalTrials.name:
                 continue
             record = trials.fetch_trial(match.external_id)
             for draft in trial_events(record) if record else []:

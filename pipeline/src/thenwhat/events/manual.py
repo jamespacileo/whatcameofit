@@ -11,23 +11,24 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import (
-    ClaimNotFound,
     EntryError,
     InvalidField,
     InvalidUrl,
     MissingField,
-    find_claim,
+    claim_by_slug,
+    tidy,
 )
 from thenwhat.db.models import EvidenceEvent
-from thenwhat.domain import EventType, RegulatoryOutcome, TrialPhase, TrialState
+from thenwhat.domain import (
+    TRIAL_EVENT_TYPES,
+    EventType,
+    RegulatoryOutcome,
+    TrialPhase,
+    TrialState,
+)
 from thenwhat.events.draft import EventDraft
 from thenwhat.events.fetch import event_row
 
-TRIAL_TYPES = {
-    EventType.TRIAL_REGISTERED,
-    EventType.TRIAL_STATUS_CHANGE,
-    EventType.TRIAL_RESULTS_POSTED,
-}
 MANUAL_SOURCE = "manual entry"
 
 
@@ -50,18 +51,16 @@ def add_manual_event(
     trial_state: TrialState | None = None,
     regulatory_outcome: RegulatoryOutcome | None = None,
 ) -> EvidenceEvent:
-    claim = find_claim(session, claim_slug)
-    if claim is None:
-        raise ClaimNotFound(f"No claim has the slug '{claim_slug}'.")
+    claim = claim_by_slug(session, claim_slug)
     source_url = source_url.strip()
     if not source_url.startswith(("http://", "https://")):
         raise InvalidUrl("An event needs a source link starting with http:// or https://.")
-    summary = " ".join(summary.split())
+    summary = tidy(summary)
     if not summary:
         raise MissingField("summary is required.")
     external_id = (external_id or "").strip()
 
-    if type in TRIAL_TYPES:
+    if type in TRIAL_EVENT_TYPES:
         if not external_id:
             raise MissingField("A trial event needs the trial's registry identifier.")
         if not trial_phases:
