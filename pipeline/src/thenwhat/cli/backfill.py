@@ -16,6 +16,13 @@ from thenwhat.backfill.allowance import Allowances, AllowanceStatus
 from thenwhat.backfill.errors import BackfillError, SourceStop
 from thenwhat.backfill.leads import hit_rates
 from thenwhat.backfill.ledger import count
+from thenwhat.backfill.link_evaluation import (
+    TENTHS,
+    Figures,
+    evaluate,
+    label_lead,
+    sample_leads,
+)
 from thenwhat.backfill.link_load import load_links
 from thenwhat.backfill.link_readers import posts_of
 from thenwhat.backfill.link_report import IN_SCOPE_KINDS, screening_report
@@ -49,7 +56,7 @@ from thenwhat.cli import session as cli_session
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.config import Settings, SourceAllowance
-from thenwhat.domain import OutletKind
+from thenwhat.domain import Decider, LeadVerdict, OutletKind
 from thenwhat.sources.base import SourceError
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 
@@ -460,3 +467,152 @@ def links_command() -> None:
         out.print("The unlisted domains with the most link leads:", markup=False)
         for domain, number in report.unlisted_domains:
             out.print(f"  {domain}  {number:,}", markup=False)
+
+
+def _triage_version(settings: Settings) -> int:
+    return find_step(steps_for(settings), LinkTriage.name).version
+
+
+@backfill_app.command("sample-leads")
+def sample_leads_command(
+    size: Annotated[int, typer.Option(min=10, help="How many leads to draw, in tens.")] = 200,
+    seed: Annotated[str, typer.Option(help="The same seed draws the same sample.")] = "1",
+) -> None:
+    """Draw scored link leads to label, in equal numbers from each tenth of the score
+    range and spread across platforms.
+
+    Leads you have already labelled are left out. The scores are not shown, so that a
+    label does not lean on them. Label each lead with `thenwhat backfill label-lead`.
+    """
+    settings = settings_or_exit()
+    with refusals(), open_session() as session:
+        sample = sample_leads(session, size=size, seed=seed, version=_triage_version(settings))
+    if not sample.leads:
+        out.print(
+            "No scored link lead is waiting for a label. Run `thenwhat backfill run "
+            "link_triage` first."
+        )
+        return
+    for lead in sample.leads:
+        out.print(
+            f"{lead.lead_id}\t{lead.first_shared:%Y-%m-%d}\t{lead.outlet}\t{lead.title}\t{lead.url}",
+            markup=False,
+            soft_wrap=True,
+        )
+    out.print(
+        f"{len(sample.leads):,} leads, {sample.per_tenth} from each tenth of the score range."
+    )
+    for tenth, found in sorted(sample.short.items()):
+        out.print(
+            f"  the tenth from {tenth / TENTHS:.1f} is short: it holds only {found} "
+            "unlabelled leads",
+            markup=False,
+        )
+
+
+@backfill_app.command("label-lead")
+def label_lead_command(
+    lead_id: Annotated[int, typer.Argument(help="The lead's number, from `sample-leads`.")],
+    label: Annotated[
+        str,
+        typer.Argument(
+            help="What the headline is: "
+            + ", ".join(verdict.value for verdict in LeadVerdict)
+            + "."
+        ),
+    ],
+    as_assistant: Annotated[
+        bool,
+        typer.Option(
+            "--as-assistant",
+            help="Record the label as an assistant's. It is never counted as a person's.",
+        ),
+    ] = False,
+) -> None:
+    """Record what a link lead's headline is: the answer triage is measured against.
+
+    The label belongs to the lead, so it holds for every later version of triage.
+    """
+    settings_or_exit()
+    by = Decider.ASSISTANT if as_assistant else Decider.HUMAN
+    with refusals(), open_session() as session:
+        label_lead(session, lead_id, label, by=by, now=datetime.now(UTC))
+    whose = "an assistant's label" if as_assistant else "your label"
+    out.print(f"Lead {lead_id} is labelled {label}, as {whose}.", markup=False)
+
+
+def _percent(share: float | None) -> str:
+    return "  n/a" if share is None else f"{round(100 * share):>4}%"
+
+
+def _figures_lines(figures: Figures) -> list[str]:
+    lines = ["  pass at or above   precision   recall   leads passed"]
+    lines += [
+        f"  {row.threshold:>16.1f}   {_percent(row.precision):>9}   {_percent(row.recall):>6}"
+        f"   {row.passed:>12,}"
+        for row in figures.rows
+    ]
+    by_tenth = "  ".join(
+        f"{tenth / TENTHS:.1f}: {number}" for tenth, number in enumerate(figures.labels_by_tenth)
+    )
+    lines.append(f"  labels in each tenth, by its lower edge: {by_tenth}")
+    if figures.unlabelled_tenths:
+        edges = ", ".join(f"{tenth / TENTHS:.1f}" for tenth in figures.unlabelled_tenths)
+        lines.append(
+            f"  no label yet in the tenths from {edges}: they hold scored leads and are "
+            "left out of precision and recall"
+        )
+    return lines
+
+
+@backfill_app.command("evaluate-leads")
+def evaluate_leads_command() -> None:
+    """Show how well triage separates leads that report a treatment from those that do
+    not, on the leads you have labelled.
+
+    Precision is the share of leads at or above a threshold that report a treatment;
+    recall is the share of all such leads that are at or above it. Each tenth of the
+    score range counts by how many scored leads it holds. Sends no request.
+    """
+    settings = settings_or_exit()
+    with refusals(), open_session() as session:
+        version = _triage_version(settings)
+        evaluation = evaluate(session, version=version)
+    if evaluation.overall.labels == 0:
+        out.print(
+            "No link lead has a label of yours yet at this version of triage. Draw leads "
+            "with `thenwhat backfill sample-leads` and label them with "
+            "`thenwhat backfill label-lead`."
+        )
+        if evaluation.assistant_only:
+            out.print(
+                f"{evaluation.assistant_only:,} leads have only an assistant's label, "
+                "which is not counted."
+            )
+        return
+    out.print(
+        f"Triage version {version}: {evaluation.overall.labels:,} leads carry a label of yours.",
+        markup=False,
+    )
+    for line in _figures_lines(evaluation.overall):
+        out.print(line, markup=False)
+    for platform, figures in evaluation.by_platform.items():
+        if figures.labels:
+            out.print(f"{platform}: {figures.labels:,} labels", markup=False)
+            for line in _figures_lines(figures):
+                out.print(line, markup=False)
+    if evaluation.disagreements:
+        out.print("Where your label and the score disagree most:", markup=False)
+        for case in evaluation.disagreements:
+            out.print(
+                f"  {case.lead_id}  score {case.score:.2f}  labelled {case.label.value}  "
+                f"{case.title}",
+                markup=False,
+                soft_wrap=True,
+            )
+    if evaluation.assistant_only:
+        out.print(
+            f"{evaluation.assistant_only:,} leads have only an assistant's label. They are "
+            "not counted in any figure above.",
+            markup=False,
+        )

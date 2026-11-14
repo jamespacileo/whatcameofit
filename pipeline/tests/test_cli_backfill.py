@@ -21,7 +21,16 @@ from thenwhat.backfill.news_search import query_for
 from thenwhat.cli import app
 from thenwhat.cli.backfill import _hours
 from thenwhat.config import SourceAllowance
-from thenwhat.db.models import ArticleLead, LinkLead, LinkShare, LlmUsage, RegistryTrial, WorkEntry
+from thenwhat.db.models import (
+    ArticleLead,
+    LinkLead,
+    LinkLeadLabel,
+    LinkShare,
+    LlmUsage,
+    RegistryTrial,
+    WorkEntry,
+)
+from thenwhat.domain import Decider
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 
 
@@ -425,3 +434,73 @@ def test_links_says_so_when_nothing_is_screened(run, session: Session, tmp_path:
     assert result.exit_code == 0, result.output
     assert "No link lead has been screened yet." in result.output
     assert "%" not in result.output
+
+
+# --- sample-leads, label-lead, evaluate-leads --------------------------------------------
+
+
+def scored_leads(run, session: Session, tmp_path: Path) -> list[LinkLead]:
+    """The three synthetic stories, screened, with a score each as triage would leave it."""
+    run("load-links", "hackernews", str(stories_file(tmp_path)))
+    run("run", "link_screen")
+    leads = list(session.scalars(select(LinkLead).order_by(LinkLead.id)))
+    for lead, score in zip(leads, (0.95, 0.15, 0.55), strict=True):
+        lead.triage_score = score
+        lead.triage_version = 1
+    session.flush()
+    return leads
+
+
+def test_a_sample_lists_leads_without_their_scores(run, session: Session, tmp_path: Path):
+    """Scenario: A sample of 200"""
+    scored_leads(run, session, tmp_path)
+
+    result = run("sample-leads", "--size", "10")
+
+    assert result.exit_code == 0, result.output
+    assert "theguardian.com" in result.output and "One" in result.output
+    assert "0.95" not in result.output
+    assert "is short" in result.output
+
+
+def test_labels_are_recorded_and_the_report_gives_precision_and_recall(
+    run, session: Session, tmp_path: Path
+):
+    """Scenarios: The operator labels a lead, An assistant labels a lead, After 200 labels"""
+    guardian, statnews, _ = scored_leads(run, session, tmp_path)
+
+    mine = run("label-lead", str(guardian.id), "treatment_report")
+    assistants = run("label-lead", str(statnews.id), "not_health", "--as-assistant")
+    result = run("evaluate-leads")
+
+    assert "as your label" in mine.output and "as an assistant's label" in assistants.output
+    by = {label.link_lead_id: label.labelled_by for label in session.scalars(select(LinkLeadLabel))}
+    assert by == {guardian.id: Decider.HUMAN, statnews.id: Decider.ASSISTANT}
+    assert result.exit_code == 0, result.output
+    assert "Triage version 1: 1 leads carry a label of yours." in result.output
+    assert "pass at or above   precision   recall   leads passed" in result.output
+    assert "1 leads have only an assistant's label" in result.output
+
+
+def test_a_label_that_is_not_an_option_is_refused_by_the_command(
+    run, session: Session, tmp_path: Path
+):
+    """Scenario: A label that is not an option"""
+    guardian, *_ = scored_leads(run, session, tmp_path)
+
+    result = run("label-lead", str(guardian.id), "breakthrough")
+
+    assert result.exit_code == 1
+    assert "Labels: treatment_report, health_other, not_health" in result.output
+    assert session.scalars(select(LinkLeadLabel)).all() == []
+
+
+def test_the_report_says_so_when_nothing_is_labelled(run, session: Session, tmp_path: Path):
+    """Scenario: No labels yet"""
+    scored_leads(run, session, tmp_path)
+
+    result = run("evaluate-leads")
+
+    assert result.exit_code == 0, result.output
+    assert "No link lead has a label of yours yet" in result.output
+    assert "precision" not in result.output

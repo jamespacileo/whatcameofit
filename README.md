@@ -264,6 +264,21 @@ thenwhat backfill links                                        # what was loaded
 - `links` lists the unlisted domains with the most leads. Add a domain that belongs on the outlet list, raise the version of `link_screen`, and run it again: it costs nothing.
 - A link lead creates no claim, changes no status and never reaches the export.
 
+Triage then scores each lead in scope from its title alone, and you measure it before anything is read:
+
+```sh
+thenwhat backfill plan                               # what triage would cost, beside the month's ceiling left
+thenwhat backfill run link_triage                    # twenty headlines to a call; fetches nothing
+thenwhat backfill sample-leads --size 200            # leads to label, from every tenth of the score range
+thenwhat backfill label-lead 4182 treatment_report   # or health_other, or not_health
+thenwhat backfill evaluate-leads                     # precision and recall at each threshold
+```
+
+- The score is the probability that the headline reports a specific treatment for a specific condition. It creates and changes nothing.
+- `sample-leads` does not show the scores, so a label cannot lean on them. A label belongs to the lead and holds for every later version of triage. A label an assistant gives is recorded with `--as-assistant` and never counted as yours.
+- `evaluate-leads` weights each tenth of the score range by how many leads it holds. Use it to set `LEAD_PASS_ABOVE` and `LEAD_REJECT_BELOW`, which have no default: until both are set, no lead is passed.
+- To reword the triage question, change it, raise the version of `link_triage` and run it again. Your labels count for the new version without being given again.
+
 ## Development
 
 Needs [uv](https://docs.astral.sh/uv/), Node 22.23.4 or later, make and Docker.

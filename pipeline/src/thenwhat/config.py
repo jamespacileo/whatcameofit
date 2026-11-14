@@ -112,6 +112,10 @@ class Settings(BaseSettings):
     lead_pass_above: float | None = None
     lead_reject_below: float | None = None
 
+    # Evaluation (openspec lead-evaluation): no link lead is read until this many leads
+    # carry a person's label and a score from the current version of triage.
+    lead_evaluation_min_labels: int = 200
+
     def chosen_subreddits(self) -> frozenset[str]:
         return frozenset(
             name.strip().removeprefix("r/")

@@ -43,11 +43,11 @@
 
 ## 6. Evaluation
 
-- [ ] 6.1 Add `thenwhat backfill sample-leads` drawing equal numbers per tenth of the score range across platforms, by seed, without showing scores; verify tests cover a full sample, a thin tenth reported as short, the same seed giving the same sample, and labelled leads left out
-- [ ] 6.2 Add `thenwhat backfill label-lead` with `--as-assistant`; verify one test of a person's label, one of an assistant's label stored as an assistant's, and one of the refusal for a label that is not an option
-- [ ] 6.3 Add `thenwhat backfill evaluate-leads` with precision, recall and leads passed per threshold, weighted by each tenth's population, overall and by platform, and the strongest disagreements; verify a test checks the weighted figures by hand for a small seeded set, and one checks that assistants' labels do not enter them
-- [ ] 6.4 Add the gate to the reading step's start (labels at the current triage version, both thresholds set) with `LEAD_EVALUATION_MIN_LABELS`; verify tests cover too few labels, a threshold unset, and labels counting again after a version is raised and the leads rescored
-- [ ] 6.5 Verify with a test that the export is the same before and after labelling
+- [x] 6.1 Add `thenwhat backfill sample-leads` drawing equal numbers per tenth of the score range across platforms, by seed, without showing scores; verify tests cover a full sample, a thin tenth reported as short, the same seed giving the same sample, and labelled leads left out
+- [x] 6.2 Add `thenwhat backfill label-lead` with `--as-assistant`; verify one test of a person's label, one of an assistant's label stored as an assistant's, and one of the refusal for a label that is not an option
+- [x] 6.3 Add `thenwhat backfill evaluate-leads` with precision, recall and leads passed per threshold, weighted by each tenth's population, overall and by platform, and the strongest disagreements; verify a test checks the weighted figures by hand for a small seeded set, and one checks that assistants' labels do not enter them
+- [ ] 6.4 (the gate's rule and its three tests are written, in `backfill/link_evaluation.py`; it is not yet called, because the reading step does not exist until 7.5) Add the gate to the reading step's start (labels at the current triage version, both thresholds set) with `LEAD_EVALUATION_MIN_LABELS`; verify tests cover too few labels, a threshold unset, and labels counting again after a version is raised and the leads rescored
+- [x] 6.5 Verify with a test that the export is the same before and after labelling
 
 ## 7. Reading
 
