@@ -1,0 +1,127 @@
+{
+    "created": 1794685440708,
+    "etag": "45bc0bb28832370e",
+    "path": "",
+    "uri": "https://gsrs.ncats.nih.gov/api/v1/substances/search?q=root_names_name%3a%22%5efaecal+microbiota+transplant%24%22&top=5&fdim=0",
+    "method": "GET",
+    "sha1": "aa4392fa8f66f34ec8153b5b5b38c2556f356fa9",
+    "total": 0,
+    "count": 0,
+    "skip": 0,
+    "top": 5,
+    "query": "fdim=0&q=root_names_name:\"^faecal microbiota transplant$\"&top=5",
+    "sideway": [],
+    "facets": [
+        {
+            "name": "root_lastEdited",
+            "values": [
+                {
+                    "label": "Today",
+                    "count": 0
+                },
+                {
+                    "label": "This week",
+                    "count": 0
+                },
+                {
+                    "label": "This month",
+                    "count": 0
+                },
+                {
+                    "label": "Past 6 months",
+                    "count": 0
+                },
+                {
+                    "label": "Past 1 year",
+                    "count": 0
+                },
+                {
+                    "label": "Past 2 years",
+                    "count": 0
+                },
+                {
+                    "label": "Older than 2 years",
+                    "count": 0
+                }
+            ],
+            "enhanced": false,
+            "prefix": "",
+            "_self": "https://gsrs.ncats.nih.gov/api/v1/substances/search/@facets?defaultField=identifiers&wait=false&kind=ix.ginas.models.v1.Substance&skip=0&promoteSpecialMatches=true&fdim=0&includeFacets=true&qSkip=0&simpleSearchOnly=false&qTop=10&q=root_names_name%3A%22%5Efaecal+microbiota+transplant%24%22&sideway=true&field=root_lastEdited&top=5&fskip=0&fetch=100&includeBreakdown=true"
+        },
+        {
+            "name": "root_approved",
+            "values": [
+                {
+                    "label": "Today",
+                    "count": 0
+                },
+                {
+                    "label": "This week",
+                    "count": 0
+                },
+                {
+                    "label": "This month",
+                    "count": 0
+                },
+                {
+                    "label": "Past 6 months",
+                    "count": 0
+                },
+                {
+                    "label": "Past 1 year",
+                    "count": 0
+                },
+                {
+                    "label": "Past 2 years",
+                    "count": 0
+                },
+                {
+                    "label": "Older than 2 years",
+                    "count": 0
+                }
+            ],
+            "enhanced": false,
+            "prefix": "",
+            "_self": "https://gsrs.ncats.nih.gov/api/v1/substances/search/@facets?defaultField=identifiers&wait=false&kind=ix.ginas.models.v1.Substance&skip=0&promoteSpecialMatches=true&fdim=0&includeFacets=true&qSkip=0&simpleSearchOnly=false&qTop=10&q=root_names_name%3A%22%5Efaecal+microbiota+transplant%24%22&sideway=true&field=root_approved&top=5&fskip=0&fetch=100&includeBreakdown=true"
+        },
+        {
+            "name": "root_created",
+            "values": [
+                {
+                    "label": "Today",
+                    "count": 0
+                },
+                {
+                    "label": "This week",
+                    "count": 0
+                },
+                {
+                    "label": "This month",
+                    "count": 0
+                },
+                {
+                    "label": "Past 6 months",
+                    "count": 0
+                },
+                {
+                    "label": "Past 1 year",
+                    "count": 0
+                },
+                {
+                    "label": "Past 2 years",
+                    "count": 0
+                },
+                {
+                    "label": "Older than 2 years",
+                    "count": 0
+                }
+            ],
+            "enhanced": false,
+            "prefix": "",
+            "_self": "https://gsrs.ncats.nih.gov/api/v1/substances/search/@facets?defaultField=identifiers&wait=false&kind=ix.ginas.models.v1.Substance&skip=0&promoteSpecialMatches=true&fdim=0&includeFacets=true&qSkip=0&simpleSearchOnly=false&qTop=10&q=root_names_name%3A%22%5Efaecal+microbiota+transplant%24%22&sideway=true&field=root_created&top=5&fskip=0&fetch=100&includeBreakdown=true"
+        }
+    ],
+    "exactMatches": [],
+    "narrowSearchSuggestions": [],
+    "content": []
+}

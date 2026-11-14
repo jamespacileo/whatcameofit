@@ -4,14 +4,14 @@ Every candidate is stored and scored. A rule rejects one scored near zero and ap
 a trial scored high for the claim's indication; the rest wait for review.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import datetime
 from typing import Protocol
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.entities import entities_of
+from thenwhat.claims.entities import development_codes, entities_of
 from thenwhat.db.models import Claim, Entity, EntityMatch
 from thenwhat.decide.core import Backend, DecisionFailed
 from thenwhat.decide.steps import OTHER_INDICATION, latest_scoring, score_matches
@@ -77,9 +77,11 @@ def trials_of(
     entity: Entity,
     indication: str | None,
     unsearchable: Callable[[UnsearchableTerm], None] | None = None,
+    codes: Sequence[str] = (),
 ) -> list[SourceRecord]:
-    """Every trial the registry holds under the intervention's name, its other names and
-    its search phrases. A phrase is searched within the indication only.
+    """Every trial the registry holds under the intervention's name, its other names, its
+    search phrases and its development codes. A phrase or a code is searched within the
+    indication only.
 
     A term the registry cannot search for as written is passed to `unsearchable` and the
     other terms are still searched: each term is its own search. Nothing simpler is
@@ -92,7 +94,7 @@ def trials_of(
         ),
         *(
             (lambda phrase=phrase: trials.search_phrase(phrase, indication))
-            for phrase in entity.search_phrases
+            for phrase in dict.fromkeys([*entity.search_phrases, *codes])
         ),
     ]
     records: list[SourceRecord] = []
@@ -152,7 +154,9 @@ def resolve_claim(
 
     for entity in entities:
         if entity.type is EntityType.INTERVENTION:
-            for record in trials_of(trials, entity, claim.indication, unsearchable):
+            for record in trials_of(
+                trials, entity, claim.indication, unsearchable, development_codes(session, entity)
+            ):
                 consider(entity, record)
         elif entity.type is EntityType.PAPER and entity.doi:
             if any(key[0] == entity.id and key[2].lower() == entity.doi.lower() for key in seen):
@@ -276,7 +280,9 @@ def rescore_claim(
             )
             if match.id not in just_scored
         }
-        for record in trials_of(trials, entity, claim.indication, unsearchable):
+        for record in trials_of(
+            trials, entity, claim.indication, unsearchable, development_codes(session, entity)
+        ):
             match = pending.pop((record.source_name, record.external_id), None)
             if match is not None:
                 match.record_summary = what_it_says(record)

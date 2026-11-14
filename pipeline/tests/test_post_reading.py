@@ -219,6 +219,7 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr("thenwhat.cli.entry.open_session", test_session)
     monkeypatch.setattr("thenwhat.cli.lookup.make_tools", lambda s: (llm, Backend(), Trials()))
     monkeypatch.setattr("thenwhat.cli.lookup.make_papers", lambda s: Papers())
+    monkeypatch.setattr("thenwhat.cli.lookup.make_substances", lambda s: None)
     monkeypatch.setattr("thenwhat.cli.extract.make_retriever", lambda: retriever)
     runner = CliRunner()
 

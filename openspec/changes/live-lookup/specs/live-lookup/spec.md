@@ -25,7 +25,7 @@ Given the text of a news article or a post, the lookup SHALL name the treatment 
 - **THEN** the lookup says so, searches nothing and returns no candidates
 
 ### Requirement: Every way of finding the trial is used
-The lookup SHALL look up directly any registry number the text states. It SHALL search the registry for the treatment's name, each other name the text gives, each part of a combination, each name the model knows the treatment by, and up to three search phrases for a treatment with no product name, each within the reported condition. A description that is not a name SHALL NOT be searched for as a name, and a registry number SHALL NOT be treated as a name. Names that come from the model's knowledge SHALL be reported apart from the names the text gives.
+The lookup SHALL look up directly any registry number the text states. It SHALL search the registry for the treatment's name, each other name the text gives, each part of a combination, each name the model knows the treatment by, up to three search phrases for a treatment with no product name, and each development code a substance registry lists for the treatment, each within the reported condition. A description that is not a name SHALL NOT be searched for as a name, and a registry number SHALL NOT be treated as a name. Names that come from the model's knowledge SHALL be reported apart from the names the text gives. Development codes SHALL be taken only from a substance registry whose terms are recorded, only for the one substance it lists under the names the text gives (or under one part of a combination), and SHALL be reported apart from both. A name from the model's knowledge SHALL NOT be asked about. When the substance registry cannot be asked, the lookup SHALL go on without codes and SHALL say that they were not looked up and why.
 
 #### Scenario: Text that states a registry number
 - **WHEN** the text contains a ClinicalTrials.gov number in any letter case
@@ -34,6 +34,14 @@ The lookup SHALL look up directly any registry number the text states. It SHALL 
 #### Scenario: Registry lists the treatment under a name the text does not give
 - **WHEN** the model knows a development code for the treatment that the text does not state, and the registry lists a trial under that code
 - **THEN** the trial is among the candidates and the code is reported as a name the text does not give
+
+#### Scenario: Trial filed under a development code
+- **WHEN** the substance registry lists the treatment's name under one substance with a code the text does not state, and the registry lists a trial under that code within the condition
+- **THEN** the trial is among the candidates and the code is reported as a development code from the substance registry
+
+#### Scenario: Substance registry cannot be asked
+- **WHEN** the substance registry does not answer
+- **THEN** the candidates found by the other searches are returned, with no code, and the answer gives the reason the codes were not looked up
 
 #### Scenario: Combination of two treatments
 - **WHEN** the text reports "A and B" as one treatment and the registry lists a trial under B
