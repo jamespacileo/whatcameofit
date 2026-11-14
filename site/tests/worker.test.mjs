@@ -575,6 +575,44 @@ test("the model reads the text while linked papers and stated numbers are looked
   assert.deepEqual((await looking).candidates.map((c) => c.id), ["NCT01234567"]);
 });
 
+test("Scenario: Text that reports no treatment while a linked paper is slow", async () => {
+  // The papers' host never answers; only ending the request settles it.
+  const asked = [];
+  const papers = {
+    trialNumbers: (paper, { signal }) => {
+      asked.push(paper);
+      return new Promise((_, reject) => signal.addEventListener("abort", () => reject(signal.reason)));
+    },
+  };
+  const fetched = [];
+  const registry = { ...fakeRegistry({}), fetch: async (id) => (fetched.push(id), new Promise(() => {})) };
+  const page = { registryNumbers: ["NCT01234567", "NCT07654321"], dois: ["10.1/first", "10.1/second"], pubmedIds: [] };
+  const model = fakeModel({ ...READING, about_a_treatment: false, intervention: null });
+
+  const found = await Promise.race([
+    lookUp({ text: TEXT, model, registry, index: INDEX, page, papers }),
+    new Promise((resolve) => setTimeout(() => resolve("still waiting"), 200)),
+  ]);
+
+  assert.equal(found.about_a_treatment, false);
+  assert.deepEqual(found.registry_numbers, ["NCT01234567", "NCT07654321"]);
+  // The paper being asked about was let go, and nothing further was asked of either host.
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  assert.deepEqual(asked, [{ doi: "10.1/first" }]);
+  assert.deepEqual(fetched, ["NCT01234567"]);
+});
+
+test("a paper's request ends when the lookup no longer needs it", async () => {
+  const fetch = (_address, { signal }) =>
+    new Promise((_, reject) => signal.addEventListener("abort", () => reject(signal.reason)));
+  const stop = new AbortController();
+  const asking = makePapers({ fetch, contact: "ops@example.org" }).trialNumbers({ doi: "10.1/slow" }, { signal: stop.signal });
+
+  stop.abort();
+
+  await assert.rejects(asking, { name: "AbortError" });
+});
+
 test("a record the model leaves out, or answers unusably, has no score", async () => {
   const { model } = modelOver({ answers: [{ item: 2, choice: "match", probabilities: { match: 3, other_indication: 0, not_a_match: 0 } }] });
 

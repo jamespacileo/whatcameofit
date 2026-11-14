@@ -14,8 +14,11 @@ export function makePapers({ fetch, contact }) {
   const headers = { "User-Agent": `thenwhat-lookup/${VERSION} (mailto:${contact})`, Accept: "application/json" };
 
   return {
-    /** The ClinicalTrials.gov numbers the paper's abstract gives for its own trial. */
-    async trialNumbers({ doi, pubmedId }) {
+    /**
+     * The ClinicalTrials.gov numbers the paper's abstract gives for its own trial.
+     * Aborting `signal` ends the request: the caller no longer needs the answer.
+     */
+    async trialNumbers({ doi, pubmedId }, { signal } = {}) {
       let query;
       if (doi) query = `DOI:"${String(doi).replaceAll('"', "")}"`;
       else if (/^\d+$/.test(pubmedId ?? "")) query = `EXT_ID:${pubmedId} AND SRC:MED`;
@@ -24,7 +27,7 @@ export function makePapers({ fetch, contact }) {
       for (const [name, value] of Object.entries({ query, format: "json", resultType: "core" })) {
         url.searchParams.set(name, value);
       }
-      const response = await fetch(url.href, { headers });
+      const response = await fetch(url.href, { headers, signal });
       if (!response.ok) throw new Error(`papers ${response.status}`);
       const paper = (await response.json())?.resultList?.result?.[0];
       const found = String(paper?.abstractText ?? "").match(REGISTRY_NUMBER) ?? [];

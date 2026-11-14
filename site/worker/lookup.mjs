@@ -52,16 +52,20 @@ function nothingFound(reading, numbers) {
   };
 }
 
-/** One request at a time to one host, in order. */
-async function inTurn(items, ask) {
+/** One request at a time to one host, in order. None is made once `signal` is aborted. */
+async function inTurn(items, ask, signal) {
   const answers = [];
-  for (const item of items) answers.push(await ask(item));
+  for (const item of items) {
+    if (signal?.aborted) break;
+    answers.push(await ask(item));
+  }
   return answers;
 }
 
 /** The registry numbers given by the papers the page links to. A paper that cannot be
- * looked up is passed over: the lookup goes on without it. */
-async function paperNumbers(page, papers) {
+ * looked up is passed over: the lookup goes on without it. Aborting `signal` ends the
+ * request in flight and asks about no further paper. */
+async function paperNumbers(page, papers, signal) {
   if (!page || !papers) return [];
   const linked = [
     ...(page.dois ?? []).map((doi) => ({ doi })),
@@ -69,7 +73,8 @@ async function paperNumbers(page, papers) {
   ].slice(0, MAX_PAPERS);
   const found = [];
   for (const paper of linked) {
-    found.push(...(await papers.trialNumbers(paper).catch(() => [])));
+    if (signal?.aborted) break;
+    found.push(...(await papers.trialNumbers(paper, { signal }).catch(() => [])));
   }
   return unique(found);
 }
@@ -86,12 +91,28 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
   ]);
   // Three hosts, none waiting on another: the model reads the text while the linked
   // papers and the registry numbers the article gives are looked up.
-  const [reading, linked, stated] = await Promise.all([
-    model.read(text, image ? { image, pageUrl } : undefined),
-    paperNumbers(page, papers),
-    inTurn(numbers, (number) => registry.fetch(number)),
-  ]);
-  if (!reading.about_a_treatment || !reading.intervention) return nothingFound(reading, numbers);
+  // Only the reading says whether there is a treatment to look up. When there is none,
+  // the answer is given at once and the other two are stopped: the papers' host can take
+  // half a minute over one paper, and nothing it says would change that answer.
+  const others = new AbortController();
+  const read = model.read(text, image ? { image, pageUrl } : undefined);
+  const linking = paperNumbers(page, papers, others.signal);
+  const stating = inTurn(numbers, (number) => registry.fetch(number), others.signal);
+  // A failure of either is raised where they are awaited below, and nowhere else.
+  linking.catch(() => {});
+  stating.catch(() => {});
+  let reading;
+  try {
+    reading = await read;
+  } catch (error) {
+    others.abort();
+    throw error;
+  }
+  if (!reading.about_a_treatment || !reading.intervention) {
+    others.abort();
+    return nothingFound(reading, numbers);
+  }
+  const [linked, stated] = await Promise.all([linking, stating]);
 
   // Metadata enrichment runs alongside trial lookup. It adds no model calls and
   // cannot change clinical candidates, their scores, or a tracked claim's status.

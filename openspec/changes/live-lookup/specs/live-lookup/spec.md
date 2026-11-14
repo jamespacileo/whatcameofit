@@ -86,7 +86,11 @@ The pipeline SHALL be able to check every tracked article's address and report, 
 - **THEN** the record shows the first as read with its signals, the second as refused without its article being asked for, and the third as failed with that status
 
 ### Requirement: Work that does not wait on other work is done at the same time
-A lookup SHALL read the text with the model while it looks up the papers the page links to and the registry numbers the article gives. One host SHALL still be asked one request at a time. The outlet check SHALL be able to check several outlets at the same time; one outlet SHALL still be asked one article at a time, a second apart, and all lookups running together SHALL keep, between them, to each registry's rate. Each lookup of an outlet check SHALL be saved when it ends, so a run that is stopped keeps what it fetched and what it spent. The registry cache SHALL accept two sessions writing the same request without failing.
+A lookup SHALL read the text with the model while it looks up the papers the page links to and the registry numbers the article gives. One host SHALL still be asked one request at a time. The outlet check SHALL be able to check several outlets at the same time; one outlet SHALL still be asked one article at a time, a second apart, and all lookups running together SHALL keep, between them, to each registry's rate. Each lookup of an outlet check SHALL be saved when it ends, so a run that is stopped keeps what it fetched and what it spent. The registry cache SHALL accept two sessions writing the same request without failing. When the model reads that the text reports no specific treatment, the lookup SHALL answer at once: it SHALL NOT wait for the linked papers or the registry numbers, SHALL end the request in flight for a paper, and SHALL ask neither host anything further.
+
+#### Scenario: Text that reports no treatment while a linked paper is slow
+- **WHEN** the page links to a paper whose host has not answered, and the model reads that the text reports no specific treatment
+- **THEN** the lookup answers that no treatment could be identified without waiting for the paper, and the paper's request is ended
 
 #### Scenario: Several outlets checked at the same time
 - **WHEN** the outlet check runs with three workers
