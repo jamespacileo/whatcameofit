@@ -1,0 +1,1021 @@
+{
+  "protocolSection": {
+    "identificationModule": {
+      "nctId": "NCT03491397",
+      "orgStudyIdInfo": {
+        "id": "18-000560"
+      },
+      "organization": {
+        "fullName": "University of California, Los Angeles",
+        "class": "OTHER"
+      },
+      "briefTitle": "Genicular Artery Embolization for the Treatment of Knee Osteoarthritis",
+      "officialTitle": "Safety and Efficacy of Genicular Artery Embolization for the Treatment of Symptomatic Knee Osteoarthritis",
+      "acronym": "GAE-OA"
+    },
+    "statusModule": {
+      "statusVerifiedDate": "2022-11",
+      "overallStatus": "COMPLETED",
+      "expandedAccessInfo": {
+        "hasExpandedAccess": false
+      },
+      "startDateStruct": {
+        "date": "2019-02-10",
+        "type": "ACTUAL"
+      },
+      "primaryCompletionDateStruct": {
+        "date": "2021-10-29",
+        "type": "ACTUAL"
+      },
+      "completionDateStruct": {
+        "date": "2021-10-29",
+        "type": "ACTUAL"
+      },
+      "studyFirstSubmitDate": "2018-03-23",
+      "studyFirstSubmitQcDate": "2018-04-05",
+      "studyFirstPostDateStruct": {
+        "date": "2018-04-09",
+        "type": "ACTUAL"
+      },
+      "resultsFirstSubmitDate": "2022-08-31",
+      "resultsFirstSubmitQcDate": "2022-11-07",
+      "resultsFirstPostDateStruct": {
+        "date": "2022-11-30",
+        "type": "ACTUAL"
+      },
+      "lastUpdateSubmitDate": "2022-11-07",
+      "lastUpdatePostDateStruct": {
+        "date": "2022-11-30",
+        "type": "ACTUAL"
+      }
+    },
+    "sponsorCollaboratorsModule": {
+      "responsibleParty": {
+        "type": "SPONSOR_INVESTIGATOR",
+        "investigatorFullName": "Example Investigator",
+        "investigatorTitle": "Principal Investigator",
+        "investigatorAffiliation": "University of California, Los Angeles"
+      },
+      "leadSponsor": {
+        "name": "Example Investigator",
+        "class": "OTHER"
+      },
+      "collaborators": [
+        {
+          "name": "Boston Scientific Corporation",
+          "class": "INDUSTRY"
+        }
+      ]
+    },
+    "oversightModule": {
+      "oversightHasDmc": true,
+      "isFdaRegulatedDrug": false,
+      "isFdaRegulatedDevice": true
+    },
+    "descriptionModule": {
+      "briefSummary": "The purpose of this clinical research study is to examine whether Embozene treatment of the genicular artery is a safe and effective way to treat arthritic knee pain. Embozene is a medical device made by Boston Scientific approved in the United States for the treatment of hypervascular tumors and arteriovenous malformations. It consists of thousands of microscopic spheres that are injected into the artery in the knee going to the region of pain. One of the causes of pain in the setting of knee arthritis is increased blood flow going to the specific area of pain. The goal of this procedure is to decrease the blood flow (embolize) to the specific region of the knee that is causing your pain. This is done by infusing Embozene particles into the specific blood vessel (genicular artery) supplying the area of pain in the knee.",
+      "detailedDescription": "This is a phase 2, single-center, prospective, single arm investigational study to evaluate the safety and efficacy of genicular artery embolization (GAE) for treatment of symptomatic knee osteoarthritis (OA). Subjects will be treated with a genicular artery embolization (GAE) procedure performed with Embozene Microspheres. The microspheres will be delivered in a saline-contrast medium solution and will be delivered to the arteries supplying the areas of the subject's pain. The primary objective of this investigation is to assess safety of genicular artery embolization (GAE) for knee osteoarthritis (OA) using Embozene particles."
+    },
+    "conditionsModule": {
+      "conditions": [
+        "Knee Osteoarthritis",
+        "Degenerative Joint Disease of Knee"
+      ],
+      "keywords": [
+        "Microspheres",
+        "Artery Embolization",
+        "Knee Osteoarthritis",
+        "Chronic Pain",
+        "Embozene"
+      ]
+    },
+    "designModule": {
+      "studyType": "INTERVENTIONAL",
+      "phases": [
+        "NA"
+      ],
+      "designInfo": {
+        "allocation": "NA",
+        "interventionModel": "SINGLE_GROUP",
+        "interventionModelDescription": "The stratification will not be randomized, but each category will be limited to 20 patients.",
+        "primaryPurpose": "TREATMENT",
+        "maskingInfo": {
+          "masking": "NONE"
+        }
+      },
+      "enrollmentInfo": {
+        "count": 40,
+        "type": "ACTUAL"
+      }
+    },
+    "armsInterventionsModule": {
+      "armGroups": [
+        {
+          "label": "GAE OA",
+          "type": "EXPERIMENTAL",
+          "description": "Subjects will be treated with a genicular artery embolization (GAE) procedure performed with Embozene Microspheres. The microspheres will be delivered in a saline-contrast medium solution and will be delivered to the arteries supplying the areas of the subject's pain.",
+          "interventionNames": [
+            "Device: Embozene MicroSpheres"
+          ]
+        }
+      ],
+      "interventions": [
+        {
+          "type": "DEVICE",
+          "name": "Embozene MicroSpheres",
+          "description": "Embozene is a medical device made by Boston Scientific approved in the United States for the treatment of hypervascular tumors and arteriovenous malformations. It consists of thousands of microscopic spheres that are injected into the artery in the knee going to the region of pain. One of the causes of pain in the setting of knee arthritis is increased blood flow going to the specific area of pain. The goal of this procedure is to decrease the blood flow (embolize) to the specific region of the knee that is causing your pain. This is done by infusing Embozene particles into the specific blood vessel (genicular artery) supplying the area of pain in the knee.",
+          "armGroupLabels": [
+            "GAE OA"
+          ],
+          "otherNames": [
+            "Color-Advanced Microspheres",
+            "Microspheres for Embolization"
+          ]
+        }
+      ]
+    },
+    "outcomesModule": {
+      "primaryOutcomes": [
+        {
+          "measure": "Number of Participants Experiencing Treatment-related Adverse Events, as a Measure of Safety",
+          "description": "Treatment-related AEs from gennicular artery embolization during the study period",
+          "timeFrame": "Up to 12 Months after GAE"
+        }
+      ],
+      "secondaryOutcomes": [
+        {
+          "measure": "Change From Baseline in Western Ontario and McMaster Universities Osteoarthritis Index (WOMAC) as a Measure of Efficacy",
+          "description": "The Western Ontario and McMaster Universities Osteoarthritis Index (WOMAC) is a self-administered questionnaire consisting of 24 items divided into 3 subscales. Each item is scored on a scale of 0-4, which correspond to: None (0), Mild (1), Moderate (2), Severe (3), and Extreme (4). With a total possible range of 0-96, higher scores indicate worse pain, stiffness, and functional limitations.\n\nPain (5 items, possible range 0-20): during walking, using stairs, in bed, sitting or lying, and standing upright Stiffness (2 items, possible range 0-8): after first waking and later in the day Physical Function (17 items, possible range 0-68): using stairs, rising from sitting, standing, bending, walking, getting in / out of a car, shopping, putting on / taking off socks, rising from bed, lying in bed, getting in / out of bath, sitting, getting on / off toilet, heavy domestic duties, light domestic duties",
+          "timeFrame": "Baseline, Month 1, Month 3, Month 6, Month 12"
+        },
+        {
+          "measure": "Change From Baseline in Western Ontario and McMaster Universities Osteoarthritis (WOMAC) Pain Subscale as a Measure of Efficacy",
+          "description": "The WOMAC Pain Subscale is a self-administered questionnaire of 5 items to assess Pain: during walking, using stairs, in bed, sitting or lying, and standing upright.\n\nEach item is scored on a scale of 0-4: None (0), Mild (1), Moderate (2), Severe (3), and Extreme (4), with a possible total score range of 0-20.",
+          "timeFrame": "Baseline, Month 1, Month 3, Month 6, Month 12"
+        },
+        {
+          "measure": "Change From Baseline in Visual Analog Scale (VAS) as a Measure of Efficacy",
+          "description": "The patient-reported severity of knee pain was quantified using a visual analog scale (VAS) score ranging from 0 (indicating no pain) through 10 (indicating the worst pain imaginable).",
+          "timeFrame": "Baseline, Month 1, Month 3, Month 6, Month 12"
+        }
+      ]
+    },
+    "eligibilityModule": {
+      "eligibilityCriteria": "Inclusion Criteria:\n\n* Provided informed consent\n* Age ≥ 40 years and ≤ 80 years\n* Life expectancy greater than 12 months\n* Ineligibility for or refusal of surgical management\n* Moderate-severe knee pain as determined by visual analog scale \\> 4\n* Osteoarthritis based on xray\n* Local knee tenderness\n* Resistant/failed conservative treatment (e.g. NSAIDS/physical therapy/steroid joint injection)\n\nExclusion Criteria:• Mild knee pain as determined by visual analog scale \\< 4\n\n* Chronic renal insufficiency (serum creatinine \\>2 mg/dL)\n* Uncorrectable bleeding diathesis: international normalized ratio (INR) \\>1.6, Platelets \\<50,000\n* Significant arterial atherosclerosis that would limit selective angiography\n* Allergy to iodinated contrast agents that is not responsive to steroid management\n* Active Infection or malignancy\n* Appropriate candidate for knee replacement surgery determined by clinical and physical examination\n* Recent (within 3 months) or active cigarette use",
+      "healthyVolunteers": false,
+      "sex": "ALL",
+      "minimumAge": "40 Years",
+      "maximumAge": "79 Years",
+      "stdAges": [
+        "ADULT",
+        "OLDER_ADULT"
+      ]
+    },
+    "ipdSharingStatementModule": {
+      "ipdSharing": "NO"
+    }
+  },
+  "resultsSection": {
+    "participantFlowModule": {
+      "recruitmentDetails": "Of 65 individuals assessed for eligibility, 20 did not meet inclusion criteria and 5 declined to participate",
+      "groups": [
+        {
+          "id": "FG000",
+          "title": "Genicular Artery Embolization (GAE) With Embozene Microspheres",
+          "description": "Subjects were treated with a genicular artery embolization (GAE) procedure performed with Embozene Microspheres. The microspheres were delivered in a saline-contrast medium solution and delivered to the arteries supplying the areas of the subject's pain."
+        }
+      ],
+      "periods": [
+        {
+          "title": "Overall Study",
+          "milestones": [
+            {
+              "type": "STARTED",
+              "achievements": [
+                {
+                  "groupId": "FG000",
+                  "numSubjects": "40"
+                }
+              ]
+            },
+            {
+              "type": "COMPLETED",
+              "achievements": [
+                {
+                  "groupId": "FG000",
+                  "numSubjects": "40"
+                }
+              ]
+            },
+            {
+              "type": "NOT COMPLETED",
+              "achievements": [
+                {
+                  "groupId": "FG000",
+                  "numSubjects": "0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "baselineCharacteristicsModule": {
+      "groups": [
+        {
+          "id": "BG000",
+          "title": "Genicular Artery Embolization (GAE) With Embozene Microspheres",
+          "description": "Subjects were treated with a genicular artery embolization (GAE) procedure performed with Embozene Microspheres. The microspheres were delivered in a saline-contrast medium solution and delivered to the arteries supplying the areas of the subject's pain."
+        }
+      ],
+      "denoms": [
+        {
+          "units": "Participants",
+          "counts": [
+            {
+              "groupId": "BG000",
+              "value": "40"
+            }
+          ]
+        }
+      ],
+      "measures": [
+        {
+          "title": "Age, Continuous",
+          "paramType": "MEDIAN",
+          "dispersionType": "FULL_RANGE",
+          "unitOfMeasure": "years",
+          "classes": [
+            {
+              "denoms": [
+                {
+                  "units": "Participants",
+                  "counts": [
+                    {
+                      "groupId": "BG000",
+                      "value": "40"
+                    }
+                  ]
+                }
+              ],
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "69",
+                      "lowerLimit": "49",
+                      "upperLimit": "80"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Sex: Female, Male",
+          "paramType": "COUNT_OF_PARTICIPANTS",
+          "unitOfMeasure": "Participants",
+          "classes": [
+            {
+              "denoms": [
+                {
+                  "units": "Participants",
+                  "counts": [
+                    {
+                      "groupId": "BG000",
+                      "value": "40"
+                    }
+                  ]
+                }
+              ],
+              "categories": [
+                {
+                  "title": "Female",
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "31"
+                    }
+                  ]
+                },
+                {
+                  "title": "Male",
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "9"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Race and Ethnicity Not Collected",
+          "populationDescription": "Race and Ethnicity were not collected from any participant.",
+          "paramType": "COUNT_OF_PARTICIPANTS",
+          "unitOfMeasure": "Participants",
+          "classes": [
+            {
+              "denoms": [
+                {
+                  "units": "Participants",
+                  "counts": [
+                    {
+                      "groupId": "BG000",
+                      "value": "0"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Region of Enrollment",
+          "paramType": "COUNT_OF_PARTICIPANTS",
+          "unitOfMeasure": "Participants",
+          "classes": [
+            {
+              "title": "United States",
+              "denoms": [
+                {
+                  "units": "Participants",
+                  "counts": [
+                    {
+                      "groupId": "BG000",
+                      "value": "40"
+                    }
+                  ]
+                }
+              ],
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "40"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Body Mass Index (BMI)",
+          "description": "Body Mass Index (BMI) is a simple calculation of kg/m\\^2 where kg is a person's weight in kilograms and m\\^2 is their height in metres squared. A BMI of 25.0 or more is overweight, while the healthy range is 18.5 to 24.9.",
+          "paramType": "MEDIAN",
+          "dispersionType": "FULL_RANGE",
+          "unitOfMeasure": "kg/m^2",
+          "classes": [
+            {
+              "denoms": [
+                {
+                  "units": "Participants",
+                  "counts": [
+                    {
+                      "groupId": "BG000",
+                      "value": "40"
+                    }
+                  ]
+                }
+              ],
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "29.3",
+                      "lowerLimit": "18.8",
+                      "upperLimit": "43.7"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "WOMAC Index",
+          "description": "The The Western Ontario and McMaster Universities Osteoarthritis (WOMAC) Index is a self-administered questionnaire consisting of 24 items divided into 3 subscales. Each item is scored on a scale of 0-4, which correspond to: None (0), Mild (1), Moderate (2), Severe (3), and Extreme (4). Possible score range 0-96. Higher scores indicate worse pain, stiffness, and functional limitations.",
+          "paramType": "MEDIAN",
+          "dispersionType": "FULL_RANGE",
+          "unitOfMeasure": "units on a scale",
+          "classes": [
+            {
+              "denoms": [
+                {
+                  "units": "Participants",
+                  "counts": [
+                    {
+                      "groupId": "BG000",
+                      "value": "40"
+                    }
+                  ]
+                }
+              ],
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "52",
+                      "lowerLimit": "23",
+                      "upperLimit": "88"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "WOMAC Pain Score",
+          "description": "The Western Ontario and McMaster Universities Osteoarthritis (WOMAC) pain scale quantifies knee pain severity with activities of daily living. The WOMAC pain scale asks the patient to rate the extent of pain in the involved knee/hip during activities. The WOMAC pain scale ranges from 0 (no pain with all 5 activities, ie, flat surface walking, stairclimbing, at night, sitting or lying, standing) to 20 (extreme pain with all 5 activities).",
+          "paramType": "MEDIAN",
+          "dispersionType": "FULL_RANGE",
+          "unitOfMeasure": "units on a scale",
+          "classes": [
+            {
+              "denoms": [
+                {
+                  "units": "Participants",
+                  "counts": [
+                    {
+                      "groupId": "BG000",
+                      "value": "40"
+                    }
+                  ]
+                }
+              ],
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "11",
+                      "lowerLimit": "5",
+                      "upperLimit": "19"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Visual Analog Scale (VAS) pain score",
+          "description": "The severity of knee pain was quantified using a visual analog scale (VAS) score ranging from 0 (indicating no pain) through 10 (indicating the worst pain imaginable).",
+          "paramType": "MEDIAN",
+          "dispersionType": "FULL_RANGE",
+          "unitOfMeasure": "units on a scale",
+          "classes": [
+            {
+              "denoms": [
+                {
+                  "units": "Participants",
+                  "counts": [
+                    {
+                      "groupId": "BG000",
+                      "value": "40"
+                    }
+                  ]
+                }
+              ],
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "BG000",
+                      "value": "8",
+                      "lowerLimit": "5",
+                      "upperLimit": "10"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "outcomeMeasuresModule": {
+      "outcomeMeasures": [
+        {
+          "type": "PRIMARY",
+          "title": "Number of Participants Experiencing Treatment-related Adverse Events, as a Measure of Safety",
+          "description": "Treatment-related AEs from gennicular artery embolization during the study period",
+          "reportingStatus": "POSTED",
+          "paramType": "COUNT_OF_PARTICIPANTS",
+          "unitOfMeasure": "Participants",
+          "timeFrame": "Up to 12 Months after GAE",
+          "groups": [
+            {
+              "id": "OG000",
+              "title": "Genicular Artery Embolization (GAE) With Embozene Microspheres",
+              "description": "Subjects were treated with a genicular artery embolization (GAE) procedure performed with Embozene Microspheres. The microspheres were delivered in a saline-contrast medium solution and delivered to the arteries supplying the areas of the subject's pain."
+            }
+          ],
+          "denoms": [
+            {
+              "units": "Participants",
+              "counts": [
+                {
+                  "groupId": "OG000",
+                  "value": "40"
+                }
+              ]
+            }
+          ],
+          "classes": [
+            {
+              "title": "Groin hematoma",
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "1"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Self-resolving focal skin ulceration",
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "7"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Asymptomatic small bone infarct on MRI",
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "2"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "SECONDARY",
+          "title": "Change From Baseline in Western Ontario and McMaster Universities Osteoarthritis Index (WOMAC) as a Measure of Efficacy",
+          "description": "The Western Ontario and McMaster Universities Osteoarthritis Index (WOMAC) is a self-administered questionnaire consisting of 24 items divided into 3 subscales. Each item is scored on a scale of 0-4, which correspond to: None (0), Mild (1), Moderate (2), Severe (3), and Extreme (4). With a total possible range of 0-96, higher scores indicate worse pain, stiffness, and functional limitations.\n\nPain (5 items, possible range 0-20): during walking, using stairs, in bed, sitting or lying, and standing upright Stiffness (2 items, possible range 0-8): after first waking and later in the day Physical Function (17 items, possible range 0-68): using stairs, rising from sitting, standing, bending, walking, getting in / out of a car, shopping, putting on / taking off socks, rising from bed, lying in bed, getting in / out of bath, sitting, getting on / off toilet, heavy domestic duties, light domestic duties",
+          "reportingStatus": "POSTED",
+          "paramType": "MEDIAN",
+          "dispersionType": "Full Range",
+          "unitOfMeasure": "score on a scale",
+          "timeFrame": "Baseline, Month 1, Month 3, Month 6, Month 12",
+          "groups": [
+            {
+              "id": "OG000",
+              "title": "Genicular Artery Embolization (GAE) With Embozene Microspheres",
+              "description": "Subjects were treated with a genicular artery embolization (GAE) procedure performed with Embozene Microspheres. The microspheres were delivered in a saline-contrast medium solution and delivered to the arteries supplying the areas of the subject's pain."
+            }
+          ],
+          "denoms": [
+            {
+              "units": "Participants",
+              "counts": [
+                {
+                  "groupId": "OG000",
+                  "value": "40"
+                }
+              ]
+            }
+          ],
+          "classes": [
+            {
+              "title": "Month 1",
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "-20.5",
+                      "lowerLimit": "-71",
+                      "upperLimit": "20"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Month 3",
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "-29.5",
+                      "lowerLimit": "-74",
+                      "upperLimit": "26"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Month 6",
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "-26.5",
+                      "lowerLimit": "-81",
+                      "upperLimit": "19"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Month 12",
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "-29.0",
+                      "lowerLimit": "-82",
+                      "upperLimit": "19"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "SECONDARY",
+          "title": "Change From Baseline in Western Ontario and McMaster Universities Osteoarthritis (WOMAC) Pain Subscale as a Measure of Efficacy",
+          "description": "The WOMAC Pain Subscale is a self-administered questionnaire of 5 items to assess Pain: during walking, using stairs, in bed, sitting or lying, and standing upright.\n\nEach item is scored on a scale of 0-4: None (0), Mild (1), Moderate (2), Severe (3), and Extreme (4), with a possible total score range of 0-20.",
+          "reportingStatus": "POSTED",
+          "paramType": "MEDIAN",
+          "dispersionType": "Full Range",
+          "unitOfMeasure": "score on a scale",
+          "timeFrame": "Baseline, Month 1, Month 3, Month 6, Month 12",
+          "groups": [
+            {
+              "id": "OG000",
+              "title": "Genicular Artery Embolization (GAE) With Embozene Microspheres",
+              "description": "Subjects were treated with a genicular artery embolization (GAE) procedure performed with Embozene Microspheres. The microspheres were delivered in a saline-contrast medium solution and delivered to the arteries supplying the areas of the subject's pain."
+            }
+          ],
+          "denoms": [
+            {
+              "units": "Participants",
+              "counts": [
+                {
+                  "groupId": "OG000",
+                  "value": "40"
+                }
+              ]
+            }
+          ],
+          "classes": [
+            {
+              "title": "Month 1",
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "-6",
+                      "lowerLimit": "-17",
+                      "upperLimit": "3"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Month 3",
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "-7",
+                      "lowerLimit": "-15",
+                      "upperLimit": "6"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Month 6",
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "-7",
+                      "lowerLimit": "-14",
+                      "upperLimit": "6"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Month 12",
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "-7.5",
+                      "lowerLimit": "-14",
+                      "upperLimit": "6"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "SECONDARY",
+          "title": "Change From Baseline in Visual Analog Scale (VAS) as a Measure of Efficacy",
+          "description": "The patient-reported severity of knee pain was quantified using a visual analog scale (VAS) score ranging from 0 (indicating no pain) through 10 (indicating the worst pain imaginable).",
+          "reportingStatus": "POSTED",
+          "paramType": "MEDIAN",
+          "dispersionType": "Full Range",
+          "unitOfMeasure": "score on a scale",
+          "timeFrame": "Baseline, Month 1, Month 3, Month 6, Month 12",
+          "groups": [
+            {
+              "id": "OG000",
+              "title": "Genicular Artery Embolization (GAE) With Embozene Microspheres",
+              "description": "Subjects were treated with a genicular artery embolization (GAE) procedure performed with Embozene Microspheres. The microspheres were delivered in a saline-contrast medium solution and delivered to the arteries supplying the areas of the subject's pain."
+            }
+          ],
+          "denoms": [
+            {
+              "units": "Participants",
+              "counts": [
+                {
+                  "groupId": "OG000",
+                  "value": "40"
+                }
+              ]
+            }
+          ],
+          "classes": [
+            {
+              "title": "Month 1",
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "-4.5",
+                      "lowerLimit": "-9",
+                      "upperLimit": "2"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Month 3",
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "-4.5",
+                      "lowerLimit": "-10",
+                      "upperLimit": "2"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Month 6",
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "-5.0",
+                      "lowerLimit": "-8.5",
+                      "upperLimit": "-1"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Month 12",
+              "categories": [
+                {
+                  "measurements": [
+                    {
+                      "groupId": "OG000",
+                      "value": "-5.0",
+                      "lowerLimit": "-9",
+                      "upperLimit": "0"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "adverseEventsModule": {
+      "frequencyThreshold": "0",
+      "timeFrame": "12 months",
+      "description": "Adverse Events were recorded, per protocol, only if determined to be at least possibly related to study intervention",
+      "eventGroups": [
+        {
+          "id": "EG000",
+          "title": "Genicular Artery Embolization (GAE) With Embozene Microspheres",
+          "description": "Subjects were treated with a genicular artery embolization (GAE) procedure performed with Embozene Microspheres. The microspheres were delivered in a saline-contrast medium solution and delivered to the arteries supplying the areas of the subject's pain.",
+          "deathsNumAffected": 0,
+          "deathsNumAtRisk": 40,
+          "seriousNumAffected": 1,
+          "seriousNumAtRisk": 40,
+          "otherNumAffected": 9,
+          "otherNumAtRisk": 40
+        }
+      ],
+      "seriousEvents": [
+        {
+          "term": "Groin hematoma",
+          "organSystem": "Injury, poisoning and procedural complications",
+          "assessmentType": "SYSTEMATIC_ASSESSMENT",
+          "stats": [
+            {
+              "groupId": "EG000",
+              "numEvents": 1,
+              "numAffected": 1,
+              "numAtRisk": 40
+            }
+          ]
+        }
+      ],
+      "otherEvents": [
+        {
+          "term": "Focal skin ulceration",
+          "organSystem": "Skin and subcutaneous tissue disorders",
+          "assessmentType": "SYSTEMATIC_ASSESSMENT",
+          "stats": [
+            {
+              "groupId": "EG000",
+              "numEvents": 7,
+              "numAffected": 7,
+              "numAtRisk": 40
+            }
+          ]
+        },
+        {
+          "term": "Asymptomatic bone infarct",
+          "organSystem": "Musculoskeletal and connective tissue disorders",
+          "assessmentType": "SYSTEMATIC_ASSESSMENT",
+          "stats": [
+            {
+              "groupId": "EG000",
+              "numEvents": 2,
+              "numAffected": 2,
+              "numAtRisk": 40
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "documentSection": {
+    "largeDocumentModule": {
+      "largeDocs": [
+        {
+          "typeAbbrev": "Prot_SAP",
+          "hasProtocol": true,
+          "hasSap": true,
+          "hasIcf": false,
+          "label": "Study Protocol and Statistical Analysis Plan",
+          "date": "2020-03-13",
+          "uploadDate": "2022-08-10T19:17",
+          "filename": "Prot_SAP_000.pdf",
+          "size": 731397
+        }
+      ]
+    }
+  },
+  "derivedSection": {
+    "miscInfoModule": {
+      "versionHolder": "2026-11-13",
+      "submissionTracking": {
+        "firstMcpInfo": {
+          "postDateStruct": {
+            "date": "2022-09-29",
+            "type": "ACTUAL"
+          }
+        }
+      }
+    },
+    "conditionBrowseModule": {
+      "meshes": [
+        {
+          "id": "D020370",
+          "term": "Osteoarthritis, Knee"
+        },
+        {
+          "id": "D059350",
+          "term": "Chronic Pain"
+        }
+      ],
+      "ancestors": [
+        {
+          "id": "D010003",
+          "term": "Osteoarthritis"
+        },
+        {
+          "id": "D001168",
+          "term": "Arthritis"
+        },
+        {
+          "id": "D007592",
+          "term": "Joint Diseases"
+        },
+        {
+          "id": "D009140",
+          "term": "Musculoskeletal Diseases"
+        },
+        {
+          "id": "D012216",
+          "term": "Rheumatic Diseases"
+        },
+        {
+          "id": "D010146",
+          "term": "Pain"
+        },
+        {
+          "id": "D009461",
+          "term": "Neurologic Manifestations"
+        },
+        {
+          "id": "D012816",
+          "term": "Signs and Symptoms"
+        },
+        {
+          "id": "D013568",
+          "term": "Pathological Conditions, Signs and Symptoms"
+        }
+      ]
+    },
+    "interventionBrowseModule": {
+      "meshes": [
+        {
+          "id": "D008863",
+          "term": "Microspheres"
+        },
+        {
+          "id": "D004621",
+          "term": "Embolization, Therapeutic"
+        }
+      ],
+      "ancestors": [
+        {
+          "id": "D004864",
+          "term": "Equipment and Supplies"
+        },
+        {
+          "id": "D006489",
+          "term": "Hemostatic Techniques"
+        },
+        {
+          "id": "D013812",
+          "term": "Therapeutics"
+        },
+        {
+          "id": "D060205",
+          "term": "Therapeutic Occlusion"
+        }
+      ]
+    }
+  },
+  "hasResults": true
+}
