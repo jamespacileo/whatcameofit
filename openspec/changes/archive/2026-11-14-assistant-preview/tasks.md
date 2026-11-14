@@ -13,4 +13,4 @@
 
 ## 3. Use
 
-- [ ] 3.1 The operator reviews the assistant's decisions and repeats the ones they agree with; verify a normal export then contains those claims
+- [x] 3.1 Superseded on 2026-11-13 by change `auto-publish` (`docs/adr/0001-publish-by-rule-archive-to-remove.md`): a normal export now contains assistant-decided claims, each marked as not checked by a person, so no claim waits for the operator. An operator who repeats a decision without `--as-assistant` makes it their own, and the claim counts as checked once no assistant decision stands on it.
