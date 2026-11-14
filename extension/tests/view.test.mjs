@@ -169,13 +169,13 @@ test("the lists are offered under an answer, and not while the page is being rea
   const root = new Element("main");
   render(root, trackedState, site, listActions, kept);
   assert.match(root.textContent, /Recently checked.*Following.*1 changed/);
-  assert.match(root.textContent, /Follow this claim/);
+  assert.match(root.textContent, /Keep me up to date/);
 
   render(root, { kind: "searching" }, site, listActions, kept);
   assert.doesNotMatch(root.textContent, /Recently checked/);
 
   render(root, trackedState, site, actions);
-  assert.doesNotMatch(root.textContent, /Recently checked|Follow this claim/);
+  assert.doesNotMatch(root.textContent, /Recently checked|Keep me up to date/);
 });
 
 test("a followed claim that moved says what it was, in words", () => {
@@ -183,7 +183,7 @@ test("a followed claim that moved says what it was, in words", () => {
   render(root, trackedState, site, listActions, { ...kept, followed: ["/reviewed"], was: { "/reviewed": "Trial registered" } });
   assert.match(root.textContent, /Changed since you last looked\. Was: Trial registered\./);
   assert.match(root.textContent, /You follow this claim\..*Stop following/);
-  assert.doesNotMatch(root.textContent, /Follow this claim/);
+  assert.doesNotMatch(root.textContent, /Keep me up to date/);
 });
 
 test("a checked page leads to its one claim, its candidates, or back to the page", () => {
