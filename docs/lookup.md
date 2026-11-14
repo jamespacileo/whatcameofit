@@ -101,7 +101,7 @@ The correction in `openspec/changes/visible-content-lookup` returns a non-treatm
 
 A linked paper that passes its deadline, or fails, is not dropped in silence. The answer counts the papers not looked up, the site and the popup say beside the list that a trial such a paper reports may be missing, and that answer is kept out of the shared results library and the popup's saved results, so the next lookup asks again. Europe PMC answered the same papers in under 0.3 seconds a minute after taking 17 to 25 seconds over them.
 
-The diagnostic tests use stalled synthetic sources, including sources that ignore cancellation, and check that late completions cannot update the popup or its saved results. The fix must be deployed with an updated Safari extension before installed users receive all of these protections.
+The diagnostic tests use stalled synthetic sources, including sources that ignore cancellation, and check that late completions cannot update the popup or its saved results. The service fix was deployed through [PR #94](https://github.com/jamespacileo/whatcameofit/pull/94), and Safari 0.9.2 (11) was installed locally. On the same article, an explicit fresh search including automatic screenshot fallback had reached its result by the 9.4-second UI observation. This was a single observed check, not a performance guarantee. See `openspec/changes/visible-content-lookup/latency-verification.md` for the release evidence; no App Store submission was made.
 
 ## Posts on social media
 

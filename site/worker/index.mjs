@@ -18,6 +18,7 @@ import { followShort } from "./short.mjs";
 import { readBody, sourceUrl, validateImage } from "./visual.mjs";
 import { previousResult, storeResult } from "./results.mjs";
 import { makeResearch } from "./research.mjs";
+import { eventStream, serverTiming, stageTimes } from "./stream.mjs";
 import { handleTrial } from "./trials.mjs";
 
 const PATH = "/api/lookup";
@@ -31,10 +32,13 @@ const MAX_SHORT_LINKS = 3;
 const PROOF_TIMEOUT_MS = 3_000;
 const UNREADABLE = { robots: "unreadable_robots", unreadable: "unreadable", address: "address" };
 
-function answer(body, status = 200) {
-  return Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
+function answer(body, status = 200, timings = null) {
+  const timing = serverTiming(timings);
+  return Response.json(body, { status, headers: { "Cache-Control": "no-store", ...(timing ? { "Server-Timing": timing } : {}) } });
 }
 const refuse = (status, error, more = {}) => answer({ error, ...more }, status);
+// The same refusal, before it is known whether it is answered as JSON or as an event.
+const refusal = (status, error, more = {}) => ({ status, body: { error, ...more } });
 
 function realTools(env) {
   return {
@@ -47,8 +51,9 @@ function realTools(env) {
       decisions: env.DECISION_BACKEND === "openai-decisions",
       decisionsModel: env.DECISIONS_MODEL || undefined,
     }),
-    registry: makeRegistry({ fetch, contact: env.CONTACT_EMAIL }),
-    papers: makePapers({ fetch, contact: env.CONTACT_EMAIL }),
+    // Public registry and paper answers are reused briefly; see worker/public-cache.mjs.
+    registry: makeRegistry({ fetch, contact: env.CONTACT_EMAIL, cache: env.LOOKUP_RESULTS }),
+    papers: makePapers({ fetch, contact: env.CONTACT_EMAIL, cache: env.LOOKUP_RESULTS }),
     research: makeResearch({ fetch, apiKey: env.OPENALEX_API_KEY, contact: env.CONTACT_EMAIL, cache: env.LOOKUP_RESULTS }),
     fetch,
   };
@@ -187,8 +192,31 @@ export async function handle(request, env, tools) {
     if (cached) return answer(cached);
   }
 
+  // An opted-in caller is answered in stages: the completed clinical answer as soon as
+  // it is ready, then the answer with research enrichment. Others get one JSON answer.
+  const work = (onCore, timings) => lookUpFor({ sent, read, text, links, platform, image, pageUrl, cacheUrl, here, env, tools, onCore, timings });
+  if (sent?.stream !== true) {
+    const timings = {};
+    const { status, body, keep } = await work(null, timings);
+    await keep?.();
+    return answer(body, status, status === 200 ? timings : null);
+  }
+  return eventStream(async (send) => {
+    const timings = {};
+    const { status, body, keep } = await work((core) => send({ type: "core", result: core, timings: stageTimes(timings) }), timings);
+    if (status !== 200) send({ type: "error", status, ...body });
+    else send({ type: "complete", result: body, timings: stageTimes(timings) });
+    // Kept once the reader has the whole answer, whether or not they are still reading.
+    await keep?.();
+  });
+}
+
+/** One lookup after its request is accepted: a status, the body to answer with and, for
+ * an answer, how to keep it for the next reader: only once complete, and only when public. */
+async function lookUpFor({ sent, read, text, links, platform, image, pageUrl, cacheUrl, here, env, tools, onCore, timings }) {
   try {
-    const { model, registry, papers, research, fetch: get = fetch, proofTimeoutMs = PROOF_TIMEOUT_MS } = tools ?? realTools(env);
+    const { model, registry, papers, research, fetch: get = fetch, proofTimeoutMs = PROOF_TIMEOUT_MS,
+      paperAllowanceMs, paperSpacingMs } = tools ?? realTools(env);
     const index = await env.ASSETS.fetch(new Request(new URL("/lookup.json", here)))
       .then((response) => (response.ok ? response.json() : { claims: {} }))
       .catch(() => ({ claims: {} }));
@@ -198,15 +226,15 @@ export async function handle(request, env, tools) {
     let publicVerified = false;
     if (read?.kind === "article") {
       const article = await readArticle(read.address, { fetch: get, contact: env.CONTACT_EMAIL });
-      if (article.refused) return refuse(422, UNREADABLE[article.refused]);
+      if (article.refused) return refusal(422, UNREADABLE[article.refused]);
       text = article.text;
       page = article.page;
       publicVerified = true;
     } else if (read?.kind === "post") {
       const both = await readPostAndArticle(read, index, { fetch: get, contact: env.CONTACT_EMAIL });
-      if (both.refused) return refuse(422, both.refused, { platform: read.platform });
+      if (both.refused) return refusal(422, both.refused, { platform: read.platform });
       post = both.source;
-      if (both.tracked) return answer({ article_tracked: true, post, tracked: both.tracked, candidates: [] });
+      if (both.tracked) return { status: 200, body: { article_tracked: true, post, tracked: both.tracked, candidates: [] } };
       text = both.text;
       page = both.page;
       publicVerified = true;
@@ -215,8 +243,8 @@ export async function handle(request, env, tools) {
       // a post this service read itself.
       const both = await withLinkedArticle(platform, { text, links }, index, { fetch: get, contact: env.CONTACT_EMAIL });
       post = { ...both.source, read_in_browser: true };
-      if (both.tracked) return answer({ article_tracked: true, post, tracked: both.tracked, candidates: [] });
-      if (!text && !both.source.article_read) return refuse(422, "post_unreadable", { platform });
+      if (both.tracked) return { status: 200, body: { article_tracked: true, post, tracked: both.tracked, candidates: [] } };
+      if (!text && !both.source.article_read) return refusal(422, "post_unreadable", { platform });
       text = both.text;
       page = both.page;
     } else if (links.length || publishedIn(text)) {
@@ -242,14 +270,17 @@ export async function handle(request, env, tools) {
       // Visual contents can differ from what an anonymous reader sees. They are not
       // published merely because the surrounding article is accessible.
     }
-    const found = { ...(await lookUp({ text, model, registry, index, page, papers, research, image, pageUrl })), post,
-      ...(image ? { source: { kind: "screenshot", host: pageUrl ? new URL(pageUrl).hostname : null } } : {}) };
-    await storeResult(env.LOOKUP_RESULTS, cacheUrl, found, publicVerified);
-    return answer(found);
+    // The core and the complete answer carry the same context: where it was read from.
+    const placed = (found) => ({ ...found, post,
+      ...(image ? { source: { kind: "screenshot", host: pageUrl ? new URL(pageUrl).hostname : null } } : {}) });
+    const found = placed(await lookUp({ text, model, registry, index, page, papers, research, image, pageUrl, timings,
+      ...(paperAllowanceMs ? { paperAllowanceMs } : {}), ...(paperSpacingMs ? { paperSpacingMs } : {}),
+      ...(onCore ? { onCore: (core) => onCore(placed(core)) } : {}) }));
+    return { status: 200, body: found, keep: () => storeResult(env.LOOKUP_RESULTS, cacheUrl, found, publicVerified) };
   } catch (error) {
     // What failed may quote what was sent, so it is not written anywhere.
-    if (error?.code === "budget_exhausted") return refuse(503, "budget_exhausted");
-    return refuse(502, "failed");
+    if (error?.code === "budget_exhausted") return refusal(503, "budget_exhausted");
+    return refusal(502, "failed");
   }
 }
 

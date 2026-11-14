@@ -5,7 +5,7 @@ import { SITE } from "./config.js";
 import { createPopupController } from "./controller.js";
 import { LIVE, describeAnswer } from "./live-lookup.js";
 import { readAddress } from "./lookup-match.js";
-import { collectFromPage, composeRequest } from "./open-page.js";
+import { collectFromPage, composeRequest, fingerprintInput, readableArticle } from "./open-page.js";
 import { pageAsText, readPage as readHtmlPage } from "./page.js";
 import { resolveShortLinks } from "./short-links.js";
 import { render } from "./view.js";
@@ -25,7 +25,9 @@ const controller = createPopupController({
     const [tab] = await api.tabs.query({ active: true, currentWindow: true });
     return tab ? { ...tab, key: articleKey(tab.url) } : null;
   },
-  async readPage(tab, signal) {
+  // `onContext` hears the cleaned address once selection and private-window checks are
+  // done, so an earlier shared result can be asked for while links are still resolved.
+  async readPage(tab, signal, { onContext } = {}) {
     const [{ result }] = await api.scripting.executeScript({ target: { tabId: tab.id }, func: collectFromPage });
     if (articleKey(result.address) !== tab.key) {
       const error = new Error("The open page changed during lookup.");
@@ -39,15 +41,18 @@ const controller = createPopupController({
     const request = composeRequest(result, tab.url, { readAddress, readPage: readHtmlPage, pageAsText }) ??
       (visible.media.length ? { text: result.postTitle || result.title || "", links: [], platform: readAddress(tab.url).platform } : null);
     if (request) {
+      const contextual = !visible.selectionOnly && !tab.incognito;
+      if (contextual) onContext?.({ pageUrl: publicPageUrl(tab.url) });
       request.links = await resolveShortLinks(request.links, (url, options) => fetch(url, { ...options, signal }));
       request.visualCandidate = visible.media.length > 0 && !visible.sensitive && !tab.incognito;
       request.selectionOnly = visible.selectionOnly;
-      if (!visible.selectionOnly && !tab.incognito) {
+      request.readableArticle = contextual && readableArticle(result, request, tab.url, { readAddress, media: visible.media });
+      if (contextual) {
         request.pageUrl = publicPageUrl(tab.url);
         // Text-only video answers concern this video's words, not its advancing
-        // playback clock or temporary media URL. Visual answers still use pixels.
-        request.contentFingerprint = await fingerprint({ text: request.text, links: request.links,
-          media: result.mediaScope?.videoOnly ? null : visible.media });
+        // playback clock or temporary media URL; an ordinary article's, its words, not
+        // where its photo sits. Visual answers still use pixels.
+        request.contentFingerprint = await fingerprint(fingerprintInput(request, visible.media, { videoOnly: result.mediaScope?.videoOnly }));
       }
     }
     return request;
