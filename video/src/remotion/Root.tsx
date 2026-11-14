@@ -3,6 +3,7 @@
 import type { CalculateMetadataFunction } from "remotion";
 import { Composition, Still } from "remotion";
 import { loadNarration } from "./brand/narration";
+import { Sting } from "./Sting";
 import { Thumbnail } from "./Thumbnail";
 import { Video, type ExplainerProps } from "./WhatCameOfItExplainerVideo";
 
@@ -44,5 +45,33 @@ export const RemotionRoot = () => (
     <Still id="Thumbnail16x9" component={Thumbnail} width={1920} height={1080} />
     <Still id="Thumbnail4x3" component={Thumbnail} width={1200} height={900} />
     <Still id="Thumbnail9x16" component={Thumbnail} width={1080} height={1920} />
+    {/* The logo sting: four silent seconds, for the end of a video and for posts. */}
+    <Composition
+      id="Sting"
+      component={Sting}
+      width={1920}
+      height={1080}
+      fps={30}
+      durationInFrames={120}
+      defaultProps={{ orientation: "horizontal" as const }}
+    />
+    <Composition
+      id="StingSquare"
+      component={Sting}
+      width={1080}
+      height={1080}
+      fps={30}
+      durationInFrames={120}
+      defaultProps={{ orientation: "square" as const }}
+    />
+    <Composition
+      id="StingVertical"
+      component={Sting}
+      width={1080}
+      height={1920}
+      fps={30}
+      durationInFrames={120}
+      defaultProps={{ orientation: "vertical" as const }}
+    />
   </>
 );
