@@ -25,7 +25,7 @@ from thenwhat.decide.steps import suggest_evidence_stage
 from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.resolve.service import resolve_claim
 from thenwhat.review.decisions import record_decision
-from thenwhat.sources.base import SourceRecord
+from thenwhat.sources.base import SourceRecord, UnsearchableTerm
 
 NOW = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
 DOI = "10.1000/example.2018.1"
@@ -235,6 +235,30 @@ def test_each_search_term_contributes_its_trials(session: Session):
         ("clinicaltrials.gov", "NCT00000002"),
         ("clinicaltrials.gov", "NCT00000003"),
     ]
+
+
+def test_a_term_the_registry_cannot_search_for_is_reported_and_the_others_still_run(
+    session: Session,
+):
+    claim = new_claim(session)
+    add_synonym(session, "tooth-regrowth-ex1", "EX-1 antibody", "TRG-035")
+
+    class Refusing(FakeTrials):
+        def search_trials(self, intervention: str, condition: str | None = None):
+            if intervention == "EX-1 antibody":
+                raise UnsearchableTerm(intervention, "Too complicated query", "clinicaltrials.gov")
+            return super().search_trials(intervention, condition)
+
+    trials = Refusing({"TRG-035": [trial("NCT00000002")]})
+    reported: list[str] = []
+
+    added = resolve(session, claim, trials=trials, unsearchable=lambda t: reported.append(t.term))
+
+    assert [match.external_id for match in added] == ["NCT00000002"]
+    assert reported == ["EX-1 antibody"]
+    # Left to itself the failure is raised, never passed over in silence.
+    with pytest.raises(UnsearchableTerm):
+        resolve(session, claim, trials=trials)
 
 
 def test_trial_found_by_two_terms_is_one_candidate(session: Session):

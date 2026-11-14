@@ -5,6 +5,7 @@ Scenario names are from openspec source-clients.
 """
 
 from datetime import date, timedelta
+from pathlib import Path
 
 import httpx
 import pytest
@@ -13,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from thenwhat.db.models import HttpCache
 from thenwhat.sources import mesh, openalex, ror
-from thenwhat.sources.base import AllowanceUsedUp, MissingKey
+from thenwhat.sources.base import AllowanceUsedUp, MissingKey, SourceError, UnsearchableTerm
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref, Notice
 from thenwhat.sources.europepmc import EuropePmc, describe
@@ -22,6 +23,7 @@ from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.ror import Ror
 
 CONTACT = "ops@thenwhat.test"
+FIXTURES = Path(__file__).parent / "fixtures"
 NOT_FOUND = httpx.Response(404, text="not found")
 
 
@@ -403,6 +405,38 @@ def test_search_phrase_is_searched_only_within_the_condition(
     assert [request.url.params.get("query.cond") for request in replay.requests] == [
         "Stiff person syndrome"
     ]
+
+
+def test_a_term_the_registry_cannot_read_is_reported_with_its_reason_and_not_retried(
+    session: Session, fake_time
+):
+    refused = httpx.Response(
+        400, text=(FIXTURES / "clinicaltrials/search_too_complicated.txt").read_text()
+    )
+    source, replay = trials(session, fake_time, lambda request: refused)
+    long_phrase = (
+        "patient-specific 3D-printed polycaprolactone scaffold with recombinant human"
+        " platelet-derived growth factor-BB"
+    )
+
+    with pytest.raises(UnsearchableTerm) as raised:
+        source.search_phrase(long_phrase, "Periodontal bone defect")
+
+    assert raised.value.term == long_phrase
+    assert str(raised.value) == (
+        f"clinicaltrials.gov cannot search for '{long_phrase}': Too complicated query"
+    )
+    # One request: no other wording of the condition or the phrase is tried after it.
+    assert len(replay.requests) == 1
+    assert fake_time.slept == []
+
+
+def test_another_refusal_by_the_registry_is_still_a_plain_error(session: Session, fake_time):
+    source, _ = trials(session, fake_time, lambda request: httpx.Response(400, text="Bad page"))
+
+    with pytest.raises(SourceError, match="status 400") as raised:
+        source.search_trials("tideglusib")
+    assert not isinstance(raised.value, UnsearchableTerm)
 
 
 def test_search_phrase_without_a_condition_sends_nothing(session: Session, fake_time, fixture_json):
