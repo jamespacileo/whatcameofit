@@ -219,7 +219,7 @@ Limits: one run, with one model. The phrases were not read one by one. Many are 
 
 **Before the run**, one claim was resolved alone to see the two new decision steps answer for the first time: `tourette-syndrome-wrist-nerve-stimulation`, whose status is "trial registered". It gained 20 paper candidates: 9 approved, 7 rejected and 4 pending. The reports of the Nottingham and Washington University trials scored 1.00; a commentary and unrelated neurophysiology papers were rejected. Its origin paper was left unset: "none" was the likeliest answer at 0.43.
 
-**Approved by rule, rejected afterwards (task 8.2).** The rule approved 33 papers on the run (42 with the trial claim). The operator has rejected none yet, because none has been looked at. Nothing from the run is published: papers and organisations stay out of the export until they have their own section.
+**Approved by rule, rejected afterwards (task 8.2).** The rule approved 33 papers on the run (42 with the trial claim). The operator has rejected none yet, because none has been looked at. When the run was made nothing from it was published. Since the related-papers section reached `main` the same day, an approved paper is exported with the role "related" and appears on the claim page with the next export; organisations are still not exported. So the papers the rule approved here, the retracted one and the near misses among them, are published unless the operator rejects them first.
 
 ## Trial facts in the export (14 November 2026)
 
