@@ -1019,6 +1019,49 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
     { name: "Example Targets", url: "https://targets.example/" },
     { name: "Example Proteins", url: "https://proteins.example/" },
   );
+  // And, on another claim, a drug card with the target its record names.
+  const named = fixture.claims.find((claim) => claim.slug === "phase-claim");
+  named.background.push(
+    {
+      kind: "drug",
+      fit: "exact",
+      label: "EXAMPLUMAB",
+      definition: null,
+      url: "https://targets.example/drug/CHEMBL0000001",
+      source: "opentargets",
+      external_id: "CHEMBL0000001",
+      version: null,
+      score: null,
+      molecule_kind: "antibody",
+      mechanisms: [{ action: "inhibitor", target: "Example receptor 1" }],
+      facts_source: "chembl",
+      reasons: [{ code: "drug_name_equals_name", name: "examplumab" }],
+      decided_by: "rule",
+      read_at: "2026-11-14T09:00:00Z",
+    },
+    {
+      kind: "target",
+      fit: "exact",
+      label: "EXR1",
+      name: "example receptor 1",
+      definition: "A synthetic description of the receptor.",
+      definition_source: "uniprot",
+      url: "https://targets.example/target/ENSG00000000002",
+      source: "opentargets",
+      external_id: "ENSG00000000002",
+      version: null,
+      score: null,
+      facts_source: "chembl",
+      reasons: [{ code: "drug_record_names_target", name: "EXAMPLUMAB" }],
+      decided_by: "rule",
+      read_at: "2026-11-14T09:00:00Z",
+    },
+  );
+  fixture.card_sources.push({
+    ...source("chembl", "Example Drugs", "Example Drugs, An Institute", "CC BY-SA 3.0 Unported", "https://drugs.example/"),
+    in_data_file: false,
+  });
+  fixture.sources.push({ name: "Example Drugs", url: "https://drugs.example/" });
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-kind-"));
   const file = path.join(directory, "export.json");
   fs.writeFileSync(file, JSON.stringify(fixture));
@@ -1051,6 +1094,27 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   assert.match(footer, /href="https:\/\/proteins\.example\/"[^>]*>Example Proteins</);
   // A page with no target card does not carry the sentence about genes.
   assert.ok(!page("phase-claim/index.html").includes("known to work through that gene"));
+
+  // The drug card and the target its record names (openspec knowledge-cards, group 6).
+  const drugPage = fs.readFileSync(path.join(dist, "phase-claim/index.html"), "utf8");
+  const drugs = backgroundOf(drugPage);
+  assert.equal(count(drugs, 'class="card-kind"'), 4);
+  assert.match(drugs, /The drug, as a drug database records it/);
+  assert.match(drugs, /href="https:\/\/targets\.example\/drug\/CHEMBL0000001"[^>]*>\s*EXAMPLUMAB\s*</);
+  assert.match(drugs, /<div class="card-facts">\s*<p>Antibody<\/p>\s*<ul>\s*<li>Inhibitor of Example receptor 1<\/li>\s*<\/ul>/);
+  // No percentage: the rule stands where a score would, and opens to its sentence.
+  assert.match(drugs, /<strong>Matched by exact name<\/strong>/);
+  assert.match(drugs, /is the same as “examplumab”, a name this claim uses\. Matched by that rule, so there is no percentage\./);
+  assert.match(drugs, /href="https:\/\/drugs\.example\/"[^>]*>\s*Kind of molecule and what it acts on: Example Drugs, An Institute, CC BY-SA 3\.0 Unported\s*</);
+  // Its record's one target, worded as the record's and not as a gene the name mentions.
+  assert.match(drugs, /What the drug acts on, as its record says/);
+  assert.match(drugs, /<strong>From the drug’s record<\/strong>/);
+  assert.match(drugs, /That the drug acts on it: Example Drugs, An Institute, CC BY-SA 3\.0 Unported/);
+  assert.match(drugs, /nothing here is a reason to start or stop a medicine\./);
+  assert.ok(!drugs.includes("known to work through that gene"));
+  // Nothing about how far the drug has got.
+  assert.doesNotMatch(drugs.split('class="card-facts"')[1].split("</div>")[0], /phase|approved|indication/i);
+  assert.match(drugPage.split("Data sources:")[1].split("</p>")[0], />Example Drugs</);
   assert.match(section, /The kind of treatment this is, not the treatment itself/);
   assert.match(section, /href="https:\/\/vocabulary\.example\/D900009"[^>]*>\s*Example Stimulation Therapy\s*</);
   assert.match(section, /High match · 90%/);
@@ -1068,6 +1132,22 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   ]);
   assert.equal(cards[2].definition_source, "uniprot");
   assert.ok(data.card_sources.some((held) => held.name === "uniprot" && held.licence === "CC BY 4.0"));
+  // The share-alike drug facts are not in the file, and the file names the source left out.
+  const kept = data.claims.find((claim) => claim.slug === "phase-claim").background;
+  assert.deepEqual(kept.map((card) => card.kind), ["condition", "intervention"]);
+  assert.ok(!JSON.stringify(data.claims).includes("EXAMPLUMAB"));
+  assert.ok(!JSON.stringify(data.claims).includes("Example receptor 1"));
+  assert.deepEqual(data.left_out.map((left) => [left.source, left.licence]), [
+    ["Example Drugs", "CC BY-SA 3.0 Unported"],
+  ]);
+
+  // Scenario: Code without site wording. An unworded molecule kind fails the build.
+  const unworded = structuredClone(fixture);
+  unworded.claims.find((claim) => claim.slug === "phase-claim").background[2].molecule_kind = "nanobot";
+  fs.writeFileSync(file, JSON.stringify(unworded));
+  const stopped = build(file, path.join(directory, "unworded"));
+  assert.notEqual(stopped.status, 0);
+  assert.match(stopped.stdout + stopped.stderr, /card molecule kind: nanobot/);
   assert.deepEqual(cards[1].reasons[1], { code: "registry_lists_type", type: "DEVICE", trials: 3 });
 
   // An unknown fit, reason or registry type fails the build and is named.
@@ -1096,6 +1176,10 @@ test("the method page explains kind cards", () => {
   // And what a card for a named gene means.
   assert.match(part, /The card\s+means the report names the gene\. It does not mean the treatment is known to work through it,\s+and the site states no mechanism\./);
   assert.match(part, /in UniProt’s words as Open Targets Platform gives them/);
+  // And what a drug card is, where it comes from and what it leaves out.
+  assert.match(part, /the card shows the rule and no percentage/);
+  assert.match(part, /The card never says how far a drug has\s+got, what it is approved for or what it is used for/);
+  assert.match(part, /left out of the data download, which says so/);
 });
 
 // --- organisations (openspec site-publishing: "Organisations on the claim page") ---

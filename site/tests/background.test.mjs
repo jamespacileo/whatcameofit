@@ -6,10 +6,16 @@ import { test } from "node:test";
 
 import {
   BACKGROUND_NOTE,
+  DRUG_NOTE,
   TARGET_NOTE,
   cardKindText,
   creditText,
   definitionCreditText,
+  factsCreditText,
+  isDrugsTarget,
+  mechanismTexts,
+  moleculeKindText,
+  scoreLabel,
   reasonTexts,
   unwordedCardCodes,
 } from "../src/lib/background.ts";
@@ -136,6 +142,73 @@ test("Scenario: Target the report names. The card says where the gene comes from
       "card source: uniprot",
       "card synonym source: a_blog",
       "card synonym source: none given",
+    ],
+  );
+});
+
+test("a drug card says what the record says, in the site's words, with no percentage", () => {
+  const drug = card({
+    kind: "drug",
+    source: "opentargets",
+    version: null,
+    score: null,
+    molecule_kind: "protein",
+    mechanisms: [
+      { action: "agonist", target: "Glucagon-like peptide 1 receptor" },
+      { action: "binding_agent", target: "Receptor tyrosine-protein kinase erbB-2" },
+    ],
+    facts_source: "chembl",
+    reasons: [{ code: "drug_name_equals_name", name: "Tirzepatide" }],
+  });
+  assert.equal(cardKindText(drug), "The drug, as a drug database records it");
+  assert.equal(moleculeKindText(drug), "Protein or peptide");
+  assert.equal(moleculeKindText(card()), null);
+  assert.deepEqual(mechanismTexts(drug), [
+    "Agonist of Glucagon-like peptide 1 receptor",
+    "Binds to Receptor tyrosine-protein kinase erbB-2",
+  ]);
+  assert.equal(scoreLabel(drug, () => "never asked"), "Matched by exact name");
+  assert.equal(scoreLabel(card({ score: 0.9 }), (score) => `scored ${score}`), "scored 0.9");
+  assert.deepEqual(reasonTexts(drug), [
+    "The drug database’s own name for this drug is the same as “Tirzepatide”, a name this claim uses. Matched by that rule, so there is no percentage.",
+  ]);
+  assert.equal(
+    factsCreditText(drug, { credit: "ChEMBL, EMBL-EBI", licence: "CC BY-SA 3.0 Unported" }),
+    "Kind of molecule and what it acts on: ChEMBL, EMBL-EBI, CC BY-SA 3.0 Unported",
+  );
+  // The target a drug's record names is worded as the record's, not as a named gene.
+  const itsTarget = card({
+    kind: "target",
+    source: "opentargets",
+    score: null,
+    facts_source: "chembl",
+    reasons: [{ code: "drug_record_names_target", name: "SEMAGLUTIDE" }],
+  });
+  assert.equal(isDrugsTarget(itsTarget), true);
+  assert.equal(cardKindText(itsTarget), "What the drug acts on, as its record says");
+  assert.equal(scoreLabel(itsTarget, () => ""), "From the drug’s record");
+  assert.match(DRUG_NOTE, /nothing here is a reason to start or stop a medicine/);
+  // Nothing the site says of a drug recommends it or says what it is used for.
+  for (const words of [cardKindText(drug), ...mechanismTexts(drug), ...reasonTexts(drug), DRUG_NOTE]) {
+    assert.doesNotMatch(words, /recommend|should|used (for|to)|treats|approved|effective|safe/i);
+  }
+
+  const sources = [{ name: "opentargets" }, { name: "chembl" }];
+  assert.deepEqual(unwordedCardCodes([drug, itsTarget], sources), []);
+  assert.deepEqual(
+    unwordedCardCodes(
+      [
+        { ...drug, molecule_kind: "nanobot" },
+        { ...drug, mechanisms: [{ action: "persuader", target: "A receptor" }] },
+        card({ score: null }),
+      ],
+      [{ name: "opentargets" }, { name: "mesh" }],
+    ),
+    [
+      "card action: persuader",
+      "card molecule kind: nanobot",
+      "card source: chembl",
+      "card without a score: condition",
     ],
   );
 });

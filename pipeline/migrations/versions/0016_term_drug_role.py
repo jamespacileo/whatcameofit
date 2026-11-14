@@ -19,7 +19,9 @@ ADDED = "drug"
 def _allow(values: tuple[str, ...]) -> None:
     listed = ", ".join(f"'{value}'" for value in values)
     op.execute("ALTER TABLE claim_term DROP CONSTRAINT ck_claim_term_role")
-    op.execute(f"ALTER TABLE claim_term ADD CONSTRAINT ck_claim_term_role CHECK (role IN ({listed}))")
+    op.execute(
+        f"ALTER TABLE claim_term ADD CONSTRAINT ck_claim_term_role CHECK (role IN ({listed}))"
+    )
 
 
 def upgrade() -> None:
