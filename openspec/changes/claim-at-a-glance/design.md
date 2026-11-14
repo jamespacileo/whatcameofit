@@ -97,6 +97,8 @@ First run (2026-11-14), on a copy of the local database (`thenwhat_readings`), n
 - "Progression-Free Survival" was read as `survival` and worded "How long until an event, such as a relapse". The event in that trial is the illness getting worse or death, so "such as a relapse" is not exact.
 - A trial whose time frame gives no number has no follow-up, and its answer names the measure alone.
 
+Second run (2026-11-14), after the three fixes, on a fresh copy: the same 17 trials, 49 readings stored, and this time 4 refused by rule (a unit outside the list three times, a number not in the words once). The model did not answer as it had an hour before; the rules and the stored readings are what make the page repeatable. Seen on the built pages: the walking test reads "How much a test of what the body can do, such as walking, changed over 61 weeks"; progression-free survival reads "How long until an event, such as the illness getting worse or death"; every model-read answer says "very likely · 99%".
+
 Repeatability is delivered by storing readings, not by trusting a model to repeat itself. The site never says the same records always give the same answers.
 
 Rejected: the model writing the plain phrase; reading the outcome description; a second model as checker.
