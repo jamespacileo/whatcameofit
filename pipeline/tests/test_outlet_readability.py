@@ -30,11 +30,13 @@ from thenwhat.review.decisions import record_decision
 NOW = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
 SLUG = "tooth-regrowth-ex1"
 ARTICLE = f"""<html><head><meta property="og:title" content="Antibody regrows teeth">
-<meta name="description" content="A drug restored missing teeth."></head>
+<meta name="description" content="A drug restored missing teeth.">
+<meta property="article:published_time" content="2026-03-04"></head>
 <body><p>{"EX-1 regrew teeth in people born without them. " * 20}</p>
 <a href="https://doi.org/10.1234/example.2026.0042">the paper</a></body></html>"""
 # A page whose article is drawn by its scripts, as the page reader returns it: drawn.
-DRAWN_BY_SCRIPT = f"""<html><head><title>News</title></head><body><div id='app'>
+DRAWN_BY_SCRIPT = f"""<html><head><title>News</title>
+<meta property="article:published_time" content="2026-03-04"></head><body><div id='app'>
 <p>{"The drawn article says EX-1 regrew teeth. " * 20}</p></div></body></html>"""
 # A page with too little text to read.
 THIN = "<html><head><title>Short</title></head><body><p>Subscribe to read.</p></body></html>"
@@ -107,15 +109,15 @@ def test_each_outlet_is_counted_by_how_the_reader_answered(tracked: Session):
 
     opened = outlets["open.example.org"]
     assert (opened.articles, opened.read, opened.thin, opened.refused) == (3, 2, 1, 0)
-    assert opened.signals == {"headline": 3, "summary": 1, "paper link": 1}
+    assert opened.signals == {"headline": 3, "summary": 1, "date": 2, "paper link": 1}
     closed = outlets["closed.example.org"]
     assert (closed.articles, closed.refused, closed.read) == (1, 1, 0)
     assert "https://closed.example.org/story" not in web.urls
     paid = outlets["paid.example.org"]
     assert (paid.articles, paid.read, dict(paid.failed)) == (1, 0, {"402": 1})
     assert [(c.url, c.outcome, c.signals) for c in opened.checked] == [
-        ("https://open.example.org/first", "read", ("headline", "summary", "paper link")),
-        ("https://open.example.org/second", "read", ("headline",)),
+        ("https://open.example.org/first", "read", ("headline", "summary", "date", "paper link")),
+        ("https://open.example.org/second", "read", ("headline", "date")),
         ("https://open.example.org/third", "thin", ("headline",)),
     ]
     assert [c.outcome for c in (*closed.checked, *paid.checked)] == ["refused", "402"]
@@ -212,7 +214,7 @@ def test_outlets_prints_and_saves_the_record(tracked: Session, run, tmp_path: Pa
     assert rows.read_text().splitlines()[:3] == [
         "outlet,url,outcome,signals,lookup",
         "closed.example.org,https://closed.example.org/story,refused,,",
-        "open.example.org,https://open.example.org/first,read,headline; summary; paper link,",
+        "open.example.org,https://open.example.org/first,read,headline; summary; date; paper link,",
     ]
 
 
@@ -221,3 +223,23 @@ def test_outlets_with_no_article_tracked_explains_and_exits_1(run):
 
     assert result.exit_code == 1
     assert "No article is tracked" in result.output
+
+
+@pytest.mark.parametrize("missing", ["body", "headline", "date"])
+def test_preview_metadata_cannot_make_an_incomplete_page_readable(missing):
+    from thenwhat.outlets.readability import _check_article
+
+    headline = "Article headline" if missing != "headline" else None
+    date = "2026-03-04" if missing != "date" else None
+    body = "Login required" if missing == "body" else "Article body. " * 60
+    page = Page(text=body, headline=headline, published=date, summary="Preview. " * 100)
+
+    class Reader:
+        def probe(self, url):
+            from thenwhat.extract.retrieve import READ, Probe
+            return Probe(READ, 200, page)
+
+    outlet = Outlet("example.org")
+    checked = _check_article(outlet, Reader(), "https://example.org/article", [], None)
+    assert checked.outcome == "thin"
+    assert (outlet.read, outlet.thin) == (0, 1)

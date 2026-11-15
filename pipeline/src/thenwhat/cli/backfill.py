@@ -315,6 +315,8 @@ def run_command(
         # A step that calls a model stops when the month's ceiling is reached.
         before_call = ceiling_check(settings, now) if model_spend_of(step) else None
 
+        tried: set[int] = set()
+
         def work(client: Any) -> RunReport:
             return run_step(
                 open_session,
@@ -324,6 +326,7 @@ def run_command(
                 attempt_limit=settings.backfill_attempt_limit,
                 limit=share,
                 before_call=before_call,
+                tried=tried,
             )
 
         if workers == 1:

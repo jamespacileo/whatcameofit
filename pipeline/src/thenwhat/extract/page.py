@@ -73,6 +73,8 @@ class Page:
     registry_numbers: tuple[str, ...] = ()
     dois: tuple[str, ...] = ()
     pubmed_ids: tuple[str, ...] = ()
+    # When supplied by the reader, main HTML is authoritative over structured text.
+    main_text: str | None = None
 
     def as_text(self) -> str:
         """The page for a reader who sees only text: what it is first, then the article."""
@@ -85,7 +87,9 @@ class Page:
             )
             if value
         ]
-        body = self.body if self.body and len(self.body) >= BODY_FROM else self.text
+        body = self.main_text
+        if body is None:
+            body = self.body if self.body and len(self.body) >= BODY_FROM else self.text
         return "\n\n".join(part for part in ("\n".join(lead), body) if part)
 
 
@@ -112,6 +116,7 @@ def read_page(html: str, main: str | None = None) -> Page:
         summary=_first(tags, SUMMARY_TAGS) or described.get("description"),
         published=_first(tags, DATE_TAGS) or described.get("datePublished") or collector.posted,
         body=described.get("articleBody"),
+        main_text=text if main is not None else None,
         registry_numbers=_unique(
             number.upper() for number in REGISTRY_NUMBER.findall(f"{all_text} {links}")
         ),

@@ -54,7 +54,14 @@ from thenwhat.decide.steps import (
 from thenwhat.domain import Decider, ReadOutcome, ReviewState, ScreenOutcome, WorkOutcome
 from thenwhat.extract.names import is_a_class, is_a_name
 from thenwhat.extract.page import Page, published_day
-from thenwhat.extract.retrieve import READER, ArticleRetriever, NotAllowed, NotNow, NotServed
+from thenwhat.extract.retrieve import (
+    READER,
+    ArticleRetriever,
+    NotAllowed,
+    NotNow,
+    NotServed,
+    ThinPage,
+)
 from thenwhat.extract.schema import Draft
 from thenwhat.extract.service import article_from_draft, claim_from_draft, read_article
 from thenwhat.llm.client import Llm
@@ -381,6 +388,8 @@ class LinkRead:
                 ReadOutcome.CANNOT_BE_READ,
                 f"{NO_PAGE} (the site answered {missing.status})",
             )
+        except ThinPage:
+            return self._finish(record, ReadOutcome.CANNOT_BE_READ, "too little article text")
         page = retrieved.page
         day = published_day(page.published if page else None)
         if day is None:

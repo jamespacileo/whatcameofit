@@ -31,12 +31,12 @@ from thenwhat.extract.retrieve import (
 ARTICLE_URL = "https://news.example.org/2018/teeth"
 SNAPSHOT_URL = "http://web.archive.org/web/20190101000000/https://news.example.org/2018/teeth"
 MARKER = "Researchers say the & drug works on synthetic molars."
-PAGE = """<html><head><title>Teeth</title><style>p { color: red }</style>
+PAGE = f"""<html><head><title>Teeth</title><style>p {{ color: red }}</style>
 <meta property="og:title" content="Mice regrow teeth">
 <meta property="article:published_time" content="2018-03-01T08:00:00Z">
 <script>var tracking = "do not keep";</script></head>
 <body><nav>Home Sport Weather</nav><main><h1>Mice regrow teeth</h1>
-<p>Researchers say the &amp; drug works on synthetic molars.</p>
+<p>{"Researchers say the &amp; drug works on synthetic molars. " * 15}</p>
 <a href="https://doi.org/10.1234/synthetic.5678">the paper</a> NCT01234567</main>
 <footer>Cookie settings</footer></body></html>"""
 SOURCE = Path(__file__).parents[1] / "src" / "thenwhat"
@@ -69,13 +69,13 @@ def test_a_page_whose_text_exists_only_as_drawn_is_read():
     # As served, the page holds only a script; the reader returns it as drawn.
     drawn = (
         "<html><head><title>Drawn</title></head>"
-        "<body><main><p>Drawn text only.</p></main></body></html>"
+        f"<body><main><p>{'Drawn text only. ' * 40}</p></main></body></html>"
     )
 
     reader = SyntheticReader(lambda request: httpx.Response(200, text=drawn))
     retrieved = retriever(reader).retrieve(ARTICLE_URL)
 
-    assert retrieved.text == "Drawn text only."
+    assert retrieved.text == ("Drawn text only. " * 40).strip()
 
 
 def test_metadata_comes_from_the_head_and_links_of_the_page_as_drawn():
@@ -259,7 +259,7 @@ def test_a_probe_says_how_the_reader_answered():
     failing = "https://failing.example.org/story"
     reader = reader_of({ARTICLE_URL: httpx.Response(200, text=PAGE), failing: httpx.Response(402)})
     reader.not_allowed["refusing.example.org"] = "not allowed by the service"
-    reader.not_now["busy.example.org"] = None
+    reader.not_now["busy.example.org"] = 60
     probing = retriever(reader)
 
     read = probing.probe(ARTICLE_URL)
@@ -292,3 +292,38 @@ def test_no_code_decides_whether_to_read_an_article_by_comparing_content_hashes(
     assert set(_content_hash_comparisons()) == {"statements/service.py"}
     service = (SOURCE / "statements" / "service.py").read_text()
     assert "changed = hashlib.sha256(text.encode()).hexdigest() != article.content_hash" in service
+
+
+@pytest.mark.parametrize("retry", [None, -1, "60", True])
+def test_not_now_requires_a_finite_nonnegative_retry_time(retry):
+    response = httpx.Response(
+        200,
+        json={
+            "success": False,
+            "code": "NOT_NOW",
+            "reason": "site busy",
+            "retryAfter": retry,
+        },
+    )
+    reader = ArticleRetriever(
+        reader_url=READER_URL,
+        reader_key="test",
+        contact_email=None,
+        turns=threading.BoundedSemaphore(1),
+        transport=httpx.MockTransport(lambda request: response),
+    )
+    with pytest.raises(ReaderUnavailable, match="form the pipeline does not know"):
+        reader.probe(ARTICLE_URL)
+
+
+def test_thin_main_content_cannot_be_read_even_with_long_metadata():
+    from thenwhat.extract.retrieve import ThinPage
+
+    raw = (
+        '<html><head><meta property="og:description" content="'
+        + "Summary. " * 100
+        + '"></head><body>Login required</body></html>'
+    )
+    reader = SyntheticReader(lambda request: httpx.Response(200, text=raw))
+    with pytest.raises(ThinPage):
+        retriever(reader).retrieve(ARTICLE_URL)

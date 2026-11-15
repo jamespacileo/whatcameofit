@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 
 from thenwhat.db.models import Claim, Entity, EntityMatch, SourceArticle
 from thenwhat.domain import ReviewState
-from thenwhat.extract.page import BODY_FROM, Page
+from thenwhat.extract.page import BODY_FROM, Page, published_day
 from thenwhat.extract.retrieve import NOT_ALLOWED, NOT_NOW, NOT_SERVED, ArticleRetriever
 from thenwhat.outlets.icons import outlet_domain
 from thenwhat.sources.clinicaltrials import ClinicalTrials
@@ -59,7 +59,7 @@ class Outlet:
     articles: int = 0
     # The reader gave the article with enough text to read.
     read: int = 0
-    # The reader gave a page with too little text to read.
+    # The page lacks enough main text, a headline, or a usable publication date.
     thin: int = 0
     # The reader answered that the address is not allowed.
     refused: int = 0
@@ -137,7 +137,11 @@ def _check_article(
         outlet.failed[failure] += 1
         checked = Checked(url, failure)
     else:
-        thin = len(page.as_text()) < BODY_FROM
+        thin = (
+            len(page.text) < BODY_FROM
+            or not (page.headline or "").strip()
+            or published_day(page.published) is None
+        )
         if thin:
             outlet.thin += 1
         else:
@@ -191,8 +195,8 @@ def report(outlets: list[Outlet], *, checked: date) -> str:
         " Regenerate it with that command; do not edit it by hand.",
         "",
         "- Every article was asked of the page reader, which decides how each site is asked.",
-        "- **Read:** the reader gave the article. **Thin:** it gave a page with too little"
-        " text to read.",
+        "- **Read:** the reader gave enough main text, a headline and a publication date."
+        " **Thin:** at least one of those is missing.",
         "- **Refused:** the reader answered that the address is not allowed. **Failed:** the"
         " page did not come back, by the site's HTTP status, or *not now* when the reader"
         " said the site could not be asked yet.",

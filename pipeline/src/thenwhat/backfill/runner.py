@@ -67,12 +67,14 @@ def process_next(
     """
     query = due_records(step, attempt_limit)
     if skip:
-        query = query.where(step.model.id.not_in(skip))
+        query = query.where(step.model.id.not_in(skip.copy()))
     record = session.scalars(
         query.limit(1).with_for_update(skip_locked=True, of=step.model)
     ).first()
     if record is None:
         return None
+    if record.id in skip:
+        return record.id, None, None
     # Another run may have finished this record between this query's view of the ledger
     # and the moment its row lock was free. The lock is now held, so look again.
     still_due = session.scalar(
@@ -144,7 +146,7 @@ def process_batch(
     """
     query = due_records(step, attempt_limit)
     if skip:
-        query = query.where(step.model.id.not_in(skip))
+        query = query.where(step.model.id.not_in(skip.copy()))
     records = list(
         session.scalars(query.limit(size).with_for_update(skip_locked=True, of=step.model))
     )
@@ -200,6 +202,7 @@ def run_step(
     attempt_limit: int,
     limit: int | None = None,
     before_call: Callable[[Session], None] | None = None,
+    tried: set[int] | None = None,
 ) -> RunReport:
     """Process due records until none is due, the limit is reached or the source may
     not be asked. Each call of the step is its own transaction, so a run can be stopped
@@ -209,7 +212,8 @@ def run_step(
     run with the records still due: a model step's spend ceiling is checked this way.
     """
     report = RunReport(errors=[])
-    tried: set[int] = set()
+    if tried is None:
+        tried = set()
     size = batch_size_of(step)
     while limit is None or report.processed < limit:
         try:
@@ -232,6 +236,11 @@ def run_step(
                         skip=tried,
                         size=room,
                     )
+                # Remember retryable records before releasing their row locks, so
+                # another worker in this run cannot pick them immediately.
+                for record_id, outcome, _ in processed or []:
+                    if isinstance(outcome, Deferred) or outcome is WorkOutcome.FAILED:
+                        tried.add(record_id)
         except SourceStop as stop:
             report.stopped = str(stop)
             break

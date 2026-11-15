@@ -9,6 +9,7 @@ module asks it for one page and turns its answer into one of four outcomes.
 The text is returned to the caller and kept nowhere: not cached, not logged.
 """
 
+import math
 import threading
 from dataclasses import dataclass
 from typing import Any
@@ -16,7 +17,7 @@ from typing import Any
 import httpx
 
 from thenwhat.backfill.errors import ReaderUnavailable
-from thenwhat.extract.page import Page, read_page
+from thenwhat.extract.page import BODY_FROM, Page, read_page
 from thenwhat.sources.base import require_contact, user_agent
 
 # The name the read step's allowance is kept under.
@@ -39,6 +40,10 @@ NOT_SERVED = "not_served"
 
 class PasteNeeded(Exception):
     """The article cannot be fetched; the operator must supply its text."""
+
+
+class ThinPage(PasteNeeded):
+    """The reader returned too little main content to read as an article."""
 
 
 class NotAllowed(PasteNeeded):
@@ -138,6 +143,10 @@ class ArticleRetriever:
             raise _refusal(url, data)
         page = data.page
         assert page is not None
+        if len(page.text) < BODY_FROM:
+            raise ThinPage(
+                f"{url} returned too little article text. Supply the article text instead."
+            )
         return Retrieved(page.text, archive_url=data.archive_url, page=page)
 
     def probe(self, url: str) -> Probe:
@@ -212,8 +221,14 @@ def _answer_of(response: httpx.Response) -> _Answer:
             return _Answer(NOT_ALLOWED, reason=reason.strip())
         if code == NOT_NOW_CODE and isinstance(reason, str) and reason.strip():
             retry = answered.get("retryAfter")
-            seconds = float(retry) if isinstance(retry, int | float) and retry >= 0 else None
-            return _Answer(NOT_NOW, reason=reason.strip(), retry_after_seconds=seconds)
+            if (
+                isinstance(retry, int | float)
+                and not isinstance(retry, bool)
+                and math.isfinite(retry)
+                and retry >= 0
+            ):
+                return _Answer(NOT_NOW, reason=reason.strip(), retry_after_seconds=float(retry))
+            raise _unknown(response)
     if response.status_code in (401, 403):
         raise ReaderUnavailable(
             f"The page reader refused the pipeline's key ({response.status_code})."
