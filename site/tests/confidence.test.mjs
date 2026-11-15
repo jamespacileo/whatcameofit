@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { bandOf, confidenceLabel, readingOf } from "../src/lib/confidence.ts";
+import { bandOf, confidenceLabel, readingOf, stageReadingNote } from "../src/lib/confidence.ts";
 
 test("scores are worded by band, with the percentage", () => {
   assert.equal(confidenceLabel(0.92), "High match · 92%");
@@ -20,4 +20,15 @@ test("a reading becomes a reason, and an unknown one says how it was scored", ()
 test("no confidence wording is a verdict", () => {
   const words = [0, 0.5, 0.8].map(bandOf).join(" ") + readingOf("match") + readingOf("not_a_match");
   assert.doesNotMatch(words, /dead|abandoned|works|failed|cure|proven/i);
+});
+
+test("an unconfirmed stage reading says its score, that it decides nothing, and what else it could be", () => {
+  const names = { animal: "Animal study" };
+  const note = stageReadingNote({ score: 0.7, also: [{ stage: "animal", score: 0.28 }] }, (code) => names[code] ?? code);
+  assert.equal(note, "Low confidence · 70%. Not confirmed, so it does not decide the status. Also read as: animal study, 28%.");
+  assert.equal(
+    stageReadingNote({ score: 0.9, also: [] }, (code) => code),
+    "Low confidence · 90%. Not confirmed, so it does not decide the status.",
+  );
+  assert.doesNotMatch(note, /dead|abandoned|works|failed|cure|proven/i);
 });

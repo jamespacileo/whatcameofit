@@ -19,7 +19,7 @@ worktrees via `wt`, archive via quarantine).
 ## Conventions and guardrails
 
 - Accuracy is the brand, and it is shown, not gated. Decided by the operator on 2026-11-13 (`docs/adr/0001-publish-by-rule-archive-to-remove.md`, change `auto-publish`): items are approved by deterministic rules and published without waiting for a person, every match the site shows carries its confidence score and reasons, and the operator removes a wrong item by archiving it. Live lookup answers are shown to the reader who asked, with scores, and are never worded as a status.
-- Claim status is derived by deterministic rules from approved evidence events. With no trial found, the reviewed evidence stage decides between "preclinical only" and "no trial record found". No model decides status, and every status lists the events that produced it.
+- Claim status is derived by deterministic rules from approved evidence events. With no trial found, the confirmed evidence stage decides between "preclinical only" and "no trial record found": a stage is confirmed by a person or, in the sure band, by rule. A reading in the lower band is shown with its score, marked low confidence, and never sets a status (`docs/adr/0004-two-confidence-bands-shown-not-reviewed.md`). No model decides status, and every status lists the events that produced it.
 - No editorial verdicts. "No signal" is never worded as "dead" or "abandoned".
 - No medical advice. A registered trial is never presented as a treatment option.
 - Store the raw API payload and fetch timestamp for every evidence event.

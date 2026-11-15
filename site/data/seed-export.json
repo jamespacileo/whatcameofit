@@ -218,6 +218,7 @@
       "indication": "congenital tooth agenesis",
       "first_reported_date": "2021-03-31",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_1",

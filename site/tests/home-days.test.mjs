@@ -107,9 +107,24 @@ test("Scenario: A report of an animal study, and what the records add", () => {
   const row = group(dated, "d-2025-09-08");
   assert.match(row, /<a class="followed" href="\/phase-claim"[^>]*>\s*“Example report 5”\s*<\/a>/);
   assert.match(row, /On record now<\/span>\s*<strong class="status-name">Phase 3 trial<\/strong>/);
-  assert.match(row, /<p class="row-then">\s*<strong>[^<]+<\/strong>\s*when first reported, [^<]*\. Large late-stage trial in people\. /);
+  assert.match(row, /<p class="row-then">\s*<strong>[^<]+<\/strong>\s*when first reported, [^<]*\. Large late-stage trial in people\.<\/p>/);
   assert.match(row, /Large late-stage trial in people/);
-  assert.match(row, /<p class="row-then">[\s\S]*?trials on record/);
+  // What the records add is drawn: the strip, with counts in numerals beside it. The
+  // sentences are the strip's name and are not shown on the row (openspec record-strip).
+  assert.match(row, /<svg class="strip-line" role="img" aria-label="Records by date\. [^"]*trials on record[^"]*"/);
+  assert.match(row, /<span class="strip-counts">\d+ trials?( · \d+ with results posted)?<\/span>/);
+  assert.ok(!row.includes("row-adds"));
+  assert.ok(!/<p[^>]*>[^<]*trials on record/.test(row));
+});
+
+test("Scenario: Home page: one key names the strip's marks, before the first strip", () => {
+  assert.equal(count(dated, 'class="strip-key"'), 1);
+  assert.ok(dated.indexOf('class="strip-key"') < dated.indexOf('class="record-strip"'));
+  const key = dated.slice(dated.indexOf('class="strip-key"'), dated.indexOf('class="record-strip"'));
+  for (const name of ["News report", "Registry record", "Results posted", "Regulator decision", "Promised date", "Registries last checked"]) {
+    assert.ok(key.includes(name), name);
+  }
+  assert.match(key, /href="\/guide\/record-strip"/);
 });
 
 test("Scenario: An approval that changed the status, and a record that changed nothing", () => {
