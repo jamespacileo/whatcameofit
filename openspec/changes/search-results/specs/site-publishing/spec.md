@@ -18,3 +18,21 @@ On the home page a search's answer SHALL stand in the place of the day-by-day li
 #### Scenario: Narrowing by topic
 - **WHEN** a search matches claims in two topics and the reader presses one topic in the side column
 - **THEN** only that topic's matches are shown, and the answer says how many of all the matches they are
+
+### Requirement: A search says what each match was found in
+Under each match a search SHALL name every report headline and trial title of that claim that holds the searched words, up to a fixed number, each with its kind in words, the matched text with the words marked, and where it is from: for a report the outlet's name, its icon where the site holds one, and the date; for a trial the registry, the identifier and the phase. Every result SHALL remain a claim, led by its status.
+
+#### Scenario: A report headline holds the words
+- **WHEN** a reader searches for "regrowing teeth" and a matching claim's report is headlined "New drug to regrow lost teeth"
+- **THEN** under that claim a line reads "Report headline" with the headline quoted, "regrow" and "teeth" marked, the outlet's icon and name, and the report's date
+
+### Requirement: An exact headline or a trial identifier is answered with that thing first
+Words that are the whole headline of a tracked report SHALL put that report's claim first, and the answer SHALL say a tracked report has this headline. A search that is a trial registry's identifier SHALL be answered from the trials matched to tracked claims, not from the word search: the trial's registry record, then each claim it is matched to, and a sentence saying a trial on record is not a treatment option. An identifier with no trial on record SHALL be answered with a sentence saying so.
+
+#### Scenario: A trial identifier
+- **WHEN** a reader searches for "NCT01814436"
+- **THEN** the answer shows that trial's registry record and the one claim it is matched to, and no claim that only shares the prefix "NCT"
+
+#### Scenario: An identifier not on record
+- **WHEN** a reader searches for an identifier no tracked claim has
+- **THEN** the answer says no trial with that identifier is on record here

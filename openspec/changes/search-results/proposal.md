@@ -2,7 +2,7 @@
 
 ## Why
 
-On 2026-11-15 the operator found that words typed in the home page's box were answered with a plain list of links and grey text under the box, unlike the rest of the page and hard to read. They asked for the answer to use the layout and parts of the "Latest" list, and chose "best match first" from three mocks (`.impeccable/mocks/search-results/`, mock C).
+On 2026-11-15 the operator found that words typed in the home page's box were answered with a plain list of links and grey text under the box, unlike the rest of the page and hard to read. They asked for the answer to use the layout and parts of the "Latest" list, and chose "best match first" from three mocks (`.impeccable/mocks/search-results/`, mock C). They then asked that a search still match on report headlines, posts and trial identifiers while every result stays a claim, and chose mock D with F from a second round.
 
 ## What Changes
 
@@ -14,7 +14,12 @@ On 2026-11-15 the operator found that words typed in the home page's box were an
 - On other pages with the box, the same answer stands under the box, without a report row or topic choice.
 - The lookup file carries each claim's topic and each listed topic's name and claim count.
 
-Out of scope: pasted article addresses and their answers, a search with no result, the search index.
+- Under the best match and each other match, a "found in" line for each report headline or trial title holding the searched words, at most three under the best match and two under each other: a drawing for the kind, "Report headline" or "Trial", the headline in quotation marks or the trial's title with the words marked, and where it is from: the outlet's own icon over its letter tile, its name and the date, or the registry and identifier with the phase. A report drawn in full under the best match is not named again inside it. The operator chose this on 2026-11-15 (mock D), with outlet icons wherever a report is named.
+- Words that are a tracked report's whole headline put its claim first, said so: "A tracked report has this headline", the claim labelled "Its claim", and the other matches under "Other claims with these words" (mock F).
+- A trial registry identifier (NCT, jRCT, ISRCTN, ACTRN, ChiCTR, DRKS, CTRI, EU CT) is answered with that trial alone: the registry record (registry, identifier, phase, title) on the panel blue, then each claim it is matched to, and "A trial on record is not a treatment option." An identifier with no trial on record says so. It never goes to the word search, which matches every identifier sharing the prefix (mock F).
+- A search detail file, `/search-detail.json`, holds each published claim's reports (title, outlet, domain, the site's address of the outlet icon, address, date) and trials (identifier, title, registry, address, phases). It is read only when words are searched. The extension does not read it.
+
+Out of scope: pasted article addresses and their answers, a search with no result, the search index's ranking. Posts on social sites are not in the export yet; once they are, they are named as reports by their platform.
 
 ## Capabilities
 
@@ -24,4 +29,4 @@ Out of scope: pasted article addresses and their answers, a search with no resul
 
 ## Impact
 
-`site/src/components/Lookup.astro`, `site/src/components/DayList.astro`, `site/src/pages/lookup.json.ts`, `site/src/styles/global.css`, `site/tests/home-search.test.mjs`, `DESIGN.md`. No change to the export or the extension.
+`site/src/components/Lookup.astro`, `site/src/components/DayList.astro`, `site/src/pages/lookup.json.ts`, `site/src/pages/search-detail.json.ts`, `site/src/styles/global.css`, `site/tests/home-search.test.mjs`, `DESIGN.md`. No change to the export or the extension.
