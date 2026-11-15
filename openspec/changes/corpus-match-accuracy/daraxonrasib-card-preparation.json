@@ -1,0 +1,141 @@
+{
+  "checked_at": "2026-11-15T21:53:31.725576+00:00",
+  "claim": "daraxonrasib-previously-treated-metastatic-pancreatic-cancer",
+  "primary_source": "https://www.dana-farber.org/newsroom/news-releases/2026/rason-inhibitor-doubles-median-overall-survival-in-results-of-phase-3-trial-for-patients-with-metastatic-pancreatic-cancer",
+  "corpus_id": "A018",
+  "source_date": "2026-05-31",
+  "extracted_indication": "metastatic pancreatic cancer",
+  "corrected_indication": "Previously treated metastatic pancreatic cancer",
+  "scope_reason": "Retain the source report\u2019s explicit prior-treatment restriction; the separate first-line trial is not the report\u2019s main finding.",
+  "preparation_seconds": 34,
+  "trial_readings_reused": 1,
+  "trial_readings_new": 1,
+  "records": [
+    {
+      "match_id": 17754,
+      "trial_id": "NCT06445062",
+      "source_url": "https://clinicaltrials.gov/study/NCT06445062",
+      "fetched_at": "2026-11-15T21:48:47.707913+00:00",
+      "previous_score": 0.87,
+      "previous_decider": "rule",
+      "event_ids": [
+        11697,
+        11698
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "Every daraxonrasib subprotocol combines it with other anticancer agents; none establishes the reported daraxonrasib monotherapy in the previously treated setting."
+    },
+    {
+      "match_id": 17741,
+      "trial_id": "NCT07573215",
+      "source_url": "https://clinicaltrials.gov/study/NCT07573215",
+      "fetched_at": "2026-11-15T21:48:46.722455+00:00",
+      "previous_score": 0.95,
+      "previous_decider": "rule",
+      "event_ids": [
+        11694
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "Expanded-access treatment program for people unable to enter a trial; it is not a trial testing the reported intervention and cannot support a trial event."
+    }
+  ],
+  "claim_state": "approved",
+  "correction_model_calls": 0,
+  "approved_trials": [
+    "NCT06625320"
+  ],
+  "status": "approved",
+  "paper_decisions": [
+    {
+      "match_id": 17762,
+      "doi": "10.1158/1538-7445.am2026-lb407",
+      "decision": "rejected",
+      "reason": "First-line daraxonrasib with chemotherapy; different setting and regimen.",
+      "decider": "assistant"
+    },
+    {
+      "match_id": 17767,
+      "doi": "10.1158/1538-7445.am2026-lb337",
+      "decision": "rejected",
+      "reason": "First-line monotherapy; different treatment setting.",
+      "decider": "assistant"
+    },
+    {
+      "match_id": 17768,
+      "doi": "10.1016/j.annonc.2026.05.382",
+      "decision": "rejected",
+      "reason": "Zoldonrasib plus daraxonrasib; different complete regimen.",
+      "decider": "assistant"
+    },
+    {
+      "match_id": 17770,
+      "doi": "10.1002/cncr.70513",
+      "decision": "rejected",
+      "source_url": "https://acsjournals.onlinelibrary.wiley.com/doi/10.1002/cncr.70513",
+      "reason": "Publisher labels this CancerScope; its text summarizes the NEJM trial and expert commentary rather than reporting an independent study.",
+      "decider": "assistant"
+    },
+    {
+      "match_id": 17774,
+      "doi": "10.3322/caac.70097",
+      "decision": "rejected",
+      "source_url": "https://acsjournals.onlinelibrary.wiley.com/doi/full/10.3322/caac.70097",
+      "reason": "Publisher labels this Perspectives; it summarizes the NEJM trial and expert interpretation rather than reporting an independent study.",
+      "decider": "assistant"
+    },
+    {
+      "match_id": 17764,
+      "doi": "10.1158/1538-7445.am2025-lb281",
+      "decision": "retained",
+      "source_url": "https://aacrjournals.org/cancerres/article/85/8_Supplement_2/LB281/761862/Abstract-LB281-Mechanisms-of-resistance-to-the-RAS",
+      "reason": "The primary abstract includes clinical resistance analysis after daraxonrasib monotherapy in previously treated metastatic PDAC, as well as preclinical combination experiments."
+    }
+  ],
+  "paper_review_limit": "The Zenodo re-analysis remains a rule-approved metadata match, labelled software; its primary landing page was unavailable during this review. No new trial/status conclusion was derived from it.",
+  "background": {
+    "outcome": "unavailable",
+    "source": "mesh",
+    "attempts": 4,
+    "message": "mesh did not answer after 4 attempts.",
+    "stored_terms": 0,
+    "retry_performed": false
+  },
+  "statement_decisions": [
+    {
+      "id": 2867,
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "The statement called 0.40 a hazard rather than a hazard ratio; do not publish that misleading statistical wording. The accurately phrased median-survival comparison remains in the claim summary."
+    }
+  ],
+  "regulatory_event": {
+    "event_id": 11720,
+    "type": "regulatory_decision",
+    "event_date": "2026-08-26",
+    "source_name": "FDA",
+    "source_url": "https://www.fda.gov/drugs/cancer-approvals/fda-approves-daraxonrasib-metastatic-pancreatic-adenocarcinoma",
+    "outcome": "approved",
+    "reviewed_by": "assistant",
+    "entry_method": "Normal event add command with manual payload and entry timestamp, followed by assistant event approval.",
+    "scope": "Adults with metastatic pancreatic adenocarcinoma after at least one prior systemic therapy or when multiagent systemic therapy is unsuitable."
+  },
+  "verified_aliases": [
+    "RMC-6236",
+    "Rasonque"
+  ],
+  "claim_reviewed_by": "assistant",
+  "checked_by_person": false,
+  "status_before_regulatory_event": "phase_3",
+  "completed_at": "2026-11-15T22:04:22.781377+00:00",
+  "export": {
+    "before_count": 156,
+    "after_count": 157,
+    "existing_claims_changed": {},
+    "only_added_claim": "daraxonrasib-previously-treated-metastatic-pancreatic-cancer",
+    "status_explained_by": [
+      11720
+    ]
+  }
+}

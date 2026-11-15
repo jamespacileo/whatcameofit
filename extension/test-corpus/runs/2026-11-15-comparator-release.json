@@ -1,0 +1,175 @@
+{
+  "release_commit": "1a8fcdbf8b7b6c1a77cd3c38fcd646a8db9f7836",
+  "worker": "79dee6e6-f93d-4fe1-86ae-411f6f3210a7",
+  "checked_at": "2026-11-15T22:01:17.055Z",
+  "index_claims": 156,
+  "method": "Released index and rendered claim pages; no model requests; not a native Safari check",
+  "corpus_source_address_mappings_checked": 258,
+  "corpus_source_address_mappings_changed": 0,
+  "model_requests": 0,
+  "pages": [
+    {
+      "slug": "liraglutide-obesity",
+      "http": 200,
+      "rejected_trials_absent": [
+        "NCT04074161"
+      ],
+      "retained_trials_present": [
+        "NCT00422058",
+        "NCT01272219",
+        "NCT01508949"
+      ]
+    },
+    {
+      "slug": "wegovy-obesity",
+      "http": 200,
+      "rejected_trials_absent": [
+        "NCT06738979",
+        "NCT07036172",
+        "NCT07284979",
+        "NCT07150975",
+        "NCT06619015",
+        "NCT07216651"
+      ],
+      "retained_trials_present": [
+        "NCT05548647",
+        "NCT05579249",
+        "NCT05746039",
+        "NCT05756764",
+        "NCT05870462",
+        "NCT06005012",
+        "NCT06027567",
+        "NCT06283667",
+        "NCT06287307",
+        "NCT06380426",
+        "NCT06396416",
+        "NCT06468748",
+        "NCT06754163",
+        "NCT06764056",
+        "NCT06854614",
+        "NCT06909006",
+        "NCT06934655",
+        "NCT07018544",
+        "NCT07055607",
+        "NCT07213466",
+        "NCT07272837",
+        "NCT07275697",
+        "NCT07280221",
+        "NCT07592546",
+        "NCT07701005",
+        "NCT07732426",
+        "NCT07779343",
+        "NCT07845994",
+        "NCT07850765",
+        "NCT07858331",
+        "NCT07870538",
+        "NCT07909889"
+      ]
+    },
+    {
+      "slug": "beta-glucan-obesity",
+      "http": 200,
+      "rejected_trials_absent": [
+        "NCT03714646"
+      ],
+      "retained_trials_present": [
+        "NCT01393210",
+        "NCT01402128",
+        "NCT02041104",
+        "NCT02604316",
+        "NCT05009615",
+        "NCT07299942"
+      ]
+    },
+    {
+      "slug": "ozempic-kidney-deterioration-in-people-with-type-2-diabetes",
+      "http": 200,
+      "rejected_trials_absent": [
+        "NCT03724981",
+        "NCT05071898",
+        "NCT06161844",
+        "NCT07046273",
+        "NCT06351748",
+        "NCT04447859",
+        "NCT04451837",
+        "NCT05689372",
+        "NCT04469855",
+        "NCT04854083",
+        "NCT05468632"
+      ],
+      "retained_trials_present": [
+        "NCT04175665",
+        "NCT06954090",
+        "NCT07456774"
+      ]
+    },
+    {
+      "slug": "orforglipron-obesity",
+      "http": 200,
+      "rejected_trials_absent": [
+        "NCT07794579"
+      ],
+      "retained_trials_present": [
+        "NCT05051579",
+        "NCT05803421",
+        "NCT05869903",
+        "NCT05872620",
+        "NCT05931380",
+        "NCT06023095",
+        "NCT06584916",
+        "NCT06649045",
+        "NCT06672939",
+        "NCT06824051",
+        "NCT06948422",
+        "NCT06948435",
+        "NCT06952530",
+        "NCT06972459",
+        "NCT06972472",
+        "NCT06993792",
+        "NCT07153471",
+        "NCT07729332",
+        "NCT07790861"
+      ]
+    },
+    {
+      "slug": "semaglutide-alzheimers-disease",
+      "http": 200,
+      "rejected_trials_absent": [
+        "NCT06072963"
+      ],
+      "retained_trials_present": [
+        "NCT04777396",
+        "NCT04777409",
+        "NCT05891496",
+        "NCT07651319"
+      ]
+    },
+    {
+      "slug": "wegovy-cardiovascular-disease",
+      "http": 200,
+      "rejected_trials_absent": [
+        "NCT07779343"
+      ],
+      "retained_trials_present": [
+        "NCT05870462",
+        "NCT07090343",
+        "NCT07275697"
+      ]
+    },
+    {
+      "slug": "pembrolizumab-plus-chemotherapy-the-most-common-type-of-lung",
+      "http": 200,
+      "rejected_trials_absent": [
+        "NCT06731907"
+      ],
+      "retained_trials_present": [
+        "NCT02039674",
+        "NCT02578680",
+        "NCT03664024",
+        "NCT03793179",
+        "NCT04956692",
+        "NCT06096844"
+      ]
+    }
+  ]
+}
