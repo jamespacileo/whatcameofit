@@ -1,6 +1,6 @@
 {
   "checked_at": "2026-11-15T20:21:36.674318+00:00",
-  "candidate_generated_at": "2026-11-15T20:19:44.552748Z",
+  "candidate_generated_at": "2026-11-15T20:30:54.892996Z",
   "previous_claims": 84,
   "candidate_claims": 126,
   "added_claims": [
@@ -57,7 +57,8 @@
     "NeuroLife has no approved trial and is not labelled preclinical.",
     "The corrected pembrolizumab claim has seven retained trial cohorts.",
     "The complete chronotherapy claim has only NCT01431573 approved.",
-    "All previously published claims remain."
+    "All previously published claims remain.",
+    "Twenty proven incompatible tentative associations are absent; the uncertain device candidate has a fresh 18% not-a-match reading. Approved trial counts remain 0/7/1 for NeuroLife/pembrolizumab/chronotherapy."
   ],
   "limitations": [
     "This snapshot contains automatic decisions and confidence scores, not new human reviews.",
@@ -71,5 +72,6 @@
     "snapshot_generated_at": "2026-11-15T18:38:12.190342Z",
     "claims": 126,
     "note": "The same 42 claims were published concurrently from an earlier snapshot. Integration retains all 126 and publishes the newer NeuroLife, pembrolizumab and chronotherapy corrections, current stage readings and refreshed organisation metadata."
-  }
+  },
+  "stale_candidate_correction": "stale-candidate-corrections.json"
 }

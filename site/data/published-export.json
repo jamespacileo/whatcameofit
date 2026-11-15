@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-15T20:19:44.552748Z",
+  "generated_at": "2026-11-15T20:30:54.892996Z",
   "last_checked_at": "2026-11-15T19:59:50.977261Z",
   "preview": false,
   "sources": [
@@ -10546,53 +10546,53 @@
       "matches": [
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT05637775",
-          "url": "https://clinicaltrials.gov/study/NCT05637775",
-          "score": 0.65,
-          "state": "candidate",
-          "reading": "match",
-          "decided_by": null,
-          "summary": "DiSCIoser: Improving Arm Sensorimotor Functions After Spinal Cord Injury Via Brain-Computer Interface Training. For: Spinal Cord Injuries, Motor Disorders. Tests: EEG-based BCI system for (hands) Motor Imagery training, Control - MI intervention. No phase, completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT04367623",
-          "url": "https://clinicaltrials.gov/study/NCT04367623",
-          "score": 0.65,
-          "state": "candidate",
-          "reading": "match",
-          "decided_by": null,
-          "summary": "Motor Conditioning to Enhance the Effect of Physical Therapy. For: Spinal Cord Injuries. Tests: Brain computer interface based therapy. No phase, terminated."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT05343130",
-          "url": "https://clinicaltrials.gov/study/NCT05343130",
-          "score": 0.56,
-          "state": "candidate",
-          "reading": "match",
-          "decided_by": null,
-          "summary": "Efficacy of a Brain-Computer Interface Controlled Functional Electrical Stimulation Therapy for Spinal Cord Injury Neurorehabilitation. For: Cervical Spinal Cord Injury. Tests: Brain-Computer Interface, Sham Brain-Computer Interface. No phase, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT02325947",
-          "url": "https://clinicaltrials.gov/study/NCT02325947",
-          "score": 0.4,
+          "external_id": "NCT02404857",
+          "url": "https://clinicaltrials.gov/study/NCT02404857",
+          "score": 0.34,
           "state": "candidate",
           "reading": "other_indication",
           "decided_by": null,
-          "summary": "Efficacy of Hand Exoskeleton Controlled by BCI in Post Stroke Patients. For: Poststroke/CVA Paresis. Tests: hand exoskeleton, brain-computer interface (BCI),, hand exoskeleton, sham BCI. No phase, completed."
+          "summary": "BCI Post-stroke Neurorehabilitation. For: Poststroke/CVA Hemiparesis, Paralytic Stroke, Hand Flaccid Paralysis. Tests: EEG based Brain Computer Interface. No phase, completed."
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT02564419",
-          "url": "https://clinicaltrials.gov/study/NCT02564419",
-          "score": 0.4,
+          "external_id": "NCT07269353",
+          "url": "https://clinicaltrials.gov/study/NCT07269353",
+          "score": 0.32,
           "state": "candidate",
-          "reading": "match",
+          "reading": "other_indication",
           "decided_by": null,
-          "summary": "Brain Machine Interface (BMI) in Subjects Living With Quadriplegia. For: Spinal Cord Injury. Tests: Medtronic Activa PC+S. No phase, completed."
+          "summary": "Using Neurotechology to Help Children With Physical Disability Due to Cerebral Palsy. For: Hemiparetic Cerebral Palsy. Tests: Brain Computer Interface - Functional Electrical Stimulations. No phase, recruiting."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT07133347",
+          "url": "https://clinicaltrials.gov/study/NCT07133347",
+          "score": 0.25,
+          "state": "candidate",
+          "reading": "other_indication",
+          "decided_by": null,
+          "summary": "Creating an Engaging BCI/FES Therapy for Children With Perinatal Stroke Using Social Media. For: Perinatal Stroke, Hemiparetic Cerebral Palsy. Tests: Brain computer interface controlled functional electrical stimulation therapy integrated with social media. Phase 1, completed."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06076928",
+          "url": "https://clinicaltrials.gov/study/NCT06076928",
+          "score": 0.22,
+          "state": "candidate",
+          "reading": "other_indication",
+          "decided_by": null,
+          "summary": "Brain Computer Interface (BCI) Integrated Wearable Hand Robotic Glove System for Upper Limb Stroke Rehabilitation. For: Stroke. Tests: Brain Computer Interface integrated HandyRehab platform (BCI-HR), HandyRehab (HR), Standard Treatment of Care. No phase, completed."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT05183152",
+          "url": "https://clinicaltrials.gov/study/NCT05183152",
+          "score": 0.19,
+          "state": "candidate",
+          "reading": "not_a_match",
+          "decided_by": null,
+          "summary": "Non-invasive BCI-controlled Assistive Devices. For: Motor Disorders, Healthy, Spinal Cord Injuries, Muscular Diseases, Motor Neuron Disease, Stroke, Traumatic Brain Injury, Movement Disorders, Multiple Sclerosis. Tests: NMES Feedback, Visual Feedback, TESS. No phase, recruiting."
         }
       ],
       "trials": [],
@@ -152183,53 +152183,53 @@
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT04061590",
-          "url": "https://clinicaltrials.gov/study/NCT04061590",
-          "score": 0.77,
+          "external_id": "NCT05269381",
+          "url": "https://clinicaltrials.gov/study/NCT05269381",
+          "score": 0.39,
           "state": "candidate",
-          "reading": "match",
+          "reading": "not_a_match",
           "decided_by": null,
-          "summary": "Pembrolizumab With or Without Chemotherapy Before Surgery in Treating Patients With Stage I-IIIA Non-Small Cell Lung Cancer. For: Lung Non-Small Cell Carcinoma, Stage I Lung Cancer AJCC v8, Stage IA1 Lung Cancer AJCC v8, Stage IA2 Lung Cancer AJCC v8, Stage IA3 Lung Cancer AJCC v8, Stage IB Lung Cancer AJCC v8, Stage II Lung Cancer AJCC v8, Stage IIA Lung Cancer AJCC v8, Stage IIB Lung Cancer AJCC."
+          "summary": "Personalized Neoantigen Peptide-Based Vaccine in Combination With Pembrolizumab for Treatment of Advanced Solid Tumors. For: Anatomic Stage III Breast Cancer AJCC v8, Anatomic Stage IIIA Breast Cancer AJCC v8, Anatomic Stage IIIB Breast Cancer AJCC v8, Anatomic Stage IIIC Breast Cancer AJCC v8, Anatomic Stage IV Breast Cancer AJCC v8, Clinical Stage III Cutaneous Melanoma AJCC v8, Clinical Stage I."
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT03634241",
-          "url": "https://clinicaltrials.gov/study/NCT03634241",
-          "score": 0.76,
+          "external_id": "NCT04032418",
+          "url": "https://clinicaltrials.gov/study/NCT04032418",
+          "score": 0.36,
           "state": "candidate",
-          "reading": "match",
+          "reading": "not_a_match",
           "decided_by": null,
-          "summary": "Pembrolizumab in Preventing Lung Cancer in Patients With Stage I-II Non-Small Cell Lung Cancer or High-Risk Pulmonary Nodules, the IMPRINT-Lung Study. For: Lung Non-Small Cell Carcinoma, Stage I Lung Cancer AJCC v8, Stage IA1 Lung Cancer AJCC v8, Stage IA2 Lung Cancer AJCC v8, Stage IA3 Lung Cancer AJCC v8, Stage IB Lung Cancer AJCC v8, Stage II Lung Cancer AJCC v8, Stage IIA Lung Cancer AJCC v8, ."
+          "summary": "Pembrolizumab Every 12 Weeks Versus Every 3 Weeks in Treating Patients With Non-small Cell Lung Cancer. For: Lung Non-Small Cell Carcinoma. Tests: Pembrolizumab. Phase 2, active not recruiting."
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT02085070",
-          "url": "https://clinicaltrials.gov/study/NCT02085070",
-          "score": 0.75,
+          "external_id": "NCT02402920",
+          "url": "https://clinicaltrials.gov/study/NCT02402920",
+          "score": 0.35,
           "state": "candidate",
-          "reading": "match",
+          "reading": "other_indication",
           "decided_by": null,
-          "summary": "MK-3475 in Melanoma and NSCLC Patients With Brain Metastases. For: Melanoma, Non-Small Cell Lung Cancer, Brain Metastases. Tests: MK-3475. Phase 2, completed."
+          "summary": "Pembrolizumab and Concurrent Chemoradiotherapy or Radiation Therapy in Treating Patients With Small Cell Lung Cancer. For: Extensive Stage Small Cell Lung Carcinoma, Limited Stage Small Cell Lung Carcinoma, Neuroendocrine Neoplasm. Tests: Carboplatin, Cisplatin, Etoposide, Laboratory Biomarker Analysis, Pembrolizumab, Radiation Therapy. Phase 1, completed."
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT02949843",
-          "url": "https://clinicaltrials.gov/study/NCT02949843",
-          "score": 0.7,
+          "external_id": "NCT02879994",
+          "url": "https://clinicaltrials.gov/study/NCT02879994",
+          "score": 0.35,
           "state": "candidate",
-          "reading": "match",
+          "reading": "not_a_match",
           "decided_by": null,
-          "summary": "Targeted Therapy in Treating Patients With Incurable Non-Small Cell Lung Cancer With Genetic Mutations. For: EGFR Activating Mutation, Recurrent Non-Small Cell Lung Carcinoma, Stage IV Non-Small Cell Lung Cancer. Tests: Chemotherapy, Immunotherapy, Laboratory Biomarker Analysis, Nivolumab, Pembrolizumab, Targeted Molecular Therapy, Tyrosine Kinase Inhibitor. Phase 2, terminated."
+          "summary": "Pembrolizumab in Treating Patients With EGFR Mutant, Tyrosine Kinase Inhibitor Naive Advanced Non-Small Cell Lung Cancer. For: Stage IIIA Non-Small Cell Lung Cancer, Stage IIIB Non-Small Cell Lung Cancer, Stage IV Non-Small Cell Lung Cancer. Tests: Laboratory Biomarker Analysis, Pembrolizumab. Phase 2, completed."
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT04340882",
-          "url": "https://clinicaltrials.gov/study/NCT04340882",
-          "score": 0.65,
+          "external_id": "NCT06698042",
+          "url": "https://clinicaltrials.gov/study/NCT06698042",
+          "score": 0.34,
           "state": "candidate",
-          "reading": "match",
+          "reading": "not_a_match",
           "decided_by": null,
-          "summary": "Phase 2 DoceRamPem for Patients With Metastatic or Recurrent NSCLC Who Progressed on Platinum-Doublet and PD-1/PD-L1 Blockade. For: Metastatic Non-Small Lung Cell Cancer, Recurrent Non-Small Lung Cell Cancer, Stage IV Lung Cancer AJCC v8, Stage IVA Lung Cancer AJCC v8, Stage IVB Lung Cancer AJCC v8. Tests: Docetaxel, Pembrolizumab, Ramucirumab. Phase 2, active not recruiting."
+          "summary": "A Clinical Study of Pembrolizumab (+) Berahyaluronidase Alfa (MK-3475A) to Treat Newly-diagnosed Metastatic Non-small Cell Lung Cancer (MK-3475A-F84). For: Lung Cancer, Non-Small Cell Lung Cancer. Tests: Pembrolizumab (+) Berahyaluronidase alfa, Pembrolizumab. Phase 3, active not recruiting."
         }
       ],
       "trials": [
@@ -183772,26 +183772,6 @@
           "reading": "match",
           "decided_by": "rule",
           "summary": "Wake Therapy in the Treatment of Depression. For: Major Depressive Disorder, Bipolar Disorder. Tests: Wake Therapy, light box, Lithium. No phase, completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT03010488",
-          "url": "https://clinicaltrials.gov/study/NCT03010488",
-          "score": 0.76,
-          "state": "candidate",
-          "reading": "match",
-          "decided_by": null,
-          "summary": "Are Bright Lights and Regulated Sleep Effective Treatment for Depression?. For: Sleep Phase Rhythm Disturbance, Sleep Deprivation. Tests: Morning Light Therapy, Assigned Sleep Times, Goggles. No phase, completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT04364646",
-          "url": "https://clinicaltrials.gov/study/NCT04364646",
-          "score": 0.59,
-          "state": "candidate",
-          "reading": "match",
-          "decided_by": null,
-          "summary": "Personalized Integrated Chronotherapy for Perinatal Depression. For: Depression, Postpartum Depression, Prenatal Disorder, Circadian Dysregulation, Pregnancy Related, Sleep Disturbance. Tests: Personalized Integrated Chronotherapy. No phase, completed."
         },
         {
           "source_name": "clinicaltrials.gov",

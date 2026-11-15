@@ -53,3 +53,5 @@
 - [x] Correct the archived kidney claim's origin paper to the already verified 2016 study without unarchiving it or changing trial decisions.
 - [x] Prepare both corrected regimens: retain seven unchanged pembrolizumab trial readings and verify the newly found lithium-containing bipolar cohort in NCT01431573.
 - [ ] Handle the demonstrated ClinicalTrials.gov condition-query complexity limit for the precise pembrolizumab indication, preserving full clinical scope for scoring.
+
+- [x] Reconcile stale tentative readings after the three identity corrections: reject 20 explicitly incompatible candidates and reread the uncertain device against the precise identity; preserve approved trial counts and prior decision history.
