@@ -126,9 +126,10 @@ def is_a_class(text: str) -> bool:
     a code. "Semaglutide" is one; "GLP-1 drugs", "GLP-1s" and "GLP-1 receptor agonist
     prescriptions" are many. What the name is said to be for is set aside first.
 
-    A word for a class marks the name only when nothing that is a name is left once the
-    class words and codes are taken out: "PD-1 inhibitor pembrolizumab" names
-    pembrolizumab, "PD-1 inhibitor" names none.
+    What comes before a word for a class is its target ("glucagon receptor agonist"), so
+    a class word marks the name unless a name follows it: "PD-1 inhibitor pembrolizumab"
+    names pembrolizumab, "PD-1 inhibitor" names none. A kind of thing after it ("agonist
+    pill") is no name.
     """
     words = [word.strip(PUNCTUATION) for word in FOR.split(text, maxsplit=1)[0].split()]
     words = [word for word in words if word]
@@ -136,14 +137,11 @@ def is_a_class(text: str) -> bool:
         return False
     if words[-1].lower() in PLURAL_KINDS or any(PLURAL_CODE.fullmatch(word) for word in words):
         return True
-    if not any(word.lower() in CLASS_WORDS for word in words):
+    marked = [at for at, word in enumerate(words) if word.lower() in CLASS_WORDS]
+    if not marked:
         return False
-    left = [
-        word
-        for word in words
-        if word.lower() not in CLASS_WORDS and not any(ch.isdigit() for ch in word)
-    ]
-    return not left or not is_a_name(" ".join(left))
+    after = [word for word in words[marked[-1] + 1 :] if word.lower() not in KINDS]
+    return not after or not is_a_name(" ".join(after))
 
 
 def is_a_name(text: str) -> bool:

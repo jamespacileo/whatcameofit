@@ -254,6 +254,9 @@ def test_a_description_is_not_another_name(description: str):
         "GLP-1 drugs for obesity",
         "GLP-1 drugs For obesity",
         "(GLP-1s)",
+        "glucagon-like peptide-1 receptor agonist",
+        "glucagon receptor agonist",
+        "GIP receptor agonist",
         "GLP-1 and/or GIP receptor agonist prescriptions",
     ],
 )
@@ -273,6 +276,7 @@ def test_a_class_of_treatments_is_told_from_one_treatment(name: str):
         "GLP-1 receptor agonist semaglutide",
         "SGLT2 inhibitor dapagliflozin",
         "PD-1 inhibitor pembrolizumab",
+        "dual GLP-1/GIP agonist tirzepatide",
         "",
     ],
 )
