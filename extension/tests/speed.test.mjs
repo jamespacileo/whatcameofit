@@ -138,7 +138,7 @@ test("only whole answers are kept: no errors, misses, partial streams or answers
   assert.equal(kept[0].found.gist, undefined, "the model's summary is not kept");
   assert.equal(reusable(kept, "page", "print", now + 1).found.about_a_treatment, false);
   assert.equal(reusable(kept, "page", "print", now + RESULT_TTL), null);
-  for (const version of [1, 2, 3, 4]) {
+  for (const version of [1, 2, 3, 4, 5]) {
     assert.equal(reusable([{ ...kept[0], version }], "page", "print", now + 1), null, "entries kept before the corpus corrections are not reused");
   }
 });

@@ -18,3 +18,25 @@ Visual fallback for an identity-bound social carousel SHALL capture only its cur
 #### Scenario: Media is partially clipped
 - **WHEN** an ancestor clips an eligible media element
 - **THEN** the screenshot crop excludes pixels outside that ancestor
+
+### Requirement: Signed-in post reading excludes account context
+LinkedIn and Bluesky reading SHALL bind text, links and screenshot scope to the addressed post. Profile sidebars, analytics, replies and other posts SHALL not supply its reading. Missing or ambiguous post identity SHALL fail closed. Explicit selected text SHALL retain precedence.
+
+#### Scenario: LinkedIn shows the reader's profile sidebar
+- **WHEN** the requested post is displayed next to account details and comments
+- **THEN** only the identity-bound post contributes text, links and media
+
+#### Scenario: Bluesky shows a reply
+- **WHEN** a thread contains the addressed post and a reply about another treatment
+- **THEN** the reply does not contribute to the lookup
+
+#### Scenario: Post has not finished loading
+- **WHEN** the URL identifies a post but no matching post container exists
+- **THEN** the reader does not fall back to the signed-in page or a stale post
+
+### Requirement: Boundary corrections replace local answers
+The extension SHALL reject local answers produced before the signed-in post-boundary correction. Independently verified public article answers MAY retain their existing shared-cache version because they contain no browser-derived account context.
+
+#### Scenario: Reopening a previously broad post reading
+- **WHEN** a version-five local result exists for a LinkedIn or Bluesky post
+- **THEN** the corrected reader does not reuse it

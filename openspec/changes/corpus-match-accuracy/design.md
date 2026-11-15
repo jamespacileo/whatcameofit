@@ -29,6 +29,11 @@ claims positive, grant additional permissions, or change clinical status rules.
   can be verified from the index and current evidence.
 - Separate structured trial/card evidence in the corpus and append precise Sheet
   columns. Keep original rows and formulas; verify edits by read-back.
+- Live signed-in checks exposed LinkedIn sidebars and Bluesky replies in the generic
+  reader. Bind each platform's post container through its own permalink before
+  collecting text or pixels; missing/ambiguous identities remain unread. Invalidate
+  local answers from the broader reader while retaining correct independently public
+  shared article results, avoiding unrelated paid rereads.
 
 ## Risks / Trade-offs
 
