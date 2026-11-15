@@ -28,6 +28,6 @@
 
 ## 5. Verification
 
-- [ ] 5.1 Run `make check` with a branch-specific `TEST_DATABASE_URL`. Verify: ruff, ty, pytest and the site build pass.
+- [x] 5.1 Run `make check` with a branch-specific `TEST_DATABASE_URL`. Verify: ruff, ty, pytest and the site build pass.
 - [x] 5.2 Run `impeccable detect --json` on the changed site files and look at home, one topic index and one year page on `site-published` at 1280 px and phone width. Verify: no new detector findings; a home report row is shorter than before on a phone; axes align down the table column.
 - [x] 5.3 Read the strip with a screen reader path (accessibility tree via `read_page`) on a claim with trials before its report and on a claim with a report only. Verify: each is one image whose name gives counts and dates only.
