@@ -10,7 +10,7 @@
   "displayed_possible_matches": 10,
   "displayed_count_is_capped": true,
   "knowledge_card": "no card",
-  "capture_preview": "not verified",
+  "capture_preview": "Preview screen and image element observed; crop not visually verified",
   "repeat_reuse": "not verified",
   "service_build": "Not exposed by native response; no exact server revision asserted",
   "remaining_concerns": [
@@ -25,5 +25,14 @@
       "issue": "Combination record scored highly against the monotherapy reading"
     }
   ],
-  "note": "Public caption visible without a sign-in overlay. RASolute 302 led at 98%; first-line RASolute 303 remained second at 100%. Broad Pancreatic cancer reading returned no exact card. Safari changed windows during follow-up, so screenshot preview and repeat reuse were not observed. Raw 22/11 counts belong to the earlier service replay, not this capped popup."
+  "note": "Public caption visible without a sign-in overlay. RASolute 302 led at 98%; first-line RASolute 303 remained second at 100%. Broad Pancreatic cancer reading returned no exact card. Safari changed windows during follow-up, so screenshot preview and repeat reuse were not observed. Raw 22/11 counts belong to the earlier service replay, not this capped popup.",
+  "checked_at": null,
+  "observation_time_note": "Exact UTC time of the initial 98% observation was not retained; checked_date is known. This is not the earlier service-replay timestamp.",
+  "followup": {
+    "recorded_at": "2026-11-15T22:28:45Z",
+    "timestamp_kind": "Recorded immediately after the native follow-up; exact UI action times not retained",
+    "preview": "Search this visible image screen, preview image element, Search this image and Cancel controls observed; Cancel returned to the answer. No screenshot sent. Automation screenshot exposed a window-manager preview, so crop correctness remains unverified.",
+    "reopen": "Popup reopened with NCT06625320 first at 99%, NCT07491445 second at 100%, combination NCT06445062 at 99% and expanded-access NCT07573215 at 96%; no saved-check label observed. Score changes do not establish the reason for the missed reuse.",
+    "repeat_reuse": "not verified"
+  }
 }

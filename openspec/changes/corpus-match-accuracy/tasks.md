@@ -45,7 +45,7 @@
 - [x] Reproduce missing hashtag study-name agreement and display ordering with failing tests; preserve complete numeric identity and compatible candidate evidence ordering in both lookup paths.
 - [x] Review and release the named-study correction as Safari 0.9.13; replay the captured S010 caption against production and record the named-study-first result separately in the corpus and Sheet.
 - [x] Verify Safari 0.9.13 is enabled in native Settings. Installation build 22 remains installed.
-- [x] Observe the completed installed Safari 0.9.13 (22) S010 popup: named RASolute 302 first at 98%, with no exact card for the broad condition. Record remaining expanded-access/combination scoring concerns; screenshot preview and repeat reuse remain unverified.
+- [x] Observe the completed installed Safari 0.9.13 (22) S010 popup: named RASolute 302 first at 98%, with no exact card for the broad condition. Record remaining expanded-access/combination scoring concerns; screenshot preview controls now open, but crop correctness and repeat reuse remain unverified.
 - [ ] Diagnose repeated S010 popup work and verify reuse before claiming cache efficiency.
 
 - [x] Correct pembrolizumab to its source-bound pemetrexed/platinum regimen and first-line metastatic nonsquamous population; reject seven incompatible trials and one monotherapy paper, retaining seven compatible trial cohorts.
