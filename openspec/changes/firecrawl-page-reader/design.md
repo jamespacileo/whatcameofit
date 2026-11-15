@@ -149,8 +149,15 @@ Not in this change's tasks. Each waits for the reader's answer to cover it, and 
 | --- | --- | --- |
 | Reading posts on Bluesky, Hacker News, Mastodon; `json()` | `extract/post.py` (172 lines), `cli/lookup.py` | a post's text and the links in it; the pipeline drops the author (decision 9) |
 | Publisher and PubMed address patterns, DOI link patterns | `extract/page.py` | the DOIs, PubMed numbers and registry numbers a page links to |
+| Whatever the pipeline does of its own to get a paper's abstract from a publisher's page | to be listed when that change is proposed | a paper's abstract as markdown, by its DOI or address (operator, 2026-11-15) |
 | The Worker's page, post, short-link and screenshot readers | `site/worker/page.mjs`, `post.mjs`, `short.mjs`, `article.mjs`, `visual.mjs` | the same answers, asked by the Worker through the tunnel; a down reader shown as service overloaded |
 | The extension's host lists and its `t.co` reading | `extension/src/open-page.js`, `short-links.js` | to be weighed: the extension reads what the reader's own browser already shows, which the service cannot see |
+
+On abstracts, three things for that change to settle, none decided here:
+
+- A paper is an evidence event, and every evidence event stores the raw payload and fetch time of the index that reported it (Europe PMC, OpenAlex, Crossref). An abstract read from a page is not that payload. It can add to a paper's record; it cannot stand in for the index's record.
+- The guide to the service says some research publishers answer with cookie or bot walls. An abstract that did not come back is an empty state, shown as such, not filled from somewhere else.
+- What is kept of an abstract. Today recorded fixtures have abstracts replaced, and a model reads a paper's record into fixed codes (ADR 0003). Whether an abstract's markdown is stored, or held only while it is read like article text, is the operator's to decide.
 
 Kept, because they are not rules about fetching: `backfill/address.py` and `site/src/lib/article-key.mjs` (when two addresses are one article), `backfill/outlet_kinds.py` (which outlets are listed, and their names, which no model and no domain may supply), `backfill/link_readers.py` (reading bulk files), and `sources/` (registry and literature APIs, whose raw payloads are stored with every evidence event).
 
