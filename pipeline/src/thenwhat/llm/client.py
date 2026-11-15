@@ -8,13 +8,19 @@ import os
 
 os.environ.setdefault("PYDANTIC_AI_NO_BANNER", "1")
 
-from collections.abc import Callable  # noqa: E402
+import asyncio  # noqa: E402
+from collections.abc import Callable, Sequence  # noqa: E402
 from dataclasses import dataclass  # noqa: E402
 from datetime import UTC, datetime  # noqa: E402
 from decimal import Decimal  # noqa: E402
 
 from pydantic import BaseModel, ValidationError  # noqa: E402
 from pydantic_ai import Agent, capture_run_messages  # noqa: E402
+
+# The library's own way onto the event loop for its synchronous calls. It is not part of
+# its public interface: `Agent.run_sync` is, but takes one prompt. Using the same door
+# keeps several calls at once on the loop the single calls use.
+from pydantic_ai._utils import run_until_complete  # noqa: E402
 from pydantic_ai.exceptions import UnexpectedModelBehavior  # noqa: E402
 from pydantic_ai.messages import ModelMessage, ModelResponse, ToolCallPart  # noqa: E402
 from pydantic_ai.models import Model, infer_model  # noqa: E402
@@ -103,6 +109,64 @@ class Llm:
         finally:
             self._record(purpose, usage)
         return result.output
+
+    def run_many[Output: BaseModel](
+        self,
+        purpose: str,
+        *,
+        instructions: str,
+        prompts: Sequence[str],
+        output_type: type[Output],
+        retries: int = 2,
+    ) -> list[Output | LlmError]:
+        """Ask the configured model the same thing of several prompts at once, and record
+        what each call cost. The answers come back in the prompts' order; a call that
+        failed gives its error in its place, and the others stand.
+
+        The refusals of `run` are made once, before any call: when the model or its
+        prices are not configured, or when this month's recorded cost has reached the
+        ceiling. The ceiling is not looked at again between the calls of one group, so a
+        group can pass it by what its own calls cost.
+        """
+        settings = self._settings
+        for value, name in (
+            (settings.model, "LLM_MODEL"),
+            (settings.input_usd_per_mtok, "LLM_INPUT_USD_PER_MTOK"),
+            (settings.output_usd_per_mtok, "LLM_OUTPUT_USD_PER_MTOK"),
+        ):
+            if value is None:
+                raise LlmNotConfigured(f"{name} is not set, so no language model call was made.")
+        check_ceiling(self._session, self._now(), settings.monthly_budget_usd)
+
+        assert settings.model is not None
+        model = self._model or self._build_model(settings.model)
+        agent = Agent(model, output_type=output_type, instructions=instructions, retries=retries)
+
+        async def ask(prompt: str) -> tuple[Output | LlmError, RunUsage]:
+            usage = RunUsage()
+            messages: list[ModelMessage] = []
+            try:
+                with capture_run_messages() as messages:
+                    result = await agent.run(prompt, usage=usage)
+            except UnexpectedModelBehavior:
+                return LlmOutputInvalid(_failing_fields(messages, output_type)), usage
+            except Exception as error:
+                # The provider's own message can echo the credential, so it is not repeated.
+                status = getattr(error, "status_code", None)
+                detail = f" with status {status}" if status else ""
+                return LlmCallFailed(
+                    f"The language model call failed{detail} ({type(error).__name__})."
+                ), usage
+            return result.output, usage
+
+        async def ask_all() -> list[tuple[Output | LlmError, RunUsage]]:
+            return list(await asyncio.gather(*(ask(prompt) for prompt in prompts)))
+
+        # On the loop the single calls run on, so the model's connections are shared.
+        answered = run_until_complete(ask_all())
+        for _, usage in answered:
+            self._record(purpose, usage)
+        return [answer for answer, _ in answered]
 
     def _record(self, purpose: str, usage: RunUsage) -> None:
         settings = self._settings
