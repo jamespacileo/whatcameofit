@@ -108,7 +108,29 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
       <h1 class="title" id="lookup-title">What happened to that breakthrough?</h1>
       <p class="lede">{SITE.description}</p>
 
-      <Lookup />
+      <Lookup>
+        {/* Under the box: words to try, shown by the script that runs them, and what
+            the site holds. Not drawn on a phone, where a row starts on the first screen. */}
+        <div class="under-box">
+          {topTopics.length > 0 && (
+            <p class="try" hidden data-try>
+              <span>Try</span>
+              {topTopics.slice(0, 3).map((topic) => (
+                <button type="button">{topic.title.toLowerCase()}</button>
+              ))}
+            </p>
+          )}
+          {data.claims.length > 0 && (
+            <p class="holds">
+              {data.claims.length} {data.claims.length === 1 ? "claim" : "claims"} tracked in{" "}
+              <a href="/topics">
+                {listedTopics.length} {listedTopics.length === 1 ? "topic" : "topics"}
+              </a>
+              .
+            </p>
+          )}
+        </div>
+      </Lookup>
     </div>
   </section>
 
@@ -147,6 +169,29 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
     days ? (
       <DayList list={days} topics={topicChoices}>
         <HomeNarrow slot="narrow" claims={data.claims} topics={topicChoices} counts={topicCounts} />
+        {/* Beside the list at the right on a wide screen: how the page is made, in
+            three short parts, each with one link. */}
+        <aside class="days-rail" slot="rail" aria-label="About this list">
+          <div>
+            <h3>How a status is set</h3>
+            <ol>
+              <li>A news report names a treatment and what it is for.</li>
+              <li>The registries are searched for trials of it.</li>
+              <li>Fixed rules set the status from the records found.</li>
+            </ol>
+            <a href="/how-it-works">The method in full</a>
+          </div>
+          <div>
+            <h3>Keep up</h3>
+            <p>A feed of every status change, for a feed reader.</p>
+            <a href="/changes.xml">Subscribe to status changes</a>
+          </div>
+          <div>
+            <h3>What this is not</h3>
+            <p>Not medical advice. A registered trial is not a treatment option.</p>
+            <a href="/about">About this site</a>
+          </div>
+        </aside>
         {/* The other ways in, each with the number it holds. */}
         <nav class="side-group" slot="browse" aria-labelledby="browse-title">
           <h3 id="browse-title">Browse</h3>
@@ -586,6 +631,19 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
 
 <script>
   import { nextAnniversaryDay } from "../lib/anniversaries";
+
+  // Words to try: pressing one looks it up, as typing it would.
+  const tries = document.querySelector<HTMLElement>("[data-try]");
+  const box = document.querySelector<HTMLInputElement>("#query");
+  if (tries && box?.form) {
+    for (const word of tries.querySelectorAll("button")) {
+      word.addEventListener("click", () => {
+        box.value = word.textContent!;
+        box.form!.requestSubmit();
+      });
+    }
+    tries.hidden = false;
+  }
 
   // The lists under the lookup: one is shown at a time, picked by its tab. The pick is
   // kept in the page's address, so a list can be linked to and returned to.

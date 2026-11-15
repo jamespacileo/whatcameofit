@@ -191,3 +191,18 @@ test("Scenario: An export with no day of last check", () => {
   assert.ok(undated.includes("view-transition-name"));
   assert.ok(!undated.includes('id="lists"'));
 });
+
+test("Scenario: The first screen and the column at the right", () => {
+  // Words to try wait for the script that runs them; the count line is the page's own.
+  const band = dated.slice(dated.indexOf('class="band home"'), dated.indexOf('class="front"'));
+  assert.match(band, /<p class="try" hidden data-try>/);
+  assert.match(band, /<p class="holds">\s*3 claims tracked in\s*<a href="\/topics">\s*1 topic\s*<\/a>/);
+  // The words come before the answer, so an answer is read straight after the box.
+  assert.ok(band.indexOf('class="under-box"') < band.indexOf('id="results"'));
+  const from = dated.indexOf('class="days-rail"');
+  const rail = dated.slice(from, dated.indexOf("</aside>", from));
+  for (const address of ["/how-it-works", "/changes.xml", "/about"]) {
+    assert.ok(rail.includes(`href="${address}"`), address);
+  }
+  assert.match(rail, /Not medical advice\. A registered trial is not a treatment option\./);
+});

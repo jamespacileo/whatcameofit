@@ -15,7 +15,10 @@ On 2026-11-15 the operator found the home page noisy: under the lookup stood a l
 - On a wide screen a side column on the pale ground stands at the left of the list: the note on the last visit, the topics as a plain list with counts, and links to every claim, status changes, approvals and all topics. The topic chips at the foot of the page are not drawn where the column is.
 - On a phone the "Narrow these lists" control is gone: the four fields sit two to a row.
 
-Out of scope: the lookup band, the five tabbed lists, the sections under them, and the rows themselves.
+- The opening band is centred on one axis with the box as the largest control on the page; under the box are three topics to try and one line saying how many claims are tracked in how many topics. The operator chose this on 2026-11-15 from three sketches of the first screen.
+- The page stands on the pale ground with the list as one white sheet. At the right of the list on a wide screen a second quiet column says how a status is set, how to keep up and what the site is not, each with one link.
+
+Out of scope: the wording of the lookup band, the five tabbed lists, the sections under them, and the rows themselves.
 
 ## Capabilities
 

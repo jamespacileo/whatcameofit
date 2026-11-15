@@ -1,3 +1,31 @@
+## ADDED Requirements
+
+### Requirement: The home page's first screen leads with the lookup
+The home page's opening band SHALL hold the title, one sentence saying what the site does, and the lookup box as the largest control on the page. Under the box, on a screen wider than a phone, it SHALL offer the three listed topics with the most claims as words to try, each looking its words up when pressed, and SHALL say how many claims are tracked in how many topics, as numbers only. The words to try SHALL be shown only where scripting can run them. The box SHALL keep its label for a screen reader wherever the label is not drawn.
+
+#### Scenario: A word to try
+- **WHEN** a reader presses a topic offered under the box
+- **THEN** the box holds that topic's name and the page answers as if the reader had typed it
+
+#### Scenario: Scripting off
+- **WHEN** the home page is opened with scripting off
+- **THEN** no words to try are shown
+
+#### Scenario: A phone
+- **WHEN** the home page is opened at 375 by 812 pixels
+- **THEN** neither the words to try nor the count line is drawn, and the box's label is
+
+### Requirement: The home page says beside its list how it is made
+On a wide screen the home page SHALL show, beside the day-by-day list, how a status is set in at most three steps with a link to the method page, a link to the feed of status changes, and that the site gives no medical advice and that a registered trial is not a treatment option. It SHALL add no verdict wording and no count.
+
+#### Scenario: A wide screen
+- **WHEN** the home page is opened on a screen at least 72rem wide
+- **THEN** the three parts stand at the right of the list, each with one link
+
+#### Scenario: A narrower screen
+- **WHEN** the home page is opened on a narrower screen
+- **THEN** the parts are not drawn, and the page's footer still carries the notices
+
 ## MODIFIED Requirements
 
 ### Requirement: The home page's lists can be narrowed by status and by topic
