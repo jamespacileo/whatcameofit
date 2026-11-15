@@ -422,6 +422,52 @@ def _say_papers(
         out.print(f"  approved {match.score:.2f}  {match.external_id}", markup=False)
 
 
+def _say_matches(
+    claim: Claim,
+    added: list[EntityMatch],
+    again: list[EntityMatch],
+    refused: dict[str, str],
+    *,
+    rescore: bool,
+    accept_above: float,
+    reject_below: float,
+) -> None:
+    """Say what a search found: how many candidates are new, how many a rule decided,
+    the terms the registry refused, and each candidate left for review with its score."""
+    noun = "candidate match" if len(added) == 1 else "candidate matches"
+    by_rule = [m for m in [*added, *again] if m.reviewed_by is Decider.RULE]
+    rejected = [m for m in by_rule if m.review_state is ReviewState.REJECTED]
+    approved = [m for m in by_rule if m.review_state is ReviewState.APPROVED]
+    waiting = "All are pending review." if not by_rule else "The rest are pending review."
+    out.print(f"Found {len(added)} new {noun} for {claim.slug}. {waiting}")
+    if rescore:
+        candidates = "candidate" if len(again) == 1 else "candidates"
+        out.print(f"Scored {len(again)} pending {candidates} again.")
+    if approved:
+        out.print(
+            f"{len(approved)} approved by rule for scoring {accept_above:g} or more"
+            " for the claim's indication. They are published with the next export.",
+            markup=False,
+        )
+    if rejected:
+        out.print(
+            f"{len(rejected)} rejected by rule for scoring under {reject_below:g}."
+            " See them with `review list --by-rule`.",
+            markup=False,
+        )
+    if refused:
+        terms = "; ".join(f"'{term}'" for term in refused)
+        out.print(
+            f"{len(refused)} term(s) the registry could not search for, and nothing was"
+            f" searched in their place: {terms}. Reword them and resolve again.",
+            markup=False,
+        )
+    for match in sorted(added, key=lambda m: m.score, reverse=True):
+        if match.reviewed_by is Decider.RULE:
+            continue
+        out.print(f"  {match.score:.2f}  {match.source_name}  {match.external_id}", markup=False)
+
+
 def resolve_command(
     claim_slug: Annotated[str, typer.Argument(help="Slug of the claim.")],
     rescore: Annotated[
@@ -475,6 +521,9 @@ def resolve_command(
         if codes is not None:
             say_codes(claim.slug, codes)
 
+        failure: str | None = None
+        added: list[EntityMatch] = []
+        again: list[EntityMatch] = []
         try:
             added = resolve_claim(
                 session,
@@ -509,41 +558,25 @@ def resolve_command(
                 session, claim, research, backend, now, reject_below, accept_above, rescore
             )
         except DecisionFailed as failed:
-            # Leave through a clean exit so the logged failure is committed with the session.
-            err.print(str(failed), markup=False)
-            err.print("No candidates were stored.")
-            raise typer.Exit(code=1) from None
-        noun = "candidate match" if len(added) == 1 else "candidate matches"
-        by_rule = [m for m in [*added, *again] if m.reviewed_by is Decider.RULE]
-        rejected = [m for m in by_rule if m.review_state is ReviewState.REJECTED]
-        approved = [m for m in by_rule if m.review_state is ReviewState.APPROVED]
-        waiting = "All are pending review." if not by_rule else "The rest are pending review."
-        out.print(f"Found {len(added)} new {noun} for {claim.slug}. {waiting}")
-        if rescore:
-            candidates = "candidate" if len(again) == 1 else "candidates"
-            out.print(f"Scored {len(again)} pending {candidates} again.")
-        if approved:
-            out.print(
-                f"{len(approved)} approved by rule for scoring {accept_above:g} or more"
-                " for the claim's indication. They are published with the next export.",
-                markup=False,
+            # Said here, exited below: the session undoes everything when it is left
+            # through an exception, an exit among them, and the logged failure, the
+            # model's recorded cost and the registries' cached answers are to be kept.
+            failure = str(failed)
+        else:
+            _say_matches(
+                claim,
+                added,
+                again,
+                refused,
+                rescore=rescore,
+                accept_above=accept_above,
+                reject_below=reject_below,
             )
-        if rejected:
-            out.print(
-                f"{len(rejected)} rejected by rule for scoring under {reject_below:g}."
-                " See them with `review list --by-rule`.",
-                markup=False,
-            )
-        if refused:
-            terms = "; ".join(f"'{term}'" for term in refused)
-            out.print(
-                f"{len(refused)} term(s) the registry could not search for, and nothing was"
-                f" searched in their place: {terms}. Reword them and resolve again.",
-                markup=False,
-            )
-        for match in sorted(added, key=lambda m: m.score, reverse=True):
-            if match.reviewed_by is Decider.RULE:
-                continue
-            out.print(
-                f"  {match.score:.2f}  {match.source_name}  {match.external_id}", markup=False
-            )
+    if failure is not None:
+        err.print(failure, markup=False)
+        err.print(
+            f"{len(added)} candidate match(es) were stored before the failure."
+            if added
+            else "No candidates were stored."
+        )
+        raise typer.Exit(code=1)

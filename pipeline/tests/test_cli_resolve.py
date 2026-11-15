@@ -104,11 +104,12 @@ class Substances:
 class Backend:
     name = "fake"
 
-    def __init__(self, broken: bool = False) -> None:
+    def __init__(self, broken: bool | str = False) -> None:
+        # True breaks every decision; a step's name breaks that step alone.
         self.broken = broken
 
     def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
-        if self.broken:
+        if self.broken is True or self.broken == step:
             raise RuntimeError("no model")
         rest = 0.2 / (len(options) - 1)
         return BackendAnswer(options[0], {o: 0.8 if o == options[0] else rest for o in options})
@@ -126,8 +127,10 @@ def rules_off(monkeypatch: pytest.MonkeyPatch) -> None:
 def run(session: Session, monkeypatch: pytest.MonkeyPatch):
     @contextmanager
     def test_session() -> Generator[Session]:
-        yield session
-        session.flush()
+        # As the command's own session does: what it wrote is kept when it ends cleanly
+        # and undone when it is left through an exception, an exit among them.
+        with session.begin_nested():
+            yield session
 
     monkeypatch.setattr("thenwhat.cli.entry.open_session", test_session)
     # The command reads its settings; the database itself is the test session above.
@@ -147,9 +150,11 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
     )
     runner = CliRunner()
 
-    def invoke(*arguments: str, broken_backend: bool = False) -> Result:
+    def invoke(*arguments: str, broken_backend: bool | str = False) -> Result:
         if broken_backend:
-            monkeypatch.setattr("thenwhat.cli.resolve.make_backend", lambda s: Backend(broken=True))
+            monkeypatch.setattr(
+                "thenwhat.cli.resolve.make_backend", lambda s: Backend(broken=broken_backend)
+            )
         return runner.invoke(app, list(arguments))
 
     return invoke
@@ -482,3 +487,13 @@ def test_resolve_with_a_failing_backend_keeps_the_failure_on_record(run, session
     assert "No candidates were stored" in result.output
     assert session.scalars(select(EntityMatch)).all() == []
     assert [entry.error is not None for entry in session.scalars(select(DecisionLog))] == [True]
+
+
+def test_resolve_failing_after_the_search_keeps_and_reports_what_it_stored(run, session: Session):
+    result = run("resolve", SLUG, broken_backend="evidence_stage")
+
+    assert result.exit_code == 1
+    assert "1 candidate match(es) were stored before the failure" in result.output
+    assert "No candidates were stored" not in result.output
+    assert len(session.scalars(select(EntityMatch)).all()) == 1
+    assert any(entry.error is not None for entry in session.scalars(select(DecisionLog)))
