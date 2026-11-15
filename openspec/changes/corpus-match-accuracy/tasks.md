@@ -53,7 +53,7 @@
 - [x] Correct the archived kidney claim's origin paper to the already verified 2016 study without unarchiving it or changing trial decisions.
 - [x] Prepare both corrected regimens: retain seven unchanged pembrolizumab trial readings and verify the newly found lithium-containing bipolar cohort in NCT01431573.
 - [x] Handle the demonstrated ClinicalTrials.gov condition-query complexity limit for the precise pembrolizumab indication, preserving full clinical scope for scoring. Two bounded discovery attempts succeed without changing candidates or scoring scope: the accepted fallback has 111 trials and contributes none under the existing 100-trial cap; no model calls.
-- [ ] Review and integrate the condition-refusal fallback after its 155 client, resolution and CLI regression checks.
+- [ ] Review and integrate the condition-refusal fallback after its 156 client, resolution and CLI regression checks. Recognize only the recorded `Conditions or disease` refusal label; unknown field labels cannot retry. Source terms and API documentation rechecked on 2026-11-15.
 
 - [x] Reconcile stale tentative readings after the three identity corrections: reject 20 explicitly incompatible candidates and reread the uncertain device against the precise identity; preserve approved trial counts and prior decision history.
 

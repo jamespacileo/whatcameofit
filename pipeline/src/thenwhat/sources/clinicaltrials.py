@@ -257,7 +257,7 @@ class ClinicalTrials(Source):
             fetched = self._get(f"{API}/studies", params)
         except _UnreadableQuery as unreadable:
             # The registry names the field it could not read: the treatment or the condition.
-            if condition and unreadable.field.startswith("Condition"):
+            if condition and unreadable.field == "Conditions or disease":
                 raise _UnreadableCondition(condition, unreadable.reason, self.name) from None
             at_fault = intervention if unreadable.field.startswith("Intervention") else condition
             raise UnsearchableTerm(at_fault or intervention, unreadable.reason, self.name) from None

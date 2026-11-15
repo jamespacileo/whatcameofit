@@ -198,7 +198,7 @@ def test_refused_condition_uses_one_bounded_discovery_fallback(
             return fixture_json("clinicaltrials/search_broad_count.json")
         if wording == condition:
             return httpx.Response(
-                400, text="Error parsing query in Condition: Too complicated query"
+                400, text=(FIXTURES / "clinicaltrials/condition_too_complicated.txt").read_text()
             )
         assert wording == fallback
         return fixture_json("clinicaltrials/search_broad_with_condition.json")
@@ -218,7 +218,9 @@ def test_refused_condition_uses_one_bounded_discovery_fallback(
 def test_refused_condition_is_reported_when_no_usable_fallback_remains(
     session: Session, fake_time, condition: str, requests: int
 ):
-    refused = httpx.Response(400, text="Error parsing query in Condition: Too complicated query")
+    refused = httpx.Response(
+        400, text=(FIXTURES / "clinicaltrials/condition_too_complicated.txt").read_text()
+    )
     source, replay = trials(session, fake_time, lambda request: refused)
 
     with pytest.raises(UnsearchableTerm, match="Too complicated query"):
@@ -228,7 +230,7 @@ def test_refused_condition_is_reported_when_no_usable_fallback_remains(
     assert all("query.cond" in r.url.params for r in replay.requests)
 
 
-@pytest.mark.parametrize("field", ["Intervention / treatment", "Unknown field"])
+@pytest.mark.parametrize("field", ["Intervention / treatment", "Unknown field", "ConditionUnknown"])
 def test_only_an_explicit_condition_refusal_can_use_the_fallback(
     session: Session, fake_time, field: str
 ):
@@ -247,7 +249,7 @@ def test_refused_condition_fallback_keeps_the_candidate_limit(
     def route(request: httpx.Request):
         if request.url.params["query.cond"] == "Stiff person syndrome":
             return httpx.Response(
-                400, text="Error parsing query in Condition: Too complicated query"
+                400, text=(FIXTURES / "clinicaltrials/condition_too_complicated.txt").read_text()
             )
         return fixture_json("clinicaltrials/search_broad_count.json")
 
