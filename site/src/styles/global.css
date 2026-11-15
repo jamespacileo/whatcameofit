@@ -4718,6 +4718,8 @@ main ul:not([class]) li + li {
   .strip-decision,
   .strip-promise path {
     fill: CanvasText;
+  }
+}
 
 /* ── The page frame ─────────────────────────────────────────────────────────────
    Claim and topic pages: a navy band holding the title and the status, then a list
