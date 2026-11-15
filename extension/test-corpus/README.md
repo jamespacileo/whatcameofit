@@ -21,6 +21,8 @@ Multiple plausible trial candidates with confidence scores and reasons are a val
 
 Never paste article text into any file here. A per-row observation goes in `notes.json`, keyed by id. A verdict a person decided goes in `verdicts.json` as `[result, reason]`.
 
+Dated reruns are recorded in `reruns.json`, keyed by row ID, with the adjudicated result, response summary, UTC timestamp, tested build and separate site/extension evidence. These take precedence over historical cache-derived answers during assembly. Update or remove the corresponding rerun entry when a newer run supersedes it; a normal sync preserves it. The `runs/` folder retains compact structured evidence without copied page text, model summaries or screenshots. Local-source checks must say so explicitly and must not be presented as a deployment or full-video check.
+
 ## Sync
 
 ```sh
