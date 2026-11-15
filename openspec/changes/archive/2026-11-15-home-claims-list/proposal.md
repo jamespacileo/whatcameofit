@@ -39,3 +39,8 @@ None.
 - `site/src/pages/index.astro`: the Claims view, its tab, its panel and its pager; rows carry the status and topic the existing controls narrow by.
 - `site/src/styles/global.css`, `DESIGN.md` (Index tables, Home tabs), `site/tests/site.test.mjs`, `site/tests/record-brief.test.mjs`.
 - No pipeline, export, schema or seed change. Does not depend on `plain-trial-entries`.
+
+## Correction at archive (2026-11-15)
+
+This change was written before `home-day-by-day` was archived. As written, its delta placed the lists "under the lookup" and dropped the scenario "Where the four lists stand". The site still shows the day-by-day list first and the lists under their own heading after it (`site/src/pages/index.astro`). So the delta was corrected to match: the lists sit under the day-by-day list, and the scenario is kept as "Where the five lists stand".
+The archive tool refuses a renamed scenario, so the main spec's scenario was renamed in the same commit before archiving.

@@ -8,7 +8,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: The home page offers the claims in five lists
-Under the lookup, the home page SHALL offer these lists of published claims, in this order, and SHALL show one at a time, the first unless the address names another:
+Under the day-by-day list, under a heading of their own, the home page SHALL offer these lists of published claims, in this order, and SHALL show one at a time, the first unless the address names another:
 
 1. Headlines: every source article, newest first.
 2. Claims: every published claim once, by the date it was first reported, newest first.
@@ -45,6 +45,10 @@ A list with no rows SHALL NOT be offered, except Headlines. Each list SHALL show
 #### Scenario: A list named in the address
 - **WHEN** the home page is opened at an address naming the Claims list
 - **THEN** that list is the one shown
+
+#### Scenario: Where the five lists stand
+- **WHEN** a reader opens the home page
+- **THEN** the day-by-day list comes first under the lookup, and the five lists follow it under their own heading
 
 ## ADDED Requirements
 
