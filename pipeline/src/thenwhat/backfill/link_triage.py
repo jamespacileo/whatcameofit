@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from thenwhat.backfill.errors import ModelUnreachable
 from thenwhat.backfill.steps import MODEL, Failed, ModelSpend
+from thenwhat.backfill.topics import title_names
 from thenwhat.db.models import DecisionLog, LinkLead
 from thenwhat.decide.core import Backend, DecisionFailed
 from thenwhat.decide.steps import (
@@ -124,8 +125,16 @@ class LinkTriage:
     # sent with every headline, so a headline costs far more than its own words.
     model_spend = ModelSpend(input_tokens=300)
 
-    def __init__(self, time: Time | None = None) -> None:
+    def __init__(self, time: Time | None = None, *, topic_terms: Sequence[str] = ()) -> None:
         self._time = time or SystemTime()
+        # The words of the operator's topics. Leads whose title names one are scored
+        # first, so a topic need not wait for every older lead.
+        self._names_a_topic = title_names(topic_terms)
+
+    def order(self) -> list[ColumnElement[Any]]:
+        """First the leads whose title names one of the operator's topics. The order
+        changes which lead is scored when, never what it scores."""
+        return [] if self._names_a_topic is None else [self._names_a_topic.desc()]
 
     def scope(self) -> ColumnElement[bool]:
         """Leads that screening left in scope: on a listed outlet and not yet tracked."""

@@ -284,3 +284,17 @@ def test_raising_the_version_scores_every_lead_again_and_keeps_the_earlier_log(
     assert report.done == 2
     assert all(lead.triage_version == 2 for lead in leads)
     assert len(log(session)) == 4
+
+
+def test_leads_that_name_a_topic_are_scored_first(session: Session):
+    """Scenario: A topic lead among older leads"""
+    titles = [f"An older trial result number {n}" for n in range(25)]
+    leads = add_leads(session, [*titles, "Zepbound in a synthetic trial"])
+    backend = Headlines(session)
+
+    triage(session, backend, LinkTriage(Clock(), topic_terms=("Zepbound",)))
+
+    # The newest lead is the one on a topic, and it is in the first call of twenty.
+    assert leads[-1].title == "Zepbound in a synthetic trial"
+    assert any("Zepbound" in headline for headline in backend.calls[0])
+    assert all(lead.triage_score is not None for lead in leads)
