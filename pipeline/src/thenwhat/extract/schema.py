@@ -75,13 +75,20 @@ class Draft(BaseModel):
         description="Your own words. Never copy sentences from the article.",
     )
     intervention: ShortText = Field(
-        description="The drug, device or method, by its name alone: no maker or mechanism."
+        description=(
+            "The drug, device or method, by its most specific product name or code stated "
+            "in the article: no appended maker or mechanism. Do not replace a named "
+            "product with its broader category, such as 'COVID-19 vaccine'."
+        )
     )
     intervention_synonyms: list[ShortText] = Field(
         default_factory=list,
         description=(
             "Other names the article gives it: a brand name, a code such as ABC-123, or a"
-            " generic name. Never a description such as 'the drug', 'the pill' or"
+            " generic name for the same complete intervention. Exclude individual"
+            " components, class members, broader categories, related substances and"
+            " names that omit an explicit stereoisomer, route or regimen restriction."
+            " Never a description such as 'the drug', 'the pill' or"
             " 'a one-time treatment'. Empty if the article gives no other name."
         ),
     )

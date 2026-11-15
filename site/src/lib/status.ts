@@ -16,9 +16,9 @@ export const STATUS_LABELS: Record<StatusCode, string> = {
 
 export const STATUS_MEANINGS: Record<StatusCode, string> = {
   preclinical_only:
-    "No clinical trial was found in the registries checked. The first reports are not recorded as describing a study in people.",
+    "The confirmed first-report evidence is laboratory or animal work. No clinical trial was found in the registries checked.",
   no_trial_found:
-    "The first reports described a study in people. No clinical trial was found in the registries checked.",
+    "No clinical trial was found in the registries checked. This does not establish whether the treatment has been studied in people.",
   trial_registered: "A clinical trial is registered. No trial with a phase has started.",
   phase_1: "The furthest trial that has started is a Phase 1 trial.",
   phase_2: "The furthest trial that has started is a Phase 2 trial.",
@@ -34,7 +34,7 @@ export const STATUS_MEANINGS: Record<StatusCode, string> = {
 // claims more than the meaning above it: "no trial on record" is not "never tested".
 export const STATUS_GLOSSES: Record<StatusCode, string> = {
   preclinical_only: "No trial in people on record",
-  no_trial_found: "Studied in people, no registered trial found",
+  no_trial_found: "No matching registered trial found",
   trial_registered: "A trial in people is registered",
   phase_1: "Early trial in people, checking safety",
   phase_2: "Mid-stage trial in people",
@@ -49,8 +49,8 @@ export const STATUS_GLOSSES: Record<StatusCode, string> = {
 const STATUS_CLAUSES: Record<StatusCode, [one: string, many: string]> = {
   preclinical_only: ["has no trial in people on record", "have no trial in people on record"],
   no_trial_found: [
-    "was studied in people with no registered trial found",
-    "were studied in people with no registered trial found",
+    "has no matching registered trial found",
+    "have no matching registered trial found",
   ],
   trial_registered: ["has a trial in people registered", "have a trial in people registered"],
   phase_1: ["has reached an early trial in people", "have reached early trials in people"],

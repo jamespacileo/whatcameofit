@@ -11,11 +11,16 @@ from sqlalchemy.orm import Session
 from thenwhat.backfill.link_read import LEAD_READING, NO_DATE
 from thenwhat.backfill.link_triage import Standing, standings
 from thenwhat.db.models import Claim, LinkLead, LlmUsage
-from thenwhat.decide.steps import LEAD_TRIAGE, VERTICAL_CHOICE
+from thenwhat.decide.steps import LEAD_TRIAGE, SAME_CLAIM, TREATMENT_KIND, VERTICAL_CHOICE
 from thenwhat.domain import Decider, ReadOutcome, ReviewState, ScreenOutcome
 
 TRIAGE_PURPOSE = f"decision:{LEAD_TRIAGE}"
-READING_PURPOSES = (LEAD_READING, f"decision:{VERTICAL_CHOICE}")
+READING_PURPOSES = (
+    LEAD_READING,
+    f"decision:{VERTICAL_CHOICE}",
+    f"decision:{SAME_CLAIM}",
+    f"decision:{TREATMENT_KIND}",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,6 +41,7 @@ class Funnel:
     not_one_treatment: int
     # Read, on a topic, and about a treatment's business: no claim was made.
     business_news: int
+    identity_unresolved: int
     enough_articles: int
     # Why leads could not be read, and how many for each reason.
     cannot_be_read: dict[str, int]
@@ -57,6 +63,7 @@ class Funnel:
             + self.needs_vertical
             + self.not_one_treatment
             + self.business_news
+            + self.identity_unresolved
         )
 
 
@@ -113,6 +120,7 @@ def funnel(session: Session, *, pass_above: float | None, reject_below: float | 
         needs_vertical=number(LinkLead.read_outcome == ReadOutcome.NEEDS_VERTICAL),
         not_one_treatment=number(LinkLead.read_outcome == ReadOutcome.NOT_ONE_TREATMENT),
         business_news=number(LinkLead.read_outcome == ReadOutcome.BUSINESS_NEWS),
+        identity_unresolved=number(LinkLead.read_outcome == ReadOutcome.IDENTITY_UNRESOLVED),
         enough_articles=number(LinkLead.read_outcome == ReadOutcome.ENOUGH_ARTICLES),
         cannot_be_read={reason or "no reason recorded": count for reason, count in reasons},
         undated_outlets=[(outlet, count) for outlet, count in undated],

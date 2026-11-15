@@ -812,6 +812,7 @@ def funnel_command() -> None:
         lines.append(f"  new claim, decided otherwise: {found.new_otherwise:,}")
     lines += [
         f"  needs a vertical, no claim made: {found.needs_vertical:,}",
+        f"  claim identity unresolved, no claim joined or made: {found.identity_unresolved:,}",
         f"  not about one treatment for one condition, no claim made: {found.not_one_treatment:,}",
         f"  on a topic, business news about a treatment, no claim made: {found.business_news:,}",
         f"held, the claim has enough articles: {found.enough_articles:,}",
@@ -824,7 +825,7 @@ def funnel_command() -> None:
     lines += [
         f"model cost recorded for triage: {_dollars(found.triage_cost_usd)}",
         f"model cost recorded for reading: {_dollars(found.reading_cost_usd)} "
-        "(the reads and the vertical decisions; checks of reported statements are "
+        "(the reads, treatment-kind, claim-identity and vertical decisions; statement checks are "
         "recorded with all statement checks)",
     ]
     for line in lines:

@@ -95,7 +95,7 @@ OVERLAY_STATUSES = frozenset(
 
 # Stages of evidence at announcement that mean the work was done in people. With no
 # trial found, such a claim is not "preclinical only": the registries simply hold no record.
-STUDIED_IN_PEOPLE = frozenset({EvidenceStage.EARLY_HUMAN, EvidenceStage.LATE_HUMAN})
+PRECLINICAL_STAGES = frozenset({EvidenceStage.IN_VITRO, EvidenceStage.ANIMAL})
 
 
 def _whole_years(start: date, end: date) -> int:
@@ -223,9 +223,9 @@ def derive(
         explaining = [event for trial in trials.values() for event in trial]
     else:
         status = (
-            ClaimStatus.NO_TRIAL_FOUND
-            if evidence_stage in STUDIED_IN_PEOPLE
-            else ClaimStatus.PRECLINICAL_ONLY
+            ClaimStatus.PRECLINICAL_ONLY
+            if evidence_stage in PRECLINICAL_STAGES
+            else ClaimStatus.NO_TRIAL_FOUND
         )
         explaining = []
 

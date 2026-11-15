@@ -9,8 +9,8 @@ const {readPage,pageAsText}=await import(pathToFileURL(root+'/site/worker/page.m
 const {inspectVisible,capturePage}=await import(pathToFileURL(root+'/extension/src/visual.js'));
 function read(url,head,body,selection='') {
  const {document,window}=parseHTML('<html><head>'+head+'</head><body>'+body+'</body></html>');
- Object.assign(globalThis,{document,window,location:new URL(url),getSelection:()=>selection,innerWidth:1000,innerHeight:800,getComputedStyle:()=>({display:'block',visibility:'visible'})});
- window.HTMLElement.prototype.getBoundingClientRect=function(){const top=Number(this.getAttribute('data-top')??0);return {x:0,y:top,left:0,top,right:600,bottom:top+700,width:600,height:700};};
+ Object.assign(globalThis,{document,window,location:new URL(url),getSelection:()=>selection,innerWidth:1000,innerHeight:800,getComputedStyle:node=>({display:node.hidden?'none':'block',visibility:'visible',overflowX:node.getAttribute('data-overflow-x')??'visible',overflowY:node.getAttribute('data-overflow-y')??'visible'})});
+ window.HTMLElement.prototype.getBoundingClientRect=function(){const top=Number(this.getAttribute('data-top')??0),left=Number(this.getAttribute('data-left')??0),width=Number(this.getAttribute('data-width')??600),height=Number(this.getAttribute('data-height')??700);return {x:left,y:top,left,top,right:left+width,bottom:top+height,width,height};};
  const captured=collectFromPage();
  return {captured,request:composeRequest(captured,url,{readAddress,readPage,pageAsText})};
 }
@@ -90,5 +90,88 @@ test('an identity-matched image-only post retains its bounded visual fallback', 
  assert.equal(visible.unavailable,false);
  assert.equal(visible.crop.kind,'img');
  assert.equal(visible.crop.identity,'https://media.example/current.jpg');
+});
+
+test('an Instagram carousel captures only its unique visible slide inside the bound viewport', () => {
+ const url='https://www.instagram.com/p/ABC123/?img_index=2';
+ const head='<meta property="og:url" content="https://www.instagram.com/p/ABC123/"><meta property="og:image" content="https://media.example/current.jpg">';
+ const image=(src,left)=>'<img src="https://media.example/'+src+'.jpg" data-left="'+left+'" data-width="480" data-height="600">';
+ const carousel=(first,second,extra='')=>'<main><div data-left="300" data-width="480" data-height="600" data-overflow-x="auto" data-overflow-y="hidden"><div><ul><li>'+image('current',first)+'</li><li>'+image('second',second)+'</li></ul></div></div>'+extra+'</main>';
+ let x=read(url,head,carousel(-180,300,image('recommendation',0)));
+ let view=inspectVisible(x.captured.mediaScope);
+ assert.equal(view.crop?.identity,'https://media.example/second.jpg');
+ assert.deepEqual([view.crop.left,view.crop.width],[300,480]);
+ x=read(url,head,carousel(60,540));
+ assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true,'two visible slides are ambiguous');
+ x=read(url,head,carousel(-180,300).replace('<li>','<li><a href="/p/OTHER123/">Another post</a>'));
+ assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true,'a list of posts is not a carousel');
+ x=read(url,head,'<main><div data-left="300" data-width="360" data-height="600" data-overflow-x="hidden">'+image('current',250)+'</div></main>');
+ view=inspectVisible(x.captured.mediaScope);
+ assert.deepEqual([view.crop.left,view.crop.width],[300,360],'crop excludes clipped neighbour pixels');
+ x=read(url,head,carousel(-180,300).replace('<main>','<main hidden>'));
+ assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true,'hidden ancestors exclude media');
+});
+
+test('LinkedIn and Bluesky bind the requested post without profile sidebars or replies', () => {
+ const url='https://www.linkedin.com/posts/author_trial-activity-1234567890123456789-abcd/';
+ const claim='EX-17 was studied for missing teeth in a randomized clinical trial.';
+ let x=read(url,'','<main><aside>PRIVATE_PROFILE_ANALYTICS</aside><div role="listitem" componentkey="update-card-focus-current"><a href="'+url+'"><div aria-labelledby="reactions">Reactions</div></a><span data-testid="expandable-text-box">'+claim+'</span><div componentkey="comment-nested">NESTED_REPLY_OTHER_DRUG</div><div componentkey="commentBox-draft">PRIVATE_DRAFT</div></div><div role="listitem" componentkey="comment-current"><a href="'+url+'">Reply</a>REPLY_OTHER_DRUG</div></main>');
+ assert.ok(x.request?.text.includes('EX-17'));
+ assert.ok(!x.request.text.includes('PRIVATE_PROFILE_ANALYTICS'));
+ assert.ok(!x.request.text.includes('REPLY_OTHER_DRUG'));
+ assert.ok(!x.request.text.includes('PRIVATE_DRAFT'));
+ assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true,'text-only post cannot capture the sidebar');
+ x=read(url,'','<main>PRIVATE_PROFILE_ANALYTICS<div role="listitem" componentkey="update-card-focus-other"><a href="/posts/author_other-activity-9999999999999999999-abcd/">Other post</a>'+claim+'</div></main>');
+ assert.equal(x.request,null,'stale post identity fails closed');
+ x=read(url,'<meta property="og:url" content="'+url+'"><meta property="og:description" content="'+claim+'">',
+  '<main>Sign in PRIVATE_PROFILE_ANALYTICS<img src="https://media.example/unrelated.jpg"></main>');
+ assert.ok(x.request?.text.includes('EX-17'),'identity-bound public caption works in another layout');
+ assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true,'public metadata alone cannot bind unrelated pixels');
+ x=read(url,'<meta property="og:url" content="https://www.linkedin.com/posts/author_other-activity-9999999999999999999-abcd/"><meta property="og:description" content="'+claim+'">','<main>Sign in</main>');
+ assert.equal(x.request,null);
+ const bsky='https://bsky.app/profile/journal.example/post/3abcdef12345';
+ x=read(bsky,'','<main><div data-testid="postThreadItem-by-journal.example"><div>'+claim+'</div><a href="'+bsky+'/liked-by"><div data-testid="likeCount-expanded">Likes</div></a></div><div data-testid="postThreadItem-by-other.example">REPLY_OTHER_DRUG<a href="/profile/other.example/post/3abc99999999">Reply</a></div></main>');
+ assert.ok(x.request?.text.includes('EX-17'));
+ assert.ok(!x.request.text.includes('REPLY_OTHER_DRUG'));
+ x=read(bsky,'','<main><div data-testid="postThreadItem-by-journal.example">STALE_OTHER_DRUG<a href="/profile/journal.example/post/3abc99999999/liked-by">Likes</a></div></main>');
+ assert.equal(x.request,null);
+ x=read(bsky,'','<main><div data-testid="postThreadItem-by-journal.example">STALE_OTHER_DRUG<a href="/profile/journal.example/post/3abc99999999/liked-by"><div data-testid="likeCount-expanded">Likes</div></a><a href="'+bsky+'">Replying to original</a></div></main>');
+ assert.equal(x.request,null,'an inline link cannot impersonate the requested post');
+ x=read(url,'','<main><div role="listitem" componentkey="update-card-focus-other"><a href="/posts/author_other-activity-9999999999999999999-abcd/"><div aria-labelledby="reactions">Reactions</div></a><span data-testid="expandable-text-box">STALE_OTHER_DRUG<a href="'+url+'">Cited original</a></span></div></main>');
+ assert.equal(x.request,null,'a cited post cannot identify the containing LinkedIn post');
+ const chosen='Selected EX-42 report for the named condition.';
+ x=read(url,'','<main>PRIVATE_PROFILE_ANALYTICS</main>',chosen);
+ assert.equal(x.request.text,chosen);
+ assert.deepEqual(x.request.links,[]);
+});
+
+test('an image-only LinkedIn post keeps only its uniquely owned attachment', () => {
+ const url='https://www.linkedin.com/posts/author_trial-activity-1234567890123456789-abcd/';
+ const image='<a href="'+url+'"><figure><img src="https://media.example/current.jpg"></figure></a>';
+ const root=inside=>'<main><aside><img src="https://media.example/sidebar.jpg"></aside><div role="listitem" componentkey="update-card-focus-current">'+inside+'<div componentkey="comment-nested"><img src="https://media.example/reply.jpg"></div></div></main>';
+ let x=read(url,'',root(image));
+ assert.equal(x.request,null);
+ assert.equal(inspectVisible(x.captured.mediaScope).crop?.identity,'https://media.example/current.jpg');
+ x=read(url,'',root(image+image.replace('current.jpg','second.jpg')));
+ assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true,'two owned attachments remain ambiguous');
+});
+
+test('Facebook reads the identity-bound caption and media instead of a larger neighbour', () => {
+ const url='https://www.facebook.com/journal/posts/reported-treatment/123456789/';
+ const caption='EX-17 was studied for a named condition in a randomized clinical trial.';
+ const head='<meta property="og:url" content="'+url+'"><meta property="og:description" content="'+caption+'"><meta property="og:image" content="https://media.example/current.jpg?size=small">';
+ const body='<main><div role="article"><div data-ad-preview="message">'+caption+' More detail from the same post.</div><img src="https://media.example/current.jpg?size=large"><div role="article" aria-label="Comment by someone">COMMENT_OTHER_DRUG</div></div><div role="article">'+('NEIGHBOUR_OTHER_DRUG '.repeat(100))+'</div></main>';
+ let x=read(url,head,body);
+ assert.ok(x.request?.text.includes('EX-17'));
+ assert.ok(x.request.text.includes('More detail'));
+ assert.ok(!x.request.text.includes('COMMENT_OTHER_DRUG'));
+ assert.ok(!x.request.text.includes('NEIGHBOUR_OTHER_DRUG'));
+ assert.equal(inspectVisible(x.captured.mediaScope).crop?.identity,'https://media.example/current.jpg?size=large');
+ x=read(url,head.replace('/123456789/','/999999999/'),body);
+ assert.equal(x.request,null,'stale metadata cannot identify the current post');
+ assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true);
+ x=read('https://www.facebook.com/journal/videos/a-trial/123456789/',head.replace(url,'https://www.facebook.com/reel/123456789/'),'<main>Log in<img src="https://media.example/unrelated.jpg"></main>');
+ assert.ok(x.request?.text.includes('EX-17'),'video and reel aliases identify the same post');
+ assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true,'unrelated media is never captured');
 });
 

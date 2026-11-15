@@ -44,14 +44,20 @@ def record_usage(
     cost_usd: Decimal,
     now: datetime,
 ) -> None:
-    session.add(
-        LlmUsage(
-            purpose=purpose,
-            model=model,
-            input_tokens=input_tokens,
-            output_tokens=output_tokens,
-            cost_usd=cost_usd.quantize(MICRO_DOLLAR),
-            created_at=now,
+    # Provider work has already happened. Its cost must survive a later rollback of
+    # claim work, just as source request turns do. A connection-bound test session
+    # uses a savepoint; production engine-bound sessions commit independently.
+    with (
+        Session(session.get_bind(), join_transaction_mode="create_savepoint") as ledger,
+        ledger.begin(),
+    ):
+        ledger.add(
+            LlmUsage(
+                purpose=purpose,
+                model=model,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                cost_usd=cost_usd.quantize(MICRO_DOLLAR),
+                created_at=now,
+            )
         )
-    )
-    session.flush()

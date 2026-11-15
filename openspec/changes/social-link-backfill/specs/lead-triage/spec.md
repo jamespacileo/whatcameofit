@@ -59,3 +59,10 @@ Raising the triage step's version SHALL make every lead in scope due for triage.
 #### Scenario: The question is reworded
 - **WHEN** the triage question is changed and the step's version is raised
 - **THEN** every lead in scope is scored again and its stored score is the new one
+
+### Requirement: Topic leads are scored first
+Among the leads due for triage, those whose title names one of the operator's topics SHALL be scored first. The order SHALL change which lead is scored when, and never what a lead scores.
+
+#### Scenario: A topic lead among older leads
+- **WHEN** twenty-five older leads and one lead that names a topic are due
+- **THEN** the lead that names the topic is in the first call

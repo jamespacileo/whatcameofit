@@ -1,9 +1,9 @@
 ---
-// Above the home page's lists: where every tracked claim stands, and a topic to narrow
-// to. A pick narrows the day-by-day list and the four tabbed lists at once.
-import SlidersHorizontal from "@lucide/astro/icons/sliders-horizontal";
-import type { ExportedClaim } from "../lib/export";
-import StageFilter from "./StageFilter.astro";
+// The home page's status and topic choices: two fields in the row of choices above the
+// lists. A pick narrows the day-by-day list and the tabbed lists at once. The status
+// field says how many claims are at each status, on the path a topic page draws.
+import type { ExportedClaim, StatusCode } from "../lib/export";
+import { STAGE_PATH, STATUS_LABELS } from "../lib/status";
 
 interface Props {
   claims: ExportedClaim[];
@@ -13,38 +13,85 @@ interface Props {
 }
 
 const { claims, topics, counts } = Astro.props;
+const all = counts[""] ?? {};
+const offPath = (Object.keys(all) as StatusCode[]).filter((code) => !STAGE_PATH.includes(code));
+const statuses = [...STAGE_PATH, ...offPath];
 ---
 
 <div class="scoreboard" data-scoreboard>
-  {/* On a phone the counts and the topic choice wait behind this, so a row is on the
-      first screen. Shown by the script; without it everything is in view. */}
-  <button
-    type="button"
-    class="narrow-toggle"
-    aria-expanded="false"
-    aria-controls="narrow-body"
-    hidden
-    data-narrow
-  >
-    <SlidersHorizontal size={16} stroke-width={1.9} aria-hidden="true" />
-    Narrow these lists
-  </button>
-  <div class="narrow-body" id="narrow-body">
-    <StageFilter claims={claims} scope="[data-feed]" param="status" />
-    {
-      topics.length > 1 && (
-        <p class="topic-filter" hidden data-topic-filter>
-          <label for="feed-topic">Topic</label>
-          <select id="feed-topic" data-counts={JSON.stringify(counts)}>
-            <option value="">All topics ({claims.length})</option>
-            {topics.map((topic) => (
-              <option value={topic.slug}>
-                {topic.title} ({topic.count})
-              </option>
-            ))}
-          </select>
-        </p>
-      )
-    }
-  </div>
+  {/* Shown by the script: without it there is nothing to pick. */}
+  <label class="pick" hidden data-status-filter>
+    <span class="visually-hidden">Status now</span>
+    <select id="feed-status" data-stage-filter data-scope="[data-feed]" data-param="status">
+      <option value="">Any status</option>
+      {
+        statuses.map((code) => (
+          <option value={code} data-label={STATUS_LABELS[code]} disabled={!all[code]}>
+            {STATUS_LABELS[code]} ({all[code] ?? 0})
+          </option>
+        ))
+      }
+    </select>
+  </label>
+  {
+    topics.length > 1 && (
+      <label class="pick topic-filter" hidden data-topic-filter>
+        <span class="visually-hidden">Topic</span>
+        <select id="feed-topic" data-counts={JSON.stringify(counts)}>
+          <option value="">All topics</option>
+          {topics.map((topic) => (
+            <option value={topic.slug}>
+              {topic.title} ({topic.count})
+            </option>
+          ))}
+        </select>
+      </label>
+    )
+  }
 </div>
+
+<script>
+  // Picking a status shows only the rows of claims that stand there now. Rows left out
+  // are marked "data-out", as a topic page's path marks them; each list then recounts.
+  const field = document.querySelector<HTMLSelectElement>("#feed-status");
+  if (field) {
+    const scope = field.dataset.scope!;
+    const tables = [...document.querySelectorAll<HTMLTableElement>(`${scope} table`)];
+    const dayList = document.querySelector<HTMLElement>(`${scope} [data-day-list]`);
+    const rows: HTMLElement[] = [
+      ...tables.flatMap((table) => [...table.querySelectorAll<HTMLElement>("tbody tr[data-status]")]),
+      ...(dayList?.querySelectorAll<HTMLElement>("[data-day-row]") ?? []),
+    ];
+    const options = [...field.options].filter((option) => option.value !== "");
+
+    const apply = (picked: string, remember = true) => {
+      for (const row of rows) row.toggleAttribute("data-out", picked !== "" && row.dataset.status !== picked);
+      for (const table of tables) table.dispatchEvent(new Event("paged:refresh"));
+      dayList?.dispatchEvent(new Event("paged:refresh"));
+      if (!remember) return;
+      const url = new URL(location.href);
+      if (picked) url.searchParams.set(field.dataset.param!, picked);
+      else url.searchParams.delete(field.dataset.param!);
+      history.replaceState(history.state, "", url);
+    };
+    field.addEventListener("change", () => apply(field.value));
+
+    // A topic choice changes how many claims are at each status.
+    field.addEventListener("stage:counts", (event) => {
+      const counts = (event as CustomEvent<Record<string, number>>).detail;
+      for (const option of options) {
+        const count = counts[option.value] ?? 0;
+        option.textContent = `${option.dataset.label} (${count})`;
+        // The picked status stays in the field, so it can always be let go.
+        option.disabled = count === 0 && field.value !== option.value;
+      }
+    });
+
+    field.closest<HTMLElement>("[data-status-filter]")!.hidden = false;
+    const asked = new URL(location.href).searchParams.get(field.dataset.param!);
+    if (asked && options.some((option) => option.value === asked && !option.disabled)) {
+      field.value = asked;
+      apply(asked, false);
+    }
+  }
+</script>
