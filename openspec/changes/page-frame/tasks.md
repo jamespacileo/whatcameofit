@@ -25,8 +25,8 @@ The mocks in `.impeccable/mocks/examine/` are the reference for look and behavio
 - [x] 3.5 Keep the timetable as the site's table by year (operator's decision, 15 Nov 2026), newest first from the library's output, with each entry's kind in words for a screen reader, the key above it, and every label reading the one pair of counts; verify "Four promises and seventeen records" on the published claim with a dated promise
 - [x] 3.6 Add the controls that narrow the timetable to one kind, with recounted year labels and the announced message, shown only when more than one kind is present; verify "Registry records only" and "One kind only", and that with scripting off every entry shows
 - [x] 3.7 Rebuild `Trial.astro` and the trials section as a table with rows that open, keeping the first-five rule and the wording of every fact; verify "Three finished trials" and "The same table on a phone", and that the existing trial-facts tests still pass
-- [ ] 3.8 Move match scores in `Paper.astro`, `Background.astro` and the trial detail into the notes, worded "Match to this claim: <band>, <percent>"; verify "Paper matched at 100%" and that "Confidence is shown with an event scored below certain" still holds for timetable events
-- [ ] 3.9 Render "Other claims in <topic>" through the claim table with the link to all of the topic's claims beside the heading; verify the link is reachable and is not inside the fold control
+- [x] 3.8 Move match scores in `Paper.astro`, `Background.astro` and the trial detail into the notes, worded "Match to this claim: <band>, <percent>"; verify "Paper matched at 100%" and that "Confidence is shown with an event scored below certain" still holds for timetable events
+- [x] 3.9 Render "Other claims in <topic>" through the claim table with the link to all of the topic's claims beside the heading; verify the link is reachable and is not inside the fold control
 
 ## 4. Topic page
 

@@ -959,15 +959,18 @@ const sections = [
     {
       others.length > 0 && (
         <section class="others" data-pagefind-ignore>
-          <FoldHead id="others" phone="folded">Other claims in {topic.toLowerCase()}</FoldHead>
+          <FoldHead id="others" phone="folded">
+            Other claims in {topic.toLowerCase()}
+            {/* Beside the heading and outside its button, so it is a link of its own. */}
+            <Fragment slot="beside">
+              {inTopic.length > others.length && (
+                <a href={`/topic/${claim.vertical}`}>
+                  All {inTopic.length + 1} claims in {topic.toLowerCase()}
+                </a>
+              )}
+            </Fragment>
+          </FoldHead>
           <ClaimTable claims={others} caption="Each claim, when it was first reported and its status" />
-          {inTopic.length > others.length && (
-            <p class="about-page">
-              <a href={`/topic/${claim.vertical}`}>
-                All {inTopic.length + 1} claims in {topic.toLowerCase()}
-              </a>
-            </p>
-          )}
         </section>
       )
     }

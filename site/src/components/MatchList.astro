@@ -3,7 +3,7 @@
 // was read one press away. Used for registry records and for papers. Openspec
 // auto-publish: "Confidence is shown with every match".
 import ChevronDown from "@lucide/astro/icons/chevron-down";
-import { confidenceLabel, readingOf } from "../lib/confidence";
+import { matchNote, readingOf } from "../lib/confidence";
 import type { ExportedMatch } from "../lib/export";
 import TrialDetailsLink from "./TrialDetailsLink.astro";
 
@@ -33,7 +33,7 @@ const { matches } = Astro.props;
         </span>
         <details class="match-why">
           <summary>
-            <strong>{confidenceLabel(match.score)}</strong>
+            <span>{matchNote(match.score)}</span>
             <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
           </summary>
           <p>{readingOf(match.reading)}</p>

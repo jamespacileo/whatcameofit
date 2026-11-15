@@ -26,7 +26,7 @@ import {
   type ExportedCard,
   type ExportedCardSource,
 } from "../lib/background";
-import { confidenceLabel } from "../lib/confidence";
+import { matchNote } from "../lib/confidence";
 
 interface Props {
   cards: ExportedCard[];
@@ -122,7 +122,7 @@ const day = (stamp: string) =>
           </div>
           <details class="match-why">
             <summary>
-              <strong>{scoreLabel(card, confidenceLabel)}</strong>
+              <span>{scoreLabel(card, matchNote)}</span>
               <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
             </summary>
             {reasonTexts(card).map((reason) => (
