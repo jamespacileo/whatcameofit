@@ -17,9 +17,11 @@ interface Props {
   filter?: boolean;
   /** Names the list in the page's address; give one when a page has two lists. */
   name?: string;
+  /** With the filter: also narrow by a typed word. */
+  words?: boolean;
 }
 
-const { claims, caption, filter = false, name = "claims" } = Astro.props;
+const { claims, caption, filter = false, name = "claims", words = false } = Astro.props;
 // A longer list is read a page at a time.
 const PAGE_SIZE = 25;
 // A handful of claims is read at a glance; the filter earns its place on a longer list.
@@ -28,7 +30,7 @@ const FILTER_FROM = 6;
 const anyPromise = claims.some((claim) => latestPromise(claim) !== null);
 ---
 
-{filter && claims.length >= FILTER_FROM && <StageFilter claims={claims} />}
+{filter && claims.length >= FILTER_FROM && <StageFilter claims={claims} words={words} />}
 {
   /* What the column counts, said once above a list long enough to be skimmed. */
   claims.length >= FILTER_FROM && <p class="entry-note tested-note">{TESTED_WORDS.note}</p>

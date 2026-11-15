@@ -10,12 +10,14 @@ import Bookmark from "@lucide/astro/icons/bookmark";
 import ClockMark from "../components/ClockMark.astro";
 import BasisMark from "../components/BasisMark.astro";
 import ClaimTable from "../components/ClaimTable.astro";
+import FoldHead from "../components/FoldHead.astro";
 import FollowOffer from "../components/FollowOffer.astro";
 import LookupAgain from "../components/LookupAgain.astro";
 import Outlet from "../components/Outlet.astro";
 import KindIcon from "../components/KindIcon.astro";
 import Pop from "../components/Pop.astro";
 import RecordBrief from "../components/RecordBrief.astro";
+import SectionList from "../components/SectionList.astro";
 import SharePill from "../components/SharePill.astro";
 import Statements from "../components/Statements.astro";
 import StageTrack from "../components/StageTrack.astro";
@@ -24,11 +26,13 @@ import TrialDetailsLink from "../components/TrialDetailsLink.astro";
 import { APPROACH_LABELS } from "../lib/approach";
 import { claimPaths, data, verticalTitle, type ExportedClaim } from "../lib/export";
 import { statusSlug } from "../lib/guide";
-import { digestBridge } from "../lib/record-brief";
+import { BRIEF_TITLE, digestBridge, recordBrief } from "../lib/record-brief";
 import { UNCHECKED_NOTE } from "../lib/notices";
+import { statementsHeading } from "../lib/statements";
 import {
   EVIDENCE_STAGES,
   KIND_NAMES,
+  KIND_PLURALS,
   STAGE_PATH,
   STATUS_LABELS,
   STATUS_GLOSSES,
@@ -154,6 +158,64 @@ const snippet = embedSnippet(SITE.url, claim.slug, claim.headline);
 // Prefilled posts carry the sentence and the address, and nothing of our own.
 const postText = shareSentence(claim, STATUS_LABELS[claim.status.code], data.last_checked_at, "").trim();
 const posts = shareLinks(postText, address, claim.headline);
+// Promises and records are counted apart and never added together: every label that
+// states them reads this one pair (openspec: "Promises and records are counted apart").
+const counts = timetable.counts;
+// The kinds of entry the timetable can be narrowed to, each with how many it holds.
+const kindCounts = [
+  ...(hasPromise ? [{ kind: "promise", name: "Promises", n: counts.promises }] : []),
+  ...kinds.map((kind) => ({
+    kind,
+    name: KIND_PLURALS[kind],
+    n: kind === "report" ? claim.articles.length : claim.events.filter((event) => eventKind(event) === kind).length,
+  })),
+];
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+const timetableNote = [
+  ...(counts.promises > 0 ? [plural(counts.promises, "promise")] : []),
+  plural(counts.records, "record"),
+  "newest first",
+].join(" · ");
+// The trials table's columns, named once for both the shown trials and the rest.
+const TRIAL_COLUMNS = ["Trial", "Compared with", "Design", "State", "Results"];
+const posted = withResults(trials);
+const trialsNote = [
+  plural(trials.length, "trial"),
+  ...(posted > 0 ? [`${posted} with posted results`] : []),
+].join(" · ");
+const paperCount = claim.papers ? claim.papers.length : papers.length;
+const papersNote = plural(paperCount, "paper");
+const brief = recordBrief(claim, data.last_checked_at);
+const statements = claim.reported_statements ?? [];
+const background = claim.background ?? [];
+// The sections this page has, in the page's order. One it does not have is not listed.
+const sections = [
+  ...(brief.length > 0 ? [{ id: "brief", name: BRIEF_TITLE }] : []),
+  ...(statements.length > 0
+    ? [
+        {
+          id: "reported-statements",
+          name: statementsHeading(new Set(statements.map((statement) => statement.article_url)).size),
+        },
+      ]
+    : []),
+  {
+    id: "timetable",
+    name: hasDatedPromise ? "Promised and recorded" : "Recorded",
+    count: counts.promises > 0 ? `${counts.promises} and ${counts.records}` : counts.records,
+  },
+  ...(trials.length > 0 ? [{ id: "trials", name: "Trials on record", count: trials.length }] : []),
+  ...(claim.matches && (untried.length > 0 || candidates.length > 0 || trials.length === 0)
+    ? [{ id: "matched", name: "Registry records" }]
+    : []),
+  ...(paperCount > 0 ? [{ id: "papers", name: "Papers on record", count: paperCount }] : []),
+  ...(organisations.length > 0
+    ? [{ id: "organisations", name: "Organisations named", count: organisations.length }]
+    : []),
+  ...(background.length > 0 ? [{ id: "background", name: "Background", count: background.length }] : []),
+  ...(others.length > 0 ? [{ id: "others", name: "Other claims" }] : []),
+  { id: "pass-on", name: "Pass it on" },
+];
 ---
 
 <Base
@@ -169,226 +231,271 @@ const posts = shareLinks(postText, address, claim.headline);
   description={description}
   image={`/og/${claim.slug}.png`}
   imageAlt={imageAlt}
+  framed
 >
-  <article data-pagefind-body>
-    <div class="above-title">
-      <div class="filed">
-        <TopicChip vertical={claim.vertical} />
+  {/* The band: what was reported and, level with it, where it stands. */}
+  <section class="band record" slot="band" data-pagefind-body aria-label="The claim and where it stands">
+    <div class="wrap band-grid">
+      <div class="band-main">
+        <div class="above-title">
+          <div class="filed">
+            <TopicChip vertical={claim.vertical} />
+            {
+              claim.approach && (
+                <span class="approach">
+                  <span class="visually-hidden">Approach: </span>
+                  {APPROACH_LABELS[claim.approach]}
+                </span>
+              )
+            }
+          </div>
+        </div>
+        <h1 class:list={["title", { long: claim.headline.length > 70 }]}>
+          {
+            /* A name such as "USAG-1" must not break at its hyphen. */
+            claim.headline.split(" ").map((word, index) => (
+              <>
+                {index > 0 && " "}
+                {word.includes("-") && word.length <= 16 ? <span class="unbroken">{word}</span> : word}
+              </>
+            ))
+          }
+        </h1>
+
+        {/* A reader arriving from a shared link has not seen the home page. */}
+        <p class="what-this-is" data-pagefind-ignore>
+          A record of what followed{" "}
+          {reports.length === 0
+            ? "this reported breakthrough"
+            : reports.length === 1
+              ? "this news report"
+              : "these news reports"}. <a href="/how-it-works">How a status is set</a>
+        </p>
+
         {
-          claim.approach && (
-            <span class="approach">
-              <span class="visually-hidden">Approach: </span>
-              {APPROACH_LABELS[claim.approach]}
-            </span>
+          shownReports.length > 0 && (
+            <section class="reported band-reported" data-pagefind-ignore>
+              <h2 class="visually-hidden">
+                {reports.length === 1 ? "The news report this page follows" : "The news reports this page follows"}
+              </h2>
+              <ul class="plain">
+                {shownReports.map((report, index) => (
+                  <li>
+                    {/* The same name as the headline on the home page, so a reader who
+                        pressed it there sees it carried to this place. */}
+                    <a
+                      class="reported-title followed"
+                      href={report.url}
+                      style={`view-transition-name: ${followedName(claim.slug, index)}`}
+                    >
+                      “{report.title}”
+                      <ExternalLink class="out" size={14} stroke-width={1.9} aria-hidden="true" />
+                      <span class="visually-hidden">(at {report.outlet || "the outlet"})</span>
+                    </a>
+                    <span class="entry-note">
+                      <Outlet url={report.url} outlet={report.outlet} link={false} />{" "}
+                      <span class="unbroken">{formatDate(report.published_date)}</span>
+                    </span>
+                    {publisherNote(report.url) && (
+                      <span class="entry-note publisher">{publisherNote(report.url)}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {reports.length > shownReports.length && (
+                <p class="entry-note">
+                  <a href="#timetable">All {reports.length} reports, by date</a>
+                </p>
+              )}
+            </section>
           )
         }
+
       </div>
-      <div class="page-actions" data-pagefind-ignore>
-        {/* Following lists the claim on the home page, in this browser only. Shown by
-            the script, where the browser lets it keep the list. */}
-        <button
-          type="button"
-          class="share"
-          data-follow
-          data-slug={claim.slug}
-          data-headline={claim.headline}
-          data-status={STATUS_LABELS[claim.status.code]}
-          aria-pressed="false"
-          hidden
-        >
-          <Bookmark size={16} stroke-width={1.9} aria-hidden="true" />
-          <span data-follow-text>Follow</span>
-        </button>
-        <SharePill />
+      <div class="digest">
+        <div class="standing">
+          <h2 class="visually-hidden">Where it stands</h2>
+          <div class="label-row">
+            <span class="label" data-pagefind-meta="status">{STATUS_LABELS[claim.status.code]}</span>
+            <Pop id="why" label="Why this status" class="info">
+              <Info slot="trigger" size={20} stroke-width={1.9} aria-hidden="true" />
+              {
+                explaining.length > 0 ? (
+                  <>
+                    <p class="pop-head">
+                      <BasisMark label={false} /> The status rests on these records
+                    </p>
+                    <ul class="pop-list">
+                      {explaining.map(({ mark, event }) => (
+                        <li>
+                          <a href={`#record-${mark}`}>{eventLabel(event)}</a>,{" "}
+                          {formatDate(event.event_date)}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <p>No trial, approval or retraction record is attached to this claim.</p>
+                )
+              }
+              {
+                /* The dots on the path are named here, so a reader need not guess them. */
+                onPath && (
+                  <>
+                    <p class="pop-head">The six places on the path</p>
+                    <ol class="pop-path">
+                      {STAGE_PATH.map((code) => (
+                        <li aria-current={code === claim.status.code ? "true" : undefined}>
+                          {STATUS_LABELS[code]}
+                        </li>
+                      ))}
+                    </ol>
+                  </>
+                )
+              }
+              <p class="pop-note">
+                <a href={`/guide/${statusSlug(claim.status.code)}`}>
+                  What “{STATUS_LABELS[claim.status.code]}” does and does not tell you
+                </a>
+              </p>
+              <p class="pop-note">
+                <a href="/how-it-works#what-each-status-means">What each status means</a>
+              </p>
+              {
+                claim.status.updated_at && (
+                  <p class="pop-note" data-pagefind-ignore>
+                    Status set {formatDate(claim.status.updated_at)}.
+                  </p>
+                )
+              }
+            </Pop>
+          </div>
+          <p class="gloss">{STATUS_GLOSSES[claim.status.code]}</p>
+          <StageTrack code={claim.status.code} ends />
+          {
+            overlay && (
+              <div>
+                <Pop id="quiet" class="overlay">
+                  <Fragment slot="trigger">
+                    <Clock size={15} stroke-width={1.9} aria-hidden="true" />
+                    {overlay}
+                  </Fragment>
+                  <p>
+                    No record on this page is more recent than that. It says nothing about work that
+                    has not been published or registered.
+                  </p>
+                  <p class="pop-note">
+                    <a href="/how-it-works#no-signal">How "no signal" is counted</a>
+                  </p>
+                  <p class="pop-note">
+                    <a href="/guide/no-signal">What “no signal” does not tell you</a>
+                  </p>
+                </Pop>
+              </div>
+            )
+          }
+          {
+            promised && (
+              <p class="promised-by" data-pagefind-ignore>
+                Promised by <a href={`#year-${promised}`}>{promised}</a>
+              </p>
+            )
+          }
+          <p class="changed" data-pagefind-ignore>
+            {latestMark ? (
+              <>
+                Latest record <a href={`#record-${latestMark}`}>{formatDate(latestRecord)}</a>
+              </>
+            ) : (
+              "No record yet"
+            )}
+          </p>
+          {
+            claim.matches && (
+              <p class="changed" data-pagefind-ignore>
+                <a href={trials.length > 0 ? "#trials" : "#matched"}>
+                  {registryMatches.length === 0
+                    ? "No registry record matched"
+                    : `${counted} registry ${counted === 1 ? "record" : "records"} matched`}
+                </a>
+                {possible > 0 && `, ${possible} possible`}
+              </p>
+            )
+          }
+          <p class="changed" data-pagefind-ignore hidden data-remind-link>
+            <a href="#check-again">Check again later</a>
+          </p>
+        </div>
+        <div class="says">
+          {/* What the status means, in a sentence, beside the label it explains. */}
+          <p class="means">{STATUS_MEANINGS[claim.status.code]}</p>
+          {
+            /* Trials on record with no phase: said here, so the status is not read as
+               contradicting the trials the page lists. No link in it: on a phone it is drawn
+               ahead of the path, and nothing drawn out of order may be pressed. */
+            bridge && <p class="bridge">{bridge}</p>
+          }
+        </div>
+      </div>
+        {/* In the band, before the content in the page's order, so a keyboard reaches them
+            first. On a phone they close the band, under the status. */}
+      <div class="page-actions band-actions" data-pagefind-ignore>
+          {/* Following lists the claim on the home page, in this browser only. Shown by
+              the script, where the browser lets it keep the list. */}
+          <button
+            type="button"
+            class="share"
+            data-follow
+            data-slug={claim.slug}
+            data-headline={claim.headline}
+            data-status={STATUS_LABELS[claim.status.code]}
+            aria-pressed="false"
+            hidden
+          >
+            <Bookmark size={16} stroke-width={1.9} aria-hidden="true" />
+            <span data-follow-text>Follow</span>
+          </button>
+          <SharePill />
+        <a class="share" href="#check-again" hidden data-remind-link>
+          <Clock size={16} stroke-width={1.9} aria-hidden="true" />
+          <span>Check again later</span>
+        </a>
+        <ReportError page={`/${claim.slug}`} short />
       </div>
     </div>
-    <h1 class:list={["title", { long: claim.headline.length > 70 }]}>
-      {
-        /* A name such as "USAG-1" must not break at its hyphen. */
-        claim.headline.split(" ").map((word, index) => (
-          <>
-            {index > 0 && " "}
-            {word.includes("-") && word.length <= 16 ? <span class="unbroken">{word}</span> : word}
-          </>
-        ))
-      }
-    </h1>
+  </section>
 
-    {/* A reader arriving from a shared link has not seen the home page. */}
-    <p class="what-this-is" data-pagefind-ignore>
-      A record of what followed{" "}
-      {reports.length === 0
-        ? "this reported breakthrough"
-        : reports.length === 1
-          ? "this news report"
-          : "these news reports"}. <a href="/how-it-works">How a status is set</a>
-    </p>
+  <div class="frame no-rail">
+    <SectionList label="On this page" items={sections} />
 
+
+  <article class="sheet" data-pagefind-body>
     {
-      shownReports.length > 0 && (
-        <section class="reported" data-pagefind-ignore>
-          <h2 class="visually-hidden">
-            {reports.length === 1 ? "The news report this page follows" : "The news reports this page follows"}
-          </h2>
-          <ul class="plain">
-            {shownReports.map((report, index) => (
-              <li>
-                {/* The same name as the headline on the home page, so a reader who
-                    pressed it there sees it carried to this place. */}
-                <a
-                  class="reported-title followed"
-                  href={report.url}
-                  style={`view-transition-name: ${followedName(claim.slug, index)}`}
-                >
-                  “{report.title}”
-                  <ExternalLink class="out" size={14} stroke-width={1.9} aria-hidden="true" />
-                  <span class="visually-hidden">(at {report.outlet || "the outlet"})</span>
-                </a>
-                <span class="entry-note">
-                  <Outlet url={report.url} outlet={report.outlet} link={false} />{" "}
-                  <span class="unbroken">{formatDate(report.published_date)}</span>
-                </span>
-                {publisherNote(report.url) && (
-                  <span class="entry-note publisher">{publisherNote(report.url)}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-          {reports.length > shownReports.length && (
+      /* On a phone the band keeps to the title and the status, so the report this
+         page follows opens the content: the newest, and a way to the rest. */
+      reports.length > 0 && (
+        <div class="reported phone-reported" data-pagefind-ignore>
+          <a class="reported-title" href={reports[0].url}>
+            “{reports[0].title}”
+            <ExternalLink class="out" size={14} stroke-width={1.9} aria-hidden="true" />
+            <span class="visually-hidden">(at {reports[0].outlet || "the outlet"})</span>
+          </a>
+          <span class="entry-note">
+            <Outlet url={reports[0].url} outlet={reports[0].outlet} link={false} />{" "}
+            <span class="unbroken">{formatDate(reports[0].published_date)}</span>
+          </span>
+          {reports.length > 1 && (
             <p class="entry-note">
-              <a href="#timetable">All {reports.length} reports, by date</a>
+              <a href="#timetable">
+                {reports.length - 1} more {reports.length === 2 ? "report" : "reports"}, on the timetable
+              </a>
             </p>
           )}
-        </section>
+        </div>
       )
     }
 
-    <div class="digest">
-      <div class="standing">
-        <h2 class="visually-hidden">Where it stands</h2>
-        <div class="label-row">
-          <span class="label" data-pagefind-meta="status">{STATUS_LABELS[claim.status.code]}</span>
-          <Pop id="why" label="Why this status" class="info">
-            <Info slot="trigger" size={20} stroke-width={1.9} aria-hidden="true" />
-            {
-              explaining.length > 0 ? (
-                <>
-                  <p class="pop-head">
-                    <BasisMark label={false} /> The status rests on these records
-                  </p>
-                  <ul class="pop-list">
-                    {explaining.map(({ mark, event }) => (
-                      <li>
-                        <a href={`#record-${mark}`}>{eventLabel(event)}</a>,{" "}
-                        {formatDate(event.event_date)}
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ) : (
-                <p>No trial, approval or retraction record is attached to this claim.</p>
-              )
-            }
-            {
-              /* The dots on the path are named here, so a reader need not guess them. */
-              onPath && (
-                <>
-                  <p class="pop-head">The six places on the path</p>
-                  <ol class="pop-path">
-                    {STAGE_PATH.map((code) => (
-                      <li aria-current={code === claim.status.code ? "true" : undefined}>
-                        {STATUS_LABELS[code]}
-                      </li>
-                    ))}
-                  </ol>
-                </>
-              )
-            }
-            <p class="pop-note">
-              <a href={`/guide/${statusSlug(claim.status.code)}`}>
-                What “{STATUS_LABELS[claim.status.code]}” does and does not tell you
-              </a>
-            </p>
-            <p class="pop-note">
-              <a href="/how-it-works#what-each-status-means">What each status means</a>
-            </p>
-            {
-              claim.status.updated_at && (
-                <p class="pop-note" data-pagefind-ignore>
-                  Status set {formatDate(claim.status.updated_at)}.
-                </p>
-              )
-            }
-          </Pop>
-        </div>
-        <p class="gloss">{STATUS_GLOSSES[claim.status.code]}</p>
-        <StageTrack code={claim.status.code} ends />
-        {
-          overlay && (
-            <div>
-              <Pop id="quiet" class="overlay">
-                <Fragment slot="trigger">
-                  <Clock size={15} stroke-width={1.9} aria-hidden="true" />
-                  {overlay}
-                </Fragment>
-                <p>
-                  No record on this page is more recent than that. It says nothing about work that
-                  has not been published or registered.
-                </p>
-                <p class="pop-note">
-                  <a href="/how-it-works#no-signal">How "no signal" is counted</a>
-                </p>
-                <p class="pop-note">
-                  <a href="/guide/no-signal">What “no signal” does not tell you</a>
-                </p>
-              </Pop>
-            </div>
-          )
-        }
-        {
-          promised && (
-            <p class="promised-by" data-pagefind-ignore>
-              Promised by <a href={`#year-${promised}`}>{promised}</a>
-            </p>
-          )
-        }
-        <p class="changed" data-pagefind-ignore>
-          {latestMark ? (
-            <>
-              Latest record <a href={`#record-${latestMark}`}>{formatDate(latestRecord)}</a>
-            </>
-          ) : (
-            "No record yet"
-          )}
-        </p>
-        {
-          claim.matches && (
-            <p class="changed" data-pagefind-ignore>
-              <a href={trials.length > 0 ? "#trials" : "#matched"}>
-                {registryMatches.length === 0
-                  ? "No registry record matched"
-                  : `${counted} registry ${counted === 1 ? "record" : "records"} matched`}
-              </a>
-              {possible > 0 && `, ${possible} possible`}
-            </p>
-          )
-        }
-        <p class="changed" data-pagefind-ignore hidden data-remind-link>
-          <a href="#check-again">Check again later</a>
-        </p>
-      </div>
-      <div class="says">
-        {/* What the status means, in a sentence, beside the label it explains. */}
-        <p class="means">{STATUS_MEANINGS[claim.status.code]}</p>
-        {
-          /* Trials on record with no phase: said here, so the status is not read as
-             contradicting the trials the page lists. No link in it: on a phone it is drawn
-             ahead of the path, and nothing drawn out of order may be pressed. */
-          bridge && <p class="bridge">{bridge}</p>
-        }
-        <p class="lede" data-pagefind-meta="summary">{claim.summary}</p>
-      </div>
-    </div>
+    <p class="lede" data-pagefind-meta="summary">{claim.summary}</p>
 
     {/* For a reader who follows this claim and last saw it at another status: filled in
         by the script, so a change noted on the home page is confirmed where they land. */}
@@ -475,8 +582,10 @@ const posts = shareLinks(postText, address, claim.headline);
       )
     }
 
-    <div class="bar-row">
-      <h2 class="bar" id="timetable">{hasDatedPromise ? "Promised and recorded" : "Recorded"}</h2>
+    <section class="recorded">
+      <FoldHead id="timetable" note={timetableNote}>
+        {hasDatedPromise ? "Promised and recorded" : "Recorded"}
+      </FoldHead>
       <ul class="legend" aria-label="Key">
         {
           hasPromise && (
@@ -500,8 +609,21 @@ const posts = shareLinks(postText, address, claim.headline);
           )
         }
       </ul>
-    </div>
     {!hasDatedPromise && <p class="absent">No dated promise on record.</p>}
+    {
+      /* Shown by the script: with none, every entry is there. */
+      kindCounts.length > 1 && (
+        <div class="kind-tabs" role="group" aria-label="Show entries of one kind" hidden data-kinds>
+          <button type="button" class="kind-tab" data-kind="all" aria-pressed="true">All</button>
+          {kindCounts.map(({ kind, name, n }) => (
+            <button type="button" class="kind-tab" data-kind={kind} aria-pressed="false">
+              {name} <span class="n">{n}</span>
+            </button>
+          ))}
+        </div>
+      )
+    }
+    <p class="visually-hidden" role="status" data-kinds-said></p>
     <div class="table-frame">
     <table role="table" class="timetable" aria-labelledby="timetable">
       <thead role="rowgroup">
@@ -523,7 +645,7 @@ const posts = shareLinks(postText, address, claim.headline);
                 <td role="cell">{hasDatedPromise ? "No promise, no record" : "No record"}</td>
               </tr>
             ) : (
-              <tr role="row" id={`year-${row.year}`}>
+              <tr role="row" id={`year-${row.year}`} data-year-row>
                 <th role="rowheader" scope="row" class="year">
                   {row.year}
                   {row.current && <small>this year</small>}
@@ -537,7 +659,7 @@ const posts = shareLinks(postText, address, claim.headline);
                       {row.promised.length === 0 ? (
                         <span class="visually-hidden">Nothing promised for this year.</span>
                       ) : (
-                        <ul class="entries">
+                        <ul class="entries" data-promises>
                           {row.promised.map((promise) => (
                             <li>
                               <span class="entry-kind">{promise.description}</span>
@@ -572,7 +694,7 @@ const posts = shareLinks(postText, address, claim.headline);
                       <ul class="entries">
                         {recordedLines(row.recorded).map((line) =>
                           line.kind === "report" ? (
-                            <li class="record">
+                            <li class="record" data-kind="report">
                               <KindIcon kind="report" />
                               <span class="visually-hidden">News report.</span>
                               <span class="entry-date">{dayAndMonth(line.date)}</span>
@@ -597,7 +719,11 @@ const posts = shareLinks(postText, address, claim.headline);
                               </span>
                             </li>
                           ) : (
-                            <li class="record">
+                            <li
+                              class="record"
+                              data-kind={eventKind(line.steps[0].event)}
+                              data-n={line.steps.length}
+                            >
                               <KindIcon kind={eventKind(line.steps[0].event)} />
                               <span class="visually-hidden">
                                 {KIND_NAMES[eventKind(line.steps[0].event)]}.
@@ -642,7 +768,6 @@ const posts = shareLinks(postText, address, claim.headline);
                                     ? `, ${line.steps[0].event.trial_id}`
                                     : ""}
                                 </a>
-                                <TrialDetailsLink url={line.sourceUrl} />
                                 {
                                   /* A record read from a registry is certain. One found by
                                      rule, such as a follow-up paper, says how sure it is. */
@@ -672,37 +797,46 @@ const posts = shareLinks(postText, address, claim.headline);
     {
       timetable.undated.length > 0 && (
         <>
-          <h2 class="bar">Promised with no date</h2>
-          <ul class="plain undated">
-            {timetable.undated.map((promise) => (
-              <li>
-                <strong>{promise.description}</strong>
-                <span class="entry-note">
-                  <Outlet url={promise.articleUrl} outlet={promise.outlet} />{" "}
-                  {formatDate(promise.madeOn)}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div data-undated>
+            <h3 class="bar sub" id="no-date">Promised with no date</h3>
+            <ul class="plain undated">
+              {timetable.undated.map((promise) => (
+                <li>
+                  <strong>{promise.description}</strong>
+                  <span class="entry-note">
+                    <Outlet url={promise.articleUrl} outlet={promise.outlet} />{" "}
+                    {formatDate(promise.madeOn)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </>
       )
     }
 
+    </section>
+
     {
       trials.length > 0 && (
         <section class="trials" data-pagefind-ignore>
-          <h2 class="bar" id="trials">Trials on record</h2>
+          <FoldHead id="trials" phone="folded" note={trialsNote}>Trials on record</FoldHead>
           <p class="take-why">{TRIALS_NOTE}</p>
-          <ul class="plain trial-list">
+          <div class="trial-table" role="table" aria-label="Trials on record">
+            <div class="trial-row trial-columns" role="row">
+              {TRIAL_COLUMNS.map((name) => (
+                <span role="columnheader">{name}</span>
+              ))}
+            </div>
             {trials.slice(0, TRIALS_SHOWN).map((trial) => (
-              <Trial
-                trial={trial}
-                match={matchOf(trial.trial_id)}
-                approach={claim.approach}
-                dates={trialDates(claim.events, trial.trial_id)}
-              />
+                <Trial
+                  trial={trial}
+                  match={matchOf(trial.trial_id)}
+                  approach={claim.approach}
+                  dates={trialDates(claim.events, trial.trial_id)}
+                />
             ))}
-          </ul>
+          </div>
           {trials.length > TRIALS_SHOWN && (
             <details class="trials-rest">
               <summary>
@@ -710,16 +844,21 @@ const posts = shareLinks(postText, address, claim.headline);
                 {foldedResults > 0 && ` (${foldedResults} with results posted)`}
                 <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
               </summary>
-              <ul class="plain trial-list">
+              <div class="trial-table" role="table" aria-label="The other trials on record">
+                <div class="trial-row trial-columns" role="row">
+                  {TRIAL_COLUMNS.map((name) => (
+                    <span role="columnheader">{name}</span>
+                  ))}
+                </div>
                 {trials.slice(TRIALS_SHOWN).map((trial) => (
                   <Trial
-                trial={trial}
-                match={matchOf(trial.trial_id)}
-                approach={claim.approach}
-                dates={trialDates(claim.events, trial.trial_id)}
-              />
+                  trial={trial}
+                  match={matchOf(trial.trial_id)}
+                  approach={claim.approach}
+                  dates={trialDates(claim.events, trial.trial_id)}
+                />
                 ))}
-              </ul>
+              </div>
             </details>
           )}
         </section>
@@ -732,11 +871,11 @@ const posts = shareLinks(postText, address, claim.headline);
          is no trial at all, the section says the registries were searched. */
       claim.matches && (untried.length > 0 || candidates.length > 0 || trials.length === 0) && (
         <section class="matched" data-pagefind-ignore>
-          <h2 class="bar" id="matched">
+          <FoldHead id="matched" phone="folded">
             {untried.length > 0 || candidates.length === 0
               ? "Matched registry records"
               : "Possible registry records"}
-          </h2>
+          </FoldHead>
           <p class="take-why">
             {untried.length > 0
               ? "Trial registry records found for this treatment and condition, with how sure each match is. A score is about the match, not about the treatment."
@@ -756,7 +895,7 @@ const posts = shareLinks(postText, address, claim.headline);
     {
       paperGroups.length > 0 && (
         <section class="papers" data-pagefind-ignore>
-          <h2 class="bar" id="papers">Papers on record</h2>
+          <FoldHead id="papers" start="folded" note={papersNote}>Papers on record</FoldHead>
           <p class="take-why">{PAPERS_NOTE}</p>
           {paperGroups.map((group) => (
             <>
@@ -789,7 +928,7 @@ const posts = shareLinks(postText, address, claim.headline);
     {
       papers.length > 0 && (
         <section class="matched" data-pagefind-ignore>
-          <h2 class="bar" id="papers">Matched papers</h2>
+          <FoldHead id="papers" start="folded" note={papersNote}>Matched papers</FoldHead>
           <p class="take-why">
             Papers matched to this claim, with how sure each match is. A paper is not a trial
             record, and a score is about the match, not about the treatment.
@@ -820,21 +959,24 @@ const posts = shareLinks(postText, address, claim.headline);
     {
       others.length > 0 && (
         <section class="others" data-pagefind-ignore>
-          <h2 class="bar" id="others">Other claims in {topic.toLowerCase()}</h2>
+          <FoldHead id="others" phone="folded">
+            Other claims in {topic.toLowerCase()}
+            {/* Beside the heading and outside its button, so it is a link of its own. */}
+            <Fragment slot="beside">
+              {inTopic.length > others.length && (
+                <a href={`/topic/${claim.vertical}`}>
+                  All {inTopic.length + 1} claims in {topic.toLowerCase()}
+                </a>
+              )}
+            </Fragment>
+          </FoldHead>
           <ClaimTable claims={others} caption="Each claim, when it was first reported and its status" />
-          {inTopic.length > others.length && (
-            <p class="about-page">
-              <a href={`/topic/${claim.vertical}`}>
-                All {inTopic.length + 1} claims in {topic.toLowerCase()}
-              </a>
-            </p>
-          )}
         </section>
       )
     }
 
     <section class="take" data-pagefind-ignore>
-      <h2 class="bar" id="pass-on">Pass it on</h2>
+      <FoldHead id="pass-on" phone="folded">Pass it on</FoldHead>
       {/* Says "Copied" to a screen reader; the button's own label changes for the eye. */}
       <p class="visually-hidden" role="status" data-said></p>
       <p class="take-why">Seen this headline shared again? Reply with the record.</p>
@@ -957,7 +1099,7 @@ const posts = shareLinks(postText, address, claim.headline);
       data-first={claim.first_reported_date}
       hidden
     >
-      <h2 class="bar" id="check-again">Check again later</h2>
+      <FoldHead id="check-again" phone="folded">Check again later</FoldHead>
       <p class="take-why">
         Save a date to your calendar to look at this record again. The file is made on this
         device; nothing is sent to us.
@@ -1001,9 +1143,11 @@ const posts = shareLinks(postText, address, claim.headline);
 
     <LookupAgain />
   </article>
+  </div>
 </Base>
 
 <script>
+  import "../scripts/timetable-kinds";
   import { calendarFile, reminderDate, type ReminderChoice } from "../lib/calendar";
   import { mastodonShare } from "../lib/share";
   import { FOLLOWING_ENTRY, readFollowed } from "../lib/returning";
@@ -1145,8 +1289,9 @@ const posts = shareLinks(postText, address, claim.headline);
       });
     }
     remind.hidden = false;
-    const link = document.querySelector<HTMLElement>("[data-remind-link]");
-    if (link) link.hidden = false;
+    for (const link of document.querySelectorAll<HTMLElement>("[data-remind-link]")) {
+      link.hidden = false;
+    }
   }
 
   // Following: the claim, its headline and its status in words are kept in this

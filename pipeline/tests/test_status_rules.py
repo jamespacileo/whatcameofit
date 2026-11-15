@@ -444,27 +444,68 @@ def ids(events: list[Evidence]) -> tuple[int, ...]:
     return tuple(event.id for event in events)
 
 
-def test_phase_2_claim_is_explained_by_its_trial_events():
+def results_posted(trial_events: list[Evidence]) -> Evidence:
+    last = trial_events[-1]
+    return evidence(
+        EventType.TRIAL_RESULTS_POSTED,
+        last.external_id,
+        last.event_date + timedelta(days=90),
+        trial_phases=last.trial_phases,
+    )
+
+
+def finished_trial(trial_id: str, phases: tuple[TrialPhase, ...], **dates) -> list[Evidence]:
+    """Registered, started, completed, results posted."""
+    events = trial(trial_id, phases, STARTED, TrialState.COMPLETED, **dates)
+    return [*events, results_posted(events)]
+
+
+def test_phase_2_claim_is_explained_by_its_registration_and_start():
     """Scenario: Phase 2 claim"""
-    deciding = trial("NCT1", PHASE_2, STARTED)
+    registered, started, _completed, _results = deciding = finished_trial("NCT1", PHASE_2)
 
     outcome = result([*deciding, paper()])
 
-    assert outcome.explaining_event_ids == ids(deciding)
+    assert outcome.status is ClaimStatus.PHASE_2
+    assert outcome.explaining_event_ids == (registered.id, started.id)
+
+
+def test_trial_registered_is_explained_by_each_standing_trials_registration():
+    """Scenario: Trial registered with three trials"""
+    no_phase = (TrialPhase.NOT_APPLICABLE,)
+    trials = [
+        finished_trial(f"NCT{n}", no_phase, registered_on=date(2020, n, 1)) for n in (1, 2, 3)
+    ]
+
+    outcome = result([event for events in trials for event in events], as_of=date(2022, 1, 1))
+
+    assert outcome.status is ClaimStatus.TRIAL_REGISTERED
+    assert outcome.explaining_event_ids == tuple(events[0].id for events in trials)
+
+
+def test_a_start_known_only_from_completion_is_explained_by_the_completion():
+    """Scenario: Trial known to have started only from its completion"""
+    registered, completed = trial("NCT1", PHASE_2, TrialState.COMPLETED)
+
+    outcome = result([registered, completed, results_posted([registered, completed])])
+
+    assert outcome.status is ClaimStatus.PHASE_2
+    assert outcome.explaining_event_ids == (registered.id, completed.id)
 
 
 def test_stage_is_explained_only_by_the_trials_that_reached_it():
+    """Scenario: Earlier-phase trial beside the deciding one"""
     earlier = trial("NCT1", PHASE_1, STARTED, TrialState.COMPLETED)
-    deciding = trial("NCT2", PHASE_2, STARTED, registered_on=date(2020, 6, 1))
+    deciding = trial("NCT2", PHASE_3, STARTED, registered_on=date(2020, 6, 1))
 
     assert result(earlier + deciding).explaining_event_ids == ids(deciding)
 
 
-def test_trial_registered_is_explained_by_every_standing_trial():
-    first = trial("NCT1", PHASE_1)
+def test_an_unstarted_trial_does_not_explain_trial_registered_by_a_later_change():
+    first = trial("NCT1", PHASE_1, TrialState.SUSPENDED)
     second = trial("NCT2", PHASE_2, registered_on=date(2020, 2, 1))
 
-    assert result(first + second).explaining_event_ids == ids(first + second)
+    assert result(first + second).explaining_event_ids == (first[0].id, second[0].id)
 
 
 def test_failed_is_explained_by_the_failed_trial_and_the_report_behind_its_flag():
@@ -505,6 +546,7 @@ def test_retracted_is_explained_by_the_retraction():
 
 
 def test_preclinical_only_has_no_explaining_events():
+    """Scenario: No trial found"""
     assert result([paper()]).explaining_event_ids == ()
 
 

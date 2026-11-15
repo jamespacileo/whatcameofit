@@ -3,6 +3,7 @@
 // each answer read without opening anything and each opening to the record it came from
 // (openspec site-publishing: "A claim page answers fixed questions from its records").
 // Native disclosures, so every answer opens without scripting and prints open.
+import FoldHead from "./FoldHead.astro";
 import type { ExportedClaim } from "../lib/export";
 import { BRIEF_TITLE, briefNote, recordBrief, sourceWords } from "../lib/record-brief";
 
@@ -18,9 +19,7 @@ const groups = recordBrief(claim, lastChecked);
 {
   groups.length > 0 && (
     <section class="brief" data-pagefind-ignore>
-      <h2 class="bar" id="brief">
-        {BRIEF_TITLE}
-      </h2>
+      <FoldHead id="brief">{BRIEF_TITLE}</FoldHead>
       <p class="take-why">
         {briefNote(groups)} <a href="/how-it-works">How an answer is made</a>
       </p>

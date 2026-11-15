@@ -1,4 +1,5 @@
 ---
+import FoldHead from "./FoldHead.astro";
 // The organisations a claim names: who a report or a trial record says is behind it,
 // in what role, and what an open registry's record says each one is. Openspec
 // site-publishing: "Organisations on the claim page". Stated, never judged: no rank,
@@ -34,7 +35,9 @@ const day = (stamp: string) =>
 ---
 
 <section class="matched organisations" data-pagefind-ignore>
-  <h2 class="bar" id="organisations">Organisations named</h2>
+  <FoldHead id="organisations" start="folded" note={`${organisations.length} named`}>
+    Organisations named
+  </FoldHead>
   <p class="take-why">{ORGANISATIONS_NOTE}</p>
   <ul class="plain match-list organisation-list">
     {
