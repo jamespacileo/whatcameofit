@@ -266,6 +266,22 @@ def test_device_with_no_name_gets_search_phrases_and_no_other_name(session: Sess
     assert intervention.synonyms == []
 
 
+@pytest.mark.parametrize(
+    ("name", "synonyms", "kept"),
+    [
+        ("EX-1 plus EX-2", ["EX-1", "EX-2", "Dualex"], ["Dualex"]),
+        ("Dualex", ["EX-1 plus EX-2", "EX-1", "EX-2"], ["EX-1 plus EX-2"]),
+    ],
+)
+def test_combination_components_are_not_saved_as_whole_intervention_names(
+    session: Session, name: str, synonyms: list[str], kept: list[str]
+):
+    claim = draft(session, DRAFT | {"intervention": name, "intervention_synonyms": synonyms})
+    [intervention] = entities(session, claim, EntityType.INTERVENTION)
+    assert intervention.name == name
+    assert intervention.synonyms == kept
+
+
 def test_named_drug_may_have_no_search_phrase(session: Session):
     """Scenario: Named drug"""
     claim = draft(session)

@@ -81,7 +81,10 @@ class Draft(BaseModel):
         default_factory=list,
         description=(
             "Other names the article gives it: a brand name, a code such as ABC-123, or a"
-            " generic name. Never a description such as 'the drug', 'the pill' or"
+            " generic name for the same complete intervention. Exclude individual"
+            " components, class members, broader categories, related substances and"
+            " names that omit an explicit stereoisomer, route or regimen restriction."
+            " Never a description such as 'the drug', 'the pill' or"
             " 'a one-time treatment'. Empty if the article gives no other name."
         ),
     )
