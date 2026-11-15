@@ -28,12 +28,11 @@ def make_measure():
     from thenwhat.decide.core import DecisionFailed
     from thenwhat.llm.errors import LlmError
     from thenwhat.lookup.service import look_up
-    from thenwhat.sources.base import Pacer, SourceError
+    from thenwhat.sources.base import SourceError
     from thenwhat.sources.clinicaltrials import ClinicalTrials
     from thenwhat.sources.europepmc import EuropePmc
 
     contact = settings_or_exit().contact_email
-    registry_turns, paper_turns = Pacer(), Pacer()
 
     def measure(page: Page, approved: list[str]) -> Measured | None:
         try:
@@ -42,11 +41,11 @@ def make_measure():
                     session,
                     make_llm(session),
                     make_backend(session),
-                    ClinicalTrials(session, contact_email=contact, pacer=registry_turns),
+                    ClinicalTrials(session, contact_email=contact),
                     text=page.as_text(),
                     now=datetime.now(UTC),
                     page=page,
-                    papers=EuropePmc(session, contact_email=contact, pacer=paper_turns),
+                    papers=EuropePmc(session, contact_email=contact),
                 )
         except (SourceError, LlmError, DecisionFailed):
             return None
