@@ -1,0 +1,106 @@
+---
+// "At a glance": the claim's treatment and condition, what kind of thing the treatment
+// is and what a drug's record says it acts on, each with its background card, then the
+// claim's own facts (passed in as rows). Near the top of the page, before the record in
+// brief, and never inside the status panel: a card describes a term, not the evidence.
+// Openspec site-publishing: "At a glance".
+import FoldHead from "./FoldHead.astro";
+import TermCard from "./TermCard.astro";
+import {
+  BACKGROUND_NOTE,
+  DRUG_NOTE,
+  TARGET_NOTE,
+  isDrugsTarget,
+  type ExportedCard,
+  type ExportedCardSource,
+} from "../lib/background";
+import { GLANCE_ID, GLANCE_TITLE, ROW_LABELS, glanceCards, rowId, targetRowLabel } from "../lib/glance";
+
+interface Props {
+  intervention: { name: string; synonyms: string[] };
+  indication: string;
+  cards: ExportedCard[];
+  sources: ExportedCardSource[];
+}
+
+const { intervention, indication, cards, sources } = Astro.props;
+const rows = glanceCards(cards);
+const namedGene = cards.some((card) => card.kind === "target" && !isDrugsTarget(card));
+const drugFacts = cards.some((card) => card.kind === "drug" || isDrugsTarget(card));
+---
+
+<section class="glance" data-pagefind-ignore>
+  <FoldHead id={GLANCE_ID}>{GLANCE_TITLE}</FoldHead>
+  <dl class="glance-rows">
+    <div id={rowId("treatment")}>
+      <dt>{ROW_LABELS.treatment}</dt>
+      <dd>
+        <span class="glance-value">{intervention.name}</span>
+        {
+          intervention.synonyms.length > 0 && (
+            <span class="aka">
+              also known as{" "}
+              {
+                /* A name such as "TRG-035" must not break at its hyphen. */
+                intervention.synonyms.map((name, index) => (
+                  <>
+                    {index > 0 && ", "}
+                    {name.includes("-") && name.length <= 16 ? <span class="unbroken">{name}</span> : name}
+                  </>
+                ))
+              }
+            </span>
+          )
+        }
+        {rows.treatment && <TermCard card={rows.treatment} sources={sources} />}
+      </dd>
+    </div>
+    {
+      rows.kind && (
+        <div id={rowId("kind")}>
+          <dt>{ROW_LABELS.kind}</dt>
+          <dd>
+            <TermCard card={rows.kind} sources={sources} />
+          </dd>
+        </div>
+      )
+    }
+    {
+      rows.drug && (
+        <div id={rowId("drug")}>
+          <dt>{ROW_LABELS.drug}</dt>
+          <dd>
+            <TermCard card={rows.drug} sources={sources} />
+          </dd>
+        </div>
+      )
+    }
+    {
+      rows.target && (
+        <div id={rowId("target")}>
+          <dt>{targetRowLabel(rows.target)}</dt>
+          <dd>
+            <TermCard card={rows.target} sources={sources} />
+          </dd>
+        </div>
+      )
+    }
+    <div id={rowId("condition")}>
+      <dt>{ROW_LABELS.condition}</dt>
+      <dd>
+        <span class="glance-value">{indication}</span>
+        {rows.condition && <TermCard card={rows.condition} sources={sources} />}
+      </dd>
+    </div>
+    <slot />
+  </dl>
+  {
+    cards.length > 0 && (
+      <p class="glance-note">
+        {BACKGROUND_NOTE}
+        {namedGene && ` ${TARGET_NOTE}`}
+        {drugFacts && ` ${DRUG_NOTE}`}
+      </p>
+    )
+  }
+</section>

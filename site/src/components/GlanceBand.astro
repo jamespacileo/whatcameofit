@@ -1,0 +1,34 @@
+---
+// The band's row of facts: what the treatment is and what it was claimed for, as
+// links to their rows in "At a glance". Across the foot of the band, under the title
+// and the status and ruled off from both: it names terms and never explains the
+// status. A fact from a card carries the card's score. Openspec site-publishing:
+// "At a glance".
+import { bandFacts, rowId, type GlanceCards } from "../lib/glance";
+
+interface Props {
+  claim: { intervention: { name: string }; indication: string };
+  cards: GlanceCards;
+}
+
+const { claim, cards } = Astro.props;
+const facts = bandFacts(claim, cards);
+---
+
+<nav class="glance-band" aria-label="At a glance" data-pagefind-ignore>
+  <div class="wrap band-grid">
+    <ul class="plain">
+      {
+        facts.map((fact) => (
+          <li>
+            <a href={`#${rowId(fact.row)}`}>
+              <span class="glance-band-label">{fact.label}</span>
+              <span class="glance-band-value">{fact.value}</span>
+              {fact.note && <span class="glance-band-note">{fact.note}</span>}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</nav>
