@@ -10,6 +10,7 @@ import {
   moleculeKindText,
   type ExportedCard,
 } from "./background";
+import { matchWords } from "./confidence";
 
 export const GLANCE_TITLE = "At a glance";
 
@@ -96,4 +97,16 @@ export function bandFacts(cards: GlanceCards): BandFact[] {
     facts.push({ label: rowLabel("target", cards.target), value: cards.target.label, row: "target" });
   }
   return facts;
+}
+
+/** What stands for a score on a card made by rule, after "Term match:". */
+const RULE_MATCH_WORDS: Record<string, string> = {
+  drug: "by exact name",
+  target: "from the drug’s record",
+};
+
+/** A row's score, said as being about the term so it is never read as about the
+ * treatment: "Term match: high, 81%", or the rule that stands for it. */
+export function termMatchText(card: Pick<ExportedCard, "kind" | "score">): string {
+  return `Term match: ${card.score === null ? RULE_MATCH_WORDS[card.kind] : matchWords(card.score)}`;
 }

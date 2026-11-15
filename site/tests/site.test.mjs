@@ -1135,12 +1135,12 @@ test("Scenario: Claim with a condition card only", () => {
   assert.match(section, /href="https:\/\/vocabulary\.example\/D900003"[^>]*>\s*Example Condition\s*</);
   // The card is one press away in its row, its score in sight on the summary; inside,
   // the definition is marked as the source's words and unchanged.
-  assert.match(section, /<details class="glance-more">\s*<summary>\s*<span>Source and definition<\/span>\s*<span class="glance-score">High match · \d+%<\/span>/);
+  assert.match(section, /<details class="glance-more">\s*<summary>\s*<span class="glance-more-label">\s*<span class="glance-more-words">Source and definition<\/span>\s*<span class="visually-hidden"> for example condition<\/span>[\s\S]*?<span class="glance-score">Term match: high, \d+%<\/span>/);
   assert.match(section, /<div class="card-words">[\s\S]*Definition, in the source’s words/);
   assert.match(section, /<blockquote[^>]*>A synthetic definition of the example condition\.<\/blockquote>/);
   assert.match(section, /When this term was gathered, the trial registry filed the claim’s one trial under it\./);
   // In its row, under the condition's own words.
-  assert.match(section, /<div id="glance-condition">\s*<dt>Claimed for<\/dt>/);
+  assert.match(section, /<div id="glance-condition" tabindex="-1">\s*<dt>Claimed for<\/dt>/);
   // At the top of the sheet, before the record in brief, and not inside the status panel.
   assert.ok(html.indexOf('id="glance"') < html.indexOf('id="brief"'));
   assert.ok(html.indexOf('id="glance"') < html.indexOf('id="timetable"'));
@@ -1282,6 +1282,8 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   );
   // And, on another claim, a drug card with the target its record names.
   const named = fixture.claims.find((claim) => claim.slug === "phase-claim");
+  // With a kind card too, which goes inside the drug's row and not in a row of its own.
+  named.background.push({ ...claim.background.find((card) => card.fit === "kind") });
   named.background.push(
     {
       kind: "drug",
@@ -1340,8 +1342,8 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   assert.match(row, /href="#glance-kind">\s*<span class="glance-band-label">Kind of treatment<\/span>\s*<span class="glance-band-value">\s*Example stimulation therapy/);
   assert.match(row, /href="#glance-target">\s*<span class="glance-band-label">Gene named<\/span>\s*<span class="glance-band-value">\s*EXG1/);
   assert.doesNotMatch(row, /\d+%|Treatment<|Claimed for/);
-  assert.match(section, /<div id="glance-kind">\s*<dt>Kind of treatment<\/dt>\s*<dd>\s*<span class="glance-value">Example stimulation therapy<\/span>/);
-  assert.match(section, /<div id="glance-target">\s*<dt>Gene named<\/dt>/);
+  assert.match(section, /<div id="glance-kind" tabindex="-1">\s*<dt>Kind of treatment<\/dt>\s*<dd>\s*<span class="glance-value">Example stimulation therapy<\/span>/);
+  assert.match(section, /<div id="glance-target" tabindex="-1">\s*<dt>Gene named<\/dt>/);
   // Scenario: Target the report names.
   assert.match(section, /A gene named in the treatment’s name/);
   assert.match(section, /href="https:\/\/targets\.example\/target\/ENSG00000000001"[^>]*>\s*EXG1\s*</);
@@ -1367,15 +1369,20 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   // The drug card and the target its record names (openspec knowledge-cards, group 6).
   const drugPage = fs.readFileSync(path.join(dist, "phase-claim/index.html"), "utf8");
   const drugs = backgroundOf(drugPage);
-  assert.equal(count(drugs, 'class="card-kind"'), 4);
+  assert.equal(count(drugs, 'class="card-kind"'), 5);
+  // A drug's record says what kind of molecule it is: no kind of treatment row beside it,
+  // and the kind card is inside the drug's row.
+  assert.ok(!drugs.includes('id="glance-kind"'));
+  const drugRowHtml = drugs.split('id="glance-drug"')[1].split('id="glance-target"')[0];
+  assert.match(drugRowHtml, />\s*Example Stimulation Therapy\s*</);
   // A drug record's kind of molecule is the band's kind, labelled as its row is, and its
   // target is what it acts on.
   const drugRow = bandRowOf(drugPage);
   assert.match(drugRow, /href="#glance-drug">\s*<span class="glance-band-label">Kind of molecule<\/span>\s*<span class="glance-band-value">\s*Antibody/);
   assert.match(drugRow, /<span class="glance-band-label">Acts on<\/span>/);
   // Its row: the kind of molecule, what the record says it acts on, and the rule in sight.
-  assert.match(drugs, /<div id="glance-drug">\s*<dt>Kind of molecule<\/dt>\s*<dd>\s*<span class="glance-value">Antibody<\/span>\s*<span class="aka">Inhibitor of Example receptor 1<\/span>/);
-  assert.match(drugs, /<span class="glance-score">Matched by exact name<\/span>/);
+  assert.match(drugs, /<div id="glance-drug" tabindex="-1">\s*<dt>Kind of molecule<\/dt>\s*<dd>\s*<span class="glance-value">Antibody<\/span>\s*<span class="aka">Inhibitor of Example receptor 1<\/span>/);
+  assert.match(drugs, /<span class="glance-score">Term match: by exact name<\/span>/);
   assert.match(drugs, /The drug, as a drug database records it/);
   assert.match(drugs, /href="https:\/\/targets\.example\/drug\/CHEMBL0000001"[^>]*>\s*examplumab\s*</);
   assert.match(drugs, /<div class="card-facts">\s*<p>Antibody<\/p>\s*<ul>\s*<li>Inhibitor of Example receptor 1<\/li>\s*<\/ul>/);
@@ -1411,7 +1418,9 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   assert.ok(data.card_sources.some((held) => held.name === "uniprot" && held.licence === "CC BY 4.0"));
   // The share-alike drug facts are not in the file, and the file names the source left out.
   const kept = data.claims.find((claim) => claim.slug === "phase-claim").background;
-  assert.deepEqual(kept.map((card) => card.kind), ["condition", "intervention"]);
+  // The condition and treatment cards and the kind card added above stay; the drug and
+  // its target do not.
+  assert.deepEqual(kept.map((card) => card.kind), ["condition", "intervention", "intervention"]);
   assert.ok(!JSON.stringify(data.claims).includes("EXAMPLUMAB"));
   assert.ok(!JSON.stringify(data.claims).includes("Example receptor 1"));
   assert.deepEqual(data.left_out.map((left) => [left.source, left.licence]), [
