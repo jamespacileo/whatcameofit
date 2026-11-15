@@ -1,0 +1,72 @@
+{
+  "version": "0.9.10 (19)",
+  "installation_verified": true,
+  "worker_version": "7361777d-4734-4ac0-a849-d45af079f5d0",
+  "rows": {
+    "S011": {
+      "checked_date": "2026-11-15",
+      "outcome": "trial match",
+      "native_lookup_completed": true,
+      "trial": "NCT06625320",
+      "score": 1,
+      "knowledge_card": "no card",
+      "note": "Initial sign-in overlay caused safe nothing-sent refusal. Public post subsequently accessible after dismissing invitation elsewhere; native popup identified prior-treated metastatic pancreatic cancer, with RASolute 302 at 100%."
+    },
+    "A077": {
+      "outcome": "trial match",
+      "native_lookup_completed": true,
+      "trial": "NCT05616013",
+      "score": 0.97,
+      "knowledge_card": "no card",
+      "note": "Explicit Search again; native popup showed complete bimagrumab plus semaglutide for obesity and BELIEVE trial.",
+      "checked_date": "2026-11-15"
+    },
+    "A041": {
+      "outcome": "trial match with display defect",
+      "native_lookup_completed": true,
+      "trial": "NCT06625320",
+      "score": 1,
+      "knowledge_card": "no card",
+      "note": "Explicit Search again; correctly identified prior-treated metastatic pancreatic cancer. Incorrectly included first-line NCT07491445 at 0% as first of four possible matches.",
+      "checked_date": "2026-11-15"
+    },
+    "S045": {
+      "outcome": "trial match",
+      "native_lookup_completed": true,
+      "trial": "NCT05616013",
+      "score": 0.91,
+      "knowledge_card": "no card",
+      "note": "Public Instagram caption accessible after dismissing sign-in invitation. Native popup showed BELIEVE; carousel completeness and caption/slide discrepancy remain unverified.",
+      "checked_date": "2026-11-15"
+    },
+    "S036": {
+      "checked_date": "2026-11-15",
+      "outcome": "trial match",
+      "native_lookup_completed": true,
+      "trial": "NCT06299098",
+      "score": 0.9,
+      "knowledge_card": "no card",
+      "note": "Dismissed LinkedIn sign-in invitation using its public Dismiss control; native popup retained semaglutide plus trevogrumab and showed COURAGE."
+    },
+    "S023": {
+      "checked_date": "2026-11-15",
+      "outcome": "trial match",
+      "native_lookup_completed": true,
+      "trial": "NCT06625320",
+      "score": 1,
+      "knowledge_card": "no card",
+      "note": "Dismissed public sign-in invitation and declined optional cookies; native popup identified prior-treated metastatic pancreatic cancer and RASolute 302."
+    },
+    "S010": {
+      "checked_date": "2026-11-15",
+      "outcome": "native reader and capture failure",
+      "native_lookup_completed": false,
+      "knowledge_card": "not checked",
+      "note": "Public LinkedIn photo post visible, no sign-in overlay. Opening and explicit Search again both reported too little readable content, nothing sent. Preview a screenshot instead reported that Safari could not capture the visible page. Earlier Chrome-reader result remains separate."
+    }
+  },
+  "recorded_at": "2026-11-15 18:28:20 UTC",
+  "timing_note": "Per-row observations are dated, not timed. No duration or exact completion timestamp was captured through native UI.",
+  "production_last_verified_commit": "24cf98da9bfebab1c0a427403cfa5c6e346965d6",
+  "production_version_note": "Native popup does not expose the Worker version. The last verified deployment was 24cf98da9bfebab1c0a427403cfa5c6e346965d6; later main changes during these checks affected private pipeline only."
+}

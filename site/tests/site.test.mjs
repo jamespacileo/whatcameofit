@@ -150,6 +150,24 @@ test("a topic page marks each row with its status and keeps amber for promises",
   assert.doesNotMatch(page("it-happened/index.html"), /Latest promise/);
 });
 
+test("Scenario: Topic index: every row of a claim list carries its record strip and its status label", () => {
+  for (const file of ["topic/gum-disease/index.html", "it-happened/index.html"]) {
+    const html = page(file);
+    const rows = html.split("<tr data-status=").slice(1).map((row) => row.slice(0, row.indexOf("</tr>")));
+    assert.ok(rows.length > 0, file);
+    for (const row of rows) {
+      // One image, named in sentences, under a status label that stays in sight.
+      assert.equal(count(row, '<svg class="strip-line" role="img" aria-label="Records by date. '), 1, file);
+      assert.match(row, /class="status-name"/);
+      // The counts are in the column beside it, not said twice.
+      assert.ok(!row.includes("strip-counts"));
+    }
+    // One key, before the first strip.
+    assert.equal(count(html, 'class="strip-key"'), 1, file);
+    assert.ok(html.indexOf('class="strip-key"') < html.indexOf('class="record-strip"'));
+  }
+});
+
 test("Scenario: Search by intervention name", () => {
   // Search indexes the part of a claim page marked for it; the synonyms must be inside.
   const html = page("quiet-claim/index.html");

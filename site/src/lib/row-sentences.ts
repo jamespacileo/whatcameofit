@@ -31,6 +31,16 @@ const TEMPLATES = {
     years === 1
       ? "No record is dated in the year since the first report."
       : `No record is dated in the ${years} years since the first report.`,
+  /** What a record strip is, said before its sentences to a reader who cannot see it. */
+  strip: (sentences: string) => `Records by date. ${sentences}`,
+  /** The strip's own sentence, when no other applies: what is dated, and as of when. */
+  onFile: (reports: number, records: number, day: string) =>
+    `${plural(reports, "news report", "news reports")} and ${
+      records === 0 ? "no dated record" : plural(records, "dated record", "dated records")
+    } on file as of ${formatDate(day)}.`,
+  /** The numerals beside a strip. */
+  counts: (trials: number, results: number) =>
+    [plural(trials, "trial", "trials"), ...(results > 0 ? [`${results} with results posted`] : [])].join(" · "),
 };
 
 /** A sentence that ends as a sentence, whatever the record's own words end with. */
@@ -81,6 +91,29 @@ export function rowSentences(claim: ExportedClaim, reportDay: string): string[] 
   return sentencesFor(claim, reportDay).slice(0, SENTENCES_SHOWN);
 }
 
+/**
+ * The text alternative of a claim's record strip (openspec record-strip): the row's
+ * sentences, or, when none applies, how many reports and dated records are on file.
+ * `reportDay` is empty where the strip is not beside one report.
+ */
+export function stripName(
+  claim: ExportedClaim,
+  reportDay: string,
+  onFile: { reports: number; records: number },
+  lastChecked: string,
+): string {
+  // With no report day the years before a report cannot be counted, so that sentence is left out.
+  const sentences = rowSentences(claim, reportDay || "0000");
+  return TEMPLATES.strip(
+    sentences.length > 0 ? sentences.join(" ") : TEMPLATES.onFile(onFile.reports, onFile.records, lastChecked),
+  );
+}
+
+/** The counts shown in numerals beside a strip. */
+export function countsLine(counts: { trials: number; results: number }): string {
+  return TEMPLATES.counts(counts.trials, counts.results);
+}
+
 // Words that characterise a count or the time between a report and a record. A row
 // states the number; the reader makes of it what they will.
 const CHARACTERISING_WORDS =
@@ -112,6 +145,11 @@ export function sampleSentences(templates: typeof TEMPLATES = TEMPLATES): [strin
     ["trials", templates.trials(1, 0, 0)],
     ["nothingSince", templates.nothingSince(9)],
     ["nothingSince", templates.nothingSince(1)],
+    ["onFile", templates.onFile(1, 0, "2026-11-14")],
+    ["onFile", templates.onFile(2, 3, "2026-11-14")],
+    ["counts", templates.counts(0, 0)],
+    ["counts", templates.counts(5, 2)],
+    ["strip", templates.strip(templates.trials(5, 3, 2))],
   ];
 }
 
