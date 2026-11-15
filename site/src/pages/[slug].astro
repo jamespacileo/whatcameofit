@@ -274,6 +274,14 @@ const sections = [
           }
         </h1>
 
+        {
+          /* What kind of thing the treatment is and a gene, straight under the headline:
+             only what the headline does not say, and only when a card gives it. */
+          bandFacts(glanceCards(background)).length > 0 && (
+            <GlanceBand facts={bandFacts(glanceCards(background))} />
+          )
+        }
+
         {/* A reader arriving from a shared link has not seen the home page. */}
         <p class="what-this-is" data-pagefind-ignore>
           A record of what followed{" "}
@@ -475,14 +483,6 @@ const sections = [
         <ReportError page={`/${claim.slug}`} short />
       </div>
     </div>
-    {
-      /* What kind of thing the treatment is and a gene, under the title and the status
-         and ruled off from both: only what the headline does not say, and only when a
-         card gives it. */
-      bandFacts(glanceCards(background)).length > 0 && (
-        <GlanceBand facts={bandFacts(glanceCards(background))} />
-      )
-    }
   </section>
 
   <div class="frame no-rail">
