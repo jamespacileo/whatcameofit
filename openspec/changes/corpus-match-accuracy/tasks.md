@@ -38,3 +38,7 @@
 - [x] Reproduce native Safari promotion of a cited zero-confidence mismatch with a failing shared-presenter test.
 - [x] Separate cited nonmatches from possible matches in site and extension without extra requests; retain confidence, provenance, cap and no-match notice.
 - [x] Deploy the presentation correction, install Safari 0.9.11, verify affected released results, and sync native findings to the corpus and Sheet.
+
+- [x] Reproduce S010's public LinkedIn reading failure with a synthetic fixture using distinct activity and attributed-post URNs.
+- [x] Bind the public caption and unique preview image to those explicit identities, excluding comments, ambiguous cards and accessibility-hidden overlays.
+- [ ] Release Safari 0.9.12, verify S010 in the native browser, and update the corpus and Sheet with the observed outcome.

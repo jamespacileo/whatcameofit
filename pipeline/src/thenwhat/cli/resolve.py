@@ -38,7 +38,14 @@ from thenwhat.resolve.papers import (
     rescore_papers,
     trials_from_papers,
 )
-from thenwhat.resolve.service import DoiLookup, TrialSearch, rescore_claim, resolve_claim
+from thenwhat.resolve.service import (
+    DoiLookup,
+    RuleRedo,
+    TrialSearch,
+    redo_rule_approvals,
+    rescore_claim,
+    resolve_claim,
+)
 from thenwhat.sources.base import UnsearchableTerm
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref
@@ -68,6 +75,31 @@ def make_backend(session: Session) -> Backend:
         return backend_named(settings.decision_backend, extract.make_llm(session), decisions)
     except UnknownBackend as unknown:
         raise EntryError(str(unknown)) from None
+
+
+def _say_redone(claim: Claim, redone: RuleRedo) -> None:
+    """What scoring a rule's approvals again changed, and what it left to be looked at."""
+    out.print(
+        f"Scored again {redone.scored} trial match(es) a rule had approved for"
+        f" '{claim.slug}'; {len(redone.withdrawn)} no longer approved.",
+        markup=False,
+    )
+    for said, trials in (
+        ("Now waiting for review", redone.pending),
+        ("Rejected by the rule", redone.rejected),
+        ("Still approved, but not returned by the search and so not scored", redone.not_returned),
+    ):
+        if trials:
+            out.print(f"{said}: {', '.join(trials)}.", markup=False)
+    if redone.events_kept:
+        kept = ", ".join(str(event) for event in redone.events_kept)
+        out.print(
+            "Events a person or an assistant decided, left as they were on a match that"
+            f" is no longer approved: {kept}.",
+            markup=False,
+        )
+    if redone.withdrawn:
+        out.print(f"Status of '{claim.slug}': {claim.current_status.value}.", markup=False)
 
 
 def make_registries(session: Session) -> tuple[TrialSearch, DoiLookup]:
@@ -479,6 +511,16 @@ def resolve_command(
             " and the pending related papers.",
         ),
     ] = False,
+    redo_rule: Annotated[
+        bool,
+        typer.Option(
+            "--redo-rule",
+            help="Also score again the trial matches a rule approved, as the question is"
+            " asked now, and let the rule decide them again. A match it no longer approves"
+            " loses its events and the status is derived again. Matches you or an"
+            " assistant decided are left alone.",
+        ),
+    ] = False,
 ) -> None:
     """Search the registries for a claim's interventions and papers.
 
@@ -525,6 +567,7 @@ def resolve_command(
         failure: str | None = None
         added: list[EntityMatch] = []
         again: list[EntityMatch] = []
+        redone: RuleRedo | None = None
         try:
             added = resolve_claim(
                 session,
@@ -552,6 +595,18 @@ def resolve_command(
                 if rescore
                 else []
             )
+            if redo_rule:
+                redone = redo_rule_approvals(
+                    session,
+                    claim,
+                    trials=trials,
+                    backend=backend,
+                    now=now,
+                    reject_below=reject_below,
+                    accept_above=accept_above,
+                    no_signal_years=settings.no_signal_years,
+                    unsearchable=unsearchable,
+                )
             if claim.evidence_stage is None:
                 stage = latest_stage_suggestion(session, claim)
                 newly_read = stage is None
@@ -586,6 +641,8 @@ def resolve_command(
                 accept_above=accept_above,
                 reject_below=reject_below,
             )
+            if redone is not None:
+                _say_redone(claim, redone)
     if failure is not None:
         err.print(failure, markup=False)
         err.print(

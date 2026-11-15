@@ -107,7 +107,7 @@ test("Scenario: A report of an animal study, and what the records add", () => {
   const row = group(dated, "d-2025-09-08");
   assert.match(row, /<a class="followed" href="\/phase-claim"[^>]*>\s*“Example report 5”\s*<\/a>/);
   assert.match(row, /On record now<\/span>\s*<strong class="status-name">Phase 3 trial<\/strong>/);
-  assert.match(row, /<p class="row-then">\s*<strong>[^<]+<\/strong>\s*when first reported, [^<]*\. Large late-stage trial in people\.<\/p>/);
+  assert.match(row, /<p class="row-then">\s*<strong>[^<]+<\/strong>\s+when first reported, [^<]*\. Large late-stage trial in people\.<\/p>/);
   assert.match(row, /Large late-stage trial in people/);
   // What the records add is drawn: the strip, with counts in numerals beside it. The
   // sentences are the strip's name and are not shown on the row (openspec record-strip).
