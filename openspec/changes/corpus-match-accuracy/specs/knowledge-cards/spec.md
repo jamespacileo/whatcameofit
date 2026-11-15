@@ -2,6 +2,14 @@
 
 ## ADDED Requirements
 
+### Requirement: Completed background work survives later source failures
+The terms command SHALL commit each completed claim before starting the next. A later source failure SHALL return an error without discarding earlier completed terms, decisions or source records. Ordinary repeats SHALL reuse completed scored terms without new model calls. Existing source pacing and review thresholds SHALL remain unchanged.
+
+#### Scenario: Later claim's vocabulary source fails
+- **GIVEN** one selected claim completes and a later claim's vocabulary source fails
+- **WHEN** the terms command exits with an error
+- **THEN** the first claim's completed work remains and repeating that claim reuses its readings
+
 ### Requirement: Background cards describe the whole intervention
 Vocabulary and drug cards SHALL describe complete regimens. Explicit components, including aliases and registry-filed names, SHALL NOT stand in for the whole regimen; whole-regimen aliases SHALL remain eligible. The export SHALL suppress incompatible legacy component cards and their drug-derived targets while preserving review decisions and clinical status.
 

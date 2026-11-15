@@ -20,6 +20,7 @@
 - [x] 2.9 Confirm eligible stored evidence-stage suggestions by rule and make the no-trial fallback honest for unknown stages; verify existing published output, prepared records, tests and independent review before data publication.
 - [x] 2.10 Pass verified entry-name evidence to vocabulary checks and support explicitly named pending-term rereads; verify preservation, failure, reuse and real pending candidates before publication.
 - [ ] 2.11 Respect explicit patient populations and treatment settings in both trial-scoring paths, invalidate old answers, verify real contrasting trial records and broad-condition controls, then release and rerun affected corpus URLs.
+- [ ] 2.12 Preserve completed background-card claims and incurred model usage after a later source failure; verify rollback and repeat behavior before resuming missing-card work.
 
 ## 3. Full corpus accuracy and efficiency
 

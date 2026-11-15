@@ -12,6 +12,7 @@ Released corpus checks found a trial match accompanied by a knowledge card for a
 - Record trial matching, card identity, release and method separately for all corpus rows, including legitimate negatives and inaccessible content.
 - Preserve accurate background-card scope for complete regimens, and prevent unpublished claims with an unknown evidence stage from being labelled preclinical. Confirm a sufficiently confident recorded stage by rule while preserving human decisions.
 - Reuse exact published address mappings and completed eligible results before paid work, and measure fresh/reused work without weakening accuracy.
+- Preserve completed background-card work and provider usage when a later source operation fails.
 
 ## Capabilities
 
@@ -22,6 +23,7 @@ Released corpus checks found a trial match accompanied by a knowledge card for a
 ### Modified Capabilities
 
 - `knowledge-cards`: keep component cards from representing complete regimens; include verified vocabulary entry-name evidence in term checks and support explicit, bounded rereads of undecided terms.
+- `llm-usage`: commit incurred provider usage independently of the caller's transaction.
 - `claims`: allow evidence-stage confirmation by the separately specified rule.
 - `review`: confirm eligible recorded evidence stages by rule without repeated model calls.
 - `status-derivation`: unknown evidence stage gives no trial record found, not preclinical only.

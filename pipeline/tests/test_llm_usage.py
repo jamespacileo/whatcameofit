@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from pydantic_ai.exceptions import ModelHTTPError
 from pydantic_ai.messages import ModelResponse, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
-from sqlalchemy import select
+from sqlalchemy import Engine, delete, select
 from sqlalchemy.orm import Session
 
 from thenwhat.db.models import LlmUsage
@@ -139,6 +139,21 @@ def test_call_is_recorded_with_purpose_model_tokens_and_cost(session: Session):
     assert entry.input_tokens > 0 and entry.output_tokens > 0
     expected = (Decimal(entry.input_tokens) * 3 + Decimal(entry.output_tokens) * 15) / 1_000_000
     assert entry.cost_usd == expected.quantize(Decimal("0.000001"))
+
+
+def test_paid_usage_survives_the_callers_rollback(engine: Engine):
+    purpose = "rollback-isolation-test"
+    try:
+        with Session(engine) as work:
+            ask(llm(work, scripted({"word": "ok"})), purpose=purpose)
+            work.rollback()
+        with Session(engine) as reader:
+            entry = reader.scalar(select(LlmUsage).where(LlmUsage.purpose == purpose))
+            assert entry is not None, "Rolling back claim work cannot undo provider usage."
+            assert entry.input_tokens > 0 and entry.output_tokens > 0 and entry.cost_usd > 0
+    finally:
+        with engine.begin() as connection:
+            connection.execute(delete(LlmUsage).where(LlmUsage.purpose == purpose))
 
 
 def test_failed_call_is_still_recorded_with_what_it_used(session: Session):
