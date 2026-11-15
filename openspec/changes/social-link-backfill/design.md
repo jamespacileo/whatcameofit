@@ -274,6 +274,16 @@ The operator set what done looks like: 1,000 processed articles on the productio
 
 *Triage, changed the same day.* Triage was first left in its order, oldest lead first, on the estimate that it was within an hour of finishing. It was not: three hours remained and 298 of the 309 GLP-1 leads on listed outlets had no score. Triage now scores leads that name a topic first. The cost is a pattern match over the due leads for each call of twenty, which is small beside the call. *Not done here.* Screening is not reordered: it was minutes from finishing. News outlets that carry GLP-1 stories and are on no list (Axios, Vox, Business Insider, Gizmodo, El País in English) are not added: an outlet's kind is set when a lead is loaded, so adding them means setting it again on stored leads and screening them again, which is its own task. Background cards are made by `thenwhat terms`, which `prepare` does not run; for now it is run after `prepare`.
 
+## Decided by the operator on 2026-11-15: two bands, shown not reviewed
+
+The first batch left a question: 42 of 109 rule-approved claims had a stage reading under the threshold for confirming by rule. Three options were put to the operator, each with a review by a person or by the auditing session somewhere in it. The operator chose none of them: "we never really want human review, only for cleanup after flagging by admin. surfacing confidence bands/scores should help the user make an informed decision." On the lower band: publish, marked low confidence; it cannot set the status.
+
+So an evidence-stage reading has two bands (ADR 0004). The sure band is the rule that `corpus-match-accuracy` added the same day: probability and confidence at the review threshold confirm the stage. The lower band is new here: a reading that did not confirm, whose chosen stage has at least `STAGE_SHOW_ABOVE` (0.5), is exported as `evidence_stage_reading` with its score and the other stages it weighed, and the claim page shows it marked low confidence. The claim's stage stays empty, so the status reads "no trial record found" and nothing counts the reading.
+
+Trial and paper matches needed nothing: the export already carries a pending match as a candidate with its score, and only approved matches reach the status rules.
+
+Not done here, and asked of the operator: an article the read ends as not one treatment, business news or needing a vertical gets no search for trials or papers, because the unit of the product is a claim. "Always attempt finding closest candidates" may ask for that; it is a change of its own.
+
 ## Open Questions
 
 - How long leads that are unlisted or rejected are kept. They are small and hold no text.
