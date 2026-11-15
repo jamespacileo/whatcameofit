@@ -9,6 +9,7 @@ import { formatDate } from "../lib/timetable";
 import DayPromise from "./DayPromise.astro";
 import DayRecord from "./DayRecord.astro";
 import DayReport from "./DayReport.astro";
+import StripKey from "./StripKey.astro";
 
 interface Props {
   list: DayList;
@@ -105,6 +106,8 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
         </label>
         <slot name="narrow" />
       </div>
+
+      <StripKey />
 
       <div class="day-list" data-day-list>
         {

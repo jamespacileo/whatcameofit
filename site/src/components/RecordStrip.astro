@@ -1,0 +1,53 @@
+---
+// The record strip (openspec record-strip): a claim's dated records as marks on one
+// time axis that every strip on the site shares, ending at the day the registries were
+// last checked. It shows where dates fall. The axis is one weight along its whole
+// length and nothing is filled between marks: a stretch with no mark is time, not an end.
+// One image to a screen reader, named by the row's sentences; not a control.
+import type { ExportedClaim } from "../lib/export";
+import { stripFor } from "../lib/record-strip";
+import { countsLine, stripName } from "../lib/row-sentences";
+import { STRIP_AXIS } from "../lib/strip-axis";
+import StripMark from "./StripMark.astro";
+
+interface Props {
+  claim: ExportedClaim;
+  /** The day of the report the strip sits beside; left out in a list of claims. */
+  reportDay?: string;
+  /** The counts in numerals beside the strip; off where a column already gives them. */
+  counts?: boolean;
+}
+
+const { claim, reportDay = "", counts = true } = Astro.props;
+const strip = STRIP_AXIS ? stripFor(claim, STRIP_AXIS.startYear, STRIP_AXIS.lastChecked) : null;
+const percent = (at: number) => `${(at * 100).toFixed(2)}%`;
+// Drawn in this order so a mark on the axis is never under a record's line, and
+// posted results, which sit above, are never covered. A regulator's decision is drawn
+// over a news report and fits inside its ring, so a decision and a report dated days
+// apart are both seen.
+const ORDER = ["record", "promise", "report", "decision", "results"];
+const marks = strip ? [...strip.marks].sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind)) : [];
+---
+
+{
+  STRIP_AXIS && strip && (
+    <span class="record-strip">
+      <svg class="strip-line" role="img" aria-label={stripName(claim, reportDay, strip, STRIP_AXIS.lastChecked)} height="22">
+        {STRIP_AXIS.notches.map((notch) => (
+          <line class="strip-notch" x1={percent(notch.at)} x2={percent(notch.at)} y1="15" y2="20" />
+        ))}
+        <line class="strip-axis" x1="0" x2="100%" y1="15" y2="15" />
+        {/* Under the marks: a report on the day of the last check stays a ring. */}
+        <svg x="100%" overflow="visible">
+          <StripMark kind="check" />
+        </svg>
+        {marks.map((mark) => (
+          <svg x={percent(mark.at)} overflow="visible">
+            <StripMark kind={mark.kind} />
+          </svg>
+        ))}
+      </svg>
+      {counts && strip.counts && <span class="strip-counts">{countsLine(strip.counts)}</span>}
+    </span>
+  )
+}

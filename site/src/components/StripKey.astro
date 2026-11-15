@@ -1,0 +1,32 @@
+---
+// The key to the record strip: each mark drawn as the strip draws it, with its name,
+// and the years the axis runs between. Said once on a page, before the first strip.
+import { STRIP_KEY, STRIP_KEY_ORDER } from "../lib/record-strip";
+import { STRIP_AXIS } from "../lib/strip-axis";
+import { formatDate } from "../lib/timetable";
+import StripMark from "./StripMark.astro";
+---
+
+{
+  STRIP_AXIS && (
+    <div class="strip-key">
+      <p class="strip-key-title">
+        Records by date, {STRIP_AXIS.startYear} to {formatDate(STRIP_AXIS.lastChecked)}.{" "}
+        <a href="/guide/record-strip">How to read it</a>
+      </p>
+      <ul>
+        {STRIP_KEY_ORDER.map((kind) => (
+          <li>
+            <svg class="strip-line" width="16" height="22" aria-hidden="true">
+              <line class="strip-axis" x1="0" x2="16" y1="15" y2="15" />
+              <svg x="8" overflow="visible">
+                <StripMark kind={kind} />
+              </svg>
+            </svg>
+            {STRIP_KEY[kind]}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}

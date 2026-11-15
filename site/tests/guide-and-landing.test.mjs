@@ -44,8 +44,11 @@ const entry = (slug, front = {}, text = TEXT) =>
     },
     text,
   );
-const statusEntries = () =>
-  codes.map((code) => entry(statusSlug(code), { shelf: "status", status: code }));
+// The statuses' entries and the one the record strip's key links to.
+const statusEntries = () => [
+  ...codes.map((code) => entry(statusSlug(code), { shelf: "status", status: code })),
+  entry("record-strip"),
+];
 const problemsWith = (...extra) => guideProblems([...statusEntries(), ...extra]);
 
 test("a complete set of entries passes, and a status without an entry is named", () => {
@@ -53,6 +56,12 @@ test("a complete set of entries passes, and a status without an entry is named",
   const missing = guideProblems(statusEntries().filter((held) => held.status !== "retracted"));
   assert.equal(missing.length, 1);
   assert.match(missing[0], /Origin paper retracted.*has no guide entry/);
+});
+
+test("Scenario: Guide entry missing", () => {
+  const without = guideProblems(statusEntries().filter((held) => held.slug !== "record-strip"));
+  assert.equal(without.length, 1);
+  assert.match(without[0], /no entry "record-strip"/);
 });
 
 test("an entry on how research is recorded needs a source with the day it was checked", () => {
@@ -106,8 +115,8 @@ test("an entry lists up to three claims its word applies to, newest report first
   for (const code of codes) assert.ok(APPLIES[code], `no set of claims for ${code}`);
 });
 
-test("the entry files: one per status, 27 in all, each research entry sourced", () => {
-  assert.equal(files.length, 27);
+test("the entry files: one per status, 28 in all, each research entry sourced", () => {
+  assert.equal(files.length, 28);
   for (const code of codes) assert.ok(files.includes(`${statusSlug(code)}.md`), `${code} has no file`);
   const research = files.filter((file) => /^shelf: research$/m.test(fs.readFileSync(`src/guide/${file}`, "utf8")));
   assert.equal(research.length, 9);
