@@ -80,6 +80,7 @@ Three pull requests, each leaving `make check` green: the status rule and regene
 
 - The site already had a pale band (`.band`) on the home, about, extension and audience pages, and `Base.astro` already had the band slot, the skip link and the id on `<main>`. The operator decided on 15 Nov 2026 that claim and topic pages take the navy band and the other pages keep the pale one: pale for a page's task, navy for a record's status. DESIGN.md records both.
 - The folding heading is one component, `FoldHead.astro`, put in place of each section's `h2`. Everything after it in its section is the fold's body, hidden by a sibling rule, so no section needed a wrapper and the components that own their heading (`RecordBrief`, `Statements`, `Organisations`, `Background`) changed by one line each. This replaces the `FoldSection` wrapper named in decision 1. Its script is `src/scripts/folds.ts`, loaded by the base layout, so that no section's markup holds a script.
+- The timetable stays the site's table (year, promised on amber, recorded), reversed to newest first, with the controls that narrow it. The operator chose this over the mock's line with dots on 15 Nov 2026: the table already sets a promise beside its record and names a gap.
 - The actions keep their words (Follow, Share, Check again later, Report an error) beside their icons, in place of the mock's icon-only column: the first critique found the icon-only column unexplained without hover.
 
 ## Risks / Trade-offs

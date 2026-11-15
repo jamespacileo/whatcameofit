@@ -176,6 +176,8 @@ const timetableNote = [
   plural(counts.records, "record"),
   "newest first",
 ].join(" · ");
+// The trials table's columns, named once for both the shown trials and the rest.
+const TRIAL_COLUMNS = ["Trial", "Compared with", "Design", "State", "Results"];
 const posted = withResults(trials);
 const trialsNote = [
   plural(trials.length, "trial"),
@@ -820,16 +822,21 @@ const sections = [
         <section class="trials" data-pagefind-ignore>
           <FoldHead id="trials" phone="folded" note={trialsNote}>Trials on record</FoldHead>
           <p class="take-why">{TRIALS_NOTE}</p>
-          <ul class="plain trial-list">
+          <div class="trial-table" role="table" aria-label="Trials on record">
+            <div class="trial-row trial-columns" role="row">
+              {TRIAL_COLUMNS.map((name) => (
+                <span role="columnheader">{name}</span>
+              ))}
+            </div>
             {trials.slice(0, TRIALS_SHOWN).map((trial) => (
-              <Trial
-                trial={trial}
-                match={matchOf(trial.trial_id)}
-                approach={claim.approach}
-                dates={trialDates(claim.events, trial.trial_id)}
-              />
+                <Trial
+                  trial={trial}
+                  match={matchOf(trial.trial_id)}
+                  approach={claim.approach}
+                  dates={trialDates(claim.events, trial.trial_id)}
+                />
             ))}
-          </ul>
+          </div>
           {trials.length > TRIALS_SHOWN && (
             <details class="trials-rest">
               <summary>
@@ -837,16 +844,21 @@ const sections = [
                 {foldedResults > 0 && ` (${foldedResults} with results posted)`}
                 <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
               </summary>
-              <ul class="plain trial-list">
+              <div class="trial-table" role="table" aria-label="The other trials on record">
+                <div class="trial-row trial-columns" role="row">
+                  {TRIAL_COLUMNS.map((name) => (
+                    <span role="columnheader">{name}</span>
+                  ))}
+                </div>
                 {trials.slice(TRIALS_SHOWN).map((trial) => (
                   <Trial
-                trial={trial}
-                match={matchOf(trial.trial_id)}
-                approach={claim.approach}
-                dates={trialDates(claim.events, trial.trial_id)}
-              />
+                  trial={trial}
+                  match={matchOf(trial.trial_id)}
+                  approach={claim.approach}
+                  dates={trialDates(claim.events, trial.trial_id)}
+                />
                 ))}
-              </ul>
+              </div>
             </details>
           )}
         </section>

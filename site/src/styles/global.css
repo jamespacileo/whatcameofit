@@ -5118,3 +5118,183 @@ body.framed {
     padding: 0;
   }
 }
+
+/* The trials table: one row to read across for each trial; a row opens to the rest. */
+.trial-table {
+  --trial-cols: minmax(0, 1.45fr) minmax(0, 1.25fr) minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.trial-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--trial-cols);
+  column-gap: 1.2rem;
+  align-items: start;
+  padding: 0.8rem 1.1rem;
+}
+
+.trial-columns {
+  background: var(--footer);
+  color: var(--paper);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding-block: 0.65rem;
+}
+
+.trial-group {
+  border-top: 1px solid var(--rule-soft);
+  scroll-margin-top: 1.25rem;
+}
+
+.trial-group > .trial-row {
+  transition: background-color 120ms;
+}
+
+.js .trial-group > .trial-row:hover {
+  background: var(--panel);
+}
+
+.trial-cell {
+  font-size: 0.95rem;
+  min-width: 0;
+}
+
+.trial-cell .lbl {
+  display: none;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.trial-open {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  text-align: left;
+}
+
+.trial-open .chev {
+  display: none;
+}
+
+.js .trial-open {
+  cursor: pointer;
+}
+
+.js .trial-open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.js .trial-open .chev {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.3rem;
+  height: 1.3rem;
+  margin-top: 0.12rem;
+  border-radius: 50%;
+  background: var(--tint);
+  color: var(--blue);
+}
+
+.trial-open .chev svg {
+  transition: rotate 200ms var(--ease-out);
+}
+
+.trial-open[aria-expanded="false"] .chev svg {
+  rotate: -90deg;
+}
+
+.trial-table .trial-title {
+  font-size: inherit;
+  margin: 0;
+}
+
+.trial-table .trial-name {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.js .trial-table .trial-name {
+  margin-left: 1.9rem;
+}
+
+.trial-detail {
+  padding: 0.2rem 1.1rem 1.1rem;
+}
+
+.js .trial-detail {
+  padding-left: 3rem;
+}
+
+@media screen {
+  .js .trial-group:not([data-open]) > .trial-detail {
+    display: none;
+  }
+}
+
+.trials-rest > .trial-table {
+  margin-top: 0.7rem;
+}
+
+@media (max-width: 40rem) {
+  .trial-columns {
+    display: none;
+  }
+
+  .trial-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    row-gap: 0.7rem;
+  }
+
+  .trial-lead {
+    grid-column: 1 / -1;
+  }
+
+  .trial-cell .lbl {
+    display: block;
+  }
+
+  .trial-table .trial-group:first-of-type,
+  .trial-columns + .trial-group {
+    border-top: 0;
+  }
+
+  .js .trial-detail {
+    padding-left: 1.1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trial-open .chev svg,
+  .trial-group > .trial-row {
+    transition: none;
+  }
+}
+
+@media print {
+  .trial-open .chev {
+    display: none !important;
+  }
+
+  .trial-columns {
+    background: none;
+    color: var(--ink);
+    border-bottom: 1px solid var(--rule);
+  }
+}

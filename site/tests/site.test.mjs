@@ -634,11 +634,15 @@ test("Scenario: Claim with one completed Phase 2 trial", () => {
   assert.equal(count(html, 'id="trial-NCT00000002"'), 1);
   const trials = sectionOf(html, "trials");
   const entry = wordsOf(trials.slice(trials.indexOf('id="trial-NCT00000002"'))).replace(/\u00a0|&nbsp;/g, " ");
-  // In plain words first: how many people and what it was compared with, what it
-  // measured, then the design and state said plainly.
-  assert.match(entry, /83 people, compared with a placebo/);
+  // A row to read across: how many people and the phase, then what it was compared
+  // with, its design, its state and its results, each under its column's name.
+  assert.match(entry, /83 people\s+Phase 2 · /);
+  assert.match(
+    entry,
+    /Compared with\s*A placebo\s+Design\s*Assigned at random · Blinded\s+State\s*Finished\s+Results\s*Posted 1 Sep 2025/,
+  );
+  // The row opens to what it measured.
   assert.match(entry, /It measured the change in a symptom score over 12 weeks\./);
-  assert.match(entry, /Assigned at random\s+Blinded\s+Finished\s+Results posted 1 Sep 2025\s+Phase 2/);
   assert.match(entry, /What it measured was read by a model and checked against the record/);
   // The registry's own terms are inside the fold.
   assert.match(entry, /Design, in the registry's terms\s+Randomised, double-blind, compared with placebo/);
@@ -675,8 +679,8 @@ test("Scenario: Claim with thirty-three trials", () => {
   // Seven here: five shown, furthest phase first, the other two one press away.
   const trials = sectionOf(page("phase-claim/index.html"), "trials");
   const [shown, rest] = trials.split('class="trials-rest"');
-  assert.equal(count(shown, 'class="trial"'), 5);
-  assert.equal(count(rest, 'class="trial"'), 2);
+  assert.equal(count(shown, 'class="trial-group"'), 5);
+  assert.equal(count(rest, 'class="trial-group"'), 2);
   assert.ok(shown.indexOf("NCT00000030") < shown.indexOf("NCT00000002"), "Phase 3 is not first");
   assert.match(rest, /The other 2 of 7 trials/);
 });
@@ -791,8 +795,8 @@ test("Scenario: Outcome reported at four time points", () => {
 
 test("Scenario: Trial the registry shows as recruiting", () => {
   const trials = wordsOf(sectionOf(page("phase-claim/index.html"), "trials"));
-  assert.match(trials, /1,200 people planned/);
-  assert.match(trials, /Under way\s+Phase 3/);
+  assert.match(trials, /1,200 people planned\s+Phase 3 · /);
+  assert.match(trials, /State\s*Under way/);
   assert.doesNotMatch(trials, /recruit|eligib|contact|location|take part|join/i);
 });
 
