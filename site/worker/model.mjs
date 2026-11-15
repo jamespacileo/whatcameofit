@@ -79,7 +79,7 @@ const READING = {
     about_a_treatment: { type: "boolean", description: "Whether the text reports a specific treatment for a specific condition." },
     gist: text("What was reported, in one neutral line of your own words."),
     intervention: { type: ["string", "null"], description: "The drug, device or method, by its name alone: no maker or mechanism." },
-    other_names: names("Other names the text gives it: a brand name, a code such as ABC-123, or a generic name. Never a description such as 'the drug'. Empty if there is none."),
+    other_names: names("Other names the text gives it: a brand name, a code such as ABC-123, or a generic name. For a combination, only whole-regimen aliases, never individual components. Never a description such as 'the drug'. Empty if there is none."),
     known_names: names("From your own knowledge, not the text: other names this exact treatment goes by that the text does not give, such as a development code, a generic name or a brand name. For a combination, also the name of each part. Only names you are sure of. At most five. Empty if you know none."),
     search_phrases: names("Up to three short phrases a clinical trial registry would use for this treatment when it has no product name, most specific first, for example 'median nerve stimulation'. Empty when the names above are enough."),
     indication: { type: ["string", "null"], description: "The condition it is reported to treat, in medical words." },

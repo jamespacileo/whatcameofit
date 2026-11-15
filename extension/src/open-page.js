@@ -50,9 +50,23 @@ export function collectFromPage() {
     };
     const visible = node => {
       const r = node.getBoundingClientRect();
-      const style = getComputedStyle(node);
-      return !node.hidden && r.width > 0 && r.height > 0 && r.top < innerHeight && r.bottom > 0 &&
-        r.left < innerWidth && r.right > 0 && style.display !== "none" && style.visibility !== "hidden";
+      let left = Math.max(0, r.left), right = Math.min(innerWidth, r.right);
+      let top = Math.max(0, r.top), bottom = Math.min(innerHeight, r.bottom);
+      // This collector is injected on its own. Keep clipping in step with the
+      // independently injected screenshot inspector in visual.js.
+      for (let item = node; item; item = item.parentElement) {
+        const style = getComputedStyle(item);
+        if (item.hidden || style.display === "none" || style.visibility === "hidden") return false;
+        if (item === node) continue;
+        const bounds = item.getBoundingClientRect();
+        if (/^(hidden|clip|auto|scroll)$/.test(style.overflowX)) {
+          left = Math.max(left, bounds.left); right = Math.min(right, bounds.right);
+        }
+        if (/^(hidden|clip|auto|scroll)$/.test(style.overflowY)) {
+          top = Math.max(top, bounds.top); bottom = Math.min(bottom, bounds.bottom);
+        }
+      }
+      return r.width > 0 && r.height > 0 && right > left && bottom > top;
     };
     const selectorFor = node => {
       const parts = [];
@@ -132,12 +146,31 @@ export function collectFromPage() {
     };
     const imageKey = mediaKey(meta("og:image"));
     const videoKey = mediaKey(meta("og:video:secure_url") || meta("og:video"));
-    const media = [...document.querySelectorAll("main img, main video")].filter(visible);
-    const images = imageKey ? media.filter(n => n.tagName === "IMG" && mediaKey(n.currentSrc || n.src) === imageKey) : [];
+    const allMedia = [...document.querySelectorAll("main img, main video")];
+    const media = allMedia.filter(visible);
+    const anchors = imageKey ? allMedia.filter(n => n.tagName === "IMG" && mediaKey(n.currentSrc || n.src) === imageKey) : [];
+    const images = anchors.filter(visible);
     const videos = media.filter(n => n.tagName === "VIDEO" &&
       (videoKey && mediaKey(n.currentSrc || n.src) === videoKey ||
        imageKey && mediaKey(n.poster || n.getAttribute("poster")) === imageKey));
-    const primary = images.length === 1 ? images[0] : videos.length === 1 ? videos[0] : null;
+    let primary = images.length === 1 ? images[0] : videos.length === 1 ? videos[0] : null;
+    if (host === "instagram.com" && anchors.length === 1) {
+      const anchor = anchors[0], list = anchor.closest("li")?.parentElement;
+      if (list?.matches("ul, ol") && [...list.children].filter(n => n.tagName === "LI").length > 1) {
+        // A metadata image identifies this slide list even after it scrolls out of
+        // view. Never widen this boundary to main or a list of recommended posts.
+        primary = null;
+        let viewport = list.parentElement;
+        while (viewport && !viewport.matches("main, article, body") &&
+          !/^(hidden|clip|auto|scroll)$/.test(getComputedStyle(viewport).overflowX)) viewport = viewport.parentElement;
+        const frame = viewport?.getBoundingClientRect(), original = anchor.getBoundingClientRect();
+        const bounded = viewport && !viewport.matches("main, article, body") && frame.width > 0 && frame.height > 0 &&
+          frame.width <= original.width * 1.25 && frame.height <= original.height * 1.25;
+        const conflicting = [...list.querySelectorAll("a[href]")].some(link => key(link.href) && key(link.href) !== wanted);
+        const slides = media.filter(node => node.closest("li")?.parentElement === list);
+        if (bounded && !conflicting && slides.length === 1) primary = slides[0];
+      }
+    }
     return { ...empty, focusText: caption.slice(0, 20000), links,
       mediaScope: { address: location.href, selector: primary ? selectorFor(primary) : null, videoOnly: primary?.tagName === "VIDEO" } };
   }

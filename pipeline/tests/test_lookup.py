@@ -333,6 +333,56 @@ def test_a_lookup_stores_no_claim_match_or_article(session: Session):
     assert stored(session) == before
 
 
+def test_tracked_cards_require_the_condition_and_whole_regimen(session: Session):
+    for slug, intervention, indication in [
+        ("ageing", "EX-1", "biological ageing"),
+        ("single", "EX-1", "obesity"),
+        ("combined", "EX-2 and EX-1", "obesity"),
+        ("triple", "EX-1 plus EX-2 plus EX-3", "obesity"),
+    ]:
+        add_claim(
+            session,
+            slug=slug,
+            headline=slug,
+            vertical="mouth-and-teeth",
+            intervention=intervention,
+            indication=indication,
+            summary="Synthetic report.",
+        )
+    add_synonym(session, "combined", "EX-2 and EX-1", "PAIR-12")
+    add_synonym(session, "single", "EX-1", "ONE-BRAND")
+    add_synonym(session, "triple", "EX-1 plus EX-2 plus EX-3", "TRIPLE-123")
+    add_synonym(session, "combined", "EX-2 and EX-1", "ONE-BRAND plus EX-2")
+    for intervention, indication, aliases, expected in [
+        ("EX-1 plus EX-2", "Obesity", ["EX-1"], ["combined"]),
+        ("EX-1", "  OBESITY ", [], ["single"]),
+        ("EX-1", None, [], []),
+        ("EX-1", "tooth loss", [], []),
+        ("PAIR-12", "obesity", [], ["combined"]),
+        ("EX-1/EX-2", "obesity", [], ["combined"]),
+        ("PAIR-12", "obesity", ["EX-1 plus EX-2", "EX-1"], ["combined"]),
+        ("UNTRACKED-PAIR", "obesity", [], []),
+        ("EX-1 plus EX-2", "obesity", ["ONE-BRAND"], ["combined"]),
+        ("PAIR-12", "obesity", ["ONE-BRAND"], ["combined"]),
+        ("EX-1 plus EX-2 plus EX-3", "obesity", ["EX-1 plus EX-2"], ["triple"]),
+        ("TRIPLE-123", "obesity", ["PAIR-12"], ["triple"]),
+        ("ONE-BRAND plus EX-2", "obesity", [], ["combined"]),
+        ("UNLISTED-PAIR", "obesity", ["EX-1 plus EX-2", "ONE-BRAND plus EX-2"], ["combined"]),
+    ]:
+        found = find(
+            session,
+            FakeTrials({}),
+            reading={
+                **READING,
+                "intervention": intervention,
+                "indication": indication,
+                "other_names": aliases,
+                "known_names": ["EX-1", "EX-2"],
+            },
+        )
+        assert found.tracked == expected
+
+
 def test_the_model_is_shown_the_text(session: Session):
     model, prompts = llm(session, READING)
 

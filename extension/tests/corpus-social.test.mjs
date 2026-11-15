@@ -9,8 +9,8 @@ const {readPage,pageAsText}=await import(pathToFileURL(root+'/site/worker/page.m
 const {inspectVisible,capturePage}=await import(pathToFileURL(root+'/extension/src/visual.js'));
 function read(url,head,body,selection='') {
  const {document,window}=parseHTML('<html><head>'+head+'</head><body>'+body+'</body></html>');
- Object.assign(globalThis,{document,window,location:new URL(url),getSelection:()=>selection,innerWidth:1000,innerHeight:800,getComputedStyle:()=>({display:'block',visibility:'visible'})});
- window.HTMLElement.prototype.getBoundingClientRect=function(){const top=Number(this.getAttribute('data-top')??0);return {x:0,y:top,left:0,top,right:600,bottom:top+700,width:600,height:700};};
+ Object.assign(globalThis,{document,window,location:new URL(url),getSelection:()=>selection,innerWidth:1000,innerHeight:800,getComputedStyle:node=>({display:node.hidden?'none':'block',visibility:'visible',overflowX:node.getAttribute('data-overflow-x')??'visible',overflowY:node.getAttribute('data-overflow-y')??'visible'})});
+ window.HTMLElement.prototype.getBoundingClientRect=function(){const top=Number(this.getAttribute('data-top')??0),left=Number(this.getAttribute('data-left')??0),width=Number(this.getAttribute('data-width')??600),height=Number(this.getAttribute('data-height')??700);return {x:left,y:top,left,top,right:left+width,bottom:top+height,width,height};};
  const captured=collectFromPage();
  return {captured,request:composeRequest(captured,url,{readAddress,readPage,pageAsText})};
 }
@@ -90,5 +90,25 @@ test('an identity-matched image-only post retains its bounded visual fallback', 
  assert.equal(visible.unavailable,false);
  assert.equal(visible.crop.kind,'img');
  assert.equal(visible.crop.identity,'https://media.example/current.jpg');
+});
+
+test('an Instagram carousel captures only its unique visible slide inside the bound viewport', () => {
+ const url='https://www.instagram.com/p/ABC123/?img_index=2';
+ const head='<meta property="og:url" content="https://www.instagram.com/p/ABC123/"><meta property="og:image" content="https://media.example/current.jpg">';
+ const image=(src,left)=>'<img src="https://media.example/'+src+'.jpg" data-left="'+left+'" data-width="480" data-height="600">';
+ const carousel=(first,second,extra='')=>'<main><div data-left="300" data-width="480" data-height="600" data-overflow-x="auto" data-overflow-y="hidden"><div><ul><li>'+image('current',first)+'</li><li>'+image('second',second)+'</li></ul></div></div>'+extra+'</main>';
+ let x=read(url,head,carousel(-180,300,image('recommendation',0)));
+ let view=inspectVisible(x.captured.mediaScope);
+ assert.equal(view.crop?.identity,'https://media.example/second.jpg');
+ assert.deepEqual([view.crop.left,view.crop.width],[300,480]);
+ x=read(url,head,carousel(60,540));
+ assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true,'two visible slides are ambiguous');
+ x=read(url,head,carousel(-180,300).replace('<li>','<li><a href="/p/OTHER123/">Another post</a>'));
+ assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true,'a list of posts is not a carousel');
+ x=read(url,head,'<main><div data-left="300" data-width="360" data-height="600" data-overflow-x="hidden">'+image('current',250)+'</div></main>');
+ view=inspectVisible(x.captured.mediaScope);
+ assert.deepEqual([view.crop.left,view.crop.width],[300,360],'crop excludes clipped neighbour pixels');
+ x=read(url,head,carousel(-180,300).replace('<main>','<main hidden>'));
+ assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true,'hidden ancestors exclude media');
 });
 

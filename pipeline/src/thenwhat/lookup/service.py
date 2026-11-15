@@ -95,7 +95,8 @@ class Reading(BaseModel):
         default_factory=list,
         description=(
             "Other names the text gives it: a brand name, a code such as ABC-123, or a generic"
-            " name. Never a description such as 'the drug'. Empty if there is none."
+            " name. For a combination, only whole-regimen aliases, never individual components."
+            " Never a description such as 'the drug'. Empty if there is none."
         ),
     )
     known_names: list[ShortText] = Field(
@@ -197,7 +198,7 @@ class Lookup:
     paper_numbers: list[str] = field(default_factory=list)
     # What the text says about the trial itself.
     details: Details = field(default_factory=Details)
-    # Slugs of claims already tracked under one of the names.
+    # Slugs of claims for the complete intervention and the same indication.
     tracked: list[str] = field(default_factory=list)
     candidates: list[Candidate] = field(default_factory=list)
 
@@ -315,7 +316,8 @@ def look_up(
         registry_numbers=numbers,
         paper_numbers=from_papers,
         details=details,
-        tracked=_tracked(session, names),
+        # Model-known names include individual components; use them only for search.
+        tracked=_tracked(session, names, reading.indication),
         candidates=candidates,
     )
 
@@ -368,17 +370,67 @@ def _parts(name: str) -> list[str]:
     return [piece for piece in pieces if piece] if len(pieces) > 1 else []
 
 
-def _tracked(session: Session, names: list[str]) -> list[str]:
-    """Claims whose intervention goes by one of these names."""
-    wanted = {name_key(name) for name in names}
-    slugs = [
-        slug
-        for slug, name, synonyms in session.execute(
-            select(Claim.slug, Entity.name, Entity.synonyms)
+def _regimen_names(names: list[str]) -> set[tuple[str, ...]]:
+    """Whole-regimen aliases, excluding single components of a combination."""
+    parts = _regimen_parts(names)
+    components = {part for one in parts if len(one) > 1 for part in one}
+    if parts and len(parts[0]) == 1 and parts[0][0] in components:
+        return set()
+    return {one for one in parts if len(one) > 1 or len(one) == 1 and one[0] not in components}
+
+
+def _regimen_parts(names: list[str]) -> list[tuple[str, ...]]:
+    return [
+        tuple(
+            sorted(
+                name_key(part)
+                for part in re.split(r"\s+(?:and|plus)\s+|\s*[+/]\s*", name, flags=re.I)
+                if name_key(part)
+            )
+        )
+        for name in names
+    ]
+
+
+def _tracked(session: Session, names: list[str], indication: str | None) -> list[str]:
+    """Claims for the complete intervention and the same explicit condition."""
+    if not indication or not name_key(indication):
+        return []
+    wanted = _regimen_names(names)
+    cards = [
+        (slug, [name, *synonyms], _regimen_names([name, *synonyms]))
+        for slug, condition, name, synonyms in session.execute(
+            select(Claim.slug, Claim.indication, Entity.name, Entity.synonyms)
             .join(Entity, Entity.claim_id == Claim.id)
             .where(Entity.type == EntityType.INTERVENTION)
             .order_by(Claim.slug)
         )
-        if wanted & {name_key(name), *(name_key(synonym) for synonym in synonyms)}
+        if name_key(condition) == name_key(indication)
+    ]
+    primary = _regimen_names(names[:1])
+    direct = [slug for slug, _, keys in cards if primary & keys]
+    if direct:
+        # Published whole aliases establish equivalence; inferred aliases must
+        # not add a component card to an exact primary match.
+        return list(dict.fromkeys(direct))
+    named_aliases = [name for _, aliases, keys in cards if primary & keys for name in aliases]
+    primary_parts = {one for one in _regimen_parts(names[:1]) if len(one) > 1}
+    named_parts = {one for one in _regimen_parts(named_aliases) if len(one) > 1}
+    full_regimens = (
+        primary_parts or named_parts or {one for one in _regimen_parts(names) if len(one) > 1}
+    )
+    whole_names = [*names, *named_aliases]
+    components = {(part,) for one in _regimen_parts(whole_names) if len(one) > 1 for part in one}
+    slugs = [
+        slug
+        for slug, aliases, keys in cards
+        if wanted & keys
+        and not components & keys
+        and (
+            not full_regimens
+            or len(full_regimens) == 1
+            and not any(len(one) > 1 for one in _regimen_parts(aliases))
+            or full_regimens <= {one for one in _regimen_parts(aliases) if len(one) > 1}
+        )
     ]
     return list(dict.fromkeys(slugs))

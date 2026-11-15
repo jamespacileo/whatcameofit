@@ -65,7 +65,7 @@ function fakeModel(reading = READING) {
 
 const INDEX = {
   claims: {
-    "tooth-regrowth-ex1": { headline: "Antibody regrows teeth", page: "/tooth-regrowth-ex1", names: ["Anti-USAG-1 antibody", "toothgrow"] },
+    "tooth-regrowth-ex1": { headline: "Antibody regrows teeth", page: "/tooth-regrowth-ex1", names: ["Anti-USAG-1 antibody", "toothgrow"], indication: "tooth agenesis" },
   },
 };
 
@@ -251,6 +251,41 @@ test("Scenario: Treatment already tracked", async () => {
   const found = await lookUp({ text: TEXT, model: fakeModel(), registry: fakeRegistry({}), index: INDEX });
 
   assert.deepEqual(found.tracked, [{ slug: "tooth-regrowth-ex1", headline: "Antibody regrows teeth", page: "/tooth-regrowth-ex1" }]);
+});
+
+test("tracked cards require the same condition and complete regimen without extra model work", async () => {
+  const claims = {
+    ageing: { names: ["EX-1"], indication: "biological ageing", headline: "Ageing", page: "/ageing" },
+    single: { names: ["EX-1", "ONE-BRAND"], indication: "obesity", headline: "One medicine", page: "/single" },
+    combined: { names: ["EX-2 and EX-1", "PAIR-12", "EX-1", "ONE-BRAND plus EX-2"], indication: "obesity", headline: "Combination", page: "/combined" },
+    legacy: { names: ["EX-1"], headline: "Unknown condition", page: "/legacy" },
+    triple: { names: ["EX-1 plus EX-2 plus EX-3", "TRIPLE-123"], indication: "obesity", headline: "Triple", page: "/triple" },
+  };
+  for (const [intervention, indication, aliases, expected] of [
+    ["EX-1 plus EX-2", "Obesity", ["EX-1"], ["combined"]],
+    ["EX-1", "  OBESITY ", [], ["single"]],
+    ["EX-1", null, [], []],
+    ["EX-1", "tooth loss", [], []],
+    ["PAIR-12", "obesity", [], ["combined"]],
+    ["EX-1/EX-2", "obesity", [], ["combined"]],
+    ["PAIR-12", "obesity", ["EX-1 plus EX-2", "EX-1"], ["combined"]],
+    ["UNTRACKED-PAIR", "obesity", [], []],
+    ["EX-1 plus EX-2", "obesity", ["ONE-BRAND"], ["combined"]],
+    ["PAIR-12", "obesity", ["ONE-BRAND"], ["combined"]],
+    ["EX-1 plus EX-2 plus EX-3", "obesity", ["EX-1 plus EX-2"], ["triple"]],
+    ["TRIPLE-123", "obesity", ["PAIR-12"], ["triple"]],
+    ["ONE-BRAND plus EX-2", "obesity", [], ["combined"]],
+    ["UNLISTED-PAIR", "obesity", ["EX-1 plus EX-2", "ONE-BRAND plus EX-2"], ["combined"]],
+  ]) {
+    let reads = 0, scores = 0;
+    const model = {
+      read: async () => { reads++; return { ...READING, intervention, indication, other_names: aliases, known_names: ["EX-1", "EX-2"] }; },
+      score: async () => { scores++; return []; },
+    };
+    const found = await lookUp({ text: TEXT, model, registry: fakeRegistry({}), index: { claims } });
+    assert.deepEqual(found.tracked.map(one => one.slug), expected);
+    assert.deepEqual([reads, scores], [1, 0], "card association adds no paid call");
+  }
 });
 
 test("no more than sixty records are scored", async () => {
