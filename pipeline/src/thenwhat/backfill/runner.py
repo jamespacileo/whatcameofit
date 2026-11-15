@@ -159,9 +159,11 @@ def process_batch(
             .with_only_columns(step.model.id)
         )
     )
-    held = [record for record in records if record.id in still_due]
+    held = [record for record in records if record.id in still_due and record.id not in skip]
     processed: list[Processed] = [
-        (record.id, None, None) for record in records if record.id not in still_due
+        (record.id, None, None)
+        for record in records
+        if record.id not in still_due or record.id in skip
     ]
     if not held:
         return processed
