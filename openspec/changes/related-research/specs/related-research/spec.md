@@ -7,11 +7,19 @@ Finds published papers about a claim's intervention and indication when the arti
 ## ADDED Requirements
 
 ### Requirement: Paper candidates from a literature search
-For each claim the system SHALL search the literature for the intervention's name, its other names and its search phrases, each together with the indication. Every paper found SHALL be stored as a candidate match with its source, external identifier, score and a one-line record of title, year, kind of paper and journal. At most twenty papers SHALL be kept per claim, taken in the source's own order of relevance.
+For each claim the system SHALL search the literature for the intervention's name, its other names and its search phrases, each together with the indication. Every paper found SHALL be stored as a candidate match with its source, external identifier, score and a one-line record of title, year, kind of paper and journal. The system SHALL also search the same terms, without the indication, among papers with an author at each organisation the article named and the organisation registry identified and no one rejected, three organisations at most, published from two years before the first report to a month after it when that date is known. At most twenty papers SHALL be kept per claim: those found under a named organisation first, the ones found under more organisations ahead, then the rest in the source's own order of relevance.
 
 #### Scenario: Claim whose article gave no DOI
 - **WHEN** resolution runs for a claim with no paper entity and the literature holds four papers on its intervention and indication
 - **THEN** four paper candidates are stored for the claim
+
+#### Scenario: The paper's title shares few words with the report (pipeline)
+- **WHEN** the search with the indication does not return the paper a claim's article reports, and the article named two organisations that are identified
+- **THEN** one search is sent per organisation, and a paper found under both is stored ahead of one found under one, which is ahead of the papers found with the indication
+
+#### Scenario: No organisation identified
+- **WHEN** a claim's article named no organisation that the registry identified
+- **THEN** only the search with the indication is sent
 
 #### Scenario: Paper found by two terms
 - **WHEN** the name and a search phrase both find the same paper

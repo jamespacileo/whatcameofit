@@ -18,8 +18,15 @@ FIELDS = (
     "authorships,abstract_inverted_index,ids"
 )
 MAX_RESULTS = 20
+# How many papers one search among an organisation's authors returns.
+MAX_ORGANISATION_RESULTS = 10
+# A report follows its paper: the paper is looked for from this long before the report
+# to this long after, which allows for a report that ran ahead of the paper's own date.
+BEFORE_REPORT = timedelta(days=730)
+AFTER_REPORT = timedelta(days=31)
 DOI_PREFIX = "https://doi.org/"
 WORK_PREFIX = "https://openalex.org/"
+ROR_PREFIX = "https://ror.org/"
 # What a search costs when the source's answer does not say.
 SEARCH_COST_USD = 0.001
 # The literature changes slowly and every search is charged, so a search's answer is
@@ -159,13 +166,40 @@ class OpenAlex(Source):
             return []
         return self._search(f"({' OR '.join(phrases)}) AND {about}", limit)
 
-    def _search(self, query: str, limit: int) -> list[SourceRecord]:
+    def search_papers_at(
+        self,
+        terms: list[str],
+        organisation: str,
+        reported: date | None = None,
+        limit: int = MAX_ORGANISATION_RESULTS,
+    ) -> list[SourceRecord]:
+        """Papers that name any of the terms and have an author at the organisation, given
+        by its ROR identifier, most relevant first, up to the limit.
+
+        A report words a finding differently from its paper's title, so the search with
+        the condition can miss the paper the report is about. The report does name where
+        the work was done. When the date of the report is known, only papers published
+        from two years before it to a month after are looked for. The condition is not
+        part of this search. One search is sent, and no second page is asked for.
+        """
+        self._require_key()
+        limit = max(1, min(limit, MAX_ORGANISATION_RESULTS))
+        phrases = list(dict.fromkeys(_phrase(term) for term in terms if _phrase(term)))
+        ror = _ror(organisation.strip())
+        if not phrases or not ror or not ror.isalnum():
+            return []
+        within = [f"authorships.institutions.ror:{ROR_PREFIX}{ror}"]
+        if reported is not None:
+            within.append(f"from_publication_date:{(reported - BEFORE_REPORT).isoformat()}")
+            within.append(f"to_publication_date:{(reported + AFTER_REPORT).isoformat()}")
+        return self._search(" OR ".join(phrases), limit, within=",".join(within))
+
+    def _search(self, query: str, limit: int, *, within: str | None = None) -> list[SourceRecord]:
         sent = self.usage.searches_sent
-        fetched = self._get(
-            f"{API}/works",
-            {"search": query, "per_page": str(limit), "select": FIELDS},
-            ttl=SEARCH_TTL,
-        )
+        asked = {"search": query, "per_page": str(limit), "select": FIELDS}
+        if within:
+            asked["filter"] = within
+        fetched = self._get(f"{API}/works", asked, ttl=SEARCH_TTL)
         if self.usage.searches_sent == sent:
             self.usage.searches_from_cache += 1
         results = fetched.payload.get("results", []) if fetched else []

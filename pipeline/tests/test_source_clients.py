@@ -589,6 +589,40 @@ def test_literature_search_asks_for_no_page_beyond_the_limit(
     assert [request.url.params["per_page"] for request in replay.requests] == ["2"]
 
 
+def test_search_among_an_organisations_authors_finds_the_paper_a_report_words_differently(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: The paper's title shares few words with the report"""
+    found = httpx.Response(
+        200, json=fixture_json("openalex/search_at_kings_college_london.json"), headers=allowance()
+    )
+    source, replay = papers(session, fake_time, lambda request: found)
+
+    records = source.search_papers_at(
+        ["Lab-grown teeth", "tooth regeneration"], "0220mzb33", date(2025, 4, 14)
+    )
+
+    assert "10.1021/acsmacrolett.4c00520" in [record.external_id for record in records]
+    [request] = replay.requests
+    assert request.url.params["search"] == '"Lab-grown teeth" OR "tooth regeneration"'
+    assert request.url.params["filter"] == (
+        "authorships.institutions.ror:https://ror.org/0220mzb33,"
+        "from_publication_date:2023-04-15,to_publication_date:2025-05-15"
+    )
+    assert request.url.params["per_page"] == "10"
+    assert source.usage.searches_sent == 1
+
+    # With no date of the report, the organisation alone narrows the search.
+    source.search_papers_at(["tooth regeneration"], "https://ror.org/0220mzb33")
+    assert replay.requests[-1].url.params["filter"] == (
+        "authorships.institutions.ror:https://ror.org/0220mzb33"
+    )
+    # Nothing to search by, or nothing that is a ROR identifier: no request.
+    assert source.search_papers_at([], "0220mzb33") == []
+    assert source.search_papers_at(["tooth regeneration"], "not a ror, id") == []
+    assert len(replay.requests) == 2
+
+
 def test_search_that_finds_nothing_is_empty_and_no_looser_search_is_sent(
     session: Session, fake_time, fixture_json
 ):
