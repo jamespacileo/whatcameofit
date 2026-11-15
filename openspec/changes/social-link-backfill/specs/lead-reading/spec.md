@@ -99,11 +99,27 @@ When the read names an intervention and an indication that an existing claim cov
 - **THEN** it stays approved, and no field the operator reviewed is changed
 
 ### Requirement: The same story in other words
-When no existing claim has the read's intervention and indication as written, the claims whose intervention shares a name with the read's, followed by the claims that screening found named in the lead's title, SHALL be candidates, up to a fixed number. A name is shared when a claim's intervention name or synonym equals one of the names the read gives, or when one sits whole inside the other, word for word. A decision SHALL say whether the article reports one of the candidates or none of them. It SHALL be shown each side's treatment and condition and nothing of the article's text. The article reports a candidate when the treatment is the same and the article's condition is the candidate's condition, a narrower form of it or a wider wording of it; a different condition is a different claim. The article SHALL be added to the chosen claim only when the decision chooses it at or above the configured probability, 0.8 unless set; otherwise a new claim SHALL be drafted. Being added SHALL change nothing of the claim that adding any article does not change: the claim keeps the indication and headline it was first given. The decision SHALL be logged.
+When no existing claim has the read's intervention and indication as written, the claims whose intervention shares a name with the read's, followed by the claims that screening found named in the lead's title, SHALL be candidates, up to a fixed number. A rejected claim SHALL NOT be a candidate. A name is shared when a claim's intervention name or synonym equals one of the names the read gives, or when one sits whole inside the other, word for word. A decision SHALL say whether the article reports one of the candidates or none of them. It SHALL be shown each side's treatment and condition and nothing of the article's text. The article reports a candidate when the treatment is the same and the article's condition is the candidate's condition, a narrower form of it or a wider wording of it; a different condition is a different claim. The article SHALL be added to the candidate the decision gives the highest probability when two things hold: the probability that the article reports one of the candidates, which is one minus the probability the decision gives to none of them, is at or above the configured probability, 0.6 unless set; and that candidate's own probability is more than half. Otherwise a new claim SHALL be drafted. Being added SHALL change nothing of the claim that adding any article does not change: the claim keeps the indication and headline it was first given. The decision SHALL be logged.
 
 #### Scenario: The same story in another outlet's words
-- **WHEN** a claim exists for esketamine for major depressive disorder and suicidal thinking, and a lead's read names esketamine for treatment-resistant depression, and the decision chooses that claim at 0.9
-- **THEN** the article is added to that claim, no claim is created, and the lead's detail says what was read and the decision's probability
+- **WHEN** a claim exists for esketamine for major depressive disorder and suicidal thinking, and a lead's read names esketamine for treatment-resistant depression, and the decision gives that claim 0.9 and none of the candidates 0.1
+- **THEN** the article is added to that claim, no claim is created, and the lead's detail says what was read and both probabilities
+
+#### Scenario: A wording the decision is less sure of
+- **WHEN** the decision gives the one candidate 0.62 and none of the candidates 0.38
+- **THEN** the article is added to that claim
+
+#### Scenario: The vote is split between two claims
+- **WHEN** the decision gives two candidates 0.51 and 0.43 and none of the candidates 0.06
+- **THEN** the article is added to the candidate given 0.51
+
+#### Scenario: Two conditions of one drug
+- **WHEN** the decision gives two candidates 0.48 and 0.47
+- **THEN** the article is added to neither and a new claim is drafted
+
+#### Scenario: A rejected draft shares the name
+- **WHEN** the only claim sharing the read's name was rejected
+- **THEN** no decision is asked about it and a new claim is drafted
 
 #### Scenario: A name inside a longer name
 - **WHEN** a claim's intervention is esketamine and a read names esketamine nasal spray
@@ -114,7 +130,7 @@ When no existing claim has the read's intervention and indication as written, th
 - **THEN** a new claim is drafted for the read's intervention and indication
 
 #### Scenario: An unsure decision
-- **WHEN** the decision chooses a candidate at 0.6 and the configured probability is 0.8
+- **WHEN** the decision gives the one candidate 0.45 and none of the candidates 0.55
 - **THEN** the article is not added to it and a new claim is drafted
 
 #### Scenario: No claim shares the name

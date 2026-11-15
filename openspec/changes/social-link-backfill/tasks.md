@@ -88,6 +88,18 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 - [x] 9.5 Leave a named claim pending at the read and reject a description at once; have `thenwhat prepare` decide a read's claim by the rule for drafts once every step succeeded; verify with tests of a prepared claim, a failed step, and a pending claim no read drafted
 - [x] 9.6 Count claims awaiting preparation in `thenwhat backfill funnel`; update the README and `.env.example`; verify `make check` passes
 
+- [x] 9.7 Join by the probability that the article reports one of the candidates (one minus "none of these"), at 0.6 unless set, with more than half for the claim joined; verify with tests of a fairly sure same story, a vote split with a clear leader, a near tie between two conditions, and a decision leaning to none
+- [x] 9.8 Leave rejected claims out of the candidates; verify with a test that a read sharing a name only with a rejected draft asks no decision
+
+## Reread: what the 200 showed on 2026-11-15 (8.6, read but not yet prepared)
+
+- **The run:** `link_read --limit 200` with the same-claim check: 141 new claims (103 awaiting preparation, 38 rejected by the name rule), 14 articles joined to a claim, 3 needed a vertical, 55 could not be read. Model cost $0.23. Nothing is approved and nothing is exportable: `thenwhat prepare` has not been run for this batch.
+- **Could not be read (55):** robots.txt refused 31 (npr.org 16, wsj.com 5, eurekalert.org 2, reuters.com 2, cbc.ca 2, three others 1 each), the page gave no date 20, the outlet had no display name 2, no page or snapshot 2.
+- **Joins:** all 14 are right as far as intervention and condition show, one of them to a claim already published (`dentine-repair-tideglusib`). Five same-story articles still became new claims; the design section above gives the 34 decisions and the rule that follows from them (9.7, 9.8).
+- **Rejected by the name rule (38 of 141, 27%):** descriptions and names that end in a kind of thing, among them "HPV vaccine", "MMR vaccine", "VSV-EBOV vaccine", "bariatric surgery", "LASIK surgery", "gene therapy" for haemophilia A, "bacteriophage therapy", "CAR-T cell therapy". Several are the accepted name of the intervention. The rule is the operator's; whether to loosen it is open.
+- **Not what the tracker is for (the reviewing session's list, about 20 of the 103):** established drugs in the news for safety or marketing ("OxyContin", "proton pump inhibitors", "paroxetine"), advice and public health ("water fluoridation", "Heimlich manoeuvre", "mindfulness meditation"), an approach for "cancer" with no one indication ("CRISPR gene editing", "CTLA-4 blockade"), and a predictor that is not an intervention ("gut microbiome composition"). Triage passes these as it was measured to: it asks whether a headline reports a treatment for a condition, not whether the report is of something new. Open for the operator.
+- **Also open:** indications that hold two conditions ("depression and bipolar disorder"), and three verticals the reviewing session questions.
+
 ## First reads: what happened on 2026-11-15 (8.6, begun and taken back)
 
 - **Before reading:** PR 113 merged; the real database migrated to `0018` after a dump. The leads loaded so far (971,734, with the 2019 scores, labels, triage ledger entries, decision records and usage) were copied in once from the separate database, and screening was run again there against the real claims. The operator set the thresholds, pass at 0.7 and reject below 0.1, and raised the month's ceiling to $100.
