@@ -28,6 +28,10 @@ EXPECTED_TABLES = {
     "entity_substance",
     "trial_read",
     "reading",
+    "link_lead",
+    "link_share",
+    "link_lead_link",
+    "link_lead_label",
 }
 
 # The migration that records where an entity was named (openspec organisations).

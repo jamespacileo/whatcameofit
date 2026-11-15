@@ -2,8 +2,10 @@
 // page links to its paper far more often than it gives a registry number; the paper's
 // abstract gives the number. Nothing of the abstract is returned or kept. The same rule
 // as the pipeline's thenwhat.sources.europepmc.trial_numbers; keep the two in step.
+// A paper's trial numbers may be reused for a day; the abstract itself is never kept.
 
 import { withDeadline } from "./deadline.mjs";
+import { SOURCE_TTL_SECONDS, makeShared, makeSourceCache } from "./public-cache.mjs";
 
 const API = "https://www.ebi.ac.uk/europepmc/webservices/rest";
 const VERSION = "1";
@@ -15,9 +17,37 @@ const MAX_TRIALS_OF_ONE_PAPER = 3;
 // long. Europe PMC answers a record it has served lately in under a second and one it
 // has not in up to half a minute, so a paper passed over here is counted in the answer.
 const TIMEOUT_MS = 5_000;
+// A paper Europe PMC does not hold yet may be added soon: that answer is kept briefly.
+const NO_RECORD_SECONDS = 3_600;
+const REQUEST_SPACING_MS = 500;
+const numbersOnly = (value) => Array.isArray(value) && value.length <= MAX_TRIALS_OF_ONE_PAPER &&
+  value.every((number) => typeof number === "string" && /^NCT\d{8}$/.test(number));
 
-export function makePapers({ fetch, contact, timeoutMs = TIMEOUT_MS }) {
+export function makePapers({ fetch, contact, timeoutMs = TIMEOUT_MS, cache, cacheTimeoutMs, requestSpacingMs = REQUEST_SPACING_MS }) {
   const headers = { "User-Agent": `thenwhat-lookup/${VERSION} (mailto:${contact})`, Accept: "application/json" };
+  const reuse = makeSourceCache(cache, { kind: "papers", timeoutMs: cacheTimeoutMs });
+  const shared = makeShared();
+  let starts = Promise.resolve();
+  let lastStart = -Infinity;
+  // Reserve origin starts after the cache check: variable cache latency must not
+  // bunch misses together. Only starts are serialized, not response bodies.
+  function start(url, signal) {
+    const slot = starts.then(async () => {
+      while (!signal.aborted && Date.now() - lastStart < requestSpacingMs) {
+        await new Promise((resolve) => {
+          const done = () => { clearTimeout(timer); signal.removeEventListener("abort", done); resolve(); };
+          const timer = setTimeout(done, requestSpacingMs - (Date.now() - lastStart));
+          signal.addEventListener("abort", done, { once: true });
+        });
+      }
+      signal.throwIfAborted();
+      lastStart = Date.now();
+      // Wrap the promise so the next start does not wait for the response.
+      return { response: fetch(url, { headers, signal }) };
+    });
+    starts = slot.then(() => {}, () => {});
+    return slot.then(({ response }) => response);
+  }
 
   return {
     /**
@@ -34,15 +64,24 @@ export function makePapers({ fetch, contact, timeoutMs = TIMEOUT_MS }) {
       for (const [name, value] of Object.entries({ query, format: "json", resultType: "core" })) {
         url.searchParams.set(name, value);
       }
-      // Unavailable in time is an error, never a paper with no trial.
-      const paper = await withDeadline(timeoutMs, async (signal) => {
-        const response = await fetch(url.href, { headers, signal });
-        if (!response.ok) throw new Error(`papers ${response.status}`);
-        return (await response.json())?.resultList?.result?.[0];
-      }, { label: "papers", parent });
-      const found = String(paper?.abstractText ?? "").match(REGISTRY_NUMBER) ?? [];
-      const numbers = [...new Set(found.map((number) => number.toUpperCase()))];
-      return numbers.length <= MAX_TRIALS_OF_ONE_PAPER ? numbers : [];
+      // The same paper asked twice at once is asked of Europe PMC once.
+      return shared(url.href, async (signal) => {
+        const key = await reuse.key(query);
+        const saved = await reuse.get(key);
+        if (numbersOnly(saved)) return [...saved];
+        // Unavailable in time is an error, never a paper with no trial, and is not kept.
+        const paper = await withDeadline(timeoutMs, async (deadline) => {
+          const response = await start(url.href, deadline);
+          if (!response.ok) throw new Error(`papers ${response.status}`);
+          return (await response.json())?.resultList?.result?.[0];
+        }, { label: "papers", parent: signal });
+        const found = String(paper?.abstractText ?? "").match(REGISTRY_NUMBER) ?? [];
+        const unique = [...new Set(found.map((number) => number.toUpperCase()))];
+        const numbers = unique.length <= MAX_TRIALS_OF_ONE_PAPER ? unique : [];
+        // Only the registry numbers are kept, never the abstract they were read from.
+        await reuse.put(key, numbers, paper ? SOURCE_TTL_SECONDS : NO_RECORD_SECONDS);
+        return [...numbers];
+      }, parent);
     },
   };
 }

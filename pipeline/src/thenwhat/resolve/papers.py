@@ -6,7 +6,7 @@ A paper candidate is a candidate match on the claim's intervention whose source 
 literature search. It is never an evidence event and never enters status derivation.
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Protocol
 
 from sqlalchemy import select
@@ -24,7 +24,7 @@ from thenwhat.decide.steps import (
     score_papers,
 )
 from thenwhat.domain import Decider, EntityType, ReviewState
-from thenwhat.resolve.reasons import paper_reasons
+from thenwhat.resolve.reasons import NAMED_IN_ARTICLE, paper_reasons
 from thenwhat.resolve.service import (
     MAX_SUMMARY_CHARACTERS,
     approve_confident,
@@ -41,6 +41,8 @@ from thenwhat.sources.ror import Ror
 # The source name a paper candidate carries.
 PAPER_SOURCE = OpenAlex.name
 MAX_PAPERS_PER_CLAIM = 20
+# The most named organisations whose authors' papers are searched for one claim.
+MAX_ORGANISATIONS_SEARCHED = 3
 
 
 class PaperSearch(Protocol):
@@ -48,6 +50,10 @@ class PaperSearch(Protocol):
 
     def search_papers(
         self, terms: list[str], condition: str, limit: int = ...
+    ) -> list[SourceRecord]: ...
+
+    def search_papers_at(
+        self, terms: list[str], organisation: str, reported: date | None = ...
     ) -> list[SourceRecord]: ...
 
     def paper(self, external_id: str) -> SourceRecord | None: ...
@@ -118,8 +124,11 @@ def find_papers(
     added; an empty list means no new paper was found.
 
     The intervention's name, other names and search phrases are searched together with
-    the indication, in one search where the source can take them all at once. A claim
-    keeps at most twenty papers, taken in the source's own order of relevance. A rejected
+    the indication, in one search where the source can take them all at once. The same
+    terms are also searched, without the indication, among the papers whose authors are
+    at each organisation the article named and ROR identified (three at most), published
+    around the first report. A claim keeps at most twenty papers: those found under a
+    named organisation first, then the rest in the source's own order of relevance. A rejected
     paper is not one the claim keeps, so it leaves room for another; it is never added
     again. A paper the claim already has is left as it is, whatever its state.
 
@@ -137,10 +146,23 @@ def find_papers(
     if room <= 0:
         return []
 
+    terms = _terms(intervention)
+    by_keyword = papers.search_papers(terms, claim.indication, MAX_PAPERS_PER_CLAIM)
+    # Papers by authors at the organisations the article named, with how many of those
+    # organisations each was found under.
+    at_named: dict[str, tuple[int, SourceRecord]] = {}
+    _, identifiers = _named_organisations(session, claim)
+    for organisation in sorted(identifiers)[:MAX_ORGANISATIONS_SEARCHED]:
+        for record in papers.search_papers_at(terms, organisation, claim.first_reported_date):
+            times, first = at_named.get(record.external_id, (0, record))
+            at_named[record.external_id] = (times + 1, first)
+    # Those come first, the ones found under more organisations ahead, so that the
+    # claim's room goes to them before the papers found by the condition's wording.
+    ordered = [
+        record for _, record in sorted(at_named.values(), key=lambda one: -one[0])
+    ] + by_keyword
     found: dict[str, SourceRecord] = {}
-    for record in papers.search_papers(
-        _terms(intervention), claim.indication, MAX_PAPERS_PER_CLAIM
-    ):
+    for record in ordered:
         if len(found) < room and record.external_id not in had:
             found.setdefault(record.external_id, record)
 
@@ -203,7 +225,10 @@ def rescore_papers(
             again.append((match, record))
     for match, record in again:
         match.record_summary = paper_line(record)
-        match.reasons = _reasons(session, claim, intervention, record)
+        # That the article names the paper is not found from the paper's record, so it
+        # is carried over.
+        named = [NAMED_IN_ARTICLE] if NAMED_IN_ARTICLE in match.reasons else []
+        match.reasons = [*_reasons(session, claim, intervention, record), *named]
     score_papers(session, backend, claim=claim, candidates=again, now=now)
     rescored = [match for match, _ in again]
     _decide_by_rule(rescored, reject_below, accept_above, now)

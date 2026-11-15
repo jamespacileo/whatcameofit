@@ -2,12 +2,15 @@
 
 import json
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entities import development_codes
+from thenwhat.claims.entry import NamedClaim
+from thenwhat.claims.verticals import VERTICALS
 from thenwhat.db.models import Claim, ClaimTerm, DecisionLog, Entity, EntityMatch
 from thenwhat.decide.core import Backend, Decision, DecisionFailed, decide, decide_many
 from thenwhat.domain import EntityType, EvidenceStage, TermRole
@@ -589,3 +592,227 @@ def _describe(candidate: SourceRecord) -> str:
     else:
         text = json.dumps(candidate.payload, ensure_ascii=False, sort_keys=True)
     return text[:MAX_CANDIDATE_CHARACTERS]
+
+
+# --- link lead triage (openspec lead-triage) -----------------------------------------
+
+LEAD_TRIAGE = "lead_triage"
+TREATMENT_REPORT = "treatment_report"
+HEALTH_OTHER = "health_other"
+NOT_HEALTH = "not_health"
+TRIAGE_OPTIONS = [TREATMENT_REPORT, HEALTH_OTHER, NOT_HEALTH]
+TRIAGE_INTRO = (
+    "Each item is the headline of a news article, with the outlet that published it and "
+    "the year it was shared. Judge from the headline alone. Nothing else is known about "
+    "the article."
+)
+TRIAGE_QUESTION = (
+    "What does this headline report?\n"
+    f"- {TREATMENT_REPORT}: a result, finding or development about one specific treatment "
+    "(a drug, vaccine, device, procedure or therapy, named or described) for one specific "
+    "disease or condition\n"
+    f"- {HEALTH_OTHER}: health or medicine, but not that: policy, an outbreak, a risk "
+    "factor, advice on diet or lifestyle, a company's business, or science with no "
+    "treatment for a condition\n"
+    f"- {NOT_HEALTH}: not about health or medicine"
+)
+
+
+def lead_ref(lead_id: int) -> str:
+    """The decision log's reference to a link lead."""
+    return f"link_lead:{lead_id}"
+
+
+def headline_text(title: str, outlet: str, year: int) -> str:
+    """All that triage is shown of a link lead: its title, its outlet and the year."""
+    return f"Headline: {title}\nOutlet: {outlet}\nYear shared: {year}"
+
+
+def triage_headlines(
+    session: Session,
+    backend: Backend,
+    *,
+    headlines: Sequence[tuple[int, str]],
+    now: datetime,
+) -> list[float]:
+    """For each link lead, given as (id, text), the probability that its headline reports
+    a specific treatment for a specific condition. This function decides nothing."""
+    decisions = decide_many(
+        session,
+        backend,
+        step=LEAD_TRIAGE,
+        intro=TRIAGE_INTRO,
+        question=TRIAGE_QUESTION,
+        items=[(lead_ref(lead_id), text) for lead_id, text in headlines],
+        options=TRIAGE_OPTIONS,
+        now=now,
+    )
+    return [decision.probabilities[TREATMENT_REPORT] for decision in decisions]
+
+
+# --- the vertical of a claim drafted from a link lead (openspec lead-reading) ---------
+
+VERTICAL_CHOICE = "vertical_choice"
+VERTICAL_QUESTION = (
+    "Which health area is this treatment filed under? Choose the area of the condition "
+    "it is reported to treat, not of the kind of treatment."
+)
+
+
+def vertical_state(intervention: str, indication: str, summary: str) -> str:
+    """What the vertical decision is shown: what was read from the article, the question,
+    and every configured vertical with its title."""
+    areas = "\n".join(f"- {slug}: {title}" for slug, title in VERTICALS.items())
+    return (
+        f"Intervention: {intervention}\nIndication: {indication}\nSummary: {summary}\n\n"
+        f"{VERTICAL_QUESTION}\n{areas}"
+    )
+
+
+def choose_vertical(
+    session: Session,
+    backend: Backend,
+    *,
+    ref: str,
+    intervention: str,
+    indication: str,
+    summary: str,
+    now: datetime,
+) -> tuple[str, float]:
+    """The vertical the backend chooses among the configured ones, and the probability
+    it gives that choice. A retired vertical is never offered. This function decides
+    nothing: the caller accepts the choice only at or above its own setting."""
+    decision = decide(
+        session,
+        backend,
+        step=VERTICAL_CHOICE,
+        state=vertical_state(intervention, indication, summary),
+        options=list(VERTICALS),
+        input_ref=ref,
+        now=now,
+    )
+    return decision.choice, decision.probabilities[decision.choice]
+
+
+SAME_CLAIM = "same_claim"
+# The answer when the article reports none of the claims it is shown.
+NO_SUCH_CLAIM = "none-of-these"
+SAME_CLAIM_QUESTION = (
+    "An article has been read. Does it report the same treatment for the same condition "
+    "as one of the claims below? Choose a claim only when its treatment is the article's "
+    "treatment and its condition is the article's condition: worded differently, more "
+    "narrowly or more generally, it is still the same condition. A different condition, "
+    f"or a different treatment that shares a word of the name, is {NO_SUCH_CLAIM}."
+)
+
+
+def same_claim_state(intervention: str, indication: str, candidates: Sequence[NamedClaim]) -> str:
+    """What the same-claim decision is shown: the treatment and condition read from the
+    article, the question, and each candidate claim's treatment and condition. Never a
+    word of the article."""
+    listed = "\n".join(
+        f"- {claim.slug}: {claim.intervention} for {claim.indication}" for claim in candidates
+    )
+    return (
+        f"Article's treatment: {intervention}\nArticle's condition: {indication}\n\n"
+        f"{SAME_CLAIM_QUESTION}\n{listed}\n- {NO_SUCH_CLAIM}"
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class SameClaim:
+    """What the same-claim decision answered."""
+
+    # The candidate it chose, or None when it chose "none of these".
+    slug: str | None
+    # The probability it gave the candidate it thinks most likely, chosen or not.
+    likeliest: str | None
+    likeliest_probability: float
+    # The probability it gave to the article reporting none of the candidates.
+    none_probability: float
+
+
+def choose_same_claim(
+    session: Session,
+    backend: Backend,
+    *,
+    ref: str,
+    intervention: str,
+    indication: str,
+    candidates: Sequence[NamedClaim],
+    now: datetime,
+) -> SameClaim:
+    """Which claim, among the candidates, the backend says the article reports, with the
+    probability it gives its likeliest candidate and the probability it gives to none of
+    them. This function decides nothing: the caller joins the article to a claim by its
+    own rule."""
+    decision = decide(
+        session,
+        backend,
+        step=SAME_CLAIM,
+        state=same_claim_state(intervention, indication, candidates),
+        options=[*(claim.slug for claim in candidates), NO_SUCH_CLAIM],
+        input_ref=ref,
+        now=now,
+    )
+    chances = decision.probabilities
+    likeliest = max(
+        (claim.slug for claim in candidates), key=lambda slug: chances.get(slug, 0.0), default=None
+    )
+    return SameClaim(
+        slug=None if decision.choice == NO_SUCH_CLAIM else decision.choice,
+        likeliest=likeliest,
+        likeliest_probability=chances.get(likeliest, 0.0) if likeliest else 0.0,
+        none_probability=chances.get(NO_SUCH_CLAIM, 0.0),
+    )
+
+
+NEW_TREATMENT_REPORT = "new_treatment_report"
+REPORTS_A_NEW_TREATMENT = "new_treatment"
+ANOTHER_KIND_OF_STORY = "other"
+NEW_TREATMENT_QUESTION = (
+    "An article has been read and is summarised above in our own words. Is it a report "
+    "about one treatment that is new, experimental or newly being tested for one "
+    "condition: a study or trial result, the start of a trial, a first use in people, an "
+    f"approval, or other progress of that treatment? Answer {REPORTS_A_NEW_TREATMENT} for "
+    f"that. Answer {ANOTHER_KIND_OF_STORY} for anything else, including: news about a "
+    "treatment long in established use (its safety, side effects, price, marketing, "
+    "prescribing or policy); advice, lifestyle and public health measures; a predictor, a "
+    "risk factor, a test or a discovery that is not a treatment; and a research direction "
+    "or an approach with no one treatment for one condition."
+)
+
+
+def new_treatment_state(headline: str, summary: str, intervention: str, indication: str) -> str:
+    """What the new-treatment decision is shown: what was read from the article, in the
+    tracker's own words, and the question. Never a word of the article."""
+    return (
+        f"Headline: {headline}\nSummary: {summary}\n"
+        f"Treatment: {intervention}\nCondition: {indication}\n\n{NEW_TREATMENT_QUESTION}"
+    )
+
+
+def reports_a_new_treatment(
+    session: Session,
+    backend: Backend,
+    *,
+    ref: str,
+    headline: str,
+    summary: str,
+    intervention: str,
+    indication: str,
+    now: datetime,
+) -> float:
+    """The probability the backend gives to the article being a report of a new treatment
+    for a condition, which is what the tracker follows. This function decides nothing:
+    the caller drafts or joins a claim only at or above its own setting."""
+    decision = decide(
+        session,
+        backend,
+        step=NEW_TREATMENT_REPORT,
+        state=new_treatment_state(headline, summary, intervention, indication),
+        options=[REPORTS_A_NEW_TREATMENT, ANOTHER_KIND_OF_STORY],
+        input_ref=ref,
+        now=now,
+    )
+    return decision.probabilities[REPORTS_A_NEW_TREATMENT]

@@ -134,7 +134,7 @@ thenwhat statements --missing           # every published claim with such an art
 thenwhat statements claim-one --again   # read them again; pending statements are replaced
 ```
 
-Record readings are what the configured model reads from a trial's stored registry record into fixed codes: for each planned primary outcome, how long it was followed and what kind of measure it is, each with the words read (`docs/adr/0003-a-model-reads-records-into-fixed-codes.md`). A rule checks every reading against the record before it is kept, a trial whose record has not changed is not read again, and the run stops at the monthly spend ceiling. `thenwhat prepare` runs it as its last step:
+Record readings are what the configured model reads from a trial's stored registry record into fixed codes: for each planned primary outcome, how long it was followed and what kind of measure it is, each with the words read (`docs/adr/0003-a-model-reads-records-into-fixed-codes.md`). A rule checks every reading against the record before it is kept, a trial whose record has not changed is not read again, and the run stops at the monthly spend ceiling. `thenwhat prepare` runs it as its last step: A reading the model gives less than `READING_ACCEPT_ABOVE` confidence (0.8 by default) is not exported, and the page gives the registry's own words for that answer.
 
 ```sh
 thenwhat readings claim-one             # the trials of the named claims
@@ -268,6 +268,61 @@ sh scripts/backfill-job.sh remove    # take the job out; the work done is kept
 - It reads the operator's `.env` (`THENWHAT_ENV_FILE`) and then `~/Library/Application Support/thenwhat/backfill.env`, which holds this job's own settings: the database, what to search, and its allowance.
 - Its log is `~/Library/Logs/thenwhat/backfill.log`: start and end times, counts and reasons for stopping. No title or address is written to it.
 - Each record is its own short transaction, so other commands can use the database while it runs.
+
+### Backfill from shared links
+
+A second backfill starts from the articles people shared. It reads bulk files of posts that you have downloaded (`docs/sources.md`, "Link datasets for the social-link backfill") and keeps one link lead per article address, with where and when it was shared. It never reads who shared a link, the post's text or its comments, and it sends no request to any platform.
+
+```sh
+thenwhat backfill load-links hackernews 2019-05.parquet        # one month of Hacker News items
+thenwhat backfill load-links reddit science_submissions.zst    # one community's submissions
+thenwhat backfill run link_screen                              # rules and stored data only
+thenwhat backfill links                                        # what was loaded, by where it was shared
+```
+
+- A Reddit load takes only the communities named in `LINK_LEAD_SUBREDDITS` and refuses while that is empty.
+- Loading a file again adds nothing, so a load that was stopped is simply run again.
+- `link_screen` sends no request and calls no model. A lead goes on only if its outlet is on the list in `backfill/outlet_kinds.py`; a lead whose address is already a source article is marked as tracked; the rest are linked to the claims and registry trials the database already holds for them.
+- `links` lists the unlisted domains with the most leads. Add a domain that belongs on the outlet list, raise the version of `link_screen`, and run it again: it costs nothing.
+- A link lead creates no claim, changes no status and never reaches the export.
+
+Triage then scores each lead in scope from its title alone, and you measure it before anything is read:
+
+```sh
+thenwhat backfill plan                               # what triage would cost, beside the month's ceiling left
+thenwhat backfill run link_triage                    # twenty headlines to a call; fetches nothing
+thenwhat backfill sample-leads --size 200            # leads to label, from every tenth of the score range
+thenwhat backfill label-lead 4182 treatment_report   # or health_other, or not_health
+thenwhat backfill spot-check-leads                   # an assistant's labels for you to check
+thenwhat backfill evaluate-leads                     # precision and recall at each threshold
+```
+
+- The score is the probability that the headline reports a specific treatment for a specific condition. It creates and changes nothing.
+- `sample-leads` does not show the scores, so a label cannot lean on them. A label belongs to the lead and holds for every later version of triage.
+- An assistant can label the sample: `thenwhat backfill label-leads labels.tsv --as-assistant` records a file with a lead's number and a label on each line. Such a label is stored as an assistant's, never as yours, and counts only where you have not labelled the lead yourself.
+- `thenwhat backfill spot-check-leads` lists what you should then look at: where the assistant's label and the score disagree most, and a random 30 of the rest. Label those yourself; your label counts in place of the assistant's, and the report says on how many you agreed.
+- `evaluate-leads` weights each tenth of the score range by how many leads it holds. Use it to set `LEAD_PASS_ABOVE` and `LEAD_REJECT_BELOW`, which have no default: until both are set, no lead is passed.
+- To reword the triage question, change it, raise the version of `link_triage` and run it again. Your labels count for the new version without being given again.
+
+Once triage is measured and both thresholds are set, the passed leads can be read:
+
+```sh
+thenwhat backfill plan                          # the pages reading would ask for, and its cost
+thenwhat backfill run link_read --limit 200     # always with a limit: what it makes is published
+thenwhat prepare --pending                      # search the registries for the claims it drafted; approves them by rule
+thenwhat backfill funnel                        # where every lead stands, and what the model calls cost
+```
+
+- `link_read` refuses to run until 200 leads carry a label, yours or an assistant's, at the current version of triage (`LEAD_EVALUATION_MIN_LABELS`) and both thresholds are set.
+- A lead is read once, with the same extraction as `thenwhat extract new`. If a claim already covers what the article reports, the article is added to it and nothing you reviewed changes. Otherwise a claim is drafted; its slug is made by rule and its vertical is chosen by a decision, accepted at `VERTICAL_ACCEPT_ABOVE`.
+- Several outlets report one story in different words. When the article's treatment shares a name with claims that exist (equal, or one inside the other, as "esketamine" is inside "esketamine nasal spray"), or screening found a claim named in the lead's title, a decision says whether the article reports one of them: the same treatment for the same condition, worded differently, more narrowly or more generally. The article joins the likeliest of them when the decision gives "one of these" at least `SAME_CLAIM_ACCEPT_ABOVE` (0.6) and gives that claim more than half; otherwise a new claim is drafted. A rejected draft is never offered. The claim keeps the wording of the first article read. Reads that run side by side take turns at this point.
+- The tracker follows reported new treatments, and triage passes a headline about any treatment. So after the read, a decision on the read's own headline and summary says whether the article is a report about a treatment that is new, experimental or newly being tested for a condition. Below `NEW_TREATMENT_ACCEPT_ABOVE` (0.5) no claim is made or joined: a price rise, a safety alert, public health advice. `funnel` counts these.
+- A claim a read drafts is not approved by the read. A description in place of a name is rejected at once. A named claim awaits review, and stays out of the export, until `thenwhat prepare --pending` has searched and read the registries for it; then it is approved by rule. Run `prepare --pending` after every read run and before `make publish-data`.
+- Everything that can be settled without the model is settled first, and costs no model call: an article that has become tracked, a claim that already has `LEAD_READS_PER_CLAIM` articles, an outlet with no display name in `backfill/outlet_kinds.py`, a page the outlet's robots.txt forbids, and a page that gives no publication date or no headline.
+- The article's date and title come from its own page. The date a link was shared and the title it was shared under are never published, and the published address carries no parameter that says where it was shared.
+- A trial or a paper's DOI that the article's page names is read from its registry or index by that identifier and becomes a candidate of the claim, decided by the same rules as one `thenwhat resolve` finds. Being named approves nothing.
+- No outlet is asked for two articles less than `OUTLET_INTERVAL_SECONDS` apart, across every process.
+- `funnel` lists the outlets whose pages gave no date. That list is how the page reader learns an outlet's markup.
 
 ## Development
 

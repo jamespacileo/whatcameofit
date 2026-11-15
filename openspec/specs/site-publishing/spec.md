@@ -317,13 +317,13 @@ Every page SHALL state, for link previews, its title, description, canonical add
 - **THEN** its preview is typed as a website and shows the site's card
 
 ### Requirement: Long lists are read a page at a time
-Each list on the home page SHALL show ten rows at a time. Every other list of claims SHALL show 25 rows at a time. A list longer than one page SHALL have, directly under it, a control to step to the next and the previous page and a line saying which rows are shown and how many there are. A list that fits one page SHALL show no such control. Where a list can be narrowed by status, the narrowing SHALL apply to the whole list and SHALL return the reader to its first page.
+Each of the home page's four tabbed lists SHALL show ten rows at a time; its day-by-day list is opened as its own requirement says. Every other list of claims SHALL show 25 rows at a time. A list longer than one page SHALL have, directly under it, a control to step to the next and the previous page and a line saying which rows are shown and how many there are. A list that fits one page SHALL show no such control. Where a list can be narrowed by status, the narrowing SHALL apply to the whole list and SHALL return the reader to its first page.
 
 Every row SHALL be in the page as built: with scripting off, and in print, the whole list SHALL be shown. The page in view SHALL be recorded in the page's address, and an address naming a page that does not exist SHALL show the nearest page that does.
 
 #### Scenario: More rows than one page
 - **WHEN** published claims have 104 source articles between them
-- **THEN** the home page shows the ten newest, says "1–10 of 104 headlines", and the next step shows the eleventh to the twentieth
+- **THEN** the home page's Headlines list shows the ten newest, says "1–10 of 104 headlines", and the next step shows the eleventh to the twentieth
 
 #### Scenario: A list that fits one page
 - **WHEN** a topic has four published claims
@@ -341,19 +341,28 @@ Every row SHALL be in the page as built: with scripting off, and in print, the w
 - **WHEN** the home page is opened with scripting off
 - **THEN** every headline and every claim is listed
 
-### Requirement: The home page offers the claims in four orders
-Under the lookup, the home page SHALL offer these lists of published claims, in this order, and SHALL show one at a time, the first unless the address names another:
+### Requirement: The home page offers the claims in five lists
+Under the day-by-day list, under a heading of their own, the home page SHALL offer these lists of published claims, in this order, and SHALL show one at a time, the first unless the address names another:
 
 1. Headlines: every source article, newest first.
-2. Status changes: every change from one status to another, newest first, each with the day, the status from that day and the status before it. A claim's first status is not a change.
-3. Promises: every claim with a dated promise, in order of its latest promised date, earliest first, with the promise beside the status now.
-4. No signal: every claim carrying the no-signal overlay, the most years first.
+2. Claims: every published claim once, by the date it was first reported, newest first.
+3. Status changes: every change from one status to another, newest first, each with the day, the status from that day and the status before it. A claim's first status is not a change.
+4. Promises: every claim with a dated promise, in order of its latest promised date, earliest first, with the promise beside the status now.
+5. No signal: every claim carrying the no-signal overlay, the most years first.
 
 A list with no rows SHALL NOT be offered, except Headlines. Each list SHALL show how many rows it has. Every order SHALL be a date or a count from the record: the page SHALL NOT rank or grade claims, and SHALL NOT word a promise as kept, missed or late. The list in view SHALL be recorded in the page's address. With scripting off, every list SHALL be shown, one under the other.
 
 #### Scenario: Lists on the home page
 - **WHEN** one published claim has changed status twice, and another has a dated promise and the no-signal overlay
-- **THEN** the home page offers Headlines, Status changes with two rows, Promises with one row and No signal with one row
+- **THEN** the home page offers Headlines, Claims with two rows, Status changes with two rows, Promises with one row and No signal with one row
+
+#### Scenario: Every claim once
+- **WHEN** a published claim has three source articles
+- **THEN** it has three rows under Headlines and one row under Claims
+
+#### Scenario: Claims in order of first report
+- **WHEN** one claim was first reported on 12 November 2026 and another on 30 October 2026
+- **THEN** the first is listed above the second under Claims, whatever their statuses or how much either has been tested
 
 #### Scenario: A first status is not a change
 - **WHEN** a claim's history holds only its first status
@@ -368,11 +377,15 @@ A list with no rows SHALL NOT be offered, except Headlines. Each list SHALL show
 - **THEN** the No signal list is not offered
 
 #### Scenario: A list named in the address
-- **WHEN** the home page is opened at an address naming the Status changes list
+- **WHEN** the home page is opened at an address naming the Claims list
 - **THEN** that list is the one shown
 
+#### Scenario: Where the five lists stand
+- **WHEN** a reader opens the home page
+- **THEN** the day-by-day list comes first under the lookup, and the five lists follow it under their own heading
+
 ### Requirement: The home page's lists can be narrowed by status and by topic
-Above its lists, the home page SHALL show how many published claims are at each status, on the same path a topic page shows, and SHALL let a reader pick one status. Where more than one topic is listed, it SHALL also let a reader choose one topic. A pick SHALL narrow all four lists at once to rows whose claim has that status now and is filed under that topic; both picks together SHALL narrow to rows that meet both. Each list's count SHALL be the rows left, and a list left with none SHALL say so in place of an empty table. With a topic chosen, the counts on the path SHALL be that topic's. The picks SHALL be recorded in the page's address. The counts SHALL be stated as numbers only: the page SHALL NOT rank topics or characterise the spread.
+Above the day-by-day list, the home page SHALL show how many published claims are at each status, on the same path a topic page shows, and SHALL let a reader pick one status. Where more than one topic is listed, it SHALL also let a reader choose one topic. A pick SHALL narrow the day-by-day list and all four tabbed lists at once to rows whose claim has that status now and is filed under that topic; both picks together SHALL narrow to rows that meet both. Each tabbed list's count SHALL be the rows left, and a list left with none SHALL say so in place of an empty table. In the day-by-day list a heading SHALL count the rows left under it, a heading left with none SHALL NOT be shown, and a list left with none SHALL say so. With a topic chosen, the counts on the path SHALL be that topic's. The picks SHALL be recorded in the page's address. The counts SHALL be stated as numbers only: the page SHALL NOT rank topics or characterise the spread.
 
 #### Scenario: Counts on the path
 - **WHEN** three published claims stand at preclinical only, phase 2 and approved
@@ -394,12 +407,24 @@ Above its lists, the home page SHALL show how many published claims are at each 
 - **WHEN** only one topic is listed
 - **THEN** no topic choice is shown
 
+#### Scenario: Narrowing the day-by-day list
+- **WHEN** a reader picks phase 3 and one day's heading holds two reports of claims now in phase 3 and one of a claim at preclinical only
+- **THEN** that heading says "2 reports" and lists those two rows, and a heading whose claims are all at other statuses is not shown
+
+#### Scenario: A status and a kind together
+- **WHEN** a reader picks approved and the control for registry records
+- **THEN** the day-by-day list shows only registry rows of claims now approved
+
 ### Requirement: Trials on the claim page
-A claim page SHALL list each of the claim's trials once, under its own heading, with its registry identifier linked to the record, phase, state, the facts the export carries for it, and the score of its match. Trials SHALL be ordered furthest phase first and, within a phase, those with posted results first. Each trial event in the timetable SHALL lead to its trial. A claim with no trial SHALL show no such section.
+A claim page SHALL list each of the claim's trials once, under its own heading, with its registry identifier linked to the record, its state, the facts the export carries for it, and the score of its match. An entry SHALL show the trial's phase when the registry gives one, and SHALL say inside its fold when the registry gives none. Trials SHALL be ordered furthest phase first and, within a phase, those with posted results first. Each trial event in the timetable SHALL lead to its trial. A claim with no trial SHALL show no such section.
 
 #### Scenario: Claim with one completed Phase 2 trial
 - **WHEN** a reader opens a claim whose one trial enrolled 83 participants, was randomised and has posted results
-- **THEN** the page shows that trial once with its identifier, "Phase 2", its state, 83 participants, its design and its posted primary outcome
+- **THEN** the page shows that trial once with its identifier, "Phase 2", that it has finished, 83 people, that people were assigned at random, and its posted primary outcome
+
+#### Scenario: Trial with no phase
+- **WHEN** a trial's registry record gives no phase
+- **THEN** the entry's visible lines name no phase, and its fold says the registry gives none
 
 #### Scenario: Reader follows a timetable entry
 - **WHEN** a reader presses a trial's "results posted" entry in the timetable
@@ -421,15 +446,15 @@ When a claim has more than five trials, the claim page SHALL show the first five
 - **THEN** the control that opens them says that three have results posted
 
 ### Requirement: The claim page counts its trials
-A claim page for a claim with at least one trial SHALL state, among its facts, how many trials are on record and the largest number of participants any of them states, with whether that number is actual or planned. The statement SHALL be a count and SHALL NOT add participants across trials.
+A claim page for a claim with at least one trial SHALL state, in "The record in brief", how many trials are on record and the largest number of participants any of them states, with whether that number is actual or planned when the answer is opened. The statement SHALL be a count and SHALL NOT add participants across trials. The facts under the digest SHALL NOT repeat it.
 
 #### Scenario: Three trials, the largest of 1,200
 - **WHEN** a claim has three trials and the largest states 1,200 actual participants
-- **THEN** the page states three trials on record and the largest with 1,200 participants
+- **THEN** the section states three trials on record and 1,200 people in the largest, and the facts under the digest do not
 
 #### Scenario: Trials that state no number
 - **WHEN** none of a claim's trials states a number of participants
-- **THEN** the page states the number of trials and no size
+- **THEN** the section states the number of trials and no size
 
 ### Requirement: Trial facts are worded without a verdict
 The site SHALL word each trial fact code itself and SHALL fail the build on a code it has no wording for. It SHALL show a posted result as the registry's numbers and SHALL NOT label an outcome as met, missed, significant, successful or failed, nor a trial as having worked. The trials section SHALL say that the numbers are as posted by the trial's sponsor to the registry.
@@ -479,7 +504,7 @@ An evidence event whose confidence is below 1 SHALL show that confidence on the 
 - **THEN** the event shows no confidence
 
 ### Requirement: The home page says what is dated since a reader's last visit
-Above its lists, the home page SHALL show a reader with scripting on one line counting the news reports, status changes and promised dates that are dated from the day of their last visit to today, each count opening the list that holds its rows. Rows of news reports and status changes dated in that span SHALL carry the word "New". On a first visit, or where the browser keeps nothing, the line SHALL cover the last thirty days and no row SHALL be marked. When nothing is dated in the span the line SHALL say so. The day of a visit SHALL be kept in the reader's browser only and SHALL NOT be sent to the site. The line SHALL state counts only.
+Above its four tabbed lists, the home page SHALL show a reader with scripting on one line counting the news reports, status changes and promised dates that are dated from the day of their last visit to today, each count opening the list that holds its rows. Rows of news reports and status changes dated in that span SHALL carry the word "New". On a first visit, or where the browser keeps nothing, the line SHALL cover the last thirty days and no row SHALL be marked. When nothing is dated in the span the line SHALL say so. The day of a visit SHALL be kept in the reader's browser only and SHALL NOT be sent to the site. The line SHALL state counts only.
 
 #### Scenario: A later visit
 - **WHEN** a reader last opened the home page on 7 November and opens it on 14 November, and 12 reports and 1 status change are dated in between
@@ -509,11 +534,11 @@ A claim page's status panel SHALL link to the page's reminders where they can be
 - **THEN** the topic page links a feed holding those changes, newest first
 
 ### Requirement: The home page's controls fit a phone
-Below the site's one breakpoint, with scripting on, the status counts and the topic choice SHALL be reached from one control and SHALL start open when the address already narrows the lists. The four lists' tabs SHALL all be in view without scrolling sideways. Every pressed thing SHALL be at least 44 pixels tall, except a link inside a sentence.
+Below the site's one breakpoint, with scripting on, the status counts and the topic choice SHALL be reached from one control and SHALL start open when the address already narrows the lists. The controls for the kinds of row SHALL all be in view without scrolling sideways, and so SHALL the four lists' tabs where they stand. Every pressed thing SHALL be at least 44 pixels tall, except a link inside a sentence.
 
 #### Scenario: A phone, first visit
 - **WHEN** the home page is opened at 375 pixels wide
-- **THEN** all four tabs are in view and the counts are behind "Narrow these lists"
+- **THEN** the controls for the kinds of row are all in view, the counts are behind "Narrow these lists", and the four tabs sit in one row above their lists
 
 #### Scenario: A narrowed address on a phone
 - **WHEN** the home page is opened at an address that names a status
@@ -535,11 +560,11 @@ Each count in the home page's since line SHALL be given with the total of the li
 - **THEN** the Headlines list shows those 14 rows and "Show all" brings back the rest
 
 ### Requirement: A headline starts on a phone's first screen
-At 375 by 812 pixels, with scripting on and nothing followed, the first row of the home page's first list SHALL start within the first screen, and all four tabs SHALL be in view. The order a keyboard moves in SHALL be the page's own.
+At 375 by 812 pixels, with scripting on and nothing followed, the first row of the home page's day-by-day list SHALL start within the first screen, and the controls for the kinds of row SHALL be in view. The order a keyboard moves in SHALL be the page's own.
 
 #### Scenario: A phone, first visit
 - **WHEN** the home page is opened at 375 by 812 pixels
-- **THEN** the first headline row starts above 812 pixels and the four tabs sit in one row
+- **THEN** the first row of the day-by-day list starts above 812 pixels and the controls for the kinds of row sit above it
 
 ### Requirement: Topic pages end on a next step
 A topic page SHALL end with a link to look up another headline and, when a suggestion address is configured, the link to suggest one. Rows of a claim list first reported since the reader's last visit to the home page SHALL carry the word "New". A pager step that leads nowhere SHALL be passed over by the Tab key.
@@ -617,3 +642,590 @@ A claim page, and the extension's view of a claim, SHALL say when no person has 
 #### Scenario: Older preview export
 - **WHEN** the site is built from an export that calls itself a preview
 - **THEN** every page carries the preview note and a noindex tag
+
+### Requirement: A trial entry leads with plain words
+A trial's entry SHALL lead with a heading that states how many people the trial enrolled or plans to enrol and, where its record names what it was compared with, that comparison. The heading SHALL state only what the record states. The registry's own title SHALL be shown inside the entry's fold. Every trial SHALL be drawn at the same size and weight.
+
+#### Scenario: Trial with a named comparison
+- **WHEN** a device trial enrolled 135 participants and its record names a sham comparator and no treatment
+- **THEN** its heading reads "135 people, compared with a sham device and with no treatment"
+
+#### Scenario: Trial whose record names no comparison
+- **WHEN** a trial enrolled 34 participants and its record names no comparator
+- **THEN** its heading reads "34 people" and says nothing about a comparison
+
+#### Scenario: Planned size
+- **WHEN** a trial not yet started plans to enrol 400 participants
+- **THEN** its heading says 400 people are planned, not that 400 took part
+
+#### Scenario: Trial that states no size
+- **WHEN** a trial's record states no number of participants
+- **THEN** its heading is the registry's title, and the title is not repeated in the fold
+
+### Requirement: A trial's design and state are said in plain words
+Under its heading a trial's entry SHALL say, in the site's fixed plain wording, how people were assigned, whether the trial was blinded or open label, its state with the date it finished when it has finished, and that results are posted with the date they were posted. The registry's exact terms for the design SHALL be shown inside the fold. No wording SHALL say that a trial is open to participants or how it turned out.
+
+#### Scenario: Randomised, quadruple-blind, completed, results posted
+- **WHEN** a trial is randomised and quadruple-blind, completed on 5 March 2023 and posted results on 30 June 2026
+- **THEN** the entry reads that people were assigned at random, that it was blinded, that it finished on 5 March 2023 and that results were posted on 30 June 2026, and its fold gives "Randomised, quadruple-blind" in the registry's terms
+
+#### Scenario: Open-label trial
+- **WHEN** a trial's masking is none
+- **THEN** the entry says it was open label and says what that means in a few words
+
+#### Scenario: Trial under way
+- **WHEN** a trial is under way
+- **THEN** the entry says it is under way, with no finishing date, and nothing says it is recruiting
+
+#### Scenario: Design the record does not state
+- **WHEN** a trial's record states neither allocation nor masking
+- **THEN** the entry says nothing about how people were assigned or whether it was blinded
+
+### Requirement: A trial entry says what it measured where a reading allows
+Where a trial's first main measure has a usable reading of its kind, the entry SHALL say in one sentence what the trial measured, in the same fixed wording "The record in brief" uses for that kind, with how long it was followed when that reading is usable too. The entry SHALL say that a model read that sentence and that it was checked against the record. With no usable reading the entry SHALL have no such sentence, and the measures SHALL remain listed in the registry's words inside the fold.
+
+#### Scenario: Symptom score followed for four weeks
+- **WHEN** a trial's first main measure has a measure reading of symptom score, a title that names a change, and a follow-up reading of 4 weeks
+- **THEN** the entry says it measured the change in a symptom score over 4 weeks, and says a model read that and it was checked against the record
+
+#### Scenario: Measure of a trial that has not ended
+- **WHEN** a trial that has not ended and has posted no results has a usable reading of its first main measure
+- **THEN** the entry says what it sets out to measure, and does not say that it measured anything
+
+#### Scenario: Time until an event, followed for years
+- **WHEN** a trial's first main measure is read as a time until an event with a follow-up of 4 years
+- **THEN** the entry says people were followed for 4 years, and does not say the event was measured "over" 4 years
+
+#### Scenario: Same wording as the record in brief
+- **WHEN** the claim's largest trial has a measure sentence in its entry
+- **THEN** the words for the measure are the same as in the brief's answer about what the largest trial measured
+
+#### Scenario: No usable reading
+- **WHEN** a trial has no reading, a reading too unsure to use, or a reading of a kind the site has no words for
+- **THEN** the entry has no measure sentence and its fold lists the planned measures in the registry's words
+
+### Requirement: Posted results are a table that says what its numbers are
+Inside a trial's fold, a posted main measure with one value for each group SHALL be shown as a table with a row for each group, its value as the registry wrote it and how many were analysed, under a caption that names the measure and says what the numbers are. No figure SHALL be larger than body text, and nothing SHALL draw a result. The entry SHALL say that the registry record states what the measure runs from and to, and SHALL link to the record. The fold's control SHALL say whether posted results are inside.
+
+#### Scenario: Three groups with a mean change
+- **WHEN** a trial posted a mean change with a standard deviation for each of three groups, each with 39 analysed
+- **THEN** the fold shows a table of three rows with the group, the mean change, the standard deviation and 39 analysed
+
+#### Scenario: Measure that is a change
+- **WHEN** the posted measure's title names a change and a group's value is below zero
+- **THEN** a line under the table says a minus number is a fall
+
+#### Scenario: Posted comparison
+- **WHEN** the record gives a p value for a comparison of two groups
+- **THEN** it is shown under the table as the record states it, naming the two groups, with no word on whether the measure was met
+
+#### Scenario: Outcome posted in several rows
+- **WHEN** a posted main measure gives several rows of values for each group
+- **THEN** no table is shown for it, and the entry says the values are in the registry record
+
+#### Scenario: Fold with no results
+- **WHEN** a trial has posted no results
+- **THEN** the fold's control does not mention results
+
+#### Scenario: Narrow screen
+- **WHEN** a reader opens a trial's results on a screen 320 pixels wide
+- **THEN** the table is readable without the page being widened, and every control is at least 44 pixels tall
+
+### Requirement: A claim page answers fixed questions from its records
+Every claim page SHALL show a section, "The record in brief", of at most six fixed questions, each with a short answer. An answer SHALL be fixed wording filled only with counts, sizes, dates and names from the records the page shows, or from a reading the export carries. No person SHALL write an answer, and no model SHALL write the words of one.
+
+#### Scenario: Claim with trials
+- **WHEN** a reader opens a claim with 3 trials on record, the largest stating 135 participants
+- **THEN** the section answers "In 3 trials. 135 people in the largest", and the answer does not begin with "Yes"
+
+#### Scenario: Comparison group
+- **WHEN** 1 of the claim's 3 trials names a sham comparator and the claim's approach is a device
+- **THEN** the section asks whether it was compared with a dummy device and answers that one record names a dummy device, and the opened answer says the other two records name no comparison
+
+#### Scenario: What the largest trial measured
+- **WHEN** the largest trial's main measure has a measure reading of symptom score and a follow-up reading of 4 weeks
+- **THEN** the section answers with the site's fixed phrase for a symptom score, worded as a change when the registry's title names a change, and "over 4 weeks"
+
+#### Scenario: Measure with no reading
+- **WHEN** the largest trial's main measure has no stored reading
+- **THEN** the answer is the registry's title for the measure in quotation marks, and the opened answer says it is in the registry's words
+
+#### Scenario: Results posted
+- **WHEN** all 3 of the claim's trials have results posted, the latest on 30 June 2026
+- **THEN** the section says results were posted by all 3 trials and gives that date, and a link under the answer, shown without opening it, leads to the trials' posted results on the page
+
+#### Scenario: Trial with no stated enrolment
+- **WHEN** no trial of the claim states how many participants it enrolled
+- **THEN** the answer about testing in people gives the number of trials and no size
+
+### Requirement: Each question has one fixed place
+The questions SHALL be shown in a fixed order in two groups: how the treatment was tested, then where the records stand now. A question's place SHALL NOT depend on its answer. A question that has nothing to ask about, because the claim has no trial, SHALL be left out, and the others SHALL keep their order. An answer that a kind of record is absent SHALL say "None on record" in the question's own place, with the date of the last record of that kind where the rule has one. No heading, mark, colour or order SHALL say that an answer counts for or against the treatment. No answer SHALL say why a record is absent, predict, advise, or say that a trial is open to participants.
+
+#### Scenario: Same questions, opposite answers
+- **WHEN** one claim has a trial under way and an approval, and another has neither
+- **THEN** both pages show "A trial under way?" and "Approved by a regulator?" in the same group and the same order
+
+#### Scenario: No trial under way
+- **WHEN** a claim has trials on record and none is under way
+- **THEN** the answer is "None on record" with the date the last one completed
+
+#### Scenario: A trial under way
+- **WHEN** 2 of a claim's trials are under way
+- **THEN** the answer says 2 are under way, and does not say a trial is recruiting or open to participants
+
+#### Scenario: Approved claim
+- **WHEN** a reader opens a claim whose status is Approved
+- **THEN** the answer names the regulator and the date of the approval and says, without being opened, that an approval is not advice to take a treatment
+
+#### Scenario: Approval entered by hand
+- **WHEN** the approval's record names no regulator as its source
+- **THEN** the answer gives the date of the approval and the same caution, and names no regulator
+
+#### Scenario: Claim with no trial on record
+- **WHEN** a reader opens a claim with no trial on record
+- **THEN** the section says no trial in people is on record, says what the first report was about, answers the approval question, and has no question about a comparison, a measure, posted results or a trial under way
+
+#### Scenario: Wording with a verdict
+- **WHEN** the site is built and a question, an answer or a group name contains the word "abandoned"
+- **THEN** the build fails and quotes the wording
+
+### Requirement: Every answer shows the record it was read from
+Each answer SHALL open to show the record it was read from as a link, what was read from it, whether it was read directly from the record or by a model, and the date the record was read. An answer read by a model SHALL also show the exact words it was read from and how sure the reading is, as a word and a percentage. An answer that counts trials SHALL link to them on the page. The section SHALL say that its answers are read from the records on the page, that they describe the records and not the treatment, and that they are not advice.
+
+#### Scenario: Answer read directly
+- **WHEN** a reader opens the answer about a comparison group
+- **THEN** it names the trial by its registry identifier as a link, gives the design as the registry states it, and gives the date the record was read
+
+#### Scenario: Answer read by a model
+- **WHEN** a reader opens an answer that rests on a reading
+- **THEN** it shows the words the reading was read from in quotation marks, says a model read them and that they were checked against the record, and says how sure the reading is
+
+#### Scenario: Reading the model is certain of
+- **WHEN** a reading's confidence is 1
+- **THEN** the opened answer says how sure the reading is as 99%, never 100%
+
+#### Scenario: Every answer opens to something
+- **WHEN** a reader opens any answer in the section
+- **THEN** it shows at least the record or records it was read from and the date they were read
+
+#### Scenario: Without scripting
+- **WHEN** a reader opens a claim page with scripting turned off
+- **THEN** every answer can still be opened
+
+#### Scenario: Narrow screen
+- **WHEN** a reader opens a claim page on a screen 320 pixels wide
+- **THEN** each question is above its answer, every row and every link in an opened answer is at least 44 pixels tall, and the page is not widened
+
+### Requirement: The brief carries no result values
+The section SHALL NOT show a trial's posted result values or a posted comparison. The answer about what the largest trial measured SHALL link to that trial's entry on the page, where its posted results are.
+
+#### Scenario: Largest trial with posted values
+- **WHEN** the largest trial has posted a value for each of three groups and a p value
+- **THEN** the section shows none of those numbers, and the opened answer links to the trial's entry
+
+### Requirement: The digest says when trials state no phase
+When a claim's status is Trial registered and it has trials on record, the digest panel SHALL say, after what the status means, how many trials are on record, how many of them have finished, and that the registry gives none a phase.
+
+#### Scenario: Three trials with no phase
+- **WHEN** a reader opens a claim whose status is Trial registered and which has 3 trials on record, none stating a phase
+- **THEN** the digest says 3 trials are on record and all have finished, and that the registry gives none a phase
+
+#### Scenario: Status with a phase
+- **WHEN** a reader opens a claim whose status is Phase 2 trial
+- **THEN** the digest has no such sentence
+
+### Requirement: The home page lists what is dated, day by day
+Under the lookup, the home page SHALL show one list of what is dated for published claims, newest first: news reports by their publication date, registry records by their event date, and dated promises by the date promised. Rows SHALL stand under dated headings: one per day for the fourteen days up to the day the registries were last checked, one per week for the rest of that year, one per year before it. A heading SHALL say how many rows of each kind it holds.
+
+#### Scenario: A day in the last fortnight
+- **WHEN** the registries were last checked on 14 November 2026 and two news reports and one registry record are dated 9 November 2026
+- **THEN** the list has a heading for Monday 9 November that says "2 reports, 1 registry record", with those three rows under it, the reports first
+
+#### Scenario: Earlier in the year
+- **WHEN** a news report is dated 28 October 2026
+- **THEN** its row stands under the heading "Week of 26 October"
+
+#### Scenario: An earlier year
+- **WHEN** a news report is dated 9 January 2017
+- **THEN** its row stands under the heading "2017"
+
+#### Scenario: Unpublished claims
+- **WHEN** a claim has not been published
+- **THEN** none of its reports, records or promises has a row
+
+### Requirement: The day-by-day list is dated by the last check
+Above the list the home page SHALL name the day the registries were last checked and SHALL show the seven days up to it, each with its number of news reports and each leading to that day's heading. No heading SHALL be dated later than the last check. A day in those seven with nothing dated SHALL keep its heading and say that nothing is dated. A heading SHALL be worded "Today" or "Yesterday" only when that is so on the reader's own date.
+
+#### Scenario: Checked on the reader's own date
+- **WHEN** the registries were last checked on 14 November 2026 and a reader opens the page that day
+- **THEN** the page names Saturday 14 November 2026, the seven days run from 8 to 14 November, and the first heading reads "Today, Saturday 14 November"
+
+#### Scenario: A page built before the reader's date
+- **WHEN** the registries were last checked on 13 November 2026 and a reader opens the page on 15 November
+- **THEN** the page names 13 November as the day of the last check, its first heading is Friday 13 November, and no heading says "Today" or "Yesterday"
+
+#### Scenario: A day with nothing dated
+- **WHEN** no report, record or promise is dated 10 November 2026 and that day is among the seven
+- **THEN** the list has a heading for 10 November that says nothing is dated, and the day in the row of seven leads to it
+
+#### Scenario: An export with no day of last check
+- **WHEN** the export does not say when the registries were last checked
+- **THEN** the home page shows neither the dated head nor the day-by-day list, the four tabbed lists follow the lookup, and no other day stands in for the missing one
+
+### Requirement: Rows are of three kinds, and each kind can be shown alone
+Each row of the day-by-day list SHALL say its kind in words: a news report, a registry record or a promised date. Above the list, one control per kind SHALL show that kind's ground and its number of rows and SHALL narrow the list to that kind; one more SHALL show every kind. While a kind is picked, a heading with no row of it SHALL NOT be shown. The pick SHALL be recorded in the page's address. Pale amber SHALL be the ground of promised dates only.
+
+#### Scenario: Picking a kind
+- **WHEN** a reader picks the control for registry records
+- **THEN** only registry rows are listed, under the headings that hold one, and the address names the pick
+
+#### Scenario: The controls as a key
+- **WHEN** a reader opens the home page
+- **THEN** the three controls show a white, a pale blue and a pale amber mark beside "Reported", "Recorded" and "Promised", each with its count
+
+#### Scenario: A kind read aloud
+- **WHEN** a screen reader reads a registry row
+- **THEN** it is told the row is a registry record without relying on the row's ground
+
+### Requirement: A report row sets the report beside the record
+A news report's row SHALL show the outlet's title in quotation marks with the outlet and the date, the title leading to the claim page; the evidence stage when the claim was first reported; the claim's status now with its gloss, its place on the path and its no-signal note; and the claim's latest promise, marked as a promise. Reports of one claim dated the same day SHALL share one row that names each outlet. The site SHALL add no wording of its own about a title.
+
+#### Scenario: A report of an animal study
+- **WHEN** a claim first reported from an animal study stands at preclinical only and has a report dated 11 November 2026
+- **THEN** the row shows the quoted title with its outlet and date, "Animal study" as the evidence when first reported, and "Preclinical only" with "No trial in people on record" and the first place on the path marked
+
+#### Scenario: Two outlets on one day
+- **WHEN** two outlets report the same claim on 6 October 2026
+- **THEN** the list has one row for that claim that day, with the first title quoted and both outlets named
+
+#### Scenario: One claim reported on two days
+- **WHEN** a claim has reports dated 6 October and 13 October 2026
+- **THEN** it has a row under each date
+
+### Requirement: A report row says what the records add
+Under the status, a report row SHALL carry at most two sentences built by fixed rules from the claim's records: the first two that apply, in one fixed order of preference. Each SHALL state a count or a date only. A sentence whose count the export does not hold SHALL be left out, never estimated.
+
+#### Scenario: The order of preference
+- **WHEN** more than two sentences apply to a claim
+- **THEN** the row carries the first two of: a regulator's decision with its date; the year of the first registered trial, when it is two or more calendar years before the report; how many trials are on record, how many are completed and how many have posted results; that no record is dated since the first report, with the no-signal years
+
+#### Scenario: A trial registered long before the report
+- **WHEN** a claim reported in 2026 has five trials on record, the first registered in 2012, three completed and two with results posted
+- **THEN** the row says the first trial was registered in 2012, 14 years before the report, and that 5 trials are on record, 3 completed, 2 with results posted
+
+#### Scenario: Nothing since the report
+- **WHEN** a claim reported in 2017 from laboratory work has no trial and carries "No signal for 9 years"
+- **THEN** the row says no record is dated in the 9 years since the first report
+
+#### Scenario: Nothing to add
+- **WHEN** a claim reported from an animal study has no trial, no regulator’s decision and no no-signal note
+- **THEN** the row carries no sentence: the evidence when first reported is already in the row
+
+#### Scenario: An approval
+- **WHEN** a claim has a regulator's approval dated 3 September 2026
+- **THEN** the first sentence is the approval as recorded, with that date
+
+### Requirement: Row sentences describe records and nothing else
+A sentence the site writes on a home page row SHALL pass the site's checks for verdict wording and for wording about how a trial turned out. It SHALL NOT say that a promise was kept, missed or late, SHALL NOT characterise the time between a report and a record, and SHALL NOT present a trial as open to join. A build SHALL fail when the wording of such a sentence breaks one of these rules.
+
+#### Scenario: A promised date that has passed
+- **WHEN** a claim's report promised trials for 2020 and no trial is on record
+- **THEN** the row shows the promise with its year and the status now, and no sentence says the date passed or the promise was missed
+
+#### Scenario: Wording that judges
+- **WHEN** a sentence's wording is changed to include "still" or "only" before a count
+- **THEN** the site's build fails and names the sentence
+
+### Requirement: A registry row names the report it belongs to
+A registry record's row SHALL show what was recorded, the registry's identifier leading to the record at its source, the intervention and indication leading to the claim page, the claim's status with its place on the path, and the title, outlet and date of the claim's newest news report. Registry rows SHALL be listed for records dated in the ninety days up to the last check. An event with a confidence below 1 SHALL show it in the words the claim page uses.
+
+#### Scenario: A trial registered last week
+- **WHEN** a trial for a published claim was registered on 2 November 2026
+- **THEN** its row reads "Trial registered", gives the trial's identifier as a link to the registry, names the claim and its status now, and quotes the claim's newest report with its outlet and date
+
+#### Scenario: A follow-up paper scored 0.6
+- **WHEN** a follow-up paper with a confidence of 0.6 is dated 26 October 2026
+- **THEN** its row shows "Medium match · 60%"
+
+#### Scenario: A record from last year
+- **WHEN** a trial for a published claim was completed in 2024
+- **THEN** it has no row on the home page and is listed on the claim page as before
+
+### Requirement: A registry row says when a status changed
+A row for a registry record dated on a day the claim's status changed SHALL say "Changed", with the status before that day and the status from it, in the words the list of status changes uses. Where several of the claim's records are dated that day, only the first listed SHALL say so. Any other registry row SHALL show the claim's status now.
+
+#### Scenario: An approval that changed the status
+- **WHEN** a regulator's approval dated 20 October 2026 moved a claim from Phase 3 trial to Approved
+- **THEN** the row says "Changed", then "Was: Phase 3 trial. Now: Approved.", with the last place on the path marked
+
+#### Scenario: A record that changed nothing
+- **WHEN** a further trial is registered for a claim already at Phase 3 trial
+- **THEN** the row shows "Status now" with Phase 3 trial and does not say "Changed"
+
+### Requirement: Promised dates to come are offered with the list
+Dated promises whose date is later than the last check SHALL be offered with the day-by-day list, apart from its dated headings and earliest first, behind one line that says how many there are and gives the next date; the line SHALL open them in place.
+
+#### Scenario: Promises still to come
+- **WHEN** nine published claims have a promised date after the last check and the earliest is 31 December 2026
+- **THEN** the line says there are 9 promised dates to come and that the next is 31 Dec 2026, and pressing it lists the nine, earliest first
+
+#### Scenario: Nothing promised to come
+- **WHEN** no published claim has a promised date after the last check
+- **THEN** the line is not shown
+
+### Requirement: A promise row shows the promise beside the status now
+A promised date's row SHALL show the claim's latest dated promise on pale amber with its year, the report it came from and the claim's status now. A promise dated on or before the last check SHALL be listed under that date's heading. The page SHALL add no wording about a date having passed.
+
+#### Scenario: A promise for a past year
+- **WHEN** a claim's latest promise is dated 2020 and the claim stands at preclinical only
+- **THEN** its row stands under the heading "2020", shows the promise with 2020 in bold on pale amber and "Preclinical only", and says nothing about the date
+
+### Requirement: The day of the last check shows one older claim
+After its own rows, the heading for the day of the last check SHALL be followed by one report row for a claim first reported in an earlier year, chosen by a fixed rule from that day's date so that it differs from one day to the next and is the same for every reader. The row SHALL say it was picked by the date. When no published claim was first reported in an earlier year, no such row SHALL be shown.
+
+#### Scenario: A day with nothing dated
+- **WHEN** nothing is dated on the day of the last check and published claims include some first reported before that year
+- **THEN** that day's heading says nothing is dated and is followed by one older claim's row, said to be picked by the date
+
+#### Scenario: Two readers on one day
+- **WHEN** two readers open the home page built from the same export
+- **THEN** both see the same older claim
+
+#### Scenario: The next day
+- **WHEN** the registries are checked again the next day and the site is rebuilt
+- **THEN** the older claim shown is a different one, as long as more than one qualifies
+
+### Requirement: The day-by-day list marks a reader's last visit
+For a reader with scripting on whose browser keeps the day of an earlier visit, the day-by-day list SHALL draw one line between the rows dated from that day on and the rows dated before it, naming that day: the span the since line counts. On a first visit, where the browser keeps nothing, or when nothing is dated in the span, no line SHALL be drawn. Rows of this list SHALL NOT carry "New". The day SHALL be the one the since line uses, kept in the reader's browser only.
+
+#### Scenario: A later visit
+- **WHEN** a reader last opened the home page on 7 November and opens it on 14 November, and ten reports are dated from 7 November on
+- **THEN** one line naming 7 Nov 2026 stands under the rows of 7 November and above the heading for 6 November
+
+#### Scenario: A first visit
+- **WHEN** a reader opens the home page with nothing kept in their browser
+- **THEN** no line is drawn
+
+#### Scenario: One kind shown
+- **WHEN** the reader picks registry records and none is dated from their last visit on
+- **THEN** no line is drawn
+
+### Requirement: The day-by-day list opens on its day headings
+With scripting on, the day-by-day list SHALL first show its day headings, and SHALL show earlier headings a batch at a time from one control directly under the list that says how many rows remain. Every row SHALL be in the page as built: with scripting off, and in print, the whole list SHALL be shown. An address that names a heading SHALL show the list opened as far as that heading.
+
+#### Scenario: Opening the home page
+- **WHEN** the list holds a fortnight of day headings and thirty earlier headings
+- **THEN** the day headings are shown, and a control under them says how many rows are earlier and shows the next headings when pressed
+
+#### Scenario: An address naming an earlier week
+- **WHEN** the home page is opened at an address that names the heading "Week of 5 October"
+- **THEN** the list is opened as far as that heading and the page is at it
+
+#### Scenario: Scripting off
+- **WHEN** the home page is opened with scripting off
+- **THEN** every heading and every row of the list is shown
+
+### Requirement: The Claims list is narrowed and paged like the others
+The home page's Claims list SHALL show each claim's name and headline, the date it was first reported, how much it has been tested in people, its latest dated promise where it has one, and its status with its place on the path. It SHALL be narrowed by the home page's status and topic controls and read a page at a time, as the other lists are.
+
+#### Scenario: Narrowed to a status
+- **WHEN** a reader picks Phase 3 trial among the home page's status counts while the Claims list is in view
+- **THEN** the list shows only claims whose status is Phase 3 trial, and says how many there are
+
+#### Scenario: Narrowed to a topic
+- **WHEN** a reader picks a topic while the Claims list is in view
+- **THEN** the list shows only that topic's claims
+
+#### Scenario: More claims than a page holds
+- **WHEN** 84 claims are published
+- **THEN** the Claims list shows the first page and says which rows of 84 are in view
+
+#### Scenario: Promise beside the record
+- **WHEN** a listed claim has a dated promise for 2027
+- **THEN** its row shows the promise on the site's promise colour, between how much it has been tested and its status
+
+### Requirement: A list of claims says how much each has been tested in people
+Wherever the site lists claims in its claims table, each row SHALL say whether the claim has been tested in people: with trials on record, how many, and beneath it the largest stated size and whether results are posted to the registry; with none, "None on record" and, where the claim records it, what its first report was about. The words SHALL be read by the same rule as the first answer of "The record in brief". A list that carries the column SHALL say, once, that it counts trials on record and does not say what they found. No row SHALL carry a result value, and nothing SHALL order or mark claims by how much they have been tested.
+
+#### Scenario: Claim with three trials
+- **WHEN** a list shows a claim with 3 trials on record, the largest stating 135 participants, all with results posted
+- **THEN** its row says it was tested in 3 trials, with 135 people in the largest and results posted by all 3
+
+#### Scenario: Claim with no trial
+- **WHEN** a list shows a claim with no trial on record whose first report was about a study in animals
+- **THEN** its row says "None on record" and that the first report was about a study in animals
+
+#### Scenario: Trials with no results posted
+- **WHEN** a list shows a claim with 2 trials on record, neither with results posted
+- **THEN** its row says no results are posted
+
+#### Scenario: Same words as the claim page
+- **WHEN** a claim's page answers "Tested in people?" with "In 3 trials. 135 people in the largest"
+- **THEN** every list that shows the claim gives the same count and the same size
+
+#### Scenario: Topic page
+- **WHEN** a reader opens a topic page
+- **THEN** its table of claims carries the column, and the line that says what the column counts
+
+#### Scenario: Narrow screen
+- **WHEN** a reader opens a list of claims on a screen 320 pixels wide
+- **THEN** each claim is a block with "Tested in people" as a labelled line, and the page is not widened
+
+### Requirement: Reported statements on the claim page
+A claim page SHALL list the claim's approved reported statements under their own heading, placed after the summary and before the records. Each statement SHALL show its text, its kind, its article by outlet and date with a link, and how sure the pipeline is that the article says it, as a word and a percentage. A claim with no approved statement SHALL show no such section.
+
+#### Scenario: Claim with three statements from one report
+- **WHEN** a reader opens a claim with three approved statements from one article
+- **THEN** the page lists the three under the report's outlet and date, each with its confidence
+
+#### Scenario: Claim with no statement
+- **WHEN** a claim has no approved statement
+- **THEN** the page shows no statements section and no placeholder for one
+
+### Requirement: A statement is worded as a report's statement
+Each statement SHALL be shown as something its report said, with the site's wording for how firmly the report put it and for who the report had saying it. The section SHALL say that a report's statement is not a record and that the records follow. The site SHALL NOT show a statement as a finding, and SHALL NOT say whether a statement held, was confirmed or was contradicted.
+
+#### Scenario: Possibility voiced by a researcher
+- **WHEN** a statement was put as a possibility and said by a researcher
+- **THEN** the page reads that the report had a researcher saying it could be so, and names no one
+
+#### Scenario: Statement beside a trial result
+- **WHEN** a claim has a statement of an effect and a trial with posted results
+- **THEN** the page shows both, in their own sections, and no word compares them
+
+### Requirement: A statement shows what the report said it rested on
+Each statement SHALL show its basis in the site's words: a study in people, a study in animals, laboratory work, or that the report did not say. The wording SHALL attribute the basis to the report.
+
+#### Scenario: Effect reported from a mouse study
+- **WHEN** a statement's basis is a study in animals
+- **THEN** the page says the report gave a study in animals as its basis
+
+### Requirement: Statement codes are worded by the site
+The site SHALL word each kind, firmness, speaker role and basis code itself and SHALL fail the build on a code it has no wording for. The wording SHALL pass the site's check against verdict wording.
+
+#### Scenario: Kind code without site wording
+- **WHEN** the export carries a statement kind the site has no wording for
+- **THEN** the site build fails and names the code
+
+### Requirement: The method page explains reported statements
+The method page SHALL explain that statements are read from a report by a language model, put in the site's own words, checked against the report and shown with a confidence; that they are what a report said and not what is on record; and that they never change a status.
+
+#### Scenario: Reader doubts a statement
+- **WHEN** a reader follows the method link from the statements section
+- **THEN** they can read how a statement is found, what its confidence means and how to report an error
+
+### Requirement: Organisations on the claim page
+A claim page SHALL list each of the claim's organisations once, under its own heading, with its name, its roles in the site's words, and, when it is identified, its kind, country, website, a link to its registry record and the match score. A sponsor's role SHALL link to the trials it sponsors. A claim with no organisation SHALL show no such section.
+
+#### Scenario: Claim with a university and a company
+- **WHEN** a reader opens a claim whose report names a university and whose three trials are sponsored by one company
+- **THEN** the page lists the university as named in the report and the company as sponsor of three trials, each trial linked
+
+#### Scenario: Claim with no organisation
+- **WHEN** a claim names no organisation
+- **THEN** the page shows no organisations section and no placeholder for one
+
+### Requirement: An unidentified organisation is listed plainly
+An organisation that is not identified SHALL be shown by the name it was given with its roles, and SHALL say that it was not matched to a registry record. It SHALL show no kind, country or website.
+
+#### Scenario: Start-up the registry does not know
+- **WHEN** a claim names a company with no approved match
+- **THEN** its entry shows the report's name and role and says no registry record was matched
+
+### Requirement: Organisations are listed without rank or judgement
+The organisations section SHALL order organisations by role and then by name. It SHALL NOT rank them, count their other claims, describe their standing, or say that an organisation endorses, backs or vouches for the claim. It SHALL say that the registry identifies an organisation and does not verify its part in the claim. The site SHALL word each kind and role code itself and SHALL fail the build on a code it has no wording for.
+
+#### Scenario: Kind code without site wording
+- **WHEN** the export carries an organisation kind the site has no wording for
+- **THEN** the site build fails and names the code
+
+#### Scenario: Well-known and unknown organisations together
+- **WHEN** a claim names a large university and a small clinic in the same role
+- **THEN** they are listed in name order, with the same facts shown for each
+
+### Requirement: A report published by a named organisation says so
+Where the claim page names a source article that is marked as published by one of the claim's organisations, it SHALL say, beside that report, that the report is on that organisation's website. The wording SHALL state where the report is and SHALL NOT call it promotional, biased or unreliable.
+
+#### Scenario: University press release
+- **WHEN** a claim's report is marked as published by Kyoto University
+- **THEN** the page says, beside the report, that it is on Kyoto University's website
+
+#### Scenario: Newspaper report
+- **WHEN** a claim's report carries no such mark
+- **THEN** the page says nothing of the kind beside it
+
+### Requirement: No person is named in the organisations section
+The organisations section SHALL NOT show the name of a researcher, an investigator, an author or any other person.
+
+#### Scenario: Trial sponsored by a person
+- **WHEN** one of a claim's trials is sponsored by a person
+- **THEN** the organisations section lists nothing for that sponsor
+
+### Requirement: Papers on the claim page
+A claim page SHALL list each of the claim's papers once, under its own heading, grouped by role: the paper first reported, results papers listed by a trial, follow-up papers, and related research. Each entry SHALL show the title linked to the paper, the journal, the year, the kind of publication, and the facts the export carries for it. A claim with no paper SHALL show no such section.
+
+#### Scenario: Claim with an origin paper and two results papers
+- **WHEN** a reader opens a claim that has an origin paper and a trial with two results papers
+- **THEN** the page lists three papers, the origin paper under its own group and two under the trial's results
+
+#### Scenario: Paper with two roles
+- **WHEN** a paper is both the origin paper and a results paper of a trial
+- **THEN** it is listed once, in the origin paper's group, and names the trial it reports
+
+#### Scenario: Claim with no paper
+- **WHEN** a claim has no paper
+- **THEN** the page shows no papers section and no placeholder for one
+
+### Requirement: A results paper names its trial
+A results paper's entry SHALL name the trial whose record lists it, linked to that trial's entry, and SHALL say whether the sponsor listed the paper or the registry linked it. A trial's entry SHALL lead to its results papers.
+
+#### Scenario: Reader goes from a trial to its paper
+- **WHEN** a reader opens a trial entry whose record lists a results paper
+- **THEN** the entry links to the paper's entry, and the paper's entry links back to the trial
+
+### Requirement: A paper says whether it studied people or animals
+A paper's entry SHALL state, in the site's words, whether its index record says the study was in people, in animals or both, and SHALL state nothing when the record does not say. The wording SHALL attribute the statement to the index.
+
+#### Scenario: Paper of a study in mice
+- **WHEN** a paper's facts state a study in animals
+- **THEN** its entry says the index files it as a study in animals
+
+#### Scenario: Paper with no statement
+- **WHEN** a paper's facts state neither
+- **THEN** its entry says nothing about people or animals
+
+### Requirement: The claim page counts its records in people and in animals
+A claim page SHALL state, among its facts, how many of its records are of studies in people (its trials, and its papers filed as studies in people) and how many of its papers are filed as studies in animals. The statement SHALL be counts and SHALL NOT say that a treatment works in people or in animals.
+
+#### Scenario: Claim with three trials and one mouse paper
+- **WHEN** a claim has three trials and one paper filed as a study in animals
+- **THEN** the page states three records in people and one in animals
+
+#### Scenario: Claim with no such record
+- **WHEN** a claim has no trial and no paper filed either way
+- **THEN** the page shows no such count
+
+### Requirement: Papers are worded without a verdict
+The site SHALL word each paper fact code itself and SHALL fail the build on a code it has no wording for. It SHALL NOT say that a paper supports, confirms, proves or refutes a claim, and SHALL NOT rank papers by quality. The papers section SHALL say that a paper is not a trial record and does not set the status.
+
+#### Scenario: Kind code without site wording
+- **WHEN** the export carries a publication kind the site has no wording for
+- **THEN** the site build fails and names the code
+
+#### Scenario: Randomised trial report
+- **WHEN** a paper's first kind is randomised trial
+- **THEN** its entry reads that it is a report of a randomised trial, and says nothing of what the trial found
+
+### Requirement: A retracted paper is marked where it is listed
+A paper whose facts state that it is retracted SHALL be marked as retracted in its entry, in words.
+
+#### Scenario: Retracted follow-up paper
+- **WHEN** a claim page lists a follow-up paper marked retracted
+- **THEN** its entry says the paper has been retracted
+
+### Requirement: Paper facts show when their record was read
+Each paper's entry SHALL show the date its index record was read, and the papers section SHALL name the index the facts come from.
+
+#### Scenario: Record read on 3 October 2026
+- **WHEN** a paper's facts were read from a record fetched on 3 October 2026
+- **THEN** the paper's entry shows that date

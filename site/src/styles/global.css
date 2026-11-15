@@ -2379,11 +2379,22 @@ main nav.contents ul li + li {
   padding: 0 0.45rem;
 }
 
-/* On a phone the order drawn is: what is dated since the last visit, the tabs, the
-   control that narrows, the list; then the tally. A keyboard still moves in the
+/* On a phone the day-by-day list comes straight after the lookup, and the band's lede
+   is not drawn, so that a row starts on the first screen: the title and the field's
+   label say what the page is. Under the list the order drawn is: what is dated since
+   the last visit, the tabs, the list. Without a day-by-day list the control that
+   narrows follows the tabs and the tally comes last. A keyboard still moves in the
    order of the page. The tabs lose their counts to fit one row, and wrap where they
    cannot; the list's heading is left to the tab that names it. */
 @media (max-width: 40rem) {
+  .band.home .lede {
+    display: none;
+  }
+
+  .band.home {
+    padding-block: 1.3rem 1.2rem;
+  }
+
   .front {
     display: flex;
     flex-direction: column;
@@ -2393,8 +2404,7 @@ main nav.contents ul li + li {
     order: 1;
   }
 
-  .front > .since {
-    order: 2;
+  .feed > .since {
     margin-top: 1rem;
     font-size: 0.95rem;
   }
@@ -3574,6 +3584,53 @@ main ul:not([class]) li + li {
 
 .index .when {
   white-space: nowrap;
+}
+
+/* How much a claim has been tested in people: the count of trials in semibold, and the
+   largest size and whether results are posted on a grey line, as a status has its gloss.
+   Counts of records only: no colour, mark or order says more. */
+.index .tested {
+  width: 18%;
+}
+
+/* With the column, the claim's name keeps the widest share: the status takes a fixed
+   one and the date only what it needs. */
+.index:has(.tested) .status {
+  width: 21%;
+}
+
+.index:has(.tested) .when {
+  width: 1%;
+}
+
+.index:has(.tested) .promise {
+  width: 16%;
+}
+
+.index .tested-lead {
+  display: block;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.tested-note {
+  max-width: var(--measure);
+  margin: 0.4rem 0 0.7rem;
+}
+
+@media (max-width: 40rem) {
+  /* A labelled line, then the grey line beneath it. */
+  /* A block for each claim: no cell keeps a column's share. */
+  .index td.tested,
+  .index:has(.tested) .status,
+  .index:has(.tested) .when,
+  .index:has(.tested) .promise {
+    width: auto;
+  }
+
+  .index .tested-lead {
+    display: inline;
+  }
 }
 
 /* Search. */

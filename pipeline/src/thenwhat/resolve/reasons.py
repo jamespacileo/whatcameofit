@@ -9,8 +9,18 @@ NAMED_IN_TITLE = "named_in_title"
 INDICATION_NAMED = "indication_named"
 NAMED_INSTITUTION = "named_institution"
 PUBLISHED_BEFORE_REPORT = "published_before_report"
+# The article's own page gives the record's registry number or DOI (openspec
+# lead-reading). Set where the page is read, not by `paper_reasons`. It is a reason to
+# look at the record, never one to approve it.
+NAMED_IN_ARTICLE = "named_in_article"
 # Every code, in the order they are given.
-REASON_CODES = (NAMED_IN_TITLE, INDICATION_NAMED, NAMED_INSTITUTION, PUBLISHED_BEFORE_REPORT)
+REASON_CODES = (
+    NAMED_IN_TITLE,
+    INDICATION_NAMED,
+    NAMED_INSTITUTION,
+    PUBLISHED_BEFORE_REPORT,
+    NAMED_IN_ARTICLE,
+)
 
 
 def _key(text: str) -> str:

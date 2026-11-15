@@ -1,4 +1,4 @@
-.PHONY: check lint types db-up test site-test site-build extension-test extension extension-safari public-export publish-data deploy-check deploy deploy-ci-check deploy-ci lookup-dev
+.PHONY: smoke-research check lint types db-up test site-test site-build extension-test extension extension-safari public-export publish-data deploy-check deploy deploy-ci-check deploy-ci lookup-dev
 
 DB_PORT ?= 5433
 export SITE_URL ?= https://whatcameofit.com
@@ -32,6 +32,13 @@ site-test: site/node_modules
 
 site-build: site/node_modules
 	ASTRO_TELEMETRY_DISABLED=1 npm --prefix site run build
+
+# Live: reads each article in site/tests/fixtures/research/cases, asks the model, OpenAlex
+# and ROR, and checks the report's paper is found. Costs a model call and up to five
+# searches per case, so it is not part of `check`. `make smoke-research RECORD=1` rewrites
+# the recorded answers the site tests replay.
+smoke-research: site/node_modules
+	node site/scripts/smoke-research.mjs $(if $(RECORD),--record)
 
 # The browser extension: plain JavaScript, tested with Node's own runner, then built.
 extension-test: site/node_modules

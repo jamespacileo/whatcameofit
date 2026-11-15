@@ -1,0 +1,110 @@
+{
+  "about": "Cases for the form in which two article addresses are compared. Read by the site's test of article-key.mjs and by the pipeline's test of its own address key, so the two cannot drift. Synthetic addresses only.",
+  "same": [
+    {
+      "key": "example.org/news/2026/tooth-study",
+      "addresses": [
+        "https://example.org/news/2026/tooth-study",
+        "https://www.example.org/news/2026/tooth-study/",
+        "http://m.example.org/news/2026/tooth-study",
+        "https://WWW.Example.org/news/2026/tooth-study#comments",
+        "https://www.example.org/news/2026/tooth-study?utm_source=feed&utm_medium=rss&fbclid=abc",
+        "https://www.example.org/news/2026/tooth-study/amp",
+        "https://www.example.org/news/2026/tooth-study.amp",
+        "  https://www.example.org/news/2026/tooth-study  "
+      ]
+    },
+    {
+      "key": "example.org/story.php?id=7&page=2",
+      "addresses": [
+        "https://example.org/story.php?page=2&id=7&utm_campaign=x",
+        "https://example.org/story.php?id=7&page=2&ref=home"
+      ]
+    },
+    {
+      "key": "example.org/News/AllNews",
+      "addresses": ["https://example.org/News/AllNews"]
+    },
+    {
+      "key": "example.org/a/b",
+      "addresses": ["https://www.example.org/a/b/", "https://example.org/a/b/index.html"]
+    },
+    {
+      "key": "example.org/search?q=gene%20therapy",
+      "addresses": [
+        "https://example.org/search?q=gene+therapy",
+        "https://example.org/search?q=gene%20therapy&UTM_SOURCE=x"
+      ]
+    },
+    {
+      "key": "example.org",
+      "addresses": ["https://example.org", "https://example.org/", "https://www.example.org/?fbclid=1"]
+    },
+    {
+      "key": "bbc.com/news/articles/c1234abcd",
+      "addresses": [
+        "https://www.bbc.com/news/articles/c1234abcd",
+        "https://www.bbc.co.uk/news/articles/c1234abcd",
+        "https://bbc.co.uk/news/articles/c1234abcd.amp",
+        "https://www.bbc.com/news/articles/c1234abcd?at_medium=social&at_campaign=64"
+      ]
+    },
+    {
+      "key": "theguardian.com/science/2026/nov/09/medical-breakthrough",
+      "addresses": [
+        "https://www.theguardian.com/science/2026/nov/09/medical-breakthrough",
+        "https://amp.theguardian.com/science/2026/nov/09/medical-breakthrough",
+        "https://www.theguardian.com/science/2026/nov/09/medical-breakthrough?CMP=share_btn_url"
+      ]
+    },
+    {
+      "key": "cnn.com/2026/10/22/health/cancer-vaccine",
+      "addresses": [
+        "https://www.cnn.com/2026/10/22/health/cancer-vaccine",
+        "https://edition.cnn.com/2026/10/22/health/cancer-vaccine/index.html",
+        "https://amp.cnn.com/cnn/2026/10/22/health/cancer-vaccine"
+      ]
+    },
+    {
+      "key": "dailymail.co.uk/article-16271133",
+      "addresses": [
+        "https://www.dailymail.co.uk/health/article-16271133/Heart-pill-hailed-Holy-Grail.html",
+        "https://www.dailymail.co.uk/health/article-16271133/amp/Heart-pill-hailed-Holy-Grail.html",
+        "https://www.dailymail.co.uk/health/article-16271133/Heart-pill-hailed-Holy-Grail.html?ito=social-twitter_mailonline"
+      ]
+    },
+    {
+      "key": "independent.co.uk/news/science/gene-therapy-b3080366.html",
+      "addresses": [
+        "https://www.independent.co.uk/news/science/gene-therapy-b3080366.html",
+        "https://www.independent.co.uk/news/science/gene-therapy-b3080366.html?amp",
+        "https://www.independent.co.uk/news/science/gene-therapy-b3080366.html?utm_source=reddit.com"
+      ]
+    },
+    {
+      "key": "nytimes.com/2026/10/01/health/drug.html",
+      "addresses": [
+        "https://www.nytimes.com/2026/10/01/health/drug.html",
+        "https://www.nytimes.com/2026/10/01/health/drug.html?smid=tw-share&unlocked_article_code=1.abc",
+        "https://mobile.nytimes.com/2026/10/01/health/drug.html"
+      ]
+    },
+    {
+      "key": "youtube.com/watch?v=abcdefghijk",
+      "addresses": [
+        "https://www.youtube.com/watch?v=abcdefghijk",
+        "https://youtu.be/abcdefghijk",
+        "https://m.youtube.com/shorts/abcdefghijk",
+        "https://www.youtube.com/watch?v=abcdefghijk&t=42s"
+      ]
+    }
+  ],
+  "none": [
+    "chrome://extensions",
+    "about:blank",
+    "file:///tmp/a.html",
+    "mailto:someone@example.org",
+    "",
+    "not an address"
+  ]
+}

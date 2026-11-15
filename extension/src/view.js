@@ -272,6 +272,10 @@ function answerBlock(state, site, actions) {
     // Said beside the list it qualifies, never folded into "Sources & privacy".
     shown.papersUnchecked && el("p", "empty-result", shown.papersUnchecked),
     ...researchPanels(shown.research, actions),
+    // The trial search above is complete; only the optional research is still to come.
+    !shown.research && state.research === "loading" && el("p", "small research-status", "Looking for related papers and organisations…"),
+    !shown.research && state.research === "incomplete" &&
+      el("p", "small research-status", "Related papers and organisations could not be loaded this time. The trial search above is complete. Search again to try for them."),
     el("footer", "answer-notes", [
       (shown.marked || context.length > 0 || shown.notices.length > 0) && disclosure([icon("info"), el("span", null, "Sources & privacy")], [
         ...context.map((line) => el("p", null, line)),
@@ -493,5 +497,9 @@ export function render(root, state, site, actions, kept = null) {
   if (!LISTS.has(state.kind) && !BUSY.has(state.kind) && state.kind !== "visual-preview") children.push(keptNav(kept, actions));
   root.replaceChildren(...children.filter(Boolean));
   root.dataset.state = state.kind;
+  // Lookup stage durations, for timing checks: names and whole milliseconds, never content.
+  const timings = Object.entries(state.timings ?? {}).filter(([name, value]) => /^[a-z_]+$/.test(name) && Number.isFinite(value));
+  if (timings.length) root.dataset.timings = timings.map(([name, value]) => `${name}=${Math.round(value)}`).join(" ");
+  else delete root.dataset.timings;
   root.setAttribute("aria-busy", String(BUSY.has(state.kind)));
 }

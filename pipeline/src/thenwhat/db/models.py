@@ -29,14 +29,17 @@ from thenwhat.domain import (
     EventType,
     EvidenceStage,
     FollowUpUnit,
+    LeadVerdict,
     MeasureCode,
     NamedBy,
     OutletKind,
     ReadBy,
     ReadingField,
     ReadingKind,
+    ReadOutcome,
     RegulatoryOutcome,
     ReviewState,
+    ScreenOutcome,
     StatementBasis,
     StatementFirmness,
     StatementKind,
@@ -679,3 +682,99 @@ class ArticleLead(Base):
     search_query: Mapped[str] = mapped_column(Text)
     raw_result: Mapped[dict[str, Any]] = mapped_column(JSONB)
     fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+
+
+class LinkLead(Base):
+    """The address of an article that people shared on a social platform, kept once per
+    address. Unreviewed, never a source article or an article lead, and never exported.
+    Who shared it is never stored. Behavior: openspec link-leads."""
+
+    __tablename__ = "link_lead"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    url: Mapped[str] = mapped_column(Text)
+    # The address in the form the site compares addresses in: one lead per key.
+    url_key: Mapped[str] = mapped_column(Text, unique=True)
+    outlet: Mapped[str] = mapped_column(Text, index=True)
+    outlet_kind: Mapped[OutletKind] = mapped_column(_enum(OutletKind, "outlet_kind"))
+    # The title the article was first shared under. Private: the operator labels from
+    # it and triage scores it. Never exported.
+    title: Mapped[str] = mapped_column(Text)
+    first_shared_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    # Set by screening (openspec lead-screening).
+    screen_outcome: Mapped[ScreenOutcome | None] = mapped_column(
+        _enum(ScreenOutcome, "screen_outcome")
+    )
+    # Set by triage (openspec lead-triage): the probability that the headline reports a
+    # specific treatment for a specific condition, and the step version that gave it.
+    triage_score: Mapped[float | None]
+    triage_version: Mapped[int | None]
+    # Set by reading (openspec lead-reading).
+    read_outcome: Mapped[ReadOutcome | None] = mapped_column(_enum(ReadOutcome, "read_outcome"))
+    read_detail: Mapped[str | None] = mapped_column(Text)
+    claim_id: Mapped[int | None] = mapped_column(ForeignKey("claim.id"), index=True)
+    source_article_id: Mapped[int | None] = mapped_column(ForeignKey("source_article.id"))
+
+
+class LinkShare(Base):
+    """One time a link lead's article was shared: where, when and with what score."""
+
+    __tablename__ = "link_share"
+    __table_args__ = (
+        UniqueConstraint(
+            "link_lead_id",
+            "platform",
+            "community",
+            "shared_at",
+            name="uq_link_share_lead_place_time",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    link_lead_id: Mapped[int] = mapped_column(ForeignKey("link_lead.id"), index=True)
+    platform: Mapped[str] = mapped_column(Text)
+    # The community within the platform; the platform's own name where it has none.
+    community: Mapped[str] = mapped_column(Text)
+    shared_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    score: Mapped[int]
+    # The Hacker News item number. Empty for Reddit: a post's id is never kept.
+    item_number: Mapped[int | None]
+
+
+class LinkLeadLink(Base):
+    """A stored record that screening found for a link lead, with the reason. The record
+    is named by kind and id, as the ledger names one. A candidate: it approves nothing."""
+
+    __tablename__ = "link_lead_link"
+    __table_args__ = (
+        UniqueConstraint(
+            "link_lead_id",
+            "record_kind",
+            "record_id",
+            "reason",
+            name="uq_link_lead_link_lead_record_reason",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    link_lead_id: Mapped[int] = mapped_column(ForeignKey("link_lead.id"), index=True)
+    record_kind: Mapped[str] = mapped_column(Text)
+    record_id: Mapped[int]
+    reason: Mapped[str] = mapped_column(Text)
+
+
+class LinkLeadLabel(Base):
+    """What a person, or an assistant, says a link lead's headline is. It belongs to the
+    lead, so it holds for every version of triage. Behavior: openspec lead-evaluation."""
+
+    __tablename__ = "link_lead_label"
+    __table_args__ = (
+        UniqueConstraint("link_lead_id", "labelled_by", name="uq_link_lead_label_lead_by"),
+        CheckConstraint("labelled_by IN ('human', 'assistant')", name="labelled_by_a_reader"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    link_lead_id: Mapped[int] = mapped_column(ForeignKey("link_lead.id"), index=True)
+    label: Mapped[LeadVerdict] = mapped_column(_enum(LeadVerdict, "label"))
+    labelled_by: Mapped[Decider] = mapped_column(_enum(Decider, "labelled_by"))
+    labelled_at: Mapped[datetime] = mapped_column(TIMESTAMP)

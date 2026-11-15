@@ -1,19 +1,21 @@
 ---
 import Rss from "@lucide/astro/icons/rss";
-import SlidersHorizontal from "@lucide/astro/icons/sliders-horizontal";
 import Base from "../layouts/Base.astro";
 import ClaimName from "../components/ClaimName.astro";
+import DayList from "../components/DayList.astro";
+import HomeNarrow from "../components/HomeNarrow.astro";
 import Lookup from "../components/Lookup.astro";
 import Outlet from "../components/Outlet.astro";
 import Pager from "../components/Pager.astro";
 import PromiseText from "../components/PromiseText.astro";
-import StageFilter from "../components/StageFilter.astro";
 import StageTrack from "../components/StageTrack.astro";
 import StatusCell from "../components/StatusCell.astro";
+import TestedCell from "../components/TestedCell.astro";
 import TopicChip from "../components/TopicChip.astro";
 import { EXTENSION_OFFERED, SITE } from "../../site.config.mjs";
 import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
 import { calendarByMonth } from "../lib/anniversaries";
+import { dayList } from "../lib/day-list";
 import { data, listedTopics } from "../lib/export";
 import {
   longestWithoutSignal,
@@ -23,6 +25,7 @@ import {
 } from "../lib/feed";
 import { followedNameFor, recentReports } from "../lib/reports";
 import { siteData } from "../lib/structured";
+import { TESTED_WORDS } from "../lib/record-brief";
 import { STATUS_LABELS, latestPromise } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 
@@ -61,8 +64,19 @@ const approvals = data.claims.filter((claim) => claim.status.code === "approved"
 const moves = statusMoves(data.claims);
 const promised = promisesByDate(data.claims);
 const quiet = longestWithoutSignal(data.claims);
+// Every published claim once, by the day it was first reported, newest first; a claim
+// with no day comes last, by name. A date, never a rank.
+const everyClaim = [...data.claims].sort((a, b) => {
+  if (a.first_reported_date && b.first_reported_date && a.first_reported_date !== b.first_reported_date) {
+    return a.first_reported_date < b.first_reported_date ? 1 : -1;
+  }
+  if (a.first_reported_date !== b.first_reported_date) return a.first_reported_date ? -1 : 1;
+  return a.intervention.name.localeCompare(b.intervention.name);
+});
+const anyClaimPromise = everyClaim.some((claim) => latestPromise(claim) !== null);
 const views = [
   { id: "headlines", tab: "Headlines", count: reports.length },
+  { id: "claims", tab: "Claims", count: everyClaim.length },
   { id: "moved", tab: "Status changes", count: moves.length },
   { id: "promised", tab: "Promises", count: promised.length },
   { id: "quiet", tab: "No signal", count: quiet.length },
@@ -82,11 +96,14 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December",
 ];
 const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days);
+// Everything dated, under dated headings. Null when the export does not say when the
+// registries were last checked: then the four lists follow the lookup, as before.
+const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at) : null;
 ---
 
 <Base current="home" structured={siteData()}>
   {/* The lookup is what the site is for: it gets a band of its own under the masthead. */}
-  <section class="band" slot="band" aria-labelledby="lookup-title">
+  <section class="band home" slot="band" aria-labelledby="lookup-title">
     <div class="wrap">
       <h1 class="title" id="lookup-title">What happened to that breakthrough?</h1>
       <p class="lede">{SITE.description}</p>
@@ -96,9 +113,9 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
   </section>
 
   <div class="front">
-  {/* The tally opens the lists, under the band: the band holds only the lookup. */}
+  {/* With no day-by-day list the tally opens the lists, under the band. */}
   {
-    data.claims.length > 0 && (
+    data.claims.length > 0 && !days && (
       <p class="tally">
         {data.claims.length} {data.claims.length === 1 ? "claim" : "claims"} tracked in{" "}
         <a href="/topics">
@@ -122,46 +139,33 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
     <p class="visually-hidden" role="status" data-following-said></p>
   </section>
 
+  <div class="feed" data-feed>
+  {/* Everything dated, day by day, with the counts and the topic choice that narrow it
+      and the four lists under it. With no day of last check in the export there is no
+      such list: the page is not dated by any other day. */}
+  {
+    days ? (
+      <DayList list={days} topics={topicChoices}>
+        <p class="tally" slot="tally">
+          {data.claims.length} {data.claims.length === 1 ? "claim" : "claims"} tracked in{" "}
+          <a href="/topics">
+            {listedTopics.length} {listedTopics.length === 1 ? "topic" : "topics"}
+          </a>
+          . <a href="/it-happened">Approvals on record</a>: {approvals} of {data.claims.length}.
+        </p>
+        <HomeNarrow slot="narrow" claims={data.claims} topics={topicChoices} counts={topicCounts} />
+      </DayList>
+    ) : (
+      data.claims.length > 0 && (
+        <HomeNarrow claims={data.claims} topics={topicChoices} counts={topicCounts} />
+      )
+    )
+  }
+  {days && <h2 class="bar lists-title" id="lists">Every headline and claim, as lists</h2>}
+
   {/* Filled in by the script from the dates on the rows below: what is dated since this
       reader's last visit, or in the last thirty days on a first one. */}
   <p class="since" hidden data-since></p>
-
-  <div class="feed" data-feed>
-  {
-    data.claims.length > 0 && (
-      <div class="scoreboard" data-scoreboard>
-        {/* On a phone the counts and the topic choice wait behind this, so a headline is
-            on the first screen. Shown by the script; without it everything is in view. */}
-        <button
-          type="button"
-          class="narrow-toggle"
-          aria-expanded="false"
-          aria-controls="narrow-body"
-          hidden
-          data-narrow
-        >
-          <SlidersHorizontal size={16} stroke-width={1.9} aria-hidden="true" />
-          Narrow these lists
-        </button>
-        <div class="narrow-body" id="narrow-body">
-        <StageFilter claims={data.claims} scope="[data-feed]" param="status" />
-        {topicChoices.length > 1 && (
-          <p class="topic-filter" hidden data-topic-filter>
-            <label for="feed-topic">Topic</label>
-            <select id="feed-topic" data-counts={JSON.stringify(topicCounts)}>
-              <option value="">All topics ({data.claims.length})</option>
-              {topicChoices.map((topic) => (
-                <option value={topic.slug}>
-                  {topic.title} ({topic.count})
-                </option>
-              ))}
-            </select>
-          </p>
-        )}
-        </div>
-      </div>
-    )
-  }
     {/* Shown by the script: without it the lists follow one another, each under its heading. */}
     <div class="feed-tabs" role="tablist" aria-label="Lists of tracked claims" hidden>
       {views.map((view, index) => (
@@ -204,12 +208,13 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
             <tr role="row" data-status={report.claim.status.code} data-topic={report.claim.vertical} data-on={report.publishedDate} data-later={index >= PAGE_SIZE ? "" : undefined}>
               <td role="cell" class="claim">
                 {/* Named as on the claim page, so the headline pressed here is
-                    carried to its place there. */}
+                    carried to its place there. With the day-by-day list above, the
+                    name is on that list's row: a name is on a page once. */}
                 <a
                   class="followed"
                   href={`/${report.claim.slug}`}
                   style={
-                    followedNameFor(report.claim, report.url)
+                    !days && followedNameFor(report.claim, report.url)
                       ? `view-transition-name: ${followedNameFor(report.claim, report.url)}`
                       : undefined
                   }
@@ -251,6 +256,65 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
     )
   }
   </section>
+
+  {
+    everyClaim.length > 0 && (
+      <section class="feed-panel" id="feed-claims" data-view="claims">
+      <h2 class="bar">Every claim tracked</h2>
+      <p class="entry-note tested-note">
+        One row for each reported breakthrough, newest report first. {TESTED_WORDS.note}
+      </p>
+      <div class="table-frame">
+      <table role="table" class="index">
+        <caption class="visually-hidden">
+          Every tracked claim, when it was first reported, how much it has been tested in people, and its status now.
+        </caption>
+        <thead role="rowgroup">
+          <tr role="row">
+            <th role="columnheader" scope="col">Claim</th>
+            <th role="columnheader" scope="col">First reported</th>
+            <th role="columnheader" scope="col">{TESTED_WORDS.column}</th>
+            {anyClaimPromise && <th role="columnheader" scope="col" class="promise">Promised</th>}
+            <th role="columnheader" scope="col">Status now</th>
+          </tr>
+        </thead>
+        <tbody role="rowgroup">
+          {everyClaim.map((claim, index) => {
+            const promise = latestPromise(claim);
+            return (
+              <tr role="row" data-status={claim.status.code} data-topic={claim.vertical} data-on={claim.first_reported_date ?? undefined} data-later={index >= PAGE_SIZE ? "" : undefined}>
+                <td role="cell" class="claim">
+                  <ClaimName claim={claim} />
+                </td>
+                <td role="cell" class="when" data-column="First reported">
+                  {claim.first_reported_date ? (
+                    formatDate(claim.first_reported_date)
+                  ) : (
+                    <span class="visually-hidden">Not recorded</span>
+                  )}
+                </td>
+                <td role="cell" class="tested" data-column={TESTED_WORDS.column}>
+                  <TestedCell claim={claim} />
+                </td>
+                {anyClaimPromise && (
+                  <td role="cell" class:list={["promise", { none: !promise }]} data-column="Promised">
+                    {promise ? <PromiseText promise={promise} /> : <span class="visually-hidden">None with a date</span>}
+                  </td>
+                )}
+                <td role="cell" class="status" data-column="Status now">
+                  <StatusCell claim={claim} />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      </div>
+      <Pager name="claims" total={everyClaim.length} size={PAGE_SIZE} one="claim" many="claims" />
+      <p class="none" data-none hidden>Nothing in this list for that choice.</p>
+      </section>
+    )
+  }
 
   {
     moves.length > 0 && (
@@ -588,6 +652,10 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
           }
           list.table.dispatchEvent(new Event("paged:refresh"));
         }
+        for (const row of feed.querySelectorAll<HTMLElement>("[data-day-row]")) {
+          row.toggleAttribute("data-out-topic", topic !== "" && row.dataset.topic !== topic);
+        }
+        feed.querySelector("[data-day-list]")?.dispatchEvent(new Event("paged:refresh"));
         strip?.dispatchEvent(new CustomEvent("stage:counts", { detail: counts[topic] ?? {} }));
       };
       choice.addEventListener("change", () => {

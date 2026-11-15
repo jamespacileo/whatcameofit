@@ -2,6 +2,7 @@
 work-ledger."""
 
 import threading
+from decimal import Decimal
 
 import pytest
 from sqlalchemy import Engine, select
@@ -11,15 +12,20 @@ from backfill_support import (
     NOW,
     Client,
     DemoStep,
+    ModelStep,
+    QuietStep,
     add_trials,
     committed_sessions,
     remove_committed,
     same_session,
 )
+from thenwhat.backfill import runner
 from thenwhat.backfill.errors import DuplicateStep, UnknownStep
 from thenwhat.backfill.ledger import count, mark_changed
 from thenwhat.backfill.runner import run_step
-from thenwhat.backfill.steps import by_name, find_step
+from thenwhat.backfill.spend import ceiling_check
+from thenwhat.backfill.steps import asks_a_source, by_name, find_step
+from thenwhat.config import Settings
 from thenwhat.db.models import ArticleLead, WorkEntry
 from thenwhat.domain import WorkOutcome
 
@@ -248,3 +254,127 @@ def test_two_runs_at_once_process_each_record_once(engine: Engine):
             assert count(session, step, LIMIT).done == 100
     finally:
         remove_committed(engine, registry=registry, step=name, source=step.source)
+
+
+# --- steps that ask no source, call a model, or take several records ------------------
+
+
+def test_a_step_that_asks_no_source_runs_and_counts_no_request(session: Session):
+    """Scenario: Planning a step that only reads the database"""
+    add_trials(session, 5)
+    step = QuietStep("quiet")
+    client = Client()
+
+    report = run_step(same_session(session), step, client, now=lambda: NOW, attempt_limit=LIMIT)
+
+    assert (report.done, report.remaining_due) == (5, 0)
+    assert client.requests_made == 0
+    assert not asks_a_source(step)
+    assert [entry.requests_used for entry in entries(session, step)] == [0] * 5
+
+
+def test_a_batch_step_makes_one_call_for_twenty_records(session: Session):
+    """Scenario: A batch of twenty"""
+    add_trials(session, 100)
+    step = ModelStep()
+
+    report = run(session, step)
+
+    assert [len(call) for call in step.calls] == [20] * 5
+    assert (report.done, report.remaining_due) == (100, 0)
+    assert len(entries(session, step)) == 100
+
+
+def test_one_bad_record_in_a_batch_is_the_only_failure(session: Session):
+    """Scenario: One bad record in a batch"""
+    add_trials(session, 20)
+    step = ModelStep()
+    step.unanswered = {"T0007"}
+
+    report = run(session, step, limit=20)
+
+    assert (report.done, report.failed) == (19, 1)
+    failed = [entry for entry in entries(session, step) if entry.outcome is WorkOutcome.FAILED]
+    assert len(failed) == 1
+    assert "left an item out" in (failed[0].error or "")
+    # One call for the batch, then each record alone.
+    assert [len(call) for call in step.calls] == [20] + [1] * 20
+
+
+def test_a_limit_cuts_the_last_batch(session: Session):
+    """Scenario: Limited run, for a step that takes several records a call"""
+    add_trials(session, 50)
+    step = ModelStep()
+
+    report = run(session, step, limit=30)
+
+    assert [len(call) for call in step.calls] == [20, 10]
+    assert (report.done, report.remaining_due) == (30, 20)
+
+
+def test_two_runs_of_a_batch_step_process_each_record_once(engine: Engine):
+    """Scenario: Two runs and batches"""
+    registry, name = "two-batch-registry", "two-batch-step"
+    open_session = committed_sessions(engine)
+    step = ModelStep(name, registry=registry)
+    reports = []
+    try:
+        with open_session() as session:
+            add_trials(session, 200, registry=registry)
+
+        def work() -> None:
+            reports.append(
+                run_step(open_session, step, Client(), now=lambda: NOW, attempt_limit=LIMIT)
+            )
+
+        threads = [threading.Thread(target=work) for _ in range(2)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        assert sorted(step.ran) == [f"T{number:04d}" for number in range(200)]
+        assert sum(report.done for report in reports) == 200
+    finally:
+        remove_committed(engine, registry=registry, step=name, source=step.source)
+
+
+def test_the_spend_ceiling_stops_a_model_step_and_leaves_records_due(session: Session):
+    """Scenario: Ceiling reached during a run"""
+    add_trials(session, 100)
+    step = ModelStep(call_cost_usd=Decimal("1"))
+    settings = Settings(database_url="postgresql+psycopg://unused/unused")
+    settings.llm_monthly_budget_usd = Decimal("2")
+    check = ceiling_check(settings, lambda: NOW)
+
+    first = run(session, step, before_call=check)
+    second = run(session, step, before_call=check)
+
+    # Two calls at one dollar reach the ceiling of two.
+    assert (first.done, first.remaining_due) == (40, 60)
+    assert "monthly ceiling of $2" in (first.stopped or "")
+    assert len(entries(session, step)) == 40
+    assert (second.processed, second.remaining_due) == (0, 60)
+    assert len(step.calls) == 2
+
+
+def test_a_run_remembers_only_the_records_that_failed(session: Session, monkeypatch):
+    """A run over hundreds of thousands of records must not carry every finished one
+    into each query: found on the first real run, which stopped at 66,000 leads."""
+    add_trials(session, 60)
+    step = ModelStep()
+    step.unanswered = {"T0007"}
+    remembered: list[int] = []
+    real = runner.process_batch
+
+    def watched(*arguments, **options):
+        remembered.append(len(options["skip"]))
+        return real(*arguments, **options)
+
+    monkeypatch.setattr(runner, "process_batch", watched)
+
+    report = run(session, step)
+
+    assert (report.done, report.failed) == (59, 1)
+    # Nothing is remembered until a record fails, and then only that one.
+    assert remembered[0] == 0 and max(remembered) == 1
