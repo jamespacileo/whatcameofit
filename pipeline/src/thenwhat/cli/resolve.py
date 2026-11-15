@@ -77,6 +77,31 @@ def make_backend(session: Session) -> Backend:
         raise EntryError(str(unknown)) from None
 
 
+def _say_redone(claim: Claim, redone: RuleRedo) -> None:
+    """What scoring a rule's approvals again changed, and what it left to be looked at."""
+    out.print(
+        f"Scored again {redone.scored} trial match(es) a rule had approved for"
+        f" '{claim.slug}'; {len(redone.withdrawn)} no longer approved.",
+        markup=False,
+    )
+    for said, trials in (
+        ("Now waiting for review", redone.pending),
+        ("Rejected by the rule", redone.rejected),
+        ("Still approved, but not returned by the search and so not scored", redone.not_returned),
+    ):
+        if trials:
+            out.print(f"{said}: {', '.join(trials)}.", markup=False)
+    if redone.events_kept:
+        kept = ", ".join(str(event) for event in redone.events_kept)
+        out.print(
+            "Events a person or an assistant decided, left as they were on a match that"
+            f" is no longer approved: {kept}.",
+            markup=False,
+        )
+    if redone.withdrawn:
+        out.print(f"Status of '{claim.slug}': {claim.current_status.value}.", markup=False)
+
+
 def make_registries(session: Session) -> tuple[TrialSearch, DoiLookup]:
     contact = settings_or_exit().contact_email
     return (
@@ -617,14 +642,7 @@ def resolve_command(
                 reject_below=reject_below,
             )
             if redone is not None:
-                out.print(
-                    f"Scored again {redone.scored} trial match(es) a rule had approved for"
-                    f" '{claim.slug}'; {len(redone.withdrawn)} no longer approved"
-                    + (f": {', '.join(redone.withdrawn)}." if redone.withdrawn else "."),
-                    markup=False,
-                )
-                if redone.withdrawn:
-                    out.print(f"Status of '{claim.slug}': {claim.current_status.value}.")
+                _say_redone(claim, redone)
     if failure is not None:
         err.print(failure, markup=False)
         err.print(

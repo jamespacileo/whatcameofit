@@ -853,7 +853,7 @@ def test_a_rule_approval_scored_again_and_no_longer_confident_loses_its_events(s
 
     redone = redo(session, claim, NowAnother())
 
-    assert (redone.scored, redone.withdrawn) == (1, ["NCT00000001"])
+    assert (redone.scored, redone.pending, redone.rejected) == (1, ["NCT00000001"], [])
     assert (match.review_state, match.reviewed_by) == (ReviewState.PENDING, None)
     assert (event.review_state, event.reviewed_by) == (ReviewState.REJECTED, Decider.RULE)
     assert claim.current_status is ClaimStatus.NO_TRIAL_FOUND
@@ -884,6 +884,32 @@ def test_a_persons_approval_is_not_scored_again(session: Session):
     assert (redone.scored, redone.withdrawn) == (0, [])
     assert match.review_state is ReviewState.APPROVED and match.score == pytest.approx(0.96)
     assert event.review_state is ReviewState.APPROVED
+
+
+def test_an_event_an_assistant_approved_is_left_and_reported(session: Session):
+    """Scenario: An event decided by a person or an assistant"""
+    claim = new_claim(session)
+    match, event = approved_trial(session, claim)
+    record_decision(event, ReviewState.APPROVED, by=Decider.ASSISTANT, now=NOW)
+    session.flush()
+
+    redone = redo(session, claim, NowAnother())
+
+    assert redone.pending == ["NCT00000001"] and redone.events_kept == [event.id]
+    assert (event.review_state, event.reviewed_by) == (ReviewState.APPROVED, Decider.ASSISTANT)
+
+
+def test_a_rule_approval_the_search_no_longer_returns_stays_and_is_reported(session: Session):
+    """Scenario: An approved trial the search no longer returns"""
+    claim = new_claim(session)
+    match, event = approved_trial(session, claim)
+
+    redone = redo_rule_approvals(
+        session, claim, trials=FakeTrials({}), backend=NowAnother(), now=NOW, accept_above=0.8
+    )
+
+    assert (redone.scored, redone.withdrawn, redone.not_returned) == (0, [], ["NCT00000001"])
+    assert match.review_state is ReviewState.APPROVED and event.review_state is ReviewState.APPROVED
 
 
 def test_a_scoring_that_fails_leaves_every_approval_as_it_was(session: Session):
