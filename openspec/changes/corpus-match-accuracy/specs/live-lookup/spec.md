@@ -4,6 +4,25 @@ Associates automatic article and post lookups with existing knowledge cards only
 
 ## ADDED Requirements
 
+### Requirement: Mentioned records do not imply a possible match
+The site and extension SHALL count and lead with valid scored `match` candidates at or above the existing display threshold, in descending score order. Other cited records SHALL appear in a separate collapsed section marked as unestablished matches, retaining title, link, confidence and citation explanation. They SHALL NOT suppress the no-match notice or increase the possible-match count.
+
+#### Scenario: Cited first-line study conflicts with prior-treatment claim
+- **GIVEN** an answer includes a cited first-line study at zero match confidence and a compatible previously treated study at high confidence
+- **WHEN** the site or extension presents the answer
+- **THEN** the compatible study leads the possible matches, while the cited mismatch remains separately inspectable
+
+#### Scenario: Only a cited mismatch is returned
+- **WHEN** a cited record is read as another indication or setting
+- **THEN** it does not count as a possible match and the no-match uncertainty notice remains visible
+
+### Requirement: Presentation correction reuses bounded saved answers
+The existing ten-record display cap SHALL apply across both groups, prioritising possible matches. The corrected presentation SHALL apply to saved answers without invalidation and SHALL add no model or source requests.
+
+#### Scenario: Saved answer contains cited mismatches
+- **WHEN** the reader reopens a complete saved answer
+- **THEN** the corrected grouping applies locally, with at most ten displayed records and no added lookup
+
 ### Requirement: Trial matching preserves explicit intervention scope
 Both lookup and private-pipeline scoring SHALL receive intervention descriptions and arm membership from the fetched registry record. Explicit route, formulation, stereoisomer and regimen conflicts SHALL mean `not_a_match`. Separate component arms SHALL NOT establish a complete regimen. Missing or truncated evidence SHALL retain uncertainty about explicit restrictions.
 

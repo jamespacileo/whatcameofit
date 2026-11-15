@@ -34,3 +34,7 @@
 - [ ] 3.4 Resolve evidence-backed missing card coverage through the existing pipeline, verify every new association and deploy any resulting changes.
 - [ ] 3.5 Measure fresh/repeated lookup and pipeline work, address demonstrated waste, and verify request/deadline/cache protections.
 - [ ] 3.6 Verify all 258 rows and Sheet agree with final released evidence, recording any external access or unresolved identity limitations explicitly.
+
+- [x] Reproduce native Safari promotion of a cited zero-confidence mismatch with a failing shared-presenter test.
+- [x] Separate cited nonmatches from possible matches in site and extension without extra requests; retain confidence, provenance, cap and no-match notice.
+- [ ] Deploy the presentation correction, install Safari 0.9.11, verify affected released results, and sync native findings to the corpus and Sheet.

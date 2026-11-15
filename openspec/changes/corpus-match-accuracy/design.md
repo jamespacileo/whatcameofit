@@ -115,3 +115,8 @@ An unpublished inhaled-interferon claim included NCT04324463, whose recorded int
 ## Origin start timestamp
 
 A production-CI regression measured paper-source starts 119 ms apart against a 120 ms minimum. The timestamp was taken just before invoking fetch, so synchronous request setup could cross a clock tick before the request began. Take the timestamp immediately after invoking fetch without awaiting its response. Subsequent starts remain serialized and paced, while response bodies still overlap. Preserve source limits, cancellation and deadlines; the regression includes synchronous setup rather than weakening the spacing assertion.
+
+
+## Native Safari presentation correction
+
+Native Safari 0.9.10 exposed a presentation defect on corpus A041: the scorer correctly assigned zero confidence to a cited first-line study, but the shared presenter promoted every explicit citation into possible matches and retained source-first order. Separate citation provenance from compatibility. Valid match decisions at the existing 0.5 display threshold lead in descending score order; other directly or paper-cited records remain in a collapsed, explicitly unestablished section with their own score and explanation. Share the ten-record cap across groups. Existing cached raw answers are re-presented correctly without invalidation or another paid call. This supersedes the earlier decision to preserve source-number priority in the possible-match list. Safari 0.9.11 uses the same presenter.

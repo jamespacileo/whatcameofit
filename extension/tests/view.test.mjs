@@ -95,6 +95,20 @@ function visibleText(node) {
   return children.map(visibleText).join(" ");
 }
 
+test("a cited mismatch stays inspectable without inflating possible matches", () => {
+  const root = new Element("main");
+  const described = describeAnswer({ about_a_treatment: true, treatment: "EX-1", condition: "Condition A", candidates: [
+    { id: "NCT00000001", title: "Different setting", url: "https://clinicaltrials.gov/study/NCT00000001", score: 0, answer: "other_indication", agrees: ["stated"] },
+    { id: "NCT00000002", title: "Matching trial", url: "https://clinicaltrials.gov/study/NCT00000002", score: 0.99, answer: "match" },
+  ] });
+  render(root, { kind: "answer", shown: described }, site, actions);
+  assert.match(visibleText(root), /1 possible match.*Matching trial.*Other records mentioned/s);
+  assert.doesNotMatch(visibleText(root), /Different setting|0% match confidence/);
+  const mentioned = elements(root, "details").find(item => item.textContent.startsWith(LIVE.mentionedLead));
+  assert.match(mentioned.textContent, /Different setting.*0% match confidence.*record's number/);
+  assert.equal(elements(mentioned, "a")[0].href, "https://clinicaltrials.gov/study/NCT00000001");
+});
+
 test("research titles remain behind collapsed, source-labelled sections with usable links", () => {
   const root = new Element("main"); const opened=[];
   render(root,{kind:"answer",shown:{...shown,research:{
