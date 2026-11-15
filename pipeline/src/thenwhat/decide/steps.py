@@ -761,22 +761,34 @@ SAME_CLAIM = "same_claim"
 NO_SUCH_CLAIM = "none-of-these"
 SAME_CLAIM_QUESTION = (
     "An article has been read. Does it report the same treatment for the same condition "
-    "as one of the claims below? Choose a claim only when its treatment is the article's "
-    "treatment and its condition is the article's condition: worded differently, more "
-    "narrowly or more generally, it is still the same condition. A different condition, "
-    f"or a different treatment that shares a word of the name, is {NO_SUCH_CLAIM}."
+    "as one of the claims below? Use the names AND the summaries to establish identity. "
+    "Equal generic category names do not establish that two products are the same. "
+    "Different vaccine products, stereoisomers, routes, formulations or complete regimens "
+    f"are {NO_SUCH_CLAIM}; separate treatments are not a combination. "
+    "Different wording of the same condition may agree, but preserve explicit patient "
+    "population and treatment-setting restrictions: prior-treated and first-line claims "
+    "are not interchangeable. Choose a claim only when the complete treatment and "
+    "condition agree. When missing or truncated detail prevents establishing identity, "
+    f"prefer {NO_SUCH_CLAIM}; do not infer an equivalence from a shared name alone."
 )
 
 
-def same_claim_state(intervention: str, indication: str, candidates: Sequence[NamedClaim]) -> str:
-    """What the same-claim decision is shown: the treatment and condition read from the
-    article, the question, and each candidate claim's treatment and condition. Never a
-    word of the article."""
+def same_claim_state(
+    intervention: str, indication: str, summary: str, candidates: Sequence[NamedClaim]
+) -> str:
+    """Bounded identity context from our summaries, never the source article's text."""
+
+    def bounded(value: str) -> str:
+        return value if len(value) <= 500 else value[:486] + " [truncated]"
+
     listed = "\n".join(
-        f"- {claim.slug}: {claim.intervention} for {claim.indication}" for claim in candidates
+        f"- {claim.slug}: {claim.intervention} for {claim.indication}\n"
+        f"  Claim summary: {bounded(claim.summary)}"
+        for claim in candidates
     )
     return (
         f"Article's treatment: {intervention}\nArticle's condition: {indication}\n\n"
+        f"Article summary: {bounded(summary)}\n\n"
         f"{SAME_CLAIM_QUESTION}\n{listed}\n- {NO_SUCH_CLAIM}"
     )
 
@@ -801,6 +813,7 @@ def choose_same_claim(
     ref: str,
     intervention: str,
     indication: str,
+    summary: str,
     candidates: Sequence[NamedClaim],
     now: datetime,
 ) -> SameClaim:
@@ -812,7 +825,7 @@ def choose_same_claim(
         session,
         backend,
         step=SAME_CLAIM,
-        state=same_claim_state(intervention, indication, candidates),
+        state=same_claim_state(intervention, indication, summary, candidates),
         options=[*(claim.slug for claim in candidates), NO_SUCH_CLAIM],
         input_ref=ref,
         now=now,

@@ -286,19 +286,17 @@ class LinkRead:
     def _claim_it_reports(
         self, session: Session, record: LinkLead, draft: Draft, client: ReadClient, now: datetime
     ) -> tuple[str | None, str | None]:
-        """The slug of the claim that exists for what the read names, and how it was found
-        when a decision found it. A claim with the same intervention and indication as
-        written is that claim. Otherwise the candidates are the claims whose intervention
-        shares a name with the read's, then the claims screening found named in the
-        lead's title; the article joins one only by the rule below. The decision is logged
-        either way."""
-        exact = slug_of_claim_covering(session, draft.intervention, draft.indication)
-        if exact is not None:
-            return exact, None
+        """Choose among named candidates using their summaries as well as their names.
+
+        Even equal names are candidates only: a generic category can hide different
+        products. The single bounded decision is logged either way.
+        """
         names = [draft.intervention, *draft.intervention_synonyms]
         # A topic's list knows a drug's brand and generic names; a claim under any of
         # them is a candidate, though the names share no word.
-        candidates = claims_sharing_a_name(session, [*names, *other_names_of(names)])
+        candidates = claims_sharing_a_name(
+            session, [*names, *other_names_of(names)], indication=draft.indication
+        )
         linked_by_title = named_claims(
             session,
             list(
@@ -322,6 +320,7 @@ class LinkRead:
             ref=lead_ref(record.id),
             intervention=draft.intervention,
             indication=draft.indication,
+            summary=draft.summary,
             candidates=candidates,
             now=now,
         )
@@ -466,6 +465,16 @@ class LinkRead:
                 detail = "; ".join(part for part in (established, how, note) if part) or None
                 return self._finish(record, ReadOutcome.ADDED_TO_CLAIM, detail)
 
+            collision = slug_of_claim_covering(session, draft.intervention, draft.indication)
+            if collision is not None:
+                # The names are already taken, but identity was not established. Neither
+                # force the article onto that claim nor pay to retry an unchanged read.
+                return self._finish(
+                    record,
+                    ReadOutcome.IDENTITY_UNRESOLVED,
+                    f"{draft.intervention} for {draft.indication}; names overlap {collision}, "
+                    "but the same treatment and condition were not established",
+                )
             if business:
                 return self._finish(
                     record,

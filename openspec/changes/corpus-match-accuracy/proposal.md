@@ -15,12 +15,14 @@ Released corpus checks found a trial match accompanied by a knowledge card for a
 - Preserve completed background-card work and provider usage when a later source operation fails.
 - Keep extracted alternate names within the complete intervention's scope and correct known overbroad unpublished aliases before publishing new cards.
 - Preserve registry intervention descriptions and arm membership for route and regimen comparisons within the existing scoring limit.
+- Compare claim summaries even when names are equal, record unresolved identity collisions without repeated work, and retain specific product names supplied by articles.
 
 ## Capabilities
 
 ### New Capabilities
 
 - `live-lookup`: adds a strict card-association requirement to the capability being introduced by the active `live-lookup` change. Its name-only association requirement is superseded by this change's intervention-and-condition requirement.
+- `lead-reading`: adds summary-aware identity checks to the capability in the active `social-link-backfill` change, superseding its exact-name join shortcut.
 
 ### Modified Capabilities
 

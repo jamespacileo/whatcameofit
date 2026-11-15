@@ -1,5 +1,27 @@
 # Design
 
+## Claim identity after a read
+
+The source-reading seam joined different vaccine products when both were extracted as
+COVID-19 vaccine for COVID-19: literal equality bypassed the same-claim decision. Remove
+that shortcut. Offer the same maximum eight candidates and add each side's existing
+summary, capped at 500 characters with marked truncation, to the one identity decision.
+Prioritize the exact name-and-condition pair before applying the eight-candidate limit;
+other conditions of the same intervention must not crowd that candidate out.
+Preserve complete intervention and explicit patient-setting restrictions in its prompt.
+Use the existing extraction call to prefer a specific product name or code when supplied.
+
+An identity refusal can leave the literal names already occupied. Record that lead as
+`identity_unresolved`, with the overlapping slug, rather than attaching it anyway or
+failing duplicate creation repeatedly. This is a completed, visible outcome, not an
+additional publication approval step. Off-topic business news that reaches identity
+comparison records the same unresolved collision before its no-claim fallback.
+Migration 0023 expands the existing read-outcome
+constraint. Include the new outcome and identity/treatment-kind costs in the funnel.
+Already-tracked URLs and completed leads still require no model calls; only a new read
+that formerly took the shortcut gains one bounded decision. Existing acceptance
+thresholds, source pacing and automatic publication rules remain unchanged.
+
 ## Context
 
 See proposal.md and the released evidence in the visible-content-lookup change.

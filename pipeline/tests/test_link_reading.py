@@ -345,6 +345,7 @@ def test_an_article_for_a_tracked_claim_is_added_and_the_claim_is_left_as_review
 ):
     """Scenarios: An earlier report of a tracked claim, A decided claim"""
     claim = tracked_claim(reader.session)
+    reader.backend.same_claim = claim.slug
     lead = reader.lead()
 
     reader.read()
@@ -355,6 +356,7 @@ def test_an_article_for_a_tracked_claim_is_added_and_the_claim_is_left_as_review
     assert (claim.headline, claim.summary) == ("The reviewed headline", "The reviewed summary.")
     assert (claim.review_state, claim.reviewed_by) == (ReviewState.APPROVED, Decider.HUMAN)
     assert reader.session.scalars(select(Claim)).all() == [claim]
+    assert len(reader.backend.same_claim_asked) == 1
 
 
 def test_a_lead_whose_article_became_tracked_is_not_fetched_or_read(reader: Reader):
@@ -479,6 +481,7 @@ def link(session: Session, lead: LinkLead, kind: str, record_id: int, reason: st
 def test_a_lead_for_a_claim_with_enough_articles_is_held_unless_it_is_earlier(reader: Reader):
     """Scenarios: A much-reported claim, An earlier article"""
     claim = tracked_claim(reader.session, articles=3, first=date(2021, 3, 1))
+    reader.backend.same_claim = claim.slug
     later = reader.lead(
         "https://www.theguardian.com/science/2022/jan/04/later",
         shared_at=datetime(2022, 1, 4, tzinfo=UTC),
@@ -605,13 +608,14 @@ def test_an_article_about_an_established_treatment_becomes_a_claim_and_says_so(r
 def test_an_article_about_an_established_treatment_joins_its_claim(reader: Reader):
     """Scenario: News about a tracked, established treatment"""
     claim = tracked_claim(reader.session)
+    reader.backend.same_claim = claim.slug
     reader.backend.report_kind = ESTABLISHED_TREATMENT
     lead = reader.lead()
 
     reader.read()
 
     assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.ADDED_TO_CLAIM, claim.id)
-    assert lead.read_detail == "an established treatment in the news"
+    assert (lead.read_detail or "").startswith("an established treatment in the news; read as ")
 
 
 def test_new_and_established_together_decide_that_it_is_one_treatment(reader: Reader):
@@ -729,13 +733,14 @@ def test_business_news_on_no_topic_starts_no_claim(reader: Reader):
 def test_business_news_on_no_topic_joins_a_claim_that_exists_and_says_so(reader: Reader):
     """Scenario: A price rise for a tracked treatment on no topic"""
     claim = tracked_claim(reader.session)
+    reader.backend.same_claim = claim.slug
     reader.backend.report_kind = BUSINESS_NEWS
     lead = reader.lead()
 
     reader.read()
 
     assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.ADDED_TO_CLAIM, claim.id)
-    assert lead.read_detail == "business news about a treatment"
+    assert (lead.read_detail or "").startswith("business news about a treatment; read as ")
 
 
 def test_a_title_that_names_nothing_is_on_a_topic_when_the_read_names_its_drug(session, fake_time):
@@ -859,7 +864,7 @@ def test_one_story_worded_four_ways_by_four_outlets_becomes_one_claim(session, f
         "read as esketamine nasal spray for depression; the same claim by decision at 0.90, "
         "none of the candidates at 0.10"
     )
-    # Asked once for each later article, and shown names and conditions only.
+    # Asked once per later article with our short summaries, never the source text.
     asked = reader.backend.same_claim_asked
     assert len(asked) == 3
     assert (
@@ -882,6 +887,97 @@ def test_the_same_treatment_for_another_condition_stays_its_own_claim(session, f
         STORY_SLUG,
     ]
     assert len(reader.backend.same_claim_asked) == 1
+
+
+@pytest.mark.parametrize("report_kind", [NEW_TREATMENT, BUSINESS_NEWS])
+def test_equal_generic_names_do_not_join_different_products(session, fake_time, report_kind):
+    """A generic vaccine name cannot override the products the summaries identify."""
+    generic = DRAFT | {
+        "intervention": "COVID-19 vaccine",
+        "intervention_synonyms": [],
+        "indication": "COVID-19",
+    }
+    reader = Reader(
+        session,
+        fake_time,
+        generic | {"summary": "The Oxford-AstraZeneca vaccine was tested in a synthetic trial."},
+        generic | {"summary": "The Moderna vaccine was tested in a different synthetic trial."},
+    )
+    leads = story_leads(reader, 2)
+    reader.read(limit=1)
+    reader.backend.report_kind = report_kind
+    reader.read()
+
+    first = claim_of(session, leads[0])
+    assert len(articles_of(session, first)) == 1
+    assert (leads[1].read_outcome, leads[1].claim_id) == (ReadOutcome.IDENTITY_UNRESOLVED, None)
+    assert leads[1].source_article_id is None
+    assert reader.entry(leads[1]).outcome is WorkOutcome.NOTHING_FOUND
+    assert len(session.scalars(select(Claim)).all()) == 1
+    [asked] = reader.backend.same_claim_asked
+    assert "Article summary: The Moderna vaccine" in asked
+    assert "Claim summary: The Oxford-AstraZeneca vaccine" in asked
+    assert MARKER not in asked
+    before = (len(reader.prompts), len(reader.backend.same_claim_asked), len(reader.web.asked))
+    assert reader.read().processed == 0
+    assert before == (
+        len(reader.prompts),
+        len(reader.backend.same_claim_asked),
+        len(reader.web.asked),
+    )
+    found = funnel(session, pass_above=0.7, reject_below=0.2)
+    assert (found.identity_unresolved, found.read) == (1, 2)
+
+
+def test_equal_names_still_supply_bounded_identity_context(reader: Reader):
+    claim = tracked_claim(reader.session)
+    claim.summary = "A synthetic product's context. " * 30 + "OMITTED-CONTEXT-END"
+    reader.backend.same_claim = claim.slug
+    lead = reader.lead()
+
+    reader.read()
+
+    assert lead.read_outcome is ReadOutcome.ADDED_TO_CLAIM
+    [asked] = reader.backend.same_claim_asked
+    assert "Article summary: An antibody restored missing teeth in mice." in asked
+    assert "Claim summary: A synthetic product's context." in asked
+    assert " [truncated]" in asked
+    assert "OMITTED-CONTEXT-END" not in asked
+
+
+def test_exact_name_and_condition_remain_a_candidate_beyond_eight_older_claims(reader: Reader):
+    for number in range(8):
+        add_claim(
+            reader.session,
+            slug=f"ex-1-other-{number}",
+            headline="Synthetic claim for another condition",
+            vertical="mouth-and-teeth",
+            intervention="EX-1 antibody",
+            indication=f"Other condition {number}",
+        )
+    claim = tracked_claim(reader.session)
+    reader.backend.same_claim = claim.slug
+    lead = reader.lead()
+
+    reader.read()
+
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.ADDED_TO_CLAIM, claim.id)
+    [asked] = reader.backend.same_claim_asked
+    assert f"- {claim.slug}: " in asked
+    assert asked.count("Claim summary:") == 8
+
+
+def test_rejected_equal_name_is_recorded_as_unresolved_without_retry(reader: Reader):
+    claim = tracked_claim(reader.session)
+    record_decision(claim, ReviewState.REJECTED, by=Decider.RULE, now=NOW)
+    lead = reader.lead()
+
+    reader.read()
+
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.IDENTITY_UNRESOLVED, None)
+    assert len(articles_of(reader.session, claim)) == 1
+    assert reader.backend.same_claim_asked == []
+    assert reader.read().processed == 0
 
 
 def test_a_decision_that_leans_to_none_of_them_joins_nothing(session, fake_time):
@@ -1052,6 +1148,25 @@ def test_reading_is_refused_until_enough_leads_are_labelled(reader: Reader):
 
 
 # --- the funnel ------------------------------------------------------------------------
+
+
+def test_funnel_includes_identity_and_treatment_kind_costs(session: Session):
+    for purpose, cost in [(SAME_CLAIM, "0.01"), (TREATMENT_KIND, "0.02"), ("other", "0.04")]:
+        session.add(
+            LlmUsage(
+                purpose=f"decision:{purpose}",
+                model="synthetic",
+                input_tokens=1,
+                output_tokens=0,
+                cost_usd=Decimal(cost),
+                created_at=NOW,
+            )
+        )
+    session.flush()
+
+    found = funnel(session, pass_above=0.7, reject_below=0.2)
+
+    assert found.reading_cost_usd == Decimal("0.03")
 
 
 def test_the_funnel_counts_each_outcome_and_the_cost_of_reading(session: Session, fake_time):
