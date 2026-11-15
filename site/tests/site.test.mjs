@@ -1477,3 +1477,151 @@ test("Scenario: Reader doubts a statement", () => {
   assert.match(part, /statements never change a status/);
   assert.match(part, /removed by a person/);
 });
+
+// Openspec site-publishing (change page-frame): the band, the section list, folding
+// sections, the newest-first timetable, counts kept apart and the trials table. These
+// read the built pages; what a script does on a press is checked in the browser.
+const bandOf = (html) =>
+  html.slice(html.indexOf('<section class="band record"'), html.indexOf('<div class="frame'));
+const foldOf = (html, id) => {
+  const at = html.indexOf(`id="${id}"`);
+  return html.slice(html.lastIndexOf('<div class="fold-head"', at), html.indexOf("</h2>", at));
+};
+
+test("Scenario: Claim page on a wide screen", () => {
+  const band = bandOf(page("phase-claim/index.html"));
+  // The title, the report followed and the status panel are all in the band.
+  assert.match(band, /<h1 class="title/);
+  assert.match(band, /class="label"[^>]*>Phase 2 trial</);
+  assert.match(band, /class="reported band-reported"/);
+  // The summary is the content's first words, not the band's.
+  assert.ok(!band.includes('class="lede"'));
+});
+
+test("Scenario: Topic with one claim at each of two statuses", () => {
+  const band = bandOf(page("topic/gum-disease/index.html"));
+  assert.match(band, /<h1 class="title">Gum disease<\/h1>/);
+  // Each status the topic's claims hold is counted in words, in the summary sentence.
+  assert.match(wordsOf(band), /Of 3 reported breakthroughs tracked, 1 has/);
+});
+
+test("Scenario: Claim that follows three reports", () => {
+  // Two here: the newest under the band on a phone, and one link to the other.
+  const html = page("quiet-claim/index.html");
+  const under = html.match(/<div class="reported phone-reported"[\s\S]*?<\/div>/)[0];
+  assert.equal(count(under, 'class="reported-title"'), 1);
+  assert.match(wordsOf(under), /1 more report, on the timetable/);
+  assert.match(under, /href="#timetable"/);
+});
+
+test("Scenario: Claim with no papers", () => {
+  // Here: a claim with no trial, so the list has no entry for trials.
+  const list = (slug) => page(`${slug}/index.html`).match(/<nav class="onpage"[\s\S]*?<\/nav>/)[0];
+  const withTrials = list("phase-claim");
+  assert.match(withTrials, /href="#trials"[\s\S]*?Trials on record[\s\S]*?class="n">7</);
+  assert.match(withTrials, /href="#papers"[\s\S]*?class="n">5</);
+  // A section the page does not have is not listed.
+  const without = list("quiet-claim");
+  assert.ok(!without.includes('href="#trials"'));
+  assert.ok(without.includes('href="#timetable"'));
+});
+
+test("Scenario: Wide screen, first view", () => {
+  const html = page("phase-claim/index.html");
+  // Papers start folded, with their count on the heading line.
+  assert.match(foldOf(html, "papers"), /data-fold="folded"/);
+  assert.match(html.slice(html.indexOf('id="papers"')), /^[\s\S]{0,700}class="fold-note">5 papers</);
+  // The timetable and the trials start open.
+  assert.match(foldOf(html, "timetable"), /data-fold="open"/);
+  assert.match(foldOf(html, "trials"), /data-fold="open"/);
+  // The heading stays a heading and holds the control, which says whether it is open.
+  assert.match(foldOf(html, "trials"), /<h2 class="bar" id="trials"><button type="button" class="fold" aria-expanded="true">/);
+});
+
+test("Scenario: Phone, first view", () => {
+  const html = page("phase-claim/index.html");
+  for (const id of ["brief", "timetable"]) assert.match(foldOf(html, id), /data-fold-phone="open"/);
+  for (const id of ["reported-statements", "trials", "papers", "others", "pass-on"]) {
+    assert.match(foldOf(html, id), /data-fold-phone="folded"/, `${id} starts open on a phone`);
+  }
+});
+
+test("Scenario: Scripting off", () => {
+  // A fold is closed by the stylesheet only where a script has marked the page, and
+  // only on a screen: with no script, and on paper, every section is open.
+  const styles = fs
+    .readdirSync(path.join(dist, "_astro"))
+    .filter((name) => name.endsWith(".css"))
+    .map((name) => fs.readFileSync(path.join(dist, "_astro", name), "utf8"))
+    .join("");
+  assert.match(styles, /@media screen\{\.js \.fold-head\[data-fold=folded\]:not\(\[data-state\]\)~\*/);
+  assert.ok(!page("phase-claim/index.html").includes(" hidden data-fold"));
+});
+
+test("Scenario: Records from 2021 to 2026 with none in 2024 and 2025", () => {
+  // Here: records in 2018 to 2020, a promise for 2025, and nothing from 2021 to 2024.
+  const timetable = sectionOf(page("quiet-claim/index.html"), "timetable");
+  const years = [...timetable.matchAll(/id="year-(\d{4})"/g)].map(([, year]) => Number(year));
+  assert.deepEqual(years, [...years].sort((a, b) => b - a), "years are not newest first");
+  assert.equal(years[0], 2026);
+  assert.equal(years.at(-1), 2018);
+  // The run of years with nothing in them is one row that names them, in its place.
+  assert.match(wordsOf(timetable), /2021 to 2024\s+No promise, no record/);
+  assert.ok(timetable.indexOf('id="year-2025"') < timetable.indexOf("2021 to 2024"));
+  assert.ok(timetable.indexOf("2021 to 2024") < timetable.indexOf('id="year-2020"'));
+});
+
+test("Scenario: Four promises and seventeen records", () => {
+  // Here: one promise and three records, given as two numbers wherever they are given.
+  const html = page("quiet-claim/index.html");
+  assert.match(html, /class="fold-note">1 promise · 3 records · newest first</);
+  assert.match(html, /href="#timetable"[\s\S]{0,200}class="n">1 and 3</);
+  const controls = html.match(/<div class="kind-tabs"[\s\S]*?<\/div>/)[0];
+  assert.match(wordsOf(controls), /All\s+Promises 1\s+News reports 2\s+/);
+  assert.ok(!/\b4\b/.test(wordsOf(controls)), "promises and records are added together");
+});
+
+test("Scenario: Registry records only", () => {
+  // The controls are shown by the script; every entry carries the kind it is narrowed by.
+  const html = page("phase-claim/index.html");
+  assert.match(html, /<div class="kind-tabs" role="group" aria-label="Show entries of one kind" hidden data-kinds>/);
+  const timetable = sectionOf(html, "timetable");
+  assert.equal(count(timetable, 'data-kind="report"'), 2, "the control and one entry");
+  assert.ok(count(timetable, 'data-kind="trial"') >= 2);
+  assert.match(html, /role="status" data-kinds-said/);
+});
+
+test("Scenario: Three finished trials", () => {
+  const trials = sectionOf(page("phase-claim/index.html"), "trials");
+  const table = trials.slice(trials.indexOf('role="table"'));
+  for (const name of ["Trial", "Compared with", "Design", "State", "Results"]) {
+    assert.ok(table.includes(`<span role="columnheader">${name}</span>`), `no column named ${name}`);
+  }
+  // A row is a row; the control that opens it says whether it is open and names what it opens.
+  assert.match(table, /class="trial-group" role="rowgroup" id="trial-NCT00000002"/);
+  assert.match(table, /class="trial-open" aria-expanded="true" aria-controls="trial-detail-NCT00000002"/);
+  assert.match(table, /class="trial-detail" role="row" id="trial-detail-NCT00000002"/);
+});
+
+test("Scenario: Trial registered with three trials", () => {
+  // Here: a Phase 2 status that rests on two records, and the page marks those two.
+  const html = page("phase-claim/index.html");
+  const why = html.match(/<ul class="pop-list">[\s\S]*?<\/ul>/)[0];
+  assert.equal(count(why, "<li"), 2);
+});
+
+test("Scenario: Tabbing into a claim page", () => {
+  const html = page("phase-claim/index.html");
+  // The skip link is the page's first link, and the actions come before the content.
+  assert.ok(html.indexOf('<a class="skip"') < html.indexOf('class="masthead"'));
+  assert.ok(html.indexOf("data-follow") < html.indexOf('<article class="sheet"'));
+  assert.ok(html.indexOf('<nav class="onpage"') < html.indexOf("data-follow"));
+});
+
+test("Scenario: Topic among ten", () => {
+  // Here: one topic with published claims, listed with its count and marked as this one.
+  const list = page("topic/gum-disease/index.html").match(/<nav class="onpage"[\s\S]*?<\/nav>/)[0];
+  assert.equal(count(list, "<li"), 1);
+  assert.match(list, /href="\/topic\/gum-disease" aria-current="page"[\s\S]*?Gum disease[\s\S]*?class="n">3</);
+  assert.ok(!list.includes("empty-topic"));
+});

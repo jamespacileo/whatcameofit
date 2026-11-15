@@ -5420,7 +5420,8 @@ body.framed {
 }
 
 @media print {
-  .band-actions {
+  .band-actions,
+  .band.record .crumbs {
     display: none !important;
   }
 }
