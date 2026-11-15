@@ -119,7 +119,7 @@ export function collectFromPage() {
         const media = ownedLinks(node).flatMap(link => [...link.querySelectorAll('figure img')]).filter(visible);
         // LinkedIn can nest replies and the reader's draft below the post. Only
         // its caption and uniquely owned attachment supply words and pixels.
-        if (captions.length === 1) return fromNode(captions[0], media.length === 1 ? media[0] : null);
+        if (captions.length <= 1) return fromNode(captions[0], media.length === 1 ? media[0] : null);
       }
       // Public caption metadata also supports signed-out or changing layouts,
       // but cannot authorize a screenshot of an unbound page.

@@ -145,3 +145,14 @@ test('LinkedIn and Bluesky bind the requested post without profile sidebars or r
  assert.deepEqual(x.request.links,[]);
 });
 
+test('an image-only LinkedIn post keeps only its uniquely owned attachment', () => {
+ const url='https://www.linkedin.com/posts/author_trial-activity-1234567890123456789-abcd/';
+ const image='<a href="'+url+'"><figure><img src="https://media.example/current.jpg"></figure></a>';
+ const root=inside=>'<main><aside><img src="https://media.example/sidebar.jpg"></aside><div role="listitem" componentkey="update-card-focus-current">'+inside+'<div componentkey="comment-nested"><img src="https://media.example/reply.jpg"></div></div></main>';
+ let x=read(url,'',root(image));
+ assert.equal(x.request,null);
+ assert.equal(inspectVisible(x.captured.mediaScope).crop?.identity,'https://media.example/current.jpg');
+ x=read(url,'',root(image+image.replace('current.jpg','second.jpg')));
+ assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true,'two owned attachments remain ambiguous');
+});
+
