@@ -63,4 +63,5 @@
 - [x] Exclude the incompatible unresectable-disease trial and component-only background cards; retain two approved postoperative trials and the tentative compatible Part D cohort without promotion.
 - [x] Run normal preparation and stage the export: 126 existing claim identities retained, two trial readings reused and no new candidates.
 - [x] Clarify that saved background trial counts describe when the term was gathered, preserving historical reasons after trial exclusions.
-- [ ] Deploy the corrected melanoma card and rerun its four mapped corpus URLs against the released site; update the corpus and Google Sheet with exact methods.
+- [x] Deploy the corrected melanoma card and rerun its four mapped corpus URLs against the released site; record exact methods in the corpus.
+- [x] Update and read back the four melanoma Sheet rows and release summary: 29 value-only cells verified; formulas, formatting and validation preserved. Native Sheet preview remains unavailable behind sign-in.

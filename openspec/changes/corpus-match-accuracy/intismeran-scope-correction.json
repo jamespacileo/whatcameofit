@@ -152,7 +152,7 @@
   ],
   "model_calls": 0,
   "source_calls_during_correction": 0,
-  "publication": "Normal export staged for reviewed production release; installed Safari unchanged at 0.9.13 (22).",
+  "publication": "Released in 85bd60c8513987f8c4902f066311374a12b55c72; four exact source mappings and corrected card verified at 2026-11-15T21:14:27.893Z. Native Safari rerun remains pending.",
   "verified_status": "phase_3",
   "preparation": {
     "duration_seconds": 225,
