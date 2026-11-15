@@ -92,7 +92,8 @@ test("a tracked answer ends with the claim's sentence, a copy button and its car
   const clipboard = { writeText: async (text) => { copied = text; } };
   const { about, window, timers } = await trackedAnswer({ navigator: { clipboard } });
   const tail = [...about.children].slice(-3);
-  assert.equal(tail[0].querySelector("a").textContent, "See the records");
+  // A screen reader hears which claim the records are for.
+assert.equal(tail[0].querySelector("a").textContent, "See the records for Earlier report");
   assert.equal(tail[1].className, "sentence");
   assert.equal(tail[1].textContent, SENTENCE);
   const copy = tail[2].querySelector("button.share");
@@ -121,5 +122,5 @@ test("with no clipboard the sentence is there to read and no button is drawn", a
 test("a page that carries no sentences answers as the home page does", async () => {
   const { about } = await trackedAnswer({ navigator: {}, carried: false });
   assert.equal(about.querySelector(".sentence"), null);
-  assert.equal(about.lastElementChild.querySelector("a").textContent, "See the records");
+  assert.equal(about.lastElementChild.querySelector("a").textContent, "See the records for Earlier report");
 });

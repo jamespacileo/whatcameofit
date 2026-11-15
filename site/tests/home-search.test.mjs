@@ -59,6 +59,7 @@ const SEARCH_DETAIL = {
 };
 
 function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE) {
+  const history = { replaceState() {} };
   const { document, window } = parseHTML(`<html><body>${body}</body></html>`);
   let resolveLookup, rejectLookup;
   const pending = new Promise((resolve, reject) => { resolveLookup = resolve; rejectLookup = reject; });
@@ -69,7 +70,7 @@ function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE) {
   const context = {
     document, URL, setTimeout, BRAND: { name: "Example tracker" }, readAddress, closestClaims,
     LIVE, describeAnswer, refusalMessage, textWouldHelp, SUGGEST_SUBJECT, contactLink,
-    location: { href: "https://example.test/", origin: "https://example.test" }, history: { replaceState() {} },
+    location: { href: "https://example.test/", origin: "https://example.test" }, history,
     innerHeight: 800, matchMedia: () => ({ matches: false }),
     loadSearchIndex: async () => {
       searches++;
@@ -89,6 +90,7 @@ function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE) {
   return {
     document,
     window,
+    history,
     results,
     get requests() { return requests; },
     get searches() { return searches; },
@@ -168,56 +170,6 @@ for (const outcome of ["resolve", "reject"]) {
   });
 }
 
-test("a search on the home page answers in the list's place: best match, its report, then the rest", async () => {
-  const page = setup(null, HOME);
-  const { document } = page;
-  for (const node of document.querySelectorAll("*")) node.getBoundingClientRect = () => ({ top: 0 });
-  page.submit("tooth regrowth");
-  await settle();
-  await settle();
-  const answer = document.querySelector("[data-search-answer]");
-  assert.equal(answer.hidden, false);
-  assert.ok(document.querySelector("[data-days]").hasAttribute("data-searching"));
-  assert.match(page.results.textContent, /3 tracked claims match “tooth regrowth”/);
-  // The best match: its status in words, then the list's own report row without its status block.
-  const digest = answer.querySelector(".digest");
-  assert.match(digest.textContent, /Best match/);
-  assert.match(digest.textContent, /Preclinical only/);
-  assert.equal(digest.querySelector("mark").textContent, "Tooth");
-  const row = answer.querySelector(".best-report .report-row");
-  assert.match(row.textContent, /Synthetic report title/);
-  assert.equal(row.querySelector(".row-now"), null);
-  assert.equal(row.hasAttribute("data-day-row"), false);
-  assert.equal(row.querySelector("a").getAttribute("style") ?? "", "");
-  const others = [...answer.querySelectorAll(".hit-row")];
-  assert.deepEqual(others.map((item) => item.querySelector("a").getAttribute("href")), ["/antibody", "/sheet"]);
-  assert.match(others[0].textContent, /Phase 1 trial/);
-  assert.match(answer.querySelector(".search-more").textContent, /Mouth and teeth, 18 claims · Gum disease, 8 claims/);
-  // The topics narrow the answer from the side column.
-  const topics = document.querySelector("[data-search-topics]");
-  assert.equal(topics.hidden, false);
-  const picks = [...topics.querySelectorAll("button")];
-  assert.deepEqual(picks.map((pick) => pick.textContent), ["All results 3", "Mouth and teeth 2", "Gum disease 1"]);
-  picks[2].dispatchEvent(new page.window.Event("click"));
-  assert.match(answer.querySelector(".search-count").textContent, /1 of 3 tracked claims, in Gum disease/);
-  assert.equal(answer.querySelectorAll(".hit-row").length, 0);
-  // Clearing brings the list back.
-  page.results.querySelector("button").dispatchEvent(new page.window.Event("click"));
-  assert.equal(answer.hidden, true);
-  assert.equal(document.querySelector("[data-days]").hasAttribute("data-searching"), false);
-  assert.equal(page.results.textContent, "");
-});
-
-test("a search elsewhere answers under the box, with no report row", async () => {
-  const page = setup(null, PAGE, true);
-  page.submit("tooth regrowth");
-  await settle();
-  await settle();
-  assert.ok(page.results.querySelector(".digest"));
-  assert.equal(page.results.querySelector(".best-report"), null);
-  assert.equal(page.results.querySelectorAll(".hit-row").length, 2);
-});
-
 async function searched(page, words) {
   for (const node of page.document.querySelectorAll("*")) node.getBoundingClientRect = () => ({ top: 0 });
   page.submit(words);
@@ -225,40 +177,98 @@ async function searched(page, words) {
   return page.document.querySelector("[data-search-answer]");
 }
 
-test("each match says which report headline or trial the words were found in", async () => {
+test("a search on the home page answers in the list's place: the closest match, then the rest", async () => {
+  SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
+  const page = setup(null, HOME);
+  const { document } = page;
+  const answer = await searched(page, "tooth regrowth");
+  assert.equal(answer.hidden, false);
+  assert.ok(document.querySelector("[data-days]").hasAttribute("data-searching"));
+  assert.match(page.results.textContent, /Results for “tooth regrowth” are shown below\./);
+  // The count is said once, beside the one way out.
+  assert.match(answer.querySelector(".search-count").textContent, /^3 tracked claims/);
+  assert.equal(answer.querySelectorAll("button.search-clear").length, 1);
+  // A word search leads with a row, labelled, not a digest.
+  assert.equal(answer.querySelector(".digest"), null);
+  const rows = [...answer.querySelectorAll(".hit-row")];
+  assert.equal(rows.length, 3);
+  assert.match(rows[0].querySelector(".hit-now").textContent, /Closest match.*Preclinical only.*First reported 1 Jan 2020/);
+  assert.equal(rows[0].querySelector("h3 a").getAttribute("href"), "/germ");
+  assert.equal(rows[0].querySelector("mark").textContent, "Tooth");
+  assert.equal(answer.querySelector("#other-matches").textContent, "Other matches");
+  assert.match(answer.querySelector(".search-more").textContent, /Mouth and teeth, 18 claims · Gum disease, 8 claims/);
+  // The topics narrow the answer from the side column and from the row under the heading.
+  const topics = document.querySelector("[data-search-topics]");
+  assert.equal(topics.hidden, false);
+  const picks = [...topics.querySelectorAll("button")];
+  assert.deepEqual(picks.map((pick) => pick.textContent), ["All results 3", "Mouth and teeth 2", "Gum disease 1"]);
+  assert.equal(answer.querySelectorAll(".search-topic-row button").length, 3);
+  picks[2].dispatchEvent(new page.window.Event("click"));
+  assert.match(answer.querySelector(".search-count").textContent, /1 of 3 tracked claims, in Gum disease/);
+  assert.equal(answer.querySelectorAll(".hit-row").length, 1);
+  // Clearing brings the list back.
+  answer.querySelector("button.search-clear").dispatchEvent(new page.window.Event("click"));
+  assert.equal(answer.hidden, true);
+  assert.equal(document.querySelector("[data-days]").hasAttribute("data-searching"), false);
+  assert.equal(page.results.textContent, "");
+});
+
+test("a search elsewhere answers under the box, with the same rows and the way out", async () => {
+  SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
+  const page = setup(null, PAGE, true);
+  page.submit("tooth regrowth");
+  for (let turn = 0; turn < 4; turn++) await settle();
+  assert.equal(page.results.querySelectorAll(".hit-row").length, 3);
+  assert.ok(page.results.querySelector("button.search-clear"));
+  assert.equal(page.results.querySelectorAll(".search-topic-row button").length, 3);
+});
+
+test("matches are ordered by where the words stand side by side, and say what they were found in", async () => {
   SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
   const page = setup(null, HOME);
   const answer = await searched(page, "regrowing teeth");
-  // The best match's report drawn in full under the digest is not named again in it.
-  const digest = answer.querySelector(".digest");
-  const inDigest = [...digest.querySelectorAll(".match-reason")].map((line) => line.textContent);
-  assert.equal(inDigest.length, 1);
-  assert.match(inDigest[0], /Report headline/);
-  assert.match(inDigest[0], /Regrowing teeth from germs/);
-  assert.doesNotMatch(inDigest.join(" "), /Synthetic report title/);
+  // "regrow teeth" in the antibody claim's own headline puts it ahead of the index's first.
+  const rows = [...answer.querySelectorAll(".hit-row")];
+  assert.deepEqual(rows.map((row) => row.querySelector("h3 a").getAttribute("href")), ["/antibody", "/germ", "/sheet"]);
   // A report line names its outlet with the outlet's icon over a letter tile, and its date.
-  const antibody = answer.querySelectorAll(".hit-row")[0];
-  const [report, trial] = antibody.querySelectorAll(".match-reason");
+  const [report, trial] = rows[0].querySelectorAll(".match-reason");
   assert.match(report.textContent, /“New drug to regrow lost teeth”/);
   assert.equal(report.querySelector(".outlet-icon img").getAttribute("src"), "/outlet-icons/uni.example.ico");
   assert.equal(report.querySelector(".outlet-icon .tile").textContent, "U");
   assert.match(report.textContent, /Example University.*2 Feb 2021/);
   assert.deepEqual([...report.querySelectorAll("mark")].map((mark) => mark.textContent), ["regrow", "teeth"]);
   assert.match(trial.textContent, /Trial.*Antibody for missing teeth.*ClinicalTrials\.gov NCT00000003 · Phase 1/);
+  assert.match(rows[1].textContent, /Regrowing teeth from germs/);
   // A match whose reports and trials hold none of the words has no such lines.
-  assert.equal(answer.querySelectorAll(".hit-row")[1].querySelector(".match-reasons"), null);
+  assert.equal(rows[2].querySelector(".match-reasons"), null);
 });
 
-test("words that are a tracked report's headline put its claim first, said so", async () => {
+test("words that are a tracked report's headline lead with that report, then its claim", async () => {
   SEARCH_HITS = ["/germ/", "/antibody/"];
   const page = setup(null, HOME);
   const answer = await searched(page, "cell sheets for GUMS!");
   assert.match(answer.querySelector(".exact-says").textContent, /A tracked report has this headline/);
-  assert.match(answer.querySelector(".digest").textContent, /Its claim · on record now/);
-  assert.match(answer.querySelector(".digest h3").textContent, /cell sheet was reported to rebuild gum/);
-  assert.match(page.results.textContent, /A tracked report has the headline/);
-  assert.equal(answer.querySelector(".search-group h3").textContent, "Other claims with these words");
+  const report = answer.querySelector(".search-report");
+  assert.match(report.textContent, /Gum News.*3 Mar 2022.*Gum disease/);
+  assert.deepEqual([...report.querySelectorAll("mark")].map((mark) => mark.textContent), ["Cell", "sheets", "for", "gums"]);
+  const digest = answer.querySelector(".digest");
+  assert.match(digest.textContent, /Its claim · on record now/);
+  assert.equal(digest.querySelector("h3 a").getAttribute("href"), "/sheet");
+  assert.equal(answer.querySelector("#other-matches").textContent, "Other claims with these words");
+  assert.match(answer.querySelector(".jump-others").textContent, /2 other claims with these words/);
   SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
+});
+
+test("a topic picked is kept in the page's address and cleared with the search", async () => {
+  SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
+  const page = setup(null, HOME);
+  const addresses = [];
+  page.history.replaceState = (_, __, url) => addresses.push(String(url));
+  const answer = await searched(page, "tooth regrowth");
+  [...answer.querySelectorAll(".search-topic-row button")][2].dispatchEvent(new page.window.Event("click"));
+  assert.match(addresses.at(-1), /[?&]topic=gums/);
+  answer.querySelector("button.search-clear").dispatchEvent(new page.window.Event("click"));
+  assert.doesNotMatch(addresses.at(-1), /topic=|q=/);
 });
 
 test("a registry identifier is answered with its trial and the claim it belongs to", async () => {
@@ -266,16 +276,30 @@ test("a registry identifier is answered with its trial and the claim it belongs 
   const answer = await searched(page, "nct00000003");
   assert.equal(page.searches, 0, "an identifier never goes to the word search");
   assert.equal(answer.querySelector(".search-title").textContent, "NCT00000003");
-  assert.match(answer.textContent, /This trial is on record for one tracked claim\./);
-  assert.match(answer.querySelector(".trial-record").textContent, /ClinicalTrials\.gov NCT00000003.*Phase 1.*Antibody for missing teeth/);
+  assert.match(answer.querySelector(".search-count").textContent, /On record for one tracked claim/);
+  const record = answer.querySelector(".trial-record");
+  assert.match(record.textContent, /ClinicalTrials\.gov NCT00000003.*Phase 1.*Antibody for missing teeth.*A trial on record is not a treatment option\./);
   assert.match(answer.querySelector(".digest").textContent, /Phase 1 trial/);
-  assert.match(answer.textContent, /A trial on record is not a treatment option\./);
+  assert.match(answer.querySelector(".search-report").textContent, /“New drug to regrow lost teeth”/);
 });
 
-test("an identifier with no trial on record says so", async () => {
+test("an identifier with no trial on record says so and links to its registry", async () => {
   const page = setup(null, PAGE, true);
-  page.submit("NCT99999999");
+  page.submit("nct99999999");
   for (let turn = 0; turn < 4; turn++) await settle();
-  assert.match(page.results.textContent, /No trial with the identifier NCT99999999 is on record here\./);
+  assert.match(page.results.textContent, /No trial with the identifier NCT99999999 is matched to a claim tracked here\./);
+  const link = [...page.results.querySelectorAll("a")].find((anchor) => /ClinicalTrials\.gov/.test(anchor.textContent));
+  assert.equal(link.getAttribute("href"), "https://clinicaltrials.gov/study/NCT99999999");
   assert.equal(page.searches, 0);
+});
+
+test("a search that finds nothing says so plainly and points to pasting a link", async () => {
+  SEARCH_HITS = [];
+  const page = setup(null, PAGE, true);
+  page.submit("zzzqqq");
+  for (let turn = 0; turn < 4; turn++) await settle();
+  assert.match(page.results.textContent, /Nothing tracked here matches “zzzqqq”\./);
+  assert.match(page.results.textContent, /paste the article's link/);
+  assert.doesNotMatch(page.results.textContent, /We say that a lot/);
+  SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
 });

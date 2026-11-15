@@ -19,6 +19,13 @@ On 2026-11-15 the operator found that words typed in the home page's box were an
 - A trial registry identifier (NCT, jRCT, ISRCTN, ACTRN, ChiCTR, DRKS, CTRI, EU CT) is answered with that trial alone: the registry record (registry, identifier, phase, title) on the panel blue, then each claim it is matched to, and "A trial on record is not a treatment option." An identifier with no trial on record says so. It never goes to the word search, which matches every identifier sharing the prefix (mock F).
 - A search detail file, `/search-detail.json`, holds each published claim's reports (title, outlet, domain, the site's address of the outlet icon, address, date) and trials (identifier, title, registry, address, phases). It is read only when words are searched. The extension does not read it.
 
+- After a critique on 2026-11-15 (25/40, `.impeccable/critique/`), the operator chose to fix all five issues it found:
+  - Matches are ordered by a fixed rule over the words they hold (side by side, then all, in the claim's headline, then a report's headline, then the treatment and condition), the search index's order breaking a tie. A word search leads with its closest match as a row labelled "Closest match"; the digest is kept for an exact headline and a trial identifier, where the site knows the claim.
+  - In an answer the unchecked notice is one grey line; a phone gets a link to the other claims.
+  - The report shown with an exact headline is built from the search detail with the words marked, the same on every page, instead of being copied from the day list.
+  - One way out, "Clear search", 44px tall, beside the count; the count is said once; the line under the box says only where the answer is. The topic pick is kept in the address as `topic`, and topics are offered as buttons under the heading where the side column is not.
+  - "Nothing tracked here matches “…”." replaces "No record found for … We say that a lot.", and points to pasting the article's link. An identifier not matched to a tracked claim links to its registry's record where the address is built from the identifier alone. "A trial on record is not a treatment option." stands inside the record it qualifies.
+
 Out of scope: pasted article addresses and their answers, a search with no result, the search index's ranking. Posts on social sites are not in the export yet; once they are, they are named as reports by their platform.
 
 ## Capabilities

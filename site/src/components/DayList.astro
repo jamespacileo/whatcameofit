@@ -537,6 +537,14 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     display: none;
   }
 
+  /* Where the side column stands, it holds a search's topics; the row under the
+     answer's heading is for narrower screens. */
+  @media (min-width: 56rem) {
+    [data-search-answer] .search-topic-row {
+      display: none;
+    }
+  }
+
   @media (min-width: 56rem) {
     .days-body {
       grid-template-columns: 13.5rem minmax(0, 1fr);

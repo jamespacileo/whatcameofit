@@ -1345,6 +1345,8 @@ main nav.contents ul li + li {
 
 .search-results mark.hit {
   background: var(--tag);
+  /* The fill is near the panel blue; a rule under the word carries the mark there. */
+  box-shadow: inset 0 -2px 0 var(--ring);
   color: inherit;
   border-radius: 3px;
   padding: 0 0.12em;
@@ -1381,10 +1383,155 @@ main nav.contents ul li + li {
   margin-top: 0.35rem;
 }
 
-/* The report under a best match: the list's own row, without the status block the
-   digest above already gives. */
-.best-report .report-row {
-  grid-template-columns: minmax(0, 1fr);
+/* A report named in an answer, built as the day list's report row is: the outlet
+   with its icon, the date and topic in grey, then the title quoted, opening the claim. */
+.search-report {
+  margin-top: 1rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.search-report .row-source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.7rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.search-report .row-topic {
+  background: var(--tint);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 0.05rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+.results .search-report-title,
+.search-report-title {
+  margin: 0.35rem 0 0;
+  font-size: clamp(1.1rem, 2.6vw, 1.3rem);
+  font-weight: 700;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.search-report-title a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.search-report-title a:hover {
+  text-decoration: underline;
+}
+
+/* In an answer the digest's headline opens the claim, and keeps the headline's ink. */
+.digest h2 a,
+.digest h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.digest h2 a:hover,
+.digest h3 a:hover {
+  text-decoration: underline;
+}
+
+.digest .about p {
+  text-wrap: pretty;
+}
+
+.results .unchecked-line,
+.unchecked-line {
+  margin-top: 0.35rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* The one way out of an answer: a text control as tall as a fingertip. */
+.search-count {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 0.75rem;
+}
+
+.search-clear {
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* The topics of the matches, under the heading, where the side column is not. */
+.search-topic-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.search-topic-row .side-pick {
+  width: auto;
+  min-height: 2.75rem;
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px var(--rule);
+  background: var(--paper);
+}
+
+.search-topic-row .side-pick .kind-count {
+  margin-left: 0.4rem;
+  color: var(--muted);
+}
+
+.search-topic-row .side-pick[aria-pressed="true"] {
+  background: var(--tint);
+  box-shadow: inset 0 0 0 1px var(--blue);
+}
+
+.jump-others {
+  display: none;
+}
+
+@media (max-width: 34rem) {
+  /* On a phone the other matches are a press away, not two screens away. */
+  .jump-others {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    margin-top: 0.4rem;
+  }
+}
+
+.hit-heading {
+  margin: 0;
+  font-size: inherit;
+}
+
+.hit-row.is-closest .hit-title {
+  font-size: 1.2rem;
+}
+
+.hit-row.is-closest .hit-now .row-label {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.results .hit-when,
+.hit-when {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+.results .trial-note,
+.trial-note {
+  margin-top: 0.4rem;
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 .search-group {
@@ -1605,9 +1752,14 @@ main nav.contents ul li + li {
 
   .hit-now {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.15rem 0.6rem;
     margin-bottom: 0.25rem;
+  }
+
+  .hit-now .row-label {
+    flex-basis: 100%;
   }
 }
 

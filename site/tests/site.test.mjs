@@ -182,7 +182,7 @@ test("Scenario: Search with no result", () => {
     .filter((name) => name.endsWith(".js"))
     .map((name) => page(path.join("_astro", name)))
     .join("\n");
-  assert.match(scripts + page("index.html"), /No record found for/);
+  assert.match(scripts + page("index.html"), /Nothing tracked here matches/);
   assert.match(page("index.html"), /<template id="unfound">\s*<svg class="unfound"/);
 });
 
