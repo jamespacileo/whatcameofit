@@ -70,7 +70,7 @@ export async function capturePage(api, tab, signal, encode = resizeCapture) {
   }
   async function inspect() {
     let scope = null;
-    if (/^(?:www\.|m\.)?youtube\.com$/.test(new URL(tab.url).hostname)) {
+    if (/^(?:(?:www\.|m\.)?youtube\.com|(?:www\.)?(?:instagram\.com|threads\.(?:com|net)|tiktok\.com|t\.me|telegram\.me))$/.test(new URL(tab.url).hostname)) {
       const [{ result: page }] = await api.scripting.executeScript({ target: { tabId: tab.id }, func: collectFromPage });
       scope = page.mediaScope;
     }

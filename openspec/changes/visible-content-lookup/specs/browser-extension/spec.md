@@ -1,5 +1,20 @@
 ## ADDED Requirements
 
+### Requirement: Addressed social post boundary
+Instagram, Threads, Telegram and TikTok detail-page reading SHALL bind collected words and any screenshot scope to the requested post identity. Replies, login forms, neighbouring messages and recommended videos SHALL NOT supply the claim. Missing or stale identity metadata SHALL fail closed. Explicit selected text SHALL retain precedence.
+
+#### Scenario: TikTok recommends a longer unrelated video
+- **WHEN** a requested video has a short caption beside a longer recommendation
+- **THEN** the reader uses the requested video's bound caption and media scope, including its matching public caption metadata when playback fails
+
+#### Scenario: Telegram opens a channel around the linked message
+- **WHEN** the channel page contains several messages
+- **THEN** only the message matching the channel and numeric message ID contributes text, links or pixels
+
+#### Scenario: Instagram or Threads metadata belongs to another post
+- **WHEN** public metadata is missing or names a different post identity
+- **THEN** the reader returns no automatic post reading rather than falling back to surrounding page text
+
 ### Requirement: Visible content fallback
 Opening an untracked page with visible media and insufficient readable text SHALL automatically use one screenshot to identify the reported intervention and indication. Selected text SHALL suppress automatic capture. A video SHALL provide only its currently visible frame. The popup SHALL explain screenshot use and OpenAI processing.
 

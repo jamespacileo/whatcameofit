@@ -9,6 +9,14 @@
 - [ ] Install and test updated Safari app; refresh store privacy/listing/build
 - [ ] Submit Safari release after final checks and screenshot
 
+## 2026-11-15 corpus rerun
+- [x] Reproduce the five failed rows and attempt every previously untested social URL on the deployed address path
+- [x] Add regression cases for social-post identity, surrounding-content exclusion and old cache rejection
+- [x] Bind social caption and screenshot scopes; correct non-treatment and multiple-claim identification
+- [x] Run the corrected reader and current local service against captured/live public pages with real provider and registry requests
+- [x] Preserve per-row build, method, timestamp, limitations and verdicts in the corpus and existing Google Sheet
+- [x] Complete final regression, build, corpus and Sheet read-back verification
+
 ## Slow article lookup correction
 - [x] Reproduce the ScienceAlert delay and isolate paper retrieval using timed production requests
 - [x] Establish failing regression checks for stalled sources, non-treatment identification and popup timeout/retry
