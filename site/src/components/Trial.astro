@@ -1,13 +1,14 @@
 ---
-// One trial, once, in plain words: how many people and what it was compared with, what
-// it measured where a reading says so, and its design and state said plainly. The
-// registry's own terms, what it set out to measure and what it posted are one press
-// away. Openspec trial-facts and site-publishing (change plain-trial-entries): the
+// One trial, once, as a row of the trials table: how many people, what it was compared
+// with, its design, its state and its results, in plain words. The row opens to what it
+// measured where a reading says so, the registry's own terms, what it set out to measure
+// and what it posted. With no script the row is simply open. Openspec site-publishing:
+// "Trials read across as a table". Openspec trial-facts and site-publishing (change plain-trial-entries): the
 // numbers are the registry's, and no word here says how the trial turned out, where it
 // takes place or who may take part.
 import ChevronDown from "@lucide/astro/icons/chevron-down";
 import ExternalLink from "@lucide/astro/icons/external-link";
-import { confidenceLabel, readingOf } from "../lib/confidence";
+import { confidenceLabel, matchWords, readingOf } from "../lib/confidence";
 import type { ExportedMatch, ExportedTrial } from "../lib/export";
 import { paperAnchor } from "../lib/paper-facts";
 import { measureWords } from "../lib/readings";
@@ -18,15 +19,13 @@ import {
   STUDY_KIND_WORDS,
   comparisonText,
   designText,
-  foldLabel,
   measureLead,
   measureText,
   phaseText,
-  plainFacts,
   resultTable,
   sponsorText,
   studiedText,
-  trialHeading,
+  trialColumns,
   type TrialDates,
 } from "../lib/trial-facts";
 import TrialDetailsLink from "./TrialDetailsLink.astro";
@@ -46,8 +45,7 @@ const { trial, match, approach, dates } = Astro.props;
 const papers = trial.papers ?? [];
 const facts = trial.facts;
 const registry = sourceName(trial.source_name);
-const heading = trialHeading(trial, approach);
-const plain = plainFacts(trial, dates);
+const columns = trialColumns(trial, approach, dates);
 // What its first main measure is, in the words "The record in brief" uses.
 const measured = measureWords(trial, 0);
 const measuredPhrase = measured
@@ -68,18 +66,37 @@ const morePlanned = (facts?.primary_outcomes_total ?? 0) - planned.length;
 const morePosted = results ? results.outcomes_total - results.outcomes.length : 0;
 ---
 
-<li class="trial" id={`trial-${trial.trial_id}`}>
-  <div class="trial-head">
-    <h3 class="trial-title">{heading.text}</h3>
-    <p class="trial-name">
-      <a href={trial.url} rel="noopener">
-        {trial.trial_id}
-        <ExternalLink class="out" size={13} stroke-width={1.9} aria-hidden="true" />
-        <span class="visually-hidden">(at {registry})</span>
-      </a>
-      <TrialDetailsLink url={trial.url} />
-    </p>
+<div class="trial-group" role="rowgroup" id={`trial-${trial.trial_id}`}>
+  <div class="trial-row" role="row">
+    <div class="trial-cell trial-lead" role="rowheader">
+      <button
+        type="button"
+        class="trial-open"
+        aria-expanded="true"
+        aria-controls={`trial-detail-${trial.trial_id}`}
+      >
+        <span class="chev" aria-hidden="true"><ChevronDown size={14} stroke-width={2.2} /></span>
+        <span class="trial-title">{columns.lead}</span>
+      </button>
+      <span class="trial-name">
+        {columns.phase && <span class="trial-phase">{columns.phase} · </span>}
+        <a href={trial.url} rel="noopener">
+          {trial.trial_id}
+          <ExternalLink class="out" size={13} stroke-width={1.9} aria-hidden="true" />
+          <span class="visually-hidden">(at {registry})</span>
+        </a>
+        <TrialDetailsLink url={trial.url} />
+      </span>
+    </div>
+    <div class="trial-cell" role="cell"><span class="lbl">Compared with</span>{columns.compared}</div>
+    <div class="trial-cell" role="cell">
+      <span class="lbl">Design</span>{columns.design.length > 0 ? columns.design.join(" · ") : "Not stated in the record"}
+    </div>
+    <div class="trial-cell" role="cell"><span class="lbl">State</span>{columns.state ?? "Not stated in the record"}</div>
+    <div class="trial-cell" role="cell"><span class="lbl">Results</span>{columns.results}</div>
   </div>
+  <div class="trial-detail" role="row" id={`trial-detail-${trial.trial_id}`}>
+    <div role="cell" aria-colspan="5">
   {
     measuredPhrase && (
       <p class="trial-measured">
@@ -87,17 +104,8 @@ const morePosted = results ? results.outcomes_total - results.outcomes.length : 
       </p>
     )
   }
-  {
-    plain.length > 0 && (
-      <p class="trial-plain">
-        {plain.map((fact) => (
-          <span>{fact}</span>
-        ))}
-      </p>
-    )
-  }
   <p class="entry-note trial-meta">
-    {match && <span class="unbroken">{confidenceLabel(match.score)}</span>}
+    {match && <span class="unbroken">Match to this claim: {matchWords(match.score)}</span>}
     {
       papers.length > 0 && (
         <a class="unbroken" href={`#${paperAnchor(papers[0])}`}>
@@ -114,11 +122,6 @@ const morePosted = results ? results.outcomes_total - results.outcomes.length : 
     }
     {measuredPhrase && <span>What it measured was read by a model and checked against the record</span>}
   </p>
-  <details class="trial-more">
-    <summary>
-      {foldLabel(trial)}
-      <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
-    </summary>
     <dl class="trial-facts">
       {
         studied && (
@@ -145,7 +148,7 @@ const morePosted = results ? results.outcomes_total - results.outcomes.length : 
         )
       }
       {
-        trial.title && !heading.isTitle && (
+        trial.title && !columns.isTitle && (
           <div>
             <dt>The registry's title</dt>
             <dd>{trial.title}</dd>
@@ -297,5 +300,6 @@ const morePosted = results ? results.outcomes_total - results.outcomes.length : 
         )
       }
     </dl>
-  </details>
-</li>
+    </div>
+  </div>
+</div>

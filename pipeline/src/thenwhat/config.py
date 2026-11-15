@@ -129,9 +129,10 @@ class Settings(BaseSettings):
     # that claim more than half. Otherwise a new claim is drafted.
     same_claim_accept_above: float = 0.6
     # An article becomes a claim, or joins one, only when a decision on the read's own
-    # headline and summary gives at least this probability to its being a report of a
-    # new treatment for a condition. Below it no claim is made and the lead says so.
-    new_treatment_accept_above: float = 0.5
+    # headline and summary gives at least this probability to its being about one
+    # treatment for one condition, whether the treatment is new or long established.
+    # Below it no claim is made and the lead says so.
+    treatment_accept_above: float = 0.5
     # No outlet is asked for two articles less than this many seconds apart, across
     # every process. A longer delay in the outlet's robots.txt replaces it.
     outlet_interval_seconds: float = 10

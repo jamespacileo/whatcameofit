@@ -133,6 +133,16 @@ def _has_started(trial: list[Evidence]) -> bool:
     return any(event.trial_state in SHOWS_A_START for event in trial)
 
 
+def _registrations(trial: list[Evidence]) -> list[Evidence]:
+    return [event for event in trial if event.type is EventType.TRIAL_REGISTERED]
+
+
+def _start(trial: list[Evidence]) -> Evidence:
+    """The event that shows a started trial started: its start, else its completion."""
+    shown = [event for event in trial if event.trial_state in SHOWS_A_START]
+    return min(shown, key=lambda event: (event.trial_state is not TrialState.STARTED, event.id))
+
+
 def _stage(trial: list[Evidence]) -> int:
     """Stage of a trial from its most recently recorded phases; the lower of two."""
     phases = next((event.trial_phases for event in reversed(trial) if event.trial_phases), ())
@@ -189,14 +199,16 @@ def derive(
         started = [trial for trial in standing.values() if _has_started(trial)]
         furthest = max((_stage(trial) for trial in started), default=0)
         status = STAGE_STATUS[furthest]
-        # A phase is explained by the trials that reached it; "trial registered" by
-        # every standing trial, since none has gone further.
-        deciding = (
-            [trial for trial in started if _stage(trial) == furthest]
-            if furthest
-            else list(standing.values())
-        )
-        explaining = [event for trial in deciding for event in trial]
+        # Only the events that decide the status explain it. A phase is decided by the
+        # registration and start of the trials that reached it; "trial registered" by
+        # the registration of every standing trial, since none has gone further.
+        if furthest:
+            deciding = [trial for trial in started if _stage(trial) == furthest]
+            explaining = [
+                event for trial in deciding for event in (*_registrations(trial), _start(trial))
+            ]
+        else:
+            explaining = [event for trial in standing.values() for event in _registrations(trial)]
     elif failed:
         status = ClaimStatus.FAILED
         reports = {flag.evidence_event_id for flag in counted_flags}
