@@ -1,5 +1,26 @@
 ## ADDED Requirements
 
+### Requirement: Reported treatment claim
+Identification SHALL require a reported therapeutic claim or study concerning an intervention and condition. Incidental drug mentions in earnings, supply, pricing, company-profile or litigation reporting SHALL NOT trigger a registry search. Preclinical work, observational findings and trial starts MAY identify a treatment without implying human efficacy or approval.
+
+#### Scenario: Financial story names an obesity drug
+- **WHEN** a story reports sales or supply without a treatment finding
+- **THEN** identification reports no specific treatment claim and does not search the registry
+
+### Requirement: Coherent intervention and condition
+Identification SHALL choose one clearly main intervention-condition pair and SHALL NOT combine separate roundup items into a fictional treatment. A genuine combination regimen SHALL remain one intervention. If no clear main pair exists, the response SHALL explain that several separate claims were present.
+
+#### Scenario: Research roundup names unrelated treatments
+- **WHEN** a post lists bladder-cancer therapy, atrial-fibrillation surgery and sickle-cell gene editing as separate items
+- **THEN** the response does not combine them into a single registry query
+
+### Requirement: Correction-aware saved results
+Results stored before the social-reading and treatment-claim corrections SHALL NOT be reused by either the shared service cache or the extension's local result cache.
+
+#### Scenario: Opening a previously misclassified business story
+- **WHEN** an otherwise fresh version-2 result exists
+- **THEN** the corrected service and extension ignore it and perform a new eligible lookup
+
 ### Requirement: Bounded visual reading
 The service SHALL accept one inline PNG/JPEG at most 750KB, 1600px maximum side and 1MP. It SHALL validate dimensions and request size before paid calls. It SHALL treat all pixels and text as untrusted report content, never instructions or proof. Identification failure SHALL be worded as insufficient identification, not absence of a treatment claim.
 
