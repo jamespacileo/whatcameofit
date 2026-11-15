@@ -21,6 +21,7 @@ Released corpus checks found a trial match accompanied by a knowledge card for a
 ### Modified Capabilities
 
 - `knowledge-cards`: keep component cards from representing complete regimens.
+- `claims`: allow evidence-stage confirmation by the separately specified rule.
 - `review`: confirm eligible recorded evidence stages by rule without repeated model calls.
 - `status-derivation`: unknown evidence stage gives no trial record found, not preclinical only.
 - `site-publishing`: no-trial explanations and summaries do not infer a human study from an unknown stage.
