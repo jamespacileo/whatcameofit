@@ -237,6 +237,7 @@ def test_preview_metadata_cannot_make_an_incomplete_page_readable(missing):
     class Reader:
         def probe(self, url):
             from thenwhat.extract.retrieve import READ, Probe
+
             return Probe(READ, 200, page)
 
     outlet = Outlet("example.org")
