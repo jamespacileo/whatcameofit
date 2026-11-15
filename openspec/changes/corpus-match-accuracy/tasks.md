@@ -11,13 +11,13 @@
 - [x] 2.2 Reproduce hidden first-slide selection; fix current-slide binding/clipping and verify neighbouring-media, ambiguity and navigation safeguards.
 - [x] 2.3 Invalidate obsolete results, update Safari version and verify cache/build regressions.
 - [ ] 2.4 Complete independent standards/spec review and CI, deploy, install signed Safari and verify affected released URLs.
-- [ ] 2.5 Update corpus and native Sheet with the new released results and verify read-back.
-- [ ] 2.6 Exclude signed-in LinkedIn sidebars and Bluesky replies; verify synthetic boundaries and live DOM, then release the corrected reader with obsolete local answers invalidated.
-- [ ] 2.7 Correct Facebook neighbouring-post selection and combination truncation; verify live captions, repeated provider readings and negative/monotherapy controls, deploy and rerun affected URLs.
+- [x] 2.5 Update corpus and native Sheet with the new released results and verify read-back.
+- [x] 2.6 Exclude signed-in LinkedIn sidebars and Bluesky replies; verify synthetic boundaries and live DOM, then release the corrected reader with obsolete local answers invalidated.
+- [x] 2.7 Correct Facebook neighbouring-post selection and combination truncation; verify live captions, repeated provider readings and negative/monotherapy controls, deploy and rerun affected URLs.
 
 ## 3. Full corpus accuracy and efficiency
 
-- [ ] 3.1 Audit every exact mapped article/card identity without paid lookup and record per-row evidence.
+- [x] 3.1 Audit every exact mapped article/card identity without paid lookup and record per-row evidence.
 - [ ] 3.2 Rerun remaining article URLs through eligible released paths, fix reproducible failures and record honest trial/card outcomes.
 - [ ] 3.3 Audit all remaining social URLs with bound readable content and available frames; fix reproducible failures and record coverage limits.
 - [ ] 3.4 Resolve evidence-backed missing card coverage through the existing pipeline, verify every new association and deploy any resulting changes.

@@ -1,0 +1,6833 @@
+{
+  "date": "2026-11-15",
+  "timing_note": "Audit pacing-queue durations are excluded from app-latency claims.",
+  "native_safari": {
+    "installed": "0.9.8 (17)",
+    "verified": false,
+    "reason": "Mac locked"
+  },
+  "social_cases": {
+    "S001": {
+      "url": "https://x.com/NEJM/status/2062855738213437787",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:07:46.215Z",
+      "http": 200,
+      "release_commit": "7868b02657ed81a0009f6bfe909bf66a7c6ae842",
+      "source_address": "https://x.com/NEJM/status/2062855738213437787",
+      "evidence": "Released 0.9.6 reader on loaded live post; public text and links only; captured 2026-11-15T14:05:08.633Z; no full video/audio check.",
+      "about_a_treatment": true,
+      "treatment": "obinutuzumab",
+      "condition": "primary membranous nephropathy",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT04629248",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": [
+            "trial_name"
+          ]
+        },
+        {
+          "id": "NCT05050214",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06120673",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06781944",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06994468",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    },
+    "S002": {
+      "url": "https://x.com/ProfGLongMIA/status/2120640215362519398",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:08:29.011Z",
+      "http": 200,
+      "release_commit": "7868b02657ed81a0009f6bfe909bf66a7c6ae842",
+      "source_address": "https://x.com/ProfGLongMIA/status/2120640215362519398",
+      "evidence": "Released 0.9.6 reader on loaded live post; public text and links only; captured 2026-11-15T14:05:09.497Z; no full video/audio check.",
+      "about_a_treatment": true,
+      "treatment": "Personalised therapeutic cancer vaccine plus pembrolizumab",
+      "condition": "Melanoma after surgery in people at high risk of recurrence",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT05933577",
+          "score": 1,
+          "answer": "match",
+          "agrees": [
+            "trial_name"
+          ]
+        },
+        {
+          "id": "NCT03897881",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03313778",
+          "score": 0.82,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06961006",
+          "score": 0.43,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT03715985",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06631079",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06833073",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07077616",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07221474",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05949775",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06077760",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06295809",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06305767",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06307431",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06496373",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06623422",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06631092",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07513376",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    },
+    "S003": {
+      "url": "https://x.com/NEJM/status/2045850057573093709",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:09:12.477Z",
+      "http": 200,
+      "release_commit": "7868b02657ed81a0009f6bfe909bf66a7c6ae842",
+      "source_address": "https://x.com/NEJM/status/2045850057573093709",
+      "evidence": "Released 0.9.6 reader on loaded live post; public text and links only; captured 2026-11-15T14:05:10.068Z; no full video/audio check.",
+      "about_a_treatment": true,
+      "treatment": "Prednisolone",
+      "condition": "Kawasaki disease",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT04078568",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": [
+            "participants"
+          ]
+        },
+        {
+          "id": "NCT03200561",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04509219",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02439996",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    },
+    "S008": {
+      "url": "https://mastodon.social/@msaleben/117588915506604557",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:09:54.395Z",
+      "http": 200,
+      "release_commit": "7868b02657ed81a0009f6bfe909bf66a7c6ae842",
+      "source_address": "https://mastodon.social/@msaleben/117588915506604557",
+      "evidence": "Released 0.9.6 reader on loaded live post; public text and links only; captured 2026-11-15T14:05:48.775Z; no full video/audio check.",
+      "about_a_treatment": true,
+      "treatment": "Emrusolmin",
+      "condition": "Multiple system atrophy",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT06568237",
+          "score": 0.5,
+          "answer": "match",
+          "agrees": [
+            "stated",
+            "trial_name",
+            "participants",
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT07197866",
+          "score": 0.88,
+          "answer": "match",
+          "agrees": [
+            "stated",
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT06627231",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": [
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT07674940",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": [
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT06911567",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": [
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT05532358",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": [
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT04685265",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT04208152",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    },
+    "S006": {
+      "url": "https://bsky.app/profile/nejm.org/post/3n24mxzs2f62a",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:38:54.201Z",
+      "http": 200,
+      "release_commit": "a92783deaa42149d7b937f43fed67e7083a35e55",
+      "source_address": "https://bsky.app/profile/nejm.org/post/3n24mxzs2f62a",
+      "evidence": "Released 0.9.7 reader on live Bluesky detail page; bound original post, excluding replies. Captured 2026-11-15T14:38:23.467Z",
+      "about_a_treatment": true,
+      "treatment": "intismeran–pembrolizumab",
+      "condition": "Resected stage IIB to IV melanoma",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT05933577",
+          "score": 1,
+          "answer": "match",
+          "agrees": [
+            "trial_name"
+          ]
+        },
+        {
+          "id": "NCT03897881",
+          "score": 0.8200000000000001,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06961006",
+          "score": 0.75,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03313778",
+          "score": 0.7100000000000001,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05608291",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07221474",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06077760",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06295809",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06305767",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06307431",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06623422",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06833073",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07513376",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    },
+    "S007": {
+      "url": "https://bsky.app/profile/statnews.com/post/3n23cb24sdp2m",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:39:24.992Z",
+      "http": 200,
+      "release_commit": "a92783deaa42149d7b937f43fed67e7083a35e55",
+      "source_address": "https://bsky.app/profile/statnews.com/post/3n23cb24sdp2m",
+      "evidence": "Released 0.9.7 reader on live Bluesky detail page; original All of Us genetics post only, excluding reply text. Captured 2026-11-15T14:38:24.988Z",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "error": null,
+      "tracked": [],
+      "candidates": []
+    },
+    "S045": {
+      "url": "https://www.instagram.com/p/DWox5WkghE-/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T15:01:58.505Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.instagram.com/p/DWox5WkghE-/",
+      "evidence": "Released 0.9.8 collector on live Instagram BELIEVE post; addressed caption and full-regimen reading correction. No full image/video/audio interpretation. Captured 2026-11-15T14:53:31.614Z",
+      "about_a_treatment": true,
+      "treatment": "bimagrumab plus semaglutide",
+      "condition": "Obesity",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT05616013",
+          "score": 0.94,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07909889",
+          "score": 0.18,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03005288",
+          "score": 0.16,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05254314",
+          "score": 0.15,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06754163",
+          "score": 0.15,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07845994",
+          "score": 0.14,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06967389",
+          "score": 0.11,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07732426",
+          "score": 0.09,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06934655",
+          "score": 0.08,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06751589",
+          "score": 0.07,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07368855",
+          "score": 0.07,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07702461",
+          "score": 0.07,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06005012",
+          "score": 0.06,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01433263",
+          "score": 0.05,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07621640",
+          "score": 0.05,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07769047",
+          "score": 0.05,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06374875",
+          "score": 0.04,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06497595",
+          "score": 0.04,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07041983",
+          "score": 0.04,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05870462",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06468748",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06633783",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02152761",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT02333331",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02468674",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05071898",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05813249",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05933499",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06380426",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07272837",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07275697",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07446998",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07592546",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07870538",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01669174",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT01868685",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05746039",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05872022",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06027567",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06738979",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06745284",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06890611",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07280221",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07642635",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07649759",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07812597",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07920887",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT01423110",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT01601600",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT01925209",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT02250443",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT02573467",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05670379",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06234111",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06431308",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06643728",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06715514",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06901349",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06950684",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07673900",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    },
+    "S026": {
+      "url": "https://www.instagram.com/p/DFkxSEXRJT_/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:21:46.478Z",
+      "http": 200,
+      "release_commit": "7868b02657ed81a0009f6bfe909bf66a7c6ae842",
+      "source_address": "https://www.instagram.com/p/DFkxSEXRJT_/?img_index=2",
+      "evidence": "Released Safari 0.9.6 collector and visible-media crop executed in live Chrome; Persian caption plus visible carousel slide 2 containing suzetrigine/Journavx. No full carousel or video/audio reading. Captured 2026-11-15T14:21:24.485Z",
+      "about_a_treatment": true,
+      "treatment": "Suzetrigine",
+      "condition": "Moderate-to-severe pain",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT06887959",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06887972",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07145346",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07257133",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07463430",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07534709",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07538570",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07539623",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07796152",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07836010",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07226700",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07357376",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07525219",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07600697",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07795827",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07839715",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07866638",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07195669",
+          "score": 0.98,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07654296",
+          "score": 0.98,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07829718",
+          "score": 0.98,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07843134",
+          "score": 0.98,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07864896",
+          "score": 0.98,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07723352",
+          "score": 0.97,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07821931",
+          "score": 0.97,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06774625",
+          "score": 0.96,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07355166",
+          "score": 0.96,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07672015",
+          "score": 0.96,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07905404",
+          "score": 0.96,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07928011",
+          "score": 0.96,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05558410",
+          "score": 0.95,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07820969",
+          "score": 0.95,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07548385",
+          "score": 0.94,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07575230",
+          "score": 0.94,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04977336",
+          "score": 0.92,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05034952",
+          "score": 0.92,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05661734",
+          "score": 0.92,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07856654",
+          "score": 0.91,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05553366",
+          "score": 0.89,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07219888",
+          "score": 0.86,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07624526",
+          "score": 0.84,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07231419",
+          "score": 0.81,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07511400",
+          "score": 0.77,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06628908",
+          "score": 0.75,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06176196",
+          "score": 0.69,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05660538",
+          "score": 0.67,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06696443",
+          "score": 0.48,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05560464",
+          "score": 0.11,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05704556",
+          "score": 0.05,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06972212",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05635110",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05818852",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06820307",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05455502",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05541471",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05851157",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06336096",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06834009",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07296770",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07378865",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07570069",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    },
+    "S012": {
+      "url": "https://www.youtube.com/watch?v=fDaMfZCZEyA",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:26:51.937Z",
+      "http": 200,
+      "release_commit": "7868b02657ed81a0009f6bfe909bf66a7c6ae842",
+      "source_address": "https://www.youtube.com/watch?v=fDaMfZCZEyA",
+      "evidence": "Released 0.9.6 reader on live YouTube watch page; title and expanded description, captions unavailable; no full video/audio interpretation. Captured 2026-11-15T14:26:16.141Z",
+      "about_a_treatment": true,
+      "treatment": "Daraxonrasib",
+      "condition": "Pancreatic cancer",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT06128551",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06445062",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06625320",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07252232",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07491445",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07805954",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07898813",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05379985",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06360354",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07756281",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06922591",
+          "score": 0.97,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07573215",
+          "score": 0.96,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06040541",
+          "score": 0.7,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07349537",
+          "score": 0.43,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07492680",
+          "score": 0.32,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07397338",
+          "score": 0.29,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07895498",
+          "score": 0.11,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07819838",
+          "score": 0.03,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06881784",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07908550",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06162221",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07793253",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    },
+    "S013": {
+      "url": "https://www.youtube.com/watch?v=UbfC2WEgzts",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:27:29.869Z",
+      "http": 200,
+      "release_commit": "7868b02657ed81a0009f6bfe909bf66a7c6ae842",
+      "source_address": "https://www.youtube.com/watch?v=UbfC2WEgzts",
+      "evidence": "Released 0.9.6 reader on live YouTube watch page; title and expanded description, captions unavailable; no full video/audio interpretation. Captured 2026-11-15T14:27:02.710Z",
+      "about_a_treatment": true,
+      "treatment": "Moderna’s melanoma vaccine",
+      "condition": "Melanoma",
+      "error": null,
+      "tracked": [],
+      "candidates": []
+    },
+    "S016": {
+      "url": "https://news.ycombinator.com/item?id=48517199",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:28:06.709Z",
+      "http": 200,
+      "release_commit": "7868b02657ed81a0009f6bfe909bf66a7c6ae842",
+      "source_address": "https://news.ycombinator.com/item?id=48517199",
+      "evidence": "Released 0.9.6 reader on live Hacker News item; addressed story title/body and outbound links, excluding discussion comments. Captured 2026-11-15T14:27:15.296Z",
+      "about_a_treatment": true,
+      "treatment": "unnamed new pancreatic cancer drug",
+      "condition": "pancreatic cancer",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT06844422",
+          "score": 0.76,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07301229",
+          "score": 0.75,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01364805",
+          "score": 0.66,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05482893",
+          "score": 0.64,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07114666",
+          "score": 0.62,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04241276",
+          "score": 0.58,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04183478",
+          "score": 0.55,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04172532",
+          "score": 0.52,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04181645",
+          "score": 0.51,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03699319",
+          "score": 0.43,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05042128",
+          "score": 0.43,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06538857",
+          "score": 0.42,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04299048",
+          "score": 0.39,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02581501",
+          "score": 0.38,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00249301",
+          "score": 0.37,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07736612",
+          "score": 0.37,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04101929",
+          "score": 0.36,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06896188",
+          "score": 0.36,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07575191",
+          "score": 0.35,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06361030",
+          "score": 0.32,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06548672",
+          "score": 0.27,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07253662",
+          "score": 0.2,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04080024",
+          "score": 0.18,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05093231",
+          "score": 0.16,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03585062",
+          "score": 0.12,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06944587",
+          "score": 0.12,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07870421",
+          "score": 0.09,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02743637",
+          "score": 0.08,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06168552",
+          "score": 0.07,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04581876",
+          "score": 0.06,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04883775",
+          "score": 0.06,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05172310",
+          "score": 0.06,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07723781",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03937453",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05708599",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06047379",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02632305",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04572165",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05692596",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06065852",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00089024",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00259532",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00983541",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01132755",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01603004",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02648880",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04558268",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05248763",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05279079",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    },
+    "S017": {
+      "url": "https://news.ycombinator.com/item?id=50235217",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:28:42.828Z",
+      "http": 200,
+      "release_commit": "7868b02657ed81a0009f6bfe909bf66a7c6ae842",
+      "source_address": "https://news.ycombinator.com/item?id=50235217",
+      "evidence": "Released 0.9.6 reader on live Hacker News item; addressed story title and outbound article link, excluding discussion comments. Captured 2026-11-15T14:27:25.515Z",
+      "about_a_treatment": true,
+      "treatment": "intismeran plus Keytruda",
+      "condition": "Resected stage IIB–IV melanoma",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT05933577",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": [
+            "participants"
+          ]
+        },
+        {
+          "id": "NCT03313778",
+          "score": 0.34,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06961006",
+          "score": 0.2,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05608291",
+          "score": 0.06,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07221474",
+          "score": 0.04,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06623422",
+          "score": 0.03,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06833073",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06077760",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06295809",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06305767",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06307431",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07513376",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    },
+    "S018": {
+      "url": "https://news.ycombinator.com/item?id=50028027",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:29:22.285Z",
+      "http": 200,
+      "release_commit": "7868b02657ed81a0009f6bfe909bf66a7c6ae842",
+      "source_address": "https://news.ycombinator.com/item?id=50028027",
+      "evidence": "Released 0.9.6 reader on live Hacker News item; addressed story title and outbound article link, excluding discussion comments. Captured 2026-11-15T14:27:26.447Z",
+      "about_a_treatment": true,
+      "treatment": "Divalent small interfering RNA",
+      "condition": "Prion disease",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT07444580",
+          "score": 0.85,
+          "answer": "match",
+          "agrees": [
+            "stated",
+            "trial_name",
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT06153966",
+          "score": 0.14,
+          "answer": "not_a_match",
+          "agrees": [
+            "stated"
+          ]
+        }
+      ]
+    },
+    "S020": {
+      "url": "https://x.com/statnews/status/2120931204035760307",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:29:54.082Z",
+      "http": 200,
+      "release_commit": "7868b02657ed81a0009f6bfe909bf66a7c6ae842",
+      "source_address": "https://x.com/statnews/status/2120931204035760307",
+      "evidence": "Released 0.9.6 reader on live X post; addressed business-financing post text and links. Captured 2026-11-15T14:28:31.651Z",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "error": null,
+      "tracked": [],
+      "candidates": []
+    },
+    "S022": {
+      "url": "https://www.threads.com/@nejm/post/DdY6w_YG3Am/new-in-the-september-issue-of-nejm-colonoscopy-intervals-and-colorectal-cancer/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:30:30.272Z",
+      "http": 200,
+      "release_commit": "7868b02657ed81a0009f6bfe909bf66a7c6ae842",
+      "source_address": "https://www.threads.com/@nejm/post/DdY6w_YG3Am/new-in-the-september-issue-of-nejm-colonoscopy-intervals-and-colorectal-cancer/",
+      "evidence": "Released 0.9.6 reader on live Threads post; identity-bound public caption listing unrelated journal studies. Captured 2026-11-15T14:28:42.356Z",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "error": null,
+      "tracked": [],
+      "candidates": []
+    },
+    "S010": {
+      "url": "https://www.linkedin.com/posts/shubham-pant-b74008220_rasolute302-daraxonrasib-unsungheroes-ugcPost-7460774293849952257-TU0v",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:36:24.175Z",
+      "http": 200,
+      "release_commit": "a92783deaa42149d7b937f43fed67e7083a35e55",
+      "source_address": "https://www.linkedin.com/posts/shubham-pant-b74008220_rasolute302-daraxonrasib-unsungheroes-ugcPost-7460774293849952257-TU0v/",
+      "evidence": "Released 0.9.7 reader executed on live LinkedIn DOM; addressed caption only, excluding sidebars, comments and drafts. Captured 2026-11-15T14:36:06.886Z",
+      "about_a_treatment": true,
+      "treatment": "Daraxonrasib",
+      "condition": "Pancreatic cancer",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT05379985",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06128551",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06360354",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06445062",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06625320",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07491445",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07805954",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07898813",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06922591",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07252232",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07756281",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07573215",
+          "score": 0.97,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06040541",
+          "score": 0.75,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07397338",
+          "score": 0.45,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07895498",
+          "score": 0.28,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07349537",
+          "score": 0.25,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07492680",
+          "score": 0.22,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07908550",
+          "score": 0.03,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07819838",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06881784",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06162221",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07793253",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    },
+    "S011": {
+      "url": "https://www.linkedin.com/posts/anna-berkenblit_first-ras-inhibitor-extends-survival-in-previously-activity-7462109924857212928-lyz4",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:36:58.313Z",
+      "http": 200,
+      "release_commit": "a92783deaa42149d7b937f43fed67e7083a35e55",
+      "source_address": "https://www.linkedin.com/posts/anna-berkenblit_daraxonrasib-pancreaticcancer-share-7460912673338122240-6afR/",
+      "evidence": "Released 0.9.7 reader executed on live LinkedIn DOM; original URL redirects to verified Anna Berkenblit daraxonrasib post. Addressed caption only, excluding sidebars, comments and drafts. Captured 2026-11-15T14:36:09.339Z",
+      "about_a_treatment": true,
+      "treatment": "daraxonrasib",
+      "condition": "Previously treated metastatic pancreatic cancer",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT06128551",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06625320",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05379985",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06360354",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06445062",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07805954",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06922591",
+          "score": 0.98,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07491445",
+          "score": 0.98,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07756281",
+          "score": 0.96,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07898813",
+          "score": 0.9,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07573215",
+          "score": 0.88,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06040541",
+          "score": 0.71,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07397338",
+          "score": 0.62,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07252232",
+          "score": 0.54,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07895498",
+          "score": 0.41,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07349537",
+          "score": 0.4,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07492680",
+          "score": 0.37,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07908550",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06881784",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07819838",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06162221",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07793253",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    },
+    "S036": {
+      "url": "https://www.linkedin.com/posts/torresphd_results-from-phase-2-courage-trial-demonstrating-activity-7511422117729472512-JZUS",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:37:36.358Z",
+      "http": 200,
+      "release_commit": "a92783deaa42149d7b937f43fed67e7083a35e55",
+      "source_address": "https://www.linkedin.com/posts/torresphd_results-from-phase-2-courage-trial-demonstrating-share-7511422114776641537-Ssql/",
+      "evidence": "Released 0.9.7 reader on live LinkedIn COURAGE post after verified redirect; addressed caption only, excluding sidebars/comments/drafts. Captured 2026-11-15T14:36:21.764Z",
+      "about_a_treatment": true,
+      "treatment": "Semaglutide plus trevogrumab",
+      "condition": "Obesity",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT06299098",
+          "score": 1,
+          "answer": "match",
+          "agrees": [
+            "trial_name",
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT01963598",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": [
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT02250053",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": [
+            "trial_name"
+          ]
+        },
+        {
+          "id": "NCT05371665",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": [
+            "trial_name"
+          ]
+        },
+        {
+          "id": "NCT01507402",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": [
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT01720576",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": [
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT01910220",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": [
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT02741739",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": [
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT02943239",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": [
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT03545464",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": [
+            "trial_name"
+          ]
+        },
+        {
+          "id": "NCT03710941",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": [
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT04944784",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": [
+            "trial_name"
+          ]
+        },
+        {
+          "id": "NCT05442775",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": [
+            "trial_name"
+          ]
+        },
+        {
+          "id": "NCT05653986",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": [
+            "trial_name"
+          ]
+        },
+        {
+          "id": "NCT06202183",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": [
+            "trial_name"
+          ]
+        },
+        {
+          "id": "NCT06276998",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": [
+            "trial_name"
+          ]
+        },
+        {
+          "id": "NCT06424483",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": [
+            "trial_name"
+          ]
+        },
+        {
+          "id": "NCT06524206",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": [
+            "trial_name"
+          ]
+        },
+        {
+          "id": "NCT06914037",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": [
+            "trial_name"
+          ]
+        },
+        {
+          "id": "NCT07560085",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": [
+            "trial_name"
+          ]
+        },
+        {
+          "id": "NCT06986993",
+          "score": 0.13,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05819853",
+          "score": 0.11,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05078255",
+          "score": 0.09,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06374875",
+          "score": 0.09,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07272837",
+          "score": 0.09,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05606471",
+          "score": 0.08,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06967389",
+          "score": 0.08,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06754163",
+          "score": 0.07,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05813249",
+          "score": 0.05,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04263415",
+          "score": 0.04,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06005012",
+          "score": 0.04,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06751589",
+          "score": 0.04,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03292315",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04979130",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07702461",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07732218",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06738979",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07411378",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07769047",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05071898",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05616013",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05746039",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06027567",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06820047",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07368855",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07457424",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07592546",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07701005",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04019197",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04174755",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05302596",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05670379",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05671653",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05870462",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06234111",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06396416",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06533527",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06715514",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06803888",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07858331",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    },
+    "S015": {
+      "url": "https://www.tiktok.com/@heather.felton.md/video/7632850359156854030",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:41:57.670Z",
+      "http": 200,
+      "release_commit": "a92783deaa42149d7b937f43fed67e7083a35e55",
+      "source_address": "https://www.tiktok.com/@heather.felton.md/video/7632850359156854030",
+      "evidence": "Released 0.9.7 reader on live TikTok detail URL; matching public caption available behind login overlay. No login, age submission, audio or full video reading. Captured 2026-11-15T14:41:25.612Z",
+      "about_a_treatment": true,
+      "treatment": "Personalized mRNA vaccine",
+      "condition": "Pancreatic cancer",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT03468244",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06156267",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06913218",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06496373",
+          "score": 0.98,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06326736",
+          "score": 0.96,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06026774",
+          "score": 0.95,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06019702",
+          "score": 0.9,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06026800",
+          "score": 0.89,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07067385",
+          "score": 0.82,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07182435",
+          "score": 0.42,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07100210",
+          "score": 0.3,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05359354",
+          "score": 0.28,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07368803",
+          "score": 0.07,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT03480152",
+          "score": 0.03,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06389591",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07334574",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07676890",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT02808416",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03908671",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06735508",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06788600",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT02808364",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05192460",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05761717",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06441955",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06685653",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06932861",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07652125",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    },
+    "S019": {
+      "url": "https://drjessemorse.substack.com/p/a-personalized-mrna-cancer-vaccine",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:42:35.734Z",
+      "http": 200,
+      "release_commit": "a92783deaa42149d7b937f43fed67e7083a35e55",
+      "source_address": "https://drjessemorse.substack.com/p/a-personalized-mrna-cancer-vaccine",
+      "evidence": "Released 0.9.7 reader on the public Substack article opened in Chrome; readable article text and links, no account or payment access. Captured 2026-11-15T14:41:37.227Z",
+      "about_a_treatment": true,
+      "treatment": "intismeran autogene plus pembrolizumab",
+      "condition": "Reducing recurrence after complete resection of high-risk cutaneous melanoma",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT05933577",
+          "score": 1,
+          "answer": "match",
+          "agrees": [
+            "stated",
+            "trial_name",
+            "participants"
+          ]
+        },
+        {
+          "id": "NCT03313778",
+          "score": 0.25,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06961006",
+          "score": 0.09,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07221474",
+          "score": 0.06,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06305767",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06833073",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06295809",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06307431",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06077760",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06623422",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07513376",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    },
+    "S021": {
+      "url": "https://www.threads.com/@nejm/post/DWoQyh3jk7R/new-in-the-april-2-2026-issue-of-nejmenfortumab-vedotin-and-pembrolizumab-in-bla",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:52:15.549Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.threads.com/@nejm/post/DWoQyh3jk7R/new-in-the-april-2-2026-issue-of-nejmenfortumab-vedotin-and-pembrolizumab-in-bla",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:49:43.095Z",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "error": null,
+      "tracked": [],
+      "candidates": []
+    },
+    "S027": {
+      "url": "https://t.me/s/pezeshkangil/10951",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:52:33.012Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://t.me/s/pezeshkangil/10951",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:49:44.278Z",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "error": null,
+      "tracked": [],
+      "candidates": []
+    },
+    "S030": {
+      "url": "https://news.ycombinator.com/item?id=45826995",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:52:52.607Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://news.ycombinator.com/item?id=45826995",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:49:46.568Z",
+      "about_a_treatment": true,
+      "treatment": "Protein-based enamel-regeneration gel",
+      "condition": "Demineralized or eroded tooth enamel",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT07718932",
+          "score": 0.04,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02810054",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04274244",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07111403",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07339605",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01030666",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06105112",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06190015",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07737834",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07841301",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04449393",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05858411",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06504329",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07230522",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07233733",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    },
+    "S031": {
+      "url": "https://news.ycombinator.com/item?id=44922571",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:53:12.158Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://news.ycombinator.com/item?id=44922571",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:49:48.041Z",
+      "about_a_treatment": true,
+      "treatment": "Keratin treatment",
+      "condition": "Tooth enamel damage and early tooth decay",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT06292026",
+          "score": 0.04,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05062070",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05797285",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06605768",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06612866",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07333170",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01052818",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01987726",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02724345",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02951897",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03374995",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT03559218",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03859843",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04489576",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT04781244",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04884347",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05641246",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07027345",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07520019",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    },
+    "S032": {
+      "url": "https://news.ycombinator.com/item?id=46811037",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:53:30.105Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://news.ycombinator.com/item?id=46811037",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:49:48.465Z",
+      "about_a_treatment": true,
+      "treatment": "ER-100",
+      "condition": "Glaucoma",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT07290244",
+          "score": 1,
+          "answer": "match",
+          "agrees": [
+            "stated",
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT00239564",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": [
+            "participants"
+          ]
+        },
+        {
+          "id": "NCT00361504",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01517711",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00325858",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00348452",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00486811",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00487435",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00594516",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00744237",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01063868",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01273532",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01309386",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01309425",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01800682",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    },
+    "S004": {
+      "url": "https://www.reddit.com/r/science/comments/1xv3bsz/landmark_phase_3_multicenter_center_study_finds/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:53:47.895Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.reddit.com/r/science/comments/1xv3bsz/landmark_phase_3_multicenter_center_study_finds/",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:49:55.852Z",
+      "about_a_treatment": true,
+      "treatment": "Personalised melanoma cancer vaccine",
+      "condition": "Melanoma",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT02035956",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06529822",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03897881",
+          "score": 0.95,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04930783",
+          "score": 0.95,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03597282",
+          "score": 0.94,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05098210",
+          "score": 0.92,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04072900",
+          "score": 0.91,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05235607",
+          "score": 0.84,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03548467",
+          "score": 0.75,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00204516",
+          "score": 0.73,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01970358",
+          "score": 0.73,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03929029",
+          "score": 0.73,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05309421",
+          "score": 0.49,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03633110",
+          "score": 0.26,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    },
+    "S005": {
+      "url": "https://www.reddit.com/r/science/comments/1xuc21w/showing_ai_chatbots_a_drug_ad_changed_which/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:54:04.461Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.reddit.com/r/science/comments/1xuc21w/showing_ai_chatbots_a_drug_ad_changed_which/",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:49:57.270Z",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "error": null,
+      "tracked": [],
+      "candidates": []
+    },
+    "S028": {
+      "url": "https://www.reddit.com/r/medicine/comments/1mz19xa/how_do_we_feel_about_suzetrigine_so_far/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:54:24.048Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.reddit.com/r/medicine/comments/1mz19xa/how_do_we_feel_about_suzetrigine_so_far/",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:49:58.629Z",
+      "about_a_treatment": true,
+      "treatment": "Suzetrigine",
+      "condition": "Moderate-to-severe acute pain after abdominoplasty or bunionectomy",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT04977336",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05034952",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05553366",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05558410",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06887972",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07257133",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05661734",
+          "score": 0.72,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07795827",
+          "score": 0.71,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06887959",
+          "score": 0.67,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07839715",
+          "score": 0.63,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06774625",
+          "score": 0.62,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07672015",
+          "score": 0.6,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07836010",
+          "score": 0.58,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07355166",
+          "score": 0.55,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07820969",
+          "score": 0.44,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07796152",
+          "score": 0.42,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07723352",
+          "score": 0.41,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07600697",
+          "score": 0.37,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07357376",
+          "score": 0.35,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07539623",
+          "score": 0.26,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07575230",
+          "score": 0.26,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07829718",
+          "score": 0.24,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07511400",
+          "score": 0.23,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07548385",
+          "score": 0.22,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07219888",
+          "score": 0.21,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07534709",
+          "score": 0.21,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07866638",
+          "score": 0.21,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07856654",
+          "score": 0.17,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07463430",
+          "score": 0.11,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07928011",
+          "score": 0.11,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07195669",
+          "score": 0.1,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07525219",
+          "score": 0.06,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07624526",
+          "score": 0.06,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07905404",
+          "score": 0.06,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07843134",
+          "score": 0.05,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06176196",
+          "score": 0.03,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06972212",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07231419",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07821931",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07864896",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05660538",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05818852",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06628908",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06696443",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06820307",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07145346",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07226700",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07654296",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05455502",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05541471",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05560464",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05635110",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05704556",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05851157",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06336096",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06834009",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07296770",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07378865",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07538570",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07570069",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    },
+    "S029": {
+      "url": "https://www.reddit.com/r/Health/comments/1ixt7z1/covid_shots_protect_kids_from_long_covidand_dont/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:54:44.613Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.reddit.com/r/Health/comments/1ixt7z1/covid_shots_protect_kids_from_long_covidand_dont/",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:49:59.857Z",
+      "about_a_treatment": true,
+      "treatment": "COVID-19 vaccination",
+      "condition": "Prevention of long COVID in children and adolescents",
+      "error": null,
+      "tracked": [],
+      "candidates": []
+    },
+    "S033": {
+      "url": "https://www.reddit.com/r/tressless/comments/1s6gl49/pelage_pp405_new_hair_growth_from_inactive/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:55:03.628Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.reddit.com/r/tressless/comments/1s6gl49/pelage_pp405_new_hair_growth_from_inactive/",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:01.550Z",
+      "about_a_treatment": true,
+      "treatment": "PP405",
+      "condition": "Alopecia (hair loss)",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT06393452",
+          "score": 1,
+          "answer": "match",
+          "agrees": [
+            "stated",
+            "participants"
+          ]
+        },
+        {
+          "id": "NCT07819435",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07907783",
+          "score": 0.97,
+          "answer": "match",
+          "agrees": []
+        }
+      ]
+    },
+    "S034": {
+      "url": "https://www.reddit.com/r/science/comments/1oobkrk/researchers_have_developed_a_gel_that_uses/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:55:22.953Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.reddit.com/r/science/comments/1oobkrk/researchers_have_developed_a_gel_that_uses/",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:02.928Z",
+      "about_a_treatment": true,
+      "treatment": "Modified-protein enamel-regenerating gel",
+      "condition": "Damaged tooth enamel",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT07718932",
+          "score": 0.04,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07339605",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02810054",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06105112",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07737834",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07841301",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01030666",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04274244",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04449393",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05858411",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06504329",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07230522",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07233733",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    },
+    "S035": {
+      "url": "https://www.reddit.com/r/immortalists/comments/1w53eel/how_much_of_the_longevity_hype_is_actually_real/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:55:43.797Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.reddit.com/r/immortalists/comments/1w53eel/how_much_of_the_longevity_hype_is_actually_real/",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:04.254Z",
+      "about_a_treatment": true,
+      "treatment": "ER-100",
+      "condition": "Biological aging",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT00239564",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00361504",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07290244",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT00325858",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00348452",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00486811",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00487435",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00594516",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00744237",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01063868",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01273532",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01309386",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01309425",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01517711",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01800682",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    },
+    "N013": {
+      "url": "https://www.instagram.com/p/DJhIT60oG4N/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:55:59.516Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.instagram.com/p/DJhIT60oG4N/",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:13.085Z",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "error": null,
+      "tracked": [],
+      "candidates": []
+    },
+    "S038": {
+      "url": "https://www.instagram.com/p/De1Sw5Pj-xV/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:56:16.082Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.instagram.com/p/De1Sw5Pj-xV/",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:14.029Z",
+      "about_a_treatment": true,
+      "treatment": "PP405",
+      "condition": "Androgenetic alopecia",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT06393452",
+          "score": 1,
+          "answer": "match",
+          "agrees": [
+            "participants",
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT07819435",
+          "score": 1,
+          "answer": "match",
+          "agrees": [
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT07907783",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": [
+            "sponsor"
+          ]
+        }
+      ]
+    },
+    "S039": {
+      "url": "https://www.instagram.com/reel/Da5ZfzDAqDd/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:56:34.576Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.instagram.com/reel/Da5ZfzDAqDd/",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:15.247Z",
+      "about_a_treatment": true,
+      "treatment": "Unnamed medicine to help grow a third set of teeth",
+      "condition": "Growing a third set of teeth",
+      "error": null,
+      "tracked": [],
+      "candidates": []
+    },
+    "S040": {
+      "url": "https://www.instagram.com/reel/DIbvYDvJYzP/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:56:56.617Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.instagram.com/reel/DIbvYDvJYzP/",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:16.552Z",
+      "about_a_treatment": true,
+      "treatment": "Personalized secretome products with microneedling",
+      "condition": "Skin rejuvenation",
+      "error": null,
+      "tracked": [],
+      "candidates": []
+    },
+    "S041": {
+      "url": "https://www.instagram.com/p/De8fBncquDV/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:57:17.791Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.instagram.com/p/De8fBncquDV/",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:17.495Z",
+      "about_a_treatment": true,
+      "treatment": "Self-destruction toxin trick",
+      "condition": "Cancer",
+      "error": null,
+      "tracked": [],
+      "candidates": []
+    },
+    "S042": {
+      "url": "https://www.instagram.com/p/DdKl43tSw-v/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:57:34.400Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.instagram.com/p/DdKl43tSw-v/",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:18.581Z",
+      "about_a_treatment": true,
+      "treatment": "Unnamed cancer vaccine",
+      "condition": "Cancer",
+      "error": null,
+      "tracked": [],
+      "candidates": []
+    },
+    "S043": {
+      "url": "https://www.instagram.com/reel/DZyROckBpjD/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:57:49.985Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.instagram.com/reel/DZyROckBpjD/",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:19.920Z",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "error": null,
+      "tracked": [],
+      "candidates": []
+    },
+    "S044": {
+      "url": "https://www.instagram.com/reel/DaKnG-sC9pm/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:58:08.978Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.instagram.com/reel/DaKnG-sC9pm/",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:20.900Z",
+      "about_a_treatment": true,
+      "treatment": "Rejuran",
+      "condition": "Improving skin healing, skin barrier, and overall skin quality",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT07912814",
+          "score": 0.4,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07912879",
+          "score": 0.33,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06402058",
+          "score": 0.24,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06376838",
+          "score": 0.2,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06428253",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    },
+    "S014": {
+      "url": "https://www.tiktok.com/@cnn/video/7630975820005264653",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:58:24.385Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.tiktok.com/@cnn/video/7630975820005264653",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:34.203Z",
+      "about_a_treatment": true,
+      "treatment": "mRNA vaccine",
+      "condition": "Pancreatic cancer",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT03468244",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06577532",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06913218",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07745790",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06156267",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03948763",
+          "score": 0.98,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06326736",
+          "score": 0.91,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06496373",
+          "score": 0.9,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06141369",
+          "score": 0.82,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06353646",
+          "score": 0.73,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07114666",
+          "score": 0.13,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05556720",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07594964",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    },
+    "S046": {
+      "url": "https://www.tiktok.com/@dentist_emi/photo/7654083124820856086",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:58:41.548Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.tiktok.com/@dentist_emi/photo/7654083124820856086",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:36.419Z",
+      "about_a_treatment": true,
+      "treatment": "unnamed drug that blocks USAG-1",
+      "condition": "Tooth regrowth",
+      "error": null,
+      "tracked": [],
+      "candidates": []
+    },
+    "S047": {
+      "url": "https://www.tiktok.com/@popularmechanics/video/7639395090804264205",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:58:56.844Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.tiktok.com/@popularmechanics/video/7639395090804264205",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:39.473Z",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "error": null,
+      "tracked": [],
+      "candidates": []
+    },
+    "S048": {
+      "url": "https://www.tiktok.com/@teethtalkgirl/video/7580143683463318814",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:59:13.765Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.tiktok.com/@teethtalkgirl/video/7580143683463318814",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:41.658Z",
+      "about_a_treatment": true,
+      "treatment": "Unnamed tooth-regrowth shot targeting dormant tooth buds",
+      "condition": "Missing teeth",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT04804514",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07339605",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01628367",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03102879",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04190914",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04776785",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06920485",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01030666",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01805388",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01976065",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02842515",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02922075",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03804450",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05064137",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05222243",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05266859",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05765240",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06293807",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06566833",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07252167",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07520097",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07522723",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07548203",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07555366",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07779421",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07891611",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07921355",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    },
+    "S049": {
+      "url": "https://www.tiktok.com/@skinandsweat/video/7637182028349328654",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:59:30.368Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.tiktok.com/@skinandsweat/video/7637182028349328654",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:43.658Z",
+      "about_a_treatment": true,
+      "treatment": "PP405",
+      "condition": "Hair growth",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT06393452",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07819435",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07907783",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        }
+      ]
+    },
+    "S050": {
+      "url": "https://www.tiktok.com/@drkopelman/video/7522805190295063839",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T14:59:47.700Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.tiktok.com/@drkopelman/video/7522805190295063839",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:47.446Z",
+      "about_a_treatment": true,
+      "treatment": "PP405",
+      "condition": "Hair loss",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT06393452",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07819435",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07907783",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        }
+      ]
+    },
+    "S051": {
+      "url": "https://www.tiktok.com/@fredhutch/video/7700340480931908878",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T15:00:06.431Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.tiktok.com/@fredhutch/video/7700340480931908878",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:49.353Z",
+      "about_a_treatment": true,
+      "treatment": "Personalized cancer vaccine plus immunotherapy",
+      "condition": "Melanoma",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT05269381",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03597282",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03633110",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05309421",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03897881",
+          "score": 0.97,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04072900",
+          "score": 0.97,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04930783",
+          "score": 0.97,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03929029",
+          "score": 0.95,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03715985",
+          "score": 0.94,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03568058",
+          "score": 0.92,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05098210",
+          "score": 0.64,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02035956",
+          "score": 0.62,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01970358",
+          "score": 0.56,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03552718",
+          "score": 0.56,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05235607",
+          "score": 0.44,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05767684",
+          "score": 0.37,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06529822",
+          "score": 0.34,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04145232",
+          "score": 0.09000000000000001,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT03480152",
+          "score": 0.08,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07567222",
+          "score": 0.08,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03639714",
+          "score": 0.07,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT03953235",
+          "score": 0.07,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT01998542",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT02999646",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT03871205",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06023277",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07898124",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT00126178",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT01782287",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT02316457",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT04105582",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT04267237",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT04879888",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06195618",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06751901",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06752044",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06752057",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07285434",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07587827",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT00082459",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT01759810",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT01782274",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT01995227",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT03223103",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT03361852",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05141721",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05153304",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05158621",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05270720",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06324240",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06751849",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06751914",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06751940",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06751953",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06751966",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07316361",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07722741",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    },
+    "S052": {
+      "url": "https://www.tiktok.com/@drsermedmezher/video/7606090347172695318",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T15:00:26.899Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.tiktok.com/@drsermedmezher/video/7606090347172695318",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:51.232Z",
+      "about_a_treatment": true,
+      "treatment": "ER-100",
+      "condition": "Optic neuropathies, including open-angle glaucoma and non-arteritic anterior ischemic optic neuropathy",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT07290244",
+          "score": 1,
+          "answer": "match",
+          "agrees": [
+            "stated",
+            "sponsor"
+          ]
+        },
+        {
+          "id": "NCT00361504",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00594516",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00239564",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00325858",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00348452",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00486811",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00487435",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00744237",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01063868",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01273532",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01309386",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01309425",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01517711",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01800682",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    },
+    "S053": {
+      "url": "https://www.tiktok.com/@thediabetescollective/video/7534037117530344759",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T15:00:47.663Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.tiktok.com/@thediabetescollective/video/7534037117530344759",
+      "evidence": "Released 0.9.7 collector on live Chrome DOM; this platform collector is unchanged in 0.9.8. Submitted through released 0.9.8 request composition to production service 7cd56bc. Public text/caption and links only; no full video/audio reading. Captured 2026-11-15T14:50:53.202Z",
+      "about_a_treatment": true,
+      "treatment": "Semaglutide plus bimagrumab",
+      "condition": "Obesity",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT05616013",
+          "score": 0.98,
+          "answer": "match",
+          "agrees": [
+            "participants"
+          ]
+        },
+        {
+          "id": "NCT07920887",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": [
+            "participants"
+          ]
+        },
+        {
+          "id": "NCT07280221",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": [
+            "participants"
+          ]
+        },
+        {
+          "id": "NCT07845994",
+          "score": 0.11,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06005012",
+          "score": 0.08,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07272837",
+          "score": 0.08,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07368855",
+          "score": 0.06,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07909889",
+          "score": 0.06,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05071898",
+          "score": 0.05,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06633783",
+          "score": 0.05,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07769047",
+          "score": 0.05,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07812597",
+          "score": 0.04,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03005288",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06497595",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06967389",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07275697",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07702461",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07732426",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07870538",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01669174",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT02468674",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05254314",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06374875",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07621640",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01433263",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT02152761",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT02333331",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05813249",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05870462",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05872022",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06643728",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06738979",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06745284",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06751589",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06754163",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06890611",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06934655",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06950684",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07592546",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07649759",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01423110",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT01601600",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT01868685",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT01925209",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT02250443",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT02573467",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05670379",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05746039",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05933499",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06027567",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06234111",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06380426",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06431308",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06468748",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06715514",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06901349",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07041983",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07446998",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07642635",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07673900",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    },
+    "S023": {
+      "url": "https://www.facebook.com/cancer.gov/posts/in-case-you-missed-it-a-new-targeted-therapy-daraxonrasib-nearly-doubled-overall/1412380880914349/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T15:01:05.421Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.facebook.com/cancer.gov/posts/in-case-you-missed-it-a-new-targeted-therapy-daraxonrasib-nearly-doubled-overall/1412380880914349/",
+      "evidence": "Released 0.9.8 collector on live Facebook post; uniquely preview-bound 726-character NCI caption, excluding neighbouring posts and comments. No video/audio reading. Captured 2026-11-15T14:53:08.519Z",
+      "about_a_treatment": true,
+      "treatment": "daraxonrasib",
+      "condition": "Previously treated metastatic pancreatic cancer",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT06128551",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06625320",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06360354",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06445062",
+          "score": 0.97,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07491445",
+          "score": 0.96,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05379985",
+          "score": 0.95,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07573215",
+          "score": 0.95,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07756281",
+          "score": 0.93,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07805954",
+          "score": 0.9,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06922591",
+          "score": 0.85,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06040541",
+          "score": 0.75,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07898813",
+          "score": 0.66,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07252232",
+          "score": 0.65,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07349537",
+          "score": 0.42,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07492680",
+          "score": 0.24,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07397338",
+          "score": 0.23,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07895498",
+          "score": 0.18,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06881784",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07908550",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07819838",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06162221",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07793253",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    },
+    "S024": {
+      "url": "https://www.facebook.com/ABC15/posts/a-new-pancreatic-cancer-drug-being-tested-by-doctors-in-phoenix-is-showing-promi/1438868244952234/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T15:01:22.076Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.facebook.com/ABC15/posts/a-new-pancreatic-cancer-drug-being-tested-by-doctors-in-phoenix-is-showing-promi/1438868244952234/",
+      "evidence": "Released 0.9.8 collector on live Facebook ABC15 post; addressed public caption only. Screenshot correctly refused by sensitive-page guard; caption does not name the drug. No comments, full video or audio included. Captured 2026-11-15T14:53:28.427Z",
+      "about_a_treatment": true,
+      "treatment": "new pancreatic cancer drug",
+      "condition": "Pancreatic cancer",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT04183478",
+          "score": 0.78,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07114666",
+          "score": 0.72,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04181645",
+          "score": 0.65,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04172532",
+          "score": 0.63,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05482893",
+          "score": 0.62,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07481383",
+          "score": 0.6,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07301229",
+          "score": 0.54,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05042128",
+          "score": 0.53,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06217666",
+          "score": 0.52,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04101929",
+          "score": 0.48,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01364805",
+          "score": 0.44,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06896188",
+          "score": 0.4,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06844422",
+          "score": 0.39,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06538857",
+          "score": 0.36,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00249301",
+          "score": 0.34,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04229004",
+          "score": 0.34,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03699319",
+          "score": 0.32,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02581501",
+          "score": 0.29,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07736612",
+          "score": 0.28,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04241276",
+          "score": 0.24,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02743637",
+          "score": 0.21,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06944587",
+          "score": 0.19,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04299048",
+          "score": 0.18,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07575191",
+          "score": 0.16,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05093231",
+          "score": 0.15,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05360264",
+          "score": 0.15,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06094140",
+          "score": 0.13,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04247165",
+          "score": 0.12,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04581876",
+          "score": 0.12,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04932187",
+          "score": 0.11,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06548672",
+          "score": 0.11,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06655142",
+          "score": 0.1,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03585062",
+          "score": 0.09,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04080024",
+          "score": 0.09,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06361030",
+          "score": 0.09,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07253662",
+          "score": 0.09,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07723781",
+          "score": 0.05,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05168527",
+          "score": 0.04,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07870421",
+          "score": 0.04,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04883775",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05172310",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00089024",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02632305",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02648880",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03937453",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05248763",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05692596",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06065852",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06168552",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06391892",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00259532",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00983541",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01132755",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01603004",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04558268",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04572165",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05279079",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05708599",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06047379",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07097064",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    },
+    "S025": {
+      "url": "https://www.facebook.com/letswinpc/videos/rasonque-a-new-drug-for-pancreatic-cancer/1065736142931975/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T15:01:39.439Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.facebook.com/letswinpc/videos/rasonque-a-new-drug-for-pancreatic-cancer/1065736142931975/",
+      "evidence": "Released 0.9.8 collector on live Facebook video URL; identity-bound public preview, matching numeric video/reel identity. No full video/audio interpretation. Captured 2026-11-15T14:53:29.684Z",
+      "about_a_treatment": true,
+      "treatment": "Rasonque",
+      "condition": "Metastatic pancreatic cancer",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT06128551",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07491445",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07805954",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05379985",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06360354",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06445062",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06625320",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06922591",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07756281",
+          "score": 0.98,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07573215",
+          "score": 0.97,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07898813",
+          "score": 0.91,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06040541",
+          "score": 0.84,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07252232",
+          "score": 0.79,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07492680",
+          "score": 0.58,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07397338",
+          "score": 0.55,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07895498",
+          "score": 0.45,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07349537",
+          "score": 0.34,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07908550",
+          "score": 0.04,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07819838",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06881784",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06162221",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07793253",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    },
+    "N014": {
+      "url": "https://tseenergy.substack.com/p/discovering-the-medical-ketogenic",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T15:02:19.357Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://tseenergy.substack.com/p/discovering-the-medical-ketogenic",
+      "evidence": "Released 0.9.8 collector on public Substack retrospective discussion; readable article text and links. Multiple psychiatric indications require judgment; not a single newly reported trial. Captured 2026-11-15T14:53:44.183Z",
+      "about_a_treatment": true,
+      "treatment": "Medical ketogenic diet",
+      "condition": "Mental illness",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT07415590",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07116226",
+          "score": 0.83,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07517757",
+          "score": 0.28,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT03202108",
+          "score": 0.16,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07496749",
+          "score": 0.1,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07233148",
+          "score": 0.08,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04399954",
+          "score": 0.06,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT02915211",
+          "score": 0.05,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07745608",
+          "score": 0.04,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07006233",
+          "score": 0.03,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT03285152",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT04005456",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04055688",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04614545",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05781269",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05836402",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06307548",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07622992",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07738536",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02598674",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02599844",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04461938",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04933448",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05273372",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05275608",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05519644",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05840237",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06013397",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06308757",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07076472",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07235332",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07745699",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    },
+    "S037": {
+      "url": "https://www.youtube.com/watch?v=_4spcgzPcEk",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T15:02:39.498Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.youtube.com/watch?v=_4spcgzPcEk",
+      "evidence": "Released 0.9.8 collector on live YouTube watch page; title and expanded description of in-vitro serum research. Captions unavailable; no full video/audio interpretation. Captured 2026-11-15T14:54:13.659Z",
+      "about_a_treatment": true,
+      "treatment": "Young human serum",
+      "condition": "Skin aging",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT04223518",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06190600",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT00381797",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01217437",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01236560",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01320449",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT01565616",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02766465",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03310736",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03394508",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03465592",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04530487",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04587050",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04852172",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05302921",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05457556",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05722886",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06610955",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    },
+    "N010": {
+      "url": "https://youtu.be/-R6W4WASu5g",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T15:07:12.139Z",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "source_address": "https://www.youtube.com/watch?v=-R6W4WASu5g",
+      "evidence": "Released 0.9.8 reader on live YouTube page after verified youtu.be redirect and expanded public description. Comments and recommendations excluded; paused video. No full video/audio check.",
+      "about_a_treatment": true,
+      "treatment": "Rasonque",
+      "condition": "Metastatic pancreatic cancer",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT06128551",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06625320",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07491445",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07805954",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07756281",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07349537",
+          "score": 0.98,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07573215",
+          "score": 0.94,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07898813",
+          "score": 0.93,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07492680",
+          "score": 0.56,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07397338",
+          "score": 0.55,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07252232",
+          "score": 0.54,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07895498",
+          "score": 0.45,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06881784",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07908550",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07793253",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07819838",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    }
+  },
+  "address_retry": {
+    "A048": {
+      "url": "https://www.gov.uk/government/news/mhra-approves-retifanlimab-zynyz-for-the-treatment-of-advanced-anal-cancer",
+      "mode": "production-address",
+      "checked_at": "2026-11-15T15:04:42.232047+00:00",
+      "http": 200,
+      "release_commit": "7cd56bc8549881644192635cb1da24868f203765",
+      "about_a_treatment": true,
+      "treatment": "retifanlimab plus carboplatin plus paclitaxel",
+      "condition": "Advanced squamous cell carcinoma of the anal canal",
+      "error": null,
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT04472429",
+          "score": 1,
+          "answer": "match",
+          "agrees": [
+            "participants"
+          ]
+        },
+        {
+          "id": "NCT03059823",
+          "score": 0.62,
+          "answer": "match",
+          "agrees": [
+            "participants"
+          ]
+        },
+        {
+          "id": "NCT06910137",
+          "score": 0.96,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03597295",
+          "score": 0.25,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03920839",
+          "score": 0.11,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04989387",
+          "score": 0.08,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03589651",
+          "score": 0.06,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06873789",
+          "score": 0.06,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06179160",
+          "score": 0.05,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07425054",
+          "score": 0.05,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07927998",
+          "score": 0.05,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06290622",
+          "score": 0.04,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT03599713",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04949191",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05359692",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03328026",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03679767",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04445844",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05083754",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05345002",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06056895",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06160206",
+          "score": 0.02,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03406949",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03522142",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03532295",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT03910530",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04231981",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT04387084",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04577014",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04586244",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04634825",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04968106",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05177133",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05440942",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05743595",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06072612",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06389799",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06896188",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06959537",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07219576",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07468136",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07472322",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07677579",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07772245",
+          "score": 0.01,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT02475213",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04082364",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT04203511",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT04205812",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT04370704",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04374305",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT04463771",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT04776876",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05239182",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05287113",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05455697",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05594290",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06149481",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06320405",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06939036",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07765836",
+          "score": 0,
+          "answer": "not_a_match",
+          "agrees": []
+        }
+      ]
+    }
+  },
+  "counts": {
+    "review": 32,
+    "pass": 114,
+    "partial": 86,
+    "blocked": 26
+  },
+  "knowledge_cards": {
+    "review": 32,
+    "not applicable": 10,
+    "no card": 86,
+    "match": 104,
+    "not checked": 26
+  },
+  "efficiency": [
+    {
+      "id": "N003",
+      "run": 1,
+      "http": 200,
+      "ms": 3964,
+      "type": "application/json",
+      "about_a_treatment": false,
+      "cached": null,
+      "read_at": null,
+      "server_timing": "registry;dur=0, papers;dur=0, read;dur=2189, core;dur=2189, total;dur=2189",
+      "error": null,
+      "checked_at": "2026-11-15T15:11:54.216Z"
+    },
+    {
+      "id": "N003",
+      "run": 2,
+      "http": 200,
+      "ms": 80,
+      "type": "application/json",
+      "about_a_treatment": false,
+      "cached": null,
+      "read_at": null,
+      "server_timing": null,
+      "error": null,
+      "checked_at": "2026-11-15T15:12:07.299Z"
+    }
+  ]
+}
