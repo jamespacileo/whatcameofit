@@ -76,6 +76,10 @@ export function collectFromPage() {
       }
       return parts.length ? `html > ${parts.join(" > ")}` : null;
     };
+    const imageAddress = value => {
+      try { const u = new URL(value); return /^https?:$/.test(u.protocol) ? u.origin + u.pathname : null; }
+      catch { return null; }
+    };
     const fromNode = (node, mediaRoot = node) => ({
       ...empty, focusText: (node?.innerText ?? "").slice(0, 20000),
       links: [...(node?.querySelectorAll("a[href]") ?? [])].slice(0, 300)
@@ -109,13 +113,9 @@ export function collectFromPage() {
           !article?.parentElement?.closest('[role="article"]') && prefix.length >= 40 &&
           normal(node.innerText ?? "").startsWith(prefix);
       });
-      const imageKey = value => {
-        try { const u = new URL(value); return /^https?:$/.test(u.protocol) ? u.origin + u.pathname : null; }
-        catch { return null; }
-      };
-      const image = imageKey(document.querySelector('meta[property="og:image"]')?.getAttribute("content"));
+      const image = imageAddress(document.querySelector('meta[property="og:image"]')?.getAttribute("content"));
       const media = image ? [...document.querySelectorAll("img, video")].filter(node => visible(node) &&
-        imageKey(node.tagName === "VIDEO" ? node.poster : node.currentSrc || node.src) === image) : [];
+        imageAddress(node.tagName === "VIDEO" ? node.poster : node.currentSrc || node.src) === image) : [];
       const reading = fromNode(messages.length === 1 ? messages[0] : null, media.length === 1 ? media[0] : null);
       return messages.length === 1 ? reading : { ...reading, focusText: caption.slice(0, 20000),
         links: [...caption.matchAll(/https?:\/\/[^\s<>"“”]+/g)].slice(0, 30)
@@ -133,6 +133,49 @@ export function collectFromPage() {
       };
       const wanted = postKey(location.href);
       if (!wanted) return empty;
+      if (host === "linkedin.com") {
+        const publicSelector = "article.main-feed-activity-card[data-activity-urn]";
+        const publicCards = [...document.querySelectorAll(publicSelector)];
+        if (publicCards.length) {
+          // A public ugcPost URL can have a different canonical activity ID.
+          // The card explicitly links these identities; a matching slug alone cannot.
+          const urnFor = value => {
+            try {
+              const u = new URL(value, location.href);
+              if (u.hostname.replace(/^www\./, "") !== host) return null;
+              const match = u.pathname.match(/-(activity|ugcPost|share)-(\d+)(?:-|\/|$)/) ??
+                u.pathname.match(/^\/feed\/update\/urn:li:(activity|ugcPost|share):(\d+)(?:\/|$)/);
+              return match ? `urn:li:${match[1]}:${match[2]}` : null;
+            } catch { return null; }
+          };
+          const addressed = urnFor(location.href);
+          if (!addressed) return empty;
+          const metadata = [document.querySelector('link[rel="canonical"]')?.getAttribute("href"),
+            document.querySelector('meta[property="og:url"]')?.getAttribute("content")].filter(Boolean);
+          // Count every visible card claiming this identity before checking its
+          // other markers. A conflicting duplicate cannot disappear from the count.
+          const bound = publicCards.filter(node =>
+            [node.getAttribute("data-activity-urn"), node.getAttribute("data-attributed-urn")].includes(addressed) &&
+            visible(node) && !node.closest('[aria-hidden="true"]'));
+          if (bound.length !== 1) return empty;
+          const node = bound[0];
+          const activity = node.getAttribute("data-activity-urn");
+          const featured = node.getAttribute("data-featured-activity-urn");
+          const identities = [activity, node.getAttribute("data-attributed-urn")]
+            .filter(value => /^urn:li:(?:activity|ugcPost|share):\d+$/.test(value ?? ""));
+          if (!/^urn:li:activity:\d+$/.test(activity ?? "") || featured && featured !== activity ||
+              !metadata.every(value => identities.includes(urnFor(value))) ||
+              node.parentElement?.closest(publicSelector) || node.querySelector(publicSelector)) return empty;
+          const owned = item => item.closest(publicSelector) === node && !item.closest(".comment") &&
+            !item.closest('[aria-hidden="true"]') && visible(item);
+          const captions = [...node.querySelectorAll('[data-test-id="main-feed-activity-card__commentary"]')].filter(owned);
+          if (captions.length > 1) return empty;
+          const image = imageAddress(document.querySelector('meta[property="og:image"]')?.getAttribute("content"));
+          const media = image ? [...node.querySelectorAll("img")].filter(item => owned(item) &&
+            imageAddress(item.currentSrc || item.src) === image) : [];
+          return fromNode(captions[0], media.length === 1 ? media[0] : null);
+        }
+      }
       const selector = host === "linkedin.com" ? '[role="listitem"][componentkey^="update-card-focus"]'
         : '[data-testid^="postThreadItem-by-"]';
       const ownedLinks = node => [...node.querySelectorAll("a[href]")].filter(link => {
