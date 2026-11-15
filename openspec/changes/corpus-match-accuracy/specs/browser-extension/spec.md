@@ -22,6 +22,16 @@ Visual fallback for an identity-bound social carousel SHALL capture only its cur
 ### Requirement: Signed-in post reading excludes account context
 LinkedIn and Bluesky reading SHALL bind text, links and screenshot scope to the addressed post. Profile sidebars, analytics, replies and other posts SHALL not supply its reading. Missing or ambiguous post identity SHALL fail closed. Explicit selected text SHALL retain precedence.
 
+#### Scenario: Public LinkedIn exposes distinct post and activity identities
+- **GIVEN** a public LinkedIn article explicitly binds its activity URN and attributed post URN, one of which equals the requested URL, and its canonical and Open Graph URLs do not conflict
+- **WHEN** the public article and its caption are visible and outside an accessibility-hidden overlay
+- **THEN** only that article's own caption and links are read, excluding comments and nested posts
+- **AND** only one visible, owned image matching the public preview image may supply screenshot scope
+
+#### Scenario: Public LinkedIn identity is ambiguous or inaccessible
+- **WHEN** public cards duplicate or conflict with the requested identity, disagree with the page metadata, or are accessibility-hidden
+- **THEN** the reader returns no post text or screenshot scope, while retaining explicit selected-text precedence
+
 #### Scenario: LinkedIn shows the reader's profile sidebar
 - **WHEN** the requested post is displayed next to account details and comments
 - **THEN** only the identity-bound post contributes text, links and media

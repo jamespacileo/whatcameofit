@@ -145,6 +145,44 @@ test('LinkedIn and Bluesky bind the requested post without profile sidebars or r
  assert.deepEqual(x.request.links,[]);
 });
 
+test('public LinkedIn binds the attributed post despite a different activity ID', () => {
+ const url='https://www.linkedin.com/posts/author_trial-ugcPost-1234567890123456789-abcd/';
+ const canonical='https://www.linkedin.com/posts/author_trial-activity-2345678901234567890-efgh/';
+ const claim='EX-17 was studied for missing teeth in a randomized clinical trial.';
+ const head='<link rel="canonical" href="'+canonical+'"><meta property="og:url" content="'+canonical+'"><meta property="og:description" content="'+claim+'"><meta property="og:image" content="https://media.example/current.jpg?preview=1">';
+ const card=inside=>'<article class="main-feed-activity-card" data-activity-urn="urn:li:activity:2345678901234567890" data-featured-activity-urn="urn:li:activity:2345678901234567890" data-attributed-urn="urn:li:ugcPost:1234567890123456789">'+inside+'</article>';
+ const caption='<p data-test-id="main-feed-activity-card__commentary">'+claim+' <a href="https://paper.example/report">Report</a></p>';
+ const image='<ul><li><img src="https://media.example/current.jpg?full=1"></li></ul>';
+ const clutter='<section class="comment">REPLY_OTHER_DRUG<img src="https://media.example/current.jpg?reply=1"><p data-test-id="main-feed-activity-card__commentary">PRIVATE_DRAFT</p></section>';
+ let x=read(url,head,'<main>'+card(caption+image+clutter)+'<aside>PRIVATE_PROFILE_ANALYTICS</aside></main>');
+ assert.ok(x.request?.text.includes('EX-17'),'the explicit attributed URN binds the public caption');
+ assert.deepEqual(x.request.links,['https://paper.example/report']);
+ assert.ok(!/REPLY_OTHER_DRUG|PRIVATE_DRAFT|PRIVATE_PROFILE_ANALYTICS/.test(x.request.text));
+ assert.equal(inspectVisible(x.captured.mediaScope).crop?.identity,'https://media.example/current.jpg?full=1');
+ x=read(canonical,head,card(caption+image));
+ assert.ok(x.request?.text.includes('EX-17'),'the activity URL binds the same post');
+ for (const body of [
+  card(caption).replace('ugcPost:1234567890123456789','ugcPost:9999999999999999999'),
+  card(caption)+card(caption),
+  '<main aria-hidden="true">'+card(caption+image)+'</main>',
+  card(caption+image).replace('data-featured-activity-urn="urn:li:activity:2345678901234567890"','data-featured-activity-urn="urn:li:activity:9999999999999999999"'),
+ ]) {
+  x=read(url,head,body);
+  assert.equal(x.request,null,'stale, ambiguous, overlaid or conflicting public cards fail closed');
+  assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true);
+ }
+ x=read(url,head.replaceAll('activity-2345678901234567890','activity-9999999999999999999'),card(caption+image));
+ assert.equal(x.request,null,'conflicting public metadata does not authorize the post');
+ x=read(url,head,card(image+clutter));
+ assert.equal(x.request,null,'an image-only post does not borrow comment text');
+ assert.equal(inspectVisible(x.captured.mediaScope).crop?.identity,'https://media.example/current.jpg?full=1');
+ x=read(url,head,card(caption+image+image));
+ assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true,'duplicate matching images remain ambiguous');
+ const chosen='Selected EX-42 report for the named condition.';
+ x=read(url,head,'<main aria-hidden="true">'+card(caption)+'</main>',chosen);
+ assert.equal(x.request.text,chosen,'explicit selection retains precedence');
+});
+
 test('an image-only LinkedIn post keeps only its uniquely owned attachment', () => {
  const url='https://www.linkedin.com/posts/author_trial-activity-1234567890123456789-abcd/';
  const image='<a href="'+url+'"><figure><img src="https://media.example/current.jpg"></figure></a>';
