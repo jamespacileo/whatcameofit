@@ -1,17 +1,21 @@
-"""Working out what each claim needs before it can be reviewed.
+"""Working out what each claim needs before it can be reviewed, and deciding a claim
+that a link lead's read drafted once it has been prepared.
 
-Planning only: which articles are unread, and the commands to run. Running them is the
+Planning: which articles are unread, and the commands to run. Running them is the
 command's job.
 """
 
 from dataclasses import dataclass
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.entry import claim_by_slug
-from thenwhat.db.models import Claim, SourceArticle
-from thenwhat.domain import ReviewState
+from thenwhat.claims.entry import claim_by_slug, find_claim
+from thenwhat.db.models import Claim, Entity, LinkLead, SourceArticle
+from thenwhat.domain import Decider, EntityType, ReadOutcome, ReviewState
+from thenwhat.extract.names import is_a_name
+from thenwhat.review.decisions import record_decision
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,3 +62,37 @@ def steps_for(plan: ClaimPlan) -> list[list[str]]:
         ["fetch", plan.slug],
         ["readings", plan.slug],
     ]
+
+
+def decide_prepared_lead_claim(session: Session, slug: str, *, now: datetime) -> ReviewState | None:
+    """Decide, by the rule for drafts, a claim that a link lead's read drafted and that has
+    now been prepared: approved when its intervention is a name, rejected when it is a
+    description. Returns the decision, or None when there is nothing to decide: the claim
+    is not awaiting review, or no lead's read drafted it (a claim the operator entered
+    keeps waiting for the operator).
+
+    The read leaves such a claim pending so that it is not published before its registries
+    have been searched (openspec lead-reading). Call this only after that search succeeded.
+    """
+    claim = find_claim(session, slug)
+    if claim is None or claim.review_state is not ReviewState.PENDING:
+        return None
+    drafted_by_a_read = session.scalar(
+        select(LinkLead.id)
+        .where(LinkLead.claim_id == claim.id, LinkLead.read_outcome == ReadOutcome.NEW_CLAIM)
+        .limit(1)
+    )
+    if drafted_by_a_read is None:
+        return None
+    intervention = session.scalar(
+        select(Entity.name).where(
+            Entity.claim_id == claim.id, Entity.type == EntityType.INTERVENTION
+        )
+    )
+    state = (
+        ReviewState.APPROVED
+        if intervention is not None and is_a_name(intervention)
+        else ReviewState.REJECTED
+    )
+    record_decision(claim, state, by=Decider.RULE, now=now)
+    return state

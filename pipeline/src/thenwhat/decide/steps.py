@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entities import development_codes
+from thenwhat.claims.entry import NamedClaim
 from thenwhat.claims.verticals import VERTICALS
 from thenwhat.db.models import Claim, ClaimTerm, DecisionLog, Entity, EntityMatch
 from thenwhat.decide.core import Backend, Decision, DecisionFailed, decide, decide_many
@@ -690,3 +691,55 @@ def choose_vertical(
         now=now,
     )
     return decision.choice, decision.probabilities[decision.choice]
+
+
+SAME_CLAIM = "same_claim"
+# The answer when the article reports none of the claims it is shown.
+NO_SUCH_CLAIM = "none-of-these"
+SAME_CLAIM_QUESTION = (
+    "An article has been read. Does it report the same treatment for the same condition "
+    "as one of the claims below? Choose a claim only when its treatment is the article's "
+    "treatment and its condition is the article's condition: worded differently, more "
+    "narrowly or more generally, it is still the same condition. A different condition, "
+    f"or a different treatment that shares a word of the name, is {NO_SUCH_CLAIM}."
+)
+
+
+def same_claim_state(intervention: str, indication: str, candidates: Sequence[NamedClaim]) -> str:
+    """What the same-claim decision is shown: the treatment and condition read from the
+    article, the question, and each candidate claim's treatment and condition. Never a
+    word of the article."""
+    listed = "\n".join(
+        f"- {claim.slug}: {claim.intervention} for {claim.indication}" for claim in candidates
+    )
+    return (
+        f"Article's treatment: {intervention}\nArticle's condition: {indication}\n\n"
+        f"{SAME_CLAIM_QUESTION}\n{listed}\n- {NO_SUCH_CLAIM}"
+    )
+
+
+def choose_same_claim(
+    session: Session,
+    backend: Backend,
+    *,
+    ref: str,
+    intervention: str,
+    indication: str,
+    candidates: Sequence[NamedClaim],
+    now: datetime,
+) -> tuple[str | None, float]:
+    """The claim, among the candidates, that the backend says the article reports, with
+    the probability it gives that answer; no claim when it says none of them. This
+    function decides nothing: the caller joins the article to the claim only at or above
+    its own setting."""
+    decision = decide(
+        session,
+        backend,
+        step=SAME_CLAIM,
+        state=same_claim_state(intervention, indication, candidates),
+        options=[*(claim.slug for claim in candidates), NO_SUCH_CLAIM],
+        input_ref=ref,
+        now=now,
+    )
+    chosen = None if decision.choice == NO_SUCH_CLAIM else decision.choice
+    return chosen, decision.probabilities[decision.choice]

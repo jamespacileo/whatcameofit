@@ -98,12 +98,46 @@ When the read names an intervention and an indication that an existing claim cov
 - **WHEN** the existing claim is approved
 - **THEN** it stays approved, and no field the operator reviewed is changed
 
+### Requirement: The same story in other words
+When no existing claim has the read's intervention and indication as written, the claims whose intervention shares a name with the read's, followed by the claims that screening found named in the lead's title, SHALL be candidates, up to a fixed number. A name is shared when a claim's intervention name or synonym equals one of the names the read gives, or when one sits whole inside the other, word for word. A decision SHALL say whether the article reports one of the candidates or none of them. It SHALL be shown each side's treatment and condition and nothing of the article's text. The article reports a candidate when the treatment is the same and the article's condition is the candidate's condition, a narrower form of it or a wider wording of it; a different condition is a different claim. The article SHALL be added to the chosen claim only when the decision chooses it at or above the configured probability, 0.8 unless set; otherwise a new claim SHALL be drafted. Being added SHALL change nothing of the claim that adding any article does not change: the claim keeps the indication and headline it was first given. The decision SHALL be logged.
+
+#### Scenario: The same story in another outlet's words
+- **WHEN** a claim exists for esketamine for major depressive disorder and suicidal thinking, and a lead's read names esketamine for treatment-resistant depression, and the decision chooses that claim at 0.9
+- **THEN** the article is added to that claim, no claim is created, and the lead's detail says what was read and the decision's probability
+
+#### Scenario: A name inside a longer name
+- **WHEN** a claim's intervention is esketamine and a read names esketamine nasal spray
+- **THEN** that claim is a candidate; a claim whose intervention is ketamine is not
+
+#### Scenario: The same treatment for a different condition
+- **WHEN** the decision says the article reports none of the candidates
+- **THEN** a new claim is drafted for the read's intervention and indication
+
+#### Scenario: An unsure decision
+- **WHEN** the decision chooses a candidate at 0.6 and the configured probability is 0.8
+- **THEN** the article is not added to it and a new claim is drafted
+
+#### Scenario: No claim shares the name
+- **WHEN** no claim's intervention shares a name with the read's and screening linked the lead's title to no claim
+- **THEN** no decision is asked and a new claim is drafted
+
+#### Scenario: A claim screening found in the title
+- **WHEN** screening linked the lead's title to a claim whose intervention name the read does not share
+- **THEN** that claim is a candidate all the same
+
+### Requirement: One read at a time settles which claim
+Reads that run side by side SHALL settle which claim an article belongs to one at a time, each holding its turn until what it made is saved, so that a claim one read has just drafted is found by the next.
+
+#### Scenario: Two articles on one story read at once
+- **WHEN** one read is settling which claim its article belongs to
+- **THEN** no other read can settle the same question until the first has saved its result
+
 ### Requirement: An article for a new claim
-When no existing claim covers what the read names, a claim SHALL be drafted from the read exactly as extraction drafts one, and decided by the existing rule for drafts. Its slug SHALL be made by rule from the intervention and the indication. Its vertical SHALL be chosen by a decision among the configured verticals and accepted only at or above the configured probability.
+When no existing claim covers what the read names, a claim SHALL be drafted from the read exactly as extraction drafts one. Its slug SHALL be made by rule from the intervention and the indication. Its vertical SHALL be chosen by a decision among the configured verticals and accepted only at or above the configured probability. A claim whose intervention is a description SHALL be rejected by rule when it is drafted. A claim whose intervention is a name SHALL await review, and so stay out of the export, until it has been prepared.
 
 #### Scenario: A named intervention
 - **WHEN** the read names an intervention that is a name, and the vertical decision is confident
-- **THEN** a claim is created with that slug and vertical, and is approved by rule and published with the next export
+- **THEN** a claim is created with that slug and vertical, awaits review, and is not in the export
 
 #### Scenario: A description in place of a name
 - **WHEN** the read gives a description where a name is needed
@@ -116,6 +150,21 @@ When no existing claim covers what the read names, a claim SHALL be drafted from
 #### Scenario: The slug is taken
 - **WHEN** the slug the rule makes belongs to a claim for another intervention or indication
 - **THEN** no claim is created and the lead's failure names the slug
+
+### Requirement: A read's claim is decided after it is prepared
+`thenwhat prepare` SHALL decide a claim that a lead's read drafted, by the existing rule for drafts, once every step it runs for that claim has succeeded: reading unread articles, searching the registries, reading the registries for approved matches, and reading the stored records. While a step has failed, the claim SHALL keep awaiting review. `thenwhat prepare` SHALL NOT decide a claim that no lead's read drafted. No claim a read drafted is published with a status that no registry search stands behind.
+
+#### Scenario: Prepared and named
+- **WHEN** `thenwhat prepare --pending` has run every step without failure for a claim a read drafted
+- **THEN** the claim is approved by rule and is published with the next export, with the status its approved evidence gives
+
+#### Scenario: A step that failed
+- **WHEN** a step of `thenwhat prepare` fails for a claim a read drafted
+- **THEN** the claim keeps awaiting review, and the next `thenwhat prepare --pending` works on it again
+
+#### Scenario: A claim the operator entered
+- **WHEN** `thenwhat prepare` runs for a claim that awaits review and that no read drafted
+- **THEN** it is prepared and left awaiting the operator, as before
 
 ### Requirement: Registry numbers and papers the page gives
 Registry numbers and paper DOIs that the article's own page gives SHALL be recorded for the claim as candidates, with the reason that the article names them, without a search. Each SHALL be scored and decided as any candidate is, for the claim's indication. A paper the page gives only by its PubMed number SHALL NOT be recorded. When what the page names cannot be read or scored, the claim and its article SHALL stand, and the lead SHALL say that they were not recorded.
@@ -140,7 +189,7 @@ A lead linked by its title to a claim that already has the configured number of 
 - **THEN** the lead is read
 
 ### Requirement: Funnel report
-`thenwhat backfill funnel` SHALL report how many leads are loaded, in scope, scored, passed, read, could not be read by reason, added to an existing claim, made a new claim approved by rule, made a claim rejected by rule, and need a vertical. It SHALL give the model cost recorded for triage and for reading. It SHALL list the outlets whose pages gave no publication date, with how many leads each lost.
+`thenwhat backfill funnel` SHALL report how many leads are loaded, in scope, scored, passed, read, could not be read by reason, added to an existing claim, made a new claim approved by rule, made a claim rejected by rule, made a claim that awaits preparation, and need a vertical. It SHALL give the model cost recorded for triage and for reading. It SHALL list the outlets whose pages gave no publication date, with how many leads each lost.
 
 #### Scenario: After a limited run
 - **WHEN** 200 leads have been through the reading step

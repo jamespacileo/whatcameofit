@@ -770,9 +770,10 @@ def funnel_command() -> None:
         f"  added to a claim that existed: {found.added_to_claim:,}",
         f"  new claim, approved by rule: {found.new_approved_by_rule:,}",
         f"  new claim, rejected by rule: {found.new_rejected_by_rule:,}",
+        f"  new claim, awaiting `thenwhat prepare --pending`: {found.new_awaiting_preparation:,}",
     ]
     if found.new_otherwise:
-        lines.append(f"  new claim, decided otherwise or pending: {found.new_otherwise:,}")
+        lines.append(f"  new claim, decided otherwise: {found.new_otherwise:,}")
     lines += [
         f"  needs a vertical, no claim made: {found.needs_vertical:,}",
         f"held, the claim has enough articles: {found.enough_articles:,}",

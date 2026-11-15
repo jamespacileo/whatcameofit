@@ -27,6 +27,9 @@ class Funnel:
     added_to_claim: int
     new_approved_by_rule: int
     new_rejected_by_rule: int
+    # Drafted by a read and not yet decided: `thenwhat prepare --pending` searches the
+    # registries for it and then decides it by rule.
+    new_awaiting_preparation: int
     new_otherwise: int
     needs_vertical: int
     enough_articles: int
@@ -45,6 +48,7 @@ class Funnel:
             self.added_to_claim
             + self.new_approved_by_rule
             + self.new_rejected_by_rule
+            + self.new_awaiting_preparation
             + self.new_otherwise
             + self.needs_vertical
         )
@@ -75,6 +79,7 @@ def funnel(session: Session, *, pass_above: float | None, reject_below: float | 
     by_rule = Claim.reviewed_by == Decider.RULE
     approved = new_claims(Claim.review_state == ReviewState.APPROVED, by_rule)
     rejected = new_claims(Claim.review_state == ReviewState.REJECTED, by_rule)
+    awaiting = new_claims(Claim.review_state == ReviewState.PENDING)
     unreadable = LinkLead.read_outcome == ReadOutcome.CANNOT_BE_READ
     reasons = session.execute(
         select(LinkLead.read_detail, func.count())
@@ -97,7 +102,8 @@ def funnel(session: Session, *, pass_above: float | None, reject_below: float | 
         added_to_claim=number(LinkLead.read_outcome == ReadOutcome.ADDED_TO_CLAIM),
         new_approved_by_rule=approved,
         new_rejected_by_rule=rejected,
-        new_otherwise=new_claims() - approved - rejected,
+        new_awaiting_preparation=awaiting,
+        new_otherwise=new_claims() - approved - rejected - awaiting,
         needs_vertical=number(LinkLead.read_outcome == ReadOutcome.NEEDS_VERTICAL),
         enough_articles=number(LinkLead.read_outcome == ReadOutcome.ENOUGH_ARTICLES),
         cannot_be_read={reason or "no reason recorded": count for reason, count in reasons},

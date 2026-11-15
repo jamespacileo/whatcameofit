@@ -79,6 +79,23 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 - [ ] 8.5 Load, screen and triage the chosen Reddit communities, and have the operator label a further sample; verify the report's platform split holds figures for both platforms
 - [ ] 8.6 After the operator sets the thresholds, read 200 leads and record the funnel here; verify the operator is shown the funnel and the claims made, and that no further reading runs before their decision
 
+## 9. One story, one claim; no claim published unsearched
+
+- [x] 9.1 Add `claims_sharing_a_name`: claims whose intervention name or synonym equals one of the read's names or sits whole inside it, or the reverse; verify with tests that "esketamine nasal spray" finds an esketamine claim and not a ketamine one, that equal names come first, and that no more than the fixed number come back
+- [x] 9.2 Add the `same_claim` decision step, shown treatments and conditions only; verify with a test that what it is shown holds no word of the article
+- [x] 9.3 In `link_read`, ask the decision when no claim is equal as written, with the claims screening linked by title as further candidates, and join only at or above `SAME_CLAIM_ACCEPT_ABOVE`; verify with tests of four synthetic reads shaped like the esketamine story (one claim, four articles, the first wording kept), of "none of these", of an unsure decision, of a read that shares no name, and of a title-linked claim
+- [x] 9.4 Take an advisory lock before the claim is settled and hold it to the end of the read's transaction; verify with a test that another connection cannot take it while a read's transaction is open
+- [x] 9.5 Leave a named claim pending at the read and reject a description at once; have `thenwhat prepare` decide a read's claim by the rule for drafts once every step succeeded; verify with tests of a prepared claim, a failed step, and a pending claim no read drafted
+- [x] 9.6 Count claims awaiting preparation in `thenwhat backfill funnel`; update the README and `.env.example`; verify `make check` passes
+
+## First reads: what happened on 2026-11-15 (8.6, begun and taken back)
+
+- **Before reading:** PR 113 merged; the real database migrated to `0018` after a dump. The leads loaded so far (971,734, with the 2019 scores, labels, triage ledger entries, decision records and usage) were copied in once from the separate database, and screening was run again there against the real claims. The operator set the thresholds, pass at 0.7 and reject below 0.1, and raised the month's ceiling to $100.
+- **The run:** `link_read --limit 200` was stopped after 52 leads. 39 new claims (27 approved by rule, 12 rejected by rule), none joined to an existing claim, 13 could not be read (11 refused by robots.txt, 1 with no page or snapshot, 1 with no date). Model cost $0.04.
+- **What was wrong:** four esketamine claims and three ketamine claims from one story's articles, and every approved claim exportable as "preclinical only" before any registry search. Found by the reviewing session's early audit.
+- **What was done:** after a dump, the 39 claims and everything hanging off them were deleted in one transaction and their leads set back to unread; the 13 unreadable outcomes, the decision records and the usage stay. 84 claims, as before. None of the 39 had been exported. Section 9 is the fix; 8.6 stays open until the reread.
+- **Also found:** on a busy machine a statement sent from the host to the Compose database's published port took about 19 ms against 0.02 ms inside the Compose network. The loader sends two or three statements a post, so a load from the host fell from about 1,700 posts a second to 34. Loads, screening, triage and reads were run from a container on the Compose network instead. Batching the loader's statements would remove the dependence; not done here.
+
 ## First run: what was done on 2026-11-14 (8.1, 8.2, and the triage of 8.3)
 
 - **Where:** a database of its own, `thenwhat_links`, on the Compose Postgres server, with the 43,320 registry trials copied read-only from `thenwhat_backfill`. It holds no claims, so no lead could be already tracked or linked to a claim. The operator's `thenwhat` database was not touched.

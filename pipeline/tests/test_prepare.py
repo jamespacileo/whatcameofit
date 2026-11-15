@@ -17,8 +17,9 @@ from thenwhat.claims.entry import (
     find_claim,
 )
 from thenwhat.cli import app
-from thenwhat.domain import Decider, ReviewState
-from thenwhat.prepare import plan_claims, steps_for
+from thenwhat.db.models import LinkLead
+from thenwhat.domain import Decider, OutletKind, ReadOutcome, ReviewState
+from thenwhat.prepare import decide_prepared_lead_claim, plan_claims, steps_for
 from thenwhat.review.decisions import record_decision
 
 NOW = datetime(2026, 11, 20, tzinfo=UTC)
@@ -114,7 +115,10 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr("thenwhat.cli.entry.open_session", test_session)
     monkeypatch.setattr("thenwhat.cli.prepare.run_step", fake_step)
     runner = CliRunner()
-    return lambda *arguments: (runner.invoke(app, list(arguments), env={"COLUMNS": "200"}), ran)
+    # The settings are read for the rule that decides a read's claim; the database they
+    # name is never opened, because the session above stands in for it.
+    env = {"COLUMNS": "200", "DATABASE_URL": "postgresql+psycopg://unused/unused"}
+    return lambda *arguments: (runner.invoke(app, list(arguments), env=env), ran)
 
 
 def test_prepare_runs_every_step_and_carries_on_after_an_article_that_cannot_be_read(
@@ -135,3 +139,68 @@ def test_prepare_with_no_claims_named_explains_and_exits_1(run):
     assert result.exit_code == 1
     assert "--pending" in result.output
     assert ran == []
+
+
+# --- a claim that a link lead's read drafted ---------------------------------------------
+
+
+def drafted_by_a_read(session: Session, slug: str) -> None:
+    """Mark the claim as the new claim of a link lead's read."""
+    claim = find_claim(session, slug)
+    assert claim is not None
+    session.add(
+        LinkLead(
+            url=f"https://news.example.org/{slug}",
+            url_key=f"news.example.org/{slug}",
+            outlet="news.example.org",
+            outlet_kind=OutletKind.GENERAL_NEWS,
+            title="words a person wrote when sharing the link",
+            first_shared_at=NOW,
+            read_outcome=ReadOutcome.NEW_CLAIM,
+            claim_id=claim.id,
+        )
+    )
+    session.flush()
+
+
+def test_a_claim_a_read_drafted_is_approved_by_rule_once_it_is_prepared(session: Session):
+    """Scenario: Prepared and named"""
+    claim_with_articles(session, "one")
+    drafted_by_a_read(session, "one")
+
+    assert decide_prepared_lead_claim(session, "one", now=NOW) is ReviewState.APPROVED
+
+    claim = find_claim(session, "one")
+    assert claim is not None
+    assert (claim.review_state, claim.reviewed_by) == (ReviewState.APPROVED, Decider.RULE)
+    # Decided once: asking again changes nothing.
+    assert decide_prepared_lead_claim(session, "one", now=NOW) is None
+
+
+def test_a_pending_claim_no_read_drafted_keeps_waiting_for_the_operator(session: Session):
+    """Scenario: A claim the operator entered"""
+    claim_with_articles(session, "one")
+
+    assert decide_prepared_lead_claim(session, "one", now=NOW) is None
+
+    claim = find_claim(session, "one")
+    assert claim is not None and claim.review_state is ReviewState.PENDING
+
+
+def test_prepare_approves_a_reads_claim_only_when_every_step_succeeded(run, session: Session):
+    """Scenarios: Prepared and named, A step that failed"""
+    claim_with_articles(session, "searched", "https://news.example.org/a")
+    claim_with_articles(session, "unsearched", "https://news.example.org/blocked")
+    for slug in ("searched", "unsearched"):
+        drafted_by_a_read(session, slug)
+
+    result, _ = run("prepare", "--pending")
+
+    assert result.exit_code == 0, result.output
+    assert "approved by rule, now that its registries have been searched" in result.output
+    states = {
+        slug: claim.review_state
+        for slug in ("searched", "unsearched")
+        if (claim := find_claim(session, slug))
+    }
+    assert states == {"searched": ReviewState.APPROVED, "unsearched": ReviewState.PENDING}

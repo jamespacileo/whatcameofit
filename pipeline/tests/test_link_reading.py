@@ -10,13 +10,14 @@ import httpx
 import pytest
 from pydantic_ai.messages import ModelResponse, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from backfill_support import same_session
 from thenwhat.backfill.allowance import Allowances
 from thenwhat.backfill.link_funnel import funnel
 from thenwhat.backfill.link_read import (
+    CLAIM_IDENTITY_LOCK,
     NO_DATE,
     NO_HEADLINE,
     NO_NAME,
@@ -39,6 +40,7 @@ from thenwhat.db.models import (
     WorkEntry,
 )
 from thenwhat.decide.core import BackendAnswer
+from thenwhat.decide.steps import NO_SUCH_CLAIM, SAME_CLAIM
 from thenwhat.domain import (
     Decider,
     LeadVerdict,
@@ -98,20 +100,30 @@ class Web:
 
 
 class Verticals:
-    """A decision backend that chooses one vertical with one probability, and says every
-    reported statement is in its article."""
+    """A decision backend that chooses one vertical with one probability, says which
+    claim, if any, an article reports, and says every reported statement is in its
+    article."""
 
     name = "fake"
 
     def __init__(self, vertical: str = "mouth-and-teeth", probability: float = 0.93) -> None:
         self.vertical = vertical
         self.probability = probability
+        # The slug the same-claim decision chooses, or None for "none of these".
+        self.same_claim: str | None = None
+        self.same_claim_probability = 0.9
+        # What the same-claim decision was shown, each time it was asked.
+        self.same_claim_asked: list[str] = []
 
     def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
-        rest = (1 - self.probability) / (len(options) - 1)
+        chosen, probability = self.vertical, self.probability
+        if step == SAME_CLAIM:
+            self.same_claim_asked.append(state)
+            chosen, probability = self.same_claim or NO_SUCH_CLAIM, self.same_claim_probability
+        rest = (1 - probability) / (len(options) - 1)
         chances = {option: rest for option in options}
-        chances[self.vertical] = self.probability
-        return BackendAnswer(self.vertical, chances)
+        chances[chosen] = probability
+        return BackendAnswer(chosen, chances)
 
     def answer_many(self, step, intro, question, items, options):
         rest = 0.1 / (len(options) - 1)
@@ -279,7 +291,8 @@ def test_a_passed_lead_is_read_into_a_new_claim_from_its_own_page(reader: Reader
     assert (report.done, lead.read_outcome) == (1, ReadOutcome.NEW_CLAIM)
     claim = claim_of(reader.session, lead)
     assert (claim.slug, claim.vertical) == ("ex-1-antibody-tooth-agenesis", "mouth-and-teeth")
-    assert (claim.review_state, claim.reviewed_by) == (ReviewState.APPROVED, Decider.RULE)
+    # Not approved by the read: it waits for its registries to be searched.
+    assert (claim.review_state, claim.reviewed_by) == (ReviewState.PENDING, None)
     [article] = articles_of(reader.session, claim)
     assert article.id == lead.source_article_id
     assert (article.outlet, article.title) == ("The Guardian", HEADLINE)
@@ -522,6 +535,167 @@ def test_a_description_in_place_of_a_name_is_rejected_by_rule_and_kept(session, 
     assert (lead.read_outcome, claim.review_state) == (ReadOutcome.NEW_CLAIM, ReviewState.REJECTED)
 
 
+# --- one story, several outlets --------------------------------------------------------
+
+# Four synthetic reads shaped like one much-shared story: each outlet words the treatment
+# and the condition its own way.
+STORY: list[dict[str, Any]] = [
+    DRAFT
+    | {
+        "intervention": "esketamine",
+        "intervention_synonyms": [],
+        "indication": "major depressive disorder and suicidal thinking",
+    },
+    DRAFT
+    | {
+        "intervention": "esketamine nasal spray",
+        "intervention_synonyms": [],
+        "indication": "depression",
+    },
+    DRAFT
+    | {
+        "intervention": "Esketamine nasal spray",
+        "intervention_synonyms": [],
+        "indication": "severe depression, particularly with suicidal thinking",
+    },
+    DRAFT
+    | {
+        "intervention": "esketamine",
+        "intervention_synonyms": [],
+        "indication": "treatment-resistant depression",
+    },
+]
+STORY_SLUG = "esketamine-major-depressive-disorder-and-suicidal-thinking"
+STORY_URLS = [
+    "https://www.theguardian.com/science/2019/mar/05/synthetic-spray",
+    "https://www.bbc.com/news/health-synthetic-spray",
+    "https://www.statnews.com/2019/03/05/synthetic-spray",
+    "https://www.reuters.com/article/synthetic-spray",
+]
+
+
+def story_leads(reader: Reader, count: int = 4) -> list[LinkLead]:
+    """Leads for the story's articles, the first the most shared, so it is read first."""
+    return [
+        reader.lead(url, shares=100 - 10 * number) for number, url in enumerate(STORY_URLS[:count])
+    ]
+
+
+def test_one_story_worded_four_ways_by_four_outlets_becomes_one_claim(session, fake_time):
+    """Scenarios: The same story in another outlet's words, A name inside a longer name"""
+    reader = Reader(session, fake_time, *STORY)
+    reader.backend.same_claim = STORY_SLUG
+    leads = story_leads(reader)
+
+    reader.read()
+
+    assert [lead.read_outcome for lead in leads] == [
+        ReadOutcome.NEW_CLAIM,
+        ReadOutcome.ADDED_TO_CLAIM,
+        ReadOutcome.ADDED_TO_CLAIM,
+        ReadOutcome.ADDED_TO_CLAIM,
+    ]
+    [claim] = session.scalars(select(Claim)).all()
+    assert claim.slug == STORY_SLUG
+    # A join adds an article and rewrites nothing: the claim keeps its first wording.
+    assert claim.indication == "major depressive disorder and suicidal thinking"
+    assert len(articles_of(session, claim)) == 4
+    assert leads[1].read_detail == (
+        "read as esketamine nasal spray for depression; the same claim by decision at 0.90"
+    )
+    # Asked once for each later article, and shown names and conditions only.
+    asked = reader.backend.same_claim_asked
+    assert len(asked) == 3
+    assert (
+        "Article's treatment: esketamine nasal spray\nArticle's condition: depression" in asked[0]
+    )
+    assert f"- {STORY_SLUG}: esketamine for major depressive disorder" in asked[0]
+    assert MARKER not in "".join(asked)
+
+
+def test_the_same_treatment_for_another_condition_stays_its_own_claim(session, fake_time):
+    """Scenario: The same treatment for a different condition"""
+    reader = Reader(session, fake_time, STORY[0], STORY[0] | {"indication": "chronic nerve pain"})
+    leads = story_leads(reader, 2)
+
+    reader.read()
+
+    assert [lead.read_outcome for lead in leads] == [ReadOutcome.NEW_CLAIM] * 2
+    assert sorted(session.scalars(select(Claim.slug))) == [
+        "esketamine-chronic-nerve-pain",
+        STORY_SLUG,
+    ]
+    assert len(reader.backend.same_claim_asked) == 1
+
+
+def test_an_unsure_same_claim_decision_joins_nothing(session, fake_time):
+    """Scenario: An unsure decision"""
+    reader = Reader(session, fake_time, STORY[0], STORY[3])
+    reader.backend.same_claim, reader.backend.same_claim_probability = STORY_SLUG, 0.6
+    leads = story_leads(reader, 2)
+
+    reader.read()
+
+    assert [lead.read_outcome for lead in leads] == [ReadOutcome.NEW_CLAIM] * 2
+    assert len(session.scalars(select(Claim)).all()) == 2
+
+
+def test_a_read_that_shares_no_name_with_any_claim_asks_no_decision(reader: Reader):
+    """Scenario: No claim shares the name"""
+    add_claim(
+        reader.session,
+        slug="another-drug-tooth-agenesis",
+        headline="A claim for another treatment of the same condition",
+        vertical="mouth-and-teeth",
+        intervention="Another drug",
+        indication="tooth agenesis",
+    )
+    lead = reader.lead()
+
+    reader.read()
+
+    assert lead.read_outcome is ReadOutcome.NEW_CLAIM
+    assert reader.backend.same_claim_asked == []
+
+
+def test_a_claim_the_title_names_is_offered_even_when_the_read_words_it_differently(
+    session, fake_time
+):
+    """Scenario: A claim screening found in the title"""
+    reader = Reader(
+        session,
+        fake_time,
+        DRAFT
+        | {"intervention": "Toothgro", "intervention_synonyms": [], "indication": "missing teeth"},
+    )
+    claim = tracked_claim(session)
+    reader.backend.same_claim = claim.slug
+    lead = reader.lead()
+    link(session, lead, "claim", claim.id, TITLE_NAMES_CLAIM)
+
+    reader.read()
+
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.ADDED_TO_CLAIM, claim.id)
+    assert (
+        "- ex-1-tooth-agenesis: EX-1 antibody for tooth agenesis"
+        in reader.backend.same_claim_asked[0]
+    )
+
+
+def test_a_read_keeps_its_turn_at_settling_the_claim_until_its_transaction_ends(
+    reader: Reader, engine
+):
+    """Scenario: Two articles on one story read at once"""
+    reader.lead()
+
+    reader.read()
+
+    # The read's transaction is still open here, so no other read may settle a claim.
+    with engine.connect() as another_read:
+        free = another_read.scalar(select(func.pg_try_advisory_xact_lock(CLAIM_IDENTITY_LOCK)))
+    assert free is False
+
+
 # --- nothing is read before triage is measured -----------------------------------------
 
 
@@ -581,7 +755,8 @@ def test_the_funnel_counts_each_outcome_and_the_cost_of_reading(session: Session
 
     assert (found.loaded, found.in_scope, found.scored) == (6, 5, 5)
     assert dict(found.standing) == {"passed": 3, "held": 1, "rejected": 1}
-    assert (found.read, found.new_approved_by_rule, found.new_rejected_by_rule) == (2, 1, 1)
+    assert (found.read, found.new_approved_by_rule, found.new_rejected_by_rule) == (2, 0, 1)
+    assert (found.new_awaiting_preparation, found.new_otherwise) == (1, 0)
     assert found.cannot_be_read == {NO_DATE: 1}
     assert found.undated_outlets == [("statnews.com", 1)]
     # Two reads were paid for; the scripted model's cost is recorded under the leads' name.

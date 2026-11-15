@@ -5,7 +5,14 @@ Everything that can be settled without the model is settled first: an article th
 become tracked, a claim that has enough articles, an outlet with no name, a page the
 outlet does not let us fetch, a page with no date or headline. The article's text is held
 only while the model reads it. What the read makes is an ordinary source article or an
-ordinary claim, decided by the rules that govern any other.
+ordinary claim.
+
+Several outlets report one story, each in its own words, so an article is joined to a
+claim that exists whenever a decision says it reports that claim; only otherwise is a new
+claim drafted. Reads that run side by side take turns at that point, so two articles on
+one story cannot both draft a claim. A new claim with a name is not approved here: it
+awaits `thenwhat prepare`, which searches the registries and then decides it by the rule
+for drafts, so that no claim is published with a status no search stands behind.
 """
 
 from collections.abc import Callable
@@ -25,22 +32,28 @@ from thenwhat.backfill.link_triage import is_passed
 from thenwhat.backfill.outlet_kinds import name_of
 from thenwhat.backfill.steps import MODEL, TEXT_DOOR, Failed, ModelSpend
 from thenwhat.claims.entry import (
+    MAX_NAMED_CLAIMS,
     EntryError,
     claim_by_slug,
+    claims_sharing_a_name,
     find_article,
     free_slug_for,
+    named_claims,
     slug_of_claim_covering,
 )
 from thenwhat.db.models import Claim, LinkLead, LinkLeadLink, LinkShare, SourceArticle
 from thenwhat.decide.core import Backend, DecisionFailed
-from thenwhat.decide.steps import choose_vertical, lead_ref
-from thenwhat.domain import ReadOutcome, ScreenOutcome, WorkOutcome
+from thenwhat.decide.steps import choose_same_claim, choose_vertical, lead_ref
+from thenwhat.domain import Decider, ReadOutcome, ReviewState, ScreenOutcome, WorkOutcome
+from thenwhat.extract.names import is_a_name
 from thenwhat.extract.page import Page, published_day
 from thenwhat.extract.retrieve import ArticleRetriever, PasteNeeded
+from thenwhat.extract.schema import Draft
 from thenwhat.extract.service import article_from_draft, claim_from_draft, read_article
 from thenwhat.llm.client import Llm
 from thenwhat.llm.errors import BudgetExceeded, LlmError
 from thenwhat.resolve.named import candidates_named_in_article
+from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceError, SystemTime, Time
 from thenwhat.statements.service import StatementChecker
 
@@ -52,6 +65,9 @@ NO_PAGE = "the page could not be retrieved and no archived snapshot was found"
 # The name a lead's read is recorded under in the usage ledger, apart from articles an
 # operator has read, so the funnel can say what reading leads has cost.
 LEAD_READING = "extraction:link_lead"
+# Held, until its transaction ends, by the one read that is settling which claim its
+# article belongs to. A claim another read has just drafted is then there to be found.
+CLAIM_IDENTITY_LOCK = 7_468_656_001
 
 
 class NotMeasured(BackfillError):
@@ -97,6 +113,7 @@ class LinkRead:
         reads_per_claim: int,
         vertical_accept_above: float,
         approve_drafts_by_rule: bool,
+        same_claim_accept_above: float = 0.8,
         match_reject_below: float = 0.0,
         match_accept_above: float = 0.0,
         time: Time | None = None,
@@ -107,6 +124,7 @@ class LinkRead:
         self.min_labels = min_labels
         self.reads_per_claim = reads_per_claim
         self.vertical_accept_above = vertical_accept_above
+        self.same_claim_accept_above = same_claim_accept_above
         self.approve_drafts_by_rule = approve_drafts_by_rule
         # The rules `thenwhat resolve` decides candidates by, for those a page names.
         self.match_reject_below = match_reject_below
@@ -234,6 +252,54 @@ class LinkRead:
             return f"the records its page names were not recorded: {failure}"
         return None
 
+    def _claim_it_reports(
+        self, session: Session, record: LinkLead, draft: Draft, client: ReadClient, now: datetime
+    ) -> tuple[str | None, str | None]:
+        """The slug of the claim that exists for what the read names, and how it was found
+        when a decision found it. A claim with the same intervention and indication as
+        written is that claim. Otherwise the candidates are the claims whose intervention
+        shares a name with the read's, then the claims screening found named in the
+        lead's title; the article joins one only when the decision chooses it at or above
+        the setting. The decision is logged either way."""
+        exact = slug_of_claim_covering(session, draft.intervention, draft.indication)
+        if exact is not None:
+            return exact, None
+        candidates = claims_sharing_a_name(
+            session, [draft.intervention, *draft.intervention_synonyms]
+        )
+        linked_by_title = named_claims(
+            session,
+            list(
+                session.scalars(
+                    select(LinkLeadLink.record_id).where(
+                        LinkLeadLink.link_lead_id == record.id,
+                        LinkLeadLink.record_kind == CLAIM,
+                        LinkLeadLink.reason == TITLE_NAMES_CLAIM,
+                    )
+                )
+            ),
+        )
+        offered = {claim.slug for claim in candidates}
+        candidates += [claim for claim in linked_by_title if claim.slug not in offered]
+        candidates = candidates[:MAX_NAMED_CLAIMS]
+        if not candidates:
+            return None, None
+        chosen, probability = choose_same_claim(
+            session,
+            client.make_backend(session),
+            ref=lead_ref(record.id),
+            intervention=draft.intervention,
+            indication=draft.indication,
+            candidates=candidates,
+            now=now,
+        )
+        if chosen is None or probability < self.same_claim_accept_above:
+            return None, None
+        return chosen, (
+            f"read as {draft.intervention} for {draft.indication}; "
+            f"the same claim by decision at {probability:.2f}"
+        )
+
     def run(self, session: Session, record: LinkLead, client: ReadClient) -> WorkOutcome | Failed:
         now = self._time.now()
         claim_id = self._tracked_claim(session, record)
@@ -281,8 +347,11 @@ class LinkRead:
         except LlmError as failure:
             return Failed(str(failure))
         address = without_tracking(record.url)
+        # One read at a time from here to the end of its transaction: whichever claim
+        # another read has just made for this story is found, not made again.
+        session.execute(select(func.pg_advisory_xact_lock(CLAIM_IDENTITY_LOCK)))
         try:
-            existing = slug_of_claim_covering(session, draft.intervention, draft.indication)
+            existing, how = self._claim_it_reports(session, record, draft, client, now)
             if existing is not None:
                 claim = claim_by_slug(session, existing)
                 article, _ = article_from_draft(
@@ -300,7 +369,8 @@ class LinkRead:
                 )
                 record.claim_id, record.source_article_id = claim.id, article.id
                 note = self._named_on_the_page(session, claim, page, client, now)
-                return self._finish(record, ReadOutcome.ADDED_TO_CLAIM, note)
+                detail = "; ".join(part for part in (how, note) if part) or None
+                return self._finish(record, ReadOutcome.ADDED_TO_CLAIM, detail)
 
             slug = free_slug_for(session, draft.intervention, draft.indication)
             vertical, probability = choose_vertical(
@@ -331,9 +401,13 @@ class LinkRead:
                 title=headline,
                 published_date=day,
                 archive_url=retrieved.archive_url,
-                decide_by_rule_at=now if self.approve_drafts_by_rule else None,
                 now=now,
             )
+            if self.approve_drafts_by_rule and not is_a_name(draft.intervention):
+                # A description in place of a name is rejected now, as for any draft: no
+                # registry search would change that. A named claim stays pending until
+                # `thenwhat prepare` has searched the registries and decides it.
+                record_decision(extracted.claim, ReviewState.REJECTED, by=Decider.RULE, now=now)
         except (EntryError, DecisionFailed) as refused:
             session.flush()
             return Failed(str(refused))
