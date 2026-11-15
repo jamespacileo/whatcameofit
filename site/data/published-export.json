@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-15T21:48:53.209887Z",
-  "last_checked_at": "2026-11-15T20:57:46.219796Z",
+  "generated_at": "2026-11-15T22:09:27.865901Z",
+  "last_checked_at": "2026-11-15T22:03:14.293468Z",
   "preview": false,
   "sources": [
     {
@@ -35942,6 +35942,489 @@
           "basis": "people",
           "confidence": 0.92,
           "article_url": "https://www.bbc.com/news/health-48868261",
+          "read_on": "2026-11-15"
+        }
+      ]
+    },
+    {
+      "slug": "daraxonrasib-previously-treated-metastatic-pancreatic-cancer",
+      "headline": "Daraxonrasib improved survival outcomes versus chemotherapy in a phase 3 pancreatic cancer trial",
+      "summary": "The article reports phase 3 results for daraxonrasib as second-line treatment for previously treated metastatic pancreatic cancer. In 500 patients, median overall survival was 13.2 months with daraxonrasib versus 6.7 months with chemotherapy, and median progression-free survival was 7.2 versus 3.6 months. It also reports response and safety results and says a separate trial is evaluating the drug as a possible first-line treatment.",
+      "vertical": "cancer",
+      "approach": null,
+      "intervention": {
+        "name": "daraxonrasib",
+        "synonyms": [
+          "RMC-6236",
+          "Rasonque"
+        ]
+      },
+      "indication": "Previously treated metastatic pancreatic cancer",
+      "first_reported_date": "2026-05-31",
+      "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
+      "checked_by_person": false,
+      "status": {
+        "code": "approved",
+        "overlay_years": null,
+        "updated_at": "2026-11-15T22:03:27.746155Z",
+        "explained_by": [
+          11720
+        ],
+        "history": [
+          {
+            "on": "2024-10-03",
+            "code": "trial_registered"
+          },
+          {
+            "on": "2024-10-16",
+            "code": "phase_3"
+          },
+          {
+            "on": "2026-08-26",
+            "code": "approved"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://www.dana-farber.org/newsroom/news-releases/2026/rason-inhibitor-doubles-median-overall-survival-in-results-of-phase-3-trial-for-patients-with-metastatic-pancreatic-cancer",
+          "outlet": "Dana-Farber Cancer Institute",
+          "title": "RAS(ON) Inhibitor Doubles Median Overall Survival in Results of Phase 3 Trial for Patients with Metastatic Pancreatic Cancer",
+          "published_date": "2026-05-31",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [],
+      "events": [
+        {
+          "id": 11695,
+          "type": "trial_registered",
+          "event_date": "2024-10-03",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06625320 registered (Phase 3).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06625320",
+          "trial_id": "NCT06625320",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11696,
+          "type": "trial_status_change",
+          "event_date": "2024-10-16",
+          "date_basis": "start date",
+          "summary": "Trial NCT06625320 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06625320",
+          "trial_id": "NCT06625320",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11720,
+          "type": "regulatory_decision",
+          "event_date": "2026-08-26",
+          "date_basis": "entered by operator",
+          "summary": "FDA approved daraxonrasib for adults with metastatic pancreatic adenocarcinoma after prior systemic treatment or when multiagent systemic treatment is unsuitable.",
+          "source_name": "FDA",
+          "source_url": "https://www.fda.gov/drugs/cancer-approvals/fda-approves-daraxonrasib-metastatic-pancreatic-adenocarcinoma",
+          "trial_id": null,
+          "trial_phases": [],
+          "trial_state": null,
+          "regulatory_outcome": "approved",
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06625320",
+          "url": "https://clinicaltrials.gov/study/NCT06625320",
+          "score": 1,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "Phase 3 Study of Daraxonrasib (RMC-6236) in Patients With Previously Treated Metastatic Pancreatic Ductal Adenocarcinoma (PDAC). For: Pancreatic Cancer, PDAC, PDAC - Pancreatic Ductal Adenocarcinoma. Tests: RMC-6236, Gemcitabine, nab-paclitaxel, Irinotecan, Liposomal irinotecan, 5-fluorouracil, leucovorin, Oxaliplatin. Phase 3, active not recruiting."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT05379985",
+          "url": "https://clinicaltrials.gov/study/NCT05379985",
+          "score": 0.47,
+          "state": "candidate",
+          "reading": "other_indication",
+          "decided_by": null,
+          "summary": "Study of RMC-6236 in Patients With Advanced Solid Tumors Harboring Specific Mutations in RAS. For: Non-small Cell Lung Cancer (NSCLC), Colorectal Cancer (CRC), Pancreatic Ductal Adenocarcinoma (PDAC), Advanced Solid Tumors. Tests: RMC-6236. Phase 1/Phase 2, recruiting."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06128551",
+          "url": "https://clinicaltrials.gov/study/NCT06128551",
+          "score": 0.42,
+          "state": "candidate",
+          "reading": "other_indication",
+          "decided_by": null,
+          "summary": "Study of Elironrasib and Daraxonrasib as Monotherapies and Combination Therapy in Participants With Advanced KRAS G12C Mutant Solid Tumors. For: Non-Small Cell Lung Cancer (NSCLC), Colorectal Cancer, Pancreatic Ductal Adenocarcinoma. Tests: Elironrasib, Daraxonrasib. Phase 1/Phase 2, recruiting."
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT06625320",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06625320",
+          "title": "Phase 3 Study of Daraxonrasib (RMC-6236) in Patients With Previously Treated Metastatic Pancreatic Ductal Adenocarcinoma (PDAC)",
+          "phases": [
+            "phase_3"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-11-15T21:48:47.206351Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 500,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "none",
+            "comparators": [
+              "active"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Revolution Medicines, Inc.",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Progression free survival (PFS) in the RAS G12-mutant population",
+                "time_frame": "Up to approximately 3 years"
+              },
+              {
+                "measure": "Overall survival (OS) in the RAS G12-mutant population",
+                "time_frame": "Up to approximately 3 years"
+              }
+            ],
+            "primary_outcomes_total": 2,
+            "why_stopped": null,
+            "results": null
+          },
+          "papers": [
+            "10.1056/nejmoa2605555"
+          ],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "3 years",
+              "number": 3,
+              "unit": "years",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-15T21:48:47.206351Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Progression free survival (PFS)",
+              "number": null,
+              "unit": null,
+              "code": "survival",
+              "confidence": 1,
+              "read_on": "2026-11-15T21:48:47.206351Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "3 years",
+              "number": 3,
+              "unit": "years",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-15T21:48:47.206351Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "Overall survival (OS)",
+              "number": null,
+              "unit": null,
+              "code": "survival",
+              "confidence": 1,
+              "read_on": "2026-11-15T21:48:47.206351Z"
+            }
+          ]
+        }
+      ],
+      "papers": [
+        {
+          "identifier": "10.1056/nejmoa2605555",
+          "url": "https://doi.org/10.1056/nejmoa2605555",
+          "record_url": "https://europepmc.org/article/MED/42223072",
+          "roles": [
+            {
+              "role": "origin",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            },
+            {
+              "role": "trial_result",
+              "trial_id": "NCT06625320",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            },
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "indication_named",
+                "named_institution",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "Daraxonrasib or Chemotherapy in Previously Treated Metastatic Pancreatic Cancer. 2026. article. New England Journal of Medicine"
+            }
+          ],
+          "facts_as_of": "2026-11-14T20:10:09.344068Z",
+          "facts": {
+            "title": "Daraxonrasib or Chemotherapy in Previously Treated Metastatic Pancreatic Cancer.",
+            "journal": "The New England journal of medicine",
+            "year": 2026,
+            "kinds": [
+              "randomised_trial",
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1056/nejmoa2505783",
+          "url": "https://doi.org/10.1056/nejmoa2505783",
+          "record_url": "https://europepmc.org/article/MED/42090791",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "named_institution",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "Daraxonrasib in Previously Treated Advanced RAS -Mutated Pancreatic Cancer. 2026. article. New England Journal of Medicine"
+            }
+          ],
+          "facts_as_of": "2026-11-14T21:11:31.362951Z",
+          "facts": {
+            "title": "Daraxonrasib in Previously Treated Advanced &lt;i&gt;RAS&lt;/i&gt;-Mutated Pancreatic Cancer.",
+            "journal": "The New England journal of medicine",
+            "year": 2026,
+            "kinds": [
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1158/1538-7445.am2025-lb281",
+          "url": "https://doi.org/10.1158/1538-7445.am2025-lb281",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "named_institution",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "Abstract LB281: Mechanisms of resistance to the RAS(ON) multi-selective inhibitor daraxonrasib (RMC-6236) in RAS mutant PDAC and potential resolution with RAS(ON) combination therapies. 2025. conference-abstract. Cancer Research"
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
+        },
+        {
+          "identifier": "10.1200/jco.2025.43.16_suppl.tps4230",
+          "url": "https://doi.org/10.1200/jco.2025.43.16_suppl.tps4230",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "named_institution",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "Trial in progress: RASolute 302—A phase 3, multicenter, global, open-label, randomized study of daraxonrasib (RMC-6236), a RAS(ON) multi-selective inhibitor, versus standard of care chemotherapy in patients with previously treated metastatic pancreatic ductal adenocarcinoma (PDAC). 2025. article. Journal of Clinical Oncology"
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
+        },
+        {
+          "identifier": "10.5281/zenodo.22708340",
+          "url": "https://doi.org/10.5281/zenodo.22708340",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 0.96,
+              "reasons": [
+                "named_in_title",
+                "indication_named"
+              ],
+              "decided_by": "rule",
+              "summary": "Absolute Survival Benefit of Daraxonrasib in Previously Treated Metastatic Pancreatic Cancer: A Reconstructed Individual Patient Data Re-analysis of RASolute 302. 2026. software. Zenodo (CERN European Organization for Nuclear Research)"
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
+        }
+      ],
+      "background": [],
+      "organisations": [
+        {
+          "name": "Dana-Farber Cancer Institute",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "02jzgtq86",
+            "url": "https://ror.org/02jzgtq86",
+            "name": "Dana-Farber Cancer Institute",
+            "kinds": [
+              "facility",
+              "funder"
+            ],
+            "country": "United States",
+            "website": null,
+            "score": 1,
+            "read_at": "2026-11-15T21:48:34.495852Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.dana-farber.org/newsroom/news-releases/2026/rason-inhibitor-doubles-median-overall-survival-in-results-of-phase-3-trial-for-patients-with-metastatic-pancreatic-cancer"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Revolution Medicines",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.dana-farber.org/newsroom/news-releases/2026/rason-inhibitor-doubles-median-overall-survival-in-results-of-phase-3-trial-for-patients-with-metastatic-pancreatic-cancer"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Revolution Medicines, Inc.",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT06625320"
+              ]
+            }
+          ]
+        }
+      ],
+      "reported_statements": [
+        {
+          "text": "Median progression-free survival was 7.2 months with daraxonrasib and 3.6 months with chemotherapy.",
+          "kind": "effect",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "people",
+          "confidence": 0.91,
+          "article_url": "https://www.dana-farber.org/newsroom/news-releases/2026/rason-inhibitor-doubles-median-overall-survival-in-results-of-phase-3-trial-for-patients-with-metastatic-pancreatic-cancer",
+          "read_on": "2026-11-15"
+        },
+        {
+          "text": "The overall objective response rate was 31.6% with daraxonrasib and 11.2% with chemotherapy.",
+          "kind": "effect",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "people",
+          "confidence": 0.95,
+          "article_url": "https://www.dana-farber.org/newsroom/news-releases/2026/rason-inhibitor-doubles-median-overall-survival-in-results-of-phase-3-trial-for-patients-with-metastatic-pancreatic-cancer",
+          "read_on": "2026-11-15"
+        },
+        {
+          "text": "Together with cyclophilin A, daraxonrasib acts as a molecular glue that blocks RAS protein signaling.",
+          "kind": "how_it_works",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "not_said",
+          "confidence": 0.99,
+          "article_url": "https://www.dana-farber.org/newsroom/news-releases/2026/rason-inhibitor-doubles-median-overall-survival-in-results-of-phase-3-trial-for-patients-with-metastatic-pancreatic-cancer",
           "read_on": "2026-11-15"
         }
       ]
