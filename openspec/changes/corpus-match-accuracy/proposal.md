@@ -15,6 +15,7 @@ Released corpus checks found a trial match accompanied by a knowledge card for a
 - Preserve completed background-card work and provider usage when a later source operation fails.
 - Keep extracted alternate names within the complete intervention's scope and correct known overbroad unpublished aliases before publishing new cards.
 - Preserve registry intervention descriptions and arm membership for route and regimen comparisons within the existing scoring limit.
+- Recover from an explicitly refused registry condition with the existing bounded discovery fallback, while preserving full clinical scope for scoring and keeping treatment-name refusals explicit.
 - Compare claim summaries even when names are equal, record unresolved identity collisions without repeated work, and retain specific product names supplied by articles.
 
 ## Capabilities
@@ -26,6 +27,7 @@ Released corpus checks found a trial match accompanied by a knowledge card for a
 
 ### Modified Capabilities
 
+- `source-clients`: permit one existing condition-keyword fallback after an explicit condition-field parse refusal, without rewriting treatment names or expanding candidate limits.
 - `knowledge-cards`: keep component cards from representing complete regimens; include verified vocabulary entry-name evidence in term checks and support explicit, bounded rereads of undecided terms.
 - `llm-usage`: commit incurred provider usage independently of the caller's transaction.
 - `claim-extraction`: instruct exact-scope alternate names and exclude explicit regimen components before storing new synonyms.

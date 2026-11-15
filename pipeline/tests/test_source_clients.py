@@ -185,6 +185,79 @@ def test_broad_name_with_no_trial_under_the_condition_gives_no_candidates(
     assert all("pageToken" not in request.url.params for request in replay.requests)
 
 
+@pytest.mark.parametrize("method", ["search_trials", "search_phrase"])
+def test_refused_condition_uses_one_bounded_discovery_fallback(
+    session: Session, fake_time, fixture_json, method: str
+):
+    condition = "Stiff person syndrome, a rare disorder"
+    fallback = "stiff OR person OR rare"
+
+    def route(request: httpx.Request):
+        wording = request.url.params.get("query.cond")
+        if wording is None:
+            return fixture_json("clinicaltrials/search_broad_count.json")
+        if wording == condition:
+            return httpx.Response(
+                400, text="Error parsing query in Condition: Too complicated query"
+            )
+        assert wording == fallback
+        return fixture_json("clinicaltrials/search_broad_with_condition.json")
+
+    source, replay = trials(session, fake_time, route)
+    records = getattr(source, method)("CAR-T cell therapy", condition)
+
+    assert [record.external_id for record in records] == ["NCT07341828", "NCT06588491"]
+    expected: list[str | None] = [condition, fallback]
+    if method == "search_trials":
+        expected.insert(0, None)
+    assert [r.url.params.get("query.cond") for r in replay.requests] == expected
+    assert all(r.url.params["query.intr"] == "CAR-T cell therapy" for r in replay.requests)
+
+
+@pytest.mark.parametrize("condition, requests", [("Stiff person syndrome", 2), ("Cancer", 1)])
+def test_refused_condition_is_reported_when_no_usable_fallback_remains(
+    session: Session, fake_time, condition: str, requests: int
+):
+    refused = httpx.Response(400, text="Error parsing query in Condition: Too complicated query")
+    source, replay = trials(session, fake_time, lambda request: refused)
+
+    with pytest.raises(UnsearchableTerm, match="Too complicated query"):
+        source.search_phrase("cell therapy", condition)
+
+    assert len(replay.requests) == requests
+    assert all("query.cond" in r.url.params for r in replay.requests)
+
+
+@pytest.mark.parametrize("field", ["Intervention / treatment", "Unknown field"])
+def test_only_an_explicit_condition_refusal_can_use_the_fallback(
+    session: Session, fake_time, field: str
+):
+    refused = httpx.Response(400, text=f"Error parsing query in {field}: Too complicated query")
+    source, replay = trials(session, fake_time, lambda request: refused)
+
+    with pytest.raises(UnsearchableTerm):
+        source.search_phrase("cell therapy", "Stiff person syndrome")
+
+    assert len(replay.requests) == 1
+
+
+def test_refused_condition_fallback_keeps_the_candidate_limit(
+    session: Session, fake_time, fixture_json
+):
+    def route(request: httpx.Request):
+        if request.url.params["query.cond"] == "Stiff person syndrome":
+            return httpx.Response(
+                400, text="Error parsing query in Condition: Too complicated query"
+            )
+        return fixture_json("clinicaltrials/search_broad_count.json")
+
+    source, replay = trials(session, fake_time, route)
+
+    assert source.search_phrase("cell therapy", "Stiff person syndrome") == []
+    assert len(replay.requests) == 2
+    assert all("pageToken" not in r.url.params for r in replay.requests)
+
+
 def test_name_still_broad_within_the_condition_gives_no_candidates(
     session: Session, fake_time, fixture_json
 ):
