@@ -7,6 +7,7 @@ Released corpus checks found a trial match accompanied by a knowledge card for a
 ## What Changes
 
 - Require the same condition and complete intervention when associating a live answer with an existing card; uncertainty must not become a positive association.
+- Respect explicit patient populations and treatment settings when scoring registry trials, including a separately linked first-line trial in an article about previously treated patients.
 - Capture the currently visible slide within an identity-bound carousel, respecting ancestor clipping and the existing consent/privacy limits.
 - Record trial matching, card identity, release and method separately for all corpus rows, including legitimate negatives and inaccessible content.
 - Preserve accurate background-card scope for complete regimens, and prevent unpublished claims with an unknown evidence stage from being labelled preclinical. Confirm a sufficiently confident recorded stage by rule while preserving human decisions.

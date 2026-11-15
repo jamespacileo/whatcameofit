@@ -56,12 +56,18 @@ outside knowledge about the subject.`;
 const ASKED = "Is this record a trial of the claim's intervention for the claim's indication?";
 // Each answer and when it applies.
 const CHOICES = [
-  ["match", "it tests this intervention in the claim's indication, in a form of that condition, or in patients who have it."],
-  ["other_indication", "it tests this intervention for a different condition, or only in healthy volunteers."],
+  ["match", "it tests this intervention in the claim's indication, in a form of that condition, or in patients who have it, respecting any explicit patient population or treatment setting in the claim."],
+  ["other_indication", "it tests this intervention for a different condition, an incompatible patient population or treatment setting, or only in healthy volunteers."],
   ["not_a_match", "it is not a trial of this intervention."],
 ];
 const OPTIONS = CHOICES.map(([option]) => option);
-const QUESTION = [ASKED, ...CHOICES.map(([option, when]) => `- ${option}: ${when}`)].join("\n");
+const QUESTION = [ASKED, ...CHOICES.map(([option, when]) => `- ${option}: ${when}`),
+  "Explicit restrictions such as prior treatment, disease stage, biomarkers or age are part of the indication. " +
+  "A first-line trial is not a match for a claim about previously treated patients, and vice versa. " +
+  "A trial mentioned in the article may be a separate study; its mention does not override a conflicting setting. " +
+  "If the record does not establish compatibility with an explicit restriction, retain uncertainty. " +
+  "Do not invent restrictions when the claim gives none.",
+].join("\n");
 // A general model is asked about this many records per call.
 const BATCH_SIZE = 20;
 // The Decisions API takes this many questions in one request.

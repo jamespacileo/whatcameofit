@@ -32,10 +32,17 @@ TRIAL_OPTIONS = [MATCH, OTHER_INDICATION, NOT_A_MATCH]
 TRIAL_QUESTION = (
     "Is this record a trial of the claim's intervention for the claim's indication?\n"
     f"- {MATCH}: it tests this intervention in the claim's indication, in a form of"
-    " that condition, or in patients who have it.\n"
+    " that condition, or in patients who have it, respecting any explicit patient"
+    " population or treatment setting in the claim.\n"
     f"- {OTHER_INDICATION}: it tests this intervention for a different condition,"
-    " or only in healthy volunteers.\n"
-    f"- {NOT_A_MATCH}: it is not a trial of this intervention."
+    " an incompatible patient population or treatment setting, or only in healthy volunteers.\n"
+    f"- {NOT_A_MATCH}: it is not a trial of this intervention.\n"
+    "Explicit restrictions such as prior treatment, disease stage, biomarkers or age"
+    " are part of the indication. A first-line trial is not a match for a claim about"
+    " previously treated patients, and vice versa. A trial mentioned in the article"
+    " may be a separate study; its mention does not override a conflicting setting."
+    " If the record does not establish compatibility with an explicit restriction,"
+    " retain uncertainty. Do not invent restrictions when the claim gives none."
 )
 
 PAPER_MATCH = "paper_match"

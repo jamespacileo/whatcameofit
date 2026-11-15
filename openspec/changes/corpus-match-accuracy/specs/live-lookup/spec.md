@@ -4,6 +4,24 @@ Associates automatic article and post lookups with existing knowledge cards only
 
 ## ADDED Requirements
 
+### Requirement: Trial matching respects explicit patient restrictions
+Lookup and private-pipeline scoring SHALL treat explicit patient populations and treatment settings as part of the indication. An incompatible setting SHALL be read as `other_indication`, even for a mentioned trial. Missing compatibility SHALL retain uncertainty; a broad claim SHALL NOT gain an unstated restriction. Existing bounded calls and source caches SHALL remain; obsolete completed answers SHALL be invalidated.
+
+#### Scenario: Article links a separate first-line trial
+- **GIVEN** the claim concerns previously treated metastatic pancreatic cancer and a linked record concerns first-line treatment
+- **WHEN** candidates are scored
+- **THEN** that record is not a full match solely because it tests the same drug and is explicitly linked
+
+#### Scenario: Compatible prior-treatment study
+- **GIVEN** the claim and record both concern the named intervention in previously treated metastatic pancreatic cancer
+- **WHEN** the candidate is scored
+- **THEN** it remains eligible as a match
+
+#### Scenario: Broad condition is not silently narrowed
+- **GIVEN** a claim about metastatic pancreatic cancer with no prior-treatment restriction
+- **WHEN** first-line and previously treated records are scored
+- **THEN** neither is excluded solely because of an unstated prior-treatment restriction
+
 ### Requirement: Card association preserves claim identity
 A live answer SHALL name a tracked card only when its complete intervention and condition match. A single component SHALL NOT establish a combination match. Missing or ambiguous condition information SHALL produce no confirmed card association. Case and whitespace differences and recorded whole-intervention aliases SHALL remain supported without an extra model or source call.
 
