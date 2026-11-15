@@ -19,6 +19,11 @@ are not treatment reports merely because they name a medicine and its usual use.
 For those stories, return about_a_treatment false and empty identification fields
 unless the story actually reports a specific therapeutic research finding or claim
 as its subject. Do not convert a side-effect lawsuit into an efficacy claim.
+Classify the purpose of the whole article or post before choosing a medicine.
+A company history listing its founding, offices and products remains a company
+profile even if one product's indication, mechanism or past regulatory approval is
+stated. Those catalogue facts are not the post's own therapeutic research claim.
+Do not select a product from that history or turn its hashtags into a new finding.
 An unnamed but described treatment can be a valid claim: keep its descriptive name
 and uncertainty instead of inventing a product. Trial permission is not approval of
 a treatment, and animal or laboratory findings are not evidence of human efficacy.

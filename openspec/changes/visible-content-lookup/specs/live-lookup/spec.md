@@ -7,6 +7,10 @@ Identification SHALL require a reported therapeutic claim or study concerning an
 - **WHEN** a story reports sales or supply without a treatment finding
 - **THEN** identification reports no specific treatment claim and does not search the registry
 
+#### Scenario: Company history lists a past medicine approval
+- **WHEN** a company profile lists its founding, offices and products, including a product’s usual indication, mechanism or historical approval
+- **THEN** those catalogue facts do not become the post’s own research finding and no registry search is made
+
 ### Requirement: Coherent intervention and condition
 Identification SHALL choose one clearly main intervention-condition pair and SHALL NOT combine separate roundup items into a fictional treatment. A genuine combination regimen SHALL remain one intervention. If no clear main pair exists, the response SHALL explain that several separate claims were present.
 
@@ -18,7 +22,7 @@ Identification SHALL choose one clearly main intervention-condition pair and SHA
 Results stored before the social-reading and treatment-claim corrections SHALL NOT be reused by either the shared service cache or the extension's local result cache.
 
 #### Scenario: Opening a previously misclassified business story
-- **WHEN** an otherwise fresh version-2 result exists
+- **WHEN** an otherwise fresh version-2 or version-3 result exists
 - **THEN** the corrected service and extension ignore it and perform a new eligible lookup
 
 ### Requirement: Bounded visual reading

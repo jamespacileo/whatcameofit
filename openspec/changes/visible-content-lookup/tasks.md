@@ -27,9 +27,11 @@
 - [x] Release the service and updated Safari extension, then verify the article in installed Safari
 
 ## Corpus release and installed Safari verification
-- [ ] Review the corpus fixes against current main and pass the release checks
-- [ ] Deploy the corrected service through the existing GitHub CI workflow
-- [ ] Build, sign and install Safari 0.9.4 with unchanged permissions and a rollback copy
+- [x] Review the corpus fixes against current main and pass the release checks
+- [x] Deploy the corrected service through the existing GitHub CI workflow
+- [x] Build, sign and install Safari 0.9.4 with unchanged permissions and a rollback copy
+- [x] Reproduce the released S026 company-history false positive; strengthen whole-post classification and verify three real-provider negatives plus two positive controls
+- [ ] Release the company-history follow-up with version-4 answer caches and Safari 0.9.5
 - [ ] Rerun all 37 affected URLs against production and the released browser reader; verify installed Safari popup behavior
 - [ ] Replace local-only corpus and Google Sheet evidence with dated released-version results and verify read-back
 
