@@ -61,3 +61,7 @@ protected tests and independent review, deploy through CI, install the signed ap
 with a rollback copy, and rerun affected URLs against production. Complete the
 full-sheet audit in batches while recording remaining uncertainty. Roll back with
 the previous release/app if a new issue prevents reliable reading.
+
+## Background-card boundary found during coverage work
+
+The normal prepare/terms workflow approved bimagrumab and semaglutide separately as exact intervention vocabulary terms for the combined regimen. The term classifier had received component names as aliases. A drug source containing only one known component could similarly produce a false whole-regimen drug link. Exclude explicitly named components from whole-name candidates and registry-filed intervention terms before paid classification; describe the complete regimen in the model prompt. Keep whole-regimen aliases eligible. Apply the same boundary when exporting legacy approved vocabulary/drug cards and omit a suppressed component drug's derived target. Preserve original review decisions and clinical status. No broad class-membership or clinical equivalence is inferred by this string boundary.

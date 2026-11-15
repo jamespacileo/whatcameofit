@@ -15,6 +15,8 @@
 - [x] 2.6 Exclude signed-in LinkedIn sidebars and Bluesky replies; verify synthetic boundaries and live DOM, then release the corrected reader with obsolete local answers invalidated.
 - [x] 2.7 Correct Facebook neighbouring-post selection and combination truncation; verify live captions, repeated provider readings and negative/monotherapy controls, deploy and rerun affected URLs.
 
+- [x] 2.8 Guard background cards against single-component substitution, including legacy approved links; verify pipeline/export seams and relevant real records before publication.
+
 ## 3. Full corpus accuracy and efficiency
 
 - [x] 3.1 Audit every exact mapped article/card identity without paid lookup and record per-row evidence.
