@@ -7,11 +7,12 @@
 
 ## 2. Card and carousel corrections
 
-- [ ] 2.1 Reproduce wrong-condition/component card associations in both lookup seams; fix matching and verify matching aliases, missing conditions and combinations.
-- [ ] 2.2 Reproduce hidden first-slide selection; fix current-slide binding/clipping and verify neighbouring-media, ambiguity and navigation safeguards.
-- [ ] 2.3 Invalidate obsolete results, update Safari version and verify cache/build regressions.
+- [x] 2.1 Reproduce wrong-condition/component card associations in both lookup seams; fix matching and verify matching aliases, missing conditions and combinations.
+- [x] 2.2 Reproduce hidden first-slide selection; fix current-slide binding/clipping and verify neighbouring-media, ambiguity and navigation safeguards.
+- [x] 2.3 Invalidate obsolete results, update Safari version and verify cache/build regressions.
 - [ ] 2.4 Complete independent standards/spec review and CI, deploy, install signed Safari and verify affected released URLs.
 - [ ] 2.5 Update corpus and native Sheet with the new released results and verify read-back.
+- [ ] 2.6 Exclude signed-in LinkedIn sidebars and Bluesky replies; verify synthetic boundaries and live DOM, then release the corrected reader with obsolete local answers invalidated.
 
 ## 3. Full corpus accuracy and efficiency
 
