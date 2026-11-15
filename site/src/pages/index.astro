@@ -146,14 +146,37 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
   {
     days ? (
       <DayList list={days} topics={topicChoices}>
-        <p class="tally" slot="tally">
-          {data.claims.length} {data.claims.length === 1 ? "claim" : "claims"} tracked in{" "}
-          <a href="/topics">
-            {listedTopics.length} {listedTopics.length === 1 ? "topic" : "topics"}
-          </a>
-          . <a href="/it-happened">Approvals on record</a>: {approvals} of {data.claims.length}.
-        </p>
         <HomeNarrow slot="narrow" claims={data.claims} topics={topicChoices} counts={topicCounts} />
+        {/* The other ways in, each with the number it holds. */}
+        <nav class="side-group" slot="browse" aria-labelledby="browse-title">
+          <h3 id="browse-title">Browse</h3>
+          <ul>
+            <li>
+              <a href="#feed-claims" data-open-view="claims">
+                Every claim <span class="kind-count">{data.claims.length}</span>
+              </a>
+            </li>
+            {moves.length > 0 && (
+              <li>
+                <a href="#feed-moved" data-open-view="moved">
+                  Status changes <span class="kind-count">{moves.length}</span>
+                </a>
+              </li>
+            )}
+            {approvals > 0 && (
+              <li>
+                <a href="/it-happened">
+                  Approvals on record <span class="kind-count">{approvals}</span>
+                </a>
+              </li>
+            )}
+            <li>
+              <a href="/topics">
+                All topics <span class="kind-count">{listedTopics.length}</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
       </DayList>
     ) : (
       data.claims.length > 0 && (
@@ -495,6 +518,8 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
     )
   }
 
+  {/* On a wide screen the list's side column already holds the topics. */}
+  <div class:list={["home-topics", { beside: days }]}>
   <h2 class="bar" id="topics">Topics</h2>
   <ul class="chips">
     {
@@ -512,6 +537,7 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
       </p>
     )
   }
+  </div>
   {
     years.length > 0 && (
       <>
@@ -610,6 +636,15 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
     feed.classList.add("tabbed");
     list.hidden = false;
     select(wanted.dataset.view!);
+    // A link to a list picks its tab, then leads to the lists.
+    for (const link of document.querySelectorAll<HTMLAnchorElement>("[data-open-view]")) {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        select(link.dataset.openView!);
+        remember(link.dataset.openView!);
+        document.getElementById("lists")?.scrollIntoView({ block: "start" });
+      });
+    }
   }
 
   // Narrowing: each list keeps the rows no filter has left out. The tab says how many
@@ -898,21 +933,6 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
         )));
     }
   }
-
-  // On a phone the counts and the topic choice open on request. They start open when
-  // the address already narrows the lists, so a narrowed list is never unexplained.
-  const board = document.querySelector<HTMLElement>("[data-scoreboard]");
-  const toggle = board?.querySelector<HTMLButtonElement>("[data-narrow]");
-  if (board && toggle) {
-    const set = (open: boolean) => {
-      board.classList.toggle("open", open);
-      toggle.setAttribute("aria-expanded", String(open));
-    };
-    const asked = new URL(location.href).searchParams;
-    set(asked.has("status") || asked.has("topic"));
-    toggle.addEventListener("click", () => set(toggle.getAttribute("aria-expanded") !== "true"));
-    toggle.hidden = false;
-  }
 </script>
 
 <style is:global>
@@ -923,6 +943,12 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
     max-width: var(--measure);
     color: var(--muted);
     font-size: 0.92rem;
+  }
+
+  @media (min-width: 56rem) and (scripting: enabled) {
+    .home-topics.beside {
+      display: none;
+    }
   }
 
   .results .suggest {
