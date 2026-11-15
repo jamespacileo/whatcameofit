@@ -30,7 +30,7 @@ from thenwhat.db.models import (
     RegistryTrial,
     WorkEntry,
 )
-from thenwhat.domain import Decider
+from thenwhat.domain import Decider, OutletKind
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 
 
@@ -591,3 +591,29 @@ def test_labels_from_a_file_are_recorded_and_a_bad_file_records_nothing(
     assert {label.labelled_by for label in session.scalars(select(LinkLeadLabel))} == {
         Decider.ASSISTANT
     }
+
+
+def test_topics_shows_coverage_and_an_unknown_topic_is_refused(run, session: Session):
+    """Scenarios: Leads at every stage, An unknown topic"""
+    session.add(
+        LinkLead(
+            url="https://news.example.org/glp",
+            url_key="news.example.org/glp",
+            outlet="news.example.org",
+            outlet_kind=OutletKind.GENERAL_NEWS,
+            title="Ozempic in a synthetic trial",
+            first_shared_at=datetime(2024, 1, 4, tzinfo=UTC),
+        )
+    )
+    session.flush()
+
+    result = run("topics")
+
+    assert result.exit_code == 0, result.output
+    assert "glp-1: 1 link leads name it" in result.output
+    assert "not screened yet: 1" in result.output and "claims: 0" in result.output
+
+    refused = run("topics", "statins")
+
+    assert refused.exit_code == 1
+    assert "No topic is named 'statins'" in refused.output
