@@ -37,4 +37,4 @@
 
 - [x] Reproduce native Safari promotion of a cited zero-confidence mismatch with a failing shared-presenter test.
 - [x] Separate cited nonmatches from possible matches in site and extension without extra requests; retain confidence, provenance, cap and no-match notice.
-- [ ] Deploy the presentation correction, install Safari 0.9.11, verify affected released results, and sync native findings to the corpus and Sheet.
+- [x] Deploy the presentation correction, install Safari 0.9.11, verify affected released results, and sync native findings to the corpus and Sheet.

@@ -1,0 +1,43 @@
+{
+  "version": "0.9.11 (20)",
+  "installation_verified": true,
+  "source_commit": "f191a8b6c78aa573b91c9057089086bc10c4f348",
+  "rows": {
+    "A041": {
+      "checked_date": "2026-11-15",
+      "mode": "saved answer presented by installed Safari",
+      "possible_matches": 3,
+      "top_trial": "NCT06625320",
+      "top_score": 1,
+      "mentioned_trial": "NCT07491445",
+      "mentioned_score": 0,
+      "mentioned_expanded_verified": true,
+      "note": "Updated installed popup re-presented the saved answer: compatible prior-treatment trial first, three possible matches, cited first-line mismatch separately inspectable at 0%."
+    }
+  },
+  "recorded_at": "2026-11-15 18:33:12 UTC",
+  "release_commit": "56fe96fb2612772550bcf2af91f5c1587aea08a9",
+  "worker_version": "f076adba-90cd-45a6-8c7e-3584365f970d",
+  "released_at": "2026-11-15T18:36:07.9729311Z",
+  "site_verification": {
+    "row": "A041",
+    "checked_date": "2026-11-15",
+    "method": "released homepage address form and registry-search button in Chrome",
+    "answer_cache_time": "2026-11-15T18:16:35Z",
+    "possible_matches": [
+      "NCT06625320",
+      "NCT07573215",
+      "NCT06445062"
+    ],
+    "scores": [
+      1,
+      0.56,
+      0.54
+    ],
+    "mentioned_trial": "NCT07491445",
+    "mentioned_score": 0,
+    "mentioned_expanded_verified": true,
+    "knowledge_card": "no confirmed card association",
+    "note": "Exact source address is untracked. Initial address-word suggestion is explicitly labelled a guess; automatic answer returns no confirmed card. Released presenter reuses cached answer and separates the cited mismatch."
+  }
+}
