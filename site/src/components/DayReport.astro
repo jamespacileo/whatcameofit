@@ -5,11 +5,11 @@
 // on a touch screen, on paper and to a screen reader.
 import type { ReportRow } from "../lib/day-list";
 import { followedNameFor } from "../lib/reports";
-import { rowSentences } from "../lib/row-sentences";
 import { EVIDENCE_STAGES, STATUS_GLOSSES, STATUS_LABELS, latestPromise, overlayText } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 import Outlet from "./Outlet.astro";
 import PromiseText from "./PromiseText.astro";
+import RecordStrip from "./RecordStrip.astro";
 import StageTrack from "./StageTrack.astro";
 
 interface Props {
@@ -25,7 +25,6 @@ const { claim } = row;
 const [first] = row.reports;
 // Named as on the claim page, so the headline pressed here is carried to its place there.
 const name = picked ? null : followedNameFor(claim, first.url);
-const sentences = rowSentences(claim, row.date);
 const promise = latestPromise(claim);
 const overlay = overlayText(claim.status.overlay_years);
 const stage = claim.evidence_stage ? EVIDENCE_STAGES[claim.evidence_stage] : null;
@@ -62,6 +61,9 @@ const gloss = `${STATUS_GLOSSES[claim.status.code]}${overlay ? `. ${overlay}` : 
         “{first.title}”
       </a>
     </h4>
+    {/* What the records add: where each is dated, on the scale every row shares, and the
+        counts in numerals. The sentences that say it are the strip's name. */}
+    <RecordStrip claim={claim} reportDay={row.date} />
     <p class="row-foot">
       <span class="row-claim">
         {claim.intervention.name} · {claim.indication}
@@ -74,7 +76,7 @@ const gloss = `${STATUS_GLOSSES[claim.status.code]}${overlay ? `. ${overlay}` : 
       <div>
         <p class="row-then">
           <strong>{stage ?? "Not recorded"}</strong>{" "}
-          {[`when first reported${claim.first_reported_date ? `, ${formatDate(claim.first_reported_date)}` : ""}.`, `${gloss}.`, ...sentences].join(" ")}
+          {[`when first reported${claim.first_reported_date ? `, ${formatDate(claim.first_reported_date)}` : ""}.`, `${gloss}.`].join(" ")}
         </p>
         {
           promise && (
