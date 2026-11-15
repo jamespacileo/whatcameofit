@@ -1,0 +1,18 @@
+---
+// How much a claim has been tested in people, in a row of a list: the count of trials on
+// record, and beneath it the largest stated size and whether results are posted. Read by
+// the rule behind the first answer of "The record in brief" (openspec site-publishing,
+// change home-claims-list). Counts only: never what a trial found, and never a link,
+// because the row's link is the claim's name.
+import type { ExportedClaim } from "../lib/export";
+import { testedSummary } from "../lib/record-brief";
+
+interface Props {
+  claim: ExportedClaim;
+}
+
+const tested = testedSummary(Astro.props.claim);
+---
+
+<strong class="tested-lead">{tested.lead}</strong>
+{tested.detail && <span class="gloss">{tested.detail}</span>}
