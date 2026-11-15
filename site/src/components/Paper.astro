@@ -3,7 +3,7 @@
 // is and where it appeared, and how it came to be listed. Openspec paper-facts: every
 // fact is the index's, and no word here says what the paper concluded or how good it is.
 import ExternalLink from "@lucide/astro/icons/external-link";
-import { confidenceLabel } from "../lib/confidence";
+import { matchNote } from "../lib/confidence";
 import type { ExportedPaper } from "../lib/export";
 import {
   ALSO_WORDS,
@@ -64,7 +64,7 @@ const reasons = (related?.reasons ?? []).map((code) => PAPER_REASON_WORDS[code] 
   {
     related && typeof related.score === "number" && (
       <p class="paper-role">
-        <strong>{confidenceLabel(related.score)}</strong>
+        <span>{matchNote(related.score)}</span>
         {reasons.length > 0 && <span class="entry-note">{reasons.join(" · ")}</span>}
       </p>
     )

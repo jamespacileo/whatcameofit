@@ -38,6 +38,8 @@ interface Props {
   article?: { published: string | null; modified: string | null };
   /** Where a site that reads oEmbed finds this page's embed. */
   oembed?: string;
+  /** A page laid out in the wide frame: a list at the left, the sheet, actions at the right. */
+  framed?: boolean;
 }
 
 const {
@@ -51,6 +53,7 @@ const {
   breadcrumbs,
   article,
   oembed,
+  framed = false,
 } = Astro.props;
 const canonical = canonicalAddress(Astro.props.canonicalPath ?? Astro.url.pathname);
 const graph = [
@@ -140,13 +143,16 @@ const topicLink =
     {data.preview && <meta name="robots" content="noindex" />}
     {/* The name's animation plays on the first page of a visit only. */}
     <script is:inline>
+      // Folded sections are folded by the stylesheet from the first paint, and only
+      // where a script is there to open them again.
+      document.documentElement.classList.add("js");
       try {
         if (sessionStorage.getItem("seen")) document.documentElement.classList.add("seen");
         else sessionStorage.setItem("seen", "1");
       } catch {}
     </script>
   </head>
-  <body>
+  <body class:list={[{ framed }]}>
     <a class="skip" href="#content">Skip to content</a>
     <header class="masthead">
       <div class="wrap">
@@ -256,6 +262,8 @@ const topicLink =
 </html>
 
 <script>
+  import "../scripts/folds";
+
   // Panels open on a tap or a key press with no script. With a mouse they also open
   // on hover, and a click then keeps one open until it is dismissed.
   // A link inside a panel leads somewhere on the page, so the panel steps aside.

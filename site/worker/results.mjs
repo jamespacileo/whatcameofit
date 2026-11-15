@@ -1,12 +1,11 @@
 // Only independently public reports enter this shared, expiring results library.
-// No page text, screenshots or reader identifiers are persisted. Version 2 holds only
-// completed answers, a completed non-treatment identification included; version 1
-// entries, kept before that rule, are no longer read.
+// No page text, screenshots or reader identifiers are persisted. Version 3 also
+// excludes answers from before incidental-drug and multi-claim reading corrections.
 import { articleKey } from "../src/lib/article-key.mjs";
 import { bounded } from "./public-cache.mjs";
 import { sourceUrl } from "./visual.mjs";
 const TTL = 86400;
-const VERSION = 2;
+const VERSION = 3;
 // The longest one shared-result read or write is waited on.
 const CACHE_TIMEOUT_MS = 500;
 async function keyFor(address) {

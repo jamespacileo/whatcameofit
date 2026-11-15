@@ -24,6 +24,17 @@ export function confidenceLabel(score: number): string {
   return `${bandOf(score)} · ${Math.round(score * 100)}%`;
 }
 
+/** "high, 92%": the band and the score, for a note that already says it is a match. */
+export function matchWords(score: number): string {
+  return `${bandOf(score).replace(" match", "").toLowerCase()}, ${Math.round(score * 100)}%`;
+}
+
+/** "Match to this claim: high, 92%": a score read as a note about the match, never as a
+ * mark beside a title (openspec: "A match score reads as a note about the match"). */
+export function matchNote(score: number): string {
+  return `Match to this claim: ${matchWords(score)}`;
+}
+
 /** Why the record scored as it did, from how it was read. */
 const READINGS:Record<string, string> = {
   match: "Read as a study of this treatment for this condition.",
