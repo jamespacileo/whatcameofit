@@ -22,7 +22,7 @@ from thenwhat.cli import app
 from thenwhat.cli.resolve import Research
 from thenwhat.db.models import DecisionLog, EntityMatch, EntitySubstance
 from thenwhat.decide.core import BackendAnswer
-from thenwhat.domain import ClaimStatus, Decider, EvidenceStage
+from thenwhat.domain import ClaimStatus, Decider, EvidenceStage, ReviewState
 from thenwhat.llm.client import Llm, LlmSettings
 from thenwhat.sources.base import SourceRecord, UnsearchableTerm
 from thenwhat.sources.openalex import OpenAlex
@@ -468,6 +468,22 @@ def test_resolve_rescore_scores_the_pending_candidates_again(run, session: Sessi
     assert result.exit_code == 0, result.output
     assert "Scored 1 pending candidate again" in result.output
     assert len(session.scalars(select(EntityMatch)).all()) == 1
+
+
+def test_resolve_redo_rule_scores_a_rules_approvals_again(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    # The fake backend scores every candidate 0.8, which this threshold approves.
+    monkeypatch.setenv("MATCH_ACCEPT_ABOVE", "0.5")
+    run("resolve", SLUG)
+    match = session.scalars(select(EntityMatch)).one()
+    assert (match.review_state, match.reviewed_by) == (ReviewState.APPROVED, Decider.RULE)
+
+    result = run("resolve", SLUG, "--redo-rule")
+
+    assert result.exit_code == 0, result.output
+    assert "Scored again 1 trial match(es) a rule had approved" in result.output
+    assert "0 no longer approved." in result.output
 
 
 def test_resolve_says_how_many_candidates_the_rule_rejected(

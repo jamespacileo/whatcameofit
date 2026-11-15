@@ -38,7 +38,14 @@ from thenwhat.resolve.papers import (
     rescore_papers,
     trials_from_papers,
 )
-from thenwhat.resolve.service import DoiLookup, TrialSearch, rescore_claim, resolve_claim
+from thenwhat.resolve.service import (
+    DoiLookup,
+    RuleRedo,
+    TrialSearch,
+    redo_rule_approvals,
+    rescore_claim,
+    resolve_claim,
+)
 from thenwhat.sources.base import UnsearchableTerm
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref
@@ -479,6 +486,16 @@ def resolve_command(
             " and the pending related papers.",
         ),
     ] = False,
+    redo_rule: Annotated[
+        bool,
+        typer.Option(
+            "--redo-rule",
+            help="Also score again the trial matches a rule approved, as the question is"
+            " asked now, and let the rule decide them again. A match it no longer approves"
+            " loses its events and the status is derived again. Matches you or an"
+            " assistant decided are left alone.",
+        ),
+    ] = False,
 ) -> None:
     """Search the registries for a claim's interventions and papers.
 
@@ -525,6 +542,7 @@ def resolve_command(
         failure: str | None = None
         added: list[EntityMatch] = []
         again: list[EntityMatch] = []
+        redone: RuleRedo | None = None
         try:
             added = resolve_claim(
                 session,
@@ -552,6 +570,18 @@ def resolve_command(
                 if rescore
                 else []
             )
+            if redo_rule:
+                redone = redo_rule_approvals(
+                    session,
+                    claim,
+                    trials=trials,
+                    backend=backend,
+                    now=now,
+                    reject_below=reject_below,
+                    accept_above=accept_above,
+                    no_signal_years=settings.no_signal_years,
+                    unsearchable=unsearchable,
+                )
             if claim.evidence_stage is None:
                 stage = latest_stage_suggestion(session, claim)
                 newly_read = stage is None
@@ -586,6 +616,15 @@ def resolve_command(
                 accept_above=accept_above,
                 reject_below=reject_below,
             )
+            if redone is not None:
+                out.print(
+                    f"Scored again {redone.scored} trial match(es) a rule had approved for"
+                    f" '{claim.slug}'; {len(redone.withdrawn)} no longer approved"
+                    + (f": {', '.join(redone.withdrawn)}." if redone.withdrawn else "."),
+                    markup=False,
+                )
+                if redone.withdrawn:
+                    out.print(f"Status of '{claim.slug}': {claim.current_status.value}.")
     if failure is not None:
         err.print(failure, markup=False)
         err.print(

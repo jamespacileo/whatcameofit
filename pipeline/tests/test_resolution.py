@@ -4,7 +4,7 @@
 Scenario names are from openspec entity-resolution and decision-steps.
 """
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 import pytest
 from sqlalchemy import select
@@ -19,12 +19,20 @@ from thenwhat.claims.entities import (
     set_origin_paper,
 )
 from thenwhat.claims.entry import DuplicateClaim, InvalidField, add_claim
-from thenwhat.db.models import Claim, DecisionLog, EntityMatch, EntitySubstance
+from thenwhat.claims.status import refresh_status
+from thenwhat.db.models import Claim, DecisionLog, EntityMatch, EntitySubstance, EvidenceEvent
 from thenwhat.decide.core import BackendAnswer, DecisionFailed
 from thenwhat.decide.steps import suggest_evidence_stage
-from thenwhat.domain import Decider, EntityType, ReviewState
+from thenwhat.domain import (
+    ClaimStatus,
+    Decider,
+    EntityType,
+    EventType,
+    ReviewState,
+    TrialPhase,
+)
 from thenwhat.resolve.codes import Listing, give_development_codes
-from thenwhat.resolve.service import resolve_claim
+from thenwhat.resolve.service import redo_rule_approvals, resolve_claim
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord, UnsearchableTerm
 
@@ -786,3 +794,104 @@ def test_a_substance_no_longer_listed_loses_its_codes(session: Session):
     give_development_codes(session, claim, substances=FakeSubstances({}))
 
     assert session.scalars(select(EntitySubstance)).all() == []
+
+
+# --- a rule's approvals scored again (openspec entity-resolution) -------------------
+
+
+class NowAnother:
+    """A backend for the question as asked now: it reads every record as the claim's
+    intervention studied for something else."""
+
+    name = "fake"
+
+    def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
+        return BackendAnswer(
+            "other_indication", {o: 0.9 if o == "other_indication" else 0.05 for o in options}
+        )
+
+
+def approved_trial(session: Session, claim: Claim) -> tuple[EntityMatch, EvidenceEvent]:
+    """One trial approved by rule, with the event of its registration read from it."""
+    found = FakeTrials({"EX-1 antibody": [trial("NCT00000001", "EX-1 in tooth agenesis")]})
+    resolve(session, claim, trials=found, backend=ByCondition(), accept_above=0.8)
+    [match] = matches(session)
+    event = EvidenceEvent(
+        claim_id=claim.id,
+        entity_match_id=match.id,
+        type=EventType.TRIAL_REGISTERED,
+        event_date=date(2020, 1, 1),
+        source_name="clinicaltrials.gov",
+        source_url="https://clinicaltrials.gov/study/NCT00000001",
+        external_id="NCT00000001",
+        trial_phases=[TrialPhase.PHASE_2.value],
+        summary="Trial registered.",
+        confidence=1.0,
+        raw_payload={},
+        fetched_at=NOW,
+        dedupe_key="NCT00000001:registered",
+    )
+    record_decision(event, ReviewState.APPROVED, by=Decider.RULE, now=NOW)
+    session.add(event)
+    session.flush()
+    refresh_status(session, claim, as_of=NOW.date(), now=NOW)
+    return match, event
+
+
+def redo(session: Session, claim: Claim, backend, **options):
+    found = FakeTrials({"EX-1 antibody": [trial("NCT00000001", "EX-1 in tooth agenesis")]})
+    return redo_rule_approvals(
+        session, claim, trials=found, backend=backend, now=NOW, accept_above=0.8, **options
+    )
+
+
+def test_a_rule_approval_scored_again_and_no_longer_confident_loses_its_events(session: Session):
+    """Scenario: A rule's approval no longer stands"""
+    claim = new_claim(session)
+    match, event = approved_trial(session, claim)
+    assert claim.current_status is ClaimStatus.TRIAL_REGISTERED
+
+    redone = redo(session, claim, NowAnother())
+
+    assert (redone.scored, redone.withdrawn) == (1, ["NCT00000001"])
+    assert (match.review_state, match.reviewed_by) == (ReviewState.PENDING, None)
+    assert (event.review_state, event.reviewed_by) == (ReviewState.REJECTED, Decider.RULE)
+    assert claim.current_status is ClaimStatus.NO_TRIAL_FOUND
+
+
+def test_a_rule_approval_that_still_scores_high_keeps_its_events(session: Session):
+    """Scenario: A rule's approval stands"""
+    claim = new_claim(session)
+    match, event = approved_trial(session, claim)
+
+    redone = redo(session, claim, ByCondition())
+
+    assert (redone.scored, redone.withdrawn) == (1, [])
+    assert (match.review_state, match.reviewed_by) == (ReviewState.APPROVED, Decider.RULE)
+    assert event.review_state is ReviewState.APPROVED
+    assert claim.current_status is ClaimStatus.TRIAL_REGISTERED
+
+
+def test_a_persons_approval_is_not_scored_again(session: Session):
+    """Scenario: A decision by a person or an assistant"""
+    claim = new_claim(session)
+    match, event = approved_trial(session, claim)
+    record_decision(match, ReviewState.APPROVED, by=Decider.ASSISTANT, now=NOW)
+    session.flush()
+
+    redone = redo(session, claim, NowAnother())
+
+    assert (redone.scored, redone.withdrawn) == (0, [])
+    assert match.review_state is ReviewState.APPROVED and match.score == pytest.approx(0.96)
+    assert event.review_state is ReviewState.APPROVED
+
+
+def test_a_scoring_that_fails_leaves_every_approval_as_it_was(session: Session):
+    claim = new_claim(session)
+    match, event = approved_trial(session, claim)
+
+    with pytest.raises(DecisionFailed):
+        redo(session, claim, Broken())
+
+    assert (match.review_state, match.reviewed_by) == (ReviewState.APPROVED, Decider.RULE)
+    assert event.review_state is ReviewState.APPROVED

@@ -5,6 +5,7 @@ a trial scored high for the claim's indication; the rest wait for review.
 """
 
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
 
@@ -12,7 +13,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entities import development_codes, entities_of
-from thenwhat.db.models import Claim, Entity, EntityMatch
+from thenwhat.claims.status import refresh_status
+from thenwhat.db.models import Claim, Entity, EntityMatch, EvidenceEvent
 from thenwhat.decide.core import Backend, DecisionFailed
 from thenwhat.decide.steps import OTHER_INDICATION, latest_scoring, score_matches
 from thenwhat.domain import Decider, EntityType, ReviewState
@@ -293,3 +295,84 @@ def rescore_claim(
     approve_confident(session, rescored, accept_above, now)
     session.flush()
     return rescored
+
+
+@dataclass(frozen=True, slots=True)
+class RuleRedo:
+    """What scoring a rule's approvals again changed for one claim."""
+
+    scored: int
+    # Registry identifiers of the trials the rule no longer approves.
+    withdrawn: list[str]
+
+
+def redo_rule_approvals(
+    session: Session,
+    claim: Claim,
+    *,
+    trials: TrialSearch,
+    backend: Backend,
+    now: datetime,
+    reject_below: float = 0.0,
+    accept_above: float = 0.0,
+    no_signal_years: int = 3,
+    unsearchable: Callable[[UnsearchableTerm], None] | None = None,
+) -> RuleRedo:
+    """Score again, with the question as it is asked now, the trial matches a rule
+    approved, and let the rule decide them again. For approvals made before the question
+    showed a trial's arms, or before it asked about the claim's patients and setting.
+
+    A match a person or an assistant decided is left alone, and so is one the search no
+    longer returns. A match the rule no longer approves waits for review, or is rejected
+    when it scores near zero; the events read from it are rejected by the rule, and the
+    claim's status is derived again. With the approval rule off nothing is scored.
+
+    Nothing is decided until every match is scored: a scoring that fails leaves every
+    approval as it was.
+    """
+    if accept_above <= 0:
+        return RuleRedo(0, [])
+    again: list[tuple[Entity, EntityMatch, SourceRecord]] = []
+    for entity in entities_of(session, claim):
+        if entity.type is not EntityType.INTERVENTION:
+            continue
+        approved = {
+            (match.source_name, match.external_id): match
+            for match in session.scalars(
+                select(EntityMatch).where(
+                    EntityMatch.entity_id == entity.id,
+                    EntityMatch.review_state == ReviewState.APPROVED,
+                    EntityMatch.reviewed_by == Decider.RULE,
+                )
+            )
+        }
+        if not approved:
+            continue
+        for record in trials_of(
+            trials, entity, claim.indication, unsearchable, development_codes(session, entity)
+        ):
+            match = approved.pop((record.source_name, record.external_id), None)
+            if match is not None:
+                again.append((entity, match, record))
+    score_matches(session, backend, claim=claim, candidates=again, now=now)
+    rescored = [match for _, match, _ in again]
+    for _, match, record in again:
+        match.record_summary = what_it_says(record)
+        match.review_state = ReviewState.PENDING
+        match.reviewed_at = None
+        match.reviewed_by = None
+    reject_near_zero(rescored, reject_below, now)
+    approve_confident(session, rescored, accept_above, now)
+    withdrawn = [match for match in rescored if match.review_state is not ReviewState.APPROVED]
+    for match in withdrawn:
+        for event in session.scalars(
+            select(EvidenceEvent).where(
+                EvidenceEvent.entity_match_id == match.id,
+                EvidenceEvent.review_state != ReviewState.REJECTED,
+            )
+        ):
+            record_decision(event, ReviewState.REJECTED, by=Decider.RULE, now=now)
+    session.flush()
+    if withdrawn:
+        refresh_status(session, claim, as_of=now.date(), now=now, no_signal_years=no_signal_years)
+    return RuleRedo(len(rescored), [match.external_id for match in withdrawn])
