@@ -386,6 +386,7 @@ def test_statements_do_not_change_status_or_evidence_stage(session: Session):
     """Scenario: Statement with a basis in people"""
     claim, article = claim_with_article(session)
     claim.evidence_stage = EvidenceStage.ANIMAL
+    claim.current_status = ClaimStatus.PRECLINICAL_ONLY
 
     keep(session, article, [EFFECT])
 

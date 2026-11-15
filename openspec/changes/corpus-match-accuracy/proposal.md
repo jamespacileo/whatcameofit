@@ -9,6 +9,7 @@ Released corpus checks found a trial match accompanied by a knowledge card for a
 - Require the same condition and complete intervention when associating a live answer with an existing card; uncertainty must not become a positive association.
 - Capture the currently visible slide within an identity-bound carousel, respecting ancestor clipping and the existing consent/privacy limits.
 - Record trial matching, card identity, release and method separately for all corpus rows, including legitimate negatives and inaccessible content.
+- Preserve accurate background-card scope for complete regimens, and prevent unpublished claims with an unknown evidence stage from being labelled preclinical. Confirm a sufficiently confident recorded stage by rule while preserving human decisions.
 - Reuse exact published address mappings and completed eligible results before paid work, and measure fresh/reused work without weakening accuracy.
 
 ## Capabilities
@@ -19,6 +20,11 @@ Released corpus checks found a trial match accompanied by a knowledge card for a
 
 ### Modified Capabilities
 
+- `knowledge-cards`: keep component cards from representing complete regimens.
+- `claims`: allow evidence-stage confirmation by the separately specified rule.
+- `review`: confirm eligible recorded evidence stages by rule without repeated model calls.
+- `status-derivation`: unknown evidence stage gives no trial record found, not preclinical only.
+- `site-publishing`: no-trial explanations and summaries do not infer a human study from an unknown stage.
 - `browser-extension`: bound current-slide capture and clipping.
 - `extension-test-corpus`: separate, reproducible card and trial accuracy evidence across the complete corpus.
 

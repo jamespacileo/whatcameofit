@@ -200,7 +200,7 @@ def test_threshold_above_one_sends_every_event_to_review(session: Session, study
     fetch(session, claim, trials=Trials({NCT: study}), threshold=1.01)
 
     assert {event.review_state for event in events(session)} == {ReviewState.PENDING}
-    assert claim.current_status is ClaimStatus.PRECLINICAL_ONLY
+    assert claim.current_status is ClaimStatus.NO_TRIAL_FOUND
 
 
 def test_second_fetch_with_no_registry_change_creates_nothing(session: Session, study):
@@ -373,7 +373,7 @@ def test_retraction_of_a_follow_up_paper_is_recorded_without_changing_status(ses
 
     [event] = events(session, EventType.RETRACTION)
     assert event.external_id == "10.1000/later"
-    assert claim.current_status is ClaimStatus.PRECLINICAL_ONLY
+    assert claim.current_status is ClaimStatus.NO_TRIAL_FOUND
 
 
 # --- manual events -------------------------------------------------------------------

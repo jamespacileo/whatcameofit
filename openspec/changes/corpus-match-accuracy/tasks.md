@@ -17,6 +17,8 @@
 
 - [x] 2.8 Guard background cards against single-component substitution, including legacy approved links; verify pipeline/export seams and relevant real records before publication.
 
+- [ ] 2.9 Confirm eligible stored evidence-stage suggestions by rule and make the no-trial fallback honest for unknown stages; verify existing published output, prepared records, tests and independent review before data publication.
+
 ## 3. Full corpus accuracy and efficiency
 
 - [x] 3.1 Audit every exact mapped article/card identity without paid lookup and record per-row evidence.

@@ -63,6 +63,43 @@ def test_migrations_match_models(engine: Engine, alembic_config: Config):
     command.check(alembic_config)
 
 
+def test_unknown_stage_default_migration_preserves_existing_statuses(
+    engine: Engine, alembic_config: Config
+):
+    command.downgrade(alembic_config, "0021")
+    try:
+        _run(
+            engine,
+            "INSERT INTO claim (slug, headline, summary, vertical, indication)"
+            " VALUES ('before-stage-default', 'h', '', 'pain', 'Pain')",
+        )
+        command.upgrade(alembic_config, "0022")
+        _run(
+            engine,
+            "INSERT INTO claim (slug, headline, summary, vertical, indication)"
+            " VALUES ('after-stage-default', 'h', '', 'pain', 'Pain')",
+        )
+        with engine.connect() as connection:
+            statuses = dict(
+                connection.execute(
+                    text(
+                        "SELECT slug, current_status FROM claim"
+                        " WHERE slug IN ('before-stage-default', 'after-stage-default')"
+                    )
+                ).all()
+            )
+        assert statuses == {
+            "before-stage-default": "preclinical_only",
+            "after-stage-default": "no_trial_found",
+        }
+    finally:
+        _run(
+            engine,
+            "DELETE FROM claim WHERE slug IN ('before-stage-default', 'after-stage-default')",
+        )
+        command.upgrade(alembic_config, "head")
+
+
 def _entity_columns(engine: Engine) -> set[str]:
     return {column["name"] for column in inspect(engine).get_columns("entity")}
 
