@@ -30,9 +30,9 @@ The mocks in `.impeccable/mocks/examine/` are the reference for look and behavio
 
 ## 4. Topic page
 
-- [ ] 4.1 Give `site/src/pages/topic/[vertical].astro` the band (title, summary sentence, counts by status in words) and the frame with the other topics listed beside the claims; verify "Topic with one claim at each of two statuses" and "Topic among ten"
-- [ ] 4.2 Add the word filter to `ClaimTable.astro` beside `StageFilter`, applied with the status to the whole list before paging and recorded in the address, with the count, its announcement and one control that clears both; verify "A word that matches one claim" and that picking a status on page two still returns to page one
-- [ ] 4.3 Add the message shown in place of the table when nothing matches; verify "Nothing matches"
+- [x] 4.1 Give `site/src/pages/topic/[vertical].astro` the band (title, summary sentence, counts by status in words) and the frame with the other topics listed beside the claims; verify "Topic with one claim at each of two statuses" and "Topic among ten"
+- [x] 4.2 Add the word filter to `ClaimTable.astro` beside `StageFilter`, applied with the status to the whole list before paging and recorded in the address, with the count, its announcement and one control that clears both; verify "A word that matches one claim" and that picking a status on page two still returns to page one
+- [x] 4.3 Add the message shown in place of the table when nothing matches; verify "Nothing matches"
 
 ## 5. Print
 

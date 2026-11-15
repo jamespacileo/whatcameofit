@@ -5298,3 +5298,129 @@ body.framed {
     border-bottom: 1px solid var(--rule);
   }
 }
+
+/* The topic page in the frame. */
+.band.record .crumbs {
+  font-size: 0.875rem;
+}
+
+.band.record .crumbs a {
+  color: var(--navy-soft);
+}
+
+.band.record .lede {
+  color: var(--paper);
+  max-width: 46rem;
+}
+
+.onpage a[aria-current="page"] {
+  background: var(--paper);
+  box-shadow: 0 0 0 1px var(--rule);
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.sheet-title {
+  margin-top: 0;
+}
+
+.word-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 24rem;
+  min-height: 2.75rem;
+  margin-bottom: 0.9rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--ring);
+  border-radius: 0.65rem;
+  background: var(--paper);
+  color: var(--muted);
+}
+
+.word-field:focus-within {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.word-field input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+}
+
+.word-field input::placeholder {
+  color: var(--muted);
+}
+
+.no-match {
+  display: grid;
+  gap: 0.9rem;
+  justify-items: start;
+  margin-top: 0.9rem;
+  padding: 1.4rem 1.5rem;
+  border: 1px dashed var(--ring);
+  border-radius: var(--radius);
+}
+
+.no-match[hidden] {
+  display: none;
+}
+
+.no-match p {
+  margin: 0;
+  max-width: 34rem;
+}
+
+@media print {
+  .word-field,
+  .no-match {
+    display: none !important;
+  }
+}
+
+/* In the sheet the claim's name leads its row at a readable width. */
+@media (min-width: 40.01rem) {
+  .sheet table.index th:first-child,
+  .sheet table.index td.claim {
+    width: 44%;
+  }
+}
+
+/* A framed page with no column of actions: the sheet takes its place. */
+.frame.no-rail .sheet {
+  grid-column: 2 / 4;
+}
+
+.band-actions {
+  flex-wrap: wrap;
+  margin-top: 1.2rem;
+}
+
+.band.record .band-actions .share {
+  color: var(--paper);
+  background: rgb(255 255 255 / 0.08);
+  border-color: rgb(255 255 255 / 0.4);
+  text-decoration: none;
+}
+
+.band.record .band-actions .share:hover {
+  background: rgb(255 255 255 / 0.18);
+  border-color: var(--paper);
+}
+
+@media (max-width: 68rem) {
+  .frame.no-rail .sheet {
+    grid-column: 1;
+  }
+}
+
+@media print {
+  .band-actions {
+    display: none !important;
+  }
+}

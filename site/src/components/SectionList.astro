@@ -3,9 +3,14 @@
 // marked. Beside the content on a wide screen; one row that stays at the top on a
 // narrow one. Openspec site-publishing: "A claim page lists its sections".
 interface Item {
-  id: string;
+  /** A section of this page, by its id; or leave out and give an address. */
+  id?: string;
+  /** Another page, for a list of pages such as the topics. */
+  href?: string;
   name: string;
   count?: string | number | null;
+  /** The page being read, in a list of pages. */
+  current?: boolean;
 }
 
 interface Props {
@@ -22,7 +27,7 @@ const { label, items } = Astro.props;
     {
       items.map((item) => (
         <li>
-          <a href={`#${item.id}`}>
+          <a href={item.href ?? `#${item.id}`} aria-current={item.current ? "page" : undefined}>
             <span>{item.name}</span>
             {item.count != null && item.count !== "" && <span class="n">{item.count}</span>}
           </a>
@@ -44,6 +49,7 @@ const { label, items } = Astro.props;
 
     // The row moves so that the marked name is in view. Only the row scrolls.
     const centre = (link: HTMLElement) => {
+      // offsetLeft is from the row itself, which is the links' offset parent.
       if (strip.scrollWidth <= strip.clientWidth) return;
       strip.scrollTo({
         left: link.offsetLeft - (strip.clientWidth - link.offsetWidth) / 2,
@@ -77,6 +83,10 @@ const { label, items } = Astro.props;
     if (targets.length > 0) {
       addEventListener("scroll", mark, { passive: true });
       mark();
+    } else {
+      // A list of pages: the one being read is in view from the start.
+      const here = strip.querySelector<HTMLElement>("[aria-current]");
+      if (here) strip.scrollLeft = here.offsetLeft - (strip.clientWidth - here.offsetWidth) / 2;
     }
     strip.addEventListener("scroll", ends, { passive: true });
     addEventListener("resize", ends);

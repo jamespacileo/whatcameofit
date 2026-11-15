@@ -3,6 +3,7 @@
 // doubles as the legend for the small tracks in the tables it narrows. By default it
 // narrows the table just after it; given a scope, every table inside that element.
 import type { ExportedClaim, StatusCode } from "../lib/export";
+import Search from "@lucide/astro/icons/search";
 import { STAGE_PATH, STATUS_LABELS } from "../lib/status";
 
 interface Props {
@@ -11,15 +12,26 @@ interface Props {
   scope?: string;
   /** Keep the picked status in the page's address under this name. */
   param?: string;
+  /** Also narrow by a typed word, matched against each claim's name and headline. */
+  words?: boolean;
 }
 
-const { claims, scope, param } = Astro.props;
+const { claims, scope, param, words = false } = Astro.props;
 const counts = new Map<StatusCode, number>();
 for (const claim of claims) counts.set(claim.status.code, (counts.get(claim.status.code) ?? 0) + 1);
 const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PATH.includes(code));
 ---
 
 <div class="stage-filter" data-stage-filter data-scope={scope} data-param={param}>
+  {
+    words && (
+      <label class="word-field">
+        <Search size={16} stroke-width={1.9} aria-hidden="true" />
+        <span class="visually-hidden">Filter these claims by a word</span>
+        <input type="search" placeholder="Filter by treatment or condition" data-words />
+      </label>
+    )
+  }
   <div class="places" role="group" aria-label="Show claims by status">
     {
       STAGE_PATH.map((code) => {
@@ -63,6 +75,13 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
     <span aria-live="polite" data-shown-text></span>
     <button type="button" data-show-all>Show all</button>
   </p>
+  {/* In place of the table when nothing matches: what was asked for, and the way back. */}
+  <div class="no-match" hidden data-none>
+    <p>
+      <strong>No claim matches.</strong> <span data-none-what></span>
+    </p>
+    <button type="button" class="share" data-show-all>Show all {claims.length} claims</button>
+  </div>
 </div>
 
 <script>
@@ -86,8 +105,14 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
     const buttons = [...filter.querySelectorAll<HTMLButtonElement>("button[data-status]")];
     const shown = filter.querySelector<HTMLElement>("[data-shown]")!;
     const shownText = filter.querySelector<HTMLElement>("[data-shown-text]")!;
+    const input = filter.querySelector<HTMLInputElement>("[data-words]");
+    const none = filter.querySelector<HTMLElement>("[data-none]")!;
+    const noneWhat = filter.querySelector<HTMLElement>("[data-none-what]")!;
+    let current: string | null = null;
 
     const apply = (picked: string | null) => {
+      current = picked;
+      const typed = (input?.value ?? "").trim().toLowerCase();
       let label = "";
       for (const button of buttons) {
         const on = button.dataset.status === picked;
@@ -96,11 +121,25 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
       }
       let visible = 0;
       for (const row of rows) {
-        const out = picked !== null && row.dataset.status !== picked;
+        const out =
+          (picked !== null && row.dataset.status !== picked) ||
+          (typed !== "" && !(row.querySelector(".claim")?.textContent ?? "").toLowerCase().includes(typed));
         row.toggleAttribute("data-out", out);
         if (!out) visible += 1;
       }
-      shown.hidden = picked === null;
+      shown.hidden = (picked === null && typed === "") || visible === 0;
+      // Nothing left: the table gives way to a line that says so and names what was asked.
+      none.hidden = visible > 0;
+      for (const table of tables) {
+        (table.closest<HTMLElement>(".table-frame") ?? table).hidden = visible === 0;
+      }
+      if (visible === 0) {
+        const word = input?.value.trim() ?? "";
+        noneWhat.textContent =
+          picked === null
+            ? `No claim here contains “${word}”.`
+            : `No claim at “${label}” contains “${word}”.`;
+      }
       // Over several lists a row is not a claim, so the status is named, not counted.
       shownText.textContent = scope
         ? `Showing only: ${label}.`
@@ -129,7 +168,14 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
         pick(button.getAttribute("aria-pressed") === "true" ? null : button.dataset.status!),
       );
     }
-    filter.querySelector("[data-show-all]")!.addEventListener("click", () => pick(null));
+    for (const all of filter.querySelectorAll("[data-show-all]")) {
+      all.addEventListener("click", () => {
+        if (input) input.value = "";
+        pick(null);
+        input?.focus();
+      });
+    }
+    input?.addEventListener("input", () => apply(current));
 
     // Another filter can change how many claims are at each place.
     filter.addEventListener("stage:counts", (event) => {
