@@ -69,10 +69,18 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
           </div>
         )
       }
+      {/* A search's matches counted by topic, each narrowing them: the lookup's. */}
+      <div class="side-group" hidden data-search-topics>
+        <h3>Results by topic</h3>
+        <ul></ul>
+      </div>
       <slot name="browse" />
     </aside>
 
     <div class="days-main">
+      {/* Where a search typed in the box above answers, in place of the list while the
+          answer stands. The lookup fills it; without scripting it is never shown. */}
+      <div class="search-answer" hidden data-search-answer></div>
       <div class="days-head">
         <h2 class="days-title" id="days-title">Latest</h2>
         <p class="checked-on">
@@ -520,6 +528,13 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
 
   .days-main {
     min-width: 0;
+  }
+
+  /* While a search typed in the box stands, its answer takes the list's place, and its
+     topics take the place of the list's topics. */
+  [data-days][data-searching] .days-main > :not([data-search-answer]),
+  [data-days][data-searching] [data-side-topics] {
+    display: none;
   }
 
   @media (min-width: 56rem) {
