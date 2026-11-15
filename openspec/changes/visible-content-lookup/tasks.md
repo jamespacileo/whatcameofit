@@ -16,7 +16,7 @@
 - [x] Bound popup attempts and prevent late work after timeout or closing
 - [x] Run source, controller, service, build and protected regression checks
 - [x] Count the linked papers not looked up in the answer, say so beside the list on the site and in the popup, keep such an answer out of the shared and saved results, and end the paper request in flight for a non-treatment identification
-- [ ] Release the service and updated Safari extension, then verify the article in installed Safari
+- [x] Release the service and updated Safari extension, then verify the article in installed Safari
 
 
 ## Faster article lookups
@@ -24,6 +24,6 @@
 - [x] Implement earlier safe cache reuse and conservative text-article visual handling
 - [x] Implement progressive completed clinical results with compatible JSON fallback
 - [x] Overlap independent sources and add bounded structured source reuse
-- [ ] Run regression suites, builds and independent review; resolve findings
-- [ ] Deploy through reviewed CI and install the signed Safari update
-- [ ] Retest the same articles, compare fresh/core/completion/repeat timings and record limitations
+- [x] Run regression suites, builds and independent review; resolve findings
+- [x] Deploy through reviewed CI and install the signed Safari update
+- [x] Retest the same articles, compare fresh/core/completion/repeat timings and record limitations
