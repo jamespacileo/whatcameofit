@@ -26,6 +26,13 @@
 - [x] Count the linked papers not looked up in the answer, say so beside the list on the site and in the popup, keep such an answer out of the shared and saved results, and end the paper request in flight for a non-treatment identification
 - [x] Release the service and updated Safari extension, then verify the article in installed Safari
 
+## Corpus release and installed Safari verification
+- [ ] Review the corpus fixes against current main and pass the release checks
+- [ ] Deploy the corrected service through the existing GitHub CI workflow
+- [ ] Build, sign and install Safari 0.9.4 with unchanged permissions and a rollback copy
+- [ ] Rerun all 37 affected URLs against production and the released browser reader; verify installed Safari popup behavior
+- [ ] Replace local-only corpus and Google Sheet evidence with dated released-version results and verify read-back
+
 
 ## Faster article lookups
 - [x] Establish protected checks for negative reuse, staged results, overlapping source work and source-cache privacy
