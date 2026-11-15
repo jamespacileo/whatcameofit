@@ -112,6 +112,8 @@ class Verticals:
         # The slug the same-claim decision chooses, or None for "none of these".
         self.same_claim: str | None = None
         self.same_claim_probability = 0.9
+        # Or every answer's probability, spelled out, when a test needs a split vote.
+        self.same_claim_chances: dict[str, float] | None = None
         # What the same-claim decision was shown, each time it was asked.
         self.same_claim_asked: list[str] = []
 
@@ -119,6 +121,9 @@ class Verticals:
         chosen, probability = self.vertical, self.probability
         if step == SAME_CLAIM:
             self.same_claim_asked.append(state)
+            if self.same_claim_chances is not None:
+                chances = {option: self.same_claim_chances.get(option, 0.0) for option in options}
+                return BackendAnswer(max(chances, key=lambda option: chances[option]), chances)
             chosen, probability = self.same_claim or NO_SUCH_CLAIM, self.same_claim_probability
         rest = (1 - probability) / (len(options) - 1)
         chances = {option: rest for option in options}
@@ -601,7 +606,8 @@ def test_one_story_worded_four_ways_by_four_outlets_becomes_one_claim(session, f
     assert claim.indication == "major depressive disorder and suicidal thinking"
     assert len(articles_of(session, claim)) == 4
     assert leads[1].read_detail == (
-        "read as esketamine nasal spray for depression; the same claim by decision at 0.90"
+        "read as esketamine nasal spray for depression; the same claim by decision at 0.90, "
+        "none of the candidates at 0.10"
     )
     # Asked once for each later article, and shown names and conditions only.
     asked = reader.backend.same_claim_asked
@@ -628,16 +634,82 @@ def test_the_same_treatment_for_another_condition_stays_its_own_claim(session, f
     assert len(reader.backend.same_claim_asked) == 1
 
 
-def test_an_unsure_same_claim_decision_joins_nothing(session, fake_time):
+def test_a_decision_that_leans_to_none_of_them_joins_nothing(session, fake_time):
     """Scenario: An unsure decision"""
     reader = Reader(session, fake_time, STORY[0], STORY[3])
-    reader.backend.same_claim, reader.backend.same_claim_probability = STORY_SLUG, 0.6
+    reader.backend.same_claim_chances = {STORY_SLUG: 0.45, NO_SUCH_CLAIM: 0.55}
     leads = story_leads(reader, 2)
 
     reader.read()
 
     assert [lead.read_outcome for lead in leads] == [ReadOutcome.NEW_CLAIM] * 2
     assert len(session.scalars(select(Claim)).all()) == 2
+
+
+def test_a_same_story_the_decision_is_only_fairly_sure_of_still_joins(session, fake_time):
+    """Scenario: A wording the decision is less sure of"""
+    reader = Reader(session, fake_time, STORY[0], STORY[3])
+    reader.backend.same_claim_chances = {STORY_SLUG: 0.62, NO_SUCH_CLAIM: 0.38}
+    leads = story_leads(reader, 2)
+
+    reader.read()
+
+    assert leads[1].read_outcome is ReadOutcome.ADDED_TO_CLAIM
+    assert len(session.scalars(select(Claim)).all()) == 1
+
+
+def test_a_near_tie_between_two_claims_of_one_drug_joins_neither(session, fake_time):
+    """Scenario: Two conditions of one drug"""
+    other = "esketamine-chronic-nerve-pain"
+    reader = Reader(
+        session,
+        fake_time,
+        STORY[0],
+        STORY[0] | {"indication": "chronic nerve pain"},
+        STORY[0] | {"indication": "pain and low mood"},
+    )
+    leads = story_leads(reader, 3)
+    reader.read(limit=2)
+    reader.backend.same_claim_chances = {STORY_SLUG: 0.48, other: 0.47, NO_SUCH_CLAIM: 0.05}
+
+    reader.read()
+
+    assert leads[2].read_outcome is ReadOutcome.NEW_CLAIM
+    assert len(session.scalars(select(Claim)).all()) == 3
+
+
+def test_a_vote_split_with_a_clear_leader_joins_the_leader(session, fake_time):
+    """Scenario: The vote is split between two claims"""
+    other = "esketamine-chronic-nerve-pain"
+    reader = Reader(
+        session,
+        fake_time,
+        STORY[0],
+        STORY[0] | {"indication": "chronic nerve pain"},
+        STORY[2],
+    )
+    leads = story_leads(reader, 3)
+    reader.read(limit=2)
+    reader.backend.same_claim_chances = {STORY_SLUG: 0.51, other: 0.43, NO_SUCH_CLAIM: 0.06}
+
+    reader.read()
+
+    assert leads[2].read_outcome is ReadOutcome.ADDED_TO_CLAIM
+    assert claim_of(session, leads[2]).slug == STORY_SLUG
+
+
+def test_a_rejected_draft_is_never_offered_as_a_candidate(session, fake_time):
+    """Scenario: A rejected draft shares the name"""
+    reader = Reader(session, fake_time, STORY[1], STORY[0])
+    leads = story_leads(reader, 2)
+
+    reader.read()
+
+    # The first read gave a description ("... nasal spray") and was rejected by rule; the
+    # second names the drug and is not asked whether it reports that rejected draft.
+    first, second = (claim_of(session, lead) for lead in leads)
+    assert (first.review_state, second.review_state) == (ReviewState.REJECTED, ReviewState.PENDING)
+    assert reader.backend.same_claim_asked == []
 
 
 def test_a_read_that_shares_no_name_with_any_claim_asks_no_decision(reader: Reader):

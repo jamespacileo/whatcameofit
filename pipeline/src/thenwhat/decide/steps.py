@@ -2,6 +2,7 @@
 
 import json
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import datetime
 
 from sqlalchemy import func, select
@@ -718,6 +719,19 @@ def same_claim_state(intervention: str, indication: str, candidates: Sequence[Na
     )
 
 
+@dataclass(frozen=True, slots=True)
+class SameClaim:
+    """What the same-claim decision answered."""
+
+    # The candidate it chose, or None when it chose "none of these".
+    slug: str | None
+    # The probability it gave the candidate it thinks most likely, chosen or not.
+    likeliest: str | None
+    likeliest_probability: float
+    # The probability it gave to the article reporting none of the candidates.
+    none_probability: float
+
+
 def choose_same_claim(
     session: Session,
     backend: Backend,
@@ -727,11 +741,11 @@ def choose_same_claim(
     indication: str,
     candidates: Sequence[NamedClaim],
     now: datetime,
-) -> tuple[str | None, float]:
-    """The claim, among the candidates, that the backend says the article reports, with
-    the probability it gives that answer; no claim when it says none of them. This
-    function decides nothing: the caller joins the article to the claim only at or above
-    its own setting."""
+) -> SameClaim:
+    """Which claim, among the candidates, the backend says the article reports, with the
+    probability it gives its likeliest candidate and the probability it gives to none of
+    them. This function decides nothing: the caller joins the article to a claim by its
+    own rule."""
     decision = decide(
         session,
         backend,
@@ -741,5 +755,13 @@ def choose_same_claim(
         input_ref=ref,
         now=now,
     )
-    chosen = None if decision.choice == NO_SUCH_CLAIM else decision.choice
-    return chosen, decision.probabilities[decision.choice]
+    chances = decision.probabilities
+    likeliest = max(
+        (claim.slug for claim in candidates), key=lambda slug: chances.get(slug, 0.0), default=None
+    )
+    return SameClaim(
+        slug=None if decision.choice == NO_SUCH_CLAIM else decision.choice,
+        likeliest=likeliest,
+        likeliest_probability=chances.get(likeliest, 0.0) if likeliest else 0.0,
+        none_probability=chances.get(NO_SUCH_CLAIM, 0.0),
+    )

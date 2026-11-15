@@ -203,6 +203,21 @@ The first 52 reads in the real database made 39 claims and joined none. Four wer
 
 *Alternative, raised in review:* gate the export on a recorded fact (a registry search having run) for every rule-approved claim, however it was made. Sounder as an invariant, but it changes what happens to claims the operator enters by hand and needs a record of searches that does not exist yet. Proposed as its own change, not folded in here.
 
+## Measured on the reread (2026-11-15): the join rule tests "none of these"
+
+With the same-claim check merged, 200 leads were read again: 141 new claims, 14 articles joined to a claim, 55 could not be read, 3 needed a vertical. The decision was asked 34 times. Esketamine still made four claims and ketamine three that should be two. The 34 decisions say why, and what the rule should be.
+
+| What the article was | Decisions | Probability given to "none of these" |
+| --- | --- | --- |
+| Another condition or another treatment (aspirin for three conditions, CRISPR, gene therapies) | 15 | 0.98 to 1.00 |
+| Arguable: a narrower population or a named form of one treatment (psilocybin for treatment-resistant depression beside major depressive disorder; CAR-T for leukaemias beside lymphoma) | 4 | 0.55 to 0.75 |
+| The same story (joined, or should have been) | 15 | 0.00 to 0.40 |
+
+- **The first rule asked the wrong number.** It required the chosen claim's own probability to reach 0.8. The same story in doubtful wording got 0.60 to 0.71, and where two drafts of one story were both candidates the vote split 0.51 and 0.43 with "none" at 0.06. All five of those became new claims.
+- **The rule now.** Join the likeliest candidate when one minus the probability of "none of these" is at or above `SAME_CLAIM_ACCEPT_ABOVE`, 0.6 unless set, and that candidate has more than half. The second test keeps two claims for two conditions of one drug from being settled by a near tie. On the 34 decisions this joins the nine that joined and the five that should have, and leaves the arguable four and the different fifteen as new claims.
+- **A rejected draft is not a candidate.** Two of the four esketamine drafts were rejected by the name rule ("esketamine nasal spray") and then stood as candidates, taking votes from the claim that stands. A rejected claim is never shown, so nothing should join it by decision. An article equal to it as written still lands on it, as before.
+- **What this does not settle.** 34 decisions is a small sample and the gap between 0.40 and 0.55 is narrow. The arguable group is a question of how finely the tracker divides one drug's indications, which is the operator's, not a threshold's. Each decision is logged with every probability, so the rule can be measured again on the next batch.
+
 ## Open Questions
 
 - How long leads that are unlisted or rejected are kept. They are small and hold no text.

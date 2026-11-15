@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from thenwhat.claims.promises import parse_promise_date
 from thenwhat.claims.verticals import APPROACHES, VERTICALS
 from thenwhat.db.models import Claim, Entity, Promise, SourceArticle
-from thenwhat.domain import EntityType
+from thenwhat.domain import EntityType, ReviewState
 
 MAX_SLUG_LENGTH = 60
 MAX_SUMMARY_LENGTH = 500
@@ -203,13 +203,18 @@ class NamedClaim:
 
 
 def named_claims(session: Session, claim_ids: Sequence[int]) -> list[NamedClaim]:
-    """These claims as the same-claim decision is shown them, oldest first."""
+    """These claims as the same-claim decision is shown them, oldest first. A rejected
+    draft is left out: an article is not joined to a claim that will never be shown."""
     if not claim_ids:
         return []
     rows = session.execute(
         select(Claim.slug, Entity.name, Claim.indication)
         .join(Entity, Entity.claim_id == Claim.id)
-        .where(Entity.type == EntityType.INTERVENTION, Claim.id.in_(claim_ids))
+        .where(
+            Entity.type == EntityType.INTERVENTION,
+            Claim.id.in_(claim_ids),
+            Claim.review_state != ReviewState.REJECTED,
+        )
         .order_by(Claim.id)
     )
     return [NamedClaim(slug, name, indication) for slug, name, indication in rows]
@@ -232,6 +237,8 @@ def claims_sharing_a_name(session: Session, names: Sequence[str]) -> list[NamedC
     when one sits whole inside the other, word for word: "esketamine" inside "esketamine
     nasal spray". This finds candidates and decides nothing: two claims for one drug and
     two conditions both come back. Claims whose name is equal come first, then the oldest.
+    A rejected draft is never a candidate: it would only take the decision's votes from
+    the claim that stands.
     """
     wanted = [words for name in names if (words := name_key(name).split())]
     if not wanted:
@@ -240,7 +247,7 @@ def claims_sharing_a_name(session: Session, names: Sequence[str]) -> list[NamedC
     rows = session.execute(
         select(Claim.id, Claim.slug, Claim.indication, Entity.name, Entity.synonyms)
         .join(Entity, Entity.claim_id == Claim.id)
-        .where(Entity.type == EntityType.INTERVENTION)
+        .where(Entity.type == EntityType.INTERVENTION, Claim.review_state != ReviewState.REJECTED)
         .order_by(Claim.id)
     )
     for claim_id, slug, indication, name, synonyms in rows:
