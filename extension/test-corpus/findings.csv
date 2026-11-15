@@ -1,12 +1,18 @@
 finding,rows,what_happened
-Business and legal stories read as treatment reports,"N003, N004, N005","Earnings, supply and lawsuit stories that name a drug were searched as if they reported a treatment result. Expected: no specific treatment."
-Threads post text not read,S021,"The reader sent only the page footer. The post was only in the tab title, which the title fallback does not match for Threads."
+Business and legal stories read as treatment reports,"N003, N004, N005","Earnings, supply and lawsuit stories that name a drug were searched as if they reported a treatment result. Expected: no specific treatment. 2026-11-15: reproduced on deployed service; corrected local service now returns no specific treatment for all three. Not deployed."
+Threads post text not read,S021,"The reader sent only the page footer. The post was only in the tab title, which the title fallback does not match for Threads. 2026-11-15: fixed addressed-post reading. Current caption is a multi-claim roundup; marked review and no combined treatment is invented."
 Platform clutter sent with posts,"S010, S011, S022, S024, S025","LinkedIn and Facebook comments, Threads 'Related threads', and Facebook's login form and cookie banner were sent along with the post."
-TikTok reads the wrong video,S014,"The player showed a different CNN video, and the reader read that caption."
+TikTok reads the wrong video,S014,"The player showed a different CNN video, and the reader read that caption. 2026-11-15: fixed current-post identity binding. Requested CNN pancreatic-cancer caption now passes; full video was not rechecked."
 Video pages give almost no text,"S012, S013, S023","YouTube gave only the player time and a signed-out Facebook post gave nothing, so the popup would need its screenshot fallback (not automated here)."
-Mixed-script treatment name,A047,"The model returned 'bეპirovirsen' with Georgian letters. The registry search still found records."
+Mixed-script treatment name,A047,The model returned 'bეპirovirsen' with Georgian letters. The registry search still found records.
 Encyclopedia pages read as reports,"N008, N009",Wikipedia drug pages produced a registry search. Decide whether that is wanted.
 "Server refused, browser could read","A021, A023, A024, N002","Sites that block the service by robots.txt or bot checks were readable in a browser, as the extension reads them."
 Blocked even in a browser,"A017, A022, A025","Bot checks (Medical Xpress, Business Wire) and a reCAPTCHA (PubMed) blocked the test browser. A person's browser may pass."
 Shortened links refused,"A034, N010",Google News story pages and youtu.be links are treated as shortened links.
-Not run,"S004, S005, S009",The test browser cannot open reddit.com or nytimes.com. Run these by hand with the extension.
+Not run,S009 (not part of this rerun),Historical browser restriction for S009 remains outside this rerun. S004 and S005 were read in the browser on 2026-11-15 and now have recorded results.
+Social caption and media isolation,"S021, S026-S029, S038-S053","2026-11-15: Instagram/Threads captions, exact Telegram messages and requested TikTok posts are bound by identity. Comments, related threads and neighbouring videos are excluded. Synthetic regression and same-day public-page reading checked; installed extension not tested."
+Corrected corpus expectations,"S026, S027",S026 is a Vertex company-profile caption. Telegram message 10951 is a diet/exercise roundup continuation; suzetrigine belongs to neighbouring message 10940. URLs kept; expectations corrected.
+Everyday target wording,"S049, S043, N003-N005, S021, S028","2026-11-15: hair growth is accepted as an explicitly stated target without a formal diagnosis. Live follow-up identifies PP405 while still rejecting an ER-100 caption with no condition, the business/legal stories and the ambiguous roundup."
+Caption and video limits,"S039, S043, S047, S048, S052",Caption-only or one-frame checks do not establish claims heard elsewhere in a video. S047 caption plus bounded frame did not identify a treatment. S052 article/caption conflict remains review. No full-video verification claimed.
+YouTube browser navigation blocked,S037,2026-11-15: repeated browser navigation did not complete. Site refuses this browser-only platform by address; no current extension result obtained.
+Rerun outcome and release state,37 selected rows,"2026-11-15: 18 pass, 1 partial, 17 review, 1 blocked; 0 fail in selected set. Four former failures pass; S021 reading failure is fixed but content remains review. Corrected code is local, not deployed. Tested build and separate site/extension evidence appear in URLs AA:AD."

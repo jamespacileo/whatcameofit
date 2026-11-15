@@ -160,6 +160,28 @@ class CacheTests(unittest.TestCase):
         self.assertEqual(path.read_bytes(), before)
         self.assertEqual({p.name for p in self.cache.iterdir()}, {"cache.json", "cache.lock"})
 
+    def test_dated_rerun_survives_assembly_without_reviving_an_old_answer(self):
+        store_result(self.url, "address", self.response)
+        for name in ["assemble.py", "corpus_cache.py", "findings.csv"]:
+            shutil.copy2(HERE / name, self.here / name)
+        rerun = {
+            "test_result": "blocked", "how_read": "browser navigation blocked",
+            "lookup_answer": "not obtained", "reason": "No current readable page.",
+            "last_tested": "2026-11-15T12:00:00Z", "tested_build": "local test build",
+            "site_result": "refused by address", "extension_result": "navigation failed",
+        }
+        (self.here / "reruns.json").write_text(json.dumps({"A001": rerun}))
+        subprocess.run(
+            [sys.executable, "-I", str(self.here / "assemble.py")], check=True, capture_output=True
+        )
+        with (self.work / "extension-test-urls.csv").open() as source:
+            row = next(csv.DictReader(source))
+        for key in ["test_result", "how_read", "lookup_answer", "last_tested",
+                    "tested_build", "site_result", "extension_result"]:
+            self.assertEqual(row[key], rerun[key])
+        self.assertEqual(row["notes"], rerun["reason"])
+        self.assertEqual(row["trial_records"], "")
+
     def test_entry_points_restore_after_worktree_cleanup_without_lookups(self):
         self.seed_legacy()
         load_cache(self.here)

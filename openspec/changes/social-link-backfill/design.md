@@ -252,6 +252,28 @@ The measurement before it was switched on (the section above) saw the same patte
 - **The default is not measured yet.** 0.5 on the first question was measured on 141 drafts; this question is a different one. It is measured on the reread of the refused leads, and the figures are recorded in tasks.md before any of them is prepared.
 - **A risk for the audit.** For a treatment in use for decades the registries may hold no record of its approval, so a status derived from registry events can understate where it stands. Each such claim is checked at audit before it is published.
 
+## Targets set by the operator on 2026-11-15, and topics
+
+The operator set what done looks like: 1,000 processed articles on the production site with their trials, papers and background cards connected, and topics people are following now, GLP-1 drugs first, covered in full.
+
+**Where that stood when it was set.** 105 articles on 84 published claims. Of 117 approved claims, 60 had an approved trial, 105 a paper and 70 a background card. 862 link leads named a GLP-1 drug in their title: 293 on listed outlets, 239 on outlets not listed, 330 not screened yet. Four had a triage score, because screening and triage work oldest first and nearly all GLP-1 news is from 2023 on. Five claims.
+
+**Topics.** A topic is a name and its words, in `backfill/topics.py`: a checked-in list applied by rule, like the outlet lists. It does two things to reading and nothing else.
+
+- *Order.* A due lead whose title names a topic word, as a whole word in any letter case, is read before every other lead.
+- *Scope.* Such a lead is read when triage held it, not only when triage passed it. Triage was measured on headlines in general at 0.7; between the thresholds about two in five labelled leads are treatment reports. For a topic that is to be covered in full that is worth a read each, and the check after the read says what each article turned out to be. A lead triage rejected is still never read.
+
+`thenwhat backfill topics` reports coverage: where the leads that name a topic stand, and each claim whose intervention names it with its articles, approved trials, approved papers and approved cards. That is the measure for "covered", in the absence of a stricter definition from the operator.
+
+**From review, before the first topic run.**
+
+- *Brand and generic names.* Ozempic, Wegovy and Rybelsus are semaglutide; Mounjaro and Zepbound are tirzepatide. The same-claim candidates need a shared word, so an article on Wegovy would never have been offered the semaglutide claim. The topic's list groups each drug's names, and a claim under any name of a group is a candidate for a read that names another. The decision still judges it.
+- *What held leads let in.* For a much-covered drug the held leads are mostly not study results: a maker's sales, shortages, lawsuits, insurance cover. Since an established treatment's price, supply and use are accepted by the check after the read, most would join the drug's claims. Whether "covered in full" means every article about the drug or only reports about its evidence, safety and approval is the operator's choice and is asked before the first topic run.
+- *Half the leads are out of reach.* 239 of the 862 GLP-1 leads are on outlets that are not listed and are never read. The coverage report says so beside the number.
+- *The measured precision does not apply.* The 0.7 figure was measured on passed leads. Held topic leads are counted apart, in the topic's coverage.
+
+*Not done here.* Screening and triage are not reordered: both were within an hour of finishing when topics were added, and ordering their work by a pattern over the title costs a scan for every batch. News outlets that carry GLP-1 stories and are on no list (Axios, Vox, Business Insider, Gizmodo, El País in English) are not added: an outlet's kind is set when a lead is loaded, so adding them means setting it again on stored leads and screening them again, which is its own task. Background cards are made by `thenwhat terms`, which `prepare` does not run; for now it is run after `prepare`.
+
 ## Open Questions
 
 - How long leads that are unlisted or rejected are kept. They are small and hold no text.
