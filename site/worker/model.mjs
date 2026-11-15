@@ -63,7 +63,9 @@ const CHOICES = [
 const OPTIONS = CHOICES.map(([option]) => option);
 const QUESTION = [ASKED, ...CHOICES.map(([option, when]) => `- ${option}: ${when}`),
   "Explicit restrictions such as prior treatment, disease stage, biomarkers or age are part of the indication. " +
-  "A first-line trial is not a match for a claim about previously treated patients, and vice versa. " +
+  "Compare prior treatment within the disease setting specified by the claim. " +
+  "First-line and later-line requirements conflict when they concern the same setting. " +
+  "Prior adjuvant or neoadjuvant treatment alone does not establish that conflict. " +
   "A trial mentioned in the article may be a separate study; its mention does not override a conflicting setting. " +
   "If the record does not establish compatibility with an explicit restriction, retain uncertainty. " +
   "Do not invent restrictions when the claim gives none.",

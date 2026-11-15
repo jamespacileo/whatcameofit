@@ -22,6 +22,11 @@ Lookup and private-pipeline scoring SHALL treat explicit patient populations and
 - **WHEN** first-line and previously treated records are scored
 - **THEN** neither is excluded solely because of an unstated prior-treatment restriction
 
+#### Scenario: Prior adjuvant treatment is compatible
+- **GIVEN** the claim describes previous adjuvant therapy for resected disease and the record explicitly permits it for first-line metastatic treatment
+- **WHEN** the candidate is scored
+- **THEN** prior treatment alone does not make the settings incompatible
+
 ### Requirement: Card association preserves claim identity
 A live answer SHALL name a tracked card only when its complete intervention and condition match. A single component SHALL NOT establish a combination match. Missing or ambiguous condition information SHALL produce no confirmed card association. Case and whitespace differences and recorded whole-intervention aliases SHALL remain supported without an extra model or source call.
 
