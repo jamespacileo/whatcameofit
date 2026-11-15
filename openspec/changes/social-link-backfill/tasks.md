@@ -91,6 +91,9 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 - [x] 9.7 Join by the probability that the article reports one of the candidates (one minus "none of these"), at 0.6 unless set, with more than half for the claim joined; verify with tests of a fairly sure same story, a vote split with a clear leader, a near tie between two conditions, and a decision leaning to none
 - [x] 9.8 Leave rejected claims out of the candidates; verify with a test that a read sharing a name only with a rejected draft asks no decision
 
+- [x] 9.9 Add the `new_treatment_report` decision and the read outcome `not_a_new_treatment` (migration `0019`), asked before any claim is joined or drafted, at `NEW_TREATMENT_ACCEPT_ABOVE` (0.5 unless set); count it in the funnel; verify with tests that such an article drafts no claim, joins no claim, and that the decision is shown none of the article's text
+- [x] 9.10 Measure the decision on the 141 drafts of the reread before switching it on; verify the figures and what the low group holds are recorded in the design
+
 ## Reread: what the 200 showed on 2026-11-15 (8.6, read but not yet prepared)
 
 - **The run:** `link_read --limit 200` with the same-claim check: 141 new claims (103 awaiting preparation, 38 rejected by the name rule), 14 articles joined to a claim, 3 needed a vertical, 55 could not be read. Model cost $0.23. Nothing is approved and nothing is exportable: `thenwhat prepare` has not been run for this batch.

@@ -765,3 +765,54 @@ def choose_same_claim(
         likeliest_probability=chances.get(likeliest, 0.0) if likeliest else 0.0,
         none_probability=chances.get(NO_SUCH_CLAIM, 0.0),
     )
+
+
+NEW_TREATMENT_REPORT = "new_treatment_report"
+REPORTS_A_NEW_TREATMENT = "new_treatment"
+ANOTHER_KIND_OF_STORY = "other"
+NEW_TREATMENT_QUESTION = (
+    "An article has been read and is summarised above in our own words. Is it a report "
+    "about one treatment that is new, experimental or newly being tested for one "
+    "condition: a study or trial result, the start of a trial, a first use in people, an "
+    f"approval, or other progress of that treatment? Answer {REPORTS_A_NEW_TREATMENT} for "
+    f"that. Answer {ANOTHER_KIND_OF_STORY} for anything else, including: news about a "
+    "treatment long in established use (its safety, side effects, price, marketing, "
+    "prescribing or policy); advice, lifestyle and public health measures; a predictor, a "
+    "risk factor, a test or a discovery that is not a treatment; and a research direction "
+    "or an approach with no one treatment for one condition."
+)
+
+
+def new_treatment_state(headline: str, summary: str, intervention: str, indication: str) -> str:
+    """What the new-treatment decision is shown: what was read from the article, in the
+    tracker's own words, and the question. Never a word of the article."""
+    return (
+        f"Headline: {headline}\nSummary: {summary}\n"
+        f"Treatment: {intervention}\nCondition: {indication}\n\n{NEW_TREATMENT_QUESTION}"
+    )
+
+
+def reports_a_new_treatment(
+    session: Session,
+    backend: Backend,
+    *,
+    ref: str,
+    headline: str,
+    summary: str,
+    intervention: str,
+    indication: str,
+    now: datetime,
+) -> float:
+    """The probability the backend gives to the article being a report of a new treatment
+    for a condition, which is what the tracker follows. This function decides nothing:
+    the caller drafts or joins a claim only at or above its own setting."""
+    decision = decide(
+        session,
+        backend,
+        step=NEW_TREATMENT_REPORT,
+        state=new_treatment_state(headline, summary, intervention, indication),
+        options=[REPORTS_A_NEW_TREATMENT, ANOTHER_KIND_OF_STORY],
+        input_ref=ref,
+        now=now,
+    )
+    return decision.probabilities[REPORTS_A_NEW_TREATMENT]
