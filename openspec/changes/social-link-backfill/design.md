@@ -265,6 +265,13 @@ The operator set what done looks like: 1,000 processed articles on the productio
 
 `thenwhat backfill topics` reports coverage: where the leads that name a topic stand, and each claim whose intervention names it with its articles, approved trials, approved papers and approved cards. That is the measure for "covered", in the absence of a stricter definition from the operator.
 
+**From review, before the first topic run.**
+
+- *Brand and generic names.* Ozempic, Wegovy and Rybelsus are semaglutide; Mounjaro and Zepbound are tirzepatide. The same-claim candidates need a shared word, so an article on Wegovy would never have been offered the semaglutide claim. The topic's list groups each drug's names, and a claim under any name of a group is a candidate for a read that names another. The decision still judges it.
+- *What held leads let in.* For a much-covered drug the held leads are mostly not study results: a maker's sales, shortages, lawsuits, insurance cover. Since an established treatment's price, supply and use are accepted by the check after the read, most would join the drug's claims. Whether "covered in full" means every article about the drug or only reports about its evidence, safety and approval is the operator's choice and is asked before the first topic run.
+- *Half the leads are out of reach.* 239 of the 862 GLP-1 leads are on outlets that are not listed and are never read. The coverage report says so beside the number.
+- *The measured precision does not apply.* The 0.7 figure was measured on passed leads. Held topic leads are counted apart, in the topic's coverage.
+
 *Not done here.* Screening and triage are not reordered: both were within an hour of finishing when topics were added, and ordering their work by a pattern over the title costs a scan for every batch. News outlets that carry GLP-1 stories and are on no list (Axios, Vox, Business Insider, Gizmodo, El País in English) are not added: an outlet's kind is set when a lead is loaded, so adding them means setting it again on stored leads and screening them again, which is its own task. Background cards are made by `thenwhat terms`, which `prepare` does not run; for now it is run after `prepare`.
 
 ## Open Questions

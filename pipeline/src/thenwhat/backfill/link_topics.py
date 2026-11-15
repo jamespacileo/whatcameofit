@@ -22,7 +22,7 @@ PAPER_SOURCES = (Crossref.name, EuropePmc.name, OpenAlex.name)
 
 # Where a lead that names the topic stands, in the order the report lists them.
 NOT_SCREENED = "not screened yet"
-UNLISTED = "on an outlet that is not listed"
+UNLISTED = "on an outlet that is not listed, so never read"
 TRACKED = "already a source article"
 NOT_SCORED = "in scope, not scored yet"
 REJECTED = "rejected by triage"

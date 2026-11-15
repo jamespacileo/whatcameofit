@@ -31,7 +31,7 @@ from thenwhat.backfill.link_screen import CLAIM, REGISTRY_TRIAL, TITLE_NAMES_CLA
 from thenwhat.backfill.link_triage import is_passed
 from thenwhat.backfill.outlet_kinds import name_of
 from thenwhat.backfill.steps import MODEL, TEXT_DOOR, Failed, ModelSpend
-from thenwhat.backfill.topics import title_names
+from thenwhat.backfill.topics import other_names_of, title_names
 from thenwhat.claims.entry import (
     MAX_NAMED_CLAIMS,
     EntryError,
@@ -294,9 +294,10 @@ class LinkRead:
         exact = slug_of_claim_covering(session, draft.intervention, draft.indication)
         if exact is not None:
             return exact, None
-        candidates = claims_sharing_a_name(
-            session, [draft.intervention, *draft.intervention_synonyms]
-        )
+        names = [draft.intervention, *draft.intervention_synonyms]
+        # A topic's list knows a drug's brand and generic names; a claim under any of
+        # them is a candidate, though the names share no word.
+        candidates = claims_sharing_a_name(session, [*names, *other_names_of(names)])
         linked_by_title = named_claims(
             session,
             list(

@@ -679,6 +679,33 @@ def test_with_no_topics_only_passed_leads_are_read(reader: Reader):
     assert held.read_outcome is None
 
 
+def test_a_brand_name_is_offered_the_claim_entered_under_the_generic_name(session, fake_time):
+    """Scenario: A brand name and its generic name"""
+    reader = Reader(
+        session,
+        fake_time,
+        DRAFT | {"intervention": "Wegovy", "intervention_synonyms": [], "indication": "obesity"},
+    )
+    claim = add_claim(
+        session,
+        slug="semaglutide-obesity",
+        headline="A synthetic headline",
+        vertical="diabetes-and-hormones",
+        intervention="semaglutide",
+        indication="obesity in adults",
+    )
+    reader.backend.same_claim = claim.slug
+    lead = reader.lead()
+
+    reader.read()
+
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.ADDED_TO_CLAIM, claim.id)
+    assert (
+        "- semaglutide-obesity: semaglutide for obesity in adults"
+        in (reader.backend.same_claim_asked[0])
+    )
+
+
 # --- one story, several outlets --------------------------------------------------------
 
 # Four synthetic reads shaped like one much-shared story: each outlet words the treatment

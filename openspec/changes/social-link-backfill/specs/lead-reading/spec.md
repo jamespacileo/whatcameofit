@@ -29,7 +29,7 @@ Due leads SHALL be read in this order: first those whose title names one of the 
 - **THEN** the lead linked to a trial is read first
 
 ### Requirement: Topic leads
-The operator's topics SHALL be a checked-in list of names, each with the words that mark a link lead or a claim as belonging to it. A lead's title names a topic when it holds one of the topic's words as a whole word, whatever its letter case. A lead that names a topic and that triage held SHALL be read as a passed lead is; a lead that triage rejected SHALL NOT be read. With no topic listed, only passed leads SHALL be read. A topic SHALL change only which leads are read and in what order: it SHALL NOT change a status and SHALL NOT appear in the export.
+The operator's topics SHALL be a checked-in list of names, each with the words that mark a link lead or a claim as belonging to it. A lead's title names a topic when it holds one of the topic's words as a whole word, whatever its letter case. A lead that names a topic and that triage held SHALL be read as a passed lead is; a lead that triage rejected SHALL NOT be read. With no topic listed, only passed leads SHALL be read. A lead on an outlet that is not listed is not in scope and SHALL NOT be read, whatever it names. A topic's list MAY group the names of one drug, brand and generic; a claim under any name of the group SHALL be a candidate for an article that names another (see "The same story in other words"). The precision measured for triage at the thresholds does not hold for held leads, so the outcomes of topic leads SHALL be reported apart, in the topic's coverage. A topic SHALL change only which leads are read, in what order, and which claims are candidates: it SHALL NOT change a status and SHALL NOT appear in the export.
 
 #### Scenario: A held lead on a topic
 - **WHEN** a lead scored 0.4 names a GLP-1 drug in its title, and the thresholds are 0.7 and 0.2
@@ -50,6 +50,10 @@ The operator's topics SHALL be a checked-in list of names, each with the words t
 #### Scenario: No topics are listed
 - **WHEN** no topic is listed
 - **THEN** a held lead is not read, whatever its title
+
+#### Scenario: A brand name and its generic name
+- **WHEN** a claim's intervention is semaglutide, and a lead's read names Wegovy, which the topic lists as the same drug
+- **THEN** that claim is a candidate, and the same-claim decision says whether the article reports it
 
 ### Requirement: Topic coverage
 `thenwhat backfill topics` SHALL report, for every topic or for the one named: how many link leads name it; how many of those are not screened yet, on an outlet that is not listed, already a source article, in scope and not scored yet, rejected by triage, and to be read; the outcomes of those that were read; and each unarchived claim whose intervention names the topic, with its review state or that it is published, its status, and how many articles, approved trials, approved papers and approved background cards it has. It SHALL send no request and change nothing.

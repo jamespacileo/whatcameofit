@@ -15,7 +15,7 @@ from thenwhat.backfill.link_topics import (
     UNLISTED,
     coverage,
 )
-from thenwhat.backfill.topics import TOPICS, UnknownTopic, names_one, terms_of
+from thenwhat.backfill.topics import TOPICS, UnknownTopic, names_one, other_names_of, terms_of
 from thenwhat.claims.entry import add_article, add_claim
 from thenwhat.db.models import Entity, EntityMatch, LinkLead
 from thenwhat.domain import Decider, OutletKind, ReadOutcome, ReviewState, ScreenOutcome
@@ -39,6 +39,14 @@ def test_every_topic_has_words_and_an_unknown_topic_is_refused_by_name():
     assert set(terms_of("glp-1")) <= set(terms_of())
     with pytest.raises(UnknownTopic, match="glp-1"):
         terms_of("statins")
+
+
+def test_a_drugs_other_names_are_its_brands_and_its_generic_name():
+    assert set(other_names_of(["Wegovy"])) == {"semaglutide", "Ozempic", "Wegovy", "Rybelsus"}
+    assert "Mounjaro" in other_names_of(["a weekly shot", "tirzepatide"])
+    # A word that is no drug's name, and a name on no list, have no other names.
+    assert other_names_of(["GLP-1"]) == ()
+    assert other_names_of(["aspirin"]) == ()
 
 
 def lead(
