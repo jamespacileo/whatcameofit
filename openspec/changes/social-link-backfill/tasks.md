@@ -110,6 +110,13 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 - [ ] 10.5 Have background cards made for every claim a read drafted, as part of preparing it, and verify the coverage report shows cards for them
 - [ ] 10.6 Report progress against the two targets after each batch: articles on published claims with trials, papers and cards; coverage of each topic
 
+## 11. Two bands for the evidence stage
+
+- [x] 11.1 Record the operator's decision as ADR 0004 and in the guardrail of `CLAUDE.md`
+- [x] 11.2 Export a lower-band stage reading as `evidence_stage_reading`, behind `STAGE_SHOW_ABOVE`; verify with tests of a shown reading that leaves the status alone, a reading under the band and a confirmed stage; regenerate the export schema and the seed export
+- [x] 11.3 Show the reading on the claim page, marked low confidence with its score and the other stages weighed; verify the wording with a site test
+- [ ] 11.4 Re-score the stored trial matches of the first batch on current main, after the auditing session's first publish, and record how many statuses moved
+
 ## Reread: what the 200 showed on 2026-11-15 (8.6, read but not yet prepared)
 
 - **The run:** `link_read --limit 200` with the same-claim check: 141 new claims (103 awaiting preparation, 38 rejected by the name rule), 14 articles joined to a claim, 3 needed a vertical, 55 could not be read. Model cost $0.23. Nothing is approved and nothing is exportable: `thenwhat prepare` has not been run for this batch.
