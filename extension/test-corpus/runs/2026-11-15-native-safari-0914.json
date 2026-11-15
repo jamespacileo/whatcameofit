@@ -11,7 +11,7 @@
   "card": "daraxonrasib-previously-treated-metastatic-pancreatic-cancer",
   "registry_search_on_final_open": false,
   "initial_open": {
-    "kind": "live answer before the loaded index refreshed",
+    "kind": "live answer on initial opening; an older loaded index and later refresh are inferred, not instrumented",
     "treatment": "daraxonrasib",
     "condition": "Previously treated metastatic pancreatic cancer",
     "card_correct": true,
