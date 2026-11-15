@@ -1,0 +1,35 @@
+{
+  "checked_at": "2026-11-15T20:11:43.121850+00:00",
+  "claim": "kidney-transplant-desensitization-kidney-failure-in-patients",
+  "source_article": {
+    "url": "http://www.nytimes.com/2016/03/10/health/kidney-transplant-desensitization-immune-system.html",
+    "published_date": "2016-03-09"
+  },
+  "primary_source": "https://www.nejm.org/doi/full/10.1056/NEJMoa1508380",
+  "reason": "The 2016 report concerns the 22-center survival comparison after HLA-incompatible living-donor transplantation. The previous 2014 conference abstract is related research, not that original study. The correct 2016 DOI was already an approved related-paper match on this claim.",
+  "previous_origin": {
+    "entity_id": 3199,
+    "name": "National Estimates and Outcomes of Incompatible Live Donor Kidney Transplantation Amongst Medicare Beneficiaries.",
+    "doi": "10.1097/00007890-201407151-00324"
+  },
+  "verified_existing_paper": {
+    "match_id": 10027,
+    "source_name": "openalex",
+    "doi": "10.1056/nejmoa1508380",
+    "score": 1.0,
+    "record_summary": "Survival Benefit with Kidney Transplants from HLA-Incompatible Live Donors. 2016. article. New England Journal of Medicine"
+  },
+  "source_calls_during_correction": 0,
+  "model_calls": 0,
+  "publication": "Private database only; no public snapshot regenerated.",
+  "trial_scope_review": "The claim was already archived before this provenance correction. It remains archived and excluded from publication. No trial association or intervention scope was changed; varying center protocols do not establish one uniform treatment.",
+  "corrected_origin": {
+    "entity_id": 4050,
+    "match_id": 15804,
+    "name": "Survival Benefit with Kidney Transplants from HLA-Incompatible Live Donors",
+    "doi": "10.1056/nejmoa1508380",
+    "decider": "assistant"
+  },
+  "claim_archived_at": "2026-11-15T18:37:02.535609+00:00",
+  "archive_reason": "Intervention is a class or several products, not one treatment."
+}

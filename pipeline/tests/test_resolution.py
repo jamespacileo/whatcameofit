@@ -115,7 +115,13 @@ class ByCondition:
         self.states.append(state)
         record = state.split("Candidate record", 1)[-1]
         choice = "match" if "Tooth Agenesis" in record else "other_indication"
-        return BackendAnswer(choice, {o: 0.96 if o == choice else 0.02 for o in options})
+        return BackendAnswer(
+            choice,
+            {
+                o: 0.96 if o == choice else 0.0 if o == "not_what_is_tested" else 0.02
+                for o in options
+            },
+        )
 
 
 class Broken:
@@ -374,7 +380,7 @@ def test_candidate_score_is_the_logged_probability_of_a_match(session: Session):
     [match] = matches(session)
     [entry] = session.scalars(select(DecisionLog)).all()
     assert (entry.step, entry.input_ref) == ("entity_match", f"entity_match:{match.id}")
-    assert entry.options == ["match", "other_indication", "not_a_match"]
+    assert entry.options == ["match", "other_indication", "not_what_is_tested", "not_a_match"]
     assert entry.output is not None
     assert (
         match.score == pytest.approx(entry.output["probabilities"]["match"]) == pytest.approx(0.83)
@@ -611,6 +617,31 @@ def test_confident_candidate_is_approved_by_rule(session: Session):
     assert all(label is None for label in labels)
 
 
+class InTheTrialNotTested:
+    """A backend that reads every record as a trial the intervention is in without being
+    what it tests, while still giving a match some weight."""
+
+    name = "fake"
+
+    def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
+        given = {"not_what_is_tested": 0.5, "match": 0.45, "not_a_match": 0.05}
+        return BackendAnswer("not_what_is_tested", {o: given.get(o, 0.0) for o in options})
+
+
+def test_a_trial_the_intervention_is_in_but_does_not_test_is_never_approved_by_rule(
+    session: Session,
+):
+    """Scenario: Comparator or background treatment"""
+    claim = new_claim(session)
+
+    resolve(session, claim, trials=two_trials(), backend=InTheTrialNotTested(), accept_above=0.4)
+
+    assert [match.score for match in matches(session)] == [pytest.approx(0.45)] * 2
+    assert {match.review_state for match in matches(session)} == {ReviewState.PENDING}
+    asked = session.scalars(select(DecisionLog).where(DecisionLog.step == "entity_match")).first()
+    assert asked is not None and "not_what_is_tested" in asked.options
+
+
 def test_candidate_between_the_thresholds_stays_pending(session: Session):
     """Scenario: Between the thresholds"""
     claim = new_claim(session)
@@ -807,7 +838,11 @@ class NowAnother:
 
     def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
         return BackendAnswer(
-            "other_indication", {o: 0.9 if o == "other_indication" else 0.05 for o in options}
+            "other_indication",
+            {
+                o: 0.9 if o == "other_indication" else 0.0 if o == "not_what_is_tested" else 0.05
+                for o in options
+            },
         )
 
 

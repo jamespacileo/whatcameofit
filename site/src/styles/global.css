@@ -1710,6 +1710,61 @@ main nav.contents ul li + li {
   border-color: var(--blue);
 }
 
+/* The path with each place named under its dot, in a panel that has room for the names. */
+.track.named {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  width: 100%;
+  margin: 0.7rem 0 0.15rem;
+}
+
+.track.named::before {
+  content: "";
+  position: absolute;
+  left: calc(100% / 12);
+  right: calc(100% / 12);
+  top: 0.4rem;
+  height: 1.5px;
+  background: var(--rule);
+}
+
+.track.named .place {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 0.3rem;
+  font-size: 0.74rem;
+  line-height: 1.15;
+  text-align: center;
+  color: var(--muted);
+  hyphens: manual;
+}
+
+.track.named .place::before {
+  content: "";
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-top: 0.175rem;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 1.5px solid var(--ring);
+}
+
+.track.named .place.here {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.track.named .place.here::before {
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-top: 0;
+  background: var(--blue);
+  border-color: var(--blue);
+}
+
 .track .ends {
   display: block;
   white-space: nowrap;
@@ -4228,6 +4283,7 @@ main ul:not([class]) li + li {
 @media (forced-colors: active) {
   .track .step.here,
   .pop .pop-path li[aria-current]::before,
+  .track.named .place.here::before,
   .share.done::before,
   .stage-filter .place[aria-pressed="true"] .dot {
     background: CanvasText;
@@ -4740,11 +4796,34 @@ main ul:not([class]) li + li {
 }
 
 /* Room at each end for a mark that falls on the first or the last day. */
-.record-strip .strip-line {
+.strip-frame {
+  display: block;
   flex: 1 1 9rem;
   width: 9rem;
   max-width: 24rem;
   margin-inline: 6px;
+}
+
+.strip-frame .strip-line {
+  width: 100%;
+}
+
+/* A strip alone, on a claim's page: its first year and its last day under the ends. */
+.strip-years {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.1rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.strip-years span:last-child {
+  transform: translateX(6px);
+}
+
+.strip-years span:first-child {
+  transform: translateX(-6px);
 }
 
 .strip-axis {
@@ -4795,9 +4874,34 @@ main ul:not([class]) li + li {
   white-space: nowrap;
 }
 
-.report-row .record-strip {
-  margin-top: 0.8rem;
-  max-width: var(--measure);
+/* What the records add, in words, under the outlet's title. */
+.row-counts {
+  margin: 0.55rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.row-counts:empty {
+  display: none;
+}
+
+/* A claim's own strip, at the head of what is recorded, with the key under it. */
+.claim-strip {
+  max-width: 40rem;
+  margin: 0.4rem 0 1.2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.claim-strip .strip-frame {
+  flex: 1 1 auto;
+  width: auto;
+  max-width: none;
+}
+
+.claim-strip .strip-key {
+  margin: 0.6rem 0 0;
 }
 
 .strip-key {
@@ -4832,13 +4936,13 @@ main ul:not([class]) li + li {
   margin-top: 0.55rem;
 }
 
-.index td.status .strip-line {
+.index td.status .strip-frame {
   flex: none;
   width: 11rem;
 }
 
 @media (max-width: 40rem) {
-  .index td.status .strip-line {
+  .index td.status .strip-frame {
     width: calc(100% - 12px);
     max-width: 24rem;
   }

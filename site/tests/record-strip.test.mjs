@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { test } from "node:test";
-import { STRIP_KEY, STRIP_KEY_ORDER, axisStart, notches, stripFor } from "../src/lib/record-strip.ts";
+import { STRIP_KEY, STRIP_KEY_ORDER, TABLE_KINDS, axisStart, claimAxis, notches, stripFor } from "../src/lib/record-strip.ts";
 import { assertRowSentence, countsLine, sampleSentences, stripName } from "../src/lib/row-sentences.ts";
 
 const fixture = JSON.parse(fs.readFileSync(new URL("./fixture-export.json", import.meta.url), "utf8"));
@@ -158,4 +158,25 @@ test("the key names six marks, and its wording is checked like a row sentence", 
   assert.equal(STRIP_KEY_ORDER.length, 6);
   assert.throws(() => assertRowSentence("strip key: promise", "Promise still not kept"), /Characterising wording/);
   for (const [name, text] of sampleSentences()) assert.doesNotThrow(() => assertRowSentence(name, text));
+});
+
+test("Scenario: A claim's own axis on its page", () => {
+  // Reported in 2026 with a trial from 2012: the axis starts at the trial's year.
+  const old = claimAxis(reported([event("trial_registered", "2012-05-10")]), CHECKED);
+  assert.equal(old.startYear, 2012);
+  assert.deepEqual(old.notches.map((notch) => notch.year).slice(0, 2), [2013, 2014]);
+  // Reported with nothing before it: five years of axis before the report.
+  const bare = claimAxis(reported(), CHECKED);
+  assert.equal(bare.startYear, 2021);
+  assert.equal(bare.lastChecked, CHECKED);
+  // A span longer than fifteen years is notched every five.
+  const long = claimAxis(reported([event("trial_registered", "2005-05-10")]), CHECKED);
+  assert.deepEqual(long.notches.map((notch) => notch.year), [2010, 2015, 2020, 2025]);
+  // A dated promise older than every record reaches the axis back to its year.
+  const later = claimAxis(reported([], [{ description: "Trials", parsed_date: "1999-12-31", article_url: "x" }]), CHECKED);
+  assert.equal(later.startYear, 1999);
+});
+
+test("a list's key names the three marks it draws", () => {
+  assert.deepEqual(TABLE_KINDS, ["record", "results", "report"]);
 });

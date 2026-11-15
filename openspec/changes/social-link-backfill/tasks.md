@@ -97,7 +97,9 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 - [x] 9.11 Replace the yes-or-no check with the three-way `treatment_kind` decision, so that an established treatment joins or drafts a claim as a new one does and only "neither" refuses; rename the outcome to `not_one_treatment` (migration `0020`) and the setting to `TREATMENT_ACCEPT_ABOVE`; verify with tests of an established treatment drafting a claim, joining its claim, an unsure split between new and established, and "neither" drafting and joining nothing
 - [ ] 9.12 Measure the three-way decision on the leads the first check refused, by rereading them, and record the figures here before any of them is prepared
 - [x] 9.13 Add `resolve --redo-rule`: score again the trial matches a rule approved, as the question is asked now, and let the rule decide again; a match no longer approved loses its events and the status is derived again. Verify with tests of an approval that no longer stands, one that stands, one a person decided, and a scoring that fails
+- [x] 9.15 Give the trial question a fourth answer, in the trial but not what is tested, never approved by rule; verify with tests of the rule, the review note and the site's wording, and measure it on the claims the audit named
 - [ ] 9.14 Run it over the claims the audit held for a trial that does not test the claim's treatment, and record how many approvals and statuses moved
+- [ ] 9.16 Mirror the fourth answer in the site worker's copy of the trial question (`site/worker/model.mjs`), in its own change, once the lookup corpus has been run against it; until then the two copies of the question differ
 
 ## 10. Targets and topics
 
@@ -106,6 +108,9 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 - [x] 10.3 Add `thenwhat backfill topics`; verify one test of the leads' standings, one of a claim's articles, trials, papers and cards, and one success and one refusal of the command
 - [x] 10.7 Give the decision after the read a fourth answer, business news about a treatment, and for a lead that names a topic join or draft a claim only when the article is about what the treatment does; add the outcome `business_news` (migration `0021`) and count it in the funnel; business news never starts a claim for any lead, and joins an existing one only off a topic; verify with tests of a shortage story on a topic, a trial result on a topic, business news with no claim to join, business news joining a tracked claim off a topic, and a lead whose title names nothing while its read names a topic's drug
 - [x] 10.8 Score the leads that name a topic first in triage, since triage works oldest first and a topic's news is recent; verify with a test that a topic lead among twenty-five older ones is in the first call
+- [x] 10.9 End a lead whose read names a class of treatments as not one treatment, by a checked-in rule on the name and before any decision; verify with tests of class names with and without a code, of single treatments, and of a read that asks no decision
+- [x] 10.10 Ask the read for one condition by the name a registry files it under, never an aim or an outcome
+- [ ] 10.11 Take the GLP-1 claims no one has prepared back out, read their leads again, and record how many claims the topic then has
 - [ ] 10.4 Add the news outlets that carry topic leads and are on no list; set the outlet kind again on stored leads and screen them again
 - [ ] 10.5 Have background cards made for every claim a read drafted, as part of preparing it, and verify the coverage report shows cards for them
 - [ ] 10.6 Report progress against the two targets after each batch: articles on published claims with trials, papers and cards; coverage of each topic

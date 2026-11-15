@@ -96,7 +96,13 @@ class ByCondition:
     def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
         record = state.split("Candidate record", 1)[-1]
         choice = "match" if "Tooth Agenesis" in record else "other_indication"
-        return BackendAnswer(choice, {o: 0.96 if o == choice else 0.02 for o in options})
+        return BackendAnswer(
+            choice,
+            {
+                o: 0.96 if o == choice else 0.0 if o == "not_what_is_tested" else 0.02
+                for o in options
+            },
+        )
 
 
 def llm(session: Session, output: dict[str, Any]) -> tuple[Llm, list[str]]:

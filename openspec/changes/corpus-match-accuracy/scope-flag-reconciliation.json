@@ -1,0 +1,167 @@
+{
+  "checked_at": "2026-11-15T20:20:09.559056+00:00",
+  "operation": "read-only reconciliation of the original 84 diagnostic flags against current decisions and archive state",
+  "original_flags": 84,
+  "counts": {
+    "active_approved": 2,
+    "active_rejected": 15,
+    "archived_claim_flags": 67
+  },
+  "archived_claims": [
+    {
+      "slug": "covid-19-vaccine-covid-19",
+      "flags": 12,
+      "archived_at": "2026-11-15 17:50:33.797946+00:00"
+    },
+    {
+      "slug": "kidney-transplant-desensitization-kidney-failure-in-patients",
+      "flags": 19,
+      "archived_at": "2026-11-15 18:37:02.535609+00:00"
+    },
+    {
+      "slug": "monoclonal-antibody-treatments-for-ebola-ebola-virus-disease",
+      "flags": 1,
+      "archived_at": "2026-11-15 17:56:39.343613+00:00"
+    },
+    {
+      "slug": "peanut-allergen-immunotherapy-by-oral-capsule-and-skin-patch",
+      "flags": 8,
+      "archived_at": "2026-11-15 17:50:33.804560+00:00"
+    },
+    {
+      "slug": "stemirac-spinal-cord-injury",
+      "flags": 4,
+      "archived_at": "2026-11-15 18:36:35.049692+00:00"
+    },
+    {
+      "slug": "weight-loss-medications-weight-loss",
+      "flags": 23,
+      "archived_at": "2026-11-15 17:56:39.352422+00:00"
+    }
+  ],
+  "active_flags": [
+    {
+      "claim": "2r-6r-hnk-depression",
+      "match": 10073,
+      "trial": "NCT06511908",
+      "state": "approved",
+      "decider": "rule"
+    },
+    {
+      "claim": "brain-computer-interface-system-for-hand-control-paralysis",
+      "match": 10560,
+      "trial": "NCT03482310",
+      "state": "rejected",
+      "decider": "assistant"
+    },
+    {
+      "claim": "brain-computer-interface-system-for-hand-control-paralysis",
+      "match": 10674,
+      "trial": "NCT01852279",
+      "state": "rejected",
+      "decider": "assistant"
+    },
+    {
+      "claim": "brain-computer-interface-system-for-hand-control-paralysis",
+      "match": 10565,
+      "trial": "NCT07720882",
+      "state": "rejected",
+      "decider": "assistant"
+    },
+    {
+      "claim": "brain-computer-interface-system-for-hand-control-paralysis",
+      "match": 10567,
+      "trial": "NCT03898804",
+      "state": "rejected",
+      "decider": "assistant"
+    },
+    {
+      "claim": "brain-computer-interface-system-for-hand-control-paralysis",
+      "match": 10568,
+      "trial": "NCT07225582",
+      "state": "rejected",
+      "decider": "assistant"
+    },
+    {
+      "claim": "brain-computer-interface-system-for-hand-control-paralysis",
+      "match": 10612,
+      "trial": "NCT03680872",
+      "state": "rejected",
+      "decider": "assistant"
+    },
+    {
+      "claim": "brain-computer-interface-system-for-hand-control-paralysis",
+      "match": 10672,
+      "trial": "NCT07934914",
+      "state": "rejected",
+      "decider": "assistant"
+    },
+    {
+      "claim": "esketamine-major-depression-including-depression-with",
+      "match": 11912,
+      "trial": "NCT01998958",
+      "state": "approved",
+      "decider": "rule"
+    },
+    {
+      "claim": "triple-chronotherapy-depression-particularly-drug-resistant",
+      "match": 14969,
+      "trial": "NCT02053649",
+      "state": "rejected",
+      "decider": "assistant"
+    },
+    {
+      "claim": "triple-chronotherapy-depression-particularly-drug-resistant",
+      "match": 14968,
+      "trial": "NCT02176824",
+      "state": "rejected",
+      "decider": "assistant"
+    },
+    {
+      "claim": "triple-chronotherapy-depression-particularly-drug-resistant",
+      "match": 14995,
+      "trial": "NCT05691647",
+      "state": "rejected",
+      "decider": "assistant"
+    },
+    {
+      "claim": "triple-chronotherapy-depression-particularly-drug-resistant",
+      "match": 14965,
+      "trial": "NCT07346014",
+      "state": "rejected",
+      "decider": "assistant"
+    },
+    {
+      "claim": "pembrolizumab-plus-chemotherapy-the-most-common-type-of-lung",
+      "match": 13601,
+      "trial": "NCT02621398",
+      "state": "rejected",
+      "decider": "assistant"
+    },
+    {
+      "claim": "pembrolizumab-plus-chemotherapy-the-most-common-type-of-lung",
+      "match": 13556,
+      "trial": "NCT04165070",
+      "state": "rejected",
+      "decider": "assistant"
+    },
+    {
+      "claim": "pembrolizumab-plus-chemotherapy-the-most-common-type-of-lung",
+      "match": 13591,
+      "trial": "NCT04267848",
+      "state": "rejected",
+      "decider": "assistant"
+    },
+    {
+      "claim": "pembrolizumab-plus-chemotherapy-the-most-common-type-of-lung",
+      "match": 13590,
+      "trial": "NCT06422143",
+      "state": "rejected",
+      "decider": "assistant"
+    }
+  ],
+  "conclusion": "All original flags on active claims are resolved: 15 rejected and two independently confirmed. Archived claims remain excluded from publication; this is not a blanket audit of every new trial association.",
+  "retained_match_evidence": "scope-confirmed-matches.json",
+  "model_calls": 0,
+  "source_calls": 0
+}

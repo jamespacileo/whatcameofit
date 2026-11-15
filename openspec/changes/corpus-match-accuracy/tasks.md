@@ -46,3 +46,12 @@
 - [x] Review and release the named-study correction as Safari 0.9.13; replay the captured S010 caption against production and record the named-study-first result separately in the corpus and Sheet.
 - [ ] Verify Safari 0.9.13 in Settings and rerun S010 natively once Safari is idle; record the installed-extension result.
 - [ ] Diagnose repeated S010 popup work and verify reuse before claiming cache efficiency.
+
+- [x] Correct pembrolizumab to its source-bound pemetrexed/platinum regimen and first-line metastatic nonsquamous population; reject seven incompatible trials and one monotherapy paper, retaining seven compatible trial cohorts.
+- [x] Correct the chronotherapy name to sleep deprivation plus lithium and bright light; reject six registry associations that do not establish that complete regimen.
+- [x] Reconcile all 84 diagnostic scope flags against current decisions: 67 belong to six archived claims, 15 active associations are rejected, and two active associations have primary-record confirmation. The kidney claim remains archived; its 19 historical flags do not block publication of active claims.
+- [x] Correct the archived kidney claim's origin paper to the already verified 2016 study without unarchiving it or changing trial decisions.
+- [x] Prepare both corrected regimens: retain seven unchanged pembrolizumab trial readings and verify the newly found lithium-containing bipolar cohort in NCT01431573.
+- [ ] Handle the demonstrated ClinicalTrials.gov condition-query complexity limit for the precise pembrolizumab indication, preserving full clinical scope for scoring.
+
+- [x] Reconcile stale tentative readings after the three identity corrections: reject 20 explicitly incompatible candidates and reread the uncertain device against the precise identity; preserve approved trial counts and prior decision history.

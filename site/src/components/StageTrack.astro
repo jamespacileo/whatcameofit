@@ -2,25 +2,43 @@
 // Where a status sits on the path from laboratory to approval: six places, one marked.
 // It shows a position, not progress: a claim can reach a place without passing the others.
 import type { StatusCode } from "../lib/export";
-import { STAGE_PATH, STATUS_LABELS } from "../lib/status";
+import { STAGE_PATH } from "../lib/status";
 
 interface Props {
   code: StatusCode;
   ends?: boolean;
+  /** Each place named under its dot, as in a panel that has room to say them. */
+  named?: boolean;
 }
 
-const { code, ends = false } = Astro.props;
+// Short enough to sit under a dot; the full labels are STATUS_LABELS.
+const PLACE_NAMES: Record<string, string> = {
+  preclinical_only: "Pre\u00adclinical",
+  trial_registered: "Regis\u00adtered",
+  phase_1: "Phase 1",
+  phase_2: "Phase 2",
+  phase_3: "Phase 3",
+  approved: "Approved",
+};
+
+const { code, ends = false, named = false } = Astro.props;
 const place = STAGE_PATH.indexOf(code);
+const name = `Place ${place + 1} of ${STAGE_PATH.length} on the path from preclinical to approved`;
 ---
 
 {
-  place >= 0 && (
+  place >= 0 && named && (
+    <span class="track named" role="img" aria-label={name}>
+      {STAGE_PATH.map((stage, index) => (
+        <span class:list={["place", { here: index === place }]}>{PLACE_NAMES[stage]}</span>
+      ))}
+    </span>
+  )
+}
+{
+  place >= 0 && !named && (
     <span class:list={["track", { ends }]}>
-      <span
-        class="steps"
-        role="img"
-        aria-label={`Place ${place + 1} of ${STAGE_PATH.length} on the path from preclinical to approved`}
-      >
+      <span class="steps" role="img" aria-label={name}>
         {STAGE_PATH.map((_, index) => <span class:list={["step", { here: index === place }]} />)}
       </span>
       {ends && (
