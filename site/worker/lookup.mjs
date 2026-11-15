@@ -21,26 +21,39 @@ const idOf = (study) => study.protocolSection.identificationModule.nctId;
 const excerpt = (value, limit) => typeof value === "string" && value.length > limit
   ? `${value.slice(0, limit - " [truncated]".length)} [truncated]` : value;
 
+// Keep membership once when both registry directions say exactly the same thing.
+// Unpaired or inconsistent labels still reach the scorer; they are not inferred.
+function unshownArms(intervention, arms) {
+  return (intervention.armGroupLabels ?? []).filter(label => !arms.some(arm =>
+    arm.label === label && (arm.interventionNames ?? []).some(name =>
+      name === intervention.name || name.endsWith(`: ${intervention.name}`))));
+}
+
 /** A registry record as it is shown to the model: what decides a match comes first. */
 function candidateText(study) {
   const section = study.protocolSection ?? {};
   const treatment = section.armsInterventionsModule ?? {};
+  const official = section.identificationModule?.officialTitle;
+  // A complete short official title often holds the population the brief title omits.
+  // Long titles remain secondary so boilerplate cannot displace treatment details.
+  const title = official && official.length <= 240 ? official : section.identificationModule?.briefTitle;
   const described = {
     conditions: section.conditionsModule?.conditions ?? [],
     study_type: section.designModule?.studyType,
-    title: excerpt(section.identificationModule?.briefTitle, 240),
+    title: excerpt(title, 240),
     // Arm roles and membership precede verbose descriptions: these establish
     // what is tested even when the record's later details exceed the limit.
     arms: (treatment.armGroups ?? []).map((arm) => ({
       label: arm.label ?? null, type: arm.type ?? null, interventions: arm.interventionNames ?? [],
     })),
-    interventions: (treatment.interventions ?? []).map((one) => ({
-      name: one.name ?? null, description: excerpt(one.description ?? null, 350), arms: one.armGroupLabels ?? [],
-    })),
+    interventions: (treatment.interventions ?? []).map((one) => {
+      const arms = unshownArms(one, treatment.armGroups ?? []);
+      return { name: one.name ?? null, description: excerpt(one.description ?? null, 350), ...(arms.length ? { arms } : {}) };
+    }),
     arm_descriptions: (treatment.armGroups ?? []).filter(arm => arm.description).map((arm) => ({
       label: arm.label ?? null, description: excerpt(arm.description, 350),
     })),
-    official_title: excerpt(section.identificationModule?.officialTitle, 240),
+    official_title: official !== title ? excerpt(official, 240) : null,
     phases: section.designModule?.phases ?? [],
     status: section.statusModule?.overallStatus,
     sponsor: section.sponsorCollaboratorsModule?.leadSponsor?.name,

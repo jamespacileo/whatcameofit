@@ -75,6 +75,11 @@ Both lookup and private-pipeline scoring SHALL receive intervention descriptions
 - **WHEN** the existing input limit is applied
 - **THEN** the short route and arm evidence comes before the duplicate title and shortened content is marked
 
+#### Scenario: A short official title carries the patient setting
+- **GIVEN** a complete official title of at most 240 characters names a treatment setting absent from the brief title
+- **WHEN** the scoring input is built
+- **THEN** that official title is used as the primary title before descriptions; a longer official title remains secondary to the bounded brief title
+
 #### Scenario: Compatibility is absent
 - **GIVEN** an explicit route restriction and a missing or truncated description that does not establish the route
 - **WHEN** the record is scored
@@ -100,6 +105,14 @@ Both scorers SHALL receive study type and arm roles/membership before verbose in
 
 ### Requirement: Combination-only trials do not establish single-medicine matches
 A combination-only experimental regimen SHALL NOT establish a match for a claim about one of its medicines alone. Placebo and supportive care SHALL NOT count as additional experimental medicines. A claim about the complete combination SHALL remain eligible when that regimen is what the study tests.
+
+#### Scenario: Preparation or activation is explicit
+- **WHEN** the record explicitly describes an ingredient as a vaccine adjuvant or required activation agent
+- **THEN** that role belongs to the treatment's preparation or delivery rather than establishing a separate experimental medicine
+
+#### Scenario: Duplicate membership would displace regimen evidence
+- **WHEN** both directions of the registry record state exactly the same intervention-arm membership
+- **THEN** the scorer receives that membership once, leaving more of the bounded input for descriptions; unpaired or inconsistent labels remain present
 
 #### Scenario: A single medicine appears only in combination arms
 - **WHEN** the claim names medicine A alone and every experimental arm containing A also includes another experimental medicine

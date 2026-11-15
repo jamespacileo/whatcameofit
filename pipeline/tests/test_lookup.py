@@ -169,7 +169,7 @@ def test_scoring_receives_route_and_separate_arm_details(session: Session, descr
     section["identificationModule"]["officialTitle"] = "A long official title " * 150
     section["armsInterventionsModule"] = {
         "interventions": [
-            {"name": "EX-1", "description": description, "armGroupLabels": ["A"]},
+            {"name": "EX-1", "description": description, "armGroupLabels": ["A", "unpaired"]},
             {"name": "EX-2", "armGroupLabels": ["B"]},
         ],
         "armGroups": [
@@ -204,7 +204,9 @@ def test_scoring_receives_route_and_separate_arm_details(session: Session, descr
     assert '"type":"ACTIVE_COMPARATOR"' in states[0]
     assert '"type":"EXPERIMENTAL"' in states[0]
     assert description in states[0]
-    assert '"arms":["A"]' in states[0] and '"arms":["B"]' in states[0]
+    assert '"interventions":["Drug: EX-1"]' in states[0]
+    assert '"interventions":["Drug: EX-2"]' in states[0]
+    assert '"arms":["unpaired"]' in states[0]
     assert "EX-1 alone" in states[0] and "EX-2 alone" in states[0]
     assert "separate arms testing A and B do not establish a trial of A plus B" in states[0]
     assert "Missing or truncated details do not establish compatibility" in states[0]
@@ -213,6 +215,59 @@ def test_scoring_receives_route_and_separate_arm_details(session: Session, descr
     assert len(described) <= 1500
     assert "[truncated]" in described
     assert found.candidates[0].answer == "not_a_match"
+
+
+def test_repeated_arm_labels_leave_room_for_combination_activation(session: Session):
+    record = trial(
+        "NCT00000001",
+        "Synthetic therapy in two eye conditions and three treatment cohorts with different doses",
+    )
+    section = record.payload["protocolSection"]
+    section["identificationModule"]["officialTitle"] = (
+        "Synthetic therapy for first-line unresectable disease"
+    )
+    section["conditionsModule"]["conditions"] = [
+        "Example eye disease with a specified patient group",
+        "Another eye disease",
+    ]
+    labels = [
+        "Example eye disease - lower dose EX-1 (two units per eye)",
+        "Example eye disease - higher dose EX-1 (six units per eye)",
+        "Another eye disease - selected dose EX-1",
+    ]
+    section["armsInterventionsModule"] = {
+        "interventions": [
+            {
+                "name": "EX-1 synthetic genetic therapy",
+                "description": "Synthetic mechanism detail " * 30,
+                "armGroupLabels": labels,
+            }
+        ],
+        "armGroups": [
+            {
+                "label": label,
+                "type": "EXPERIMENTAL",
+                "interventionNames": ["Genetic: EX-1 synthetic genetic therapy"],
+                "description": "Participants receive a dose in one eye. " * 4
+                + "Oral auxiliary-1 activates EX-1 for eight weeks.",
+            }
+            for label in labels
+        ],
+    }
+
+    class Capture(ByCondition):
+        def answer(self, step, state, options):
+            described = state.split("Candidate record from clinicaltrials.gov (NCT00000001):\n")[
+                1
+            ].split("\n\n", 1)[0]
+            assert "Oral auxiliary-1 activates EX-1" in described
+            assert "first-line unresectable disease" in described
+            assert all(label in described for label in labels)
+            assert len(described) <= 1500
+            return super().answer(step, state, options)
+
+    model, _ = llm(session, READING)
+    look_up(session, model, Capture(), FakeTrials({"EX-1": [record]}), text=TEXT, now=NOW)
 
 
 def test_oversized_registry_record_marks_missing_details_within_the_existing_limit(

@@ -68,8 +68,12 @@ TRIAL_QUESTION = (
     " An EXPANDED_ACCESS record provides treatment outside a clinical trial; read it"
     " as not_a_match. For a claim about a single medicine, an arm must establish that"
     " medicine alone, not only a multi-medicine experimental regimen containing it."
+    " A monotherapy arm for a different medicine does not establish monotherapy for"
+    " the claim's medicine."
     " A record testing only combinations is not_a_match for a single-medicine claim;"
     " placebo or supportive care is not an additional experimental medicine."
+    " An ingredient explicitly described as a vaccine adjuvant or an activation agent"
+    " belongs to that treatment's preparation or delivery, not a separate experimental medicine."
     " Being named in an arm does not make an intervention what the trial tests. Ask"
     " what differs between the arms, and what that difference is meant to treat. In a"
     " trial with one arm, what that arm receives is what is tested. When the claim's"
@@ -633,6 +637,23 @@ def _excerpt(value: str | None, limit: int) -> str | None:
     return value[: limit - len(" [truncated]")] + " [truncated]"
 
 
+def _unshown_arms(intervention: dict, arms: list[dict]) -> list[str]:
+    """Keep unpaired labels; omit only exact membership already shown by an arm."""
+    name = intervention.get("name")
+    return [
+        label
+        for label in intervention.get("armGroupLabels", [])
+        if not any(
+            arm.get("label") == label
+            and any(
+                member == name or member.endswith(f": {name}")
+                for member in arm.get("interventionNames", [])
+            )
+            for arm in arms
+        )
+    ]
+
+
 def _describe(candidate: SourceRecord) -> str:
     """What the record says, with a trial's conditions and interventions first so that a
     long record is never cut off before them."""
@@ -640,10 +661,13 @@ def _describe(candidate: SourceRecord) -> str:
     if isinstance(section, dict):
         identification = section.get("identificationModule", {})
         treatment = section.get("armsInterventionsModule", {})
+        official = identification.get("officialTitle")
+        # Preserve a complete short title's population before verbose descriptions.
+        title = official if official and len(official) <= 240 else identification.get("briefTitle")
         described = {
             "conditions": section.get("conditionsModule", {}).get("conditions", []),
             "study_type": section.get("designModule", {}).get("studyType"),
-            "title": _excerpt(identification.get("briefTitle"), 240),
+            "title": _excerpt(title, 240),
             # Keep roles and membership ahead of verbose descriptions under the cap.
             "arms": [
                 {
@@ -657,7 +681,11 @@ def _describe(candidate: SourceRecord) -> str:
                 {
                     "name": intervention.get("name"),
                     "description": _excerpt(intervention.get("description"), 350),
-                    "arms": intervention.get("armGroupLabels", []),
+                    **(
+                        {"arms": labels}
+                        if (labels := _unshown_arms(intervention, treatment.get("armGroups", [])))
+                        else {}
+                    ),
                 }
                 for intervention in treatment.get("interventions", [])
             ],
@@ -669,7 +697,7 @@ def _describe(candidate: SourceRecord) -> str:
                 for arm in treatment.get("armGroups", [])
                 if arm.get("description")
             ],
-            "official_title": _excerpt(identification.get("officialTitle"), 240),
+            "official_title": _excerpt(official, 240) if official != title else None,
             "phases": section.get("designModule", {}).get("phases", []),
             "status": section.get("statusModule", {}).get("overallStatus"),
             "sponsor": section.get("sponsorCollaboratorsModule", {})

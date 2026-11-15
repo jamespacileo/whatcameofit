@@ -111,13 +111,33 @@ test("registry search carries arm roles and study type into bounded scoring", as
   assert.ok(requests.some(url=>url.searchParams.has("query.intr")));
 });
 
+test("repeated arm labels do not crowd out how a combination is activated", async () => {
+  const record=study("NCT00000001", "Synthetic therapy in two eye conditions and three treatment cohorts with different doses");
+  record.protocolSection.identificationModule.officialTitle="Synthetic therapy for first-line unresectable disease";
+  record.protocolSection.conditionsModule.conditions=["Example eye disease with a specified patient group", "Another eye disease"];
+  const labels=["Example eye disease - lower dose EX-1 (two units per eye)","Example eye disease - higher dose EX-1 (six units per eye)","Another eye disease - selected dose EX-1"];
+  record.protocolSection.armsInterventionsModule={
+    interventions:[{name:"EX-1 synthetic genetic therapy",description:"Synthetic mechanism detail ".repeat(30),armGroupLabels:labels}],
+    armGroups:labels.map(label=>({label,type:"EXPERIMENTAL",interventionNames:["Genetic: EX-1 synthetic genetic therapy"],description:"Participants receive a dose in one eye. ".repeat(4)+"Oral auxiliary-1 activates EX-1 for eight weeks."})),
+  };
+  const model=fakeModel();
+  model.score=async(_intro,items)=>{
+    assert.match(items[0], /first-line unresectable disease/);
+    assert.match(items[0], /Oral auxiliary-1 activates EX-1/);
+    for(const label of labels)assert.ok(items[0].includes(label));
+    assert.ok(items[0].split("\n").slice(1).join("\n").length<=1500);
+    return [{answer:"match",probabilities:{match:.9}}];
+  };
+  await lookUp({text:TEXT,model,registry:fakeRegistry({"EX-1":[record]}),index:INDEX});
+});
+
 test("scoring retains routes and separate arms before a long official title", async () => {
   for (const description of ["Delivered by inhalation", "Subcutaneous injection"]) {
     const record = study("NCT00000001", "EX-1 trial");
     record.protocolSection.identificationModule.officialTitle = "A long official title ".repeat(150);
     record.protocolSection.armsInterventionsModule = {
       interventions: [
-        {name: "EX-1", description, armGroupLabels: ["A"]},
+        {name: "EX-1", description, armGroupLabels: ["A", "unpaired"]},
         {name: "EX-2", armGroupLabels: ["B"]},
       ],
       armGroups: [
@@ -134,7 +154,8 @@ test("scoring retains routes and separate arms before a long official title", as
     const found = await lookUp({text: TEXT, model, registry: fakeRegistry({"EX-1": [record]}), index: INDEX});
     assert.equal(scored.length, 1);
     assert.ok(scored[0].includes(description));
-    assert.ok(scored[0].includes('"arms":["A"]') && scored[0].includes('"arms":["B"]'));
+    assert.ok(scored[0].includes('"interventions":["Drug: EX-1"]') && scored[0].includes('"interventions":["Drug: EX-2"]'));
+    assert.ok(scored[0].includes('"arms":["unpaired"]'));
     assert.match(scored[0], /EX-1 alone/);
     assert.match(scored[0], /EX-2 alone/);
     assert.match(scored[0], /\[truncated\]/);
