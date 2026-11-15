@@ -1070,3 +1070,162 @@ Wherever the site lists claims in its claims table, each row SHALL say whether t
 #### Scenario: Narrow screen
 - **WHEN** a reader opens a list of claims on a screen 320 pixels wide
 - **THEN** each claim is a block with "Tested in people" as a labelled line, and the page is not widened
+
+### Requirement: Reported statements on the claim page
+A claim page SHALL list the claim's approved reported statements under their own heading, placed after the summary and before the records. Each statement SHALL show its text, its kind, its article by outlet and date with a link, and how sure the pipeline is that the article says it, as a word and a percentage. A claim with no approved statement SHALL show no such section.
+
+#### Scenario: Claim with three statements from one report
+- **WHEN** a reader opens a claim with three approved statements from one article
+- **THEN** the page lists the three under the report's outlet and date, each with its confidence
+
+#### Scenario: Claim with no statement
+- **WHEN** a claim has no approved statement
+- **THEN** the page shows no statements section and no placeholder for one
+
+### Requirement: A statement is worded as a report's statement
+Each statement SHALL be shown as something its report said, with the site's wording for how firmly the report put it and for who the report had saying it. The section SHALL say that a report's statement is not a record and that the records follow. The site SHALL NOT show a statement as a finding, and SHALL NOT say whether a statement held, was confirmed or was contradicted.
+
+#### Scenario: Possibility voiced by a researcher
+- **WHEN** a statement was put as a possibility and said by a researcher
+- **THEN** the page reads that the report had a researcher saying it could be so, and names no one
+
+#### Scenario: Statement beside a trial result
+- **WHEN** a claim has a statement of an effect and a trial with posted results
+- **THEN** the page shows both, in their own sections, and no word compares them
+
+### Requirement: A statement shows what the report said it rested on
+Each statement SHALL show its basis in the site's words: a study in people, a study in animals, laboratory work, or that the report did not say. The wording SHALL attribute the basis to the report.
+
+#### Scenario: Effect reported from a mouse study
+- **WHEN** a statement's basis is a study in animals
+- **THEN** the page says the report gave a study in animals as its basis
+
+### Requirement: Statement codes are worded by the site
+The site SHALL word each kind, firmness, speaker role and basis code itself and SHALL fail the build on a code it has no wording for. The wording SHALL pass the site's check against verdict wording.
+
+#### Scenario: Kind code without site wording
+- **WHEN** the export carries a statement kind the site has no wording for
+- **THEN** the site build fails and names the code
+
+### Requirement: The method page explains reported statements
+The method page SHALL explain that statements are read from a report by a language model, put in the site's own words, checked against the report and shown with a confidence; that they are what a report said and not what is on record; and that they never change a status.
+
+#### Scenario: Reader doubts a statement
+- **WHEN** a reader follows the method link from the statements section
+- **THEN** they can read how a statement is found, what its confidence means and how to report an error
+
+### Requirement: Organisations on the claim page
+A claim page SHALL list each of the claim's organisations once, under its own heading, with its name, its roles in the site's words, and, when it is identified, its kind, country, website, a link to its registry record and the match score. A sponsor's role SHALL link to the trials it sponsors. A claim with no organisation SHALL show no such section.
+
+#### Scenario: Claim with a university and a company
+- **WHEN** a reader opens a claim whose report names a university and whose three trials are sponsored by one company
+- **THEN** the page lists the university as named in the report and the company as sponsor of three trials, each trial linked
+
+#### Scenario: Claim with no organisation
+- **WHEN** a claim names no organisation
+- **THEN** the page shows no organisations section and no placeholder for one
+
+### Requirement: An unidentified organisation is listed plainly
+An organisation that is not identified SHALL be shown by the name it was given with its roles, and SHALL say that it was not matched to a registry record. It SHALL show no kind, country or website.
+
+#### Scenario: Start-up the registry does not know
+- **WHEN** a claim names a company with no approved match
+- **THEN** its entry shows the report's name and role and says no registry record was matched
+
+### Requirement: Organisations are listed without rank or judgement
+The organisations section SHALL order organisations by role and then by name. It SHALL NOT rank them, count their other claims, describe their standing, or say that an organisation endorses, backs or vouches for the claim. It SHALL say that the registry identifies an organisation and does not verify its part in the claim. The site SHALL word each kind and role code itself and SHALL fail the build on a code it has no wording for.
+
+#### Scenario: Kind code without site wording
+- **WHEN** the export carries an organisation kind the site has no wording for
+- **THEN** the site build fails and names the code
+
+#### Scenario: Well-known and unknown organisations together
+- **WHEN** a claim names a large university and a small clinic in the same role
+- **THEN** they are listed in name order, with the same facts shown for each
+
+### Requirement: A report published by a named organisation says so
+Where the claim page names a source article that is marked as published by one of the claim's organisations, it SHALL say, beside that report, that the report is on that organisation's website. The wording SHALL state where the report is and SHALL NOT call it promotional, biased or unreliable.
+
+#### Scenario: University press release
+- **WHEN** a claim's report is marked as published by Kyoto University
+- **THEN** the page says, beside the report, that it is on Kyoto University's website
+
+#### Scenario: Newspaper report
+- **WHEN** a claim's report carries no such mark
+- **THEN** the page says nothing of the kind beside it
+
+### Requirement: No person is named in the organisations section
+The organisations section SHALL NOT show the name of a researcher, an investigator, an author or any other person.
+
+#### Scenario: Trial sponsored by a person
+- **WHEN** one of a claim's trials is sponsored by a person
+- **THEN** the organisations section lists nothing for that sponsor
+
+### Requirement: Papers on the claim page
+A claim page SHALL list each of the claim's papers once, under its own heading, grouped by role: the paper first reported, results papers listed by a trial, follow-up papers, and related research. Each entry SHALL show the title linked to the paper, the journal, the year, the kind of publication, and the facts the export carries for it. A claim with no paper SHALL show no such section.
+
+#### Scenario: Claim with an origin paper and two results papers
+- **WHEN** a reader opens a claim that has an origin paper and a trial with two results papers
+- **THEN** the page lists three papers, the origin paper under its own group and two under the trial's results
+
+#### Scenario: Paper with two roles
+- **WHEN** a paper is both the origin paper and a results paper of a trial
+- **THEN** it is listed once, in the origin paper's group, and names the trial it reports
+
+#### Scenario: Claim with no paper
+- **WHEN** a claim has no paper
+- **THEN** the page shows no papers section and no placeholder for one
+
+### Requirement: A results paper names its trial
+A results paper's entry SHALL name the trial whose record lists it, linked to that trial's entry, and SHALL say whether the sponsor listed the paper or the registry linked it. A trial's entry SHALL lead to its results papers.
+
+#### Scenario: Reader goes from a trial to its paper
+- **WHEN** a reader opens a trial entry whose record lists a results paper
+- **THEN** the entry links to the paper's entry, and the paper's entry links back to the trial
+
+### Requirement: A paper says whether it studied people or animals
+A paper's entry SHALL state, in the site's words, whether its index record says the study was in people, in animals or both, and SHALL state nothing when the record does not say. The wording SHALL attribute the statement to the index.
+
+#### Scenario: Paper of a study in mice
+- **WHEN** a paper's facts state a study in animals
+- **THEN** its entry says the index files it as a study in animals
+
+#### Scenario: Paper with no statement
+- **WHEN** a paper's facts state neither
+- **THEN** its entry says nothing about people or animals
+
+### Requirement: The claim page counts its records in people and in animals
+A claim page SHALL state, among its facts, how many of its records are of studies in people (its trials, and its papers filed as studies in people) and how many of its papers are filed as studies in animals. The statement SHALL be counts and SHALL NOT say that a treatment works in people or in animals.
+
+#### Scenario: Claim with three trials and one mouse paper
+- **WHEN** a claim has three trials and one paper filed as a study in animals
+- **THEN** the page states three records in people and one in animals
+
+#### Scenario: Claim with no such record
+- **WHEN** a claim has no trial and no paper filed either way
+- **THEN** the page shows no such count
+
+### Requirement: Papers are worded without a verdict
+The site SHALL word each paper fact code itself and SHALL fail the build on a code it has no wording for. It SHALL NOT say that a paper supports, confirms, proves or refutes a claim, and SHALL NOT rank papers by quality. The papers section SHALL say that a paper is not a trial record and does not set the status.
+
+#### Scenario: Kind code without site wording
+- **WHEN** the export carries a publication kind the site has no wording for
+- **THEN** the site build fails and names the code
+
+#### Scenario: Randomised trial report
+- **WHEN** a paper's first kind is randomised trial
+- **THEN** its entry reads that it is a report of a randomised trial, and says nothing of what the trial found
+
+### Requirement: A retracted paper is marked where it is listed
+A paper whose facts state that it is retracted SHALL be marked as retracted in its entry, in words.
+
+#### Scenario: Retracted follow-up paper
+- **WHEN** a claim page lists a follow-up paper marked retracted
+- **THEN** its entry says the paper has been retracted
+
+### Requirement: Paper facts show when their record was read
+Each paper's entry SHALL show the date its index record was read, and the papers section SHALL name the index the facts come from.
+
+#### Scenario: Record read on 3 October 2026
+- **WHEN** a paper's facts were read from a record fetched on 3 October 2026
+- **THEN** the paper's entry shows that date

@@ -37,3 +37,36 @@ The data file SHALL hold, for each published claim, the trials the claim page li
 #### Scenario: Registry record
 - **WHEN** the data file is inspected
 - **THEN** it holds no registry record as the registry returned it
+
+### Requirement: Reported statements in the download
+The data file SHALL hold, for each published claim, the approved reported statements the claim page shows, each with its text, kind, firmness, speaker role, basis, confidence and the address of its article. It SHALL NOT hold a pending or rejected statement, nor any text from an article.
+
+#### Scenario: Claim with approved statements
+- **WHEN** a reader downloads the data file
+- **THEN** the claim's approved statements are in it, each in the site's own words with its confidence and its article's address
+
+#### Scenario: Pending statement
+- **WHEN** a statement is still pending
+- **THEN** it does not appear in the data file
+
+### Requirement: Organisations in the download
+The data file SHALL hold, for each published claim, the organisations the claim page lists, each with its name, roles and, when identified, its kind, country, website, registry record link, match score and the date its record was read; and, for each article, the organisation it is marked as published by. It SHALL NOT hold a person's name or a registry record itself.
+
+#### Scenario: Claim with an identified sponsor
+- **WHEN** a reader downloads the data file
+- **THEN** the sponsor is in it with its registry link, kind, country, score and the trials it sponsors
+
+#### Scenario: Person sponsor
+- **WHEN** a claim's only sponsor is a person
+- **THEN** the data file lists no organisation for that sponsor and names no one
+
+### Requirement: Papers in the download
+The data file SHALL hold, for each published claim, the papers the claim page lists, each with its identifier, link, roles, the facts the page shows for it and the date its index record was read. It SHALL NOT hold an abstract, an author, an affiliation or an index record itself.
+
+#### Scenario: Claim with a results paper
+- **WHEN** a reader downloads the data file
+- **THEN** the claim's results paper is in it with its title, journal, year, kinds, the trial it reports and the date its record was read
+
+#### Scenario: Authors
+- **WHEN** the data file is inspected
+- **THEN** it names no author of any paper
