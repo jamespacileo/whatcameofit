@@ -187,7 +187,7 @@ Kept, because they are not rules about fetching: `backfill/address.py` and `site
 
 ## Live integration checked on 2026-11-15
 
-The service adopted `NOT_NOW` with `reason` and `retryAfter` for its host-cooldown gate. A site challenge is represented as a not-served status. `NOT_ALLOWED` and `metadata.archiveUrl` remain supported client fields for future service policies and full archived pages. Single article reads request full HTML and receive no preview-card substitution. Both routes accepted the bearer key and refused unauthenticated requests. The pipeline continues to use Tailscale.
+The service adopted `NOT_NOW` with `reason` and `retryAfter` for its host-cooldown gate and target engine exhaustion. A site challenge is represented as a not-served status. `NOT_ALLOWED` and `metadata.archiveUrl` remain supported client fields for future service policies and full archived pages. Single article reads request full HTML and receive no preview-card substitution. Both routes accepted the bearer key and refused unauthenticated requests. The pipeline continues to use Tailscale.
 
 The retention probe passed for the pipeline request shape. Changed source values proved a fresh fetch on repeated reads. The unique request left no queue record or matching page content in inspected Redis values and service logs. Immediate JavaScript rendering passed. A delayed-render fixture returned a shell, which the main-body check rejects before a model call. The dated details are in `docs/sources.md`.
 
