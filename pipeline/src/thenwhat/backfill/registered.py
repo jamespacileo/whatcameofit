@@ -10,7 +10,7 @@ from thenwhat.config import Settings
 
 
 def registered_steps(settings: Settings) -> list[Step]:
-    triage = LinkTriage()
+    triage = LinkTriage(topic_terms=terms_of())
     return [
         NewsSearch(leads_per_trial=settings.leads_per_trial),
         LinkScreen(links_max=settings.lead_links_max),
