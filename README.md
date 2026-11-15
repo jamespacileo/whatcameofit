@@ -311,6 +311,7 @@ thenwhat backfill plan                          # the pages reading would ask fo
 thenwhat backfill run link_read --limit 200     # always with a limit: what it makes is published
 thenwhat prepare --pending                      # search the registries for the claims it drafted; approves them by rule
 thenwhat backfill funnel                        # where every lead stands, and what the model calls cost
+thenwhat backfill topics                        # how far each topic you named is covered
 ```
 
 - `link_read` refuses to run until 200 leads carry a label, yours or an assistant's, at the current version of triage (`LEAD_EVALUATION_MIN_LABELS`) and both thresholds are set.
@@ -322,6 +323,7 @@ thenwhat backfill funnel                        # where every lead stands, and w
 - The article's date and title come from its own page. The date a link was shared and the title it was shared under are never published, and the published address carries no parameter that says where it was shared.
 - A trial or a paper's DOI that the article's page names is read from its registry or index by that identifier and becomes a candidate of the claim, decided by the same rules as one `thenwhat resolve` finds. Being named approves nothing.
 - No outlet is asked for two articles less than `OUTLET_INTERVAL_SECONDS` apart, across every process.
+- Topics you want covered first, such as GLP-1 drugs, are a name and its words in `backfill/topics.py`. A lead whose title names one is read before the others, and is read when triage held it (never when triage rejected it). `thenwhat backfill topics` shows, for each topic, where its leads stand and what each of its claims holds: articles, approved trials, approved papers and background cards.
 - `funnel` lists the outlets whose pages gave no date. That list is how the page reader learns an outlet's markup.
 
 ## Development
