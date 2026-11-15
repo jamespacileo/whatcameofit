@@ -64,17 +64,15 @@ def read_post(
     ref: PostRef,
     *,
     get_json: Callable[[str], Any],
-    allowed: Callable[[str], bool],
 ) -> Post | None:
     """The post's text and links, or None when it is private, deleted, not there, or its
-    server does not allow it to be read. `get_json` fetches an address as JSON, or None;
-    `allowed` says whether a site's own rules let this client fetch an address."""
+    server does not allow it to be read. `get_json` fetches an address as JSON, or None."""
     if ref.how == "bluesky":
         read = _bluesky(ref, get_json)
     elif ref.how == "hackernews":
         read = _hacker_news(ref, get_json)
     else:
-        read = _mastodon(ref, get_json, allowed)
+        read = _mastodon(ref, get_json)
     if read is None:
         return None
     text, links = read
@@ -113,14 +111,8 @@ def _hacker_news(ref: PostRef, get_json: Callable[[str], Any]) -> tuple[str, lis
     return "\n".join(part for part in (item.get("title"), text) if part), [item.get("url"), *links]
 
 
-def _mastodon(
-    ref: PostRef, get_json: Callable[[str], Any], allowed: Callable[[str], bool]
-) -> tuple[str, list[Any]] | None:
-    # Any server can be a Mastodon server, so this one is asked like any site: only if
-    # its own rules allow it.
+def _mastodon(ref: PostRef, get_json: Callable[[str], Any]) -> tuple[str, list[Any]] | None:
     address = f"https://{ref.host}/api/v1/statuses/{ref.id}"
-    if not allowed(address):
-        return None
     status = get_json(address)
     if (
         not status

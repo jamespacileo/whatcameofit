@@ -90,24 +90,28 @@ The operator's topics SHALL be a checked-in list of names, each with the words t
 - **WHEN** the operator names a topic that is not listed
 - **THEN** the command fails and lists the topics
 
-### Requirement: Outlets are asked politely
-An article SHALL be fetched only where the outlet's robots.txt allows the pipeline's client, with the contact User-Agent. No outlet SHALL be asked for two articles less than the configured interval apart, counted across every process, or less than the delay its robots.txt asks for when that is longer. An article that cannot be retrieved SHALL be looked for as an archived snapshot, as extraction does today.
+### Requirement: Outlets are asked through the page reader
+An article SHALL be fetched only through the page reader, which decides whether an address may be fetched, how often an outlet is asked and where a copy comes from (`docs/adr/0006`, change `firecrawl-page-reader`). The reading step SHALL act on the reader's answer and keep no rule of its own about an outlet.
 
-#### Scenario: Robots.txt forbids the fetch
-- **WHEN** a lead's outlet forbids the pipeline's client
-- **THEN** the article is not fetched, the lead's outcome is cannot be read with that reason, and it is not tried again
+#### Scenario: Not allowed
+- **WHEN** the reader answers that a lead's address is not allowed
+- **THEN** the article is not read, the lead's outcome is cannot be read with the reader's reason, and it is not tried again
 
-#### Scenario: Robots.txt cannot be read
-- **WHEN** a lead's outlet does not answer for its robots.txt, answers with a server error, or says it was asked too often
-- **THEN** the article is not fetched, the lead is given no outcome, the failure is recorded with its reason, and the lead is tried again on a later run until the attempt limit is reached
+#### Scenario: Not now
+- **WHEN** the reader answers that a lead's outlet cannot be asked now
+- **THEN** the lead is given no outcome, no attempt is counted against it, it stays due, and the run goes on with other leads
 
 #### Scenario: Two processes, one outlet
 - **WHEN** two processes each hold a due lead on the same outlet
-- **THEN** their two fetches are at least the configured interval apart
+- **THEN** both requests go to the reader, and how far apart the outlet is asked is the reader's doing
 
-#### Scenario: A dead link with no snapshot
-- **WHEN** the address answers not found and no archived snapshot exists
-- **THEN** the lead's outcome is cannot be read, and no text is asked of the operator
+#### Scenario: The site did not serve the page
+- **WHEN** the reader answers that the site gave a status other than success
+- **THEN** the lead's outcome is cannot be read, with that status, and no text is asked of the operator
+
+#### Scenario: The reader cannot be asked
+- **WHEN** the reader does not answer, fails, says it is overloaded, or answers in a form that is none of these
+- **THEN** the run ends, the leads not yet read stay due with their attempts unchanged, and nothing is recorded against an outlet
 
 ### Requirement: One read per article
 An article SHALL be read by the model at most once for its lead, with the existing extraction. Its text SHALL be held only while the read runs and SHALL NOT be stored, cached, logged or written to a fixture. The article's content hash SHALL be recorded.

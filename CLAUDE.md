@@ -25,12 +25,12 @@ worktrees via `wt`, archive via quarantine).
 - Store the raw API payload and fetch timestamp for every evidence event.
 - Summarise and link to news articles. Never store or display article text, including in logs, caches and test fixtures.
 - Subscriber emails are the only personal data, and none is collected before Phase 2. UK GDPR applies: double opt-in, one-click unsubscribe, deletion on request.
-- Respect robots.txt and published rate limits. Identify the client with a contact User-Agent.
+- Whether and how a news site is asked (robots.txt, rate limits, how the client presents itself) is the page reader's decision (`docs/adr/0006-whether-and-how-a-site-is-asked-is-the-page-readers-decision.md`); the pipeline acts on its answers and fetches no page another way. Registries and literature indexes are asked directly, within their published rate limits, with a contact User-Agent.
 - Check a source's current terms, auth and rate limits before writing its client, and note them in `docs/sources.md`.
 - Tests for status rules and each source client use recorded fixtures. No live network calls in tests or CI.
 - No model IDs in code. Provider, model and prices come from environment variables.
 - Secrets live in `.env`, which is never committed. Keep `.env.example` current.
-- Nothing public is served from the home network. The pipeline and database stay private.
+- Nothing public is served from the home network. The pipeline and database stay private. One exception, decided by the operator on 2026-11-15 (`docs/adr/0005-the-page-reader-is-the-one-home-service-a-worker-may-ask.md`): the page reader runs at home and the lookup service may ask it through a tunnel closed to everyone else.
 - Small commits with conventional commit messages. The README must get a clean clone running in under ten commands.
 
 ## Working rules learned so far

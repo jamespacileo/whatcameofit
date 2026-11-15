@@ -1,0 +1,24 @@
+{
+  "checked_at": "2026-11-15T21:33:54.837548+00:00",
+  "method": "Normal paced ClinicalTrials.gov source client; bounded candidate discovery only, no match scoring or claim change",
+  "condition": "Previously untreated metastatic nonsquamous non-small-cell lung cancer without sensitizing EGFR or ALK alterations",
+  "intervention": "Pembrolizumab plus pemetrexed and platinum chemotherapy",
+  "attempts": [
+    {
+      "condition": "Previously untreated metastatic nonsquamous non-small-cell lung cancer without sensitizing EGFR or ALK alterations",
+      "outcome": "refused",
+      "reason": "Too complicated query"
+    },
+    {
+      "condition": "previously OR untreated OR metastatic OR nonsquamous OR non-small-cell OR lung OR without OR sensitizing OR egfr OR alk OR alterations",
+      "outcome": "read",
+      "total": 111
+    }
+  ],
+  "refused_fields": [
+    "Conditions or disease"
+  ],
+  "returned_candidates": 0,
+  "elapsed_seconds": 0.309,
+  "model_calls": 0
+}

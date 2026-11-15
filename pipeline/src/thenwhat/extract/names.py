@@ -77,7 +77,7 @@ KINDS = frozenset(
 
 # Words for a class of treatments: every member of the class, not one of them. A code
 # in the phrase does not make it one treatment: "GLP-1 receptor agonists", "PD-1
-# inhibitor". Wherever one of these stands in the name, the name is a class.
+# inhibitor". "Receptor" goes with them, since it names a target, not a treatment.
 CLASS_WORDS = frozenset(
     [
         "agonist",
@@ -96,6 +96,8 @@ CLASS_WORDS = frozenset(
         "modulators",
         "mimetic",
         "mimetics",
+        "receptor",
+        "receptors",
     ]
 )
 # Kinds of thing in the plural: several treatments, whatever comes before.
@@ -114,21 +116,34 @@ PLURAL_KINDS = frozenset(
 # The plural of a code: "GLP-1s", "SGLT2s". A code names a target or a family when it
 # takes a plural; one product does not.
 PLURAL_CODE = re.compile(r"[A-Za-z]{2,}-?\d+[A-Za-z]?s")
+# What a name is said to be for, set aside before it is judged: "GLP-1 drugs for obesity".
+FOR = re.compile(r"\bfor\b", re.IGNORECASE)
+PUNCTUATION = ".,;:()[]"
 
 
 def is_a_class(text: str) -> bool:
     """Whether the text names a class of treatments, not one treatment, with or without
     a code. "Semaglutide" is one; "GLP-1 drugs", "GLP-1s" and "GLP-1 receptor agonist
-    prescriptions" are many. What the name is said to be for is set aside first: "GLP-1
-    drugs for obesity" is judged as "GLP-1 drugs"."""
-    words = [word.strip(".,;:()").lower() for word in text.split(" for ")[0].split()]
+    prescriptions" are many. What the name is said to be for is set aside first.
+
+    A word for a class marks the name only when nothing that is a name is left once the
+    class words and codes are taken out: "PD-1 inhibitor pembrolizumab" names
+    pembrolizumab, "PD-1 inhibitor" names none.
+    """
+    words = [word.strip(PUNCTUATION) for word in FOR.split(text, maxsplit=1)[0].split()]
+    words = [word for word in words if word]
     if not words:
         return False
-    return (
-        words[-1] in PLURAL_KINDS
-        or any(word in CLASS_WORDS for word in words)
-        or any(PLURAL_CODE.fullmatch(word) for word in text.split(" for ")[0].split())
-    )
+    if words[-1].lower() in PLURAL_KINDS or any(PLURAL_CODE.fullmatch(word) for word in words):
+        return True
+    if not any(word.lower() in CLASS_WORDS for word in words):
+        return False
+    left = [
+        word
+        for word in words
+        if word.lower() not in CLASS_WORDS and not any(ch.isdigit() for ch in word)
+    ]
+    return not left or not is_a_name(" ".join(left))
 
 
 def is_a_name(text: str) -> bool:

@@ -113,6 +113,16 @@ State on 2026-11-14: the operator answered 6.1 ("Yes, accept ChEMBL for drug car
 - [x] 6.4 Word molecule kinds in the wording module, failing the build on an unworded one; show both cards on the claim page and keep share-alike facts out of the data file, naming the source left out; verify in the browser and by the open data test
 - [x] 6.5 Run on the real database and record how many claims gained a drug card and a target card
 
+## 6a. At a glance
+
+Asked for by the operator on 2026-11-15 ("inspired by examine.com ... a knowledge card like section at the top of the page"), choosing sketches C and A from `.impeccable/mocks/knowledge-card/`.
+
+- [x] 6a.1 Replace the folded "Background" section with "At a glance" before the record in brief: the treatment, kind, drug record, target and condition rows with their cards and definitions open, then the claim's facts; verify by site test on a claim with one card, with four cards and with none
+- [x] 6a.2 End the record band with a row of linked facts (treatment, kind, target, condition) when a claim has a card, a card's value carrying its score; verify by site test and in the browser at phone and desktop widths
+- [x] 6a.3 Record "At a glance" and the band's row in `DESIGN.md`
+- [x] 6a.4 After the critique of 2026-11-15 (22/36), as the operator chose: one line per row with the card one press away and its score on the summary; the band's row trimmed to the kind and a target, with no score and a visible link cue; one label per source in the band and the rows; a drug's name in the claim's case; quieter credits; the section note cut to three sentences; summary, note and data-sources measures capped; the long title larger on a phone. Verify by site test and in the browser at phone and desktop widths
+- [x] 6a.5 After the second critique of 2026-11-15 (23/36), as the operator chose: the band's facts as one line under the headline, before the status on a phone; no kind of treatment row beside a drug row, its card inside the drug's row; the score worded "Term match: …"; each summary named for its term, and a row reached from the band focused and marked; the summary's words and chevron kept together on a phone. The second Follow under the summary stays, as reader-follow-up requires a Follow with its explanation after the status; the treatment and condition rows stay, as the headline is the outlet's sentence and the rows are the claim's own unit. Verify by site test and in the browser at phone and desktop widths
+
 ## 7. Integration
 
 - [ ] 7.1 Run `make check`

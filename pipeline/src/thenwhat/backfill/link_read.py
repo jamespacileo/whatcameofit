@@ -3,7 +3,7 @@ article of the claim it reports, or a new claim. Behavior: openspec lead-reading
 
 Everything that can be settled without the model is settled first: an article that has
 become tracked, a claim that has enough articles, an outlet with no name, a page the
-outlet does not let us fetch, a page with no date or headline. The article's text is held
+page reader does not give, a page with no date or headline. The article's text is held
 only while the model reads it. What the read makes is an ordinary source article or an
 ordinary claim.
 
@@ -24,13 +24,13 @@ from sqlalchemy import ColumnElement, and_, exists, func, or_, select
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.address import article_key, without_tracking
-from thenwhat.backfill.allowance import Allowances, outlet_source
+from thenwhat.backfill.allowance import Allowances
 from thenwhat.backfill.errors import BackfillError, SpendCeilingReached
 from thenwhat.backfill.link_evaluation import reading_refusal
 from thenwhat.backfill.link_screen import CLAIM, REGISTRY_TRIAL, TITLE_NAMES_CLAIM
 from thenwhat.backfill.link_triage import is_passed
 from thenwhat.backfill.outlet_kinds import name_of
-from thenwhat.backfill.steps import MODEL, TEXT_DOOR, Failed, ModelSpend
+from thenwhat.backfill.steps import TEXT_DOOR, Deferred, Failed, ModelSpend
 from thenwhat.backfill.topics import (
     names_one,
     names_only_a_class,
@@ -59,7 +59,14 @@ from thenwhat.decide.steps import (
 from thenwhat.domain import Decider, ReadOutcome, ReviewState, ScreenOutcome, WorkOutcome
 from thenwhat.extract.names import is_a_class, is_a_name
 from thenwhat.extract.page import Page, published_day
-from thenwhat.extract.retrieve import ArticleRetriever, PasteNeeded
+from thenwhat.extract.retrieve import (
+    READER,
+    ArticleRetriever,
+    NotAllowed,
+    NotNow,
+    NotServed,
+    ThinPage,
+)
 from thenwhat.extract.schema import Draft
 from thenwhat.extract.service import article_from_draft, claim_from_draft, read_article
 from thenwhat.llm.client import Llm
@@ -72,9 +79,8 @@ from thenwhat.statements.service import StatementChecker
 NO_NAME = "its outlet has no display name"
 NO_DATE = "the page gives no publication date"
 NO_HEADLINE = "the page gives no headline"
-REFUSED_BY_ROBOTS = "the outlet's robots.txt does not allow the fetch"
-ROBOTS_UNKNOWN = "the outlet's robots.txt could not be read, so its page was not asked for"
-NO_PAGE = "the page could not be retrieved and no archived snapshot was found"
+NOT_ALLOWED = "the page reader does not allow the address"
+NO_PAGE = "the page could not be retrieved"
 # The name a lead's read is recorded under in the usage ledger, apart from articles an
 # operator has read, so the funnel can say what reading leads has cost.
 LEAD_READING = "extraction:link_lead"
@@ -92,7 +98,7 @@ class NotMeasured(BackfillError):
 
 @dataclass(slots=True)
 class ReadClient:
-    """What the reading step asks through: the outlet for the page, and the model for
+    """What the reading step asks through: the page reader for the page, and the model for
     the read. The model's doors are made for the session at hand, because they record
     each call and its cost there."""
 
@@ -112,7 +118,8 @@ class LinkRead:
     version = 1
     record_kind = "link_lead"
     model = LinkLead
-    source = MODEL
+    # Every page is asked of the page reader, under its one allowance.
+    source = READER
     requests_per_record = 1
     # An estimate for the plan: an article's text and the instructions in, a draft out.
     model_spend = ModelSpend(input_tokens=3000, output_tokens=700, door=TEXT_DOOR)
@@ -349,7 +356,9 @@ class LinkRead:
             f"{answer.none_probability:.2f}"
         )
 
-    def run(self, session: Session, record: LinkLead, client: ReadClient) -> WorkOutcome | Failed:
+    def run(
+        self, session: Session, record: LinkLead, client: ReadClient
+    ) -> WorkOutcome | Failed | Deferred:
         now = self._time.now()
         claim_id = self._tracked_claim(session, record)
         if claim_id is not None:
@@ -364,23 +373,28 @@ class LinkRead:
         if outlet is None:
             return self._finish(record, ReadOutcome.CANNOT_BE_READ, NO_NAME)
 
-        # The outlet is asked: robots.txt first, then the page, a set interval apart.
-        if not client.retriever.allowed(record.url):
-            if client.retriever.rules_unknown(record.url):
-                # The outlet has not refused: its rules could not be read just now. The
-                # lead stays due and is tried again on a later run, not settled as
-                # refused for good.
-                return Failed(ROBOTS_UNKNOWN)
-            return self._finish(record, ReadOutcome.CANNOT_BE_READ, REFUSED_BY_ROBOTS)
-        client.allowances.claim(
-            outlet_source(record.outlet),
-            at_least_seconds=client.retriever.crawl_delay(record.url),
-        )
+        # The page reader is asked for the page. Whether the outlet may be asked, and how
+        # often, is the reader's to decide; the pipeline acts on its answer.
+        client.allowances.claim(READER)
         client.requests_made += 1
         try:
             retrieved = client.retriever.retrieve(record.url)
-        except PasteNeeded:
-            return self._finish(record, ReadOutcome.CANNOT_BE_READ, NO_PAGE)
+        except NotNow as later:
+            # The site has not refused: it cannot be asked just now. The lead stays due
+            # with no attempt counted, and the run goes on with other leads.
+            return Deferred(str(later))
+        except NotAllowed as refused:
+            return self._finish(
+                record, ReadOutcome.CANNOT_BE_READ, f"{NOT_ALLOWED}: {refused.reason}"
+            )
+        except NotServed as missing:
+            return self._finish(
+                record,
+                ReadOutcome.CANNOT_BE_READ,
+                f"{NO_PAGE} (the site answered {missing.status})",
+            )
+        except ThinPage:
+            return self._finish(record, ReadOutcome.CANNOT_BE_READ, "too little article text")
         page = retrieved.page
         day = published_day(page.published if page else None)
         if day is None:

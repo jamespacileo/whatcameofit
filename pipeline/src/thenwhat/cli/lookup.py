@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Annotated
 import typer
 from sqlalchemy.orm import Session
 
+from thenwhat.backfill.errors import ReaderUnavailable
 from thenwhat.claims.entry import EntryError
 from thenwhat.cli.console import out
 from thenwhat.cli.entry import entry_session
@@ -65,7 +66,7 @@ def _post_and_article(url: str) -> tuple[str, "Page | None"] | None:
     if ref is None:
         return None
     retriever = make_retriever()
-    post = read_post(ref, get_json=retriever.json, allowed=retriever.allowed)
+    post = read_post(ref, get_json=retriever.json)
     if post is None:
         raise EntryError(
             f"That post on {ref.platform} could not be read. It may be private or deleted."
@@ -79,6 +80,8 @@ def _post_and_article(url: str) -> tuple[str, "Page | None"] | None:
         return said, None
     try:
         retrieved = retriever.retrieve(linked)
+    except ReaderUnavailable as down:
+        raise EntryError(str(down)) from None
     except PasteNeeded:
         out.print(
             f"Read from a post on {ref.platform}. The article it links to could not be read:"
@@ -112,6 +115,8 @@ def _text(url: str | None, paste: bool) -> tuple[str, "Page | None"]:
         retrieved = make_retriever().retrieve(url)
     except PasteNeeded as needed:
         raise EntryError(f"{needed} Run the command again with --paste.") from None
+    except ReaderUnavailable as down:
+        raise EntryError(str(down)) from None
     page = retrieved.page
     return (page.as_text() if page else retrieved.text), page
 

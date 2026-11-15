@@ -14,6 +14,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from backfill_support import same_session
+from reader_support import SyntheticReader, retriever
 from thenwhat.backfill.allowance import Allowances
 from thenwhat.backfill.link_funnel import funnel
 from thenwhat.backfill.link_read import (
@@ -21,7 +22,8 @@ from thenwhat.backfill.link_read import (
     NO_DATE,
     NO_HEADLINE,
     NO_NAME,
-    REFUSED_BY_ROBOTS,
+    NO_PAGE,
+    NOT_ALLOWED,
     LinkRead,
     NotMeasured,
     ReadClient,
@@ -29,6 +31,7 @@ from thenwhat.backfill.link_read import (
 from thenwhat.backfill.link_screen import REGISTRY_TRIAL, TITLE_NAMES_CLAIM
 from thenwhat.backfill.runner import RunReport, run_step
 from thenwhat.claims.entry import add_article, add_claim, articles_of
+from thenwhat.config import SourceAllowance
 from thenwhat.db.models import (
     Base,
     Claim,
@@ -58,7 +61,7 @@ from thenwhat.domain import (
     ScreenOutcome,
     WorkOutcome,
 )
-from thenwhat.extract.retrieve import ArticleRetriever
+from thenwhat.extract.retrieve import READER
 from thenwhat.llm.client import Llm, LlmSettings
 from thenwhat.review.decisions import record_decision
 from thenwhat.statements.service import StatementChecker
@@ -92,20 +95,10 @@ class Web:
 
     def __init__(self) -> None:
         self.pages: dict[str, str] = {}
-        self.forbidding: set[str] = set()
-        # Hosts whose robots.txt cannot be served just now.
-        self.failing: set[str] = set()
         self.asked: list[str] = []
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
         host, path = request.url.host, request.url.path
-        if path == "/robots.txt" and host in self.failing:
-            return httpx.Response(503)
-        if path == "/robots.txt":
-            rules = "Disallow: /" if host in self.forbidding else "Allow: /"
-            return httpx.Response(200, text=f"User-agent: *\n{rules}\n")
-        if host == "archive.org":
-            return httpx.Response(200, json={"archived_snapshots": {}})
         self.asked.append(f"{host}{path}")
         found = self.pages.get(f"{host}{path}")
         return httpx.Response(200, text=found) if found else httpx.Response(404)
@@ -165,6 +158,7 @@ class Reader:
     def __init__(self, session: Session, fake_time, *drafts: dict[str, Any]) -> None:
         self.session = session
         self.web = Web()
+        self.page_reader = SyntheticReader(self.web)
         self.prompts: list[str] = []
         self.backend = Verticals()
         self.time = fake_time
@@ -178,10 +172,12 @@ class Reader:
         model = FunctionModel(respond, model_name="scripted")
         settings = LlmSettings("test:scripted", Decimal("10"), Decimal("3"), Decimal("15"))
         self.client = ReadClient(
-            retriever=ArticleRetriever(
-                contact_email="ops@thenwhat.test", transport=httpx.MockTransport(self.web)
+            retriever=retriever(self.page_reader),
+            allowances=Allowances(
+                same_session(session),
+                {READER: SourceAllowance(requests=1000, period_hours=24, interval_seconds=1)},
+                fake_time,
             ),
-            allowances=Allowances(same_session(session), {}, fake_time, outlet_interval_seconds=10),
             make_llm=lambda at: Llm(at, settings, model=model, now=lambda: NOW),
             make_checker=lambda at: StatementChecker(self.backend),
             make_backend=lambda at: self.backend,
@@ -402,39 +398,60 @@ def test_with_a_threshold_unset_nothing_is_in_scope(reader: Reader):
     assert reader.read().processed == 0
 
 
-def test_an_outlet_that_forbids_the_fetch_is_not_asked_for_the_page(reader: Reader):
-    """Scenario: Robots.txt forbids the fetch"""
+def test_a_lead_the_reader_does_not_allow_cannot_be_read_and_is_not_retried(reader: Reader):
+    """Scenario: Not allowed"""
     lead = reader.lead()
-    reader.web.forbidding.add("www.theguardian.com")
+    reader.page_reader.not_allowed["www.theguardian.com"] = "the site's rules disallow it"
 
     first = reader.read()
     second = reader.read()
 
-    assert (lead.read_outcome, lead.read_detail) == (ReadOutcome.CANNOT_BE_READ, REFUSED_BY_ROBOTS)
+    assert lead.read_outcome is ReadOutcome.CANNOT_BE_READ
+    assert lead.read_detail == f"{NOT_ALLOWED}: the site's rules disallow it"
     assert (first.nothing_found, second.processed) == (1, 0)
     assert (reader.web.asked, reader.prompts) == ([], [])
 
 
-def test_an_outlet_whose_rules_cannot_be_read_is_asked_again_on_a_later_run(reader: Reader):
-    """Scenario: Robots.txt cannot be read"""
-    lead = reader.lead()
-    reader.web.failing.add("www.theguardian.com")
+def test_a_lead_whose_site_cannot_be_asked_now_stays_due_and_the_run_goes_on(reader: Reader):
+    """Scenario: Not now"""
+    busy = reader.lead()
+    other = reader.lead("https://www.bbc.co.uk/news/health-synthetic-teeth")
+    reader.page_reader.not_now["www.theguardian.com"] = 600
 
-    first = reader.read()
+    report = reader.read()
 
-    # Not fetched and not settled: the lead has no outcome, and its failure is on record.
-    assert (lead.read_outcome, reader.web.asked, reader.prompts) == (None, [], [])
-    assert (first.failed, reader.entry(lead).outcome) == (1, WorkOutcome.FAILED)
-    assert "robots.txt could not be read" in (reader.entry(lead).error or "")
-
-    # A later run, with the outlet answering again, reads it.
-    reader.web.failing.clear()
-    reader.client.retriever = ArticleRetriever(
-        contact_email="ops@thenwhat.test", transport=httpx.MockTransport(reader.web)
+    # No outcome and no attempt for the busy site's lead; the other outlet's is read.
+    assert (busy.read_outcome, report.deferred) == (None, 1)
+    assert (
+        reader.session.scalars(
+            select(WorkEntry).where(WorkEntry.step == "link_read", WorkEntry.record_id == busy.id)
+        ).all()
+        == []
     )
+    assert other.read_outcome is ReadOutcome.NEW_CLAIM
+    assert report.remaining_due == 1
+
+    # A later run, with the site answering again, reads it.
+    reader.page_reader.not_now.clear()
     reader.read()
 
-    assert lead.read_outcome is ReadOutcome.NEW_CLAIM
+    assert busy.read_outcome is not None
+
+
+def test_the_reader_down_ends_the_run_with_leads_due_and_attempts_unchanged(reader: Reader):
+    """Scenario: The reader's machine is down during a backfill run"""
+    first = reader.lead()
+    reader.lead("https://www.bbc.co.uk/news/health-synthetic-teeth")
+    reader.page_reader.answer = lambda: httpx.Response(503)
+
+    report = reader.read()
+
+    assert report.stopped is not None and "page reader" in report.stopped
+    assert (report.processed, report.remaining_due) == (0, 2)
+    assert first.read_outcome is None
+    assert (
+        reader.session.scalars(select(WorkEntry).where(WorkEntry.step == "link_read")).all() == []
+    )
 
 
 def test_an_outlet_with_no_display_name_is_not_fetched(reader: Reader):
@@ -471,19 +488,20 @@ def test_a_page_with_no_headline_is_not_read_by_the_model(reader: Reader):
     assert (lead.read_detail, reader.prompts) == (NO_HEADLINE, [])
 
 
-def test_a_dead_link_with_no_snapshot_cannot_be_read(reader: Reader):
-    """Scenario: A dead link with no snapshot"""
+def test_a_page_the_site_did_not_serve_cannot_be_read(reader: Reader):
+    """Scenario: The site did not serve the page"""
     lead = reader.lead(serves=None)
 
     reader.read()
 
     assert lead.read_outcome is ReadOutcome.CANNOT_BE_READ
-    assert "no archived snapshot" in (lead.read_detail or "")
+    assert lead.read_detail == f"{NO_PAGE} (the site answered 404)"
     assert reader.prompts == []
 
 
-def test_two_leads_on_one_outlet_are_fetched_the_interval_apart(reader: Reader):
-    """Scenario: Two processes, one outlet"""
+def test_two_leads_on_one_outlet_are_both_asked_of_the_reader(reader: Reader):
+    """Scenario: Two articles of one outlet read side by side. How far apart the outlet
+    is asked is the reader's doing: the pipeline keeps only the reader's allowance."""
     reader.lead()
     reader.lead(
         "https://www.theguardian.com/science/2019/may/04/other", serves=page(published=None)
@@ -491,7 +509,11 @@ def test_two_leads_on_one_outlet_are_fetched_the_interval_apart(reader: Reader):
 
     reader.read()
 
-    assert reader.time.slept == [10.0]
+    assert [body["url"] for body in reader.page_reader.asked] == [
+        "https://www.theguardian.com/science/2019/may/04/synthetic-teeth",
+        "https://www.theguardian.com/science/2019/may/04/other",
+    ]
+    assert reader.time.slept == [1.0]  # the reader's allowance, not the outlet's
 
 
 # --- enough articles, and the order of reading -------------------------------------------

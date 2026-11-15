@@ -117,6 +117,10 @@ class _UnreadableQuery(SourceError):
         self.reason = reason
 
 
+class _UnreadableCondition(UnsearchableTerm):
+    """Only the condition field was refused; bounded discovery wording may remain."""
+
+
 class ClinicalTrials(Source):
     name = "clinicaltrials.gov"
     default_rate_per_second = 2.0
@@ -142,15 +146,7 @@ class ClinicalTrials(Source):
         """
         first, total, next_token = self._page(intervention, None, None)
         if condition and total > BROAD_NAME:
-            for wording in (condition, _telling_words(condition)):
-                if not wording:
-                    continue
-                narrowed, within, _ = self._page(intervention, wording, None)
-                if within > BROAD_NAME:
-                    return []
-                if narrowed:
-                    return narrowed
-            return []
+            return self._condition_trials(intervention, condition)
         records = first
         while next_token:
             more, _, next_token = self._page(intervention, None, next_token)
@@ -167,10 +163,21 @@ class ClinicalTrials(Source):
         """
         if not condition:
             return []
-        for wording in (condition, _telling_words(condition)):
-            if not wording:
+        return self._condition_trials(phrase, condition)
+
+    def _condition_trials(self, intervention: str, condition: str) -> list[SourceRecord]:
+        """Discover candidates with at most two wordings, never altering scoring scope."""
+        wordings = [condition]
+        fallback = _telling_words(condition)
+        if fallback and fallback != condition:
+            wordings.append(fallback)
+        for index, wording in enumerate(wordings):
+            try:
+                narrowed, within, _ = self._page(intervention, wording, None)
+            except _UnreadableCondition:
+                if index == len(wordings) - 1:
+                    raise
                 continue
-            narrowed, within, _ = self._page(phrase, wording, None)
             if within > BROAD_NAME:
                 return []
             if narrowed:
@@ -250,6 +257,8 @@ class ClinicalTrials(Source):
             fetched = self._get(f"{API}/studies", params)
         except _UnreadableQuery as unreadable:
             # The registry names the field it could not read: the treatment or the condition.
+            if condition and unreadable.field == "Conditions or disease":
+                raise _UnreadableCondition(condition, unreadable.reason, self.name) from None
             at_fault = intervention if unreadable.field.startswith("Intervention") else condition
             raise UnsearchableTerm(at_fault or intervention, unreadable.reason, self.name) from None
         if fetched is None:
@@ -261,7 +270,7 @@ class ClinicalTrials(Source):
 
     def _heed(self, response: httpx.Response) -> None:
         """A search the registry cannot read is its own failure, with the registry's
-        reason, so the term can be reported and reworded. Nothing simpler is sent."""
+        reason. Only a condition refusal may use the existing discovery fallback."""
         if response.status_code == 400:
             unreadable = UNREADABLE_QUERY.match(response.text.strip())
             if unreadable:

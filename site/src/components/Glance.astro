@@ -1,0 +1,122 @@
+---
+// "At a glance": the claim's treatment and condition, what kind of thing the treatment
+// is and a gene, one line each, then the claim's own facts (passed in as rows). Each
+// line taken from a background card has one disclosure, closed until asked for, with
+// the term's match in sight on its summary and the source's words, credit and reasons
+// inside. Before the record in brief, never inside the status panel: a card describes
+// a term, not the evidence. Openspec site-publishing: "Background cards on the claim page".
+import ChevronDown from "@lucide/astro/icons/chevron-down";
+import FoldHead from "./FoldHead.astro";
+import TermCard from "./TermCard.astro";
+import { BACKGROUND_NOTE, type ExportedCard, type ExportedCardSource } from "../lib/background";
+import {
+  GLANCE_ID,
+  GLANCE_TITLE,
+  drugLine,
+  drugName,
+  glanceCards,
+  rowId,
+  rowLabel,
+  sentenceCase,
+  termMatchText,
+  type GlanceRow,
+} from "../lib/glance";
+
+interface Props {
+  intervention: { name: string; synonyms: string[] };
+  indication: string;
+  cards: ExportedCard[];
+  sources: ExportedCardSource[];
+}
+
+const { intervention, indication, cards, sources } = Astro.props;
+const found = glanceCards(cards);
+
+interface Row {
+  row: GlanceRow;
+  value: string;
+  /** A second, grey line: a gene's full name, what a drug acts on. */
+  detail: string | null;
+  /** The row's cards, the first giving the term match on the summary. */
+  cards: ExportedCard[];
+}
+
+// A drug's own record says what kind of molecule it is, so the kind of treatment is not
+// a row of its own beside it: its card goes inside the drug's row.
+const drug = found.drug ? drugLine(found.drug) : null;
+const rows: Row[] = [
+  { row: "treatment", value: intervention.name, detail: null, cards: found.treatment ? [found.treatment] : [] },
+  ...(found.kind && !found.drug
+    ? [{ row: "kind" as const, value: sentenceCase(found.kind.label), detail: null, cards: [found.kind] }]
+    : []),
+  ...(found.drug && drug
+    ? [
+        {
+          row: "drug" as const,
+          value: drug.value,
+          detail: drug.detail,
+          cards: [found.drug, ...(found.kind ? [found.kind] : [])],
+        },
+      ]
+    : []),
+  ...(found.target
+    ? [{ row: "target" as const, value: found.target.label, detail: found.target.name, cards: [found.target] }]
+    : []),
+  { row: "condition", value: indication, detail: null, cards: found.condition ? [found.condition] : [] },
+];
+---
+
+<section class="glance" data-pagefind-ignore>
+  <FoldHead id={GLANCE_ID}>{GLANCE_TITLE}</FoldHead>
+  <dl class="glance-rows">
+    {
+      rows.map(({ row, value, detail, cards: rowCards }) => (
+        // Reached from the band's links: the row takes focus and is marked.
+        <div id={rowId(row)} tabindex="-1">
+          <dt>{rowLabel(row, rowCards[0])}</dt>
+          <dd>
+            <span class="glance-value">{value}</span>
+            {detail && <span class="aka">{detail}</span>}
+            {row === "treatment" && intervention.synonyms.length > 0 && (
+              <span class="aka">
+                also known as{" "}
+                {
+                  /* A name such as "TRG-035" must not break at its hyphen. */
+                  intervention.synonyms.map((name, index) => (
+                    <>
+                      {index > 0 && ", "}
+                      {name.includes("-") && name.length <= 16 ? <span class="unbroken">{name}</span> : name}
+                    </>
+                  ))
+                }
+              </span>
+            )}
+            {rowCards.length > 0 && (
+              <details class="glance-more">
+                <summary>
+                  <span class="glance-more-label">
+                    <span class="glance-more-words">Source and definition</span>
+                    <span class="visually-hidden"> for {value}</span>
+                    <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+                  </span>
+                  <span class="glance-score">{termMatchText(rowCards[0])}</span>
+                </summary>
+                {rowCards.map((card) => (
+                  <TermCard card={card} sources={sources} label={card.kind === "drug" ? drugName(card) : card.label} />
+                ))}
+              </details>
+            )}
+          </dd>
+        </div>
+      ))
+    }
+    <slot />
+  </dl>
+  {
+    cards.length > 0 && (
+      <p class="glance-note">
+        {BACKGROUND_NOTE} <a href="/how-it-works#background-on-a-claims-terms">How these terms are chosen</a>
+      </p>
+    )
+  }
+</section>
