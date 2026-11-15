@@ -38,16 +38,17 @@
 
     <aside class="hero-side snap" aria-labelledby="bystatus">
       <div class="snap-head"><span id="bystatus">7 claims, by status</span><span>Checked 14 Nov 2026</span></div>
-      <div class="snap-body" style="padding:.6rem .5rem .7rem">
-        <button class="facet" type="button" data-status="preclinical" aria-pressed="false"><span class="d"></span>Preclinical only<span class="n">2</span></button>
-        <button class="facet" type="button" data-status="registered" aria-pressed="false"><span class="d"></span>Trial registered<span class="n">1</span></button>
-        <button class="facet" type="button" disabled><span class="d"></span>Phase 1 trial<span class="n">0</span></button>
-        <button class="facet" type="button" data-status="phase2" aria-pressed="false"><span class="d"></span>Phase 2 trial<span class="n">1</span></button>
-        <button class="facet" type="button" data-status="phase3" aria-pressed="false"><span class="d"></span>Phase 3 trial<span class="n">1</span></button>
-        <button class="facet" type="button" data-status="approved" aria-pressed="false"><span class="d"></span>Approved<span class="n">1</span></button>
-        <p class="small muted" style="padding:.5rem .6rem .25rem;border-top:1px solid var(--rule-soft);margin-top:.4rem">Off the path</p>
-        <button class="facet" type="button" data-status="none" aria-pressed="false"><span class="d" style="border-radius:2px"></span>No trial record found<span class="n">1</span></button>
-        <p class="small muted" style="padding:.5rem .6rem 0">Press a status to show only its claims.</p>
+      <div class="snap-body">
+        <dl style="margin-top:0;border-top:0">
+          <div><dt>Preclinical only</dt><dd>2</dd></div>
+          <div><dt>Trial registered</dt><dd>1</dd></div>
+          <div><dt>Phase 1 trial</dt><dd>0</dd></div>
+          <div><dt>Phase 2 trial</dt><dd>1</dd></div>
+          <div><dt>Phase 3 trial</dt><dd>1</dd></div>
+          <div><dt>Approved</dt><dd>1</dd></div>
+          <div><dt>Off the path: no trial record found</dt><dd>1</dd></div>
+        </dl>
+        <a class="more" href="#claims">Filter the claims by status</a>
       </div>
     </aside>
   </div>
@@ -55,6 +56,7 @@
 
 <div class="frame">
   <nav class="onpage" aria-label="Topics">
+  <div class="strip">
     <h2>Topics</h2>
     <a href="#">Mouth and teeth <span class="n">18</span></a>
     <a href="#">Diabetes, weight and hormones <span class="n">8</span></a>
@@ -68,69 +70,85 @@
     <a href="#">Mental health <span class="n">3</span></a>
     <hr>
     <a href="#"><i data-i="topics"></i>All 18 topics</a>
+  </div>
   </nav>
 
   <section class="sheet" aria-labelledby="claims">
     <div class="sec" style="border:0">
-      <div style="display:flex;align-items:baseline;gap:1rem;padding:1.6rem 0 1.1rem">
-        <h2 id="claims">Claims in brain and nerves</h2>
+      <div class="sec-head plain">
+        <h2 id="claims" tabindex="-1">Claims in brain and nerves</h2>
         <span class="sec-meta">Newest report first</span>
       </div>
       <div class="filterbar">
         <label class="field"><i data-i="search"></i><span class="vh">Filter these claims</span><input type="search" placeholder="Filter by treatment or condition" data-filter></label>
-        <span class="count" data-count aria-live="polite">All 7 claims</span>
+        <span class="count" data-count role="status">All 7 claims</span>
+        <button class="pill" type="button" data-clear hidden>Show all</button>
+        <div class="tabs" role="group" aria-label="Show claims at one status">
+          <button class="tab" type="button" data-status="all" aria-pressed="true">All <span class="n">7</span></button>
+          <button class="tab" type="button" data-status="preclinical" aria-pressed="false">Preclinical only <span class="n">2</span></button>
+          <button class="tab" type="button" data-status="registered" aria-pressed="false">Trial registered <span class="n">1</span></button>
+          <button class="tab" type="button" data-status="phase2" aria-pressed="false">Phase 2 trial <span class="n">1</span></button>
+          <button class="tab" type="button" data-status="phase3" aria-pressed="false">Phase 3 trial <span class="n">1</span></button>
+          <button class="tab" type="button" data-status="approved" aria-pressed="false">Approved <span class="n">1</span></button>
+          <button class="tab" type="button" data-status="none" aria-pressed="false">No trial record found <span class="n">1</span></button>
+        </div>
       </div>
 
-      <div class="grid" style="--cols: minmax(0,2.1fr) minmax(0,0.8fr) minmax(0,1.25fr) minmax(11rem,1.4fr)">
-        <div class="grid-head" aria-hidden="true"><span>Claim</span><span>First reported</span><span>Latest promise</span><span>Status</span></div>
+      <div class="empty" data-empty hidden>
+        <p><b>No claim matches.</b> Nothing in brain and nerves fits that word and status together.</p>
+        <button class="pill" type="button" data-clear>Show all 7 claims</button>
+      </div>
 
-        <div class="grid-row" data-row data-status="registered"><div class="cells">
-          <span class="lead"><span><a href="claim.html">Wrist-worn median nerve stimulation device</a><span class="sub">A wrist-worn device that stimulates the median nerve was reported to reduce tics in people with Tourette syndrome</span></span></span>
-          <span class="cell"><span class="lbl">First reported</span>12 Nov 2026</span>
-          <span class="cell muted small"><span class="lbl">Latest promise</span>None with a date</span>
-          <span class="cell status-cell wide-cell"><b>Trial registered <span data-track="2"></span></b><span class="muted small">A trial in people is registered</span></span>
+      <div class="grid" role="table" aria-label="Claims in brain and nerves" style="--cols: minmax(0,2.1fr) minmax(0,0.8fr) minmax(0,1.25fr) minmax(11rem,1.4fr)">
+        <div class="grid-head" role="row"><span role="columnheader">Claim</span><span role="columnheader">First reported</span><span role="columnheader">Latest promise</span><span role="columnheader">Status</span></div>
+
+        <div class="grid-row" data-row data-status="registered"><div class="cells" role="row">
+          <span class="lead" role="rowheader"><span><a href="claim.html">Wrist-worn median nerve stimulation device</a><span class="sub">A wrist-worn device that stimulates the median nerve was reported to reduce tics in people with Tourette syndrome</span></span></span>
+          <span role="cell" class="cell"><span class="lbl">First reported</span>12 Nov 2026</span>
+          <span role="cell" class="cell muted small"><span class="lbl">Latest promise</span>None with a date</span>
+          <span role="cell" class="cell status-cell wide-cell"><b>Trial registered <span data-track="2"></span></b><span class="muted small">A trial in people is registered</span></span>
         </div></div>
 
-        <div class="grid-row" data-row data-status="phase2"><div class="cells">
-          <span class="lead"><span><a href="#">CAR-T cell therapy</a><span class="sub">CAR-T cell therapy was reported to restore function in some people with stiff person syndrome in an early study</span></span></span>
-          <span class="cell"><span class="lbl">First reported</span>9 Nov 2026</span>
-          <span class="cell muted small"><span class="lbl">Latest promise</span>None with a date</span>
-          <span class="cell status-cell wide-cell"><b>Phase 2 trial <span data-track="4"></span></b><span class="muted small">Mid-stage trial in people</span></span>
+        <div class="grid-row" data-row data-status="phase2"><div class="cells" role="row">
+          <span class="lead" role="rowheader"><span><a href="#">CAR-T cell therapy</a><span class="sub">CAR-T cell therapy was reported to restore function in some people with stiff person syndrome in an early study</span></span></span>
+          <span role="cell" class="cell"><span class="lbl">First reported</span>9 Nov 2026</span>
+          <span role="cell" class="cell muted small"><span class="lbl">Latest promise</span>None with a date</span>
+          <span role="cell" class="cell status-cell wide-cell"><b>Phase 2 trial <span data-track="4"></span></b><span class="muted small">Mid-stage trial in people</span></span>
         </div></div>
 
-        <div class="grid-row" data-row data-status="none"><div class="cells">
-          <span class="lead"><span><a href="#">Gene therapy delivered by an engineered virus to seizure-triggering neurons, combined with a drug</a><span class="sub">A gene therapy infused into the brain was reported to cut seizures by more than 90% in three adults with drug-resistant epilepsy</span></span></span>
-          <span class="cell"><span class="lbl">First reported</span>6 Nov 2026</span>
-          <span class="cell muted small"><span class="lbl">Latest promise</span>None with a date</span>
-          <span class="cell status-cell wide-cell"><b>No trial record found</b><span class="muted small">Studied in people, no registered trial found</span></span>
+        <div class="grid-row" data-row data-status="none"><div class="cells" role="row">
+          <span class="lead" role="rowheader"><span><a href="#">Gene therapy delivered by an engineered virus to seizure-triggering neurons, combined with a drug</a><span class="sub">A gene therapy infused into the brain was reported to cut seizures by more than 90% in three adults with drug-resistant epilepsy</span></span></span>
+          <span role="cell" class="cell"><span class="lbl">First reported</span>6 Nov 2026</span>
+          <span role="cell" class="cell muted small"><span class="lbl">Latest promise</span>None with a date</span>
+          <span role="cell" class="cell status-cell wide-cell"><b>No trial record found</b><span class="muted small">Studied in people, no registered trial found</span></span>
         </div></div>
 
-        <div class="grid-row" data-row data-status="approved"><div class="cells">
-          <span class="lead"><span><a href="#">Zilganersen</a><span class="sub">The spinal injection zilganersen was reported to be the first drug approved by the FDA for Alexander disease</span></span></span>
-          <span class="cell"><span class="lbl">First reported</span>30 Oct 2026</span>
-          <span class="cell muted small"><span class="lbl">Latest promise</span>None with a date</span>
-          <span class="cell status-cell wide-cell"><b>Approved <span data-track="6"></span></b><span class="muted small">Approved by a regulator</span></span>
+        <div class="grid-row" data-row data-status="approved"><div class="cells" role="row">
+          <span class="lead" role="rowheader"><span><a href="#">Zilganersen</a><span class="sub">The spinal injection zilganersen was reported to be the first drug approved by the FDA for Alexander disease</span></span></span>
+          <span role="cell" class="cell"><span class="lbl">First reported</span>30 Oct 2026</span>
+          <span role="cell" class="cell muted small"><span class="lbl">Latest promise</span>None with a date</span>
+          <span role="cell" class="cell status-cell wide-cell"><b>Approved <span data-track="6"></span></b><span class="muted small">Approved by a regulator</span></span>
         </div></div>
 
-        <div class="grid-row" data-row data-status="phase3"><div class="cells">
-          <span class="lead"><span><a href="#">Solengepras</a><span class="sub">The daily pill solengepras was reported to cut daily ‘off’ time in Parkinson’s disease by about 37 minutes more than placebo</span></span></span>
-          <span class="cell"><span class="lbl">First reported</span>7 Oct 2026</span>
-          <span class="cell promise"><span class="lbl">Latest promise</span><b>2029</b>The pill could potentially be prescribed to patients within three years.</span>
-          <span class="cell status-cell wide-cell"><b>Phase 3 trial <span data-track="5"></span></b><span class="muted small">Large late-stage trial in people</span></span>
+        <div class="grid-row" data-row data-status="phase3"><div class="cells" role="row">
+          <span class="lead" role="rowheader"><span><a href="#">Solengepras</a><span class="sub">The daily pill solengepras was reported to cut daily ‘off’ time in Parkinson’s disease by about 37 minutes more than placebo</span></span></span>
+          <span role="cell" class="cell"><span class="lbl">First reported</span>7 Oct 2026</span>
+          <span role="cell" class="cell promise"><span class="lbl">Latest promise</span><b>2029</b>The pill could potentially be prescribed to patients within three years.</span>
+          <span role="cell" class="cell status-cell wide-cell"><b>Phase 3 trial <span data-track="5"></span></b><span class="muted small">Large late-stage trial in people</span></span>
         </div></div>
 
-        <div class="grid-row" data-row data-status="preclinical"><div class="cells">
-          <span class="lead"><span><a href="#">Kamuvudine K-9</a><span class="sub">The experimental drug Kamuvudine K-9 was reported to reverse paralysis and vision loss in mice with a multiple sclerosis-like disease</span></span></span>
-          <span class="cell"><span class="lbl">First reported</span>24 Sep 2026</span>
-          <span class="cell muted small"><span class="lbl">Latest promise</span>None with a date</span>
-          <span class="cell status-cell wide-cell"><b>Preclinical only <span data-track="1"></span></b><span class="muted small">No trial in people on record</span></span>
+        <div class="grid-row" data-row data-status="preclinical"><div class="cells" role="row">
+          <span class="lead" role="rowheader"><span><a href="#">Kamuvudine K-9</a><span class="sub">The experimental drug Kamuvudine K-9 was reported to reverse paralysis and vision loss in mice with a multiple sclerosis-like disease</span></span></span>
+          <span role="cell" class="cell"><span class="lbl">First reported</span>24 Sep 2026</span>
+          <span role="cell" class="cell muted small"><span class="lbl">Latest promise</span>None with a date</span>
+          <span role="cell" class="cell status-cell wide-cell"><b>Preclinical only <span data-track="1"></span></b><span class="muted small">No trial in people on record</span></span>
         </div></div>
 
-        <div class="grid-row" data-row data-status="preclinical"><div class="cells">
-          <span class="lead"><span><a href="#">Personalised engineered spinal cord implant</a><span class="sub">A personalised engineered spinal cord implant from Tel Aviv University was reported to be moving towards a first implant in a person with paralysis</span></span></span>
-          <span class="cell"><span class="lbl">First reported</span>19 Aug 2026</span>
-          <span class="cell promise"><span class="lbl">Latest promise</span>Treatment of the first selected patient could begin in the first half of <b style="display:inline">2027</b>, if scientific and regulatory milestones are met.</span>
-          <span class="cell status-cell wide-cell"><b>Preclinical only <span data-track="1"></span></b><span class="muted small">No trial in people on record</span></span>
+        <div class="grid-row" data-row data-status="preclinical"><div class="cells" role="row">
+          <span class="lead" role="rowheader"><span><a href="#">Personalised engineered spinal cord implant</a><span class="sub">A personalised engineered spinal cord implant from Tel Aviv University was reported to be moving towards a first implant in a person with paralysis</span></span></span>
+          <span role="cell" class="cell"><span class="lbl">First reported</span>19 Aug 2026</span>
+          <span role="cell" class="cell promise"><span class="lbl">Latest promise</span>Treatment of the first selected patient could begin in the first half of <b style="display:inline">2027</b>, if scientific and regulatory milestones are met.</span>
+          <span role="cell" class="cell status-cell wide-cell"><b>Preclinical only <span data-track="1"></span></b><span class="muted small">No trial in people on record</span></span>
         </div></div>
       </div>
 

@@ -1,5 +1,5 @@
-// Mock behaviour only: icons, the section list's current place,
-// the timeline's tabs and the table filter. None of this is the site's script.
+// Mock behaviour only: icons, folds, the section list's current place,
+// the timeline's tabs, the table filter and printing. None of this is the site's script.
 const ICONS = {
   chev: '<path d="m6 9 6 6 6-6"/>',
   brief: '<path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/>',
@@ -35,31 +35,82 @@ for (const el of document.querySelectorAll("[data-track]")) {
   el.innerHTML = `<span class="steps" role="img" aria-label="Place ${place} of 6 on the path from preclinical to approved">${[1, 2, 3, 4, 5, 6].map((n) => `<span class="step${n === place ? " here" : ""}"></span>`).join("")}</span>`;
 }
 
-// Section list: mark the section in view, and open a folded section when its link is pressed.
-const links = [...document.querySelectorAll(".onpage a[href^='#']")];
+// Folds: a button in a heading (or in a table row) shows and hides the block it names.
+const phone = matchMedia("(max-width: 48rem)");
+function setFold(button, open) {
+  button.setAttribute("aria-expanded", String(open));
+  document.getElementById(button.getAttribute("aria-controls")).hidden = !open;
+}
+function foldOf(target) {
+  return target?.matches(".sec") ? target.querySelector(":scope > .sec-head .fold") : null;
+}
+for (const b of document.querySelectorAll(".fold")) {
+  b.addEventListener("click", () => setFold(b, b.getAttribute("aria-expanded") !== "true"));
+}
+// On a phone only the record in brief and the timeline start open.
+if (phone.matches) {
+  for (const sec of document.querySelectorAll('.sec[data-phone="folded"]')) {
+    if (`#${sec.id}` !== location.hash) setFold(foldOf(sec), false);
+  }
+}
+function openTarget(hash) {
+  const t = hash.length > 1 ? document.getElementById(hash.slice(1)) : null;
+  const b = foldOf(t?.closest(".sec"));
+  if (b) setFold(b, true);
+  return t;
+}
+openTarget(location.hash);
+for (const a of document.querySelectorAll("a[href^='#']")) {
+  a.addEventListener("click", () => openTarget(a.getAttribute("href")));
+}
+
+// Section list: mark the section in view. On a narrow screen the list is a strip of chips:
+// keep the current chip in view and fade whichever end has more chips.
+const nav = document.querySelector(".onpage");
+const strip = nav?.querySelector(".strip");
+const links = [...document.querySelectorAll(".onpage a[href^='#']")].filter((a) => a.getAttribute("href").length > 1);
 const targets = links.map((a) => document.getElementById(a.getAttribute("href").slice(1))).filter(Boolean);
+function centre(chip, behavior) {
+  if (!strip || strip.scrollWidth <= strip.clientWidth) return;
+  strip.scrollTo({ left: chip.offsetLeft - (strip.clientWidth - chip.offsetWidth) / 2, behavior });
+}
+function ends() {
+  if (!strip) return;
+  const more = [];
+  if (strip.scrollLeft > 4) more.push("start");
+  if (strip.scrollLeft + strip.clientWidth < strip.scrollWidth - 4) more.push("end");
+  nav.dataset.more = more.join(" ");
+}
+let marked = null;
 function mark() {
   let current = targets[0];
   for (const t of targets) if (t.getBoundingClientRect().top <= 140) current = t;
+  if (current === marked) return;
+  marked = current;
   for (const a of links) {
-    if (current && a.getAttribute("href") === `#${current.id}`) a.setAttribute("aria-current", "true");
-    else a.removeAttribute("aria-current");
+    if (a.getAttribute("href") === `#${current.id}`) {
+      a.setAttribute("aria-current", "true");
+      centre(a, matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth");
+    } else a.removeAttribute("aria-current");
   }
 }
 if (targets.length) { addEventListener("scroll", mark, { passive: true }); mark(); }
-for (const a of document.querySelectorAll("a[href^='#']")) {
-  a.addEventListener("click", () => {
-    const t = document.getElementById(a.getAttribute("href").slice(1));
-    if (t?.tagName === "DETAILS") t.open = true;
-  });
-}
+else if (nav?.querySelector("[aria-current]")) centre(nav.querySelector("[aria-current]"), "auto");
+strip?.addEventListener("scroll", ends, { passive: true });
+addEventListener("resize", ends);
+ends();
 
 // Timeline tabs.
+const tlStatus = document.querySelector("[data-tl-status]");
 for (const tab of document.querySelectorAll(".tab[data-kind]")) {
   tab.addEventListener("click", () => {
     for (const t of document.querySelectorAll(".tab[data-kind]")) t.setAttribute("aria-pressed", String(t === tab));
     const kind = tab.dataset.kind;
-    for (const ev of document.querySelectorAll(".tl-ev")) ev.hidden = kind !== "all" && ev.dataset.kind !== kind;
+    let shown = 0;
+    for (const ev of document.querySelectorAll(".tl-ev")) {
+      ev.hidden = kind !== "all" && ev.dataset.kind !== kind;
+      if (!ev.hidden) shown += 1;
+    }
     for (const year of document.querySelectorAll(".tl-year")) {
       let any = false;
       for (let n = year.nextElementSibling; n && !n.classList.contains("tl-year"); n = n.nextElementSibling) {
@@ -68,29 +119,46 @@ for (const tab of document.querySelectorAll(".tab[data-kind]")) {
       year.hidden = !any;
     }
     for (const gap of document.querySelectorAll(".tl-gap")) gap.hidden = kind !== "all";
+    if (tlStatus) tlStatus.textContent = kind === "all" ? "Showing every entry." : `Showing ${shown} of ${document.querySelectorAll(".tl-ev").length} entries: ${tab.firstChild.textContent.trim()}.`;
   });
 }
 
-// Table filter: typed words and one status.
+// Table filter: typed words and one status. No match shows a message with a way back.
 const rows = [...document.querySelectorAll("[data-row]")];
 const input = document.querySelector("[data-filter]");
 const count = document.querySelector("[data-count]");
-let facet = "all";
+const empty = document.querySelector("[data-empty]");
+const chips = [...document.querySelectorAll(".tab[data-status]")];
+let status = "all";
 function narrow() {
   const words = (input?.value ?? "").trim().toLowerCase();
   let shown = 0;
   for (const r of rows) {
-    const ok = (facet === "all" || r.dataset.status === facet) && (!words || r.textContent.toLowerCase().includes(words));
+    const ok = (status === "all" || r.dataset.status === status) && (!words || r.textContent.toLowerCase().includes(words));
     r.hidden = !ok;
     if (ok) shown += 1;
   }
-  if (count) count.textContent = shown === rows.length ? `All ${rows.length} claims` : `${shown} of ${rows.length} claims`;
+  const filtered = status !== "all" || words !== "";
+  if (count) count.textContent = filtered ? `${shown} of ${rows.length} claims` : `All ${rows.length} claims`;
+  for (const c of chips) c.setAttribute("aria-pressed", String(c.dataset.status === status));
+  for (const b of document.querySelectorAll(".filterbar [data-clear]")) b.hidden = !filtered || shown === 0;
+  if (empty) {
+    empty.hidden = shown > 0;
+    document.querySelector("[data-row]").closest(".grid").hidden = shown === 0;
+  }
 }
 input?.addEventListener("input", narrow);
-for (const f of document.querySelectorAll(".facet")) {
-  f.addEventListener("click", () => {
-    facet = f.getAttribute("aria-pressed") === "true" ? "all" : f.dataset.status;
-    for (const g of document.querySelectorAll(".facet")) g.setAttribute("aria-pressed", String(g.dataset.status === facet));
-    narrow();
-  });
+for (const c of chips) c.addEventListener("click", () => { status = c.dataset.status; narrow(); });
+for (const b of document.querySelectorAll("[data-clear]")) {
+  b.addEventListener("click", () => { status = "all"; input.value = ""; narrow(); input.focus(); });
 }
+
+// Printing: every fold opens, and closes again afterwards.
+let closed = [];
+addEventListener("beforeprint", () => {
+  closed = [...document.querySelectorAll('.fold[aria-expanded="false"], details:not([open])')];
+  for (const el of closed) el.matches("details") ? (el.open = true) : setFold(el, true);
+});
+addEventListener("afterprint", () => {
+  for (const el of closed) el.matches("details") ? (el.open = false) : setFold(el, false);
+});
