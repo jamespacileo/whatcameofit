@@ -4740,11 +4740,34 @@ main ul:not([class]) li + li {
 }
 
 /* Room at each end for a mark that falls on the first or the last day. */
-.record-strip .strip-line {
+.strip-frame {
+  display: block;
   flex: 1 1 9rem;
   width: 9rem;
   max-width: 24rem;
   margin-inline: 6px;
+}
+
+.strip-frame .strip-line {
+  width: 100%;
+}
+
+/* A strip alone, on a claim's page: its first year and its last day under the ends. */
+.strip-years {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.1rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.strip-years span:last-child {
+  transform: translateX(6px);
+}
+
+.strip-years span:first-child {
+  transform: translateX(-6px);
 }
 
 .strip-axis {
@@ -4795,9 +4818,34 @@ main ul:not([class]) li + li {
   white-space: nowrap;
 }
 
-.report-row .record-strip {
-  margin-top: 0.8rem;
-  max-width: var(--measure);
+/* What the records add, in words, under the outlet's title. */
+.row-counts {
+  margin: 0.55rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.row-counts:empty {
+  display: none;
+}
+
+/* A claim's own strip, at the head of what is recorded, with the key under it. */
+.claim-strip {
+  max-width: 40rem;
+  margin: 0.4rem 0 1.2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.claim-strip .strip-frame {
+  flex: 1 1 auto;
+  width: auto;
+  max-width: none;
+}
+
+.claim-strip .strip-key {
+  margin: 0.6rem 0 0;
 }
 
 .strip-key {
@@ -4832,13 +4880,13 @@ main ul:not([class]) li + li {
   margin-top: 0.55rem;
 }
 
-.index td.status .strip-line {
+.index td.status .strip-frame {
   flex: none;
   width: 11rem;
 }
 
 @media (max-width: 40rem) {
-  .index td.status .strip-line {
+  .index td.status .strip-frame {
     width: calc(100% - 12px);
     max-width: 24rem;
   }
