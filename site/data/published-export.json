@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-15T22:03:48.273814Z",
+  "generated_at": "2026-11-15T22:07:31.790490Z",
   "last_checked_at": "2026-11-15T22:03:14.293468Z",
   "preview": false,
   "sources": [
@@ -36059,36 +36059,6 @@
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT07756281",
-          "url": "https://clinicaltrials.gov/study/NCT07756281",
-          "score": 0.69,
-          "state": "candidate",
-          "reading": "match",
-          "decided_by": null,
-          "summary": "First in Human Study of SNV1521 With a RAS Inhibitor for People With Advanced Pancreatic Cancer. For: Pancreatic Cancer, Pancreatic Acinar Carcinoma. Tests: SNV1521, daraxonrasib. Phase 1, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT06922591",
-          "url": "https://clinicaltrials.gov/study/NCT06922591",
-          "score": 0.55,
-          "state": "candidate",
-          "reading": "match",
-          "decided_by": null,
-          "summary": "Study to Evaluate the Safety, Tolerability & Efficacy of TNG462 in Combination in PDAC & NSCLC Patients. For: PDAC, PDAC - Pancreatic Ductal Adenocarcinoma, NSCLC, RAS Mutation, MTAP Deletion, Lung Cancer, Pancreatic Cancer Metastatic, Thoracic Cancer. Tests: TNG462, RMC-9805, RMC-6236, mFOLFIRINOX, gemcitabine/nab-paclitaxel. Phase 1/Phase 2, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT06040541",
-          "url": "https://clinicaltrials.gov/study/NCT06040541",
-          "score": 0.5,
-          "state": "candidate",
-          "reading": "match",
-          "decided_by": null,
-          "summary": "Study of RMC-9805 in Participants With KRAS G12D-Mutant Solid Tumors. For: Non-small Cell Lung Cancer (NSCLC), Colorectal Cancer (CRC), Pancreatic Ductal Adenocarcinoma (PDAC), Advanced Solid Tumors. Tests: RMC-9805, RMC-6236. Phase 1, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
           "external_id": "NCT05379985",
           "url": "https://clinicaltrials.gov/study/NCT05379985",
           "score": 0.47,
@@ -36106,6 +36076,36 @@
           "reading": "other_indication",
           "decided_by": null,
           "summary": "Study of Elironrasib and Daraxonrasib as Monotherapies and Combination Therapy in Participants With Advanced KRAS G12C Mutant Solid Tumors. For: Non-Small Cell Lung Cancer (NSCLC), Colorectal Cancer, Pancreatic Ductal Adenocarcinoma. Tests: Elironrasib, Daraxonrasib. Phase 1/Phase 2, recruiting."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT07349537",
+          "url": "https://clinicaltrials.gov/study/NCT07349537",
+          "score": 0.35,
+          "state": "candidate",
+          "reading": "other_indication",
+          "decided_by": null,
+          "summary": "Study of RMC-5127 in Patients With Advanced KRAS G12V-Mutant Solid Tumors. For: Non-small Cell Lung Cancer (NSCLC), Colorectal Cancer (CRC), Pancreatic Adenocarcinoma, Pancreatic Ductal Adenocarcinoma (PDAC), PDAC, CRC, NSCLC, Pancreatic Cancer, Lung Cancer (NSCLC), Advanced Solid Tumors. Tests: RMC-5127, daraxonrasib, cetuximab. Phase 1, recruiting."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT07492680",
+          "url": "https://clinicaltrials.gov/study/NCT07492680",
+          "score": 0.15,
+          "state": "candidate",
+          "reading": "other_indication",
+          "decided_by": null,
+          "summary": "A Study of Navlimetostat (BMS-986504) Monotherapy and in Combination With Other Agents in Participants With Advanced and/or Metastatic Solid Tumors With Homozygous MTAP Deletion (MountainTAP-5). For: Solid Tumors. Tests: Navlimetostat, Daraxonrasib, Temozolomide, Pumitamig, Pemetrexed, Carboplatin, Nab-paclitaxel, Gemcitabine, Paclitaxel, Cisplatin. Phase 2, recruiting."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT07898813",
+          "url": "https://clinicaltrials.gov/study/NCT07898813",
+          "score": 0.07,
+          "state": "candidate",
+          "reading": "other_indication",
+          "decided_by": null,
+          "summary": "Daraxonrasib in Resectable PDAC. For: Pancreatic Ductal Adenocarcinoma, Pancreatic Cancer, Resectable Pancreatic Ductal Adenocarcinoma. Tests: Daraxonrasib, Surgical Resection, Adjuvant Chemotherapy, Adjuvant Radiation Therapy. Phase 1, not yet recruiting."
         }
       ],
       "trials": [

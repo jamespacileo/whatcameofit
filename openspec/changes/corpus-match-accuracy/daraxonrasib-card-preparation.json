@@ -6,7 +6,7 @@
   "source_date": "2026-05-31",
   "extracted_indication": "metastatic pancreatic cancer",
   "corrected_indication": "Previously treated metastatic pancreatic cancer",
-  "scope_reason": "Retain the source report\u2019s explicit prior-treatment restriction; the separate first-line trial is not the report\u2019s main finding.",
+  "scope_reason": "Retain the source report’s explicit prior-treatment restriction; the separate first-line trial is not the report’s main finding.",
   "preparation_seconds": 34,
   "trial_readings_reused": 1,
   "trial_readings_new": 1,
@@ -39,6 +39,38 @@
       "decision": "rejected",
       "decider": "assistant",
       "reason": "Expanded-access treatment program for people unable to enter a trial; it is not a trial testing the reported intervention and cannot support a trial event."
+    }
+  ],
+  "additional_candidate_rejections": [
+    {
+      "match_id": 17750,
+      "trial_id": "NCT07756281",
+      "previous_score": 0.69,
+      "previous_state": "pending",
+      "decision": "rejected",
+      "decider": "assistant",
+      "source_url": "https://clinicaltrials.gov/study/NCT07756281",
+      "reason": "The experimental regimen is SNV1521 plus daraxonrasib; no daraxonrasib monotherapy arm."
+    },
+    {
+      "match_id": 17757,
+      "trial_id": "NCT06922591",
+      "previous_score": 0.55,
+      "previous_state": "pending",
+      "decision": "rejected",
+      "decider": "assistant",
+      "source_url": "https://clinicaltrials.gov/study/NCT06922591",
+      "reason": "The experimental regimen is TNG462 plus RMC-6236; no daraxonrasib monotherapy arm."
+    },
+    {
+      "match_id": 17755,
+      "trial_id": "NCT06040541",
+      "previous_score": 0.5,
+      "previous_state": "pending",
+      "decision": "rejected",
+      "decider": "assistant",
+      "source_url": "https://clinicaltrials.gov/study/NCT06040541",
+      "reason": "The trial tests RMC-9805 alone or with RMC-6236; no daraxonrasib monotherapy arm."
     }
   ],
   "claim_state": "approved",
