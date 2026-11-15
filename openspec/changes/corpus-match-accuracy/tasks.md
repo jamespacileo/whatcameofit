@@ -17,7 +17,8 @@
 
 - [x] 2.8 Guard background cards against single-component substitution, including legacy approved links; verify pipeline/export seams and relevant real records before publication.
 
-- [ ] 2.9 Confirm eligible stored evidence-stage suggestions by rule and make the no-trial fallback honest for unknown stages; verify existing published output, prepared records, tests and independent review before data publication.
+- [x] 2.9 Confirm eligible stored evidence-stage suggestions by rule and make the no-trial fallback honest for unknown stages; verify existing published output, prepared records, tests and independent review before data publication.
+- [ ] 2.10 Pass verified entry-name evidence to vocabulary checks and support explicitly named pending-term rereads; verify preservation, failure, reuse and real pending candidates before publication.
 
 ## 3. Full corpus accuracy and efficiency
 

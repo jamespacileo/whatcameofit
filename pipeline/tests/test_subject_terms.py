@@ -250,12 +250,14 @@ class Reader:
         # given, the backend fails when a kind is asked for.
         self.kind = kind
         self.calls: list[tuple[str, str, list[str]]] = []
+        self.questions: list[str] = []
         self.kinds_asked: list[tuple[str, list[str]]] = []
 
     def answer_many(
         self, step: str, intro: str, question: str, items: list[str], options: list[str]
     ) -> list[BackendAnswer | None]:
         self.calls.append((step, intro, items))
+        self.questions.append(question)
         return [self._one(item, options) for item in items]
 
     def _one(self, item: str, options: list[str]) -> BackendAnswer | None:
@@ -509,6 +511,51 @@ def test_score_between_the_two_levels_waits_for_review(session: Session, knee_cl
     assert {t.review_state for t in links(session, knee_claim).values()} == {ReviewState.PENDING}
 
 
+@pytest.mark.parametrize("answer", [("broader", 0.9), None])
+def test_explicit_pending_rescore_preserves_decisions_and_failed_readings(
+    session: Session, knee_claim: Claim, answer
+):
+    backend = Reader({"Osteoarthritis, Knee": ("same", 0.95), "Pain": ("broader", 0.5)})
+    vocabulary = Vocabulary()
+
+    def run(rescore_pending: bool = False):
+        return link_terms(
+            session,
+            knee_claim,
+            vocabulary=vocabulary,
+            backend=backend,
+            now=NOW,
+            accept_above=ACCEPT,
+            reject_below=REJECT,
+            rescore_pending=rescore_pending,
+        )
+
+    run()
+    knee, pain = (links(session, knee_claim)[label] for label in (KNEE[1], PAIN[1]))
+    decide_item(session, "term", knee.id, ReviewState.REJECTED, now=NOW)
+    before = [(log.id, log.human_label) for log in term_logs(session)]
+    backend.by_label["Pain"] = answer
+
+    # Ordinary reruns still reuse scored pending readings without a model call.
+    assert run().scored == []
+    assert len(backend.calls) == 1
+    result = run(rescore_pending=True)
+
+    assert len(backend.calls) == 2 and len(backend.calls[-1][2]) == 1
+    assert (knee.review_state, knee.reviewed_by) == (ReviewState.REJECTED, Decider.HUMAN)
+    assert [(log.id, log.human_label) for log in term_logs(session)[:2]] == before
+    assert pain.fit is TermFit.BROADER
+    if answer is None:
+        assert result.unscored == [pain] and result.scored == []
+        assert pain.score == 0.5 and pain.review_state is ReviewState.PENDING
+    else:
+        assert result.scored == [pain] and pain.score == pytest.approx(0.9)
+        assert (pain.review_state, pain.reviewed_by) == (ReviewState.APPROVED, Decider.RULE)
+        # An approved link is not reconsidered even with explicit rescore.
+        assert run(rescore_pending=True).scored == []
+        assert len(backend.calls) == 2
+
+
 def test_link_the_operator_rejected_stays_rejected(session: Session, knee_claim: Claim):
     backend = Reader({"Osteoarthritis, Knee": ("same", 0.95), "Pain": ("broader", 0.9)})
     link_terms(
@@ -726,7 +773,38 @@ def test_terms_refuses_without_claims_or_missing(run):
     assert run("terms", SLUG, "--all").exit_code == 1
 
 
+def test_terms_pending_rescore_requires_named_claims(run, session: Session, knee_claim: Claim):
+    assert run("terms", SLUG).exit_code == 0
+    before = len(term_logs(session))
+    result = run("terms", SLUG, "--rescore-pending")
+    assert result.exit_code == 0, result.output
+    assert len(term_logs(session)) == before + 1
+    refused = run("terms", "--all", "--rescore-pending")
+    assert refused.exit_code == 1 and "Name the claims" in refused.output
+    assert len(term_logs(session)) == before + 1
+
+
 # --- entry terms -------------------------------------------------------------------
+
+
+def test_entry_term_evidence_reaches_classifier_without_becoming_an_approval(session: Session):
+    claim = new_claim(session, intervention="EX-1")
+    vocabulary = Vocabulary(labels={"ex-1": [LabelledTerm("C123", "Example compound", "EX-1")]})
+    backend = Reader({"Example compound": ("broader", 0.6)})
+    result = link_terms(
+        session,
+        claim,
+        vocabulary=vocabulary,
+        backend=backend,
+        now=NOW,
+        accept_above=ACCEPT,
+        reject_below=REJECT,
+    )
+    [(step, _, items)] = backend.calls
+    assert step == TERM_MATCH and "narrower concept" in backend.questions[0]
+    assert '"entry_term": "EX-1"' in items[0] and '"name": "EX-1"' in items[0]
+    [term] = result.scored
+    assert term.fit is TermFit.BROADER and term.review_state is ReviewState.PENDING
 
 
 def test_name_equal_to_an_entry_term_is_a_candidate_that_records_the_entry_term():
@@ -1561,6 +1639,40 @@ def test_whole_combination_alias_remains_a_background_candidate(session: Session
     )
     [link] = links(session, claim).values()
     assert link.label == "Dualex" and link.review_state is ReviewState.APPROVED
+
+
+def test_pending_reread_keeps_kind_links_and_skips_legacy_components(session: Session):
+    claim = new_claim(session, intervention="EX-1 plus EX-2")
+    for identifier, label, fit in [
+        ("C100001", "EX-1", TermFit.EXACT),
+        ("D010455", "Peptides", TermFit.KIND),
+    ]:
+        session.add(
+            ClaimTerm(
+                claim_id=claim.id,
+                role=TermRole.INTERVENTION,
+                source_name="mesh",
+                external_id=identifier,
+                label=label,
+                fit=fit,
+                score=0.6,
+                reasons=[],
+            )
+        )
+    session.flush()
+    backend = Reader({"EX-1": ("same", 0.99), "Peptides": ("broader", 0.99)})
+    result = link_terms(
+        session,
+        claim,
+        vocabulary=Vocabulary(),
+        backend=backend,
+        now=NOW,
+        accept_above=ACCEPT,
+        reject_below=REJECT,
+        rescore_pending=True,
+    )
+    assert result.scored == [] and backend.calls == []
+    assert all(term.score == 0.6 for term in links(session, claim).values())
 
 
 def test_branded_combination_excludes_components_of_its_explicit_regimen_alias(session: Session):

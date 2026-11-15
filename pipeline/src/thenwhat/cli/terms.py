@@ -59,6 +59,14 @@ def terms_command(
             " that already have a score are left as they are.",
         ),
     ] = False,
+    rescore_pending: Annotated[
+        bool,
+        typer.Option(
+            "--rescore-pending",
+            help="Recheck undecided subject-term readings for explicitly named claims."
+            " Keeps approved/rejected links and preserves old readings if a check fails.",
+        ),
+    ] = False,
 ) -> None:
     """Propose subject terms, the intervention kind, named genes and the drug record
     for claims.
@@ -89,6 +97,9 @@ def terms_command(
             "Name the claims, or use --missing for every published claim without a"
             " subject term, or --all for every published claim. Give one of the three."
         )
+        raise typer.Exit(code=1)
+    if rescore_pending and not slugs:
+        err.print("Name the claims to recheck pending terms; --all and --missing are not allowed.")
         raise typer.Exit(code=1)
     settings = settings_or_exit()
     failed = 0
@@ -122,6 +133,7 @@ def terms_command(
                 limit=settings.term_candidates_max,
                 accept_above=accept,
                 reject_below=reject,
+                rescore_pending=rescore_pending,
             )
             try:
                 kind = link_kind(

@@ -3,7 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: Background cards describe the whole intervention
-An explicit component of a named combination SHALL NOT be linked or exported as the complete intervention's vocabulary or drug card. Component aliases and registry filing SHALL NOT override this boundary. Whole-regimen aliases SHALL remain candidates. A component's drug-derived target SHALL NOT be exported as if it described the complete regimen. Existing review decisions SHALL remain recorded; the export boundary SHALL suppress incompatible component cards without rewriting decisions or clinical status.
+Vocabulary and drug cards SHALL describe complete regimens. Explicit components, including aliases and registry-filed names, SHALL NOT stand in for the whole regimen; whole-regimen aliases SHALL remain eligible. The export SHALL suppress incompatible legacy component cards and their drug-derived targets while preserving review decisions and clinical status.
 
 #### Scenario: Model calls one component an exact match
 - **GIVEN** a claim for EX-1 plus EX-2 and a candidate term naming EX-1
@@ -39,3 +39,28 @@ An explicit component of a named combination SHALL NOT be linked or exported as 
 - **GIVEN** an intervention named EX-1, EX-2 and EX-3, EX-1 and EX-2 combination, or Combination of EX-1 and EX-2
 - **WHEN** one of those explicitly named components is proposed as a background card
 - **THEN** the component is excluded before paid classification
+
+### Requirement: Vocabulary checks receive entry-name evidence
+The term classifier SHALL receive recorded vocabulary entry-name matches alongside the candidate label and definition. An entry name SHALL be treated as evidence, not an automatic exact match: it may name a narrower concept. Existing confidence thresholds and whole-intervention safeguards SHALL remain in force.
+
+#### Scenario: Preferred label differs from the claim name
+- **GIVEN** a candidate vocabulary record has a verified entry name equal to the claim's name
+- **WHEN** the term is checked
+- **THEN** the classifier receives that evidence and may still return broader, unrelated or uncertain
+
+### Requirement: Pending term readings can be explicitly rechecked
+Ordinary term runs SHALL reuse scored candidates. An explicit pending-term reread SHALL require named claims and reconsider only undecided condition/intervention vocabulary links. Approved and rejected links, previous decision logs and human labels SHALL remain unchanged. Every reread SHALL receive its own decision log; failure SHALL retain the prior fit and score. Kind, target and drug links SHALL NOT be rescored by this option.
+
+#### Scenario: Successful pending reread
+- **GIVEN** a pending vocabulary candidate already has a score
+- **WHEN** its claim is explicitly named with `--rescore-pending`
+- **THEN** the new reading is recorded and the existing approval/rejection thresholds apply
+
+#### Scenario: Failed pending reread
+- **GIVEN** a pending candidate has an earlier fit and score
+- **WHEN** its explicit reread fails
+- **THEN** the failed call is logged and the earlier fit and score remain
+
+#### Scenario: Mass reread refused
+- **WHEN** `--rescore-pending` is combined with `--all` or `--missing` instead of named claims
+- **THEN** the command refuses before any source or model work
