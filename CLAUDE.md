@@ -30,7 +30,7 @@ worktrees via `wt`, archive via quarantine).
 - Tests for status rules and each source client use recorded fixtures. No live network calls in tests or CI.
 - No model IDs in code. Provider, model and prices come from environment variables.
 - Secrets live in `.env`, which is never committed. Keep `.env.example` current.
-- Nothing public is served from the home network. The pipeline and database stay private.
+- Nothing public is served from the home network. The pipeline and database stay private. One exception, decided by the operator on 2026-11-15 (`docs/adr/0005-the-page-reader-is-the-one-home-service-a-worker-may-ask.md`): the page reader runs at home and the lookup service may ask it through a tunnel closed to everyone else.
 - Small commits with conventional commit messages. The README must get a clean clone running in under ten commands.
 
 ## Working rules learned so far
