@@ -226,7 +226,7 @@ def test_outlets_with_no_article_tracked_explains_and_exits_1(run):
 
 
 @pytest.mark.parametrize("missing", ["body", "headline", "date"])
-def test_preview_metadata_cannot_make_an_incomplete_page_readable(missing):
+def test_preview_metadata_cannot_make_an_incomplete_page_readable(missing, monkeypatch):
     from thenwhat.outlets.readability import _check_article
 
     headline = "Article headline" if missing != "headline" else None
@@ -234,13 +234,11 @@ def test_preview_metadata_cannot_make_an_incomplete_page_readable(missing):
     body = "Login required" if missing == "body" else "Article body. " * 60
     page = Page(text=body, headline=headline, published=date, summary="Preview. " * 100)
 
-    class Reader:
-        def probe(self, url):
-            from thenwhat.extract.retrieve import READ, Probe
+    from thenwhat.extract.retrieve import READ, Probe
 
-            return Probe(READ, 200, page)
-
+    reader = retriever(Web())
+    monkeypatch.setattr(reader, "probe", lambda url: Probe(READ, 200, page))
     outlet = Outlet("example.org")
-    checked = _check_article(outlet, Reader(), "https://example.org/article", [], None)
+    checked = _check_article(outlet, reader, "https://example.org/article", [], None)
     assert checked.outcome == "thin"
     assert (outlet.read, outlet.thin) == (0, 1)
