@@ -146,6 +146,10 @@ def test_hashtag_study_names_retain_their_complete_numeric_identity():
     assert agreeing(record(acronym="REGROW 21"), named) == []
     assert agreeing(record(acronym="REGROW 3"), named) == []
     assert agreeing(record(acronym="REGROW2A"), named) == []
+    assert agreeing(record(title="The 4TUNE trial"), Details(trial_name="4TUNE")) == ["trial_name"]
+    assert agreeing(record(title="RECOVERY 5-year follow-up"), Details(trial_name="RECOVERY")) == [
+        "trial_name"
+    ]
 
 
 def test_a_record_agrees_with_a_number_of_participants_within_a_tenth():

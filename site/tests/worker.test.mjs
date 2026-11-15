@@ -288,6 +288,8 @@ test("a record agrees with a trial's name, size and sponsor by rule", () => {
   assert.deepEqual(agreeing(record({ acronym: "REGROW-21" }), { trial_name: "REGROW-21" }), ["trial_name"]);
   assert.deepEqual(agreeing(study("NCT00000001", "EX-1", "x", { acronym: "REGROW-21" }), { trial_name: "REGROW-2" }), []);
   assert.deepEqual(agreeing(study("NCT00000001", "EX-1", "x", { acronym: "REGROW2A" }), { trial_name: "REGROW2" }), []);
+  assert.deepEqual(agreeing(study("NCT00000001", "The 4TUNE trial", "x"), { trial_name: "4TUNE" }), ["trial_name"]);
+  assert.deepEqual(agreeing(study("NCT00000001", "RECOVERY 5-year follow-up", "x"), { trial_name: "RECOVERY" }), ["trial_name"]);
   assert.deepEqual(agreeing(record({ enrolled: 2539 }), { participants: 2500 }), ["participants"]);
   assert.deepEqual(agreeing(record({ enrolled: 751 }), { participants: 2500 }), []);
   assert.deepEqual(agreeing(record({ sponsor: "University of Oxford" }), { sponsor: "Oxford University" }), ["sponsor"]);

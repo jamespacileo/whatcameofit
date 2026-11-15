@@ -40,13 +40,15 @@ def agreeing(payload: dict[str, Any], details: Details) -> list[str]:
     identification = section.get("identificationModule") or {}
     reasons: list[str] = []
 
-    name = _trial_words(details.trial_name)
+    name = _words(details.trial_name)
     if len("".join(name)) >= 3:
-        carried = [
-            _trial_words(identification.get(part))
-            for part in ("acronym", "briefTitle", "officialTitle")
-        ]
-        if any(_within(name, words) for words in carried):
+        carried = [identification.get(part) for part in ("acronym", "briefTitle", "officialTitle")]
+        # Keep ordinary title word boundaries; the separator variant is a fallback.
+        if any(
+            _within(name, _words(given))
+            or _within(_trial_words(details.trial_name), _trial_words(given))
+            for given in carried
+        ):
             reasons.append(TRIAL_NAME)
 
     enrolled = ((section.get("designModule") or {}).get("enrollmentInfo") or {}).get("count")

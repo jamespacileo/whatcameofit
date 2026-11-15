@@ -38,10 +38,12 @@ export function agreeing(study, details) {
   const identification = section.identificationModule ?? {};
   const reasons = [];
 
-  const name = trialWords(details.trial_name);
+  const name = words(details.trial_name);
   if (name.join("").length >= 3) {
-    const carried = [identification.acronym, identification.briefTitle, identification.officialTitle].map(trialWords);
-    if (carried.some((given) => within(name, given))) reasons.push(TRIAL_NAME);
+    const carried = [identification.acronym, identification.briefTitle, identification.officialTitle];
+    // Keep ordinary title word boundaries; the separator variant is a fallback.
+    if (carried.some((given) => within(name, words(given)) ||
+      within(trialWords(details.trial_name), trialWords(given)))) reasons.push(TRIAL_NAME);
   }
 
   const enrolled = section.designModule?.enrollmentInfo?.count;
