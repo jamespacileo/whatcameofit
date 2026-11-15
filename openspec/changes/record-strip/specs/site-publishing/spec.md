@@ -63,7 +63,7 @@ A record strip SHALL be exposed to assistive technology as one image with a text
 - **THEN** it reads the number of reports and that no dated record is on file as of the last check
 
 ### Requirement: Claim list tables carry the record strip
-Every claim list table SHALL show each claim's record strip. On a wide screen the strips SHALL share one column so their axes align from row to row. The status label SHALL remain in sight in the same row.
+Every claim list table SHALL show each claim's record strip. On a wide screen the strips SHALL sit in one column at one width so their axes align from row to row. The status label SHALL remain in sight in the same row.
 
 #### Scenario: Topic index
 - **WHEN** a reader opens a topic index with 18 claims on a wide screen

@@ -9,6 +9,7 @@ Domain terms for thenwhat. Behavior is specified in `openspec/`; this file only 
 | **Indication** | The condition the intervention is claimed to treat. With the intervention it makes a claim's identity. |
 | **Source article** | A news article that reported a claim. Stored as URL, outlet, title and date. Its text is never stored. |
 | **Promise** | A timeline stated in a source article ("human trials by 2025"). A claim can have several, each tied to its article. |
+| **Record strip** | A small time axis beside a claim with a mark at the date of each news report, registry record, posting of results, regulator decision and dated promise. Every strip shares one scale and ends at the day the registries were last checked. Its marks are named, in these words, in a key: "Registry record", "Results posted", "Regulator decision", "News report", "Promised date", "Registries last checked". |
 | **Reading** | Something a model read from a trial's stored registry record into a fixed code, or a number with a unit, kept with the exact words it was read from. A rule checks the words are in the record before a reading is stored. The site words the code; a reading never changes a status, a match score or a trial fact. |
 | **Under way** | A trial the registry lists as started and not yet finished. Never "recruiting": the site does not say a trial is open to participants. |
 | **The record in brief** | The section of a claim page that answers up to six fixed questions from the claim's records, each answer opening to the record it was read from. |

@@ -4697,7 +4697,12 @@ main ul:not([class]) li + li {
   }
 }
 
+/* A drawing's ink is not swapped by the system, so each mark is given the system's
+   text colour by name. */
 @media (forced-colors: active) {
+  .strip-axis,
+  .strip-record,
+  .strip-check,
   .strip-notch,
   .strip-report,
   .strip-promise line {
@@ -4708,6 +4713,8 @@ main ul:not([class]) li + li {
     fill: Canvas;
   }
 
+  .strip-results,
+  .strip-decision,
   .strip-promise path {
     fill: CanvasText;
   }

@@ -46,7 +46,8 @@ See `proposal.md` for why. What shapes the approach:
 
 8. **Counts line.** Wording owned by the site lib, numerals first: trials on record, and trials with results posted when at least one. A claim with no trial shows "0 trials": an explicit empty state, not a blank.
 
-9. **Layout.** Table: own column, fixed width (about 144 px), so axes align. Phone: full row width under the status. Report row: under the status, counts line to its right on wide screens and under it on a phone.
+9. **Layout.** Table: under the status, inside the status column, at one fixed width (11rem) in every row, so axes align down the column; no counts there, because "Tested in people" beside it gives them. Phone: full row width under the status. Report row: under the status, counts line to its right on wide screens and under it on a phone.
+   - Changed during build: a sixth column of its own was tried first and left the claim column too narrow to read at 800 px. The status column already had the width.
 
 10. **Key.** A small inline legend drawn with the same component marks, each with its word. Home: beside the existing kind pills. Tables: under the table's heading. Words pass the verdict check.
 
@@ -61,4 +62,4 @@ See `proposal.md` for why. What shapes the approach:
 
 ## Open Questions
 
-- Exact width of the table column once seen beside the status column at 1280 and 1024 px. Decided during build by looking; does not change specs or tasks.
+None.
