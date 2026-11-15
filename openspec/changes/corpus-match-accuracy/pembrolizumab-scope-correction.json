@@ -1,0 +1,276 @@
+{
+  "checked_at": "2026-11-15T19:57:07.197866+00:00",
+  "claim": "pembrolizumab-plus-chemotherapy-the-most-common-type-of-lung",
+  "primary_identity_sources": [
+    "https://www.nejm.org/doi/full/10.1056/NEJMoa1801005",
+    "https://clinicaltrials.gov/study/NCT02578680"
+  ],
+  "additional_paper_source": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5526047/",
+  "records": [
+    {
+      "match_id": 13560,
+      "external_id": "NCT02581943",
+      "source_url": "https://clinicaltrials.gov/study/NCT02581943",
+      "previous_score": 0.99,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 6814,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:52:42.321804+00:00"
+        },
+        {
+          "id": 6815,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:52:42.321804+00:00"
+        },
+        {
+          "id": 6816,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:52:42.321804+00:00"
+        },
+        {
+          "id": 6817,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:52:42.321804+00:00"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "Uses paclitaxel rather than pemetrexed and permits prior systemic treatment; this is not the source report’s pemetrexed/platinum combination for previously untreated metastatic nonsquamous disease."
+    },
+    {
+      "match_id": 13601,
+      "external_id": "NCT02621398",
+      "source_url": "https://clinicaltrials.gov/study/NCT02621398",
+      "previous_score": 0.93,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 6836,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:53:13.116499+00:00"
+        },
+        {
+          "id": 6837,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:53:13.116499+00:00"
+        },
+        {
+          "id": 6838,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:53:13.116499+00:00"
+        },
+        {
+          "id": 6839,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:53:13.116499+00:00"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "Stage II–IIIB locally advanced disease with paclitaxel/carboplatin and concurrent radiation differs in regimen and setting."
+    },
+    {
+      "match_id": 13556,
+      "external_id": "NCT04165070",
+      "source_url": "https://clinicaltrials.gov/study/NCT04165070",
+      "previous_score": 0.98,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 6812,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:52:41.839095+00:00"
+        },
+        {
+          "id": 6813,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:52:41.839095+00:00"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "Every chemotherapy arm adds an investigational agent; no arm tests the reported pembrolizumab/pemetrexed/platinum regimen alone."
+    },
+    {
+      "match_id": 13569,
+      "external_id": "NCT04216316",
+      "source_url": "https://clinicaltrials.gov/study/NCT04216316",
+      "previous_score": 0.97,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 6820,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:52:43.322665+00:00"
+        },
+        {
+          "id": 6821,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:52:43.322665+00:00"
+        },
+        {
+          "id": 6822,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:52:43.322665+00:00"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "Squamous disease with gemcitabine/carboplatin differs from the reported nonsquamous population and pemetrexed regimen."
+    },
+    {
+      "match_id": 13591,
+      "external_id": "NCT04267848",
+      "source_url": "https://clinicaltrials.gov/study/NCT04267848",
+      "previous_score": 0.85,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 6834,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:52:54.831597+00:00"
+        },
+        {
+          "id": 6835,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:52:54.831597+00:00"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "Resected stage II–IIIB adjuvant treatment differs from previously untreated metastatic disease."
+    },
+    {
+      "match_id": 13564,
+      "external_id": "NCT05501665",
+      "source_url": "https://clinicaltrials.gov/study/NCT05501665",
+      "previous_score": 0.99,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 6818,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:52:42.822675+00:00"
+        },
+        {
+          "id": 6819,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:52:42.822675+00:00"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "Every relevant pembrolizumab arm adds adaptive radiation; this is not the complete regimen in the source report."
+    },
+    {
+      "match_id": 13590,
+      "external_id": "NCT06422143",
+      "source_url": "https://clinicaltrials.gov/study/NCT06422143",
+      "previous_score": 0.98,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 6832,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:52:54.280388+00:00"
+        },
+        {
+          "id": 6833,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T12:52:54.280388+00:00"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "Metastatic squamous disease and carboplatin/taxane induction differ from the source’s nonsquamous pemetrexed regimen, regardless of the maintenance comparator."
+    },
+    {
+      "match_id": 13636,
+      "external_id": "10.1016/s1470-2045(16)30053-5",
+      "source_url": "https://doi.org/10.1016/s1470-2045(16)30053-5",
+      "previous_score": 0.97,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "Pembrolizumab alone for brain metastases does not test the reported pembrolizumab/pemetrexed/platinum combination."
+    }
+  ],
+  "retained_trials": {
+    "NCT02039674": "KEYNOTE-021 cohorts C and G include pembrolizumab, pemetrexed and carboplatin for advanced nonsquamous disease; other cohorts do not establish the association.",
+    "NCT02578680": "KEYNOTE-189 is the named origin trial: first-line metastatic nonsquamous disease, pemetrexed plus carboplatin or cisplatin and pembrolizumab.",
+    "NCT03664024": "KEYNOTE-782 uses the same regimen in untreated stage IV nonsquamous disease without the specified actionable drivers.",
+    "NCT03793179": "Includes a first-line metastatic nonsquamous cohort and a concurrent pembrolizumab/pemetrexed/carboplatin arm; timing alternatives are not treated as the origin trial.",
+    "NCT04956692": "The IV pembrolizumab arm includes the same pemetrexed/platinum regimen for treatment-naive metastatic nonsquamous participants without EGFR/ALK-directed therapy; the SC arm is not required for this association.",
+    "NCT06096844": "The chemotherapy arm includes pemetrexed/carboplatin with pembrolizumab for eligible nonsquamous participants, with no prior metastatic chemotherapy or immunotherapy and negative actionable first-line mutations.",
+    "NCT06731907": "The active comparator includes pembrolizumab/pemetrexed/carboplatin in the untreated metastatic nonsquamous cohort; the HER3-DXd experimental arm is not the matching regimen."
+  },
+  "source_calls_during_correction": 0,
+  "model_calls": 0,
+  "published_index_checked": {
+    "claims": 84,
+    "contains_this_claim": false
+  },
+  "publication": "Private database correction; no public snapshot regenerated.",
+  "previous": {
+    "intervention": "pembrolizumab plus chemotherapy",
+    "aliases": [],
+    "search_phrases": [],
+    "indication": "The most common type of lung cancer",
+    "headline": "Study links pembrolizumab plus chemotherapy to longer survival in lung cancer",
+    "summary": "A major study found that adding pembrolizumab to chemotherapy improved survival odds for people with the most common type of lung cancer. Medical experts said the findings support using immunotherapy early in treatment.",
+    "claim_decider": "rule",
+    "status": "phase_3",
+    "evidence_stage": "late_human",
+    "published_at": "2026-11-15 18:38:12.190342+00:00"
+  },
+  "corrected": {
+    "intervention": "Pembrolizumab plus pemetrexed and platinum chemotherapy",
+    "indication": "Previously untreated metastatic nonsquamous non-small-cell lung cancer without sensitizing EGFR or ALK alterations",
+    "headline": "Study links a pembrolizumab combination to longer survival in metastatic nonsquamous lung cancer",
+    "summary": "The 2018 KEYNOTE-189 study compared pembrolizumab plus pemetrexed and a platinum drug with chemotherapy alone in previously untreated metastatic nonsquamous non-small-cell lung cancer without sensitizing EGFR or ALK alterations. The combination improved overall and progression-free survival in that study population. These findings do not establish the same result for squamous disease, adjuvant treatment after surgery, or regimens adding other investigational agents or radiation.",
+    "aliases": [],
+    "search_phrases": [],
+    "status": "phase_3",
+    "evidence_stage": "late_human"
+  },
+  "prepare": {
+    "elapsed_seconds_for_two_claim_batch": 25.51,
+    "registry_search": "refused: ClinicalTrials.gov reports Too complicated query for the full condition; existing seven accepted trial records remain",
+    "trial_readings": {
+      "unchanged_not_read_again": 7,
+      "newly_read": 0
+    },
+    "status": "phase_3",
+    "remaining_work": "Handle the registry condition-query limit without dropping clinical scope from match scoring."
+  }
+}
