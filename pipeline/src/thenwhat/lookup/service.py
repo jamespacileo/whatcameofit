@@ -419,8 +419,6 @@ def _tracked(session: Session, names: list[str], indication: str | None) -> list
     full_regimens = (
         primary_parts or named_parts or {one for one in _regimen_parts(names) if len(one) > 1}
     )
-    if len(full_regimens) > 1:
-        return []
     whole_names = [*names, *named_aliases]
     components = {(part,) for one in _regimen_parts(whole_names) if len(one) > 1 for part in one}
     slugs = [
@@ -430,7 +428,9 @@ def _tracked(session: Session, names: list[str], indication: str | None) -> list
         and not components & keys
         and (
             not full_regimens
-            or all(one in full_regimens for one in _regimen_parts(aliases) if len(one) > 1)
+            or len(full_regimens) == 1
+            and not any(len(one) > 1 for one in _regimen_parts(aliases))
+            or full_regimens <= {one for one in _regimen_parts(aliases) if len(one) > 1}
         )
     ]
     return list(dict.fromkeys(slugs))

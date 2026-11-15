@@ -312,9 +312,12 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
     // match outranks model-supplied aliases; these cannot add a component card.
     const associated = namedCards.length ? namedCards : cards
       .filter(card => card.keys.some(name => wanted.has(name)) && !card.keys.some(name => components.has(name)))
-      .filter(card => fullRegimens.size <= 1 && (!fullRegimens.size ||
-        regimenParts(card.claim.names ?? []).filter(parts => parts.length > 1)
-          .every(parts => fullRegimens.has(JSON.stringify(parts)))));
+      .filter(card => {
+        const sets = new Set(regimenParts(card.claim.names ?? []).filter(parts => parts.length > 1)
+          .map(parts => JSON.stringify(parts)));
+        return !fullRegimens.size || !sets.size && fullRegimens.size === 1 ||
+          [...fullRegimens].every(parts => sets.has(parts));
+      });
     const tracked = associated
       .map(({ slug, claim }) => ({ slug, headline: claim.headline, page: claim.page }))
       .sort((a, b) => a.slug.localeCompare(b.slug));

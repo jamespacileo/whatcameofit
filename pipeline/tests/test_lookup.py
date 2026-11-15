@@ -367,6 +367,7 @@ def test_tracked_cards_require_the_condition_and_whole_regimen(session: Session)
         ("EX-1 plus EX-2 plus EX-3", "obesity", ["EX-1 plus EX-2"], ["triple"]),
         ("TRIPLE-123", "obesity", ["PAIR-12"], ["triple"]),
         ("ONE-BRAND plus EX-2", "obesity", [], ["combined"]),
+        ("UNLISTED-PAIR", "obesity", ["EX-1 plus EX-2", "ONE-BRAND plus EX-2"], ["combined"]),
     ]:
         found = find(
             session,

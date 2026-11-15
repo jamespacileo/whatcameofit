@@ -275,6 +275,7 @@ test("tracked cards require the same condition and complete regimen without extr
     ["EX-1 plus EX-2 plus EX-3", "obesity", ["EX-1 plus EX-2"], ["triple"]],
     ["TRIPLE-123", "obesity", ["PAIR-12"], ["triple"]],
     ["ONE-BRAND plus EX-2", "obesity", [], ["combined"]],
+    ["UNLISTED-PAIR", "obesity", ["EX-1 plus EX-2", "ONE-BRAND plus EX-2"], ["combined"]],
   ]) {
     let reads = 0, scores = 0;
     const model = {
