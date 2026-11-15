@@ -3,11 +3,11 @@
 ## MODIFIED Requirements
 
 ### Requirement: Robots exclusion
-The system SHALL NOT read an article whose address the page reader answers is not allowed, whether because the site's robots.txt disallows it for the project's client or for any other reason the reader gives. The reason SHALL be shown to the operator.
+The system SHALL NOT read an article whose address the page reader answers is not allowed, for whatever reason the reader gives. Whether a site's robots.txt is a reason is the reader's to decide. The reason SHALL be shown to the operator.
 
 #### Scenario: Disallowed URL
-- **WHEN** an operator requests extraction for a URL that the site's robots.txt disallows
-- **THEN** the page is not fetched, the operator is told why, and is asked to supply the text directly
+- **WHEN** an operator requests extraction for a URL and the reader answers that it is not allowed because of the site's robots.txt
+- **THEN** the article is not read, the operator is told why, and is asked to supply the text directly
 
 #### Scenario: An address the reader refuses for another reason
 - **WHEN** an operator requests extraction for an address the reader answers is not allowed, for a reason other than robots.txt

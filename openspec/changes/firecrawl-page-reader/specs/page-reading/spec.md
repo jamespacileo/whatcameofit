@@ -47,28 +47,20 @@ The page reader's answer to a request SHALL be one of: the page was read; the ad
 - **WHEN** the reader answers in a form that is none of the four
 - **THEN** the run stops and reports the reader's answer as a fault of the reader, and the article stays due
 
-### Requirement: Conditions the reader must meet
-The pipeline SHALL be configured only with a page reader that has been checked to respect a news site's robots.txt, to identify the project's client to a news site, and to keep nothing of a page. How a social or video platform is read, and whether it is, SHALL be the reader's to decide. The result and its date SHALL be recorded in `docs/sources.md`, and the check SHALL be made again whenever the reader's rules or version change.
-
-#### Scenario: An address robots.txt disallows
-- **WHEN** the reader is asked for an address its site's robots.txt disallows for the project's client
-- **THEN** it answers not allowed
-
-#### Scenario: A post on a social platform
-- **WHEN** the reader is asked for a post on a social or video platform
-- **THEN** the pipeline takes whatever the reader answers, a page read or a refusal, and holds no rule of its own about that platform
-
-#### Scenario: Who the site sees
-- **WHEN** the reader asks a site for a page
-- **THEN** the request carries the project's contact User-Agent and goes through no means that hides the client
+### Requirement: What the reader must never do
+The pipeline SHALL be configured only with a page reader that has been checked to keep nothing of a page after it has answered, with the result and its date recorded in `docs/sources.md`. The check SHALL be made again whenever the reader's version or configuration changes. How a site is asked, whether its robots.txt is followed and how the request is made SHALL be the reader's to decide.
 
 #### Scenario: Nothing kept
 - **WHEN** the reader has answered a request
 - **THEN** it holds no copy of the page, and a second request for the same address asks the site again
 
-#### Scenario: The check has not been made
-- **WHEN** `docs/sources.md` holds no dated check of the reader in use
-- **THEN** the change that introduces or alters the reader is not accepted
+#### Scenario: A post on a social platform
+- **WHEN** the reader is asked for a post on a social or video platform
+- **THEN** the pipeline takes whatever the reader answers, a page read or a refusal, and holds no rule of its own about that platform
+
+#### Scenario: A site whose robots.txt disallows the address
+- **WHEN** the reader is asked for an address its site's robots.txt disallows
+- **THEN** the pipeline takes whatever the reader answers, and reads no robots.txt itself
 
 ### Requirement: The pipeline holds a page only while it reads it
 The pipeline SHALL hold what the reader returns only as long as it holds any article text, and SHALL NOT write it to a log, a cache or a test fixture.

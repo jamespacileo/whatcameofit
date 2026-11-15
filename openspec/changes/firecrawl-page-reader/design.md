@@ -15,7 +15,7 @@ See `proposal.md` for why. What shapes the approach:
   - When the home machine is down, readers are shown a service-overloaded error.
 - Read from Firecrawl's documentation on 2026-11-15, not tried against a running service: `POST /v2/scrape` returns `markdown`, `html` (page furniture removed) or `rawHtml`; results are cached for two days unless `maxAge: 0` and `storeInCache: false`; `headers` can set the User-Agent; robots.txt is read "before it crawls a site", with no statement that this covers a single-page scrape.
 - The operator's guide to the service, given on 2026-11-15, is summarised under "The service as it is today". It is the standard Firecrawl v2 interface with a router in front of single scrapes. It has no answer of the kinds this design needs ("not allowed, because", "not now, until"), and its router reads platforms this project has decided not to read. So the service has work to do before this change can be applied.
-- Guardrails that bind here, wherever they are enforced: robots.txt and published rate limits; a contact User-Agent; article text kept nowhere; no model IDs in code; no fallback paths; no live requests in tests.
+- Guardrails that bind here: article text kept nowhere; no model IDs in code; no fallback paths; no live requests in tests. The guardrail on robots.txt, rate limits and the contact User-Agent is changed by the operator's decision (decision 6).
 
 ## The service as it is today
 
@@ -32,16 +32,16 @@ What this change needs and the service does not yet give:
 
 | Needed | Today | Consequence |
 | --- | --- | --- |
-| `not_allowed`, with a reason | No such answer. Nothing in the guide says robots.txt is read on a single scrape | The pipeline's robots.txt reading cannot be pruned until the service refuses what robots.txt disallows and says so |
+| `not_allowed`, with a reason | No such answer | Nothing is blocked by this: whether to refuse anything is the service's to decide (decision 6). The pipeline understands the answer when the service gives it |
 | A decision on the platforms `docs/sources.md` lists as not read | The router reads X, Reddit, Facebook, Instagram, Threads and YouTube captions | Decided by the operator on 2026-11-15: allowed, and how each is read is the service's responsibility (decision 9) |
 | `not_now`, with when | No such answer; a throttled site shows as a 500 | A site's limit cannot be told from the machine failing, so a throttled site would stop a whole run |
 | The site's status for a page not served | `metadata.statusCode` on a normal scrape (Firecrawl's field; to confirm) | Likely met |
-| The client identified to the site | Not stated | To check; `headers` can carry the contact User-Agent if the service passes it on |
+| The client identified to the site | Not stated | The service's to decide (decision 6) |
 | Nothing kept | Not stated; Firecrawl caches for two days by default | The pipeline sends `maxAge: 0` and `storeInCache: false`; the service's queue and logs are checked |
 | A post's author never returned | Post routes return the author | Matters for the posts prune, not for this change |
 | No silent second route | The router falls back to a normal scrape when a route fails | A fallback of the kind the operator's rule asks to be flagged. It decides nothing in this change, which sends no post to the router |
 
-The service is shared with the operator's other projects, which may not want what this project needs (robots.txt respected on news sites, nothing cached). So what this project needs is best held in the service as a named set of rules that a caller asks for by name. The pipeline then names its rule set and still holds no rule about any site.
+The one thing this project needs of every request is that nothing is kept, and it asks for that itself with `maxAge: 0` and `storeInCache: false`. So no rule set by name is needed in the service.
 
 ## Goals / Non-Goals
 
@@ -75,13 +75,13 @@ What the pipeline needs, whatever the wire format:
 | Outcome | Carries | The pipeline |
 | --- | --- | --- |
 | `read` | the page's HTML as drawn, its main content, the final address, an archive address if the copy came from one | reads it |
-| `not_allowed` | a reason code and words for the operator (robots.txt, platform terms, the service's own list) | extraction: `PasteNeeded` with the reason. Lead: cannot be read, with the reason, not tried again. Outlets report: refused |
+| `not_allowed` | a reason in words for the operator, whatever the service's reason is | extraction: `PasteNeeded` with the reason. Lead: cannot be read, with the reason, not tried again. Outlets report: refused |
 | `not_now` | when the site may be asked again, and why (rate limit, rules could not be read) | lead stays due, no attempt counted, the run goes on with other sites. Extraction: tells the operator when |
 | `not_served` | the site's status | as today for a page that could not be retrieved; the outlets report shows the status |
 
 Anything else, or no answer, is the reader failing (decision 4).
 
-On the wire, as far as the guide settles it: the request is `POST /v2/scrape` with `formats: ["rawHtml", "html"]`, `maxAge: 0`, `storeInCache: false`, and the name of this project's rule set once the service has one. `read` is `success` with `metadata.statusCode` 200. `not_served` is `success` with another status. `not_allowed` and `not_now` have no form yet; task 1.1 is the service gaining them. The pipeline never asks for `json`, `summary` or `describeImages`, and never uses batch or crawl.
+On the wire, as far as the guide settles it: the request is `POST /v2/scrape` with `formats: ["rawHtml", "html"]`, `maxAge: 0`, `storeInCache: false`. `read` is `success` with `metadata.statusCode` 200. `not_served` is `success` with another status. `not_allowed` and `not_now` have no form in the service yet. The pipeline will understand this one, proposed to the service: `success: false` with `code: "NOT_ALLOWED"` or `code: "NOT_NOW"`, a `reason` in words, and for `NOT_NOW` a `retryAfter` in seconds. Until the service sends them, a site it will not or cannot read shows as `not_served` or as the reader failing. The pipeline never asks for `json`, `summary` or `describeImages`, and never uses batch or crawl.
 
 Success is not trusted as good content. The pipeline keeps its own checks on what came back: a body under the existing length is thin, and a page with no headline or date is not read. Those are checks on a page, not rules about a site.
 
@@ -101,16 +101,21 @@ Not configured: the command refuses, as it does with no contact address. Unreach
 
 The read step's source becomes `reader`, with one configured allowance, so `source-allowances` still holds: the plan shows it, and a missing allowance refuses the run. The `outlet:` sources and `outlet_source` are removed. The allowance is a ceiling on how hard the pipeline drives the home machine; spacing per site is the reader's. The machine takes at most 4 requests in flight and is shared with other projects, so the pipeline's reads side by side are capped at 2 by a setting, and the request timeout is 120 seconds.
 
-### 6. The guardrails become a conformance check
+### 6. Whether and how a site is asked is the service's decision
 
-The pipeline can no longer show by its own code that robots.txt was respected or the client identified. So the reader is checked, by hand, against the running service, and the dated result is written into its entry in `docs/sources.md`:
+The operator decided on 2026-11-15, asked whether robots.txt on ordinary news sites should also be left to the service: "Service decides". With decision 9 this means the project no longer holds, checks or promises anything about robots.txt, crawl delays, per-site rate limits or how the client presents itself to a site. The service does what its operator has set it to do, and answers `not_allowed` or `not_now` where it chooses to. Recorded in `docs/adr/0006`.
 
-- an address a site's robots.txt disallows is answered `not_allowed`;
-- a request-echo page shows the contact User-Agent, and no stealth proxy is in use;
-- a second read of one page is not served from a kept copy, and the service's queue and logs hold no page text after the answer;
+The assistant's reading, not the operator's words: "service decides" covers the contact User-Agent and proxies too, since they are part of how a site is asked. The pipeline still sends its contact User-Agent to the registries and literature indexes it asks directly; nothing about `sources/` changes.
+
+What stays the project's own, because it is about what the project keeps and not about fetching: no article or post text is kept. That is checked against the running service, by hand, with the dated result in the reader's entry in `docs/sources.md`:
+
+- a second read of one page is not served from a kept copy;
+- the service's queue and logs hold no page text after the answer;
 - a page drawn by scripts comes back as drawn.
 
-The check is repeated when the service's rules or version change. `docs/sources.md` stays the record of what was decided about each source and when; the service is where it is carried out.
+The check is repeated when the service's version or configuration changes.
+
+What changes outside the code, in task 4.4: the guardrail in `CLAUDE.md` and in `openspec/config.yaml`, the README's lines on robots.txt, and the outlet entry in `docs/sources.md` that says "robots.txt decides". The site's wording that mentions robots.txt (`site/src/lib/live-lookup.mjs`) belongs to the Worker's change.
 
 ### 7. Configuration
 
@@ -151,10 +156,11 @@ Kept, because they are not rules about fetching: `backfill/address.py` and `site
 
 ## Risks / Trade-offs
 
-- [The project's guardrails now rest on a service this repository does not contain] → Decision 6: a dated check in `docs/sources.md`, repeated on change. The pipeline's tests cover its handling of each answer, not the service's rules.
+- [The project no longer promises that robots.txt is followed] → The operator's decision (ADR 0006). No public page may go on saying it is; task 4.4 finds and corrects every such line.
 - [The reader is a single point of failure] → Accepted by the operator. The run stops with a clear reason and records stay due.
 - [A `not_now` for a busy site could leave leads due for a long time] → They cost nothing while due; the funnel report counts them.
-- [The service cannot yet answer `not_allowed` or `not_now`] → Task 1.1: the service gains them first. Until then nothing is pruned and the pipeline keeps reading robots.txt itself.
+- [A site the pipeline refused before is now read, because the service does not refuse it] → Intended by the operator's decision. Task 5.2 lists every outlet that moves from Refused to Read, for the operator to see before merging.
+- [A throttled site shows as the reader failing and stops a run, until the service answers `not_now`] → Safe: records stay due. Proposed to the service in decision 2.
 - [A challenge or login page comes back as success and is read as an article] → The pipeline's own thin, headline and date checks stay. The outlets report before and after shows any outlet whose Read count rises on pages that are not articles; task 5.2 samples them.
 - [The tunnel exposes the reader] → Decision 8.
 - [Content hashes change for articles read again] → Nothing compares a new hash with an old one to decide whether to read; task 3.5 verifies that.
@@ -162,7 +168,7 @@ Kept, because they are not rules about fetching: `backfill/address.py` and `site
 
 ## Migration Plan
 
-1. Agree the answer format with the service and run the conformance check (tasks 1.1, 1.2).
+1. Offer the answer format to the service and run the keep-nothing check (tasks 1.1, 1.2).
 2. Run `thenwhat outlets` on main and keep the report as the baseline.
 3. Land the change. Remove the `outlet:` rows' use; the allowance-use table needs no migration, old rows are simply no longer read.
 4. Run `thenwhat outlets` again and compare.
@@ -170,6 +176,4 @@ Kept, because they are not rules about fetching: `backfill/address.py` and `site
 
 ## Open Questions
 
-- **Robots.txt on news sites.** Decision 9 hands social and video platforms to the service. This design assumes robots.txt is still to be respected for ordinary news sites (the-sun.com is refused today and stays refused). The operator has not said otherwise; if the service is to decide that too, decision 6 and one requirement change.
-
-- **Stealth proxies.** medicalxpress.com answers the identified client with 403. This change's conformance check forbids hiding the client, so it stays unread. Whether that is the standing answer is the operator's; it changes nothing in this change.
+- None that changes this change. Whether the service uses stealth proxies, for medicalxpress.com or any site, is now the service's (decision 6).
