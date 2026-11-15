@@ -329,7 +329,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
   async function send(scope, request, { reuse = false, key = null, provisional = false } = {}) {
     if (!await current(scope)) { scope.showPage({ kind: "refused", code: "page_changed" }); return null; }
     if (reuse && key) {
-      const saved = reusable(results, tab.key, key, Date.now());
+      const saved = reusable(results, tab.key, key, Date.now(), index);
       if (saved) { scope.showPage(resultState(saved.found, saved.at, timingsOf({ reused_ms: scope.elapsed() }))); return saved.found; }
     }
     // A staged answer is asked for; a service that answers in one piece is read as before.
@@ -389,7 +389,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     try {
       const key = !request.selectionOnly && request.contentFingerprint ? request.contentFingerprint : null;
       if (reuse && key) {
-        const saved = reusable(results, tab.key, key, Date.now());
+        const saved = reusable(results, tab.key, key, Date.now(), index);
         if (saved) { scope.showPage(resultState(saved.found, saved.at, timingsOf({ reused_ms: scope.elapsed() }))); return; }
       }
       if (reuse && request.pageUrl && !request.selectionOnly) {

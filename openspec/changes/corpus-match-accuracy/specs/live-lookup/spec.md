@@ -4,6 +4,25 @@ Associates automatic article and post lookups with existing knowledge cards only
 
 ## ADDED Requirements
 
+### Requirement: Reused clinical answers use the available publication index
+Reused clinical answers SHALL recompute tracked-claim associations using the fresh lookup's whole-intervention and exact-condition comparison. Shared answers SHALL use the current static index; local answers SHALL use the extension's loaded index. Reuse SHALL preserve the clinical reading, trial scores, check time, lifetime and index refresh policy, without repeating model, registry or paper work. Exact source-address responses and non-treatment answers SHALL remain separate.
+
+#### Scenario: A card is published after a clinical answer was saved
+- **WHEN** a completed answer names the exact whole intervention and condition of a card newly present in the available index
+- **THEN** reuse includes that card without another paid lookup and retains the original check time
+
+#### Scenario: A card is removed or its indication is corrected
+- **WHEN** a saved association is absent or no longer matches the available index
+- **THEN** the reused answer omits it without changing its trial results
+
+#### Scenario: An available card covers only a component or another setting
+- **WHEN** a saved answer concerns a complete regimen for a particular patient setting
+- **THEN** reuse does not associate a component card or a card for a different setting
+
+#### Scenario: The service index fails or stalls
+- **WHEN** the service cannot obtain its current static index within 500 milliseconds
+- **THEN** it still returns the completed saved clinical answer, with no unverified card associations
+
 ### Requirement: Mentioned records do not imply a possible match
 The site and extension SHALL count and lead with valid scored `match` candidates at or above the existing display threshold. Other cited records SHALL appear in a separate collapsed section marked as unestablished matches, retaining title, link, confidence and citation explanation. They SHALL NOT suppress the no-match notice or increase the possible-match count.
 
