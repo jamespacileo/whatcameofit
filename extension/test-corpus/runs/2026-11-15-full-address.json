@@ -7388,16 +7388,16 @@
     "A041": {
       "url": "https://health.yahoo.com/conditions/cancer/pancreatic-cancer/articles/pancreatic-cancer-drug-nearly-doubles-195720621.html",
       "mode": "production-address",
-      "checked_at": "2026-11-15T16:40:24.796Z",
+      "checked_at": "2026-11-15T17:26:23.423Z",
       "http": 200,
       "ms": null,
-      "release_commit": "0b5eb2a71ef99f7a486062832f54dfd768aa272a",
-      "worker_version": "8f6278b2-4a8a-468e-b1c6-5e829e6de47a",
+      "release_commit": "299f3002676cecd2304e7f7c60af327c0052725b",
+      "worker_version": "e6bc2182-5f32-41e4-a8a0-a663f42f01aa",
       "timing_note": "Paced queue; no latency claim.",
       "body": {
         "about_a_treatment": true,
         "treatment": "daraxonrasib",
-        "condition": "Metastatic pancreatic cancer that has progressed after prior treatment",
+        "condition": "Metastatic pancreatic cancer after progression on a prior treatment",
         "names": [
           "daraxonrasib"
         ],
@@ -7412,7 +7412,7 @@
         "details": {
           "trial_name": null,
           "participants": null,
-          "sponsor": null
+          "sponsor": "Revolution Medicines"
         },
         "tracked": [],
         "candidates": [
@@ -7421,126 +7421,159 @@
             "score": 0,
             "answer": "other_indication",
             "agrees": [
-              "stated"
+              "stated",
+              "sponsor"
             ]
           },
           {
             "id": "NCT06625320",
             "score": 0.99,
             "answer": "match",
-            "agrees": []
+            "agrees": [
+              "sponsor"
+            ]
           },
           {
             "id": "NCT07573215",
-            "score": 0.85,
+            "score": 0.64,
             "answer": "match",
-            "agrees": []
+            "agrees": [
+              "sponsor"
+            ]
           },
           {
             "id": "NCT06445062",
-            "score": 0.45,
-            "answer": "other_indication",
-            "agrees": []
-          },
-          {
-            "id": "NCT06040541",
-            "score": 0.4,
-            "answer": "other_indication",
-            "agrees": []
-          },
-          {
-            "id": "NCT06922591",
-            "score": 0.37,
-            "answer": "other_indication",
-            "agrees": []
+            "score": 0.62,
+            "answer": "match",
+            "agrees": [
+              "sponsor"
+            ]
           },
           {
             "id": "NCT05379985",
-            "score": 0.29,
+            "score": 0.47,
             "answer": "other_indication",
-            "agrees": []
-          },
-          {
-            "id": "NCT07492680",
-            "score": 0.28,
-            "answer": "other_indication",
-            "agrees": []
+            "agrees": [
+              "sponsor"
+            ]
           },
           {
             "id": "NCT07349537",
-            "score": 0.27,
+            "score": 0.32000000000000006,
             "answer": "other_indication",
-            "agrees": []
+            "agrees": [
+              "sponsor"
+            ]
           },
           {
-            "id": "NCT07756281",
-            "score": 0.18,
+            "id": "NCT06040541",
+            "score": 0.31,
             "answer": "other_indication",
-            "agrees": []
-          },
-          {
-            "id": "NCT06360354",
-            "score": 0.17,
-            "answer": "other_indication",
-            "agrees": []
+            "agrees": [
+              "sponsor"
+            ]
           },
           {
             "id": "NCT06128551",
-            "score": 0.14,
+            "score": 0.27,
             "answer": "other_indication",
-            "agrees": []
+            "agrees": [
+              "sponsor"
+            ]
           },
           {
-            "id": "NCT07895498",
-            "score": 0.09,
+            "id": "NCT07756281",
+            "score": 0.05,
             "answer": "not_a_match",
-            "agrees": []
-          },
-          {
-            "id": "NCT06881784",
-            "score": 0.01,
-            "answer": "other_indication",
-            "agrees": []
-          },
-          {
-            "id": "NCT07252232",
-            "score": 0.01,
-            "answer": "other_indication",
-            "agrees": []
+            "agrees": [
+              "sponsor"
+            ]
           },
           {
             "id": "NCT07805954",
+            "score": 0.02,
+            "answer": "other_indication",
+            "agrees": [
+              "sponsor"
+            ]
+          },
+          {
+            "id": "NCT07793253",
             "score": 0.01,
             "answer": "other_indication",
-            "agrees": []
+            "agrees": [
+              "sponsor"
+            ]
           },
           {
             "id": "NCT06162221",
             "score": 0,
             "answer": "other_indication",
-            "agrees": []
+            "agrees": [
+              "sponsor"
+            ]
+          },
+          {
+            "id": "NCT06881784",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": [
+              "sponsor"
+            ]
+          },
+          {
+            "id": "NCT06922591",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": [
+              "sponsor"
+            ]
+          },
+          {
+            "id": "NCT07252232",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": [
+              "sponsor"
+            ]
           },
           {
             "id": "NCT07397338",
             "score": 0,
+            "answer": "not_a_match",
+            "agrees": [
+              "sponsor"
+            ]
+          },
+          {
+            "id": "NCT07898813",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": [
+              "sponsor"
+            ]
+          },
+          {
+            "id": "NCT06360354",
+            "score": 0.3,
             "answer": "other_indication",
             "agrees": []
           },
           {
-            "id": "NCT07793253",
-            "score": 0,
+            "id": "NCT07492680",
+            "score": 0.14,
             "answer": "other_indication",
             "agrees": []
           },
           {
             "id": "NCT07819838",
-            "score": 0,
+            "score": 0.02,
             "answer": "other_indication",
             "agrees": []
           },
           {
-            "id": "NCT07898813",
-            "score": 0,
+            "id": "NCT07895498",
+            "score": 0.02,
             "answer": "other_indication",
             "agrees": []
           },
@@ -7565,13 +7598,31 @@
               "linked": true
             },
             {
-              "id": "https://openalex.org/W7213560921",
-              "title": "Cost-Effectiveness of Daraxonrasib vs Chemotherapy in Previously Treated Metastatic Pancreatic Adenocarcinoma",
+              "id": "https://openalex.org/W7172425797",
+              "title": "Daraxonrasib: A Breakthrough in Pancreatic Ductal Adenocarcinoma",
               "source": "openalex",
               "year": 2026,
-              "kind": "preprint",
-              "journal": "medRxiv",
-              "url": "https://doi.org/10.64898/2026.09.16.26363246"
+              "kind": "article",
+              "journal": "Cureus",
+              "url": "https://doi.org/10.7759/cureus.113927"
+            },
+            {
+              "id": "https://openalex.org/W7225126122",
+              "title": "RASONQUE (daraxonrasib)",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "editorial",
+              "journal": "Clinical Therapeutics",
+              "url": "https://doi.org/10.1016/j.clinthera.2026.10.006"
+            },
+            {
+              "id": "https://openalex.org/W7214194264",
+              "title": "Daraxonrasib: The first-in-class RAS(ON) multi-selective inhibitor approved for treatment of metastatic pancreatic adenocarcinoma",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "article",
+              "journal": "Drug Discoveries & Therapeutics",
+              "url": "https://doi.org/10.5582/ddt.2026.01067"
             },
             {
               "id": "https://openalex.org/W7213235776",
@@ -7583,13 +7634,13 @@
               "url": "https://doi.org/10.62051/ndcdrx21"
             },
             {
-              "id": "https://openalex.org/W7204466430",
-              "title": "Allele-Specific Mechanisms Guide Salvage Therapy to Overcome Daraxonrasib Resistance in Pancreatic Cancer",
+              "id": "https://openalex.org/W7213560921",
+              "title": "Cost-Effectiveness of Daraxonrasib vs Chemotherapy in Previously Treated Metastatic Pancreatic Adenocarcinoma",
               "source": "openalex",
               "year": 2026,
-              "kind": "article",
-              "journal": "Cancer Research",
-              "url": "https://doi.org/10.1158/0008-5472.can-26-1181"
+              "kind": "preprint",
+              "journal": "medRxiv",
+              "url": "https://doi.org/10.64898/2026.09.16.26363246"
             },
             {
               "id": "https://openalex.org/W7207804980",
@@ -7610,6 +7661,15 @@
               "url": "https://doi.org/10.2139/ssrn.7445307"
             },
             {
+              "id": "https://openalex.org/W7204466430",
+              "title": "Allele-Specific Mechanisms Guide Salvage Therapy to Overcome Daraxonrasib Resistance in Pancreatic Cancer",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "article",
+              "journal": "Cancer Research",
+              "url": "https://doi.org/10.1158/0008-5472.can-26-1181"
+            },
+            {
               "id": "https://openalex.org/W7202180933",
               "title": "Acquired resistance to the RAS(ON) multi-selective inhibitor daraxonrasib guides rational combination therapy strategies in pancreatic cancer",
               "source": "openalex",
@@ -7619,40 +7679,13 @@
               "url": "https://doi.org/10.1038/s41591-026-04537-w"
             },
             {
-              "id": "https://openalex.org/W7211888909",
-              "title": "RAS-targeted therapies for pancreatic cancer",
-              "source": "openalex",
-              "year": 2026,
-              "kind": "review",
-              "journal": "ESMO Gastrointestinal Oncology",
-              "url": "https://doi.org/10.1016/j.esmogo.2026.100414"
-            },
-            {
-              "id": "https://openalex.org/W7220714476",
-              "title": "Pancreatic Cancer KRAS Breakthrough: Drug Graveyard No More",
+              "id": "https://openalex.org/W7171360267",
+              "title": "Oncogenic Kras targeting with MRTX1133 or Daraxonrasib specifically synergize with anti-CTLA4 to promote anti-tumor immunity in pancreatic cancer",
               "source": "openalex",
               "year": 2026,
               "kind": "article",
-              "journal": "Clinical Cancer Research",
-              "url": "https://doi.org/10.1158/1078-0432.ccr-25-4177"
-            },
-            {
-              "id": "https://openalex.org/W7128534010",
-              "title": "Phase II Trial of Vemurafenib and Sorafenib Combination in Advanced KRAS-Mutated Metastatic Pancreatic Cancer",
-              "source": "openalex",
-              "year": 2026,
-              "kind": "article",
-              "journal": "Journal of Immunotherapy and Precision Oncology",
-              "url": "https://doi.org/10.36401/jipo-25-20"
-            },
-            {
-              "id": "https://openalex.org/W7160500954",
-              "title": "Pancreatic cancer",
-              "source": "openalex",
-              "year": 2026,
-              "kind": "review",
-              "journal": "Nature Reviews Disease Primers",
-              "url": "https://doi.org/10.1038/s41572-026-00699-6"
+              "journal": "Nature Communications",
+              "url": "https://doi.org/10.1038/s41467-026-75960-3"
             }
           ],
           "organisations": [],
@@ -16942,9 +16975,12 @@
     "A077": {
       "url": "https://www.pharmacytimes.com/view/bimagrumab-semaglutide-combination-achieves-significant-weight-loss-while-preserving-muscle-mass",
       "mode": "production-address",
-      "checked_at": "2026-11-15T14:41:21.143Z",
+      "checked_at": "2026-11-15T17:26:43.930Z",
       "http": 200,
-      "ms": 21066,
+      "ms": null,
+      "release_commit": "299f3002676cecd2304e7f7c60af327c0052725b",
+      "worker_version": "e6bc2182-5f32-41e4-a8a0-a663f42f01aa",
+      "timing_note": "Paced queue; no latency claim.",
       "body": {
         "about_a_treatment": true,
         "treatment": "Bimagrumab plus semaglutide",
@@ -16953,8 +16989,7 @@
           "Bimagrumab plus semaglutide"
         ],
         "known_names": [
-          "BYM338",
-          "NN9535"
+          "BYM338"
         ],
         "registry_numbers": [
           "NCT05616013"
@@ -16970,7 +17005,7 @@
         "candidates": [
           {
             "id": "NCT05616013",
-            "score": 0.75,
+            "score": 0.98,
             "answer": "match",
             "agrees": [
               "stated",
@@ -16979,50 +17014,14 @@
           },
           {
             "id": "NCT07920887",
-            "score": 0.02,
+            "score": 0,
             "answer": "not_a_match",
             "agrees": [
               "participants"
             ]
           },
           {
-            "id": "NCT00813020",
-            "score": 0.02,
-            "answer": "not_a_match",
-            "agrees": []
-          },
-          {
             "id": "NCT01669174",
-            "score": 0.02,
-            "answer": "not_a_match",
-            "agrees": []
-          },
-          {
-            "id": "NCT00833716",
-            "score": 0.01,
-            "answer": "not_a_match",
-            "agrees": []
-          },
-          {
-            "id": "NCT01433263",
-            "score": 0.01,
-            "answer": "not_a_match",
-            "agrees": []
-          },
-          {
-            "id": "NCT01601600",
-            "score": 0.01,
-            "answer": "other_indication",
-            "agrees": []
-          },
-          {
-            "id": "NCT01925209",
-            "score": 0.01,
-            "answer": "other_indication",
-            "agrees": []
-          },
-          {
-            "id": "NCT02152761",
             "score": 0.01,
             "answer": "not_a_match",
             "agrees": []
@@ -17034,26 +17033,14 @@
             "agrees": []
           },
           {
-            "id": "NCT02333331",
-            "score": 0.01,
-            "answer": "not_a_match",
-            "agrees": []
-          },
-          {
             "id": "NCT02468674",
             "score": 0.01,
             "answer": "not_a_match",
             "agrees": []
           },
           {
-            "id": "NCT00696657",
-            "score": 0,
-            "answer": "not_a_match",
-            "agrees": []
-          },
-          {
-            "id": "NCT00851773",
-            "score": 0,
+            "id": "NCT03005288",
+            "score": 0.01,
             "answer": "not_a_match",
             "agrees": []
           },
@@ -17064,19 +17051,43 @@
             "agrees": []
           },
           {
+            "id": "NCT01433263",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01601600",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
             "id": "NCT01868685",
             "score": 0,
-            "answer": "other_indication",
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01925209",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02152761",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02333331",
+            "score": 0,
+            "answer": "not_a_match",
             "agrees": []
           },
           {
             "id": "NCT02573467",
-            "score": 0,
-            "answer": "other_indication",
-            "agrees": []
-          },
-          {
-            "id": "NCT03005288",
             "score": 0,
             "answer": "not_a_match",
             "agrees": []
@@ -17205,8 +17216,7 @@
             "openalex": "ok",
             "ror": "not_needed"
           }
-        },
-        "post": null
+        }
       }
     },
     "A078": {
