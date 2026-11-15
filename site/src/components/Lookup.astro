@@ -293,9 +293,13 @@ const sentenceJson = sentences
       if (shown.marked) block.append(element("p", LIVE.trackedLead));
       block.append(list);
     }
-    if (shown.likely.length > 0) {
+    for (const [records, label, separate] of [
+      [shown.likely, LIVE.likelyLead, false],
+      [shown.mentioned, LIVE.mentionedLead, true],
+    ] as const) {
+      if (!records.length) continue;
       const list = element("ul", undefined, "plain match-list live-matches");
-      for (const record of shown.likely) {
+      for (const record of records) {
         const link = element("a", record.title) as HTMLAnchorElement;
         link.href = record.url;
         link.rel = "noopener";
@@ -309,7 +313,13 @@ const sentenceJson = sentences
         item.append(about, confidence);
         list.append(item);
       }
-      block.append(element("p", LIVE.likelyLead), list);
+      if (separate) {
+        const panel = element("details", undefined, "research-results");
+        panel.append(element("summary", label), list);
+        block.append(panel);
+      } else {
+        block.append(element("p", label), list);
+      }
     }
     if (shown.none) block.append(element("p", shown.none));
     // Said beside the list it qualifies, never folded away.
