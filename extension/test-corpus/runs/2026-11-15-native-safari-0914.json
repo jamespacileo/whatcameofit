@@ -1,0 +1,26 @@
+{
+  "row": "A018",
+  "checked_at": "2026-11-15T22:36:13Z",
+  "timestamp_kind": "Verification recorded immediately after closing the tested popup and owned article tab",
+  "version": "0.9.14 (23)",
+  "release_commit": "fb70f630e6880b99c80f2aad455ac1f57d64797b",
+  "native_settings": "0.9.14 displayed and enabled",
+  "site_content_release": "f616aaa5fe040e2211bdf7913d3376f203148693",
+  "method": "Installed Safari extension on the original Dana-Farber A018 URL",
+  "final_outcome": "Exact tracked card shown on reopening, including Approved, first reported 31 May 2026, software/person-check disclosure and evidence link",
+  "card": "daraxonrasib-previously-treated-metastatic-pancreatic-cancer",
+  "registry_search_on_final_open": false,
+  "initial_open": {
+    "kind": "live answer before the loaded index refreshed",
+    "treatment": "daraxonrasib",
+    "condition": "Previously treated metastatic pancreatic cancer",
+    "card_correct": true,
+    "top_trial": "NCT06625320",
+    "top_score": 0.98,
+    "displayed_matches": 3,
+    "remaining_concern": "Expanded-access NCT07573215 appeared at 64%; this live scoring concern is separate from the final tracked-card route"
+  },
+  "repeat_clinical_cache_reuse": "Not exercised on final reopen: exact source-address match took precedence",
+  "permissions_changed": false,
+  "rollback": "0.9.13 (22) retained"
+}
