@@ -16,6 +16,7 @@ from thenwhat.decide.core import Backend, Decision, DecisionFailed, decide, deci
 from thenwhat.domain import EntityType, EvidenceStage, TermRole
 from thenwhat.sources import openalex
 from thenwhat.sources.base import SourceRecord
+from thenwhat.terms.candidates import ENTRY_TERM_EQUALS_NAME
 
 EVIDENCE_STAGE = "evidence_stage"
 ENTITY_MATCH = "entity_match"
@@ -294,9 +295,18 @@ def term_ref(term: ClaimTerm) -> str:
 
 
 def term_text(term: ClaimTerm, definition: str | None) -> str:
-    """A subject term as it is shown to the backend: its label and its definition."""
+    """The vocabulary label, verified entry-name evidence and definition."""
+    entry_matches = [
+        reason for reason in term.reasons if reason.get("code") == ENTRY_TERM_EQUALS_NAME
+    ]
+    provenance = (
+        f"Vocabulary entry-name evidence: {json.dumps(entry_matches, ensure_ascii=False)}\n"
+        if entry_matches
+        else ""
+    )
     return (
         f"Candidate term ({term.source_name} {term.external_id}): {term.label}\n"
+        f"{provenance}"
         f"Definition: {definition or 'none given'}"
     )
 
@@ -322,7 +332,13 @@ def check_terms(
         backend,
         step=TERM_MATCH,
         intro=_claim_text(session, claim),
-        question=TERM_QUESTIONS[role],
+        question=TERM_QUESTIONS[role]
+        + (
+            "\nEntry-name evidence explains why the vocabulary record was proposed."
+            " An entry term can name a narrower concept within the record; it does not"
+            " by itself prove that the record is the same as the claim. Evaluate its"
+            " meaning and the whole claim, and retain uncertainty when evidence is insufficient."
+        ),
         items=[
             (ref, term_text(term, definition))
             for ref, (term, definition) in zip(refs, candidates, strict=True)

@@ -225,6 +225,7 @@ def link_terms(
     limit: int = 10,
     accept_above: float = 0.0,
     reject_below: float = 0.0,
+    rescore_pending: bool = False,
 ) -> TermsRun:
     """Gather the claim's candidate subject terms, score those without a score and
     decide them by rule, and keep the record of every approved term.
@@ -234,7 +235,9 @@ def link_terms(
     scored at or above `accept_above` is approved by rule (0 turns that off); one under
     `reject_below` is rejected by rule; the rest wait for review. A candidate that
     already has a score is left exactly as it is, so a link the operator rejected stays
-    rejected. A name equal to an entry term whose record the vocabulary did not give
+    rejected. An explicit `rescore_pending` rechecks undecided scored subject terms;
+    failed rereads leave their old score and fit intact. Approved/rejected links are
+    never rescored. A name equal to an entry term whose record the vocabulary did not give
     makes no candidate and is named in the run's result.
     """
     label_matches, unresolved = _label_matches(session, claim, vocabulary)
@@ -273,8 +276,9 @@ def link_terms(
     waiting = [
         term
         for term in terms_of(session, claim)
-        if term.score is None
+        if (term.score is None or (rescore_pending and term.reviewed_by is None))
         and term.review_state is ReviewState.PENDING
+        and term.fit is not TermFit.KIND
         and term.source_name == vocabulary.name
         and (term.role is not TermRole.INTERVENTION or name_key(term.label) not in components)
     ]
