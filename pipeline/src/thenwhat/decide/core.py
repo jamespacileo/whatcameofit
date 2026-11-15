@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Protocol
 from sqlalchemy.orm import Session
 
 from thenwhat.db.models import DecisionLog
-from thenwhat.llm.errors import LlmError
+from thenwhat.llm.errors import LlmCallFailed, LlmError
 
 if TYPE_CHECKING:
     from thenwhat.llm.client import Llm
@@ -67,6 +67,12 @@ class Decision:
 class DecisionFailed(Exception):
     """The backend gave no usable answer. Nothing is substituted for it."""
 
+    def __init__(self, problem: str | None, *, unreachable: bool = False) -> None:
+        super().__init__(problem)
+        # True when the call never reached the model or got no answer back: a fault of
+        # the connection, which says nothing about the item that was asked about.
+        self.unreachable = unreachable
+
 
 class UnknownBackend(Exception):
     pass
@@ -88,12 +94,14 @@ def decide(
         step=step, input_ref=input_ref, backend=backend.name, options=offered, created_at=now
     )
     answer: BackendAnswer | None = None
+    unreachable = False
     try:
         answer = backend.answer(step, state, offered)
         entry.model = answer.model
         problem = _problem(answer, offered)
     except LlmError as error:
         problem = str(error)
+        unreachable = isinstance(error, LlmCallFailed)
     except Exception as error:
         problem = f"The {backend.name} backend failed ({type(error).__name__})."
 
@@ -101,7 +109,7 @@ def decide(
         entry.error = problem
         session.add(entry)
         session.flush()
-        raise DecisionFailed(problem)
+        raise DecisionFailed(problem, unreachable=unreachable)
     return _record(session, entry, answer)
 
 
@@ -145,10 +153,12 @@ def decide_many(
         batch = items[start : start + size]
         answers: Sequence[BackendAnswer | None] = []
         failure: str | None = None
+        unreachable = False
         try:
             answers = answer_many(step, intro, question, [text for _, text in batch], offered)
         except LlmError as error:
             failure = str(error)
+            unreachable = isinstance(error, LlmCallFailed)
         except Exception as error:
             failure = f"The {backend.name} backend failed ({type(error).__name__})."
 
@@ -178,7 +188,7 @@ def decide_many(
             decisions.append(_record(session, entry, answer))
         session.flush()
         if problems:
-            raise DecisionFailed(problems[0])
+            raise DecisionFailed(problems[0], unreachable=unreachable)
     return decisions
 
 

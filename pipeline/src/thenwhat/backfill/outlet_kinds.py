@@ -134,6 +134,128 @@ PRESS_RELEASE = frozenset(
         "prweb.com",
     ]
 )
+# The name each listed outlet goes by, as a source article shows it: the name the
+# outlet uses for itself, in the form entered articles already carry ("ScienceDaily",
+# "The Guardian"). An article read from a link lead takes its outlet's name from here,
+# and a lead whose outlet has no name here is not read (openspec lead-reading). Every
+# domain listed above has a name; a test fails when one is added without.
+OUTLET_NAMES: dict[str, str] = {
+    # General news.
+    "abcnews.go.com": "ABC News",
+    "aljazeera.com": "Al Jazeera",
+    "apnews.com": "Associated Press",
+    "bbc.co.uk": "BBC News",
+    "bbc.com": "BBC News",
+    "bloomberg.com": "Bloomberg",
+    "cbc.ca": "CBC News",
+    "cbsnews.com": "CBS News",
+    "cidrap.umn.edu": "CIDRAP",
+    "cnbc.com": "CNBC",
+    "cnn.com": "CNN",
+    "ctvnews.ca": "CTV News",
+    "dailymail.co.uk": "Daily Mail",
+    "dailymail.com": "Daily Mail",
+    "economist.com": "The Economist",
+    "everydayhealth.com": "Everyday Health",
+    "forbes.com": "Forbes",
+    "foxnews.com": "Fox News",
+    "ft.com": "Financial Times",
+    "healthday.com": "HealthDay",
+    "healthline.com": "Healthline",
+    "independent.co.uk": "The Independent",
+    "latimes.com": "Los Angeles Times",
+    "livescience.com": "Live Science",
+    "medicalnewstoday.com": "Medical News Today",
+    "medicalxpress.com": "Medical Xpress",
+    "mirror.co.uk": "The Mirror",
+    "nautil.us": "Nautilus",
+    "nbcnews.com": "NBC News",
+    "newatlas.com": "New Atlas",
+    "news-medical.net": "News-Medical",
+    "newscientist.com": "New Scientist",
+    "newsweek.com": "Newsweek",
+    "npr.org": "NPR",
+    "nytimes.com": "The New York Times",
+    "reuters.com": "Reuters",
+    "sciencealert.com": "ScienceAlert",
+    "sciencedaily.com": "ScienceDaily",
+    "scientificamerican.com": "Scientific American",
+    "scitechdaily.com": "SciTechDaily",
+    "sky.com": "Sky News",
+    "statnews.com": "STAT",
+    "telegraph.co.uk": "The Telegraph",
+    "theatlantic.com": "The Atlantic",
+    "theconversation.com": "The Conversation",
+    "theguardian.com": "The Guardian",
+    "thetimes.co.uk": "The Times",
+    "time.com": "Time",
+    "usatoday.com": "USA Today",
+    "usnews.com": "U.S. News & World Report",
+    "washingtonpost.com": "The Washington Post",
+    "webmd.com": "WebMD",
+    "wired.com": "Wired",
+    "wsj.com": "The Wall Street Journal",
+    "yahoo.com": "Yahoo News",
+    # Health and clinical trade press.
+    "2minutemedicine.com": "2 Minute Medicine",
+    "ajmc.com": "AJMC",
+    "ascopost.com": "The ASCO Post",
+    "biocentury.com": "BioCentury",
+    "biopharmadive.com": "BioPharma Dive",
+    "biospace.com": "BioSpace",
+    "cancernetwork.com": "CancerNetwork",
+    "citeline.com": "Citeline",
+    "clinicaltrialsarena.com": "Clinical Trials Arena",
+    "contemporaryobgyn.net": "Contemporary OB/GYN",
+    "contemporarypediatrics.com": "Contemporary Pediatrics",
+    "dermatologytimes.com": "Dermatology Times",
+    "drugstorenews.com": "Drug Store News",
+    "drugtopics.com": "Drug Topics",
+    "endpts.com": "Endpoints News",
+    "fdanews.com": "FDAnews",
+    "fiercebiotech.com": "Fierce Biotech",
+    "fiercepharma.com": "Fierce Pharma",
+    "genengnews.com": "Genetic Engineering & Biotechnology News",
+    "hcplive.com": "HCPLive",
+    "healio.com": "Healio",
+    "hepmag.com": "Hep",
+    "hmpgloballearningnetwork.com": "HMP Global Learning Network",
+    "managedhealthcareexecutive.com": "Managed Healthcare Executive",
+    "mdedge.com": "MDedge",
+    "medicaldialogues.in": "Medical Dialogues",
+    "medpagetoday.com": "MedPage Today",
+    "medscape.com": "Medscape",
+    "mims.com": "MIMS",
+    "neurologylive.com": "NeurologyLive",
+    "onclive.com": "OncLive",
+    "oncologypipeline.com": "Oncology Pipeline",
+    "ophthalmologytimes.com": "Ophthalmology Times",
+    "outsourcing-pharma.com": "Outsourcing-Pharma",
+    "pharmaceutical-business-review.com": "Pharmaceutical Business Review",
+    "pharmaceutical-technology.com": "Pharmaceutical Technology",
+    "pharmacytimes.com": "Pharmacy Times",
+    "pharmaintelligence.informa.com": "Pharma Intelligence",
+    "pharmatimes.com": "PharmaTimes",
+    "pharmexec.com": "Pharmaceutical Executive",
+    "practicaldermatology.com": "Practical Dermatology",
+    "practicalneurology.com": "Practical Neurology",
+    "reachmd.com": "ReachMD",
+    "targetedonc.com": "Targeted Oncology",
+    "thepharmaletter.com": "The Pharma Letter",
+    "urologytimes.com": "Urology Times",
+    "urotoday.com": "UroToday",
+    # Press release wires.
+    "accesswire.com": "Accesswire",
+    "businesswire.com": "Business Wire",
+    "einpresswire.com": "EIN Presswire",
+    "eurekalert.org": "EurekAlert",
+    "globenewswire.com": "GlobeNewswire",
+    "newswire.com": "Newswire",
+    "prnewswire.co.uk": "PR Newswire",
+    "prnewswire.com": "PR Newswire",
+    "prweb.com": "PRWeb",
+}
+
 # Patient-community news sites of one publisher share this ending, for example
 # multiplesclerosisnewstoday.com. They report trials for patients of one condition.
 TRADE_ENDINGS = ("newstoday.com",)
@@ -157,3 +279,14 @@ def kind_of(domain: str) -> OutletKind:
     if domain.endswith(TRADE_ENDINGS):
         return OutletKind.TRADE_PRESS
     return OutletKind.UNKNOWN
+
+
+def name_of(domain: str) -> str | None:
+    """The display name of the listed outlet a domain belongs to, or None when the
+    outlet has no name: a domain on no list, or one listed only by its ending. No name
+    is made up from a domain."""
+    domain = domain.lower().removeprefix("www.")
+    for listed, name in OUTLET_NAMES.items():
+        if domain == listed or domain.endswith("." + listed):
+            return name
+    return None

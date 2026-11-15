@@ -43,11 +43,13 @@ def _is_due(attempt_limit: int) -> ColumnElement[bool]:
 def due_records(step: Step, attempt_limit: int) -> Select[Any]:
     """The records in the step's scope with no finished entry at its current version, or
     whose input changed since. A record that failed stays due until its attempts run out."""
+    order = getattr(step, "order", None)
     return (
         select(step.model)
         .outerjoin(WorkEntry, _entry_of(step))
         .where(step.scope(), _is_due(attempt_limit))
-        .order_by(step.model.id)
+        # A step may say which due records come first; the record's id settles the rest.
+        .order_by(*(order() if order is not None else ()), step.model.id)
     )
 
 

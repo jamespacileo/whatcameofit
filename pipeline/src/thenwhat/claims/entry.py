@@ -1,6 +1,7 @@
 """Manual entry of claims, source articles and promises. Behavior: openspec claims."""
 
 import re
+import unicodedata
 from datetime import date, datetime
 
 from sqlalchemy import func, select
@@ -102,6 +103,40 @@ def _check_slug(slug: str) -> None:
             f"Slug '{slug}' is not valid. Use lowercase letters, digits and single hyphens,"
             f" at most {MAX_SLUG_LENGTH} characters."
         )
+
+
+def slug_for(intervention: str, indication: str) -> str:
+    """The slug a rule makes for a claim from its intervention and indication: their
+    words in lower case, joined by hyphens, cut to the longest whole words that fit.
+    Letters with accents lose them; any other character outside the slug's set is a
+    break between words. Refuses when nothing usable is left."""
+    plain = unicodedata.normalize("NFKD", f"{intervention} {indication}")
+    plain = plain.encode("ascii", "ignore").decode().lower()
+    words = re.findall(r"[a-z0-9]+", plain)
+    slug = ""
+    for word in words:
+        longer = f"{slug}-{word}" if slug else word
+        if len(longer) > MAX_SLUG_LENGTH:
+            break
+        slug = longer
+    if not slug:
+        raise InvalidSlug(
+            f"No slug can be made from the intervention '{intervention}' and the "
+            f"indication '{indication}'."
+        )
+    return slug
+
+
+def free_slug_for(session: Session, intervention: str, indication: str) -> str:
+    """The slug the rule makes for a new claim. Refuses, naming the slug, when a claim
+    already has it: no other slug is tried in its place."""
+    slug = slug_for(intervention, indication)
+    if find_claim(session, slug) is not None:
+        raise SlugTaken(
+            f"The slug '{slug}', made by rule from the intervention '{intervention}' and "
+            f"the indication '{indication}', belongs to another claim."
+        )
+    return slug
 
 
 def _check_vertical(vertical: str) -> None:

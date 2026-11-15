@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backfill_support import NOW, add_trials, same_session
+from thenwhat.backfill import outlet_kinds
 from thenwhat.backfill.allowance import Allowances
 from thenwhat.backfill.errors import SourcePaused
 from thenwhat.backfill.leads import hit_rates
@@ -357,3 +358,30 @@ def test_trials_seeded_for_these_tests_are_in_the_steps_scope(session: Session):
     in_scope = session.scalars(select(RegistryTrial).where(NewsSearch().scope())).all()
 
     assert len(in_scope) == 2
+
+
+# --- outlet names ----------------------------------------------------------------------
+
+
+def test_every_listed_outlet_has_a_display_name_and_no_name_is_for_an_unlisted_one():
+    listed = outlet_kinds.GENERAL_NEWS | outlet_kinds.TRADE_PRESS | outlet_kinds.PRESS_RELEASE
+
+    assert set(outlet_kinds.OUTLET_NAMES) == listed
+    assert all(name == name.strip() and name for name in outlet_kinds.OUTLET_NAMES.values())
+
+
+@pytest.mark.parametrize(
+    ("domain", "name"),
+    [
+        ("theguardian.com", "The Guardian"),
+        ("www.bbc.co.uk", "BBC News"),
+        ("ca.news.yahoo.com", "Yahoo News"),
+        ("sciencedaily.com", "ScienceDaily"),
+        # Listed by its ending only, so it has a kind and no name.
+        ("multiplesclerosisnewstoday.com", None),
+        ("a-site-on-no-list.example", None),
+        ("notthebbc.com", None),
+    ],
+)
+def test_an_outlet_is_named_from_the_list_and_never_from_its_domain(domain, name):
+    assert outlet_kinds.name_of(domain) == name

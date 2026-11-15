@@ -4,6 +4,8 @@ from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import UTC, datetime
+from decimal import Decimal
+from pathlib import Path
 from typing import Annotated, Any
 
 import typer
@@ -14,6 +16,21 @@ from thenwhat.backfill.allowance import Allowances, AllowanceStatus
 from thenwhat.backfill.errors import BackfillError, SourceStop
 from thenwhat.backfill.leads import hit_rates
 from thenwhat.backfill.ledger import count
+from thenwhat.backfill.link_evaluation import (
+    TENTHS,
+    Figures,
+    evaluate,
+    label_lead,
+    label_leads,
+    sample_leads,
+    spot_check,
+)
+from thenwhat.backfill.link_funnel import funnel
+from thenwhat.backfill.link_load import load_links
+from thenwhat.backfill.link_read import LinkRead, ReadClient
+from thenwhat.backfill.link_readers import posts_of
+from thenwhat.backfill.link_report import IN_SCOPE_KINDS, screening_report
+from thenwhat.backfill.link_triage import DecisionClient, LinkTriage, Standing
 from thenwhat.backfill.mediacloud import MediaCloud
 from thenwhat.backfill.registered import registered_steps
 from thenwhat.backfill.registry_load import (
@@ -22,12 +39,28 @@ from thenwhat.backfill.registry_load import (
     load_trials,
 )
 from thenwhat.backfill.runner import RunReport, run_step
-from thenwhat.backfill.steps import Step, by_name, find_step
+from thenwhat.backfill.spend import (
+    PricesNotSet,
+    ceiling_check,
+    cost_of,
+    left_this_month,
+    prices_for,
+    records_covered,
+)
+from thenwhat.backfill.steps import (
+    NO_SOURCE,
+    ModelSpend,
+    Step,
+    asks_a_source,
+    by_name,
+    find_step,
+    model_spend_of,
+)
 from thenwhat.cli import session as cli_session
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.config import Settings, SourceAllowance
-from thenwhat.domain import OutletKind
+from thenwhat.domain import Decider, LeadVerdict, OutletKind
 from thenwhat.sources.base import SourceError
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 
@@ -69,16 +102,46 @@ def steps_for(settings: Settings) -> list[Step]:
 
 
 def make_allowances(settings: Settings) -> Allowances:
-    return Allowances(open_session, settings.allowances())
+    return Allowances(
+        open_session,
+        settings.allowances(),
+        outlet_interval_seconds=settings.outlet_interval_seconds,
+    )
 
 
 def make_registry(session: Session, settings: Settings) -> TrialList:
     return ClinicalTrials(session, contact_email=settings.contact_email)
 
 
+class NoClient:
+    """What a step that asks no source is given: it only has to count, and counts nothing."""
+
+    def __init__(self) -> None:
+        self.requests_made = 0
+
+
 def make_client(step: Step, settings: Settings, allowances: Allowances) -> Any:
     """What a step asks its source through. Refuses here, before any record is
     touched, when the source could not be asked at all."""
+    if step.source == NO_SOURCE:
+        return NoClient()
+    if isinstance(step, LinkTriage):
+        # Imported here: the model libraries are slow to load and most commands never
+        # need them.
+        from thenwhat.cli.resolve import make_backend
+
+        return DecisionClient(make_backend)
+    if isinstance(step, LinkRead):
+        from thenwhat.cli import extract, resolve
+
+        return ReadClient(
+            retriever=extract.make_retriever(),
+            allowances=allowances,
+            make_llm=extract.make_llm,
+            make_checker=extract.make_checker,
+            make_backend=resolve.make_backend,
+            make_research=resolve.make_research,
+        )
     if step.source == MediaCloud.name:
         client = MediaCloud(
             api_key=settings.mediacloud_api_key,
@@ -111,6 +174,30 @@ def _allowance_line(source: str, allowance: SourceAllowance, status: AllowanceSt
     return line
 
 
+def _dollars(amount: Decimal) -> str:
+    return f"${amount.quantize(Decimal('0.01'))}"
+
+
+def _spend_line(session: Session, settings: Settings, spend: ModelSpend, due: int) -> str:
+    """What a model step's due records would cost beside what is left of the month's
+    ceiling. No cost is given while a price is not configured."""
+    try:
+        prices = prices_for(settings, spend.door)
+    except PricesNotSet as missing:
+        return f"  calls a model: no cost can be given, {missing}"
+    cost = cost_of(spend, prices, due)
+    left = left_this_month(session, settings, datetime.now(UTC))
+    line = (
+        f"  calls a model: the due records need about {_dollars(cost)}; "
+        f"{_dollars(left)} of the month's {_dollars(settings.llm_monthly_budget_usd)} "
+        "ceiling is left"
+    )
+    covered = records_covered(spend, prices, left)
+    if covered is None or covered >= due:
+        return f"{line}, which covers them all"
+    return f"{line}, which covers {covered:,} of the {due:,} due records"
+
+
 @backfill_app.command("steps")
 def steps_command() -> None:
     """List the steps a backfill can run."""
@@ -136,9 +223,6 @@ def plan_command() -> None:
             for step in steps_for(settings):
                 counts = count(session, step, settings.backfill_attempt_limit)
                 total = session.scalar(select(func.count()).select_from(step.model)) or 0
-                allowance = allowances.of(step.source)
-                status = allowances.status(session, step.source)
-                requests = counts.due * step.requests_per_record
                 out.print(f"{step.name} (version {step.version})", markup=False)
                 out.print(
                     f"  in scope: {counts.in_scope:,} of {total:,} {step.record_kind} records"
@@ -146,22 +230,38 @@ def plan_command() -> None:
                     f"  failed: {counts.failed:,}  due: {counts.due:,}",
                     markup=False,
                 )
-                out.print(
-                    f"  the due records need {requests:,} requests, "
-                    f"{_hours(requests, allowance)} at the source's rate",
-                    markup=False,
-                )
-                out.print(_allowance_line(step.source, allowance, status), markup=False)
-                if requests > status.left:
-                    covered = status.left // step.requests_per_record
-                    periods = -(-(requests - status.left) // allowance.requests)
+                if asks_a_source(step):
+                    allowance = allowances.of(step.source)
+                    status = allowances.status(session, step.source)
+                    requests = counts.due * step.requests_per_record
                     out.print(
-                        f"  the allowance left covers {covered:,} of the {counts.due:,} due "
-                        f"records; the rest needs {periods:,} more "
-                        f"{'period' if periods == 1 else 'periods'} of "
-                        f"{allowance.period_hours:g} hours",
+                        f"  the due records need {requests:,} requests, "
+                        f"{_hours(requests, allowance)} at the source's rate",
                         markup=False,
                     )
+                    out.print(_allowance_line(step.source, allowance, status), markup=False)
+                    if requests > status.left:
+                        covered = status.left // step.requests_per_record
+                        periods = -(-(requests - status.left) // allowance.requests)
+                        out.print(
+                            f"  the allowance left covers {covered:,} of the {counts.due:,} due "
+                            f"records; the rest needs {periods:,} more "
+                            f"{'period' if periods == 1 else 'periods'} of "
+                            f"{allowance.period_hours:g} hours",
+                            markup=False,
+                        )
+                elif step.requests_per_record:
+                    pages = counts.due * step.requests_per_record
+                    out.print(
+                        f"  asks outlets for {pages:,} pages, each outlet at least "
+                        f"{settings.outlet_interval_seconds:g} seconds apart",
+                        markup=False,
+                    )
+                else:
+                    out.print("  asks no source: the due records need 0 requests", markup=False)
+                spend = model_spend_of(step)
+                if spend is not None:
+                    out.print(_spend_line(session, settings, spend, counts.due), markup=False)
                 if counts.needs_attention:
                     out.print(
                         f"  {counts.needs_attention:,} failed "
@@ -202,19 +302,36 @@ def run_command(
     settings = settings_or_exit()
     with refusals():
         step = find_step(steps_for(settings), step_name)
+        if getattr(step, "needs_limit", False) and limit is None:
+            raise BackfillError(
+                f"`{step.name}` publishes what it makes, so a run says how many records it "
+                "may process. Run it again with --limit."
+            )
+        check_ready = getattr(step, "check_ready", None)
+        if check_ready is not None:
+            with open_session() as session:
+                check_ready(session)
         allowances = make_allowances(settings)
-        allowances.of(step.source)
+        if asks_a_source(step):
+            allowances.of(step.source)
         clients = [make_client(step, settings, allowances) for _ in range(workers)]
         share = None if limit is None else -(-limit // workers)
+
+        def now() -> datetime:
+            return datetime.now(UTC)
+
+        # A step that calls a model stops when the month's ceiling is reached.
+        before_call = ceiling_check(settings, now) if model_spend_of(step) else None
 
         def work(client: Any) -> RunReport:
             return run_step(
                 open_session,
                 step,
                 client,
-                now=lambda: datetime.now(UTC),
+                now=now,
                 attempt_limit=settings.backfill_attempt_limit,
                 limit=share,
+                before_call=before_call,
             )
 
         if workers == 1:
@@ -279,6 +396,43 @@ def load_trials_command(
     )
 
 
+@backfill_app.command("load-links")
+def load_links_command(
+    platform: Annotated[
+        str, typer.Argument(help="Where the links were shared: hackernews or reddit.")
+    ],
+    file: Annotated[
+        Path,
+        typer.Argument(
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="A bulk file of that platform's posts, already on this machine.",
+        ),
+    ],
+) -> None:
+    """Load the article addresses people shared, from a bulk file of posts.
+
+    One link lead is kept per article address, with where and when it was shared. Who
+    shared it, the post's text and its comments are never read. No request is sent to
+    any platform or outlet, and nothing reaches the export. Loading a file again adds
+    nothing, so a load that was stopped is simply run again.
+    """
+    settings = settings_or_exit()
+    with refusals():
+        steps = steps_for(settings)
+        posts = posts_of(platform, file, communities=settings.chosen_subreddits())
+        report = load_links(open_session, platform, posts, steps)
+    out.print(
+        f"Read {report.read:,} posts from {file.name}: {report.new_leads:,} new link leads, "
+        f"{report.added_shares:,} more shares of leads already stored, "
+        f"{report.already_stored:,} already stored.",
+        markup=False,
+    )
+    for reason, number in sorted(report.skipped.items()):
+        out.print(f"  skipped, {reason.value}: {number:,}", markup=False)
+
+
 @backfill_app.command("leads")
 def leads_command() -> None:
     """Show how many searched trials have a news article, in all and by kind of outlet."""
@@ -301,3 +455,338 @@ def leads_command() -> None:
             f"  {number:,} ({rates.share(number)}%) have one from {KIND_WORDS[kind]}",
             markup=False,
         )
+
+
+@backfill_app.command("links")
+def links_command() -> None:
+    """Show what the loaded link leads are, by where they were shared: how many are on
+    a listed outlet, already tracked, and linked to stored claims and trials.
+
+    Sends no request and changes nothing.
+    """
+    settings_or_exit()
+    with refusals(), open_session() as session:
+        report = screening_report(session)
+    if report.screened == 0:
+        out.print(
+            "No link lead has been screened yet. Load a file with "
+            "`thenwhat backfill load-links`, then run `thenwhat backfill run link_screen`."
+        )
+        return
+    for place in report.places:
+        where = (
+            place.platform
+            if place.community == place.platform
+            else f"{place.platform} / {place.community}"
+        )
+        out.print(
+            f"{where}: {place.loaded:,} link leads loaded, {place.screened:,} screened",
+            markup=False,
+        )
+        kinds = ", ".join(f"{place.in_scope[kind]:,} {KIND_WORDS[kind]}" for kind in IN_SCOPE_KINDS)
+        out.print(
+            f"  in scope: {place.in_scope_total:,} ({place.share(place.in_scope_total)}%): {kinds}",
+            markup=False,
+        )
+        out.print(
+            f"  on an unlisted outlet: {place.unlisted:,} ({place.share(place.unlisted)}%)"
+            f"  already tracked: {place.already_tracked:,}",
+            markup=False,
+        )
+        out.print(
+            f"  linked to a claim: {place.linked_to_claim:,}"
+            f"  linked to a registry trial: {place.linked_to_trial:,}",
+            markup=False,
+        )
+    if report.unlisted_domains:
+        out.print("The unlisted domains with the most link leads:", markup=False)
+        for domain, number in report.unlisted_domains:
+            out.print(f"  {domain}  {number:,}", markup=False)
+
+
+def _triage_version(settings: Settings) -> int:
+    return find_step(steps_for(settings), LinkTriage.name).version
+
+
+@backfill_app.command("sample-leads")
+def sample_leads_command(
+    size: Annotated[int, typer.Option(min=10, help="How many leads to draw, in tens.")] = 200,
+    seed: Annotated[str, typer.Option(help="The same seed draws the same sample.")] = "1",
+    tenth: Annotated[
+        float | None,
+        typer.Option(
+            min=0.0,
+            max=0.9,
+            help="Draw every lead from the one tenth of the score range that starts here, "
+            "for example 0.0. Use it where one tenth holds most of the leads.",
+        ),
+    ] = None,
+) -> None:
+    """Draw scored link leads to label, in equal numbers from each tenth of the score
+    range and spread across platforms.
+
+    Leads you have already labelled are left out. The scores are not shown, so that a
+    label does not lean on them. Label each lead with `thenwhat backfill label-lead`.
+    """
+    settings = settings_or_exit()
+    with refusals(), open_session() as session:
+        sample = sample_leads(
+            session,
+            size=size,
+            seed=seed,
+            version=_triage_version(settings),
+            only_tenth=None if tenth is None else round(tenth * TENTHS),
+        )
+    if not sample.leads:
+        out.print(
+            "No scored link lead is waiting for a label. Run `thenwhat backfill run "
+            "link_triage` first."
+        )
+        return
+    for lead in sample.leads:
+        out.print(
+            f"{lead.lead_id}\t{lead.first_shared:%Y-%m-%d}\t{lead.outlet}\t{lead.title}\t{lead.url}",
+            markup=False,
+            soft_wrap=True,
+        )
+    where = (
+        f"{sample.per_tenth} from each tenth of the score range"
+        if tenth is None
+        else f"all from the tenth of the score range that starts at {tenth:.1f}"
+    )
+    out.print(f"{len(sample.leads):,} leads, {where}.")
+    for short, found in sorted(sample.short.items()):
+        out.print(
+            f"  the tenth from {short / TENTHS:.1f} is short: it holds only {found} "
+            "unlabelled leads",
+            markup=False,
+        )
+
+
+@backfill_app.command("label-lead")
+def label_lead_command(
+    lead_id: Annotated[int, typer.Argument(help="The lead's number, from `sample-leads`.")],
+    label: Annotated[
+        str,
+        typer.Argument(
+            help="What the headline is: "
+            + ", ".join(verdict.value for verdict in LeadVerdict)
+            + "."
+        ),
+    ],
+    as_assistant: Annotated[
+        bool,
+        typer.Option(
+            "--as-assistant",
+            help="Record the label as an assistant's. It is never counted as a person's.",
+        ),
+    ] = False,
+) -> None:
+    """Record what a link lead's headline is: the answer triage is measured against.
+
+    The label belongs to the lead, so it holds for every later version of triage.
+    """
+    settings_or_exit()
+    by = Decider.ASSISTANT if as_assistant else Decider.HUMAN
+    with refusals(), open_session() as session:
+        label_lead(session, lead_id, label, by=by, now=datetime.now(UTC))
+    whose = "an assistant's label" if as_assistant else "your label"
+    out.print(f"Lead {lead_id} is labelled {label}, as {whose}.", markup=False)
+
+
+def _percent(share: float | None) -> str:
+    return "  n/a" if share is None else f"{round(100 * share):>4}%"
+
+
+def _figures_lines(figures: Figures) -> list[str]:
+    lines = ["  pass at or above   precision   recall   leads passed"]
+    lines += [
+        f"  {row.threshold:>16.1f}   {_percent(row.precision):>9}   {_percent(row.recall):>6}"
+        f"   {row.passed:>12,}"
+        for row in figures.rows
+    ]
+    by_tenth = "  ".join(
+        f"{tenth / TENTHS:.1f}: {number}" for tenth, number in enumerate(figures.labels_by_tenth)
+    )
+    lines.append(f"  labels in each tenth, by its lower edge: {by_tenth}")
+    if figures.unlabelled_tenths:
+        edges = ", ".join(f"{tenth / TENTHS:.1f}" for tenth in figures.unlabelled_tenths)
+        lines.append(
+            f"  no label yet in the tenths from {edges}: they hold scored leads and are "
+            "left out of precision and recall"
+        )
+    return lines
+
+
+@backfill_app.command("evaluate-leads")
+def evaluate_leads_command() -> None:
+    """Show how well triage separates leads that report a treatment from those that do
+    not, on the leads you have labelled.
+
+    Precision is the share of leads at or above a threshold that report a treatment;
+    recall is the share of all such leads that are at or above it. Each tenth of the
+    score range counts by how many scored leads it holds. Sends no request.
+    """
+    settings = settings_or_exit()
+    with refusals(), open_session() as session:
+        version = _triage_version(settings)
+        evaluation = evaluate(session, version=version)
+    if evaluation.overall.labels == 0:
+        out.print(
+            "No link lead has a label yet at this version of triage. Draw leads with "
+            "`thenwhat backfill sample-leads` and label them with `thenwhat backfill "
+            "label-lead` or `label-leads`."
+        )
+        return
+    out.print(
+        f"Triage version {version}: {evaluation.overall.labels:,} leads carry a label that "
+        f"counts: {evaluation.by_person:,} yours, {evaluation.by_assistant:,} an assistant's.",
+        markup=False,
+    )
+    if evaluation.by_assistant:
+        checked = (
+            f"You have labelled {evaluation.checked:,} of the leads an assistant labelled "
+            f"and agree on {evaluation.agreed:,}."
+            if evaluation.checked
+            else "You have checked none of the assistant's labels yet."
+        )
+        out.print(
+            f"{checked} See what to check with `thenwhat backfill spot-check-leads`.",
+            markup=False,
+        )
+    for line in _figures_lines(evaluation.overall):
+        out.print(line, markup=False)
+    for platform, figures in evaluation.by_platform.items():
+        if figures.labels:
+            out.print(f"{platform}: {figures.labels:,} labels", markup=False)
+            for line in _figures_lines(figures):
+                out.print(line, markup=False)
+    if evaluation.disagreements:
+        out.print("Where the label and the score disagree most:", markup=False)
+        for case in evaluation.disagreements:
+            out.print(
+                f"  {case.lead_id}  score {case.score:.2f}  labelled {case.label.value}  "
+                f"{case.title}",
+                markup=False,
+                soft_wrap=True,
+            )
+
+
+@backfill_app.command("label-leads")
+def label_leads_command(
+    file: Annotated[
+        Path,
+        typer.Argument(
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="A file with a lead's number and a label on each line.",
+        ),
+    ],
+    as_assistant: Annotated[
+        bool,
+        typer.Option(
+            "--as-assistant",
+            help="Record the labels as an assistant's. They are never stored as a person's.",
+        ),
+    ] = False,
+) -> None:
+    """Record the labels in a file: a lead's number and a label on each line, separated
+    by a tab, a comma or spaces.
+
+    All of them or none: a line that cannot be used fails the whole file and is named.
+    Blank lines and lines that start with # are passed over.
+    """
+    settings_or_exit()
+    by = Decider.ASSISTANT if as_assistant else Decider.HUMAN
+    with refusals(), open_session() as session:
+        number = label_leads(session, file.read_text().splitlines(), by=by, now=datetime.now(UTC))
+    whose = "an assistant's" if as_assistant else "yours"
+    out.print(f"Recorded {number:,} labels from {file.name}, as {whose}.", markup=False)
+
+
+@backfill_app.command("spot-check-leads")
+def spot_check_leads_command(
+    seed: Annotated[str, typer.Option(help="The same seed draws the same random leads.")] = "1",
+) -> None:
+    """List the leads that only an assistant has labelled and that you should look at:
+    where its label and the score disagree most, and a random draw of the rest.
+
+    The assistant's label is shown and the score is not. Label a lead yourself with
+    `thenwhat backfill label-lead` and your label counts in place of the assistant's.
+    """
+    settings = settings_or_exit()
+    with refusals(), open_session() as session:
+        found = spot_check(session, version=_triage_version(settings), seed=seed)
+    if not found.disagreements and not found.random:
+        out.print("No lead has only an assistant's label: there is nothing to check.")
+        return
+    for heading, leads in (
+        ("Where the assistant's label and the score disagree most:", found.disagreements),
+        ("A random draw of the other leads an assistant labelled:", found.random),
+    ):
+        if not leads:
+            continue
+        out.print(heading, markup=False)
+        for lead in leads:
+            out.print(
+                f"  {lead.lead_id}\t{lead.assistants_label.value}\t{lead.outlet}\t{lead.title}"
+                f"\t{lead.url}",
+                markup=False,
+                soft_wrap=True,
+            )
+
+
+@backfill_app.command("funnel")
+def funnel_command() -> None:
+    """Show where the link leads stand, from loading to a claim, and what the model
+    calls for them have cost.
+
+    Sends no request and changes nothing.
+    """
+    settings = settings_or_exit()
+    with refusals(), open_session() as session:
+        found = funnel(
+            session, pass_above=settings.lead_pass_above, reject_below=settings.lead_reject_below
+        )
+    standing = found.standing
+    lines = [
+        f"loaded: {found.loaded:,}",
+        f"in scope after screening: {found.in_scope:,}",
+        f"scored by triage: {found.scored:,}",
+    ]
+    if standing[Standing.UNDECIDED]:
+        lines.append(
+            f"  undecided: {standing[Standing.UNDECIDED]:,} (set LEAD_PASS_ABOVE and "
+            "LEAD_REJECT_BELOW to pass any)"
+        )
+    else:
+        lines.append(
+            f"  passed: {standing[Standing.PASSED]:,}  held: {standing[Standing.HELD]:,}"
+            f"  rejected: {standing[Standing.REJECTED]:,}"
+        )
+    lines += [
+        f"read by the model: {found.read:,}",
+        f"  added to a claim that existed: {found.added_to_claim:,}",
+        f"  new claim, approved by rule: {found.new_approved_by_rule:,}",
+        f"  new claim, rejected by rule: {found.new_rejected_by_rule:,}",
+    ]
+    if found.new_otherwise:
+        lines.append(f"  new claim, decided otherwise or pending: {found.new_otherwise:,}")
+    lines += [
+        f"  needs a vertical, no claim made: {found.needs_vertical:,}",
+        f"held, the claim has enough articles: {found.enough_articles:,}",
+        f"could not be read: {sum(found.cannot_be_read.values()):,}",
+    ]
+    lines += [f"  {reason}: {number:,}" for reason, number in found.cannot_be_read.items()]
+    if found.undated_outlets:
+        lines.append("outlets whose pages gave no publication date:")
+        lines += [f"  {outlet}  {number:,}" for outlet, number in found.undated_outlets]
+    lines += [
+        f"model cost recorded for triage: {_dollars(found.triage_cost_usd)}",
+        f"model cost recorded for reading: {_dollars(found.reading_cost_usd)} "
+        "(the reads and the vertical decisions; checks of reported statements are "
+        "recorded with all statement checks)",
+    ]
+    for line in lines:
+        out.print(line, markup=False)

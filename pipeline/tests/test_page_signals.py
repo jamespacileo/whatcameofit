@@ -4,7 +4,11 @@ agrees with what an article says of its trial, tested through `agreeing`. Both a
 Scenario names are from openspec live-lookup. Every page here is synthetic.
 """
 
-from thenwhat.extract.page import read_page
+from datetime import date
+
+import pytest
+
+from thenwhat.extract.page import published_day, read_page
 from thenwhat.lookup.details import Details, agreeing
 
 BODY = "Researchers gave EX-1 to 120 people born without some teeth. " * 12
@@ -153,3 +157,50 @@ def test_a_record_agrees_with_a_sponsor_named_in_other_words():
     assert agreeing(record(lead="Eli Lilly and Company"), Details(sponsor="Eli Lilly")) == [
         "sponsor"
     ]
+
+
+# --- the page's date, for reading link leads (openspec lead-reading) -------------------
+
+
+def test_a_date_shown_in_an_element_known_to_hold_it_is_read():
+    """Scenario: A date the page shows in words"""
+    page = read_page(
+        "<html><head><title>A synthetic release</title></head><body>"
+        '<dl><dt>Date:</dt><dd id="date_posted">April 30, 2021</dd>'
+        '<dt>Source:</dt><dd id="source">A synthetic university</dd></dl>'
+        "<p>Synthetic words about a study.</p></body></html>"
+    )
+
+    assert page.published == "April 30, 2021"
+    assert published_day(page.published) == date(2021, 4, 30)
+
+
+def test_a_date_in_a_tag_is_preferred_to_one_shown_in_words():
+    page = read_page(
+        '<html><head><meta property="article:published_time" content="2026-10-22T09:00:00Z">'
+        '</head><body><dd id="date_posted">October 25, 2026</dd></body></html>'
+    )
+
+    assert published_day(page.published) == date(2026, 10, 22)
+
+
+@pytest.mark.parametrize(
+    ("given", "day"),
+    [
+        ("2026-10-22", date(2026, 10, 22)),
+        ("2026-10-22T23:30:00-07:00", date(2026, 10, 22)),
+        ("2026-10-22 09:00", date(2026, 10, 22)),
+        ("April 30, 2021", date(2021, 4, 30)),
+        ("Sept. 9, 2019", date(2019, 9, 9)),
+        ("Published 30 April 2021", date(2021, 4, 30)),
+        ("3rd May 2018", date(2018, 5, 3)),
+        ("February 30, 2021", None),
+        ("last Tuesday", None),
+        ("20261022", None),
+        ("", None),
+        (None, None),
+    ],
+)
+def test_the_day_is_read_from_the_date_as_the_page_gives_it(given, day):
+    """Scenarios: A date the page gives in a tag, A date that cannot be read"""
+    assert published_day(given) == day

@@ -231,3 +231,30 @@ class OutletKind(StrEnum):
     TRADE_PRESS = "trade_press"
     PRESS_RELEASE = "press_release"
     UNKNOWN = "unknown"
+
+
+class ScreenOutcome(StrEnum):
+    """What screening found for a link lead, by rule and from stored data alone."""
+
+    IN_SCOPE = "in_scope"
+    UNLISTED_OUTLET = "unlisted_outlet"
+    ALREADY_TRACKED = "already_tracked"
+
+
+class LeadVerdict(StrEnum):
+    """What a link lead's headline is: the options triage chooses between, and the
+    labels a person can give."""
+
+    TREATMENT_REPORT = "treatment_report"
+    HEALTH_OTHER = "health_other"
+    NOT_HEALTH = "not_health"
+
+
+class ReadOutcome(StrEnum):
+    """What became of a link lead whose article was to be read."""
+
+    ADDED_TO_CLAIM = "added_to_claim"
+    NEW_CLAIM = "new_claim"
+    CANNOT_BE_READ = "cannot_be_read"
+    NEEDS_VERTICAL = "needs_vertical"
+    ENOUGH_ARTICLES = "enough_articles"

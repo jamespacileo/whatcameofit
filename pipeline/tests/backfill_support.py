@@ -2,15 +2,23 @@
 sets, and sessions that stand in for separate processes."""
 
 import threading
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Sequence
 from contextlib import AbstractContextManager, contextmanager
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import ColumnElement, Engine, delete
 from sqlalchemy.orm import Session
 
-from thenwhat.db.models import ArticleLead, RegistryTrial, SourceAllowanceUse, WorkEntry
+from thenwhat.backfill.steps import MODEL, NO_SOURCE, ModelSpend
+from thenwhat.db.models import (
+    ArticleLead,
+    LlmUsage,
+    RegistryTrial,
+    SourceAllowanceUse,
+    WorkEntry,
+)
 from thenwhat.domain import OutletKind, WorkOutcome
 
 NOW = datetime(2026, 11, 20, 9, 0, tzinfo=UTC)
@@ -99,6 +107,73 @@ class DemoStep:
         if record.external_id in self.fails:
             raise RuntimeError(f"could not process {record.external_id}")
         return WorkOutcome.DONE
+
+
+class QuietStep(DemoStep):
+    """A step that asks no source: it only reads the database."""
+
+    source = NO_SOURCE
+    requests_per_record = 0
+
+    def run(self, session: Session, record: RegistryTrial, client: Client) -> WorkOutcome:
+        with self._lock:
+            self.ran.append(record.external_id)
+        return WorkOutcome.DONE
+
+
+class ModelStep(DemoStep):
+    """A step that calls a model for several records at once. A test names the trials
+    the model gives no answer for, and what each call costs."""
+
+    source = MODEL
+    requests_per_record = 0
+    model_spend = ModelSpend(input_tokens=40)
+
+    def __init__(
+        self,
+        name: str = "demo-model",
+        version: int = 1,
+        registry: str = "demo-registry",
+        *,
+        batch_size: int = 20,
+        call_cost_usd: Decimal = Decimal(0),
+    ) -> None:
+        super().__init__(name, version, registry)
+        self.batch_size = batch_size
+        self.call_cost_usd = call_cost_usd
+        self.unanswered: set[str] = set()
+        # The trials of each call made, in order.
+        self.calls: list[list[str]] = []
+
+    def _call(self, session: Session, records: Sequence[RegistryTrial]) -> None:
+        asked = [record.external_id for record in records]
+        with self._lock:
+            self.calls.append(asked)
+            self.ran.extend(asked)
+        if self.call_cost_usd:
+            session.add(
+                LlmUsage(
+                    purpose=self.name,
+                    model="synthetic-model",
+                    input_tokens=40 * len(records),
+                    output_tokens=0,
+                    cost_usd=self.call_cost_usd,
+                    created_at=NOW,
+                )
+            )
+            session.flush()
+        if self.unanswered.intersection(asked):
+            raise RuntimeError("the model left an item out")
+
+    def run(self, session: Session, record: RegistryTrial, client: Client) -> WorkOutcome:
+        self._call(session, [record])
+        return WorkOutcome.DONE
+
+    def run_many(
+        self, session: Session, records: Sequence[RegistryTrial], client: Client
+    ) -> list[WorkOutcome]:
+        self._call(session, records)
+        return [WorkOutcome.DONE for _ in records]
 
 
 def same_session(session: Session) -> Callable[[], AbstractContextManager[Session]]:

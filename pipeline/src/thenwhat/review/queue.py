@@ -193,10 +193,13 @@ def _match_item(session: Session, claim: Claim, match: EntityMatch, entity: Enti
         match.id,
         claim.slug,
         f"{entity.type.value} '{entity.name}' is {match.source_name}"
-        f" record {match.external_id}{_score_note(session, match, entity)}",
+        f" record {match.external_id}{_score_note(session, match, entity)}"
+        # A trial has a reason only when something other than the search found it.
+        f"{'. Reasons: ' + ', '.join(match.reasons) if match.reasons else ''}",
         link,
         match.score,
         match.record_summary,
+        tuple(match.reasons),
     )
 
 

@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entities import development_codes
+from thenwhat.claims.verticals import VERTICALS
 from thenwhat.db.models import Claim, ClaimTerm, DecisionLog, Entity, EntityMatch
 from thenwhat.decide.core import Backend, Decision, DecisionFailed, decide, decide_many
 from thenwhat.domain import EntityType, EvidenceStage, TermRole
@@ -589,3 +590,103 @@ def _describe(candidate: SourceRecord) -> str:
     else:
         text = json.dumps(candidate.payload, ensure_ascii=False, sort_keys=True)
     return text[:MAX_CANDIDATE_CHARACTERS]
+
+
+# --- link lead triage (openspec lead-triage) -----------------------------------------
+
+LEAD_TRIAGE = "lead_triage"
+TREATMENT_REPORT = "treatment_report"
+HEALTH_OTHER = "health_other"
+NOT_HEALTH = "not_health"
+TRIAGE_OPTIONS = [TREATMENT_REPORT, HEALTH_OTHER, NOT_HEALTH]
+TRIAGE_INTRO = (
+    "Each item is the headline of a news article, with the outlet that published it and "
+    "the year it was shared. Judge from the headline alone. Nothing else is known about "
+    "the article."
+)
+TRIAGE_QUESTION = (
+    "What does this headline report?\n"
+    f"- {TREATMENT_REPORT}: a result, finding or development about one specific treatment "
+    "(a drug, vaccine, device, procedure or therapy, named or described) for one specific "
+    "disease or condition\n"
+    f"- {HEALTH_OTHER}: health or medicine, but not that: policy, an outbreak, a risk "
+    "factor, advice on diet or lifestyle, a company's business, or science with no "
+    "treatment for a condition\n"
+    f"- {NOT_HEALTH}: not about health or medicine"
+)
+
+
+def lead_ref(lead_id: int) -> str:
+    """The decision log's reference to a link lead."""
+    return f"link_lead:{lead_id}"
+
+
+def headline_text(title: str, outlet: str, year: int) -> str:
+    """All that triage is shown of a link lead: its title, its outlet and the year."""
+    return f"Headline: {title}\nOutlet: {outlet}\nYear shared: {year}"
+
+
+def triage_headlines(
+    session: Session,
+    backend: Backend,
+    *,
+    headlines: Sequence[tuple[int, str]],
+    now: datetime,
+) -> list[float]:
+    """For each link lead, given as (id, text), the probability that its headline reports
+    a specific treatment for a specific condition. This function decides nothing."""
+    decisions = decide_many(
+        session,
+        backend,
+        step=LEAD_TRIAGE,
+        intro=TRIAGE_INTRO,
+        question=TRIAGE_QUESTION,
+        items=[(lead_ref(lead_id), text) for lead_id, text in headlines],
+        options=TRIAGE_OPTIONS,
+        now=now,
+    )
+    return [decision.probabilities[TREATMENT_REPORT] for decision in decisions]
+
+
+# --- the vertical of a claim drafted from a link lead (openspec lead-reading) ---------
+
+VERTICAL_CHOICE = "vertical_choice"
+VERTICAL_QUESTION = (
+    "Which health area is this treatment filed under? Choose the area of the condition "
+    "it is reported to treat, not of the kind of treatment."
+)
+
+
+def vertical_state(intervention: str, indication: str, summary: str) -> str:
+    """What the vertical decision is shown: what was read from the article, the question,
+    and every configured vertical with its title."""
+    areas = "\n".join(f"- {slug}: {title}" for slug, title in VERTICALS.items())
+    return (
+        f"Intervention: {intervention}\nIndication: {indication}\nSummary: {summary}\n\n"
+        f"{VERTICAL_QUESTION}\n{areas}"
+    )
+
+
+def choose_vertical(
+    session: Session,
+    backend: Backend,
+    *,
+    ref: str,
+    intervention: str,
+    indication: str,
+    summary: str,
+    now: datetime,
+) -> tuple[str, float]:
+    """The vertical the backend chooses among the configured ones, and the probability
+    it gives that choice. A retired vertical is never offered. This function decides
+    nothing: the caller accepts the choice only at or above its own setting."""
+    decision = decide(
+        session,
+        backend,
+        step=VERTICAL_CHOICE,
+        state=vertical_state(intervention, indication, summary),
+        options=list(VERTICALS),
+        input_ref=ref,
+        now=now,
+    )
+    return decision.choice, decision.probabilities[decision.choice]

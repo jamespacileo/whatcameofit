@@ -101,6 +101,42 @@ class Settings(BaseSettings):
     # At most this many article leads are kept for one trial.
     leads_per_trial: int = 20
 
+    # Link leads (openspec link-leads). The Reddit communities whose submissions are
+    # loaded, separated by commas, without "r/". A Reddit load refuses while it is empty.
+    link_lead_subreddits: str = ""
+
+    # At most this many stored claims and registry trials are linked to one link lead
+    # by screening (openspec lead-screening).
+    lead_links_max: int = 10
+
+    # Triage (openspec lead-triage): a link lead scored at or above the first is passed
+    # and may be read; one scored below the second is rejected and kept; between them it
+    # is held. No default on purpose: the operator sets both from the evaluation report,
+    # and until then nothing is passed.
+    lead_pass_above: float | None = None
+    lead_reject_below: float | None = None
+
+    # Evaluation (openspec lead-evaluation): no link lead is read until this many leads
+    # carry a person's label and a score from the current version of triage.
+    lead_evaluation_min_labels: int = 200
+
+    # Reading (openspec lead-reading). A new claim's vertical is chosen by a decision and
+    # accepted only at or above this probability; below it no claim is made.
+    vertical_accept_above: float = 0.8
+    # No outlet is asked for two articles less than this many seconds apart, across
+    # every process. A longer delay in the outlet's robots.txt replaces it.
+    outlet_interval_seconds: float = 10
+    # A lead for a claim that already has this many source articles is held, unless it
+    # was shared before the claim's first reported date.
+    lead_reads_per_claim: int = 3
+
+    def chosen_subreddits(self) -> frozenset[str]:
+        return frozenset(
+            name.strip().removeprefix("r/")
+            for name in self.link_lead_subreddits.split(",")
+            if name.strip()
+        )
+
     def allowances(self) -> dict[str, SourceAllowance]:
         return {**DEFAULT_ALLOWANCES, **self.source_allowances}
 
