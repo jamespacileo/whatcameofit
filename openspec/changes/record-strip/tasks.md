@@ -16,7 +16,7 @@
 ## 3. Surfaces
 
 - [x] 3.1 `DayReport.astro`: draw the strip and counts line under the status; stop showing the two sentences in sight. Verify: `site/tests/home-days.test.mjs` or `day-list.test.mjs` asserts the strip, the counts, and that the sentences appear only in the strip's name.
-- [x] 3.2 Home page: add the strip's key beside the kind pills. Verify: page test asserts one key before the first strip.
+- [x] 3.2 Home page: add the strip's key under the fields above the list. Verify: page test asserts one key before the first strip.
 - [x] 3.3 `ClaimTable.astro`: draw the strip under the status at one width on wide screens and at the row's width below the breakpoint (see design decision 9); key above the table; status label still shown. Verify: `site/tests/site.test.mjs` asserts a strip and a status label on every row of a topic, year and approved-claims table.
 - [x] 3.4 Check every other user of `ClaimTable` (claim page, guide entry, source page) at desktop and phone width and fix any overflow. Verify: screenshots of one page of each kind on `site-published`.
 

@@ -19,7 +19,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.entry import articles_of, promises_of
+from thenwhat.claims.entities import intervention_components
+from thenwhat.claims.entry import articles_of, name_key, promises_of
 from thenwhat.claims.status import refresh_status, status_history
 from thenwhat.claims.verticals import GROUPS, RETIRED_VERTICALS, VERTICAL_GROUPS, VERTICALS
 from thenwhat.db.models import (
@@ -910,7 +911,7 @@ def _trials(
     return trials
 
 
-def _background(session: Session, claim: Claim) -> list[ExportedCard]:
+def _background(session: Session, claim: Claim, intervention: Entity) -> list[ExportedCard]:
     """At most one card for the claim's condition and one for its intervention: the
     approved exact link with the highest score or, with none, the approved broader one
     or, for the intervention with neither, the approved kind link. Then at most one
@@ -919,6 +920,7 @@ def _background(session: Session, claim: Claim) -> list[ExportedCard]:
     A link whose source is not accepted in the list of sources gives no card, nor does
     one whose term has no stored record, since a card states when its record was read.
     """
+    components = intervention_components([intervention.name, *intervention.synonyms])
     approved = list(
         session.scalars(
             select(ClaimTerm)
@@ -932,7 +934,7 @@ def _background(session: Session, claim: Claim) -> list[ExportedCard]:
         )
     )
     cards: list[ExportedCard] = []
-    drug, drugs_target = _drug_cards(session, claim)
+    drug, drugs_target = _drug_cards(session, claim, components)
     # The drug source's own target comes before a gene named in the intervention.
     for role in (TermRole.CONDITION, TermRole.INTERVENTION, TermRole.DRUG, TermRole.TARGET):
         if role is TermRole.DRUG:
@@ -947,7 +949,9 @@ def _background(session: Session, claim: Claim) -> list[ExportedCard]:
                     made
                     for term in approved
                     if term.role is role and term.fit is fit
+                    if role is not TermRole.INTERVENTION or name_key(term.label) not in components
                     if (made := _card(session, term)) is not None
+                    if role is not TermRole.INTERVENTION or name_key(made.label) not in components
                 ),
                 None,
             )
@@ -996,7 +1000,9 @@ def _card(session: Session, term: ClaimTerm) -> ExportedCard | None:
     )
 
 
-def _drug_cards(session: Session, claim: Claim) -> tuple[ExportedCard | None, ExportedCard | None]:
+def _drug_cards(
+    session: Session, claim: Claim, components: set[str]
+) -> tuple[ExportedCard | None, ExportedCard | None]:
     """The claim's drug card and, when the drug's record names exactly one single
     protein as its target, that target's card. Neither is scored: the drug was found by
     its exact name.
@@ -1005,7 +1011,13 @@ def _drug_cards(session: Session, claim: Claim) -> tuple[ExportedCard | None, Ex
     licence, so both are made only while that source is accepted, and each names it.
     A drug whose record gives no kind of molecule and no mechanism makes no card.
     """
-    link = session.scalars(
+    listed, facts = (
+        LISTED_SOURCES.get(opentargets.OpenTargets.name),
+        LISTED_SOURCES.get(DRUG_FACTS_FROM),
+    )
+    if listed is None or not listed.accepted or facts is None or not facts.accepted:
+        return None, None
+    for link in session.scalars(
         select(ClaimTerm)
         .where(
             ClaimTerm.claim_id == claim.id,
@@ -1013,20 +1025,20 @@ def _drug_cards(session: Session, claim: Claim) -> tuple[ExportedCard | None, Ex
             ClaimTerm.review_state == ReviewState.APPROVED,
         )
         .order_by(ClaimTerm.id)
-    ).first()
-    listed, facts = (
-        LISTED_SOURCES.get(opentargets.OpenTargets.name),
-        LISTED_SOURCES.get(DRUG_FACTS_FROM),
-    )
-    if link is None or listed is None or not listed.accepted or facts is None or not facts.accepted:
-        return None, None
-    record = session.get(TermRecord, (link.source_name, link.external_id))
-    if record is None or link.source_name != listed.name:
+    ):
+        if name_key(link.label) in components or link.source_name != listed.name:
+            continue
+        record = session.get(TermRecord, (link.source_name, link.external_id))
+        if record is None:
+            continue
+        drug = opentargets.describe_drug(_source_record(record))
+        if name_key(drug.name) in components:
+            continue
+        if drug.molecule_kind is not None or drug.mechanisms:
+            break
+    else:
         return None, None
     assert link.fit is not None and link.reviewed_by is not None
-    drug = opentargets.describe_drug(_source_record(record))
-    if drug.molecule_kind is None and not drug.mechanisms:
-        return None, None
     drug_card = ExportedCard(
         kind=TermRole.DRUG,
         fit=link.fit,
@@ -1247,7 +1259,7 @@ def build_export(
                 matches=_matches(session, claim),
                 trials=trials,
                 papers=papers.listed(),
-                background=_background(session, claim),
+                background=_background(session, claim, intervention),
                 organisations=organisations,
                 reported_statements=_statements(session, claim),
                 failure_flags=[

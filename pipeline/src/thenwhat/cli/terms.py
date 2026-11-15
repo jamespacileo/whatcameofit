@@ -59,6 +59,14 @@ def terms_command(
             " that already have a score are left as they are.",
         ),
     ] = False,
+    rescore_pending: Annotated[
+        bool,
+        typer.Option(
+            "--rescore-pending",
+            help="Recheck undecided subject-term readings for explicitly named claims."
+            " Keeps approved/rejected links and preserves old readings if a check fails.",
+        ),
+    ] = False,
 ) -> None:
     """Propose subject terms, the intervention kind, named genes and the drug record
     for claims.
@@ -90,6 +98,9 @@ def terms_command(
             " subject term, or --all for every published claim. Give one of the three."
         )
         raise typer.Exit(code=1)
+    if rescore_pending and not slugs:
+        err.print("Name the claims to recheck pending terms; --all and --missing are not allowed.")
+        raise typer.Exit(code=1)
     settings = settings_or_exit()
     failed = 0
     with entry_session() as session:
@@ -106,12 +117,17 @@ def terms_command(
                 else "Every published claim has a candidate subject term."
             )
             return
-        vocabulary = make_vocabulary(session)
-        genes = make_genes(session)
-        drugs = make_drugs(session)
-        backend = resolve.make_backend(session)
-        accept, reject = settings.match_accept_above, settings.match_reject_below
-        for claim in claims:
+        selected = [claim.slug for claim in claims]
+    # Commit each completed claim before asking for the next. A source outage must
+    # not discard earlier paid readings, decisions or reusable source records.
+    for slug in selected:
+        with entry_session() as session:
+            claim = claim_by_slug(session, slug)
+            vocabulary = make_vocabulary(session)
+            genes = make_genes(session)
+            drugs = make_drugs(session)
+            backend = resolve.make_backend(session)
+            accept, reject = settings.match_accept_above, settings.match_reject_below
             now = datetime.now(UTC)
             run = link_terms(
                 session,
@@ -122,6 +138,7 @@ def terms_command(
                 limit=settings.term_candidates_max,
                 accept_above=accept,
                 reject_below=reject,
+                rescore_pending=rescore_pending,
             )
             try:
                 kind = link_kind(

@@ -49,7 +49,7 @@ See `proposal.md` for why. What shapes the approach:
 9. **Layout.** Table: under the status, inside the status column, at one fixed width (11rem) in every row, so axes align down the column; no counts there, because "Tested in people" beside it gives them. Phone: full row width under the status. Report row: under the status, counts line to its right on wide screens and under it on a phone.
    - Changed during build: a sixth column of its own was tried first and left the claim column too narrow to read at 800 px. The status column already had the width.
 
-10. **Key.** A small inline legend drawn with the same component marks, each with its word. Home: beside the existing kind pills. Tables: under the table's heading. Words pass the verdict check.
+10. **Key.** A small inline legend drawn with the same component marks, each with its word. Home: under the row of fields above the list (the kind pills it first sat beside became a field in `home-distilled`). Tables: under the table's heading. Words pass the verdict check.
 
 ## Risks / Trade-offs
 

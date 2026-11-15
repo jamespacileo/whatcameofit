@@ -31,6 +31,8 @@ export function lookupClaim(claim: ExportedClaim) {
     // For offering close matches to an address that is not tracked: the treatment's
     // names, then the condition and the titles of the reports.
     names: [claim.intervention.name, ...claim.intervention.synonyms],
+    // Live card association compares the condition explicitly, never report-title words.
+    indication: claim.indication,
     terms: [claim.indication, ...claim.articles.map((article) => article.title)].join(" "),
   };
 }

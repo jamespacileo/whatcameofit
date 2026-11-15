@@ -78,7 +78,7 @@ A page that shows a record strip SHALL carry one key that names each kind of mar
 
 #### Scenario: Home page
 - **WHEN** a reader opens the home page
-- **THEN** the key beside the kinds of row names the report, registry record, results posted, regulator's decision, promised date and last-check marks
+- **THEN** the key above the list names the report, registry record, results posted, regulator's decision, promised date and last-check marks
 
 #### Scenario: Guide entry missing
 - **WHEN** the site is built and the guide has no entry for the record strip

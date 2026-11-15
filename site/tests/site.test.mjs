@@ -336,14 +336,14 @@ test("Scenario: Topic page", () => {
 test("Scenario: Counts on the path", () => {
   const html = page("index.html");
   const strip = html.slice(html.indexOf("data-stage-filter"), html.indexOf('role="tablist"'));
-  // Three claims: one preclinical, one in phase 2, one approved. The strip narrows
+  // Three claims: one preclinical, one in phase 2, one approved. The field narrows
   // every list under it and keeps the pick in the address.
   assert.match(strip, /data-scope="\[data-feed\]"/);
   assert.match(strip, /data-param="status"/);
-  for (const [code, number] of [["preclinical_only", 1], ["phase_2", 1], ["approved", 1]]) {
-    assert.match(strip, new RegExp(`data-status="${code}"[^>]*>.*?<strong>${number}</strong>`, "s"));
+  for (const [code, label] of [["preclinical_only", "Preclinical only"], ["phase_2", "Phase 2 trial"], ["approved", "Approved"]]) {
+    assert.match(strip, new RegExp(`<option value="${code}"[^>]*>\\s*${label} \\(1\\)\\s*</option>`));
   }
-  assert.match(strip, /data-status="phase_1"[^>]*disabled/);
+  assert.match(strip, /<option value="phase_1"[^>]*disabled/);
   // Each row carries what the strip and the topic choice narrow by.
   assert.match(html, /<tr[^>]*data-status="phase_2"[^>]*data-topic="gum-disease"/);
 });
@@ -381,8 +381,8 @@ test("Scenario: A returning reader's home page", () => {
   assert.match(html, /<button type="button" data-step="-1" aria-disabled="true" tabindex="-1">Previous<\/button>/);
   // The head of the day-by-day list says when the registries were last checked.
   assert.match(html, /Registries last checked\s+<span class="unbroken/);
-  // On a phone the counts wait behind one control.
-  assert.match(html, /<button[^>]*class="narrow-toggle"[^>]*aria-expanded="false"[^>]*hidden/);
+  // The status and topic choices are fields, shown by the reader's browser.
+  assert.match(html, /<label class="pick" hidden data-status-filter>/);
 });
 
 test("Scenario: Following from a claim page", () => {
@@ -453,6 +453,7 @@ test("Scenario: Article of a published claim", () => {
   assert.equal(claim.status, "Phase 2 trial");
   assert.equal(claim.headline, "Synthetic claim with a started trial");
   assert.equal(claim.page, "/phase-claim");
+  assert.equal(claim.indication, "example condition");
   assert.match(claim.meaning, /Phase 2/);
   // The notices and the check date travel with the statuses.
   assert.equal(lookup.notices.length, 2);

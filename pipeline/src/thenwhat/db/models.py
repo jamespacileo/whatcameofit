@@ -128,8 +128,8 @@ class Claim(Reviewed, Base):
     )
     current_status: Mapped[ClaimStatus] = mapped_column(
         _enum(ClaimStatus, "current_status"),
-        default=ClaimStatus.PRECLINICAL_ONLY,
-        server_default=ClaimStatus.PRECLINICAL_ONLY.value,
+        default=ClaimStatus.NO_TRIAL_FOUND,
+        server_default=ClaimStatus.NO_TRIAL_FOUND.value,
     )
     overlay_years: Mapped[int | None]
     status_updated_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)

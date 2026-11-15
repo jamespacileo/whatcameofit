@@ -18,13 +18,14 @@ from thenwhat.claims.entities import (
     set_origin_paper,
 )
 from thenwhat.claims.entry import EntryError, claim_by_slug
+from thenwhat.claims.stages import confirm_stage_by_rule
 from thenwhat.cli import extract
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.db.models import Claim, Entity, EntityMatch
 from thenwhat.decide.core import Backend, DecisionFailed, UnknownBackend, backend_named
-from thenwhat.decide.steps import has_stage_suggestion, suggest_evidence_stage
+from thenwhat.decide.steps import latest_stage_suggestion, suggest_evidence_stage
 from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.resolve.codes import Codes, Listing, Substances, give_development_codes
 from thenwhat.resolve.organisations import OrganisationRegistry, match_organisations
@@ -551,9 +552,22 @@ def resolve_command(
                 if rescore
                 else []
             )
-            if claim.evidence_stage is None and not has_stage_suggestion(session, claim):
-                stage = suggest_evidence_stage(session, backend, claim, now=now)
-                out.print(f"Suggested evidence stage: {stage.choice}. Confirm it in review.")
+            if claim.evidence_stage is None:
+                stage = latest_stage_suggestion(session, claim)
+                newly_read = stage is None
+                if stage is None:
+                    stage = suggest_evidence_stage(session, backend, claim, now=now)
+                if settings.approve_drafts_by_rule and confirm_stage_by_rule(
+                    session,
+                    claim,
+                    stage,
+                    threshold=settings.review_confidence_threshold,
+                    now=now,
+                    no_signal_years=settings.no_signal_years,
+                ):
+                    out.print(f"Evidence stage confirmed by rule: {stage.choice}.")
+                elif newly_read:
+                    out.print(f"Suggested evidence stage: {stage.choice}. Confirm it in review.")
             _related_research(
                 session, claim, research, backend, now, reject_below, accept_above, rescore
             )

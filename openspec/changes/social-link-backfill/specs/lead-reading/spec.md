@@ -97,6 +97,10 @@ An article SHALL be fetched only where the outlet's robots.txt allows the pipeli
 - **WHEN** a lead's outlet forbids the pipeline's client
 - **THEN** the article is not fetched, the lead's outcome is cannot be read with that reason, and it is not tried again
 
+#### Scenario: Robots.txt cannot be read
+- **WHEN** a lead's outlet does not answer for its robots.txt, answers with a server error, or says it was asked too often
+- **THEN** the article is not fetched, the lead is given no outcome, the failure is recorded with its reason, and the lead is tried again on a later run until the attempt limit is reached
+
 #### Scenario: Two processes, one outlet
 - **WHEN** two processes each hold a due lead on the same outlet
 - **THEN** their two fetches are at least the configured interval apart

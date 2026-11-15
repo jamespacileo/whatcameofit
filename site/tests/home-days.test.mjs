@@ -64,23 +64,19 @@ before(() => {
 });
 
 test("Scenario: Checked on the reader's own date", () => {
-  // Read without its styles the heading is the long date, once: a phone leaves out the
+  // Read without its styles the line is the long date, once: a phone leaves out the
   // weekday and the end of the month's name, and nothing is said twice.
-  const title = dated.slice(dated.indexOf('id="days-title"'), dated.indexOf("</h2>", dated.indexOf('id="days-title"')));
+  const from = dated.indexOf('class="checked-on"');
+  const line = dated.slice(from, dated.indexOf("</p>", from));
   assert.equal(
-    title.slice(title.indexOf(">") + 1).replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim(),
+    line.slice(line.indexOf(">") + 1).replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim(),
     "Registries last checked Wednesday 10 September 2025",
   );
-  assert.match(title, /<span class="on-wide">Wednesday <\/span>10 Sep<span class="on-wide">tember<\/span> 2025/);
-  // The seven days up to it, each leading to its heading.
-  for (const day of ["04", "05", "06", "07", "08", "09", "10"]) {
-    assert.ok(dated.includes(`<a href="#d-2025-09-${day}"`), `no link to 2025-09-${day}`);
-    assert.ok(dated.includes(`id="d-2025-09-${day}"`), `no heading for 2025-09-${day}`);
-  }
-  // The day of the last check is marked as that. Which day is today is the reader's
-  // browser's to say: the built page calls no day the current date.
-  assert.match(dated, /<a href="#d-2025-09-10" data-checked-day/);
+  assert.match(line, /<span class="on-wide">Wednesday <\/span>10 Sep<span class="on-wide">tember<\/span> 2025/);
+  // The page calls no day the current date: which day is today is the reader's
+  // browser's to say.
   assert.ok(!dated.includes('aria-current="date"'));
+  assert.ok(dated.includes('data-checked="2025-09-10"'));
   // No heading is dated after the last check, and none says "Today" as built: that
   // word is the reader's browser's to add.
   const days = [...dated.matchAll(/id="d-(\d{4}-\d{2}-\d{2})"/g)].map(([, day]) => day);
@@ -99,10 +95,11 @@ test("Scenario: A kind read aloud", () => {
   assert.match(record, /<span class="row-label">Registry record<\/span>/);
   assert.match(group(dated, "d-2025-09-08"), /<span class="visually-hidden">News report\. <\/span>/);
   assert.match(dated, /data-kind="promise"[\s\S]*?<span class="row-label">Promised date<\/span>/);
-  // The controls that show one kind are the script's, and carry the three grounds.
-  assert.match(dated, /<div class="kinds"[^>]*hidden/);
-  for (const kind of ["report", "record", "promise"]) {
-    assert.match(dated, new RegExp(`data-kind-pick="${kind}"[^>]*>\\s*<span class="swatch ${kind}"`));
+  // The field that shows one kind is the script's, and names each kind in words.
+  const field = dated.slice(dated.indexOf('id="feed-kind"'), dated.indexOf("</select>", dated.indexOf('id="feed-kind"')));
+  assert.match(dated, /<label class="pick" hidden data-kinds>/);
+  for (const [kind, name] of [["report", "News reports"], ["record", "Registry records"], ["promise", "Promised dates"]]) {
+    assert.match(field, new RegExp(`<option value="${kind}">${name}</option>`));
   }
 });
 
@@ -151,12 +148,26 @@ test("Scenario: Promises still to come", () => {
   assert.ok(!/overdue|missed|has passed|late\b/i.test(toCome));
 });
 
-test("Scenario: The day of the last check shows one older claim", () => {
-  const day = group(dated, "d-2025-09-10");
-  assert.match(day, /One older claim, picked by the date\./);
-  // The one row marked as picked is under that day's heading.
+test("Scenario: One older claim under the list", () => {
+  const from = dated.indexOf("data-older");
+  const older = dated.slice(from, dated.indexOf("</section>", from));
+  assert.match(older, /One older claim, picked by the date\./);
+  // The one row marked as picked is under that heading, after every dated heading.
   assert.equal(dated.match(/<li class="day-row report-row"[^>]*data-picked/g).length, 1);
-  assert.match(day, /<li class="day-row report-row"[^>]*data-picked/);
+  assert.match(older, /<li class="day-row report-row"[^>]*data-picked/);
+  assert.ok(from > dated.lastIndexOf('<section class="day-group"'));
+});
+
+test("Scenario: The spans a reader can keep to", () => {
+  const from = dated.indexOf('id="feed-span"');
+  const field = dated.slice(from, dated.indexOf("</select>", from));
+  assert.deepEqual(
+    [...field.matchAll(/<option value="([a-z]+)">([^<]+)</g)].map(([, value, name]) => `${value}: ${name}`),
+    ["week: Past week", "month: Past month", "year: Past year", "all: All time"],
+  );
+  // The span and its end are the script's: as built every row is shown.
+  assert.match(dated, /<label class="pick" hidden data-spans>/);
+  assert.match(dated, /<p class="earlier" hidden data-span-end>/);
 });
 
 test("Scenario: Scripting off", () => {
@@ -194,4 +205,19 @@ test("Scenario: An export with no day of last check", () => {
   assert.ok(undated.indexOf("data-scoreboard") < undated.indexOf('role="tablist"'));
   assert.ok(undated.includes("view-transition-name"));
   assert.ok(!undated.includes('id="lists"'));
+});
+
+test("Scenario: The first screen and the column at the right", () => {
+  // Words to try wait for the script that runs them; the count line is the page's own.
+  const band = dated.slice(dated.indexOf('class="band home"'), dated.indexOf('class="front"'));
+  assert.match(band, /<p class="try" hidden data-try>/);
+  assert.match(band, /<p class="holds">\s*3 claims tracked in\s*<a href="\/topics">\s*1 topic\s*<\/a>/);
+  // The words come before the answer, so an answer is read straight after the box.
+  assert.ok(band.indexOf('class="under-box"') < band.indexOf('id="results"'));
+  const from = dated.indexOf('class="days-rail"');
+  const rail = dated.slice(from, dated.indexOf("</aside>", from));
+  for (const address of ["/how-it-works", "/changes.xml", "/about"]) {
+    assert.ok(rail.includes(`href="${address}"`), address);
+  }
+  assert.match(rail, /Not medical advice\. A registered trial is not a treatment option\./);
 });

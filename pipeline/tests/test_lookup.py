@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
+import pytest
 from pydantic_ai.messages import ModelResponse, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
 from sqlalchemy import func, select
@@ -152,6 +153,66 @@ def test_trials_for_the_reported_treatment_and_condition_come_first(session: Ses
     assert found.candidates[0].score > 0.9 > found.candidates[1].score
     assert found.candidates[0].url == "https://clinicaltrials.gov/study/NCT00000001"
     assert "EX-1 in tooth agenesis" in found.candidates[0].summary
+
+
+@pytest.mark.parametrize("description", ["Delivered by inhalation", "Subcutaneous injection"])
+def test_scoring_receives_route_and_separate_arm_details(session: Session, description: str):
+    record = trial("NCT00000001", "EX-1 trial", condition="Example disease")
+    section = record.payload["protocolSection"]
+    section["identificationModule"]["officialTitle"] = "A long official title " * 150
+    section["armsInterventionsModule"] = {
+        "interventions": [
+            {"name": "EX-1", "description": description, "armGroupLabels": ["A"]},
+            {"name": "EX-2", "armGroupLabels": ["B"]},
+        ],
+        "armGroups": [
+            {"label": "A", "interventionNames": ["Drug: EX-1"], "description": "EX-1 alone"},
+            {"label": "B", "interventionNames": ["Drug: EX-2"], "description": "EX-2 alone"},
+        ],
+    }
+    states = []
+
+    class Capture:
+        name = "capture"
+
+        def answer(self, step, state, options):
+            states.append(state)
+            return BackendAnswer("not_a_match", {o: float(o == "not_a_match") for o in options})
+
+    model, _ = llm(session, READING)
+    found = look_up(session, model, Capture(), FakeTrials({"EX-1": [record]}), text=TEXT, now=NOW)
+
+    assert len(states) == 1
+    assert description in states[0]
+    assert '"arms":["A"]' in states[0] and '"arms":["B"]' in states[0]
+    assert "EX-1 alone" in states[0] and "EX-2 alone" in states[0]
+    assert "separate arms testing A and B do not establish a trial of A plus B" in states[0]
+    assert "Missing or truncated details do not establish compatibility" in states[0]
+    described = states[0].split("Candidate record from clinicaltrials.gov (NCT00000001):\n")[1]
+    described = described.split("\n\n", 1)[0]
+    assert len(described) <= 1500
+    assert "[truncated]" in described
+    assert found.candidates[0].answer == "not_a_match"
+
+
+def test_oversized_registry_record_marks_missing_details_within_the_existing_limit(
+    session: Session,
+):
+    record = trial("NCT00000001", "EX-1 trial")
+    record.payload["protocolSection"]["armsInterventionsModule"]["interventions"] = [
+        {"name": f"EX-{n}", "description": "Synthetic description " * 100} for n in range(20)
+    ]
+
+    class Capture(ByCondition):
+        def answer(self, step, state, options):
+            described = state.split("Candidate record from clinicaltrials.gov (NCT00000001):\n")[1]
+            described = described.split("\n\n", 1)[0]
+            assert len(described) <= 1500
+            assert described.endswith(" [truncated]")
+            return super().answer(step, state, options)
+
+    model, _ = llm(session, READING)
+    look_up(session, model, Capture(), FakeTrials({"EX-1": [record]}), text=TEXT, now=NOW)
 
 
 def test_every_name_and_search_phrase_is_searched_within_the_condition(session: Session):
@@ -331,6 +392,56 @@ def test_a_lookup_stores_no_claim_match_or_article(session: Session):
     find(session, FakeTrials({"EX-1": [trial("NCT00000001", "EX-1 in tooth agenesis")]}))
 
     assert stored(session) == before
+
+
+def test_tracked_cards_require_the_condition_and_whole_regimen(session: Session):
+    for slug, intervention, indication in [
+        ("ageing", "EX-1", "biological ageing"),
+        ("single", "EX-1", "obesity"),
+        ("combined", "EX-2 and EX-1", "obesity"),
+        ("triple", "EX-1 plus EX-2 plus EX-3", "obesity"),
+    ]:
+        add_claim(
+            session,
+            slug=slug,
+            headline=slug,
+            vertical="mouth-and-teeth",
+            intervention=intervention,
+            indication=indication,
+            summary="Synthetic report.",
+        )
+    add_synonym(session, "combined", "EX-2 and EX-1", "PAIR-12")
+    add_synonym(session, "single", "EX-1", "ONE-BRAND")
+    add_synonym(session, "triple", "EX-1 plus EX-2 plus EX-3", "TRIPLE-123")
+    add_synonym(session, "combined", "EX-2 and EX-1", "ONE-BRAND plus EX-2")
+    for intervention, indication, aliases, expected in [
+        ("EX-1 plus EX-2", "Obesity", ["EX-1"], ["combined"]),
+        ("EX-1", "  OBESITY ", [], ["single"]),
+        ("EX-1", None, [], []),
+        ("EX-1", "tooth loss", [], []),
+        ("PAIR-12", "obesity", [], ["combined"]),
+        ("EX-1/EX-2", "obesity", [], ["combined"]),
+        ("PAIR-12", "obesity", ["EX-1 plus EX-2", "EX-1"], ["combined"]),
+        ("UNTRACKED-PAIR", "obesity", [], []),
+        ("EX-1 plus EX-2", "obesity", ["ONE-BRAND"], ["combined"]),
+        ("PAIR-12", "obesity", ["ONE-BRAND"], ["combined"]),
+        ("EX-1 plus EX-2 plus EX-3", "obesity", ["EX-1 plus EX-2"], ["triple"]),
+        ("TRIPLE-123", "obesity", ["PAIR-12"], ["triple"]),
+        ("ONE-BRAND plus EX-2", "obesity", [], ["combined"]),
+        ("UNLISTED-PAIR", "obesity", ["EX-1 plus EX-2", "ONE-BRAND plus EX-2"], ["combined"]),
+    ]:
+        found = find(
+            session,
+            FakeTrials({}),
+            reading={
+                **READING,
+                "intervention": intervention,
+                "indication": indication,
+                "other_names": aliases,
+                "known_names": ["EX-1", "EX-2"],
+            },
+        )
+        assert found.tracked == expected
 
 
 def test_the_model_is_shown_the_text(session: Session):

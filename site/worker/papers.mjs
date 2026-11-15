@@ -41,9 +41,11 @@ export function makePapers({ fetch, contact, timeoutMs = TIMEOUT_MS, cache, cach
         });
       }
       signal.throwIfAborted();
-      lastStart = Date.now();
       // Wrap the promise so the next start does not wait for the response.
-      return { response: fetch(url, { headers, signal }) };
+      // Measure after invoking fetch: its synchronous setup can cross a clock tick.
+      const response = fetch(url, { headers, signal });
+      lastStart = Date.now();
+      return { response };
     });
     starts = slot.then(() => {}, () => {});
     return slot.then(({ response }) => response);

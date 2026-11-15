@@ -260,7 +260,7 @@ def test_rejecting_an_approved_event_takes_it_out_of_the_status(session: Session
 
     decide_item(session, "event", registered.id, ReviewState.REJECTED, now=NOW)
 
-    assert claim.current_status is ClaimStatus.PRECLINICAL_ONLY
+    assert claim.current_status is ClaimStatus.NO_TRIAL_FOUND
 
 
 def test_rejecting_a_match_rejects_the_events_that_came_from_it(session: Session):
@@ -275,7 +275,7 @@ def test_rejecting_a_match_rejects_the_events_that_came_from_it(session: Session
     decide_item(session, "match", match.id, ReviewState.REJECTED, now=NOW)
 
     assert (event.review_state, event.reviewed_by) == (ReviewState.REJECTED, Decider.HUMAN)
-    assert claim.current_status is ClaimStatus.PRECLINICAL_ONLY
+    assert claim.current_status is ClaimStatus.NO_TRIAL_FOUND
 
 
 # --- queue ---------------------------------------------------------------------------
@@ -694,7 +694,7 @@ def test_approving_a_statement_publishes_it_and_labels_its_check(session: Sessio
 
     assert (unsure.review_state, unsure.reviewed_by) == (ReviewState.APPROVED, Decider.HUMAN)
     assert labels(session, "statement_check") == ["says_this"]
-    assert claim.current_status is ClaimStatus.PRECLINICAL_ONLY
+    assert claim.current_status is ClaimStatus.NO_TRIAL_FOUND
 
 
 def test_rejecting_a_statement_approved_by_rule_keeps_it_and_labels_nothing(session: Session):
