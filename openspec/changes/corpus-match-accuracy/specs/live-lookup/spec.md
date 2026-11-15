@@ -29,3 +29,14 @@ The service and extension SHALL reject saved results produced before the claim-i
 #### Scenario: Previously saved wrong-condition card
 - **WHEN** a version-four result contains a name-only card association
 - **THEN** the next eligible lookup does not reuse it
+
+### Requirement: Combination readings retain the complete experiment
+When a report's main experiment adds one named treatment to another, the reading SHALL retain the complete regimen. Discussion of a component-only comparison arm SHALL NOT by itself shorten that regimen to its newest component. A report explicitly centred on monotherapy SHALL retain that monotherapy. Unrelated roundups and company profiles SHALL remain negative identifications. Both lookup implementations SHALL use equivalent reading instructions and obsolete saved answers SHALL be invalidated.
+
+#### Scenario: Combination trial discusses a component-only result
+- **WHEN** a report describes A plus B and also highlights an A-only arm
+- **THEN** its main combination is named A plus B
+
+#### Scenario: Main claim is monotherapy
+- **WHEN** the report explicitly concerns A alone and mentions an earlier combination as context
+- **THEN** A remains the identified treatment

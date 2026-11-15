@@ -32,6 +32,10 @@ intervention, but unrelated treatments listed in a round-up are not a combinatio
 Different arms of one trial are not unrelated roundup items. A report comparing
 monotherapy with a combination still reports a treatment study: identify the main
 experimental treatment or regimen and use its comparators as study context.
+When the reported experiment adds one named treatment to another, name the complete
+combination in intervention (A plus B), even if the report also highlights an A-only
+arm. Do not reduce that combination to its newest or most discussed component.
+Use A alone only when the report's main therapeutic claim is explicitly A alone.
 Choose a single pair only when it is clearly the main subject. Otherwise return
 about_a_treatment false with empty identification fields and explain in the gist
 that the text contains several separate claims, rather than merging their names.

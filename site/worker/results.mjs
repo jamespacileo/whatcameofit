@@ -5,7 +5,7 @@ import { articleKey } from "../src/lib/article-key.mjs";
 import { bounded } from "./public-cache.mjs";
 import { sourceUrl } from "./visual.mjs";
 const TTL = 86400;
-const VERSION = 5;
+const VERSION = 6;
 // The longest one shared-result read or write is waited on.
 const CACHE_TIMEOUT_MS = 500;
 async function keyFor(address) {

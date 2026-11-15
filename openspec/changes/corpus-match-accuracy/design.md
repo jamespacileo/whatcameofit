@@ -37,6 +37,15 @@ claims positive, grant additional permissions, or change clinical status rules.
 
 ## Risks / Trade-offs
 
+Facebook's numeric detail URL and rendered pfbid permalink can differ. Require the
+public preview URL to match the current post/video identity, then use its caption
+prefix to select a unique visible message. Read that message only, never its parent
+post or comment tree. Bind media through the preview image's origin/path, ignoring
+CDN rendition parameters. Missing or ambiguous media refuses capture. Explicit
+combination instructions preserve all named components when comparison arms are
+also discussed. This correction advances the shared answer cache to six and the
+local reader cache to seven; public registry/source caches remain reusable.
+
 - Conservative condition comparison can miss synonymous descriptions → record
   absence explicitly and add evidence-backed aliases or coverage only when proven;
   never silently broaden one indication into another.

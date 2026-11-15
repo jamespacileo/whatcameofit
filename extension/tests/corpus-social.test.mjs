@@ -156,3 +156,22 @@ test('an image-only LinkedIn post keeps only its uniquely owned attachment', () 
  assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true,'two owned attachments remain ambiguous');
 });
 
+test('Facebook reads the identity-bound caption and media instead of a larger neighbour', () => {
+ const url='https://www.facebook.com/journal/posts/reported-treatment/123456789/';
+ const caption='EX-17 was studied for a named condition in a randomized clinical trial.';
+ const head='<meta property="og:url" content="'+url+'"><meta property="og:description" content="'+caption+'"><meta property="og:image" content="https://media.example/current.jpg?size=small">';
+ const body='<main><div role="article"><div data-ad-preview="message">'+caption+' More detail from the same post.</div><img src="https://media.example/current.jpg?size=large"><div role="article" aria-label="Comment by someone">COMMENT_OTHER_DRUG</div></div><div role="article">'+('NEIGHBOUR_OTHER_DRUG '.repeat(100))+'</div></main>';
+ let x=read(url,head,body);
+ assert.ok(x.request?.text.includes('EX-17'));
+ assert.ok(x.request.text.includes('More detail'));
+ assert.ok(!x.request.text.includes('COMMENT_OTHER_DRUG'));
+ assert.ok(!x.request.text.includes('NEIGHBOUR_OTHER_DRUG'));
+ assert.equal(inspectVisible(x.captured.mediaScope).crop?.identity,'https://media.example/current.jpg?size=large');
+ x=read(url,head.replace('/123456789/','/999999999/'),body);
+ assert.equal(x.request,null,'stale metadata cannot identify the current post');
+ assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true);
+ x=read('https://www.facebook.com/journal/videos/a-trial/123456789/',head.replace(url,'https://www.facebook.com/reel/123456789/'),'<main>Log in<img src="https://media.example/unrelated.jpg"></main>');
+ assert.ok(x.request?.text.includes('EX-17'),'video and reel aliases identify the same post');
+ assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true,'unrelated media is never captured');
+});
+
