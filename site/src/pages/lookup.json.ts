@@ -3,7 +3,7 @@
 // it and compares addresses inside the browser. It holds no article text.
 import type { APIRoute } from "astro";
 import { articleKey } from "../lib/article-key.mjs";
-import { data } from "../lib/export";
+import { data, listedTopics } from "../lib/export";
 import { lookupClaim } from "../lib/lookup-claim";
 import { NOTICES } from "../lib/notices";
 import { STAGE_PATH } from "../lib/status";
@@ -15,7 +15,9 @@ export const GET: APIRoute = () => {
   const claims: Record<string, unknown> = {};
 
   for (const claim of data.claims) {
-    claims[claim.slug] = lookupClaim(claim);
+    // The topic is the site's search answer's, for its topic counts and links; the
+    // extension does not read it.
+    claims[claim.slug] = { ...lookupClaim(claim), topic: claim.vertical };
     for (const article of claim.articles) {
       const key = articleKey(article.url);
       if (key === null) continue;
@@ -34,6 +36,13 @@ export const GET: APIRoute = () => {
     // The browser extension reads it here, so it need not be rebuilt when that changes.
     live: SITE.lookupUrl,
     places: STAGE_PATH.length,
+    // Each listed topic's name and how many published claims it holds.
+    topics: Object.fromEntries(
+      listedTopics.map((topic) => [
+        topic.slug,
+        { title: topic.title, count: data.claims.filter((claim) => claim.vertical === topic.slug).length },
+      ]),
+    ),
     articles,
     claims,
   };

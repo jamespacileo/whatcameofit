@@ -1,9 +1,9 @@
 ---
-// The band's row: what kind of thing the treatment is and a gene, when a card gives
-// them, as links down to their rows in "At a glance". Only what the headline does not
-// already say, and no score beside the status: each row carries its own. Across the
-// foot of the band, ruled off from the title and the status. Openspec site-publishing:
-// "The band names what the treatment is".
+// Under the headline in the record band: what kind of thing the treatment is and a
+// gene, when a card gives them, each a link down to its row in "At a glance". Only what
+// the headline does not already say, and no score beside the status: each row carries
+// its own. Before the status on a phone, so a reader learns what the treatment is
+// before scrolling. Openspec site-publishing: "The band names what the treatment is".
 import ArrowDown from "@lucide/astro/icons/arrow-down";
 import { rowId, type BandFact } from "../lib/glance";
 
@@ -15,22 +15,18 @@ const { facts } = Astro.props;
 ---
 
 <nav class="glance-band" aria-label="What the treatment is" data-pagefind-ignore>
-  <div class="wrap band-grid">
-    <ul class="plain">
-      {
-        facts.map((fact) => (
-          <li>
-            <a href={`#${rowId(fact.row)}`}>
-              <span class="glance-band-label">{fact.label}</span>
-              <span class="glance-band-value">
-                {fact.value}
-                <ArrowDown size={14} stroke-width={2.2} aria-hidden="true" />
-              </span>
-              <span class="visually-hidden">, details further down this page</span>
-            </a>
-          </li>
-        ))
-      }
-    </ul>
-  </div>
+  <ul class="plain">
+    {
+      facts.map((fact) => (
+        <li>
+          <a href={`#${rowId(fact.row)}`}>
+            <span class="glance-band-label">{fact.label}</span>
+            <span class="glance-band-value">{fact.value}</span>
+            <ArrowDown size={14} stroke-width={2.2} aria-hidden="true" />
+            <span class="visually-hidden">, details further down this page</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
 </nav>

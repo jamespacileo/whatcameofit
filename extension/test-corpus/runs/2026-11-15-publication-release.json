@@ -1,0 +1,87 @@
+{
+  "release_commit": "49d4b09bfbdb279688edc946404888bbf5ef63d5",
+  "checked_at": "2026-11-15T20:44:45.578Z",
+  "method": "Released exact source-address index and rendered claim pages; no provider/model request; not a native Safari check",
+  "index_claims": 126,
+  "claims": [
+    {
+      "slug": "brain-computer-interface-system-for-hand-control-paralysis",
+      "intervention": "NeuroLife Neural Bypass Technology",
+      "indication": "Paralysis with quadriplegia and loss of hand control",
+      "page": "/brain-computer-interface-system-for-hand-control-paralysis",
+      "http": 200,
+      "approved_trial_ids_present": [],
+      "rejected_trial_ids_absent": [
+        "NCT05637775",
+        "NCT04367623",
+        "NCT02325947",
+        "NCT02564419"
+      ],
+      "source_mappings": [
+        {
+          "url": "http://www.nytimes.com/2016/04/14/health/paralysis-limb-reanimation-brain-chip.html",
+          "slug": "brain-computer-interface-system-for-hand-control-paralysis"
+        }
+      ]
+    },
+    {
+      "slug": "pembrolizumab-plus-chemotherapy-the-most-common-type-of-lung",
+      "intervention": "Pembrolizumab plus pemetrexed and platinum chemotherapy",
+      "indication": "Previously untreated metastatic nonsquamous non-small-cell lung cancer without sensitizing EGFR or ALK alterations",
+      "page": "/pembrolizumab-plus-chemotherapy-the-most-common-type-of-lung",
+      "http": 200,
+      "approved_trial_ids_present": [
+        "NCT02039674",
+        "NCT02578680",
+        "NCT03664024",
+        "NCT03793179",
+        "NCT04956692",
+        "NCT06096844",
+        "NCT06731907"
+      ],
+      "rejected_trial_ids_absent": [
+        "NCT02628067",
+        "NCT02949843",
+        "NCT04340882",
+        "NCT03049618",
+        "NCT02444741",
+        "NCT03050060",
+        "NCT05633602",
+        "NCT03634241",
+        "NCT03516981",
+        "NCT01905657",
+        "NCT04061590",
+        "NCT02595866",
+        "NCT04165083",
+        "NCT02085070"
+      ],
+      "source_mappings": [
+        {
+          "url": "https://www.nytimes.com/2018/04/16/health/lung-cancer-immunotherapy.html",
+          "slug": "pembrolizumab-plus-chemotherapy-the-most-common-type-of-lung"
+        }
+      ]
+    },
+    {
+      "slug": "triple-chronotherapy-depression-particularly-drug-resistant",
+      "intervention": "Sleep deprivation plus lithium and bright light therapy",
+      "indication": "Bipolar depression, including treatment-resistant bipolar depression",
+      "page": "/triple-chronotherapy-depression-particularly-drug-resistant",
+      "http": 200,
+      "approved_trial_ids_present": [
+        "NCT01431573"
+      ],
+      "rejected_trial_ids_absent": [
+        "NCT04364646",
+        "NCT03010488"
+      ],
+      "source_mappings": [
+        {
+          "url": "http://www.bbc.com/future/story/20180123-can-staying-awake-beat-depression",
+          "slug": "triple-chronotherapy-depression-particularly-drug-resistant"
+        }
+      ]
+    }
+  ],
+  "worker": "10a10576-b828-4b61-9532-e4b085550309"
+}

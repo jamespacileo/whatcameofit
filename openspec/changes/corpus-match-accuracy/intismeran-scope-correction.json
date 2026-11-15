@@ -1,0 +1,179 @@
+{
+  "checked_at": "2026-11-15T20:40:51.970256+00:00",
+  "claim": "melanoma-mrna-vaccine-intismeran",
+  "primary_sources": [
+    "https://www.merck.com/news/merck-and-moderna-will-present-results-from-landmark-phase-3-interpath-001-trial-for-intismeran-autogene-plus-keytruda-pembrolizumab-at-esmo-2026-presidential-symposium/",
+    "https://clinicaltrials.gov/study/NCT05933577",
+    "https://www.cancer.gov/research/participate/clinical-trials-search/v?id=NCI-2025-03879"
+  ],
+  "previous": {
+    "id": 53,
+    "entity_id": 56,
+    "slug": "melanoma-mrna-vaccine-intismeran",
+    "intervention": "Intismeran autogene",
+    "synonyms": [
+      "experimental personalized mRNA vaccine",
+      "Individualized neoantigen therapy"
+    ],
+    "search_phrases": [],
+    "indication": "Melanoma at high risk of recurrence after surgery",
+    "summary": "Moderna and Merck reported Phase 3 results for a vaccine made individually for each patient's tumour and given with the immunotherapy pembrolizumab. The risk of the melanoma returning or of death was 42% lower than with pembrolizumab alone. The vaccine is not yet approved.",
+    "headline": "A personalised mRNA vaccine given with pembrolizumab was reported to cut the risk of melanoma returning or causing death by 42% in a Phase 3 trial",
+    "review_state": "approved",
+    "reviewed_by": "assistant",
+    "archived_at": "None",
+    "status": "phase_3"
+  },
+  "corrected": {
+    "intervention": "Intismeran autogene plus pembrolizumab",
+    "indication": "Completely resected stage IIB–IV cutaneous melanoma",
+    "summary": "In October 2026, Moderna and Merck reported results from INTerpath-001, comparing intismeran autogene plus pembrolizumab with pembrolizumab alone after complete resection of stage IIB–IV cutaneous melanoma. The combination reduced the reported risk of recurrence or death by 42%. This finding concerns the combined postoperative regimen, not intismeran alone or treatment of unresectable melanoma.",
+    "aliases": [
+      "Intismeran plus pembrolizumab",
+      "Intismeran autogene plus Keytruda",
+      "V940 plus pembrolizumab",
+      "mRNA-4157 plus pembrolizumab"
+    ]
+  },
+  "trial_decisions": [
+    {
+      "match_id": 156,
+      "id": "NCT03313778",
+      "state": "pending",
+      "decider": "None",
+      "score": 0.72,
+      "fetched_at": "2026-11-15T20:35:30.697285+00:00",
+      "events": [],
+      "decision": "unchanged",
+      "reason": "Keep tentative: Part D explicitly gives mRNA-4157 plus pembrolizumab to participants with completely resected stage II/III/IV cutaneous melanoma. Other arms do not establish this association. No promotion or score change.",
+      "source_url": "https://clinicaltrials.gov/study/NCT03313778"
+    },
+    {
+      "match_id": 97,
+      "id": "NCT03897881",
+      "state": "approved",
+      "decider": "assistant",
+      "score": 0.99,
+      "fetched_at": "2026-11-15T20:35:31.153377+00:00",
+      "events": [
+        {
+          "id": 45,
+          "state": "approved",
+          "decider": "rule"
+        },
+        {
+          "id": 46,
+          "state": "approved",
+          "decider": "rule"
+        }
+      ],
+      "decision": "unchanged",
+      "reason": "Retain KEYNOTE-942: an adjuvant cohort receives mRNA-4157 plus pembrolizumab following complete resection.",
+      "source_url": "https://clinicaltrials.gov/study/NCT03897881"
+    },
+    {
+      "match_id": 94,
+      "id": "NCT05933577",
+      "state": "approved",
+      "decider": "assistant",
+      "score": 0.99,
+      "fetched_at": "2026-11-15T20:35:31.651584+00:00",
+      "events": [
+        {
+          "id": 43,
+          "state": "approved",
+          "decider": "rule"
+        },
+        {
+          "id": 44,
+          "state": "approved",
+          "decider": "rule"
+        }
+      ],
+      "decision": "unchanged",
+      "reason": "Retain INTerpath-001: the named origin study explicitly compares the complete combination after resection of stage IIB–IV cutaneous melanoma.",
+      "source_url": "https://clinicaltrials.gov/study/NCT05933577"
+    },
+    {
+      "match_id": 152,
+      "id": "NCT06961006",
+      "state": "approved",
+      "decider": "assistant",
+      "score": 0.99,
+      "fetched_at": "2026-11-15T20:35:32.151228+00:00",
+      "events": [
+        {
+          "id": 47,
+          "state": "approved",
+          "decider": "rule"
+        },
+        {
+          "id": 48,
+          "state": "approved",
+          "decider": "rule"
+        }
+      ],
+      "decision": "rejected",
+      "reason": "Reject INTerpath-012: it requires unresectable stage III/IV melanoma and measurable disease, incompatible with the postoperative disease-free claim.",
+      "source_url": "https://clinicaltrials.gov/study/NCT06961006"
+    }
+  ],
+  "term_decisions": [
+    {
+      "id": 60,
+      "role": "condition",
+      "label": "Melanoma",
+      "previous_fit": "exact",
+      "previous_score": 0.88,
+      "previous_decider": "rule",
+      "decision": "retain approved as broader condition",
+      "decider": "assistant"
+    },
+    {
+      "id": 144,
+      "role": "intervention",
+      "label": "Vaccines",
+      "previous_fit": "kind",
+      "previous_score": 0.97,
+      "previous_decider": "rule",
+      "decision": "reject component-only whole-regimen description",
+      "decider": "assistant"
+    },
+    {
+      "id": 231,
+      "role": "drug",
+      "label": "INTISMERAN AUTOGENE",
+      "previous_fit": "exact",
+      "previous_score": null,
+      "previous_decider": "rule",
+      "decision": "reject component-only whole-regimen description",
+      "decider": "assistant"
+    }
+  ],
+  "model_calls": 0,
+  "source_calls_during_correction": 0,
+  "publication": "Released in 85bd60c8513987f8c4902f066311374a12b55c72; four exact source mappings and corrected card verified at 2026-11-15T21:14:27.893Z. Native Safari rerun remains pending.",
+  "verified_status": "phase_3",
+  "preparation": {
+    "duration_seconds": 225,
+    "new_candidates": 0,
+    "trial_readings_reused": 2,
+    "trial_readings_created": 0,
+    "status": "phase_3",
+    "note": "Normal prepare; rejected trial and component terms remain excluded. Times are elapsed command stages, not model latency."
+  },
+  "export_verification": {
+    "checked_at": "2026-11-15T20:50:15.164025+00:00",
+    "claim_count": 126,
+    "claim_identities_retained": true,
+    "human_flags_unchanged": true,
+    "approved_trials": [
+      "NCT03897881",
+      "NCT05933577"
+    ],
+    "excluded_trial": "NCT06961006",
+    "remaining_candidate": "NCT03313778",
+    "background": "Melanoma retained as broader condition; component-only vaccine and drug cards excluded",
+    "unrelated_changes": "Only refreshed organisation-record read_at timestamps on 39 other claims; all other fields unchanged."
+  }
+}

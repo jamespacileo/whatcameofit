@@ -1323,14 +1323,446 @@ main nav.contents ul li + li {
   font-size: 0.95rem;
 }
 
-/* Search matches: the headline at reading size, the status in ink before the summary. */
-.results .hits a {
-  font-weight: 600;
-  font-size: 1.02rem;
+/* A search's answer: the best match as a digest with its report under it, then every
+   other match on a line. On the home page it stands in the list's place. */
+.search-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.1rem 1rem;
 }
 
-.results .hits .entry-note strong {
+.search-title {
+  font-size: clamp(1.35rem, 3.8vw, 1.6rem);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.search-count {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.search-results mark.hit {
+  background: var(--tag);
+  /* The fill is near the panel blue; a rule under the word carries the mark there. */
+  box-shadow: inset 0 -2px 0 var(--ring);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 0.12em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.search-results .digest {
+  grid-template-columns: minmax(10rem, 0.8fr) 2fr;
+  margin-top: 1.1rem;
+}
+
+.search-results .digest .standing {
+  display: grid;
+  align-content: start;
+  gap: 0.2rem;
+}
+
+.search-results .digest .track {
+  width: min(100%, 8rem);
+}
+
+.search-results .digest h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.25rem;
+  line-height: 1.25;
+}
+
+.search-results .digest .about p {
+  margin: 0;
+}
+
+.search-results .digest .about p + p {
+  margin-top: 0.35rem;
+}
+
+/* A report named in an answer, built as the day list's report row is: the outlet
+   with its icon, the date and topic in grey, then the title quoted, opening the claim. */
+.search-report {
+  margin-top: 1rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.search-report .row-source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.7rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.search-report .row-topic {
+  background: var(--tint);
   color: var(--ink);
+  border-radius: 999px;
+  padding: 0.05rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+.results .search-report-title,
+.search-report-title {
+  margin: 0.35rem 0 0;
+  font-size: clamp(1.1rem, 2.6vw, 1.3rem);
+  font-weight: 700;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.search-report-title a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.search-report-title a:hover {
+  text-decoration: underline;
+}
+
+/* In an answer the digest's headline opens the claim, and keeps the headline's ink. */
+.digest h2 a,
+.digest h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.digest h2 a:hover,
+.digest h3 a:hover {
+  text-decoration: underline;
+}
+
+.digest .about p {
+  text-wrap: pretty;
+}
+
+.results .unchecked-line,
+.unchecked-line {
+  margin-top: 0.35rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* The one way out of an answer: a text control as tall as a fingertip. */
+.search-count {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 0.75rem;
+}
+
+.search-clear {
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* The topics of the matches, under the heading, where the side column is not. */
+.search-topic-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.search-topic-row .side-pick {
+  width: auto;
+  min-height: 2.75rem;
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px var(--rule);
+  background: var(--paper);
+}
+
+.search-topic-row .side-pick .kind-count {
+  margin-left: 0.4rem;
+  color: var(--muted);
+}
+
+.search-topic-row .side-pick[aria-pressed="true"] {
+  background: var(--tint);
+  box-shadow: inset 0 0 0 1px var(--blue);
+}
+
+.jump-others {
+  display: none;
+}
+
+@media (max-width: 34rem) {
+  /* On a phone the other matches are a press away, not two screens away. */
+  .jump-others {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    margin-top: 0.4rem;
+  }
+}
+
+.hit-heading {
+  margin: 0;
+  font-size: inherit;
+}
+
+.hit-row.is-closest .hit-title {
+  font-size: 1.2rem;
+}
+
+.hit-row.is-closest .hit-now .row-label {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.results .hit-when,
+.hit-when {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+.results .trial-note,
+.trial-note {
+  margin-top: 0.4rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.search-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.7rem;
+  border-bottom: 1px solid var(--rule);
+  padding: 1.6rem 0 0.45rem;
+}
+
+.search-group h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.search-group span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.hit-row {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  gap: 0 1.1rem;
+  align-items: baseline;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.hit-now {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.hit-now .status-name {
+  color: var(--blue);
+  font-size: 0.92rem;
+  line-height: 1.2;
+}
+
+.hit-now .track {
+  width: 5.5rem;
+}
+
+.hit-title {
+  display: block;
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 1.02rem;
+  line-height: 1.3;
+  text-decoration: none;
+  text-wrap: pretty;
+}
+
+.hit-title:hover {
+  text-decoration: underline;
+}
+
+.results .hit-meta,
+.hit-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.6rem;
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.hit-meta .row-topic {
+  background: var(--tint);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 0.05rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+/* Under a match, what the words were found in: a drawing for the kind, the kind in
+   words, then the report's headline or the trial's title with where it is from. */
+.match-reasons {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.match-reason {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  gap: 0 0.5rem;
+  align-items: baseline;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.match-kind {
+  grid-row: span 2;
+  color: var(--blue);
+  translate: 0 0.2em;
+}
+
+.match-kind svg {
+  display: block;
+}
+
+.match-label {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.match-text {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.6rem;
+  color: var(--ink);
+}
+
+.match-text > a {
+  color: var(--ink);
+}
+
+.match-source {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.5rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.match-source .outlet-name {
+  color: var(--muted);
+}
+
+.match-source a {
+  color: var(--muted);
+}
+
+.results .match-more,
+.match-more {
+  color: var(--muted);
+  font-size: 0.82rem;
+  padding-left: 1.5rem;
+}
+
+.results .matched-title,
+.search-results .matched-title {
+  margin-top: 0.8rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* An exact headline or a registry identifier: said in a sentence, then the thing. */
+.results .exact-says,
+.exact-says {
+  margin: 1.1rem 0 0;
+  font-weight: 600;
+}
+
+.trial-record {
+  margin-top: 0.6rem;
+  padding: 0.7rem 0.9rem 0.8rem;
+  background: var(--panel);
+  border-radius: var(--radius);
+}
+
+.trial-record .row-source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.6rem;
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.trial-record .row-label {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.trial-record .match-kind {
+  translate: none;
+}
+
+.trial-record .when {
+  color: var(--muted);
+}
+
+.results .trial-title,
+.trial-title {
+  margin: 0.3rem 0 0;
+  font-weight: 600;
+  line-height: 1.35;
+  max-width: var(--measure);
+}
+
+.results .search-more,
+.search-more {
+  margin: 1.1rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 34rem) {
+  .search-results .digest,
+  .hit-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hit-now {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.15rem 0.6rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .hit-now .row-label {
+    flex-basis: 100%;
+  }
 }
 
 .next-up {
@@ -1420,6 +1852,15 @@ main nav.contents ul li + li {
   border-top: 0;
 }
 
+/* A row reached from the band is marked, as a record reached by a link is. */
+.glance-rows > div:target {
+  background: var(--tint);
+}
+
+.glance-rows > div:focus {
+  outline: none;
+}
+
 .glance-rows dt {
   font-size: 0.9rem;
   color: var(--muted);
@@ -1464,13 +1905,21 @@ main nav.contents ul li + li {
   display: none;
 }
 
-.glance-more summary > span:first-child {
+/* The words and the chevron stay together; only the term match moves to a new line. */
+.glance-more-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.glance-more-words {
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.18em;
 }
 
-.glance-more summary:hover > span:first-child {
+.glance-more summary:hover .glance-more-words {
   text-decoration-thickness: 2px;
 }
 
@@ -5150,62 +5599,41 @@ body.framed {
   color: var(--footer);
 }
 
-/* The band's row of facts closes the band: ruled off from the title and the status,
-   across their two columns, each fact a link to its row in "At a glance". */
-.band.record:has(.glance-band) {
-  padding-bottom: 0;
-}
-
+/* Under the headline: what kind of thing the treatment is and a gene, each a link down
+   to its row in "At a glance". A quiet line of the band's own type, before the status
+   on a phone. */
 .glance-band {
-  margin-top: 1.5rem;
-  border-top: 1px solid rgb(255 255 255 / 0.14);
+  margin-top: 0.7rem;
 }
 
 .glance-band ul {
-  grid-column: 2 / -1;
   display: flex;
   flex-wrap: wrap;
+  gap: 0 1.5rem;
 }
 
-/* A list's own row rules are for white pages; on the navy the facts are ruled apart. */
 .band.record .glance-band li {
-  border-block: 0;
+  border: 0;
   padding: 0;
 }
 
-.glance-band li + li {
-  border-left: 1px solid rgb(255 255 255 / 0.14);
-}
-
 .band.record .glance-band a {
-  display: grid;
-  align-content: start;
-  gap: 0.1rem;
-  min-height: 44px;
-  height: 100%;
-  padding: 0.75rem 1rem 0.9rem;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.4rem;
+  min-height: 2.75rem;
+  padding-block: 0.55rem;
   color: var(--paper);
   text-decoration: none;
-}
-
-.band.record .glance-band li:first-child a {
-  padding-left: 0;
-}
-
-.band.record .glance-band a:hover {
-  background: rgb(255 255 255 / 0.05);
 }
 
 .band.record .glance-band a:hover .glance-band-value {
   text-decoration-thickness: 2px;
 }
 
-.band.record .glance-band a:focus-visible {
-  outline-offset: -3px;
-}
-
 .glance-band-label {
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   color: var(--navy-soft);
 }
 
@@ -5213,7 +5641,6 @@ body.framed {
    touch screen cannot learn from a hover. */
 .glance-band-value {
   font-weight: 600;
-  line-height: 1.3;
   overflow-wrap: anywhere;
   text-decoration: underline;
   text-decoration-thickness: 1px;
@@ -5221,17 +5648,9 @@ body.framed {
   text-underline-offset: 0.2em;
 }
 
-.glance-band-value svg {
-  margin-left: 0.25rem;
-  vertical-align: -0.15em;
+.glance-band svg {
+  align-self: center;
   color: var(--on-navy);
-}
-
-/* Where the frame's side list gives way, the row spans the band from its left edge. */
-@media (max-width: 68rem) {
-  .glance-band ul {
-    grid-column: 1 / -1;
-  }
 }
 
 /* The status panel is the card at the right: ink on white, level with the title. */
@@ -5671,18 +6090,6 @@ body.framed {
   /* The band keeps to the title and the status; the report opens the sheet. */
   .band-reported {
     display: none;
-  }
-
-  .band.record:has(.glance-band) {
-    padding-bottom: 0;
-  }
-
-  .glance-band {
-    margin-top: 1.2rem;
-  }
-
-  .glance-band ul {
-    grid-column: 1;
   }
 
   .glance-rows > div {

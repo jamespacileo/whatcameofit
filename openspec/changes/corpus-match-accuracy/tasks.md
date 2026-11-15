@@ -52,6 +52,16 @@
 - [x] Reconcile all 84 diagnostic scope flags against current decisions: 67 belong to six archived claims, 15 active associations are rejected, and two active associations have primary-record confirmation. The kidney claim remains archived; its 19 historical flags do not block publication of active claims.
 - [x] Correct the archived kidney claim's origin paper to the already verified 2016 study without unarchiving it or changing trial decisions.
 - [x] Prepare both corrected regimens: retain seven unchanged pembrolizumab trial readings and verify the newly found lithium-containing bipolar cohort in NCT01431573.
-- [ ] Handle the demonstrated ClinicalTrials.gov condition-query complexity limit for the precise pembrolizumab indication, preserving full clinical scope for scoring.
+- [x] Handle the demonstrated ClinicalTrials.gov condition-query complexity limit for the precise pembrolizumab indication, preserving full clinical scope for scoring. Two bounded discovery attempts succeed without changing candidates or scoring scope: the accepted fallback has 111 trials and contributes none under the existing 100-trial cap; no model calls.
+- [ ] Review and integrate the condition-refusal fallback after its 156 client, resolution and CLI regression checks. Recognize only the recorded `Conditions or disease` refusal label; unknown field labels cannot retry. Source terms and API documentation rechecked on 2026-11-15.
 
 - [x] Reconcile stale tentative readings after the three identity corrections: reject 20 explicitly incompatible candidates and reread the uncertain device against the precise identity; preserve approved trial counts and prior decision history.
+
+## Intismeran combination and postoperative scope
+
+- [x] Verify the full intismeran-plus-pembrolizumab regimen against primary sources and retain the completely resected stage IIB–IV cutaneous melanoma population.
+- [x] Exclude the incompatible unresectable-disease trial and component-only background cards; retain two approved postoperative trials and the tentative compatible Part D cohort without promotion.
+- [x] Run normal preparation and stage the export: 126 existing claim identities retained, two trial readings reused and no new candidates.
+- [x] Clarify that saved background trial counts describe when the term was gathered, preserving historical reasons after trial exclusions.
+- [x] Deploy the corrected melanoma card and rerun its four mapped corpus URLs against the released site; record exact methods in the corpus.
+- [x] Update and read back the four melanoma Sheet rows and release summary: 29 value-only cells verified; formulas, formatting and validation preserved. Native Sheet preview remains unavailable behind sign-in.
