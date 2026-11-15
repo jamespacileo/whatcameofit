@@ -139,6 +139,19 @@ def test_a_record_agrees_with_the_trial_name_by_acronym_or_title():
     assert agreeing(record(acronym="REGROW-2"), Details()) == []
 
 
+def test_hashtag_study_names_retain_their_complete_numeric_identity():
+    named = Details(trial_name="REGROW2")
+    assert agreeing(record(acronym="REGROW 2"), named) == ["trial_name"]
+    assert agreeing(record(title="EX-1 in adults (REGROW-2)"), named) == ["trial_name"]
+    assert agreeing(record(acronym="REGROW 21"), named) == []
+    assert agreeing(record(acronym="REGROW 3"), named) == []
+    assert agreeing(record(acronym="REGROW2A"), named) == []
+    assert agreeing(record(title="The 4TUNE trial"), Details(trial_name="4TUNE")) == ["trial_name"]
+    assert agreeing(record(title="RECOVERY 5-year follow-up"), Details(trial_name="RECOVERY")) == [
+        "trial_name"
+    ]
+
+
 def test_a_record_agrees_with_a_number_of_participants_within_a_tenth():
     """Scenario: Text that gives the trial's size and who ran it"""
     assert agreeing(record(count=2539), Details(participants=2500)) == ["participants"]

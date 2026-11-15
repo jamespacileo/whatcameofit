@@ -209,7 +209,12 @@ export function describeAnswer(answer) {
   const likely = candidates.filter(
     (candidate) => candidate.answer === "match" && Number.isFinite(candidate.score) &&
       candidate.score >= LIKELY_FROM && candidate.score <= 1,
-  ).sort((a, b) => b.score - a.score);
+  ).sort((a, b) =>
+    // Keep the lookup service's evidence ordering within compatible candidates.
+    // A citation or agreeing trial detail cannot make a nonmatch eligible.
+    Number((b.agrees ?? []).includes("stated")) - Number((a.agrees ?? []).includes("stated")) ||
+    (b.agrees ?? []).length - (a.agrees ?? []).length || b.score - a.score,
+  );
   const mentioned = candidates.filter(candidate => !likely.includes(candidate) &&
     (candidate.agrees ?? []).some(reason => reason === "stated" || reason === "paper"));
   const others = candidates.length - likely.length - mentioned.length;

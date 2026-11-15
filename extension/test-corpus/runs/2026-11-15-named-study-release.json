@@ -1,0 +1,65 @@
+{
+  "release_commit": "7040c80676349eec9c1365809aa0f51aa4d4e8a2",
+  "worker_version": "8f4211ce-6aeb-43f9-a006-5360939ec71b",
+  "released_at": "2026-11-15T19:41:55.1791565Z",
+  "production_ci_run": "43753578678",
+  "pull_request": 156,
+  "safari": {
+    "version": "0.9.13 (22)",
+    "installed_signed_universal_app_verified": true,
+    "permissions_unchanged": true,
+    "rollback_retained": true,
+    "native_version_and_lookup_verification": "pending; Safari was changing windows and pages during preparation"
+  },
+  "service_checks": {
+    "S010": {
+      "checked_at": "2026-11-15T19:43:56.980Z",
+      "method": "Previously captured, bound public LinkedIn caption replayed to the released production service. Not a current native Safari check.",
+      "capture_date": "2026-11-15T14:36:06.886Z",
+      "http": 200,
+      "elapsed_ms": 5382,
+      "server_timing": "registry;dur=110, papers;dur=0, read;dur=4044, research;dur=45, score;dur=1092, core;dur=5246, total;dur=5246",
+      "trial_records": 22,
+      "likely_records": 11,
+      "top_trial": "NCT06625320",
+      "top_score": 0.99,
+      "top_agrees": [
+        "trial_name"
+      ],
+      "trial_name_read": "RASolute302",
+      "registry_acronym": "RASolute 302",
+      "knowledge_card": "no card",
+      "outcome": "Named study now leads; broad treatment/condition matches retain their scores. No exact knowledge-card association returned."
+    }
+  },
+  "verification_notes": [
+    "New regression tests failed before correction. Full local make check and final release CI passed; independent spec review's title-boundary finding was reproduced and fixed.",
+    "The service replay uses the project's normal Node fetch client. An initial Python HTTP request returned 403 and provided no lookup result; a subsequent non-paid cache probe from Node returned 200/cacheMiss.",
+    "No current native screenshot preview or repeat-reuse claim is made."
+  ],
+  "corpus_and_sheet": {
+    "updated_date": "2026-11-15",
+    "corpus_row": "S010",
+    "sheet_id": "15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA",
+    "sheet_title": "URLs",
+    "changed_cells": [
+      "I11",
+      "M11",
+      "P11",
+      "Z11",
+      "AB11",
+      "AD11"
+    ],
+    "readback_verified": true,
+    "other_values_formats_validation_and_chips_unchanged": true,
+    "native_visual_fit": "unverified while Safari is in use",
+    "corpus_cache_tests": 9,
+    "counts": {
+      "pass": 114,
+      "partial": 86,
+      "review": 32,
+      "blocked": 26
+    },
+    "note": "Captured service replay is explicitly distinguished from the latest completed native Safari check (0.9.12). No new native 0.9.13 or knowledge-card success is claimed."
+  }
+}
