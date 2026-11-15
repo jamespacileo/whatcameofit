@@ -140,6 +140,9 @@ const MOST_RELATED = 5;
 
 const wordCount = (text: string) => text.split(/\s+/).filter(Boolean).length;
 
+/** Entries the site's own pages link to by name: the key to the record strip. */
+export const REQUIRED_ENTRIES = ["record-strip"];
+
 /**
  * Everything wrong with the entry files, one line each; empty when the guide may be
  * built. A status without an entry, a research entry without a source, a related entry
@@ -161,6 +164,11 @@ export function guideProblems(
     if (held.length > 1) {
       problems.push(`The status ${code} has ${held.length} guide entries; it takes one.`);
     }
+  }
+
+  // A drawing the site asks a reader to learn has an entry that explains it.
+  for (const slug of REQUIRED_ENTRIES) {
+    if (!slugs.has(slug)) problems.push(`The guide has no entry "${slug}", which a key on the site links to.`);
   }
 
   for (const entry of entries) {
