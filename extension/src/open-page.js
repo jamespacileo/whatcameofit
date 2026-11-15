@@ -42,7 +42,7 @@ export function collectFromPage() {
   const host = location.hostname.replace(/^www\./, "");
   // These detail pages also render replies, recommendations or neighbouring posts.
   // Bind the reading to the requested post before collecting any words or pixels.
-  if (["instagram.com", "threads.com", "threads.net", "t.me", "telegram.me", "tiktok.com", "linkedin.com", "bsky.app"].includes(host)) {
+  if (["instagram.com", "threads.com", "threads.net", "t.me", "telegram.me", "tiktok.com", "linkedin.com", "bsky.app", "facebook.com"].includes(host)) {
     const empty = {
       address: location.href, title: "", selection: String(getSelection() ?? "").trim().slice(0, 20000),
       head: "", focusHtml: "", focusText: "", links: [], postTitle: null, contentHref: null, structured: [],
@@ -83,6 +83,44 @@ export function collectFromPage() {
       mediaScope: { address: location.href, selector: mediaRoot ? selectorFor(mediaRoot) : null,
         videoOnly: host === "tiktok.com" && location.pathname.includes("/video/") },
     });
+    if (host === "facebook.com") {
+      const postKey = value => {
+        try {
+          const u = new URL(value, location.href);
+          if (u.hostname.replace(/^www\./, "") !== host) return null;
+          const post = u.pathname.match(/\/posts\/(?:[^/]+\/)?(\d+|pfbid[\w]+)\/?$/)?.[1];
+          if (post) return `post:${post}`;
+          const video = u.pathname.match(/\/(?:videos|reel)\/(?:[^/]+\/)?(\d+)\/?$/)?.[1] ??
+            (u.pathname === "/watch/" ? u.searchParams.get("v") : null);
+          return video ? `video:${video}` : null;
+        } catch { return null; }
+      };
+      const wanted = postKey(location.href);
+      const metaUrl = document.querySelector('meta[property="og:url"]')?.getAttribute("content");
+      if (!wanted || !metaUrl || postKey(metaUrl) !== wanted) return empty;
+      const caption = document.querySelector('meta[property="og:description"]')?.getAttribute("content")?.trim() ?? "";
+      const normal = text => text.replace(/\s+/g, " ").trim();
+      const prefix = normal(caption).replace(/(?:\.{3}|…)$/, "").trim();
+      // Numeric and pfbid permalinks differ in Facebook's rendered cards. The
+      // current page's public preview binds its caption without reading comments.
+      const messages = [...document.querySelectorAll('[data-ad-preview="message"]')].filter(node => {
+        const article = node.closest('[role="article"]');
+        return visible(node) && !article?.hasAttribute("aria-label") &&
+          !article?.parentElement?.closest('[role="article"]') && prefix.length >= 40 &&
+          normal(node.innerText ?? "").startsWith(prefix);
+      });
+      const imageKey = value => {
+        try { const u = new URL(value); return /^https?:$/.test(u.protocol) ? u.origin + u.pathname : null; }
+        catch { return null; }
+      };
+      const image = imageKey(document.querySelector('meta[property="og:image"]')?.getAttribute("content"));
+      const media = image ? [...document.querySelectorAll("img, video")].filter(node => visible(node) &&
+        imageKey(node.tagName === "VIDEO" ? node.poster : node.currentSrc || node.src) === image) : [];
+      const reading = fromNode(messages.length === 1 ? messages[0] : null, media.length === 1 ? media[0] : null);
+      return messages.length === 1 ? reading : { ...reading, focusText: caption.slice(0, 20000),
+        links: [...caption.matchAll(/https?:\/\/[^\s<>"“”]+/g)].slice(0, 30)
+          .map(([href]) => ({ href: href.replace(/[.,;)]+$/, ""), text: "" })) };
+    }
     if (host === "linkedin.com" || host === "bsky.app") {
       const postKey = value => {
         try {

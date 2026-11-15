@@ -13,6 +13,7 @@
 - [ ] 2.4 Complete independent standards/spec review and CI, deploy, install signed Safari and verify affected released URLs.
 - [ ] 2.5 Update corpus and native Sheet with the new released results and verify read-back.
 - [ ] 2.6 Exclude signed-in LinkedIn sidebars and Bluesky replies; verify synthetic boundaries and live DOM, then release the corrected reader with obsolete local answers invalidated.
+- [ ] 2.7 Correct Facebook neighbouring-post selection and combination truncation; verify live captions, repeated provider readings and negative/monotherapy controls, deploy and rerun affected URLs.
 
 ## 3. Full corpus accuracy and efficiency
 

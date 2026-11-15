@@ -40,3 +40,18 @@ The extension SHALL reject local answers produced before the signed-in post-boun
 #### Scenario: Reopening a previously broad post reading
 - **WHEN** a version-five local result exists for a LinkedIn or Bluesky post
 - **THEN** the corrected reader does not reuse it
+
+### Requirement: Facebook detail reading uses the requested public post
+Facebook detail reading SHALL require public metadata matching the current post identity. A unique visible caption matching that preview MAY supply full text and links; otherwise only the public preview MAY be read. Comments and neighbouring posts SHALL NOT supply text. Only unique visible media matching the preview image MAY authorize a screenshot. Missing or stale identity SHALL fail closed; video/reel aliases for one ID SHALL remain supported.
+
+#### Scenario: A neighbouring post is longer
+- **WHEN** a Facebook detail page includes a longer recent post and comments below the requested report
+- **THEN** the requested caption is read without neighbouring posts or comments
+
+#### Scenario: Facebook redirects video metadata to its reel
+- **WHEN** the current video URL and public reel URL identify the same video ID
+- **THEN** the public caption remains readable, without authorizing unrelated media
+
+#### Scenario: Public preview is stale
+- **WHEN** the public preview identifies a different post
+- **THEN** neither its caption nor its media is used

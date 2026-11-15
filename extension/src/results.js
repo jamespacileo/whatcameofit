@@ -3,7 +3,7 @@
 // treatment-report identification, including company-history false positives.
 // Only completed answers can be reused.
 export const RESULT_TTL = 24 * 60 * 60 * 1000;
-const VERSION = 6;
+const VERSION = 7;
 const MAX_RESULTS = 10;
 
 /** Whether an answer is whole: not an error, a miss, a partial stream or one that is
