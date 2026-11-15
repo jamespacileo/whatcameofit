@@ -192,3 +192,17 @@ The service adopted `NOT_NOW` with `reason` and `retryAfter` for its host-cooldo
 The retention probe passed for the pipeline request shape. Changed source values proved a fresh fetch on repeated reads. The unique request left no queue record or matching page content in inspected Redis values and service logs. Immediate JavaScript rendering passed. A delayed-render fixture returned a shell, which the main-body check rejects before a model call. The dated details are in `docs/sources.md`.
 
 Review corrections make the supplied main HTML authoritative through `Page.as_text()`, reject thin bodies before extraction, require headline and date for outlet Read counts, reject malformed retry times, and share deferred exclusions across workers in a run.
+
+The proxy previously fell back directly to the upstream API when the router restarted. That skipped the router response contract. Single scrapes now require the router. An unavailable router is reported as unavailable, allowing the pipeline to leave work due. Target engine exhaustion is a temporary `NOT_NOW` answer with a 60-second retry interval.
+
+## Outlet acceptance result on 2026-11-15
+
+The final run finished 400 tracked articles in 303.49 seconds, with at most two HTTP requests in flight. One article was added by another session after the 399-article baseline. Over the matching 399 URLs, Read was 329 versus 337, Thin 27 versus 0, Refused 0 versus 4, and failed 43 versus 58. The new article was Read, making the current report 330 Read. Elapsed wall time per checked article was 0.759 seconds. This is throughput with concurrency, not the latency of one HTTP request. No per-request mean latency was recorded.
+
+The requested no-regression and lower-Thin conditions were not met. The stricter checks require enough main text and a usable publication date, and a detected challenge is no longer counted as an article. The operator was told of these results before merge. The regenerated report records the observed results.
+
+Both previously refused outlets became readable, QUB (1) and The Sun (3). Other outlets with higher Read counts were AP (0 to 2), Bloomberg (0 to 2), Fierce Biotech (0 to 2), Fierce Pharma (0 to 1), Financial Times (0 to 4), The Atlantic (0 to 5), US News (0 to 1), and Washington Post (0 to 3). Dana-Farber's one newly added article also read successfully.
+
+Outlets whose Read counts fell were au.news.yahoo.com (1 to 0), bbc.co.uk (20 to 19), dailymail.co.uk (3 to 0), dailymail.com (7 to 0), eurekalert.org (5 to 0), idw-online.de (1 to 0), kyoto-u.ac.jp (1 to 0), medscape.com (1 to 0), news.yahoo.com (2 to 0), nottingham.ac.uk (1 to 0), nz.news.yahoo.com (1 to 0), okayama-u.ac.jp (1 to 0), plymouth.ac.uk (1 to 0), qmul.ac.uk (1 to 0), riken.jp (1 to 0), sg.news.yahoo.com (2 to 0), tohoku.ac.jp (1 to 0), and usatoday.com (1 to 0).
+
+Repeat inspection used up to three newly readable articles per outlet, or all when fewer were available, and recorded headline, publication date, body length and paragraph count without retaining article text. AP, Fierce Biotech, Fierce Pharma, Financial Times, QUB, The Atlantic, The Sun, US News, Dana-Farber and Washington Post passed those mechanical checks. Washington Post bodies were only 528–744 characters, so completeness is uncertain despite meeting the existing 500-character threshold. Bloomberg's two pages failed on repeat with no body or metadata. Its initial two Read results are therefore not a reliable gain.
