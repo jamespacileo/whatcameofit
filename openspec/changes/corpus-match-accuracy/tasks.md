@@ -21,8 +21,9 @@
 - [x] 2.10 Pass verified entry-name evidence to vocabulary checks and support explicitly named pending-term rereads; verify preservation, failure, reuse and real pending candidates before publication.
 - [x] 2.11 Respect explicit patient populations and treatment settings in both trial-scoring paths, invalidate old answers, verify real contrasting trial records and broad-condition controls, then release and rerun affected corpus URLs.
 - [x] 2.12 Preserve completed background-card claims and incurred model usage after a later source failure; verify rollback and repeat behavior before resuming missing-card work.
-- [ ] 2.13 Preserve whole-intervention scope in extracted alternate names, correct proven overbroad unpublished aliases and verify source/card boundaries before publication.
+- [x] 2.13 Preserve whole-intervention scope in extracted alternate names, correct proven overbroad unpublished aliases and verify source/card boundaries before publication.
 - [ ] 2.14 Preserve bounded registry intervention/arm details needed to assess explicit route and regimen restrictions in both scoring paths, then verify conflicting and compatible records before release.
+- [ ] 2.15 Measure paper-source spacing after synchronous request setup so a clock tick cannot shorten the required interval; retain concurrent response handling.
 
 ## 3. Full corpus accuracy and efficiency
 

@@ -4,6 +4,36 @@ Associates automatic article and post lookups with existing knowledge cards only
 
 ## ADDED Requirements
 
+### Requirement: Trial matching preserves explicit intervention scope
+Both lookup and private-pipeline scoring SHALL receive intervention descriptions and arm membership from the fetched registry record. Explicit route, formulation, stereoisomer and regimen conflicts SHALL mean `not_a_match`. Separate component arms SHALL NOT establish a complete regimen. Missing or truncated evidence SHALL retain uncertainty about explicit restrictions.
+
+#### Scenario: Injected treatment against an inhaled claim
+- **GIVEN** the claim explicitly concerns inhaled treatment and a record describes subcutaneous injection
+- **WHEN** that trial is scored
+- **THEN** the description is available to the scorer and the conflicting route is not a full match
+
+#### Scenario: Separate component arms
+- **GIVEN** the claim concerns A plus B while the registry describes an A-only arm and a B-only arm
+- **WHEN** that trial is scored
+- **THEN** arm membership is available and the two names alone cannot establish a combination match
+
+#### Scenario: Long duplicate title
+- **GIVEN** an unusually long official title and short intervention/arm descriptions
+- **WHEN** the existing input limit is applied
+- **THEN** the short route and arm evidence comes before the duplicate title and shortened content is marked
+
+#### Scenario: Compatibility is absent
+- **GIVEN** an explicit route restriction and a missing or truncated description that does not establish the route
+- **WHEN** the record is scored
+- **THEN** the restriction remains uncertain rather than becoming a confident match
+
+### Requirement: Detailed trial inputs remain bounded
+The existing 1,500-character record limit, request counts and source caches SHALL remain. Shortened content SHALL be marked and obsolete completed answers SHALL be invalidated.
+
+#### Scenario: Record exceeds the input limit
+- **WHEN** descriptions and arm details exceed the record limit
+- **THEN** the shortened input remains within 1,500 characters, carries a truncation marker and adds no request
+
 ### Requirement: Trial matching respects explicit patient restrictions
 Lookup and private-pipeline scoring SHALL treat explicit patient populations and treatment settings as part of the indication. An incompatible setting SHALL be read as `other_indication`, even for a mentioned trial. Missing compatibility SHALL retain uncertainty; a broad claim SHALL NOT gain an unstated restriction. Existing bounded calls and source caches SHALL remain; obsolete completed answers SHALL be invalidated.
 

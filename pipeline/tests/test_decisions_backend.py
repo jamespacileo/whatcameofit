@@ -97,7 +97,7 @@ def test_every_record_is_scored_in_one_request(session: Session, fixture_json):
     # Each option carries the question's own account of when it applies.
     assert first["choices"][1] == {
         "value": "other_indication",
-        "description": "it tests this intervention for a different condition,"
+        "description": "it tests the same complete intervention for a different condition,"
         " an incompatible patient population or treatment setting, or only in healthy volunteers.",
     }
     logged = list(session.scalars(select(DecisionLog).order_by(DecisionLog.id)))

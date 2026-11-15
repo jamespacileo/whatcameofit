@@ -14,6 +14,7 @@ Released corpus checks found a trial match accompanied by a knowledge card for a
 - Reuse exact published address mappings and completed eligible results before paid work, and measure fresh/reused work without weakening accuracy.
 - Preserve completed background-card work and provider usage when a later source operation fails.
 - Keep extracted alternate names within the complete intervention's scope and correct known overbroad unpublished aliases before publishing new cards.
+- Preserve registry intervention descriptions and arm membership for route and regimen comparisons within the existing scoring limit.
 
 ## Capabilities
 

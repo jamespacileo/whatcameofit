@@ -17,15 +17,23 @@ const MAX_PAPERS = 3;
 
 const unique = (items) => [...new Set(items)];
 const idOf = (study) => study.protocolSection.identificationModule.nctId;
+const excerpt = (value, limit) => typeof value === "string" && value.length > limit
+  ? `${value.slice(0, limit - " [truncated]".length)} [truncated]` : value;
 
 /** A registry record as it is shown to the model: what decides a match comes first. */
 function candidateText(study) {
   const section = study.protocolSection ?? {};
+  const treatment = section.armsInterventionsModule ?? {};
   const described = {
-    title: section.identificationModule?.briefTitle,
-    official_title: section.identificationModule?.officialTitle,
     conditions: section.conditionsModule?.conditions ?? [],
-    interventions: (section.armsInterventionsModule?.interventions ?? []).map((one) => one.name),
+    title: excerpt(section.identificationModule?.briefTitle, 240),
+    interventions: (treatment.interventions ?? []).map((one) => ({
+      name: one.name ?? null, description: excerpt(one.description ?? null, 350), arms: one.armGroupLabels ?? [],
+    })),
+    arms: (treatment.armGroups ?? []).map((arm) => ({
+      label: arm.label ?? null, interventions: arm.interventionNames ?? [], description: excerpt(arm.description ?? null, 350),
+    })),
+    official_title: excerpt(section.identificationModule?.officialTitle, 240),
     phases: section.designModule?.phases ?? [],
     status: section.statusModule?.overallStatus,
     sponsor: section.sponsorCollaboratorsModule?.leadSponsor?.name,
@@ -33,7 +41,7 @@ function candidateText(study) {
   const kept = Object.fromEntries(
     Object.entries(described).filter(([, value]) => (Array.isArray(value) ? value.length : value)),
   );
-  return `Candidate record from clinicaltrials.gov (${idOf(study)}):\n${JSON.stringify(kept).slice(0, MAX_RECORD_CHARACTERS)}`;
+  return `Candidate record from clinicaltrials.gov (${idOf(study)}):\n${excerpt(JSON.stringify(kept), MAX_RECORD_CHARACTERS)}`;
 }
 
 function nothingFound(reading, numbers) {

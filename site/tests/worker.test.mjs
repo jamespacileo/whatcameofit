@@ -71,6 +71,52 @@ const INDEX = {
 
 // --- lookup -------------------------------------------------------------------------
 
+test("scoring retains routes and separate arms before a long official title", async () => {
+  for (const description of ["Delivered by inhalation", "Subcutaneous injection"]) {
+    const record = study("NCT00000001", "EX-1 trial");
+    record.protocolSection.identificationModule.officialTitle = "A long official title ".repeat(150);
+    record.protocolSection.armsInterventionsModule = {
+      interventions: [
+        {name: "EX-1", description, armGroupLabels: ["A"]},
+        {name: "EX-2", armGroupLabels: ["B"]},
+      ],
+      armGroups: [
+        {label: "A", interventionNames: ["Drug: EX-1"], description: "EX-1 alone"},
+        {label: "B", interventionNames: ["Drug: EX-2"], description: "EX-2 alone"},
+      ],
+    };
+    const model = fakeModel();
+    const scored = [];
+    model.score = async (_intro, items) => {
+      scored.push(...items);
+      return items.map(() => ({answer: "not_a_match", probabilities: {match: 0}}));
+    };
+    const found = await lookUp({text: TEXT, model, registry: fakeRegistry({"EX-1": [record]}), index: INDEX});
+    assert.equal(scored.length, 1);
+    assert.ok(scored[0].includes(description));
+    assert.ok(scored[0].includes('"arms":["A"]') && scored[0].includes('"arms":["B"]'));
+    assert.match(scored[0], /EX-1 alone/);
+    assert.match(scored[0], /EX-2 alone/);
+    assert.match(scored[0], /\[truncated\]/);
+    assert.ok(scored[0].split("\n").slice(1).join("\n").length <= 1500);
+    assert.equal(found.candidates[0].answer, "not_a_match");
+  }
+});
+
+test("oversized registry evidence marks omitted details within the existing input limit", async () => {
+  const record = study("NCT00000001", "EX-1 trial");
+  record.protocolSection.armsInterventionsModule.interventions = Array.from({length:20}, (_, n) =>
+    ({name: `EX-${n}`, description: "Synthetic description ".repeat(100)}));
+  const model = fakeModel();
+  model.score = async (_intro, items) => {
+    assert.equal(items.length, 1);
+    assert.ok(items[0].split("\n").slice(1).join("\n").length <= 1500);
+    assert.ok(items[0].endsWith(" [truncated]"));
+    return [{answer: "not_a_match", probabilities: {match: 0}}];
+  };
+  await lookUp({text: TEXT, model, registry: fakeRegistry({"EX-1": [record]}), index: INDEX});
+});
+
 test("optional research gets named entities only and cannot affect clinical results", async () => {
   const calls = [];
   const base = {text:TEXT,model:fakeModel({...READING, organisations:["Example University"]}), registry:fakeRegistry({}), index:INDEX};

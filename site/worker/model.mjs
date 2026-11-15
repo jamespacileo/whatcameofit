@@ -56,9 +56,9 @@ outside knowledge about the subject.`;
 const ASKED = "Is this record a trial of the claim's intervention for the claim's indication?";
 // Each answer and when it applies.
 const CHOICES = [
-  ["match", "it tests this intervention in the claim's indication, in a form of that condition, or in patients who have it, respecting any explicit patient population or treatment setting in the claim."],
-  ["other_indication", "it tests this intervention for a different condition, an incompatible patient population or treatment setting, or only in healthy volunteers."],
-  ["not_a_match", "it is not a trial of this intervention."],
+  ["match", "the record establishes the same complete intervention, including any explicit route, formulation, stereoisomer and regimen, in the claim's indication, in a form of that condition, or in patients who have it, respecting any explicit patient population or treatment setting in the claim."],
+  ["other_indication", "it tests the same complete intervention for a different condition, an incompatible patient population or treatment setting, or only in healthy volunteers."],
+  ["not_a_match", "it is not a trial of this intervention, including a conflicting route, formulation, stereoisomer or regimen."],
 ];
 const OPTIONS = CHOICES.map(([option]) => option);
 const QUESTION = [ASKED, ...CHOICES.map(([option, when]) => `- ${option}: ${when}`),
@@ -68,7 +68,13 @@ const QUESTION = [ASKED, ...CHOICES.map(([option, when]) => `- ${option}: ${when
   "Prior adjuvant or neoadjuvant treatment alone does not establish that conflict. " +
   "A trial mentioned in the article may be a separate study; its mention does not override a conflicting setting. " +
   "If the record does not establish compatibility with an explicit restriction, retain uncertainty. " +
-  "Do not invent restrictions when the claim gives none.",
+  "Do not invent restrictions when the claim gives none. " +
+  "Explicit route, formulation, stereoisomer and combination-regimen restrictions are part of the intervention. " +
+  "A conflicting intervention is not_a_match. " +
+  "Check intervention descriptions and arm membership: separate arms testing A and B do not establish a trial of A plus B. " +
+  "Missing or truncated details do not establish compatibility; retain uncertainty about explicit restrictions. " +
+  "A generic drug name alone does not establish an explicitly claimed route or formulation. " +
+  "If that detail is absent, spread uncertainty across the options rather than assuming the restriction is satisfied.",
 ].join("\n");
 // A general model is asked about this many records per call.
 const BATCH_SIZE = 20;
