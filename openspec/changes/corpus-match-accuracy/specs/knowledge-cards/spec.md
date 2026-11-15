@@ -24,3 +24,18 @@ An explicit component of a named combination SHALL NOT be linked or exported as 
 - **GIVEN** EX-1 plus EX-2 is also named Dualex
 - **WHEN** the vocabulary has a term for Dualex
 - **THEN** it remains eligible for the ordinary scored match decision
+
+#### Scenario: Brand is the primary name
+- **GIVEN** Dualex has the explicit regimen alias EX-1 plus EX-2 and the component alias EX-1
+- **WHEN** background terms or drugs are linked or exported
+- **THEN** Dualex and its complete-regimen alias remain eligible but EX-1 does not
+
+#### Scenario: Older component precedes a whole-regimen drug
+- **GIVEN** an approved component drug link is older than an approved whole-regimen drug link
+- **WHEN** background cards are exported
+- **THEN** the component is skipped before selection so the whole-regimen drug remains eligible
+
+#### Scenario: Regimen uses a list or a combination label
+- **GIVEN** an intervention named EX-1, EX-2 and EX-3, EX-1 and EX-2 combination, or Combination of EX-1 and EX-2
+- **WHEN** one of those explicitly named components is proposed as a background card
+- **THEN** the component is excluded before paid classification

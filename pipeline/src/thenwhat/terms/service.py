@@ -244,7 +244,7 @@ def link_terms(
         limit=limit,
     )
     names = intervention_names(session, claim)
-    components = intervention_components(names[0]) if names else set()
+    components = intervention_components(names)
     candidates = [
         candidate
         for candidate in candidates

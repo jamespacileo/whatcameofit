@@ -43,19 +43,27 @@ def entities_of(session: Session, claim: Claim) -> list[Entity]:
     )
 
 
-def intervention_components(name: str) -> set[str]:
-    """Explicit components of a named regimen, never inferred from other names."""
-    parts = re.split(r"\s+(?:and|plus|with(?:\s+or\s+without)?)\s+|\s*[+/]\s*", name, flags=re.I)
-    return (
-        {name_key(part.strip(" ,;")) for part in parts if part.strip(" ,;")}
-        if len(parts) > 1
-        else set()
-    )
+def intervention_components(names: Sequence[str]) -> set[str]:
+    """Components explicitly listed in a regimen name, including a brand's alias."""
+    components: set[str] = set()
+    for name in names:
+        name = re.sub(r"^combination of\s+|\s+combination$", "", name.strip(), flags=re.I)
+        parts = re.split(
+            r"\s+(?:and|plus|with(?:\s+or\s+without)?)\s+|\s*[+/]\s*", name, flags=re.I
+        )
+        if len(parts) > 1:
+            components.update(
+                name_key(component.strip(" ;"))
+                for part in parts
+                for component in part.split(",")
+                if component.strip(" ;")
+            )
+    return components
 
 
 def whole_intervention_names(names: Sequence[str]) -> list[str]:
     """Whole names, excluding aliases that merely repeat one explicit component."""
-    components = intervention_components(names[0]) if names else set()
+    components = intervention_components(names)
     return [name for name in names if name.strip() and name_key(name) not in components]
 
 

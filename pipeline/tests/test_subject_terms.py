@@ -1512,7 +1512,15 @@ def test_drug_found_under_another_of_the_interventions_names(session: Session):
 
 
 @pytest.mark.parametrize(
-    "regimen", ["EX-1 plus EX-2", "EX-1/EX-2", "EX-1 plus EX-2, with or without EX-3"]
+    "regimen",
+    [
+        "EX-1 plus EX-2",
+        "EX-1/EX-2",
+        "EX-1 plus EX-2, with or without EX-3",
+        "EX-1, EX-2 and EX-3",
+        "EX-2 and EX-1 combination",
+        "Combination of EX-1 and EX-2",
+    ],
 )
 def test_combination_component_is_not_the_interventions_background_card(
     session: Session, regimen: str
@@ -1546,6 +1554,29 @@ def test_whole_combination_alias_remains_a_background_candidate(session: Session
         session,
         claim,
         vocabulary=Vocabulary(labels={"dualex": [LabelledTerm("C100002", "Dualex")]}),
+        backend=backend,
+        now=NOW,
+        accept_above=ACCEPT,
+        reject_below=REJECT,
+    )
+    [link] = links(session, claim).values()
+    assert link.label == "Dualex" and link.review_state is ReviewState.APPROVED
+
+
+def test_branded_combination_excludes_components_of_its_explicit_regimen_alias(session: Session):
+    claim = new_claim(session, intervention="Dualex")
+    add_synonym(session, claim.slug, "Dualex", "EX-1 plus EX-2")
+    add_synonym(session, claim.slug, "Dualex", "EX-1")
+    backend = Reader({"EX-1": ("same", 1.0), "Dualex": ("same", 0.98)})
+    link_terms(
+        session,
+        claim,
+        vocabulary=Vocabulary(
+            labels={
+                "dualex": [LabelledTerm("C100002", "Dualex")],
+                "ex-1": [LabelledTerm("C100001", "EX-1")],
+            }
+        ),
         backend=backend,
         now=NOW,
         accept_above=ACCEPT,

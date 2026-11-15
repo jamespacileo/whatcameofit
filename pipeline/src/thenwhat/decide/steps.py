@@ -159,7 +159,11 @@ def _intervention_text(session: Session, claim: Claim) -> str:
     ).first()
     names = ""
     if intervention is not None:
-        aliases = whole_intervention_names([intervention.name, *intervention.synonyms])[1:]
+        aliases = [
+            name
+            for name in whole_intervention_names([intervention.name, *intervention.synonyms])
+            if name != intervention.name
+        ]
         also = f" (also known as: {', '.join(aliases)})" if aliases else ""
         codes = development_codes(session, intervention)
         coded = f" (development codes: {', '.join(codes)})" if codes else ""

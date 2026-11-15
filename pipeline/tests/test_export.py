@@ -1473,6 +1473,24 @@ def test_old_component_links_are_not_exported_as_the_whole_combination(
     assert component.review_state is drug.review_state is ReviewState.APPROVED
 
 
+def test_old_component_drug_does_not_mask_a_branded_whole_regimen(session: Session, fixture_json):
+    claim = new_claim(session)
+    [intervention] = entities_of(session, claim)
+    intervention.name = "Dualex"
+    intervention.synonyms = ["EX-1 plus semaglutide", "semaglutide"]
+    add_drug(session, claim, fixture_json, "semaglutide", "SEMAGLUTIDE")
+    whole = add_drug(session, claim, fixture_json, "tirzepatide", "TIRZEPATIDE")
+    whole.label = "DUALEX"
+    record = session.get(TermRecord, (whole.source_name, whole.external_id))
+    assert record is not None
+    record.payload = {**record.payload, "name": "DUALEX"}
+
+    cards = cards_by_kind(exported(session))
+
+    assert cards["drug"]["label"] == "DUALEX"
+    assert "target" not in cards, "The suppressed component's GLP1R target must not leak."
+
+
 def test_drug_with_one_protein_target_gives_a_drug_card_and_that_targets_card(
     session: Session, fixture_json
 ):
