@@ -4,10 +4,10 @@ The mocks in `.impeccable/mocks/examine/` are the reference for look and behavio
 
 ## 1. Status explanation lists only the deciding events
 
-- [ ] 1.1 Add tests in the pipeline's status rule tests for the five scenarios of "Status explanation" (Phase 2 claim, Trial registered with three trials, started known only from completion, earlier-phase trial beside the deciding one, No trial found) and verify the first four fail against the current rules
-- [ ] 1.2 Change `pipeline/src/thenwhat/status/rules.py` so a trial status is explained by each standing trial's registered event, and a phase status by the registered event and the started (or, with no started event, completed) event of each standing trial at the furthest started phase; leave approved, retracted, failed and terminated as they are; verify the new tests pass
-- [ ] 1.3 Update the pipeline tests that assert `explained_by` (`test_export.py`, `test_organisations.py`, `test_seed.py`) where the expected list changes, regenerate `site/data/seed-export.json`, and verify `site/export.schema.json` is unchanged and the pipeline suite passes
-- [ ] 1.4 Read `site/src/lib/open-data.ts` and `site/src/pages/for/researchers.astro` where they describe `explained_by`, correct any wording that says every event of a trial is listed, and verify `make check` passes
+- [x] 1.1 Add tests in the pipeline's status rule tests for the five scenarios of "Status explanation" (Phase 2 claim, Trial registered with three trials, started known only from completion, earlier-phase trial beside the deciding one, No trial found) and verify the first four fail against the current rules
+- [x] 1.2 Change `pipeline/src/thenwhat/status/rules.py` so a trial status is explained by each standing trial's registered event, and a phase status by the registered event and the started (or, with no started event, completed) event of each standing trial at the furthest started phase; leave approved, retracted, failed and terminated as they are; verify the new tests pass
+- [x] 1.3 Update the pipeline tests that assert `explained_by` (`test_export.py`, `test_organisations.py`, `test_seed.py`) where the expected list changes, regenerate `site/data/seed-export.json`, and verify `site/export.schema.json` is unchanged and the pipeline suite passes
+- [x] 1.4 Read `site/src/lib/open-data.ts` and `site/src/pages/for/researchers.astro` where they describe `explained_by`, correct any wording that says every event of a trial is listed, and verify `make check` passes
 
 ## 2. Frame components
 
