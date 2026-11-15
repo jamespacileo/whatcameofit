@@ -39,6 +39,7 @@ from thenwhat.domain import (
 )
 from thenwhat.extract.names import is_a_class, is_a_name
 from thenwhat.extract.phrases import backfill_search_phrases
+from thenwhat.extract.schema import Draft
 from thenwhat.extract.service import (
     ClaimNotPending,
     Extracted,
@@ -260,6 +261,14 @@ def test_a_class_of_treatments_is_told_from_one_treatment(name: str):
 )
 def test_one_treatment_is_not_a_class(name: str):
     assert not is_a_class(name)
+
+
+def test_the_read_is_asked_for_one_condition_and_to_keep_prevention_apart():
+    """Scenarios: An aim reported as the condition; Prevention is not treatment"""
+    asked = Draft.model_fields["indication"].description or ""
+
+    assert "never an aim or an outcome" in asked and "One condition" in asked
+    assert "'prevention of COVID-19'" in asked
 
 
 def test_descriptions_the_model_returns_are_not_recorded_as_names(session: Session):
