@@ -81,7 +81,7 @@ What the pipeline needs, whatever the wire format:
 
 Anything else, or no answer, is the reader failing (decision 4).
 
-On the wire, as far as the guide settles it: the request is `POST /v2/scrape` with `formats: ["rawHtml", "html"]`, `maxAge: 0`, `storeInCache: false`. `read` is `success` with `metadata.statusCode` 200. `not_served` is `success` with another status. `not_allowed` and `not_now` have no form in the service yet. The pipeline will understand this one, proposed to the service: `success: false` with `code: "NOT_ALLOWED"` or `code: "NOT_NOW"`, a `reason` in words, and for `NOT_NOW` a `retryAfter` in seconds. Until the service sends them, a site it will not or cannot read shows as `not_served` or as the reader failing. The pipeline never asks for `json`, `summary` or `describeImages`, and never uses batch or crawl.
+On the wire, as far as the guide settles it: the request is `POST /v2/scrape` with `formats: ["rawHtml", "html"]`, `maxAge: 0`, `storeInCache: false`. `read` is `success` with `metadata.statusCode` 200. `not_served` is `success` with another status. `not_allowed` and `not_now` have no form in the service yet. The pipeline will understand this one, proposed to the service: `success: false` with `code: "NOT_ALLOWED"` or `code: "NOT_NOW"`, a `reason` in words, and for `NOT_NOW` a `retryAfter` in seconds. A refusal is known by its code, whatever HTTP status it comes with. When the copy it returns came from an archive, the service says so as `metadata.archiveUrl` (added when the change was applied, 2026-11-15; offered with the rest in task 1.1). Until the service sends them, a site it will not or cannot read shows as `not_served` or as the reader failing. The pipeline never asks for `json`, `summary` or `describeImages`, and never uses batch or crawl.
 
 Success is not trusted as good content. The pipeline keeps its own checks on what came back: a body under the existing length is thin, and a page with no headline or date is not read. Those are checks on a page, not rules about a site.
 
@@ -184,3 +184,25 @@ Kept, because they are not rules about fetching: `backfill/address.py` and `site
 ## Open Questions
 
 - None that changes this change. Whether the service uses stealth proxies, for medicalxpress.com or any site, is now the service's (decision 6).
+
+## Live integration checked on 2026-11-15
+
+The service adopted `NOT_NOW` with `reason` and `retryAfter` for its host-cooldown gate and target engine exhaustion. A site challenge is represented as a not-served status. `NOT_ALLOWED` and `metadata.archiveUrl` remain supported client fields for future service policies and full archived pages. Single article reads request full HTML and receive no preview-card substitution. Both routes accepted the bearer key and refused unauthenticated requests. The pipeline continues to use Tailscale.
+
+The retention probe passed for the pipeline request shape. Changed source values proved a fresh fetch on repeated reads. The unique request left no queue record or matching page content in inspected Redis values and service logs. Immediate JavaScript rendering passed. A delayed-render fixture returned a shell, which the main-body check rejects before a model call. The dated details are in `docs/sources.md`.
+
+Review corrections make the supplied main HTML authoritative through `Page.as_text()`, reject thin bodies before extraction, require headline and date for outlet Read counts, reject malformed retry times, and share deferred exclusions across workers in a run.
+
+The proxy previously fell back directly to the upstream API when the router restarted. That skipped the router response contract. Single scrapes now require the router. An unavailable router is reported as unavailable, allowing the pipeline to leave work due. Target engine exhaustion is a temporary `NOT_NOW` answer with a 60-second retry interval.
+
+## Outlet acceptance result on 2026-11-15
+
+The final run finished 400 tracked articles in 303.49 seconds, with at most two HTTP requests in flight. One article was added by another session after the 399-article baseline. Over the matching 399 URLs, Read was 329 versus 337, Thin 27 versus 0, Refused 0 versus 4, and failed 43 versus 58. The new article was Read, making the current report 330 Read. Elapsed wall time per checked article was 0.759 seconds. This is throughput with concurrency, not the latency of one HTTP request. No per-request mean latency was recorded.
+
+The requested no-regression and lower-Thin conditions were not met. The stricter checks require enough main text and a usable publication date, and a detected challenge is no longer counted as an article. The operator was told of these results before merge. The regenerated report records the observed results.
+
+Both previously refused outlets became readable, QUB (1) and The Sun (3). Other outlets with higher Read counts were AP (0 to 2), Bloomberg (0 to 2), Fierce Biotech (0 to 2), Fierce Pharma (0 to 1), Financial Times (0 to 4), The Atlantic (0 to 5), US News (0 to 1), and Washington Post (0 to 3). Dana-Farber's one newly added article also read successfully.
+
+Outlets whose Read counts fell were au.news.yahoo.com (1 to 0), bbc.co.uk (20 to 19), dailymail.co.uk (3 to 0), dailymail.com (7 to 0), eurekalert.org (5 to 0), idw-online.de (1 to 0), kyoto-u.ac.jp (1 to 0), medscape.com (1 to 0), news.yahoo.com (2 to 0), nottingham.ac.uk (1 to 0), nz.news.yahoo.com (1 to 0), okayama-u.ac.jp (1 to 0), plymouth.ac.uk (1 to 0), qmul.ac.uk (1 to 0), riken.jp (1 to 0), sg.news.yahoo.com (2 to 0), tohoku.ac.jp (1 to 0), and usatoday.com (1 to 0).
+
+Repeat inspection used up to three newly readable articles per outlet, or all when fewer were available, and recorded headline, publication date, body length and paragraph count without retaining article text. AP, Fierce Biotech, Fierce Pharma, Financial Times, QUB, The Atlantic, The Sun, US News, Dana-Farber and Washington Post passed those mechanical checks. Washington Post bodies were only 528–744 characters, so completeness is uncertain despite meeting the existing 500-character threshold. Bloomberg's two pages failed on repeat with no body or metadata. Its initial two Read results are therefore not a reliable gain.

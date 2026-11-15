@@ -104,11 +104,7 @@ def steps_for(settings: Settings) -> list[Step]:
 
 
 def make_allowances(settings: Settings) -> Allowances:
-    return Allowances(
-        open_session,
-        settings.allowances(),
-        outlet_interval_seconds=settings.outlet_interval_seconds,
-    )
+    return Allowances(open_session, settings.allowances())
 
 
 def make_registry(session: Session, settings: Settings) -> TrialList:
@@ -252,13 +248,6 @@ def plan_command() -> None:
                             f"{allowance.period_hours:g} hours",
                             markup=False,
                         )
-                elif step.requests_per_record:
-                    pages = counts.due * step.requests_per_record
-                    out.print(
-                        f"  asks outlets for {pages:,} pages, each outlet at least "
-                        f"{settings.outlet_interval_seconds:g} seconds apart",
-                        markup=False,
-                    )
                 else:
                     out.print("  asks no source: the due records need 0 requests", markup=False)
                 spend = model_spend_of(step)
@@ -279,6 +268,7 @@ def _merge(reports: list[RunReport]) -> RunReport:
         merged.done += report.done
         merged.nothing_found += report.nothing_found
         merged.failed += report.failed
+        merged.deferred += report.deferred
         merged.stopped = merged.stopped or report.stopped
         merged.errors = (merged.errors or []) + (report.errors or [])
     merged.remaining_due = min(report.remaining_due for report in reports)
@@ -325,6 +315,8 @@ def run_command(
         # A step that calls a model stops when the month's ceiling is reached.
         before_call = ceiling_check(settings, now) if model_spend_of(step) else None
 
+        tried: set[int] = set()
+
         def work(client: Any) -> RunReport:
             return run_step(
                 open_session,
@@ -334,6 +326,7 @@ def run_command(
                 attempt_limit=settings.backfill_attempt_limit,
                 limit=share,
                 before_call=before_call,
+                tried=tried,
             )
 
         if workers == 1:
@@ -343,7 +336,9 @@ def run_command(
                 report = _merge(list(pool.map(work, clients)))
     out.print(
         f"{step.name}: {report.done:,} done, {report.nothing_found:,} found nothing, "
-        f"{report.failed:,} failed; {report.remaining_due:,} still due.",
+        f"{report.failed:,} failed"
+        + (f", {report.deferred:,} could not be asked for now" if report.deferred else "")
+        + f"; {report.remaining_due:,} still due.",
         markup=False,
     )
     for error in (report.errors or [])[:10]:

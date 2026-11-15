@@ -4,6 +4,7 @@ agrees with what an article says of its trial, tested through `agreeing`. Both a
 Scenario names are from openspec live-lookup. Every page here is synthetic.
 """
 
+import json
 from datetime import date
 
 import pytest
@@ -217,3 +218,15 @@ def test_a_date_in_a_tag_is_preferred_to_one_shown_in_words():
 def test_the_day_is_read_from_the_date_as_the_page_gives_it(given, day):
     """Scenarios: A date the page gives in a tag, A date that cannot be read"""
     assert published_day(given) == day
+
+
+def test_reader_main_content_remains_authoritative_over_structured_body():
+    raw = (
+        '<script type="application/ld+json">'
+        + json.dumps({"@type": "NewsArticle", "articleBody": "Structured. " * 100})
+        + "</script>"
+    )
+    page = read_page(raw, "<p>Main visible article.</p>")
+    assert "Main visible article." in page.as_text()
+    assert "Structured." not in page.as_text()
+    assert page.body is not None

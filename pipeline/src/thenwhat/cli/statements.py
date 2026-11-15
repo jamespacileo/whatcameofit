@@ -6,6 +6,7 @@ from typing import Annotated
 
 import typer
 
+from thenwhat.backfill.errors import ReaderUnavailable
 from thenwhat.claims.entry import EntryError, claim_by_slug
 from thenwhat.cli import extract
 from thenwhat.cli.console import err, out
@@ -48,8 +49,8 @@ def statements_command(
 ) -> None:
     """Read the articles of decided claims again, for reported statements only.
 
-    Each article is read under the same robots, archived-copy and pasted-text rules as a
-    first read, and its text is kept nowhere. Statements are refused by rule when they
+    Each article is read through the page reader, or from pasted text, as on a first
+    read, and its text is kept nowhere. Statements are refused by rule when they
     copy the article, quote or name someone, then checked against the article: one
     checked with a high probability is approved by rule and published, the rest wait in
     review. Nothing else about the claim changes, and an article that already has
@@ -95,6 +96,8 @@ def statements_command(
             else:
                 try:
                     text = retriever.retrieve(article.url).text
+                except ReaderUnavailable as down:
+                    raise EntryError(str(down)) from None
                 except PasteNeeded as needed:
                     problems += 1
                     err.print(f"  {_paste_needed(slug, article, str(needed))}", markup=False)

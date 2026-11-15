@@ -39,6 +39,16 @@ class Failed:
     error: str
 
 
+@dataclass(frozen=True, slots=True)
+class Deferred:
+    """A step's answer for a record that may not be worked on now, for a reason that is
+    not the record's: the page reader said its site cannot be asked yet. No outcome is
+    written and no attempt counted; the record stays due and the run goes on with
+    others."""
+
+    reason: str
+
+
 class CountingClient(Protocol):
     """What a step asks its source through. It counts its own requests so the ledger
     can record how many a record used, whether or not the step finished."""
@@ -64,7 +74,7 @@ class Step(Protocol):
         """The fields the step reads. The record is due again when they change."""
         ...
 
-    def run(self, session: Session, record: Any, client: Any) -> "WorkOutcome | Failed":
+    def run(self, session: Session, record: Any, client: Any) -> "WorkOutcome | Failed | Deferred":
         """Process one record and store its result in the session. Done or nothing found;
         a failure is raised, or returned as `Failed` to keep what was written."""
         ...

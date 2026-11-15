@@ -1,17 +1,14 @@
 """The pieces reading a link lead is built from: the slug rule, the vertical decision,
-the spacing of requests to one outlet, and adding a read article to a claim that
+and adding a read article to a claim that
 exists. Scenario names are from openspec lead-reading. Everything here is synthetic."""
 
 import hashlib
 from datetime import UTC, date, datetime
 
-import httpx
 import pytest
-from sqlalchemy import Engine, delete, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backfill_support import committed_sessions
-from thenwhat.backfill.allowance import Allowances, outlet_source
 from thenwhat.claims.entry import (
     MAX_NAMED_CLAIMS,
     InvalidSlug,
@@ -25,11 +22,10 @@ from thenwhat.claims.entry import (
     slug_for,
 )
 from thenwhat.claims.verticals import RETIRED_VERTICALS, VERTICALS
-from thenwhat.db.models import Claim, DecisionLog, Entity, SourceAllowanceUse
+from thenwhat.db.models import Claim, DecisionLog, Entity
 from thenwhat.decide.core import BackendAnswer
 from thenwhat.decide.steps import VERTICAL_CHOICE, choose_vertical
 from thenwhat.domain import Decider, ReviewState
-from thenwhat.extract.retrieve import ArticleRetriever
 from thenwhat.extract.schema import Draft
 from thenwhat.extract.service import article_from_draft
 from thenwhat.review.decisions import record_decision
@@ -143,63 +139,6 @@ def test_an_unsure_choice_comes_back_with_its_low_probability(session: Session):
     _, probability = choose(session, Chooses("cancer", 0.4))
 
     assert probability == pytest.approx(0.4)
-
-
-# --- spacing requests to one outlet --------------------------------------------------
-
-
-def test_two_processes_keep_their_requests_to_one_outlet_apart(engine: Engine, fake_time):
-    """Scenario: Two processes, one outlet"""
-    source = outlet_source("www.Spacing-Test.example")
-    open_session = committed_sessions(engine)
-    try:
-        first = Allowances(open_session, {}, fake_time, outlet_interval_seconds=10)
-        second = Allowances(open_session, {}, fake_time, outlet_interval_seconds=10)
-
-        first.claim(source)
-        second.claim(source)
-        second.claim(outlet_source("other-outlet.example"))
-
-        assert source == "outlet:spacing-test.example"
-        # The second process waited the interval; another outlet is not held up by it.
-        assert fake_time.slept == [10.0]
-    finally:
-        with Session(engine) as session, session.begin():
-            session.execute(
-                delete(SourceAllowanceUse).where(SourceAllowanceUse.source_name.like("outlet:%"))
-            )
-
-
-def test_a_longer_delay_in_robots_txt_replaces_the_interval(engine: Engine, fake_time):
-    source = outlet_source("slow-outlet.example")
-    open_session = committed_sessions(engine)
-    try:
-        allowances = Allowances(open_session, {}, fake_time, outlet_interval_seconds=10)
-
-        allowances.claim(source, at_least_seconds=30)
-        allowances.claim(source, at_least_seconds=30)
-        allowances.claim(source, at_least_seconds=2)
-
-        assert fake_time.slept == [30.0, 10.0]
-    finally:
-        with Session(engine) as session, session.begin():
-            session.execute(
-                delete(SourceAllowanceUse).where(SourceAllowanceUse.source_name.like("outlet:%"))
-            )
-
-
-def test_the_delay_an_outlet_asks_for_is_read_from_its_robots_txt():
-    def site(request: httpx.Request) -> httpx.Response:
-        if request.url.host == "slow.example":
-            return httpx.Response(200, text="User-agent: *\nCrawl-delay: 30\nAllow: /\n")
-        return httpx.Response(200, text="User-agent: *\nAllow: /\n")
-
-    retriever = ArticleRetriever(
-        contact_email="ops@thenwhat.test", transport=httpx.MockTransport(site)
-    )
-
-    assert retriever.crawl_delay("https://slow.example/news/a") == 30.0
-    assert retriever.crawl_delay("https://quick.example/news/a") == 0.0
 
 
 # --- an article for a claim that exists ----------------------------------------------

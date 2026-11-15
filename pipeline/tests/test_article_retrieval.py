@@ -1,248 +1,329 @@
-"""Getting an article's text, tested through `ArticleRetriever.retrieve` on a fake transport.
+"""Getting an article's text through the page reader, tested through `ArticleRetriever`
+on a synthetic reader.
 
-Scenario names are from openspec claim-extraction. Article text here is synthetic.
+Scenario names are from openspec page-reading and claim-extraction. Every page and every
+reader answer here is synthetic.
 """
+
+import ast
+import logging
+import threading
+import time
+from pathlib import Path
 
 import httpx
 import pytest
 
-from thenwhat.extract.retrieve import ArticleRetriever, PasteNeeded, Probe
-from thenwhat.sources.base import MissingContact
+from reader_support import READER_URL, SyntheticReader, retriever
+from thenwhat.backfill.errors import ReaderUnavailable
+from thenwhat.extract.retrieve import (
+    NOT_ALLOWED,
+    NOT_NOW,
+    NOT_SERVED,
+    READ,
+    ArticleRetriever,
+    NotAllowed,
+    NotNow,
+    NotServed,
+    Probe,
+)
 
 ARTICLE_URL = "https://news.example.org/2018/teeth"
 SNAPSHOT_URL = "http://web.archive.org/web/20190101000000/https://news.example.org/2018/teeth"
-PAGE = """<html><head><title>Teeth</title><style>p { color: red }</style>
+MARKER = "Researchers say the & drug works on synthetic molars."
+PAGE = f"""<html><head><title>Teeth</title><style>p {{ color: red }}</style>
+<meta property="og:title" content="Mice regrow teeth">
+<meta property="article:published_time" content="2018-03-01T08:00:00Z">
 <script>var tracking = "do not keep";</script></head>
-<body><h1>Mice regrow teeth</h1><p>Researchers say the &amp; drug works.</p></body></html>"""
-ALLOW_ALL = httpx.Response(200, text="User-agent: *\nDisallow:\n")
-NO_SNAPSHOT = httpx.Response(200, json={"archived_snapshots": {}})
-SNAPSHOT = httpx.Response(
-    200,
-    json={
-        "archived_snapshots": {"closest": {"available": True, "url": SNAPSHOT_URL, "status": "200"}}
-    },
-)
+<body><nav>Home Sport Weather</nav><main><h1>Mice regrow teeth</h1>
+<p>{"Researchers say the &amp; drug works on synthetic molars. " * 15}</p>
+<a href="https://doi.org/10.1234/synthetic.5678">the paper</a> NCT01234567</main>
+<footer>Cookie settings</footer></body></html>"""
+SOURCE = Path(__file__).parents[1] / "src" / "thenwhat"
 
 
-class Web:
-    """Answers by URL and records which URLs were asked for."""
+def site(pages: dict[str, httpx.Response]):
+    def answer(request: httpx.Request) -> httpx.Response:
+        return pages.get(str(request.url), httpx.Response(404))
 
-    def __init__(self, answers: dict[str, httpx.Response]) -> None:
-        self.answers = answers
-        self.requests: list[httpx.Request] = []
-
-    def __call__(self, request: httpx.Request) -> httpx.Response:
-        self.requests.append(request)
-        url = str(request.url)
-        for prefix, answer in self.answers.items():
-            if url.startswith(prefix):
-                return answer
-        return httpx.Response(404)
-
-    @property
-    def urls(self) -> list[str]:
-        return [str(request.url) for request in self.requests]
+    return answer
 
 
-def retriever(web: Web, contact: str | None = "ops@thenwhat.test") -> ArticleRetriever:
-    return ArticleRetriever(contact_email=contact, transport=httpx.MockTransport(web))
+def reader_of(pages: dict[str, httpx.Response] | None = None) -> SyntheticReader:
+    return SyntheticReader(site(pages or {ARTICLE_URL: httpx.Response(200, text=PAGE)}))
 
 
-def test_allowed_page_is_returned_as_plain_text():
-    web = Web(
-        {
-            "https://news.example.org/robots.txt": ALLOW_ALL,
-            ARTICLE_URL: httpx.Response(200, text=PAGE),
-        }
-    )
+def test_a_read_page_is_returned_as_plain_text_from_its_main_content():
+    reader = reader_of()
 
-    retrieved = retriever(web).retrieve(ARTICLE_URL)
+    retrieved = retriever(reader).retrieve(ARTICLE_URL)
 
-    assert "Mice regrow teeth" in retrieved.text
-    assert "Researchers say the & drug works." in retrieved.text
+    assert MARKER in retrieved.text
+    assert "Home Sport Weather" not in retrieved.text and "Cookie settings" not in retrieved.text
     assert "tracking" not in retrieved.text and "color" not in retrieved.text
     assert retrieved.archive_url is None
 
 
-def test_disallowed_url_is_not_fetched_and_text_is_asked_for():
-    """Scenario: Disallowed URL"""
-    robots = httpx.Response(200, text="User-agent: *\nDisallow: /2018/\n")
-    web = Web(
-        {"https://news.example.org/robots.txt": robots, ARTICLE_URL: httpx.Response(200, text=PAGE)}
+def test_a_page_whose_text_exists_only_as_drawn_is_read():
+    """Scenario: A page drawn by scripts"""
+    # As served, the page holds only a script; the reader returns it as drawn.
+    drawn = (
+        "<html><head><title>Drawn</title></head>"
+        f"<body><main><p>{'Drawn text only. ' * 40}</p></main></body></html>"
     )
 
-    with pytest.raises(PasteNeeded, match="robots.txt"):
-        retriever(web).retrieve(ARTICLE_URL)
+    reader = SyntheticReader(lambda request: httpx.Response(200, text=drawn))
+    retrieved = retriever(reader).retrieve(ARTICLE_URL)
 
-    assert ARTICLE_URL not in web.urls
-
-
-def test_rule_naming_this_client_is_respected():
-    robots = httpx.Response(
-        200, text="User-agent: thenwhat\nDisallow: /\n\nUser-agent: *\nDisallow:\n"
-    )
-    web = Web(
-        {"https://news.example.org/robots.txt": robots, ARTICLE_URL: httpx.Response(200, text=PAGE)}
-    )
-
-    with pytest.raises(PasteNeeded):
-        retriever(web).retrieve(ARTICLE_URL)
+    assert retrieved.text == ("Drawn text only. " * 40).strip()
 
 
-def test_site_without_robots_txt_may_be_fetched():
-    web = Web({ARTICLE_URL: httpx.Response(200, text=PAGE)})
+def test_metadata_comes_from_the_head_and_links_of_the_page_as_drawn():
+    page = retriever(reader_of()).retrieve(ARTICLE_URL).page
 
-    assert "Mice regrow teeth" in retriever(web).retrieve(ARTICLE_URL).text
-
-
-def test_unreadable_robots_txt_counts_as_disallowed():
-    web = Web(
-        {
-            "https://news.example.org/robots.txt": httpx.Response(503),
-            ARTICLE_URL: httpx.Response(200, text=PAGE),
-        }
-    )
-
-    with pytest.raises(PasteNeeded):
-        retriever(web).retrieve(ARTICLE_URL)
-
-    assert ARTICLE_URL not in web.urls
+    assert page is not None
+    assert page.headline == "Mice regrow teeth"
+    assert page.published == "2018-03-01T08:00:00Z"
+    assert page.dois == ("10.1234/synthetic.5678",)
+    assert page.registry_numbers == ("NCT01234567",)
 
 
-class Unreachable(Web):
-    """A site that does not answer at all."""
+def test_not_allowed_carries_the_readers_reason_and_asks_for_the_text():
+    """Scenario: Disallowed URL; An address the reader refuses for another reason"""
+    reader = reader_of()
+    reader.not_allowed["news.example.org"] = "the site's robots.txt disallows it"
 
-    def __call__(self, request: httpx.Request) -> httpx.Response:
-        self.requests.append(request)
-        raise httpx.ConnectTimeout("timed out", request=request)
+    with pytest.raises(NotAllowed, match="robots.txt disallows it") as refused:
+        retriever(reader).retrieve(ARTICLE_URL)
 
-
-@pytest.mark.parametrize("status", [500, 503, 429])
-def test_rules_a_site_could_not_serve_are_unknown_and_nothing_is_fetched(status: int):
-    web = Web({"https://news.example.org/robots.txt": httpx.Response(status)})
-    site = retriever(web)
-
-    assert site.allowed(ARTICLE_URL) is False
-    assert site.rules_unknown(ARTICLE_URL) is True
-    assert ARTICLE_URL not in web.urls
+    assert refused.value.reason == "the site's robots.txt disallows it"
+    assert "Supply the article text" in str(refused.value)
 
 
-def test_rules_of_a_site_that_does_not_answer_are_unknown():
-    site = retriever(Unreachable({}))
+def test_not_now_says_when_the_site_may_be_asked_again():
+    reader = reader_of()
+    reader.not_now["news.example.org"] = 90
 
-    assert site.allowed(ARTICLE_URL) is False
-    assert site.rules_unknown(ARTICLE_URL) is True
+    with pytest.raises(NotNow, match="90 seconds") as later:
+        retriever(reader).retrieve(ARTICLE_URL)
+
+    assert later.value.retry_after_seconds == 90
+
+
+def test_a_page_the_site_did_not_serve_is_not_served_with_its_status():
+    """Scenario: The site did not serve the page; Dead link without a snapshot"""
+    reader = reader_of({ARTICLE_URL: httpx.Response(404)})
+
+    with pytest.raises(NotServed, match="answered 404") as missing:
+        retriever(reader).retrieve(ARTICLE_URL)
+
+    assert missing.value.status == 404
+    # Scenario: The reader gives no page. The pipeline sends the site nothing of its own.
+    assert reader.elsewhere == []
+
+
+def test_a_copy_from_an_archive_keeps_the_archive_address_and_no_archive_is_asked():
+    """Scenario: Dead link with a snapshot"""
+    reader = reader_of()
+    reader.archived[ARTICLE_URL] = SNAPSHOT_URL
+
+    retrieved = retriever(reader).retrieve(ARTICLE_URL)
+
+    assert retrieved.archive_url == SNAPSHOT_URL
+    assert MARKER in retrieved.text
+    assert reader.elsewhere == []  # the Internet Archive is sent nothing
 
 
 @pytest.mark.parametrize(
-    "robots",
+    "answer",
     [
-        httpx.Response(200, text="User-agent: *\nDisallow: /\n"),
-        httpx.Response(403),
-        httpx.Response(404),
-        httpx.Response(200, text="User-agent: *\nAllow: /\n"),
+        pytest.param(lambda: httpx.Response(200, json={"weird": True}), id="unknown answer"),
+        pytest.param(lambda: httpx.Response(200, text="not json"), id="not json"),
+        pytest.param(
+            lambda: httpx.Response(400, json={"success": False, "error": "bad"}), id="error"
+        ),
+        pytest.param(
+            lambda: httpx.Response(200, json={"success": True, "data": {"metadata": {}}}),
+            id="no status",
+        ),
+        pytest.param(lambda: httpx.Response(503), id="overloaded"),
+        pytest.param(lambda: httpx.Response(429), id="too busy"),
     ],
 )
-def test_rules_a_site_answered_with_are_known(robots: httpx.Response):
-    web = Web({"https://news.example.org/robots.txt": robots})
+def test_an_answer_that_is_none_of_the_four_is_the_reader_failing(answer):
+    """Scenario: An answer the pipeline does not know"""
+    reader = reader_of()
+    reader.answer = answer
 
-    assert retriever(web).rules_unknown(ARTICLE_URL) is False
+    with pytest.raises(ReaderUnavailable):
+        retriever(reader).retrieve(ARTICLE_URL)
+    with pytest.raises(ReaderUnavailable):
+        retriever(reader).probe(ARTICLE_URL)  # not counted against the outlet
 
 
-def test_dead_link_with_a_snapshot_uses_the_snapshot():
-    """Scenario: Dead link with a snapshot"""
-    web = Web(
-        {
-            "https://news.example.org/robots.txt": ALLOW_ALL,
-            ARTICLE_URL: httpx.Response(404),
-            "https://archive.org/wayback/available": SNAPSHOT,
-            SNAPSHOT_URL: httpx.Response(200, text=PAGE),
-        }
+def test_no_answer_from_the_reader_is_the_reader_unavailable():
+    def down(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("refused", request=request)
+
+    unreachable = ArticleRetriever(
+        reader_url=READER_URL,
+        reader_key="k",
+        contact_email=None,
+        turns=threading.BoundedSemaphore(2),
+        transport=httpx.MockTransport(down),
     )
 
-    retrieved = retriever(web).retrieve(ARTICLE_URL)
-
-    assert "Mice regrow teeth" in retrieved.text
-    assert retrieved.archive_url == SNAPSHOT_URL
+    with pytest.raises(ReaderUnavailable, match="could not be reached"):
+        unreachable.retrieve(ARTICLE_URL)
 
 
-def test_dead_link_without_a_snapshot_asks_for_the_text():
-    """Scenario: Dead link without a snapshot"""
-    web = Web(
-        {
-            "https://news.example.org/robots.txt": ALLOW_ALL,
-            ARTICLE_URL: httpx.Response(404),
-            "https://archive.org/wayback/available": NO_SNAPSHOT,
-        }
+def test_a_wrong_key_is_the_reader_refusing_not_the_site():
+    reader = reader_of()
+    wrong = ArticleRetriever(
+        reader_url=READER_URL,
+        reader_key="not-the-key",
+        contact_email=None,
+        turns=threading.BoundedSemaphore(2),
+        transport=httpx.MockTransport(reader),
     )
 
-    with pytest.raises(PasteNeeded, match="no archived snapshot"):
-        retriever(web).retrieve(ARTICLE_URL)
+    with pytest.raises(ReaderUnavailable, match="FIRECRAWL_API_KEY"):
+        wrong.retrieve(ARTICLE_URL)
 
 
-def test_site_that_cannot_be_reached_falls_back_to_the_archive():
-    class Down(Web):
-        def __call__(self, request: httpx.Request) -> httpx.Response:
-            if request.url.host == "news.example.org" and request.url.path != "/robots.txt":
-                self.requests.append(request)
-                raise httpx.ConnectError("refused")
-            return super().__call__(request)
+def test_the_request_is_one_scrape_for_the_page_and_nothing_kept():
+    reader = reader_of()
 
-    web = Down(
-        {
-            "https://news.example.org/robots.txt": ALLOW_ALL,
-            "https://archive.org/wayback/available": SNAPSHOT,
-            SNAPSHOT_URL: httpx.Response(200, text=PAGE),
-        }
-    )
+    retriever(reader).retrieve(ARTICLE_URL)
 
-    assert retriever(web).retrieve(ARTICLE_URL).archive_url == SNAPSHOT_URL
+    assert reader.asked == [
+        {"url": ARTICLE_URL, "formats": ["rawHtml", "html"], "maxAge": 0, "storeInCache": False}
+    ]
+    assert reader.elsewhere == []
 
 
-def test_requests_identify_the_client():
-    web = Web(
-        {
-            "https://news.example.org/robots.txt": ALLOW_ALL,
-            ARTICLE_URL: httpx.Response(200, text=PAGE),
-        }
-    )
+def test_only_single_scrapes_are_sent_whatever_is_asked():
+    """Scenario: A read that drafts a claim. The reader runs no model for the pipeline:
+    no format but the page's is asked for, and no batch, crawl or map route is used."""
+    reader = reader_of()
+    asking = retriever(reader)
 
-    retriever(web).retrieve(ARTICLE_URL)
+    asking.retrieve(ARTICLE_URL)
+    asking.probe(ARTICLE_URL)
 
-    assert all("ops@thenwhat.test" in request.headers["User-Agent"] for request in web.requests)
-
-
-def test_missing_contact_address_sends_nothing():
-    web = Web({})
-
-    with pytest.raises(MissingContact):
-        retriever(web, contact=None).retrieve(ARTICLE_URL)
-
-    assert web.requests == []
+    assert {tuple(body["formats"]) for body in reader.asked} == {("rawHtml", "html")}
+    assert all(set(body) == {"url", "formats", "maxAge", "storeInCache"} for body in reader.asked)
+    assert reader.elsewhere == []  # nothing reached any route but /v2/scrape
 
 
-def test_a_probe_says_how_the_site_itself_answered():
-    """Scenario: Outlet that can be read, outlet that refuses, outlet that fails"""
+def test_a_readers_answer_appears_in_no_log_record(caplog: pytest.LogCaptureFixture):
+    """Scenario: After a read"""
+    reader = reader_of()
+    caplog.set_level(logging.DEBUG)
+
+    retriever(reader).retrieve(ARTICLE_URL)
+    with pytest.raises(NotServed):
+        retriever(reader_of({ARTICLE_URL: httpx.Response(404, text=PAGE)})).retrieve(ARTICLE_URL)
+
+    assert "synthetic molars" not in caplog.text
+
+
+def test_no_more_requests_are_in_flight_than_allowed():
+    """Two reads side by side at most, however many threads ask."""
+    lock = threading.Lock()
+    now = {"in flight": 0, "most": 0}
+
+    def slow(request: httpx.Request) -> httpx.Response:
+        with lock:
+            now["in flight"] += 1
+            now["most"] = max(now["most"], now["in flight"])
+        time.sleep(0.05)
+        with lock:
+            now["in flight"] -= 1
+        return httpx.Response(200, text=PAGE)
+
+    shared = retriever(SyntheticReader(slow), at_once=2)
+    threads = [threading.Thread(target=shared.retrieve, args=(ARTICLE_URL,)) for _ in range(6)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert now["most"] == 2
+
+
+def test_a_probe_says_how_the_reader_answered():
+    """Scenario: An outlet the reader does not allow"""
     refusing = "https://refusing.example.org/story"
+    later = "https://busy.example.org/story"
     failing = "https://failing.example.org/story"
-    web = Web(
-        {
-            "https://news.example.org/robots.txt": ALLOW_ALL,
-            ARTICLE_URL: httpx.Response(200, text=PAGE),
-            "https://refusing.example.org/robots.txt": httpx.Response(
-                200, text="User-agent: *\nDisallow: /\n"
-            ),
-            "https://failing.example.org/robots.txt": ALLOW_ALL,
-            failing: httpx.Response(402),
-        }
-    )
-    probing = retriever(web)
+    reader = reader_of({ARTICLE_URL: httpx.Response(200, text=PAGE), failing: httpx.Response(402)})
+    reader.not_allowed["refusing.example.org"] = "not allowed by the service"
+    reader.not_now["busy.example.org"] = 60
+    probing = retriever(reader)
 
     read = probing.probe(ARTICLE_URL)
-    assert (read.robots, read.status) == ("allowed", 200)
-    assert read.page is not None and read.page.headline == "Teeth"
-    assert probing.probe(refusing) == Probe("robots")
-    assert probing.probe(failing) == Probe("allowed", 402)
-    # No archive is asked: the question is whether the outlet itself can be read.
-    assert not any("archive.org" in url for url in web.urls)
-    assert refusing not in web.urls
+    assert (read.answer, read.status) == (READ, 200)
+    assert read.page is not None and read.page.headline == "Mice regrow teeth"
+    assert probing.probe(refusing) == Probe(NOT_ALLOWED)
+    assert probing.probe(later) == Probe(NOT_NOW)
+    assert probing.probe(failing) == Probe(NOT_SERVED, 402)
+
+
+def _content_hash_comparisons() -> list[str]:
+    """Every place in the pipeline that compares an article's content hash, by file."""
+    found = []
+    for path in SOURCE.rglob("*.py"):
+        for node in ast.walk(ast.parse(path.read_text())):
+            if isinstance(node, ast.Compare):
+                names = [
+                    part.attr
+                    for part in ast.walk(node)
+                    if isinstance(part, ast.Attribute) and part.attr == "content_hash"
+                ]
+                if names:
+                    found.append(str(path.relative_to(SOURCE)))
+    return found
+
+
+def test_no_code_decides_whether_to_read_an_article_by_comparing_content_hashes():
+    """A hash from a read through the reader differs from one recorded before. The one
+    comparison only reports, after the read, whether the text changed."""
+    assert set(_content_hash_comparisons()) == {"statements/service.py"}
+    service = (SOURCE / "statements" / "service.py").read_text()
+    assert "changed = hashlib.sha256(text.encode()).hexdigest() != article.content_hash" in service
+
+
+@pytest.mark.parametrize("retry", [None, -1, "60", True])
+def test_not_now_requires_a_finite_nonnegative_retry_time(retry):
+    response = httpx.Response(
+        200,
+        json={
+            "success": False,
+            "code": "NOT_NOW",
+            "reason": "site busy",
+            "retryAfter": retry,
+        },
+    )
+    reader = ArticleRetriever(
+        reader_url=READER_URL,
+        reader_key="test",
+        contact_email=None,
+        turns=threading.BoundedSemaphore(1),
+        transport=httpx.MockTransport(lambda request: response),
+    )
+    with pytest.raises(ReaderUnavailable, match="form the pipeline does not know"):
+        reader.probe(ARTICLE_URL)
+
+
+def test_thin_main_content_cannot_be_read_even_with_long_metadata():
+    from thenwhat.extract.retrieve import ThinPage
+
+    raw = (
+        '<html><head><meta property="og:description" content="'
+        + "Summary. " * 100
+        + '"></head><body>Login required</body></html>'
+    )
+    reader = SyntheticReader(lambda request: httpx.Response(200, text=raw))
+    with pytest.raises(ThinPage):
+        retriever(reader).retrieve(ARTICLE_URL)

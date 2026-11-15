@@ -6,6 +6,7 @@ from typing import Annotated
 
 import typer
 
+from thenwhat.backfill.errors import ReaderUnavailable
 from thenwhat.claims.entry import EntryError
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
@@ -78,8 +79,8 @@ def outlets_command(
             "--workers",
             min=1,
             max=8,
-            help="How many outlets to check at the same time. One outlet is still asked one"
-            " article a second, and each registry keeps its own rate.",
+            help="How many outlets to check at the same time. The page reader decides how"
+            " each site is asked, and each registry keeps its own rate.",
         ),
     ] = 4,
     save: Annotated[
@@ -91,18 +92,22 @@ def outlets_command(
         typer.Option("--articles", help="Write one row per article address to this CSV file."),
     ] = None,
 ) -> None:
-    """Ask for every tracked article once and record, per outlet, whether its site let the
-    article be read and which signals its pages carry. No article text is kept."""
+    """Ask the page reader for every tracked article once and record, per outlet, whether
+    the article was read and which signals its pages carry. No article text is kept."""
     from thenwhat.cli.extract import make_retriever
 
     with entry_session() as session:
-        outlets = check_outlets(
-            session,
-            make_retriever(),
-            measure=make_measure() if with_lookup else None,
-            workers=workers,
-            on_article=_tell,
-        )
+        try:
+            outlets = check_outlets(
+                session,
+                make_retriever(),
+                measure=make_measure() if with_lookup else None,
+                workers=workers,
+                on_article=_tell,
+            )
+        except ReaderUnavailable as down:
+            # Nothing is reported: a report would count the reader's failure as the outlets'.
+            raise EntryError(str(down)) from None
         if not outlets:
             raise EntryError("No article is tracked, so there is no outlet to check.")
     page = report(outlets, checked=datetime.now(UTC).date())

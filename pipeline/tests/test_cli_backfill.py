@@ -554,7 +554,8 @@ def test_the_plan_says_what_reading_would_ask_and_cost(
     reading = result.output.split("link_read (version 1)")[1]
     # One lead of the three is scored at or above 0.7.
     assert "in scope: 1 of 3 link_lead records" in reading
-    assert "asks outlets for 1 pages, each outlet at least 10 seconds apart" in reading
+    # Every page is asked of the page reader, under its one allowance.
+    assert "  reader: 3,000 requests in 24 hours, 1 seconds apart; 0 used, 3,000 left" in reading
     # 3,000 tokens in at $1 and 700 out at $5 a million is $0.0065 a lead.
     assert "calls a model: the due records need about $0.01" in reading
 
