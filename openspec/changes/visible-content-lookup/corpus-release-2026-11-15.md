@@ -36,3 +36,11 @@ No copied caption or model gist is included in this evidence. The 78 affected
 service/post/visual tests, lint and type checks passed. Version-4 shared and local
 answer caches invalidate results made before this follow-up; Safari is bumped
 to 0.9.5 for the corresponding local-cache correction.
+
+The same released run also rejected S045 as a roundup because the BELIEVE post
+compared monotherapy and combination arms. The instructions now distinguish arms
+of one trial from unrelated studies. Two live follow-ups identify bimagrumab (alone
+or with semaglutide) for obesity and return the BELIEVE candidate; the NEJM roundup
+S021 stays negative in two follow-ups. A final S026 repeat remains negative with
+both refinements present. The complete 163 extension tests and 24 service speed
+checks pass, including rejection of version-3 saved answers.

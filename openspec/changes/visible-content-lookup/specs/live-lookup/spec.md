@@ -18,6 +18,10 @@ Identification SHALL choose one clearly main intervention-condition pair and SHA
 - **WHEN** a post lists bladder-cancer therapy, atrial-fibrillation surgery and sickle-cell gene editing as separate items
 - **THEN** the response does not combine them into a single registry query
 
+#### Scenario: One trial compares monotherapy and a combination
+- **WHEN** a report describes different arms of the same trial
+- **THEN** the experimental treatment or regimen is identified and comparator arms are study context, not separate roundup claims
+
 ### Requirement: Correction-aware saved results
 Results stored before the social-reading and treatment-claim corrections SHALL NOT be reused by either the shared service cache or the extension's local result cache.
 

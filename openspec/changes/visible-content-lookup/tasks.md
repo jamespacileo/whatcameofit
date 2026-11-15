@@ -31,6 +31,7 @@
 - [x] Deploy the corrected service through the existing GitHub CI workflow
 - [x] Build, sign and install Safari 0.9.4 with unchanged permissions and a rollback copy
 - [x] Reproduce the released S026 company-history false positive; strengthen whole-post classification and verify three real-provider negatives plus two positive controls
+- [x] Reproduce the released S045 trial-arm false negative; distinguish comparators from roundups and verify the real S045/S021/S026 boundary
 - [ ] Release the company-history follow-up with version-4 answer caches and Safari 0.9.5
 - [ ] Rerun all 37 affected URLs against production and the released browser reader; verify installed Safari popup behavior
 - [ ] Replace local-only corpus and Google Sheet evidence with dated released-version results and verify read-back

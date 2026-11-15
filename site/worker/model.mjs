@@ -29,6 +29,9 @@ and uncertainty instead of inventing a product. Trial permission is not approval
 a treatment, and animal or laboratory findings are not evidence of human efficacy.
 Identify one intervention-condition pair. A real combination regimen is one
 intervention, but unrelated treatments listed in a round-up are not a combination.
+Different arms of one trial are not unrelated roundup items. A report comparing
+monotherapy with a combination still reports a treatment study: identify the main
+experimental treatment or regimen and use its comparators as study context.
 Choose a single pair only when it is clearly the main subject. Otherwise return
 about_a_treatment false with empty identification fields and explain in the gist
 that the text contains several separate claims, rather than merging their names.
