@@ -250,6 +250,17 @@ test("Scenario: Text that names the trial", async () => {
   assert.deepEqual(found.candidates.map((c) => [c.id, c.agrees]), [["NCT00000009", ["trial_name"]], ["NCT00000001", []]]);
 });
 
+test("a study name written as a hashtag agrees with its spaced registry name", async () => {
+  const named = study("NCT00000009", "EX-1 in tooth agenesis", "Tooth Agenesis", { acronym: "REGROW 2" });
+  const other = study("NCT00000001", "EX-1 in tooth agenesis", "Tooth Agenesis", { acronym: "REGROW 21" });
+  const registry = fakeRegistry({ "EX-1": [other, named] });
+  const found = await lookUp({ text: "The #REGROW2 trial studied EX-1 for tooth agenesis.",
+    model: fakeModel({ ...READING, trial_name: "REGROW2" }), registry, index: INDEX });
+  assert.deepEqual(found.candidates.map(c => [c.id, c.agrees]), [
+    ["NCT00000009", ["trial_name"]], ["NCT00000001", []],
+  ]);
+});
+
 test("Scenario: Text that gives the trial's size and who ran it", async () => {
   const registry = fakeRegistry({
     "EX-1": [
@@ -276,6 +287,7 @@ test("a record agrees with a trial's name, size and sponsor by rule", () => {
   assert.deepEqual(agreeing(record({ acronym: "REGROW-2" }), { trial_name: "regrow 2" }), ["trial_name"]);
   assert.deepEqual(agreeing(record({ acronym: "REGROW-21" }), { trial_name: "REGROW-21" }), ["trial_name"]);
   assert.deepEqual(agreeing(study("NCT00000001", "EX-1", "x", { acronym: "REGROW-21" }), { trial_name: "REGROW-2" }), []);
+  assert.deepEqual(agreeing(study("NCT00000001", "EX-1", "x", { acronym: "REGROW2A" }), { trial_name: "REGROW2" }), []);
   assert.deepEqual(agreeing(record({ enrolled: 2539 }), { participants: 2500 }), ["participants"]);
   assert.deepEqual(agreeing(record({ enrolled: 751 }), { participants: 2500 }), []);
   assert.deepEqual(agreeing(record({ sponsor: "University of Oxford" }), { sponsor: "Oxford University" }), ["sponsor"]);
