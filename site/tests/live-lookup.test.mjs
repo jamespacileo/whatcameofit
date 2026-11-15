@@ -67,9 +67,11 @@ test("match confidence belongs to each record and is not a treatment rating", ()
     candidate("NCT00000005", 1.5, { agrees: ["stated"] }),
   ] }));
   assert.deepEqual(shown.likely.map(({ confidence, confidenceLabel }) => [confidence, confidenceLabel]), [
-    [95, "95% match confidence"],
-    [0, "0% match confidence"],
     [100, "100% match confidence"],
+    [95, "95% match confidence"],
+  ]);
+  assert.deepEqual(shown.mentioned.map(({ confidence, confidenceLabel }) => [confidence, confidenceLabel]), [
+    [0, "0% match confidence"],
     [null, "Match confidence unavailable"],
     [null, "Match confidence unavailable"],
   ]);
@@ -100,12 +102,12 @@ test("a record is said to agree with the article only on what was compared", () 
   );
 
   assert.equal(shown.trialSaid, "Of the trial itself, the article says: it is called REGROW-2 and 2,539 people took part.");
-  // A record the article gives the number of is listed even when its score is low.
+  // Low-confidence citations remain inspectable, outside the possible matches.
   assert.deepEqual(shown.likely.map((record) => record.why), [
-    "The article gives this record's number.",
     "A paper the article links to gives this record's number. Its registration agrees with the article on the trial's name, the number of participants and who ran it.",
     "Its registration agrees with the article on the number of participants.",
   ]);
+  assert.equal(shown.mentioned[0].why, "The article gives this record's number.");
   assert.equal(shown.rest, "1 other record was found and read as not being trials of this treatment for this condition.");
   assertNeutral([shown.trialSaid, ...shown.likely.map((record) => record.why)]);
 });
@@ -116,6 +118,45 @@ test("no record found is not worded as no trial existing", () => {
   assert.deepEqual(shown.likely, []);
   assert.equal(shown.none, LIVE.none);
   assert.match(shown.none, /not evidence that no trial exists/);
+});
+
+test("a cited different-setting trial is separate from possible matches", () => {
+  const shown = describeAnswer(answer({ candidates: [
+    candidate("NCT00000001", 0, { agrees: ["stated"], answer: "other_indication" }),
+    candidate("NCT00000002", 0.99),
+    candidate("NCT00000003", 0.6),
+  ] }));
+  assert.deepEqual(shown.likely.map(record => record.registryId), ["NCT00000002", "NCT00000003"]);
+  assert.deepEqual(shown.mentioned.map(record => record.registryId), ["NCT00000001"]);
+  assert.equal(shown.mentioned[0].confidence, 0);
+  assert.match(shown.mentioned[0].why, /record's number/);
+  assert.equal(shown.rest, null);
+});
+
+test("a cited trial alone cannot suppress the no-match notice", () => {
+  const shown = describeAnswer(answer({ candidates: [
+    candidate("NCT00000001", 0.9, { agrees: ["paper"], answer: "other_indication" }),
+  ] }));
+  assert.deepEqual(shown.likely, []);
+  assert.equal(shown.none, LIVE.none);
+  assert.equal(shown.mentioned[0].registryId, "NCT00000001");
+});
+
+test("possible matches lead in score order without mutating the response", () => {
+  const candidates = [candidate("NCT00000001", 0.6), candidate("NCT00000002", 0.99)];
+  const shown = describeAnswer(answer({ candidates }));
+  assert.deepEqual(shown.likely.map(record => record.registryId), ["NCT00000002", "NCT00000001"]);
+  assert.equal(candidates[0].id, "NCT00000001");
+});
+
+test("the display cap is shared by possible matches and other citations", () => {
+  const shown = describeAnswer(answer({ candidates: [
+    ...Array.from({ length: 9 }, (_, index) => candidate(`NCT${index}`, 0.9)),
+    candidate("NCTCITED1", 0, { agrees: ["stated"] }),
+    candidate("NCTCITED2", 0, { agrees: ["stated"] }),
+  ] }));
+  assert.equal(shown.likely.length, 9);
+  assert.equal(shown.mentioned.length, 1);
 });
 
 test("Scenario: Reader is told a linked paper was not looked up", () => {

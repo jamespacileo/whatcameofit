@@ -26,6 +26,7 @@ export const LIVE = {
   notATreatment: "A specific treatment and condition could not be identified from the content that could be read. The registry was not searched; nothing has been ruled out.",
   trackedLead: "We track this treatment. Its page has been through our usual checks:",
   likelyLead: "Registry records that read as trials of this treatment for this condition, likeliest first:",
+  mentionedLead: "Other records mentioned in the report; not established as matches to this treatment and condition:",
   confidenceMeaning:
     "Match confidence is the model's estimate that this record concerns the reported treatment and condition. It is not a verified probability or a rating of treatment effectiveness or trial quality.",
   trialSaid: "Of the trial itself, the article says:",
@@ -183,6 +184,7 @@ function papersUnchecked(count) {
  * @returns {{ marked: string | null, lead: string, subject: { treatment: string, condition: string | null } | null, source: string | null, searchedAlso: string | null, trialSaid: string | null,
  *   tracked: { slug: string, headline: string, page: string }[],
  *   likely: { title: string, url: string, detail: string, phase: string, state: string, registryId: string, why: string | null, confidence: number | null, confidenceLabel: string }[],
+ *   mentioned: { title: string, url: string, detail: string, phase: string, state: string, registryId: string, why: string | null, confidence: number | null, confidenceLabel: string }[], mentionedLead: string,
  *   rest: string | null, none: string | null, papersUnchecked: string | null, notices: string[] }}
  */
 export function describeAnswer(answer) {
@@ -193,7 +195,7 @@ export function describeAnswer(answer) {
   const source = answer.source?.kind === "screenshot"
     ? "Read from the visible screenshot and caption. A video contributes only its current frame, not its audio. This identifies what the post claims; it does not establish that the claim is true."
     : sourceOf(answer.post);
-  const nothing = { subject: null, searchedAlso: null, trialSaid: null, tracked: [], likely: [], rest: null, none: null, papersUnchecked: null, research: null };
+  const nothing = { subject: null, searchedAlso: null, trialSaid: null, tracked: [], likely: [], mentioned: [], mentionedLead: LIVE.mentionedLead, rest: null, none: null, papersUnchecked: null, research: null };
   // A post that links to an article the site tracks: its reviewed page is the answer,
   // and no automatic search was made, so nothing is marked as one.
   if (answer.article_tracked) {
@@ -203,11 +205,24 @@ export function describeAnswer(answer) {
     return { ...nothing, marked, lead: LIVE.notATreatment, source, notices };
   }
   const candidates = answer.candidates ?? [];
-  // A record the article itself gives the number of is listed whatever its score.
+  // Mention establishes provenance, not compatibility with the reported claim.
   const likely = candidates.filter(
-    (candidate) => candidate.score >= LIKELY_FROM || (candidate.agrees ?? []).includes("stated"),
-  );
-  const others = candidates.length - likely.length;
+    (candidate) => candidate.answer === "match" && Number.isFinite(candidate.score) &&
+      candidate.score >= LIKELY_FROM && candidate.score <= 1,
+  ).sort((a, b) => b.score - a.score);
+  const mentioned = candidates.filter(candidate => !likely.includes(candidate) &&
+    (candidate.agrees ?? []).some(reason => reason === "stated" || reason === "paper"));
+  const others = candidates.length - likely.length - mentioned.length;
+  const record = (candidate) => ({
+    title: candidate.title || candidate.id,
+    url: candidate.url,
+    detail: [phaseLabel(candidate.phases), stateLabel(candidate.state), candidate.id].filter(Boolean).join(" · "),
+    phase: phaseLabel(candidate.phases),
+    state: stateLabel(candidate.state),
+    registryId: candidate.id,
+    why: whyListed(candidate.agrees ?? []),
+    ...matchConfidence(candidate.score),
+  });
   const known = answer.known_names ?? [];
   return {
     marked,
@@ -219,16 +234,9 @@ export function describeAnswer(answer) {
       : null,
     trialSaid: trialSaid(answer.details),
     tracked: answer.tracked ?? [],
-    likely: likely.slice(0, SHOWN_AT_MOST).map((candidate) => ({
-      title: candidate.title || candidate.id,
-      url: candidate.url,
-      detail: [phaseLabel(candidate.phases), stateLabel(candidate.state), candidate.id].filter(Boolean).join(" · "),
-      phase: phaseLabel(candidate.phases),
-      state: stateLabel(candidate.state),
-      registryId: candidate.id,
-      why: whyListed(candidate.agrees ?? []),
-      ...matchConfidence(candidate.score),
-    })),
+    likely: likely.slice(0, SHOWN_AT_MOST).map(record),
+    mentioned: mentioned.slice(0, Math.max(0, SHOWN_AT_MOST - likely.length)).map(record),
+    mentionedLead: LIVE.mentionedLead,
     rest:
       others > 0
         ? `${others} other ${others === 1 ? "record was" : "records were"} found and read as not being trials of this treatment for this condition.`
