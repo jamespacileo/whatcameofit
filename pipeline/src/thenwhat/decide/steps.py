@@ -646,7 +646,7 @@ def _unshown_arms(intervention: dict, arms: list[dict]) -> list[str]:
         if not any(
             arm.get("label") == label
             and any(
-                member == name or member.endswith(f": {name}")
+                member == name or member.partition(": ")[2] == name
                 for member in arm.get("interventionNames", [])
             )
             for arm in arms

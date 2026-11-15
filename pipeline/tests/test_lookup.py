@@ -169,7 +169,11 @@ def test_scoring_receives_route_and_separate_arm_details(session: Session, descr
     section["identificationModule"]["officialTitle"] = "A long official title " * 150
     section["armsInterventionsModule"] = {
         "interventions": [
-            {"name": "EX-1", "description": description, "armGroupLabels": ["A", "unpaired"]},
+            {
+                "name": "EX-1",
+                "description": description,
+                "armGroupLabels": ["A", "unpaired", "suffix-conflict"],
+            },
             {"name": "EX-2", "armGroupLabels": ["B"]},
         ],
         "armGroups": [
@@ -185,6 +189,7 @@ def test_scoring_receives_route_and_separate_arm_details(session: Session, descr
                 "interventionNames": ["Drug: EX-2"],
                 "description": "EX-2 alone",
             },
+            {"label": "suffix-conflict", "interventionNames": ["Drug: Product B: EX-1"]},
         ],
     }
     states = []
@@ -206,7 +211,7 @@ def test_scoring_receives_route_and_separate_arm_details(session: Session, descr
     assert description in states[0]
     assert '"interventions":["Drug: EX-1"]' in states[0]
     assert '"interventions":["Drug: EX-2"]' in states[0]
-    assert '"arms":["unpaired"]' in states[0]
+    assert '"arms":["unpaired","suffix-conflict"]' in states[0]
     assert "EX-1 alone" in states[0] and "EX-2 alone" in states[0]
     assert "separate arms testing A and B do not establish a trial of A plus B" in states[0]
     assert "Missing or truncated details do not establish compatibility" in states[0]

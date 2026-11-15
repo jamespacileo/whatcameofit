@@ -26,7 +26,7 @@ const excerpt = (value, limit) => typeof value === "string" && value.length > li
 function unshownArms(intervention, arms) {
   return (intervention.armGroupLabels ?? []).filter(label => !arms.some(arm =>
     arm.label === label && (arm.interventionNames ?? []).some(name =>
-      name === intervention.name || name.endsWith(`: ${intervention.name}`))));
+      name === intervention.name || name.replace(/^[^:]+: /, "") === intervention.name)));
 }
 
 /** A registry record as it is shown to the model: what decides a match comes first. */

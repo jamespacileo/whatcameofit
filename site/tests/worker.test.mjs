@@ -137,12 +137,13 @@ test("scoring retains routes and separate arms before a long official title", as
     record.protocolSection.identificationModule.officialTitle = "A long official title ".repeat(150);
     record.protocolSection.armsInterventionsModule = {
       interventions: [
-        {name: "EX-1", description, armGroupLabels: ["A", "unpaired"]},
+        {name: "EX-1", description, armGroupLabels: ["A", "unpaired", "suffix-conflict"]},
         {name: "EX-2", armGroupLabels: ["B"]},
       ],
       armGroups: [
         {label: "A", interventionNames: ["Drug: EX-1"], description: "EX-1 alone"},
         {label: "B", interventionNames: ["Drug: EX-2"], description: "EX-2 alone"},
+        {label: "suffix-conflict", interventionNames: ["Drug: Product B: EX-1"]},
       ],
     };
     const model = fakeModel();
@@ -155,7 +156,7 @@ test("scoring retains routes and separate arms before a long official title", as
     assert.equal(scored.length, 1);
     assert.ok(scored[0].includes(description));
     assert.ok(scored[0].includes('"interventions":["Drug: EX-1"]') && scored[0].includes('"interventions":["Drug: EX-2"]'));
-    assert.ok(scored[0].includes('"arms":["unpaired"]'));
+    assert.ok(scored[0].includes('"arms":["unpaired","suffix-conflict"]'));
     assert.match(scored[0], /EX-1 alone/);
     assert.match(scored[0], /EX-2 alone/);
     assert.match(scored[0], /\[truncated\]/);
