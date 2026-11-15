@@ -480,6 +480,17 @@
             }
           ]
         },
+        "evidence_stage_reading": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedStageReading"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "checked_by_person": {
           "title": "Checked By Person",
           "type": "boolean"
@@ -1762,6 +1773,50 @@
         "kind"
       ],
       "title": "ExportedSponsor",
+      "type": "object"
+    },
+    "ExportedStageReading": {
+      "additionalProperties": false,
+      "properties": {
+        "stage": {
+          "$ref": "#/$defs/EvidenceStage"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "also": {
+          "items": {
+            "$ref": "#/$defs/ExportedStageShare"
+          },
+          "title": "Also",
+          "type": "array"
+        }
+      },
+      "required": [
+        "stage",
+        "score",
+        "also"
+      ],
+      "title": "ExportedStageReading",
+      "type": "object"
+    },
+    "ExportedStageShare": {
+      "additionalProperties": false,
+      "properties": {
+        "stage": {
+          "$ref": "#/$defs/EvidenceStage"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "stage",
+        "score"
+      ],
+      "title": "ExportedStageShare",
       "type": "object"
     },
     "ExportedStatement": {

@@ -36,7 +36,7 @@ from thenwhat.db.models import (
     SourceArticle,
     TermRecord,
 )
-from thenwhat.decide.steps import latest_scoring
+from thenwhat.decide.steps import latest_scoring, latest_stage_suggestion
 from thenwhat.domain import (
     TRIAL_EVENT_TYPES,
     ClaimStatus,
@@ -540,6 +540,23 @@ class ExportedCardSource(Strict):
     in_data_file: bool
 
 
+class ExportedStageShare(Strict):
+    stage: EvidenceStage
+    # The probability, 0 to 1, the reading gave this stage.
+    score: float
+
+
+class ExportedStageReading(Strict):
+    # How the first report was read when the reading was not sure enough to confirm the
+    # stage by rule (openspec review, ADR 0004). The site shows it apart, marked low
+    # confidence. Never an input to the status: `evidence_stage` stays empty beside it.
+    stage: EvidenceStage
+    # The probability, 0 to 1, the reading gave the stage it chose.
+    score: float
+    # The other stages the reading gave weight to, likeliest first: why it is unsure.
+    also: list[ExportedStageShare]
+
+
 class ExportedClaim(Strict):
     slug: str
     headline: str
@@ -551,6 +568,8 @@ class ExportedClaim(Strict):
     indication: str
     first_reported_date: date | None
     evidence_stage: EvidenceStage | None
+    # Present only while `evidence_stage` is empty and a reading of it is on record.
+    evidence_stage_reading: ExportedStageReading | None = None
     # True only when a person approved the claim and no assistant decision stands on
     # it, its matches or its events.
     checked_by_person: bool
@@ -1132,12 +1151,49 @@ def _outlets(session: Session, claims: list[ExportedClaim]) -> list[ExportedOutl
     ]
 
 
+# A stage the reading gave less weight than this is left out of `also`.
+STAGE_SHARE_FLOOR = 0.05
+
+
+def _unconfirmed_stage_reading(
+    session: Session, claim: Claim, *, show_above: float
+) -> ExportedStageReading | None:
+    """The latest reading of a claim's evidence stage, when the stage is not confirmed
+    and the reading chose its stage with at least `show_above`. Shown, never used."""
+    if claim.evidence_stage is not None:
+        return None
+    reading = latest_stage_suggestion(session, claim)
+    stages = {stage.value for stage in EvidenceStage}
+    if reading is None or reading.choice not in stages:
+        return None
+    score = reading.probabilities.get(reading.choice, 0.0)
+    if score < show_above:
+        return None
+    others = sorted(
+        (
+            (probability, stage)
+            for stage, probability in reading.probabilities.items()
+            if stage in stages and stage != reading.choice and probability >= STAGE_SHARE_FLOOR
+        ),
+        reverse=True,
+    )
+    return ExportedStageReading(
+        stage=EvidenceStage(reading.choice),
+        score=score,
+        also=[
+            ExportedStageShare(stage=EvidenceStage(stage), score=probability)
+            for probability, stage in others
+        ],
+    )
+
+
 def build_export(
     session: Session,
     *,
     now: datetime,
     no_signal_years: int = 3,
     reading_accept_above: float = 0.8,
+    stage_show_above: float = 0.5,
 ) -> Export:
     """Everything the site may show, as of now.
 
@@ -1209,6 +1265,9 @@ def build_export(
                 indication=claim.indication,
                 first_reported_date=claim.first_reported_date,
                 evidence_stage=claim.evidence_stage,
+                evidence_stage_reading=_unconfirmed_stage_reading(
+                    session, claim, show_above=stage_show_above
+                ),
                 checked_by_person=claim.reviewed_by is Decider.HUMAN and not assistant,
                 status=ExportedStatus(
                     code=derivation.status,
@@ -1326,6 +1385,7 @@ def write_export(
     now: datetime,
     no_signal_years: int = 3,
     reading_accept_above: float = 0.8,
+    stage_show_above: float = 0.5,
 ) -> Export:
     """Write the export to `path`, replacing any earlier file only once it is complete."""
     export = build_export(
@@ -1333,6 +1393,7 @@ def write_export(
         now=now,
         no_signal_years=no_signal_years,
         reading_accept_above=reading_accept_above,
+        stage_show_above=stage_show_above,
     )
     path.parent.mkdir(parents=True, exist_ok=True)
     partial = path.with_suffix(path.suffix + ".partial")

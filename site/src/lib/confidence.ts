@@ -47,3 +47,19 @@ const UNREAD ="Scored before the condition was part of the question.";
 export function readingOf(reading: string | null): string {
   return (reading && READINGS[reading]) ?? UNREAD;
 }
+
+const percent = (score: number): number => Math.round(score * 100);
+
+/** The note beside an evidence stage that was read but not confirmed: how sure the reading
+ * was, that it decides nothing, and the other stages it gave weight to (openspec review,
+ * "Lower-band stage reading"). The caller words the stages, so their names live in one place. */
+export function stageReadingNote(
+  reading: { score: number; also: { stage: string; score: number }[] },
+  stageName: (code: string) => string,
+): string {
+  const also = reading.also.map((share) => `${stageName(share.stage).toLowerCase()}, ${percent(share.score)}%`);
+  return (
+    `Low confidence · ${percent(reading.score)}%. Not confirmed, so it does not decide the status.` +
+    (also.length ? ` Also read as: ${also.join("; ")}.` : "")
+  );
+}

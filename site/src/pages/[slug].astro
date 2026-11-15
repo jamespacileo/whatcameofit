@@ -46,7 +46,7 @@ import {
 } from "../lib/status";
 import { cardAlt, clip, shareSentence } from "../lib/card";
 import { embedSnippet, shareLinks } from "../lib/share";
-import { confidenceLabel } from "../lib/confidence";
+import { confidenceLabel, stageReadingNote } from "../lib/confidence";
 import MatchList from "../components/MatchList.astro";
 import Background from "../components/Background.astro";
 import Organisations from "../components/Organisations.astro";
@@ -556,6 +556,21 @@ const sections = [
           <div>
             <dt>Evidence when first reported</dt>
             <dd>{EVIDENCE_STAGES[claim.evidence_stage] ?? claim.evidence_stage}</dd>
+          </div>
+        )
+      }
+      {
+        /* A reading that was not sure enough to confirm the stage: shown with its score,
+           never used for the status (openspec review, "Lower-band stage reading"). */
+        !claim.evidence_stage && claim.evidence_stage_reading && (
+          <div>
+            <dt>Evidence when first reported</dt>
+            <dd>
+              {EVIDENCE_STAGES[claim.evidence_stage_reading.stage] ?? claim.evidence_stage_reading.stage}
+              <span class="aka">
+                {stageReadingNote(claim.evidence_stage_reading, (code) => EVIDENCE_STAGES[code] ?? code)}
+              </span>
+            </dd>
           </div>
         )
       }
