@@ -44,10 +44,11 @@ from thenwhat.claims.entry import (
 from thenwhat.db.models import Claim, LinkLead, LinkLeadLink, LinkShare, SourceArticle
 from thenwhat.decide.core import Backend, DecisionFailed
 from thenwhat.decide.steps import (
+    ESTABLISHED_TREATMENT,
     choose_same_claim,
     choose_vertical,
+    kind_of_treatment_report,
     lead_ref,
-    reports_a_new_treatment,
 )
 from thenwhat.domain import Decider, ReadOutcome, ReviewState, ScreenOutcome, WorkOutcome
 from thenwhat.extract.names import is_a_name
@@ -122,7 +123,7 @@ class LinkRead:
         vertical_accept_above: float,
         approve_drafts_by_rule: bool,
         same_claim_accept_above: float = 0.6,
-        new_treatment_accept_above: float = 0.5,
+        treatment_accept_above: float = 0.5,
         match_reject_below: float = 0.0,
         match_accept_above: float = 0.0,
         time: Time | None = None,
@@ -134,7 +135,7 @@ class LinkRead:
         self.reads_per_claim = reads_per_claim
         self.vertical_accept_above = vertical_accept_above
         self.same_claim_accept_above = same_claim_accept_above
-        self.new_treatment_accept_above = new_treatment_accept_above
+        self.treatment_accept_above = treatment_accept_above
         self.approve_drafts_by_rule = approve_drafts_by_rule
         # The rules `thenwhat resolve` decides candidates by, for those a page names.
         self.match_reject_below = match_reject_below
@@ -368,11 +369,12 @@ class LinkRead:
             raise SpendCeilingReached(str(ceiling)) from None
         except LlmError as failure:
             return Failed(str(failure))
-        # The tracker follows reported new treatments. Triage passes a headline about any
-        # treatment for a condition, so what the article turned out to be is asked here,
-        # of the read's own headline and summary, before anything is joined or drafted.
+        # A claim is one treatment for one condition. Triage sees only a headline, so what
+        # the article turned out to be is asked here, of the read's own headline and
+        # summary, before anything is joined or drafted. A treatment long in use is
+        # wanted as much as a new one: its trials and approval are what came of it.
         try:
-            new_treatment = reports_a_new_treatment(
+            report = kind_of_treatment_report(
                 session,
                 client.make_backend(session),
                 ref=lead_ref(record.id),
@@ -385,13 +387,16 @@ class LinkRead:
         except DecisionFailed as refused:
             session.flush()
             return Failed(str(refused))
-        if new_treatment < self.new_treatment_accept_above:
+        if report.one_treatment_probability < self.treatment_accept_above:
             return self._finish(
                 record,
-                ReadOutcome.NOT_A_NEW_TREATMENT,
-                f"{draft.intervention} for {draft.indication}; "
-                f"a report of a new treatment at {new_treatment:.2f}",
+                ReadOutcome.NOT_ONE_TREATMENT,
+                f"{draft.intervention} for {draft.indication}; about one treatment for "
+                f"one condition at {report.one_treatment_probability:.2f}",
             )
+        established = (
+            "an established treatment in the news" if report.kind == ESTABLISHED_TREATMENT else None
+        )
         address = without_tracking(record.url)
         # One read at a time from here to the end of its transaction: whichever claim
         # another read has just made for this story is found, not made again.
@@ -415,7 +420,7 @@ class LinkRead:
                 )
                 record.claim_id, record.source_article_id = claim.id, article.id
                 note = self._named_on_the_page(session, claim, page, client, now)
-                detail = "; ".join(part for part in (how, note) if part) or None
+                detail = "; ".join(part for part in (established, how, note) if part) or None
                 return self._finish(record, ReadOutcome.ADDED_TO_CLAIM, detail)
 
             slug = free_slug_for(session, draft.intervention, draft.indication)
@@ -461,4 +466,5 @@ class LinkRead:
         record.claim_id = extracted.claim.id
         record.source_article_id = article.id if article else None
         note = self._named_on_the_page(session, extracted.claim, page, client, now)
-        return self._finish(record, ReadOutcome.NEW_CLAIM, note)
+        detail = "; ".join(part for part in (established, note) if part) or None
+        return self._finish(record, ReadOutcome.NEW_CLAIM, detail)

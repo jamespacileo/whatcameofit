@@ -41,10 +41,12 @@ from thenwhat.db.models import (
 )
 from thenwhat.decide.core import BackendAnswer
 from thenwhat.decide.steps import (
-    NEW_TREATMENT_REPORT,
+    ESTABLISHED_TREATMENT,
+    NEW_TREATMENT,
     NO_SUCH_CLAIM,
-    REPORTS_A_NEW_TREATMENT,
+    NOT_ONE_TREATMENT,
     SAME_CLAIM,
+    TREATMENT_KIND,
 )
 from thenwhat.domain import (
     Decider,
@@ -121,16 +123,17 @@ class Verticals:
         self.same_claim_chances: dict[str, float] | None = None
         # What the same-claim decision was shown, each time it was asked.
         self.same_claim_asked: list[str] = []
-        # The probability given to an article being a report of a new treatment, and
-        # what that decision was shown.
-        self.new_treatment_probability = 0.95
-        self.new_treatment_asked: list[str] = []
+        # What the treatment-kind decision answers (a new treatment unless a test says
+        # otherwise), with what probability, and what it was shown.
+        self.report_kind = NEW_TREATMENT
+        self.report_probability = 0.95
+        self.report_asked: list[str] = []
 
     def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
         chosen, probability = self.vertical, self.probability
-        if step == NEW_TREATMENT_REPORT:
-            self.new_treatment_asked.append(state)
-            chosen, probability = REPORTS_A_NEW_TREATMENT, self.new_treatment_probability
+        if step == TREATMENT_KIND:
+            self.report_asked.append(state)
+            chosen, probability = self.report_kind, self.report_probability
         if step == SAME_CLAIM:
             self.same_claim_asked.append(state)
             if self.same_claim_chances is not None:
@@ -552,38 +555,73 @@ def test_a_description_in_place_of_a_name_is_rejected_by_rule_and_kept(session, 
     assert (lead.read_outcome, claim.review_state) == (ReadOutcome.NEW_CLAIM, ReviewState.REJECTED)
 
 
-# --- only reports of a new treatment ---------------------------------------------------
+# --- only an article about one treatment for one condition -----------------------------
 
 
-def test_an_article_that_is_not_a_report_of_a_new_treatment_makes_no_claim(reader: Reader):
-    """Scenario: News about an established treatment"""
-    reader.backend.new_treatment_probability = 0.2
+def test_an_article_that_is_not_about_one_treatment_makes_no_claim(reader: Reader):
+    """Scenario: An approach with no one condition"""
+    reader.backend.report_kind = NOT_ONE_TREATMENT
     lead = reader.lead()
 
     report = reader.read()
 
-    assert (report.done, lead.read_outcome) == (0, ReadOutcome.NOT_A_NEW_TREATMENT)
+    assert (report.done, lead.read_outcome) == (0, ReadOutcome.NOT_ONE_TREATMENT)
     assert lead.read_detail == (
-        "EX-1 antibody for tooth agenesis; a report of a new treatment at 0.20"
+        "EX-1 antibody for tooth agenesis; about one treatment for one condition at 0.05"
     )
     assert reader.session.scalars(select(Claim)).all() == []
     assert reader.entry(lead).outcome is WorkOutcome.NOTHING_FOUND
     # Asked of the read's own words, never of the article's.
-    [shown] = reader.backend.new_treatment_asked
+    [shown] = reader.backend.report_asked
     assert "Headline: Antibody regrows teeth in mice" in shown and MARKER not in shown
-    assert funnel(reader.session, pass_above=0.7, reject_below=0.2).not_a_new_treatment == 1
+    assert funnel(reader.session, pass_above=0.7, reject_below=0.2).not_one_treatment == 1
 
 
-def test_an_article_that_is_not_a_report_of_a_new_treatment_joins_no_claim(reader: Reader):
-    """Scenario: News about a tracked treatment"""
+def test_an_article_that_is_not_about_one_treatment_joins_no_claim(reader: Reader):
+    """Scenario: Not one treatment, though it names a tracked one"""
     claim = tracked_claim(reader.session)
-    reader.backend.new_treatment_probability = 0.2
+    reader.backend.report_kind = NOT_ONE_TREATMENT
     lead = reader.lead()
 
     reader.read()
 
-    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.NOT_A_NEW_TREATMENT, None)
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.NOT_ONE_TREATMENT, None)
     assert len(articles_of(reader.session, claim)) == 1
+
+
+def test_an_article_about_an_established_treatment_becomes_a_claim_and_says_so(reader: Reader):
+    """Scenario: News about an established treatment"""
+    reader.backend.report_kind = ESTABLISHED_TREATMENT
+    lead = reader.lead()
+
+    reader.read()
+
+    assert lead.read_outcome is ReadOutcome.NEW_CLAIM
+    assert lead.read_detail == "an established treatment in the news"
+    assert claim_of(reader.session, lead).review_state is ReviewState.PENDING
+
+
+def test_an_article_about_an_established_treatment_joins_its_claim(reader: Reader):
+    """Scenario: News about a tracked, established treatment"""
+    claim = tracked_claim(reader.session)
+    reader.backend.report_kind = ESTABLISHED_TREATMENT
+    lead = reader.lead()
+
+    reader.read()
+
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.ADDED_TO_CLAIM, claim.id)
+    assert lead.read_detail == "an established treatment in the news"
+
+
+def test_new_and_established_together_decide_that_it_is_one_treatment(reader: Reader):
+    """Scenario: Unsure whether new or established"""
+    reader.backend.report_kind, reader.backend.report_probability = ESTABLISHED_TREATMENT, 0.4
+    lead = reader.lead()
+
+    reader.read()
+
+    # 0.4 established and 0.3 new: about one treatment at 0.7, whichever it is.
+    assert lead.read_outcome is ReadOutcome.NEW_CLAIM
 
 
 # --- one story, several outlets --------------------------------------------------------

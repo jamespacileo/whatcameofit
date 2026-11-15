@@ -32,8 +32,8 @@ class Funnel:
     new_awaiting_preparation: int
     new_otherwise: int
     needs_vertical: int
-    # Read, and not a report of a new treatment: no claim was made.
-    not_a_new_treatment: int
+    # Read, and not about one treatment for one condition: no claim was made.
+    not_one_treatment: int
     enough_articles: int
     # Why leads could not be read, and how many for each reason.
     cannot_be_read: dict[str, int]
@@ -53,7 +53,7 @@ class Funnel:
             + self.new_awaiting_preparation
             + self.new_otherwise
             + self.needs_vertical
-            + self.not_a_new_treatment
+            + self.not_one_treatment
         )
 
 
@@ -108,7 +108,7 @@ def funnel(session: Session, *, pass_above: float | None, reject_below: float | 
         new_awaiting_preparation=awaiting,
         new_otherwise=new_claims() - approved - rejected - awaiting,
         needs_vertical=number(LinkLead.read_outcome == ReadOutcome.NEEDS_VERTICAL),
-        not_a_new_treatment=number(LinkLead.read_outcome == ReadOutcome.NOT_A_NEW_TREATMENT),
+        not_one_treatment=number(LinkLead.read_outcome == ReadOutcome.NOT_ONE_TREATMENT),
         enough_articles=number(LinkLead.read_outcome == ReadOutcome.ENOUGH_ARTICLES),
         cannot_be_read={reason or "no reason recorded": count for reason, count in reasons},
         undated_outlets=[(outlet, count) for outlet, count in undated],
