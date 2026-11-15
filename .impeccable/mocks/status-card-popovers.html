@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Status card popovers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #ffffff; --ink: #0f1f38; --blue: #14427f; --muted: #46566b;
+    --panel: #f1f5fb; --tint: #e6eef8; --tag: #d6e2f2; --rule: #d9e2ee;
+    --rule-soft: #e9eff5; --ring: #7f90a3; --ground: #f4f7fb;
+    --face: "Figtree", "Helvetica Neue", Arial, sans-serif;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --shadow: 0 10px 28px -8px rgb(15 31 56 / 0.2), 0 2px 6px -2px rgb(15 31 56 / 0.1);
+  }
+  * { box-sizing: border-box; }
+  ::selection { background: var(--tag); color: var(--ink); }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 400 1rem/1.5 var(--face); }
+  a { color: var(--blue); text-underline-offset: 0.2em; text-decoration-thickness: 1.5px; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: 4px; }
+  .wrap { max-width: 66rem; margin: 0 auto; padding: 2.5rem 1rem 4rem; }
+  h1 { font-size: 1.75rem; letter-spacing: -0.015em; margin: 0 0 0.4rem; font-weight: 800; }
+  .lede { color: var(--muted); max-width: 62ch; margin: 0 0 0.5rem; }
+  .finding { max-width: 62ch; margin: 1.25rem 0 0; padding: 0.85rem 1rem; background: #fff7df; border: 1px solid #d9c88a; border-radius: 0.65rem; font-size: 0.95rem; }
+  .finding strong { font-weight: 700; }
+
+  section.mock { margin-top: 3rem; }
+  .mock > header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 1rem; margin-bottom: 0.35rem; }
+  .mock h2 { font-size: 1.25rem; margin: 0; font-weight: 800; letter-spacing: -0.01em; }
+  .mock .tag { font-size: 0.8rem; font-weight: 700; color: var(--blue); background: var(--tag); border-radius: 99px; padding: 0.1rem 0.6rem; }
+  .mock .why { color: var(--muted); max-width: 64ch; margin: 0 0 1rem; font-size: 0.95rem; }
+  .mock .trade { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0.5rem 2rem; font-size: 0.9rem; color: var(--muted); margin: 1rem 0 0; max-width: 60rem; }
+  .mock .trade b { color: var(--ink); }
+
+  /* The row, as in DayReport */
+  .stage { background: var(--paper); border: 1px solid var(--rule); border-radius: 0.85rem; padding: 1.5rem; position: relative; min-height: 26rem; }
+  .stage:has(.at-below) { min-height: 30rem; }
+  .stage:has(.grown) { min-height: 0; }
+  .row { display: grid; grid-template-columns: 11.5rem 1fr; gap: 1.5rem; align-items: start; }
+  .row-now { background: var(--panel); border-radius: 0.85rem; padding: 0.9rem 1rem 1rem; position: relative; }
+  .row-label { display: block; font-size: 0.82rem; color: var(--muted); font-weight: 500; }
+  .status-name { display: block; font-size: 1.15rem; font-weight: 800; color: var(--blue); line-height: 1.2; margin: 0.15rem 0 0.55rem; }
+  .status-name.more { text-decoration: underline dotted var(--ring); text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; cursor: help; }
+  .track { display: flex; align-items: center; justify-content: space-between; height: 0.8rem; width: 6.5rem;
+    background: linear-gradient(var(--rule), var(--rule)) center / 100% 1.5px no-repeat; }
+  .step { width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--paper); border: 1.5px solid var(--ring); }
+  .step.here { width: 0.8rem; height: 0.8rem; background: var(--blue); border-color: var(--blue); }
+  .info { position: absolute; top: 0.55rem; right: 0.55rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; border: 0; background: none; color: var(--blue); display: grid; place-items: center; cursor: pointer; }
+  .info.on { background: var(--tag); }
+
+  .row-main { color: var(--muted); font-size: 0.92rem; }
+  .row-src { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+  .row-src a { font-weight: 500; }
+  .chip { background: var(--panel); border-radius: 99px; padding: 0.1rem 0.7rem; color: var(--ink); }
+  .row-title { color: var(--ink); font-size: 1.4rem; font-weight: 800; line-height: 1.2; letter-spacing: -0.01em; margin: 0.4rem 0 0.6rem; max-width: 30ch; }
+  .row-foot { display: flex; justify-content: space-between; gap: 1rem; }
+
+  /* Popover, as .pop */
+  .pop { position: absolute; z-index: 3; width: 21rem; padding: 0.85rem 0.95rem 0.9rem; background: var(--paper); border: 1px solid var(--rule); border-radius: 0.65rem; box-shadow: var(--shadow); font-size: 0.9rem; line-height: 1.45; color: var(--ink);
+    animation: rise 170ms var(--ease-out) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(4px); } }
+  @media (prefers-reduced-motion: reduce) { .pop { animation-name: fade; } @keyframes fade { from { opacity: 0; } } }
+  .pop p { margin: 0; }
+  .pop p + p, .pop ol + p, .pop .block + .block { margin-top: 0.6rem; }
+  .pop .head { font-weight: 700; }
+  .pop .sub { color: var(--muted); }
+  .pop .foot { margin-top: 0.75rem; padding-top: 0.6rem; border-top: 1px solid var(--rule-soft); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1rem; font-size: 0.85rem; }
+  .pop .when { color: var(--muted); }
+  .pop .lab { font-size: 0.78rem; font-weight: 700; color: var(--muted); display: block; margin-bottom: 0.1rem; }
+  .at-right { left: calc(1.5rem + 11.5rem + 0.6rem); top: 1.4rem; }
+  .at-below { left: 1.5rem; top: 10.4rem; }
+
+  /* A: path named */
+  .path { margin: 0.45rem 0 0; padding: 0; list-style: none; color: var(--muted); position: relative; }
+  .path::before { content: ""; position: absolute; left: 0.5rem; top: 0.7rem; bottom: 0.7rem; width: 1.5px; background: var(--rule); transform: translateX(-50%); }
+  .path li { display: grid; grid-template-columns: 1rem 1fr; gap: 0.55rem; align-items: center; padding: 0.12rem 0; position: relative; }
+  .path li::before { content: ""; justify-self: center; width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--paper); border: 1.5px solid var(--ring); }
+  .path li[aria-current] { color: var(--ink); font-weight: 700; }
+  .path li[aria-current]::before { width: 0.8rem; height: 0.8rem; background: var(--blue); border-color: var(--blue); }
+  .path li small { display: block; font-weight: 400; color: var(--muted); font-size: 0.82rem; line-height: 1.3; }
+
+  /* B: labelled track */
+  .ltrack { margin: 0.7rem 0 0.2rem; display: grid; grid-template-columns: repeat(6, 1fr); position: relative; }
+  .ltrack::before { content: ""; position: absolute; left: calc(100% / 12); right: calc(100% / 12); top: 0.4rem; height: 1.5px; background: var(--rule); }
+  .ltrack span { display: grid; justify-items: center; gap: 0.3rem; font-size: 0.74rem; line-height: 1.15; text-align: center; color: var(--muted); position: relative; }
+  .ltrack span::before { content: ""; width: 0.45rem; height: 0.45rem; margin-top: 0.175rem; border-radius: 50%; background: var(--paper); border: 1.5px solid var(--ring); }
+  .ltrack span.here { color: var(--ink); font-weight: 700; }
+  .ltrack span.here::before { width: 0.8rem; height: 0.8rem; margin-top: 0; background: var(--blue); border-color: var(--blue); }
+  .reason { margin-top: 0.75rem; background: var(--panel); border-radius: 0.5rem; padding: 0.6rem 0.7rem; }
+  .ids { font-variant-numeric: tabular-nums; }
+
+  /* C: two answers */
+  .pair { display: grid; gap: 0.6rem; margin-top: 0.55rem; }
+  .pair .block { display: grid; grid-template-columns: 1.1rem 1fr; gap: 0.5rem; }
+  .pair svg { margin-top: 0.15rem; color: var(--blue); }
+  .pair .not svg { color: var(--muted); }
+
+  /* D: in place */
+  .row.d { grid-template-columns: auto 1fr; }
+  .row-now.grown { width: 19rem; box-shadow: none; outline: 1.5px solid var(--tag); transition: width 220ms var(--ease-out); }
+  .grown .ltrack { margin-top: 0.4rem; }
+  .grown .gloss { font-size: 0.88rem; color: var(--ink); margin: 0.6rem 0 0; }
+  .grown .gloss + .gloss { color: var(--muted); margin-top: 0.35rem; }
+  .grown a { font-size: 0.85rem; font-weight: 600; display: inline-block; margin-top: 0.55rem; }
+
+  .rec { margin-top: 3.5rem; padding: 1.25rem 1.25rem 1.1rem; background: var(--paper); border: 1.5px solid var(--blue); border-radius: 0.85rem; max-width: 60rem; }
+  .rec h2 { margin: 0 0 0.4rem; font-size: 1.2rem; }
+  .rec ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+  .rec li + li { margin-top: 0.3rem; }
+
+  @media (max-width: 52rem) {
+    .row { grid-template-columns: 1fr; }
+    .at-right { left: 1.5rem; top: 10.4rem; }
+    .stage { min-height: 42rem; }
+    .pop { width: min(21rem, calc(100% - 3rem)); }
+    .stage.tall { min-height: 46rem; }
+    .row-now.grown { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Status card: hover and focus popovers</h1>
+  <p class="lede">Four ways to say what “On record now” and the six dots mean, drawn on the Tourette row from the home page. Each uses the site’s existing popover (white, hairline, the one soft shadow, 170&nbsp;ms rise) except D, which opens in place.</p>
+  <p class="finding"><strong>What this row shows:</strong> the card says <em>Trial registered</em>, but its strip says 3 trials with results posted. All three trials started and completed; ClinicalTrials.gov records each one’s phase as “not applicable”, as it usually does for device studies, so by the rule none counts as a phase. A reader sees both on the same row and has nothing to reconcile them with. B and D answer that for this claim.</p>
+
+  <!-- A -->
+  <section class="mock">
+    <header><h2>A. The path, named</h2><span class="tag">Smallest change</span></header>
+    <p class="why">Hover or focus the status name (dotted underline, the site’s existing “more” trigger). The six dots become six named places, one line of plain words under each place that is not obvious. The same for every claim at this status.</p>
+    <div class="stage tall">
+      <div class="row">
+        <div class="row-now">
+          <span class="row-label">On record now</span>
+          <span class="status-name more" tabindex="0">Trial registered</span>
+          <span class="track"><i class="step"></i><i class="step here"></i><i class="step"></i><i class="step"></i><i class="step"></i><i class="step"></i></span>
+        </div>
+        <div class="row-main">
+          <p class="row-src"><a href="#">BBC News</a> bbc.co.uk <span>12 Nov 2026</span> <span class="chip">Brain and nerves</span></p>
+          <p class="row-title">“Tourette syndrome: The life-changing device helping to stop tics”</p>
+          <p class="row-foot"><span>Wrist-worn median nerve stimulation device · Tourette syndrome</span><a href="#">See the records</a></p>
+        </div>
+      </div>
+      <div class="pop at-right" role="note">
+        <p class="head">Where the records place this claim</p>
+        <ol class="path">
+          <li><span>Preclinical only<small>Laboratory or animal work</small></span></li>
+          <li aria-current="step"><span>Trial registered<small>A trial in people is on record, with no phase</small></span></li>
+          <li><span>Phase 1 trial</span></li>
+          <li><span>Phase 2 trial</span></li>
+          <li><span>Phase 3 trial</span></li>
+          <li><span>Approved</span></li>
+        </ol>
+        <p class="sub">A place, not progress: a claim can reach any place without passing the ones before it.</p>
+        <p class="foot"><a href="#">What “Trial registered” means</a><span class="when">Guide</span></p>
+      </div>
+    </div>
+    <div class="trade"><span><b>For:</b> reuses <code>.pop-path</code> and <code>STATUS_GLOSSES</code>; no new data; same for every row, so it can be cached per status.</span><span><b>Against:</b> generic. It leaves the “3 with results posted” mismatch unexplained.</span></div>
+  </section>
+
+  <!-- B -->
+  <section class="mock">
+    <header><h2>B. The path, then why this claim is here</h2><span class="tag">Answers the mismatch</span></header>
+    <p class="why">The track grows to full width with short names under each dot, then one panel-blue box gives the reason for this claim from its own records, and the day it was set. Opens from a small info button in the card’s corner as well as on hover over the card.</p>
+    <div class="stage">
+      <div class="row">
+        <div class="row-now">
+          <button class="info on" aria-label="What this status means" aria-expanded="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></button>
+          <span class="row-label">On record now</span>
+          <span class="status-name">Trial registered</span>
+          <span class="track"><i class="step"></i><i class="step here"></i><i class="step"></i><i class="step"></i><i class="step"></i><i class="step"></i></span>
+        </div>
+        <div class="row-main">
+          <p class="row-src"><a href="#">BBC News</a> bbc.co.uk <span>12 Nov 2026</span> <span class="chip">Brain and nerves</span></p>
+          <p class="row-title">“Tourette syndrome: The life-changing device helping to stop tics”</p>
+          <p class="row-foot"><span>Wrist-worn median nerve stimulation device · Tourette syndrome</span><a href="#">See the records</a></p>
+        </div>
+      </div>
+      <div class="pop at-right" role="note">
+        <p class="head">Trial registered</p>
+        <p class="sub">A trial in people is registered. No trial with a phase has started.</p>
+        <div class="ltrack" role="img" aria-label="Place 2 of 6 on the path from preclinical to approved">
+          <span>Pre&shy;clinical</span><span class="here">Regis&shy;tered</span><span>Phase 1</span><span>Phase 2</span><span>Phase 3</span><span>Approved</span>
+        </div>
+        <div class="reason">
+          <span class="lab">Why this claim is here</span>
+          <p>3 trials are on record and all 3 have completed. The registry gives each one’s phase as “not applicable”, which it usually does for device studies, so none of them counts as Phase 1 or later.</p>
+        </div>
+        <p class="foot"><a href="#">See the 3 trials</a><span class="when">Set by rule, 13 Nov 2026</span></p>
+      </div>
+    </div>
+    <div class="trade"><span><b>For:</b> says why for this claim, in the records’ terms, and the date. Follows principle 1: the event, then the status.</span><span><b>Against:</b> needs one new reason sentence per rule outcome in <code>status.ts</code> (e.g. “all trials have no phase”), with a build test like the verdict check.</span></div>
+  </section>
+
+  <!-- C -->
+  <section class="mock">
+    <header><h2>C. What it says, what it does not</h2><span class="tag">Guardrail first</span></header>
+    <p class="why">Two short answers drawn from the guide entry’s own sections, so the wording is already written and checked once. Opens below the card, where it covers the next row rather than the headline.</p>
+    <div class="stage">
+      <div class="row">
+        <div class="row-now">
+          <span class="row-label">On record now</span>
+          <span class="status-name more" tabindex="0">Trial registered</span>
+          <span class="track"><i class="step"></i><i class="step here"></i><i class="step"></i><i class="step"></i><i class="step"></i><i class="step"></i></span>
+        </div>
+        <div class="row-main">
+          <p class="row-src"><a href="#">BBC News</a> bbc.co.uk <span>12 Nov 2026</span> <span class="chip">Brain and nerves</span></p>
+          <p class="row-title">“Tourette syndrome: The life-changing device helping to stop tics”</p>
+          <p class="row-foot"><span>Wrist-worn median nerve stimulation device · Tourette syndrome</span><a href="#">See the records</a></p>
+        </div>
+      </div>
+      <div class="pop at-below" role="note">
+        <p class="head">Trial registered · place 2 of 6</p>
+        <div class="pair">
+          <div class="block"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><p><span class="lab">In the records</span>A trial of this treatment for this condition is registered and matched to the claim.</p></div>
+          <div class="block not"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg><p><span class="lab">Does not tell you</span>That it works or is safe, or that it is close to use. A registered trial is not a treatment option.</p></div>
+        </div>
+        <p class="foot"><a href="#">Read the guide entry</a><span class="when">Not yet checked by a person</span></p>
+      </div>
+    </div>
+    <div class="trade"><span><b>For:</b> carries the “not a treatment option” line to the point of reading; text comes from <code>site/src/guide</code>, one source.</span><span><b>Against:</b> no path, no claim-specific reason. Two labelled blocks risk reading as a pros and cons list.</span></div>
+  </section>
+
+  <!-- D -->
+  <section class="mock">
+    <header><h2>D. The card opens in place</h2><span class="tag">No floating layer</span></header>
+    <p class="why">On hover or focus the card widens over its own column: the dots get names, then the gloss and the reason for this claim. Nothing floats, so nothing covers the headline, and on a touch screen it can simply be shown open, as the row’s “when first reported” line already is.</p>
+    <div class="stage">
+      <div class="row d">
+        <div class="row-now grown" tabindex="0">
+          <span class="row-label">On record now</span>
+          <span class="status-name">Trial registered</span>
+          <div class="ltrack" role="img" aria-label="Place 2 of 6 on the path from preclinical to approved">
+            <span>Pre&shy;clinical</span><span class="here">Regis&shy;tered</span><span>Phase 1</span><span>Phase 2</span><span>Phase 3</span><span>Approved</span>
+          </div>
+          <p class="gloss">A trial in people is registered. No trial with a phase has started.</p>
+          <p class="gloss">All 3 trials on record have completed; the registry gives none a phase.</p>
+          <a href="#">What this status means</a>
+        </div>
+        <div class="row-main">
+          <p class="row-src"><a href="#">BBC News</a> bbc.co.uk <span>12 Nov 2026</span> <span class="chip">Brain and nerves</span></p>
+          <p class="row-title">“Tourette syndrome: The life-changing device helping to stop tics”</p>
+          <p class="row-foot"><span>Wrist-worn median nerve stimulation device · Tourette syndrome</span><a href="#">See the records</a></p>
+        </div>
+      </div>
+    </div>
+    <div class="trade"><span><b>For:</b> works the same with mouse, keyboard, touch and print; no anchor positioning needed.</span><span><b>Against:</b> the row reflows on hover (the headline column narrows), which jitters a long list. Needs a fixed card width or an overlay that keeps the grid.</span></div>
+  </section>
+
+  <aside class="rec">
+    <h2>Recommendation: B, with A’s list on narrow screens</h2>
+    <ul>
+      <li>B is the only one that answers this row’s actual question, and it does so from records, which is the site’s whole method.</li>
+      <li>Trigger: the info button in the card corner (keyboard and touch) plus hover over the whole card with a mouse, through the existing <code>Pop</code> component.</li>
+      <li>Reason sentences live beside <code>STATUS_MEANINGS</code>, one per rule outcome, and go through <code>assertNeutral</code>.</li>
+      <li>Under 30rem the labelled track gets cramped; fall back to A’s vertical path there.</li>
+    </ul>
+  </aside>
+</main>
+</body>
+</html>

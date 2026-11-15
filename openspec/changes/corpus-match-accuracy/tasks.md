@@ -38,3 +38,17 @@
 - [x] Reproduce native Safari promotion of a cited zero-confidence mismatch with a failing shared-presenter test.
 - [x] Separate cited nonmatches from possible matches in site and extension without extra requests; retain confidence, provenance, cap and no-match notice.
 - [x] Deploy the presentation correction, install Safari 0.9.11, verify affected released results, and sync native findings to the corpus and Sheet.
+
+- [x] Reproduce S010's public LinkedIn reading failure with a synthetic fixture using distinct activity and attributed-post URNs.
+- [x] Bind the public caption and unique preview image to those explicit identities, excluding comments, ambiguous cards and accessibility-hidden overlays.
+- [x] Release Safari 0.9.12, verify S010 in the native browser, and update the corpus and Sheet with the observed outcome.
+- [x] Reproduce missing hashtag study-name agreement and display ordering with failing tests; preserve complete numeric identity and compatible candidate evidence ordering in both lookup paths.
+- [x] Review and release the named-study correction as Safari 0.9.13; replay the captured S010 caption against production and record the named-study-first result separately in the corpus and Sheet.
+- [ ] Verify Safari 0.9.13 in Settings and rerun S010 natively once Safari is idle; record the installed-extension result.
+- [ ] Diagnose repeated S010 popup work and verify reuse before claiming cache efficiency.
+
+- [x] Correct pembrolizumab to its source-bound pemetrexed/platinum regimen and first-line metastatic nonsquamous population; reject seven incompatible trials and one monotherapy paper, retaining seven compatible trial cohorts.
+- [x] Correct the chronotherapy name to sleep deprivation plus lithium and bright light; reject six registry associations that do not establish that complete regimen.
+- [ ] Complete the remaining 19 kidney-desensitization scope flags before regenerating the public claim snapshot.
+- [x] Prepare both corrected regimens: retain seven unchanged pembrolizumab trial readings and verify the newly found lithium-containing bipolar cohort in NCT01431573.
+- [ ] Handle the demonstrated ClinicalTrials.gov condition-query complexity limit for the precise pembrolizumab indication, preserving full clinical scope for scoring.

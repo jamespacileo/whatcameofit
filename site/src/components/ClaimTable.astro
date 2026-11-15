@@ -11,6 +11,7 @@ import StripKey from "./StripKey.astro";
 import StatusCell from "./StatusCell.astro";
 import TestedCell from "./TestedCell.astro";
 import { TESTED_WORDS } from "../lib/record-brief";
+import { TABLE_KINDS } from "../lib/record-strip";
 
 interface Props {
   claims: ExportedClaim[];
@@ -37,7 +38,7 @@ const anyPromise = claims.some((claim) => latestPromise(claim) !== null);
   /* What the column counts, said once above a list long enough to be skimmed. */
   claims.length >= FILTER_FROM && <p class="entry-note tested-note">{TESTED_WORDS.note}</p>
 }
-{claims.length > 0 && <StripKey />}
+{claims.length > 0 && <StripKey kinds={TABLE_KINDS} />}
 <div class="table-frame">
 <table role="table" class="index">
   <caption class="visually-hidden">{caption}</caption>
@@ -83,8 +84,9 @@ const anyPromise = claims.some((claim) => latestPromise(claim) !== null);
             <td role="cell" class="status" data-column="Status">
               <StatusCell claim={claim} />
               {/* Under the status, so every strip in the list has the column's width and
-                  the axes line up row to row. The counts are in the column beside it. */}
-              <RecordStrip claim={claim} counts={false} />
+                  the axes line up row to row. The counts are in the column beside it;
+                  a promise has its own column and a decision is in the status. */}
+              <RecordStrip claim={claim} counts={false} kinds={TABLE_KINDS} />
             </td>
           </tr>
         );

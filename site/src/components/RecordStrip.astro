@@ -1,13 +1,18 @@
 ---
 // The record strip (openspec record-strip): a claim's dated records as marks on one
-// time axis that every strip on the site shares, ending at the day the registries were
-// last checked. It shows where dates fall. The axis is one weight along its whole
-// length and nothing is filled between marks: a stretch with no mark is time, not an end.
-// One image to a screen reader, named by the row's sentences; not a control.
+// time axis ending at the day the registries were last checked. It shows where dates
+// fall. The axis is one weight along its whole length and nothing is filled between
+// marks: a stretch with no mark is time, not an end. One image to a screen reader,
+// named by sentences; not a control.
+//
+// In a list of claims every strip shares one axis, so a date falls at the same place
+// down the column. On a claim's page the strip has the claim's own axis, with its
+// years written under it.
 import type { ExportedClaim } from "../lib/export";
-import { stripFor } from "../lib/record-strip";
+import { type StripAxis, type StripMarkKind, stripFor } from "../lib/record-strip";
 import { countsLine, stripName } from "../lib/row-sentences";
 import { STRIP_AXIS } from "../lib/strip-axis";
+import { formatDate } from "../lib/timetable";
 import StripMark from "./StripMark.astro";
 
 interface Props {
@@ -16,37 +21,58 @@ interface Props {
   reportDay?: string;
   /** The counts in numerals beside the strip; off where a column already gives them. */
   counts?: boolean;
+  /** The axis to draw on; the one every list shares when left out. */
+  axis?: StripAxis | null;
+  /** The kinds of mark drawn; every kind when left out. The page's key names these. */
+  kinds?: StripMarkKind[];
+  /** The axis's first year and the day of the last check written under its ends, for a
+   * strip alone; its key then need not name the end. */
+  years?: boolean;
 }
 
-const { claim, reportDay = "", counts = true } = Astro.props;
-const strip = STRIP_AXIS ? stripFor(claim, STRIP_AXIS.startYear, STRIP_AXIS.lastChecked) : null;
+const { claim, reportDay = "", counts = true, axis = STRIP_AXIS, kinds, years = false } = Astro.props;
+const strip = axis ? stripFor(claim, axis.startYear, axis.lastChecked) : null;
 const percent = (at: number) => `${(at * 100).toFixed(2)}%`;
 // Drawn in this order so a mark on the axis is never under a record's line, and
 // posted results, which sit above, are never covered. A regulator's decision is drawn
 // over a news report and fits inside its ring, so a decision and a report dated days
 // apart are both seen.
 const ORDER = ["record", "promise", "report", "decision", "results"];
-const marks = strip ? [...strip.marks].sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind)) : [];
+const marks = strip
+  ? strip.marks
+      .filter((mark) => !kinds || kinds.includes(mark.kind))
+      .sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind))
+  : [];
 ---
 
 {
-  STRIP_AXIS && strip && (
-    <span class="record-strip">
-      <svg class="strip-line" role="img" aria-label={stripName(claim, reportDay, strip, STRIP_AXIS.lastChecked)} height="22">
-        {STRIP_AXIS.notches.map((notch) => (
-          <line class="strip-notch" x1={percent(notch.at)} x2={percent(notch.at)} y1="15" y2="20" />
-        ))}
-        <line class="strip-axis" x1="0" x2="100%" y1="15" y2="15" />
-        {/* Under the marks: a report on the day of the last check stays a ring. */}
-        <svg x="100%" overflow="visible">
-          <StripMark kind="check" />
-        </svg>
-        {marks.map((mark) => (
-          <svg x={percent(mark.at)} overflow="visible">
-            <StripMark kind={mark.kind} />
+  axis && strip && (
+    <span class:list={["record-strip", { "has-years": years }]}>
+      <span class="strip-frame">
+        <svg class="strip-line" role="img" aria-label={stripName(claim, reportDay, strip, axis.lastChecked)} height="22">
+          {axis.notches.map((notch) => (
+            <line class="strip-notch" x1={percent(notch.at)} x2={percent(notch.at)} y1="15" y2="20" />
+          ))}
+          <line class="strip-axis" x1="0" x2="100%" y1="15" y2="15" />
+          {/* Under the marks: a report on the day of the last check stays a ring. */}
+          <svg x="100%" overflow="visible">
+            <StripMark kind="check" />
           </svg>
-        ))}
-      </svg>
+          {marks.map((mark) => (
+            <svg x={percent(mark.at)} overflow="visible">
+              <StripMark kind={mark.kind} />
+            </svg>
+          ))}
+        </svg>
+        {
+          years && (
+            <span class="strip-years" aria-hidden="true">
+              <span>{axis.startYear}</span>
+              <span>Last checked {formatDate(axis.lastChecked)}</span>
+            </span>
+          )
+        }
+      </span>
       {counts && strip.counts && <span class="strip-counts">{countsLine(strip.counts)}</span>}
     </span>
   )
