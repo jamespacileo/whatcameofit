@@ -45,7 +45,6 @@ from thenwhat.claims.entry import (
 from thenwhat.db.models import Claim, LinkLead, LinkLeadLink, LinkShare, SourceArticle
 from thenwhat.decide.core import Backend, DecisionFailed
 from thenwhat.decide.steps import (
-    BUSINESS_NEWS,
     ESTABLISHED_TREATMENT,
     choose_same_claim,
     choose_vertical,
@@ -416,23 +415,31 @@ class LinkRead:
                 f"{draft.intervention} for {draft.indication}; about one treatment for "
                 f"one condition at {report.one_treatment_probability:.2f}",
             )
-        # A topic is covered by what was reported of its treatments: evidence, safety,
-        # new uses, approvals (the operator, 2026-11-15). For a much-covered drug most
-        # of the rest is its price, supply and sales, and is not attached to its claims.
-        if (
-            names_one(record.title, self._topic_terms)
-            and report.evidence_probability < self.treatment_accept_above
-        ):
+        # Business news is about one treatment, but not about what it does: its price,
+        # supply, sales, a lawsuit. Two rules, both the operator's (2026-11-15). It never
+        # starts a claim: a claim rests on something reported of the treatment. And a
+        # topic is covered by evidence, safety, new uses and approvals only, so on a
+        # topic it does not join a claim either. The lead is on a topic when its title
+        # or the treatment the read names holds one of the topic's words: a link is
+        # often shared under a title that names nothing.
+        business = report.evidence_probability < self.treatment_accept_above
+        on_a_topic = any(
+            names_one(text, self._topic_terms)
+            for text in (record.title, draft.intervention, *draft.intervention_synonyms)
+        )
+        if business and on_a_topic:
             return self._finish(
                 record,
                 ReadOutcome.BUSINESS_NEWS,
-                f"{draft.intervention} for {draft.indication}; about what the treatment "
-                f"does at {report.evidence_probability:.2f}",
+                f"{draft.intervention} for {draft.indication}; on a topic, and about what "
+                f"the treatment does at {report.evidence_probability:.2f}",
             )
-        established = {
-            ESTABLISHED_TREATMENT: "an established treatment in the news",
-            BUSINESS_NEWS: "business news about a treatment",
-        }.get(report.kind)
+        if business:
+            established = "business news about a treatment"
+        elif report.kind == ESTABLISHED_TREATMENT:
+            established = "an established treatment in the news"
+        else:
+            established = None
         address = without_tracking(record.url)
         # One read at a time from here to the end of its transaction: whichever claim
         # another read has just made for this story is found, not made again.
@@ -459,6 +466,13 @@ class LinkRead:
                 detail = "; ".join(part for part in (established, how, note) if part) or None
                 return self._finish(record, ReadOutcome.ADDED_TO_CLAIM, detail)
 
+            if business:
+                return self._finish(
+                    record,
+                    ReadOutcome.BUSINESS_NEWS,
+                    f"{draft.intervention} for {draft.indication}; no claim to join, and "
+                    f"about what the treatment does at {report.evidence_probability:.2f}",
+                )
             slug = free_slug_for(session, draft.intervention, draft.indication)
             vertical, probability = choose_vertical(
                 session,

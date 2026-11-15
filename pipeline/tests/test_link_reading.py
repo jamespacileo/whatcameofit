@@ -692,7 +692,7 @@ def test_business_news_on_a_topic_makes_no_claim(reader: Reader):
 
     assert lead.read_outcome is ReadOutcome.BUSINESS_NEWS
     assert lead.read_detail == (
-        "EX-1 antibody for tooth agenesis; about what the treatment does at 0.03"
+        "EX-1 antibody for tooth agenesis; on a topic, and about what the treatment does at 0.03"
     )
     assert reader.session.scalars(select(Claim)).all() == []
     assert funnel(reader.session, pass_above=0.7, reject_below=0.2).business_news == 1
@@ -711,16 +711,56 @@ def test_evidence_on_a_topic_becomes_a_claim(reader: Reader):
     assert lead.read_outcome is ReadOutcome.NEW_CLAIM
 
 
-def test_business_news_on_no_topic_still_becomes_a_claim_and_says_so(reader: Reader):
-    """Scenario: A price rise for a drug on no topic"""
-    reader.step = step(topic_terms=("Zepbound",))
+def test_business_news_on_no_topic_starts_no_claim(reader: Reader):
+    """Scenario: A price rise with no claim to join"""
     reader.backend.report_kind = BUSINESS_NEWS
     lead = reader.lead()
 
     reader.read()
 
-    assert lead.read_outcome is ReadOutcome.NEW_CLAIM
+    assert lead.read_outcome is ReadOutcome.BUSINESS_NEWS
+    assert lead.read_detail == (
+        "EX-1 antibody for tooth agenesis; no claim to join, and about what the treatment "
+        "does at 0.03"
+    )
+    assert reader.session.scalars(select(Claim)).all() == []
+
+
+def test_business_news_on_no_topic_joins_a_claim_that_exists_and_says_so(reader: Reader):
+    """Scenario: A price rise for a tracked treatment on no topic"""
+    claim = tracked_claim(reader.session)
+    reader.backend.report_kind = BUSINESS_NEWS
+    lead = reader.lead()
+
+    reader.read()
+
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.ADDED_TO_CLAIM, claim.id)
     assert lead.read_detail == "business news about a treatment"
+
+
+def test_a_title_that_names_nothing_is_on_a_topic_when_the_read_names_its_drug(session, fake_time):
+    """Scenario: Shared under a title that names nothing"""
+    reader = Reader(
+        session,
+        fake_time,
+        DRAFT | {"intervention": "Wegovy", "intervention_synonyms": [], "indication": "obesity"},
+    )
+    reader.step = step(topic_terms=("semaglutide", "Wegovy"))
+    add_claim(
+        session,
+        slug="semaglutide-obesity",
+        headline="A synthetic headline",
+        vertical="diabetes-and-hormones",
+        intervention="semaglutide",
+        indication="obesity",
+    )
+    reader.backend.report_kind = BUSINESS_NEWS
+    lead = reader.lead()
+
+    reader.read()
+
+    # The title is the default one and names no drug; the read does. Not joined.
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.BUSINESS_NEWS, None)
 
 
 def test_a_brand_name_is_offered_the_claim_entered_under_the_generic_name(session, fake_time):
