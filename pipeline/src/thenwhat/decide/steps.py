@@ -67,7 +67,10 @@ TRIAL_QUESTION = (
     " rather than assuming the restriction is satisfied."
     " Being named in an arm does not make an intervention what the trial tests. Ask"
     " what differs between the arms, and what that difference is meant to treat. In a"
-    " trial with one arm, what that arm receives is what is tested."
+    " trial with one arm, what that arm receives is what is tested. When the claim's"
+    " intervention is a combination, a trial whose arms differ in one part of it, with"
+    " the rest given to every arm, tests the combination; a trial that adds something"
+    " else to the whole combination in every arm does not."
 )
 
 PAPER_MATCH = "paper_match"
