@@ -1,0 +1,68 @@
+{
+  "version": "0.9.12 (21)",
+  "installation_verified": true,
+  "native_settings_version_verified": true,
+  "source_commit": "1c24eb5d3bd41a58e1e02f1e293ccf87aa6699cb",
+  "release_commit": "123f41f10d5ab14c883e78ec31384ce8694babda",
+  "extension_inputs_identical_to_release": true,
+  "worker_version": "7b5672be-3a6a-4b50-95a8-8952071b2e62",
+  "released_at": "2026-11-15T19:11:58.7634777Z",
+  "production_ci_run": "43750731505",
+  "method": "Installed signed Safari extension on public LinkedIn pages, with native popup results observed after production deployment. Normal sign-in invitations dismissed through LinkedIn's public control.",
+  "rows": {
+    "S010": {
+      "checked_date": "2026-11-15",
+      "outcome": "reader fixed; trial ranking unresolved",
+      "native_lookup_completed": true,
+      "trial": "NCT06625320",
+      "score": 0.99,
+      "top_trial": "NCT07491445",
+      "top_score": 1,
+      "displayed_possible_matches": 10,
+      "knowledge_card": "no card",
+      "capture_preview": "not verified",
+      "note": "Public ugcPost/activity identity alias now reads successfully. Post names RASolute 302, but the released lookup retains broad pancreatic-cancer scope and ranks first-line RASolute 303 above the named trial. Popup reopening returned 98% for RASolute 302 and 100% for RASolute 303; repeat reuse was not verified. The displayed count is capped and is not the raw registry total. Attempts to activate Screenshot dismissed the popup without an observed preview; this does not establish whether capture itself failed. Earlier 0.9.10 reader/capture failure is retained as history."
+    },
+    "S011": {
+      "checked_date": "2026-11-15",
+      "outcome": "trial match",
+      "native_lookup_completed": true,
+      "trial": "NCT06625320",
+      "score": 1,
+      "displayed_possible_matches": 3,
+      "other_displayed_trials": [
+        {"trial": "NCT07573215", "score": 0.91},
+        {"trial": "NCT05379985", "score": 0.72}
+      ],
+      "knowledge_card": "no card",
+      "note": "Public post lookup retains previously treated metastatic pancreatic cancer and returns RASolute 302 first. No screenshot or audio verification."
+    },
+    "S036": {
+      "checked_date": "2026-11-15",
+      "outcome": "trial match",
+      "native_lookup_completed": true,
+      "trial": "NCT06299098",
+      "score": 0.91,
+      "displayed_possible_matches": 1,
+      "knowledge_card": "no card",
+      "note": "Public post lookup retains the complete semaglutide-plus-trevogrumab combination and returns COURAGE. No screenshot or audio verification."
+    }
+  },
+  "sheet_verification": {
+    "spreadsheet_id": "15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA",
+    "sheet": "URLs",
+    "rows": [11, 12, 242],
+    "updated_cells": 15,
+    "read_back_verified": true,
+    "untouched_values_formats_validations_preserved": true,
+    "native_result_text_verified": "AD11",
+    "visual_fit": "unverified; native screenshot was distorted and unreadable",
+    "incidental_cell_restored": "Native navigation unexpectedly replaced AD173. Its exact prior corpus value was restored through the connector and verified by connector read-back and native formula-bar text."
+  },
+  "limitations": [
+    "All three rows remain partial because no exact knowledge-card association was returned.",
+    "S010 still has unresolved named-study ranking and repeat-reuse questions.",
+    "Raw HTTP counts and earlier address-only results remain separate from this native UI evidence.",
+    "No article text, model summaries or screenshots are stored in this evidence file."
+  ]
+}

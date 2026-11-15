@@ -12,6 +12,17 @@
       "outcome": "retain existing approved association; no database change",
       "reason": "Stored primary registry title and intervention identify (2R,6R)-hydroxynorketamine, and the trial tests it in people with major depressive disorder. The broad depression claim does not state a restriction incompatible with this treatment-resistant population. A borderline diagnostic score alone does not justify reopening the association or changing its phase-2 status to preclinical-only.",
       "exclusion": "Exclude this match from the unexecuted blanket uncertain-scope reopening script. Review remaining flags against their primary records."
+    },
+    {
+      "claim": "esketamine-major-depression-including-depression-with",
+      "match_id": 11912,
+      "trial_id": "NCT01998958",
+      "source_url": "https://clinicaltrials.gov/study/NCT01998958",
+      "fetched_at": "2026-11-15T11:58:18.070648+00:00",
+      "diagnostic_score": 0.49,
+      "outcome": "retain existing approved association; no database change",
+      "reason": "SYNAPSE tests intranasal esketamine in people with treatment-resistant major depressive disorder. The card's indication includes major depression generally; suicidal thoughts are included, not an exclusive eligibility restriction. The trial therefore falls within the recorded claim, although it does not establish efficacy for acute suicidality. Its separate title, population and source remain visible. The low-confidence diagnostic split alone does not justify rejecting the association.",
+      "exclusion": "Exclude this match from the unexecuted blanket uncertain-scope reopening script. No score or human-review label was changed."
     }
   ]
 }

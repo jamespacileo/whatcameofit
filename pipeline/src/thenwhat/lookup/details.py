@@ -42,10 +42,13 @@ def agreeing(payload: dict[str, Any], details: Details) -> list[str]:
 
     name = _words(details.trial_name)
     if len("".join(name)) >= 3:
-        carried = [
-            _words(identification.get(part)) for part in ("acronym", "briefTitle", "officialTitle")
-        ]
-        if any(_within(name, words) for words in carried):
+        carried = [identification.get(part) for part in ("acronym", "briefTitle", "officialTitle")]
+        # Keep ordinary title word boundaries; the separator variant is a fallback.
+        if any(
+            _within(name, _words(given))
+            or _within(_trial_words(details.trial_name), _trial_words(given))
+            for given in carried
+        ):
             reasons.append(TRIAL_NAME)
 
     enrolled = ((section.get("designModule") or {}).get("enrollmentInfo") or {}).get("count")
@@ -71,6 +74,12 @@ def agreeing(payload: dict[str, Any], details: Details) -> list[str]:
 
 def _words(text: object) -> list[str]:
     return re.findall(r"[a-z0-9]+", str(text).lower()) if text else []
+
+
+def _trial_words(text: object) -> list[str]:
+    # Hashtags omit the separator before a study number. Preserve the complete
+    # alphanumeric token so REGROW2 differs from REGROW21 and REGROW2A.
+    return _words(re.sub(r"(?<=[a-z])[\s_-]+(?=[0-9])", "", str(text).lower())) if text else []
 
 
 def _within(wanted: list[str], words: list[str]) -> bool:

@@ -1,11 +1,11 @@
 // Only independently public reports enter this shared, expiring results library.
-// No page text, screenshots or reader identifiers are persisted. Version 4 also
-// excludes answers from before incidental-drug, multi-claim and company-history corrections.
+// No page text, screenshots or reader identifiers are persisted. Version 9 excludes
+// answers that missed numeric study names written as hashtags.
 import { articleKey } from "../src/lib/article-key.mjs";
 import { bounded } from "./public-cache.mjs";
 import { sourceUrl } from "./visual.mjs";
 const TTL = 86400;
-const VERSION = 8;
+const VERSION = 9;
 // The longest one shared-result read or write is waited on.
 const CACHE_TIMEOUT_MS = 500;
 async function keyFor(address) {
