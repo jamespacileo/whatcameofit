@@ -455,6 +455,30 @@ test("a page with a saved answer waits for its fingerprint: a match sends nothin
   }
 });
 
+test("reused popup answers rebind cards against the loaded index without another lookup", async () => {
+  for (const condition of ["tinnitus", "another condition"]) {
+    const checkedAt = Date.now() - 60_000;
+    const found = { ...positive, names: ["EX-1"], tracked: [{ slug: "archived", headline: "Old card", page: "/archived" }] };
+    const current = { ...index, claims: { current: { names: ["EX-1"], indication: condition, headline: "New card", page: "/current" } } };
+    const stored = { lookup: { version: 2, index: current, savedAt: Date.now() }, results: remember([], tab.key, "article-print", found, checkedAt) };
+    const states = [];
+    const controller = createPopupController({
+      site: { url: "https://service.example.org" },
+      storage: { get: async () => stored, set: async values => Object.assign(stored, values) },
+      readTab: async () => tab, isCurrentPage: async () => true,
+      readPage: async () => ({ ...articleRequest, contentFingerprint: "article-print" }),
+      fetch: async () => assert.fail("a saved answer and available index need no request"),
+      describeAnswer: answer => ({ ...answer }), present: state => states.push(state),
+    });
+    await controller.open();
+    const last = states.at(-1);
+    assert.equal(last.kind, "answer");
+    assert.deepEqual(last.shown.tracked, condition === "tinnitus" ? [{ slug: "current", headline: "New card", page: "/current" }] : []);
+    assert.equal(last.cachedAt, checkedAt);
+    controller.close();
+  }
+});
+
 test("a shared non-treatment answer is final for a readable article, but a media page still gets its screenshot", async () => {
   for (const readable of [true, false]) {
     const { controller, calls, stored } = popup({
@@ -515,6 +539,7 @@ async function runPopup({ selection = "", collected = sciencePage(), address = S
   try {
     const files = {
       "popup.js": "extension/src/popup.js", "controller.js": "extension/src/controller.js", "results.js": "extension/src/results.js",
+      "tracked.js": "site/worker/tracked.mjs", "names.js": "site/worker/names.mjs",
       "visual.js": "extension/src/visual.js", "source-url.js": "site/src/lib/source-url.mjs", "lookup.js": "extension/src/lookup.js",
       "kept.js": "extension/src/kept.js", "watch.js": "extension/src/watch.js", "open-page.js": "extension/src/open-page.js",
       "short-links.js": "extension/src/short-links.js", "article-key.js": "site/src/lib/article-key.mjs",
@@ -523,7 +548,9 @@ async function runPopup({ selection = "", collected = sciencePage(), address = S
     };
     for (const [name, source] of Object.entries(files)) {
       const content = (await fs.readFile(path.join(root, source), "utf8")).replaceAll("./article-key.mjs", "./article-key.js")
-        .replace("../../site/src/lib/source-url.mjs", "./source-url.js");
+        .replace("../../site/src/lib/source-url.mjs", "./source-url.js")
+        .replace("../../site/worker/tracked.mjs", "./tracked.js")
+        .replace("./names.mjs", "./names.js");
       await fs.writeFile(path.join(directory, name), content);
     }
     await fs.writeFile(path.join(directory, "package.json"), '{"type":"module"}');

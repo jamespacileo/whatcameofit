@@ -312,6 +312,56 @@ test("a stalled shared-result store is a miss within its bound, and a stalled wr
 
 // --- public source reuse --------------------------------------------------------------------
 
+test("shared answers use current exact-identity cards without repeating their clinical work", async () => {
+  for (const cacheOnly of [true, false]) {
+    const store = memory();
+    const checkedAt = Date.now() - 60_000;
+    const saved = { about_a_treatment: true, treatment: "EX-1 plus EX-2", names: ["EX-1 plus EX-2", "EX-1"],
+      known_names: ["EX-1", "EX-2"], condition: "previously treated tinnitus", tracked: [{ slug: "archived" }],
+      candidates: [{ id: "NCT00000001", score: 0.9 }], papers_unchecked: 0 };
+    await storeResult(store, "https://news.example.org/new-card", saved, true, checkedAt);
+    let reads = 0;
+    const claims = {
+      current: { names: ["EX-2 and EX-1"], indication: saved.condition, headline: "Current card", page: "/current" },
+      component: { names: ["EX-1"], indication: saved.condition, headline: "Component", page: "/component" },
+      other: { names: saved.names, indication: "first-line tinnitus", headline: "Other setting", page: "/other" },
+    };
+    const settings = { ...env(store), ASSETS: { fetch: async () => { reads++; return Response.json({ claims }); } } };
+    const noWork = { model: { read: () => assert.fail("cached reading must be reused") }, registry: { search: () => assert.fail("cached trials must be reused") } };
+    const body = { pageUrl: "https://news.example.org/new-card", ...(cacheOnly ? { cacheOnly: true } : { text: "Synthetic report" }) };
+    const found = await (await handle(post(body), settings, noWork)).json();
+    assert.deepEqual(found.tracked, [{ slug: "current", headline: "Current card", page: "/current" }]);
+    assert.deepEqual(found.candidates, saved.candidates);
+    assert.equal(found.cache.checkedAt, checkedAt);
+    assert.equal(reads, 1);
+    assert.equal(store.puts.length, 1, "rebinding does not extend the saved answer's lifetime");
+    claims.current.indication = "first-line tinnitus";
+    const changed = await (await handle(post(body), settings, noWork)).json();
+    assert.deepEqual(changed.tracked, [], "a changed condition removes the earlier association");
+  }
+});
+
+test("an unavailable current card index does not preserve obsolete cached card links", async () => {
+  const store = memory();
+  await storeResult(store, "https://news.example.org/old-card", { about_a_treatment: true, treatment: "EX-1", names: ["EX-1"],
+    condition: "tinnitus", tracked: [{ slug: "old-card" }], candidates: [], papers_unchecked: 0 }, true);
+  const settings = { ...env(store), ASSETS: { fetch: async () => { throw new Error("index unavailable"); } } };
+  const found = await (await handle(post({ cacheOnly: true, pageUrl: "https://news.example.org/old-card" }), settings)).json();
+  assert.equal(found.cache.shared, true);
+  assert.deepEqual(found.tracked, []);
+});
+
+test("a stalled card index cannot hold up a saved clinical answer beyond its bound", async () => {
+  const store = memory();
+  await storeResult(store, "https://news.example.org/slow-index", { about_a_treatment: true, treatment: "EX-1", names: ["EX-1"],
+    condition: "tinnitus", tracked: [{ slug: "old-card" }], candidates: [], papers_unchecked: 0 }, true);
+  const settings = { ...env(store), ASSETS: { fetch: never } };
+  const response = await within(handle(post({ cacheOnly: true, pageUrl: "https://news.example.org/slow-index" }), settings), 1_000);
+  const found = await response.json();
+  assert.equal(found.cache.shared, true);
+  assert.deepEqual(found.tracked, []);
+});
+
 const europe = (abstractText, calls) => async (_url, { signal }) => {
   calls.push(signal);
   return Response.json({ resultList: { result: abstractText === null ? [] : [{ abstractText, authorString: "PRIVATE AUTHOR" }] } });

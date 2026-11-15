@@ -45,7 +45,7 @@
 - [x] Reproduce missing hashtag study-name agreement and display ordering with failing tests; preserve complete numeric identity and compatible candidate evidence ordering in both lookup paths.
 - [x] Review and release the named-study correction as Safari 0.9.13; replay the captured S010 caption against production and record the named-study-first result separately in the corpus and Sheet.
 - [x] Verify Safari 0.9.13 is enabled in native Settings. Installation build 22 remains installed.
-- [ ] Rerun S010 natively once the Safari test window is fully onscreen; record the installed-extension result. The window remains exposed to automation as a small window-manager preview; no completed 0.9.13 popup result has been observed.
+- [x] Observe the completed installed Safari 0.9.13 (22) S010 popup: named RASolute 302 first at 98%, with no exact card for the broad condition. Record remaining expanded-access/combination scoring concerns; screenshot preview controls now open, but crop correctness and repeat reuse remain unverified.
 - [ ] Diagnose repeated S010 popup work and verify reuse before claiming cache efficiency.
 
 - [x] Correct pembrolizumab to its source-bound pemetrexed/platinum regimen and first-line metastatic nonsquamous population; reject seven incompatible trials and one monotherapy paper, retaining seven compatible trial cohorts.
@@ -78,4 +78,10 @@
 
 - [x] Verify the Dana-Farber A018 report and create a pending daraxonrasib draft through normal extraction; run its normal preparation (34 seconds, with one existing trial reading reused).
 - [x] Retain the source's explicit previously treated metastatic setting, exclude two approved trial associations plus seven incompatible tentative candidates and five wrong-scope/commentary papers, and omit a statement that confused a hazard ratio with a hazard. Retain RASolute 302 and two uncertain monotherapy candidates whose broader cohorts include the relevant population. Record the optional MeSH outage and no background terms, without another unchanged retry. Verify the FDA approval notice, enter its 2026-08-26 regulatory event through the normal workflow, and approve the event and prepared claim as assistant. The 157-claim normal export changes no existing claim; the new status is explained by the FDA event. The rule-approved Zenodo re-analysis remains metadata-only, with its unavailable primary landing page noted in the audit.
-- [ ] Publish the verified card and rerun the affected corpus URLs, keeping broad or ambiguous post readings separate from exact source-address matches.
+- [x] Publish the verified card through PR #173/main f616aaa5fe04; production run 43768242611 passed (Worker 4b40ba0b-1e82-4257-b703-b916abc3b3f7). Verify A018 exact mapping, rendered card, nine rejected trial exclusions and sourced approval date against the released 157-card index. Replay the unchanged extension mapping function separately from native Safari. Broad S010 remains partial with no card; no paid lookup was needed.
+
+## Cards published after a saved answer
+
+- [x] Reproduce the stale-association defect through the service cache-only and ordinary cache-hit paths and the extension's local reuse path; add failing boundary tests before changing the implementation.
+- [x] Share the existing exact condition/whole-regimen matcher across fresh and reused answers, preserving clinical results, check times, answer lifetimes and the extension's index refresh policy. Bound the service's static-index read and exclude unverified associations when it is unavailable.
+- [ ] Complete the site/extension regression suites and independent review; deploy, install Safari 0.9.14, and verify affected released reuse paths without claiming native results from service tests.

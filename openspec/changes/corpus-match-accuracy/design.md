@@ -22,6 +22,21 @@ Already-tracked URLs and completed leads still require no model calls; only a ne
 that formerly took the shortcut gains one bounded decision. Existing acceptance
 thresholds, source pacing and automatic publication rules remain unchanged.
 
+## Card publication after an answer was saved
+
+A deterministic service replay exposed a reuse gap: a completed answer stored before
+a card was published returned its old empty `tracked` list without reading the new
+index. The extension's local answer did the same even with a newer loaded index.
+Extract the existing exact-condition and complete-regimen comparison into one pure
+shared module; use it for fresh scoring, shared-answer reuse and local-answer reuse.
+Keep clinical work and its original timestamp unchanged. The service reads its static
+index only for a positive cache hit, with a 500 ms bound; unavailable metadata omits
+card associations, not the clinical answer. The extension uses the index it already
+loaded, preserving the six-hour refresh policy. Fresh server answers are not rebound
+against a possibly older extension index. No result-cache version bump, provider
+request, broader equivalence rule or stored source content is needed. Release the
+extension change as 0.9.14.
+
 ## Context
 
 See proposal.md and the released evidence in the visible-content-lookup change.
