@@ -294,7 +294,9 @@ class LinkRead:
         names = [draft.intervention, *draft.intervention_synonyms]
         # A topic's list knows a drug's brand and generic names; a claim under any of
         # them is a candidate, though the names share no word.
-        candidates = claims_sharing_a_name(session, [*names, *other_names_of(names)])
+        candidates = claims_sharing_a_name(
+            session, [*names, *other_names_of(names)], indication=draft.indication
+        )
         linked_by_title = named_claims(
             session,
             list(
@@ -463,13 +465,6 @@ class LinkRead:
                 detail = "; ".join(part for part in (established, how, note) if part) or None
                 return self._finish(record, ReadOutcome.ADDED_TO_CLAIM, detail)
 
-            if business:
-                return self._finish(
-                    record,
-                    ReadOutcome.BUSINESS_NEWS,
-                    f"{draft.intervention} for {draft.indication}; no claim to join, and "
-                    f"about what the treatment does at {report.evidence_probability:.2f}",
-                )
             collision = slug_of_claim_covering(session, draft.intervention, draft.indication)
             if collision is not None:
                 # The names are already taken, but identity was not established. Neither
@@ -479,6 +474,13 @@ class LinkRead:
                     ReadOutcome.IDENTITY_UNRESOLVED,
                     f"{draft.intervention} for {draft.indication}; names overlap {collision}, "
                     "but the same treatment and condition were not established",
+                )
+            if business:
+                return self._finish(
+                    record,
+                    ReadOutcome.BUSINESS_NEWS,
+                    f"{draft.intervention} for {draft.indication}; no claim to join, and "
+                    f"about what the treatment does at {report.evidence_probability:.2f}",
                 )
             slug = free_slug_for(session, draft.intervention, draft.indication)
             vertical, probability = choose_vertical(

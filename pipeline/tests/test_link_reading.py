@@ -889,7 +889,8 @@ def test_the_same_treatment_for_another_condition_stays_its_own_claim(session, f
     assert len(reader.backend.same_claim_asked) == 1
 
 
-def test_equal_generic_names_do_not_join_different_products(session, fake_time):
+@pytest.mark.parametrize("report_kind", [NEW_TREATMENT, BUSINESS_NEWS])
+def test_equal_generic_names_do_not_join_different_products(session, fake_time, report_kind):
     """A generic vaccine name cannot override the products the summaries identify."""
     generic = DRAFT | {
         "intervention": "COVID-19 vaccine",
@@ -903,7 +904,8 @@ def test_equal_generic_names_do_not_join_different_products(session, fake_time):
         generic | {"summary": "The Moderna vaccine was tested in a different synthetic trial."},
     )
     leads = story_leads(reader, 2)
-
+    reader.read(limit=1)
+    reader.backend.report_kind = report_kind
     reader.read()
 
     first = claim_of(session, leads[0])
@@ -941,6 +943,28 @@ def test_equal_names_still_supply_bounded_identity_context(reader: Reader):
     assert "Claim summary: A synthetic product's context." in asked
     assert " [truncated]" in asked
     assert "OMITTED-CONTEXT-END" not in asked
+
+
+def test_exact_name_and_condition_remain_a_candidate_beyond_eight_older_claims(reader: Reader):
+    for number in range(8):
+        add_claim(
+            reader.session,
+            slug=f"ex-1-other-{number}",
+            headline="Synthetic claim for another condition",
+            vertical="mouth-and-teeth",
+            intervention="EX-1 antibody",
+            indication=f"Other condition {number}",
+        )
+    claim = tracked_claim(reader.session)
+    reader.backend.same_claim = claim.slug
+    lead = reader.lead()
+
+    reader.read()
+
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.ADDED_TO_CLAIM, claim.id)
+    [asked] = reader.backend.same_claim_asked
+    assert f"- {claim.slug}: " in asked
+    assert asked.count("Claim summary:") == 8
 
 
 def test_rejected_equal_name_is_recorded_as_unresolved_without_retry(reader: Reader):
