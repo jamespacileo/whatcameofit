@@ -77,6 +77,9 @@ const QUESTION = [ASKED, ...CHOICES.map(([option, when]) => `- ${option}: ${when
   "A generic drug name alone does not establish an explicitly claimed route or formulation. " +
   "If that detail is absent, spread uncertainty across the options rather than assuming the restriction is satisfied. " +
   "Being named in an arm does not make an intervention what the trial tests. " +
+  "An EXPANDED_ACCESS record provides treatment outside a clinical trial; read it as not_a_match. " +
+  "For a claim about a single medicine, an arm must establish that medicine alone, not only a multi-medicine experimental regimen containing it. " +
+  "A record testing only combinations is not_a_match for a single-medicine claim; placebo or supportive care is not an additional experimental medicine. " +
   "Ask what differs between the arms, and what that difference is meant to treat. " +
   "In a trial with one arm, what that arm receives is what is tested. " +
   "When the claim's intervention is a combination, a trial whose arms differ in one part of it, with the rest given to every arm, tests the combination; " +

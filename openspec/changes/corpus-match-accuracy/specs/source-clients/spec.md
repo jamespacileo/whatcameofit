@@ -1,5 +1,16 @@
 ## ADDED Requirements
 
+### Requirement: Registry searches retain the evidence needed to judge treatment roles
+Both ClinicalTrials.gov clients SHALL request study type, intervention descriptions and arm membership, arm types and arm descriptions in name and trial-title search responses. They SHALL preserve existing query, page, pacing and cache bounds and SHALL NOT add individual-record requests solely to obtain those fields.
+
+#### Scenario: Search response is projected to requested fields
+- **WHEN** the registry returns only the requested fields for an experimental arm and its comparator
+- **THEN** both clients retain their types, intervention membership and descriptions in the same search response
+
+#### Scenario: Search finds expanded access
+- **WHEN** a name search returns an expanded-access record
+- **THEN** the scorer receives its study type without fetching that record separately
+
 ### Requirement: A refused condition has one bounded discovery fallback
 When ClinicalTrials.gov explicitly refuses the condition field of a condition-scoped search, the client SHALL try the existing distinct condition-keyword wording once, if available. Both broad-name and search-phrase discovery SHALL use this behavior. The intervention name SHALL remain unchanged and no unscoped search SHALL replace it.
 

@@ -158,6 +158,71 @@ def test_specific_name_is_searched_without_the_condition(session: Session, fake_
     assert all("query.cond" not in request.url.params for request in replay.requests)
 
 
+@pytest.mark.parametrize("by_name", [False, True])
+def test_search_preserves_arm_roles_and_study_type_without_detail_requests(
+    session: Session, fake_time, by_name: bool
+):
+    def selected(request):
+        fields = set(request.url.params["fields"].split(","))
+
+        def include(name, value):
+            return value if name in fields else None
+
+        return {
+            "studies": [
+                {
+                    "protocolSection": {
+                        "identificationModule": {
+                            "nctId": "NCT00000001",
+                            "briefTitle": "Synthetic trial",
+                        },
+                        "designModule": {"studyType": include("StudyType", "INTERVENTIONAL")},
+                        "armsInterventionsModule": {
+                            "interventions": [
+                                {
+                                    "name": "EX-1",
+                                    "description": include("InterventionDescription", "Inhaled"),
+                                    "armGroupLabels": include(
+                                        "InterventionArmGroupLabel", ["control"]
+                                    ),
+                                }
+                            ],
+                            "armGroups": [
+                                {
+                                    "label": include("ArmGroupLabel", "control"),
+                                    "type": include("ArmGroupType", "ACTIVE_COMPARATOR"),
+                                    "description": include("ArmGroupDescription", "EX-1 alone"),
+                                    "interventionNames": include(
+                                        "ArmGroupInterventionName", ["Drug: EX-1"]
+                                    ),
+                                }
+                            ],
+                        },
+                    }
+                }
+            ],
+            "totalCount": 1,
+        }
+
+    source, replay = trials(session, fake_time, selected)
+    records = source.named_trials("EXAMPLE-1") if by_name else source.search_trials("EX-1")
+    assert len(replay.requests) == 1
+    section = records[0].payload["protocolSection"]
+    assert section["designModule"]["studyType"] == "INTERVENTIONAL"
+    treatment = section["armsInterventionsModule"]
+    assert treatment["interventions"] == [
+        {"name": "EX-1", "description": "Inhaled", "armGroupLabels": ["control"]}
+    ]
+    assert treatment["armGroups"] == [
+        {
+            "label": "control",
+            "type": "ACTIVE_COMPARATOR",
+            "description": "EX-1 alone",
+            "interventionNames": ["Drug: EX-1"],
+        }
+    ]
+
+
 def test_condition_wording_the_registry_does_not_know_is_tried_by_its_words(
     session: Session, fake_time, fixture_json
 ):

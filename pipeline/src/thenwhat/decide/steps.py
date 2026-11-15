@@ -65,6 +65,11 @@ TRIAL_QUESTION = (
     " A generic drug name alone does not establish an explicitly claimed route or"
     " formulation. If that detail is absent, spread uncertainty across the options"
     " rather than assuming the restriction is satisfied."
+    " An EXPANDED_ACCESS record provides treatment outside a clinical trial; read it"
+    " as not_a_match. For a claim about a single medicine, an arm must establish that"
+    " medicine alone, not only a multi-medicine experimental regimen containing it."
+    " A record testing only combinations is not_a_match for a single-medicine claim;"
+    " placebo or supportive care is not an additional experimental medicine."
     " Being named in an arm does not make an intervention what the trial tests. Ask"
     " what differs between the arms, and what that difference is meant to treat. In a"
     " trial with one arm, what that arm receives is what is tested. When the claim's"
@@ -637,7 +642,17 @@ def _describe(candidate: SourceRecord) -> str:
         treatment = section.get("armsInterventionsModule", {})
         described = {
             "conditions": section.get("conditionsModule", {}).get("conditions", []),
+            "study_type": section.get("designModule", {}).get("studyType"),
             "title": _excerpt(identification.get("briefTitle"), 240),
+            # Keep roles and membership ahead of verbose descriptions under the cap.
+            "arms": [
+                {
+                    "label": arm.get("label"),
+                    "type": arm.get("type"),
+                    "interventions": arm.get("interventionNames", []),
+                }
+                for arm in treatment.get("armGroups", [])
+            ],
             "interventions": [
                 {
                     "name": intervention.get("name"),
@@ -646,13 +661,13 @@ def _describe(candidate: SourceRecord) -> str:
                 }
                 for intervention in treatment.get("interventions", [])
             ],
-            "arms": [
+            "arm_descriptions": [
                 {
                     "label": arm.get("label"),
-                    "interventions": arm.get("interventionNames", []),
                     "description": _excerpt(arm.get("description"), 350),
                 }
                 for arm in treatment.get("armGroups", [])
+                if arm.get("description")
             ],
             "official_title": _excerpt(identification.get("officialTitle"), 240),
             "phases": section.get("designModule", {}).get("phases", []),

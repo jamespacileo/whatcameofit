@@ -1,5 +1,11 @@
 # Design
 
+## Registry search projection and treatment roles
+
+The earlier scoring formatter accepted descriptions and arm membership from full records, but name/title searches omitted those fields in their API projection. Request study type, descriptions and arm roles/membership in the existing searches on both paths. Query selection, source pacing, cache lifetime, page limits and candidate counts stay unchanged. A changed fields parameter naturally gives a different source-cache key; there is no per-candidate enrichment fetch.
+
+Within the existing 1,500-character scoring input, put conditions, study type, title and compact arm roles/membership before verbose intervention descriptions. Missing or truncated information cannot establish compatibility. Align the Worker's fourth answer with the existing private-pipeline rule, distinguish expanded access, and explicitly preserve complete-regimen identity when a search finds a single medicine only inside combination arms. Bump shared/local clinical-answer versions, while keeping reusable public source responses. Validate on the applicable saved corpus readings and candidate sets without rereading article text; record that replay separately from fresh page and native Safari release verification.
+
 ## Claim identity after a read
 
 The source-reading seam joined different vaccine products when both were extracted as

@@ -26,6 +26,14 @@
 - [x] 2.15 Measure paper-source spacing after synchronous request setup so a clock tick cannot shorten the required interval; retain concurrent response handling.
 - [ ] 2.16 Resolve proven generic-name identity collisions and mixed-treatment unpublished claims, and review the targeted trial-scope audit before the normal publication snapshot.
 
+## Registry search fields and trial roles
+
+- [x] Reproduce search projection omitting study type, intervention descriptions and treatment-arm membership/roles in both clients; request the fields within the same bounded search, without individual-record expansion.
+- [x] Put arm roles and membership ahead of verbose descriptions within the unchanged 1,500-character scoring limit; mirror the pipeline's fourth trial-role answer in the Worker and invalidate older scored answers.
+- [x] Run real configured-model controls on three primary registry records: preserve RASolute 302 for daraxonrasib, retain the genuine combination claim, and exclude expanded access and the comparator-only reading from possible matches. The broad combination-only control remains uncertain below the display threshold, not categorically rejected.
+- [ ] Run the scoring change against every applicable stored corpus reading/candidate set, with exact-card, negative, inaccessible and missing-reading rows explicitly accounted for. This replay does not replace fresh released-page/native checks.
+- [ ] Complete regression checks and independent review; deploy the correction, update Safari and rerun affected URLs against the released versions before updating current corpus/Sheet verdicts.
+
 ## 3. Full corpus accuracy and efficiency
 
 - [x] 3.1 Audit every exact mapped article/card identity without paid lookup and record per-row evidence.

@@ -165,6 +165,7 @@ def test_trials_for_the_reported_treatment_and_condition_come_first(session: Ses
 def test_scoring_receives_route_and_separate_arm_details(session: Session, description: str):
     record = trial("NCT00000001", "EX-1 trial", condition="Example disease")
     section = record.payload["protocolSection"]
+    section["designModule"]["studyType"] = "INTERVENTIONAL"
     section["identificationModule"]["officialTitle"] = "A long official title " * 150
     section["armsInterventionsModule"] = {
         "interventions": [
@@ -172,8 +173,18 @@ def test_scoring_receives_route_and_separate_arm_details(session: Session, descr
             {"name": "EX-2", "armGroupLabels": ["B"]},
         ],
         "armGroups": [
-            {"label": "A", "interventionNames": ["Drug: EX-1"], "description": "EX-1 alone"},
-            {"label": "B", "interventionNames": ["Drug: EX-2"], "description": "EX-2 alone"},
+            {
+                "label": "A",
+                "type": "ACTIVE_COMPARATOR",
+                "interventionNames": ["Drug: EX-1"],
+                "description": "EX-1 alone",
+            },
+            {
+                "label": "B",
+                "type": "EXPERIMENTAL",
+                "interventionNames": ["Drug: EX-2"],
+                "description": "EX-2 alone",
+            },
         ],
     }
     states = []
@@ -189,6 +200,9 @@ def test_scoring_receives_route_and_separate_arm_details(session: Session, descr
     found = look_up(session, model, Capture(), FakeTrials({"EX-1": [record]}), text=TEXT, now=NOW)
 
     assert len(states) == 1
+    assert '"study_type":"INTERVENTIONAL"' in states[0]
+    assert '"type":"ACTIVE_COMPARATOR"' in states[0]
+    assert '"type":"EXPERIMENTAL"' in states[0]
     assert description in states[0]
     assert '"arms":["A"]' in states[0] and '"arms":["B"]' in states[0]
     assert "EX-1 alone" in states[0] and "EX-2 alone" in states[0]

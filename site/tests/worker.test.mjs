@@ -71,6 +71,44 @@ const INDEX = {
 
 // --- lookup -------------------------------------------------------------------------
 
+test("registry search carries arm roles and study type into bounded scoring", async () => {
+  const requests = [];
+  const registry = makeRegistry({contact: "ops@example.org", fetch: async address => {
+    const url = new URL(address); requests.push(url);
+    const fields = new Set(url.searchParams.get("fields").split(","));
+    const record = study("NCT00000001", "EX-1 compared with EX-2");
+    record.protocolSection.designModule.studyType = fields.has("StudyType") ? "INTERVENTIONAL" : undefined;
+    const include = (name, value) => fields.has(name) ? value : undefined;
+    record.protocolSection.armsInterventionsModule = {
+      interventions: [{name:"EX-1",description:include("InterventionDescription","Delivered by inhalation"),armGroupLabels:include("InterventionArmGroupLabel",["control"])},
+        {name:"EX-2",description:include("InterventionDescription","Synthetic detail ".repeat(100)),armGroupLabels:include("InterventionArmGroupLabel",["test"])}],
+      armGroups: fields.has("ArmGroupLabel") ? [
+        {label:"control",type:include("ArmGroupType","ACTIVE_COMPARATOR"),interventionNames:include("ArmGroupInterventionName",["Drug: EX-1"]),description:include("ArmGroupDescription","EX-1 alone")},
+        {label:"test",type:include("ArmGroupType","EXPERIMENTAL"),interventionNames:include("ArmGroupInterventionName",["Drug: EX-2"]),description:include("ArmGroupDescription","EX-2 alone")},
+      ] : undefined,
+    };
+    const access = study("NCT00000002", "EX-1 access program");
+    access.protocolSection.designModule.studyType = include("StudyType","EXPANDED_ACCESS");
+    return Response.json({studies:[record,access],totalCount:2});
+  }});
+  const model=fakeModel({...READING,other_names:[],trial_name:"REGROW-2"});
+  model.score=async (_intro,items)=>{
+    assert.equal(items.length,2);
+    assert.match(items[0], /"study_type":"INTERVENTIONAL"/);
+    assert.match(items[0], /"type":"ACTIVE_COMPARATOR"/);
+    assert.match(items[0], /"type":"EXPERIMENTAL"/);
+    assert.match(items[0], /"interventions":\["Drug: EX-1"\]/);
+    assert.match(items[0], /Delivered by inhalation/);
+    assert.match(items[1], /"study_type":"EXPANDED_ACCESS"/);
+    for(const item of items) assert.ok(item.split("\n").slice(1).join("\n").length<=1500);
+    return items.map(()=>({answer:"not_a_match",probabilities:{match:0}}));
+  };
+  await lookUp({text:TEXT,model,registry,index:INDEX});
+  assert.equal(requests.length,2);
+  assert.ok(requests.some(url=>url.searchParams.has("query.titles")));
+  assert.ok(requests.some(url=>url.searchParams.has("query.intr")));
+});
+
 test("scoring retains routes and separate arms before a long official title", async () => {
   for (const description of ["Delivered by inhalation", "Subcutaneous injection"]) {
     const record = study("NCT00000001", "EX-1 trial");

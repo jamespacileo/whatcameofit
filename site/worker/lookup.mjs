@@ -27,12 +27,18 @@ function candidateText(study) {
   const treatment = section.armsInterventionsModule ?? {};
   const described = {
     conditions: section.conditionsModule?.conditions ?? [],
+    study_type: section.designModule?.studyType,
     title: excerpt(section.identificationModule?.briefTitle, 240),
+    // Arm roles and membership precede verbose descriptions: these establish
+    // what is tested even when the record's later details exceed the limit.
+    arms: (treatment.armGroups ?? []).map((arm) => ({
+      label: arm.label ?? null, type: arm.type ?? null, interventions: arm.interventionNames ?? [],
+    })),
     interventions: (treatment.interventions ?? []).map((one) => ({
       name: one.name ?? null, description: excerpt(one.description ?? null, 350), arms: one.armGroupLabels ?? [],
     })),
-    arms: (treatment.armGroups ?? []).map((arm) => ({
-      label: arm.label ?? null, interventions: arm.interventionNames ?? [], description: excerpt(arm.description ?? null, 350),
+    arm_descriptions: (treatment.armGroups ?? []).filter(arm => arm.description).map((arm) => ({
+      label: arm.label ?? null, description: excerpt(arm.description, 350),
     })),
     official_title: excerpt(section.identificationModule?.officialTitle, 240),
     phases: section.designModule?.phases ?? [],
