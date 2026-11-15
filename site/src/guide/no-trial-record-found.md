@@ -2,16 +2,16 @@
 shelf: status
 status: no_trial_found
 rule: how-a-status-is-set
-on_site: When no trial is found for a claim and the first news reports described a study in people, the status is “No trial record found”. It sits off the path from preclinical to approved, because the records do not say where on the path the claim is.
+on_site: When no trial is found and the first-report evidence is a study in people or remains unconfirmed, the status is “No trial record found”. It sits off the path from preclinical to approved, because a missing trial record does not establish a research stage.
 related: [trial-registry, clinical-trial, preclinical-only, match-and-confidence]
 checked: false
 ---
 
 ## In the records
 
-The first news reports of the claim described a study in people, and that is recorded with the claim. A search of the trial registries this site checks then found no clinical trial of the treatment for the condition.
+The trial registries this site checks returned no matching clinical trial of the treatment for the condition. The first-report evidence may describe a study in people, or its stage may remain unconfirmed.
 
-So the page holds reports of a study in people and no registry record to set beside them. The status says exactly that, and no more.
+The page gives the confirmed first-report evidence separately when it is known. This status alone does not establish whether the treatment has been studied in people.
 
 ## What it does not tell you
 

@@ -11,7 +11,7 @@ reading; those systems must be measured and reused, not duplicated.
 
 Correct false card associations and current-slide capture, then audit every row
 against released behavior. This does not make unavailable video or ambiguous
-claims positive, grant additional permissions, or change clinical status rules.
+claims positive or grant additional permissions. Publication auditing also requires correcting the unknown-stage fallback described below.
 
 ## Decisions
 
@@ -65,3 +65,7 @@ the previous release/app if a new issue prevents reliable reading.
 ## Background-card boundary found during coverage work
 
 The normal prepare/terms workflow approved bimagrumab and semaglutide separately as exact intervention vocabulary terms for the combined regimen. The term classifier had received component names as aliases. A drug source containing only one known component could similarly produce a false whole-regimen drug link. Exclude explicitly named components from whole-name candidates and registry-filed intervention terms before paid classification; describe the complete regimen in the model prompt. Keep whole-regimen aliases eligible. Apply the same boundary when exporting legacy approved vocabulary/drug cards and omit a suppressed component drug's derived target. Preserve original review decisions and clinical status. No broad class-membership or clinical equivalence is inferred by this string boundary.
+
+## Evidence-stage gap found before publication
+
+The private export contained 110 prepared claims with no confirmed evidence stage, including reports explicitly describing studies in people. Twenty-six therefore inherited `preclinical_only` despite the absence of a confirmed laboratory/animal stage. This resolves the evidence-stage open question in the auto-publish design: a stored valid suggestion can be confirmed by rule only while the claim stage is empty and both its chosen-stage probability and recorded confidence meet the existing review threshold. Respect the draft-rule switch, preserve confirmed stages and human labels, and reuse the existing decision instead of paying for another reading. A low-confidence or unavailable stage stays unknown. With no approved trial, unknown now means `no_trial_found`; only confirmed animal/in-vitro evidence means `preclinical_only`. Approved trial, regulatory and retraction precedence stays unchanged. No model directly chooses a clinical status.

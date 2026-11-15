@@ -138,7 +138,7 @@ def test_claim_whose_status_never_changed_has_no_status_updated_time(session: Se
 
     refresh(session, claim)
 
-    assert claim.current_status is ClaimStatus.PRECLINICAL_ONLY
+    assert claim.current_status is ClaimStatus.NO_TRIAL_FOUND
     assert claim.status_updated_at is None
 
 
@@ -192,7 +192,7 @@ def test_events_of_other_claims_are_not_read(session: Session):
 
     refresh(session, claim)
 
-    assert claim.current_status is ClaimStatus.PRECLINICAL_ONLY
+    assert claim.current_status is ClaimStatus.NO_TRIAL_FOUND
 
 
 def test_failure_flag_is_read(session: Session):
@@ -247,7 +247,7 @@ def test_unapproved_origin_paper_match_does_not_identify_the_origin_paper(sessio
 
     refresh(session, claim)
 
-    assert claim.current_status is ClaimStatus.PRECLINICAL_ONLY
+    assert claim.current_status is ClaimStatus.NO_TRIAL_FOUND
 
 
 def test_no_signal_threshold_is_passed_through(session: Session):

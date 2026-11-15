@@ -17,12 +17,12 @@ from sqlalchemy.orm import Session
 from typer.testing import CliRunner, Result
 
 from thenwhat.claims.entities import entities_of
-from thenwhat.claims.entry import add_claim
+from thenwhat.claims.entry import add_claim, claim_by_slug
 from thenwhat.cli import app
 from thenwhat.cli.resolve import Research
 from thenwhat.db.models import DecisionLog, EntityMatch, EntitySubstance
 from thenwhat.decide.core import BackendAnswer
-from thenwhat.domain import Decider
+from thenwhat.domain import ClaimStatus, Decider, EvidenceStage
 from thenwhat.llm.client import Llm, LlmSettings
 from thenwhat.sources.base import SourceRecord, UnsearchableTerm
 from thenwhat.sources.openalex import OpenAlex
@@ -166,6 +166,38 @@ def names(session: Session) -> list[str]:
     claim = find_claim(session, SLUG)
     assert claim is not None
     return [entity.name for entity in entities_of(session, claim)]
+
+
+def test_resolve_confirms_a_stored_confident_stage_without_reading_it_again(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    class HumanStudy(Backend):
+        stage_calls = 0
+
+        def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
+            if step != "evidence_stage":
+                return super().answer(step, state, options)
+            self.stage_calls += 1
+            return BackendAnswer(
+                "early_human", {o: float(o == "early_human") for o in options}, confidence=0.98
+            )
+
+    backend = HumanStudy()
+    monkeypatch.setattr("thenwhat.cli.resolve.make_backend", lambda s: backend)
+    # First save a suggestion while automatic draft approval is off.
+    assert run("resolve", SLUG).exit_code == 0
+    claim = claim_by_slug(session, SLUG)
+    assert claim.evidence_stage is None
+    monkeypatch.setenv("APPROVE_DRAFTS_BY_RULE", "true")
+
+    result = run("resolve", SLUG)
+
+    assert result.exit_code == 0, result.output
+    assert claim.evidence_stage is EvidenceStage.EARLY_HUMAN
+    assert claim.current_status is ClaimStatus.NO_TRIAL_FOUND
+    assert backend.stage_calls == 1
+    [log] = session.scalars(select(DecisionLog).where(DecisionLog.step == "evidence_stage"))
+    assert log.human_label is None
 
 
 def test_entity_add_adds_the_entity(run, session: Session):

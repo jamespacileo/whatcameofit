@@ -172,16 +172,18 @@ def _intervention_text(session: Session, claim: Claim) -> str:
     return f"Claim: {claim.headline}{summary}{names}"
 
 
-def has_stage_suggestion(session: Session, claim: Claim) -> bool:
-    return (
+def latest_stage_suggestion(session: Session, claim: Claim) -> Decision | None:
+    """Reuse the most recent successful stage reading, including its confidence."""
+    return _logged(
         session.scalars(
-            select(DecisionLog.id).where(
+            select(DecisionLog)
+            .where(
                 DecisionLog.step == EVIDENCE_STAGE,
                 DecisionLog.input_ref == f"claim:{claim.id}",
                 DecisionLog.error.is_(None),
             )
+            .order_by(DecisionLog.id.desc())
         ).first()
-        is not None
     )
 
 
@@ -189,7 +191,7 @@ def suggest_evidence_stage(
     session: Session, backend: Backend, claim: Claim, *, now: datetime
 ) -> Decision:
     """Suggest the stage of evidence at announcement. The claim's stage is not set here:
-    it stays empty until an operator confirms it."""
+    it stays empty until the operator or a separate threshold rule confirms it."""
     return decide(
         session,
         backend,
