@@ -34,3 +34,13 @@ export function partsOf(name) {
 export function nameKey(name) {
   return String(name ?? "").toLowerCase().replace(/\s+/g, " ").trim();
 }
+
+/** Whole-regimen aliases only: one component is not another name for a combination. */
+export function regimenKeys(names) {
+  const components = name => {
+    const parts = partsOf(name);
+    return (parts.length ? parts : [name]).map(nameKey).sort();
+  };
+  const size = components(names[0] ?? "").length;
+  return names.map(components).filter(parts => parts.length === size).map(parts => JSON.stringify(parts));
+}

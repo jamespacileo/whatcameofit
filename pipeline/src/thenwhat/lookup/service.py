@@ -197,7 +197,7 @@ class Lookup:
     paper_numbers: list[str] = field(default_factory=list)
     # What the text says about the trial itself.
     details: Details = field(default_factory=Details)
-    # Slugs of claims already tracked under one of the names.
+    # Slugs of claims for the complete intervention and the same indication.
     tracked: list[str] = field(default_factory=list)
     candidates: list[Candidate] = field(default_factory=list)
 
@@ -315,7 +315,7 @@ def look_up(
         registry_numbers=numbers,
         paper_numbers=from_papers,
         details=details,
-        tracked=_tracked(session, names),
+        tracked=_tracked(session, [*names, *known], reading.indication),
         candidates=candidates,
     )
 
@@ -368,17 +368,26 @@ def _parts(name: str) -> list[str]:
     return [piece for piece in pieces if piece] if len(pieces) > 1 else []
 
 
-def _tracked(session: Session, names: list[str]) -> list[str]:
-    """Claims whose intervention goes by one of these names."""
-    wanted = {name_key(name) for name in names}
+def _regimen_names(names: list[str]) -> set[tuple[str, ...]]:
+    """Whole-regimen aliases, excluding single components of a combination."""
+    parts = [tuple(sorted(name_key(part) for part in (_parts(name) or [name]))) for name in names]
+    return {one for one in parts if len(one) == len(parts[0])} if parts else set()
+
+
+def _tracked(session: Session, names: list[str], indication: str | None) -> list[str]:
+    """Claims for the complete intervention and the same explicit condition."""
+    if not indication or not name_key(indication):
+        return []
+    wanted = _regimen_names(names)
     slugs = [
         slug
-        for slug, name, synonyms in session.execute(
-            select(Claim.slug, Entity.name, Entity.synonyms)
+        for slug, condition, name, synonyms in session.execute(
+            select(Claim.slug, Claim.indication, Entity.name, Entity.synonyms)
             .join(Entity, Entity.claim_id == Claim.id)
             .where(Entity.type == EntityType.INTERVENTION)
             .order_by(Claim.slug)
         )
-        if wanted & {name_key(name), *(name_key(synonym) for synonym in synonyms)}
+        if name_key(condition) == name_key(indication)
+        and wanted & _regimen_names([name, *synonyms])
     ]
     return list(dict.fromkeys(slugs))

@@ -65,7 +65,7 @@ function fakeModel(reading = READING) {
 
 const INDEX = {
   claims: {
-    "tooth-regrowth-ex1": { headline: "Antibody regrows teeth", page: "/tooth-regrowth-ex1", names: ["Anti-USAG-1 antibody", "toothgrow"] },
+    "tooth-regrowth-ex1": { headline: "Antibody regrows teeth", page: "/tooth-regrowth-ex1", names: ["Anti-USAG-1 antibody", "toothgrow"], indication: "tooth agenesis" },
   },
 };
 
@@ -251,6 +251,30 @@ test("Scenario: Treatment already tracked", async () => {
   const found = await lookUp({ text: TEXT, model: fakeModel(), registry: fakeRegistry({}), index: INDEX });
 
   assert.deepEqual(found.tracked, [{ slug: "tooth-regrowth-ex1", headline: "Antibody regrows teeth", page: "/tooth-regrowth-ex1" }]);
+});
+
+test("tracked cards require the same condition and complete regimen without extra model work", async () => {
+  const claims = {
+    ageing: { names: ["EX-1"], indication: "biological ageing", headline: "Ageing", page: "/ageing" },
+    single: { names: ["EX-1"], indication: "obesity", headline: "One medicine", page: "/single" },
+    combined: { names: ["EX-2 and EX-1", "EX-1"], indication: "obesity", headline: "Combination", page: "/combined" },
+    legacy: { names: ["EX-1"], headline: "Unknown condition", page: "/legacy" },
+  };
+  for (const [intervention, indication, aliases, expected] of [
+    ["EX-1 plus EX-2", "Obesity", ["EX-1"], ["combined"]],
+    ["EX-1", "  OBESITY ", [], ["single"]],
+    ["EX-1", null, [], []],
+    ["EX-1", "tooth loss", [], []],
+  ]) {
+    let reads = 0, scores = 0;
+    const model = {
+      read: async () => { reads++; return { ...READING, intervention, indication, other_names: aliases }; },
+      score: async () => { scores++; return []; },
+    };
+    const found = await lookUp({ text: TEXT, model, registry: fakeRegistry({}), index: { claims } });
+    assert.deepEqual(found.tracked.map(one => one.slug), expected);
+    assert.deepEqual([reads, scores], [1, 0], "card association adds no paid call");
+  }
 });
 
 test("no more than sixty records are scored", async () => {

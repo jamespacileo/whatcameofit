@@ -4,7 +4,7 @@
 //
 // The answer carries codes and registry fields only. The site words them.
 import { PAPER, STATED, agreeing } from "./details.mjs";
-import { isAName, nameKey, partsOf } from "./names.mjs";
+import { isAName, nameKey, partsOf, regimenKeys } from "./names.mjs";
 import { LIKELY_FROM } from "../src/lib/live-lookup.mjs";
 import { timedOut } from "./deadline.mjs";
 
@@ -289,9 +289,11 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
           a.id.localeCompare(b.id),
       );
 
-    const wanted = new Set([...names, ...known].map(nameKey));
+    const wanted = new Set(regimenKeys([...names, ...known]));
+    const indication = nameKey(reading.indication);
     const tracked = Object.entries(index?.claims ?? {})
-      .filter(([, claim]) => (claim.names ?? []).some((name) => wanted.has(nameKey(name))))
+      .filter(([, claim]) => indication && nameKey(claim.indication) === indication &&
+        regimenKeys(claim.names ?? []).some(name => wanted.has(name)))
       .map(([slug, claim]) => ({ slug, headline: claim.headline, page: claim.page }))
       .sort((a, b) => a.slug.localeCompare(b.slug));
 

@@ -435,6 +435,7 @@ test("Scenario: Article of a published claim", () => {
   assert.equal(claim.status, "Phase 2 trial");
   assert.equal(claim.headline, "Synthetic claim with a started trial");
   assert.equal(claim.page, "/phase-claim");
+  assert.equal(claim.indication, "example condition");
   assert.match(claim.meaning, /Phase 2/);
   // The notices and the check date travel with the statuses.
   assert.equal(lookup.notices.length, 2);

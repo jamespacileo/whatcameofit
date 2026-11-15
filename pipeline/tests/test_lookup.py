@@ -333,6 +333,40 @@ def test_a_lookup_stores_no_claim_match_or_article(session: Session):
     assert stored(session) == before
 
 
+def test_tracked_cards_require_the_condition_and_whole_regimen(session: Session):
+    for slug, intervention, indication in [
+        ("ageing", "EX-1", "biological ageing"),
+        ("single", "EX-1", "obesity"),
+        ("combined", "EX-2 and EX-1", "obesity"),
+    ]:
+        add_claim(
+            session,
+            slug=slug,
+            headline=slug,
+            vertical="mouth-and-teeth",
+            intervention=intervention,
+            indication=indication,
+            summary="Synthetic report.",
+        )
+    for intervention, indication, aliases, expected in [
+        ("EX-1 plus EX-2", "Obesity", ["EX-1"], ["combined"]),
+        ("EX-1", "  OBESITY ", [], ["single"]),
+        ("EX-1", None, [], []),
+        ("EX-1", "tooth loss", [], []),
+    ]:
+        found = find(
+            session,
+            FakeTrials({}),
+            reading={
+                **READING,
+                "intervention": intervention,
+                "indication": indication,
+                "other_names": aliases,
+            },
+        )
+        assert found.tracked == expected
+
+
 def test_the_model_is_shown_the_text(session: Session):
     model, prompts = llm(session, READING)
 
