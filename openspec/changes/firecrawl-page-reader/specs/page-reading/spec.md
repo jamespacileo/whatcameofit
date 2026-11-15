@@ -48,11 +48,23 @@ The page reader's answer to a request SHALL be one of: the page was read; the ad
 - **THEN** the run stops and reports the reader's answer as a fault of the reader, and the article stays due
 
 ### Requirement: Conditions the reader must meet
-The pipeline SHALL be configured only with a page reader that has been checked, with the result and the date recorded in `docs/sources.md`, to do all of the following: answer not allowed for an address its site's robots.txt disallows; answer not allowed for every platform that `docs/sources.md` lists as not read; ask a site with the project's contact User-Agent and without any means that hides the client; and keep nothing of a page after it has answered. The check SHALL be made again whenever the reader's rules or version change.
+The pipeline SHALL be configured only with a page reader that has been checked to respect each site's robots.txt, to refuse the platforms `docs/sources.md` lists as not read, to identify the project's client to a site, and to keep nothing of a page. The result and its date SHALL be recorded in `docs/sources.md`, and the check SHALL be made again whenever the reader's rules or version change.
+
+#### Scenario: An address robots.txt disallows
+- **WHEN** the reader is asked for an address its site's robots.txt disallows for the project's client
+- **THEN** it answers not allowed
 
 #### Scenario: A platform that is not read
 - **WHEN** the reader is asked for a post on a platform listed as not read
 - **THEN** it answers not allowed, and the platform is sent no request
+
+#### Scenario: Who the site sees
+- **WHEN** the reader asks a site for a page
+- **THEN** the request carries the project's contact User-Agent and goes through no means that hides the client
+
+#### Scenario: Nothing kept
+- **WHEN** the reader has answered a request
+- **THEN** it holds no copy of the page, and a second request for the same address asks the site again
 
 #### Scenario: The check has not been made
 - **WHEN** `docs/sources.md` holds no dated check of the reader in use
