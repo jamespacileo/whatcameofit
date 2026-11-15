@@ -23,9 +23,16 @@ const weekday = (day: string) => WEEKDAYS[new Date(`${day}T00:00:00Z`).getUTCDay
 const rows = list.headings.flatMap((heading) => heading.rows);
 const totals = countKinds(rows.concat(list.toCome));
 const KINDS = [
-  { kind: "report", name: "Reported" },
-  { kind: "record", name: "Recorded" },
-  { kind: "promise", name: "Promised" },
+  { kind: "report", name: "News reports" },
+  { kind: "record", name: "Registry records" },
+  { kind: "promise", name: "Promised dates" },
+] as const;
+// The spans a reader can keep to, each counted back from the day of the last check.
+const SPANS = [
+  { span: "week", name: "Past week" },
+  { span: "month", name: "Past month" },
+  { span: "year", name: "Past year" },
+  { span: "all", name: "All time" },
 ] as const;
 const earlier = list.headings.filter((heading) => heading.span !== "day");
 // "Saturday 14 November", in its parts.
@@ -34,79 +41,91 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
 ---
 
 <section class="days" aria-labelledby="days-title" data-days data-checked={list.checked}>
-  <div class="days-head">
-    <h2 class="days-title" id="days-title">
-      Registries last checked{" "}
-      {/* A phone has one line for it, so the weekday and the end of the month's name are
-          not drawn there; the row of days under it gives the weekday. Read without its
-          styles the heading is the long date, once. */}
-      <span class="unbroken">
-        <span class="on-wide">{checkedDay.weekday} </span>{checkedDay.day} {checkedDay.month.slice(0, 3)}<span class="on-wide">{checkedDay.month.slice(3)}</span> {list.checked.slice(0, 4)}
-      </span>
-    </h2>
-    <slot name="tally" />
-    {/* The seven days up to the last check. Each leads to its heading below. */}
-    <ol class="week" aria-label="The seven days up to the last check">
-      {
-        list.week.map((day) => (
-          <li>
-            {/* The day of the last check is marked as that, not as today: a page can be
-                read after the day it was built. The script says which day is today. */}
-            <a href={`#d-${day.date}`} data-checked-day={day.date === list.checked ? "" : undefined}>
-              <span class="week-day">{weekday(day.date)}</span>
-              <span class="week-date">{Number(day.date.slice(8))}</span>
-              <span class="week-count">
-                {day.reports === 0 ? "none" : `${day.reports} ${day.reports === 1 ? "report" : "reports"}`}
-              </span>
-            </a>
-          </li>
-        ))
-      }
-    </ol>
-  </div>
-
-  {/* The three kinds of row. The controls are also the key to the three grounds.
-      Shown by the script: without it there is nothing to pick. */}
-  <div class="kinds" role="group" aria-label="Show rows of one kind" hidden data-kinds>
-    <button type="button" class="share" aria-pressed="true" data-kind-pick="all">
-      All <span class="kind-count">{rows.length + list.toCome.length}</span>
-    </button>
-    {
-      KINDS.filter(({ kind }) => totals[kind] > 0).map(({ kind, name }) => (
-        <button type="button" class="share" aria-pressed="false" data-kind-pick={kind}>
-          <span class:list={["swatch", kind]} aria-hidden="true" />
-          {name} <span class="kind-count">{totals[kind]}</span>
-        </button>
-      ))
-    }
-  </div>
-
-  <slot name="narrow" />
-
   <div class="days-body">
-    <div class="day-list" data-day-list>
+    {/* Beside the list on a wide screen, on the pale ground so the list keeps the page:
+        where the reader left off, one topic to narrow to, and the other ways in. The
+        note and the topics are the script's; the links are the page's own. */}
+    <aside class="days-side" aria-label="Topics and other lists" data-days-side>
+      <p class="visit-note" hidden data-visit-note></p>
       {
-        list.toCome.length > 0 && (
-          <details class="to-come" data-to-come>
-            <summary>
-              <strong>Ahead.</strong> <span data-to-come-count>{toComeText(list.toCome.length)}</span>{" "}
-              Next: <span data-to-come-next>{formatDate(list.toCome[0].date)}</span>.{" "}
-              <span class="text-control">Show them</span>
-            </summary>
-            <p class="entry-note">
-              A promise is what a report said, not a record. Each is listed by the date it was promised for.
-            </p>
-            <ol>
-              {list.toCome.map((row) => <DayPromise row={row} />)}
-            </ol>
-          </details>
+        topics.length > 1 && (
+          <div class="side-group" hidden data-side-topics>
+            <h3>Topics</h3>
+            <ul>
+              <li>
+                <button type="button" class="side-pick" aria-pressed="true" data-topic-pick="">
+                  All topics <span class="kind-count">{topics.reduce((sum, topic) => sum + topic.count, 0)}</span>
+                </button>
+              </li>
+              {topics.map((topic) => (
+                <li>
+                  <button type="button" class="side-pick" aria-pressed="false" data-topic-pick={topic.slug}>
+                    {topic.title} <span class="kind-count">{topic.count}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         )
       }
-      {
-        list.headings.map((heading) => {
-          const isChecked = heading.span === "day" && heading.date === list.checked;
-          const picked = isChecked ? list.older : null;
-          return (
+      <slot name="browse" />
+    </aside>
+
+    <div class="days-main">
+      <div class="days-head">
+        <h2 class="days-title" id="days-title">Latest</h2>
+        <p class="checked-on">
+          Registries last checked{" "}
+          {/* A phone has the short date. Read without its styles it is the long date, once. */}
+          <span class="unbroken">
+            <span class="on-wide">{checkedDay.weekday} </span>{checkedDay.day} {checkedDay.month.slice(0, 3)}<span class="on-wide">{checkedDay.month.slice(3)}</span> {list.checked.slice(0, 4)}
+          </span>
+        </p>
+      </div>
+
+      {/* One row of choices, each a field that names what it shows. The kind and the
+          span are the script's: without it there is nothing to pick. */}
+      <div class="filters" role="group" aria-label="Narrow this list">
+        <label class="pick" hidden data-kinds>
+          <span class="visually-hidden">Kind of row</span>
+          <select id="feed-kind">
+            <option value="all">Everything</option>
+            {
+              KINDS.filter(({ kind }) => totals[kind] > 0).map(({ kind, name }) => (
+                <option value={kind}>{name}</option>
+              ))
+            }
+          </select>
+        </label>
+        <label class="pick" hidden data-spans>
+          <span class="visually-hidden">Dated in</span>
+          <select id="feed-span">
+            {SPANS.map(({ span, name }) => <option value={span}>{name}</option>)}
+          </select>
+        </label>
+        <slot name="narrow" />
+      </div>
+
+      <div class="day-list" data-day-list>
+        {
+          list.toCome.length > 0 && (
+            <details class="to-come" data-to-come>
+              <summary>
+                <strong>Ahead.</strong> <span data-to-come-count>{toComeText(list.toCome.length)}</span>{" "}
+                Next: <span data-to-come-next>{formatDate(list.toCome[0].date)}</span>.{" "}
+                <span class="text-control">Show them</span>
+              </summary>
+              <p class="entry-note">
+                A promise is what a report said, not a record. Each is listed by the date it was promised for.
+              </p>
+              <ol>
+                {list.toCome.map((row) => <DayPromise row={row} />)}
+              </ol>
+            </details>
+          )
+        }
+        {
+          list.headings.map((heading) => (
             <section
               class="day-group"
               id={heading.id}
@@ -129,51 +148,44 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
                     <DayPromise row={row} />
                   ),
                 )}
-                {picked && (
-                  <li class="picked-note" data-picked-note>
-                    One older claim, picked by the date.
-                  </li>
-                )}
-                {picked && <DayReport row={picked} topic={topicTitle.get(picked.claim.vertical) ?? ""} picked />}
               </ol>
             </section>
-          );
-        })
-      }
-      {
-        earlier.length > 0 && (
-          <p class="earlier" hidden data-earlier-control>
-            <button type="button" class="share">Show earlier</button>
-            <span class="entry-note" data-earlier-left>
-              {earlierText(earlier.reduce((sum, heading) => sum + heading.rows.length, 0))}
-            </span>
-          </p>
-        )
-      }
-      <p class="none" hidden data-days-none>Nothing in this list for that choice.</p>
+          ))
+        }
+        <p class="none" hidden data-days-none>Nothing in this list for that choice.</p>
+        {/* Where a span ends: what it held, and the next span one press away. */}
+        <p class="earlier" hidden data-span-end>
+          <span class="entry-note" data-span-said></span>
+          <button type="button" class="share" data-span-wider></button>
+        </p>
+        {
+          earlier.length > 0 && (
+            <p class="earlier" hidden data-earlier-control>
+              <button type="button" class="share">Show earlier</button>
+              <span class="entry-note" data-earlier-left>
+                {earlierText(earlier.reduce((sum, heading) => sum + heading.rows.length, 0))}
+              </span>
+            </p>
+          )
+        }
+        {/* One claim from an earlier year, under the list: the same for every reader
+            that day. It is not dated by the list, so no span leaves it out. */}
+        {
+          list.older && (
+            <section class="older" aria-labelledby="older-title" data-older>
+              <div class="day-head">
+                <h3 id="older-title">From an earlier year</h3>
+                <span data-picked-note>One older claim, picked by the date.</span>
+              </div>
+              <ol>
+                <DayReport row={list.older} topic={topicTitle.get(list.older.claim.vertical) ?? ""} picked />
+              </ol>
+            </section>
+          )
+        }
+      </div>
     </div>
-
-    {/* Beside the list on a wide screen: where the reader left off, and one topic to
-        narrow to. Both are the script's; without it the column is not drawn. */}
-    <aside class="days-side" hidden data-days-side>
-      <p class="visit-note" hidden data-visit-note></p>
-      {
-        topics.length > 1 && (
-          <div class="side-topics">
-            <h3>Topics</h3>
-            <ul>
-              {topics.map((topic) => (
-                <li>
-                  <button type="button" class="topic-pick" aria-pressed="false" data-topic-pick={topic.slug}>
-                    {topic.title} <span class="kind-count">{topic.count}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )
-      }
-    </aside>
+    <slot name="rail" />
   </div>
 </section>
 
@@ -189,16 +201,19 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     const toCome = list.querySelector<HTMLDetailsElement>("[data-to-come]");
     const control = list.querySelector<HTMLElement>("[data-earlier-control]");
     const none = list.querySelector<HTMLElement>("[data-days-none]")!;
-    const side = root.querySelector<HTMLElement>("[data-days-side]");
+    const sideTopics = root.querySelector<HTMLElement>("[data-side-topics]");
+    const spanEnd = list.querySelector<HTMLElement>("[data-span-end]")!;
+    const spanSaid = spanEnd.querySelector<HTMLElement>("[data-span-said]")!;
+    const spanWider = spanEnd.querySelector<HTMLButtonElement>("[data-span-wider]")!;
     const visitNote = root.querySelector<HTMLElement>("[data-visit-note]");
     const allRows = [...list.querySelectorAll<HTMLElement>("[data-day-row]")];
     const rowsIn = (element: Element) => [...element.querySelectorAll<HTMLElement>("[data-day-row]")];
     // Each filter marks the rows it leaves out, as on the tables further down the page.
     const out = (row: Element) => row.getAttributeNames().some((name) => name.startsWith("data-out"));
     const kindsOf = (rows: HTMLElement[]) => countKinds(rows.map((row) => ({ kind: row.dataset.kind as RowKind })));
-    // The older claim after the day of the last check is not dated that day.
+    // The older claim under the list is not dated by it.
     const picked = list.querySelector<HTMLElement>("[data-picked]");
-    const pickedNote = list.querySelector<HTMLElement>("[data-picked-note]");
+    const older = list.querySelector<HTMLElement>("[data-older]");
     const isPicked = (row: HTMLElement) => row === picked;
 
     const two = (value: number) => String(value).padStart(2, "0");
@@ -233,7 +248,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       line.remove();
       if (visitNote) visitNote.hidden = true;
       if (!since) return;
-      const dated = groups.flatMap((group) => rowsIn(group).filter((row) => !out(row) && !isPicked(row)));
+      const dated = groups.flatMap((group) => rowsIn(group).filter((row) => !out(row)));
       const index = lastVisitIndex(dated.map((row) => row.dataset.on!), since, today);
       if (index === null) return;
       const day = formatDate(since.from);
@@ -265,48 +280,37 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       }
     };
 
-    // The seven days: a cell says how many reports are left under its heading, and
-    // leads there only while the heading is shown.
-    const cells = [...root.querySelectorAll<HTMLAnchorElement>(".week a")].map((cell) => ({
-      cell,
-      count: cell.querySelector<HTMLElement>(".week-count")!,
-      all: cell.querySelector<HTMLElement>(".week-count")!.textContent!,
-      href: cell.getAttribute("href")!,
-      group: groups.find((group) => `#${group.id}` === cell.getAttribute("href")),
-    }));
-    for (const { cell, group } of cells) {
-      // Said to be the current date only when it is the reader's own.
-      if (group?.dataset.date === today) cell.setAttribute("aria-current", "date");
-    }
-    const drawWeek = (narrowed: boolean) => {
-      for (const { cell, count, all, href, group } of cells) {
-        if (!group) continue;
-        const left = rowsIn(group).filter((row) => !out(row) && !isPicked(row) && row.dataset.kind === "report").length;
-        count.textContent = !narrowed ? all : left === 0 ? "none" : `${left} ${left === 1 ? "report" : "reports"}`;
-        if (group.hidden) cell.removeAttribute("href");
-        else cell.setAttribute("href", href);
-      }
-    };
+    // The span the list keeps to, counted back from the day of the last check, and the
+    // kind of row shown. Both are set by the fields above the list.
+    const SPANS = [
+      { span: "week", days: 7, name: "the past week" },
+      { span: "month", days: 30, name: "the past month" },
+      { span: "year", days: 365, name: "the past year" },
+      { span: "all", days: null, name: "all time" },
+    ];
+    let span = "week";
+    let kind = "all";
+    let setSpan: (picked: string, keep?: boolean) => void = () => {};
 
     const refresh = () => {
       list.querySelectorAll(".last-visit-item").forEach((item) => item.remove());
-      const narrowed = allRows.some(out);
       let shown = 0;
       let later = 0;
       for (const group of groups) {
         const rows = rowsIn(group);
         const left = rows.filter((row) => !out(row));
         for (const row of rows) row.hidden = out(row);
-        const dated = left.filter((row) => !isPicked(row));
         const says = group.querySelector<HTMLElement>("[data-says]")!;
-        says.textContent = countsText(kindsOf(dated));
-        // A heading with nothing under it is kept only when nothing narrows the list.
-        group.hidden = narrowed && left.length === 0;
+        says.textContent = countsText(kindsOf(left));
+        // A heading with nothing under it is not shown.
+        group.hidden = left.length === 0;
         shown += left.length;
         if (group.hasAttribute("data-earlier")) later += left.length;
       }
       if (toCome) {
-        const left = rowsIn(toCome).filter((row) => !out(row));
+        // Dates still to come are no part of what has happened: they are offered when
+        // the reader asks for promised dates.
+        const left = kind === "promise" ? rowsIn(toCome).filter((row) => !out(row)) : [];
         for (const row of rowsIn(toCome)) row.hidden = out(row);
         toCome.hidden = left.length === 0;
         if (left.length > 0) {
@@ -315,15 +319,30 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
         }
         shown += left.length;
       }
-      if (pickedNote) pickedNote.hidden = !picked || out(picked);
-      drawWeek(narrowed);
-      none.hidden = shown > 0;
+      if (older && picked) {
+        picked.hidden = out(picked);
+        older.hidden = out(picked);
+      }
+      const at = SPANS.findIndex((entry) => entry.span === span);
+      const wider = SPANS[at + 1];
+      none.hidden = shown > 0 || wider !== undefined;
+      // A span that has been read to its end says so, and offers the next one.
+      spanEnd.hidden = wider === undefined || later > 0;
+      if (wider) {
+        spanSaid.textContent =
+          shown > 0 ? `That is everything dated in ${SPANS[at].name}.` : `Nothing is dated in ${SPANS[at].name} for that choice.`;
+        spanWider.textContent = `Show ${wider.name}`;
+      }
       if (control) {
         control.hidden = later === 0;
         control.querySelector("[data-earlier-left]")!.textContent = earlierText(later);
       }
       drawLastVisit();
     };
+    spanWider.addEventListener("click", () => {
+      const wider = SPANS[SPANS.findIndex((entry) => entry.span === span) + 1];
+      if (wider) setSpan(wider.span);
+    });
 
     // Earlier headings are shown a batch at a time, or as far as one named in the address.
     const BATCH = 8;
@@ -340,6 +359,8 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     };
     control?.querySelector("button")!.addEventListener("click", () => reveal(BATCH));
     const openTo = (target: HTMLElement) => {
+      // A heading outside the span is reached by widening to all time.
+      if (target.hidden && span !== "all") setSpan("all");
       if (!target.hasAttribute("data-earlier")) return;
       for (const group of groups) {
         group.removeAttribute("data-earlier");
@@ -374,48 +395,80 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       refresh();
     });
 
-    // One kind at a time, or every kind. The pick is kept in the page's address.
-    const picks = [...root.querySelectorAll<HTMLButtonElement>("[data-kind-pick]")];
-    const pick = (kind: string, remember = true) => {
-      for (const button of picks) button.setAttribute("aria-pressed", String(button.dataset.kindPick === kind));
-      for (const row of allRows) row.toggleAttribute("data-out-kind", kind !== "all" && row.dataset.kind !== kind);
-      refresh();
-      if (!remember) return;
+    const remember = (name: string, value: string, first: string) => {
       const url = new URL(location.href);
-      if (kind === "all") url.searchParams.delete("kind");
-      else url.searchParams.set("kind", kind);
+      if (value === first) url.searchParams.delete(name);
+      else url.searchParams.set(name, value);
       history.replaceState(history.state, "", url);
     };
-    for (const button of picks) button.addEventListener("click", () => pick(button.dataset.kindPick!));
+
+    // One kind at a time, or every kind. The pick is kept in the page's address.
+    const kindField = root.querySelector<HTMLSelectElement>("#feed-kind")!;
+    const pick = (picked: string) => {
+      kind = picked;
+      kindField.value = picked;
+      for (const row of allRows) row.toggleAttribute("data-out-kind", picked !== "all" && row.dataset.kind !== picked);
+      refresh();
+    };
+    kindField.addEventListener("change", () => {
+      pick(kindField.value);
+      remember("kind", kind, "all");
+    });
     root.querySelector<HTMLElement>("[data-kinds]")!.hidden = false;
+
+    // The span: rows dated before it are left out. A date still to come is in every span.
+    const spanField = root.querySelector<HTMLSelectElement>("#feed-span")!;
+    const checked = root.dataset.checked!;
+    const fromOf = (days: number | null) => {
+      if (days === null) return "";
+      const day = new Date(`${checked}T00:00:00Z`);
+      day.setUTCDate(day.getUTCDate() - (days - 1));
+      return day.toISOString().slice(0, 10);
+    };
+    setSpan = (picked, keep = true) => {
+      span = picked;
+      spanField.value = picked;
+      const from = fromOf(SPANS.find((entry) => entry.span === picked)!.days);
+      for (const row of allRows) {
+        row.toggleAttribute("data-out-span", !isPicked(row) && row.dataset.on! < from);
+      }
+      refresh();
+      if (keep) remember("span", span, "week");
+    };
+    spanField.addEventListener("change", () => setSpan(spanField.value));
+    root.querySelector<HTMLElement>("[data-spans]")!.hidden = false;
 
     // The status path and the topic choice narrow these rows too, and say so here.
     list.addEventListener("paged:refresh", refresh);
 
     // On a wide screen the topic is chosen from the side column; it drives the same
-    // field the phone's control does, so there is one choice and one place it is kept.
+    // field a narrower screen shows, so there is one choice and one place it is kept.
     const choice = document.querySelector<HTMLSelectElement>("#feed-topic");
     const topicPicks = [...root.querySelectorAll<HTMLButtonElement>("[data-topic-pick]")];
-    if (side) {
+    if (sideTopics && choice) {
       const sync = () => {
         for (const button of topicPicks) {
-          button.setAttribute("aria-pressed", String(choice?.value === button.dataset.topicPick));
+          button.setAttribute("aria-pressed", String(choice.value === button.dataset.topicPick));
         }
       };
       for (const button of topicPicks) {
         button.addEventListener("click", () => {
-          if (!choice) return;
-          choice.value = choice.value === button.dataset.topicPick ? "" : button.dataset.topicPick!;
+          choice.value = button.dataset.topicPick!;
           choice.dispatchEvent(new Event("change"));
         });
       }
-      choice?.addEventListener("change", sync);
+      choice.addEventListener("change", sync);
       sync();
-      side.hidden = false;
+      sideTopics.hidden = false;
     }
 
-    const asked = new URL(location.href).searchParams.get("kind");
-    pick(picks.some((button) => button.dataset.kindPick === asked) ? asked! : "all", false);
+    const asked = new URL(location.href).searchParams;
+    const askedKind = asked.get("kind");
+    const askedSpan = asked.get("span");
+    kind = [...kindField.options].some((option) => option.value === askedKind) ? askedKind! : "all";
+    for (const row of allRows) row.toggleAttribute("data-out-kind", kind !== "all" && row.dataset.kind !== kind);
+    kindField.value = kind;
+    setSpan(SPANS.some((entry) => entry.span === askedSpan) ? askedSpan! : "week", false);
     fromAddress();
   }
 </script>
@@ -426,129 +479,113 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     margin-top: clamp(1.5rem, 5vw, 2.25rem);
   }
 
-  .days-title {
-    font-size: clamp(1.35rem, 3.8vw, 1.75rem);
-    line-height: 1.2;
-    margin: 0;
-    text-wrap: balance;
-  }
-
-  .days-head .tally {
-    margin: 0.4rem 0 0;
-    font-size: 0.95rem;
-    max-width: var(--measure);
-  }
-
-  .week {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    list-style: none;
-    padding: 0;
-    margin: 1.1rem 0 0;
-    max-width: none;
-    border: 1px solid var(--rule);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-
-  .week li + li {
-    border-left: 1px solid var(--rule);
-  }
-
-  .week a {
-    display: block;
-    min-height: 2.75rem;
-    padding: 0.5rem 0.2rem 0.55rem;
-    text-align: center;
-    line-height: 1.25;
-    color: var(--ink);
-    text-decoration: none;
-    transition: background-color 120ms;
-  }
-
-  .week a:hover {
-    background: var(--panel);
-  }
-
-  .week a[data-checked-day] {
-    background: var(--tint);
-  }
-
-  .week a:not([href]) {
-    color: var(--muted);
-  }
-
-  .week a:focus-visible {
-    outline-offset: -3px;
-  }
-
-  .week-day,
-  .week-count {
-    display: block;
-    font-size: 0.75rem;
-    color: var(--muted);
-  }
-
-  .week-date {
-    display: block;
-    font-size: 1.15rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* The kinds of row: each control carries the ground its rows are drawn on. */
-  .kinds {
+  /* The head: what the list is, and in grey the day it is dated by. */
+  .days-head {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-top: 1.1rem;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.1rem 1rem;
   }
 
-  .kinds .share {
-    min-height: 2.1rem;
-    color: var(--ink);
+  .days-title {
+    font-size: clamp(1.35rem, 3.8vw, 1.6rem);
+    line-height: 1.2;
+    margin: 0;
   }
 
-  .kinds .share[aria-pressed="true"] {
-    background: var(--tint);
-  }
-
-  .kind-count {
-    font-weight: 400;
+  .checked-on {
+    margin: 0;
+    font-size: 0.85rem;
     color: var(--muted);
-    font-variant-numeric: tabular-nums;
   }
 
-  .swatch {
-    width: 0.8rem;
-    height: 0.8rem;
-    border-radius: 0.2rem;
-    border: 1px solid var(--ring);
-    background: var(--paper);
-    flex: none;
-  }
-
-  .swatch.record {
-    background: var(--tag);
-  }
-
-  .swatch.promise {
-    background: var(--promise);
-    border: 1px dashed #a8924a;
+  /* The choices: one row of fields, each saying what it shows. */
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.9rem;
   }
 
   .days-body {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 0 2.6rem;
+    gap: 0 2.4rem;
     align-items: start;
   }
 
-  @media (min-width: 56rem) and (scripting: enabled) {
+  .days-main {
+    min-width: 0;
+  }
+
+  @media (min-width: 56rem) {
     .days-body {
-      grid-template-columns: minmax(0, 1fr) 16rem;
+      grid-template-columns: 13.5rem minmax(0, 1fr);
+      gap: 0 2rem;
     }
 
+    /* The list is the one white sheet on the pale ground. */
+    .days-main {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      padding: 1.4rem clamp(1.1rem, 2.4vw, 2rem) 1.8rem;
+    }
+  }
+
+  /* The right column: three short parts in grey headings, parted by hairlines. */
+  .days-rail {
+    display: none;
+  }
+
+  @media (min-width: 72rem) {
+    .days-body {
+      grid-template-columns: 13.5rem minmax(0, 1fr) 15rem;
+    }
+
+    .days-rail {
+      display: grid;
+      gap: 1.4rem;
+      position: sticky;
+      top: 1rem;
+      padding-top: 1.4rem;
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .days-rail h3 {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin: 0 0 0.35rem;
+    }
+
+    .days-rail p,
+    .days-rail ol {
+      margin: 0 0 0.45rem;
+      max-width: none;
+    }
+
+    .days-rail ol {
+      padding-left: 1.1rem;
+    }
+
+    .days-rail li + li {
+      margin-top: 0.25rem;
+    }
+
+    .days-rail a {
+      font-weight: 600;
+    }
+
+    .days-rail > div + div {
+      padding-top: 1.4rem;
+      border-top: 1px solid var(--rule);
+    }
+  }
+
+  @media (min-width: 56rem) and (scripting: enabled) {
     /* The side column holds the topic choice there; the field is for narrower screens. */
     .days .topic-filter {
       display: none;
@@ -808,14 +845,9 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     margin-top: 0;
   }
 
-  .picked-note {
-    padding-top: 1.1rem;
-    font-size: 0.9rem;
-    color: var(--muted);
-  }
-
-  .picked-note + .day-row {
-    padding-top: 0.5rem;
+  /* The older claim stands apart from the dated list, under its own heading. */
+  .older {
+    margin-top: 1.4rem;
   }
 
   /* The reader's last visit: one line across the list. */
@@ -843,27 +875,31 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     padding-top: 1.4rem;
   }
 
-  /* Beside the list on a wide screen. */
+  /* Beside the list on a wide screen: on the pale ground, so it recedes and the list
+     keeps the page. */
   .days-side {
     display: none;
   }
 
   @media (min-width: 56rem) {
-    .days-side:not([hidden]) {
+    .days-side {
       display: grid;
-      gap: 1.5rem;
+      gap: 1.3rem;
       position: sticky;
       top: 1rem;
-      padding-top: 1.6rem;
-      font-size: 0.9rem;
+      max-height: calc(100vh - 2rem);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--ring) transparent;
+      padding: 1.4rem 0 1rem;
+      font-size: 0.88rem;
     }
   }
 
   .visit-note {
-    margin: 0;
-    padding: 0.85rem 1rem;
-    background: var(--panel);
-    border-radius: var(--radius);
+    margin: 0 0.4rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--rule);
   }
 
   .visit-note a {
@@ -872,40 +908,55 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     font-weight: 600;
   }
 
-  .side-topics h3 {
-    font-size: 0.95rem;
-    margin: 0 0 0.4rem;
+  .side-group h3 {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin: 0 0.4rem 0.3rem;
   }
 
-  .side-topics ul {
+  .days-side .side-group ul {
     list-style: none;
     padding: 0;
     margin: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
+    max-width: none;
   }
 
-  .topic-pick {
+  .side-pick,
+  .side-group a {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.6rem;
+    width: 100%;
     font: inherit;
-    font-size: 0.82rem;
+    text-align: left;
+    line-height: 1.3;
     color: var(--ink);
-    background: var(--tint);
-    border: 1px solid var(--tint);
-    border-radius: 999px;
-    padding: 0.15rem 0.65rem;
+    background: none;
+    border: 0;
+    border-radius: 0.5rem;
+    padding: 0.26rem 0.4rem;
     cursor: pointer;
+    text-decoration: none;
     transition: background-color 120ms;
   }
 
-  .topic-pick:hover {
-    border-color: var(--blue);
+  .side-pick:hover,
+  .side-group a:hover {
+    background: var(--tint);
   }
 
-  .topic-pick[aria-pressed="true"] {
+  .side-pick:focus-visible,
+  .side-group a:focus-visible {
+    outline-offset: -3px;
+  }
+
+  .side-pick[aria-pressed="true"] {
     background: var(--paper);
-    border-color: var(--blue);
+    color: var(--blue);
     font-weight: 700;
+    box-shadow: inset 0 0 0 1px var(--rule), 0 1px 2px rgb(11 37 69 / 0.06);
   }
 
   /* A phone: the head on one line, the kinds without their counts in one row, and
@@ -920,60 +971,21 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       display: none;
     }
 
-    .week-count,
-    .kinds .kind-count {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      margin: -1px;
-      overflow: hidden;
-      clip-path: inset(50%);
-      white-space: nowrap;
-    }
-
     .days-title {
-      font-size: 1.05rem;
+      font-size: 1.2rem;
     }
 
-    .days-head .tally {
-      display: none;
-    }
-
-    .week {
+    /* Two fields to a row, each 44 pixels to press. */
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.4rem;
       margin-top: 0.6rem;
     }
 
-    .week a {
-      padding-block: 0.3rem 0.35rem;
-    }
-
-    .kinds {
-      flex-wrap: nowrap;
-      gap: 0.25rem;
-      margin-top: 0.6rem;
-    }
-
-    .kinds .share {
-      flex: 1 1 auto;
-      justify-content: center;
-      gap: 0.25rem;
+    .pick select {
+      width: 100%;
       min-height: 2.75rem;
-      padding-inline: 0.3rem;
-      font-size: 0.8rem;
-    }
-
-    .kinds .swatch {
-      width: 0.7rem;
-      height: 0.7rem;
-    }
-
-    .week a,
-    .kinds .share {
-      position: relative;
-    }
-
-    .days .scoreboard {
-      margin-top: 0.5rem;
     }
 
     .row-source a {
@@ -1019,8 +1031,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       padding-top: 0.7rem;
     }
 
-    .day-row,
-    .picked-note + .day-row {
+    .day-row {
       padding-top: 0.3rem;
     }
 
@@ -1030,10 +1041,6 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
 
     .row-title {
       margin-top: 0;
-    }
-
-    .picked-note {
-      padding-top: 0.5rem;
     }
 
     /* Rows are parted by their rule and the space under it. */
@@ -1066,31 +1073,18 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     }
   }
 
-  /* A narrow phone: the four kinds take two rows rather than widen the page. */
-  @media (max-width: 22rem) {
-    .kinds {
-      flex-wrap: wrap;
-    }
-  }
-
   /* A forced palette drops fills: what is picked gains an outline, a registry row and
-     the "on record" cell an edge, and the three swatches are told apart by their edge. */
+     the "on record" cell an edge. */
   @media (forced-colors: active) {
-    .kinds .share[aria-pressed="true"],
-    .topic-pick[aria-pressed="true"],
-    .week a[data-checked-day] {
+    .side-pick[aria-pressed="true"],
+    .pick select:has(option:not(:first-child):checked) {
       outline: 2px solid CanvasText;
       outline-offset: -2px;
     }
 
     .record-row,
-    .row-promise,
-    .visit-note {
+    .row-promise {
       border: 1px solid CanvasText;
-    }
-
-    .swatch.record {
-      border-width: 3px;
     }
 
     .last-visit::before,
@@ -1100,10 +1094,16 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
   }
 
   @media print {
-    .kinds,
+    .filters,
     .earlier,
-    .days-side {
+    .days-side,
+    .days-rail {
       display: none;
+    }
+
+    .days-main {
+      border: 0;
+      padding: 0;
     }
 
     /* A row is never split across sheets, and a heading stays with its first row. */
