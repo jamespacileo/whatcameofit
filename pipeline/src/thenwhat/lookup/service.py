@@ -408,6 +408,11 @@ def _tracked(session: Session, names: list[str], indication: str | None) -> list
         if name_key(condition) == name_key(indication)
     ]
     primary = _regimen_names(names[:1])
+    direct = [slug for slug, _, keys in cards if primary & keys]
+    if direct:
+        # Published whole aliases establish equivalence; inferred aliases must
+        # not add a component card to an exact primary match.
+        return list(dict.fromkeys(direct))
     named_aliases = [name for _, aliases, keys in cards if primary & keys for name in aliases]
     primary_parts = {one for one in _regimen_parts(names[:1]) if len(one) > 1}
     named_parts = {one for one in _regimen_parts(named_aliases) if len(one) > 1}

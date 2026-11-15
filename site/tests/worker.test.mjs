@@ -257,7 +257,7 @@ test("tracked cards require the same condition and complete regimen without extr
   const claims = {
     ageing: { names: ["EX-1"], indication: "biological ageing", headline: "Ageing", page: "/ageing" },
     single: { names: ["EX-1", "ONE-BRAND"], indication: "obesity", headline: "One medicine", page: "/single" },
-    combined: { names: ["EX-2 and EX-1", "PAIR-12", "EX-1"], indication: "obesity", headline: "Combination", page: "/combined" },
+    combined: { names: ["EX-2 and EX-1", "PAIR-12", "EX-1", "ONE-BRAND plus EX-2"], indication: "obesity", headline: "Combination", page: "/combined" },
     legacy: { names: ["EX-1"], headline: "Unknown condition", page: "/legacy" },
     triple: { names: ["EX-1 plus EX-2 plus EX-3", "TRIPLE-123"], indication: "obesity", headline: "Triple", page: "/triple" },
   };
@@ -274,6 +274,7 @@ test("tracked cards require the same condition and complete regimen without extr
     ["PAIR-12", "obesity", ["ONE-BRAND"], ["combined"]],
     ["EX-1 plus EX-2 plus EX-3", "obesity", ["EX-1 plus EX-2"], ["triple"]],
     ["TRIPLE-123", "obesity", ["PAIR-12"], ["triple"]],
+    ["ONE-BRAND plus EX-2", "obesity", [], ["combined"]],
   ]) {
     let reads = 0, scores = 0;
     const model = {
