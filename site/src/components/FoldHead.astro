@@ -1,0 +1,32 @@
+---
+// A section's heading that folds the section: the heading stays a heading and holds
+// the button. Everything after this element in its parent is the fold's body, so the
+// markup of a section does not change. With no script the body is simply shown.
+// The script is src/scripts/folds.ts, loaded once by the base layout, so that a
+// section's own markup holds no script.
+// Openspec site-publishing: "Sections of a claim page fold".
+import ChevronDown from "@lucide/astro/icons/chevron-down";
+
+interface Props {
+  id: string;
+  /** How the section starts on a wide screen. */
+  start?: "open" | "folded";
+  /** How it starts below the phone breakpoint. */
+  phone?: "open" | "folded";
+  /** What the section holds, said beside the heading: "3 trials · all finished". */
+  note?: string | null;
+}
+
+const { id, start = "open", phone = start, note = null } = Astro.props;
+---
+
+<div class="fold-head" data-fold={start} data-fold-phone={phone}>
+  <h2 class="bar" id={id}>
+    <button type="button" class="fold" aria-expanded="true">
+      <span class="chev" aria-hidden="true"><ChevronDown size={16} stroke-width={2.2} /></span>
+      <span><slot /></span>
+    </button>
+  </h2>
+  {note && <span class="fold-note">{note}</span>}
+  <slot name="beside" />
+</div>

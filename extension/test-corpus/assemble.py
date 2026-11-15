@@ -14,7 +14,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from openpyxl import Workbook
-from openpyxl.formatting.rule import CellIsRule
+from openpyxl.formatting.rule import FormulaRule
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
@@ -127,6 +127,7 @@ def main():
     results = cache["results"]
     notes = load("notes.json", {})
     overrides = load("verdicts.json", {})
+    reruns = load("reruns.json", {})
 
     out = []
     for row in rows:
@@ -150,6 +151,13 @@ def main():
             result, why = overrides[rid]
             note = f"{why}; {note}" if note else why
         ms = (browser or address or {}).get("ms")
+        rerun = reruns.get(rid, {})
+        if rerun:
+            result, path = rerun["test_result"], rerun["how_read"]
+            answer, tracked, n, likely, top = (rerun.get(key, "") for key in
+                ["lookup_answer", "tracked_claim", "trial_records", "likely_records", "top_record"])
+            ms = rerun.get("ms")
+            note = rerun["reason"]
         out.append({
             "id": rid, "group": row["group"], "page_type": row["page_type"], "url": url, "outlet": row["outlet"],
             "intervention_condition": row["intervention_condition"], "expected_answer": row["expected_answer"],
@@ -160,6 +168,7 @@ def main():
             "http_status": c.get("http_status", ""), "redirects_to": c.get("redirects_to", ""), "page_title": c.get("page_title", ""),
             "link_checked": c.get("link_checked", ""), "source_of_row": row["source_of_row"],
             "notes": "; ".join(x for x in [note, row["notes"]] if x),
+            **{key: rerun.get(key, "") for key in ["last_tested", "tested_build", "site_result", "extension_result"]},
         })
     write_workbook(out)
     print(len(out), "rows", dict(Counter(o["test_result"] for o in out)))
@@ -180,7 +189,8 @@ def write_workbook(out):
     ws.auto_filter.ref = ws.dimensions
     widths = {"id": 7, "group": 9, "page_type": 26, "url": 46, "outlet": 20, "intervention_condition": 36, "expected_answer": 28,
               "test_result": 10, "how_read": 22, "lookup_answer": 40, "top_record": 50, "tracked_claim": 26,
-              "closest_tracked_claim": 26, "notes": 50, "page_title": 40, "redirects_to": 30}
+              "closest_tracked_claim": 26, "notes": 50, "page_title": 40, "redirects_to": 30,
+              "last_tested": 24, "tested_build": 42, "site_result": 60, "extension_result": 70}
     for i, name in enumerate(cols, 1):
         ws.column_dimensions[get_column_letter(i)].width = widths.get(name, 10)
     last = len(out) + 1
@@ -189,7 +199,7 @@ def write_workbook(out):
     ws.add_data_validation(choices)
     choices.add(f"{t}2:{t}{last}")
     for word, color in [("pass", "C6EFCE"), ("partial", "FFEB9C"), ("fail", "FFC7CE"), ("blocked", "D9D9D9"), ("review", "DDEBF7")]:
-        ws.conditional_formatting.add(f"{t}2:{t}{last}", CellIsRule(operator="equal", formula=[f'"{word}"'], fill=PatternFill("solid", fgColor=color)))
+        ws.conditional_formatting.add(f"{t}2:{t}{last}", FormulaRule(formula=[f'${t}2="{word}"'], fill=PatternFill("solid", fgColor=color)))
 
     s = wb.create_sheet("Summary")
     s.append(["Extension test corpus", f"built {datetime.now(UTC).date().isoformat()}"])
@@ -226,6 +236,9 @@ def write_workbook(out):
         ("access / http_status", "One plain request on the check date: open, paywall, sign-in wall likely, blocks bots."),
         ("priority", "P1 core page types and the test-brief rows; P2 negative, edge and unopened rows; P3 tracked seed claims."),
         ("Adding rows", "Source of truth is extension/test-corpus/urls.csv in the repository. Edits made here are overwritten by the next sync."),
+        ("last_tested / tested_build", "UTC rerun timestamp and exact base commit plus correction fingerprint. Local-source results are not evidence of deployment."),
+        ("site_result / extension_result", "Separate deployed-site address checks from corrected local-service results and the extension reading method. DOM replay, live caption, bounded visible frame and blocked browser attempts are distinguished. A caption check does not verify the full video or installed extension."),
+        ("Rerun evidence", "extension/test-corpus/reruns.json preserves adjudicated rerun results across syncs. runs/ contains structured summaries without copied post text or screenshots. Existing findings outside the selected rerun remain open."),
     ]:
         k.append(record)
     k["A1"].font = bold

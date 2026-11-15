@@ -405,6 +405,59 @@ export function plainFacts(trial: ExportedTrial, dates: TrialDates): string[] {
   ].filter((part): part is string => part !== null);
 }
 
+/** What the trials table says when a record names nothing to compare with, or has
+ * posted nothing. */
+export const NO_COMPARATOR = "None named in the record";
+export const NO_RESULTS = "None posted";
+
+export interface TrialColumns {
+  /** "135 people", "330 people planned", or the registry's title when no size is stated. */
+  lead: string;
+  isTitle: boolean;
+  /** "Phase 3", when the registry gives a phase. */
+  phase: string | null;
+  compared: string;
+  /** How people were assigned and whether it was blinded: the parts the record states. */
+  design: string[];
+  state: string | null;
+  results: string;
+}
+
+/** One trial as a row to read across: the same facts and words as `trialHeading` and
+ * `plainFacts`, set out by column. States only what the record states. */
+export function trialColumns(
+  trial: ExportedTrial,
+  approach: string | null,
+  dates: TrialDates,
+): TrialColumns {
+  const facts = trial.facts;
+  const stated = facts?.participants;
+  const people = stated ? `${number(stated.count)} ${stated.count === 1 ? "person" : "people"}` : null;
+  const compared = (facts?.comparators ?? []).map((code) => comparatorWords(code, approach));
+  const comparedText = compared.join(" and ");
+  const state = PLAIN_STATE[trial.state] ?? null;
+  const phased = trial.phases.filter((code) => code !== "not_applicable");
+  return {
+    lead: people
+      ? stated!.basis === "planned"
+        ? `${people} planned`
+        : people
+      : (trial.title ?? `Trial ${trial.trial_id}`),
+    isTitle: !people,
+    phase: phased.length > 0 ? phaseText(phased) : null,
+    compared:
+      comparedText.length > 0
+        ? `${comparedText.charAt(0).toUpperCase()}${comparedText.slice(1)}`
+        : NO_COMPARATOR,
+    design: [
+      facts?.allocation ? (PLAIN_ALLOCATION[facts.allocation] ?? null) : null,
+      facts?.masking ? (PLAIN_MASKING[facts.masking] ?? null) : null,
+    ].filter((part): part is string => part !== null),
+    state: state && trial.state === "completed" && dates.finished ? `${state} ${day(dates.finished)}` : state,
+    results: facts?.results ? (dates.posted ? `Posted ${day(dates.posted)}` : "Posted") : NO_RESULTS,
+  };
+}
+
 /** What the fold's control says is inside it. */
 export function foldLabel(trial: ExportedTrial): string {
   const facts = trial.facts;
