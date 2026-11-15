@@ -97,11 +97,30 @@ export function collectFromPage() {
       if (!wanted) return empty;
       const selector = host === "linkedin.com" ? '[role="listitem"][componentkey^="update-card-focus"]'
         : '[data-testid^="postThreadItem-by-"]';
-      const bound = [...document.querySelectorAll(selector)].filter(node => visible(node) &&
-        [...node.querySelectorAll("a[href]")].some(link => postKey(link.href) === wanted));
+      const ownedLinks = node => [...node.querySelectorAll("a[href]")].filter(link => {
+        if (link.closest(selector) !== node) return false;
+        if (host === "bsky.app") return postKey(link.href) && /\/(?:liked-by|reposted-by|quotes)\/?$/.test(new URL(link.href, location.href).pathname) &&
+          !!link.querySelector('[data-testid="likeCount-expanded"], [data-testid="repostCount-expanded"], [data-testid="quoteCount-expanded"]');
+        return !link.closest('[data-testid="expandable-text-box"], [componentkey^="comment"]') &&
+          !!link.querySelector('figure img, [aria-labelledby], svg[id^="paper-plane"]');
+      });
+      const bound = [...document.querySelectorAll(selector)].filter(node => {
+        if (!visible(node) || node.querySelector(selector)) return false;
+        const keys = new Set(ownedLinks(node).map(link => postKey(link.href)).filter(Boolean));
+        return keys.size === 1 && keys.has(wanted);
+      });
       // Never fall back to main: signed-in sidebars and replies are outside the
       // addressed report, even when no post has finished loading yet.
-      if (bound.length === 1) return fromNode(bound[0]);
+      if (bound.length === 1) {
+        const node = bound[0];
+        if (host === "bsky.app") return fromNode(node);
+        const captions = [...node.querySelectorAll('[data-testid="expandable-text-box"]')]
+          .filter(item => !item.closest('[componentkey^="comment"]'));
+        const media = ownedLinks(node).flatMap(link => [...link.querySelectorAll('figure img')]).filter(visible);
+        // LinkedIn can nest replies and the reader's draft below the post. Only
+        // its caption and uniquely owned attachment supply words and pixels.
+        if (captions.length === 1) return fromNode(captions[0], media.length === 1 ? media[0] : null);
+      }
       // Public caption metadata also supports signed-out or changing layouts,
       // but cannot authorize a screenshot of an unbound page.
       const metaUrl = document.querySelector('meta[property="og:url"]')?.getAttribute("content");

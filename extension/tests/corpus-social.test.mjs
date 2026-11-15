@@ -115,10 +115,11 @@ test('an Instagram carousel captures only its unique visible slide inside the bo
 test('LinkedIn and Bluesky bind the requested post without profile sidebars or replies', () => {
  const url='https://www.linkedin.com/posts/author_trial-activity-1234567890123456789-abcd/';
  const claim='EX-17 was studied for missing teeth in a randomized clinical trial.';
- let x=read(url,'','<main><aside>PRIVATE_PROFILE_ANALYTICS</aside><div role="listitem" componentkey="update-card-focus-current"><a href="'+url+'">Permalink</a><span data-testid="expandable-text-box">'+claim+'</span></div><div role="listitem" componentkey="comment-current"><a href="'+url+'">Reply</a>REPLY_OTHER_DRUG</div></main>');
+ let x=read(url,'','<main><aside>PRIVATE_PROFILE_ANALYTICS</aside><div role="listitem" componentkey="update-card-focus-current"><a href="'+url+'"><div aria-labelledby="reactions">Reactions</div></a><span data-testid="expandable-text-box">'+claim+'</span><div componentkey="comment-nested">NESTED_REPLY_OTHER_DRUG</div><div componentkey="commentBox-draft">PRIVATE_DRAFT</div></div><div role="listitem" componentkey="comment-current"><a href="'+url+'">Reply</a>REPLY_OTHER_DRUG</div></main>');
  assert.ok(x.request?.text.includes('EX-17'));
  assert.ok(!x.request.text.includes('PRIVATE_PROFILE_ANALYTICS'));
  assert.ok(!x.request.text.includes('REPLY_OTHER_DRUG'));
+ assert.ok(!x.request.text.includes('PRIVATE_DRAFT'));
  assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true,'text-only post cannot capture the sidebar');
  x=read(url,'','<main>PRIVATE_PROFILE_ANALYTICS<div role="listitem" componentkey="update-card-focus-other"><a href="/posts/author_other-activity-9999999999999999999-abcd/">Other post</a>'+claim+'</div></main>');
  assert.equal(x.request,null,'stale post identity fails closed');
@@ -129,11 +130,15 @@ test('LinkedIn and Bluesky bind the requested post without profile sidebars or r
  x=read(url,'<meta property="og:url" content="https://www.linkedin.com/posts/author_other-activity-9999999999999999999-abcd/"><meta property="og:description" content="'+claim+'">','<main>Sign in</main>');
  assert.equal(x.request,null);
  const bsky='https://bsky.app/profile/journal.example/post/3abcdef12345';
- x=read(bsky,'','<main><div data-testid="postThreadItem-by-journal.example"><div>'+claim+'</div><a href="'+bsky+'/liked-by">Likes</a></div><div data-testid="postThreadItem-by-other.example">REPLY_OTHER_DRUG<a href="/profile/other.example/post/3abc99999999">Reply</a></div></main>');
+ x=read(bsky,'','<main><div data-testid="postThreadItem-by-journal.example"><div>'+claim+'</div><a href="'+bsky+'/liked-by"><div data-testid="likeCount-expanded">Likes</div></a></div><div data-testid="postThreadItem-by-other.example">REPLY_OTHER_DRUG<a href="/profile/other.example/post/3abc99999999">Reply</a></div></main>');
  assert.ok(x.request?.text.includes('EX-17'));
  assert.ok(!x.request.text.includes('REPLY_OTHER_DRUG'));
  x=read(bsky,'','<main><div data-testid="postThreadItem-by-journal.example">STALE_OTHER_DRUG<a href="/profile/journal.example/post/3abc99999999/liked-by">Likes</a></div></main>');
  assert.equal(x.request,null);
+ x=read(bsky,'','<main><div data-testid="postThreadItem-by-journal.example">STALE_OTHER_DRUG<a href="/profile/journal.example/post/3abc99999999/liked-by"><div data-testid="likeCount-expanded">Likes</div></a><a href="'+bsky+'">Replying to original</a></div></main>');
+ assert.equal(x.request,null,'an inline link cannot impersonate the requested post');
+ x=read(url,'','<main><div role="listitem" componentkey="update-card-focus-other"><a href="/posts/author_other-activity-9999999999999999999-abcd/"><div aria-labelledby="reactions">Reactions</div></a><span data-testid="expandable-text-box">STALE_OTHER_DRUG<a href="'+url+'">Cited original</a></span></div></main>');
+ assert.equal(x.request,null,'a cited post cannot identify the containing LinkedIn post');
  const chosen='Selected EX-42 report for the named condition.';
  x=read(url,'','<main>PRIVATE_PROFILE_ANALYTICS</main>',chosen);
  assert.equal(x.request.text,chosen);
