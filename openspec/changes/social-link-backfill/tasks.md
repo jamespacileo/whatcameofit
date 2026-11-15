@@ -110,6 +110,7 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 - [x] 10.8 Score the leads that name a topic first in triage, since triage works oldest first and a topic's news is recent; verify with a test that a topic lead among twenty-five older ones is in the first call
 - [x] 10.9 End a lead whose read names a class of treatments as not one treatment, by a checked-in rule on the name and before any decision; verify with tests of class names with and without a code, of single treatments, and of a read that asks no decision
 - [x] 10.10 Ask the read for one condition by the name a registry files it under, never an aim or an outcome
+- [x] 10.12 Tighten the class rule after the reread let four class names through ("GLP-1s", "GLP-1 drugs for obesity", "GLP-1 metabolic therapy", "GLP-1 and/or GIP receptor agonist prescriptions"): a class word anywhere, the plural of a code, a trailing "for", and a topic's class word with no drug and no name left
 - [ ] 10.11 Take the GLP-1 claims no one has prepared back out, read their leads again, and record how many claims the topic then has
 - [ ] 10.4 Add the news outlets that carry topic leads and are on no list; set the outlet kind again on stored leads and screen them again
 - [ ] 10.5 Have background cards made for every claim a read drafted, as part of preparing it, and verify the coverage report shows cards for them

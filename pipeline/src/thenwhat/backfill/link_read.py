@@ -31,7 +31,12 @@ from thenwhat.backfill.link_screen import CLAIM, REGISTRY_TRIAL, TITLE_NAMES_CLA
 from thenwhat.backfill.link_triage import is_passed
 from thenwhat.backfill.outlet_kinds import name_of
 from thenwhat.backfill.steps import MODEL, TEXT_DOOR, Failed, ModelSpend
-from thenwhat.backfill.topics import names_one, other_names_of, title_names
+from thenwhat.backfill.topics import (
+    names_one,
+    names_only_a_class,
+    other_names_of,
+    title_names,
+)
 from thenwhat.claims.entry import (
     MAX_NAMED_CLAIMS,
     EntryError,
@@ -397,7 +402,7 @@ class LinkRead:
             return Failed(str(failure))
         # A class of treatments is every member of it, not one: "GLP-1 receptor agonists".
         # The name the read gave says so by rule, so no decision is paid for.
-        if is_a_class(draft.intervention):
+        if is_a_class(draft.intervention) or names_only_a_class([draft.intervention]):
             return self._finish(
                 record,
                 ReadOutcome.NOT_ONE_TREATMENT,

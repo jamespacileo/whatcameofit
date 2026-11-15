@@ -185,11 +185,19 @@ After the read and before any claim is joined or drafted, a decision SHALL say w
 - **THEN** the article is not added to that claim
 
 ### Requirement: A class of treatments is not one treatment
-When the treatment the read names ends in a word for a class of treatments (agonists, inhibitors, blockers, analogs and the like, singular or plural) or in a plural kind of thing (drugs, medications, medicines, treatments, therapies, vaccines, antibodies), no claim SHALL be joined or drafted and no decision SHALL be asked. The lead's outcome SHALL be not one treatment, with what was read and that it is a class. A code in the name SHALL NOT change this. The rule is checked-in and applied from the name alone. A singular category that hides several products, such as "COVID-19 vaccine", is not this rule's case: the same-claim decision compares the summaries and refuses the join (`corpus-match-accuracy`, "identity unresolved").
+When the treatment the read names is a class by a checked-in rule on the name, no claim SHALL be joined or drafted and no decision SHALL be asked; the lead's outcome SHALL be not one treatment, with what was read and that it is a class. A name is a class when, with anything it is said to be for set aside, it holds a word for a class (agonist, inhibitor, blocker, analog, modulator, mimetic, singular or plural), ends in a plural kind of thing (drugs, medications, medicines, treatments, therapies, vaccines, antibodies, prescriptions), or holds the plural of a code. A name is also a class when it holds a topic's class word, none of the topic's drugs, and what is left of it is not a name. A code in the name SHALL NOT change this. A singular category that hides several products, such as "COVID-19 vaccine", is not this rule's case: the same-claim decision compares the summaries and refuses the join (`corpus-match-accuracy`, "identity unresolved").
 
 #### Scenario: A class of treatments
 - **WHEN** a read names "GLP-1 receptor agonists" as the treatment
 - **THEN** the lead's outcome is not one treatment, its detail says a class of treatments, no claim exists and no treatment-kind decision was asked
+
+#### Scenario: A topic's class named without a drug
+- **WHEN** a read names "GLP-1 metabolic therapy" as the treatment, and GLP-1 is a topic's class word
+- **THEN** the lead's outcome is not one treatment and no decision was asked
+
+#### Scenario: A treatment described by what it does to the class's target
+- **WHEN** a read names a treatment that is described as releasing GLP-1 and names no drug of the topic
+- **THEN** the rule does not apply, because what is left of the name still names something
 
 #### Scenario: One member of a class
 - **WHEN** a read names "semaglutide" as the treatment

@@ -250,6 +250,9 @@ def test_a_description_is_not_another_name(description: str):
         "COVID-19 vaccines",
         "Weight-loss medications",
         "β2 agonist",
+        "GLP-1s",
+        "GLP-1 drugs for obesity",
+        "GLP-1 and/or GIP receptor agonist prescriptions",
     ],
 )
 def test_a_class_of_treatments_is_told_from_one_treatment(name: str):
@@ -257,7 +260,16 @@ def test_a_class_of_treatments_is_told_from_one_treatment(name: str):
 
 
 @pytest.mark.parametrize(
-    "name", ["semaglutide", "Wegovy", "BPL-003", "COVID-19 vaccine", "esketamine nasal spray", ""]
+    "name",
+    [
+        "semaglutide",
+        "Wegovy",
+        "BPL-003",
+        "COVID-19 vaccine",
+        "esketamine nasal spray",
+        "retatrutide for obesity",
+        "",
+    ],
 )
 def test_one_treatment_is_not_a_class(name: str):
     assert not is_a_class(name)
