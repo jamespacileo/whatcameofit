@@ -73,7 +73,7 @@ const gloss = `${STATUS_GLOSSES[claim.status.code]}${overlay ? `. ${overlay}` : 
     <div class="row-more">
       <div>
         <p class="row-then">
-          <strong>{stage ?? "Not recorded"}</strong>
+          <strong>{stage ?? "Not recorded"}</strong>{" "}
           {[`when first reported${claim.first_reported_date ? `, ${formatDate(claim.first_reported_date)}` : ""}.`, `${gloss}.`, ...sentences].join(" ")}
         </p>
         {
