@@ -30,3 +30,5 @@ None.
 - `pipeline/src/thenwhat/cli/outlets.py`: no longer shares a pacer by hand.
 - `source_allowance_use.last_request_at` can now hold a time a moment ahead of now: the turn a client has taken and is waiting for. `Allowances.claim` already waits correctly on such a time.
 - One short transaction on a second connection for every request that is not answered from the cache.
+- A row now exists in `source_allowance_use` for every source a client has asked, also for one with no configured allowance (ClinicalTrials.gov when asked by `resolve`, OpenAlex, Crossref). Such a row holds a time and nothing else: it is not an allowance, its count stays at zero, and `backfill plan` does not show it.
+- The second connection matters when many processes run: the database reached its limit of 100 connections on 2026-11-15 with four backfill runs and other sessions. Each turn holds its connection for a moment only, but it is one more a process can ask for at its busiest.
