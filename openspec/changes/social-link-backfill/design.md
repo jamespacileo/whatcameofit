@@ -181,6 +181,28 @@ The gate before reading first required 200 labels given by the operator. Asked w
 - The spot-check is the operator's to do and is not enforced by a count: the gate opens on 200 labels that count. That is the trade the operator chose: triage quality is then measured largely by one model judging another, and the report says how many labels are an assistant's so the figures can be read for what they are.
 - `label-leads` records a file of labels at once, all or none, because 200 commands is no way to label.
 
+## Found on the first reads (2026-11-15): one story became several claims
+
+The first 52 reads in the real database made 39 claims and joined none. Four were esketamine for depression in four wordings and three more were ketamine, each from another outlet's article about one piece of news. The run was stopped and its 39 claims removed before any export; the leads are unread again.
+
+**Why.** `slug_of_claim_covering` joins an article to a claim only when intervention and indication are equal as written. That holds when an operator feeds a claim its articles. It does not hold when several outlets report one story, which is exactly what a much-shared story is.
+
+**The same-claim check.** After the model read, and only when no claim is equal as written, candidates are gathered by rule and one decision judges them:
+
+- *Candidates:* claims whose intervention name or synonym equals one of the read's names, or where one sits whole inside the other, word for word ("esketamine" inside "esketamine nasal spray"; "ketamine" is not inside "esketamine"). Then the claims screening already linked to the lead by its title. At most eight, equal names first, then the oldest. The net is wide on purpose: finding candidates is cheap and deciding is the decision's job.
+- *The decision:* shown the read's treatment and condition and each candidate's, never article text. It answers one of the candidates or none. The rule it is given: the same treatment, and the article's condition is the claim's condition, a narrower form of it, or a wider wording of it. A different condition is a different claim (ketamine for suicidal thinking is not ketamine for depression).
+- *The rule:* the article joins the chosen claim at or above `SAME_CLAIM_ACCEPT_ABOVE` (0.8 unless set). Below it, or on "none", a new claim is drafted. The decision is logged either way, and the lead's detail records what was read and the probability.
+
+*Not taken:* dropping formulation and dose words from names before comparing. That is a word list to maintain, and containment already catches the case. *Not available:* reaching candidates through subject terms or development codes. A claim that was drafted minutes ago has neither.
+
+**Which wording a claim keeps.** The first article read fixes the claim's indication and headline, and reads are ordered by trial links and then by shares. So the page carries the most shared article's wording, not the best one. A join never rewrites it (task 7.6 holds that). The operator can reword a claim; nothing here does.
+
+**Taking turns.** With four reads at once, two articles on one story could both look, find nothing and both draft. Each read therefore takes a database advisory lock after its model read and holds it until its transaction ends, so the question "which claim is this" is settled by one read at a time. Fetching the page and the model read, which are the slow parts, still run side by side.
+
+**No claim published unsearched.** A claim the read drafts was approved by rule on the spot, with the status every new claim starts with, and the export takes every approved claim. Esketamine would have gone out as "preclinical only". Now a named claim stays pending after the read. `thenwhat prepare --pending` already searches and reads the registries for every pending claim; when every step for a read's claim has succeeded, it decides the claim by the rule for drafts. A description in place of a name is still rejected at the read, since no search would change that.
+
+*Alternative, raised in review:* gate the export on a recorded fact (a registry search having run) for every rule-approved claim, however it was made. Sounder as an invariant, but it changes what happens to claims the operator enters by hand and needs a record of searches that does not exist yet. Proposed as its own change, not folded in here.
+
 ## Open Questions
 
 - How long leads that are unlisted or rejected are kept. They are small and hold no text.

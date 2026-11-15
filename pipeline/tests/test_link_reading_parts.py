@@ -13,11 +13,13 @@ from sqlalchemy.orm import Session
 from backfill_support import committed_sessions
 from thenwhat.backfill.allowance import Allowances, outlet_source
 from thenwhat.claims.entry import (
+    MAX_NAMED_CLAIMS,
     InvalidSlug,
     SlugTaken,
     add_article,
     add_claim,
     articles_of,
+    claims_sharing_a_name,
     free_slug_for,
     promises_of,
     slug_for,
@@ -287,3 +289,61 @@ def test_an_earlier_article_is_added_and_nothing_the_operator_reviewed_changes(
     ]
     assert names_after == names_before
     assert promises_of(session, claim) == []
+
+
+# --- claims that share a name ------------------------------------------------------------
+
+
+def named(session: Session, slug: str, intervention: str, indication: str = "depression") -> None:
+    add_claim(
+        session,
+        slug=slug,
+        headline="A synthetic headline",
+        vertical="mental-health",
+        intervention=intervention,
+        indication=indication,
+    )
+
+
+def sharing(session: Session, *names: str) -> list[str]:
+    return [claim.slug for claim in claims_sharing_a_name(session, names)]
+
+
+def test_a_claim_shares_a_name_when_one_name_sits_whole_inside_the_other(session: Session):
+    named(session, "esketamine-depression", "esketamine")
+    named(session, "ketamine-depression", "ketamine")
+    named(session, "ex-9-nasal-spray-depression", "EX-9 nasal spray")
+
+    # Whole words only: "ketamine" is not inside "esketamine".
+    assert sharing(session, "Esketamine  Nasal Spray") == ["esketamine-depression"]
+    assert sharing(session, "ketamine") == ["ketamine-depression"]
+    # Either way round, and through any of the read's names.
+    assert sharing(session, "a new pill", "EX-9") == ["ex-9-nasal-spray-depression"]
+    assert sharing(session, "psilocybin") == []
+    assert sharing(session, "  ") == []
+
+
+def test_claims_with_an_equal_name_come_first_and_every_condition_comes_back(session: Session):
+    named(session, "esketamine-spray-pain", "esketamine nasal spray", "chronic pain")
+    named(session, "esketamine-depression", "esketamine")
+    named(session, "esketamine-pain", "esketamine", "chronic pain")
+    synonym = session.scalars(select(Entity).where(Entity.name == "esketamine nasal spray")).one()
+    synonym.synonyms = ["Spravato"]
+    session.flush()
+
+    found = claims_sharing_a_name(session, ["esketamine"])
+
+    assert [claim.slug for claim in found] == [
+        "esketamine-depression",
+        "esketamine-pain",
+        "esketamine-spray-pain",
+    ]
+    assert (found[0].intervention, found[0].indication) == ("esketamine", "depression")
+    assert sharing(session, "spravato") == ["esketamine-spray-pain"]
+
+
+def test_no_more_claims_are_offered_than_the_decision_is_shown(session: Session):
+    for number in range(MAX_NAMED_CLAIMS + 2):
+        named(session, f"esketamine-condition-{number}", "esketamine", f"condition {number}")
+
+    assert len(claims_sharing_a_name(session, ["esketamine"])) == MAX_NAMED_CLAIMS

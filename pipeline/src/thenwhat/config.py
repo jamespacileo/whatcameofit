@@ -123,6 +123,10 @@ class Settings(BaseSettings):
     # Reading (openspec lead-reading). A new claim's vertical is chosen by a decision and
     # accepted only at or above this probability; below it no claim is made.
     vertical_accept_above: float = 0.8
+    # An article whose treatment shares a name with existing claims joins one of them
+    # only when the same-claim decision chooses it at or above this probability; below
+    # it, or when the decision says none of them, a new claim is drafted.
+    same_claim_accept_above: float = 0.8
     # No outlet is asked for two articles less than this many seconds apart, across
     # every process. A longer delay in the outlet's robots.txt replaces it.
     outlet_interval_seconds: float = 10

@@ -2,6 +2,8 @@
 
 import re
 import unicodedata
+from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import date, datetime
 
 from sqlalchemy import func, select
@@ -184,6 +186,71 @@ def slug_of_claim_covering(session: Session, intervention: str, indication: str)
         if wanted[0] in known_names and name_key(indications[slug]) == wanted[1]:
             return slug
     return None
+
+
+# How many claims are offered to the decision that says whether an article reports one
+# of them. An intervention with more claims than this is rare; the oldest are kept.
+MAX_NAMED_CLAIMS = 8
+
+
+@dataclass(frozen=True, slots=True)
+class NamedClaim:
+    """A claim as the same-claim decision is shown it: what it is for, never its text."""
+
+    slug: str
+    intervention: str
+    indication: str
+
+
+def named_claims(session: Session, claim_ids: Sequence[int]) -> list[NamedClaim]:
+    """These claims as the same-claim decision is shown them, oldest first."""
+    if not claim_ids:
+        return []
+    rows = session.execute(
+        select(Claim.slug, Entity.name, Claim.indication)
+        .join(Entity, Entity.claim_id == Claim.id)
+        .where(Entity.type == EntityType.INTERVENTION, Claim.id.in_(claim_ids))
+        .order_by(Claim.id)
+    )
+    return [NamedClaim(slug, name, indication) for slug, name, indication in rows]
+
+
+def _one_within_the_other(first: list[str], second: list[str]) -> bool:
+    """Whether one run of words is the other, or sits whole inside it."""
+    short, long = sorted((first, second), key=len)
+    if not short:
+        return False
+    return any(
+        long[start : start + len(short)] == short for start in range(len(long) - len(short) + 1)
+    )
+
+
+def claims_sharing_a_name(session: Session, names: Sequence[str]) -> list[NamedClaim]:
+    """Claims whose intervention shares a name with one of these names.
+
+    A name is shared when a claim's intervention name or synonym is one of the names, or
+    when one sits whole inside the other, word for word: "esketamine" inside "esketamine
+    nasal spray". This finds candidates and decides nothing: two claims for one drug and
+    two conditions both come back. Claims whose name is equal come first, then the oldest.
+    """
+    wanted = [words for name in names if (words := name_key(name).split())]
+    if not wanted:
+        return []
+    found: list[tuple[bool, int, NamedClaim]] = []
+    rows = session.execute(
+        select(Claim.id, Claim.slug, Claim.indication, Entity.name, Entity.synonyms)
+        .join(Entity, Entity.claim_id == Claim.id)
+        .where(Entity.type == EntityType.INTERVENTION)
+        .order_by(Claim.id)
+    )
+    for claim_id, slug, indication, name, synonyms in rows:
+        known = [name_key(known_name).split() for known_name in (name, *synonyms)]
+        if not any(_one_within_the_other(mine, theirs) for mine in wanted for theirs in known):
+            continue
+        equal = any(mine == theirs for mine in wanted for theirs in known)
+        found.append((not equal, claim_id, NamedClaim(slug, name, indication)))
+    found.sort(key=lambda entry: entry[:2])
+    return [claim for _, _, claim in found[:MAX_NAMED_CLAIMS]]
 
 
 def add_claim(
