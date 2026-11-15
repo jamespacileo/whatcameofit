@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="mock.css">
 </head>
 <body>
+<a class="skip" href="#main">Skip to the page content</a>
 
 <header class="mast">
   <div class="mast-in">
@@ -15,7 +16,7 @@
   </div>
 </header>
 
-<main>
+<main id="main" tabindex="-1">
 <div class="hero navy">
   <div class="hero-in">
     <div class="hero-main">
@@ -28,7 +29,7 @@
         <h1 class="long">The daily pill solengepras was reported to cut daily ‘off’ time in Parkinson’s disease by about 37 minutes more than placebo</h1>
         <p class="what">A record of what followed these news reports. <a href="#">How a status is set</a></p>
       </div>
-      <div class="hero-rest">
+      <div class="hero-rest to-sheet">
         <ul class="followed reports">
           <li><a href="#"><q>Big potential breakthrough for Parkinson’s treatment as scientists ‘thrilled’</q>&nbsp;<i data-i="out"></i></a><span class="by">Daily Express · express.co.uk · <span class="nowrap">8 Oct 2026</span></span></li>
           <li class="wide-only"><a href="#"><q>Major Parkinson’s breakthrough as new pill offers hope of treating symptoms and has fewer side-effects</q>&nbsp;<i data-i="out"></i></a><span class="by">The Independent · independent.co.uk · <span class="nowrap">7 Oct 2026</span></span></li>
@@ -37,7 +38,7 @@
         </ul>
         <div class="jumps">
           <a class="pill jump" href="#brief"><i data-i="brief"></i>The record in brief</a>
-          <a class="pill jump" href="#recorded"><i data-i="clock"></i>Promised and recorded <span class="n">21</span></a>
+          <a class="pill jump" href="#recorded"><i data-i="clock"></i>Promised and recorded <span class="n">4 and 17</span></a>
           <a class="pill jump" href="#trials"><i data-i="flask"></i>Trials <span class="n">4</span></a>
           <button class="pill narrow-only" type="button"><i data-i="follow"></i>Follow</button>
           <button class="pill narrow-only" type="button"><i data-i="share"></i>Share</button>
@@ -46,7 +47,7 @@
     </div>
 
     <aside class="hero-side snap" aria-labelledby="stands">
-      <div class="snap-head"><span id="stands">Where it stands</span><span>Checked 14 Nov 2026</span></div>
+      <div class="snap-head"><h2 id="stands">Where it stands</h2><span>Checked 14 Nov 2026</span></div>
       <div class="snap-body">
         <p class="status">Phase 3 trial</p>
         <p class="gloss">Large late-stage trial in people</p>
@@ -73,13 +74,32 @@
     <h2>On this page</h2>
     <a href="#brief"><i data-i="brief"></i>The record in brief</a>
     <a href="#said"><i data-i="news"></i>What the reports said <span class="n">3</span></a>
-    <a href="#recorded"><i data-i="clock"></i>Promised and recorded <span class="n">21</span></a>
+    <a href="#recorded"><i data-i="clock"></i>Promised and recorded <span class="n">4 and 17</span></a>
     <a href="#trials"><i data-i="flask"></i>Trials on record <span class="n">4</span></a>
     <a href="#orgs"><i data-i="org"></i>Organisations named <span class="n">5</span></a>
   </div>
   </nav>
 
+  <aside class="rail" aria-label="This claim">
+    <button type="button" data-tip="Follow this claim" aria-label="Follow this claim"><i data-i="follow"></i></button>
+    <button type="button" data-tip="Share" aria-label="Share"><i data-i="share"></i></button>
+    <a href="#" data-tip="Check again later" aria-label="Check again later"><i data-i="clock"></i></a>
+    <a href="#" data-tip="Report an error" aria-label="Report an error"><i data-i="flag"></i></a>
+  </aside>
+
   <article class="sheet">
+    <div class="phone-only sheet-report">
+      <ul class="followed reports">
+        <li><a href="#"><q>Big potential breakthrough for Parkinson’s treatment as scientists ‘thrilled’</q>&nbsp;<i data-i="out"></i></a><span class="by">Daily Express · express.co.uk · <span class="nowrap">8 Oct 2026</span></span></li>
+        <li class="wide-only"><a href="#"><q>Major Parkinson’s breakthrough as new pill offers hope of treating symptoms and has fewer side-effects</q>&nbsp;<i data-i="out"></i></a><span class="by">The Independent · independent.co.uk · <span class="nowrap">7 Oct 2026</span></span></li>
+        <li class="wide-only"><a href="#"><q>Major Parkinson’s breakthrough as new pill offers hope of treating symptoms and has fewer side-effects</q>&nbsp;<i data-i="out"></i></a><span class="by">Yahoo News · nz.news.yahoo.com · <span class="nowrap">7 Oct 2026</span></span></li>
+        <li class="phone-only"><a href="#recorded">2 more reports, on the timeline</a></li>
+      </ul>
+      <div class="jumps">
+        <button class="pill" type="button"><i data-i="follow"></i>Follow</button>
+        <button class="pill" type="button"><i data-i="share"></i>Share</button>
+      </div>
+    </div>
     <p style="padding-top:1.5rem;font-size:1.08rem;max-width:66ch">A randomised, placebo-controlled trial of solengepras in 341 patients in the US, Europe, the UK and Australia found that the higher dose reduced daily ‘off’ time by about 37 minutes more than placebo. The company, Cerevance, will take the results to the FDA to decide next steps.</p>
     <p class="notice">This page has not yet been checked by a person. It was put together by software from the public records it links to. <a href="#">What “checked by a person” means</a></p>
 
@@ -120,12 +140,15 @@
       <div class="sec-head"><h2><button class="fold" type="button" aria-expanded="true" aria-controls="recorded-body"><span class="chev"><i data-i="chev"></i></span>Promised and recorded</button></h2><span class="sec-meta">4 promises · 17 records · 2019 to 2029 · newest first</span></div>
       <div class="sec-body" id="recorded-body">
         <div class="tabs" role="group" aria-label="Show entries of one kind">
-          <button class="tab" type="button" data-kind="all" aria-pressed="true">All <span class="n">19</span></button>
-          <button class="tab" type="button" data-kind="promise" aria-pressed="false">Promises with a date <span class="n">2</span></button>
+          <button class="tab" type="button" data-kind="all" aria-pressed="true">All</button>
+          <button class="tab" type="button" data-kind="promise" aria-pressed="false">Promises <span class="n">4</span></button>
           <button class="tab" type="button" data-kind="registry" aria-pressed="false">Trial registry <span class="n">14</span></button>
           <button class="tab" type="button" data-kind="news" aria-pressed="false">News reports <span class="n">3</span></button>
         </div>
         <p class="vh" role="status" data-tl-status></p>
+
+
+        <p class="key"><span><span class="promise-chip" style="width:1.1rem;height:.8rem;padding:0"></span>Promised</span><span><i data-i="news"></i>News report</span><span><i data-i="flask"></i>Trial registry record</span><span><span class="basis"></span>Basis of status</span></p>
 
         <ol class="tl">
           <li class="tl-year ahead" id="y2029"><span class="yr">2029</span><span class="when">Still to come</span></li>
@@ -176,15 +199,13 @@
           <li class="tl-ev" data-kind="registry"><time datetime="2019-12-02">2 Dec</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial started</span><a class="src" href="#trials">NCT04191577</a></li>
         </ol>
 
-        <div class="undated">
+        <div class="undated" data-kind="promise">
           <span class="lbl">Promised with no date</span>
           <ul>
             <li>US regulatory discussions, with a view to prescriptions within the next few years<span class="by">Daily Express · express.co.uk · <span class="nowrap">8 Oct 2026</span></span></li>
             <li>A similar regulatory process is planned in the UK<span class="by">Daily Express · express.co.uk · <span class="nowrap">8 Oct 2026</span></span></li>
           </ul>
         </div>
-
-        <p class="key"><span><span class="promise-chip" style="width:1.1rem;height:.8rem;padding:0"></span>Promised</span><span><i data-i="news"></i>News report</span><span><i data-i="flask"></i>Trial registry record</span><span><span class="basis"></span>Basis of status</span></p>
       </div>
     </section>
 
@@ -237,12 +258,6 @@
     </section>
   </article>
 
-  <aside class="rail" aria-label="This claim">
-    <button type="button" data-tip="Follow this claim" aria-label="Follow this claim"><i data-i="follow"></i></button>
-    <button type="button" data-tip="Share" aria-label="Share"><i data-i="share"></i></button>
-    <a href="#" data-tip="Check again later" aria-label="Check again later"><i data-i="clock"></i></a>
-    <a href="#" data-tip="Report an error" aria-label="Report an error"><i data-i="flag"></i></a>
-  </aside>
 </div>
 </main>
 

@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="mock.css">
 </head>
 <body>
+<a class="skip" href="#main">Skip to the page content</a>
 
 <header class="mast">
   <div class="mast-in">
@@ -15,7 +16,7 @@
   </div>
 </header>
 
-<main>
+<main id="main" tabindex="-1">
 <div class="hero navy">
   <div class="hero-in">
     <div class="hero-main">
@@ -28,7 +29,7 @@
         <h1 class="long">A wrist-worn device that stimulates the median nerve was reported to reduce tics in people with Tourette syndrome</h1>
         <p class="what">A record of what followed this news report. <a href="#">How a status is set</a></p>
       </div>
-      <div class="hero-rest">
+      <div class="hero-rest to-sheet">
         <p class="followed">
           <a href="https://www.bbc.co.uk/"><q>Tourette syndrome: The life-changing device helping to stop tics</q>&nbsp;<i data-i="out"></i></a>
           <span class="by">BBC News · bbc.co.uk · <span class="nowrap">12 Nov 2026</span></span>
@@ -45,7 +46,7 @@
     </div>
 
     <aside class="hero-side snap" aria-labelledby="stands">
-      <div class="snap-head"><span id="stands">Where it stands</span><span>Checked 14 Nov 2026</span></div>
+      <div class="snap-head"><h2 id="stands">Where it stands</h2><span>Checked 14 Nov 2026</span></div>
       <div class="snap-body">
         <p class="status">Trial registered</p>
         <p class="gloss">A trial in people is registered</p>
@@ -84,7 +85,24 @@
   </div>
   </nav>
 
+  <aside class="rail" aria-label="This claim">
+    <button type="button" data-tip="Follow this claim" aria-label="Follow this claim"><i data-i="follow"></i></button>
+    <button type="button" data-tip="Share" aria-label="Share"><i data-i="share"></i></button>
+    <a href="#pass" data-tip="Check again later" aria-label="Check again later"><i data-i="clock"></i></a>
+    <a href="#" data-tip="Report an error" aria-label="Report an error"><i data-i="flag"></i></a>
+  </aside>
+
   <article class="sheet">
+    <div class="phone-only sheet-report">
+      <p class="followed">
+        <a href="https://www.bbc.co.uk/"><q>Tourette syndrome: The life-changing device helping to stop tics</q>&nbsp;<i data-i="out"></i></a>
+        <span class="by">BBC News · bbc.co.uk · <span class="nowrap">12 Nov 2026</span></span>
+      </p>
+      <div class="jumps">
+        <button class="pill" type="button"><i data-i="follow"></i>Follow</button>
+        <button class="pill" type="button"><i data-i="share"></i>Share</button>
+      </div>
+    </div>
     <p style="padding-top:1.5rem;font-size:1.08rem;max-width:66ch">A BBC News video report described a small wrist device developed at the University of Nottingham that delivers electrical pulses to the median nerve, which trials have shown can change activity in brain regions involved in movement control. It features a 15-year-old user who said tics stopped quickly. The piece does not give trial sizes or results, so the evidence is described only in general terms.</p>
     <p class="notice">This page has not yet been checked by a person. It was put together by software from the public records it links to. <a href="#">What “checked by a person” means</a></p>
 
@@ -159,6 +177,9 @@
         <p class="vh" role="status" data-tl-status></p>
         <p class="small muted" style="margin-bottom:1rem">No dated promise on record.</p>
 
+
+        <p class="key"><span><i data-i="news"></i>News report</span><span><i data-i="flask"></i>Trial registry record</span><span><span class="basis"></span>Basis of status</span></p>
+
         <ol class="tl">
           <li class="tl-year"><span class="yr">2026</span><span class="when">This year · 2 records</span></li>
           <li class="tl-ev" data-kind="news">
@@ -167,31 +188,29 @@
           </li>
           <li class="tl-ev" data-kind="registry">
             <time datetime="2026-06-30">30 Jun</time>
-            <span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial results posted<span class="basis" role="img" aria-label="Basis of status"></span></span>
+            <span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial results posted</span>
             <a class="src" href="#trials">NCT05269953</a>
           </li>
 
           <li class="tl-gap"><b>2024 to 2025</b> · No record</li>
 
           <li class="tl-year"><span class="yr">2023</span><span class="when">3 records</span></li>
-          <li class="tl-ev" data-kind="registry"><time datetime="2023-10-05">5 Oct</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial results posted<span class="basis" role="img" aria-label="Basis of status"></span></span><a class="src" href="#trials">NCT04731714</a></li>
-          <li class="tl-ev" data-kind="registry"><time datetime="2023-10-05">5 Oct</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial results posted<span class="basis" role="img" aria-label="Basis of status"></span></span><a class="src" href="#trials">NCT05016765</a></li>
-          <li class="tl-ev" data-kind="registry"><time datetime="2023-03-05">5 Mar</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial completed<span class="basis" role="img" aria-label="Basis of status"></span></span><a class="src" href="#trials">NCT05269953</a></li>
+          <li class="tl-ev" data-kind="registry"><time datetime="2023-10-05">5 Oct</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial results posted</span><a class="src" href="#trials">NCT04731714</a></li>
+          <li class="tl-ev" data-kind="registry"><time datetime="2023-10-05">5 Oct</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial results posted</span><a class="src" href="#trials">NCT05016765</a></li>
+          <li class="tl-ev" data-kind="registry"><time datetime="2023-03-05">5 Mar</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial completed</span><a class="src" href="#trials">NCT05269953</a></li>
 
           <li class="tl-year"><span class="yr">2022</span><span class="when">4 records</span></li>
-          <li class="tl-ev" data-kind="registry"><time datetime="2022-04-27">27 Apr</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial completed<span class="basis" role="img" aria-label="Basis of status"></span></span><a class="src" href="#trials">NCT04731714</a></li>
-          <li class="tl-ev" data-kind="registry"><time datetime="2022-04-27">27 Apr</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial completed<span class="basis" role="img" aria-label="Basis of status"></span></span><a class="src" href="#trials">NCT05016765</a></li>
-          <li class="tl-ev" data-kind="registry"><time datetime="2022-03-18">18 Mar</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial started<span class="basis" role="img" aria-label="Basis of status"></span></span><a class="src" href="#trials">NCT05269953</a></li>
+          <li class="tl-ev" data-kind="registry"><time datetime="2022-04-27">27 Apr</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial completed</span><a class="src" href="#trials">NCT04731714</a></li>
+          <li class="tl-ev" data-kind="registry"><time datetime="2022-04-27">27 Apr</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial completed</span><a class="src" href="#trials">NCT05016765</a></li>
+          <li class="tl-ev" data-kind="registry"><time datetime="2022-03-18">18 Mar</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial started</span><a class="src" href="#trials">NCT05269953</a></li>
           <li class="tl-ev" data-kind="registry"><time datetime="2022-03-08">8 Mar</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial registered<span class="basis" role="img" aria-label="Basis of status"></span></span><a class="src" href="#trials">NCT05269953</a></li>
 
           <li class="tl-year"><span class="yr">2021</span><span class="when">4 records</span></li>
-          <li class="tl-ev" data-kind="registry"><time datetime="2021-11-18">18 Nov</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial started<span class="basis" role="img" aria-label="Basis of status"></span></span><a class="src" href="#trials">NCT05016765</a></li>
+          <li class="tl-ev" data-kind="registry"><time datetime="2021-11-18">18 Nov</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial started</span><a class="src" href="#trials">NCT05016765</a></li>
           <li class="tl-ev" data-kind="registry"><time datetime="2021-08-23">23 Aug</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial registered<span class="basis" role="img" aria-label="Basis of status"></span></span><a class="src" href="#trials">NCT05016765</a></li>
-          <li class="tl-ev" data-kind="registry"><time datetime="2021-07-15">15 Jul</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial started<span class="basis" role="img" aria-label="Basis of status"></span></span><a class="src" href="#trials">NCT04731714</a></li>
+          <li class="tl-ev" data-kind="registry"><time datetime="2021-07-15">15 Jul</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial started</span><a class="src" href="#trials">NCT04731714</a></li>
           <li class="tl-ev" data-kind="registry"><time datetime="2021-02-01">1 Feb</time><span class="what"><span class="kind"><i data-i="flask"></i></span><span class="vh">Trial registry record. </span>Trial registered<span class="basis" role="img" aria-label="Basis of status"></span></span><a class="src" href="#trials">NCT04731714</a></li>
         </ol>
-
-        <p class="key"><span><i data-i="news"></i>News report</span><span><i data-i="flask"></i>Trial registry record</span><span><span class="basis"></span>Basis of status</span></p>
       </div>
     </section>
 
@@ -327,12 +346,6 @@
     </section>
   </article>
 
-  <aside class="rail" aria-label="This claim">
-    <button type="button" data-tip="Follow this claim" aria-label="Follow this claim"><i data-i="follow"></i></button>
-    <button type="button" data-tip="Share" aria-label="Share"><i data-i="share"></i></button>
-    <a href="#pass" data-tip="Check again later" aria-label="Check again later"><i data-i="clock"></i></a>
-    <a href="#" data-tip="Report an error" aria-label="Report an error"><i data-i="flag"></i></a>
-  </aside>
 </div>
 </main>
 

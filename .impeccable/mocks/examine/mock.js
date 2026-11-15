@@ -74,12 +74,16 @@ function centre(chip, behavior) {
   if (!strip || strip.scrollWidth <= strip.clientWidth) return;
   strip.scrollTo({ left: chip.offsetLeft - (strip.clientWidth - chip.offsetWidth) / 2, behavior });
 }
-function ends() {
-  if (!strip) return;
-  const more = [];
-  if (strip.scrollLeft > 4) more.push("start");
-  if (strip.scrollLeft + strip.clientWidth < strip.scrollWidth - 4) more.push("end");
-  nav.dataset.more = more.join(" ");
+function fadeEnds(scroller, host) {
+  const set = () => {
+    const more = [];
+    if (scroller.scrollLeft > 4) more.push("start");
+    if (scroller.scrollLeft + scroller.clientWidth < scroller.scrollWidth - 4) more.push("end");
+    host.dataset.more = more.join(" ");
+  };
+  scroller.addEventListener("scroll", set, { passive: true });
+  addEventListener("resize", set);
+  set();
 }
 let marked = null;
 function mark() {
@@ -96,32 +100,48 @@ function mark() {
 }
 if (targets.length) { addEventListener("scroll", mark, { passive: true }); mark(); }
 else if (nav?.querySelector("[aria-current]")) centre(nav.querySelector("[aria-current]"), "auto");
-strip?.addEventListener("scroll", ends, { passive: true });
-addEventListener("resize", ends);
-ends();
+if (strip) fadeEnds(strip, nav);
+for (const t of document.querySelectorAll(".filterbar .tabs")) fadeEnds(t, t);
 
-// Timeline tabs.
+// Timeline tabs. Promises and records are counted apart, never as one total.
 const tlStatus = document.querySelector("[data-tl-status]");
-for (const tab of document.querySelectorAll(".tab[data-kind]")) {
-  tab.addEventListener("click", () => {
-    for (const t of document.querySelectorAll(".tab[data-kind]")) t.setAttribute("aria-pressed", String(t === tab));
-    const kind = tab.dataset.kind;
-    let shown = 0;
-    for (const ev of document.querySelectorAll(".tl-ev")) {
-      ev.hidden = kind !== "all" && ev.dataset.kind !== kind;
-      if (!ev.hidden) shown += 1;
+const undated = document.querySelector(".undated");
+const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+for (const when of document.querySelectorAll(".tl-year .when")) when.dataset.all = when.textContent;
+function showKind(kind) {
+  for (const t of document.querySelectorAll(".tab[data-kind]")) t.setAttribute("aria-pressed", String(t.dataset.kind === kind));
+  let promises = 0;
+  let records = 0;
+  for (const ev of document.querySelectorAll(".tl-ev")) {
+    ev.hidden = kind !== "all" && ev.dataset.kind !== kind;
+    if (ev.hidden) continue;
+    if (ev.classList.contains("tl-pair")) promises += ev.querySelectorAll(".tl-promise li").length;
+    else records += 1;
+  }
+  if (undated) {
+    undated.hidden = kind !== "all" && kind !== "promise";
+    if (!undated.hidden) promises += undated.querySelectorAll("li").length;
+  }
+  for (const year of document.querySelectorAll(".tl-year")) {
+    let any = false;
+    let n = 0;
+    for (let el = year.nextElementSibling; el && !el.classList.contains("tl-year"); el = el.nextElementSibling) {
+      if (!el.classList.contains("tl-ev") || el.hidden) continue;
+      any = true;
+      if (!el.classList.contains("tl-pair")) n += 1;
     }
-    for (const year of document.querySelectorAll(".tl-year")) {
-      let any = false;
-      for (let n = year.nextElementSibling; n && !n.classList.contains("tl-year"); n = n.nextElementSibling) {
-        if (n.classList.contains("tl-ev") && !n.hidden) any = true;
-      }
-      year.hidden = !any;
-    }
-    for (const gap of document.querySelectorAll(".tl-gap")) gap.hidden = kind !== "all";
-    if (tlStatus) tlStatus.textContent = kind === "all" ? "Showing every entry." : `Showing ${shown} of ${document.querySelectorAll(".tl-ev").length} entries: ${tab.firstChild.textContent.trim()}.`;
-  });
+    year.hidden = !any;
+    const when = year.querySelector(".when");
+    const m = when.dataset.all.match(/^(.*?)\d+ records?$/);
+    if (m) when.textContent = kind === "all" ? when.dataset.all : m[1] + plural(n, "record");
+  }
+  for (const gap of document.querySelectorAll(".tl-gap")) gap.hidden = kind !== "all";
+  const parts = [];
+  if (promises) parts.push(plural(promises, "promise"));
+  if (records) parts.push(plural(records, "record"));
+  if (tlStatus) tlStatus.textContent = `Showing ${parts.join(" and ")}.`;
 }
+for (const tab of document.querySelectorAll(".tab[data-kind]")) tab.addEventListener("click", () => showKind(tab.dataset.kind));
 
 // Table filter: typed words and one status. No match shows a message with a way back.
 const rows = [...document.querySelectorAll("[data-row]")];
@@ -143,6 +163,13 @@ function narrow() {
   for (const c of chips) c.setAttribute("aria-pressed", String(c.dataset.status === status));
   for (const b of document.querySelectorAll(".filterbar [data-clear]")) b.hidden = !filtered || shown === 0;
   if (empty) {
+    const why = empty.querySelector("[data-empty-why]");
+    if (why && shown === 0) {
+      const chip = chips.find((c) => c.dataset.status === status);
+      why.textContent = status === "all"
+        ? `Nothing in brain and nerves contains “${input.value.trim()}”.`
+        : `No claim at “${chip.firstChild.textContent.trim()}” contains “${input.value.trim()}”.`;
+    }
     empty.hidden = shown > 0;
     document.querySelector("[data-row]").closest(".grid").hidden = shown === 0;
   }
@@ -153,12 +180,16 @@ for (const b of document.querySelectorAll("[data-clear]")) {
   b.addEventListener("click", () => { status = "all"; input.value = ""; narrow(); input.focus(); });
 }
 
-// Printing: every fold opens, and closes again afterwards.
+// Printing: every fold opens and the timeline shows every entry; both go back afterwards.
 let closed = [];
+let printedKind = null;
 addEventListener("beforeprint", () => {
   closed = [...document.querySelectorAll('.fold[aria-expanded="false"], details:not([open])')];
   for (const el of closed) el.matches("details") ? (el.open = true) : setFold(el, true);
+  printedKind = document.querySelector('.tab[data-kind][aria-pressed="true"]')?.dataset.kind ?? null;
+  if (printedKind && printedKind !== "all") showKind("all");
 });
 addEventListener("afterprint", () => {
   for (const el of closed) el.matches("details") ? (el.open = false) : setFold(el, false);
+  if (printedKind && printedKind !== "all") showKind(printedKind);
 });

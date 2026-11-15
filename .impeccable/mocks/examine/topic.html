@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="mock.css">
 </head>
 <body>
+<a class="skip" href="#main">Skip to the page content</a>
 
 <header class="mast">
   <div class="mast-in">
@@ -15,7 +16,7 @@
   </div>
 </header>
 
-<main>
+<main id="main" tabindex="-1">
 <div class="hero navy">
   <div class="hero-in">
     <div class="hero-main">
@@ -27,7 +28,7 @@
         <p class="what">Reported breakthroughs in brain and nerves, and where the public records show each stands now. <a href="#">How a status is set</a></p>
       </div>
       <div class="hero-rest">
-        <p class="lede">Of 7 reported breakthroughs tracked, 2 have no trial in people on record, 1 has a trial in people registered, 1 has reached a mid-stage trial in people, 1 has reached a large late-stage trial in people and 2 are at other statuses.</p>
+        <p class="lede wide-only">Of 7 reported breakthroughs tracked, 2 have no trial in people on record, 1 has a trial in people registered, 1 has reached a mid-stage trial in people, 1 has reached a large late-stage trial in people and 2 are at other statuses.</p>
         <div class="jumps">
           <button class="pill" type="button"><i data-i="share"></i>Share</button>
           <button class="pill" type="button"><i data-i="copy"></i>Copy sentence</button>
@@ -37,7 +38,7 @@
     </div>
 
     <aside class="hero-side snap" aria-labelledby="bystatus">
-      <div class="snap-head"><span id="bystatus">7 claims, by status</span><span>Checked 14 Nov 2026</span></div>
+      <div class="snap-head"><h2 id="bystatus">7 claims, by status</h2><span>Checked 14 Nov 2026</span></div>
       <div class="snap-body">
         <dl style="margin-top:0;border-top:0">
           <div><dt>Preclinical only</dt><dd>2</dd></div>
@@ -73,6 +74,11 @@
   </div>
   </nav>
 
+  <aside class="rail" aria-label="This topic">
+    <button type="button" data-tip="Share this topic" aria-label="Share this topic"><i data-i="share"></i></button>
+    <a href="#" data-tip="Status changes feed" aria-label="Status changes feed"><i data-i="feed"></i></a>
+  </aside>
+
   <section class="sheet" aria-labelledby="claims">
     <div class="sec" style="border:0">
       <div class="sec-head plain">
@@ -95,7 +101,7 @@
       </div>
 
       <div class="empty" data-empty hidden>
-        <p><b>No claim matches.</b> Nothing in brain and nerves fits that word and status together.</p>
+        <p><b>No claim matches.</b> <span data-empty-why>Nothing in brain and nerves fits that filter.</span></p>
         <button class="pill" type="button" data-clear>Show all 7 claims</button>
       </div>
 
@@ -160,10 +166,6 @@
     </div>
   </section>
 
-  <aside class="rail" aria-label="This topic">
-    <button type="button" data-tip="Share this topic" aria-label="Share this topic"><i data-i="share"></i></button>
-    <a href="#" data-tip="Status changes feed" aria-label="Status changes feed"><i data-i="feed"></i></a>
-  </aside>
 </div>
 </main>
 
