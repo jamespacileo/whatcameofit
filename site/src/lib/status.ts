@@ -218,6 +218,18 @@ export const KIND_NAMES: Record<RecordKind, string> = {
   record: "Record",
 };
 
+/** The same kinds, named as a count of them: the controls that narrow the timetable. */
+export const KIND_PLURALS: Record<RecordKind, string> = {
+  report: "News reports",
+  trial: "Trial registry records",
+  paper: "Papers",
+  regulator: "Regulator decisions",
+  retraction: "Retraction notices",
+  grant: "Grants",
+  company: "Company events",
+  record: "Records",
+};
+
 export function eventKind(event: ExportedEvent): RecordKind {
   if (event.type.startsWith("trial_")) return "trial";
   switch (event.type) {

@@ -4809,6 +4809,63 @@ body.framed {
   font-size: 1.05rem;
 }
 
+/* The controls that narrow the timetable to one kind of entry. */
+.kind-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.9rem 0;
+}
+
+.kind-tab {
+  min-height: 2.1rem;
+  padding: 0.28rem 0.85rem;
+  border: 1px solid var(--ring);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 120ms,
+    color 120ms,
+    border-color 120ms;
+}
+
+.kind-tab .n {
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 0.2rem;
+}
+
+.kind-tab:hover {
+  background: var(--tint);
+}
+
+.kind-tab[aria-pressed="true"] {
+  background: var(--footer);
+  border-color: var(--footer);
+  color: var(--paper);
+}
+
+.kind-tab[aria-pressed="true"] .n {
+  color: var(--navy-soft);
+}
+
+@media (max-width: 40rem) {
+  .kind-tab {
+    min-height: 2.75rem;
+  }
+}
+
+@media print {
+  .kind-tabs {
+    display: none !important;
+  }
+}
+
 /* The first state of a fold is the stylesheet's, so nothing is painted open and then
    shut. With no script, and on paper, every section is open. */
 @media screen {
