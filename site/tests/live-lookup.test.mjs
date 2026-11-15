@@ -149,6 +149,21 @@ test("possible matches lead in score order without mutating the response", () =>
   assert.equal(candidates[0].id, "NCT00000001");
 });
 
+test("a compatible named study remains ahead of broader treatment matches", () => {
+  const candidates = [
+    candidate("NCT00000001", 0.98, { agrees: ["trial_name"] }),
+    ...Array.from({ length: 11 }, (_, index) => candidate(`NCT${index + 2}`, 1)),
+    candidate("NCT00000099", 0, { agrees: ["stated"], answer: "other_indication" }),
+  ];
+  const shown = describeAnswer(answer({ details: { trial_name: "REGROW-2" }, candidates }));
+  assert.equal(shown.likely[0].registryId, "NCT00000001");
+  assert.equal(shown.likely[0].confidence, 98);
+  assert.match(shown.likely[0].why, /trial's name/);
+  assert.equal(shown.likely.length, 10);
+  assert.ok(!shown.likely.some(record => record.registryId === "NCT00000099"));
+  assert.equal(candidates[0].id, "NCT00000001");
+});
+
 test("the display cap is shared by possible matches and other citations", () => {
   const shown = describeAnswer(answer({ candidates: [
     ...Array.from({ length: 9 }, (_, index) => candidate(`NCT${index}`, 0.9)),

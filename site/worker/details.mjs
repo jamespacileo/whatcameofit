@@ -17,6 +17,9 @@ const PARTICIPANTS_WITHIN = 0.1;
 const SPONSOR_FILLER = new Set("of the and at inc ltd plc llc co company corporation corp".split(" "));
 
 const words = (text) => (text ? String(text).toLowerCase().match(/[a-z0-9]+/g) ?? [] : []);
+// A hashtag can omit the separator before a study number. Keep the complete
+// alphanumeric token: REGROW2 must not also agree with REGROW21 or REGROW2A.
+const trialWords = (text) => words(text ? String(text).toLowerCase().replace(/(?<=[a-z])[\s_-]+(?=[0-9])/g, "") : "");
 
 /** Whether the wanted words appear in order, next to each other. */
 function within(wanted, given) {
@@ -37,8 +40,10 @@ export function agreeing(study, details) {
 
   const name = words(details.trial_name);
   if (name.join("").length >= 3) {
-    const carried = [identification.acronym, identification.briefTitle, identification.officialTitle].map(words);
-    if (carried.some((given) => within(name, given))) reasons.push(TRIAL_NAME);
+    const carried = [identification.acronym, identification.briefTitle, identification.officialTitle];
+    // Keep ordinary title word boundaries; the separator variant is a fallback.
+    if (carried.some((given) => within(name, words(given)) ||
+      within(trialWords(details.trial_name), trialWords(given)))) reasons.push(TRIAL_NAME);
   }
 
   const enrolled = section.designModule?.enrollmentInfo?.count;

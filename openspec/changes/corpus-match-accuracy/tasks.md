@@ -42,4 +42,6 @@
 - [x] Reproduce S010's public LinkedIn reading failure with a synthetic fixture using distinct activity and attributed-post URNs.
 - [x] Bind the public caption and unique preview image to those explicit identities, excluding comments, ambiguous cards and accessibility-hidden overlays.
 - [x] Release Safari 0.9.12, verify S010 in the native browser, and update the corpus and Sheet with the observed outcome.
-- [ ] Preserve explicitly named study identity in live lookup ranking and verify repeated S010 popup work before claiming accuracy or cache reuse.
+- [x] Reproduce missing hashtag study-name agreement and display ordering with failing tests; preserve complete numeric identity and compatible candidate evidence ordering in both lookup paths.
+- [ ] Review and release the named-study correction as Safari 0.9.13, then rerun S010 and record the released result.
+- [ ] Diagnose repeated S010 popup work and verify reuse before claiming cache efficiency.
