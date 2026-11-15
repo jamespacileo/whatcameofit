@@ -5,6 +5,7 @@ a trial scored high for the claim's indication; the rest wait for review.
 """
 
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
 
@@ -12,12 +13,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entities import development_codes, entities_of
-from thenwhat.db.models import Claim, Entity, EntityMatch
+from thenwhat.claims.status import refresh_status
+from thenwhat.db.models import Claim, Entity, EntityMatch, EvidenceEvent
 from thenwhat.decide.core import Backend, DecisionFailed
 from thenwhat.decide.steps import OTHER_INDICATION, latest_scoring, score_matches
 from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord, UnsearchableTerm
+from thenwhat.sources.clinicaltrials import ClinicalTrials
 
 MAX_SUMMARY_CHARACTERS = 400
 
@@ -293,3 +296,120 @@ def rescore_claim(
     approve_confident(session, rescored, accept_above, now)
     session.flush()
     return rescored
+
+
+@dataclass(frozen=True, slots=True)
+class RuleRedo:
+    """What scoring a rule's approvals again changed for one claim. Trials are given by
+    their registry identifiers."""
+
+    scored: int
+    # No longer approved and waiting for review. Approving one later does not bring its
+    # events back: they stay rejected until someone approves them.
+    pending: list[str]
+    # No longer approved and rejected by the rule for scoring near zero.
+    rejected: list[str]
+    # Approved by a rule, but the registry search no longer returns them, so they were
+    # not scored and stay approved. To be looked at: nothing here says they still hold.
+    not_returned: list[str]
+    # Events read from a match that is no longer approved, which a person or an
+    # assistant had decided. They are left as they were, by their ids.
+    events_kept: list[int]
+
+    @property
+    def withdrawn(self) -> list[str]:
+        """Every trial the rule no longer approves."""
+        return [*self.pending, *self.rejected]
+
+
+def redo_rule_approvals(
+    session: Session,
+    claim: Claim,
+    *,
+    trials: TrialSearch,
+    backend: Backend,
+    now: datetime,
+    reject_below: float = 0.0,
+    accept_above: float = 0.0,
+    no_signal_years: int = 3,
+    unsearchable: Callable[[UnsearchableTerm], None] | None = None,
+) -> RuleRedo:
+    """Score again, with the question as it is asked now, the trial matches a rule
+    approved, and let the rule decide them again. For approvals made before the question
+    showed a trial's arms, or before it asked about the claim's patients and setting.
+
+    A match a person or an assistant decided is left alone. One the search no longer
+    returns cannot be scored: it stays approved and is reported. A match the rule no
+    longer approves waits for review, or is rejected when it scores near zero. The
+    events read from it that a rule approved, or that still wait, are rejected by the
+    rule; an event a person or an assistant decided is left and reported. The claim's
+    status is then derived again. With the approval rule off nothing is scored.
+
+    Nothing is decided until every match is scored: a scoring that fails leaves every
+    approval as it was. Each scoring is logged, so the earlier score of a match stays
+    in the decision log beside the new one.
+    """
+    if accept_above <= 0:
+        return RuleRedo(0, [], [], [], [])
+    again: list[tuple[Entity, EntityMatch, SourceRecord]] = []
+    not_returned: list[str] = []
+    for entity in entities_of(session, claim):
+        if entity.type is not EntityType.INTERVENTION:
+            continue
+        approved = {
+            (match.source_name, match.external_id): match
+            for match in session.scalars(
+                select(EntityMatch).where(
+                    EntityMatch.entity_id == entity.id,
+                    EntityMatch.review_state == ReviewState.APPROVED,
+                    EntityMatch.reviewed_by == Decider.RULE,
+                )
+            )
+        }
+        if not approved:
+            continue
+        for record in trials_of(
+            trials, entity, claim.indication, unsearchable, development_codes(session, entity)
+        ):
+            match = approved.pop((record.source_name, record.external_id), None)
+            if match is not None:
+                again.append((entity, match, record))
+        # What is left is a trial approval the search did not return. A paper's match
+        # is never returned by it and is not this function's to report.
+        not_returned += [
+            match.external_id
+            for match in approved.values()
+            if match.source_name == ClinicalTrials.name
+        ]
+    score_matches(session, backend, claim=claim, candidates=again, now=now)
+    rescored = [match for _, match, _ in again]
+    for _, match, record in again:
+        match.record_summary = what_it_says(record)
+        match.review_state = ReviewState.PENDING
+        match.reviewed_at = None
+        match.reviewed_by = None
+    reject_near_zero(rescored, reject_below, now)
+    approve_confident(session, rescored, accept_above, now)
+    withdrawn = [match for match in rescored if match.review_state is not ReviewState.APPROVED]
+    events_kept: list[int] = []
+    for match in withdrawn:
+        for event in session.scalars(
+            select(EvidenceEvent).where(
+                EvidenceEvent.entity_match_id == match.id,
+                EvidenceEvent.review_state != ReviewState.REJECTED,
+            )
+        ):
+            if event.reviewed_by in (None, Decider.RULE):
+                record_decision(event, ReviewState.REJECTED, by=Decider.RULE, now=now)
+            else:
+                events_kept.append(event.id)
+    session.flush()
+    if withdrawn:
+        refresh_status(session, claim, as_of=now.date(), now=now, no_signal_years=no_signal_years)
+    return RuleRedo(
+        scored=len(rescored),
+        pending=[m.external_id for m in withdrawn if m.review_state is ReviewState.PENDING],
+        rejected=[m.external_id for m in withdrawn if m.review_state is ReviewState.REJECTED],
+        not_returned=sorted(not_returned),
+        events_kept=events_kept,
+    )
