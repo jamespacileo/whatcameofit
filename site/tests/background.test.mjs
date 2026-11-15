@@ -41,7 +41,7 @@ test("a card says what its term is to the claim, and when it is broader", () => 
 
 test("reasons are worded with their counts and names", () => {
   assert.deepEqual(reasonTexts(card()), [
-    "The trial registry files 5 of this claim’s 6 trials under this term.",
+    "When this term was gathered, the trial registry filed 5 of the claim’s 6 trials under it.",
   ]);
   assert.deepEqual(
     reasonTexts(card({ reasons: [{ code: "label_equals_name", name: "Obesity" }] })),

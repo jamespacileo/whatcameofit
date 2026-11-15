@@ -61,4 +61,5 @@
 - [x] Verify the full intismeran-plus-pembrolizumab regimen against primary sources and retain the completely resected stage IIB–IV cutaneous melanoma population.
 - [x] Exclude the incompatible unresectable-disease trial and component-only background cards; retain two approved postoperative trials and the tentative compatible Part D cohort without promotion.
 - [x] Run normal preparation and stage the export: 126 existing claim identities retained, two trial readings reused and no new candidates.
+- [x] Clarify that saved background trial counts describe when the term was gathered, preserving historical reasons after trial exclusions.
 - [ ] Deploy the corrected melanoma card and rerun its four mapped corpus URLs against the released site; update the corpus and Google Sheet with exact methods.
