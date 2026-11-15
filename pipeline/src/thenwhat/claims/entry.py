@@ -195,11 +195,12 @@ MAX_NAMED_CLAIMS = 8
 
 @dataclass(frozen=True, slots=True)
 class NamedClaim:
-    """A claim as the same-claim decision is shown it: what it is for, never its text."""
+    """Claim identity and its own summary, never source article text."""
 
     slug: str
     intervention: str
     indication: str
+    summary: str
 
 
 def named_claims(session: Session, claim_ids: Sequence[int]) -> list[NamedClaim]:
@@ -208,7 +209,7 @@ def named_claims(session: Session, claim_ids: Sequence[int]) -> list[NamedClaim]
     if not claim_ids:
         return []
     rows = session.execute(
-        select(Claim.slug, Entity.name, Claim.indication)
+        select(Claim.slug, Entity.name, Claim.indication, Claim.summary)
         .join(Entity, Entity.claim_id == Claim.id)
         .where(
             Entity.type == EntityType.INTERVENTION,
@@ -217,7 +218,7 @@ def named_claims(session: Session, claim_ids: Sequence[int]) -> list[NamedClaim]
         )
         .order_by(Claim.id)
     )
-    return [NamedClaim(slug, name, indication) for slug, name, indication in rows]
+    return [NamedClaim(slug, name, indication, summary) for slug, name, indication, summary in rows]
 
 
 def _one_within_the_other(first: list[str], second: list[str]) -> bool:
@@ -245,17 +246,17 @@ def claims_sharing_a_name(session: Session, names: Sequence[str]) -> list[NamedC
         return []
     found: list[tuple[bool, int, NamedClaim]] = []
     rows = session.execute(
-        select(Claim.id, Claim.slug, Claim.indication, Entity.name, Entity.synonyms)
+        select(Claim.id, Claim.slug, Claim.indication, Entity.name, Entity.synonyms, Claim.summary)
         .join(Entity, Entity.claim_id == Claim.id)
         .where(Entity.type == EntityType.INTERVENTION, Claim.review_state != ReviewState.REJECTED)
         .order_by(Claim.id)
     )
-    for claim_id, slug, indication, name, synonyms in rows:
+    for claim_id, slug, indication, name, synonyms, summary in rows:
         known = [name_key(known_name).split() for known_name in (name, *synonyms)]
         if not any(_one_within_the_other(mine, theirs) for mine in wanted for theirs in known):
             continue
         equal = any(mine == theirs for mine in wanted for theirs in known)
-        found.append((not equal, claim_id, NamedClaim(slug, name, indication)))
+        found.append((not equal, claim_id, NamedClaim(slug, name, indication, summary)))
     found.sort(key=lambda entry: entry[:2])
     return [claim for _, _, claim in found[:MAX_NAMED_CLAIMS]]
 
