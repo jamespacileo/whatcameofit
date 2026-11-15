@@ -31,3 +31,10 @@
 - [x] 5.1 Run `make check` with a branch-specific `TEST_DATABASE_URL`. Verify: ruff, ty, pytest and the site build pass.
 - [x] 5.2 Run `impeccable detect --json` on the changed site files and look at home, one topic index and one year page on `site-published` at 1280 px and phone width. Verify: no new detector findings; a home report row is shorter than before on a phone; axes align down the table column.
 - [x] 5.3 Read the strip with a screen reader path (accessibility tree via `read_page`) on a claim with trials before its report and on a claim with a report only. Verify: each is one image whose name gives counts and dates only.
+
+## 6. Revision after the critique
+
+- [x] 6.1 `DayReport.astro`, `DayList.astro`: no strip and no key on the home page; counts line in sight, sentences for a screen reader. Verify: `home-days.test.mjs`.
+- [x] 6.2 `record-strip.ts`: `claimAxis` and `TABLE_KINDS`; `RecordStrip.astro` takes an axis, the kinds drawn and year labels; `StripKey.astro` names only the kinds given. Verify: `record-strip.test.mjs`.
+- [x] 6.3 Claim page: the claim's own strip and key at the head of "Recorded"; tables draw three marks with a three-mark key. Verify: `site.test.mjs`; claim page, topic page and home at 1280px and 375px on `site-published`.
+- [x] 6.4 `DESIGN.md`, `GLOSSARY.md`, the guide entry: record the revision.

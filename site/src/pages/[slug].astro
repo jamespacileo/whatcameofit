@@ -17,6 +17,9 @@ import Outlet from "../components/Outlet.astro";
 import KindIcon from "../components/KindIcon.astro";
 import Pop from "../components/Pop.astro";
 import RecordBrief from "../components/RecordBrief.astro";
+import RecordStrip from "../components/RecordStrip.astro";
+import StripKey from "../components/StripKey.astro";
+import { claimAxis, stripFor } from "../lib/record-strip";
 import SectionList from "../components/SectionList.astro";
 import SharePill from "../components/SharePill.astro";
 import Statements from "../components/Statements.astro";
@@ -94,6 +97,13 @@ const latestMark =
 const onPath = STAGE_PATH.includes(claim.status.code);
 const hasDatedPromise = claim.promises.some((promise) => promise.parsed_date !== null);
 const hasPromise = claim.promises.length > 0;
+// The claim's records by date on its own axis, and a key naming only the marks drawn;
+// the end of the axis is named in words under it.
+const lastCheckedDay = data.last_checked_at?.slice(0, 10) ?? null;
+const ownAxis = lastCheckedDay ? claimAxis(claim, lastCheckedDay) : null;
+const ownKinds = ownAxis
+  ? [...new Set(stripFor(claim, ownAxis.startYear, ownAxis.lastChecked).marks.map((mark) => mark.kind))]
+  : [];
 // The year the latest dated promise names, shown beside the status as it is on the card.
 const promised = latestPromise(claim)?.parsed_date?.slice(0, 4) ?? null;
 // The legend names only the kinds of record this page shows.
@@ -591,6 +601,14 @@ const sections = [
       <FoldHead id="timetable" note={timetableNote}>
         {hasDatedPromise ? "Promised and recorded" : "Recorded"}
       </FoldHead>
+      {
+        ownAxis && (
+          <div class="claim-strip">
+            <RecordStrip claim={claim} counts={false} axis={ownAxis} years />
+            <StripKey kinds={ownKinds} title={false} />
+          </div>
+        )
+      }
       <ul class="legend" aria-label="Key">
         {
           hasPromise && (

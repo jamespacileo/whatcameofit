@@ -162,10 +162,26 @@ test("Scenario: Topic index: every row of a claim list carries its record strip 
       // The counts are in the column beside it, not said twice.
       assert.ok(!row.includes("strip-counts"));
     }
-    // One key, before the first strip.
+    // One key, before the first strip, naming the three marks a list draws.
     assert.equal(count(html, 'class="strip-key"'), 1, file);
     assert.ok(html.indexOf('class="strip-key"') < html.indexOf('class="record-strip"'));
+    const key = html.slice(html.indexOf('class="strip-key"'), html.indexOf("</div>", html.indexOf('class="strip-key"')));
+    for (const name of ["Registry record", "Results posted", "News report"]) assert.ok(key.includes(name), name);
+    for (const name of ["Regulator decision", "Promised date"]) assert.ok(!key.includes(name), name);
+    // A list draws no promise and no decision: its columns and status say them.
+    assert.ok(!html.includes('class="strip-promise"') && !html.includes('class="strip-decision"'), file);
   }
+});
+
+test("Scenario: Claim page: the claim's own record strip, its years and a key of its marks", () => {
+  const html = page("phase-claim/index.html");
+  const block = html.slice(html.indexOf('class="claim-strip"'), html.indexOf('class="legend"'));
+  assert.equal(count(block, '<svg class="strip-line" role="img" aria-label="Records by date. '), 1);
+  assert.match(block, /class="strip-years"[^>]*><span>\d{4}<\/span><span>Last checked [^<]+<\/span>/);
+  // The key names the marks drawn and no others; the axis end is named under it.
+  assert.ok(block.includes("News report"));
+  assert.ok(!block.includes("Registries last checked"));
+  assert.ok(!block.includes("How to read it"));
 });
 
 test("Scenario: Search by intervention name", () => {
