@@ -56,8 +56,9 @@ outside knowledge about the subject.`;
 const ASKED = "Is this record a trial of the claim's intervention for the claim's indication?";
 // Each answer and when it applies.
 const CHOICES = [
-  ["match", "the record establishes the same complete intervention, including any explicit route, formulation, stereoisomer and regimen, in the claim's indication, in a form of that condition, or in patients who have it, respecting any explicit patient population or treatment setting in the claim."],
+  ["match", "the record establishes the same complete intervention, including any explicit route, formulation, stereoisomer and regimen, in the claim's indication, in a form of that condition, or in patients who have it, respecting any explicit patient population or treatment setting in the claim, and the trial tests it as a treatment for that condition."],
   ["other_indication", "it tests the same complete intervention for a different condition, an incompatible patient population or treatment setting, or only in healthy volunteers."],
+  ["not_what_is_tested", "the claim's intervention is in the record, but the trial does not test it as a treatment for the indication: it is the comparator or control for something else under test, it is given to every arm alongside what is tested, or it has another role in the trial, such as the anaesthetic for a procedure."],
   ["not_a_match", "it is not a trial of this intervention, including a conflicting route, formulation, stereoisomer or regimen."],
 ];
 const OPTIONS = CHOICES.map(([option]) => option);
@@ -74,7 +75,10 @@ const QUESTION = [ASKED, ...CHOICES.map(([option, when]) => `- ${option}: ${when
   "Check intervention descriptions and arm membership: separate arms testing A and B do not establish a trial of A plus B. " +
   "Missing or truncated details do not establish compatibility; retain uncertainty about explicit restrictions. " +
   "A generic drug name alone does not establish an explicitly claimed route or formulation. " +
-  "If that detail is absent, spread uncertainty across the options rather than assuming the restriction is satisfied.",
+  "If that detail is absent, spread uncertainty across the options rather than assuming the restriction is satisfied. " +
+  "Being named in an arm does not make an intervention what the trial tests. " +
+  "Ask what differs between the arms, and what that difference is meant to treat. " +
+  "In a trial with one arm, what that arm receives is what is tested.",
 ].join("\n");
 // A general model is asked about this many records per call.
 const BATCH_SIZE = 20;

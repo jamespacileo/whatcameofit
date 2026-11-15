@@ -15,7 +15,6 @@ from sqlalchemy.orm import Session
 from thenwhat.db.models import DecisionLog, LlmUsage
 from thenwhat.decide.core import DecisionFailed, backend_named, decide, decide_many
 from thenwhat.decide.decisions_backend import DecisionsBackend
-from thenwhat.decide.steps import TRIAL_OPTIONS, TRIAL_QUESTION
 from thenwhat.llm.client import Llm, LlmSettings
 from thenwhat.llm.decisions import Decisions, DecisionsSettings
 
@@ -38,6 +37,18 @@ class Api:
         if isinstance(self.answer, httpx.Response):
             return self.answer
         return httpx.Response(200, json=self.answer)
+
+
+# The question the recorded response answers. It is kept here, apart from the pipeline's
+# trial question, so the recording stays as the API gave it when that question changes.
+TRIAL_OPTIONS = ["match", "other_indication", "not_a_match"]
+TRIAL_QUESTION = (
+    "Is this record a trial of the claim's intervention for the claim's indication?\n"
+    "- match: it tests this intervention in the claim's indication.\n"
+    "- other_indication: it tests the same complete intervention for a different condition,"
+    " an incompatible patient population or treatment setting, or only in healthy volunteers.\n"
+    "- not_a_match: it is not a trial of this intervention."
+)
 
 
 def backend(

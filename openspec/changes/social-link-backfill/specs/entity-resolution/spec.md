@@ -29,3 +29,14 @@ For a match the rule no longer approves, the events read from it that a rule app
 #### Scenario: An approved trial the search no longer returns
 - **WHEN** a rule approved a trial for a claim and the registry search for the claim no longer returns it
 - **THEN** the match stays approved, it is not scored, and the result names it
+
+### Requirement: A trial the intervention is in without being what it tests is its own answer
+The question asked about a trial record SHALL offer, beside a match, another indication and not a match, the answer that the claim's intervention is in the record but is not what the trial tests as a treatment for the indication: it is the comparator or control for something else under test, it is given to every arm alongside what is tested, or it has another role in the trial, such as the anaesthetic for a procedure. A record read so SHALL NOT be approved by rule, whatever its score. The review queue and the site SHALL say that it was read so. The live lookup SHALL ask the same question with the same answers.
+
+#### Scenario: Comparator or background treatment
+- **WHEN** a trial gives the claim's drug to every arm as the anaesthetic for the procedure it tests, and the record is read as in the trial but not what is tested
+- **THEN** the match is not approved by rule and the review queue says how it was read
+
+#### Scenario: The claim's drug is the treatment on trial
+- **WHEN** a trial's arms differ in whether patients receive the claim's drug for the claim's condition
+- **THEN** the record can be read as a match and approved by rule as before

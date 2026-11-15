@@ -529,7 +529,7 @@ test("a model named with its provider, as the pipeline's settings name it, is as
 });
 
 test("records are scored twenty to a call and probabilities that nearly sum to one are rescaled", async () => {
-  const answer = (item) => ({ item, choice: "match", probabilities: { match: 0.9, other_indication: 0.06, not_a_match: 0.02 } });
+  const answer = (item) => ({ item, choice: "match", probabilities: { match: 0.9, other_indication: 0.06, not_what_is_tested: 0, not_a_match: 0.02 } });
   const first = { answers: Array.from({ length: 20 }, (_, n) => answer(n + 1)) };
   const second = { answers: [answer(1)] };
   const { model, sent } = modelOver(first, second);
@@ -557,6 +557,7 @@ test("Scenario: Many items, one call", async () => {
             probabilities: [
               { value: "match", probability: 0.88 },
               { value: "other_indication", probability: 0.1 },
+              { value: "not_what_is_tested", probability: 0 },
               { value: "not_a_match", probability: 0.02 },
             ],
             confidence: 0.82,
@@ -576,10 +577,11 @@ test("Scenario: Many items, one call", async () => {
   const [first] = sent[0].body.questions;
   assert.deepEqual([first.type, first.name], ["choice", "item-1"]);
   assert.match(first.instructions, /^Is this record a trial[\s\S]*\n\nrecord 0$/);
-  assert.deepEqual(first.choices.map((choice) => choice.value), ["match", "other_indication", "not_a_match"]);
+  assert.deepEqual(first.choices.map((choice) => choice.value), ["match", "other_indication", "not_what_is_tested", "not_a_match"]);
   assert.match(first.choices[1].description, /different condition/);
+  assert.match(first.choices[2].description, /comparator or control/);
   assert.equal(scored.length, 60);
-  assert.deepEqual(scored[0], { answer: "match", probabilities: { match: 0.88, other_indication: 0.1, not_a_match: 0.02 } });
+  assert.deepEqual(scored[0], { answer: "match", probabilities: { match: 0.88, other_indication: 0.1, not_what_is_tested: 0, not_a_match: 0.02 } });
   // A record the API declines has no score.
   assert.equal(scored[1], null);
 });
