@@ -95,7 +95,8 @@ class Reading(BaseModel):
         default_factory=list,
         description=(
             "Other names the text gives it: a brand name, a code such as ABC-123, or a generic"
-            " name. Never a description such as 'the drug'. Empty if there is none."
+            " name. For a combination, only whole-regimen aliases, never individual components."
+            " Never a description such as 'the drug'. Empty if there is none."
         ),
     )
     known_names: list[ShortText] = Field(
@@ -315,7 +316,8 @@ def look_up(
         registry_numbers=numbers,
         paper_numbers=from_papers,
         details=details,
-        tracked=_tracked(session, [*names, *known], reading.indication),
+        # Model-known names include individual components; use them only for search.
+        tracked=_tracked(session, names, reading.indication),
         candidates=candidates,
     )
 
@@ -370,8 +372,20 @@ def _parts(name: str) -> list[str]:
 
 def _regimen_names(names: list[str]) -> set[tuple[str, ...]]:
     """Whole-regimen aliases, excluding single components of a combination."""
-    parts = [tuple(sorted(name_key(part) for part in (_parts(name) or [name]))) for name in names]
-    return {one for one in parts if len(one) == len(parts[0])} if parts else set()
+    parts = [
+        tuple(
+            sorted(
+                name_key(part)
+                for part in re.split(r"\s+(?:and|plus)\s+|\s*[+/]\s*", name, flags=re.I)
+                if name_key(part)
+            )
+        )
+        for name in names
+    ]
+    components = {part for one in parts if len(one) > 1 for part in one}
+    if parts and len(parts[0]) == 1 and parts[0][0] in components:
+        return set()
+    return {one for one in parts if len(one) > 1 or len(one) == 1 and one[0] not in components}
 
 
 def _tracked(session: Session, names: list[str], indication: str | None) -> list[str]:

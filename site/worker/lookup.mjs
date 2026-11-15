@@ -289,7 +289,9 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
           a.id.localeCompare(b.id),
       );
 
-    const wanted = new Set(regimenKeys([...names, ...known]));
+    // Model-known names also include individual regimen components, so they are
+    // search terms only. The names stated as whole aliases can associate a card.
+    const wanted = new Set(regimenKeys(names));
     const indication = nameKey(reading.indication);
     const tracked = Object.entries(index?.claims ?? {})
       .filter(([, claim]) => indication && nameKey(claim.indication) === indication &&

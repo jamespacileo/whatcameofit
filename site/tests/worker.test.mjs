@@ -257,7 +257,7 @@ test("tracked cards require the same condition and complete regimen without extr
   const claims = {
     ageing: { names: ["EX-1"], indication: "biological ageing", headline: "Ageing", page: "/ageing" },
     single: { names: ["EX-1"], indication: "obesity", headline: "One medicine", page: "/single" },
-    combined: { names: ["EX-2 and EX-1", "EX-1"], indication: "obesity", headline: "Combination", page: "/combined" },
+    combined: { names: ["EX-2 and EX-1", "PAIR-12", "EX-1"], indication: "obesity", headline: "Combination", page: "/combined" },
     legacy: { names: ["EX-1"], headline: "Unknown condition", page: "/legacy" },
   };
   for (const [intervention, indication, aliases, expected] of [
@@ -265,10 +265,14 @@ test("tracked cards require the same condition and complete regimen without extr
     ["EX-1", "  OBESITY ", [], ["single"]],
     ["EX-1", null, [], []],
     ["EX-1", "tooth loss", [], []],
+    ["PAIR-12", "obesity", [], ["combined"]],
+    ["EX-1/EX-2", "obesity", [], ["combined"]],
+    ["PAIR-12", "obesity", ["EX-1 plus EX-2", "EX-1"], ["combined"]],
+    ["UNTRACKED-PAIR", "obesity", [], []],
   ]) {
     let reads = 0, scores = 0;
     const model = {
-      read: async () => { reads++; return { ...READING, intervention, indication, other_names: aliases }; },
+      read: async () => { reads++; return { ...READING, intervention, indication, other_names: aliases, known_names: ["EX-1", "EX-2"] }; },
       score: async () => { scores++; return []; },
     };
     const found = await lookUp({ text: TEXT, model, registry: fakeRegistry({}), index: { claims } });

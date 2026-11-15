@@ -348,11 +348,16 @@ def test_tracked_cards_require_the_condition_and_whole_regimen(session: Session)
             indication=indication,
             summary="Synthetic report.",
         )
+    add_synonym(session, "combined", "EX-2 and EX-1", "PAIR-12")
     for intervention, indication, aliases, expected in [
         ("EX-1 plus EX-2", "Obesity", ["EX-1"], ["combined"]),
         ("EX-1", "  OBESITY ", [], ["single"]),
         ("EX-1", None, [], []),
         ("EX-1", "tooth loss", [], []),
+        ("PAIR-12", "obesity", [], ["combined"]),
+        ("EX-1/EX-2", "obesity", [], ["combined"]),
+        ("PAIR-12", "obesity", ["EX-1 plus EX-2", "EX-1"], ["combined"]),
+        ("UNTRACKED-PAIR", "obesity", [], []),
     ]:
         found = find(
             session,
@@ -362,6 +367,7 @@ def test_tracked_cards_require_the_condition_and_whole_regimen(session: Session)
                 "intervention": intervention,
                 "indication": indication,
                 "other_names": aliases,
+                "known_names": ["EX-1", "EX-2"],
             },
         )
         assert found.tracked == expected

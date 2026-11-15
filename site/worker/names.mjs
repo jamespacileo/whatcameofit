@@ -37,10 +37,11 @@ export function nameKey(name) {
 
 /** Whole-regimen aliases only: one component is not another name for a combination. */
 export function regimenKeys(names) {
-  const components = name => {
-    const parts = partsOf(name);
-    return (parts.length ? parts : [name]).map(nameKey).sort();
-  };
-  const size = components(names[0] ?? "").length;
-  return names.map(components).filter(parts => parts.length === size).map(parts => JSON.stringify(parts));
+  const parts = names.map(name => name.split(/\s+(?:and|plus)\s+|\s*[+/]\s*/i).map(nameKey).filter(Boolean).sort());
+  const components = new Set(parts.filter(one => one.length > 1).flat());
+  // A named regimen can have an unsplit brand/code alias. Reject actual component
+  // names, not all unsplit aliases. Contradictory primary/alias identity fails closed.
+  if (parts[0]?.length === 1 && components.has(parts[0][0])) return [];
+  return parts.filter(one => one.length > 1 || one.length === 1 && !components.has(one[0]))
+    .map(one => JSON.stringify(one));
 }
