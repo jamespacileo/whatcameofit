@@ -51,6 +51,11 @@ class Settings(BaseSettings):
     decisions_input_usd_per_mtok: Decimal | None = None
 
     review_confidence_threshold: float = 0.95
+    # An evidence-stage reading the threshold above did not confirm is still exported,
+    # marked as unconfirmed, when the stage it chose has at least this probability
+    # (openspec review, ADR 0004). It never sets the stage or the status. A value above 1
+    # exports none.
+    stage_show_above: float = 0.5
     # A new candidate match scored under this is rejected by rule instead of waiting
     # for review. It is kept and can be listed and approved. 0 turns the rule off.
     match_reject_below: float = 0.05

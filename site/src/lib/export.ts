@@ -191,6 +191,13 @@ export interface ExportedClaim {
   indication: string;
   first_reported_date: string | null;
   evidence_stage: string | null;
+  /** How the first report was read while the stage is not confirmed: shown marked low
+   * confidence, never used for the status. Absent or null when there is nothing to show. */
+  evidence_stage_reading?: {
+    stage: string;
+    score: number;
+    also: { stage: string; score: number }[];
+  } | null;
   // False for a claim loaded from a seed file or decided by an AI assistant.
   checked_by_person: boolean;
   status: {

@@ -26,6 +26,8 @@ from thenwhat.db.models import (
     SourceArticle,
     TermRecord,
 )
+from thenwhat.decide.core import BackendAnswer
+from thenwhat.decide.steps import suggest_evidence_stage
 from thenwhat.domain import (
     Decider,
     EntityType,
@@ -1768,3 +1770,53 @@ def test_a_statement_decided_by_the_assistant_says_no_person_checked_the_claim(
     )
 
     assert claim_in(exported(session))["checked_by_person"] is False
+
+
+# --- evidence stage, lower band (openspec review, ADR 0004) --------------------------
+
+
+class StageReading:
+    """A backend that reads every claim as an early human study with one probability."""
+
+    name = "fake"
+
+    def __init__(self, probability: float) -> None:
+        self.probability = probability
+
+    def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
+        rest = [option for option in options if option != "early_human"]
+        shares = {"early_human": self.probability, "animal": 1 - self.probability - 0.02}
+        shares |= {option: 0.01 for option in rest if option != "animal"}
+        return BackendAnswer("early_human", shares, confidence=0.9)
+
+
+def test_an_unconfirmed_stage_reading_is_exported_apart_and_does_not_set_the_status(
+    session: Session,
+):
+    """Scenario: Lower-band reading is shown and not used"""
+    claim = new_claim(session)
+    suggest_evidence_stage(session, StageReading(0.7), claim, now=NOW)
+
+    out = claim_in(exported(session))
+
+    assert out["evidence_stage"] is None
+    assert out["evidence_stage_reading"] == {
+        "stage": "early_human",
+        "score": 0.7,
+        "also": [{"stage": "animal", "score": pytest.approx(0.28)}],
+    }
+    assert out["status"]["code"] == "no_trial_found"
+
+
+def test_a_stage_reading_is_not_exported_when_weak_or_when_the_stage_is_confirmed(
+    session: Session,
+):
+    """Scenarios: Reading below the lower band; Confirmed stage"""
+    weak = new_claim(session)
+    suggest_evidence_stage(session, StageReading(0.45), weak, now=NOW)
+    assert claim_in(exported(session))["evidence_stage_reading"] is None
+
+    suggest_evidence_stage(session, StageReading(0.7), weak, now=NOW)
+    confirm_stage(session, SLUG, EvidenceStage.ANIMAL, now=NOW)
+    out = claim_in(exported(session))
+    assert out["evidence_stage"] == "animal" and out["evidence_stage_reading"] is None
