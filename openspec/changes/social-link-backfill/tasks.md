@@ -97,6 +97,16 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 - [x] 9.11 Replace the yes-or-no check with the three-way `treatment_kind` decision, so that an established treatment joins or drafts a claim as a new one does and only "neither" refuses; rename the outcome to `not_one_treatment` (migration `0020`) and the setting to `TREATMENT_ACCEPT_ABOVE`; verify with tests of an established treatment drafting a claim, joining its claim, an unsure split between new and established, and "neither" drafting and joining nothing
 - [ ] 9.12 Measure the three-way decision on the leads the first check refused, by rereading them, and record the figures here before any of them is prepared
 
+## 10. Targets and topics
+
+- [x] 10.1 Add `backfill/topics.py` with the GLP-1 topic's words, and the rule for a title naming one; verify with tests that a word is matched whole and in any letter case, and that an unknown topic is refused by name
+- [x] 10.2 In `link_read`, read leads that name a topic first, and read held leads that name one; verify with tests of a held lead on a topic, a held lead on none, a rejected lead on a topic, a topic lead ahead of a much-shared lead, and no topics listed
+- [x] 10.3 Add `thenwhat backfill topics`; verify one test of the leads' standings, one of a claim's articles, trials, papers and cards, and one success and one refusal of the command
+- [x] 10.7 Give the decision after the read a fourth answer, business news about a treatment, and for a lead that names a topic join or draft a claim only when the article is about what the treatment does; add the outcome `business_news` (migration `0021`) and count it in the funnel; business news never starts a claim for any lead, and joins an existing one only off a topic; verify with tests of a shortage story on a topic, a trial result on a topic, business news with no claim to join, business news joining a tracked claim off a topic, and a lead whose title names nothing while its read names a topic's drug
+- [ ] 10.4 Add the news outlets that carry topic leads and are on no list; set the outlet kind again on stored leads and screen them again
+- [ ] 10.5 Have background cards made for every claim a read drafted, as part of preparing it, and verify the coverage report shows cards for them
+- [ ] 10.6 Report progress against the two targets after each batch: articles on published claims with trials, papers and cards; coverage of each topic
+
 ## Reread: what the 200 showed on 2026-11-15 (8.6, read but not yet prepared)
 
 - **The run:** `link_read --limit 200` with the same-claim check: 141 new claims (103 awaiting preparation, 38 rejected by the name rule), 14 articles joined to a claim, 3 needed a vertical, 55 could not be read. Model cost $0.23. Nothing is approved and nothing is exportable: `thenwhat prepare` has not been run for this batch.
