@@ -15,6 +15,10 @@ A home page report row fills a phone screen, mostly with sentences that say when
 
 Out of scope: the claim page timetable as trial lanes, the status when first reported drawn on the stage track, moving the status gloss out of list rows, the link-preview cards, the embed, the extension popup, the claim page digest, and any change to the export. Each is a later change.
 
+## Revised 2026-11-15
+
+After a critique of the built strip, the operator moved it off the home page: a report row shows the counts in words, and the claim page draws the claim's records on an axis of its own. Lists keep the shared axis with three marks. See design decisions 11 to 14.
+
 ## Capabilities
 
 ### New Capabilities

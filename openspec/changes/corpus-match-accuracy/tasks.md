@@ -43,5 +43,6 @@
 - [x] Bind the public caption and unique preview image to those explicit identities, excluding comments, ambiguous cards and accessibility-hidden overlays.
 - [x] Release Safari 0.9.12, verify S010 in the native browser, and update the corpus and Sheet with the observed outcome.
 - [x] Reproduce missing hashtag study-name agreement and display ordering with failing tests; preserve complete numeric identity and compatible candidate evidence ordering in both lookup paths.
-- [ ] Review and release the named-study correction as Safari 0.9.13, then rerun S010 and record the released result.
+- [x] Review and release the named-study correction as Safari 0.9.13; replay the captured S010 caption against production and record the named-study-first result separately in the corpus and Sheet.
+- [ ] Verify Safari 0.9.13 in Settings and rerun S010 natively once Safari is idle; record the installed-extension result.
 - [ ] Diagnose repeated S010 popup work and verify reuse before claiming cache efficiency.

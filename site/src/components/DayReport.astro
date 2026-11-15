@@ -8,6 +8,7 @@ import Info from "@lucide/astro/icons/info";
 import type { ReportRow } from "../lib/day-list";
 import { statusSlug } from "../lib/guide";
 import { followedNameFor } from "../lib/reports";
+import { countsLine, rowSentences } from "../lib/row-sentences";
 import {
   EVIDENCE_STAGES,
   STATUS_GLOSSES,
@@ -18,10 +19,10 @@ import {
 } from "../lib/status";
 import { statusReason } from "../lib/status-reason";
 import { formatDate } from "../lib/timetable";
+import { withResults } from "../lib/trial-facts";
 import Outlet from "./Outlet.astro";
 import Pop from "./Pop.astro";
 import PromiseText from "./PromiseText.astro";
-import RecordStrip from "./RecordStrip.astro";
 import StageTrack from "./StageTrack.astro";
 
 interface Props {
@@ -40,6 +41,10 @@ const name = picked ? null : followedNameFor(claim, first.url);
 const promise = latestPromise(claim);
 const overlay = overlayText(claim.status.overlay_years);
 const stage = claim.evidence_stage ? EVIDENCE_STAGES[claim.evidence_stage] : null;
+// What the records add, in words: the counts in sight, the row's sentences for a
+// screen reader. The claim page draws the records by date.
+const counts = claim.trials ? countsLine({ trials: claim.trials.length, results: withResults(claim.trials) }) : null;
+const sentences = rowSentences(claim, row.date);
 const gloss = `${STATUS_GLOSSES[claim.status.code]}${overlay ? `. ${overlay}` : ""}`;
 const label = STATUS_LABELS[claim.status.code];
 const reason = statusReason(claim);
@@ -113,9 +118,14 @@ const whyId = `why-${claim.slug}-${row.date}${picked ? "-picked" : ""}`;
         “{first.title}”
       </a>
     </h4>
-    {/* What the records add: where each is dated, on the scale every row shares, and the
-        counts in numerals. The sentences that say it are the strip's name. */}
-    <RecordStrip claim={claim} reportDay={row.date} />
+    {
+      (counts || sentences.length > 0) && (
+        <p class="row-counts">
+          {counts}
+          {sentences.length > 0 && <span class="visually-hidden"> {sentences.join(" ")}</span>}
+        </p>
+      )
+    }
     <p class="row-foot">
       <span class="row-claim">
         {claim.intervention.name} · {claim.indication}

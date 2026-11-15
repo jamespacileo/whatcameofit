@@ -1,21 +1,37 @@
 ---
-// The key to the record strip: each mark drawn as the strip draws it, with its name,
-// and the years the axis runs between. Said once on a page, before the first strip.
-import { STRIP_KEY, STRIP_KEY_ORDER } from "../lib/record-strip";
+// The key to the record strip: each mark drawn as the strip draws it, with its name.
+// Said once on a page, before the first strip, and naming only the marks the page's
+// strips draw. In a list of claims it also gives the years the shared axis runs
+// between; beside a claim's own strip the years are written under the axis instead.
+import { STRIP_KEY, STRIP_KEY_ORDER, type StripMarkKind } from "../lib/record-strip";
 import { STRIP_AXIS } from "../lib/strip-axis";
 import { formatDate } from "../lib/timetable";
 import StripMark from "./StripMark.astro";
+
+interface Props {
+  /** The kinds of mark named; every kind when left out. */
+  kinds?: (StripMarkKind | "check")[];
+  /** The line giving the shared axis's years and the guide link. */
+  title?: boolean;
+}
+
+const { kinds = STRIP_KEY_ORDER, title = true } = Astro.props;
+const named = STRIP_KEY_ORDER.filter((kind) => kinds.includes(kind));
 ---
 
 {
   STRIP_AXIS && (
     <div class="strip-key">
-      <p class="strip-key-title">
-        Records by date, {STRIP_AXIS.startYear} to {formatDate(STRIP_AXIS.lastChecked)}.{" "}
-        <a href="/guide/record-strip">How to read it</a>
-      </p>
-      <ul>
-        {STRIP_KEY_ORDER.map((kind) => (
+      {
+        title && (
+          <p class="strip-key-title">
+            Records by date, {STRIP_AXIS.startYear} to the last check on {formatDate(STRIP_AXIS.lastChecked)}.{" "}
+            <a href="/guide/record-strip">How to read it</a>
+          </p>
+        )
+      }
+      <ul aria-label="Key to the record strip">
+        {named.map((kind) => (
           <li>
             <svg class="strip-line" width="16" height="22" aria-hidden="true">
               <line class="strip-axis" x1="0" x2="16" y1="15" y2="15" />
