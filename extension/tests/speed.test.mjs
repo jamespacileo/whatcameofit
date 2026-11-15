@@ -138,7 +138,9 @@ test("only whole answers are kept: no errors, misses, partial streams or answers
   assert.equal(kept[0].found.gist, undefined, "the model's summary is not kept");
   assert.equal(reusable(kept, "page", "print", now + 1).found.about_a_treatment, false);
   assert.equal(reusable(kept, "page", "print", now + RESULT_TTL), null);
-  assert.equal(reusable([{ ...kept[0], version: 1 }], "page", "print", now + 1), null, "entries kept under the earlier rules are not reused");
+  for (const version of [1, 2, 3, 4, 5, 6, 7, 8]) {
+    assert.equal(reusable([{ ...kept[0], version }], "page", "print", now + 1), null, "entries kept before the corpus corrections are not reused");
+  }
 });
 
 test("a shared answer kept with its earlier date does not push out newer saved answers; ten at most", () => {

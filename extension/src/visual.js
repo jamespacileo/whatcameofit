@@ -10,11 +10,28 @@ export function inspectVisible(scope = null) {
       if (node.shadowRoot) roots.push(node.shadowRoot);
     }
   }
-  const visible = node => {
+  const visibleRect = node => {
     const r = node.getBoundingClientRect();
-    const style = getComputedStyle(node);
-    return r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth && style.visibility !== "hidden" && style.display !== "none";
+    let left = Math.max(0, r.left), right = Math.min(innerWidth, r.right);
+    let top = Math.max(0, r.top), bottom = Math.min(innerHeight, r.bottom);
+    // This inspector is injected independently of collectFromPage. Both must
+    // exclude media clipped by an ancestor, even if it intersects the viewport.
+    for (let item = node; item; item = item.parentElement ?? item.getRootNode()?.host) {
+      const style = getComputedStyle(item);
+      if (item.hidden || style.display === "none" || style.visibility === "hidden") return null;
+      if (item === node) continue;
+      const bounds = item.getBoundingClientRect();
+      if (/^(hidden|clip|auto|scroll)$/.test(style.overflowX)) {
+        left = Math.max(left, bounds.left); right = Math.min(right, bounds.right);
+      }
+      if (/^(hidden|clip|auto|scroll)$/.test(style.overflowY)) {
+        top = Math.max(top, bounds.top); bottom = Math.min(bottom, bounds.bottom);
+      }
+    }
+    return r.width > 0 && r.height > 0 && right > left && bottom > top
+      ? { left, top, width: right - left, height: bottom - top } : null;
   };
+  const visible = node => Boolean(visibleRect(node));
   const sensitive = roots.some(root => [...root.querySelectorAll('input, textarea, [contenteditable]')]
     .some(node => visible(node) && (node.type === "password" ||
       !["checkbox", "radio", "range", "button", "submit", "reset", "search", "hidden"].includes(node.type) &&
@@ -23,8 +40,8 @@ export function inspectVisible(scope = null) {
       node.isContentEditable && (node.innerText.trim() || node.matches(":focus-within")))));
   const focus = scope ? (scope.address === location.href && scope.selector ? document.querySelector(scope.selector) : null)
     : youtube ? null : document.querySelector('shreddit-post, article, [role="article"], main') ?? document.body;
-  // A video ad is unrelated to the report. Missing/stale video context must not
-  // turn into a screenshot of the entire personalised YouTube page.
+  // A video ad is unrelated to the report. Missing/stale scoped context must not
+  // turn into a screenshot of the surrounding page.
   const overlays = ".ytp-endscreen-content, .ytp-ce-element-show, .ytp-pause-overlay";
   const unavailable = !focus || Boolean(youtube && (focus.querySelector(".ad-showing, .ad-interrupting") ||
     [...focus.querySelectorAll(overlays)].some(visible)));
@@ -35,9 +52,7 @@ export function inspectVisible(scope = null) {
       (!scope?.mediaSelector || node.matches(scope.mediaSelector)) &&
       (focus.contains(node) || !scope && node.getRootNode() !== document))
     .map(node => {
-      const r = node.getBoundingClientRect();
-      const left = Math.max(0, r.left), top = Math.max(0, r.top);
-      return { left, top, width: Math.min(innerWidth, r.right) - left, height: Math.min(innerHeight, r.bottom) - top,
+      return { ...visibleRect(node),
         kind: node.tagName.toLowerCase(), identity: node.currentSrc || node.src || "", time: node.currentTime ?? null };
     }).filter(r => r.width >= 120 && r.height >= 80).sort((a, b) => b.width * b.height - a.width * a.height);
   // An embedded document may contain credentials that this document cannot inspect.
@@ -48,7 +63,7 @@ export function inspectVisible(scope = null) {
     const r = frame.getBoundingClientRect();
     return r.left < crop.left + crop.width && r.right > crop.left && r.top < crop.top + crop.height && r.bottom > crop.top;
   }));
-  return { address: location.href, sensitive, embedded, hidden: document.hidden, unavailable: unavailable || youtube && !media.length,
+  return { address: location.href, sensitive, embedded, hidden: document.hidden, unavailable: unavailable || Boolean((scope || youtube) && !media.length),
     width: innerWidth, height: innerHeight, crop: media[0] ?? null,
     media: media.slice(0, 5), selectionOnly: String(getSelection() ?? "").trim().length >= 20 };
 }
@@ -70,7 +85,7 @@ export async function capturePage(api, tab, signal, encode = resizeCapture) {
   }
   async function inspect() {
     let scope = null;
-    if (/^(?:www\.|m\.)?youtube\.com$/.test(new URL(tab.url).hostname)) {
+    if (/^(?:(?:www\.|m\.)?youtube\.com|(?:www\.)?(?:instagram\.com|threads\.(?:com|net)|tiktok\.com|t\.me|telegram\.me|linkedin\.com|bsky\.app|facebook\.com))$/.test(new URL(tab.url).hostname)) {
       const [{ result: page }] = await api.scripting.executeScript({ target: { tabId: tab.id }, func: collectFromPage });
       scope = page.mediaScope;
     }

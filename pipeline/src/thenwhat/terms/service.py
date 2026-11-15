@@ -14,7 +14,8 @@ from typing import Protocol
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.entities import entities_of
+from thenwhat.claims.entities import entities_of, intervention_components, whole_intervention_names
+from thenwhat.claims.entry import name_key
 from thenwhat.claims.mesh_areas import approved_trial_payloads
 from thenwhat.db.models import Claim, ClaimTerm, TermRecord
 from thenwhat.decide.core import Backend
@@ -186,13 +187,15 @@ def _definition(record: TermRecord | None) -> str | None:
 def intervention_names(session: Session, claim: Claim) -> list[str]:
     """The claim's intervention's name and its other names. Search phrases are not
     names: they were written for searching the registry."""
-    return [
-        name
-        for entity in entities_of(session, claim)
-        if entity.type is EntityType.INTERVENTION
-        for name in [entity.name, *entity.synonyms]
-        if name.strip()
-    ]
+    return whole_intervention_names(
+        [
+            name
+            for entity in entities_of(session, claim)
+            if entity.type is EntityType.INTERVENTION
+            for name in [entity.name, *entity.synonyms]
+            if name.strip()
+        ]
+    )
 
 
 def _label_matches(
@@ -222,6 +225,7 @@ def link_terms(
     limit: int = 10,
     accept_above: float = 0.0,
     reject_below: float = 0.0,
+    rescore_pending: bool = False,
 ) -> TermsRun:
     """Gather the claim's candidate subject terms, score those without a score and
     decide them by rule, and keep the record of every approved term.
@@ -231,7 +235,9 @@ def link_terms(
     scored at or above `accept_above` is approved by rule (0 turns that off); one under
     `reject_below` is rejected by rule; the rest wait for review. A candidate that
     already has a score is left exactly as it is, so a link the operator rejected stays
-    rejected. A name equal to an entry term whose record the vocabulary did not give
+    rejected. An explicit `rescore_pending` rechecks undecided scored subject terms;
+    failed rereads leave their old score and fit intact. Approved/rejected links are
+    never rescored. A name equal to an entry term whose record the vocabulary did not give
     makes no candidate and is named in the run's result.
     """
     label_matches, unresolved = _label_matches(session, claim, vocabulary)
@@ -240,6 +246,14 @@ def link_terms(
         label_matches=label_matches,
         limit=limit,
     )
+    names = intervention_names(session, claim)
+    components = intervention_components(names)
+    candidates = [
+        candidate
+        for candidate in candidates
+        if candidate.role is not TermRole.INTERVENTION
+        or name_key(candidate.label) not in components
+    ]
     known = {(term.role, term.source_name, term.external_id) for term in terms_of(session, claim)}
     added: list[ClaimTerm] = []
     for candidate in candidates:
@@ -262,9 +276,11 @@ def link_terms(
     waiting = [
         term
         for term in terms_of(session, claim)
-        if term.score is None
+        if (term.score is None or (rescore_pending and term.reviewed_by is None))
         and term.review_state is ReviewState.PENDING
+        and term.fit is not TermFit.KIND
         and term.source_name == vocabulary.name
+        and (term.role is not TermRole.INTERVENTION or name_key(term.label) not in components)
     ]
     scored: list[ClaimTerm] = []
     unscored: list[ClaimTerm] = []

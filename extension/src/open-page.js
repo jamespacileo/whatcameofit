@@ -39,6 +39,228 @@ const IMAGE_CLAIM = new RegExp([
  */
 export function collectFromPage() {
   const CAP = 300000;
+  const host = location.hostname.replace(/^www\./, "");
+  // These detail pages also render replies, recommendations or neighbouring posts.
+  // Bind the reading to the requested post before collecting any words or pixels.
+  if (["instagram.com", "threads.com", "threads.net", "t.me", "telegram.me", "tiktok.com", "linkedin.com", "bsky.app", "facebook.com"].includes(host)) {
+    const empty = {
+      address: location.href, title: "", selection: String(getSelection() ?? "").trim().slice(0, 20000),
+      head: "", focusHtml: "", focusText: "", links: [], postTitle: null, contentHref: null, structured: [],
+      mediaScope: { address: location.href, selector: null, videoOnly: false },
+    };
+    const visible = node => {
+      const r = node.getBoundingClientRect();
+      let left = Math.max(0, r.left), right = Math.min(innerWidth, r.right);
+      let top = Math.max(0, r.top), bottom = Math.min(innerHeight, r.bottom);
+      // This collector is injected on its own. Keep clipping in step with the
+      // independently injected screenshot inspector in visual.js.
+      for (let item = node; item; item = item.parentElement) {
+        const style = getComputedStyle(item);
+        if (item.hidden || style.display === "none" || style.visibility === "hidden") return false;
+        if (item === node) continue;
+        const bounds = item.getBoundingClientRect();
+        if (/^(hidden|clip|auto|scroll)$/.test(style.overflowX)) {
+          left = Math.max(left, bounds.left); right = Math.min(right, bounds.right);
+        }
+        if (/^(hidden|clip|auto|scroll)$/.test(style.overflowY)) {
+          top = Math.max(top, bounds.top); bottom = Math.min(bottom, bounds.bottom);
+        }
+      }
+      return r.width > 0 && r.height > 0 && right > left && bottom > top;
+    };
+    const selectorFor = node => {
+      const parts = [];
+      for (let item = node; item && item !== document.documentElement; item = item.parentElement) {
+        const peers = [...(item.parentElement?.children ?? [])].filter(other => other.tagName === item.tagName);
+        parts.unshift(`${item.tagName.toLowerCase()}:nth-of-type(${peers.indexOf(item) + 1})`);
+      }
+      return parts.length ? `html > ${parts.join(" > ")}` : null;
+    };
+    const fromNode = (node, mediaRoot = node) => ({
+      ...empty, focusText: (node?.innerText ?? "").slice(0, 20000),
+      links: [...(node?.querySelectorAll("a[href]") ?? [])].slice(0, 300)
+        .map(a => ({ href: a.href, text: (a.innerText ?? "").slice(0, 200) })),
+      mediaScope: { address: location.href, selector: mediaRoot ? selectorFor(mediaRoot) : null,
+        videoOnly: host === "tiktok.com" && location.pathname.includes("/video/") },
+    });
+    if (host === "facebook.com") {
+      const postKey = value => {
+        try {
+          const u = new URL(value, location.href);
+          if (u.hostname.replace(/^www\./, "") !== host) return null;
+          const post = u.pathname.match(/\/posts\/(?:[^/]+\/)?(\d+|pfbid[\w]+)\/?$/)?.[1];
+          if (post) return `post:${post}`;
+          const video = u.pathname.match(/\/(?:videos|reel)\/(?:[^/]+\/)?(\d+)\/?$/)?.[1] ??
+            (u.pathname === "/watch/" ? u.searchParams.get("v") : null);
+          return video ? `video:${video}` : null;
+        } catch { return null; }
+      };
+      const wanted = postKey(location.href);
+      const metaUrl = document.querySelector('meta[property="og:url"]')?.getAttribute("content");
+      if (!wanted || !metaUrl || postKey(metaUrl) !== wanted) return empty;
+      const caption = document.querySelector('meta[property="og:description"]')?.getAttribute("content")?.trim() ?? "";
+      const normal = text => text.replace(/\s+/g, " ").trim();
+      const prefix = normal(caption).replace(/(?:\.{3}|…)$/, "").trim();
+      // Numeric and pfbid permalinks differ in Facebook's rendered cards. The
+      // current page's public preview binds its caption without reading comments.
+      const messages = [...document.querySelectorAll('[data-ad-preview="message"]')].filter(node => {
+        const article = node.closest('[role="article"]');
+        return visible(node) && !article?.hasAttribute("aria-label") &&
+          !article?.parentElement?.closest('[role="article"]') && prefix.length >= 40 &&
+          normal(node.innerText ?? "").startsWith(prefix);
+      });
+      const imageKey = value => {
+        try { const u = new URL(value); return /^https?:$/.test(u.protocol) ? u.origin + u.pathname : null; }
+        catch { return null; }
+      };
+      const image = imageKey(document.querySelector('meta[property="og:image"]')?.getAttribute("content"));
+      const media = image ? [...document.querySelectorAll("img, video")].filter(node => visible(node) &&
+        imageKey(node.tagName === "VIDEO" ? node.poster : node.currentSrc || node.src) === image) : [];
+      const reading = fromNode(messages.length === 1 ? messages[0] : null, media.length === 1 ? media[0] : null);
+      return messages.length === 1 ? reading : { ...reading, focusText: caption.slice(0, 20000),
+        links: [...caption.matchAll(/https?:\/\/[^\s<>"“”]+/g)].slice(0, 30)
+          .map(([href]) => ({ href: href.replace(/[.,;)]+$/, ""), text: "" })) };
+    }
+    if (host === "linkedin.com" || host === "bsky.app") {
+      const postKey = value => {
+        try {
+          const u = new URL(value, location.href);
+          if (u.hostname.replace(/^www\./, "") !== host) return null;
+          if (host === "linkedin.com") return u.pathname.match(/-(?:activity|ugcPost|share)-(\d+)(?:-|\/|$)/)?.[1] ??
+            u.pathname.match(/^\/feed\/update\/urn:li:(?:activity|ugcPost|share):(\d+)(?:\/|$)/)?.[1] ?? null;
+          return u.pathname.match(/^\/profile\/([^/]+)\/post\/([\w]+)(?:\/|$)/)?.slice(1).join("/") ?? null;
+        } catch { return null; }
+      };
+      const wanted = postKey(location.href);
+      if (!wanted) return empty;
+      const selector = host === "linkedin.com" ? '[role="listitem"][componentkey^="update-card-focus"]'
+        : '[data-testid^="postThreadItem-by-"]';
+      const ownedLinks = node => [...node.querySelectorAll("a[href]")].filter(link => {
+        if (link.closest(selector) !== node) return false;
+        if (host === "bsky.app") return postKey(link.href) && /\/(?:liked-by|reposted-by|quotes)\/?$/.test(new URL(link.href, location.href).pathname) &&
+          !!link.querySelector('[data-testid="likeCount-expanded"], [data-testid="repostCount-expanded"], [data-testid="quoteCount-expanded"]');
+        return !link.closest('[data-testid="expandable-text-box"], [componentkey^="comment"]') &&
+          !!link.querySelector('figure img, [aria-labelledby], svg[id^="paper-plane"]');
+      });
+      const bound = [...document.querySelectorAll(selector)].filter(node => {
+        if (!visible(node) || node.querySelector(selector)) return false;
+        const keys = new Set(ownedLinks(node).map(link => postKey(link.href)).filter(Boolean));
+        return keys.size === 1 && keys.has(wanted);
+      });
+      // Never fall back to main: signed-in sidebars and replies are outside the
+      // addressed report, even when no post has finished loading yet.
+      if (bound.length === 1) {
+        const node = bound[0];
+        if (host === "bsky.app") return fromNode(node);
+        const captions = [...node.querySelectorAll('[data-testid="expandable-text-box"]')]
+          .filter(item => !item.closest('[componentkey^="comment"]'));
+        const media = ownedLinks(node).flatMap(link => [...link.querySelectorAll('figure img')]).filter(visible);
+        // LinkedIn can nest replies and the reader's draft below the post. Only
+        // its caption and uniquely owned attachment supply words and pixels.
+        if (captions.length <= 1) return fromNode(captions[0], media.length === 1 ? media[0] : null);
+      }
+      // Public caption metadata also supports signed-out or changing layouts,
+      // but cannot authorize a screenshot of an unbound page.
+      const metaUrl = document.querySelector('meta[property="og:url"]')?.getAttribute("content");
+      const caption = document.querySelector('meta[property="og:description"]')?.getAttribute("content");
+      if (!bound.length && metaUrl && postKey(metaUrl) === wanted && caption?.trim()) {
+        return { ...empty, focusText: caption.trim().slice(0, 20000),
+          links: [...caption.matchAll(/https?:\/\/[^\s<>"“”]+/g)].slice(0, 30)
+            .map(([href]) => ({ href: href.replace(/[.,;)]+$/, ""), text: "" })) };
+      }
+      return empty;
+    }
+    if (host === "t.me" || host === "telegram.me") {
+      const match = location.pathname.match(/^\/(?:s\/)?([\w]+)\/(\d+)\/?$/);
+      if (!match) return empty;
+      const post = document.querySelector(`[data-post="${match[1]}/${match[2]}"]`);
+      return fromNode(post?.querySelector(".tgme_widget_message_text"), post);
+    }
+    if (host === "tiktok.com") {
+      const key = value => {
+        if (typeof value !== "string" || !value.trim()) return null;
+        try { const u = new URL(value, location.href); return u.hostname.replace(/^www\./, "") === host
+          ? u.pathname.match(/^\/@([^/]+)\/(video|photo)\/(\d+)\/?$/)?.slice(1).join("/") : null; }
+        catch { return null; }
+      };
+      const wanted = key(location.href);
+      if (!wanted) return empty;
+      const items = [...document.querySelectorAll('article[data-e2e="recommend-list-item-container"]')];
+      // Some layouts carry a permalink on the current item. The initial feed layout
+      // instead binds item zero through its canonical URL; never guess another item.
+      const bound = items.filter(item => visible(item) && [...item.querySelectorAll("a[href]")].some(a => key(a.href) === wanted));
+      const canonical = document.querySelector('link[rel="canonical"]')?.getAttribute("href");
+      const initial = items.find(item => item.getAttribute("data-scroll-index") === "0" && visible(item));
+      const post = bound.length === 1 ? bound[0] : bound.length === 0 && canonical && key(canonical) === wanted ? initial : null;
+      if (!post) return empty;
+      const caption = post.querySelector('[data-e2e="video-desc"], [data-e2e="browse-video-desc"]');
+      const collected = fromNode(caption, post);
+      const metaUrl = document.querySelector('meta[property="og:url"]')?.getAttribute("content");
+      const description = document.querySelector('meta[property="og:description"]')?.getAttribute("content");
+      if (metaUrl && key(metaUrl) === wanted && description?.trim()) {
+        collected.focusText = description.trim().slice(0, 20000);
+        collected.links = [...description.matchAll(/https?:\/\/[^\s<>"“”]+/g)].slice(0, 30)
+          .map(([href]) => ({ href: href.replace(/[.,;)]+$/, ""), text: "" }));
+      }
+      return collected;
+    }
+    const key = value => {
+      if (typeof value !== "string" || !value.trim()) return null;
+      try {
+        const u = new URL(value, location.href), h = u.hostname.replace(/^www\./, "");
+        if (host === "instagram.com") return h === host ? u.pathname.match(/^\/(?:[^/]+\/)?(?:p|reel|tv)\/([\w-]+)(?:\/|$)/)?.[1] : null;
+        return ["threads.com", "threads.net"].includes(h) ? u.pathname.match(/^\/@[^/]+\/post\/([\w-]+)(?:\/|$)/)?.[1] : null;
+      } catch { return null; }
+    };
+    const meta = property => document.querySelector(`meta[property="${property}"]`)?.getAttribute("content") ?? "";
+    const wanted = key(location.href);
+    if (!wanted || key(meta("og:url")) !== wanted) return empty;
+    let caption = meta("og:description");
+    if (host === "instagram.com") {
+      // Instagram wraps the public caption in attribution/counts. Preserve only the
+      // quoted caption, including its internal quotes and non-Latin writing.
+      const unwrap = value => value.replace(/[\u200e\u200f]/g, "").match(/:\s*["“]([\s\S]*)["”]\.?\s*$/)?.[1] ?? "";
+      caption = unwrap(caption) || unwrap(meta("og:title"));
+    }
+    const links = [...caption.matchAll(/https?:\/\/[^\s<>"“”]+/g)].slice(0, 30)
+      .map(([href]) => ({ href: href.replace(/[.,;)]+$/, ""), text: "" }));
+    // Media identity is independent of caption availability. An image-only post
+    // still has a visual path; a lone unrelated video never supplies that path.
+    const mediaKey = value => {
+      if (!value) return "";
+      try { const u = new URL(value, location.href); return u.origin + u.pathname; }
+      catch { return ""; }
+    };
+    const imageKey = mediaKey(meta("og:image"));
+    const videoKey = mediaKey(meta("og:video:secure_url") || meta("og:video"));
+    const allMedia = [...document.querySelectorAll("main img, main video")];
+    const media = allMedia.filter(visible);
+    const anchors = imageKey ? allMedia.filter(n => n.tagName === "IMG" && mediaKey(n.currentSrc || n.src) === imageKey) : [];
+    const images = anchors.filter(visible);
+    const videos = media.filter(n => n.tagName === "VIDEO" &&
+      (videoKey && mediaKey(n.currentSrc || n.src) === videoKey ||
+       imageKey && mediaKey(n.poster || n.getAttribute("poster")) === imageKey));
+    let primary = images.length === 1 ? images[0] : videos.length === 1 ? videos[0] : null;
+    if (host === "instagram.com" && anchors.length === 1) {
+      const anchor = anchors[0], list = anchor.closest("li")?.parentElement;
+      if (list?.matches("ul, ol") && [...list.children].filter(n => n.tagName === "LI").length > 1) {
+        // A metadata image identifies this slide list even after it scrolls out of
+        // view. Never widen this boundary to main or a list of recommended posts.
+        primary = null;
+        let viewport = list.parentElement;
+        while (viewport && !viewport.matches("main, article, body") &&
+          !/^(hidden|clip|auto|scroll)$/.test(getComputedStyle(viewport).overflowX)) viewport = viewport.parentElement;
+        const frame = viewport?.getBoundingClientRect(), original = anchor.getBoundingClientRect();
+        const bounded = viewport && !viewport.matches("main, article, body") && frame.width > 0 && frame.height > 0 &&
+          frame.width <= original.width * 1.25 && frame.height <= original.height * 1.25;
+        const conflicting = [...list.querySelectorAll("a[href]")].some(link => key(link.href) && key(link.href) !== wanted);
+        const slides = media.filter(node => node.closest("li")?.parentElement === list);
+        if (bounded && !conflicting && slides.length === 1) primary = slides[0];
+      }
+    }
+    return { ...empty, focusText: caption.slice(0, 20000), links,
+      mediaScope: { address: location.href, selector: primary ? selectorFor(primary) : null, videoOnly: primary?.tagName === "VIDEO" } };
+  }
   // YouTube keeps recommendations and inactive Shorts in the same document. Read
   // only the renderer bound to this URL's video, never the surrounding page.
   if (/^(?:www\.|m\.)?youtube\.com$/.test(location.hostname)) {

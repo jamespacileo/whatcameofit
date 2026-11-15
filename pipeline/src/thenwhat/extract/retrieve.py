@@ -48,8 +48,9 @@ class ArticleRetriever:
     ) -> None:
         self._contact = (contact_email or "").strip()
         self._client = httpx.Client(transport=transport, timeout=30.0, follow_redirects=True)
-        # A site's rules are read once for as long as this retriever lives.
-        self._rules: dict[str, RobotFileParser | bool] = {}
+        # A site's rules are read once for as long as this retriever lives. None is a
+        # site whose rules could not be read: nothing of it is fetched, as if refused.
+        self._rules: dict[str, RobotFileParser | bool | None] = {}
 
     def retrieve(self, url: str) -> Retrieved:
         """The article as plain text: from the site if robots.txt allows it, else from
@@ -77,6 +78,15 @@ class ArticleRetriever:
         require_contact(self._contact)
         return self._allowed(url)
 
+    def rules_unknown(self, url: str) -> bool:
+        """Whether the site's rules could not be read: it did not answer, could not serve
+        them, or said it was asked too often. Nothing is fetched from such a site, but
+        that is not the site refusing, and its rules may be read another time."""
+        require_contact(self._contact)
+        self._allowed(url)  # reads the site's rules if they are not yet known
+        parts = urlsplit(url)
+        return self._rules[f"{parts.scheme}://{parts.netloc}"] is None
+
     def crawl_delay(self, url: str) -> float:
         """The seconds the site's robots.txt asks this client to leave between requests,
         or 0 when it asks for none."""
@@ -84,7 +94,7 @@ class ArticleRetriever:
         self._allowed(url)  # reads the site's rules if they are not yet known
         parts = urlsplit(url)
         rules = self._rules.get(f"{parts.scheme}://{parts.netloc}")
-        if isinstance(rules, bool) or rules is None:
+        if not isinstance(rules, RobotFileParser):
             return 0.0
         return float(rules.crawl_delay(CLIENT_NAME) or 0)
 
@@ -125,13 +135,16 @@ class ArticleRetriever:
         if site not in self._rules:
             self._rules[site] = self._rules_of(site)
         rules = self._rules[site]
+        if rules is None:
+            return False  # rules unknown: do not fetch
         return rules if isinstance(rules, bool) else rules.can_fetch(CLIENT_NAME, url)
 
-    def _rules_of(self, site: str) -> RobotFileParser | bool:
-        """A site's rules, or one answer for every address when it has none to parse."""
+    def _rules_of(self, site: str) -> RobotFileParser | bool | None:
+        """A site's rules, or one answer for every address when it has none to parse, or
+        None when the rules could not be read."""
         response = self._get(f"{site}/robots.txt")
-        if response is None or response.status_code >= 500:
-            return False  # rules unknown: do not fetch
+        if response is None or response.status_code >= 500 or response.status_code == 429:
+            return None
         if response.status_code in (401, 403):
             return False
         if response.status_code >= 400:

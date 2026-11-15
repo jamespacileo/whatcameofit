@@ -6,6 +6,7 @@ The registry record is a recorded fixture with its planned primary outcomes repl
 No model and no network is called.
 """
 
+import asyncio
 import copy
 import json
 from collections.abc import Callable
@@ -276,14 +277,39 @@ def llm(session: Session, scripted: Scripted, **overrides: Any) -> Llm:
     return Llm(
         session,
         settings,
-        model=FunctionModel(scripted.respond, model_name="scripted-model"),
+        model=FunctionModel(
+            scripted.respond_slowly if isinstance(scripted, Overlapping) else scripted.respond,
+            model_name="scripted-model",
+        ),
         now=lambda: NOW,
     )
 
 
-def read(session: Session, claim: Claim, scripted: Scripted, **overrides: Any) -> ReadingsRun:
+def read(
+    session: Session, claim: Claim, scripted: Scripted, *, at_once: int = 1, **overrides: Any
+) -> ReadingsRun:
     client = llm(session, scripted, **overrides)
-    return read_trials(session, client, trials_of(session, claim), now=NOW)
+    return read_trials(session, client, trials_of(session, claim), now=NOW, at_once=at_once)
+
+
+class Overlapping(Scripted):
+    """A scripted model that takes a moment to answer and counts how many calls were
+    waiting on it at once."""
+
+    def __init__(self, *answers: dict[str, Any], fails_for: str | None = None) -> None:
+        super().__init__(*answers)
+        self.waiting = 0
+        self.most_at_once = 0
+        self.fails_for = fails_for
+
+    async def respond_slowly(self, messages, info) -> ModelResponse:
+        self.waiting += 1
+        self.most_at_once = max(self.most_at_once, self.waiting)
+        await asyncio.sleep(0.01)
+        self.waiting -= 1
+        if self.fails_for is not None and self.fails_for in str(messages):
+            raise RuntimeError("no model")
+        return self.respond(messages, info)
 
 
 def stored(session: Session) -> list[Reading]:
@@ -511,13 +537,62 @@ def test_the_run_stops_at_the_spend_ceiling_and_leaves_the_rest_unread(
     # At a dollar a token the first call alone passes the ceiling.
     dear = {"input_usd_per_mtok": Decimal("1000000"), "monthly_budget_usd": Decimal("10")}
 
-    run = read(session, claim, model, **dear)
+    run = read(session, claim, model, at_once=1, **dear)
 
     assert run.stopped is not None and "monthly ceiling of $10" in run.stopped
     assert (run.read, run.unread) == ([TRIAL], [OTHER_TRIAL])
     assert len(model.shown) == 1
     assert [trial_read.trial_id for trial_read in reads(session)] == [TRIAL]
     assert len(stored(session)) == 4
+
+
+def test_trials_read_at_once_are_asked_together_and_kept_in_order(
+    session: Session, claim: Claim, fixture_json
+):
+    """Scenario: Several trials read at once"""
+    third = "NCT00000003"
+    store_record(session, claim, study_with(fixture_json, OUTCOMES, trial_id=OTHER_TRIAL))
+    store_record(session, claim, study_with(fixture_json, OUTCOMES, trial_id=third))
+    model = Overlapping(ANSWER)
+
+    run = read(session, claim, model, at_once=2)
+
+    # Three trials in groups of two: two calls waited together, never three.
+    assert model.most_at_once == 2
+    assert sorted(run.read) == sorted([TRIAL, OTHER_TRIAL, third])
+    assert [trial_read.trial_id for trial_read in reads(session)] == sorted(run.read)
+    assert len(stored(session)) == 12
+    # Each call's cost is on record.
+    assert len(session.scalars(select(LlmUsage)).all()) == 3
+
+
+def test_a_call_that_fails_in_a_group_is_reported_and_the_others_stand(
+    session: Session, claim: Claim, fixture_json
+):
+    changed = [{"measure": "Synthetic tic count", "timeFrame": "Week 6"}]
+    store_record(session, claim, study_with(fixture_json, changed, trial_id=OTHER_TRIAL))
+    model = Overlapping(ANSWER, fails_for="Synthetic tic count")
+
+    run = read(session, claim, model, at_once=2)
+
+    assert run.read == [TRIAL]
+    assert [trial_id for trial_id, _ in run.failed] == [OTHER_TRIAL]
+    assert [trial_read.trial_id for trial_read in reads(session)] == [TRIAL]
+
+
+def test_the_ceiling_is_looked_at_before_each_group(session: Session, claim: Claim, fixture_json):
+    """Scenario: Spend ceiling reached"""
+    third = "NCT00000003"
+    store_record(session, claim, study_with(fixture_json, OUTCOMES, trial_id=OTHER_TRIAL))
+    store_record(session, claim, study_with(fixture_json, OUTCOMES, trial_id=third))
+    model = Overlapping(ANSWER)
+    dear = {"input_usd_per_mtok": Decimal("1000000"), "monthly_budget_usd": Decimal("10")}
+
+    run = read(session, claim, model, at_once=2, **dear)
+
+    # The first group of two is read whole; the run stops before the third trial.
+    assert run.stopped is not None and "monthly ceiling of $10" in run.stopped
+    assert (len(run.read), len(run.unread), len(model.shown)) == (2, 1, 2)
 
 
 def test_no_model_configured_reads_nothing_and_says_so(session: Session, claim: Claim):

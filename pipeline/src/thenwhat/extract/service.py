@@ -12,7 +12,11 @@ from datetime import UTC, date, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.entities import ORGANISATION_TYPES, note_named_organisation
+from thenwhat.claims.entities import (
+    ORGANISATION_TYPES,
+    note_named_organisation,
+    whole_intervention_names,
+)
 from thenwhat.claims.entry import (
     ArticleNotFound,
     EntryError,
@@ -273,9 +277,16 @@ def _apply(
 
     intervention = next(e for e in existing if e.type is EntityType.INTERVENTION)
     names = {name_key(intervention.name), *(name_key(s) for s in intervention.synonyms)}
+    whole_names = set(
+        whole_intervention_names(
+            [intervention.name, *intervention.synonyms, *draft.intervention_synonyms]
+        )
+    )
     # A description the model returned as a name is dropped: it would be searched for.
     new_synonyms = [
-        s for s in draft.intervention_synonyms if is_a_name(s) and name_key(s) not in names
+        s
+        for s in draft.intervention_synonyms
+        if s in whole_names and is_a_name(s) and name_key(s) not in names
     ]
     if new_synonyms:
         intervention.synonyms = [*intervention.synonyms, *new_synonyms]

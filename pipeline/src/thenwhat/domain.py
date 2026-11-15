@@ -260,3 +260,7 @@ class ReadOutcome(StrEnum):
     ENOUGH_ARTICLES = "enough_articles"
     # Read, and not about one treatment for one condition: no claim was made.
     NOT_ONE_TREATMENT = "not_one_treatment"
+    # Read, on a topic, and about a treatment's business, not what it does: no claim made.
+    BUSINESS_NEWS = "business_news"
+    # Read, but equal names did not establish the same product and condition.
+    IDENTITY_UNRESOLVED = "identity_unresolved"

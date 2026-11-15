@@ -30,7 +30,7 @@ from thenwhat.domain import (
 )
 from thenwhat.events.trial_facts import read_trial
 from thenwhat.events.trial_records import newest_registry_record
-from thenwhat.llm.errors import BudgetExceeded, LlmError, LlmNotConfigured
+from thenwhat.llm.errors import BudgetExceeded, LlmError
 from thenwhat.readings.rules import FIELD_OF_KIND, Outcome, Proposed, Refusal, input_hash, refusal
 
 if TYPE_CHECKING:
@@ -258,22 +258,19 @@ def proposed(answer: ReadingsAnswer) -> list[tuple[Proposed, float]]:
     return readings
 
 
-def read_record(
-    session: Session, llm: "Llm", trial: TrialRecord, *, now: datetime, run: ReadingsRun
+def store_read(
+    session: Session,
+    llm: "Llm",
+    trial: TrialRecord,
+    answer: ReadingsAnswer,
+    *,
+    now: datetime,
+    run: ReadingsRun,
 ) -> None:
-    """Read one trial, unless its stored read is of this record under these instructions.
-
-    The model is asked for one follow-up and one measure per outcome. Each is checked by
-    the rules; the trial's earlier read and readings are replaced by this read and the
-    readings that pass. Raises what the model call raises, with nothing changed.
-    """
+    """Keep what the model answered for one trial. Each reading is checked by the rules;
+    the trial's earlier read and readings are replaced by this read and the readings
+    that pass."""
     earlier = stored_read(session, trial.source_name, trial.trial_id)
-    if is_current(earlier, trial):
-        run.unchanged.append(trial.trial_id)
-        return
-    answer = llm.run(
-        PURPOSE, instructions=INSTRUCTIONS, prompt=shown(trial), output_type=ReadingsAnswer
-    )
     provider, _, model = (llm.model_name or "").partition(":")
 
     if earlier is not None:
@@ -327,9 +324,19 @@ def read_record(
 
 
 def read_trials(
-    session: Session, llm: "Llm", trials: Sequence[TrialRecord], *, now: datetime
+    session: Session,
+    llm: "Llm",
+    trials: Sequence[TrialRecord],
+    *,
+    now: datetime,
+    at_once: int = 1,
 ) -> ReadingsRun:
-    """Read each trial once, in order. When the monthly spend ceiling is reached the run
+    """Read each trial once, `at_once` of them at a time, and keep the answers in the
+    trials' order. The model is asked for one follow-up and one measure per outcome. A
+    trial whose stored read is of this record under these instructions is not asked
+    about.
+
+    The monthly spend ceiling is looked at before each group. When it is reached the run
     stops there and says so: the trials it did not reach keep what they had, which for a
     trial never read is no reading. A trial whose call fails otherwise is reported and
     the run goes on. A model that is not configured is raised: nothing can be read."""
@@ -338,20 +345,28 @@ def read_trials(
     once: dict[tuple[str, str], TrialRecord] = {}
     for trial in trials:
         once.setdefault((trial.source_name, trial.trial_id), trial)
-    todo = list(once.values())
-    for place, trial in enumerate(todo):
+    todo: list[TrialRecord] = []
+    for trial in once.values():
+        if is_current(stored_read(session, trial.source_name, trial.trial_id), trial):
+            run.unchanged.append(trial.trial_id)
+        else:
+            todo.append(trial)
+    for start in range(0, len(todo), at_once):
+        group = todo[start : start + at_once]
         try:
-            read_record(session, llm, trial, now=now, run=run)
+            answers = llm.run_many(
+                PURPOSE,
+                instructions=INSTRUCTIONS,
+                prompts=[shown(trial) for trial in group],
+                output_type=ReadingsAnswer,
+            )
         except BudgetExceeded as error:
             run.stopped = str(error)
-            run.unread = [
-                later.trial_id
-                for later in todo[place:]
-                if not is_current(stored_read(session, later.source_name, later.trial_id), later)
-            ]
+            run.unread = [later.trial_id for later in todo[start:]]
             break
-        except LlmNotConfigured:
-            raise
-        except LlmError as error:
-            run.failed.append((trial.trial_id, str(error)))
+        for trial, answer in zip(group, answers, strict=True):
+            if isinstance(answer, LlmError):
+                run.failed.append((trial.trial_id, str(answer)))
+            else:
+                store_read(session, llm, trial, answer, now=now, run=run)
     return run

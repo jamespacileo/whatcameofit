@@ -8,9 +8,10 @@ from datetime import timedelta
 
 import httpx
 import pytest
+from sqlalchemy import Engine, delete
 from sqlalchemy.orm import Session
 
-from thenwhat.db.models import HttpCache
+from thenwhat.db.models import HttpCache, SourceAllowanceUse
 from thenwhat.sources.base import (
     MissingContact,
     Pacer,
@@ -204,6 +205,42 @@ def test_burst_of_requests_is_spread_out(session: Session, fake_time):
         demo.get(f"thing-{number}")
 
     assert fake_time.elapsed >= 3.0 - 1e-9  # nine gaps of a third of a second
+
+
+def test_separate_clients_of_one_source_take_turns(session: Session, fake_time):
+    """Scenario: Several clients of one registry at once"""
+    first = client(session, fake_time, Server(ok()))
+    second = client(session, fake_time, Server(ok()))
+
+    first.get("a")
+    second.get("b")
+    first.get("c")
+
+    # Nothing ties the two together but the source's name, and still they keep to the
+    # source's rate between them: three a second here.
+    assert fake_time.slept == pytest.approx([1 / 3, 1 / 3], abs=1e-5)
+
+
+def test_processes_asking_one_source_keep_to_its_rate_together(engine: Engine, fake_time):
+    """Scenario: Several processes ask one source"""
+    try:
+        # Two sessions on their own connections, as two processes have.
+        with Session(engine) as one, Session(engine) as other:
+            first = client(one, fake_time, Server(ok()))
+            second = client(other, fake_time, Server(ok()))
+
+            first.get("a")
+            second.get("b")
+            first.get("c")
+            one.rollback()
+            other.rollback()
+
+        assert fake_time.slept == pytest.approx([1 / 3, 1 / 3], abs=1e-5)
+    finally:
+        with Session(engine) as session, session.begin():
+            session.execute(
+                delete(SourceAllowanceUse).where(SourceAllowanceUse.source_name == Demo.name)
+            )
 
 
 def test_clients_that_share_a_pacer_take_turns(session: Session, fake_time):

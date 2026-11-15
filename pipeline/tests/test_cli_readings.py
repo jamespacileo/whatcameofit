@@ -103,10 +103,17 @@ def test_all_reads_every_published_claim_and_a_second_run_asks_nothing(
 
 
 def test_the_command_stops_at_the_spend_ceiling_says_so_and_exits_1(
-    run, session: Session, model: Scripted, claim: Claim, fixture_json
+    run,
+    session: Session,
+    model: Scripted,
+    claim: Claim,
+    fixture_json,
+    monkeypatch: pytest.MonkeyPatch,
 ):
     """Scenario: Spend ceiling reached"""
     store_record(session, claim, study_with(fixture_json, OUTCOMES, trial_id=OTHER_TRIAL))
+    # One trial at a time, so the ceiling is looked at between the two.
+    monkeypatch.setenv("READINGS_AT_ONCE", "1")
 
     result = run("readings", SLUG, input_usd_per_mtok=Decimal("1000000"))
 

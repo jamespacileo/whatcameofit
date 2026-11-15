@@ -17,12 +17,12 @@ from sqlalchemy.orm import Session
 from typer.testing import CliRunner, Result
 
 from thenwhat.claims.entities import entities_of
-from thenwhat.claims.entry import add_claim
+from thenwhat.claims.entry import add_claim, claim_by_slug
 from thenwhat.cli import app
 from thenwhat.cli.resolve import Research
 from thenwhat.db.models import DecisionLog, EntityMatch, EntitySubstance
 from thenwhat.decide.core import BackendAnswer
-from thenwhat.domain import Decider
+from thenwhat.domain import ClaimStatus, Decider, EvidenceStage
 from thenwhat.llm.client import Llm, LlmSettings
 from thenwhat.sources.base import SourceRecord, UnsearchableTerm
 from thenwhat.sources.openalex import OpenAlex
@@ -104,11 +104,12 @@ class Substances:
 class Backend:
     name = "fake"
 
-    def __init__(self, broken: bool = False) -> None:
+    def __init__(self, broken: bool | str = False) -> None:
+        # True breaks every decision; a step's name breaks that step alone.
         self.broken = broken
 
     def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
-        if self.broken:
+        if self.broken is True or self.broken == step:
             raise RuntimeError("no model")
         rest = 0.2 / (len(options) - 1)
         return BackendAnswer(options[0], {o: 0.8 if o == options[0] else rest for o in options})
@@ -126,8 +127,10 @@ def rules_off(monkeypatch: pytest.MonkeyPatch) -> None:
 def run(session: Session, monkeypatch: pytest.MonkeyPatch):
     @contextmanager
     def test_session() -> Generator[Session]:
-        yield session
-        session.flush()
+        # As the command's own session does: what it wrote is kept when it ends cleanly
+        # and undone when it is left through an exception, an exit among them.
+        with session.begin_nested():
+            yield session
 
     monkeypatch.setattr("thenwhat.cli.entry.open_session", test_session)
     # The command reads its settings; the database itself is the test session above.
@@ -147,9 +150,11 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
     )
     runner = CliRunner()
 
-    def invoke(*arguments: str, broken_backend: bool = False) -> Result:
+    def invoke(*arguments: str, broken_backend: bool | str = False) -> Result:
         if broken_backend:
-            monkeypatch.setattr("thenwhat.cli.resolve.make_backend", lambda s: Backend(broken=True))
+            monkeypatch.setattr(
+                "thenwhat.cli.resolve.make_backend", lambda s: Backend(broken=broken_backend)
+            )
         return runner.invoke(app, list(arguments))
 
     return invoke
@@ -161,6 +166,38 @@ def names(session: Session) -> list[str]:
     claim = find_claim(session, SLUG)
     assert claim is not None
     return [entity.name for entity in entities_of(session, claim)]
+
+
+def test_resolve_confirms_a_stored_confident_stage_without_reading_it_again(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    class HumanStudy(Backend):
+        stage_calls = 0
+
+        def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
+            if step != "evidence_stage":
+                return super().answer(step, state, options)
+            self.stage_calls += 1
+            return BackendAnswer(
+                "early_human", {o: float(o == "early_human") for o in options}, confidence=0.98
+            )
+
+    backend = HumanStudy()
+    monkeypatch.setattr("thenwhat.cli.resolve.make_backend", lambda s: backend)
+    # First save a suggestion while automatic draft approval is off.
+    assert run("resolve", SLUG).exit_code == 0
+    claim = claim_by_slug(session, SLUG)
+    assert claim.evidence_stage is None
+    monkeypatch.setenv("APPROVE_DRAFTS_BY_RULE", "true")
+
+    result = run("resolve", SLUG)
+
+    assert result.exit_code == 0, result.output
+    assert claim.evidence_stage is EvidenceStage.EARLY_HUMAN
+    assert claim.current_status is ClaimStatus.NO_TRIAL_FOUND
+    assert backend.stage_calls == 1
+    [log] = session.scalars(select(DecisionLog).where(DecisionLog.step == "evidence_stage"))
+    assert log.human_label is None
 
 
 def test_entity_add_adds_the_entity(run, session: Session):
@@ -482,3 +519,13 @@ def test_resolve_with_a_failing_backend_keeps_the_failure_on_record(run, session
     assert "No candidates were stored" in result.output
     assert session.scalars(select(EntityMatch)).all() == []
     assert [entry.error is not None for entry in session.scalars(select(DecisionLog))] == [True]
+
+
+def test_resolve_failing_after_the_search_keeps_and_reports_what_it_stored(run, session: Session):
+    result = run("resolve", SLUG, broken_backend="evidence_stage")
+
+    assert result.exit_code == 1
+    assert "1 candidate match(es) were stored before the failure" in result.output
+    assert "No candidates were stored" not in result.output
+    assert len(session.scalars(select(EntityMatch)).all()) == 1
+    assert any(entry.error is not None for entry in session.scalars(select(DecisionLog)))

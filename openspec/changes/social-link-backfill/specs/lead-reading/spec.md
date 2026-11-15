@@ -7,10 +7,10 @@ Reads the article of a link lead that triage passed, once, and makes it a source
 ## ADDED Requirements
 
 ### Requirement: Which leads are read
-The reading step SHALL apply to leads that are passed at the configured thresholds. Before a lead is read, the check for an article already tracked SHALL run again; a lead that has become already tracked SHALL NOT be read.
+The reading step SHALL apply to leads that are passed at the configured thresholds, and to the held leads that name one of the operator's topics (see "Topic leads"). Before a lead is read, the check for an article already tracked SHALL run again; a lead that has become already tracked SHALL NOT be read.
 
 #### Scenario: A held lead
-- **WHEN** a lead's score is between the two thresholds
+- **WHEN** a lead's score is between the two thresholds and its title names no topic
 - **THEN** it is not read
 
 #### Scenario: Tracked since it was screened
@@ -18,11 +18,77 @@ The reading step SHALL apply to leads that are passed at the configured threshol
 - **THEN** the lead's outcome becomes already tracked, and no article is fetched and no model is called for it
 
 ### Requirement: Reading order
-Due leads SHALL be read in this order: first those linked to a registry trial, then by the sum of their shares' scores, highest first.
+Due leads SHALL be read in this order: first those whose title names one of the operator's topics, then those linked to a registry trial, then by the sum of their shares' scores, highest first.
+
+#### Scenario: A topic lead and a much-shared lead
+- **WHEN** two leads are due, and the less shared one names a topic
+- **THEN** the lead that names the topic is read first
 
 #### Scenario: Two leads, one linked to a trial
 - **WHEN** two leads are due and only the less shared one is linked to a registry trial
 - **THEN** the lead linked to a trial is read first
+
+### Requirement: Topic leads
+The operator's topics SHALL be a checked-in list of names, each with the words that mark a link lead or a claim as belonging to it. A lead's title names a topic when it holds one of the topic's words as a whole word, whatever its letter case. A lead that names a topic and that triage held SHALL be read as a passed lead is; a lead that triage rejected SHALL NOT be read. With no topic listed, only passed leads SHALL be read. A lead on an outlet that is not listed is not in scope and SHALL NOT be read, whatever it names. A topic is covered by what was reported of its treatments. A lead is on a topic when its title, or the treatment its read names, holds one of the topic's words. For a lead on a topic, when the probability that the article is about what the treatment does (new or established: evidence, safety, a new use, an approval) is below the configured probability, 0.5 unless set, no claim SHALL be joined or drafted and the lead's outcome SHALL be business news. A topic's list MAY group the names of one drug, brand and generic; a claim under any name of the group SHALL be a candidate for an article that names another (see "The same story in other words"). The precision measured for triage at the thresholds does not hold for held leads, so the outcomes of topic leads SHALL be reported apart, in the topic's coverage. A topic SHALL change only which leads are read, in what order, and which claims are candidates: it SHALL NOT change a status and SHALL NOT appear in the export.
+
+#### Scenario: A held lead on a topic
+- **WHEN** a lead scored 0.4 names a GLP-1 drug in its title, and the thresholds are 0.7 and 0.2
+- **THEN** it is read, and the check after the read decides whether it becomes or joins a claim
+
+#### Scenario: A held lead on no topic
+- **WHEN** a lead scored 0.4 names no topic
+- **THEN** it is not read
+
+#### Scenario: A rejected lead on a topic
+- **WHEN** a lead scored 0.1 names a topic, and the lower threshold is 0.2
+- **THEN** it is not read
+
+#### Scenario: A word inside another word
+- **WHEN** a title holds "GLP-12" and the topic's word is "GLP-1"
+- **THEN** the title does not name the topic
+
+#### Scenario: No topics are listed
+- **WHEN** no topic is listed
+- **THEN** a held lead is not read, whatever its title
+
+#### Scenario: A shortage of a topic's drug
+- **WHEN** a lead names a topic, and the decision gives 0.03 to the article being about what the treatment does and 0.95 to business news
+- **THEN** no claim is created or joined, and the lead's outcome is business news with that probability
+
+#### Scenario: A trial result for a topic's drug
+- **WHEN** a lead names a topic, and the decision says an established treatment and what it does
+- **THEN** the read goes on to join a claim or draft one
+
+#### Scenario: A price rise for a tracked treatment on no topic
+- **WHEN** a lead is on no topic, the decision says business news, and a claim exists for what the read names
+- **THEN** the article is added to that claim, and the lead's detail says business news about a treatment
+
+#### Scenario: A price rise with no claim to join
+- **WHEN** a lead is on no topic, the decision says business news, and no claim exists for what the read names
+- **THEN** no claim is created, and the lead's outcome is business news
+
+#### Scenario: Shared under a title that names nothing
+- **WHEN** a lead's title names no topic word, the read names Wegovy, and the decision says business news
+- **THEN** the lead is on the topic, and the article is not added to the semaglutide claim
+
+#### Scenario: A brand name and its generic name
+- **WHEN** a claim's intervention is semaglutide, and a lead's read names Wegovy, which the topic lists as the same drug
+- **THEN** that claim is a candidate, and the same-claim decision says whether the article reports it
+
+### Requirement: Topic coverage
+`thenwhat backfill topics` SHALL report, for every topic or for the one named: how many link leads name it; how many of those are not screened yet, on an outlet that is not listed, already a source article, in scope and not scored yet, rejected by triage, and to be read; the outcomes of those that were read; and each unarchived claim whose intervention names the topic, with its review state or that it is published, its status, and how many articles, approved trials, approved papers and approved background cards it has. It SHALL send no request and change nothing.
+
+#### Scenario: Leads at every stage
+- **WHEN** leads that name a topic stand at different stages
+- **THEN** the report gives the number at each stage and the outcomes of those read
+
+#### Scenario: A claim with a trial and a paper
+- **WHEN** a claim for semaglutide has one article, one approved trial, one rejected trial and one approved paper
+- **THEN** the report lists it with 1 article, 1 trial, 1 paper and 0 cards
+
+#### Scenario: An unknown topic
+- **WHEN** the operator names a topic that is not listed
+- **THEN** the command fails and lists the topics
 
 ### Requirement: Outlets are asked politely
 An article SHALL be fetched only where the outlet's robots.txt allows the pipeline's client, with the contact User-Agent. No outlet SHALL be asked for two articles less than the configured interval apart, counted across every process, or less than the delay its robots.txt asks for when that is longer. An article that cannot be retrieved SHALL be looked for as an archived snapshot, as extraction does today.
@@ -30,6 +96,10 @@ An article SHALL be fetched only where the outlet's robots.txt allows the pipeli
 #### Scenario: Robots.txt forbids the fetch
 - **WHEN** a lead's outlet forbids the pipeline's client
 - **THEN** the article is not fetched, the lead's outcome is cannot be read with that reason, and it is not tried again
+
+#### Scenario: Robots.txt cannot be read
+- **WHEN** a lead's outlet does not answer for its robots.txt, answers with a server error, or says it was asked too often
+- **THEN** the article is not fetched, the lead is given no outcome, the failure is recorded with its reason, and the lead is tried again on a later run until the attempt limit is reached
 
 #### Scenario: Two processes, one outlet
 - **WHEN** two processes each hold a due lead on the same outlet
@@ -88,7 +158,7 @@ A source article made from a lead SHALL carry the headline its own page gives as
 - **THEN** no model is called and the lead's outcome is cannot be read with that reason
 
 ### Requirement: Only an article about one treatment for one condition becomes a claim
-After the read and before any claim is joined or drafted, a decision SHALL say which the article is: about one treatment for one condition where the treatment is new, experimental or being tested for it; about one treatment for one condition where the treatment is already in established use; or neither. It SHALL be shown the read's own headline, summary, treatment and condition and nothing of the article's text. An article about an established treatment SHALL be joined or drafted exactly as one about a new treatment, and the lead's detail SHALL say it is an established treatment in the news. When the probability that the article is about one treatment for one condition, new or established, is below the configured probability, 0.5 unless set, no claim SHALL be joined or drafted, and the lead's outcome SHALL be not one treatment, with what was read and the probability. The decision SHALL be logged under its own step name, `treatment_kind`, with the lead's reference; that log entry is the record of whether an article was about a new or an established treatment.
+After the read and before any claim is joined or drafted, a decision SHALL say which the article is: about one treatment for one condition where the treatment is new, experimental or being tested for it; about one treatment for one condition where the treatment is already in established use and the article is about what it does; business news about one treatment for one condition, such as its price, sales, supply, a lawsuit or who takes it; or none of these. It SHALL be shown the read's own headline, summary, treatment and condition and nothing of the article's text. An article about an established treatment SHALL be joined or drafted exactly as one about a new treatment, and the lead's detail SHALL say it is an established treatment in the news. Business news SHALL NOT start a claim, for any lead. It SHALL be joined to a claim that exists, with the lead's detail saying it is business news, unless the lead is on a topic (see "Topic leads"); with no claim to join, or on a topic, the lead's outcome SHALL be business news. An article is business news when the probability that it is about what the treatment does, new or established, is below the configured probability. A kind logged before the business answer existed never says business news. When the probability that the article is about one treatment for one condition, of any of those three kinds, is below the configured probability, 0.5 unless set, no claim SHALL be joined or drafted, and the lead's outcome SHALL be not one treatment, with what was read and the probability. The decision SHALL be logged under its own step name, `treatment_kind`, with the lead's reference; that log entry is the record of whether an article was about a new or an established treatment.
 
 #### Scenario: A trial result
 - **WHEN** the decision says a new treatment at 0.95
@@ -232,7 +302,7 @@ A lead linked by its title to a claim that already has the configured number of 
 - **THEN** the lead is read
 
 ### Requirement: Funnel report
-`thenwhat backfill funnel` SHALL report how many leads are loaded, in scope, scored, passed, read, could not be read by reason, added to an existing claim, made a new claim approved by rule, made a claim rejected by rule, made a claim that awaits preparation, need a vertical, and were not about one treatment for one condition. It SHALL give the model cost recorded for triage and for reading. It SHALL list the outlets whose pages gave no publication date, with how many leads each lost.
+`thenwhat backfill funnel` SHALL report how many leads are loaded, in scope, scored, passed, read, could not be read by reason, added to an existing claim, made a new claim approved by rule, made a claim rejected by rule, made a claim that awaits preparation, need a vertical, were not about one treatment for one condition, and were business news on a topic. It SHALL give the model cost recorded for triage and for reading. It SHALL list the outlets whose pages gave no publication date, with how many leads each lost.
 
 #### Scenario: After a limited run
 - **WHEN** 200 leads have been through the reading step

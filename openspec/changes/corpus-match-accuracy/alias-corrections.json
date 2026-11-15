@@ -1,0 +1,225 @@
+{
+  "checked_at": "2026-11-15T16:56:04.587630+00:00",
+  "decider": "assistant",
+  "scope": "Only unpublished intervention synonym fields; no claim, trial, event or term review decisions changed. Removed aliases remain in this reversible audit.",
+  "sources": [
+    "https://www.accessdata.fda.gov/drugsatfda_docs/label/2025/211243s019lbl.pdf",
+    "https://pubmed.ncbi.nlm.nih.gov/22612619/"
+  ],
+  "corrections": [
+    {
+      "slug": "2r-6r-hnk-depression",
+      "entity_id": 1921,
+      "intervention": "(2R,6R)-HNK",
+      "before": [
+        "hydroxynorketamine",
+        "HNK"
+      ],
+      "after": [],
+      "reason": "The family name omits the explicitly named stereoisomer."
+    },
+    {
+      "slug": "670-nm-deep-red-light-exposure-age-related-decline-in",
+      "entity_id": 2241,
+      "intervention": "670 nm deep red light exposure",
+      "before": [
+        "long-wavelength red light"
+      ],
+      "after": [],
+      "reason": "Broader description omits the explicit wavelength."
+    },
+    {
+      "slug": "brain-computer-interface-system-for-hand-control-paralysis",
+      "entity_id": 2474,
+      "intervention": "Brain-computer interface system for hand control",
+      "before": [
+        "limb reanimation",
+        "bypass system"
+      ],
+      "after": [],
+      "reason": "Broad descriptions do not identify the recorded hand-control intervention."
+    },
+    {
+      "slug": "corneat-kpro-corneal-blindness-and-damaged-scarred-or-opaque",
+      "entity_id": 2655,
+      "intervention": "CorNeat KPro",
+      "before": [
+        "artificial cornea"
+      ],
+      "after": [],
+      "reason": "A device category does not identify the named product."
+    },
+    {
+      "slug": "covid-19-vaccine-covid-19",
+      "entity_id": 2506,
+      "intervention": "COVID-19 vaccine",
+      "before": [
+        "AstraZeneca COVID-19 vaccine"
+      ],
+      "after": [],
+      "reason": "A specific class member cannot be an exact alias for the generic vaccine category."
+    },
+    {
+      "slug": "esketamine-major-depression-including-depression-with",
+      "entity_id": 1914,
+      "intervention": "Esketamine",
+      "before": [
+        "ketamine"
+      ],
+      "after": [],
+      "reason": "Esketamine is the S-enantiomer; racemic ketamine is not the same substance."
+    },
+    {
+      "slug": "inhaled-interferon-beta-covid-19",
+      "entity_id": 2336,
+      "intervention": "Inhaled interferon beta",
+      "before": [
+        "interferon beta"
+      ],
+      "after": [],
+      "reason": "The unqualified substance name omits the explicit inhaled route."
+    },
+    {
+      "slug": "kidney-transplant-desensitization-kidney-failure-in-patients",
+      "entity_id": 2309,
+      "intervention": "Kidney transplant desensitization",
+      "before": [
+        "Desensitization"
+      ],
+      "after": [],
+      "reason": "The generic procedure category omits the kidney-transplant context."
+    },
+    {
+      "slug": "low-dose-aspirin-prevention-of-a-first-heart-attack-or",
+      "entity_id": 2575,
+      "intervention": "Low-dose aspirin",
+      "before": [
+        "aspirin"
+      ],
+      "after": [],
+      "reason": "The unqualified substance name omits the explicit low-dose regimen."
+    },
+    {
+      "slug": "lsd-microdosing-alzheimers-disease",
+      "entity_id": 2226,
+      "intervention": "LSD microdosing",
+      "before": [
+        "LSD",
+        "Lysergic Acid Diethylamide"
+      ],
+      "after": [],
+      "reason": "The substance names omit the explicit microdosing regimen."
+    },
+    {
+      "slug": "monoclonal-antibody-treatments-for-ebola-ebola-virus-disease",
+      "entity_id": 2075,
+      "intervention": "Monoclonal antibody treatments for Ebola",
+      "before": [
+        "Regeneron monoclonal antibody cocktail",
+        "mAb114"
+      ],
+      "after": [],
+      "reason": "These are distinct class members described in the stored source summary, not names of the whole category."
+    },
+    {
+      "slug": "peanut-allergen-immunotherapy-by-oral-capsule-and-skin-patch",
+      "entity_id": 2463,
+      "intervention": "Peanut allergen immunotherapy by oral capsule and skin patch",
+      "before": [
+        "AR101",
+        "Viaskin"
+      ],
+      "after": [],
+      "reason": "These identify separate oral and patch interventions, not the complete multi-intervention report."
+    },
+    {
+      "slug": "stemirac-spinal-cord-injury",
+      "entity_id": 2685,
+      "intervention": "Stemirac",
+      "before": [
+        "mesenchymal stem cells (MSCs)"
+      ],
+      "after": [],
+      "reason": "A cell category does not identify the named product."
+    },
+    {
+      "slug": "triple-chronotherapy-depression-particularly-drug-resistant",
+      "entity_id": 2269,
+      "intervention": "Triple chronotherapy",
+      "before": [
+        "chronotherapy"
+      ],
+      "after": [],
+      "reason": "The broader procedure name omits the explicit triple regimen."
+    },
+    {
+      "slug": "weight-loss-medications-weight-loss",
+      "entity_id": 3293,
+      "intervention": "Weight-loss medications",
+      "before": [
+        "tirzepatide",
+        "Mounjaro",
+        "semaglutide",
+        "Wegovy",
+        "Ozempic"
+      ],
+      "after": [],
+      "reason": "Distinct medicines are class members, not alternate names of the class."
+    },
+    {
+      "slug": "bimagrumab-plus-semaglutide-obesity-and-weight-loss",
+      "entity_id": 3687,
+      "intervention": "Bimagrumab plus semaglutide",
+      "before": [
+        "bimagrumab",
+        "semaglutide"
+      ],
+      "after": [],
+      "reason": "Each name is one explicit component of the complete regimen."
+    },
+    {
+      "slug": "semaglutide-plus-trevogrumab-with-or-without-garetosmab",
+      "entity_id": 3975,
+      "intervention": "Semaglutide plus trevogrumab, with or without garetosmab",
+      "before": [
+        "semaglutide",
+        "trevogrumab",
+        "garetosmab"
+      ],
+      "after": [],
+      "reason": "Each name is one explicit component, not the whole optional-component regimen."
+    },
+    {
+      "slug": "ravidasvir-and-sofosbuvir-combination-hepatitis-c",
+      "entity_id": 2066,
+      "intervention": "Ravidasvir and sofosbuvir combination",
+      "before": [
+        "ravidasvir",
+        "sofosbuvir"
+      ],
+      "after": [],
+      "reason": "Each name is one explicit component of the complete regimen."
+    },
+    {
+      "slug": "tpa-plus-modified-pro-uk-clot-related-strokes-and-heart",
+      "entity_id": 2180,
+      "intervention": "tPA plus modified pro-UK",
+      "before": [
+        "tPA",
+        "pro-UK"
+      ],
+      "after": [],
+      "reason": "Each name is one component and pro-UK also omits the explicit modification."
+    },
+    {
+      "slug": "pembrolizumab-plus-chemotherapy-the-most-common-type-of-lung",
+      "entity_id": 2432,
+      "intervention": "pembrolizumab plus chemotherapy",
+      "before": [
+        "pembrolizumab"
+      ],
+      "after": [],
+      "reason": "One component does not identify the complete regimen."
+    }
+  ]
+}
