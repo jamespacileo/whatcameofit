@@ -49,6 +49,7 @@
 
 - [x] Correct pembrolizumab to its source-bound pemetrexed/platinum regimen and first-line metastatic nonsquamous population; reject seven incompatible trials and one monotherapy paper, retaining seven compatible trial cohorts.
 - [x] Correct the chronotherapy name to sleep deprivation plus lithium and bright light; reject six registry associations that do not establish that complete regimen.
-- [ ] Complete the remaining 19 kidney-desensitization scope flags before regenerating the public claim snapshot.
+- [x] Reconcile all 84 diagnostic scope flags against current decisions: 67 belong to six archived claims, 15 active associations are rejected, and two active associations have primary-record confirmation. The kidney claim remains archived; its 19 historical flags do not block publication of active claims.
+- [x] Correct the archived kidney claim's origin paper to the already verified 2016 study without unarchiving it or changing trial decisions.
 - [x] Prepare both corrected regimens: retain seven unchanged pembrolizumab trial readings and verify the newly found lithium-containing bipolar cohort in NCT01431573.
 - [ ] Handle the demonstrated ClinicalTrials.gov condition-query complexity limit for the precise pembrolizumab indication, preserving full clinical scope for scoring.
