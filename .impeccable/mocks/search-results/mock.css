@@ -1,0 +1,185 @@
+/* Only what the three search mocks add on top of the site's own CSS. */
+
+mark.hit {
+  background: var(--tag);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 0.12em;
+  box-decoration-break: clone;
+}
+
+.result-line {
+  margin: 0.9rem 0 0;
+}
+.result-line a {
+  margin-left: 0.4rem;
+}
+
+.clear-search {
+  white-space: nowrap;
+}
+
+.side-note {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin: 0.5rem 0.4rem 0;
+  line-height: 1.4;
+}
+
+.search-key {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin: 0.9rem 0 0;
+  max-width: var(--measure);
+}
+
+.search-mode .filters {
+  margin-top: 1rem;
+}
+
+/* B: the jump line of statuses with their counts. */
+.stand-jump {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+  margin-top: 1rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--panel);
+  border-radius: 0.65rem;
+  font-size: 0.92rem;
+}
+.stand-jump-label {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-right: 0.25rem;
+}
+.stand-jump a {
+  color: var(--ink);
+  text-decoration: none;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.stand-jump a strong {
+  color: var(--blue);
+}
+.stand-jump a:hover {
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.report-row.is-compact {
+  padding: 1rem 0 0.95rem;
+}
+.report-row.is-compact .row-title {
+  font-size: 1.1rem;
+}
+
+/* C: best match in the digest's treatment, then one-line matches. */
+.digest.best {
+  margin-top: 1.1rem;
+  grid-template-columns: minmax(10rem, 0.8fr) 2fr;
+}
+.digest.best .standing {
+  display: grid;
+  align-content: start;
+  gap: 0.2rem;
+}
+.digest.best .track {
+  width: min(100%, 8rem);
+}
+.digest.best h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.25rem;
+  line-height: 1.25;
+}
+.digest.best p {
+  margin: 0;
+}
+.best-report {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.best-report .report-row .row-now {
+  display: none;
+}
+.best-report .report-row {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.hit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.hit-row {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr) auto;
+  gap: 0 1.1rem;
+  align-items: baseline;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.hit-now {
+  display: grid;
+  gap: 0.3rem;
+}
+.hit-now .status-name {
+  color: var(--blue);
+  font-size: 0.92rem;
+  line-height: 1.2;
+}
+.hit-now .track {
+  width: 5.5rem;
+}
+.hit-title {
+  display: block;
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 1.02rem;
+  line-height: 1.3;
+  text-decoration: none;
+}
+.hit-title:hover {
+  text-decoration: underline;
+}
+.hit-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.6rem;
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+.hit-when {
+  color: var(--muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.search-more {
+  margin: 1.1rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+@media (width <= 34rem) {
+  .digest.best {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hit-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hit-now {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.25rem;
+  }
+  .hit-when {
+    margin-top: 0.2rem;
+  }
+}
