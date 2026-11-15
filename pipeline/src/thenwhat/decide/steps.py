@@ -31,12 +31,15 @@ MAX_CANDIDATE_CHARACTERS = 1500
 TRIAL_OPTIONS = [MATCH, OTHER_INDICATION, NOT_A_MATCH]
 TRIAL_QUESTION = (
     "Is this record a trial of the claim's intervention for the claim's indication?\n"
-    f"- {MATCH}: it tests this intervention in the claim's indication, in a form of"
+    f"- {MATCH}: the record establishes the same complete intervention, including any"
+    " explicit route, formulation, stereoisomer and regimen, in the claim's indication,"
+    " in a form of"
     " that condition, or in patients who have it, respecting any explicit patient"
     " population or treatment setting in the claim.\n"
-    f"- {OTHER_INDICATION}: it tests this intervention for a different condition,"
+    f"- {OTHER_INDICATION}: it tests the same complete intervention for a different condition,"
     " an incompatible patient population or treatment setting, or only in healthy volunteers.\n"
-    f"- {NOT_A_MATCH}: it is not a trial of this intervention.\n"
+    f"- {NOT_A_MATCH}: it is not a trial of this intervention, including a conflicting"
+    " route, formulation, stereoisomer or regimen.\n"
     "Explicit restrictions such as prior treatment, disease stage, biomarkers or age"
     " are part of the indication. Compare prior treatment within the disease setting"
     " specified by the claim. First-line and later-line requirements conflict when"
@@ -45,6 +48,14 @@ TRIAL_QUESTION = (
     " may be a separate study; its mention does not override a conflicting setting."
     " If the record does not establish compatibility with an explicit restriction,"
     " retain uncertainty. Do not invent restrictions when the claim gives none."
+    " Explicit route, formulation, stereoisomer and combination-regimen restrictions"
+    " are part of the intervention. A conflicting intervention is not_a_match."
+    " Check intervention descriptions and arm membership: separate arms testing A"
+    " and B do not establish a trial of A plus B. Missing or truncated details do"
+    " not establish compatibility; retain uncertainty about explicit restrictions."
+    " A generic drug name alone does not establish an explicitly claimed route or"
+    " formulation. If that detail is absent, spread uncertainty across the options"
+    " rather than assuming the restriction is satisfied."
 )
 
 PAPER_MATCH = "paper_match"
@@ -596,22 +607,39 @@ def choose_origin_paper(
     )
 
 
+def _excerpt(value: str | None, limit: int) -> str | None:
+    if value is None or len(value) <= limit:
+        return value
+    return value[: limit - len(" [truncated]")] + " [truncated]"
+
+
 def _describe(candidate: SourceRecord) -> str:
     """What the record says, with a trial's conditions and interventions first so that a
     long record is never cut off before them."""
     section = candidate.payload.get("protocolSection")
     if isinstance(section, dict):
         identification = section.get("identificationModule", {})
+        treatment = section.get("armsInterventionsModule", {})
         described = {
-            "title": identification.get("briefTitle"),
-            "official_title": identification.get("officialTitle"),
             "conditions": section.get("conditionsModule", {}).get("conditions", []),
+            "title": _excerpt(identification.get("briefTitle"), 240),
             "interventions": [
-                intervention.get("name")
-                for intervention in section.get("armsInterventionsModule", {}).get(
-                    "interventions", []
-                )
+                {
+                    "name": intervention.get("name"),
+                    "description": _excerpt(intervention.get("description"), 350),
+                    "arms": intervention.get("armGroupLabels", []),
+                }
+                for intervention in treatment.get("interventions", [])
             ],
+            "arms": [
+                {
+                    "label": arm.get("label"),
+                    "interventions": arm.get("interventionNames", []),
+                    "description": _excerpt(arm.get("description"), 350),
+                }
+                for arm in treatment.get("armGroups", [])
+            ],
+            "official_title": _excerpt(identification.get("officialTitle"), 240),
             "phases": section.get("designModule", {}).get("phases", []),
             "status": section.get("statusModule", {}).get("overallStatus"),
             "sponsor": section.get("sponsorCollaboratorsModule", {})
@@ -619,11 +647,13 @@ def _describe(candidate: SourceRecord) -> str:
             .get("name"),
         }
         text = json.dumps(
-            {name: value for name, value in described.items() if value}, ensure_ascii=False
+            {name: value for name, value in described.items() if value},
+            ensure_ascii=False,
+            separators=(",", ":"),
         )
     else:
         text = json.dumps(candidate.payload, ensure_ascii=False, sort_keys=True)
-    return text[:MAX_CANDIDATE_CHARACTERS]
+    return _excerpt(text, MAX_CANDIDATE_CHARACTERS) or ""
 
 
 # --- link lead triage (openspec lead-triage) -----------------------------------------
