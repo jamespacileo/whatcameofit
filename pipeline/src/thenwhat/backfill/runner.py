@@ -11,15 +11,22 @@ from sqlalchemy.orm import Session
 
 from thenwhat.backfill.errors import SourceStop
 from thenwhat.backfill.ledger import count, due_records, record_outcome
-from thenwhat.backfill.steps import BatchStep, CountingClient, Failed, Step, batch_size_of
+from thenwhat.backfill.steps import (
+    BatchStep,
+    CountingClient,
+    Deferred,
+    Failed,
+    Step,
+    batch_size_of,
+)
 from thenwhat.domain import WorkOutcome
 
 OpenSession = Callable[[], AbstractContextManager[Session]]
 # How many failures' errors a run's report carries. The ledger keeps every one.
 ERRORS_KEPT = 50
 # A record's id, its outcome and its error. The outcome is None for a record that
-# another run finished first.
-Processed = tuple[int, WorkOutcome | None, str | None]
+# another run finished first, and Deferred for one that may not be worked on now.
+Processed = tuple[int, WorkOutcome | Deferred | None, str | None]
 
 
 @dataclass(slots=True)
@@ -27,6 +34,8 @@ class RunReport:
     done: int = 0
     nothing_found: int = 0
     failed: int = 0
+    # Records the source said could not be asked for now: no outcome, no attempt.
+    deferred: int = 0
     remaining_due: int = 0
     # Why the run ended before its records ran out, in words for the operator.
     stopped: str | None = None
@@ -76,7 +85,7 @@ def process_next(
     return _process_record(session, step, record, client, now)
 
 
-def _outcome_of(answer: WorkOutcome | Failed) -> tuple[WorkOutcome, str | None]:
+def _outcome_of(answer: "WorkOutcome | Failed") -> tuple[WorkOutcome, str | None]:
     """A step's answer as an outcome and its error. A failure the step returns keeps
     what the step wrote; one it raises does not."""
     if isinstance(answer, Failed):
@@ -93,7 +102,11 @@ def _process_record(
     error: str | None = None
     try:
         with session.begin_nested():
-            outcome, error = _outcome_of(step.run(session, record, client))
+            answer = step.run(session, record, client)
+            if isinstance(answer, Deferred):
+                # Nothing is written for it: it stays due with its attempts unchanged.
+                return record.id, answer, answer.reason
+            outcome, error = _outcome_of(answer)
     except SourceStop:
         raise
     except Exception as failure:  # one record's failure must not end the run
@@ -226,6 +239,11 @@ def run_step(
             break
         for record_id, outcome, error in processed:
             if outcome is None:
+                continue
+            if isinstance(outcome, Deferred):
+                # Not picked again in this run, so the run goes on with other records.
+                tried.add(record_id)
+                report.deferred += 1
                 continue
             if outcome is WorkOutcome.DONE:
                 report.done += 1

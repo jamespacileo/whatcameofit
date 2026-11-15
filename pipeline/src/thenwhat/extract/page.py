@@ -89,12 +89,20 @@ class Page:
         return "\n\n".join(part for part in ("\n".join(lead), body) if part)
 
 
-def read_page(html: str) -> Page:
+def read_page(html: str, main: str | None = None) -> Page:
+    """What a page says, from its HTML as drawn. `main` is the page's main content as
+    the page reader cut it out: when given, the text is its text, and everything else
+    still comes from the whole page (openspec page-reading)."""
     collector = _Collector()
     collector.feed(html)
     collector.close()
     all_text = _tidy(" ".join(collector.pieces))
     text = _tidy(" ".join(collector.main_pieces)) or all_text
+    if main is not None:
+        content = _Collector()
+        content.feed(main)
+        content.close()
+        text = _tidy(" ".join(content.pieces))
     described = _structured(collector.structured)
     tags = collector.tags
     links = " ".join(collector.links)

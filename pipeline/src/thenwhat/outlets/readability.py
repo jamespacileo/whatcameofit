@@ -1,7 +1,10 @@
 """Which outlets the pipeline can read, and what their pages carry. Behavior: openspec live-lookup.
 
-Every tracked article's address is asked for once, politely, and what came back is counted
-per outlet: read, refused, failed, and which of the signals a lookup uses were on the page.
+Every tracked article's address is asked of the page reader once, and what came back is
+counted per outlet: read, thin, refused, failed, and which of the signals a lookup uses were
+on the page. How often each outlet is asked is the reader's to decide (openspec
+page-reading). When the reader itself cannot be asked the check stops: nothing is counted
+against an outlet for it.
 Counts and codes only: no article text is kept, here or in the report.
 """
 
@@ -20,13 +23,10 @@ from sqlalchemy.orm import Session
 from thenwhat.db.models import Claim, Entity, EntityMatch, SourceArticle
 from thenwhat.domain import ReviewState
 from thenwhat.extract.page import BODY_FROM, Page
-from thenwhat.extract.retrieve import REFUSED_BY_ROBOTS, ArticleRetriever
+from thenwhat.extract.retrieve import NOT_ALLOWED, NOT_NOW, NOT_SERVED, ArticleRetriever
 from thenwhat.outlets.icons import outlet_domain
-from thenwhat.sources.base import SystemTime, Time
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 
-# One outlet is asked at most this often.
-SECONDS_BETWEEN_REQUESTS = 1.0
 # What a page can carry that a lookup uses, in the order the report shows them.
 SIGNALS = ("headline", "summary", "date", "structured article", "paper link", "registry number")
 
@@ -46,7 +46,7 @@ class Checked:
     """How one article's address answered. Codes only."""
 
     url: str
-    # "read", "thin", "refused", or how it failed: an HTTP status or "no answer".
+    # "read", "thin", "refused", or how it failed: the site's HTTP status or "not now".
     outcome: str
     signals: tuple[str, ...] = ()
     # With a lookup measured: "found first", "found" or "not found". Empty when none was.
@@ -57,13 +57,14 @@ class Checked:
 class Outlet:
     domain: str
     articles: int = 0
-    # The site served the article with enough text to read.
+    # The reader gave the article with enough text to read.
     read: int = 0
-    # The site served a page with too little text: the article is drawn by scripts.
+    # The reader gave a page with too little text to read.
     thin: int = 0
-    # robots.txt forbids the fetch, or could not be read.
+    # The reader answered that the address is not allowed.
     refused: int = 0
-    # The page did not come back: by HTTP status, or "no answer".
+    # The page did not come back: by the site's HTTP status, or "not now" when the
+    # reader said the site could not be asked yet.
     failed: Counter[str] = field(default_factory=Counter)
     signals: Counter[str] = field(default_factory=Counter)
     measured: int = 0
@@ -76,7 +77,6 @@ def check_outlets(
     session: Session,
     retriever: ArticleRetriever,
     *,
-    time: Time | None = None,
     measure: Callable[[Page, list[str]], Measured | None] | None = None,
     workers: int = 1,
     on_article: Callable[[Checked], None] | None = None,
@@ -86,11 +86,10 @@ def check_outlets(
     With `measure`, each article that was read and whose claim has approved trials is also
     put through a lookup, and the outlet's row counts how often an approved trial was found.
 
-    With more than one worker, several outlets are checked at the same time. One outlet is
-    still asked one article at a time, a second apart, and `measure` is then called from
-    several threads at once. `on_article` is told of each article as it is finished.
+    With more than one worker, several outlets are checked at the same time, and `measure`
+    is then called from several threads at once. The retriever caps the requests in flight
+    with the reader. `on_article` is told of each article as it is finished.
     """
-    clock = time or SystemTime()
     approved = _approved_trials(session)
     by_outlet: dict[str, list[tuple[str, list[str]]]] = {}
     articles = session.execute(
@@ -104,12 +103,8 @@ def check_outlets(
 
     def one_outlet(domain: str) -> Outlet:
         outlet = Outlet(domain)
-        asked_at: float | None = None
         for url, trials in by_outlet[domain]:
-            if asked_at is not None and clock.monotonic() - asked_at < SECONDS_BETWEEN_REQUESTS:
-                clock.sleep(SECONDS_BETWEEN_REQUESTS - (clock.monotonic() - asked_at))
             checked = _check_article(outlet, retriever, url, trials, measure)
-            asked_at = clock.monotonic()
             if on_article is not None:
                 with telling:
                     on_article(checked)
@@ -134,11 +129,11 @@ def _check_article(
     outlet.articles += 1
     probe = retriever.probe(url)
     page = probe.page
-    if probe.robots == REFUSED_BY_ROBOTS:
+    if probe.answer == NOT_ALLOWED:
         outlet.refused += 1
         checked = Checked(url, "refused")
-    elif page is None:
-        failure = str(probe.status) if probe.status else "no answer"
+    elif probe.answer in (NOT_NOW, NOT_SERVED) or page is None:
+        failure = "not now" if probe.answer == NOT_NOW else str(probe.status)
         outlet.failed[failure] += 1
         checked = Checked(url, failure)
     else:
@@ -195,10 +190,12 @@ def report(outlets: list[Outlet], *, checked: date) -> str:
         f"Checked {checked.isoformat()} with `thenwhat outlets`, over every tracked article."
         " Regenerate it with that command; do not edit it by hand.",
         "",
-        "- **Read:** the site served the article. **Thin:** it served a page with too little"
-        " text to read, usually because scripts draw the article.",
-        "- **Refused:** the site's robots.txt forbids the fetch, or could not be read, so the"
-        " article was not asked for. **Failed:** the page did not come back, by HTTP status.",
+        "- Every article was asked of the page reader, which decides how each site is asked.",
+        "- **Read:** the reader gave the article. **Thin:** it gave a page with too little"
+        " text to read.",
+        "- **Refused:** the reader answered that the address is not allowed. **Failed:** the"
+        " page did not come back, by the site's HTTP status, or *not now* when the reader"
+        " said the site could not be asked yet.",
         "- The signal columns count the pages that carried each thing a lookup uses.",
     ]
     if measured:

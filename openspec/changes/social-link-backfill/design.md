@@ -11,7 +11,7 @@ What exists today, as read in the code on 2026-11-14:
 - `article_lead` is unique on registry trial and address and cannot exist without a trial.
 - `source_article` is unique on claim and address. The pipeline has no address comparison of its own; the site has one (`site/src/lib/article-key.mjs`, `source-url.mjs`) and the extension copies it.
 - Extraction (`extract/service.py`) is one model call on the article's text, which is hashed and dropped. `draft_claim_from_article` takes the slug and vertical as arguments and checks them before the model is called. `extract_into_claim` refuses a claim that is no longer pending.
-- `ArticleRetriever` (`extract/retrieve.py`) reads robots.txt once per site and falls back to the Wayback availability API. It has no spacing between requests to one outlet.
+- `ArticleRetriever` (`extract/retrieve.py`) read robots.txt once per site and fell back to the Wayback availability API, with no spacing between requests to one outlet. Since the change `firecrawl-page-reader` it asks the page reader and nothing else.
 - A fetched page already yields, by rule, the registry numbers, DOIs and PubMed ids it gives (`extract/page.py`). Only the live lookup uses them; drafting a claim does not.
 - `thenwhat resolve` asks ClinicalTrials.gov for each claim and never reads `registry_trial`.
 - Decisions go through `decide_many`, at most twenty items a call, each with its own `decision_log` entry. `decision_log.human_label` belongs to one logged answer. Model cost is recorded in `llm_usage` and refused at `LLM_MONTHLY_BUDGET_USD`.
@@ -102,9 +102,9 @@ The vertical has one way: a decision among the configured verticals, shown the d
 
 *Alternative:* derive the vertical from a linked trial's MeSH terms where there is one, and decide otherwise. Rejected as two ways of doing one thing.
 
-### 10. Outlet spacing reuses the allowance table
+### 10. Outlets are asked through the page reader
 
-Before a fetch the reading step claims a request against `source_allowance_use` under the name `outlet:<domain>`, with a default interval for every outlet (`OUTLET_INTERVAL_SECONDS`, 10 unless set) and no count limit. The row lock spaces processes, as it does for sources. A crawl delay in robots.txt replaces the interval when longer. Whether a lead whose outlet is not yet free is skipped for the moment or simply waited for is left to task 7.4: the requirement is only the interval.
+*Superseded on 2026-11-15 by the change `firecrawl-page-reader` (`docs/adr/0006`).* The reading step first claimed a request under `outlet:<domain>` with a default interval (`OUTLET_INTERVAL_SECONDS`) and the outlet's robots.txt crawl delay. Now every page is asked of the page reader under one allowance named `reader`, which is a ceiling on how hard the pipeline drives the operator's machine. Spacing per outlet, robots.txt and where a copy comes from are the reader's. A lead whose outlet the reader says cannot be asked now stays due with no attempt counted, and the run goes on.
 
 ### 11. Where stored data saves cost, and where it does not
 

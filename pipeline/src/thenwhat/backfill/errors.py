@@ -37,3 +37,9 @@ class ModelUnreachable(SourceStop):
 
 class SourcePaused(SourceStop):
     """The source said "too many requests" and is not asked until the pause has passed."""
+
+
+class ReaderUnavailable(SourceStop):
+    """The page reader could not be asked: it did not answer, it failed, it said it was
+    overloaded, or it answered in a form the pipeline does not know. That says nothing
+    about the site asked for, so nothing is recorded against it (openspec page-reading)."""

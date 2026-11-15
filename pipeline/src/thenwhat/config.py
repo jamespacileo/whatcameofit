@@ -22,6 +22,10 @@ class SourceAllowance(BaseModel):
 DEFAULT_ALLOWANCES = {
     "clinicaltrials.gov": SourceAllowance(requests=5000, period_hours=24, interval_seconds=0.5),
     "mediacloud": SourceAllowance(requests=4000, period_hours=168, interval_seconds=30),
+    # The page reader is the operator's own machine (openspec page-reading). This is a
+    # ceiling on how hard the pipeline drives it; how often each site is asked is the
+    # reader's to decide.
+    "reader": SourceAllowance(requests=3000, period_hours=24, interval_seconds=1),
 }
 
 
@@ -32,6 +36,16 @@ class Settings(BaseSettings):
     database_url: str
     # Sent in the User-Agent of every registry request. No request is sent without it.
     contact_email: str | None = None
+
+    # The page reader (openspec page-reading, ADR 0005 and 0006): the address the
+    # pipeline asks it at and its key. No default: no page is read while either is empty.
+    firecrawl_api_url: str | None = None
+    firecrawl_api_key: str | None = None
+    # How many requests the pipeline has with the reader at once, across its threads.
+    # The machine takes at most 4 and is shared with other projects.
+    reader_reads_at_once: int = Field(default=2, ge=1, le=4)
+    # How long one request to the reader may take.
+    reader_timeout_seconds: float = 120
 
     # OpenAlex's free key, for the literature search. Empty turns paper search off and
     # leaves the rest of resolution as it is.
@@ -142,9 +156,6 @@ class Settings(BaseSettings):
     # treatment for one condition, whether the treatment is new or long established.
     # Below it no claim is made and the lead says so.
     treatment_accept_above: float = 0.5
-    # No outlet is asked for two articles less than this many seconds apart, across
-    # every process. A longer delay in the outlet's robots.txt replaces it.
-    outlet_interval_seconds: float = 10
     # A lead for a claim that already has this many source articles is held, unless it
     # was shared before the claim's first reported date.
     lead_reads_per_claim: int = 3
