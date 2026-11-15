@@ -39,6 +39,8 @@ export function matchNote(score: number): string {
 const READINGS:Record<string, string> = {
   match: "Read as a study of this treatment for this condition.",
   other_indication: "Read as the same treatment studied for a different condition, patient group or treatment setting.",
+  not_what_is_tested:
+    "Read as a study this treatment is in but that does not test it: it is the comparison, a treatment every group receives, or has another role.",
   not_a_match: "Read as a study of something else.",
 };
 

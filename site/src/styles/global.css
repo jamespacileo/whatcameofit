@@ -1776,6 +1776,61 @@ main nav.contents ul li + li {
   border-color: var(--blue);
 }
 
+/* The path with each place named under its dot, in a panel that has room for the names. */
+.track.named {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  width: 100%;
+  margin: 0.7rem 0 0.15rem;
+}
+
+.track.named::before {
+  content: "";
+  position: absolute;
+  left: calc(100% / 12);
+  right: calc(100% / 12);
+  top: 0.4rem;
+  height: 1.5px;
+  background: var(--rule);
+}
+
+.track.named .place {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 0.3rem;
+  font-size: 0.74rem;
+  line-height: 1.15;
+  text-align: center;
+  color: var(--muted);
+  hyphens: manual;
+}
+
+.track.named .place::before {
+  content: "";
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-top: 0.175rem;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 1.5px solid var(--ring);
+}
+
+.track.named .place.here {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.track.named .place.here::before {
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-top: 0;
+  background: var(--blue);
+  border-color: var(--blue);
+}
+
 .track .ends {
   display: block;
   white-space: nowrap;
@@ -4335,6 +4390,7 @@ main ul:not([class]) li + li {
 @media (forced-colors: active) {
   .track .step.here,
   .pop .pop-path li[aria-current]::before,
+  .track.named .place.here::before,
   .share.done::before,
   .stage-filter .place[aria-pressed="true"] .dot {
     background: CanvasText;
