@@ -6,6 +6,7 @@ const root=fileURLToPath(new URL('../../',import.meta.url)).replace(/\/$/,'');
 const {collectFromPage,composeRequest}=await import(pathToFileURL(root+'/extension/src/open-page.js'));
 const {readAddress}=await import(pathToFileURL(root+'/site/src/lib/lookup-match.mjs'));
 const {readPage,pageAsText}=await import(pathToFileURL(root+'/site/worker/page.mjs'));
+const {inspectVisible,capturePage}=await import(pathToFileURL(root+'/extension/src/visual.js'));
 function read(url,head,body,selection='') {
  const {document,window}=parseHTML('<html><head>'+head+'</head><body>'+body+'</body></html>');
  Object.assign(globalThis,{document,window,location:new URL(url),getSelection:()=>selection,innerWidth:1000,innerHeight:800,getComputedStyle:()=>({display:'block',visibility:'visible'})});
@@ -43,5 +44,51 @@ assert.equal(x.request.text,chosen,'Explicit selection retains precedence');
 assert.deepEqual(x.request.links,[]);
 x=read(tturl,'<link rel="canonical" href="'+tturl+'"><meta property="og:url" content="'+tturl+'"><meta property="og:description" content="'+trials+'">','<article id="one-column-item-0" data-scroll-index="0" data-e2e="recommend-list-item-container"><div>Video could not play</div></article>');
 assert.ok(x.request?.text.includes('EX-17'),'A current TikTok public caption remains readable when video playback fails');
+});
+
+test('a scoped social post without visible media never captures neighbouring content', async () => {
+ for (const [url,head,body] of [
+  ['https://t.me/s/journal/123','',
+   '<div data-post="journal/123"><div class="tgme_widget_message_text">A text-only report.</div></div><div data-post="journal/124"><img src="https://media.example/other.jpg"></div>'],
+  ['https://www.tiktok.com/@journal/video/123',
+   '<link rel="canonical" href="https://www.tiktok.com/@journal/video/123">',
+   '<article data-e2e="recommend-list-item-container" data-scroll-index="0"><div data-e2e="video-desc">A caption without a playable video.</div></article><article><video src="https://media.example/other.mp4"></video></article>'],
+ ]) {
+  const {captured}=read(url,head,body);
+  const visible=inspectVisible(captured.mediaScope);
+  assert.equal(visible.unavailable,true);
+  assert.equal(visible.crop,null);
+  let captures=0;
+  const tab={id:1,windowId:1,url};
+  const api={tabs:{query:async()=>[tab],captureVisibleTab:async()=>{captures++;return 'pixels';}},
+   scripting:{executeScript:async({func,args=[]})=>[{result:func(...args)}]}};
+  await assert.rejects(capturePage(api,tab,null,async()=>({})),e=>e.code==='capture_unavailable');
+  assert.equal(captures,0);
+ }
+});
+
+test('social media needs its own identity even when it is the only visible video', () => {
+ for (const [url,description] of [
+  ['https://www.instagram.com/p/ABC123/','8 likes: &quot;EX-17 was studied for missing teeth in a synthetic randomized clinical trial.&quot;.'],
+  ['https://www.threads.com/@journal/post/ABC123','EX-17 was studied for missing teeth in a synthetic randomized clinical trial.'],
+ ]) {
+  const head='<meta property="og:url" content="'+url+'"><meta property="og:description" content="'+description+'"><meta property="og:image" content="https://media.example/current.jpg">';
+  let x=read(url,head,'<main><article>Current post</article><article><video src="https://media.example/unrelated.mp4" poster="https://media.example/other.jpg"></video></article></main>');
+  assert.ok(x.request?.text.includes('EX-17'));
+  assert.equal(inspectVisible(x.captured.mediaScope).unavailable,true);
+  x=read(url,head,'<main><video poster="https://media.example/current.jpg" src="blob:current"></video></main>');
+  assert.equal(inspectVisible(x.captured.mediaScope).crop.kind,'video');
+ }
+});
+
+test('an identity-matched image-only post retains its bounded visual fallback', () => {
+ const url='https://www.instagram.com/p/ABC123/';
+ const x=read(url,'<meta property="og:url" content="'+url+'"><meta property="og:image" content="https://media.example/current.jpg">',
+  '<main><img src="https://media.example/current.jpg"><video src="https://media.example/other.mp4"></video></main>');
+ assert.equal(x.request,null);
+ const visible=inspectVisible(x.captured.mediaScope);
+ assert.equal(visible.unavailable,false);
+ assert.equal(visible.crop.kind,'img');
+ assert.equal(visible.crop.identity,'https://media.example/current.jpg');
 });
 

@@ -121,16 +121,22 @@ export function collectFromPage() {
       const unwrap = value => value.replace(/[\u200e\u200f]/g, "").match(/:\s*["“]([\s\S]*)["”]\.?\s*$/)?.[1] ?? "";
       caption = unwrap(caption) || unwrap(meta("og:title"));
     }
-    if (!caption.trim()) return empty;
     const links = [...caption.matchAll(/https?:\/\/[^\s<>"“”]+/g)].slice(0, 30)
       .map(([href]) => ({ href: href.replace(/[.,;)]+$/, ""), text: "" }));
-    // Pixel fallback must share the same post boundary. A matching public preview
-    // image, or the sole visible video on a detail page, provides that boundary.
-    let imageName = "";
-    try { imageName = new URL(meta("og:image")).pathname.split("/").pop(); } catch { /* No image identity. */ }
+    // Media identity is independent of caption availability. An image-only post
+    // still has a visual path; a lone unrelated video never supplies that path.
+    const mediaKey = value => {
+      if (!value) return "";
+      try { const u = new URL(value, location.href); return u.origin + u.pathname; }
+      catch { return ""; }
+    };
+    const imageKey = mediaKey(meta("og:image"));
+    const videoKey = mediaKey(meta("og:video:secure_url") || meta("og:video"));
     const media = [...document.querySelectorAll("main img, main video")].filter(visible);
-    const images = imageName ? media.filter(n => n.tagName === "IMG" && (n.currentSrc || n.src || "").includes(imageName)) : [];
-    const videos = media.filter(n => n.tagName === "VIDEO");
+    const images = imageKey ? media.filter(n => n.tagName === "IMG" && mediaKey(n.currentSrc || n.src) === imageKey) : [];
+    const videos = media.filter(n => n.tagName === "VIDEO" &&
+      (videoKey && mediaKey(n.currentSrc || n.src) === videoKey ||
+       imageKey && mediaKey(n.poster || n.getAttribute("poster")) === imageKey));
     const primary = images.length === 1 ? images[0] : videos.length === 1 ? videos[0] : null;
     return { ...empty, focusText: caption.slice(0, 20000), links,
       mediaScope: { address: location.href, selector: primary ? selectorFor(primary) : null, videoOnly: primary?.tagName === "VIDEO" } };

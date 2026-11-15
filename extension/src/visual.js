@@ -23,8 +23,8 @@ export function inspectVisible(scope = null) {
       node.isContentEditable && (node.innerText.trim() || node.matches(":focus-within")))));
   const focus = scope ? (scope.address === location.href && scope.selector ? document.querySelector(scope.selector) : null)
     : youtube ? null : document.querySelector('shreddit-post, article, [role="article"], main') ?? document.body;
-  // A video ad is unrelated to the report. Missing/stale video context must not
-  // turn into a screenshot of the entire personalised YouTube page.
+  // A video ad is unrelated to the report. Missing/stale scoped context must not
+  // turn into a screenshot of the surrounding page.
   const overlays = ".ytp-endscreen-content, .ytp-ce-element-show, .ytp-pause-overlay";
   const unavailable = !focus || Boolean(youtube && (focus.querySelector(".ad-showing, .ad-interrupting") ||
     [...focus.querySelectorAll(overlays)].some(visible)));
@@ -48,7 +48,7 @@ export function inspectVisible(scope = null) {
     const r = frame.getBoundingClientRect();
     return r.left < crop.left + crop.width && r.right > crop.left && r.top < crop.top + crop.height && r.bottom > crop.top;
   }));
-  return { address: location.href, sensitive, embedded, hidden: document.hidden, unavailable: unavailable || youtube && !media.length,
+  return { address: location.href, sensitive, embedded, hidden: document.hidden, unavailable: unavailable || Boolean((scope || youtube) && !media.length),
     width: innerWidth, height: innerHeight, crop: media[0] ?? null,
     media: media.slice(0, 5), selectionOnly: String(getSelection() ?? "").trim().length >= 20 };
 }
