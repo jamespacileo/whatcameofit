@@ -697,6 +697,10 @@ def _describe(candidate: SourceRecord) -> str:
                 for arm in treatment.get("armGroups", [])
                 if arm.get("description")
             ],
+            # A summary may supply an alias or patient restriction absent from the title.
+            "brief_summary": _excerpt(
+                section.get("descriptionModule", {}).get("briefSummary"), 350
+            ),
             "official_title": _excerpt(official, 240) if official != title else None,
             "phases": section.get("designModule", {}).get("phases", []),
             "status": section.get("statusModule", {}).get("overallStatus"),

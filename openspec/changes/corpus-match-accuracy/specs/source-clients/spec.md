@@ -1,11 +1,11 @@
 ## ADDED Requirements
 
 ### Requirement: Registry searches retain the evidence needed to judge treatment roles
-Both ClinicalTrials.gov clients SHALL request study type, intervention descriptions and arm membership, arm types and arm descriptions in name and trial-title search responses. They SHALL preserve existing query, page, pacing and cache bounds and SHALL NOT add individual-record requests solely to obtain those fields.
+Both ClinicalTrials.gov clients SHALL request study type, intervention descriptions and arm membership, arm types, arm descriptions and the brief summary in name and trial-title search responses. They SHALL preserve existing query, page, pacing and cache bounds and SHALL NOT add individual-record requests solely to obtain those fields.
 
 #### Scenario: Search response is projected to requested fields
 - **WHEN** the registry returns only the requested fields for an experimental arm and its comparator
-- **THEN** both clients retain their types, intervention membership and descriptions in the same search response
+- **THEN** both clients retain their types, intervention membership, descriptions and brief summary in the same search response
 
 #### Scenario: Search finds expanded access
 - **WHEN** a name search returns an expanded-access record

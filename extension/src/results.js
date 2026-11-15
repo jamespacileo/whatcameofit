@@ -4,7 +4,7 @@
 import { withCurrentClaims } from "../../site/worker/tracked.mjs";
 
 export const RESULT_TTL = 24 * 60 * 60 * 1000;
-const VERSION = 11;
+const VERSION = 12;
 const MAX_RESULTS = 10;
 
 /** Whether an answer is whole: not an error, a miss, a partial stream or one that is

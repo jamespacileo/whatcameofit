@@ -12,7 +12,7 @@ const TIMEOUT_MS = 10_000;
 // treatment's trials an article reports.
 const SEARCH_FIELDS =
   "NCTId,BriefTitle,OfficialTitle,InterventionName,LeadSponsorName,Phase,OverallStatus,Condition" +
-  ",Acronym,EnrollmentCount,CollaboratorName,StudyType" +
+  ",Acronym,EnrollmentCount,CollaboratorName,StudyType,BriefSummary" +
   ",InterventionDescription,InterventionArmGroupLabel,ArmGroupLabel,ArmGroupType,ArmGroupDescription,ArmGroupInterventionName";
 // A trial's name that this many trials carry does not identify one.
 const MAX_NAMED_TRIALS = 20;

@@ -71,6 +71,33 @@ const INDEX = {
 
 // --- lookup -------------------------------------------------------------------------
 
+test("registry search carries a summary-only alias and population into bounded scoring", async () => {
+  const summary = "The EX diet is also called Example Dietary Plan and is tested in mild-to-moderate example disease. ";
+  for (const trial_name of [null, "DIET-1"]) {
+    const requests = [];
+    const registry = makeRegistry({contact: "ops@example.org", fetch: async address => {
+      const url = new URL(address); requests.push(url);
+      const fields = new Set(url.searchParams.get("fields").split(","));
+      const record = study("NCT00000001", "Example Dietary Plan", "Example disease");
+      record.protocolSection.descriptionModule = {
+        briefSummary: fields.has("BriefSummary") ? summary + "Synthetic background. ".repeat(100) + "UNKEPT_TAIL" : undefined,
+      };
+      return Response.json({studies: [record], totalCount: 1});
+    }});
+    const model = fakeModel({...READING, other_names: [], trial_name});
+    model.score = async (_intro, items) => {
+      assert.equal(items.length, 1);
+      assert.ok(items[0].includes(summary));
+      assert.ok(items[0].includes("[truncated]"));
+      assert.ok(!items[0].includes("UNKEPT_TAIL"));
+      assert.ok(items[0].split("\n").slice(1).join("\n").length <= 1500);
+      return [{answer: "match", probabilities: {match: .9}}];
+    };
+    await lookUp({text: TEXT, model, registry, index: INDEX});
+    assert.equal(requests.length, trial_name ? 2 : 1);
+  }
+});
+
 test("registry search carries arm roles and study type into bounded scoring", async () => {
   const requests = [];
   const registry = makeRegistry({contact: "ops@example.org", fetch: async address => {

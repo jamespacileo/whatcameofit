@@ -161,6 +161,32 @@ def test_trials_for_the_reported_treatment_and_condition_come_first(session: Ses
     assert "EX-1 in tooth agenesis" in found.candidates[0].summary
 
 
+def test_scoring_receives_summary_only_alias_and_population(session: Session):
+    record = trial("NCT00000001", "Example Dietary Plan", condition="Example disease")
+    summary = (
+        "The EX diet is also called Example Dietary Plan and is tested in "
+        "mild-to-moderate example disease. "
+    )
+    record.payload["protocolSection"]["descriptionModule"] = {
+        "briefSummary": summary + "Synthetic background. " * 100 + "UNKEPT_TAIL"
+    }
+
+    class Capture:
+        name = "capture"
+
+        def answer(self, step, state, options):
+            assert summary in state
+            assert "[truncated]" in state
+            assert "UNKEPT_TAIL" not in state
+            described = state.split("Candidate record from clinicaltrials.gov (NCT00000001):\n")[1]
+            assert len(described.split("\n\n", 1)[0]) <= 1500
+            return BackendAnswer("match", {o: float(o == "match") for o in options})
+
+    model, _ = llm(session, READING)
+    found = look_up(session, model, Capture(), FakeTrials({"EX-1": [record]}), text=TEXT, now=NOW)
+    assert found.candidates[0].answer == "match"
+
+
 @pytest.mark.parametrize("description", ["Delivered by inhalation", "Subcutaneous injection"])
 def test_scoring_receives_route_and_separate_arm_details(session: Session, description: str):
     record = trial("NCT00000001", "EX-1 trial", condition="Example disease")

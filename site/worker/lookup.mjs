@@ -53,6 +53,8 @@ function candidateText(study) {
     arm_descriptions: (treatment.armGroups ?? []).filter(arm => arm.description).map((arm) => ({
       label: arm.label ?? null, description: excerpt(arm.description, 350),
     })),
+    // Summaries may supply an alias or patient restriction missing from the title.
+    brief_summary: excerpt(section.descriptionModule?.briefSummary, 350),
     official_title: official !== title ? excerpt(official, 240) : null,
     phases: section.designModule?.phases ?? [],
     status: section.statusModule?.overallStatus,

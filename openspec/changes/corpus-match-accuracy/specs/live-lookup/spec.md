@@ -92,6 +92,18 @@ The existing 1,500-character record limit, request counts and source caches SHAL
 - **WHEN** descriptions and arm details exceed the record limit
 - **THEN** the shortened input remains within 1,500 characters, carries a truncation marker and adds no request
 
+### Requirement: Trial summaries retain identity and population context
+Both lookup scorers and private-pipeline matching SHALL receive a bounded registry brief-summary excerpt when it fits after the existing arm, intervention and delivery details. The excerpt SHALL be limited to 350 characters within the existing 1,500-character record limit; shortened content SHALL be marked. Registry searches SHALL request this field in their existing calls, and obsolete completed answers SHALL be invalidated.
+
+#### Scenario: The registry summary supplies the missing alias and population
+- **GIVEN** the title names a diet by one name and only the brief summary supplies its other name and explicit patient population
+- **WHEN** the record is scored
+- **THEN** that summary context reaches the scorer without a separate registry or model request
+
+#### Scenario: A lengthy summary competes with treatment-role evidence
+- **WHEN** the brief summary is long
+- **THEN** its bounded excerpt follows existing arm and intervention details, and the entire record still respects the input limit
+
 ### Requirement: Trial scoring distinguishes access and treatment roles
 Both scorers SHALL receive study type and arm roles/membership before verbose intervention descriptions. They SHALL use the fourth `not_what_is_tested` answer for a comparator, background medicine or other incidental role, as specified in `social-link-backfill`. Expanded access SHALL be read as `not_a_match`. Missing or truncated details SHALL retain uncertainty.
 

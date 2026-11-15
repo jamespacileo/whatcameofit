@@ -177,6 +177,11 @@ def test_search_preserves_arm_roles_and_study_type_without_detail_requests(
                             "briefTitle": "Synthetic trial",
                         },
                         "designModule": {"studyType": include("StudyType", "INTERVENTIONAL")},
+                        "descriptionModule": {
+                            "briefSummary": include(
+                                "BriefSummary", "EX-1 treats mild example disease"
+                            )
+                        },
                         "armsInterventionsModule": {
                             "interventions": [
                                 {
@@ -209,6 +214,7 @@ def test_search_preserves_arm_roles_and_study_type_without_detail_requests(
     assert len(replay.requests) == 1
     section = records[0].payload["protocolSection"]
     assert section["designModule"]["studyType"] == "INTERVENTIONAL"
+    assert section["descriptionModule"]["briefSummary"] == "EX-1 treats mild example disease"
     treatment = section["armsInterventionsModule"]
     assert treatment["interventions"] == [
         {"name": "EX-1", "description": "Inhaled", "armGroupLabels": ["control"]}

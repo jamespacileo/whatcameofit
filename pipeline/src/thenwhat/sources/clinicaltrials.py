@@ -22,7 +22,7 @@ NCT_ID = re.compile(r"NCT\d{8}")
 # trials an article reports.
 SEARCH_FIELDS = (
     "NCTId,BriefTitle,OfficialTitle,InterventionName,LeadSponsorName,Phase,OverallStatus,Condition"
-    ",Acronym,EnrollmentCount,CollaboratorName,StudyType"
+    ",Acronym,EnrollmentCount,CollaboratorName,StudyType,BriefSummary"
     ",InterventionDescription,InterventionArmGroupLabel"
     ",ArmGroupLabel,ArmGroupType,ArmGroupDescription,ArmGroupInterventionName"
 )

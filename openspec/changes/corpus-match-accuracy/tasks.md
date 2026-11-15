@@ -102,3 +102,10 @@
 - [x] Verify released A033 shared reuse in 109/116 ms with unchanged candidates and check time, and replay four released responses through the installed signed extension functions. This does not establish native popup or browser-storage reuse.
 - [x] Update and read back the 13 Google Sheet rows and Summary!B1: 137 changed cells and 466 read-back values verified, with formulas, validation and formatting preserved. Corpus totals are 116 pass, 81 partial, 35 review and 26 blocked; 106 rows have matching cards. Native Sheet layout remains unverified behind sign-in.
 - [ ] Finish native Safari 0.9.15 popup and unchanged-page reuse checks once the Mac is unlocked; keep prior native evidence separate from installed-resource replay.
+
+## Registry summary context
+
+- [x] Reproduce the A066 identity miss with the released structured reading and two saved primary records: the Stanford trial scores 39%, below possible-match threshold. Its registry brief summary explicitly supplies the diet alias and patient restriction omitted from the scoring input. Adding that field makes the original controlled replay match at 100%; N007's separate product-identity gap remains unresolved.
+- [x] Add failing source-projection and scoring-boundary tests, then request the brief summary in existing registry searches and include at most 350 characters after arm/intervention details, within the unchanged 1,500-character record cap. Invalidate old completed service and extension answers.
+- [ ] Complete the corpus scoring replay, full checks and independent review.
+- [ ] Deploy, update Safari, rerun affected released URLs and update the corpus and Sheet with the observed results.
