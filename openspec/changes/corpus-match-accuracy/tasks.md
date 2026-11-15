@@ -55,3 +55,10 @@
 - [ ] Handle the demonstrated ClinicalTrials.gov condition-query complexity limit for the precise pembrolizumab indication, preserving full clinical scope for scoring.
 
 - [x] Reconcile stale tentative readings after the three identity corrections: reject 20 explicitly incompatible candidates and reread the uncertain device against the precise identity; preserve approved trial counts and prior decision history.
+
+## Intismeran combination and postoperative scope
+
+- [x] Verify the full intismeran-plus-pembrolizumab regimen against primary sources and retain the completely resected stage IIB–IV cutaneous melanoma population.
+- [x] Exclude the incompatible unresectable-disease trial and component-only background cards; retain two approved postoperative trials and the tentative compatible Part D cohort without promotion.
+- [x] Run normal preparation and stage the export: 126 existing claim identities retained, two trial readings reused and no new candidates.
+- [ ] Deploy the corrected melanoma card and rerun its four mapped corpus URLs against the released site; update the corpus and Google Sheet with exact methods.
