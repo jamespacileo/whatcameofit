@@ -1,0 +1,605 @@
+{
+  "release_commit": "0b5eb2a71ef99f7a486062832f54dfd768aa272a",
+  "worker_version": "8f6278b2-4a8a-468e-b1c6-5e829e6de47a",
+  "released_at": "2026-11-15T16:38:24.0861087Z",
+  "native_safari": {
+    "installed": "0.9.9 (18)",
+    "execution_verified": false,
+    "reason": "Mac locked"
+  },
+  "timing_note": "Paced production checks; queue times are not app-latency measurements.",
+  "rows": {
+    "A041": {
+      "url": "https://health.yahoo.com/conditions/cancer/pancreatic-cancer/articles/pancreatic-cancer-drug-nearly-doubles-195720621.html",
+      "mode": "production-address",
+      "checked_at": "2026-11-15T16:40:24.796Z",
+      "http": 200,
+      "release_commit": "0b5eb2a71ef99f7a486062832f54dfd768aa272a",
+      "ms": null,
+      "about_a_treatment": true,
+      "treatment": "daraxonrasib",
+      "condition": "Metastatic pancreatic cancer that has progressed after prior treatment",
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT07491445",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": [
+            "stated"
+          ]
+        },
+        {
+          "id": "NCT06625320",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07573215",
+          "score": 0.85,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06445062",
+          "score": 0.45,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06040541",
+          "score": 0.4,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06922591",
+          "score": 0.37,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT05379985",
+          "score": 0.29,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07492680",
+          "score": 0.28,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07349537",
+          "score": 0.27,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07756281",
+          "score": 0.18,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06360354",
+          "score": 0.17,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06128551",
+          "score": 0.14,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07895498",
+          "score": 0.09,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06881784",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07252232",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07805954",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06162221",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07397338",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07793253",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07819838",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07898813",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07908550",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    },
+    "S011": {
+      "url": "https://www.linkedin.com/posts/anna-berkenblit_first-ras-inhibitor-extends-survival-in-previously-activity-7462109924857212928-lyz4",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T16:41:30.789Z",
+      "http": 200,
+      "release_commit": "0b5eb2a71ef99f7a486062832f54dfd768aa272a",
+      "source_address": "https://www.linkedin.com/posts/anna-berkenblit_daraxonrasib-pancreaticcancer-share-7460912673338122240-6afR/",
+      "evidence": "Safari 0.9.9 reader in live Chrome; bound public LinkedIn post caption only, excluding sidebar and comments; production 0b5eb2a71ef9.",
+      "ms": null,
+      "about_a_treatment": true,
+      "treatment": "daraxonrasib",
+      "condition": "Previously treated metastatic pancreatic cancer",
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT06625320",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07573215",
+          "score": 0.91,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05379985",
+          "score": 0.8,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06445062",
+          "score": 0.56,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06360354",
+          "score": 0.39,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06040541",
+          "score": 0.28,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06128551",
+          "score": 0.25,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06922591",
+          "score": 0.24,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07492680",
+          "score": 0.18,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07756281",
+          "score": 0.16,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07349537",
+          "score": 0.14,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07895498",
+          "score": 0.09,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06881784",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07397338",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07805954",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06162221",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07252232",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07491445",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07793253",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07819838",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07898813",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07908550",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    },
+    "S023": {
+      "url": "https://www.facebook.com/cancer.gov/posts/in-case-you-missed-it-a-new-targeted-therapy-daraxonrasib-nearly-doubled-overall/1412380880914349/",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T16:41:48.618Z",
+      "http": 200,
+      "release_commit": "0b5eb2a71ef99f7a486062832f54dfd768aa272a",
+      "source_address": "https://www.facebook.com/cancer.gov/posts/in-case-you-missed-it-a-new-targeted-therapy-daraxonrasib-nearly-doubled-overall/1412380880914349/",
+      "evidence": "Safari 0.9.9 reader in live Chrome; identity-bound public Facebook caption only, comments excluded; production 0b5eb2a71ef9.",
+      "ms": null,
+      "about_a_treatment": true,
+      "treatment": "daraxonrasib",
+      "condition": "Previously treated metastatic pancreatic cancer",
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT06625320",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07573215",
+          "score": 0.73,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06445062",
+          "score": 0.57,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT05379985",
+          "score": 0.41,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06360354",
+          "score": 0.29000000000000004,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06128551",
+          "score": 0.17,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07349537",
+          "score": 0.13,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06922591",
+          "score": 0.12,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06040541",
+          "score": 0.11,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07756281",
+          "score": 0.09,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07895498",
+          "score": 0.03,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07492680",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06881784",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06162221",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07252232",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07397338",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07491445",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07793253",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07805954",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07819838",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07898813",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07908550",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    },
+    "S010": {
+      "url": "https://www.linkedin.com/posts/shubham-pant-b74008220_rasolute302-daraxonrasib-unsungheroes-ugcPost-7460774293849952257-TU0v",
+      "mode": "released-reader-in-live-Chrome",
+      "checked_at": "2026-11-15T16:42:05.926Z",
+      "http": 200,
+      "release_commit": "0b5eb2a71ef99f7a486062832f54dfd768aa272a",
+      "source_address": "https://www.linkedin.com/posts/shubham-pant-b74008220_rasolute302-daraxonrasib-unsungheroes-ugcPost-7460774293849952257-TU0v/",
+      "evidence": "Safari 0.9.9 reader in live Chrome; bound LinkedIn caption with broad pancreatic-cancer wording and RASolute302 name; no screenshot, sidebar or comments; production 0b5eb2a71ef9.",
+      "ms": null,
+      "about_a_treatment": true,
+      "treatment": "Daraxonrasib",
+      "condition": "Pancreatic cancer",
+      "tracked": [],
+      "candidates": [
+        {
+          "id": "NCT05379985",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06128551",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07898813",
+          "score": 1,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07491445",
+          "score": 0.99,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06360354",
+          "score": 0.98,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06445062",
+          "score": 0.98,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07252232",
+          "score": 0.98,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06625320",
+          "score": 0.94,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07805954",
+          "score": 0.93,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07756281",
+          "score": 0.89,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07573215",
+          "score": 0.84,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06040541",
+          "score": 0.72,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06922591",
+          "score": 0.5700000000000001,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07492680",
+          "score": 0.55,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07349537",
+          "score": 0.33,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT07397338",
+          "score": 0.31,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07819838",
+          "score": 0.27,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07895498",
+          "score": 0.24,
+          "answer": "not_a_match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06881784",
+          "score": 0.02,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07908550",
+          "score": 0.01,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT06162221",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        },
+        {
+          "id": "NCT07793253",
+          "score": 0,
+          "answer": "other_indication",
+          "agrees": []
+        }
+      ]
+    }
+  }
+}
