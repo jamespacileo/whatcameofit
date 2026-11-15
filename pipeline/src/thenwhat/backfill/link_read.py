@@ -31,7 +31,7 @@ from thenwhat.backfill.link_screen import CLAIM, REGISTRY_TRIAL, TITLE_NAMES_CLA
 from thenwhat.backfill.link_triage import is_passed
 from thenwhat.backfill.outlet_kinds import name_of
 from thenwhat.backfill.steps import MODEL, TEXT_DOOR, Failed, ModelSpend
-from thenwhat.backfill.topics import other_names_of, title_names
+from thenwhat.backfill.topics import names_one, other_names_of, title_names
 from thenwhat.claims.entry import (
     MAX_NAMED_CLAIMS,
     EntryError,
@@ -45,6 +45,7 @@ from thenwhat.claims.entry import (
 from thenwhat.db.models import Claim, LinkLead, LinkLeadLink, LinkShare, SourceArticle
 from thenwhat.decide.core import Backend, DecisionFailed
 from thenwhat.decide.steps import (
+    BUSINESS_NEWS,
     ESTABLISHED_TREATMENT,
     choose_same_claim,
     choose_vertical,
@@ -141,6 +142,7 @@ class LinkRead:
         # The words of the operator's topics. A lead whose title names one is read first,
         # and is read when triage held it as well as when triage passed it.
         self._names_a_topic = title_names(topic_terms)
+        self._topic_terms = tuple(topic_terms)
         self.approve_drafts_by_rule = approve_drafts_by_rule
         # The rules `thenwhat resolve` decides candidates by, for those a page names.
         self.match_reject_below = match_reject_below
@@ -414,9 +416,23 @@ class LinkRead:
                 f"{draft.intervention} for {draft.indication}; about one treatment for "
                 f"one condition at {report.one_treatment_probability:.2f}",
             )
-        established = (
-            "an established treatment in the news" if report.kind == ESTABLISHED_TREATMENT else None
-        )
+        # A topic is covered by what was reported of its treatments: evidence, safety,
+        # new uses, approvals (the operator, 2026-11-15). For a much-covered drug most
+        # of the rest is its price, supply and sales, and is not attached to its claims.
+        if (
+            names_one(record.title, self._topic_terms)
+            and report.evidence_probability < self.treatment_accept_above
+        ):
+            return self._finish(
+                record,
+                ReadOutcome.BUSINESS_NEWS,
+                f"{draft.intervention} for {draft.indication}; about what the treatment "
+                f"does at {report.evidence_probability:.2f}",
+            )
+        established = {
+            ESTABLISHED_TREATMENT: "an established treatment in the news",
+            BUSINESS_NEWS: "business news about a treatment",
+        }.get(report.kind)
         address = without_tracking(record.url)
         # One read at a time from here to the end of its transaction: whichever claim
         # another read has just made for this story is found, not made again.

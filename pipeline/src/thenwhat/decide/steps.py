@@ -772,8 +772,10 @@ def choose_same_claim(
 TREATMENT_KIND = "treatment_kind"
 NEW_TREATMENT = "new_treatment"
 ESTABLISHED_TREATMENT = "established_treatment"
+# About one treatment for one condition, but not about what the treatment does.
+BUSINESS_NEWS = "business_news"
 NOT_ONE_TREATMENT = "not_one_treatment"
-TREATMENT_KIND_OPTIONS = [NEW_TREATMENT, ESTABLISHED_TREATMENT, NOT_ONE_TREATMENT]
+TREATMENT_KIND_OPTIONS = [NEW_TREATMENT, ESTABLISHED_TREATMENT, BUSINESS_NEWS, NOT_ONE_TREATMENT]
 TREATMENT_KIND_QUESTION = (
     "An article has been read and is summarised above in our own words. Which is it?\n"
     f"- {NEW_TREATMENT}: about one treatment for one condition, where the treatment is "
@@ -782,8 +784,12 @@ TREATMENT_KIND_QUESTION = (
     "refusal. A drug long used for something else and now tested for this condition "
     "belongs here.\n"
     f"- {ESTABLISHED_TREATMENT}: about one treatment for one condition, where the "
-    "treatment is already in established use for that condition. New evidence about how "
-    "well it works, its safety, its price or supply, or how it is used.\n"
+    "treatment is already in established use for that condition, and the article is "
+    "about what the treatment does: new evidence about how well it works or about its "
+    "safety, a new use of it, or a change to its approval.\n"
+    f"- {BUSINESS_NEWS}: about one treatment for one condition, but not about what the "
+    "treatment does: its price, sales, supply or shortage, a lawsuit, insurance cover, "
+    "marketing, or who is taking it.\n"
     f"- {NOT_ONE_TREATMENT}: anything else. No one treatment (a class or an approach for "
     "many conditions, a research direction); not a treatment (a predictor, a risk factor, "
     "a test, a discovery about a disease); or advice with no condition treated."
@@ -794,11 +800,15 @@ TREATMENT_KIND_QUESTION = (
 class TreatmentKind:
     """What the treatment-kind decision answered."""
 
-    # Whichever of the new and the established treatment it thinks likelier.
+    # Whichever it thinks likeliest of a new treatment, an established treatment and
+    # business news about a treatment.
     kind: str
     # The probability it gave to the article being about one treatment for one
-    # condition, new or established: one minus what it gave to neither.
+    # condition, of any of those three kinds: one minus what it gave to none.
     one_treatment_probability: float
+    # The probability it gave to the article being about what the treatment does, new
+    # or established: evidence, safety, a new use, an approval.
+    evidence_probability: float
 
 
 def treatment_kind_state(headline: str, summary: str, intervention: str, indication: str) -> str:
@@ -822,10 +832,11 @@ def kind_of_treatment_report(
     now: datetime,
 ) -> TreatmentKind:
     """Whether the backend says the article is about one treatment for one condition,
-    which is what a claim is, and whether that treatment is new or established. This
-    function decides nothing: the caller drafts or joins a claim only at or above its own
-    setting. An established treatment is wanted as much as a new one: its registry record
-    is what came of it."""
+    which is what a claim is; whether that treatment is new or established; and whether
+    the article is about what the treatment does or about its business. This function
+    decides nothing: the caller drafts or joins a claim only by its own rule. An
+    established treatment is wanted as much as a new one: its registry record is what
+    came of it."""
     decision = decide(
         session,
         backend,
@@ -836,8 +847,10 @@ def kind_of_treatment_report(
         now=now,
     )
     chances = decision.probabilities
-    new, established = chances.get(NEW_TREATMENT, 0.0), chances.get(ESTABLISHED_TREATMENT, 0.0)
+    kinds = (NEW_TREATMENT, ESTABLISHED_TREATMENT, BUSINESS_NEWS)
     return TreatmentKind(
-        kind=ESTABLISHED_TREATMENT if established > new else NEW_TREATMENT,
+        kind=max(kinds, key=lambda kind: chances.get(kind, 0.0)),
         one_treatment_probability=1 - chances.get(NOT_ONE_TREATMENT, 0.0),
+        evidence_probability=chances.get(NEW_TREATMENT, 0.0)
+        + chances.get(ESTABLISHED_TREATMENT, 0.0),
     )

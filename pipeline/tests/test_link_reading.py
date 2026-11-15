@@ -41,6 +41,7 @@ from thenwhat.db.models import (
 )
 from thenwhat.decide.core import BackendAnswer
 from thenwhat.decide.steps import (
+    BUSINESS_NEWS,
     ESTABLISHED_TREATMENT,
     NEW_TREATMENT,
     NO_SUCH_CLAIM,
@@ -677,6 +678,49 @@ def test_with_no_topics_only_passed_leads_are_read(reader: Reader):
     reader.read()
 
     assert held.read_outcome is None
+
+
+def test_business_news_on_a_topic_makes_no_claim(reader: Reader):
+    """Scenario: A shortage of a topic's drug"""
+    reader.step = step(topic_terms=("Zepbound",))
+    reader.backend.report_kind = BUSINESS_NEWS
+    lead = reader.lead()
+    lead.title = "Zepbound shortage hits synthetic pharmacies"
+    reader.session.flush()
+
+    reader.read()
+
+    assert lead.read_outcome is ReadOutcome.BUSINESS_NEWS
+    assert lead.read_detail == (
+        "EX-1 antibody for tooth agenesis; about what the treatment does at 0.03"
+    )
+    assert reader.session.scalars(select(Claim)).all() == []
+    assert funnel(reader.session, pass_above=0.7, reject_below=0.2).business_news == 1
+
+
+def test_evidence_on_a_topic_becomes_a_claim(reader: Reader):
+    """Scenario: A trial result for a topic's drug"""
+    reader.step = step(topic_terms=("Zepbound",))
+    reader.backend.report_kind = ESTABLISHED_TREATMENT
+    lead = reader.lead()
+    lead.title = "Zepbound cuts heart risk in a synthetic trial"
+    reader.session.flush()
+
+    reader.read()
+
+    assert lead.read_outcome is ReadOutcome.NEW_CLAIM
+
+
+def test_business_news_on_no_topic_still_becomes_a_claim_and_says_so(reader: Reader):
+    """Scenario: A price rise for a drug on no topic"""
+    reader.step = step(topic_terms=("Zepbound",))
+    reader.backend.report_kind = BUSINESS_NEWS
+    lead = reader.lead()
+
+    reader.read()
+
+    assert lead.read_outcome is ReadOutcome.NEW_CLAIM
+    assert lead.read_detail == "business news about a treatment"
 
 
 def test_a_brand_name_is_offered_the_claim_entered_under_the_generic_name(session, fake_time):
