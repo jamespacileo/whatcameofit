@@ -22,8 +22,10 @@ const { claim, reportDay = "", counts = true } = Astro.props;
 const strip = STRIP_AXIS ? stripFor(claim, STRIP_AXIS.startYear, STRIP_AXIS.lastChecked) : null;
 const percent = (at: number) => `${(at * 100).toFixed(2)}%`;
 // Drawn in this order so a mark on the axis is never under a record's line, and
-// posted results, which sit above, are never covered.
-const ORDER = ["record", "promise", "decision", "report", "results"];
+// posted results, which sit above, are never covered. A regulator's decision is drawn
+// over a news report and fits inside its ring, so a decision and a report dated days
+// apart are both seen.
+const ORDER = ["record", "promise", "report", "decision", "results"];
 const marks = strip ? [...strip.marks].sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind)) : [];
 ---
 
