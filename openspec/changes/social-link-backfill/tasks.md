@@ -97,7 +97,9 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 - [x] 9.11 Replace the yes-or-no check with the three-way `treatment_kind` decision, so that an established treatment joins or drafts a claim as a new one does and only "neither" refuses; rename the outcome to `not_one_treatment` (migration `0020`) and the setting to `TREATMENT_ACCEPT_ABOVE`; verify with tests of an established treatment drafting a claim, joining its claim, an unsure split between new and established, and "neither" drafting and joining nothing
 - [ ] 9.12 Measure the three-way decision on the leads the first check refused, by rereading them, and record the figures here before any of them is prepared
 - [x] 9.13 Add `resolve --redo-rule`: score again the trial matches a rule approved, as the question is asked now, and let the rule decide again; a match no longer approved loses its events and the status is derived again. Verify with tests of an approval that no longer stands, one that stands, one a person decided, and a scoring that fails
+- [x] 9.15 Give the trial question a fourth answer, in the trial but not what is tested, never approved by rule; verify with tests of the rule, the review note and the site's wording, and measure it on the claims the audit named
 - [ ] 9.14 Run it over the claims the audit held for a trial that does not test the claim's treatment, and record how many approvals and statuses moved
+- [ ] 9.16 Mirror the fourth answer in the site worker's copy of the trial question (`site/worker/model.mjs`), in its own change, once the lookup corpus has been run against it; until then the two copies of the question differ
 
 ## 10. Targets and topics
 

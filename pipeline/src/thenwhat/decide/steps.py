@@ -24,20 +24,29 @@ MATCH = "match"
 NOT_A_MATCH = "not_a_match"
 # The record is about the claim's intervention, but for a different condition.
 OTHER_INDICATION = "other_indication"
+# The claim's intervention is in the record, but it is not what the trial tests.
+NOT_WHAT_IS_TESTED = "not_what_is_tested"
 MAX_CANDIDATE_CHARACTERS = 1500
 
 # What is asked about a trial record: a claim is one intervention for one indication,
-# so the same intervention in another condition is its own answer.
-TRIAL_OPTIONS = [MATCH, OTHER_INDICATION, NOT_A_MATCH]
+# so the same intervention in another condition is its own answer. So is a trial the
+# intervention is in without being what it tests: a search by name finds every trial
+# that gives a drug, as the comparator or the anaesthetic as readily as on trial.
+TRIAL_OPTIONS = [MATCH, OTHER_INDICATION, NOT_WHAT_IS_TESTED, NOT_A_MATCH]
 TRIAL_QUESTION = (
     "Is this record a trial of the claim's intervention for the claim's indication?\n"
     f"- {MATCH}: the record establishes the same complete intervention, including any"
     " explicit route, formulation, stereoisomer and regimen, in the claim's indication,"
     " in a form of"
     " that condition, or in patients who have it, respecting any explicit patient"
-    " population or treatment setting in the claim.\n"
+    " population or treatment setting in the claim, and the trial tests it as a"
+    " treatment for that condition.\n"
     f"- {OTHER_INDICATION}: it tests the same complete intervention for a different condition,"
     " an incompatible patient population or treatment setting, or only in healthy volunteers.\n"
+    f"- {NOT_WHAT_IS_TESTED}: the claim's intervention is in the record, but the trial does"
+    " not test it as a treatment for the indication: it is the comparator or control for"
+    " something else under test, it is given to every arm alongside what is tested, or it"
+    " has another role in the trial, such as the anaesthetic for a procedure.\n"
     f"- {NOT_A_MATCH}: it is not a trial of this intervention, including a conflicting"
     " route, formulation, stereoisomer or regimen.\n"
     "Explicit restrictions such as prior treatment, disease stage, biomarkers or age"
@@ -56,6 +65,12 @@ TRIAL_QUESTION = (
     " A generic drug name alone does not establish an explicitly claimed route or"
     " formulation. If that detail is absent, spread uncertainty across the options"
     " rather than assuming the restriction is satisfied."
+    " Being named in an arm does not make an intervention what the trial tests. Ask"
+    " what differs between the arms, and what that difference is meant to treat. In a"
+    " trial with one arm, what that arm receives is what is tested. When the claim's"
+    " intervention is a combination, a trial whose arms differ in one part of it, with"
+    " the rest given to every arm, tests the combination; a trial that adds something"
+    " else to the whole combination in every arm does not."
 )
 
 PAPER_MATCH = "paper_match"

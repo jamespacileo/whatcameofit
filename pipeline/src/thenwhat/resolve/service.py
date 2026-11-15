@@ -16,7 +16,12 @@ from thenwhat.claims.entities import development_codes, entities_of
 from thenwhat.claims.status import refresh_status
 from thenwhat.db.models import Claim, Entity, EntityMatch, EvidenceEvent
 from thenwhat.decide.core import Backend, DecisionFailed
-from thenwhat.decide.steps import OTHER_INDICATION, latest_scoring, score_matches
+from thenwhat.decide.steps import (
+    NOT_WHAT_IS_TESTED,
+    OTHER_INDICATION,
+    latest_scoring,
+    score_matches,
+)
 from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord, UnsearchableTerm
@@ -222,12 +227,16 @@ def reject_near_zero(scored: list[EntityMatch], reject_below: float, now: dateti
 
 
 def _scored_for_the_indication(session: Session, match: EntityMatch) -> bool:
-    """True when the latest scoring asked about the claim's indication and did not read
-    the record as the same intervention for another indication."""
+    """True when the latest scoring asked about the claim's indication and read the
+    record neither as the same intervention for another indication nor as a trial the
+    intervention is in without being what it tests."""
     scored = latest_scoring(session, match)
     if scored is None or scored.output is None:
         return False
-    return OTHER_INDICATION in scored.options and scored.output.get("choice") != OTHER_INDICATION
+    return OTHER_INDICATION in scored.options and scored.output.get("choice") not in (
+        OTHER_INDICATION,
+        NOT_WHAT_IS_TESTED,
+    )
 
 
 def approve_confident(
