@@ -7,12 +7,13 @@ from typing import TYPE_CHECKING, Annotated
 import typer
 from sqlalchemy.orm import Session
 
+from thenwhat.backfill.errors import ReaderUnavailable
 from thenwhat.claims.entry import EntryError
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import DATE_FORMATS, entry_session
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.domain import ReviewState
-from thenwhat.extract.retrieve import ArticleRetriever, PasteNeeded, Retrieved
+from thenwhat.extract.retrieve import ArticleRetriever, PasteNeeded, Retrieved, reader_turns
 
 if TYPE_CHECKING:
     from thenwhat.llm.client import Llm
@@ -87,7 +88,27 @@ def unchecked_line(run: "StatementsRun", slug: str) -> str | None:
 
 
 def make_retriever() -> ArticleRetriever:
-    return ArticleRetriever(contact_email=settings_or_exit().contact_email)
+    """The page reader, as configured. Refuses, before any request, when its address or
+    key is not set: no page is fetched any other way (openspec page-reading)."""
+    settings = settings_or_exit()
+    for name, value in (
+        ("FIRECRAWL_API_URL", settings.firecrawl_api_url),
+        ("FIRECRAWL_API_KEY", settings.firecrawl_api_key),
+    ):
+        if not (value or "").strip():
+            err.print(
+                f"{name} is not set, so no page can be read. Set the page reader's address"
+                " and key, or use --paste where the command offers it.",
+                markup=False,
+            )
+            raise typer.Exit(code=1)
+    return ArticleRetriever(
+        reader_url=settings.firecrawl_api_url or "",
+        reader_key=settings.firecrawl_api_key or "",
+        contact_email=settings.contact_email,
+        turns=reader_turns(settings.reader_reads_at_once),
+        timeout_seconds=settings.reader_timeout_seconds,
+    )
 
 
 def _article_text(url: str, paste: bool) -> Retrieved:
@@ -103,6 +124,8 @@ def _article_text(url: str, paste: bool) -> Retrieved:
         raise EntryError(
             f"{needed} Run the command again with --paste and pipe the text in."
         ) from None
+    except ReaderUnavailable as down:
+        raise EntryError(str(down)) from None
 
 
 @extract_app.command("new")

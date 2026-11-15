@@ -58,20 +58,27 @@ Terms, authentication and rate limits for each external source. Check an entry a
 - **Terms that bind the site:** almost none of the metadata is subject to copyright and it may be used for any purpose; some abstracts may be copyrighted, so they are not published.
 - **Behavior (observed):** an unknown DOI returns 404. Retraction and correction notices, including Retraction Watch data, arrive on the work itself under `updated-by`, each with a type, a date and the notice's own DOI.
 
-## Internet Archive Wayback availability API
+## Page reader (self-hosted Firecrawl)
 
-- **Checked:** 2026-11-11
-- **Documentation:** <https://archive.org/help/wayback_api.php>
-- **Authentication:** none.
-- **Rate limit:** not stated. Used at most once per article that cannot be retrieved.
-- **Behavior (documented):** `GET https://archive.org/wayback/available?url=…` returns the closest snapshot under `archived_snapshots.closest` with `available`, `url`, `timestamp` and `status`, or an empty `archived_snapshots` when there is none.
+Every news page the pipeline reads is fetched by this service, and in no other way (openspec `page-reading`). No address of the service and not its key is written in this repository; they are the settings `FIRECRAWL_API_URL` and `FIRECRAWL_API_KEY`.
+
+- **Checked on 2026-11-15.** Both authenticated routes returned an ordinary page with `html` and `rawHtml`.
+- **Where it runs:** on the operator's machine at home (`docs/adr/0005`). The pipeline asks it over the private network (Tailscale); a Cloudflare Tunnel is the route a Worker would use, and the pipeline does not use it.
+- **Routes checked.** Both need the service's bearer key and answered 401 without it. The pipeline sends only single scrapes, `POST /v2/scrape`, with `formats: ["rawHtml", "html"]`, `maxAge: 0` and `storeInCache: false`. It never asks for `json`, `summary` or `describeImages`, and never uses batch, crawl or map.
+- **Version checked.** Self-hosted image `firecrawl-local-integrated:20261115`, with the social router updated on 2026-11-15. Full-page requests bypass preview-card substitution and receive the service's site-cooldown answer as `NOT_NOW`.
+- **Limits:** one small machine, at most 4 requests in flight, allow 120 seconds a request. The pipeline keeps at most `READER_READS_AT_ONCE` (default 2) in flight per process, a 120-second timeout, and one allowance named `reader` (3,000 requests in 24 hours, 1 second apart, by default) for the backfill.
+- **Rules about sites:** whether an address may be fetched, whether a site's robots.txt is followed, how often a site is asked, how the request presents itself and where a copy comes from are the service's decision, not this project's (`docs/adr/0006`). The pipeline acts on the answer: the page was read; not allowed, with a reason; not now, with when; or not served, with the site's status. A down or overloaded service, or an answer of any other form, stops the run and is recorded against no site.
+- **Answer agreement checked on 2026-11-15.** The service adopted `NOT_NOW` with `reason` and a nonnegative `retryAfter` for its host-cooldown gate and target engine exhaustion. A detected site challenge returns a not-served status. The reverse proxy sends single scrapes through the router, including after a router restart. `NOT_ALLOWED` and `metadata.archiveUrl` are supported by the client and reserved for future service policies and archived full pages. This article route currently returns neither archived copies nor social preview cards.
+- **Retention checked on 2026-11-15.** With `maxAge: 0` and `storeInCache: false`, two reads of a changing endpoint returned different source values. Two ordinary page reads left no matching page in the inspected Redis values or API, router and browser logs, and no queue row for the unique request address. The synchronous API uses an in-memory job with `skipNuq`; its configured logging has no external page-content store. The router now also honors no-store on its Reddit cache. A JavaScript-rendered quote page returned rendered quote elements in both HTML formats. These observations cover the pipeline's single-page request shape. Repeat them when the service's version or configuration changes.
+- **Rendering limit observed.** A page that inserts content immediately with JavaScript worked. A delayed-JavaScript fixture returned its initial shell without the late content. The pipeline treats an insufficient main body as thin and spends no model call on it.
+- **Archived copies:** the pipeline no longer asks the Internet Archive itself. Where a copy comes from is the service's decision; when it says the copy came from an archive, the archive address is recorded with the article.
 
 ## Outlet sites (icons)
 
 - **Checked:** 2026-11-11
 - **What is read:** per outlet domain, `robots.txt`, then `/favicon.ico`, and when that is not an image, or is a blank placeholder (an ICO with every pixel transparent), the home page and at most two icons it names with `<link rel="icon">` or `apple-touch-icon`. Another host an icon lives on has its own robots.txt read first. The home page is read to find the icon's address and is kept nowhere.
 - **Authentication:** none.
-- **Terms:** each outlet has its own and they are not read one by one. The rule applied to all: robots.txt decides. A host whose rules refuse the client, or cannot be read, is sent nothing more.
+- **Terms:** each outlet has its own and they are not read one by one. The rule applied to the icon fetch: robots.txt decides. A host whose rules refuse the client, or cannot be read, is sent nothing more. This is the icon fetch only (`thenwhat icons`): article pages are asked of the page reader, which decides how each site is asked (`docs/adr/0006`).
 - **Rate limit:** none published for this. The client sends one request per second at most and asks each domain once; `thenwhat icons --retry-missing` asks again only the domains that had no usable icon. `make public-export` runs `thenwhat icons` first, so outlets added since the last run are asked.
 - **What is kept:** one raster image (PNG, ICO, GIF, JPEG or WebP, told from its bytes) of at most 100,000 bytes, with its address and fetch time. SVG is not kept: it can carry script and the site would serve it from its own address.
 - **Terms that bind the site:** the icons are the outlets' own marks. The site shows one only beside the outlet's name and a link to its article, to say where a report came from. Remove an outlet's row from `outlet_icon` if it asks.
@@ -128,29 +135,33 @@ A reader may give the address of a post in place of an article's. A post is read
 
 - **Checked:** 2026-11-12
 - **Documentation:** <https://docs.joinmastodon.org/methods/statuses/>, which marks `GET /api/v1/statuses/:id` as "Public for public statuses".
-- **Terms:** each server has its own and they are not read one by one. The rule applied to all, as for outlets: the server's robots.txt decides, a server that refuses or whose rules cannot be read is sent nothing more, and only a post whose `visibility` is `public` is used. A server can also turn this interface off; then the post is refused like any unreadable one.
+- **Terms:** each server has its own and they are not read one by one. Only a post whose `visibility` is `public` is used. Until 2026-11-15 the pipeline read each server's robots.txt first; with `docs/adr/0006` it reads none, and posts are to move to the page reader with the posts prune (design of `openspec/changes/firecrawl-page-reader`). A server can also turn this interface off; then the post is refused like any unreadable one.
 - **Which addresses:** any host with a path shaped `/@name/<digits>` or `/users/name/statuses/<digits>`. A local or private address is never asked.
 - **Behavior (observed on one server):** the post's text is HTML in `content`; links to tags and people carry the class `mention` or `hashtag`; the link card is in `card` (`url`, `title`, `description`).
 
-### Platforms whose posts are not read
+### Social and video platforms: the 2026-11-12 reading and the operator's decision
 
-Checked 2026-11-12 by reading each platform's own terms and documentation. No platform was asked for a post. The three robots.txt lines given below were read again directly; the rest is one reading of long legal pages, so re-read the page linked before acting on any line here.
+**Decided by the operator on 2026-11-15** (`docs/adr/0006`): "allow X, Reddit, Meta, Youtube and others, it'll be the responsibility of the service to decide how to handle these, in worst case we may get markdown based off open graph cards". These platforms may be read through the page reader, and how each is read is the service's responsibility. This is the operator's decision, not a legal reading. It takes effect with the posts prune (design of `openspec/changes/firecrawl-page-reader`); until then the pipeline sends no post to the reader.
 
-| Platform | Finding | What decides it | What would change it |
+What the project still never keeps, whatever the platform: a post's author (never kept, logged or exported, and dropped on arrival when the reader returns it) and a post's text (held while it is read, like article text, and kept nowhere). A post is a way to an article and its claim, never evidence.
+
+What the reading of 2026-11-12 found, kept for whoever revisits the decision. It was checked by reading each platform's own terms and documentation. No platform was asked for a post. The three robots.txt lines given below were read again directly; the rest is one reading of long legal pages, so re-read the page linked before acting on any line here.
+
+| Platform | Found on 2026-11-12 | What the reading rested on | What it said would change it |
 | --- | --- | --- | --- |
-| X | Not read | Its embed interface (`publish.x.com/oembed`) needs no sign-in and returns the post's text, but its robots.txt says `Disallow: /oembed`, and the Developer Agreement (updated 27 April 2026) licenses analysis only "as explicitly approved by X". The Terms of Service (effective 9 October 2026) forbid scraping without written consent. | A developer account and the X API's post lookup, paid per post read ($0.005 at the date checked). The operator's step. |
-| Reddit | Not read | robots.txt is `Disallow: /` for every client. The Data API Terms (revised 20 July 2026) allow access only with the credentials Reddit issues. Its embed interface is licensed for embedding only. | A registered app with Reddit's approval. Whether a free one covers this use, and its rate limit, could not be confirmed: the help pages sit behind a bot check. The operator's step. |
-| Facebook, Instagram, Threads | Not read | Their embed interfaces need no token since 15 June 2026, but their documentation forbids any use other than showing the embed, "extracting" content included, and they return no text or links. | Nothing found. |
-| LinkedIn | Not read | The User Agreement (effective 3 November 2025) forbids automated access; robots.txt allows named search engines only. | Nothing found. |
-| Telegram | Not read | Its content-licensing terms forbid access to user content other than as a user, and its use with AI models. No robots.txt exists (404). | Nothing found. |
-| TikTok | Not read | The documented embed answer carries no caption, title or links, so there is nothing to read; the terms forbid automated extraction. | Nothing useful to gain. |
-| YouTube | Not fetched by the service | A video URL alone is not used to fetch video, description or captions. The extension can read the current video's loaded page content when opened. | A separate authorised API client would need its own terms, permissions and quota review. |
+| X | Judged not to be read | Its embed interface (`publish.x.com/oembed`) needs no sign-in and returns the post's text, but its robots.txt says `Disallow: /oembed`, and the Developer Agreement (updated 27 April 2026) licenses analysis only "as explicitly approved by X". The Terms of Service (effective 9 October 2026) forbid scraping without written consent. | A developer account and the X API's post lookup, paid per post read ($0.005 at the date checked). The operator's step. |
+| Reddit | Judged not to be read | robots.txt is `Disallow: /` for every client. The Data API Terms (revised 20 July 2026) allow access only with the credentials Reddit issues. Its embed interface is licensed for embedding only. | A registered app with Reddit's approval. Whether a free one covers this use, and its rate limit, could not be confirmed: the help pages sit behind a bot check. The operator's step. |
+| Facebook, Instagram, Threads | Judged not to be read | Their embed interfaces need no token since 15 June 2026, but their documentation forbids any use other than showing the embed, "extracting" content included, and they return no text or links. | Nothing found. |
+| LinkedIn | Judged not to be read | The User Agreement (effective 3 November 2025) forbids automated access; robots.txt allows named search engines only. | Nothing found. |
+| Telegram | Judged not to be read | Its content-licensing terms forbid access to user content other than as a user, and its use with AI models. No robots.txt exists (404). | Nothing found. |
+| TikTok | Judged not to be read | The documented embed answer carries no caption, title or links, so there is nothing to read; the terms forbid automated extraction. | Nothing useful to gain. |
+| YouTube | Judged not to be fetched by the service | A video URL alone is not used to fetch video, description or captions. The extension can read the current video's loaded page content when opened. | A separate authorised API client would need its own terms, permissions and quota review. |
 
 Pages read: for X, `docs.x.com/x-for-websites/oembed-api`, `docs.x.com/developer-terms/agreement`, `x.com/en/tos`; for Reddit, `redditinc.com/policies/data-api-terms`, `/developer-terms`, `/embeds-terms`, `/user-agreement`; for Meta, `developers.facebook.com/docs/graph-api/reference/instagram-oembed`, `/documentation/threads/reference/oembed`, `/blog/post/2026/06/15/tokenless-access-to-meta-oembed-apis`; for LinkedIn, `linkedin.com/legal/user-agreement`, `/legal/crawling-terms`; for Telegram, `telegram.org/tos/content-licensing`; for TikTok, `developers.tiktok.com/doc/embed-videos` and its terms of service; for YouTube, `developers.google.com/youtube/terms/developer-policies`, `/youtube/v3/docs/videos/list`.
 
-For every platform in this table the site names the platform, asks nothing of it, and offers to take the post's text or the article's address.
+Until the posts prune, for every platform in this table the site names the platform, asks nothing of it, and offers to take the post's text or the article's address.
 
-Reddit submission dumps published by third parties are a separate matter, decided by the operator on 2026-11-14: see "Link datasets for the social-link backfill" at the end of this file. Reddit itself is still asked nothing.
+Reddit submission dumps published by third parties are a separate matter, decided by the operator on 2026-11-14: see "Link datasets for the social-link backfill" at the end of this file. Reddit itself is asked nothing by the pipeline until the posts prune.
 
 ### YouTube in the reader's browser
 
@@ -330,7 +341,7 @@ Read on 2026-11-14 for a proposed backfill that starts from article addresses pe
 
 ### Reddit submission dumps (operator's decision: use, links only)
 
-- **Checked:** 2026-11-14. [Arctic Shift download links](https://github.com/ArthurHeitmann/arctic_shift/blob/master/download_links.md), read directly. Reddit's Data API Terms and Public Content Policy were not re-read on this date; the reading of 2026-11-12 is in the table under "Platforms whose posts are not read".
+- **Checked:** 2026-11-14. [Arctic Shift download links](https://github.com/ArthurHeitmann/arctic_shift/blob/master/download_links.md), read directly. Reddit's Data API Terms and Public Content Policy were not re-read on this date; the reading of 2026-11-12 is in the table under "Social and video platforms: the 2026-11-12 reading and the operator's decision".
 - **What exists (observed):** monthly dumps of all submissions and comments are listed on Academic Torrents from 2024-04 to 2026-10, and the 2026-07 listing answered on this date. The single archive for 2005-06 to 2025-12 is struck through on Academic Torrents and offered by magnet link only, at about 3.8 TB. A per-subreddit release for the top 40,000 subreddits covers 2005-06 to 2023-12, so chosen subreddits can be taken without the whole archive.
 - **Reported, not confirmed:** that the 2005 to 2025 archive was removed from Academic Torrents at Reddit's request from 30 July 2026; that Reddit stopped taking new public API requests on 31 October 2026 and ends public access in March 2027. Both come from third-party posts. The struck-through listing is consistent with the first.
 - **Terms:** the dumps are published by third parties, not by Reddit, and carry no licence from Reddit. Reddit's Public Content Policy (May 2024) says use of its public content needs an agreement with Reddit and must respect deletions. A dump cannot respect a deletion made after it was taken. The supply may end without notice.

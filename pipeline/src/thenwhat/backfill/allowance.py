@@ -17,15 +17,6 @@ from thenwhat.sources.base import SystemTime, Time
 
 OpenSession = Callable[[], AbstractContextManager[Session]]
 
-# An outlet is asked for articles under this name followed by its domain. Every outlet
-# has the same allowance: an interval between requests and no count.
-OUTLET = "outlet:"
-UNCOUNTED = 10**9
-
-
-def outlet_source(domain: str) -> str:
-    return f"{OUTLET}{domain.lower().removeprefix('www.')}"
-
 
 @dataclass(frozen=True, slots=True)
 class AllowanceStatus:
@@ -53,18 +44,12 @@ class Allowances:
         open_session: OpenSession,
         configured: dict[str, SourceAllowance],
         time: Time | None = None,
-        outlet_interval_seconds: float | None = None,
     ) -> None:
         self._open_session = open_session
         self._configured = configured
         self._time = time or SystemTime()
-        self._outlet_interval = outlet_interval_seconds
 
     def of(self, source: str) -> SourceAllowance:
-        if source.startswith(OUTLET) and self._outlet_interval is not None:
-            return SourceAllowance(
-                requests=UNCOUNTED, period_hours=24, interval_seconds=self._outlet_interval
-            )
         if source not in self._configured:
             raise NoAllowance(
                 f"No allowance is configured for '{source}'. "
@@ -72,11 +57,9 @@ class Allowances:
             )
         return self._configured[source]
 
-    def claim(self, source: str, *, at_least_seconds: float = 0) -> None:
+    def claim(self, source: str) -> None:
         """Take one request from the source's allowance, waiting for its turn. Raises
-        when the allowance is spent or the source is paused; nothing is counted then.
-        `at_least_seconds` lengthens the interval for this claim, for a source that asks
-        for a longer one itself, as an outlet does in its robots.txt."""
+        when the allowance is spent or the source is paused; nothing is counted then."""
         allowance = self.of(source)
         period = timedelta(hours=allowance.period_hours)
         with self._open_session() as session:
@@ -96,8 +79,7 @@ class Allowances:
                     f"It is restored at {_when(use.period_start + period)}."
                 )
             if use.last_request_at is not None:
-                interval = max(allowance.interval_seconds, at_least_seconds)
-                wait = interval - (now - use.last_request_at).total_seconds()
+                wait = allowance.interval_seconds - (now - use.last_request_at).total_seconds()
                 if wait > 0:
                     self._time.sleep(wait)
                     now = self._time.now()

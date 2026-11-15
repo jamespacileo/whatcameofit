@@ -18,10 +18,10 @@ from pydantic_ai.models.function import FunctionModel
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
+from reader_support import retriever as reader_retriever
 from thenwhat.cli import app
 from thenwhat.decide.core import BackendAnswer
 from thenwhat.extract.post import Post, post_at, read_post
-from thenwhat.extract.retrieve import ArticleRetriever
 from thenwhat.llm.client import Llm, LlmSettings
 from thenwhat.sources.base import SourceRecord
 
@@ -54,7 +54,7 @@ TOOT = "https://scicomm.example/@lab/117593221666993044"
 TOOT_API = "https://scicomm.example/api/v1/statuses/117593221666993044"
 
 
-def reading(answers: dict[str, Any], *, forbidden: tuple[str, ...] = ()):
+def reading(answers: dict[str, Any]):
     asked: list[str] = []
 
     def get_json(address: str) -> Any:
@@ -64,7 +64,7 @@ def reading(answers: dict[str, Any], *, forbidden: tuple[str, ...] = ()):
     def read(address: str) -> Post | None:
         ref = post_at(address)
         assert ref is not None, address
-        return read_post(ref, get_json=get_json, allowed=lambda url: url not in forbidden)
+        return read_post(ref, get_json=get_json)
 
     return read, asked
 
@@ -125,7 +125,7 @@ def test_a_hacker_news_story_or_comment_is_read_and_a_deleted_one_is_not():
     assert read("https://news.ycombinator.com/item?id=4") is None
 
 
-def test_a_mastodon_post_is_read_only_when_public_and_when_its_server_allows():
+def test_a_mastodon_post_is_read_only_when_public():
     """Scenario: Post on a Mastodon server"""
     status = {
         "visibility": "public",
@@ -144,9 +144,7 @@ def test_a_mastodon_post_is_read_only_when_public_and_when_its_server_allows():
 
     private, _ = reading({TOOT_API: status | {"visibility": "private"}})
     assert private(TOOT) is None
-    refused, refused_asked = reading({TOOT_API: status}, forbidden=(TOOT_API,))
-    assert refused(TOOT) is None
-    assert (asked, refused_asked) == ([TOOT_API], [])
+    assert asked == [TOOT_API]
 
 
 # --- the lookup command ----------------------------------------------------------------
@@ -213,9 +211,7 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
 
     settings = LlmSettings("test:scripted", Decimal("10"), Decimal("3"), Decimal("15"))
     llm = Llm(session, settings, model=FunctionModel(respond, model_name="scripted"))
-    retriever = ArticleRetriever(
-        contact_email="ops@thenwhat.test", transport=httpx.MockTransport(serve)
-    )
+    retriever = reader_retriever(serve)
     monkeypatch.setattr("thenwhat.cli.entry.open_session", test_session)
     monkeypatch.setattr("thenwhat.cli.lookup.make_tools", lambda s: (llm, Backend(), Trials()))
     monkeypatch.setattr("thenwhat.cli.lookup.make_papers", lambda s: Papers())

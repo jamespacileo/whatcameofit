@@ -1,26 +1,87 @@
-"""Getting the text of a news article, politely. Behavior: openspec claim-extraction.
+"""Getting the text of a news article through the page reader. Behavior: openspec
+page-reading and claim-extraction.
+
+Every news page is fetched by the page reader, the operator's self-hosted Firecrawl
+service, and in no other way. The reader holds the rules about each site: whether an
+address may be fetched, how often a site is asked and where a copy comes from. This
+module asks it for one page and turns its answer into one of four outcomes.
 
 The text is returned to the caller and kept nowhere: not cached, not logged.
 """
 
+import math
+import threading
 from dataclasses import dataclass
 from typing import Any
-from urllib.parse import urlsplit
-from urllib.robotparser import RobotFileParser
 
 import httpx
 
-from thenwhat.extract.page import Page, read_page
-from thenwhat.sources.base import CLIENT_NAME, require_contact, user_agent
+from thenwhat.backfill.errors import ReaderUnavailable
+from thenwhat.extract.page import BODY_FROM, Page, read_page
+from thenwhat.sources.base import require_contact, user_agent
 
-WAYBACK_AVAILABLE = "https://archive.org/wayback/available"
-# How a site answered when asked for one article.
-ALLOWED = "allowed"
-REFUSED_BY_ROBOTS = "robots"
+# The name the read step's allowance is kept under.
+READER = "reader"
+SCRAPE = "/v2/scrape"
+# What the pipeline asks the reader for: the page as drawn and its main content, and
+# nothing kept. Never a summary, structured extraction or image descriptions: every
+# model call on an article is the pipeline's own.
+FORMATS = ("rawHtml", "html")
+# The answers the service is asked to give when it will not read a page now or at all
+# (design.md of the change firecrawl-page-reader, decision 2).
+NOT_ALLOWED_CODE = "NOT_ALLOWED"
+NOT_NOW_CODE = "NOT_NOW"
+# How an address answered, for the record of which outlets can be read.
+READ = "read"
+NOT_ALLOWED = "not_allowed"
+NOT_NOW = "not_now"
+NOT_SERVED = "not_served"
 
 
 class PasteNeeded(Exception):
     """The article cannot be fetched; the operator must supply its text."""
+
+
+class ThinPage(PasteNeeded):
+    """The reader returned too little main content to read as an article."""
+
+
+class NotAllowed(PasteNeeded):
+    """The reader answered that the address is not allowed. It is not asked for again."""
+
+    def __init__(self, url: str, reason: str) -> None:
+        self.reason = reason
+        super().__init__(
+            f"The page reader does not allow {url}: {reason}. Supply the article text instead."
+        )
+
+
+class NotNow(PasteNeeded):
+    """The reader answered that the site cannot be asked now."""
+
+    def __init__(self, url: str, reason: str, retry_after_seconds: float | None) -> None:
+        self.reason = reason
+        self.retry_after_seconds = retry_after_seconds
+        when = (
+            f"in {round(retry_after_seconds):,} seconds"
+            if retry_after_seconds is not None
+            else "later"
+        )
+        super().__init__(
+            f"The page reader cannot ask for {url} now: {reason}. It may be asked again {when},"
+            " or supply the article text instead."
+        )
+
+
+class NotServed(PasteNeeded):
+    """The reader asked the site, and the site did not serve the page."""
+
+    def __init__(self, url: str, status: int) -> None:
+        self.status = status
+        super().__init__(
+            f"{url} could not be retrieved: the site answered {status}."
+            " Supply the article text instead."
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,136 +96,183 @@ class Retrieved:
 class Probe:
     """How one article address answered, for the record of which outlets can be read."""
 
-    # ALLOWED, or REFUSED_BY_ROBOTS when the site's rules forbid the fetch or cannot be read.
-    robots: str
-    # The page's HTTP status; None when it was not asked for or did not answer.
+    # READ, NOT_ALLOWED, NOT_NOW or NOT_SERVED.
+    answer: str
+    # The site's HTTP status, as the reader reports it.
     status: int | None = None
     page: Page | None = None
 
 
+_turns: dict[int, threading.BoundedSemaphore] = {}
+_turns_lock = threading.Lock()
+
+
+def reader_turns(at_once: int) -> threading.BoundedSemaphore:
+    """One set of turns per process for each size, so every retriever made in it shares
+    the cap on requests in flight with the reader."""
+    with _turns_lock:
+        return _turns.setdefault(at_once, threading.BoundedSemaphore(at_once))
+
+
 class ArticleRetriever:
     def __init__(
-        self, *, contact_email: str | None, transport: httpx.BaseTransport | None = None
+        self,
+        *,
+        reader_url: str,
+        reader_key: str,
+        contact_email: str | None,
+        turns: threading.BoundedSemaphore,
+        timeout_seconds: float = 120,
+        transport: httpx.BaseTransport | None = None,
     ) -> None:
+        self._scrape = reader_url.rstrip("/") + SCRAPE
+        self._key = reader_key
+        self._turns = turns
         self._contact = (contact_email or "").strip()
+        self._reader = httpx.Client(transport=transport, timeout=timeout_seconds)
+        # Only for the platforms' own interfaces that `json` asks, until posts are read
+        # through the reader too.
         self._client = httpx.Client(transport=transport, timeout=30.0, follow_redirects=True)
-        # A site's rules are read once for as long as this retriever lives. None is a
-        # site whose rules could not be read: nothing of it is fetched, as if refused.
-        self._rules: dict[str, RobotFileParser | bool | None] = {}
 
     def retrieve(self, url: str) -> Retrieved:
-        """The article as plain text: from the site if robots.txt allows it, else from
-        an archived snapshot. Raises PasteNeeded when neither is possible."""
-        require_contact(self._contact)
-        if not self._allowed(url):
-            raise PasteNeeded(
-                f"The robots.txt of {urlsplit(url).netloc} does not allow fetching {url}."
-                " Supply the article text instead."
+        """The article as plain text, from the page reader. Raises NotAllowed, NotNow or
+        NotServed when the reader gives no page, and ReaderUnavailable when the reader
+        itself could not be asked."""
+        data = self._ask(url)
+        if data.answer != READ:
+            raise _refusal(url, data)
+        page = data.page
+        assert page is not None
+        if len(page.text) < BODY_FROM:
+            raise ThinPage(
+                f"{url} returned too little article text. Supply the article text instead."
             )
-        html = self._page(url)
-        if html is not None:
-            return _retrieved(html)
-        snapshot = self._snapshot(url)
-        html = self._page(snapshot) if snapshot else None
-        if html is None:
-            raise PasteNeeded(
-                f"{url} could not be retrieved and no archived snapshot was found."
-                " Supply the article text instead."
-            )
-        return _retrieved(html, archive_url=snapshot)
+        return Retrieved(page.text, archive_url=data.archive_url, page=page)
 
-    def allowed(self, url: str) -> bool:
-        """Whether the site's own rules let this client fetch the address."""
-        require_contact(self._contact)
-        return self._allowed(url)
-
-    def rules_unknown(self, url: str) -> bool:
-        """Whether the site's rules could not be read: it did not answer, could not serve
-        them, or said it was asked too often. Nothing is fetched from such a site, but
-        that is not the site refusing, and its rules may be read another time."""
-        require_contact(self._contact)
-        self._allowed(url)  # reads the site's rules if they are not yet known
-        parts = urlsplit(url)
-        return self._rules[f"{parts.scheme}://{parts.netloc}"] is None
-
-    def crawl_delay(self, url: str) -> float:
-        """The seconds the site's robots.txt asks this client to leave between requests,
-        or 0 when it asks for none."""
-        require_contact(self._contact)
-        self._allowed(url)  # reads the site's rules if they are not yet known
-        parts = urlsplit(url)
-        rules = self._rules.get(f"{parts.scheme}://{parts.netloc}")
-        if not isinstance(rules, RobotFileParser):
-            return 0.0
-        return float(rules.crawl_delay(CLIENT_NAME) or 0)
+    def probe(self, url: str) -> Probe:
+        """Ask the reader for one article and say how it answered. Raises
+        ReaderUnavailable when the reader itself could not be asked: that is not the
+        outlet's answer."""
+        data = self._ask(url)
+        return Probe(data.answer, data.status, data.page)
 
     def json(self, url: str) -> Any:
         """The JSON a platform's own interface for software serves at this address, or
         None when it does not answer with any."""
         require_contact(self._contact)
-        response = self._get(url)
-        if response is None or response.status_code != 200:
+        headers = {"User-Agent": user_agent(self._contact)}
+        try:
+            response = self._client.get(url, headers=headers)
+        except httpx.TransportError:
+            return None
+        if response.status_code != 200:
             return None
         try:
             return response.json()
         except ValueError:
             return None
 
-    def probe(self, url: str) -> Probe:
-        """Ask the site itself for one article and say how it answered. No archive is tried:
-        the question is whether this outlet can be read."""
-        require_contact(self._contact)
-        if not self._allowed(url):
-            return Probe(REFUSED_BY_ROBOTS)
-        response = self._get(url)
-        if response is None:
-            return Probe(ALLOWED)
-        page = read_page(response.text) if response.status_code == 200 else None
-        return Probe(ALLOWED, response.status_code, page)
-
-    def _get(self, url: str, params: dict[str, str] | None = None) -> httpx.Response | None:
-        headers = {"User-Agent": user_agent(self._contact)}
-        try:
-            return self._client.get(url, params=params, headers=headers)
-        except httpx.TransportError:
-            return None
-
-    def _allowed(self, url: str) -> bool:
-        parts = urlsplit(url)
-        site = f"{parts.scheme}://{parts.netloc}"
-        if site not in self._rules:
-            self._rules[site] = self._rules_of(site)
-        rules = self._rules[site]
-        if rules is None:
-            return False  # rules unknown: do not fetch
-        return rules if isinstance(rules, bool) else rules.can_fetch(CLIENT_NAME, url)
-
-    def _rules_of(self, site: str) -> RobotFileParser | bool | None:
-        """A site's rules, or one answer for every address when it has none to parse, or
-        None when the rules could not be read."""
-        response = self._get(f"{site}/robots.txt")
-        if response is None or response.status_code >= 500 or response.status_code == 429:
-            return None
-        if response.status_code in (401, 403):
-            return False
-        if response.status_code >= 400:
-            return True  # no robots.txt: nothing is disallowed
-        rules = RobotFileParser()
-        rules.parse(response.text.splitlines())
-        return rules
-
-    def _page(self, url: str) -> str | None:
-        response = self._get(url)
-        return response.text if response is not None and response.status_code == 200 else None
-
-    def _snapshot(self, url: str) -> str | None:
-        response = self._get(WAYBACK_AVAILABLE, {"url": url})
-        if response is None or response.status_code != 200:
-            return None
-        closest = response.json().get("archived_snapshots", {}).get("closest", {})
-        return closest.get("url") if closest.get("available") else None
+    def _ask(self, url: str) -> "_Answer":
+        body = {
+            "url": url,
+            "formats": list(FORMATS),
+            "maxAge": 0,
+            "storeInCache": False,
+        }
+        headers = {"Authorization": f"Bearer {self._key}"}
+        with self._turns:
+            try:
+                response = self._reader.post(self._scrape, json=body, headers=headers)
+            except httpx.TimeoutException:
+                raise ReaderUnavailable(
+                    "The page reader did not answer in time. Nothing was recorded against the"
+                    " site; try again when the reader is running."
+                ) from None
+            except httpx.TransportError:
+                raise ReaderUnavailable(
+                    "The page reader could not be reached. Nothing was recorded against the"
+                    " site; try again when the reader is running."
+                ) from None
+        return _answer_of(response)
 
 
-def _retrieved(html: str, archive_url: str | None = None) -> Retrieved:
-    page = read_page(html)
-    return Retrieved(page.text, archive_url=archive_url, page=page)
+@dataclass(frozen=True, slots=True)
+class _Answer:
+    answer: str
+    status: int | None = None
+    page: Page | None = None
+    archive_url: str | None = None
+    reason: str = ""
+    retry_after_seconds: float | None = None
+
+
+def _answer_of(response: httpx.Response) -> _Answer:
+    """The reader's answer as one of the four outcomes. Anything else is the reader
+    failing, never the site. A refusal is known by its code, whatever HTTP status it
+    comes with."""
+    try:
+        answered = response.json()
+    except ValueError:
+        answered = None
+    if isinstance(answered, dict) and answered.get("success") is False:
+        code = answered.get("code")
+        reason = answered.get("reason")
+        if code == NOT_ALLOWED_CODE and isinstance(reason, str) and reason.strip():
+            return _Answer(NOT_ALLOWED, reason=reason.strip())
+        if code == NOT_NOW_CODE and isinstance(reason, str) and reason.strip():
+            retry = answered.get("retryAfter")
+            if (
+                isinstance(retry, int | float)
+                and not isinstance(retry, bool)
+                and math.isfinite(retry)
+                and retry >= 0
+            ):
+                return _Answer(NOT_NOW, reason=reason.strip(), retry_after_seconds=float(retry))
+            raise _unknown(response)
+    if response.status_code in (401, 403):
+        raise ReaderUnavailable(
+            f"The page reader refused the pipeline's key ({response.status_code})."
+            " Check FIRECRAWL_API_KEY."
+        )
+    if response.status_code == 429 or response.status_code >= 500:
+        raise ReaderUnavailable(
+            f"The page reader is overloaded or failing ({response.status_code})."
+            " Nothing was recorded against the site; try again later."
+        )
+    if not isinstance(answered, dict) or response.status_code != 200:
+        raise _unknown(response)
+    data = answered.get("data")
+    if answered.get("success") is not True or not isinstance(data, dict):
+        raise _unknown(response)
+    metadata = data.get("metadata")
+    status = metadata.get("statusCode") if isinstance(metadata, dict) else None
+    if not isinstance(status, int) or isinstance(status, bool):
+        raise _unknown(response)
+    if status != 200:
+        return _Answer(NOT_SERVED, status=status)
+    drawn, main = data.get("rawHtml"), data.get("html")
+    if not isinstance(drawn, str) or not isinstance(main, str):
+        raise _unknown(response)
+    archive = metadata.get("archiveUrl") if isinstance(metadata, dict) else None
+    return _Answer(
+        READ,
+        status=status,
+        page=read_page(drawn, main),
+        archive_url=archive if isinstance(archive, str) and archive else None,
+    )
+
+
+def _unknown(response: httpx.Response) -> ReaderUnavailable:
+    # The answer's body is not quoted: it may carry the page's text.
+    return ReaderUnavailable(
+        f"The page reader answered in a form the pipeline does not know ({response.status_code})."
+        " Nothing was recorded against the site."
+    )
+
+
+def _refusal(url: str, data: _Answer) -> PasteNeeded:
+    if data.answer == NOT_ALLOWED:
+        return NotAllowed(url, data.reason)
+    if data.answer == NOT_NOW:
+        return NotNow(url, data.reason, data.retry_after_seconds)
+    return NotServed(url, data.status or 0)
