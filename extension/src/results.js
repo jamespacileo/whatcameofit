@@ -1,9 +1,9 @@
 // Private to this browser. A previous answer is useful, but never silently current.
-// Version 4 also excludes answers from before current-post scoping and corrected
-// treatment-report identification, including company-history false positives.
+// Version 8 excludes answers scored before explicit patient-group and treatment-
+// setting restrictions became part of trial matching.
 // Only completed answers can be reused.
 export const RESULT_TTL = 24 * 60 * 60 * 1000;
-const VERSION = 7;
+const VERSION = 8;
 const MAX_RESULTS = 10;
 
 /** Whether an answer is whole: not an error, a miss, a partial stream or one that is

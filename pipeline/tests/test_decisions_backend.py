@@ -98,7 +98,7 @@ def test_every_record_is_scored_in_one_request(session: Session, fixture_json):
     assert first["choices"][1] == {
         "value": "other_indication",
         "description": "it tests this intervention for a different condition,"
-        " or only in healthy volunteers.",
+        " an incompatible patient population or treatment setting, or only in healthy volunteers.",
     }
     logged = list(session.scalars(select(DecisionLog).order_by(DecisionLog.id)))
     assert [(entry.backend, entry.model) for entry in logged] == [
