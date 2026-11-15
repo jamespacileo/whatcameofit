@@ -1,6 +1,6 @@
 {
   "source": "Normal private CLI export, passed through the unchanged public-export staging validator.",
-  "generated_at": "2026-11-15T21:37:23.866081Z",
+  "generated_at": "2026-11-15T21:48:53.209887Z",
   "before_count": 126,
   "after_count": 156,
   "newly_prepared_claims": [
@@ -33,7 +33,6 @@
         "NCT01402128",
         "NCT02041104",
         "NCT02604316",
-        "NCT03714646",
         "NCT05009615",
         "NCT07299942"
       ],
@@ -114,8 +113,7 @@
       "trial_ids": [
         "NCT00422058",
         "NCT01272219",
-        "NCT01508949",
-        "NCT04074161"
+        "NCT01508949"
       ],
       "source_urls": [
         "https://medicalxpress.com/news/2024-09-mouse-reveals-central-action-weight.html"
@@ -184,8 +182,7 @@
         "NCT06993792",
         "NCT07153471",
         "NCT07729332",
-        "NCT07790861",
-        "NCT07794579"
+        "NCT07790861"
       ],
       "source_urls": [
         "https://www.cnbc.com/2025/03/24/eli-lilly-to-release-weight-loss-pill-orforglipron-trial-data-.html"
@@ -207,19 +204,8 @@
       "intervention": "Ozempic",
       "indication": "Kidney deterioration in people with type 2 diabetes",
       "trial_ids": [
-        "NCT03724981",
         "NCT04175665",
-        "NCT04447859",
-        "NCT04451837",
-        "NCT04469855",
-        "NCT04854083",
-        "NCT05071898",
-        "NCT05468632",
-        "NCT05689372",
-        "NCT06161844",
-        "NCT06351748",
         "NCT06954090",
-        "NCT07046273",
         "NCT07456774"
       ],
       "source_urls": [
@@ -317,7 +303,6 @@
         "NCT04777396",
         "NCT04777409",
         "NCT05891496",
-        "NCT06072963",
         "NCT07651319"
       ],
       "source_urls": [
@@ -387,8 +372,7 @@
       "trial_ids": [
         "NCT05870462",
         "NCT07090343",
-        "NCT07275697",
-        "NCT07779343"
+        "NCT07275697"
       ],
       "source_urls": [
         "https://www.statnews.com/2023/11/11/heart-attack-stroke-obesity-wegovy-novo-nordisk-select/",
@@ -426,23 +410,17 @@
         "NCT06380426",
         "NCT06396416",
         "NCT06468748",
-        "NCT06619015",
-        "NCT06738979",
         "NCT06754163",
         "NCT06764056",
         "NCT06854614",
         "NCT06909006",
         "NCT06934655",
         "NCT07018544",
-        "NCT07036172",
         "NCT07055607",
-        "NCT07150975",
         "NCT07213466",
-        "NCT07216651",
         "NCT07272837",
         "NCT07275697",
         "NCT07280221",
-        "NCT07284979",
         "NCT07592546",
         "NCT07701005",
         "NCT07732426",
@@ -478,6 +456,9 @@
       "organisations"
     ],
     "kidney-failure-pig-kidney-transplant": [
+      "organisations"
+    ],
+    "pancreatic-cancer-daraxonrasib": [
       "organisations"
     ],
     "pembrolizumab-plus-chemotherapy-the-most-common-type-of-lung": [

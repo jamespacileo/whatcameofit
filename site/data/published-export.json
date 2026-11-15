@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-15T21:37:23.866081Z",
+  "generated_at": "2026-11-15T21:48:53.209887Z",
   "last_checked_at": "2026-11-15T20:57:46.219796Z",
   "preview": false,
   "sources": [
@@ -9791,38 +9791,6 @@
           "confidence": 1
         },
         {
-          "id": 10160,
-          "type": "trial_status_change",
-          "event_date": "2018-09-05",
-          "date_basis": "start date",
-          "summary": "Trial NCT03714646 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT03714646",
-          "trial_id": "NCT03714646",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10159,
-          "type": "trial_registered",
-          "event_date": "2018-10-22",
-          "date_basis": "first posted",
-          "summary": "Trial NCT03714646 registered (no phase).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT03714646",
-          "trial_id": "NCT03714646",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
           "id": 10168,
           "type": "trial_status_change",
           "event_date": "2018-12-03",
@@ -9835,22 +9803,6 @@
             "not_applicable"
           ],
           "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10161,
-          "type": "trial_status_change",
-          "event_date": "2019-05-10",
-          "date_basis": "completion date",
-          "summary": "Trial NCT03714646 completed.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT03714646",
-          "trial_id": "NCT03714646",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": "completed",
           "regulatory_outcome": null,
           "confidence": 1
         },
@@ -9956,16 +9908,6 @@
           "reading": "match",
           "decided_by": "rule",
           "summary": "SATIN: Satiety Innovation. Study 2- University of Aberdeen. For: Overweight and Obesity. Tests: Arabinoxylan, Beta- Glucan. No phase, completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT03714646",
-          "url": "https://clinicaltrials.gov/study/NCT03714646",
-          "score": 0.93,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Beta Glucan and Acetate Production. For: Pre Diabetes, Obesity. Tests: beta glucan and resistant starch, Placebo, beta gluten. No phase, completed."
         },
         {
           "source_name": "clinicaltrials.gov",
@@ -10457,79 +10399,6 @@
           ]
         },
         {
-          "trial_id": "NCT03714646",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT03714646",
-          "title": "Beta Glucan and Acetate Production",
-          "phases": [
-            "not_applicable"
-          ],
-          "state": "completed",
-          "facts_as_of": "2026-11-15T20:51:51.876051Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 24,
-              "basis": "actual"
-            },
-            "allocation": "randomised",
-            "masking": "double",
-            "comparators": [
-              "placebo",
-              "active"
-            ],
-            "healthy_volunteers": true,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Maastricht University Medical Center",
-              "kind": "other"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Plasma acetate concentrations (microM)",
-                "time_frame": "at baseline (before a high-fat mixed meal)"
-              },
-              {
-                "measure": "Plasma acetate concentrations (microM)",
-                "time_frame": "four hours after a high fat mixed meal"
-              }
-            ],
-            "primary_outcomes_total": 2,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [
-            "10.1080/19490976.2021.2009297"
-          ],
-          "readings": [
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Plasma acetate concentrations (microM)",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T20:51:51.876051Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "Plasma acetate concentrations (microM)",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T20:51:51.876051Z"
-            }
-          ]
-        },
-        {
           "trial_id": "NCT05009615",
           "source_name": "clinicaltrials.gov",
           "url": "https://clinicaltrials.gov/study/NCT05009615",
@@ -10810,37 +10679,6 @@
           }
         },
         {
-          "identifier": "10.1080/19490976.2021.2009297",
-          "url": "https://doi.org/10.1080/19490976.2021.2009297",
-          "record_url": "https://europepmc.org/article/MED/34923911",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT03714646",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T20:51:51.942916Z",
-          "facts": {
-            "title": "Fiber mixture-specific effect on distal colonic fermentation and metabolic health in lean but not in prediabetic men.",
-            "journal": "Gut microbes",
-            "year": 2022,
-            "kinds": [
-              "article"
-            ],
-            "open_access": true,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        },
-        {
           "identifier": "10.1016/j.tjnut.2024.05.003",
           "url": "https://doi.org/10.1016/j.tjnut.2024.05.003",
           "record_url": "https://europepmc.org/article/MED/38735572",
@@ -10956,20 +10794,6 @@
               "article_urls": [],
               "trial_ids": [
                 "NCT05009615"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Maastricht University Medical Center",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT03714646"
               ]
             }
           ]
@@ -128632,9 +128456,7 @@
         "updated_at": "2026-11-15T20:52:27.524143Z",
         "explained_by": [
           10220,
-          10221,
-          10254,
-          10255
+          10221
         ],
         "history": [
           {
@@ -128818,70 +128640,6 @@
           "trial_state": "completed",
           "regulatory_outcome": null,
           "confidence": 1
-        },
-        {
-          "id": 10254,
-          "type": "trial_registered",
-          "event_date": "2019-08-29",
-          "date_basis": "first posted",
-          "summary": "Trial NCT04074161 registered (Phase 3).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04074161",
-          "trial_id": "NCT04074161",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10255,
-          "type": "trial_status_change",
-          "event_date": "2019-09-11",
-          "date_basis": "start date",
-          "summary": "Trial NCT04074161 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04074161",
-          "trial_id": "NCT04074161",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10256,
-          "type": "trial_status_change",
-          "event_date": "2021-05-11",
-          "date_basis": "completion date",
-          "summary": "Trial NCT04074161 completed.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04074161",
-          "trial_id": "NCT04074161",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": "completed",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10257,
-          "type": "trial_results_posted",
-          "event_date": "2022-04-27",
-          "date_basis": "results first posted",
-          "summary": "Results posted for trial NCT04074161.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04074161",
-          "trial_id": "NCT04074161",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
         }
       ],
       "failure_flags": [],
@@ -128895,16 +128653,6 @@
           "reading": "match",
           "decided_by": "rule",
           "summary": "Effect of Liraglutide on Body Weight in Non-diabetic Obese Subjects or Overweight Subjects With Co-morbidities: SCALE™ - Obesity and Pre-diabetes. For: Metabolism and Nutrition Disorder, Obesity. Tests: liraglutide, placebo, liraglutide, placebo. Phase 3, completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT04074161",
-          "url": "https://clinicaltrials.gov/study/NCT04074161",
-          "score": 1,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Research Study to Investigate How Well Semaglutide Works Compared to Liraglutide in People Living With Overweight or Obesity. For: Overweight, Obesity. Tests: Semaglutide, Placebo (semaglutide), Liraglutide, Placebo (liraglutide). Phase 3, completed."
         },
         {
           "source_name": "clinicaltrials.gov",
@@ -129353,118 +129101,6 @@
               "read_on": "2026-11-15T20:52:28.378692Z"
             }
           ]
-        },
-        {
-          "trial_id": "NCT04074161",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT04074161",
-          "title": "Research Study to Investigate How Well Semaglutide Works Compared to Liraglutide in People Living With Overweight or Obesity",
-          "phases": [
-            "phase_3"
-          ],
-          "state": "completed",
-          "facts_as_of": "2026-11-15T20:39:32.002371Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 338,
-              "basis": "actual"
-            },
-            "allocation": "randomised",
-            "masking": "quadruple",
-            "comparators": [
-              "placebo",
-              "active"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Novo Nordisk A/S",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Change From Baseline (Week 0) to Week 68 in Body Weight (%) (Semaglutide 2.4 mg Versus Liraglutide 3.0 mg)",
-                "time_frame": "Baseline (week 0), week 68"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": {
-              "outcomes": [
-                {
-                  "title": "Change From Baseline (Week 0) to Week 68 in Body Weight (%) (Semaglutide 2.4 mg Versus Liraglutide 3.0 mg)",
-                  "time_frame": "Baseline (week 0), week 68",
-                  "unit": "Percentage of body weight",
-                  "measure": "mean",
-                  "spread_kind": "Standard Deviation",
-                  "rows": 1,
-                  "groups": [
-                    {
-                      "title": "Semaglutide 2.4 mg",
-                      "analysed": "117",
-                      "value": "-16.4",
-                      "spread": "10.5",
-                      "lower": null,
-                      "upper": null
-                    },
-                    {
-                      "title": "Liraglutide 3.0 mg",
-                      "analysed": "117",
-                      "value": "-6.4",
-                      "spread": "7.7",
-                      "lower": null,
-                      "upper": null
-                    }
-                  ],
-                  "comparisons": [
-                    {
-                      "groups": [
-                        "Semaglutide 2.4 mg",
-                        "Liraglutide 3.0 mg"
-                      ],
-                      "p_value": "<0.0001",
-                      "method": "ANCOVA",
-                      "test": "superiority"
-                    }
-                  ]
-                }
-              ],
-              "outcomes_total": 1
-            }
-          },
-          "papers": [
-            "10.1080/00325481.2021.2002616",
-            "10.1001/jama.2021.23619",
-            "10.1111/dom.14809"
-          ],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "week 68",
-              "number": 68,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T20:39:32.002371Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Body Weight (%)",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 1,
-              "read_on": "2026-11-15T20:39:32.002371Z"
-            }
-          ]
         }
       ],
       "papers": [
@@ -129551,53 +129187,6 @@
             "year": 2015,
             "kinds": [
               "randomised_trial",
-              "article"
-            ],
-            "open_access": false,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        },
-        {
-          "identifier": "10.1001/jama.2021.23619",
-          "url": "https://doi.org/10.1001/jama.2021.23619",
-          "record_url": "https://europepmc.org/article/MED/35015037",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT04074161",
-              "listed": "listed_by_sponsor",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            },
-            {
-              "role": "related",
-              "trial_id": null,
-              "listed": null,
-              "event_id": null,
-              "score": 1,
-              "reasons": [
-                "named_in_title",
-                "indication_named",
-                "published_before_report"
-              ],
-              "decided_by": "rule",
-              "summary": "Effect of Weekly Subcutaneous Semaglutide vs Daily Liraglutide on Body Weight in Adults With Overweight or Obesity Without Diabetes: The STEP 8 Randomized Clinical Trial. 2022. article. JAMA"
-            }
-          ],
-          "facts_as_of": "2026-11-15T20:52:43.441294Z",
-          "facts": {
-            "title": "Effect of Weekly Subcutaneous Semaglutide vs Daily Liraglutide on Body Weight in Adults With Overweight or Obesity Without Diabetes: The STEP 8 Randomized Clinical Trial.",
-            "journal": "JAMA",
-            "year": 2022,
-            "kinds": [
-              "randomised_trial",
-              "clinical_trial",
               "article"
             ],
             "open_access": false,
@@ -130267,70 +129856,6 @@
           }
         },
         {
-          "identifier": "10.1080/00325481.2021.2002616",
-          "url": "https://doi.org/10.1080/00325481.2021.2002616",
-          "record_url": "https://europepmc.org/article/MED/34775881",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT04074161",
-              "listed": "listed_by_sponsor",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T20:52:42.941811Z",
-          "facts": {
-            "title": "Managing the gastrointestinal side effects of GLP-1 receptor agonists in obesity: recommendations for clinical practice.",
-            "journal": "Postgraduate medicine",
-            "year": 2022,
-            "kinds": [
-              "article"
-            ],
-            "open_access": false,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        },
-        {
-          "identifier": "10.1111/dom.14809",
-          "url": "https://doi.org/10.1111/dom.14809",
-          "record_url": "https://europepmc.org/article/MED/35791625",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT04074161",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T20:52:44.442002Z",
-          "facts": {
-            "title": "Ease-of-use and acceptability of the novel semaglutide 2.4 mg single-dose pen-injector in people with overweight or obesity in the STEP 8 phase III trial.",
-            "journal": "Diabetes, obesity & metabolism",
-            "year": 2022,
-            "kinds": [
-              "clinical_trial",
-              "comment",
-              "article"
-            ],
-            "open_access": true,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        },
-        {
           "identifier": "10.1172/jci178239",
           "url": "https://doi.org/10.1172/jci178239",
           "record_url": "https://europepmc.org/article/MED/39225090",
@@ -130396,6 +129921,43 @@
               "article"
             ],
             "open_access": true,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1001/jama.2021.23619",
+          "url": "https://doi.org/10.1001/jama.2021.23619",
+          "record_url": "https://europepmc.org/article/MED/35015037",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "indication_named",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "Effect of Weekly Subcutaneous Semaglutide vs Daily Liraglutide on Body Weight in Adults With Overweight or Obesity Without Diabetes: The STEP 8 Randomized Clinical Trial. 2022. article. JAMA"
+            }
+          ],
+          "facts_as_of": "2026-11-15T20:52:43.441294Z",
+          "facts": {
+            "title": "Effect of Weekly Subcutaneous Semaglutide vs Daily Liraglutide on Body Weight in Adults With Overweight or Obesity Without Diabetes: The STEP 8 Randomized Clinical Trial.",
+            "journal": "JAMA",
+            "year": 2022,
+            "kinds": [
+              "randomised_trial",
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
             "retracted": false,
             "studied_in": [
               "people"
@@ -130479,8 +130041,7 @@
               "trial_ids": [
                 "NCT00422058",
                 "NCT01272219",
-                "NCT01508949",
-                "NCT04074161"
+                "NCT01508949"
               ]
             }
           ]
@@ -155883,9 +155444,7 @@
           10324,
           10302,
           10350,
-          10351,
-          10332,
-          10331
+          10351
         ],
         "history": [
           {
@@ -156683,22 +156242,6 @@
           "confidence": 1
         },
         {
-          "id": 10332,
-          "type": "trial_status_change",
-          "event_date": "2026-08-26",
-          "date_basis": "start date",
-          "summary": "Trial NCT07794579 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07794579",
-          "trial_id": "NCT07794579",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
           "id": 10310,
           "type": "trial_registered",
           "event_date": "2026-08-27",
@@ -156707,22 +156250,6 @@
           "source_name": "clinicaltrials.gov",
           "source_url": "https://clinicaltrials.gov/study/NCT07790861",
           "trial_id": "NCT07790861",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10331,
-          "type": "trial_registered",
-          "event_date": "2026-08-31",
-          "date_basis": "first posted",
-          "summary": "Trial NCT07794579 registered (Phase 3).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07794579",
-          "trial_id": "NCT07794579",
           "trial_phases": [
             "phase_3"
           ],
@@ -156938,16 +156465,6 @@
           "reading": "match",
           "decided_by": "rule",
           "summary": "A Master Protocol for Orforglipron (LY3502970) in Participants With Hypertension and Obesity or Overweight: (ATTAIN-Hypertension Screening). For: Hypertension. Tests: Orforglipron, Placebo. Phase 3, active not recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT07794579",
-          "url": "https://clinicaltrials.gov/study/NCT07794579",
-          "score": 0.85,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "A Study of Orforglipron in Participants With Overweight at Risk of Development of Obesity-Related Complications or Progression to Class 1 Obesity. For: Overweight, Prediabetic State, Prehypertension, Obesity, Abdominal. Tests: Orforglipron, Placebo. Phase 3, recruiting."
         },
         {
           "source_name": "clinicaltrials.gov",
@@ -158691,70 +158208,6 @@
               "read_on": "2026-11-15T20:53:06.757571Z"
             }
           ]
-        },
-        {
-          "trial_id": "NCT07794579",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT07794579",
-          "title": "A Study of Orforglipron in Participants With Overweight at Risk of Development of Obesity-Related Complications or Progression to Class 1 Obesity",
-          "phases": [
-            "phase_3"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T20:53:12.939115Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 2001,
-              "basis": "planned"
-            },
-            "allocation": "randomised",
-            "masking": "double",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Eli Lilly and Company",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Time to Onset of Obesity Related Complications or Class 1 Obesity",
-                "time_frame": "Baseline to Week 104"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "Week 104",
-              "number": 104,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T20:53:12.939115Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Time to Onset",
-              "number": null,
-              "unit": null,
-              "code": "survival",
-              "confidence": 0.97,
-              "read_on": "2026-11-15T20:53:12.939115Z"
-            }
-          ]
         }
       ],
       "papers": [
@@ -159390,8 +158843,7 @@
                 "NCT06972472",
                 "NCT06993792",
                 "NCT07153471",
-                "NCT07790861",
-                "NCT07794579"
+                "NCT07790861"
               ]
             }
           ]
@@ -161734,20 +161186,16 @@
         "overlay_years": null,
         "updated_at": "2026-11-15T20:53:24.504625Z",
         "explained_by": [
-          10412,
-          10411,
-          10386,
-          10385,
-          10417,
-          10418,
-          10419,
-          10420,
           10423,
           10424
         ],
         "history": [
           {
-            "on": "2018-10-18",
+            "on": "2019-11-25",
+            "code": "trial_registered"
+          },
+          {
+            "on": "2025-11-20",
             "code": "phase_3"
           }
         ]
@@ -161772,54 +161220,6 @@
       ],
       "promises": [],
       "events": [
-        {
-          "id": 10412,
-          "type": "trial_status_change",
-          "event_date": "2018-10-18",
-          "date_basis": "start date",
-          "summary": "Trial NCT03724981 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT03724981",
-          "trial_id": "NCT03724981",
-          "trial_phases": [
-            "phase_4"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10411,
-          "type": "trial_registered",
-          "event_date": "2018-10-30",
-          "date_basis": "first posted",
-          "summary": "Trial NCT03724981 registered (Phase 4).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT03724981",
-          "trial_id": "NCT03724981",
-          "trial_phases": [
-            "phase_4"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10413,
-          "type": "trial_status_change",
-          "event_date": "2019-04-12",
-          "date_basis": "completion date",
-          "summary": "Trial NCT03724981 completed.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT03724981",
-          "trial_id": "NCT03724981",
-          "trial_phases": [
-            "phase_4"
-          ],
-          "trial_state": "completed",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
         {
           "id": 10408,
           "type": "trial_registered",
@@ -161863,308 +161263,6 @@
           "confidence": 1
         },
         {
-          "id": 10386,
-          "type": "trial_status_change",
-          "event_date": "2020-02-23",
-          "date_basis": "start date",
-          "summary": "Trial NCT04447859 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04447859",
-          "trial_id": "NCT04447859",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10414,
-          "type": "trial_results_posted",
-          "event_date": "2020-04-24",
-          "date_basis": "results first posted",
-          "summary": "Results posted for trial NCT03724981.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT03724981",
-          "trial_id": "NCT03724981",
-          "trial_phases": [
-            "phase_4"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10385,
-          "type": "trial_registered",
-          "event_date": "2020-06-25",
-          "date_basis": "first posted",
-          "summary": "Trial NCT04447859 registered (Phase 3).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04447859",
-          "trial_id": "NCT04447859",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10389,
-          "type": "trial_registered",
-          "event_date": "2020-06-30",
-          "date_basis": "first posted",
-          "summary": "Trial NCT04451837 registered (Phase 2).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04451837",
-          "trial_id": "NCT04451837",
-          "trial_phases": [
-            "phase_2"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10405,
-          "type": "trial_registered",
-          "event_date": "2020-07-14",
-          "date_basis": "first posted",
-          "summary": "Trial NCT04469855 registered (phase not given).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04469855",
-          "trial_id": "NCT04469855",
-          "trial_phases": [],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10406,
-          "type": "trial_status_change",
-          "event_date": "2020-07-27",
-          "date_basis": "start date",
-          "summary": "Trial NCT04469855 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04469855",
-          "trial_id": "NCT04469855",
-          "trial_phases": [],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10390,
-          "type": "trial_status_change",
-          "event_date": "2020-09-10",
-          "date_basis": "start date",
-          "summary": "Trial NCT04451837 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04451837",
-          "trial_id": "NCT04451837",
-          "trial_phases": [
-            "phase_2"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10417,
-          "type": "trial_registered",
-          "event_date": "2021-04-22",
-          "date_basis": "first posted",
-          "summary": "Trial NCT04854083 registered (Phase 4).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04854083",
-          "trial_id": "NCT04854083",
-          "trial_phases": [
-            "phase_4"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10387,
-          "type": "trial_registered",
-          "event_date": "2021-10-08",
-          "date_basis": "first posted",
-          "summary": "Trial NCT05071898 registered (Phase 1).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT05071898",
-          "trial_id": "NCT05071898",
-          "trial_phases": [
-            "phase_1"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10418,
-          "type": "trial_status_change",
-          "event_date": "2022-02-17",
-          "date_basis": "start date",
-          "summary": "Trial NCT04854083 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04854083",
-          "trial_id": "NCT04854083",
-          "trial_phases": [
-            "phase_4"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10388,
-          "type": "trial_status_change",
-          "event_date": "2022-04-11",
-          "date_basis": "start date",
-          "summary": "Trial NCT05071898 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT05071898",
-          "trial_id": "NCT05071898",
-          "trial_phases": [
-            "phase_1"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10426,
-          "type": "trial_status_change",
-          "event_date": "2022-07-05",
-          "date_basis": "start date",
-          "summary": "Trial NCT05468632 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT05468632",
-          "trial_id": "NCT05468632",
-          "trial_phases": [],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10425,
-          "type": "trial_registered",
-          "event_date": "2022-07-21",
-          "date_basis": "first posted",
-          "summary": "Trial NCT05468632 registered (phase not given).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT05468632",
-          "trial_id": "NCT05468632",
-          "trial_phases": [],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10427,
-          "type": "trial_status_change",
-          "event_date": "2022-07-31",
-          "date_basis": "completion date",
-          "summary": "Trial NCT05468632 completed.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT05468632",
-          "trial_id": "NCT05468632",
-          "trial_phases": [],
-          "trial_state": "completed",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10399,
-          "type": "trial_registered",
-          "event_date": "2023-01-19",
-          "date_basis": "first posted",
-          "summary": "Trial NCT05689372 registered (phase not given).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT05689372",
-          "trial_id": "NCT05689372",
-          "trial_phases": [],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10419,
-          "type": "trial_registered",
-          "event_date": "2023-12-08",
-          "date_basis": "first posted",
-          "summary": "Trial NCT06161844 registered (Phase 3).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06161844",
-          "trial_id": "NCT06161844",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10379,
-          "type": "trial_status_change",
-          "event_date": "2024-01-02",
-          "date_basis": "start date",
-          "summary": "Trial NCT06351748 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06351748",
-          "trial_id": "NCT06351748",
-          "trial_phases": [],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10420,
-          "type": "trial_status_change",
-          "event_date": "2024-02-23",
-          "date_basis": "start date",
-          "summary": "Trial NCT06161844 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06161844",
-          "trial_id": "NCT06161844",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10380,
-          "type": "trial_status_change",
-          "event_date": "2024-03-29",
-          "date_basis": "completion date",
-          "summary": "Trial NCT06351748 completed.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06351748",
-          "trial_id": "NCT06351748",
-          "trial_phases": [],
-          "trial_state": "completed",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10378,
-          "type": "trial_registered",
-          "event_date": "2024-04-08",
-          "date_basis": "first posted",
-          "summary": "Trial NCT06351748 registered (phase not given).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06351748",
-          "trial_id": "NCT06351748",
-          "trial_phases": [],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
           "id": 10423,
           "type": "trial_registered",
           "event_date": "2025-05-01",
@@ -162175,52 +161273,6 @@
           "trial_id": "NCT06954090",
           "trial_phases": [
             "phase_4"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10407,
-          "type": "trial_status_change",
-          "event_date": "2025-05-12",
-          "date_basis": "completion date",
-          "summary": "Trial NCT04469855 completed.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04469855",
-          "trial_id": "NCT04469855",
-          "trial_phases": [],
-          "trial_state": "completed",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10421,
-          "type": "trial_status_change",
-          "event_date": "2025-05-14",
-          "date_basis": "completion date",
-          "summary": "Trial NCT06161844 completed.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06161844",
-          "trial_id": "NCT06161844",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": "completed",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10422,
-          "type": "trial_registered",
-          "event_date": "2025-07-01",
-          "date_basis": "first posted",
-          "summary": "Trial NCT07046273 registered (Phase 3).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07046273",
-          "trial_id": "NCT07046273",
-          "trial_phases": [
-            "phase_3"
           ],
           "trial_state": null,
           "regulatory_outcome": null,
@@ -162238,20 +161290,6 @@
           "trial_phases": [
             "phase_4"
           ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10400,
-          "type": "trial_status_change",
-          "event_date": "2026-02-02",
-          "date_basis": "start date",
-          "summary": "Trial NCT05689372 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT05689372",
-          "trial_id": "NCT05689372",
-          "trial_phases": [],
           "trial_state": "started",
           "regulatory_outcome": null,
           "confidence": 1
@@ -162289,26 +161327,6 @@
       "matches": [
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT05468632",
-          "url": "https://clinicaltrials.gov/study/NCT05468632",
-          "score": 0.99,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "A Study in North Macedonia Investigating Retrospective Data of Glucagon-like Peptide-1 (GLP-1) Participants With Type 2 Diabetes (T2D) in Real World Environment (RWE) Setting (MIRAGE). For: Diabetes Mellitus, Type 2. Tests: Semaglutide. completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT06351748",
-          "url": "https://clinicaltrials.gov/study/NCT06351748",
-          "score": 0.98,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Real-world Study of CHina Ozempic cLinicAl pRactice in Patients With Type 2 Diabetes (SCHOLAR). For: Diabetes Mellitus, Type 2. Tests: Semaglutide. completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
           "external_id": "NCT04175665",
           "url": "https://clinicaltrials.gov/study/NCT04175665",
           "score": 0.98,
@@ -162316,16 +161334,6 @@
           "reading": "match",
           "decided_by": "rule",
           "summary": "Real-world Health Outcomes in Canadian Patients Using Semaglutide. For: Type 2 Diabetes. Tests: Semaglutide. completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT06161844",
-          "url": "https://clinicaltrials.gov/study/NCT06161844",
-          "score": 0.98,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Efficacy and Safety of Semaglutide Injection (HD1916) in Patients With Type 2 Diabetes Mellitus. For: Type 2 Diabetes Mellitus. Tests: semaglutide injection (HD1916), Ozempic®. Phase 3, completed."
         },
         {
           "source_name": "clinicaltrials.gov",
@@ -162339,36 +161347,6 @@
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT07046273",
-          "url": "https://clinicaltrials.gov/study/NCT07046273",
-          "score": 0.96,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Phase III Clinical Study on the Efficacy and Safety of Semaglutide and Ozempic® in Patients With Type 2 Diabetes. For: Type 2 Diabetes (T2DM). Tests: F027, Ozempic®. Phase 3, not yet recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT04854083",
-          "url": "https://clinicaltrials.gov/study/NCT04854083",
-          "score": 0.95,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Semaglutide as an Adjunct to Dieting in the Treatment of Type 2 Diabetes. For: Type2 Diabetes. Tests: Semaglutide, 1.34 mg/mL, Placebo. Phase 4, unknown."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT03724981",
-          "url": "https://clinicaltrials.gov/study/NCT03724981",
-          "score": 0.92,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "A Study Comparing the Dulaglutide Pen and the Semaglutide Pen. For: Diabetes Mellitus, Type 2. Tests: Dulaglutide Pen, Semaglutide Pen. Phase 4, completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
           "external_id": "NCT07456774",
           "url": "https://clinicaltrials.gov/study/NCT07456774",
           "score": 0.9,
@@ -162376,56 +161354,6 @@
           "reading": "match",
           "decided_by": "rule",
           "summary": "A Two-armed Real-world Study of Ozempic (OW Semaglutide) to Evaluate Its Adherence and Persistence Compared With Other Anti-diabetic Drugs Among Adult T2DM Patients in China. For: Type 2 Diabetes. enrolling by invitation."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT04469855",
-          "url": "https://clinicaltrials.gov/study/NCT04469855",
-          "score": 0.89,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Post-Marketing Surveillance (Special Use-results Surveillance) on Long-term Use With Ozempic®. For: Diabetes Mellitus, Type 2. Tests: semaglutide. completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT04451837",
-          "url": "https://clinicaltrials.gov/study/NCT04451837",
-          "score": 0.86,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Semaglutide and Dapagliflozin in Diabetic Patients With Different Pathophysiology. For: Type2 Diabetes. Tests: Semaglutide, Dapagliflozin. Phase 2, active not recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT05689372",
-          "url": "https://clinicaltrials.gov/study/NCT05689372",
-          "score": 0.86,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Regulatory Post Marketing Surveillance (rPMS) Study of Ozempic (Semaglutide) to Evaluate Safety and Effectiveness in Patients With Type 2 Diabetes Mellitus in Routine Clinical Practice in Korea. For: Diabetes Mellitus, Type 2. Tests: Semaglutide. enrolling by invitation."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT04447859",
-          "url": "https://clinicaltrials.gov/study/NCT04447859",
-          "score": 0.85,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "16-week Flexible vs. 8-week Semaglutide Titration. For: Diabetes type2. Tests: Semaglutide, label recommended titration. Phase 3, unknown."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT05071898",
-          "url": "https://clinicaltrials.gov/study/NCT05071898",
-          "score": 0.81,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Pharmacogenetics of Response to GLP1R Agonists. For: Obesity, Diabetes Type 2. Tests: Semaglutide Pen Injector [Ozempic]. Phase 1, recruiting."
         },
         {
           "source_name": "clinicaltrials.gov",
@@ -162479,84 +161407,6 @@
         }
       ],
       "trials": [
-        {
-          "trial_id": "NCT03724981",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT03724981",
-          "title": "A Study Comparing the Dulaglutide Pen and the Semaglutide Pen",
-          "phases": [
-            "phase_4"
-          ],
-          "state": "completed",
-          "facts_as_of": "2026-11-15T20:53:30.207532Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 312,
-              "basis": "actual"
-            },
-            "allocation": "randomised",
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Eli Lilly and Company",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Participant Preference Between 2 Injection Devices Based on Global Preference Item",
-                "time_frame": "Day 1"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": {
-              "outcomes": [
-                {
-                  "title": "Participant Preference Between 2 Injection Devices Based on Global Preference Item",
-                  "time_frame": "Day 1",
-                  "unit": "percentage of participants",
-                  "measure": "number",
-                  "spread_kind": null,
-                  "rows": 3,
-                  "groups": [],
-                  "comparisons": []
-                }
-              ],
-              "outcomes_total": 1
-            }
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "Day 1",
-              "number": 1,
-              "unit": "days",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T20:53:30.207532Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Participant Preference Between 2 Injection Devices Based on Global Preference Item",
-              "number": null,
-              "unit": null,
-              "code": "other",
-              "confidence": 0.97,
-              "read_on": "2026-11-15T20:53:30.207532Z"
-            }
-          ]
-        },
         {
           "trial_id": "NCT04175665",
           "source_name": "clinicaltrials.gov",
@@ -162616,692 +161466,6 @@
               "code": "body_measure",
               "confidence": 0.99,
               "read_on": "2026-11-15T20:53:29.184713Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT04447859",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT04447859",
-          "title": "16-week Flexible vs. 8-week Semaglutide Titration",
-          "phases": [
-            "phase_3"
-          ],
-          "state": "unknown",
-          "facts_as_of": "2026-11-15T20:53:25.683694Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 100,
-              "basis": "planned"
-            },
-            "allocation": "randomised",
-            "masking": "none",
-            "comparators": [
-              "active"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Tel-Aviv Sourasky Medical Center",
-              "kind": "government"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Gastrointestinal adverse events (GI-AEs)",
-                "time_frame": "16 weeks - from visit one to visit seven (and in each visit alone)"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "16 weeks",
-              "number": 16,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 0.99,
-              "read_on": "2026-11-15T20:53:25.683694Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "adverse events",
-              "number": null,
-              "unit": null,
-              "code": "side_effects",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T20:53:25.683694Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT04451837",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT04451837",
-          "title": "Semaglutide and Dapagliflozin in Diabetic Patients With Different Pathophysiology",
-          "phases": [
-            "phase_2"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T20:53:26.178045Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 200,
-              "basis": "planned"
-            },
-            "allocation": "randomised",
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Region Skane",
-              "kind": "other"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Hba1c",
-                "time_frame": "6 months"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [
-            "10.1038/s42255-023-00943-3"
-          ],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "6 months",
-              "number": 6,
-              "unit": "months",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T20:53:26.178045Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Hba1c",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T20:53:26.178045Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT04469855",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT04469855",
-          "title": "Post-Marketing Surveillance (Special Use-results Surveillance) on Long-term Use With Ozempic®",
-          "phases": [],
-          "state": "completed",
-          "facts_as_of": "2026-11-15T20:53:28.183354Z",
-          "facts": {
-            "study_kind": "observational",
-            "participants": {
-              "count": 3217,
-              "basis": "actual"
-            },
-            "allocation": null,
-            "masking": null,
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "child",
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Novo Nordisk A/S",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Number of adverse events (AEs)",
-                "time_frame": "From baseline (day 0) to end of study (month 36)"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "month 36",
-              "number": 36,
-              "unit": "months",
-              "code": null,
-              "confidence": 0.98,
-              "read_on": "2026-11-15T20:53:28.183354Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "adverse events (AEs)",
-              "number": null,
-              "unit": null,
-              "code": "side_effects",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T20:53:28.183354Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT04854083",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT04854083",
-          "title": "Semaglutide as an Adjunct to Dieting in the Treatment of Type 2 Diabetes",
-          "phases": [
-            "phase_4"
-          ],
-          "state": "unknown",
-          "facts_as_of": "2026-11-15T13:19:43.538535Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 50,
-              "basis": "planned"
-            },
-            "allocation": "randomised",
-            "masking": "double",
-            "comparators": [
-              "placebo"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": null,
-              "kind": "individual"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "HbA1c",
-                "time_frame": "from baseline to 12 months"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "12 months",
-              "number": 12,
-              "unit": "months",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T13:19:43.538535Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "HbA1c",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 1,
-              "read_on": "2026-11-15T13:19:43.538535Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT05071898",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT05071898",
-          "title": "Pharmacogenetics of Response to GLP1R Agonists",
-          "phases": [
-            "phase_1"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T13:16:45.460239Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 600,
-              "basis": "planned"
-            },
-            "allocation": null,
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": true,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "University of Maryland, Baltimore",
-              "kind": "other"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "First phase insulin secretion",
-                "time_frame": "Measured both at baseline and after completing 6 weeks of semaglutide therapy"
-              },
-              {
-                "measure": "Second phase insulin secretion",
-                "time_frame": "Measured both at baseline and after completing 6 weeks of semaglutide therapy"
-              },
-              {
-                "measure": "Rate of glucose disappearance",
-                "time_frame": "Measured both at baseline and after completing 6 weeks of semaglutide therapy"
-              }
-            ],
-            "primary_outcomes_total": 3,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [
-            "10.1111/dom.15143"
-          ],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "6 weeks",
-              "number": 6,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T13:16:45.460239Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "insulin secretion",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 0.95,
-              "read_on": "2026-11-15T13:16:45.460239Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 1,
-              "field": "time_frame",
-              "words": "6 weeks",
-              "number": 6,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T13:16:45.460239Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "insulin secretion",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 0.95,
-              "read_on": "2026-11-15T13:16:45.460239Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 2,
-              "field": "time_frame",
-              "words": "6 weeks",
-              "number": 6,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T13:16:45.460239Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 2,
-              "field": "measure",
-              "words": "Rate of glucose disappearance",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 0.9,
-              "read_on": "2026-11-15T13:16:45.460239Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT05468632",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT05468632",
-          "title": "A Study in North Macedonia Investigating Retrospective Data of Glucagon-like Peptide-1 (GLP-1) Participants With Type 2 Diabetes (T2D) in Real World Environment (RWE) Setting (MIRAGE)",
-          "phases": [],
-          "state": "completed",
-          "facts_as_of": "2026-11-15T20:53:32.685897Z",
-          "facts": {
-            "study_kind": "observational",
-            "participants": {
-              "count": 314,
-              "basis": "actual"
-            },
-            "allocation": null,
-            "masking": null,
-            "comparators": [],
-            "healthy_volunteers": null,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Novo Nordisk A/S",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Change in glycated haemoglobin (HbA1c)",
-                "time_frame": "From baseline (week 0) to end of follow-up (week 30+- 4 weeks)"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "week 30",
-              "number": 30,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 0.98,
-              "read_on": "2026-11-15T20:53:32.685897Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "glycated haemoglobin (HbA1c)",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T20:53:32.685897Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT05689372",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT05689372",
-          "title": "Regulatory Post Marketing Surveillance (rPMS) Study of Ozempic (Semaglutide) to Evaluate Safety and Effectiveness in Patients With Type 2 Diabetes Mellitus in Routine Clinical Practice in Korea",
-          "phases": [],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T20:53:27.178923Z",
-          "facts": {
-            "study_kind": "observational",
-            "participants": {
-              "count": 600,
-              "basis": "planned"
-            },
-            "allocation": null,
-            "masking": null,
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Novo Nordisk A/S",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Number (incidence) of adverse events (AEs)",
-                "time_frame": "From baseline (week 0) to 26 weeks"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "26 weeks",
-              "number": 26,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 0.99,
-              "read_on": "2026-11-15T20:53:27.178923Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "adverse events (AEs)",
-              "number": null,
-              "unit": null,
-              "code": "side_effects",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T20:53:27.178923Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT06161844",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT06161844",
-          "title": "Efficacy and Safety of Semaglutide Injection (HD1916) in Patients With Type 2 Diabetes Mellitus",
-          "phases": [
-            "phase_3"
-          ],
-          "state": "completed",
-          "facts_as_of": "2026-11-15T20:53:31.681027Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 506,
-              "basis": "actual"
-            },
-            "allocation": "randomised",
-            "masking": "none",
-            "comparators": [
-              "active"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "CSPC ZhongQi Pharmaceutical Technology Co., Ltd.",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Change from baseline to week 32 in glycosylated haemoglobin (HbA1c)",
-                "time_frame": "Week 32"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "Week 32",
-              "number": 32,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T20:53:31.681027Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "glycosylated haemoglobin (HbA1c)",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 1,
-              "read_on": "2026-11-15T20:53:31.681027Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT06351748",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT06351748",
-          "title": "Real-world Study of CHina Ozempic cLinicAl pRactice in Patients With Type 2 Diabetes (SCHOLAR)",
-          "phases": [],
-          "state": "completed",
-          "facts_as_of": "2026-11-15T20:53:24.695877Z",
-          "facts": {
-            "study_kind": "observational",
-            "participants": {
-              "count": 34238,
-              "basis": "actual"
-            },
-            "allocation": null,
-            "masking": null,
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Novo Nordisk A/S",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Change in Haemoglobin A1c (HbA1c) level",
-                "time_frame": "From baseline (3 months prior to or on the index date) to 6 months"
-              },
-              {
-                "measure": "Change in HbA1c level",
-                "time_frame": "From baseline (3 months prior to or on the index date) to 6 months"
-              },
-              {
-                "measure": "Proportion of participants achieving HbA1c less than (<) 7.0%",
-                "time_frame": "At 6 months"
-              }
-            ],
-            "primary_outcomes_total": 3,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [
-            "10.1007/s13300-026-01915-y",
-            "10.1007/s13300-026-01848-6"
-          ],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "to 6 months",
-              "number": 6,
-              "unit": "months",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T20:53:24.695877Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Haemoglobin A1c (HbA1c) level",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 1,
-              "read_on": "2026-11-15T20:53:24.695877Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 1,
-              "field": "time_frame",
-              "words": "to 6 months",
-              "number": 6,
-              "unit": "months",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T20:53:24.695877Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "HbA1c level",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 1,
-              "read_on": "2026-11-15T20:53:24.695877Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 2,
-              "field": "time_frame",
-              "words": "At 6 months",
-              "number": 6,
-              "unit": "months",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T20:53:24.695877Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 2,
-              "field": "measure",
-              "words": "Proportion of participants achieving",
-              "number": null,
-              "unit": null,
-              "code": "frequency",
-              "confidence": 1,
-              "read_on": "2026-11-15T20:53:24.695877Z"
             }
           ]
         },
@@ -163392,72 +161556,6 @@
               "code": "other",
               "confidence": 0.9,
               "read_on": "2026-11-15T20:53:13.474348Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT07046273",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT07046273",
-          "title": "Phase III Clinical Study on the Efficacy and Safety of Semaglutide and Ozempic® in Patients With Type 2 Diabetes",
-          "phases": [
-            "phase_3"
-          ],
-          "state": "not_started",
-          "facts_as_of": "2026-11-15T20:53:32.201240Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 496,
-              "basis": "planned"
-            },
-            "allocation": "randomised",
-            "masking": "none",
-            "comparators": [
-              "active"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Shandong New Time Pharmaceutical Co., LTD",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Change in HbA1c from baseline",
-                "time_frame": "Week 32"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "Week 32",
-              "number": 32,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T20:53:32.201240Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "HbA1c",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 1,
-              "read_on": "2026-11-15T20:53:32.201240Z"
             }
           ]
         },
@@ -163576,129 +161674,7 @@
           ]
         }
       ],
-      "papers": [
-        {
-          "identifier": "10.1038/s42255-023-00943-3",
-          "url": "https://doi.org/10.1038/s42255-023-00943-3",
-          "record_url": "https://europepmc.org/article/MED/38177805",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT04451837",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T20:53:26.547409Z",
-          "facts": {
-            "title": "Randomized open-label trial of semaglutide and dapagliflozin in patients with type 2 diabetes of different pathophysiology.",
-            "journal": "Nature metabolism",
-            "year": 2024,
-            "kinds": [
-              "randomised_trial",
-              "article"
-            ],
-            "open_access": true,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        },
-        {
-          "identifier": "10.1111/dom.15143",
-          "url": "https://doi.org/10.1111/dom.15143",
-          "record_url": "https://europepmc.org/article/MED/37264484",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT05071898",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T13:16:46.000187Z",
-          "facts": {
-            "title": "Acute pharmacodynamic responses to exenatide: Drug-induced increases in insulin secretion and glucose effectiveness.",
-            "journal": "Diabetes, obesity & metabolism",
-            "year": 2023,
-            "kinds": [
-              "article"
-            ],
-            "open_access": false,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        },
-        {
-          "identifier": "10.1007/s13300-026-01915-y",
-          "url": "https://doi.org/10.1007/s13300-026-01915-y",
-          "record_url": "https://europepmc.org/article/MED/42803912",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT06351748",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T20:53:25.068496Z",
-          "facts": {
-            "title": "Combined Semaglutide and Sodium-Glucose Cotransporter-2 Inhibitor Use and Metabolic Outcomes in Chinese Adults With Diabetes: Post Hoc Analysis.",
-            "journal": "Diabetes therapy : research, treatment and education of diabetes and related disorders",
-            "year": 2026,
-            "kinds": [
-              "article"
-            ],
-            "open_access": true,
-            "retracted": false,
-            "studied_in": []
-          }
-        },
-        {
-          "identifier": "10.1007/s13300-026-01848-6",
-          "url": "https://doi.org/10.1007/s13300-026-01848-6",
-          "record_url": "https://europepmc.org/article/MED/41848818",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT06351748",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T20:53:25.546386Z",
-          "facts": {
-            "title": "Real-World Cohort Study of Semaglutide in Adults with Type 2 Diabetes Using an Electronic Health Records Database in Tianjin, China.",
-            "journal": "Diabetes therapy : research, treatment and education of diabetes and related disorders",
-            "year": 2026,
-            "kinds": [
-              "article"
-            ],
-            "open_access": true,
-            "retracted": false,
-            "studied_in": []
-          }
-        }
-      ],
+      "papers": [],
       "background": [],
       "organisations": [
         {
@@ -163729,34 +161705,6 @@
           ]
         },
         {
-          "name": "CSPC ZhongQi Pharmaceutical Technology Co., Ltd.",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT06161844"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Eli Lilly and Company",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT03724981"
-              ]
-            }
-          ]
-        },
-        {
           "name": "LMC Diabetes & Endocrinology Ltd.",
           "identified": false,
           "record": null,
@@ -163779,39 +161727,7 @@
               "role": "sponsor",
               "article_urls": [],
               "trial_ids": [
-                "NCT04469855",
-                "NCT05468632",
-                "NCT05689372",
-                "NCT06351748",
                 "NCT07456774"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Region Skane",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT04451837"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Shandong New Time Pharmaceutical Co., LTD",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT07046273"
               ]
             }
           ]
@@ -163826,34 +161742,6 @@
               "article_urls": [],
               "trial_ids": [
                 "NCT06954090"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Tel-Aviv Sourasky Medical Center",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT04447859"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "University of Maryland, Baltimore",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT05071898"
               ]
             }
           ]
@@ -165891,7 +163779,7 @@
             "country": "United States",
             "website": null,
             "score": 1,
-            "read_at": "2026-11-14T20:10:16.506406Z"
+            "read_at": "2026-11-15T21:48:34.495852Z"
           },
           "roles": [
             {
@@ -202191,38 +200079,6 @@
           "confidence": 1
         },
         {
-          "id": 10642,
-          "type": "trial_registered",
-          "event_date": "2023-10-10",
-          "date_basis": "first posted",
-          "summary": "Trial NCT06072963 registered (Phase 2).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06072963",
-          "trial_id": "NCT06072963",
-          "trial_phases": [
-            "phase_2"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 10643,
-          "type": "trial_status_change",
-          "event_date": "2024-01-30",
-          "date_basis": "start date",
-          "summary": "Trial NCT06072963 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06072963",
-          "trial_id": "NCT06072963",
-          "trial_phases": [
-            "phase_2"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
           "id": 10649,
           "type": "trial_status_change",
           "event_date": "2025-09-08",
@@ -202352,16 +200208,6 @@
           "reading": "match",
           "decided_by": "rule",
           "summary": "A Research Study Investigating Semaglutide in People With Early Alzheimer's Disease (EVOKE Plus). For: Early Alzheimer´s Disease. Tests: Semaglutide, Placebo (semaglutide). Phase 3, completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT06072963",
-          "url": "https://clinicaltrials.gov/study/NCT06072963",
-          "score": 0.93,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "COMMETS- Combination MCI Metabolic Syndrome. For: Alzheimer Disease, Mild Cognitive Impairment, Metabolic Syndrome. Tests: Semaglutide, Intranasal insulin, Semaglutide placebo, Intranasal insulin placebo. Phase 2, recruiting."
         },
         {
           "source_name": "clinicaltrials.gov",
@@ -202693,125 +200539,6 @@
               "code": "body_measure",
               "confidence": 0.82,
               "read_on": "2026-11-15T20:54:39.007086Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT06072963",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT06072963",
-          "title": "COMMETS- Combination MCI Metabolic Syndrome",
-          "phases": [
-            "phase_2"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T20:54:24.638676Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 80,
-              "basis": "planned"
-            },
-            "allocation": "randomised",
-            "masking": "quadruple",
-            "comparators": [
-              "placebo",
-              "sham"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Rutgers, The State University of New Jersey",
-              "kind": "other"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Cognitive change - The effect of the combination of Semaglutide and intranasal insulin on cognitive functioning.",
-                "time_frame": "12 months"
-              },
-              {
-                "measure": "Neuroimaging outcome -- The effect of the combination of Semaglutide and intranasal insulin on cerebral blood flow (CBF).",
-                "time_frame": "6 months"
-              },
-              {
-                "measure": "Neuroimaging outcome -- The effect of the combination of Semaglutide and intranasal insulin on brain glucose intake.",
-                "time_frame": "6 months"
-              }
-            ],
-            "primary_outcomes_total": 3,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "12 months",
-              "number": 12,
-              "unit": "months",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T20:54:24.638676Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Cognitive change",
-              "number": null,
-              "unit": null,
-              "code": "other",
-              "confidence": 0.82,
-              "read_on": "2026-11-15T20:54:24.638676Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 1,
-              "field": "time_frame",
-              "words": "6 months",
-              "number": 6,
-              "unit": "months",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T20:54:24.638676Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "cerebral blood flow (CBF)",
-              "number": null,
-              "unit": null,
-              "code": "scan_finding",
-              "confidence": 0.98,
-              "read_on": "2026-11-15T20:54:24.638676Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 2,
-              "field": "time_frame",
-              "words": "6 months",
-              "number": 6,
-              "unit": "months",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T20:54:24.638676Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 2,
-              "field": "measure",
-              "words": "brain glucose intake",
-              "number": null,
-              "unit": null,
-              "code": "scan_finding",
-              "confidence": 0.95,
-              "read_on": "2026-11-15T20:54:24.638676Z"
             }
           ]
         },
@@ -203208,20 +200935,6 @@
                 "NCT04777396",
                 "NCT04777409",
                 "NCT05891496"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Rutgers, The State University of New Jersey",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT06072963"
               ]
             }
           ]
@@ -217703,22 +215416,6 @@
           "confidence": 1
         },
         {
-          "id": 11349,
-          "type": "trial_status_change",
-          "event_date": "2026-01-22",
-          "date_basis": "start date",
-          "summary": "Trial NCT07779343 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07779343",
-          "trial_id": "NCT07779343",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
           "id": 11346,
           "type": "trial_status_change",
           "event_date": "2026-03-23",
@@ -217731,22 +215428,6 @@
             "phase_4"
           ],
           "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 11348,
-          "type": "trial_registered",
-          "event_date": "2026-08-21",
-          "date_basis": "first posted",
-          "summary": "Trial NCT07779343 registered (no phase).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07779343",
-          "trial_id": "NCT07779343",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": null,
           "regulatory_outcome": null,
           "confidence": 1
         }
@@ -217772,16 +215453,6 @@
           "reading": "match",
           "decided_by": "rule",
           "summary": "Semaglutide in Patients Undergoing Transcatether Aortic Valve Replacement. For: Aortic Stenosis, Heart Failure. Tests: Wegovy ®, Placebo. Phase 3, not yet recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT07779343",
-          "url": "https://clinicaltrials.gov/study/NCT07779343",
-          "score": 0.83,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "OBESIAL: A Prospective Interventional Real-world Study of a Multidisciplinary Obesity Management Programme. For: Obesity Difficult Airway Airway Management, Obesity Adult Onset, Obesity and Cardiovascular Risk, Obesity Type 2 Diabetes Mellitus. Tests: Semaglutide (Wegovy) weekly injection, Behavioral Treatment, Weight loss. No phase, recruiting."
         },
         {
           "source_name": "clinicaltrials.gov",
@@ -218008,72 +215679,6 @@
               "code": "survival",
               "confidence": 1,
               "read_on": "2026-11-15T13:16:54.112667Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT07779343",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT07779343",
-          "title": "OBESIAL: A Prospective Interventional Real-world Study of a Multidisciplinary Obesity Management Programme",
-          "phases": [
-            "not_applicable"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T13:17:07.111291Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 300,
-              "basis": "planned"
-            },
-            "allocation": "randomised",
-            "masking": "none",
-            "comparators": [
-              "active"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "University of Health Sciences, Algeria",
-              "kind": "other"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Percentage of Participants Achieving ≥5% Weight Loss at Month 18",
-                "time_frame": "18 months follow-up"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "18 months follow-up",
-              "number": 18,
-              "unit": "months",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T13:17:07.111291Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Percentage of Participants",
-              "number": null,
-              "unit": null,
-              "code": "frequency",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T13:17:07.111291Z"
             }
           ]
         }
@@ -218341,20 +215946,6 @@
               "article_urls": [],
               "trial_ids": [
                 "NCT07090343"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "University of Health Sciences, Algeria",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT07779343"
               ]
             }
           ]
@@ -219095,20 +216686,12 @@
           11382,
           11402,
           11403,
-          11353,
           11358,
           11359,
-          11398,
           11414,
           11413,
-          11354,
-          11397,
-          11431,
-          11432,
           11417,
           11385,
-          11415,
-          11416,
           11418,
           11386,
           11374,
@@ -219508,23 +217091,6 @@
           "confidence": 1
         },
         {
-          "id": 11391,
-          "type": "trial_registered",
-          "event_date": "2024-10-01",
-          "date_basis": "first posted",
-          "summary": "Trial NCT06619015 registered (Phase 2/Phase 3).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06619015",
-          "trial_id": "NCT06619015",
-          "trial_phases": [
-            "phase_2",
-            "phase_3"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
           "id": 11395,
           "type": "trial_status_change",
           "event_date": "2024-11-19",
@@ -219555,22 +217121,6 @@
           "confidence": 1
         },
         {
-          "id": 11353,
-          "type": "trial_registered",
-          "event_date": "2024-12-18",
-          "date_basis": "first posted",
-          "summary": "Trial NCT06738979 registered (Phase 3).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06738979",
-          "trial_id": "NCT06738979",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
           "id": 11358,
           "type": "trial_registered",
           "event_date": "2024-12-31",
@@ -219597,22 +217147,6 @@
           "trial_id": "NCT06754163",
           "trial_phases": [
             "phase_4"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 11398,
-          "type": "trial_status_change",
-          "event_date": "2025-01-03",
-          "date_basis": "start date",
-          "summary": "Trial NCT07036172 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07036172",
-          "trial_id": "NCT07036172",
-          "trial_phases": [
-            "phase_3"
           ],
           "trial_state": "started",
           "regulatory_outcome": null,
@@ -219663,39 +217197,6 @@
             "phase_4"
           ],
           "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 11354,
-          "type": "trial_status_change",
-          "event_date": "2025-03-20",
-          "date_basis": "start date",
-          "summary": "Trial NCT06738979 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06738979",
-          "trial_id": "NCT06738979",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 11392,
-          "type": "trial_status_change",
-          "event_date": "2025-04-01",
-          "date_basis": "start date",
-          "summary": "Trial NCT06619015 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06619015",
-          "trial_id": "NCT06619015",
-          "trial_phases": [
-            "phase_2",
-            "phase_3"
-          ],
-          "trial_state": "started",
           "regulatory_outcome": null,
           "confidence": 1
         },
@@ -219776,22 +217277,6 @@
           "confidence": 1
         },
         {
-          "id": 11397,
-          "type": "trial_registered",
-          "event_date": "2025-06-25",
-          "date_basis": "first posted",
-          "summary": "Trial NCT07036172 registered (Phase 3).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07036172",
-          "trial_id": "NCT07036172",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
           "id": 11422,
           "type": "trial_registered",
           "event_date": "2025-07-09",
@@ -219802,52 +217287,6 @@
           "trial_id": "NCT07055607",
           "trial_phases": [],
           "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 11431,
-          "type": "trial_registered",
-          "event_date": "2025-09-02",
-          "date_basis": "first posted",
-          "summary": "Trial NCT07150975 registered (Phase 3).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07150975",
-          "trial_id": "NCT07150975",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 11409,
-          "type": "trial_status_change",
-          "event_date": "2025-09-23",
-          "date_basis": "start date",
-          "summary": "Trial NCT07216651 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07216651",
-          "trial_id": "NCT07216651",
-          "trial_phases": [],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 11432,
-          "type": "trial_status_change",
-          "event_date": "2025-09-23",
-          "date_basis": "start date",
-          "summary": "Trial NCT07150975 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07150975",
-          "trial_id": "NCT07150975",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": "started",
           "regulatory_outcome": null,
           "confidence": 1
         },
@@ -219863,20 +217302,6 @@
           "trial_phases": [
             "phase_4"
           ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 11408,
-          "type": "trial_registered",
-          "event_date": "2025-10-14",
-          "date_basis": "first posted",
-          "summary": "Trial NCT07216651 registered (phase not given).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07216651",
-          "trial_id": "NCT07216651",
-          "trial_phases": [],
           "trial_state": null,
           "regulatory_outcome": null,
           "confidence": 1
@@ -219956,22 +217381,6 @@
           "confidence": 1
         },
         {
-          "id": 11415,
-          "type": "trial_registered",
-          "event_date": "2025-12-16",
-          "date_basis": "first posted",
-          "summary": "Trial NCT07284979 registered (Phase 3).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07284979",
-          "trial_id": "NCT07284979",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
           "id": 11373,
           "type": "trial_status_change",
           "event_date": "2025-12-19",
@@ -219984,22 +217393,6 @@
             "phase_4"
           ],
           "trial_state": "withdrawn",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 11416,
-          "type": "trial_status_change",
-          "event_date": "2025-12-30",
-          "date_basis": "start date",
-          "summary": "Trial NCT07284979 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07284979",
-          "trial_id": "NCT07284979",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": "started",
           "regulatory_outcome": null,
           "confidence": 1
         },
@@ -220052,20 +217445,6 @@
           "confidence": 1
         },
         {
-          "id": 11410,
-          "type": "trial_status_change",
-          "event_date": "2026-03-18",
-          "date_basis": "completion date",
-          "summary": "Trial NCT07216651 completed.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07216651",
-          "trial_id": "NCT07216651",
-          "trial_phases": [],
-          "trial_state": "completed",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
           "id": 11386,
           "type": "trial_status_change",
           "event_date": "2026-03-23",
@@ -220096,23 +217475,6 @@
           "confidence": 1
         },
         {
-          "id": 11393,
-          "type": "trial_status_change",
-          "event_date": "2026-04-17",
-          "date_basis": "last update posted",
-          "summary": "Trial NCT06619015 withdrawn.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06619015",
-          "trial_id": "NCT06619015",
-          "trial_phases": [
-            "phase_2",
-            "phase_3"
-          ],
-          "trial_state": "withdrawn",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
           "id": 11368,
           "type": "trial_status_change",
           "event_date": "2026-05-15",
@@ -220139,22 +217501,6 @@
             "phase_4"
           ],
           "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 11355,
-          "type": "trial_status_change",
-          "event_date": "2026-05-26",
-          "date_basis": "completion date",
-          "summary": "Trial NCT06738979 completed.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06738979",
-          "trial_id": "NCT06738979",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": "completed",
           "regulatory_outcome": null,
           "confidence": 1
         },
@@ -220429,16 +217775,6 @@
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT06738979",
-          "url": "https://clinicaltrials.gov/study/NCT06738979",
-          "score": 0.99,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "A Clinical Study Comparing Semaglutide Injection and Wegovy® for Weight Management in Obese Subjects. For: Obesity. Tests: TQF3510 (Semaglutide Injection), Wegovy®. Phase 3, completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
           "external_id": "NCT07732426",
           "url": "https://clinicaltrials.gov/study/NCT07732426",
           "score": 0.99,
@@ -220559,16 +217895,6 @@
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT07036172",
-          "url": "https://clinicaltrials.gov/study/NCT07036172",
-          "score": 0.97,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Efficacy and Safety of Semaglutide Injection Vs WEGOVY® in Chinese Obese Patients. For: Obesity Control. Tests: HDM1702, Wegovy ®. Phase 3, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
           "external_id": "NCT07701005",
           "url": "https://clinicaltrials.gov/study/NCT07701005",
           "score": 0.97,
@@ -220629,26 +217955,6 @@
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT06619015",
-          "url": "https://clinicaltrials.gov/study/NCT06619015",
-          "score": 0.94,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Tailoring Obesity Treatment Trial. For: Obesity, Appetite Regulation, PreDiabetes. Tests: Pramlintide Acetate 1 MG/ML, Semaglutide Pen Injector, Sodium Chloride 0.9% Inj. Phase 2/Phase 3, withdrawn."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT07216651",
-          "url": "https://clinicaltrials.gov/study/NCT07216651",
-          "score": 0.91,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "WeDosify Real World Evidence (RWE) Study: Personalized Semaglutide Dosing in U.S. Adults. For: Obesity & Overweight. completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
           "external_id": "NCT07275697",
           "url": "https://clinicaltrials.gov/study/NCT07275697",
           "score": 0.9,
@@ -220679,16 +217985,6 @@
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT07150975",
-          "url": "https://clinicaltrials.gov/study/NCT07150975",
-          "score": 0.89,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Phase III Clinical Study Comparing the Efficacy and Safety of GZR18 Injection and Semaglutide (Wegovy®) in Adult Obese or Overweight Subjects. For: Obesity/Overweight in Adult. Tests: GZR18, Semaglutide(Wegovy® ). Phase 3, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
           "external_id": "NCT07845994",
           "url": "https://clinicaltrials.gov/study/NCT07845994",
           "score": 0.86,
@@ -220716,16 +218012,6 @@
           "reading": "match",
           "decided_by": "rule",
           "summary": "The Effect of an Anti-obesity Drug, Semaglutide, as Treatment in New-onset Idiopathic Intracranial Hypertension (IIH) Compared to Standard Weight Management (Dietician) With Regards to Change in Weight and Intracranial Pressure. For: Idiopathic Intracranial Hypertension, Intracranial Pressure, Obesity, Pseudotumor Cerebri Syndrome, Papilledema, Weight Loss. Tests: Semaglutide, Very Low Calorie Die."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT07284979",
-          "url": "https://clinicaltrials.gov/study/NCT07284979",
-          "score": 0.84,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Efficacy and Safety of Ribupatide Administered Once Weekly Compared With Semaglutide and Placebo in Participants Living With Obesity Who Do Not Have Diabetes. For: Obesity. Tests: Ribupatide, Semaglutide, Placebo. Phase 3, active not recruiting."
         },
         {
           "source_name": "clinicaltrials.gov",
@@ -221847,139 +219133,6 @@
           ]
         },
         {
-          "trial_id": "NCT06619015",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT06619015",
-          "title": "Tailoring Obesity Treatment Trial",
-          "phases": [
-            "phase_2",
-            "phase_3"
-          ],
-          "state": "withdrawn",
-          "facts_as_of": "2026-11-15T13:16:56.112246Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 0,
-              "basis": "actual"
-            },
-            "allocation": "randomised",
-            "masking": "triple",
-            "comparators": [
-              "active"
-            ],
-            "healthy_volunteers": true,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Esbjerg Hospital - University Hospital of Southern Denmark",
-              "kind": "other"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Change in kilocalorie (kCal) consumption at ad libitum meal test, from baseline, to after 26 weeks of semaglutide of which the last two weeks is with the addition of either pramlintide or placebo",
-                "time_frame": "From baseline at the start of the study(week 0), to the end of the study after 26 weeks"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": "suspended by the danish medical agency",
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "after 26 weeks",
-              "number": 26,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T13:16:56.112246Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "kilocalorie (kCal) consumption",
-              "number": null,
-              "unit": null,
-              "code": "other",
-              "confidence": 0.84,
-              "read_on": "2026-11-15T13:16:56.112246Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT06738979",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT06738979",
-          "title": "A Clinical Study Comparing Semaglutide Injection and Wegovy® for Weight Management in Obese Subjects",
-          "phases": [
-            "phase_3"
-          ],
-          "state": "completed",
-          "facts_as_of": "2026-11-15T13:16:36.868128Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 408,
-              "basis": "actual"
-            },
-            "allocation": "randomised",
-            "masking": "none",
-            "comparators": [
-              "active"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Chia Tai Tianqing Pharmaceutical Group Co., Ltd.",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Percentage (%) of body weight loss",
-                "time_frame": "Baseline to week 44"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "week 44",
-              "number": 44,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T13:16:36.868128Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "body weight loss",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T13:16:36.868128Z"
-            }
-          ]
-        },
-        {
           "trial_id": "NCT06754163",
           "source_name": "clinicaltrials.gov",
           "url": "https://clinicaltrials.gov/study/NCT06754163",
@@ -222435,72 +219588,6 @@
           ]
         },
         {
-          "trial_id": "NCT07036172",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT07036172",
-          "title": "Efficacy and Safety of Semaglutide Injection Vs WEGOVY® in Chinese Obese Patients",
-          "phases": [
-            "phase_3"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T13:16:57.606873Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 460,
-              "basis": "planned"
-            },
-            "allocation": "randomised",
-            "masking": "none",
-            "comparators": [
-              "active"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Hangzhou Zhongmei Huadong Pharmaceutical Co., Ltd.",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "The percentage change in body weight from baseline to week 44",
-                "time_frame": "week 44"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "week 44",
-              "number": 44,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T13:16:57.606873Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "body weight",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 1,
-              "read_on": "2026-11-15T13:16:57.606873Z"
-            }
-          ]
-        },
-        {
           "trial_id": "NCT07055607",
           "source_name": "clinicaltrials.gov",
           "url": "https://clinicaltrials.gov/study/NCT07055607",
@@ -222589,72 +219676,6 @@
           ]
         },
         {
-          "trial_id": "NCT07150975",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT07150975",
-          "title": "Phase III Clinical Study Comparing the Efficacy and Safety of GZR18 Injection and Semaglutide (Wegovy®) in Adult Obese or Overweight Subjects",
-          "phases": [
-            "phase_3"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T13:17:17.713575Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 420,
-              "basis": "planned"
-            },
-            "allocation": "randomised",
-            "masking": "none",
-            "comparators": [
-              "active"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Gan & Lee Pharmaceuticals.",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Percentage change in body weight from baseline after 52 weeks (W) of treatment.",
-                "time_frame": "From Week 0 to Week 52"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "Week 52",
-              "number": 52,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T13:17:17.713575Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "body weight",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 1,
-              "read_on": "2026-11-15T13:17:17.713575Z"
-            }
-          ]
-        },
-        {
           "trial_id": "NCT07213466",
           "source_name": "clinicaltrials.gov",
           "url": "https://clinicaltrials.gov/study/NCT07213466",
@@ -222715,68 +219736,6 @@
               "code": "frequency",
               "confidence": 0.91,
               "read_on": "2026-11-15T13:17:04.110687Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT07216651",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT07216651",
-          "title": "WeDosify Real World Evidence (RWE) Study: Personalized Semaglutide Dosing in U.S. Adults",
-          "phases": [],
-          "state": "completed",
-          "facts_as_of": "2026-11-15T13:17:01.606610Z",
-          "facts": {
-            "study_kind": "observational",
-            "participants": {
-              "count": 20,
-              "basis": "actual"
-            },
-            "allocation": null,
-            "masking": null,
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Closed Loop Medicine",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Percentage of participants who persisted on semaglutide treatment over the study period",
-                "time_frame": "3 months"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "3 months",
-              "number": 3,
-              "unit": "months",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T13:17:01.606610Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "persisted on semaglutide treatment over the study period",
-              "number": null,
-              "unit": null,
-              "code": "use_of_treatment",
-              "confidence": 0.98,
-              "read_on": "2026-11-15T13:17:01.606610Z"
             }
           ]
         },
@@ -222967,73 +219926,6 @@
               "code": "body_measure",
               "confidence": 1,
               "read_on": "2026-11-15T13:16:47.105935Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT07284979",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT07284979",
-          "title": "Efficacy and Safety of Ribupatide Administered Once Weekly Compared With Semaglutide and Placebo in Participants Living With Obesity Who Do Not Have Diabetes",
-          "phases": [
-            "phase_3"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T13:17:03.108841Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 1270,
-              "basis": "actual"
-            },
-            "allocation": "randomised",
-            "masking": "double",
-            "comparators": [
-              "placebo",
-              "active"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Kailera",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Percent Change From Baseline in Body Weight at Week 76",
-                "time_frame": "Baseline, Week 76"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "Week 76",
-              "number": 76,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T13:17:03.108841Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Body Weight",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 1,
-              "read_on": "2026-11-15T13:17:03.108841Z"
             }
           ]
         },
@@ -224381,20 +221273,6 @@
           ]
         },
         {
-          "name": "Chia Tai Tianqing Pharmaceutical Group Co., Ltd.",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT06738979"
-              ]
-            }
-          ]
-        },
-        {
           "name": "Children's Hospital Los Angeles",
           "identified": false,
           "record": null,
@@ -224404,48 +221282,6 @@
               "article_urls": [],
               "trial_ids": [
                 "NCT06934655"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Closed Loop Medicine",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT07216651"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Esbjerg Hospital - University Hospital of Southern Denmark",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT06619015"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Gan & Lee Pharmaceuticals.",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT07150975"
               ]
             }
           ]
@@ -224465,20 +221301,6 @@
           ]
         },
         {
-          "name": "Hangzhou Zhongmei Huadong Pharmaceutical Co., Ltd.",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT07036172"
-              ]
-            }
-          ]
-        },
-        {
           "name": "Institut universitaire de cardiologie et de pneumologie de Québec, University Laval",
           "identified": false,
           "record": null,
@@ -224488,20 +221310,6 @@
               "article_urls": [],
               "trial_ids": [
                 "NCT06764056"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Kailera",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT07284979"
               ]
             }
           ]
