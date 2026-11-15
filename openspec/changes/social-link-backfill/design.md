@@ -218,6 +218,17 @@ With the same-claim check merged, 200 leads were read again: 141 new claims, 14 
 - **A rejected draft is not a candidate.** Two of the four esketamine drafts were rejected by the name rule ("esketamine nasal spray") and then stood as candidates, taking votes from the claim that stands. A rejected claim is never shown, so nothing should join it by decision. An article equal to it as written still lands on it, as before.
 - **What this does not settle.** 34 decisions is a small sample and the gap between 0.40 and 0.55 is narrow. The arguable group is a question of how finely the tracker divides one drug's indications, which is the operator's, not a threshold's. Each decision is logged with every probability, so the rule can be measured again on the next batch.
 
+## Decided by the operator on 2026-11-15: a check at the read for what the tracker follows
+
+Of the 141 claims the reread drafted, the reviewing session found about twenty that are not reports of a new treatment: an established drug in the news for its price or safety, advice and public health, an approach with no one condition. Triage passes them as it was measured to. It is shown a headline and asked whether it reports a treatment for a condition, which a price rise for a tuberculosis drug does.
+
+The operator chose a check at the read over tightening triage or archiving by hand, and chose to keep the name rule as it is for now.
+
+- **The decision.** After the model read and before any claim is joined or drafted, `new_treatment_report` is shown the read's own headline, summary, treatment and condition and asked whether this is a report about one treatment that is new, experimental or newly being tested for one condition. Below `NEW_TREATMENT_ACCEPT_ABOVE` (0.5 unless set) no claim is made and nothing is joined; the lead's outcome is `not_a_new_treatment` with what was read and the probability.
+- **Why at the read, not in triage.** The read has the article's substance; triage has eight words of headline. And it costs one decision on a few lines of our own text for a lead that has already been paid for.
+- **Measured before it was switched on.** The decision was asked about all 141 drafts from their stored headlines and summaries. 33 scored 0.10 or less, 89 scored 0.90 or more, and 19 fell between. At 0.5, 41 would not have been drafted: 28 of the 103 pending and 13 of the 38 the name rule rejected. Read against their summaries the low group is price stories (Luxturna, cycloserine), safety alerts (faecal transplants, a face transplant's complication), established treatments (proton pump inhibitors, OxyContin, the MMR vaccine), advice and public health (water fluoridation, the Heimlich manoeuvre) and features about one patient. Arguable ones sit low too: an observational study of aspirin and prostate cancer at 0.02, an unpublished insurance-claims analysis of Enbrel at 0.29.
+- **What it does not do.** It does not judge whether a treatment works, and it is not a status. It does not fix indications that hold two conditions or a doubtful vertical.
+
 ## Open Questions
 
 - How long leads that are unlisted or rejected are kept. They are small and hold no text.

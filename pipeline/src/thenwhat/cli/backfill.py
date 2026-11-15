@@ -776,6 +776,7 @@ def funnel_command() -> None:
         lines.append(f"  new claim, decided otherwise: {found.new_otherwise:,}")
     lines += [
         f"  needs a vertical, no claim made: {found.needs_vertical:,}",
+        f"  not a report of a new treatment, no claim made: {found.not_a_new_treatment:,}",
         f"held, the claim has enough articles: {found.enough_articles:,}",
         f"could not be read: {sum(found.cannot_be_read.values()):,}",
     ]

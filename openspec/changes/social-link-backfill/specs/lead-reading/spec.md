@@ -87,6 +87,21 @@ A source article made from a lead SHALL carry the headline its own page gives as
 - **WHEN** a lead's page gives no headline
 - **THEN** no model is called and the lead's outcome is cannot be read with that reason
 
+### Requirement: Only a report of a new treatment becomes a claim
+After the read and before any claim is joined or drafted, a decision SHALL say whether the article is a report about one treatment that is new, experimental or newly being tested for one condition, or another kind of story. It SHALL be shown the read's own headline, summary, treatment and condition and nothing of the article's text. Below the configured probability, 0.5 unless set, no claim SHALL be joined or drafted, and the lead's outcome SHALL be not a report of a new treatment, with what was read and the probability. The decision SHALL be logged.
+
+#### Scenario: News about an established treatment
+- **WHEN** a read summarises a price rise for a drug long in use, and the decision gives a report of a new treatment 0.2
+- **THEN** no claim is created, and the lead's outcome is not a report of a new treatment with that probability
+
+#### Scenario: News about a tracked treatment
+- **WHEN** the read names a claim's intervention and indication, and the decision gives a report of a new treatment 0.2
+- **THEN** the article is not added to that claim
+
+#### Scenario: A trial result
+- **WHEN** the decision gives a report of a new treatment 0.95
+- **THEN** the read goes on to join a claim or draft one
+
 ### Requirement: An article for a claim that exists
 When the read names an intervention and an indication that an existing claim covers, the article SHALL be added to that claim as a source article, with its content hash, any archive address and its reported statements, which are checked and approved by the existing rule. The claim's headline, summary, intervention, indication, vertical and review state SHALL NOT change.
 
@@ -205,7 +220,7 @@ A lead linked by its title to a claim that already has the configured number of 
 - **THEN** the lead is read
 
 ### Requirement: Funnel report
-`thenwhat backfill funnel` SHALL report how many leads are loaded, in scope, scored, passed, read, could not be read by reason, added to an existing claim, made a new claim approved by rule, made a claim rejected by rule, made a claim that awaits preparation, and need a vertical. It SHALL give the model cost recorded for triage and for reading. It SHALL list the outlets whose pages gave no publication date, with how many leads each lost.
+`thenwhat backfill funnel` SHALL report how many leads are loaded, in scope, scored, passed, read, could not be read by reason, added to an existing claim, made a new claim approved by rule, made a claim rejected by rule, made a claim that awaits preparation, need a vertical, and were not a report of a new treatment. It SHALL give the model cost recorded for triage and for reading. It SHALL list the outlets whose pages gave no publication date, with how many leads each lost.
 
 #### Scenario: After a limited run
 - **WHEN** 200 leads have been through the reading step
