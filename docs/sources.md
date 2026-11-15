@@ -6,6 +6,8 @@ Terms, authentication and rate limits for each external source. Check an entry a
 
 ## ClinicalTrials.gov API v2
 
+- **Search field projection rechecked (2026-11-15):** the [current terms](https://clinicaltrials.gov/terms-conditions), [API documentation](https://clinicaltrials.gov/data-api/api) and [field metadata](https://clinicaltrials.gov/api/v2/studies/metadata) were checked before changing the clients. Public requests still require no key. Search responses include descriptions and arm roles only when the requested `fields` includes `StudyType`, `InterventionDescription`, `InterventionArmGroupLabel`, `ArmGroupLabel`, `ArmGroupType`, `ArmGroupDescription` and `ArmGroupInterventionName`. A paired request for NCT06445062, NCT07573215 and NCT06625320 returned 2,870 bytes with the old projection and 8,688 with these fields; no individual-record request was added. The clients retain their existing query/page bounds, pacing, request allowances and cache lifetimes. The registry's [study glossary](https://clinicaltrials.gov/expert-search) distinguishes expanded access from interventional studies: access outside a clinical trial must not be presented as a trial match. Attribution, processing-date and modification disclosures described below remain applicable. No new published rate limit was found in the pages checked.
+
 - **Checked:** 2026-11-15; terms and API documentation rechecked for condition-query fallback.
 - **Terms:** <https://clinicaltrials.gov/about-site/terms-conditions> (last updated 31 January 2023)
 - **API:** <https://clinicaltrials.gov/data-api/api>

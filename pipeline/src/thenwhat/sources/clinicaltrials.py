@@ -22,7 +22,9 @@ NCT_ID = re.compile(r"NCT\d{8}")
 # trials an article reports.
 SEARCH_FIELDS = (
     "NCTId,BriefTitle,OfficialTitle,InterventionName,LeadSponsorName,Phase,OverallStatus,Condition"
-    ",Acronym,EnrollmentCount,CollaboratorName"
+    ",Acronym,EnrollmentCount,CollaboratorName,StudyType"
+    ",InterventionDescription,InterventionArmGroupLabel"
+    ",ArmGroupLabel,ArmGroupType,ArmGroupDescription,ArmGroupInterventionName"
 )
 # What a bulk load keeps of each trial. No free text beyond the title.
 LIST_FIELDS = (

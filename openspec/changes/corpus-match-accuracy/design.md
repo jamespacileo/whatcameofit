@@ -1,5 +1,15 @@
 # Design
 
+## Registry search projection and treatment roles
+
+The earlier scoring formatter accepted descriptions and arm membership from full records, but name/title searches omitted those fields in their API projection. Request study type, descriptions and arm roles/membership in the existing searches on both paths. Query selection, source pacing, cache lifetime, page limits and candidate counts stay unchanged. A changed fields parameter naturally gives a different source-cache key; there is no per-candidate enrichment fetch.
+
+Within the existing 1,500-character scoring input, put conditions, study type, title and compact arm roles/membership before verbose intervention descriptions. Missing or truncated information cannot establish compatibility. Align the Worker's fourth answer with the existing private-pipeline rule, distinguish expanded access, and explicitly preserve complete-regimen identity when a search finds a single medicine only inside combination arms. Bump shared/local clinical-answer versions, while keeping reusable public source responses. Validate on the applicable saved corpus readings and candidate sets without rereading article text; record that replay separately from fresh page and native Safari release verification.
+
+The first full replay exposed duplicate membership wasting the bounded input: ER-100's repeated arm labels cut off the sentence identifying its activation agent. Remove only an intervention's arm label whose exact same name/membership is already present in the arm list; retain unmatched or inconsistent labels. This keeps the activation detail within the existing limit without extra tokens or requests. Explicit vaccine-adjuvant and activation roles are part of preparation/delivery, not proof of a separate experimental combination. Missing aliases or patient-setting details still remain uncertain rather than being filled in from outside knowledge.
+
+The replay also exposed a short official title carrying a setting omitted by the brief title: NCT06961006 names first-line advanced melanoma only in its official title. Use the complete official title as the primary title when it fits the existing 240-character title allowance; otherwise keep the brief title first and the shortened official title secondary. This restores the setting without raising the record limit. Clarify that a monotherapy arm for another medicine cannot establish monotherapy for the medicine being matched (NCT07349537).
+
 ## Claim identity after a read
 
 The source-reading seam joined different vaccine products when both were extracted as

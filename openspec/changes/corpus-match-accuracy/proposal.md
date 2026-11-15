@@ -16,6 +16,7 @@ Released corpus checks found a trial match accompanied by a knowledge card for a
 - Preserve completed background-card work and provider usage when a later source operation fails.
 - Keep extracted alternate names within the complete intervention's scope and correct known overbroad unpublished aliases before publishing new cards.
 - Preserve registry intervention descriptions and arm membership for route and regimen comparisons within the existing scoring limit.
+- Request those details in registry searches as well as individual records, include study type and arm roles, and distinguish comparator/background use, combination-only trials and expanded access from a trial of the claim's complete intervention.
 - Recover from an explicitly refused registry condition with the existing bounded discovery fallback, while preserving full clinical scope for scoring and keeping treatment-name refusals explicit.
 - Compare claim summaries even when names are equal, record unresolved identity collisions without repeated work, and retain specific product names supplied by articles.
 
