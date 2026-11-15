@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -77,6 +77,10 @@ class Settings(BaseSettings):
     # less confidence than this is not exported, so the page and the data file give the
     # registry's own words for that answer instead. 0 exports every reading the rule kept.
     reading_accept_above: float = 0.8
+    # How many trials the readings step asks the model about at a time. The monthly
+    # spend ceiling is looked at before each group, so a run can pass it by the cost of
+    # one group's calls at most. 1 asks about one trial at a time.
+    readings_at_once: int = Field(default=6, ge=1, le=16)
     # Decide new drafts by rule: approved, and published, when the intervention is a
     # name; rejected and kept otherwise. On by default: approval needs no person
     # (openspec auto-publish).
