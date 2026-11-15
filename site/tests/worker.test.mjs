@@ -81,7 +81,9 @@ test("registry search carries arm roles and study type into bounded scoring", as
     const include = (name, value) => fields.has(name) ? value : undefined;
     record.protocolSection.armsInterventionsModule = {
       interventions: [{name:"EX-1",description:include("InterventionDescription","Delivered by inhalation"),armGroupLabels:include("InterventionArmGroupLabel",["control"])},
-        {name:"EX-2",description:include("InterventionDescription","Synthetic detail ".repeat(100)),armGroupLabels:include("InterventionArmGroupLabel",["test"])}],
+        {name:"EX-2",description:include("InterventionDescription","Synthetic detail ".repeat(100)),armGroupLabels:include("InterventionArmGroupLabel",["test"])},
+        {name:"Saline",description:include("InterventionDescription","Synthetic supportive care ".repeat(100)),armGroupLabels:include("InterventionArmGroupLabel",["control","test"])},
+        {name:"Rescue medicine",description:include("InterventionDescription","Synthetic rescue detail ".repeat(100)),armGroupLabels:include("InterventionArmGroupLabel",["control","test"])}],
       armGroups: fields.has("ArmGroupLabel") ? [
         {label:"control",type:include("ArmGroupType","ACTIVE_COMPARATOR"),interventionNames:include("ArmGroupInterventionName",["Drug: EX-1"]),description:include("ArmGroupDescription","EX-1 alone")},
         {label:"test",type:include("ArmGroupType","EXPERIMENTAL"),interventionNames:include("ArmGroupInterventionName",["Drug: EX-2"]),description:include("ArmGroupDescription","EX-2 alone")},
