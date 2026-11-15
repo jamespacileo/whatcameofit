@@ -14,11 +14,12 @@ test("scores are worded by band, with the percentage", () => {
 test("a reading becomes a reason, and an unknown one says how it was scored", () => {
   assert.match(readingOf("match"), /this treatment for this condition/);
   assert.match(readingOf("other_indication"), /different condition/);
+  assert.match(readingOf("not_what_is_tested"), /does not test it/);
   assert.match(readingOf(null), /before the condition/);
 });
 
 test("no confidence wording is a verdict", () => {
-  const words = [0, 0.5, 0.8].map(bandOf).join(" ") + readingOf("match") + readingOf("not_a_match");
+  const words = [0, 0.5, 0.8].map(bandOf).join(" ") + readingOf("match") + readingOf("not_a_match") + readingOf("not_what_is_tested");
   assert.doesNotMatch(words, /dead|abandoned|works|failed|cure|proven/i);
 });
 

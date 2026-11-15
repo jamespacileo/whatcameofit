@@ -607,6 +607,21 @@ def test_an_article_that_is_not_about_one_treatment_makes_no_claim(reader: Reade
     assert funnel(reader.session, pass_above=0.7, reject_below=0.2).not_one_treatment == 1
 
 
+def test_a_class_of_treatments_makes_no_claim_and_asks_no_decision(session: Session, fake_time):
+    """Scenario: A class of treatments"""
+    reader = Reader(session, fake_time, DRAFT | {"intervention": "GLP-1 receptor agonists"})
+    lead = reader.lead()
+
+    report = reader.read()
+
+    assert (report.done, lead.read_outcome) == (0, ReadOutcome.NOT_ONE_TREATMENT)
+    assert lead.read_detail == (
+        "GLP-1 receptor agonists for tooth agenesis; a class of treatments, not one"
+    )
+    assert reader.session.scalars(select(Claim)).all() == []
+    assert reader.backend.report_asked == []
+
+
 def test_an_article_that_is_not_about_one_treatment_joins_no_claim(reader: Reader):
     """Scenario: Not one treatment, though it names a tracked one"""
     claim = tracked_claim(reader.session)

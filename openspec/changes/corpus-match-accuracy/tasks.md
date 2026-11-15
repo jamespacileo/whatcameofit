@@ -43,5 +43,23 @@
 - [x] Bind the public caption and unique preview image to those explicit identities, excluding comments, ambiguous cards and accessibility-hidden overlays.
 - [x] Release Safari 0.9.12, verify S010 in the native browser, and update the corpus and Sheet with the observed outcome.
 - [x] Reproduce missing hashtag study-name agreement and display ordering with failing tests; preserve complete numeric identity and compatible candidate evidence ordering in both lookup paths.
-- [ ] Review and release the named-study correction as Safari 0.9.13, then rerun S010 and record the released result.
+- [x] Review and release the named-study correction as Safari 0.9.13; replay the captured S010 caption against production and record the named-study-first result separately in the corpus and Sheet.
+- [ ] Verify Safari 0.9.13 in Settings and rerun S010 natively once Safari is idle; record the installed-extension result.
 - [ ] Diagnose repeated S010 popup work and verify reuse before claiming cache efficiency.
+
+- [x] Correct pembrolizumab to its source-bound pemetrexed/platinum regimen and first-line metastatic nonsquamous population; reject seven incompatible trials and one monotherapy paper, retaining seven compatible trial cohorts.
+- [x] Correct the chronotherapy name to sleep deprivation plus lithium and bright light; reject six registry associations that do not establish that complete regimen.
+- [x] Reconcile all 84 diagnostic scope flags against current decisions: 67 belong to six archived claims, 15 active associations are rejected, and two active associations have primary-record confirmation. The kidney claim remains archived; its 19 historical flags do not block publication of active claims.
+- [x] Correct the archived kidney claim's origin paper to the already verified 2016 study without unarchiving it or changing trial decisions.
+- [x] Prepare both corrected regimens: retain seven unchanged pembrolizumab trial readings and verify the newly found lithium-containing bipolar cohort in NCT01431573.
+- [ ] Handle the demonstrated ClinicalTrials.gov condition-query complexity limit for the precise pembrolizumab indication, preserving full clinical scope for scoring.
+
+- [x] Reconcile stale tentative readings after the three identity corrections: reject 20 explicitly incompatible candidates and reread the uncertain device against the precise identity; preserve approved trial counts and prior decision history.
+
+## Intismeran combination and postoperative scope
+
+- [x] Verify the full intismeran-plus-pembrolizumab regimen against primary sources and retain the completely resected stage IIB–IV cutaneous melanoma population.
+- [x] Exclude the incompatible unresectable-disease trial and component-only background cards; retain two approved postoperative trials and the tentative compatible Part D cohort without promotion.
+- [x] Run normal preparation and stage the export: 126 existing claim identities retained, two trial readings reused and no new candidates.
+- [x] Clarify that saved background trial counts describe when the term was gathered, preserving historical reasons after trial exclusions.
+- [ ] Deploy the corrected melanoma card and rerun its four mapped corpus URLs against the released site; update the corpus and Google Sheet with exact methods.

@@ -73,6 +73,45 @@ KINDS = frozenset(
     ]
 )
 
+# What the name of a class of treatments ends in: every member of the class, not one of
+# them. A code in the phrase does not make it one treatment: "GLP-1 receptor agonists",
+# "PD-1 inhibitor".
+CLASS_ENDINGS = frozenset(
+    [
+        "agonist",
+        "agonists",
+        "antagonist",
+        "antagonists",
+        "inhibitor",
+        "inhibitors",
+        "blocker",
+        "blockers",
+        "analog",
+        "analogs",
+        "analogue",
+        "analogues",
+        "modulator",
+        "modulators",
+        "mimetic",
+        "mimetics",
+        # Kinds of thing in the plural: several treatments, whatever comes before.
+        "drugs",
+        "medications",
+        "medicines",
+        "treatments",
+        "therapies",
+        "vaccines",
+        "antibodies",
+    ]
+)
+
+
+def is_a_class(text: str) -> bool:
+    """Whether the text names a class of treatments, not one treatment: it ends in a word
+    for a class, with or without a code. "Semaglutide" is one; "GLP-1 drugs" is many."""
+    words = text.split()
+    return bool(words) and words[-1].lower().strip(".,;:") in CLASS_ENDINGS
+
 
 def is_a_name(text: str) -> bool:
     """Whether the text names an intervention: a brand, a code or a generic name.

@@ -33,6 +33,7 @@ from thenwhat.decide.steps import (
     INTERVENTION_KIND,
     MATCH,
     NOT_A_MATCH,
+    NOT_WHAT_IS_TESTED,
     OTHER_INDICATION,
     PAPER_MATCH,
     SAME,
@@ -286,6 +287,8 @@ def _score_note(session: Session, match: EntityMatch, entity: Entity) -> str:
         return " (scored without the indication: run `resolve --rescore`)"
     if scored.output.get("choice") == OTHER_INDICATION:
         return " (read as the same intervention for another indication)"
+    if scored.output.get("choice") == NOT_WHAT_IS_TESTED:
+        return " (read as a trial the intervention is in, but does not test)"
     return ""
 
 

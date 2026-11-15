@@ -120,3 +120,7 @@ A production-CI regression measured paper-source starts 119 ms apart against a 1
 ## Native Safari presentation correction
 
 Native Safari 0.9.10 exposed a presentation defect on corpus A041: the scorer correctly assigned zero confidence to a cited first-line study, but the shared presenter promoted every explicit citation into possible matches and retained source-first order. Separate citation provenance from compatibility. Valid match decisions at the existing 0.5 display threshold lead in descending score order; other directly or paper-cited records remain in a collapsed, explicitly unestablished section with their own score and explanation. Share the ten-record cap across groups. Existing cached raw answers are re-presented correctly without invalidation or another paid call. This supersedes the earlier decision to preserve source-number priority in the possible-match list. Safari 0.9.11 uses the same presenter.
+
+## Historical background gathering reasons
+
+A correction can remove an approved trial after a vocabulary term was gathered. Keep the original stored gathering counts and reading date, but word the public registry-filing reason in the past tense and explicitly say when the term was gathered. This preserves provenance without presenting a historical trial set as the current set. No new scoring or source request.

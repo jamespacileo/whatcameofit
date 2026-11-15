@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knowledge card sketches</title>
+<style>
+@font-face {
+  font-family: "Figtree Variable";
+  src: url("figtree-latin-wght-normal.woff2") format("woff2");
+  font-weight: 300 900;
+  font-display: swap;
+}
+:root {
+  --paper: #ffffff;
+  --ink: #0f1f38;
+  --blue: #14427f;
+  --muted: #46566b;
+  --panel: #f1f5fb;
+  --tint: #e6eef8;
+  --tag: #d6e2f2;
+  --rule: #d9e2ee;
+  --rule-soft: #e9eff5;
+  --footer: #0b2545;
+  --navy-soft: #c9d9ee;
+  --ground: #f4f7fb;
+  --on-navy: #8ec1f5;
+  color-scheme: light;
+  font-size: 106.25%;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: "Figtree Variable", "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.55;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+::selection { background: var(--tag); color: var(--ink); }
+a { color: var(--blue); text-underline-offset: 0.18em; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3, p { margin: 0; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+svg.i { width: 1em; height: 1em; flex: none; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.14em; }
+
+/* ---------- Sketch sheet chrome ---------- */
+.sheet-head {
+  background: var(--footer);
+  color: var(--paper);
+  padding: 1.6rem clamp(1rem, 4vw, 2rem) 1.4rem;
+}
+.sheet-head .wrap { max-width: 62rem; margin: 0 auto; display: grid; gap: 0.8rem; }
+.sheet-head h1 { font-size: clamp(1.5rem, 4vw, 1.9rem); line-height: 1.2; }
+.sheet-head p { color: var(--navy-soft); max-width: 46rem; }
+.switch { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.switch span { color: var(--navy-soft); font-size: 0.9rem; margin-right: 0.25rem; }
+.switch button {
+  font: inherit; font-size: 0.92rem; font-weight: 600;
+  min-height: 44px; padding: 0 1rem; border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.35); background: transparent; color: var(--paper); cursor: pointer;
+}
+.switch button[aria-pressed="true"] { background: var(--paper); color: var(--blue); border-color: var(--paper); }
+.switch button:focus-visible { outline-color: var(--paper); }
+
+main { max-width: 62rem; margin: 0 auto; padding: 1.5rem clamp(1rem, 4vw, 2rem) 4rem; display: grid; gap: 3rem; }
+.direction > header { display: grid; gap: 0.3rem; margin-bottom: 1rem; max-width: 46rem; }
+.direction > header h2 { font-size: 1.25rem; line-height: 1.3; }
+.direction > header h2 b { color: var(--blue); margin-right: 0.35rem; }
+.direction > header p { color: var(--muted); }
+.frame { background: var(--paper); border: 1px solid var(--rule); border-radius: 0.85rem; overflow: hidden; }
+.frame .below { padding: 1.1rem clamp(1rem, 3vw, 1.75rem) 1.4rem; color: var(--muted); font-size: 0.9rem; border-top: 1px dashed var(--rule); }
+
+/* ---------- Mini record band (as on the claim page) ---------- */
+.band {
+  background: var(--footer); color: var(--paper);
+  padding: 1.3rem clamp(1rem, 3vw, 1.75rem) 1.5rem;
+  display: grid; grid-template-columns: minmax(0, 1fr) 15rem; gap: 1.5rem;
+}
+.filed { display: flex; gap: 0.6rem; align-items: center; margin-bottom: 0.6rem; font-size: 0.85rem; }
+.chip { background: rgb(255 255 255 / 0.1); border-radius: 999px; padding: 0.2rem 0.75rem; font-weight: 600; }
+.band h3 { font-size: clamp(1.25rem, 3vw, 1.5rem); line-height: 1.25; max-width: 36ch; text-wrap: balance; }
+.band .report { margin-top: 0.7rem; font-size: 0.88rem; color: var(--navy-soft); }
+.band .report a { color: var(--paper); font-weight: 600; }
+.stand { background: rgb(255 255 255 / 0.06); border-radius: 0.85rem; padding: 0.9rem 1rem; align-self: start; }
+.stand .label { font-size: 1.3rem; font-weight: 700; color: var(--on-navy); line-height: 1.2; }
+.stand p { font-size: 0.85rem; color: var(--navy-soft); margin-top: 0.3rem; }
+
+/* ---------- Shared bits ---------- */
+.credit { font-size: 0.78rem; color: var(--muted); }
+.credit a { color: var(--muted); }
+.score { white-space: nowrap; }
+.said { font-size: 0.78rem; color: var(--muted); display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap; }
+.outlet-dot { width: 0.9rem; height: 0.9rem; border-radius: 3px; background: var(--tag); display: inline-grid; place-items: center; font-size: 0.55rem; font-weight: 800; color: var(--blue); }
+.absent { color: var(--muted); font-style: normal; }
+.absent::before { content: "—  "; }
+.aka { color: var(--muted); font-size: 0.85rem; }
+
+/* ============ A · Fact sheet ============ */
+.facts {
+  margin: 1.4rem clamp(1rem, 3vw, 1.75rem) 0;
+  border: 1px solid var(--rule); border-radius: 0.85rem; overflow: hidden;
+}
+.facts > h4 {
+  margin: 0; padding: 0.75rem 1.1rem; font-size: 1rem; background: var(--panel);
+  display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; align-items: baseline;
+}
+.facts > h4 span { font-weight: 400; font-size: 0.82rem; color: var(--muted); }
+.facts dl { margin: 0; display: grid; grid-template-columns: 11rem minmax(0, 1fr); }
+.facts dt, .facts dd { margin: 0; padding: 0.85rem 1.1rem; border-top: 1px solid var(--rule-soft); }
+.facts dl > dt:first-of-type, .facts dl > dt:first-of-type + dd { border-top: 0; }
+.facts dt { color: var(--muted); font-size: 0.9rem; display: flex; gap: 0.5rem; align-items: flex-start; }
+.facts dt svg { color: var(--blue); margin-top: 0.2rem; }
+.facts dd strong { font-size: 1.02rem; }
+.facts dd .gloss { margin-top: 0.15rem; max-width: 62ch; }
+.facts dd .gloss + .credit { margin-top: 0.25rem; }
+.facts .reported dt { background: none; }
+.facts .split { grid-column: 1 / -1; padding: 0.55rem 1.1rem; background: var(--panel); font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--rule); font-weight: 600; }
+
+/* ============ B · Two sides ============ */
+.pair { padding: 1.4rem clamp(1rem, 3vw, 1.75rem) 0; display: grid; gap: 1rem; }
+.pair-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.side { border: 1px solid var(--rule); border-radius: 0.85rem; padding: 1rem 1.1rem 1.1rem; display: grid; gap: 0.55rem; align-content: start; }
+.side .role { font-size: 0.82rem; font-weight: 700; color: var(--muted); display: flex; gap: 0.45rem; align-items: center; }
+.side .role svg { color: var(--blue); }
+.side .name { font-size: 1.3rem; font-weight: 700; line-height: 1.2; }
+.side .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.side .tag { background: var(--tint); border-radius: 999px; padding: 0.15rem 0.65rem; font-size: 0.82rem; font-weight: 600; color: var(--blue); }
+.side .def { font-size: 0.92rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.side .more { font-size: 0.85rem; font-weight: 600; }
+.side .sub { border-top: 1px solid var(--rule-soft); padding-top: 0.6rem; display: grid; gap: 0.2rem; }
+.side .sub b { font-size: 0.95rem; }
+.claimsaid { background: var(--panel); border-radius: 0.85rem; padding: 1rem 1.1rem; display: grid; gap: 0.7rem; }
+.claimsaid h4 { margin: 0; font-size: 1rem; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; align-items: baseline; }
+.claimsaid h4 span { font-weight: 400; font-size: 0.82rem; color: var(--muted); }
+.claimsaid ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.claimsaid li { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: 0.75rem; }
+.claimsaid li > span { font-size: 0.85rem; font-weight: 700; color: var(--blue); padding-top: 0.1rem; }
+
+/* ============ C · In the band ============ */
+.band.with-facts { padding-bottom: 0; }
+.inline-facts {
+  grid-column: 1 / -1; margin: 0 calc(-1 * clamp(1rem, 3vw, 1.75rem));
+  border-top: 1px solid rgb(255 255 255 / 0.14);
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.inline-facts button {
+  font: inherit; color: var(--paper); background: transparent; border: 0; text-align: left; cursor: pointer;
+  padding: 0.75rem clamp(1rem, 3vw, 1.75rem) 0.85rem; min-height: 44px;
+  border-left: 1px solid rgb(255 255 255 / 0.14); display: grid; gap: 0.1rem;
+}
+.inline-facts button:first-child { border-left: 0; }
+.inline-facts button:hover { background: rgb(255 255 255 / 0.05); }
+.inline-facts button[aria-expanded="true"] { background: var(--paper); color: var(--ink); }
+.inline-facts button[aria-expanded="true"] small { color: var(--muted); }
+.inline-facts button:focus-visible { outline-color: var(--paper); outline-offset: -3px; }
+.inline-facts small { font-size: 0.75rem; color: var(--navy-soft); display: flex; gap: 0.35rem; align-items: center; }
+.inline-facts strong { font-size: 0.98rem; line-height: 1.3; }
+.inline-facts .none { font-weight: 400; color: var(--navy-soft); }
+.drawer { padding: 1.1rem clamp(1rem, 3vw, 1.75rem) 1.2rem; display: grid; grid-template-columns: minmax(0, 1fr) 16rem; gap: 1.5rem; border-bottom: 1px solid var(--rule); }
+.drawer h4 { margin: 0 0 0.3rem; font-size: 1.05rem; }
+.drawer .def { max-width: 62ch; }
+.drawer aside { font-size: 0.85rem; color: var(--muted); display: grid; gap: 0.4rem; align-content: start; border-left: 1px solid var(--rule); padding-left: 1rem; }
+
+/* ============ D · Chain ============ */
+.chain-wrap { padding: 1.5rem clamp(1rem, 3vw, 1.75rem) 0; display: grid; gap: 0.9rem; }
+.chain-wrap > h4 { margin: 0; font-size: 1rem; }
+.chain { display: grid; grid-template-columns: minmax(0, 1fr) 4.5rem minmax(0, 1fr) 4.5rem minmax(0, 1fr); align-items: stretch; }
+.node { border: 1px solid var(--rule); border-radius: 0.85rem; padding: 0.85rem 1rem; display: grid; gap: 0.25rem; align-content: start; background: var(--paper); }
+.node.first { background: var(--panel); border-color: var(--tag); }
+.node .role { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
+.node .name { font-size: 1.1rem; font-weight: 700; line-height: 1.25; }
+.node .kind { font-size: 0.88rem; }
+.node.empty { border-style: dashed; background: transparent; }
+.node.empty .name { font-weight: 400; color: var(--muted); font-size: 0.95rem; }
+.link { display: grid; place-items: center; position: relative; color: var(--blue); }
+.link::before { content: ""; position: absolute; left: 0.4rem; right: 0.9rem; top: 50%; border-top: 1.5px solid var(--blue); }
+.link svg { position: absolute; right: 0.35rem; top: calc(50% - 0.5em); background: var(--paper); }
+.link.faint { color: var(--rule); }
+.link.faint::before { border-top-style: dashed; border-color: #9fb1c7; }
+.link.faint svg { color: #9fb1c7; }
+.how {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.4rem 0.75rem; align-items: baseline;
+  border-top: 1px solid var(--rule-soft); padding-top: 0.85rem;
+}
+.how > span { font-size: 0.82rem; font-weight: 700; color: var(--blue); white-space: nowrap; }
+.how q { quotes: "“" "”"; }
+.how .said { grid-column: 2; }
+.note { font-size: 0.82rem; color: var(--muted); max-width: 70ch; }
+
+/* ---------- Phone ---------- */
+@media (max-width: 40rem) {
+  .band { grid-template-columns: 1fr; gap: 1rem; }
+  .facts dl { grid-template-columns: 1fr; }
+  .facts dt { padding-bottom: 0; border-top: 1px solid var(--rule-soft); }
+  .facts dd { padding-top: 0.2rem; border-top: 0; }
+  .pair-cards { grid-template-columns: 1fr; }
+  .claimsaid li { grid-template-columns: 1fr; gap: 0.1rem; }
+  .inline-facts { grid-template-columns: 1fr 1fr; }
+  .inline-facts button:nth-child(3) { border-left: 0; }
+  .inline-facts button:nth-child(n+3) { border-top: 1px solid rgb(255 255 255 / 0.14); }
+  .drawer { grid-template-columns: 1fr; }
+  .drawer aside { border-left: 0; padding-left: 0; border-top: 1px solid var(--rule); padding-top: 0.75rem; }
+  .chain { grid-template-columns: 1fr; }
+  .how { grid-template-columns: 1fr; gap: 0.15rem; }
+  .how > p { margin-bottom: 0.5rem; }
+  .how .said { grid-column: 1; }
+  .link { height: 2.2rem; }
+  .link::before { left: 50%; right: auto; top: 0.3rem; bottom: 0.5rem; border-top: 0; border-left: 1.5px solid var(--blue); }
+  .link.faint::before { border-left-style: dashed; border-color: #9fb1c7; }
+  .link svg { right: auto; left: calc(50% - 0.5em); top: auto; bottom: 0.1rem; transform: rotate(90deg); }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="pill" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></symbol>
+  <symbol id="shapes" viewBox="0 0 24 24"><path d="M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/></symbol>
+  <symbol id="dna" viewBox="0 0 24 24"><path d="m10 16 1.5 1.5"/><path d="m14 8-1.5-1.5"/><path d="M15 2c-1.798 1.998-2.518 3.995-2.807 5.993"/><path d="m16.5 10.5 1 1"/><path d="m17 6-2.891-2.891"/><path d="M2 15c6.667-6 13.333 0 20-6"/><path d="m20 9 .891.891"/><path d="M3.109 14.109 4 15"/><path d="m6.5 12.5 1 1"/><path d="m7 18 2.891 2.891"/><path d="M9 22c1.798-1.998 2.518-3.995 2.807-5.993"/></symbol>
+  <symbol id="activity" viewBox="0 0 24 24"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></symbol>
+  <symbol id="quote" viewBox="0 0 24 24"><path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/><path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/></symbol>
+  <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+  <symbol id="device" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 2h6M9 22h6"/><path d="M12 9v3l2 1"/></symbol>
+</svg>
+
+<header class="sheet-head">
+  <div class="wrap">
+    <h1>Knowledge card: four sketches</h1>
+    <p>Each sketch puts what the treatment is, what it is for and what the report said it does at the top of the claim page, drawn from data the export already carries (intervention, approach, background cards, reported statements). Switch claims to see a full record and a sparse one.</p>
+    <div class="switch" role="group" aria-label="Claim shown">
+      <span>Claim:</span>
+      <button type="button" data-claim="zil" aria-pressed="true">Zilganersen, a drug</button>
+      <button type="button" data-claim="tic" aria-pressed="false">Wrist device, sparse record</button>
+    </div>
+  </div>
+</header>
+
+<main id="sketches"></main>
+
+<script>
+const ICON = (id) => `<svg class="i" aria-hidden="true"><use href="#${id}"/></svg>`;
+const CLAIMS = {
+  zil: {
+    topic: "Brain and nerves", approach: "Drug", treatIcon: "pill",
+    headline: "The spinal injection zilganersen was reported to be the first drug approved by the FDA for Alexander disease",
+    report: { title: "After 30 Years, FDA Approves First-Ever Drug For a Rare Neurological Disorder", outlet: "ScienceAlert", initial: "S", date: "30 Oct 2026" },
+    status: "Approved", statusNote: "Latest record 11 Nov 2026",
+    treatment: { name: "Zilganersen", aka: ["ION373", "Zanvastro"] },
+    kind: { label: "Oligonucleotide", fromDrug: true, mesh: "Oligonucleotides",
+      def: "Polymers made up of a few (2-20) nucleotides. In molecular genetics, they refer to a short sequence synthesized to match a region where a mutation is known to occur…",
+      credit: "Open Targets drug record, matched by exact name. Kind term: MeSH 2026, high match, 100%" },
+    gene: { symbol: "GFAP", name: "glial fibrillary acidic protein",
+      def: "A class-III intermediate filament, a cell-specific marker that, during the development of the central nervous system, distinguishes astrocytes from other glial cells.",
+      credit: "Open Targets, in UniProt’s words. Named in the treatment’s name; not a statement of how it works." },
+    condition: { label: "Alexander disease", mesh: "Alexander Disease",
+      def: "Rare leukoencephalopathy with infantile-onset accumulation of Rosenthal fibers in the subpial, periventricular, and subependymal zones of the brain. Rosenthal fibers are glial fibrillary acidic protein aggregates found in astrocytes.",
+      credit: "MeSH 2026, high match, 100%. Read 14 Nov 2026" },
+    said: [
+      { kind: "How it acts", text: "It uses antisense oligonucleotides to suppress production of GFAP.", firm: "Stated as fact" },
+      { kind: "Effect", text: "It can significantly slow Alexander disease and improve symptoms, but it does not cure or reverse the condition.", firm: "Stated as fact, from results in people" },
+      { kind: "Who it could help", text: "Its approval covers patients of all ages.", firm: "Stated as fact" },
+    ],
+  },
+  tic: {
+    topic: "Brain and nerves", approach: "Device", treatIcon: "device",
+    headline: "A wrist-worn device that stimulates the median nerve was reported to reduce tics in people with Tourette syndrome",
+    report: { title: "Tourette syndrome: The life-changing device helping to stop tics", outlet: "BBC News", initial: "B", date: "12 Nov 2026" },
+    status: "Trial registered", statusNote: "Latest record 30 Jun 2026",
+    treatment: { name: "Wrist-worn median nerve stimulation device", aka: [] },
+    kind: { label: "Electric stimulation therapy", fromDrug: false, mesh: "Electric Stimulation Therapy",
+      def: "Application of electric current in treatment without the generation of perceptible heat. It includes electric stimulation of nerves or muscles…",
+      credit: "MeSH 2026, high match, 81%. The kind of treatment, not the device itself" },
+    gene: null,
+    condition: { label: "Tourette syndrome", mesh: "Tourette Syndrome",
+      def: "A neuropsychological disorder related to alterations in dopamine metabolism and neurotransmission involving frontal-subcortical neuronal circuits. Multiple motor and one or more vocal tics are present, many times a day, for more than a year, with onset before age 18.",
+      credit: "MeSH 2026, high match, 100%. Read 14 Nov 2026" },
+    said: [
+      { kind: "How it acts", text: "Trials have shown it can change activity in brain areas involved in controlling movement.", firm: "Stated as fact" },
+    ],
+  },
+};
+const NO_GENE = "No gene or drug record is linked to this treatment.";
+const NO_EFFECT = "The report gives no effect that could be read as a statement.";
+
+function band(c, extra = "", cls = "") {
+  return `<div class="band ${cls}">
+    <div>
+      <div class="filed"><span class="chip">${c.topic}</span><span>${c.approach}</span></div>
+      <h3>${c.headline}</h3>
+      <p class="report"><a href="#">“${c.report.title}”</a> · ${c.report.outlet} ${c.report.date}</p>
+    </div>
+    <div class="stand"><div class="label">${c.status}</div><p>${c.statusNote}</p></div>
+    ${extra}
+  </div>`;
+}
+const said = (c) => `<span class="said"><span class="outlet-dot" aria-hidden="true">${c.report.initial}</span>${c.report.outlet}, ${c.report.date}. Read 14 Nov 2026</span>`;
+const below = `<div class="below">The record in brief · What the report said · Recorded · Trials on record… (the page continues as now)</div>`;
+
+/* A · Fact sheet */
+function factSheet(c) {
+  const effect = c.said.find((s) => s.kind === "Effect");
+  const how = c.said.find((s) => s.kind === "How it acts");
+  const who = c.said.find((s) => s.kind === "Who it could help");
+  return `${band(c)}
+  <section class="facts" aria-labelledby="a-h">
+    <h4 id="a-h">At a glance <span>Descriptions of the terms, not evidence for the claim</span></h4>
+    <dl>
+      <dt>${ICON(c.treatIcon)}Treatment</dt>
+      <dd><strong>${c.treatment.name}</strong>${c.treatment.aka.length ? ` <span class="aka">also ${c.treatment.aka.join(", ")}</span>` : ""}</dd>
+      <dt>${ICON("shapes")}Kind</dt>
+      <dd><strong>${c.kind.label}</strong><p class="gloss">${c.kind.def}</p><p class="credit">${c.kind.credit}</p></dd>
+      <dt>${ICON("dna")}Gene named</dt>
+      <dd>${c.gene ? `<strong>${c.gene.symbol}</strong> <span class="aka">${c.gene.name}</span><p class="gloss">${c.gene.def}</p><p class="credit">${c.gene.credit}</p>` : `<span class="absent">${NO_GENE}</span>`}</dd>
+      <dt>${ICON("activity")}Condition</dt>
+      <dd><strong>${c.condition.label}</strong><p class="gloss">${c.condition.def}</p><p class="credit">${c.condition.credit}</p></dd>
+      <div class="split">What the report said, in its terms</div>
+      <dt>How it acts</dt>
+      <dd>${how ? `${how.text}${said(c)}` : `<span class="absent">Not said.</span>`}</dd>
+      <dt>Effect</dt>
+      <dd>${effect ? `${effect.text}${said(c)}` : `<span class="absent">${NO_EFFECT}</span>`}</dd>
+      ${who ? `<dt>Who it could help</dt><dd>${who.text}${said(c)}</dd>` : ""}
+    </dl>
+  </section>${below}`;
+}
+
+/* B · Two sides */
+function twoSides(c) {
+  return `${band(c)}
+  <div class="pair">
+    <div class="pair-cards">
+      <section class="side" aria-label="The treatment">
+        <p class="role">${ICON(c.treatIcon)}The treatment</p>
+        <p class="name">${c.treatment.name}</p>
+        <div class="tags"><span class="tag">${c.approach}</span><span class="tag">${c.kind.label}</span></div>
+        ${c.treatment.aka.length ? `<p class="aka">Also recorded as ${c.treatment.aka.join(", ")}</p>` : ""}
+        <p class="def">${c.kind.def}</p>
+        <p class="credit">${c.kind.credit}</p>
+        <div class="sub">${c.gene
+          ? `<b>${ICON("dna")} Gene named: ${c.gene.symbol}</b><span class="credit">${c.gene.name}. Named in the treatment’s name; not a statement of how it works.</span>`
+          : `<span class="absent">${NO_GENE}</span>`}</div>
+      </section>
+      <section class="side" aria-label="The condition">
+        <p class="role">${ICON("activity")}The condition</p>
+        <p class="name">${c.condition.label}</p>
+        <p class="def">${c.condition.def}</p>
+        <a class="more" href="#">Full definition</a>
+        <p class="credit">${c.condition.credit}</p>
+      </section>
+    </div>
+    <section class="claimsaid" aria-labelledby="b-h">
+      <h4 id="b-h">What the report said it does <span>${c.report.outlet}, ${c.report.date}. Not checked against the records below</span></h4>
+      <ul>
+        ${c.said.map((s) => `<li><span>${s.kind}</span><p>${s.text}</p></li>`).join("")}
+        ${c.said.some((s) => s.kind === "Effect") ? "" : `<li><span>Effect</span><p class="absent">${NO_EFFECT}</p></li>`}
+      </ul>
+    </section>
+  </div>${below}`;
+}
+
+/* C · In the band */
+function inBand(c) {
+  const cells = [
+    ["Treatment", c.treatment.name, c.treatIcon],
+    ["Kind", c.kind.label, "shapes"],
+    ["Gene named", c.gene ? c.gene.symbol : null, "dna"],
+    ["Condition", c.condition.label, "activity"],
+  ];
+  const row = `<div class="inline-facts" role="group" aria-label="At a glance">
+    ${cells.map(([k, v, ic], i) => `<button type="button" aria-expanded="${i === 3}"><small>${ICON(ic)}${k}</small><strong${v ? "" : ' class="none"'}>${v ?? "None on record"}</strong></button>`).join("")}
+  </div>`;
+  return `${band(c, row, "with-facts")}
+  <div class="drawer">
+    <div>
+      <h4>${c.condition.label}</h4>
+      <p class="def">${c.condition.def}</p>
+    </div>
+    <aside>
+      <span>${c.condition.credit}</span>
+      <a href="#">MeSH: ${c.condition.mesh}</a>
+      <span>A description of the term. Not evidence for this claim and not advice.</span>
+    </aside>
+  </div>${below}`;
+}
+
+/* D · Chain */
+function chain(c) {
+  const how = c.said.find((s) => s.kind === "How it acts");
+  const effect = c.said.find((s) => s.kind === "Effect");
+  return `${band(c)}
+  <section class="chain-wrap" aria-labelledby="d-h">
+    <h4 id="d-h">What it is and what it is for</h4>
+    <div class="chain">
+      <div class="node first"><span class="role">Treatment</span><span class="name">${c.treatment.name}</span><span class="kind">${c.kind.label}</span></div>
+      <div class="link${c.gene ? "" : " faint"}" aria-hidden="true">${ICON("arrow")}</div>
+      ${c.gene
+        ? `<div class="node"><span class="role">Gene named</span><span class="name">${c.gene.symbol}</span><span class="kind">${c.gene.name}</span></div>`
+        : `<div class="node empty"><span class="role">Gene or target</span><span class="name">None on record</span></div>`}
+      <div class="link" aria-hidden="true">${ICON("arrow")}</div>
+      <div class="node"><span class="role">Condition</span><span class="name">${c.condition.label}</span><span class="kind credit">MeSH: ${c.condition.mesh}</span></div>
+    </div>
+    <p class="vh">${c.treatment.name}, ${c.kind.label}${c.gene ? `, names the gene ${c.gene.symbol}` : ""}, reported for ${c.condition.label}.</p>
+    <div class="how">
+      <span>How it acts</span><p>${how ? `<q>${how.text}</q>` : `<span class="absent">Not said.</span>`}</p>
+      <span>Effect</span><p>${effect ? `<q>${effect.text}</q>` : `<span class="absent">${NO_EFFECT}</span>`}</p>
+      ${said(c)}
+    </div>
+    <p class="note">The arrows show how the records are linked, not how the treatment works. ${c.gene ? "The gene is shown because the treatment’s name names it." : ""}</p>
+  </section>${below}`;
+}
+
+const DIRECTIONS = [
+  ["A", "Fact sheet", "A labelled table straight under the band, closest to Examine’s summary box. Records first, then a ruled-off part for what the report said. Most complete; longest.", factSheet],
+  ["B", "Two sides", "The treatment and the condition as two equal cards, with the report’s words in a panel underneath. Easiest to scan on a phone; the definitions fold to three lines.", twoSides],
+  ["C", "In the band", "Four facts as a row inside the navy band, so they are in the first view with the status. Each opens its definition in a drawer. Smallest; the definitions are one tap away.", inBand],
+  ["D", "The chain", "Treatment, gene and condition as linked boxes, then the report’s two key sentences. Shows the relationship at a glance; an empty link is drawn dashed so absence reads as absence.", chain],
+];
+
+function render(id) {
+  const c = CLAIMS[id];
+  document.getElementById("sketches").innerHTML = DIRECTIONS.map(([letter, name, why, fn]) => `
+    <section class="direction" aria-labelledby="dir-${letter}">
+      <header><h2 id="dir-${letter}"><b>${letter}</b>${name}</h2><p>${why}</p></header>
+      <div class="frame">${fn(c)}</div>
+    </section>`).join("");
+  document.querySelectorAll(".inline-facts button").forEach((b) =>
+    b.addEventListener("click", () => {
+      b.parentElement.querySelectorAll("button").forEach((o) => o.setAttribute("aria-expanded", String(o === b)));
+    }));
+}
+document.querySelectorAll(".switch button").forEach((b) =>
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".switch button").forEach((o) => o.setAttribute("aria-pressed", String(o === b)));
+    render(b.dataset.claim);
+  }));
+render("zil");
+</script>
+</body>
+</html>

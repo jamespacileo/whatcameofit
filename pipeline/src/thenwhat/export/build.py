@@ -241,7 +241,8 @@ class ExportedMatch(Strict):
     score: float
     # "approved" counts toward the status; "candidate" is shown apart and does not.
     state: str
-    # How the record was read: "match", "other_indication", "not_a_match", or None.
+    # How the record was read: "match", "other_indication", "not_what_is_tested",
+    # "not_a_match", or None.
     reading: str | None
     # Who approved it: "human", "rule", "seed" or "assistant". None for a candidate.
     decided_by: str | None

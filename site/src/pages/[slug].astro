@@ -17,6 +17,9 @@ import Outlet from "../components/Outlet.astro";
 import KindIcon from "../components/KindIcon.astro";
 import Pop from "../components/Pop.astro";
 import RecordBrief from "../components/RecordBrief.astro";
+import RecordStrip from "../components/RecordStrip.astro";
+import StripKey from "../components/StripKey.astro";
+import { claimAxis, stripFor } from "../lib/record-strip";
 import SectionList from "../components/SectionList.astro";
 import SharePill from "../components/SharePill.astro";
 import Statements from "../components/Statements.astro";
@@ -48,7 +51,9 @@ import { cardAlt, clip, shareSentence } from "../lib/card";
 import { embedSnippet, shareLinks } from "../lib/share";
 import { confidenceLabel, stageReadingNote } from "../lib/confidence";
 import MatchList from "../components/MatchList.astro";
-import Background from "../components/Background.astro";
+import Glance from "../components/Glance.astro";
+import GlanceBand from "../components/GlanceBand.astro";
+import { GLANCE_ID, GLANCE_TITLE, bandFacts, glanceCards } from "../lib/glance";
 import Organisations from "../components/Organisations.astro";
 import { publisherOf, publisherText } from "../lib/organisations";
 import Paper from "../components/Paper.astro";
@@ -92,6 +97,13 @@ const latestMark =
 const onPath = STAGE_PATH.includes(claim.status.code);
 const hasDatedPromise = claim.promises.some((promise) => promise.parsed_date !== null);
 const hasPromise = claim.promises.length > 0;
+// The claim's records by date on its own axis, and a key naming only the marks drawn;
+// the end of the axis is named in words under it.
+const lastCheckedDay = data.last_checked_at?.slice(0, 10) ?? null;
+const ownAxis = lastCheckedDay ? claimAxis(claim, lastCheckedDay) : null;
+const ownKinds = ownAxis
+  ? [...new Set(stripFor(claim, ownAxis.startYear, ownAxis.lastChecked).marks.map((mark) => mark.kind))]
+  : [];
 // The year the latest dated promise names, shown beside the status as it is on the card.
 const promised = latestPromise(claim)?.parsed_date?.slice(0, 4) ?? null;
 // The legend names only the kinds of record this page shows.
@@ -190,6 +202,7 @@ const statements = claim.reported_statements ?? [];
 const background = claim.background ?? [];
 // The sections this page has, in the page's order. One it does not have is not listed.
 const sections = [
+  { id: GLANCE_ID, name: GLANCE_TITLE },
   ...(brief.length > 0 ? [{ id: "brief", name: BRIEF_TITLE }] : []),
   ...(statements.length > 0
     ? [
@@ -212,7 +225,6 @@ const sections = [
   ...(organisations.length > 0
     ? [{ id: "organisations", name: "Organisations named", count: organisations.length }]
     : []),
-  ...(background.length > 0 ? [{ id: "background", name: "Background", count: background.length }] : []),
   ...(others.length > 0 ? [{ id: "others", name: "Other claims" }] : []),
   { id: "pass-on", name: "Pass it on" },
 ];
@@ -463,6 +475,14 @@ const sections = [
         <ReportError page={`/${claim.slug}`} short />
       </div>
     </div>
+    {
+      /* What kind of thing the treatment is and a gene, under the title and the status
+         and ruled off from both: only what the headline does not say, and only when a
+         card gives it. */
+      bandFacts(glanceCards(background)).length > 0 && (
+        <GlanceBand facts={bandFacts(glanceCards(background))} />
+      )
+    }
   </section>
 
   <div class="frame no-rail">
@@ -510,35 +530,14 @@ const sections = [
       )
     }
 
-    {/* How the claim was tested and where its records stand, before the facts and the
-        records themselves. The count of trials and the largest size are said here, once. */}
-    <RecordBrief claim={claim} lastChecked={data.last_checked_at} />
-
-    <dl class="facts">
-      <div>
-        <dt>Intervention</dt>
-        <dd>
-          {claim.intervention.name}
-          {claim.intervention.synonyms.length > 0 && (
-            <span class="aka">
-              also known as{" "}
-              {
-                /* A name such as "TRG-035" must not break at its hyphen. */
-                claim.intervention.synonyms.map((name, index) => (
-                  <>
-                    {index > 0 && ", "}
-                    {name.includes("-") && name.length <= 16 ? <span class="unbroken">{name}</span> : name}
-                  </>
-                ))
-              }
-            </span>
-          )}
-        </dd>
-      </div>
-      <div>
-        <dt>Claimed for</dt>
-        <dd>{claim.indication}</dd>
-      </div>
+    {/* What the treatment and the condition are, then the claim's own facts: before
+        the record in brief, so a reader knows what the records are about. */}
+    <Glance
+      intervention={claim.intervention}
+      indication={claim.indication}
+      cards={background}
+      sources={data.card_sources ?? []}
+    >
       {
         claim.first_reported_date && (
           <div>
@@ -587,7 +586,11 @@ const sections = [
           </div>
         )
       }
-    </dl>
+    </Glance>
+
+    {/* How the claim was tested and where its records stand, before the facts and the
+        records themselves. The count of trials and the largest size are said here, once. */}
+    <RecordBrief claim={claim} lastChecked={data.last_checked_at} />
 
     {
       /* What the reports said, in the site's words: after the summary and before the
@@ -601,6 +604,14 @@ const sections = [
       <FoldHead id="timetable" note={timetableNote}>
         {hasDatedPromise ? "Promised and recorded" : "Recorded"}
       </FoldHead>
+      {
+        ownAxis && (
+          <div class="claim-strip">
+            <RecordStrip claim={claim} counts={false} axis={ownAxis} years />
+            <StripKey kinds={ownKinds} title={false} />
+          </div>
+        )
+      }
       <ul class="legend" aria-label="Key">
         {
           hasPromise && (
@@ -958,14 +969,6 @@ const sections = [
          After the records and away from the status: an organisation is never evidence. */
       organisations.length > 0 && (
         <Organisations organisations={organisations} articles={claim.articles} trialIds={trialIds} />
-      )
-    }
-
-    {
-      /* What open vocabularies say of the claim's terms. After the records and away
-         from the status: a card describes a term, never the claim's evidence. */
-      (claim.background ?? []).length > 0 && (
-        <Background cards={claim.background ?? []} sources={data.card_sources ?? []} />
       )
     }
 
