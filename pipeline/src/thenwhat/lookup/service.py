@@ -57,11 +57,19 @@ are not treatment reports merely because they name a medicine and its usual use.
 For those stories, return about_a_treatment false and empty identification fields
 unless the story actually reports a specific therapeutic research finding or claim
 as its subject. Do not convert a side-effect lawsuit into an efficacy claim.
+Classify the purpose of the whole article or post before choosing a medicine.
+A company history listing its founding, offices and products remains a company
+profile even if one product's indication, mechanism or past regulatory approval is
+stated. Those catalogue facts are not the post's own therapeutic research claim.
+Do not select a product from that history or turn its hashtags into a new finding.
 An unnamed but described treatment can be a valid claim: keep its descriptive name
 and uncertainty instead of inventing a product. Trial permission is not approval of
 a treatment, and animal or laboratory findings are not evidence of human efficacy.
 Identify one intervention-condition pair. A real combination regimen is one
 intervention, but unrelated treatments listed in a round-up are not a combination.
+Different arms of one trial are not unrelated roundup items. A report comparing
+monotherapy with a combination still reports a treatment study: identify the main
+experimental treatment or regimen and use its comparators as study context.
 Choose a single pair only when it is clearly the main subject. Otherwise return
 about_a_treatment false with empty identification fields and explain in the gist
 that the text contains several separate claims, rather than merging their names.
