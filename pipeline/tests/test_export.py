@@ -1455,6 +1455,24 @@ def cards_by_kind(data: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return {card["kind"]: card for card in data["claims"][0]["background"]}
 
 
+def test_old_component_links_are_not_exported_as_the_whole_combination(
+    session: Session, fixture_json
+):
+    claim = new_claim(session)
+    [intervention] = entities_of(session, claim)
+    intervention.name = "EX-1 plus semaglutide"
+    component = add_term(session, claim, "C100001", "Semaglutide", role=TermRole.INTERVENTION)
+    drug = add_drug(session, claim, fixture_json, "semaglutide", "SEMAGLUTIDE")
+    add_term(session, claim, "D000001", "Anodontia")
+
+    data = exported(session)
+
+    assert [(c["kind"], c["label"]) for c in data["claims"][0]["background"]] == [
+        ("condition", "Anodontia")
+    ]
+    assert component.review_state is drug.review_state is ReviewState.APPROVED
+
+
 def test_drug_with_one_protein_target_gives_a_drug_card_and_that_targets_card(
     session: Session, fixture_json
 ):

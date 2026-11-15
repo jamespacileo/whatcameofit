@@ -1,6 +1,9 @@
 """A claim's entities: adding them, their synonyms, and the origin paper.
 Behavior: openspec entity-resolution."""
 
+import re
+from collections.abc import Sequence
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -38,6 +41,22 @@ def entities_of(session: Session, claim: Claim) -> list[Entity]:
     return list(
         session.scalars(select(Entity).where(Entity.claim_id == claim.id).order_by(Entity.id))
     )
+
+
+def intervention_components(name: str) -> set[str]:
+    """Explicit components of a named regimen, never inferred from other names."""
+    parts = re.split(r"\s+(?:and|plus|with(?:\s+or\s+without)?)\s+|\s*[+/]\s*", name, flags=re.I)
+    return (
+        {name_key(part.strip(" ,;")) for part in parts if part.strip(" ,;")}
+        if len(parts) > 1
+        else set()
+    )
+
+
+def whole_intervention_names(names: Sequence[str]) -> list[str]:
+    """Whole names, excluding aliases that merely repeat one explicit component."""
+    components = intervention_components(names[0]) if names else set()
+    return [name for name in names if name.strip() and name_key(name) not in components]
 
 
 def development_codes(session: Session, entity: Entity) -> list[str]:

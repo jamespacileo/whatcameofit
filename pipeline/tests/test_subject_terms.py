@@ -1511,6 +1511,61 @@ def test_drug_found_under_another_of_the_interventions_names(session: Session):
     assert run.link.reasons == [{"code": DRUG_NAME_EQUALS_NAME, "name": "tirzepatide"}]
 
 
+@pytest.mark.parametrize(
+    "regimen", ["EX-1 plus EX-2", "EX-1/EX-2", "EX-1 plus EX-2, with or without EX-3"]
+)
+def test_combination_component_is_not_the_interventions_background_card(
+    session: Session, regimen: str
+):
+    """A confidently misread component still cannot describe the whole regimen."""
+    claim = new_claim(session, intervention=regimen)
+    add_synonym(session, claim.slug, regimen, "EX-1")
+    component = ("C100001", "EX-1")
+    approve_trials(session, claim, [trial("NCT00000001", interventions=(component,))])
+    backend = Reader({"EX-1": ("same", 1.0)})
+
+    link_terms(
+        session,
+        claim,
+        vocabulary=Vocabulary(labels={"ex-1": [LabelledTerm(*component)]}),
+        backend=backend,
+        now=NOW,
+        accept_above=ACCEPT,
+        reject_below=REJECT,
+    )
+
+    assert not any(t.review_state is ReviewState.APPROVED for t in links(session, claim).values())
+    assert backend.calls == [], "An explicit component needs no paid classification."
+
+
+def test_whole_combination_alias_remains_a_background_candidate(session: Session):
+    claim = new_claim(session, intervention="EX-1 plus EX-2")
+    add_synonym(session, claim.slug, "EX-1 plus EX-2", "Dualex")
+    backend = Reader({"Dualex": ("same", 0.98)})
+    link_terms(
+        session,
+        claim,
+        vocabulary=Vocabulary(labels={"dualex": [LabelledTerm("C100002", "Dualex")]}),
+        backend=backend,
+        now=NOW,
+        accept_above=ACCEPT,
+        reject_below=REJECT,
+    )
+    [link] = links(session, claim).values()
+    assert link.label == "Dualex" and link.review_state is ReviewState.APPROVED
+
+
+def test_only_one_listed_combination_component_still_gets_no_drug_card(session: Session):
+    claim = new_claim(session, intervention="EX-1 plus semaglutide")
+    add_synonym(session, claim.slug, "EX-1 plus semaglutide", "semaglutide")
+    drugs = Drugs({"semaglutide": SEMAGLUTIDE})
+
+    run = link_drug(session, claim, drugs=drugs, now=NOW)
+
+    assert run.link is None and not run.added
+    assert drugs.searched == ["EX-1 plus semaglutide"]
+
+
 def test_procedure_no_drug_is_named_after_gets_no_drug_link(session: Session):
     """Scenario: Procedure"""
     claim = new_claim(session, slug="ovary-ex9", intervention="Opportunistic salpingectomy")

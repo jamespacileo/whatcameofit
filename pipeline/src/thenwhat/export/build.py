@@ -19,7 +19,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.entry import articles_of, promises_of
+from thenwhat.claims.entities import intervention_components
+from thenwhat.claims.entry import articles_of, name_key, promises_of
 from thenwhat.claims.status import refresh_status, status_history
 from thenwhat.claims.verticals import GROUPS, RETIRED_VERTICALS, VERTICAL_GROUPS, VERTICALS
 from thenwhat.db.models import (
@@ -910,7 +911,7 @@ def _trials(
     return trials
 
 
-def _background(session: Session, claim: Claim) -> list[ExportedCard]:
+def _background(session: Session, claim: Claim, intervention: str) -> list[ExportedCard]:
     """At most one card for the claim's condition and one for its intervention: the
     approved exact link with the highest score or, with none, the approved broader one
     or, for the intervention with neither, the approved kind link. Then at most one
@@ -919,6 +920,7 @@ def _background(session: Session, claim: Claim) -> list[ExportedCard]:
     A link whose source is not accepted in the list of sources gives no card, nor does
     one whose term has no stored record, since a card states when its record was read.
     """
+    components = intervention_components(intervention)
     approved = list(
         session.scalars(
             select(ClaimTerm)
@@ -933,6 +935,8 @@ def _background(session: Session, claim: Claim) -> list[ExportedCard]:
     )
     cards: list[ExportedCard] = []
     drug, drugs_target = _drug_cards(session, claim)
+    if drug is not None and name_key(drug.label) in components:
+        drug, drugs_target = None, None
     # The drug source's own target comes before a gene named in the intervention.
     for role in (TermRole.CONDITION, TermRole.INTERVENTION, TermRole.DRUG, TermRole.TARGET):
         if role is TermRole.DRUG:
@@ -947,7 +951,9 @@ def _background(session: Session, claim: Claim) -> list[ExportedCard]:
                     made
                     for term in approved
                     if term.role is role and term.fit is fit
+                    if role is not TermRole.INTERVENTION or name_key(term.label) not in components
                     if (made := _card(session, term)) is not None
+                    if role is not TermRole.INTERVENTION or name_key(made.label) not in components
                 ),
                 None,
             )
@@ -1247,7 +1253,7 @@ def build_export(
                 matches=_matches(session, claim),
                 trials=trials,
                 papers=papers.listed(),
-                background=_background(session, claim),
+                background=_background(session, claim, intervention.name),
                 organisations=organisations,
                 reported_statements=_statements(session, claim),
                 failure_flags=[

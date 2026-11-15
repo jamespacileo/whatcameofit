@@ -8,7 +8,7 @@ from datetime import datetime
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.entities import development_codes
+from thenwhat.claims.entities import development_codes, whole_intervention_names
 from thenwhat.claims.entry import NamedClaim
 from thenwhat.claims.verticals import VERTICALS
 from thenwhat.db.models import Claim, ClaimTerm, DecisionLog, Entity, EntityMatch
@@ -80,7 +80,9 @@ TERM_QUESTIONS = {
         f"- {BROADER}: it names a class or kind of treatment that includes the claim's"
         " intervention.\n"
         f"- {SOMETHING_ELSE}: it names a different treatment, such as another drug given"
-        " in the same trials, or something that is not the claim's intervention."
+        " in the same trials, just one component of the claim's combination regimen,"
+        " or something that is not the claim's intervention. A component is neither"
+        " the complete regimen nor a broader class containing that regimen."
     ),
 }
 
@@ -157,9 +159,8 @@ def _intervention_text(session: Session, claim: Claim) -> str:
     ).first()
     names = ""
     if intervention is not None:
-        also = (
-            f" (also known as: {', '.join(intervention.synonyms)})" if intervention.synonyms else ""
-        )
+        aliases = whole_intervention_names([intervention.name, *intervention.synonyms])[1:]
+        also = f" (also known as: {', '.join(aliases)})" if aliases else ""
         codes = development_codes(session, intervention)
         coded = f" (development codes: {', '.join(codes)})" if codes else ""
         names = f"\nIntervention: {intervention.name}{also}{coded}."

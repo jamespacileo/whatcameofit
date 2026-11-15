@@ -14,7 +14,8 @@ from typing import Protocol
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.entities import entities_of
+from thenwhat.claims.entities import entities_of, intervention_components, whole_intervention_names
+from thenwhat.claims.entry import name_key
 from thenwhat.claims.mesh_areas import approved_trial_payloads
 from thenwhat.db.models import Claim, ClaimTerm, TermRecord
 from thenwhat.decide.core import Backend
@@ -186,13 +187,15 @@ def _definition(record: TermRecord | None) -> str | None:
 def intervention_names(session: Session, claim: Claim) -> list[str]:
     """The claim's intervention's name and its other names. Search phrases are not
     names: they were written for searching the registry."""
-    return [
-        name
-        for entity in entities_of(session, claim)
-        if entity.type is EntityType.INTERVENTION
-        for name in [entity.name, *entity.synonyms]
-        if name.strip()
-    ]
+    return whole_intervention_names(
+        [
+            name
+            for entity in entities_of(session, claim)
+            if entity.type is EntityType.INTERVENTION
+            for name in [entity.name, *entity.synonyms]
+            if name.strip()
+        ]
+    )
 
 
 def _label_matches(
@@ -240,6 +243,14 @@ def link_terms(
         label_matches=label_matches,
         limit=limit,
     )
+    names = intervention_names(session, claim)
+    components = intervention_components(names[0]) if names else set()
+    candidates = [
+        candidate
+        for candidate in candidates
+        if candidate.role is not TermRole.INTERVENTION
+        or name_key(candidate.label) not in components
+    ]
     known = {(term.role, term.source_name, term.external_id) for term in terms_of(session, claim)}
     added: list[ClaimTerm] = []
     for candidate in candidates:
@@ -265,6 +276,7 @@ def link_terms(
         if term.score is None
         and term.review_state is ReviewState.PENDING
         and term.source_name == vocabulary.name
+        and (term.role is not TermRole.INTERVENTION or name_key(term.label) not in components)
     ]
     scored: list[ClaimTerm] = []
     unscored: list[ClaimTerm] = []
