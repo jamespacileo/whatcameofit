@@ -1,21 +1,20 @@
 ---
-// The band's row of facts: what the treatment is and what it was claimed for, as
-// links to their rows in "At a glance". Across the foot of the band, under the title
-// and the status and ruled off from both: it names terms and never explains the
-// status. A fact from a card carries the card's score. Openspec site-publishing:
-// "At a glance".
-import { bandFacts, rowId, type GlanceCards } from "../lib/glance";
+// The band's row: what kind of thing the treatment is and a gene, when a card gives
+// them, as links down to their rows in "At a glance". Only what the headline does not
+// already say, and no score beside the status: each row carries its own. Across the
+// foot of the band, ruled off from the title and the status. Openspec site-publishing:
+// "The band names what the treatment is".
+import ArrowDown from "@lucide/astro/icons/arrow-down";
+import { rowId, type BandFact } from "../lib/glance";
 
 interface Props {
-  claim: { intervention: { name: string }; indication: string };
-  cards: GlanceCards;
+  facts: BandFact[];
 }
 
-const { claim, cards } = Astro.props;
-const facts = bandFacts(claim, cards);
+const { facts } = Astro.props;
 ---
 
-<nav class="glance-band" aria-label="At a glance" data-pagefind-ignore>
+<nav class="glance-band" aria-label="What the treatment is" data-pagefind-ignore>
   <div class="wrap band-grid">
     <ul class="plain">
       {
@@ -23,8 +22,11 @@ const facts = bandFacts(claim, cards);
           <li>
             <a href={`#${rowId(fact.row)}`}>
               <span class="glance-band-label">{fact.label}</span>
-              <span class="glance-band-value">{fact.value}</span>
-              {fact.note && <span class="glance-band-note">{fact.note}</span>}
+              <span class="glance-band-value">
+                {fact.value}
+                <ArrowDown size={14} stroke-width={2.2} aria-hidden="true" />
+              </span>
+              <span class="visually-hidden">, details further down this page</span>
             </a>
           </li>
         ))

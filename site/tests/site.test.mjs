@@ -1133,8 +1133,10 @@ test("Scenario: Claim with a condition card only", () => {
   assert.equal(count(section, 'class="card-kind"'), 1);
   assert.match(section, /The condition/);
   assert.match(section, /href="https:\/\/vocabulary\.example\/D900003"[^>]*>\s*Example Condition\s*</);
-  // The definition is open, marked as the source's words and unchanged.
-  assert.match(section, /<details class="card-words" open>[\s\S]*Definition, in the source’s words/);
+  // The card is one press away in its row, its score in sight on the summary; inside,
+  // the definition is marked as the source's words and unchanged.
+  assert.match(section, /<details class="glance-more">\s*<summary>\s*<span>Source and definition<\/span>\s*<span class="glance-score">High match · \d+%<\/span>/);
+  assert.match(section, /<div class="card-words">[\s\S]*Definition, in the source’s words/);
   assert.match(section, /<blockquote[^>]*>A synthetic definition of the example condition\.<\/blockquote>/);
   assert.match(section, /The trial registry files this claim’s one trial under this term\./);
   // In its row, under the condition's own words.
@@ -1142,14 +1144,10 @@ test("Scenario: Claim with a condition card only", () => {
   // At the top of the sheet, before the record in brief, and not inside the status panel.
   assert.ok(html.indexOf('id="glance"') < html.indexOf('id="brief"'));
   assert.ok(html.indexOf('id="glance"') < html.indexOf('id="timetable"'));
-  const digest = html.slice(html.indexOf('class="digest"'), html.indexOf('class="glance-band"'));
-  assert.ok(!digest.includes("card-kind") && !digest.includes("glance"));
-  // The band's row names the treatment and the condition, each a link to its row.
-  const row = bandRowOf(html);
-  assert.ok(row, "no band row");
-  assert.match(row, /href="#glance-treatment"/);
-  assert.match(row, /href="#glance-condition"/);
-  assert.ok(!row.includes("Definition"));
+  const digest = html.slice(html.indexOf('class="digest"'), html.indexOf('class="glance"'));
+  assert.ok(!digest.includes("card-kind") && !digest.includes("glance-"));
+  // A condition card alone adds nothing the headline does not say: no row in the band.
+  assert.ok(!bandRowOf(html));
 });
 
 test("Scenario: Claim with no card", () => {
@@ -1169,8 +1167,8 @@ test("Scenario: Broader term, and Reason shown on request", () => {
   assert.match(section, /Match to this claim: high, 90%/);
   assert.match(section, /The trial registry files 5 of this claim’s 6 trials under this term\./);
   assert.match(section, /The term’s label is the same as “examplumab”, a name this claim uses\./);
-  // A term its source gives no definition has no disclosure to press.
-  assert.equal(count(section, '<details class="card-words" open>'), 1);
+  // A term its source gives no definition says so in place of the source's words.
+  assert.equal(count(section, '<div class="card-words">'), 1);
   assert.match(section, /The source gives this term no definition\./);
 });
 
@@ -1181,9 +1179,10 @@ test("Scenario: Definition in the vocabulary's style, and Vocabulary that asks f
     section,
     /Medical Subject Headings \(MeSH\), U\.S\. National Library of Medicine, 2026 edition\s*<\/a>\s*\. Record read 14 November 2026\./,
   );
-  // The section's note: terms, not evidence, not advice, no endorsement.
-  assert.match(section, /They are not about this claim’s evidence and they are not medical advice\./);
-  assert.match(section, /Naming a source does not mean it endorses this site\./);
+  // The section's note: terms, not evidence, not advice, no endorsement, with the method.
+  assert.match(section, /They are not about this claim’s evidence and they are not medical advice/);
+  assert.match(section, /naming a source does not mean it endorses this site/);
+  assert.match(section, /href="\/how-it-works#background-on-a-claims-terms">How these terms are chosen</);
 });
 
 test("Scenario: Card for a drug class with approved uses", () => {
@@ -1335,13 +1334,14 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   const built = fs.readFileSync(path.join(dist, "approved-claim/index.html"), "utf8");
   const section = backgroundOf(built);
   assert.equal(count(section, 'class="card-kind"'), 3);
-  // Scenario: Device with a kind card. The band names the kind and the gene with their
-  // scores, each a link to its row.
+  // Scenario: Device with a kind card. The band names the kind and the gene, each a link
+  // down to its row, with no score beside the status; the rows carry the scores.
   const row = bandRowOf(built);
-  assert.match(row, /href="#glance-kind">\s*<span class="glance-band-label">Kind<\/span>\s*<span class="glance-band-value">Example Stimulation Therapy<\/span>\s*<span class="glance-band-note">High match · 90%<\/span>/);
-  assert.match(row, /href="#glance-target">\s*<span class="glance-band-label">Gene named<\/span>\s*<span class="glance-band-value">EXG1<\/span>/);
-  assert.match(section, /<div id="glance-kind">\s*<dt>Kind of treatment<\/dt>/);
-  assert.match(section, /<div id="glance-target">\s*<dt>Gene named in its name<\/dt>/);
+  assert.match(row, /href="#glance-kind">\s*<span class="glance-band-label">Kind of treatment<\/span>\s*<span class="glance-band-value">\s*Example stimulation therapy/);
+  assert.match(row, /href="#glance-target">\s*<span class="glance-band-label">Gene named<\/span>\s*<span class="glance-band-value">\s*EXG1/);
+  assert.doesNotMatch(row, /\d+%|Treatment<|Claimed for/);
+  assert.match(section, /<div id="glance-kind">\s*<dt>Kind of treatment<\/dt>\s*<dd>\s*<span class="glance-value">Example stimulation therapy<\/span>/);
+  assert.match(section, /<div id="glance-target">\s*<dt>Gene named<\/dt>/);
   // Scenario: Target the report names.
   assert.match(section, /A gene named in the treatment’s name/);
   assert.match(section, /href="https:\/\/targets\.example\/target\/ENSG00000000001"[^>]*>\s*EXG1\s*</);
@@ -1368,20 +1368,24 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   const drugPage = fs.readFileSync(path.join(dist, "phase-claim/index.html"), "utf8");
   const drugs = backgroundOf(drugPage);
   assert.equal(count(drugs, 'class="card-kind"'), 4);
-  // A drug record's kind of molecule is the band's kind, and its target is what it acts on.
+  // A drug record's kind of molecule is the band's kind, labelled as its row is, and its
+  // target is what it acts on.
   const drugRow = bandRowOf(drugPage);
-  assert.match(drugRow, /href="#glance-drug">\s*<span class="glance-band-label">Kind<\/span>\s*<span class="glance-band-value">Antibody<\/span>\s*<span class="glance-band-note">Matched by exact name<\/span>/);
+  assert.match(drugRow, /href="#glance-drug">\s*<span class="glance-band-label">Kind of molecule<\/span>\s*<span class="glance-band-value">\s*Antibody/);
   assert.match(drugRow, /<span class="glance-band-label">Acts on<\/span>/);
+  // Its row: the kind of molecule, what the record says it acts on, and the rule in sight.
+  assert.match(drugs, /<div id="glance-drug">\s*<dt>Kind of molecule<\/dt>\s*<dd>\s*<span class="glance-value">Antibody<\/span>\s*<span class="aka">Inhibitor of Example receptor 1<\/span>/);
+  assert.match(drugs, /<span class="glance-score">Matched by exact name<\/span>/);
   assert.match(drugs, /The drug, as a drug database records it/);
-  assert.match(drugs, /href="https:\/\/targets\.example\/drug\/CHEMBL0000001"[^>]*>\s*EXAMPLUMAB\s*</);
+  assert.match(drugs, /href="https:\/\/targets\.example\/drug\/CHEMBL0000001"[^>]*>\s*examplumab\s*</);
   assert.match(drugs, /<div class="card-facts">\s*<p>Antibody<\/p>\s*<ul>\s*<li>Inhibitor of Example receptor 1<\/li>\s*<\/ul>/);
   // No percentage: the rule stands where a score would, and opens to its sentence.
-  assert.match(drugs, /<span>Matched by exact name<\/span>/);
+  assert.match(drugs, /<p class="match-why-head">Matched by exact name<\/p>/);
   assert.match(drugs, /is the same as “examplumab”, a name this claim uses\. Matched by that rule, so there is no percentage\./);
   assert.match(drugs, /href="https:\/\/drugs\.example\/"[^>]*>\s*Kind of molecule and what it acts on: Example Drugs, An Institute, CC BY-SA 3\.0 Unported\s*</);
   // Its record's one target, worded as the record's and not as a gene the name mentions.
   assert.match(drugs, /What the drug acts on, as its record says/);
-  assert.match(drugs, /<span>From the drug’s record<\/span>/);
+  assert.match(drugs, /<p class="match-why-head">From the drug’s record<\/p>/);
   assert.match(drugs, /That the drug acts on it: Example Drugs, An Institute, CC BY-SA 3\.0 Unported/);
   assert.match(drugs, /nothing here is a reason to start or stop a medicine\./);
   assert.ok(!drugs.includes("known to work through that gene"));
@@ -1394,7 +1398,7 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   assert.match(section, /Its kind was chosen from this site’s fixed list of kinds\./);
   assert.match(section, /The trial registry lists it as a device in 3 of this claim’s trials\./);
   assert.match(section, /<blockquote[^>]*>A synthetic definition of a KIND OF TREATMENT, as the vocabulary writes it\.<\/blockquote>/);
-  assert.match(section, /the note is for the kind of treatment it is, and says so/);
+  assert.match(section, /The kind of treatment this is, not the treatment itself/);
   // The open data file carries the kind card with its reasons.
   const data = JSON.parse(fs.readFileSync(path.join(dist, "data/claims.json"), "utf8"));
   const cards = data.claims.find((claim) => claim.slug === "approved-claim").background;

@@ -1010,7 +1010,7 @@ body.embed {
 /* A headline that is a whole sentence is set smaller and wider, so the answer
    beneath it stays on the first screen. */
 .title.long {
-  font-size: clamp(1.35rem, 3.4vw, 1.7rem);
+  font-size: clamp(1.5rem, 3.4vw, 1.7rem);
   line-height: 1.22;
   letter-spacing: -0.01em;
   max-width: 44ch;
@@ -1019,6 +1019,8 @@ body.embed {
 .lede {
   font-size: 1.08rem;
   margin-top: 1rem;
+  max-width: var(--measure);
+  text-wrap: pretty;
 }
 
 /* The digest: where the claim stands, answered first. */
@@ -1440,14 +1442,50 @@ main nav.contents ul li + li {
   color: var(--muted);
 }
 
-.glance-value + .term-card,
-.aka + .term-card {
-  margin-top: 0.55rem;
+/* A row's card is one press away: its summary says what is inside and, in sight, how
+   well the term fits, as every match on the site does. */
+.glance-more {
+  margin-top: 0.3rem;
+}
+
+.glance-more summary {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.55rem;
+  min-height: 2rem;
+  cursor: pointer;
+  list-style: none;
+  color: var(--blue);
+  font-size: 0.9rem;
+}
+
+.glance-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.glance-more summary > span:first-child {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.glance-more summary:hover > span:first-child {
+  text-decoration-thickness: 2px;
+}
+
+.glance-score {
+  color: var(--muted);
+}
+
+.glance-more[open] summary svg {
+  transform: rotate(180deg);
 }
 
 .glance-note {
   margin: 0.7rem 0 0;
-  max-width: var(--measure);
+  max-width: 62ch;
+  text-wrap: pretty;
   font-size: 0.85rem;
   color: var(--muted);
 }
@@ -3118,13 +3156,22 @@ main ul:not([class]) li + li {
   font-size: 0.9rem;
 }
 
-/* A background card: a term, the source's own words and the source, with its score
-   at the right as every match has. */
+/* A background card, inside its row's disclosure in "At a glance": the term, the
+   source's own words, then a quiet credit, the score and its reasons, one column. */
 .term-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 0.2rem 1rem;
+  gap: 0.55rem;
+  margin-top: 0.6rem;
+  padding: 0.85rem 1rem 0.95rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.65rem;
+  max-width: 64ch;
+}
+
+.card-head {
+  margin: 0;
+  display: grid;
+  gap: 0.05rem;
 }
 
 .card-kind {
@@ -3137,29 +3184,56 @@ main ul:not([class]) li + li {
   justify-self: start;
 }
 
-.card-words {
-  margin-top: 0.2rem;
+.card-words-label {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
-.card-words summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  cursor: pointer;
-  list-style: none;
-  color: var(--blue);
+/* Credit is owed and given, in the small grey of a footnote: a source is named, never
+   louder than what it says. */
+.term-credit {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
 }
 
-.card-words summary::-webkit-details-marker {
-  display: none;
+.term-credit a {
+  color: var(--muted);
+  text-decoration-color: var(--rule);
 }
 
-.card-words[open] summary svg {
-  transform: rotate(180deg);
+.term-credit a:hover {
+  color: var(--ink);
+  text-decoration-color: currentColor;
+}
+
+.term-card .match-why {
+  justify-self: start;
+  text-align: left;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.term-card .match-why p {
+  margin: 0;
+  max-width: none;
+  font-size: inherit;
+}
+
+.term-card .match-why-head {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.term-note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
 .card-words blockquote {
-  margin: 0.4rem 0 0;
+  margin: 0.3rem 0 0;
   padding: 0.7rem 0.9rem;
   background: var(--panel);
   border-radius: 0.65rem;
@@ -3196,7 +3270,7 @@ main ul:not([class]) li + li {
 }
 
 .term-card .match-why p + p {
-  margin-top: 0.4rem;
+  margin-top: 0.25rem;
 }
 
 /* Organisations named: each once, its name, what the registry says it is, and the part
@@ -3934,6 +4008,7 @@ main ul:not([class]) li + li {
 
 .colophon .details p {
   margin: 0;
+  max-width: var(--measure);
 }
 
 /* Motion. Two authored moments tell the site's story: the name's question mark
@@ -5032,8 +5107,8 @@ body.framed {
 
 .glance-band ul {
   grid-column: 2 / -1;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  display: flex;
+  flex-wrap: wrap;
 }
 
 /* A list's own row rules are for white pages; on the navy the facts are ruled apart. */
@@ -5066,24 +5141,34 @@ body.framed {
 }
 
 .band.record .glance-band a:hover .glance-band-value {
-  text-decoration: underline;
-  text-underline-offset: 0.18em;
+  text-decoration-thickness: 2px;
 }
 
 .band.record .glance-band a:focus-visible {
   outline-offset: -3px;
 }
 
-.glance-band-label,
-.glance-band-note {
+.glance-band-label {
   font-size: 0.78rem;
   color: var(--navy-soft);
 }
 
+/* Underlined at rest, with an arrow down: a link to further down this page, which a
+   touch screen cannot learn from a hover. */
 .glance-band-value {
   font-weight: 600;
   line-height: 1.3;
   overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgb(255 255 255 / 0.5);
+  text-underline-offset: 0.2em;
+}
+
+.glance-band-value svg {
+  margin-left: 0.25rem;
+  vertical-align: -0.15em;
+  color: var(--on-navy);
 }
 
 /* Where the frame's side list gives way, the row spans the band from its left edge. */
@@ -5542,37 +5627,14 @@ body.framed {
 
   .glance-band ul {
     grid-column: 1;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .glance-band li:nth-child(odd) {
-    border-left: 0;
-  }
-
-  .band.record .glance-band li:nth-child(odd) a {
-    padding-left: 0;
-  }
-
-  .band.record .glance-band li:nth-child(n + 3) {
-    border-top: 1px solid rgb(255 255 255 / 0.14);
   }
 
   .glance-rows > div {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .term-card {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .term-card .match-why {
-    justify-self: start;
-    text-align: left;
-  }
-
-  .term-card .match-why p {
-    margin-left: 0;
-    max-width: none;
+  .glance-more summary {
+    min-height: 2.75rem;
   }
 
   .phone-reported {

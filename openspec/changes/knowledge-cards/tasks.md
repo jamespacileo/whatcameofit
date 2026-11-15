@@ -120,6 +120,7 @@ Asked for by the operator on 2026-11-15 ("inspired by examine.com ... a knowledg
 - [x] 6a.1 Replace the folded "Background" section with "At a glance" before the record in brief: the treatment, kind, drug record, target and condition rows with their cards and definitions open, then the claim's facts; verify by site test on a claim with one card, with four cards and with none
 - [x] 6a.2 End the record band with a row of linked facts (treatment, kind, target, condition) when a claim has a card, a card's value carrying its score; verify by site test and in the browser at phone and desktop widths
 - [x] 6a.3 Record "At a glance" and the band's row in `DESIGN.md`
+- [x] 6a.4 After the critique of 2026-11-15 (22/36), as the operator chose: one line per row with the card one press away and its score on the summary; the band's row trimmed to the kind and a target, with no score and a visible link cue; one label per source in the band and the rows; a drug's name in the claim's case; quieter credits; the section note cut to three sentences; summary, note and data-sources measures capped; the long title larger on a phone. Verify by site test and in the browser at phone and desktop widths
 
 ## 7. Integration
 

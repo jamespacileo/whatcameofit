@@ -53,7 +53,7 @@ import { confidenceLabel, stageReadingNote } from "../lib/confidence";
 import MatchList from "../components/MatchList.astro";
 import Glance from "../components/Glance.astro";
 import GlanceBand from "../components/GlanceBand.astro";
-import { GLANCE_ID, GLANCE_TITLE, glanceCards } from "../lib/glance";
+import { GLANCE_ID, GLANCE_TITLE, bandFacts, glanceCards } from "../lib/glance";
 import Organisations from "../components/Organisations.astro";
 import { publisherOf, publisherText } from "../lib/organisations";
 import Paper from "../components/Paper.astro";
@@ -476,9 +476,12 @@ const sections = [
       </div>
     </div>
     {
-      /* What the treatment is and what it was claimed for, under the title and the
-         status and ruled off from both. Only when a card gives more than the title. */
-      background.length > 0 && <GlanceBand claim={claim} cards={glanceCards(background)} />
+      /* What kind of thing the treatment is and a gene, under the title and the status
+         and ruled off from both: only what the headline does not say, and only when a
+         card gives it. */
+      bandFacts(glanceCards(background)).length > 0 && (
+        <GlanceBand facts={bandFacts(glanceCards(background))} />
+      )
     }
   </section>
 
