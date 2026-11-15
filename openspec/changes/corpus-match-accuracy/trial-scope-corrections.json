@@ -1,0 +1,109 @@
+{
+  "checked_at": "2026-11-15T17:53:16.960368+00:00",
+  "claim": "stemirac-spinal-cord-injury",
+  "primary_identity_sources": [
+    "https://www.pmda.go.jp/files/000231946.pdf",
+    "https://pubmed.ncbi.nlm.nih.gov/33667953/"
+  ],
+  "records": [
+    {
+      "match_id": 14710,
+      "trial_id": "NCT01446640",
+      "source_url": "https://clinicaltrials.gov/study/NCT01446640",
+      "fetched_at": "2026-11-15T13:20:42.873802+00:00",
+      "previous_review_state": "approved",
+      "previous_decider": "rule",
+      "previous_score": 0.98,
+      "previous_events": [
+        {
+          "id": 9539,
+          "state": "approved",
+          "decider": "rule"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "The registry tests combined intravenous and intrathecal MSC administration, not the claimed single intravenous Stemirac product/regimen."
+    },
+    {
+      "match_id": 14715,
+      "trial_id": "NCT01909154",
+      "source_url": "https://clinicaltrials.gov/study/NCT01909154",
+      "fetched_at": "2026-11-15T13:20:43.870367+00:00",
+      "previous_review_state": "approved",
+      "previous_decider": "rule",
+      "previous_score": 0.96,
+      "previous_events": [
+        {
+          "id": 9541,
+          "state": "approved",
+          "decider": "rule"
+        },
+        {
+          "id": 9542,
+          "state": "approved",
+          "decider": "rule"
+        },
+        {
+          "id": 9543,
+          "state": "approved",
+          "decider": "rule"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "The registry tests local subarachnoid/intramedullary administration, not intravenous Stemirac."
+    },
+    {
+      "match_id": 14709,
+      "trial_id": "NCT04288934",
+      "source_url": "https://clinicaltrials.gov/study/NCT04288934",
+      "fetched_at": "2026-11-15T13:20:41.891353+00:00",
+      "previous_review_state": "approved",
+      "previous_decider": "rule",
+      "previous_score": 0.88,
+      "previous_events": [
+        {
+          "id": 9536,
+          "state": "approved",
+          "decider": "rule"
+        },
+        {
+          "id": 9537,
+          "state": "approved",
+          "decider": "rule"
+        },
+        {
+          "id": 9538,
+          "state": "approved",
+          "decider": "rule"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "The registry tests marrow-derived or Wharton-jelly cells injected into spinal medulla, not intravenous Stemirac."
+    },
+    {
+      "match_id": 14713,
+      "trial_id": "NCT05671796",
+      "source_url": "https://clinicaltrials.gov/study/NCT05671796",
+      "fetched_at": "2026-11-15T13:20:43.369536+00:00",
+      "previous_review_state": "approved",
+      "previous_decider": "rule",
+      "previous_score": 0.97,
+      "previous_events": [
+        {
+          "id": 9540,
+          "state": "approved",
+          "decider": "rule"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "The registry tests two intrathecal cell transplants 90 days apart, not the claimed single intravenous Stemirac infusion."
+    }
+  ],
+  "previous_summary": "A phase 2 trial treated 13 people with non-penetrating spinal cord injuries using an infusion of their own bone-marrow stem cells. By six months, all but one had sensory or motor improvements, and no adverse effects were reported. The researchers called for larger follow-up studies while noting that some recovery could have occurred spontaneously.",
+  "previous_claim_decider": "rule",
+  "corrected_summary": "A phase 2 case series gave 13 people with spinal cord injuries a single intravenous infusion of their own bone-marrow mesenchymal cells expanded in autologous serum. Twelve improved on the ASIA scale by six months. The uncontrolled study could not exclude spontaneous recovery, placebo effects or observer bias."
+}

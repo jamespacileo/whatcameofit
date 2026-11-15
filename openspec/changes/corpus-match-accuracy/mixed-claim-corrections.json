@@ -1,0 +1,140 @@
+{
+  "checked_at": "2026-11-15T17:50:33.673052+00:00",
+  "operation": "archive",
+  "reason": "Correct proven mixed-product identities before normal publication.",
+  "reversible": true,
+  "records": [
+    {
+      "id": 359,
+      "slug": "covid-19-vaccine-candidate-prevention-of-covid-19",
+      "intervention": "COVID-19 vaccine candidate",
+      "indication": "Prevention of COVID-19",
+      "previous_archived_at": null,
+      "previous_archive_reason": null,
+      "review_state": "approved",
+      "source_urls": [
+        "https://apnews.com/8089a3d0ec8f9fde971bddd7b3aa2ba1",
+        "https://www.cbsnews.com/news/astrazeneca-temporarily-pauses-coronavirus-vaccine-trial-after-participant-may-have-suffered-adverse-reaction/"
+      ],
+      "reason": "Generic vaccine-candidate identity joined an AstraZeneca source to a claim describing a different vaccine trial. Separate product claims are required.",
+      "archived_at": "2026-11-15T17:50:33.794252+00:00"
+    },
+    {
+      "id": 417,
+      "slug": "covid-19-vaccine-covid-19",
+      "intervention": "COVID-19 vaccine",
+      "indication": "COVID-19",
+      "previous_archived_at": null,
+      "previous_archive_reason": null,
+      "review_state": "approved",
+      "source_urls": [
+        "https://www.wired.com/story/the-astrazeneca-covid-vaccine-data-isnt-up-to-snuff/",
+        "https://www.theguardian.com/world/2020/dec/08/oxford-astrazeneca-covid-vaccine-has-70-efficacy-full-trial-data-shows",
+        "https://apnews.com/article/oxford-coronavirus-pandemic-c99d26eb2946f6fde45a1edc002ff028",
+        "https://www.wired.com/story/does-the-astrazeneca-vaccine-also-stop-covid-transmission/",
+        "https://www.bbc.co.uk/news/health-54902908",
+        "https://www.bbc.com/news/health-55145696",
+        "https://www.bbc.com/news/uk-55227325",
+        "https://www.bbc.co.uk/news/health-55797312",
+        "https://www.washingtonpost.com/nation/2020/11/18/dolly-parton-moderna-vaccine-abumrad-covid/",
+        "https://www.cnbc.com/2021/03/11/denmark-suspends-use-of-astrazeneca-vaccine-over-reports-of-blood-clots.html",
+        "https://www.theguardian.com/world/2021/mar/18/astrazeneca-covid-vaccine-safe-ema-blood-clotting"
+      ],
+      "reason": "Generic vaccine identity joined sources explicitly naming Oxford-AstraZeneca, Moderna and Pfizer-BioNTech. Their trials and outcomes cannot be represented as one product.",
+      "archived_at": "2026-11-15T17:50:33.797946+00:00"
+    },
+    {
+      "id": 429,
+      "slug": "covid-19-vaccine-preventing-covid-19",
+      "intervention": "COVID-19 vaccine",
+      "indication": "Preventing COVID-19",
+      "previous_archived_at": null,
+      "previous_archive_reason": null,
+      "review_state": "approved",
+      "source_urls": [
+        "https://www.bbc.co.uk/news/health-54873105",
+        "https://www.statnews.com/2020/12/18/fda-eua-moderna-vaccine-covid19/",
+        "https://www.bbc.com/news/world-europe-56357760"
+      ],
+      "reason": "A Pfizer-BioNTech summary was joined to Moderna and Oxford-AstraZeneca sources through a generic vaccine name. Separate product claims are required.",
+      "archived_at": "2026-11-15T17:50:33.799554+00:00"
+    },
+    {
+      "id": 430,
+      "slug": "covid-19-vaccines-covid-19",
+      "intervention": "COVID-19 vaccines",
+      "indication": "COVID-19",
+      "previous_archived_at": null,
+      "previous_archive_reason": null,
+      "review_state": "approved",
+      "source_urls": [
+        "https://www.statnews.com/2021/01/25/in-a-major-setback-merck-to-stop-developing-its-two-covid-19-vaccines-and-focus-on-therapies/"
+      ],
+      "reason": "The recorded summary describes two separate Merck vaccine development programs, not one intervention or a combined regimen.",
+      "archived_at": "2026-11-15T17:50:33.801595+00:00"
+    },
+    {
+      "id": 422,
+      "slug": "pfizer-biontech-and-moderna-covid-19-vaccines-covid-19",
+      "intervention": "Pfizer-BioNTech and Moderna COVID-19 vaccines",
+      "indication": "COVID-19",
+      "previous_archived_at": null,
+      "previous_archive_reason": null,
+      "review_state": "approved",
+      "source_urls": [
+        "https://www.cnbc.com/2020/12/08/pfizer-moderna-covid-vaccine-side-effects-trials.html"
+      ],
+      "reason": "The source compares two separate vaccine products and trials, not a combined intervention.",
+      "archived_at": "2026-11-15T17:50:33.803482+00:00"
+    },
+    {
+      "id": 410,
+      "slug": "peanut-allergen-immunotherapy-by-oral-capsule-and-skin-patch",
+      "intervention": "Peanut allergen immunotherapy by oral capsule and skin patch",
+      "indication": "Peanut allergy",
+      "previous_archived_at": null,
+      "previous_archive_reason": null,
+      "review_state": "approved",
+      "source_urls": [
+        "https://www.ft.com/content/682bb942-4583-11e7-8d27-59b4dd6296b8"
+      ],
+      "reason": "The source describes oral AR101 and a separate Viaskin patch, not a combined regimen. Their evidence cannot be assigned to a single intervention.",
+      "archived_at": "2026-11-15T17:50:33.804560+00:00"
+    },
+    {
+      "id": 346,
+      "slug": "monoclonal-antibody-treatments-for-ebola-ebola-virus-disease",
+      "previous_archived_at": null,
+      "previous_archive_reason": null,
+      "review_state": "approved",
+      "source_urls": [
+        "https://www.wired.com/story/ebola-is-now-curable-heres-how-the-new-treatments-work/"
+      ],
+      "reason": "The stored summary describes two separate monoclonal-antibody treatments being compared, not one product or a combined regimen.",
+      "archived_at": "2026-11-15T17:56:39.343613+00:00"
+    },
+    {
+      "id": 450,
+      "slug": "weight-loss-medications-weight-loss",
+      "previous_archived_at": null,
+      "previous_archive_reason": null,
+      "review_state": "approved",
+      "source_urls": [
+        "https://www.nytimes.com/2023/01/24/style/ozempic-weight-loss-drugs-aging.html",
+        "https://www.theatlantic.com/health/archive/2024/03/ozempic-glp1-weight-loss-brain-gut/677645/",
+        "https://www.bloomberg.com/news/features/2024-08-07/ozempic-boom-inside-usa-s-weight-loss-drug-capital",
+        "https://www.healthline.com/health-news/ozempic-muscle-mass-loss",
+        "https://www.scientificamerican.com/article/why-ozempic-and-wegovy-dont-cause-weight-loss-for-everyone/",
+        "https://www.wired.com/story/glp1-no-weight-loss-ozempic-wegovy-mounjaro-semaglutide-tirzepatide/",
+        "https://www.theatlantic.com/health/archive/2024/12/diet-exercise-ozempic/680909/",
+        "https://www.nytimes.com/2023/09/18/well/ozempic-weight-loss-plateau.html",
+        "https://www.dailymail.co.uk/health/article-12000533/Now-Ozempic-patients-say-theyre-going-BALD-fat-loss-shot.html",
+        "https://www.newscientist.com/article/mg25934470-900-beyond-wegovy-could-the-next-wave-of-weight-loss-drugs-end-obesity/",
+        "https://www.usnews.com/news/health-news/articles/2024-06-06/its-safe-to-take-glp-1-weight-loss-meds-before-surgery-study"
+      ],
+      "reason": "The stored summary explicitly covers semaglutide and tirzepatide and the attached sources include multi-drug roundups. A generic weight-loss category cannot represent one product and its trials.",
+      "archived_at": "2026-11-15T17:56:39.352422+00:00"
+    }
+  ],
+  "updated_at": "2026-11-15T17:56:39.364719+00:00"
+}

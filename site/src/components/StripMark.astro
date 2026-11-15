@@ -1,0 +1,28 @@
+---
+// One mark of the record strip, drawn about its own date at x = 0 on an axis at y = 15.
+// A kind differs from the others by shape and by where it sits against the axis, so the
+// strip reads the same printed, in forced colours and without colour vision:
+// a registry record rises from the axis, posted results sit above it, a regulator's
+// decision and a news report sit on it, a promised date is the one dashed, amber mark.
+import type { StripMarkKind } from "../lib/record-strip";
+
+interface Props {
+  kind: StripMarkKind | "check";
+}
+
+const { kind } = Astro.props;
+---
+
+{kind === "record" && <line class="strip-record" x1="0" x2="0" y1="8" y2="15" />}
+{kind === "results" && <rect class="strip-results" x="-2.5" y="1" width="5" height="5" />}
+{kind === "decision" && <path class="strip-decision" d="M0 11.5 3.5 15 0 18.5 -3.5 15Z" />}
+{kind === "report" && <circle class="strip-report" cx="0" cy="15" r="3.75" />}
+{
+  kind === "promise" && (
+    <g class="strip-promise">
+      <line x1="0" x2="0" y1="1" y2="15" />
+      <path d="M0 1 6 3.5 0 6Z" />
+    </g>
+  )
+}
+{kind === "check" && <line class="strip-check" x1="0" x2="0" y1="7" y2="21" />}
