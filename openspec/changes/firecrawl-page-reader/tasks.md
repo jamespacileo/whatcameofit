@@ -2,7 +2,7 @@
 
 ## 1. The reader as a source
 
-- [ ] 1.1 Ask the operator where the Firecrawl service runs (self-hosted or cloud), then write its entry in `docs/sources.md` with the date checked: address kind, authentication, rate limit, and what its result cache, job queue and logs keep and for how long; verify the entry states plainly whether any article text outlives a read, and stop the change if it does
+- [ ] 1.1 The service is self-hosted (operator, 2026-11-15). Read its deployment configuration and Firecrawl's self-hosting guide, then write its entry in `docs/sources.md` with the date checked: that it is reachable only on the private network, authentication, version, any limit it applies, which cloud-only features it lacks, and what its result cache, job queue and container logs keep and for how long; verify the entry states plainly whether any article text outlives a read, and stop the change if it does and cannot be configured away
 - [ ] 1.2 Against the running service, by hand and outside tests, read one request-echo page and one page drawn by scripts with the request of `design.md` decision 5; verify and record in `docs/sources.md` that the outlet receives the contact User-Agent, that `rawHtml` is the page as drawn, and that a second read is not served from a kept copy. If any of the three fails, stop and tell the operator
 - [ ] 1.3 Add page reader to `GLOSSARY.md`, saying it fetches a page and decides nothing; verify the term matches the words in `specs/page-reading/spec.md`
 - [ ] 1.4 Run `thenwhat outlets` on main before any code changes and keep the report outside the repository as the baseline; verify it lists Read, Thin, Refused and Failed for every outlet in `docs/outlets.md`

@@ -13,6 +13,7 @@ See `proposal.md` for why. What shapes the approach:
   - `headers` sets request headers, a User-Agent included. `proxy` is `basic`, `enhanced` or `auto`.
   - Firecrawl reads robots.txt "before it crawls a site" under the token `FirecrawlAgent`. The documentation does not say this covers a single-page scrape, and says the token is not necessarily the User-Agent header sent.
   - A self-hosted service is addressed by its own URL and may need no key.
+- The operator's service is self-hosted (answered 2026-11-15). The pipeline reaches it on the private network; it is not served publicly. What a self-hosted service lacks compared with the cloud one (the operator's recollection of Firecrawl's self-hosting guide is that the stealth proxy engine is cloud-only) is confirmed in task 1.1, not assumed here.
 - Guardrails that bind here: robots.txt and a contact User-Agent; article text kept nowhere, logs and caches included; no model IDs in code; no fallback paths; no live requests in tests.
 
 ## Goals / Non-Goals
@@ -80,11 +81,11 @@ The outlet's own status is taken from `metadata.statusCode` in the answer. A fai
 
 ### 7. Configuration
 
-`FIRECRAWL_API_URL` (required to read any page) and `FIRECRAWL_API_KEY` (optional: a self-hosted service may need none). Both in `Settings` and `.env.example`. No default address: the cloud service must be a deliberate choice because of decision 8.
+`FIRECRAWL_API_URL` (required to read any page) and `FIRECRAWL_API_KEY` (optional: a self-hosted service may need none). Both in `Settings` and `.env.example`. No default address: the service is the operator's own, and pointing the pipeline at the cloud service instead must be a deliberate choice because of decision 8.
 
 ### 8. Retention on the reader's side is checked, not assumed
 
-`storeInCache: false` covers Firecrawl's result cache. It does not cover a self-hosted service's job queue, its logs, or a cloud account's activity log. Task 1.1 records in `docs/sources.md` where the service runs and what each of those keeps, and for how long. A reader that keeps article text longer than a read takes fails the guardrail and blocks the change.
+`storeInCache: false` covers Firecrawl's result cache. On the operator's self-hosted service it does not cover the job queue, which holds a finished job's result for a time, or the containers' logs. Task 1.1 reads the service's own configuration and records in `docs/sources.md` what each keeps, and for how long, and sets them so that a page does not outlive its read. A reader that keeps article text longer than a read takes fails the guardrail and blocks the change.
 
 ## Risks / Trade-offs
 
