@@ -10,14 +10,14 @@ The pipeline reads an article with one plain request and a hand-written HTML rea
 - **BREAKING** (for the pipeline's internals and two requirements): the rules about an individual site move to the reader. The reader decides whether an address may be fetched, how often a site may be asked, and where a copy comes from. The pipeline no longer reads robots.txt, keeps a crawl delay, spaces requests per outlet, or asks the Internet Archive itself.
 - The reader **answers with what happened**, and the pipeline acts on the answer: the page was read; the address is not allowed, with the reason; the site cannot be asked now, with when to try again; the site did not serve the page, with its status.
 - **Pruned from the pipeline:** the robots.txt reading, crawl delay and unknown-rules handling in `extract/retrieve.py`; the archive lookup there; the per-outlet allowance and its branches in `backfill/link_read.py`.
-- The guardrails do not move with the code. Robots.txt is respected, the client is identified, the platforms `docs/sources.md` lists as not read stay unread, and no article text is kept. They become conditions the reader must meet, checked against the running service and recorded in `docs/sources.md`, and re-checked whenever its rules change.
+- The guardrails do not move with the code. Robots.txt is respected on news sites, the client is identified to them, and no article text is kept. They become conditions the reader must meet, checked against the running service and recorded in `docs/sources.md`, and re-checked whenever its rules change.
 - The pipeline asks the reader for the page only: no summary, no structured extraction. Every model call stays in the pipeline, where it is logged and counted against the monthly ceiling.
 - When the reader itself cannot be reached or is overloaded, the run stops and says so; the article is left to be read later. Nothing is fetched another way.
 - `thenwhat outlets` is run before and after. The change is accepted on its Read, Thin, Refused and Failed counts per outlet.
 
 Not in this change, and listed in `design.md` as the next prunes once the reader's answers cover them:
 
-- **Posts.** `extract/post.py` reads Bluesky, Hacker News and Mastodon through each platform's own interface. It goes when the reader returns a post's text and links without its author.
+- **Posts.** `extract/post.py` reads Bluesky, Hacker News and Mastodon through each platform's own interface. It goes when posts are read through the reader. By the operator's decision of 2026-11-15 the reader may read X, Reddit, Meta's platforms, YouTube and others, and how it reads each is the service's responsibility; at worst the answer is built from a post's Open Graph card. The pipeline still keeps no author and no post text.
 - **Research papers and registry records a page links to.** `extract/page.py` holds address patterns for publishers and PubMed. They go when the reader returns the identifiers a page links to.
 - **The lookup service and the browser extension.** `site/worker` has its own page, post, short-link and screenshot readers, and the extension has its own host lists. The public lookup will depend on the reader too (`docs/adr/0005`): the project's Worker asks it, and a reader's browser or the extension never does. When the reader's machine is down, the lookup shows a service-overloaded error. That is its own change.
 
@@ -41,7 +41,7 @@ Not pruned, because they are not rules about fetching: the address comparison sh
 - **Code changed:** `extract/retrieve.py` (asks the reader, maps its answers), `outlets/readability.py`, `cli/extract.py`, `cli/lookup.py`, `cli/statements.py`, `config.py`, `.env.example`.
 - **Dependencies:** none added. The reader is asked over HTTP with the client the pipeline already uses.
 - **Configuration:** the reader's address and key, from the environment. The read step's allowance names the reader, not each outlet.
-- **Docs:** `docs/sources.md` (the reader's entry and its conformance check), `docs/outlets.md` (regenerated), `GLOSSARY.md`, `CLAUDE.md` (where the robots and identification rules are enforced), `docs/adr/0005` (written).
+- **Docs:** `docs/sources.md` (the reader's entry and its conformance check; "Platforms whose posts are not read" rewritten to record the operator's decision), `docs/outlets.md` (regenerated), `GLOSSARY.md`, `CLAUDE.md` (where the robots and identification rules are enforced), `docs/adr/0005` (written).
 - **Tests:** retrieval, outlet and reading tests move to synthetic reader answers; tests of robots parsing and crawl delay are removed with the code. No live request in tests or CI.
 - **Data:** no migration. A content hash from a new read of an article will differ from one recorded before.
 - **Operations:** the pipeline needs the reader running to read any article, and trusts it for the rules it used to check itself.

@@ -48,15 +48,15 @@ The page reader's answer to a request SHALL be one of: the page was read; the ad
 - **THEN** the run stops and reports the reader's answer as a fault of the reader, and the article stays due
 
 ### Requirement: Conditions the reader must meet
-The pipeline SHALL be configured only with a page reader that has been checked to respect each site's robots.txt, to refuse the platforms `docs/sources.md` lists as not read, to identify the project's client to a site, and to keep nothing of a page. The result and its date SHALL be recorded in `docs/sources.md`, and the check SHALL be made again whenever the reader's rules or version change.
+The pipeline SHALL be configured only with a page reader that has been checked to respect a news site's robots.txt, to identify the project's client to a news site, and to keep nothing of a page. How a social or video platform is read, and whether it is, SHALL be the reader's to decide. The result and its date SHALL be recorded in `docs/sources.md`, and the check SHALL be made again whenever the reader's rules or version change.
 
 #### Scenario: An address robots.txt disallows
 - **WHEN** the reader is asked for an address its site's robots.txt disallows for the project's client
 - **THEN** it answers not allowed
 
-#### Scenario: A platform that is not read
-- **WHEN** the reader is asked for a post on a platform listed as not read
-- **THEN** it answers not allowed, and the platform is sent no request
+#### Scenario: A post on a social platform
+- **WHEN** the reader is asked for a post on a social or video platform
+- **THEN** the pipeline takes whatever the reader answers, a page read or a refusal, and holds no rule of its own about that platform
 
 #### Scenario: Who the site sees
 - **WHEN** the reader asks a site for a page

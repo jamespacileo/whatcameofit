@@ -33,7 +33,7 @@ What this change needs and the service does not yet give:
 | Needed | Today | Consequence |
 | --- | --- | --- |
 | `not_allowed`, with a reason | No such answer. Nothing in the guide says robots.txt is read on a single scrape | The pipeline's robots.txt reading cannot be pruned until the service refuses what robots.txt disallows and says so |
-| The platforms `docs/sources.md` lists as not read are refused | The router reads X, Reddit, Facebook, Instagram, Threads and YouTube captions | The service does the opposite of the project's recorded decisions. Either the service refuses them for this project, or the operator revisits those decisions. Not decided here |
+| A decision on the platforms `docs/sources.md` lists as not read | The router reads X, Reddit, Facebook, Instagram, Threads and YouTube captions | Decided by the operator on 2026-11-15: allowed, and how each is read is the service's responsibility (decision 9) |
 | `not_now`, with when | No such answer; a throttled site shows as a 500 | A site's limit cannot be told from the machine failing, so a throttled site would stop a whole run |
 | The site's status for a page not served | `metadata.statusCode` on a normal scrape (Firecrawl's field; to confirm) | Likely met |
 | The client identified to the site | Not stated | To check; `headers` can carry the contact User-Agent if the service passes it on |
@@ -41,7 +41,7 @@ What this change needs and the service does not yet give:
 | A post's author never returned | Post routes return the author | Matters for the posts prune, not for this change |
 | No silent second route | The router falls back to a normal scrape when a route fails | A fallback of the kind the operator's rule asks to be flagged. It decides nothing in this change, which sends no post to the router |
 
-The service is shared with the operator's other projects, which may want what this project refuses. So the rules this project needs are best held in the service as a named set of rules that a caller asks for by name. The pipeline then names its rule set and still holds no rule about any site.
+The service is shared with the operator's other projects, which may not want what this project needs (robots.txt respected on news sites, nothing cached). So what this project needs is best held in the service as a named set of rules that a caller asks for by name. The pipeline then names its rule set and still holds no rule about any site.
 
 ## Goals / Non-Goals
 
@@ -106,12 +106,11 @@ The read step's source becomes `reader`, with one configured allowance, so `sour
 The pipeline can no longer show by its own code that robots.txt was respected or the client identified. So the reader is checked, by hand, against the running service, and the dated result is written into its entry in `docs/sources.md`:
 
 - an address a site's robots.txt disallows is answered `not_allowed`;
-- every platform in "Platforms whose posts are not read" (X, Reddit, Facebook, Instagram, Threads, LinkedIn, Telegram, and YouTube by address) is answered `not_allowed`, with no request sent to it;
 - a request-echo page shows the contact User-Agent, and no stealth proxy is in use;
 - a second read of one page is not served from a kept copy, and the service's queue and logs hold no page text after the answer;
 - a page drawn by scripts comes back as drawn.
 
-The check is repeated when the service's rules or version change. `docs/sources.md` stays the record of *why* each platform is or is not read; the service is where it is enforced. A capable reader does not reopen those decisions.
+The check is repeated when the service's rules or version change. `docs/sources.md` stays the record of what was decided about each source and when; the service is where it is carried out.
 
 ### 7. Configuration
 
@@ -123,13 +122,27 @@ A reader that answers anyone is an open proxy: a stranger could fetch any page t
 
 Not in place, and the operator's to weigh: a check at Cloudflare before a request reaches the home machine (an Access service token). With the key alone, every guess at the key and every flood of requests arrives at the machine itself.
 
+### 9. Social and video platforms are the reader's to handle
+
+The operator decided on 2026-11-15: "allow X, Reddit, Meta, Youtube and others, it'll be the responsibility of the service to decide how to handle these, in worst case we may get markdown based off open graph cards".
+
+This replaces the "Not read" entries of 2026-11-12 in `docs/sources.md` ("Platforms whose posts are not read"). That table is rewritten in task 1.4 to say what was found about each platform's terms and robots.txt, that the operator decided to read them through the reader, and the date. As with the Reddit dumps entry there, it is the operator's decision and not a legal reading; what the 2026-11-12 reading found stays on the page for whoever revisits it.
+
+What the decision does not change, because these are the project's rules about what it keeps and shows, not about fetching:
+
+- A post's author is never kept, logged or exported. The reader's post routes return the author; the pipeline drops it on arrival.
+- A post's text is treated as article text: held while it is read, kept nowhere, never displayed.
+- A post is a way to an article and to the claim it reports. It is never itself evidence, and a registered trial found through a post is never presented as a treatment option.
+
+No post is sent to the reader by this change. The decision takes effect with the posts prune.
+
 ## Next prunes
 
 Not in this change's tasks. Each waits for the reader's answer to cover it, and each is its own change.
 
 | What goes | Where | What the reader's answer needs |
 | --- | --- | --- |
-| Reading posts on Bluesky, Hacker News, Mastodon; `json()` | `extract/post.py` (172 lines), `cli/lookup.py` | a post's text and the links in it, never its author |
+| Reading posts on Bluesky, Hacker News, Mastodon; `json()` | `extract/post.py` (172 lines), `cli/lookup.py` | a post's text and the links in it; the pipeline drops the author (decision 9) |
 | Publisher and PubMed address patterns, DOI link patterns | `extract/page.py` | the DOIs, PubMed numbers and registry numbers a page links to |
 | The Worker's page, post, short-link and screenshot readers | `site/worker/page.mjs`, `post.mjs`, `short.mjs`, `article.mjs`, `visual.mjs` | the same answers, asked by the Worker through the tunnel; a down reader shown as service overloaded |
 | The extension's host lists and its `t.co` reading | `extension/src/open-page.js`, `short-links.js` | to be weighed: the extension reads what the reader's own browser already shows, which the service cannot see |
@@ -141,7 +154,7 @@ Kept, because they are not rules about fetching: `backfill/address.py` and `site
 - [The project's guardrails now rest on a service this repository does not contain] → Decision 6: a dated check in `docs/sources.md`, repeated on change. The pipeline's tests cover its handling of each answer, not the service's rules.
 - [The reader is a single point of failure] → Accepted by the operator. The run stops with a clear reason and records stay due.
 - [A `not_now` for a busy site could leave leads due for a long time] → They cost nothing while due; the funnel report counts them.
-- [The service cannot yet answer `not_allowed` or `not_now`, and reads platforms the project does not] → Task 1.1: the service gains them first. Until then nothing is pruned and the pipeline keeps reading robots.txt itself.
+- [The service cannot yet answer `not_allowed` or `not_now`] → Task 1.1: the service gains them first. Until then nothing is pruned and the pipeline keeps reading robots.txt itself.
 - [A challenge or login page comes back as success and is read as an article] → The pipeline's own thin, headline and date checks stay. The outlets report before and after shows any outlet whose Read count rises on pages that are not articles; task 5.2 samples them.
 - [The tunnel exposes the reader] → Decision 8.
 - [Content hashes change for articles read again] → Nothing compares a new hash with an old one to decide whether to read; task 3.5 verifies that.
@@ -157,6 +170,6 @@ Kept, because they are not rules about fetching: `backfill/address.py` and `site
 
 ## Open Questions
 
-- **The platforms not read.** The service was built to read X, Reddit, Meta's platforms and YouTube captions. `docs/sources.md` records, platform by platform, why this project does not: X's robots.txt disallows its embed interface and its terms forbid scraping; Reddit's robots.txt disallows everything; Meta's embed terms forbid extracting content. This change keeps them refused, because it sends no post to the reader at all. The question becomes live with the posts prune, and it is the operator's: keep those decisions, with the service refusing for this project, or revisit them one platform at a time in `docs/sources.md`.
+- **Robots.txt on news sites.** Decision 9 hands social and video platforms to the service. This design assumes robots.txt is still to be respected for ordinary news sites (the-sun.com is refused today and stays refused). The operator has not said otherwise; if the service is to decide that too, decision 6 and one requirement change.
 
 - **Stealth proxies.** medicalxpress.com answers the identified client with 403. This change's conformance check forbids hiding the client, so it stays unread. Whether that is the standing answer is the operator's; it changes nothing in this change.

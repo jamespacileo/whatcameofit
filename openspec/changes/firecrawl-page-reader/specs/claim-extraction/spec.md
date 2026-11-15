@@ -9,9 +9,9 @@ The system SHALL NOT read an article whose address the page reader answers is no
 - **WHEN** an operator requests extraction for a URL that the site's robots.txt disallows
 - **THEN** the page is not fetched, the operator is told why, and is asked to supply the text directly
 
-#### Scenario: A platform that is not read
-- **WHEN** an operator requests extraction for an address on a platform the reader does not allow
-- **THEN** nothing is fetched, the operator is told the reader's reason, and is asked to supply the text directly
+#### Scenario: An address the reader refuses for another reason
+- **WHEN** an operator requests extraction for an address the reader answers is not allowed, for a reason other than robots.txt
+- **THEN** the operator is told the reader's reason and is asked to supply the text directly
 
 ### Requirement: Archived copies
 The system SHALL NOT look for an archived snapshot itself. When the page reader says the copy it returned came from an archive, the system SHALL extract from it and record the archive address with the article. When the reader returns no page, the operator SHALL be asked to supply the text directly.
