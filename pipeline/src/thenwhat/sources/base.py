@@ -3,6 +3,7 @@ client identification and retry. Behavior: openspec source-clients."""
 
 import hashlib
 import json
+import math
 import threading
 import time as system_time
 from collections.abc import Callable
@@ -11,11 +12,12 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
 
 import httpx
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from thenwhat import __version__
-from thenwhat.db.models import HttpCache
+from thenwhat.db.models import HttpCache, SourceAllowanceUse
 from thenwhat.sources.terms import SOURCES
 
 
@@ -132,9 +134,59 @@ class SystemTime:
         system_time.sleep(seconds)
 
 
+class Turns(Protocol):
+    """Whose turn it is to ask a source."""
+
+    def wait(self, time: Time, interval: float) -> None: ...
+
+
+class SharedTurns:
+    """Whose turn it is to ask a source, for every client of it in every process.
+
+    The source's row in the allowance table holds the time of the latest turn given out.
+    A client takes the next free time, one interval after that or now if that is later,
+    writes it in a short transaction of its own, apart from the work it is doing, and
+    then waits for that time with nothing held. Turns are therefore never closer than
+    the interval, whichever process takes them. A request can still leave a little
+    after its turn, by as long as the database took to answer, so two requests can be
+    closer than the interval by that much; the rate over any longer stretch holds.
+
+    Only the time is written here. Counting requests against an allowance is the
+    allowance's own business (openspec source-allowances), and a step that claims one
+    shares this row and waits out the same times.
+    """
+
+    def __init__(self, session: Session, source: str) -> None:
+        self._bind = session.get_bind()
+        self._source = source
+
+    def wait(self, time: Time, interval: float) -> None:
+        with Session(self._bind, join_transaction_mode="create_savepoint") as turn, turn.begin():
+            turn.execute(
+                insert(SourceAllowanceUse)
+                .values(source_name=self._source, period_start=time.now(), requests_used=0)
+                .on_conflict_do_nothing(index_elements=[SourceAllowanceUse.source_name])
+            )
+            use = turn.scalars(
+                select(SourceAllowanceUse)
+                .where(SourceAllowanceUse.source_name == self._source)
+                .with_for_update()
+            ).one()
+            mine = time.now()
+            if use.last_request_at is not None:
+                # Rounded up to the clock's own step, so a turn is never early.
+                apart = timedelta(microseconds=math.ceil(interval * 1_000_000))
+                mine = max(mine, use.last_request_at + apart)
+            use.last_request_at = mine
+        wait = (mine - time.now()).total_seconds()
+        if wait > 0:
+            time.sleep(wait)
+
+
 class Pacer:
-    """Whose turn it is to ask a registry. One pacer shared by several clients of the same
-    registry keeps them, together, to that registry's rate, whatever thread each is on."""
+    """Whose turn it is among the clients that hold this one pacer, whatever thread each
+    is on. It knows nothing of other processes: a source's clients take turns through
+    `SharedTurns` unless they are handed a pacer."""
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
@@ -174,7 +226,7 @@ class Source:
         cache_ttl: timedelta = timedelta(hours=24),
         max_attempts: int = 4,
         time: Time | None = None,
-        pacer: Pacer | None = None,
+        pacer: Turns | None = None,
     ) -> None:
         self._session = session
         self._contact = (contact_email or "").strip()
@@ -182,8 +234,9 @@ class Source:
         self._interval = 1.0 / (rate_per_second or self.default_rate_per_second)
         self._cache_ttl = cache_ttl
         self._max_attempts = max_attempts
-        # Its own pacer unless one is shared with other clients of the same registry.
-        self._pacer = pacer or Pacer()
+        # Every client of this source, in every process, takes turns with this one,
+        # unless it is handed a pacer of its own.
+        self._pacer: Turns = pacer or SharedTurns(session, self.name)
         self._client = httpx.Client(transport=transport, timeout=30.0, follow_redirects=True)
 
     def _get(
