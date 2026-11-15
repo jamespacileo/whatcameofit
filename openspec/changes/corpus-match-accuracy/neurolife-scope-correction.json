@@ -1,0 +1,248 @@
+{
+  "checked_at": "2026-11-15T18:51:06.396091+00:00",
+  "claim": "brain-computer-interface-system-for-hand-control-paralysis",
+  "primary_identity_sources": [
+    "https://pubmed.ncbi.nlm.nih.gov/27074513/",
+    "https://www.nature.com/articles/nature17435",
+    "https://inside.battelle.org/blog-details/our-work-in-neurotechnology-you-asked-we-answered",
+    "https://www.battelle.org/history/space-age"
+  ],
+  "records": [
+    {
+      "match_id": 10560,
+      "trial_id": "NCT03482310",
+      "source_url": "https://clinicaltrials.gov/study/NCT03482310",
+      "fetched_at": "2026-11-15T10:52:06.648217+00:00",
+      "title": "Restoring High Dimensional Hand Function to Persons With Chronic High Tetraplegia",
+      "previous_score": 0.98,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 1764,
+          "state": "approved",
+          "decider": "rule"
+        },
+        {
+          "id": 1765,
+          "state": "approved",
+          "decider": "rule"
+        },
+        {
+          "id": 1766,
+          "state": "approved",
+          "decider": "rule"
+        },
+        {
+          "id": 1767,
+          "state": "approved",
+          "decider": "rule"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "BrainGate/Neuroport cortical recording with implanted arm, shoulder and hand FES electrodes is a different system from the reported NeuroLife cortical implant and external stimulation sleeve."
+    },
+    {
+      "match_id": 10674,
+      "trial_id": "NCT01852279",
+      "source_url": "https://clinicaltrials.gov/study/NCT01852279",
+      "fetched_at": "2026-11-15T10:52:40.892315+00:00",
+      "title": "BCI and FES for Hand Therapy in Spinal Cord Injury",
+      "previous_score": 0.94,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 1779,
+          "state": "approved",
+          "decider": "rule"
+        },
+        {
+          "id": 1780,
+          "state": "approved",
+          "decider": "rule"
+        },
+        {
+          "id": 1781,
+          "state": "approved",
+          "decider": "rule"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "EEG-controlled hand stimulation is non-invasive brain recording, unlike the reported NeuroLife intracortical implant."
+    },
+    {
+      "match_id": 10565,
+      "trial_id": "NCT07720882",
+      "source_url": "https://clinicaltrials.gov/study/NCT07720882",
+      "fetched_at": "2026-11-15T10:52:08.133539+00:00",
+      "title": "A Clinical Study of a Fully Implanted, Wireless and Functional BCI for Upper-Limb Functional Replacement in Tetraplegia Due to Spinal Cord Injury: Efficacy and Safety",
+      "previous_score": 1.0,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 1768,
+          "state": "approved",
+          "decider": "rule"
+        },
+        {
+          "id": 1769,
+          "state": "approved",
+          "decider": "rule"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "NeuroXess Triple-F is a separately named fully implanted wireless device, not NeuroLife."
+    },
+    {
+      "match_id": 10567,
+      "trial_id": "NCT03898804",
+      "source_url": "https://clinicaltrials.gov/study/NCT03898804",
+      "fetched_at": "2026-11-15T10:52:08.618566+00:00",
+      "title": "An Early Feasibility Study of the ReHAB System",
+      "previous_score": 0.94,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 1770,
+          "state": "approved",
+          "decider": "rule"
+        },
+        {
+          "id": 1771,
+          "state": "approved",
+          "decider": "rule"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "ReHAB uses implanted cortical and arm/shoulder electrodes, not the reported NeuroLife external stimulation sleeve."
+    },
+    {
+      "match_id": 10568,
+      "trial_id": "NCT07225582",
+      "source_url": "https://clinicaltrials.gov/study/NCT07225582",
+      "fetched_at": "2026-11-15T10:51:11.964391+00:00",
+      "title": "Development of Optimal Sensory Feedback Strategies to Maximize Function After Tetraplegia",
+      "previous_score": 1.0,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 1772,
+          "state": "approved",
+          "decider": "rule"
+        },
+        {
+          "id": 1773,
+          "state": "approved",
+          "decider": "rule"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "This sensory-feedback investigation enrolls ReHAB participants and uses implanted cortical and peripheral nerve stimulation, not the NeuroLife system in the report."
+    },
+    {
+      "match_id": 10569,
+      "trial_id": "NCT01964261",
+      "source_url": "https://clinicaltrials.gov/study/NCT01964261",
+      "fetched_at": "2026-11-15T10:52:18.283858+00:00",
+      "title": "Sensory Motor Transformations in Human Cortex",
+      "previous_score": 0.97,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 1774,
+          "state": "approved",
+          "decider": "rule"
+        },
+        {
+          "id": 1775,
+          "state": "approved",
+          "decider": "rule"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "Neural Prosthetic System 2 controls external devices and supplies intracortical sensory feedback; it is not the reported NeuroLife arm-sleeve neural bypass."
+    },
+    {
+      "match_id": 10612,
+      "trial_id": "NCT03680872",
+      "source_url": "https://clinicaltrials.gov/study/NCT03680872",
+      "fetched_at": "2026-11-15T10:52:43.046842+00:00",
+      "title": "Restoring Motor and Sensory Hand Function in Tetraplegia Using a Neural Bypass System",
+      "previous_score": 1.0,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 1776,
+          "state": "approved",
+          "decider": "rule"
+        },
+        {
+          "id": 1777,
+          "state": "approved",
+          "decider": "rule"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "The separately named Bidirectional Neural Bypass System studies restoration of both motor and sensory function; shared neural-bypass terminology does not establish it as NeuroLife."
+    },
+    {
+      "match_id": 10672,
+      "trial_id": "NCT07934914",
+      "source_url": "https://clinicaltrials.gov/study/NCT07934914",
+      "fetched_at": "2026-11-15T10:52:39.892525+00:00",
+      "title": "Endovascular Brain-Computer Interface for Upper-Limb Paralysis",
+      "previous_score": 1.0,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 1778,
+          "state": "approved",
+          "decider": "rule"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "The venous endovascular BCI Type-A sensor and FES/robotic-arm intervention is a different device and implantation route from NeuroLife."
+    }
+  ],
+  "correction_operation": "Existing review operations over stored primary registry records; the identity was checked against the linked public primary sources.",
+  "correction_source_api_calls": 0,
+  "correction_model_calls": 0,
+  "subsequent_preparation": {
+    "command": "thenwhat prepare brain-computer-interface-system-for-hand-control-paralysis --workers 1",
+    "outcome": "Completed in approximately seven seconds. The more specific identity returned no new candidate matches; fetching and record-reading steps completed without an approved trial.",
+    "status": "no_trial_found",
+    "evidence_stage": "early_human",
+    "note": "This is a registry-coverage limit, not a claim that the reported human experiment did not happen. No public snapshot was changed by this correction."
+  },
+  "previous": {
+    "intervention": "Brain-computer interface system for hand control",
+    "aliases": [],
+    "summary": "A 2016 report described a man with quadriplegia who used a brain implant linked to a computer and an arm sleeve to control hand and finger movements. He performed several tasks after repeated practice, but could use the system only in the laboratory, and researchers said it was not a cure for paralysis.",
+    "claim_decider": "rule",
+    "status": "trial_registered",
+    "evidence_stage": "early_human",
+    "published_at": "2026-11-15 18:38:12.190342+00:00"
+  },
+  "corrected": {
+    "intervention": "NeuroLife Neural Bypass Technology",
+    "aliases": [],
+    "summary": "A 2016 laboratory demonstration used NeuroLife Neural Bypass Technology: an intracortical implant decoded intended movements and drove an external neuromuscular stimulation sleeve. A participant with quadriplegia from cervical spinal-cord injury made voluntary wrist, hand and finger movements and manipulated objects after training. This was an early human demonstration, not a cure for paralysis or evidence of independent use outside the system.",
+    "status": "no_trial_found",
+    "evidence_stage": "early_human"
+  }
+}
