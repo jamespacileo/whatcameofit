@@ -1,0 +1,2098 @@
+{
+  "date": "2026-11-15",
+  "base_commit": "64e7aa84b1c5593bc7cd63f424a0c2b9621742ed",
+  "first_source_sha256": "589a58e09376fb799d5070212f940eafa9424c0471f36d25abd35bbc804810c5",
+  "final_source_sha256": "cda788576c8ebca1403b19ab4bb0a3096fa8c314df1698aae58be2ed0e9df189",
+  "source_files": {
+    "extension/src/open-page.js": "b29c3596be1f5f52acd4fae3df2c89f36f82cb4374a725d938fd99ffebe2786b",
+    "extension/src/visual.js": "0f63c481e26a6461f5d9731a900cb8c67176bb9b590b70d667e72d2f37b28f9a",
+    "extension/src/results.js": "c6f94d4e21a862b30bf6599e678ee0db671f293aec0afc428090c927cd81060f",
+    "site/worker/model.mjs": "4b6686f7c3d50e42de186066fa955ac7c45858d529a482c379b24acdd6945bef",
+    "site/worker/results.mjs": "813e4821124748cbe3373251d9668655df48fa1af65155092866c55f4e17f84f"
+  },
+  "model": "openai:gpt-6-luna",
+  "deployment": "Not deployed or installed in Safari",
+  "scope": "5 failed rows + 30 untested Social rows + 2 untested social edge cases in Negative",
+  "limitations": "Live collection or collector replay on same-day public DOM, with one bounded frame for S047. No full-video or installed-popup verification. YouTube S037 navigation blocked.",
+  "baseline": {
+    "S004": {
+      "http": 422,
+      "ms": 321,
+      "checked_at": "2026-11-15T11:15:07.955Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.reddit.com/r/science/comments/1xv3bsz/landmark_phase_3_multicenter_center_study_finds/",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S005": {
+      "http": 422,
+      "ms": 82,
+      "checked_at": "2026-11-15T11:15:21.058Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.reddit.com/r/science/comments/1xuc21w/showing_ai_chatbots_a_drug_ad_changed_which/",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S014": {
+      "http": 422,
+      "ms": 123,
+      "checked_at": "2026-11-15T11:15:34.187Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.tiktok.com/@cnn/video/7630975820005264653",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "N003": {
+      "http": 200,
+      "ms": 10991,
+      "checked_at": "2026-11-15T11:15:58.183Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.timeslive.co.za/news/world/2026-11-04-novo-nordisk-lifts-2026-outlook-as-wegovy-pill-surges/",
+      "about_a_treatment": true,
+      "treatment": "Wegovy",
+      "condition": "Obesity",
+      "papers_unchecked": 0,
+      "trial_records": 60,
+      "likely_records": 40,
+      "top_candidates": [
+        {
+          "id": "NCT06234111",
+          "score": 1,
+          "title": "Semaglutide and Physical Activity for Obesity and Multimorbidity",
+          "phases": [],
+          "state": "ACTIVE_NOT_RECRUITING"
+        },
+        {
+          "id": "NCT06396416",
+          "score": 1,
+          "title": "Obesity Management for Kidney TRANSPLANTation: OK-TRANSPLANT 2",
+          "phases": [
+            "PHASE4"
+          ],
+          "state": "RECRUITING"
+        },
+        {
+          "id": "NCT06468748",
+          "score": 1,
+          "title": "The Effects of Semaglutide on Body Composition and Performance in Military Personnel",
+          "phases": [
+            "PHASE4"
+          ],
+          "state": "WITHDRAWN"
+        }
+      ]
+    },
+    "N004": {
+      "http": 200,
+      "ms": 9459,
+      "checked_at": "2026-11-15T11:16:20.686Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.theguardian.com/business/2026/nov/10/pharma-firms-weight-loss-drugs-insulin-glp-1-ozempic-mounjaro",
+      "about_a_treatment": true,
+      "treatment": "GLP-1 medications",
+      "condition": "Obesity and type 2 diabetes",
+      "papers_unchecked": 0,
+      "trial_records": 60,
+      "likely_records": 44,
+      "top_candidates": [
+        {
+          "id": "NCT02344186",
+          "score": 1,
+          "title": "Effects of Liraglutide on ER Stress in Obese Patients With Type 2 Diabetes",
+          "phases": [
+            "PHASE4"
+          ],
+          "state": "UNKNOWN"
+        },
+        {
+          "id": "NCT03018665",
+          "score": 1,
+          "title": "A Study of the Effect of Glucagon-like Peptide 1(GLP-1) Receptor Agonist in Combination With Metformin Therapy on Diabetes Remission in Subjects With Newly Diagnosed Type 2 Diabetes Who Are Overweight or Obese",
+          "phases": [
+            "PHASE4"
+          ],
+          "state": "UNKNOWN"
+        },
+        {
+          "id": "NCT05071898",
+          "score": 1,
+          "title": "Pharmacogenetics of Response to GLP1R Agonists",
+          "phases": [
+            "PHASE1"
+          ],
+          "state": "RECRUITING"
+        }
+      ]
+    },
+    "N005": {
+      "http": 200,
+      "ms": 4696,
+      "checked_at": "2026-11-15T11:16:38.393Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.mirror.co.uk/news/health/ozempic-side-effect-vision-blindness-37873301",
+      "about_a_treatment": true,
+      "treatment": "Ozempic",
+      "condition": "Type 2 diabetes mellitus",
+      "papers_unchecked": 0,
+      "trial_records": 45,
+      "likely_records": 39,
+      "top_candidates": [
+        {
+          "id": "NCT04175665",
+          "score": 1,
+          "title": "Real-world Health Outcomes in Canadian Patients Using Semaglutide",
+          "phases": [],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT04469855",
+          "score": 1,
+          "title": "Post-Marketing Surveillance (Special Use-results Surveillance) on Long-term Use With Ozempic®",
+          "phases": [],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT04572165",
+          "score": 1,
+          "title": "Epidemiological Assessment of the Risk for Pancreatic Cancer Associated With the Use of Semaglutide in Patients With Type 2 Diabetes - A Cohort Study Based on Nordic Registry Data",
+          "phases": [],
+          "state": "COMPLETED"
+        }
+      ]
+    },
+    "S021": {
+      "http": 422,
+      "ms": 76,
+      "checked_at": "2026-11-15T11:16:51.469Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.threads.com/@nejm/post/DWoQyh3jk7R/new-in-the-april-2-2026-issue-of-nejmenfortumab-vedotin-and-pembrolizumab-in-bla",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S026": {
+      "http": 422,
+      "ms": 70,
+      "checked_at": "2026-11-15T11:17:04.543Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.instagram.com/p/DFkxSEXRJT_/",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S027": {
+      "http": 422,
+      "ms": 104,
+      "checked_at": "2026-11-15T11:17:17.651Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://t.me/s/pezeshkangil/10951",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S028": {
+      "http": 422,
+      "ms": 115,
+      "checked_at": "2026-11-15T11:17:30.773Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.reddit.com/r/medicine/comments/1mz19xa/how_do_we_feel_about_suzetrigine_so_far/",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S029": {
+      "http": 422,
+      "ms": 72,
+      "checked_at": "2026-11-15T11:17:43.847Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.reddit.com/r/Health/comments/1ixt7z1/covid_shots_protect_kids_from_long_covidand_dont/",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "N013": {
+      "http": 422,
+      "ms": 108,
+      "checked_at": "2026-11-15T11:17:56.957Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.instagram.com/p/DJhIT60oG4N/",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "N014": {
+      "http": 422,
+      "ms": 331,
+      "checked_at": "2026-11-15T11:18:10.290Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://tseenergy.substack.com/p/discovering-the-medical-ketogenic",
+      "error": "unreadable",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S030": {
+      "http": 200,
+      "ms": 13632,
+      "checked_at": "2026-11-15T11:18:36.925Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://news.ycombinator.com/item?id=45826995",
+      "about_a_treatment": true,
+      "treatment": "Protein-based gel",
+      "condition": "Demineralized or eroded tooth enamel",
+      "papers_unchecked": 0,
+      "trial_records": 60,
+      "likely_records": 0,
+      "top_candidates": [
+        {
+          "id": "NCT04274244",
+          "score": 0.02,
+          "title": "Comparison of Clinical and Radiographic Parameters in the Application of Cross-linked Hyaluronic Acid 1.8% and Enamel Matrix Derivative in Periodontal Regeneration.",
+          "phases": [
+            "PHASE4"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT06733142",
+          "score": 0.02,
+          "title": "Spoonable Bioavailability",
+          "phases": [
+            "NA"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT07339605",
+          "score": 0.02,
+          "title": "Flapless Periodontal Regeneration Using Hyaluronic Acid Versus Enamel Matrix Derivative",
+          "phases": [
+            "NA"
+          ],
+          "state": "RECRUITING"
+        }
+      ]
+    },
+    "S031": {
+      "http": 200,
+      "ms": 6365,
+      "checked_at": "2026-11-15T11:18:56.293Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://news.ycombinator.com/item?id=44922571",
+      "about_a_treatment": true,
+      "treatment": "Keratin",
+      "condition": "Tooth enamel erosion and early tooth decay",
+      "papers_unchecked": 0,
+      "trial_records": 48,
+      "likely_records": 0,
+      "top_candidates": [
+        {
+          "id": "NCT05062070",
+          "score": 0.02,
+          "title": "Safety and Efficacy of Topical TolaSure Targeting Aggregated Mutant Keratin in Severe Epidermolysis Bullosa Simplex",
+          "phases": [
+            "PHASE1"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT06292026",
+          "score": 0.02,
+          "title": "Efficacy of ProgenaMatrix™ in the Management of DFUs",
+          "phases": [
+            "NA"
+          ],
+          "state": "UNKNOWN"
+        },
+        {
+          "id": "NCT02027649",
+          "score": 0.01,
+          "title": "Detection of K14 in Bladder Cancer With a Non Invasive Technique",
+          "phases": [],
+          "state": "TERMINATED"
+        }
+      ]
+    },
+    "S032": {
+      "http": 200,
+      "ms": 7096,
+      "checked_at": "2026-11-15T11:19:16.393Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://news.ycombinator.com/item?id=46811037",
+      "about_a_treatment": true,
+      "treatment": "ER-100",
+      "condition": "Glaucoma",
+      "papers_unchecked": 0,
+      "trial_records": 15,
+      "likely_records": 1,
+      "top_candidates": [
+        {
+          "id": "NCT07290244",
+          "score": 1,
+          "title": "Evaluating ER-100 for Safety in People With Glaucoma or Non-Arteritic Anterior Ischemic Optic Neuropathy (Optic Nerve Conditions)",
+          "phases": [
+            "PHASE1"
+          ],
+          "state": "RECRUITING"
+        },
+        {
+          "id": "NCT00361504",
+          "score": 0.01,
+          "title": "A Study to Evaluate Long-Term Safety of Multiple Doses of Tapentadol (CG5503) Prolonged-Release (PR) and Oxycodone Controlled-Release (CR) in Patients With Chronic Pain",
+          "phases": [
+            "PHASE3"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT00239564",
+          "score": 0,
+          "title": "Pharmacokinetics and Pharmacodynamics of IPX054 in Subjects With Parkinson's Disease",
+          "phases": [
+            "PHASE1",
+            "PHASE2"
+          ],
+          "state": "COMPLETED"
+        }
+      ]
+    },
+    "S033": {
+      "http": 422,
+      "ms": 89,
+      "checked_at": "2026-11-15T11:19:29.492Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.reddit.com/r/tressless/comments/1s6gl49/pelage_pp405_new_hair_growth_from_inactive/",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S034": {
+      "http": 422,
+      "ms": 40,
+      "checked_at": "2026-11-15T11:19:42.537Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.reddit.com/r/science/comments/1oobkrk/researchers_have_developed_a_gel_that_uses/",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S035": {
+      "http": 422,
+      "ms": 57,
+      "checked_at": "2026-11-15T11:19:55.599Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.reddit.com/r/immortalists/comments/1w53eel/how_much_of_the_longevity_hype_is_actually_real/",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S036": {
+      "http": 422,
+      "ms": 66,
+      "checked_at": "2026-11-15T11:20:08.669Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.linkedin.com/posts/torresphd_results-from-phase-2-courage-trial-demonstrating-activity-7511422117729472512-JZUS",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S037": {
+      "http": 422,
+      "ms": 48,
+      "checked_at": "2026-11-15T11:20:21.719Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.youtube.com/watch?v=_4spcgzPcEk",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S038": {
+      "http": 422,
+      "ms": 87,
+      "checked_at": "2026-11-15T11:20:34.809Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.instagram.com/p/De1Sw5Pj-xV/",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S039": {
+      "http": 422,
+      "ms": 86,
+      "checked_at": "2026-11-15T11:20:47.908Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.instagram.com/reel/Da5ZfzDAqDd/",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S040": {
+      "http": 422,
+      "ms": 94,
+      "checked_at": "2026-11-15T11:21:01.013Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.instagram.com/reel/DIbvYDvJYzP/",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S041": {
+      "http": 422,
+      "ms": 101,
+      "checked_at": "2026-11-15T11:21:14.121Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.instagram.com/p/De8fBncquDV/",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S042": {
+      "http": 422,
+      "ms": 124,
+      "checked_at": "2026-11-15T11:21:27.258Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.instagram.com/p/DdKl43tSw-v/",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S043": {
+      "http": 422,
+      "ms": 68,
+      "checked_at": "2026-11-15T11:21:40.359Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.instagram.com/reel/DZyROckBpjD/",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S044": {
+      "http": 422,
+      "ms": 114,
+      "checked_at": "2026-11-15T11:21:53.476Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.instagram.com/reel/DaKnG-sC9pm/",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S045": {
+      "http": 422,
+      "ms": 94,
+      "checked_at": "2026-11-15T11:22:06.594Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.instagram.com/p/DWox5WkghE-/",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S046": {
+      "http": 422,
+      "ms": 47,
+      "checked_at": "2026-11-15T11:22:19.645Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.tiktok.com/@dentist_emi/photo/7654083124820856086",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S047": {
+      "http": 422,
+      "ms": 164,
+      "checked_at": "2026-11-15T11:22:32.817Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.tiktok.com/@popularmechanics/video/7639395090804264205",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S048": {
+      "http": 422,
+      "ms": 70,
+      "checked_at": "2026-11-15T11:22:45.894Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.tiktok.com/@teethtalkgirl/video/7580143683463318814",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S049": {
+      "http": 422,
+      "ms": 50,
+      "checked_at": "2026-11-15T11:22:59.122Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.tiktok.com/@skinandsweat/video/7637182028349328654",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S050": {
+      "http": 422,
+      "ms": 70,
+      "checked_at": "2026-11-15T11:23:12.194Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.tiktok.com/@drkopelman/video/7522805190295063839",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S051": {
+      "http": 422,
+      "ms": 50,
+      "checked_at": "2026-11-15T11:23:25.262Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.tiktok.com/@fredhutch/video/7700340480931908878",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S052": {
+      "http": 422,
+      "ms": 173,
+      "checked_at": "2026-11-15T11:23:38.455Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.tiktok.com/@drsermedmezher/video/7606090347172695318",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S053": {
+      "http": 422,
+      "ms": 50,
+      "checked_at": "2026-11-15T11:23:51.524Z",
+      "endpoint": "https://whatcameofit.com/api/lookup",
+      "mode": "address",
+      "url": "https://www.tiktok.com/@thediabetescollective/video/7534037117530344759",
+      "error": "post",
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    }
+  },
+  "corrected_initial": {
+    "S021": {
+      "http": 200,
+      "ms": 3147,
+      "checked_at": "2026-11-15T11:58:39.363Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.threads.com/@nejm/post/DWoQyh3jk7R/new-in-the-april-2-2026-issue-of-nejmenfortumab-vedotin-and-pembrolizumab-in-bla",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S026": {
+      "http": 200,
+      "ms": 3994,
+      "checked_at": "2026-11-15T11:58:56.392Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.instagram.com/p/DFkxSEXRJT_/",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S027": {
+      "http": 200,
+      "ms": 4738,
+      "checked_at": "2026-11-15T11:59:14.344Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://t.me/s/pezeshkangil/10951",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S004": {
+      "http": 200,
+      "ms": 8438,
+      "checked_at": "2026-11-15T11:59:35.799Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.reddit.com/r/science/comments/1xv3bsz/landmark_phase_3_multicenter_center_study_finds/",
+      "about_a_treatment": true,
+      "treatment": "Personalized melanoma cancer vaccine",
+      "condition": "Melanoma",
+      "papers_unchecked": 0,
+      "trial_records": 12,
+      "likely_records": 11,
+      "top_candidates": [
+        {
+          "id": "NCT02035956",
+          "score": 1,
+          "title": "IVAC MUTANOME Phase I Clinical Trial",
+          "phases": [
+            "PHASE1"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT03897881",
+          "score": 0.97,
+          "title": "An Efficacy Study of Adjuvant Treatment With the Personalized Cancer Vaccine mRNA-4157 and Pembrolizumab in Participants With High-Risk Melanoma (KEYNOTE-942)",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "ACTIVE_NOT_RECRUITING"
+        },
+        {
+          "id": "NCT03597282",
+          "score": 0.96,
+          "title": "A Personal Cancer Vaccine (NEO-PV-01) and APX005M or Ipilimumab With Nivolumab in Patients With Advanced Melanoma",
+          "phases": [
+            "PHASE1"
+          ],
+          "state": "TERMINATED"
+        }
+      ]
+    },
+    "S005": {
+      "http": 200,
+      "ms": 3016,
+      "checked_at": "2026-11-15T11:59:51.821Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.reddit.com/r/science/comments/1xuc21w/showing_ai_chatbots_a_drug_ad_changed_which/",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S028": {
+      "http": 200,
+      "ms": 5124,
+      "checked_at": "2026-11-15T12:00:09.993Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.reddit.com/r/medicine/comments/1mz19xa/how_do_we_feel_about_suzetrigine_so_far/",
+      "about_a_treatment": true,
+      "treatment": "Suzetrigine",
+      "condition": "Moderate-to-severe acute postoperative pain",
+      "papers_unchecked": 0,
+      "trial_records": 60,
+      "likely_records": 38,
+      "top_candidates": [
+        {
+          "id": "NCT05553366",
+          "score": 1,
+          "title": "Evaluation of Efficacy and Safety of VX-548 for Acute Pain After a Bunionectomy",
+          "phases": [
+            "PHASE3"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT05558410",
+          "score": 1,
+          "title": "Evaluation of Efficacy and Safety of Suzetrigine for Acute Pain After an Abdominoplasty",
+          "phases": [
+            "PHASE3"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT05661734",
+          "score": 1,
+          "title": "A Single-arm Study to Evaluate Safety and Effectiveness of VX-548 for Acute Pain",
+          "phases": [
+            "PHASE3"
+          ],
+          "state": "COMPLETED"
+        }
+      ]
+    },
+    "S029": {
+      "http": 200,
+      "ms": 9288,
+      "checked_at": "2026-11-15T12:00:32.312Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.reddit.com/r/Health/comments/1ixt7z1/covid_shots_protect_kids_from_long_covidand_dont/",
+      "about_a_treatment": true,
+      "treatment": "COVID-19 vaccines",
+      "condition": "Long COVID in children and adolescents",
+      "papers_unchecked": 0,
+      "trial_records": 56,
+      "likely_records": 5,
+      "top_candidates": [
+        {
+          "id": "NCT05587868",
+          "score": 1,
+          "title": "COVID-19 Vaccination Status and The Clinical Outcomes of Long COVID-19 Patients",
+          "phases": [],
+          "state": "UNKNOWN"
+        },
+        {
+          "id": "NCT06441955",
+          "score": 0.97,
+          "title": "Covid-19 Long Haul Preventative and Health Promotion Care Clinical Trial Acceleration Program.",
+          "phases": [
+            "PHASE4"
+          ],
+          "state": "RECRUITING"
+        },
+        {
+          "id": "NCT05052307",
+          "score": 0.91,
+          "title": "A Real-world Evidence Study of BNT162b2 mRNA Covid-19 Vaccine in Brazil",
+          "phases": [],
+          "state": "COMPLETED"
+        }
+      ]
+    },
+    "S033": {
+      "http": 200,
+      "ms": 6080,
+      "checked_at": "2026-11-15T12:00:51.400Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.reddit.com/r/tressless/comments/1s6gl49/pelage_pp405_new_hair_growth_from_inactive/",
+      "about_a_treatment": true,
+      "treatment": "PP405",
+      "condition": "Alopecia",
+      "papers_unchecked": 0,
+      "trial_records": 3,
+      "likely_records": 3,
+      "top_candidates": [
+        {
+          "id": "NCT06393452",
+          "score": 1,
+          "title": "Safety, Pharmacokinetics and Efficacy of PP405 in Adults With AGA",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT07819435",
+          "score": 1,
+          "title": "Phase 2/3 Efficacy and Safety of PP405 in Adult Males",
+          "phases": [
+            "PHASE2",
+            "PHASE3"
+          ],
+          "state": "RECRUITING"
+        },
+        {
+          "id": "NCT07907783",
+          "score": 0.99,
+          "title": "Phase 2 Efficacy and Safety of PP405 in Adult Females With Androgenetic Alopecia",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "NOT_YET_RECRUITING"
+        }
+      ]
+    },
+    "S034": {
+      "http": 200,
+      "ms": 7205,
+      "checked_at": "2026-11-15T12:01:11.612Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.reddit.com/r/science/comments/1oobkrk/researchers_have_developed_a_gel_that_uses/",
+      "about_a_treatment": true,
+      "treatment": "amelogenin-mimicking gel",
+      "condition": "Tooth enamel damage",
+      "papers_unchecked": 0,
+      "trial_records": 3,
+      "likely_records": 0,
+      "top_candidates": [
+        {
+          "id": "NCT07718932",
+          "score": 0.02,
+          "title": "Regenerative Gel (Emdogain®) for Healing After Wisdom Tooth Extraction",
+          "phases": [
+            "NA"
+          ],
+          "state": "RECRUITING"
+        },
+        {
+          "id": "NCT07111403",
+          "score": 0.01,
+          "title": "Clinical Evaluation of Remineralizing Potential of Remineralizing Agents on WSLs Managment",
+          "phases": [
+            "NA"
+          ],
+          "state": "UNKNOWN"
+        },
+        {
+          "id": "NCT06190015",
+          "score": 0,
+          "title": "Impact of Advanced Platelet Rich Fibrin and Enamel Matrix Derivative on Clinical and Molecular Wound Healing Parameters After Surgical Removal of Mandibular Third Molars",
+          "phases": [
+            "PHASE4"
+          ],
+          "state": "UNKNOWN"
+        }
+      ]
+    },
+    "S035": {
+      "http": 200,
+      "ms": 6388,
+      "checked_at": "2026-11-15T12:01:31.056Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.reddit.com/r/immortalists/comments/1w53eel/how_much_of_the_longevity_hype_is_actually_real/",
+      "about_a_treatment": true,
+      "treatment": "ER-100",
+      "condition": "Biological aging",
+      "papers_unchecked": 0,
+      "trial_records": 15,
+      "likely_records": 0,
+      "top_candidates": [
+        {
+          "id": "NCT07290244",
+          "score": 0.02,
+          "title": "Evaluating ER-100 for Safety in People With Glaucoma or Non-Arteritic Anterior Ischemic Optic Neuropathy (Optic Nerve Conditions)",
+          "phases": [
+            "PHASE1"
+          ],
+          "state": "RECRUITING"
+        },
+        {
+          "id": "NCT00325858",
+          "score": 0.01,
+          "title": "A Study Comparing the Effectiveness and Safety of Varying Dose Strengths (100, 200, 300 and 400 mg) of Extended-release Tramadol HCl With Placebo for the Treatment of Osteoarthritis(OA) of the Knee and/or Hip",
+          "phases": [
+            "PHASE3"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT01309386",
+          "score": 0.01,
+          "title": "A Safety and Efficacy Study of Oral Tapentadol Extended-Release in Japanese Participants",
+          "phases": [
+            "PHASE3"
+          ],
+          "state": "COMPLETED"
+        }
+      ]
+    },
+    "N013": {
+      "http": 200,
+      "ms": 3591,
+      "checked_at": "2026-11-15T12:01:47.776Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.instagram.com/p/DJhIT60oG4N/",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S038": {
+      "http": 200,
+      "ms": 5635,
+      "checked_at": "2026-11-15T12:02:06.549Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.instagram.com/p/De1Sw5Pj-xV/",
+      "about_a_treatment": true,
+      "treatment": "PP405",
+      "condition": "Androgenetic alopecia",
+      "papers_unchecked": 0,
+      "trial_records": 3,
+      "likely_records": 3,
+      "top_candidates": [
+        {
+          "id": "NCT06393452",
+          "score": 1,
+          "title": "Safety, Pharmacokinetics and Efficacy of PP405 in Adults With AGA",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT07819435",
+          "score": 1,
+          "title": "Phase 2/3 Efficacy and Safety of PP405 in Adult Males",
+          "phases": [
+            "PHASE2",
+            "PHASE3"
+          ],
+          "state": "RECRUITING"
+        },
+        {
+          "id": "NCT07907783",
+          "score": 1,
+          "title": "Phase 2 Efficacy and Safety of PP405 in Adult Females With Androgenetic Alopecia",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "NOT_YET_RECRUITING"
+        }
+      ]
+    },
+    "S039": {
+      "http": 200,
+      "ms": 7230,
+      "checked_at": "2026-11-15T12:02:26.796Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.instagram.com/reel/Da5ZfzDAqDd/",
+      "about_a_treatment": true,
+      "treatment": "new medicine",
+      "condition": "Tooth regrowth",
+      "papers_unchecked": 0,
+      "trial_records": 16,
+      "likely_records": 0,
+      "top_candidates": [
+        {
+          "id": "NCT06904118",
+          "score": 0.02,
+          "title": "Clinical Efficacy of Novel Titanium Oxide Nanoparticle Enriched Bleaching Gel",
+          "phases": [
+            "NA"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT00642252",
+          "score": 0.01,
+          "title": "Development and Validation of a Multi-Mineral Fluoride Mouthrinse",
+          "phases": [
+            "PHASE1"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT02194023",
+          "score": 0.01,
+          "title": "Clinical Effects of Two New Chlorhexidine Digluconate Formulations: 0.12% and 0.03%.",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "COMPLETED"
+        }
+      ]
+    },
+    "S040": {
+      "http": 200,
+      "ms": 7208,
+      "checked_at": "2026-11-15T12:02:47.030Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.instagram.com/reel/DIbvYDvJYzP/",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S041": {
+      "http": 200,
+      "ms": 8413,
+      "checked_at": "2026-11-15T12:03:08.470Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.instagram.com/p/De8fBncquDV/",
+      "about_a_treatment": true,
+      "treatment": "Self-Destruction Toxin Trick",
+      "condition": "Cancer",
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S042": {
+      "http": 200,
+      "ms": 4946,
+      "checked_at": "2026-11-15T12:03:26.463Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.instagram.com/p/DdKl43tSw-v/",
+      "about_a_treatment": true,
+      "treatment": "Cancer vaccine",
+      "condition": "Cancer",
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S043": {
+      "http": 200,
+      "ms": 3395,
+      "checked_at": "2026-11-15T12:03:42.881Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.instagram.com/reel/DZyROckBpjD/",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S044": {
+      "http": 200,
+      "ms": 9872,
+      "checked_at": "2026-11-15T12:04:05.829Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.instagram.com/reel/DaKnG-sC9pm/",
+      "about_a_treatment": true,
+      "treatment": "Rejuran",
+      "condition": "Skin quality concerns",
+      "papers_unchecked": 0,
+      "trial_records": 5,
+      "likely_records": 4,
+      "top_candidates": [
+        {
+          "id": "NCT07912879",
+          "score": 0.98,
+          "title": "Clinical Evaluation of Dual-Plane Technique PN-Based Treatment for Horizontal Neck Lines Using DNA Fragment Opmizing Technology Polynucleotide (DOT PN)",
+          "phases": [],
+          "state": "NOT_YET_RECRUITING"
+        },
+        {
+          "id": "NCT07912814",
+          "score": 0.76,
+          "title": "Clinical Research on Deep-Plane Rejuran S Injection for Improvement in the Apperance of Periorbital Hollowing Using a Cannula Technique",
+          "phases": [],
+          "state": "NOT_YET_RECRUITING"
+        },
+        {
+          "id": "NCT06402058",
+          "score": 0.72,
+          "title": "A Study Comparing DMSB01 and Rejuran® for Temporary Crow's Feet Lines Improvement",
+          "phases": [
+            "NA"
+          ],
+          "state": "UNKNOWN"
+        }
+      ]
+    },
+    "S045": {
+      "http": 200,
+      "ms": 11354,
+      "checked_at": "2026-11-15T12:04:30.195Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.instagram.com/p/DWox5WkghE-/",
+      "about_a_treatment": true,
+      "treatment": "bimagrumab plus semaglutide",
+      "condition": "obesity",
+      "papers_unchecked": 0,
+      "trial_records": 18,
+      "likely_records": 1,
+      "top_candidates": [
+        {
+          "id": "NCT05616013",
+          "score": 0.98,
+          "title": "Safety and Efficacy of Bimagrumab and Semaglutide in Adults Who Are Overweight or Obese",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT03005288",
+          "score": 0.04,
+          "title": "Safety, Pharmacokinetics and Efficacy of Bimagrumab in Overweight and Obese Patients With Type 2 Diabetes",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT01669174",
+          "score": 0.03,
+          "title": "BYM338 in Chronic Obstructive Pulmonary Disease (COPD) Patients With Cachexia",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "COMPLETED"
+        }
+      ]
+    },
+    "N014": {
+      "http": 200,
+      "ms": 5233,
+      "checked_at": "2026-11-15T12:04:48.446Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://tseenergy.substack.com/p/discovering-the-medical-ketogenic",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S030": {
+      "http": 200,
+      "ms": 6325,
+      "checked_at": "2026-11-15T12:05:07.801Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://news.ycombinator.com/item?id=45826995",
+      "about_a_treatment": true,
+      "treatment": "protein-based dental enamel-regenerating gel",
+      "condition": "Demineralized or eroded dental enamel",
+      "papers_unchecked": 0,
+      "trial_records": 7,
+      "likely_records": 0,
+      "top_candidates": [
+        {
+          "id": "NCT07111403",
+          "score": 0.05,
+          "title": "Clinical Evaluation of Remineralizing Potential of Remineralizing Agents on WSLs Managment",
+          "phases": [
+            "NA"
+          ],
+          "state": "UNKNOWN"
+        },
+        {
+          "id": "NCT07244991",
+          "score": 0.05,
+          "title": "Effect of MI Paste Plus™ on Streptococcus Mutans and White Spot Lesions in Fixed Orthodontics",
+          "phases": [
+            "NA"
+          ],
+          "state": "RECRUITING"
+        },
+        {
+          "id": "NCT00752089",
+          "score": 0.01,
+          "title": "Experimental Dentifrice Remineralization/Fluoride Uptake in an in Situ Model",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "COMPLETED"
+        }
+      ]
+    },
+    "S031": {
+      "http": 200,
+      "ms": 6227,
+      "checked_at": "2026-11-15T12:05:27.706Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://news.ycombinator.com/item?id=44922571",
+      "about_a_treatment": true,
+      "treatment": "Keratin",
+      "condition": "Damaged tooth enamel and early tooth decay",
+      "papers_unchecked": 0,
+      "trial_records": 48,
+      "likely_records": 0,
+      "top_candidates": [
+        {
+          "id": "NCT06605768",
+          "score": 0.03,
+          "title": "Study Evaluating the Effects of Dietary Supplement on Hair Thickness and Hair Strength in Individuals With Self-Perceived Thinning Hair",
+          "phases": [
+            "NA"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT03564795",
+          "score": 0.02,
+          "title": "Effectiveness of KeraStat Gel for Improved Cosmesis of Partial Thickness Burns",
+          "phases": [
+            "NA"
+          ],
+          "state": "TERMINATED"
+        },
+        {
+          "id": "NCT05062070",
+          "score": 0.02,
+          "title": "Safety and Efficacy of Topical TolaSure Targeting Aggregated Mutant Keratin in Severe Epidermolysis Bullosa Simplex",
+          "phases": [
+            "PHASE1"
+          ],
+          "state": "COMPLETED"
+        }
+      ]
+    },
+    "S032": {
+      "http": 200,
+      "ms": 5695,
+      "checked_at": "2026-11-15T12:05:46.412Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://news.ycombinator.com/item?id=46811037",
+      "about_a_treatment": true,
+      "treatment": "ER-100",
+      "condition": "Glaucoma",
+      "papers_unchecked": 0,
+      "trial_records": 15,
+      "likely_records": 1,
+      "top_candidates": [
+        {
+          "id": "NCT07290244",
+          "score": 1,
+          "title": "Evaluating ER-100 for Safety in People With Glaucoma or Non-Arteritic Anterior Ischemic Optic Neuropathy (Optic Nerve Conditions)",
+          "phases": [
+            "PHASE1"
+          ],
+          "state": "RECRUITING"
+        },
+        {
+          "id": "NCT00239564",
+          "score": 0,
+          "title": "Pharmacokinetics and Pharmacodynamics of IPX054 in Subjects With Parkinson's Disease",
+          "phases": [
+            "PHASE1",
+            "PHASE2"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT01517711",
+          "score": 0.01,
+          "title": "Tramadol Extended-Release (ER) for Posttraumatic Stress Disorder (PTSD)",
+          "phases": [
+            "PHASE4"
+          ],
+          "state": "COMPLETED"
+        }
+      ]
+    },
+    "S036": {
+      "http": 200,
+      "ms": 10809,
+      "checked_at": "2026-11-15T12:06:10.259Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.linkedin.com/posts/torresphd_results-from-phase-2-courage-trial-demonstrating-activity-7511422117729472512-JZUS",
+      "about_a_treatment": true,
+      "treatment": "trevogrumab plus semaglutide",
+      "condition": "Obesity",
+      "papers_unchecked": 0,
+      "trial_records": 60,
+      "likely_records": 1,
+      "top_candidates": [
+        {
+          "id": "NCT06299098",
+          "score": 0.98,
+          "title": "A Study to Test if Trevogrumab or Trevogrumab With Garetosmab When Taken With Semaglutide is Safe and How Well They Work in Adult Patients With Obesity for Weight Loss, Fat Loss, and Lean Mass Preservation",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT06374875",
+          "score": 0.07,
+          "title": "Fibrosis Lessens After Metabolic Surgery",
+          "phases": [
+            "PHASE4"
+          ],
+          "state": "RECRUITING"
+        },
+        {
+          "id": "NCT06852391",
+          "score": 0.06,
+          "title": "JOULE - Metabolic Adaptation to Weight Loss in Response to a Behavioural Lifestyle Program With or Without Semaglutide in Adolescents With Obesity",
+          "phases": [
+            "PHASE4"
+          ],
+          "state": "RECRUITING"
+        }
+      ]
+    },
+    "N003": {
+      "http": 200,
+      "ms": 2766,
+      "checked_at": "2026-11-15T12:06:26.038Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current service address reading",
+      "mode": "address",
+      "url": "https://www.timeslive.co.za/news/world/2026-11-04-novo-nordisk-lifts-2026-outlook-as-wegovy-pill-surges/",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "N004": {
+      "http": 200,
+      "ms": 5379,
+      "checked_at": "2026-11-15T12:06:44.423Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current service address reading",
+      "mode": "address",
+      "url": "https://www.theguardian.com/business/2026/nov/10/pharma-firms-weight-loss-drugs-insulin-glp-1-ozempic-mounjaro",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "N005": {
+      "http": 200,
+      "ms": 3566,
+      "checked_at": "2026-11-15T12:07:00.993Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current service address reading",
+      "mode": "address",
+      "url": "https://www.mirror.co.uk/news/health/ozempic-side-effect-vision-blindness-37873301",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S049": {
+      "http": 200,
+      "ms": 3824,
+      "checked_at": "2026-11-15T12:07:17.827Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader executed in live Chrome 157; caption text",
+      "mode": "browser",
+      "url": "https://www.tiktok.com/@skinandsweat/video/7637182028349328654",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S051": {
+      "http": 200,
+      "ms": 6915,
+      "checked_at": "2026-11-15T12:07:37.755Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader executed in live Chrome 157; caption text",
+      "mode": "browser",
+      "url": "https://www.tiktok.com/@fredhutch/video/7700340480931908878",
+      "about_a_treatment": true,
+      "treatment": "Personalized cancer vaccine with immunotherapy",
+      "condition": "Melanoma",
+      "papers_unchecked": 0,
+      "trial_records": 60,
+      "likely_records": 10,
+      "top_candidates": [
+        {
+          "id": "NCT02897765",
+          "score": 1,
+          "title": "A Personal Cancer Vaccine (NEO-PV-01) w/ Nivolumab for Patients With Melanoma, Lung Cancer or Bladder Cancer",
+          "phases": [
+            "PHASE1"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT03480152",
+          "score": 0.99,
+          "title": "Messenger RNA (mRNA)-Based, Personalized Cancer Vaccine Against Neoantigens Expressed by the Autologous Cancer",
+          "phases": [
+            "PHASE1",
+            "PHASE2"
+          ],
+          "state": "TERMINATED"
+        },
+        {
+          "id": "NCT04930783",
+          "score": 0.97,
+          "title": "NeoVax + CDX-301 and Nivolumab or Pembrolizumab in Melanoma",
+          "phases": [
+            "PHASE1"
+          ],
+          "state": "ACTIVE_NOT_RECRUITING"
+        }
+      ]
+    },
+    "S052": {
+      "http": 200,
+      "ms": 11575,
+      "checked_at": "2026-11-15T12:08:02.429Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader executed in live Chrome 157; caption text",
+      "mode": "browser",
+      "url": "https://www.tiktok.com/@drsermedmezher/video/7606090347172695318",
+      "about_a_treatment": true,
+      "treatment": "ER-100",
+      "condition": "Optic neuropathies, including open-angle glaucoma and non-arteritic anterior ischemic optic neuropathy",
+      "papers_unchecked": 0,
+      "trial_records": 15,
+      "likely_records": 1,
+      "top_candidates": [
+        {
+          "id": "NCT07290244",
+          "score": 1,
+          "title": "Evaluating ER-100 for Safety in People With Glaucoma or Non-Arteritic Anterior Ischemic Optic Neuropathy (Optic Nerve Conditions)",
+          "phases": [
+            "PHASE1"
+          ],
+          "state": "RECRUITING"
+        },
+        {
+          "id": "NCT00325858",
+          "score": 0.01,
+          "title": "A Study Comparing the Effectiveness and Safety of Varying Dose Strengths (100, 200, 300 and 400 mg) of Extended-release Tramadol HCl With Placebo for the Treatment of Osteoarthritis(OA) of the Knee and/or Hip",
+          "phases": [
+            "PHASE3"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT00348452",
+          "score": 0.01,
+          "title": "A Study Comparing the Effectiveness and Safety of Extended Release Tramadol HCl at 100 mg, 200 mg and 300 mg Doses to Placebo for the Treatment of Moderate to Severe Pain Due to Osteoarthritis (OA)",
+          "phases": [
+            "PHASE3"
+          ],
+          "state": "COMPLETED"
+        }
+      ]
+    },
+    "S053": {
+      "http": 200,
+      "ms": 9079,
+      "checked_at": "2026-11-15T12:08:24.550Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader executed in live Chrome 157; caption text",
+      "mode": "browser",
+      "url": "https://www.tiktok.com/@thediabetescollective/video/7534037117530344759",
+      "about_a_treatment": true,
+      "treatment": "Bimagrumab plus semaglutide",
+      "condition": "Overweight or obesity",
+      "papers_unchecked": 0,
+      "trial_records": 60,
+      "likely_records": 1,
+      "top_candidates": [
+        {
+          "id": "NCT05616013",
+          "score": 0.93,
+          "title": "Safety and Efficacy of Bimagrumab and Semaglutide in Adults Who Are Overweight or Obese",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT07770841",
+          "score": 0.01,
+          "title": "Research Study on How Well Oral Semaglutide Works for Weight Loss in Adults With Excess Body Weight",
+          "phases": [
+            "PHASE3"
+          ],
+          "state": "RECRUITING"
+        },
+        {
+          "id": "NCT07920887",
+          "score": 0.01,
+          "title": "A Study of Bimagrumab in Participants With HFpEF",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "NOT_YET_RECRUITING"
+        }
+      ]
+    },
+    "S014": {
+      "http": 200,
+      "ms": 4046,
+      "checked_at": "2026-11-15T12:08:41.606Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader executed in live Chrome 157; caption text",
+      "mode": "browser",
+      "url": "https://www.tiktok.com/@cnn/video/7630975820005264653",
+      "about_a_treatment": true,
+      "treatment": "mRNA vaccine",
+      "condition": "Pancreatic cancer",
+      "papers_unchecked": 0,
+      "trial_records": 13,
+      "likely_records": 10,
+      "top_candidates": [
+        {
+          "id": "NCT03468244",
+          "score": 1,
+          "title": "Clinical Study of Personalized mRNA Vaccine Encoding Neoantigen in Patients With Advanced Digestive System Neoplasms",
+          "phases": [
+            "NA"
+          ],
+          "state": "UNKNOWN"
+        },
+        {
+          "id": "NCT06913218",
+          "score": 1,
+          "title": "A Study of mRNA Vaccines AK154 Monotherapy or in Combination With AK104/AK112,and Sequential mFOLFIRINOX in Surgically Resected PDAC",
+          "phases": [
+            "PHASE1"
+          ],
+          "state": "NOT_YET_RECRUITING"
+        },
+        {
+          "id": "NCT07745790",
+          "score": 1,
+          "title": "Safety and Efficacy of Multimodal Thermal Therapy (MTT) Combined With KRAS G12V mRNA Vaccine, S-1, and Sintilimab in Patients With Metastatic Pancreatic Cancer",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "NOT_YET_RECRUITING"
+        }
+      ]
+    },
+    "S046": {
+      "http": 200,
+      "ms": 3997,
+      "checked_at": "2026-11-15T12:08:58.620Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader executed in live Chrome 157; caption text",
+      "mode": "browser",
+      "url": "https://www.tiktok.com/@dentist_emi/photo/7654083124820856086",
+      "about_a_treatment": true,
+      "treatment": "USAG-1-blocking drug",
+      "condition": "Tooth loss",
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S047": {
+      "http": 200,
+      "ms": 2465,
+      "checked_at": "2026-11-15T12:09:14.108Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader and inspectVisible in live Chrome 157; bounded visible video frame; capture only, no audio",
+      "mode": "browser",
+      "url": "https://www.tiktok.com/@popularmechanics/video/7639395090804264205",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S050": {
+      "http": 200,
+      "ms": 4250,
+      "checked_at": "2026-11-15T12:09:31.368Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader executed in live Chrome 157; caption text",
+      "mode": "browser",
+      "url": "https://www.tiktok.com/@drkopelman/video/7522805190295063839",
+      "about_a_treatment": true,
+      "treatment": "PP405",
+      "condition": "Hair loss",
+      "papers_unchecked": 0,
+      "trial_records": 3,
+      "likely_records": 3,
+      "top_candidates": [
+        {
+          "id": "NCT06393452",
+          "score": 1,
+          "title": "Safety, Pharmacokinetics and Efficacy of PP405 in Adults With AGA",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT07819435",
+          "score": 1,
+          "title": "Phase 2/3 Efficacy and Safety of PP405 in Adult Males",
+          "phases": [
+            "PHASE2",
+            "PHASE3"
+          ],
+          "state": "RECRUITING"
+        },
+        {
+          "id": "NCT07907783",
+          "score": 1,
+          "title": "Phase 2 Efficacy and Safety of PP405 in Adult Females With Androgenetic Alopecia",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "NOT_YET_RECRUITING"
+        }
+      ]
+    },
+    "S048": {
+      "http": 200,
+      "ms": 4725,
+      "checked_at": "2026-11-15T12:09:49.105Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader executed in live Chrome 157; caption text",
+      "mode": "browser",
+      "url": "https://www.tiktok.com/@teethtalkgirl/video/7580143683463318814",
+      "about_a_treatment": true,
+      "treatment": "drug targeting dormant tooth buds",
+      "condition": "Missing teeth",
+      "papers_unchecked": 0,
+      "trial_records": 27,
+      "likely_records": 0,
+      "top_candidates": [
+        {
+          "id": "NCT04804514",
+          "score": 0.02,
+          "title": "Evaluation of the Safety and Tolerability of KH001 in Dentin Hypersensitivity Patients",
+          "phases": [
+            "PHASE1",
+            "PHASE2"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT03804450",
+          "score": 0.01,
+          "title": "Magnetic Resonance Imaging (MRI) of Pulp Regeneration",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT06566833",
+          "score": 0.01,
+          "title": "Effectiveness of Different Remineralizing Strategies on the Management of Early Carious Lesions in Primary Teeth",
+          "phases": [
+            "EARLY_PHASE1"
+          ],
+          "state": "COMPLETED"
+        }
+      ]
+    }
+  },
+  "plain_language_target_followup": {
+    "S021": {
+      "http": 200,
+      "ms": 3910,
+      "checked_at": "2026-11-15T12:10:32.741Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.threads.com/@nejm/post/DWoQyh3jk7R/new-in-the-april-2-2026-issue-of-nejmenfortumab-vedotin-and-pembrolizumab-in-bla",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S028": {
+      "http": 200,
+      "ms": 5272,
+      "checked_at": "2026-11-15T12:10:51.017Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.reddit.com/r/medicine/comments/1mz19xa/how_do_we_feel_about_suzetrigine_so_far/",
+      "about_a_treatment": true,
+      "treatment": "Suzetrigine",
+      "condition": "Moderate-to-severe acute pain",
+      "papers_unchecked": 0,
+      "trial_records": 60,
+      "likely_records": 39,
+      "top_candidates": [
+        {
+          "id": "NCT04977336",
+          "score": 1,
+          "title": "A Study Evaluating Efficacy and Safety of VX-548 for Acute Pain After a Bunionectomy",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT05034952",
+          "score": 1,
+          "title": "A Study Evaluating Efficacy and Safety of VX-548 for Acute Pain After an Abdominoplasty",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT05553366",
+          "score": 1,
+          "title": "Evaluation of Efficacy and Safety of VX-548 for Acute Pain After a Bunionectomy",
+          "phases": [
+            "PHASE3"
+          ],
+          "state": "COMPLETED"
+        }
+      ]
+    },
+    "S043": {
+      "http": 200,
+      "ms": 3163,
+      "checked_at": "2026-11-15T12:11:07.187Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader on live browser DOM captured 2026-11-15; text path only",
+      "mode": "browser",
+      "url": "https://www.instagram.com/reel/DZyROckBpjD/",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "N003": {
+      "http": 200,
+      "ms": 3550,
+      "checked_at": "2026-11-15T12:11:23.746Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current service address reading",
+      "mode": "address",
+      "url": "https://www.timeslive.co.za/news/world/2026-11-04-novo-nordisk-lifts-2026-outlook-as-wegovy-pill-surges/",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "N004": {
+      "http": 200,
+      "ms": 2983,
+      "checked_at": "2026-11-15T12:11:39.735Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current service address reading",
+      "mode": "address",
+      "url": "https://www.theguardian.com/business/2026/nov/10/pharma-firms-weight-loss-drugs-insulin-glp-1-ozempic-mounjaro",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "N005": {
+      "http": 200,
+      "ms": 4473,
+      "checked_at": "2026-11-15T12:11:57.212Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current service address reading",
+      "mode": "address",
+      "url": "https://www.mirror.co.uk/news/health/ozempic-side-effect-vision-blindness-37873301",
+      "about_a_treatment": false,
+      "treatment": null,
+      "condition": null,
+      "papers_unchecked": 0,
+      "trial_records": 0,
+      "likely_records": 0,
+      "top_candidates": []
+    },
+    "S049": {
+      "http": 200,
+      "ms": 4019,
+      "checked_at": "2026-11-15T12:12:14.237Z",
+      "endpoint": "current local source; no shared answer cache",
+      "evidence": "current reader executed in live Chrome 157; caption text",
+      "mode": "browser",
+      "url": "https://www.tiktok.com/@skinandsweat/video/7637182028349328654",
+      "about_a_treatment": true,
+      "treatment": "PP405",
+      "condition": "Hair growth",
+      "papers_unchecked": 0,
+      "trial_records": 3,
+      "likely_records": 3,
+      "top_candidates": [
+        {
+          "id": "NCT06393452",
+          "score": 1,
+          "title": "Safety, Pharmacokinetics and Efficacy of PP405 in Adults With AGA",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "COMPLETED"
+        },
+        {
+          "id": "NCT07819435",
+          "score": 1,
+          "title": "Phase 2/3 Efficacy and Safety of PP405 in Adult Males",
+          "phases": [
+            "PHASE2",
+            "PHASE3"
+          ],
+          "state": "RECRUITING"
+        },
+        {
+          "id": "NCT07907783",
+          "score": 1,
+          "title": "Phase 2 Efficacy and Safety of PP405 in Adult Females With Androgenetic Alopecia",
+          "phases": [
+            "PHASE2"
+          ],
+          "state": "NOT_YET_RECRUITING"
+        }
+      ]
+    }
+  },
+  "verdicts": {
+    "S004": [
+      "review",
+      "Caption identifies a melanoma-vaccine claim and returns candidates, but does not uniquely identify the phase-3 study; candidate scores are not confirmation of that trial."
+    ],
+    "S005": [
+      "pass",
+      "Drug-ad/AI study correctly produces no specific treatment claim."
+    ],
+    "S014": [
+      "pass",
+      "Requested CNN caption now identifies an mRNA vaccine for pancreatic cancer; unrelated recommended-video caption is excluded. Caption checked, not the full video."
+    ],
+    "N003": [
+      "pass",
+      "Earnings story now produces no specific treatment claim; deployed baseline incorrectly searched for a treatment."
+    ],
+    "N004": [
+      "pass",
+      "Insulin supply/business story now produces no specific treatment claim; deployed baseline incorrectly searched for a treatment."
+    ],
+    "N005": [
+      "pass",
+      "Ozempic lawsuit story now produces no specific treatment claim; deployed baseline incorrectly searched for a treatment."
+    ],
+    "S021": [
+      "review",
+      "Addressed Threads post is now read without related threads. It contains several unrelated research items; model correctly avoids merging them. Select a particular claim to resolve the roundup."
+    ],
+    "S026": [
+      "pass",
+      "Corrected expectation: addressed Persian caption is a Vertex company profile, not the neighbouring/assumed suzetrigine treatment report. No treatment claim is appropriate for this caption; carousel images were not verified."
+    ],
+    "S027": [
+      "review",
+      "Corrected expectation: message 10951 is a health-roundup continuation with diet/exercise links, not the suzetrigine message 10940. Reader now excludes neighbouring messages; no unique pair identified."
+    ],
+    "S028": [
+      "pass",
+      "Caption identifies suzetrigine for acute postoperative pain and returns matching trial candidates."
+    ],
+    "S029": [
+      "review",
+      "COVID vaccination/long-COVID association is identified. Returned trial candidates are not proof that the cited observational study was a trial."
+    ],
+    "N013": [
+      "review",
+      "Multiple cancer interventions and indications are kept separate; no invented combined regimen or unique trial is reported."
+    ],
+    "N014": [
+      "review",
+      "Several psychiatric diagnoses and ketogenic-diet claims have no clear primary pair; model refuses to merge them."
+    ],
+    "S030": [
+      "pass",
+      "Enamel-regenerating gel claim identified as laboratory work. No likely human trial is an acceptable result for this preclinical case."
+    ],
+    "S031": [
+      "pass",
+      "Keratin enamel-repair claim identified. No likely human trial is an acceptable result for this preclinical case."
+    ],
+    "S032": [
+      "review",
+      "ER-100/glaucoma trial-start claim and candidate identified; this does not establish efficacy or approval."
+    ],
+    "S033": [
+      "pass",
+      "PP405/alopecia claim identified with matching candidates."
+    ],
+    "S034": [
+      "pass",
+      "Amelogenin-mimicking enamel gel identified as laboratory work; no likely human trial is expected."
+    ],
+    "S035": [
+      "review",
+      "Broad longevity discussion yields ER-100/biological aging. It does not establish that aging is the condition in the cited trial."
+    ],
+    "S036": [
+      "pass",
+      "LinkedIn post identifies trevogrumab plus semaglutide for obesity and returns the COURAGE trial candidate."
+    ],
+    "S037": [
+      "blocked",
+      "YouTube navigation repeatedly failed to complete in the test browser. No current caption/frame or installed-extension result obtained; address route also refuses YouTube."
+    ],
+    "S038": [
+      "pass",
+      "PP405/androgenetic alopecia claim identified with matching candidates."
+    ],
+    "S039": [
+      "review",
+      "Readable caption says only an unnamed tooth-regrowth medicine. TRG035 identity appears in media not checked in this rerun; no likely registry match."
+    ],
+    "S040": [
+      "review",
+      "Multiple cosmetic secretome uses in promotional caption; no unique intervention-condition pair is invented."
+    ],
+    "S041": [
+      "review",
+      "Vague toxin/cancer claim identified, but no specific agent or cancer type is established; no registry candidate returned."
+    ],
+    "S042": [
+      "review",
+      "Unnamed Russian cancer vaccine and unspecified cancer identified; no registry candidate. Image availability claims remain unverified."
+    ],
+    "S043": [
+      "review",
+      "Caption names ER-100 dosing but no condition. Model does not invent glaucoma from the drug name; video content remains to be checked."
+    ],
+    "S044": [
+      "review",
+      "Rejuran/skin-quality claim yields candidates, but testimonial and periodontal analogy require judgment rather than a unique-trial pass."
+    ],
+    "S045": [
+      "pass",
+      "Actual bimagrumab plus semaglutide regimen remains intact and the BELIEVE trial candidate is returned."
+    ],
+    "S046": [
+      "partial",
+      "USAG-1-blocking tooth-regrowth claim identified from the requested TikTok caption, but no registry candidate reaches the likely threshold."
+    ],
+    "S047": [
+      "review",
+      "Requested caption and one bounded visible video frame were tested. They do not identify the antibody sufficiently; no treatment was returned. Full video/audio was not analysed."
+    ],
+    "S048": [
+      "review",
+      "Requested caption yields an unnamed drug targeting dormant tooth buds and no likely trial. USAG-1 identity from the earlier full-video review was not available in this caption-only rerun."
+    ],
+    "S049": [
+      "pass",
+      "Corrected overly strict condition rule: the explicit hair-growth target is sufficient. PP405 is identified without requiring a formal diagnosis; full video not checked."
+    ],
+    "S050": [
+      "pass",
+      "Requested TikTok caption identifies PP405 for hair loss and matching candidates."
+    ],
+    "S051": [
+      "pass",
+      "Requested caption identifies personalized melanoma vaccination with immunotherapy and returns candidates; full video not checked."
+    ],
+    "S052": [
+      "review",
+      "Linked article yields ER-100/optic-neuropathy candidate, but caption's wound-healing claim conflicts with the earlier video review. A returned eye-trial candidate does not resolve that contradiction."
+    ],
+    "S053": [
+      "pass",
+      "Requested caption preserves bimagrumab plus semaglutide as the reported regimen and returns the BELIEVE trial candidate."
+    ]
+  },
+  "pipeline_prompt_source_sha256": "5391247f80cd6cdbfae4f3e5ff4c8f45b19715db7732a6ee018d69fcae4682ff"
+}
