@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-15T18:38:12.190342Z",
-  "last_checked_at": "2026-11-15T13:21:54.995637Z",
+  "generated_at": "2026-11-15T20:30:54.892996Z",
+  "last_checked_at": "2026-11-15T19:59:50.977261Z",
   "preview": false,
   "sources": [
     {
@@ -479,6 +479,7 @@
       "indication": "Depression",
       "first_reported_date": "2016-05-04",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_2",
@@ -965,6 +966,7 @@
       "indication": "Binge drinking in alcohol use disorder",
       "first_reported_date": "2026-11-05",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_2",
@@ -1928,6 +1930,7 @@
       "indication": "Alexander disease",
       "first_reported_date": "2026-10-30",
       "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "approved",
@@ -2478,6 +2481,7 @@
       "indication": "Alzheimer's disease",
       "first_reported_date": "2026-10-27",
       "evidence_stage": "in_vitro",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -2724,6 +2728,7 @@
       "indication": "Alzheimer's disease",
       "first_reported_date": "2026-08-26",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -2937,6 +2942,7 @@
       "indication": "Alzheimer's disease",
       "first_reported_date": "2026-11-08",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -3140,6 +3146,7 @@
       "indication": "Prevention of Alzheimer's disease",
       "first_reported_date": "2026-09-05",
       "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -3642,6 +3649,7 @@
       "indication": "Sleep loss in Alzheimer's disease",
       "first_reported_date": "2026-10-19",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -4093,6 +4101,16 @@
       "indication": "Reducing severe complications and death in hospitalized COVID-19 patients",
       "first_reported_date": "2020-10-23",
       "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "early_human",
+        "score": 0.94,
+        "also": [
+          {
+            "stage": "late_human",
+            "score": 0.06
+          }
+        ]
+      },
       "checked_by_person": false,
       "status": {
         "code": "phase_2",
@@ -5040,6 +5058,16 @@
       "indication": "Alcoholism (alcohol dependence)",
       "first_reported_date": "2016-09-16",
       "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "late_human",
+        "score": 0.75,
+        "also": [
+          {
+            "stage": "early_human",
+            "score": 0.25
+          }
+        ]
+      },
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -8875,6 +8903,7 @@
       "indication": "Bacterial infection",
       "first_reported_date": "2026-10-21",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "no_trial_found",
@@ -9128,6 +9157,7 @@
       "indication": "Biological ageing",
       "first_reported_date": "2026-10-06",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -10476,35 +10506,27 @@
     {
       "slug": "brain-computer-interface-system-for-hand-control-paralysis",
       "headline": "Brain-linked system helps a paralyzed man control his hand in a laboratory",
-      "summary": "A 2016 report described a man with quadriplegia who used a brain implant linked to a computer and an arm sleeve to control hand and finger movements. He performed several tasks after repeated practice, but could use the system only in the laboratory, and researchers said it was not a cure for paralysis.",
+      "summary": "A 2016 laboratory demonstration used NeuroLife Neural Bypass Technology: an intracortical implant decoded intended movements and drove an external neuromuscular stimulation sleeve. A participant with quadriplegia from cervical spinal-cord injury made voluntary wrist, hand and finger movements and manipulated objects after training. This was an early human demonstration, not a cure for paralysis or evidence of independent use outside the system.",
       "vertical": "brain-and-nerves",
       "approach": null,
       "intervention": {
-        "name": "Brain-computer interface system for hand control",
+        "name": "NeuroLife Neural Bypass Technology",
         "synonyms": []
       },
       "indication": "Paralysis with quadriplegia and loss of hand control",
       "first_reported_date": "2016-04-13",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
-        "code": "trial_registered",
-        "overlay_years": null,
-        "updated_at": "2026-11-15T11:44:21.237186Z",
-        "explained_by": [
-          1779,
-          1774,
-          1764,
-          1776,
-          1770,
-          1772,
-          1768,
-          1778
-        ],
+        "code": "no_trial_found",
+        "overlay_years": 10,
+        "updated_at": "2026-11-15T18:51:06.396091Z",
+        "explained_by": [],
         "history": [
           {
-            "on": "2013-05-08",
-            "code": "trial_registered"
+            "on": "2016-04-13",
+            "code": "no_trial_found"
           }
         ]
       },
@@ -10519,1290 +10541,62 @@
         }
       ],
       "promises": [],
-      "events": [
-        {
-          "id": 1780,
-          "type": "trial_status_change",
-          "event_date": "2013-05-08",
-          "date_basis": "start date",
-          "summary": "Trial NCT01852279 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT01852279",
-          "trial_id": "NCT01852279",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 1779,
-          "type": "trial_registered",
-          "event_date": "2013-05-13",
-          "date_basis": "first posted",
-          "summary": "Trial NCT01852279 registered (no phase).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT01852279",
-          "trial_id": "NCT01852279",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 1774,
-          "type": "trial_registered",
-          "event_date": "2013-10-17",
-          "date_basis": "first posted",
-          "summary": "Trial NCT01964261 registered (no phase).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT01964261",
-          "trial_id": "NCT01964261",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 1775,
-          "type": "trial_status_change",
-          "event_date": "2013-11-01",
-          "date_basis": "start date",
-          "summary": "Trial NCT01964261 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT01964261",
-          "trial_id": "NCT01964261",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 1764,
-          "type": "trial_registered",
-          "event_date": "2018-03-29",
-          "date_basis": "first posted",
-          "summary": "Trial NCT03482310 registered (no phase).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT03482310",
-          "trial_id": "NCT03482310",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 1765,
-          "type": "trial_status_change",
-          "event_date": "2018-06-01",
-          "date_basis": "start date",
-          "summary": "Trial NCT03482310 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT03482310",
-          "trial_id": "NCT03482310",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 1776,
-          "type": "trial_registered",
-          "event_date": "2018-09-21",
-          "date_basis": "first posted",
-          "summary": "Trial NCT03680872 registered (no phase).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT03680872",
-          "trial_id": "NCT03680872",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 1781,
-          "type": "trial_status_change",
-          "event_date": "2018-12-31",
-          "date_basis": "completion date",
-          "summary": "Trial NCT01852279 completed.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT01852279",
-          "trial_id": "NCT01852279",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": "completed",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 1770,
-          "type": "trial_registered",
-          "event_date": "2019-04-02",
-          "date_basis": "first posted",
-          "summary": "Trial NCT03898804 registered (no phase).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT03898804",
-          "trial_id": "NCT03898804",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 1771,
-          "type": "trial_status_change",
-          "event_date": "2019-04-09",
-          "date_basis": "start date",
-          "summary": "Trial NCT03898804 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT03898804",
-          "trial_id": "NCT03898804",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 1777,
-          "type": "trial_status_change",
-          "event_date": "2019-09-30",
-          "date_basis": "start date",
-          "summary": "Trial NCT03680872 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT03680872",
-          "trial_id": "NCT03680872",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 1766,
-          "type": "trial_status_change",
-          "event_date": "2023-09-30",
-          "date_basis": "completion date",
-          "summary": "Trial NCT03482310 completed.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT03482310",
-          "trial_id": "NCT03482310",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": "completed",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 1772,
-          "type": "trial_registered",
-          "event_date": "2025-11-06",
-          "date_basis": "first posted",
-          "summary": "Trial NCT07225582 registered (no phase).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07225582",
-          "trial_id": "NCT07225582",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 1773,
-          "type": "trial_status_change",
-          "event_date": "2026-01-13",
-          "date_basis": "start date",
-          "summary": "Trial NCT07225582 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07225582",
-          "trial_id": "NCT07225582",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 1767,
-          "type": "trial_results_posted",
-          "event_date": "2026-02-20",
-          "date_basis": "results first posted",
-          "summary": "Results posted for trial NCT03482310.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT03482310",
-          "trial_id": "NCT03482310",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 1769,
-          "type": "trial_status_change",
-          "event_date": "2026-07-07",
-          "date_basis": "start date",
-          "summary": "Trial NCT07720882 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07720882",
-          "trial_id": "NCT07720882",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 1768,
-          "type": "trial_registered",
-          "event_date": "2026-07-22",
-          "date_basis": "first posted",
-          "summary": "Trial NCT07720882 registered (no phase).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07720882",
-          "trial_id": "NCT07720882",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 1778,
-          "type": "trial_registered",
-          "event_date": "2026-11-13",
-          "date_basis": "first posted",
-          "summary": "Trial NCT07934914 registered (no phase).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07934914",
-          "trial_id": "NCT07934914",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        }
-      ],
+      "events": [],
       "failure_flags": [],
       "matches": [
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT07720882",
-          "url": "https://clinicaltrials.gov/study/NCT07720882",
-          "score": 1,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "A Clinical Study of a Fully Implanted, Wireless and Functional BCI for Upper-Limb Functional Replacement in Tetraplegia Due to Spinal Cord Injury: Efficacy and Safety. For: Spinal Cord Injury. Tests: \"Triple-F\" BCI. No phase, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT07225582",
-          "url": "https://clinicaltrials.gov/study/NCT07225582",
-          "score": 1,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Development of Optimal Sensory Feedback Strategies to Maximize Function After Tetraplegia. For: Spinal Cord Injury Cervical, Spinal Cord Injuries (Complete and Incomplete). Tests: Brain Computer Interface (BCI) - Functional Electrical Stimulation (FES) system. No phase, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT03680872",
-          "url": "https://clinicaltrials.gov/study/NCT03680872",
-          "score": 1,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Restoring Motor and Sensory Hand Function in Tetraplegia Using a Neural Bypass System. For: Spinal Cord Injuries, Spinal Cord Injury Cervical. Tests: Bidirectional Neural Bypass System. No phase, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT07934914",
-          "url": "https://clinicaltrials.gov/study/NCT07934914",
-          "score": 1,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Endovascular Brain-Computer Interface for Upper-Limb Paralysis. For: Stroke, Hemiplegia, Spinal Cord Injury, Paraplegia and Tetraplegia, Amyotrophic Lateral Sclerosis & Other Neuromuscular Disorders. Tests: Endovascular Venous BCI Type-A Sensor, BCI-Triggered Functional Electrical Stimulation, BCI-Controlled Bionic Robotic Arm. No phase, not yet recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT03482310",
-          "url": "https://clinicaltrials.gov/study/NCT03482310",
-          "score": 0.98,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Restoring High Dimensional Hand Function to Persons With Chronic High Tetraplegia. For: Spinal Cord Injuries, Tetraplegia, Quadriplegia. Tests: Using the Neuroport cortical recording array to determine the desired grasp pattern for a functional electrical stimulation (FES) system. No phase, completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT01964261",
-          "url": "https://clinicaltrials.gov/study/NCT01964261",
-          "score": 0.97,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Sensory Motor Transformations in Human Cortex. For: Quadriplegia. Tests: Neural Prosthetic System 2 (NPS2). No phase, active not recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT03898804",
-          "url": "https://clinicaltrials.gov/study/NCT03898804",
-          "score": 0.94,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "An Early Feasibility Study of the ReHAB System. For: Tetraplegia. Tests: BCI and FES. No phase, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT01852279",
-          "url": "https://clinicaltrials.gov/study/NCT01852279",
-          "score": 0.94,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "BCI and FES for Hand Therapy in Spinal Cord Injury. For: Spinal Cord Injury. Tests: BCI-FES, Passive muscle stimulation. No phase, completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT05637775",
-          "url": "https://clinicaltrials.gov/study/NCT05637775",
-          "score": 0.65,
-          "state": "candidate",
-          "reading": "match",
-          "decided_by": null,
-          "summary": "DiSCIoser: Improving Arm Sensorimotor Functions After Spinal Cord Injury Via Brain-Computer Interface Training. For: Spinal Cord Injuries, Motor Disorders. Tests: EEG-based BCI system for (hands) Motor Imagery training, Control - MI intervention. No phase, completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT04367623",
-          "url": "https://clinicaltrials.gov/study/NCT04367623",
-          "score": 0.65,
-          "state": "candidate",
-          "reading": "match",
-          "decided_by": null,
-          "summary": "Motor Conditioning to Enhance the Effect of Physical Therapy. For: Spinal Cord Injuries. Tests: Brain computer interface based therapy. No phase, terminated."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT05343130",
-          "url": "https://clinicaltrials.gov/study/NCT05343130",
-          "score": 0.56,
-          "state": "candidate",
-          "reading": "match",
-          "decided_by": null,
-          "summary": "Efficacy of a Brain-Computer Interface Controlled Functional Electrical Stimulation Therapy for Spinal Cord Injury Neurorehabilitation. For: Cervical Spinal Cord Injury. Tests: Brain-Computer Interface, Sham Brain-Computer Interface. No phase, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT02325947",
-          "url": "https://clinicaltrials.gov/study/NCT02325947",
-          "score": 0.4,
+          "external_id": "NCT02404857",
+          "url": "https://clinicaltrials.gov/study/NCT02404857",
+          "score": 0.34,
           "state": "candidate",
           "reading": "other_indication",
           "decided_by": null,
-          "summary": "Efficacy of Hand Exoskeleton Controlled by BCI in Post Stroke Patients. For: Poststroke/CVA Paresis. Tests: hand exoskeleton, brain-computer interface (BCI),, hand exoskeleton, sham BCI. No phase, completed."
+          "summary": "BCI Post-stroke Neurorehabilitation. For: Poststroke/CVA Hemiparesis, Paralytic Stroke, Hand Flaccid Paralysis. Tests: EEG based Brain Computer Interface. No phase, completed."
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT02564419",
-          "url": "https://clinicaltrials.gov/study/NCT02564419",
-          "score": 0.4,
+          "external_id": "NCT07269353",
+          "url": "https://clinicaltrials.gov/study/NCT07269353",
+          "score": 0.32,
           "state": "candidate",
-          "reading": "match",
+          "reading": "other_indication",
           "decided_by": null,
-          "summary": "Brain Machine Interface (BMI) in Subjects Living With Quadriplegia. For: Spinal Cord Injury. Tests: Medtronic Activa PC+S. No phase, completed."
+          "summary": "Using Neurotechology to Help Children With Physical Disability Due to Cerebral Palsy. For: Hemiparetic Cerebral Palsy. Tests: Brain Computer Interface - Functional Electrical Stimulations. No phase, recruiting."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT07133347",
+          "url": "https://clinicaltrials.gov/study/NCT07133347",
+          "score": 0.25,
+          "state": "candidate",
+          "reading": "other_indication",
+          "decided_by": null,
+          "summary": "Creating an Engaging BCI/FES Therapy for Children With Perinatal Stroke Using Social Media. For: Perinatal Stroke, Hemiparetic Cerebral Palsy. Tests: Brain computer interface controlled functional electrical stimulation therapy integrated with social media. Phase 1, completed."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06076928",
+          "url": "https://clinicaltrials.gov/study/NCT06076928",
+          "score": 0.22,
+          "state": "candidate",
+          "reading": "other_indication",
+          "decided_by": null,
+          "summary": "Brain Computer Interface (BCI) Integrated Wearable Hand Robotic Glove System for Upper Limb Stroke Rehabilitation. For: Stroke. Tests: Brain Computer Interface integrated HandyRehab platform (BCI-HR), HandyRehab (HR), Standard Treatment of Care. No phase, completed."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT05183152",
+          "url": "https://clinicaltrials.gov/study/NCT05183152",
+          "score": 0.19,
+          "state": "candidate",
+          "reading": "not_a_match",
+          "decided_by": null,
+          "summary": "Non-invasive BCI-controlled Assistive Devices. For: Motor Disorders, Healthy, Spinal Cord Injuries, Muscular Diseases, Motor Neuron Disease, Stroke, Traumatic Brain Injury, Movement Disorders, Multiple Sclerosis. Tests: NMES Feedback, Visual Feedback, TESS. No phase, recruiting."
         }
       ],
-      "trials": [
-        {
-          "trial_id": "NCT01852279",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT01852279",
-          "title": "BCI and FES for Hand Therapy in Spinal Cord Injury",
-          "phases": [
-            "not_applicable"
-          ],
-          "state": "completed",
-          "facts_as_of": "2026-11-15T10:52:40.892315Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 15,
-              "basis": "actual"
-            },
-            "allocation": "randomised",
-            "masking": "double",
-            "comparators": [
-              "active"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "NHS Greater Glasgow and Clyde",
-              "kind": "other"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Muscle strength as measured by the Oxford manual test",
-                "time_frame": "Between initial and final assessment after up to 8 weeks of treatment"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [
-            "10.1088/1741-2560/13/6/065002"
-          ],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "8 weeks",
-              "number": 8,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 0.98,
-              "read_on": "2026-11-15T10:52:40.892315Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Muscle strength as measured by the Oxford manual test",
-              "number": null,
-              "unit": null,
-              "code": "physical_test",
-              "confidence": 0.94,
-              "read_on": "2026-11-15T10:52:40.892315Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT01964261",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT01964261",
-          "title": "Sensory Motor Transformations in Human Cortex",
-          "phases": [
-            "not_applicable"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T10:52:18.283858Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 5,
-              "basis": "planned"
-            },
-            "allocation": null,
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": null,
-              "kind": "individual"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Patient control over the end effector (virtual or physical)",
-                "time_frame": "Nine years after array implantation"
-              },
-              {
-                "measure": "Absence of infection or irritation",
-                "time_frame": "Nine years after array implantation"
-              }
-            ],
-            "primary_outcomes_total": 2,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [
-            "10.1088/1741-2552/ad6e19",
-            "10.7554/elife.32904"
-          ],
-          "readings": [
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Patient control over the end effector (virtual or physical)",
-              "number": null,
-              "unit": null,
-              "code": "other",
-              "confidence": 0.82,
-              "read_on": "2026-11-15T10:52:18.283858Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "infection or irritation",
-              "number": null,
-              "unit": null,
-              "code": "side_effects",
-              "confidence": 0.91,
-              "read_on": "2026-11-15T10:52:18.283858Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT03482310",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT03482310",
-          "title": "Restoring High Dimensional Hand Function to Persons With Chronic High Tetraplegia",
-          "phases": [
-            "not_applicable"
-          ],
-          "state": "completed",
-          "facts_as_of": "2026-11-15T10:52:06.648217Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 1,
-              "basis": "actual"
-            },
-            "allocation": null,
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "child",
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "VA Office of Research and Development",
-              "kind": "government"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Ability to Form Appropriate Grasp Patterns",
-                "time_frame": "Outcomes were assessed on average every 3 months for the full time (4 years) that the participant was enrolled in the study."
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": {
-              "outcomes": [
-                {
-                  "title": "Ability to Form Appropriate Grasp Patterns",
-                  "time_frame": "Outcomes were assessed on average every 3 months for the full time (4 years) that the participant was enrolled in the study.",
-                  "unit": "percentage of correct grasps formed",
-                  "measure": "mean",
-                  "spread_kind": "Standard Deviation",
-                  "rows": 1,
-                  "groups": [
-                    {
-                      "title": "Cortical Control of Grasp Patterns",
-                      "analysed": "1",
-                      "value": "78.75",
-                      "spread": "19.1",
-                      "lower": null,
-                      "upper": null
-                    }
-                  ],
-                  "comparisons": []
-                }
-              ],
-              "outcomes_total": 1
-            }
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "4 years",
-              "number": 4,
-              "unit": "years",
-              "code": null,
-              "confidence": 0.98,
-              "read_on": "2026-11-15T10:52:06.648217Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT03680872",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT03680872",
-          "title": "Restoring Motor and Sensory Hand Function in Tetraplegia Using a Neural Bypass System",
-          "phases": [
-            "not_applicable"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T10:52:43.046842Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 7,
-              "basis": "planned"
-            },
-            "allocation": null,
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": null,
-              "kind": "individual"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Restoration of Movement",
-                "time_frame": "The primary outcome will be assessed over the course of 48 months during the study's restoration sessions."
-              },
-              {
-                "measure": "Restoration of Sensation",
-                "time_frame": "The primary outcome will be assessed over the course of 48 months during the study's restoration sessions."
-              }
-            ],
-            "primary_outcomes_total": 2,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "48 months",
-              "number": 48,
-              "unit": "months",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T10:52:43.046842Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Restoration of Movement",
-              "number": null,
-              "unit": null,
-              "code": "other",
-              "confidence": 0.88,
-              "read_on": "2026-11-15T10:52:43.046842Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 1,
-              "field": "time_frame",
-              "words": "48 months",
-              "number": 48,
-              "unit": "months",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T10:52:43.046842Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "Restoration of Sensation",
-              "number": null,
-              "unit": null,
-              "code": "other",
-              "confidence": 0.88,
-              "read_on": "2026-11-15T10:52:43.046842Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT03898804",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT03898804",
-          "title": "An Early Feasibility Study of the ReHAB System",
-          "phases": [
-            "not_applicable"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T10:52:08.618566Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 12,
-              "basis": "planned"
-            },
-            "allocation": null,
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "University Hospitals Cleveland Medical Center",
-              "kind": "other"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Incidence of treatment-related adverse events",
-                "time_frame": "13 months"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [
-            "10.1101/2023.04.24.23288977",
-            "10.1088/1741-2552/ae0d31",
-            "10.1101/2025.03.29.25324704",
-            "10.1227/neu.0000000000002769"
-          ],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "13 months",
-              "number": 13,
-              "unit": "months",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T10:52:08.618566Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "treatment-related adverse events",
-              "number": null,
-              "unit": null,
-              "code": "side_effects",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T10:52:08.618566Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT07225582",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT07225582",
-          "title": "Development of Optimal Sensory Feedback Strategies to Maximize Function After Tetraplegia",
-          "phases": [
-            "not_applicable"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T10:51:11.964391Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 3,
-              "basis": "planned"
-            },
-            "allocation": null,
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Case Western Reserve University",
-              "kind": "other"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Force matching success rate",
-                "time_frame": "From enrollment to around two years after enrollment"
-              },
-              {
-                "measure": "Object discrimination accuracy",
-                "time_frame": "From enrollment to around two years after enrollment"
-              },
-              {
-                "measure": "Discrimination threshold",
-                "time_frame": "From enrollment until around two years post-enrollment"
-              }
-            ],
-            "primary_outcomes_total": 4,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "success rate",
-              "number": null,
-              "unit": null,
-              "code": "frequency",
-              "confidence": 0.91,
-              "read_on": "2026-11-15T10:51:11.964391Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "Object discrimination accuracy",
-              "number": null,
-              "unit": null,
-              "code": "other",
-              "confidence": 0.83,
-              "read_on": "2026-11-15T10:51:11.964391Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 2,
-              "field": "measure",
-              "words": "Discrimination threshold",
-              "number": null,
-              "unit": null,
-              "code": "other",
-              "confidence": 0.9,
-              "read_on": "2026-11-15T10:51:11.964391Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT07720882",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT07720882",
-          "title": "A Clinical Study of a Fully Implanted, Wireless and Functional BCI for Upper-Limb Functional Replacement in Tetraplegia Due to Spinal Cord Injury: Efficacy and Safety",
-          "phases": [
-            "not_applicable"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T10:52:08.133539Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 32,
-              "basis": "planned"
-            },
-            "allocation": null,
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "NeuroXess Technology (shanghai) Co.,Ltd.",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "BCI-assisted ARAT response rate (at 3 months postoperatively)",
-                "time_frame": "3 months post-operation"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "3 months",
-              "number": 3,
-              "unit": "months",
-              "code": null,
-              "confidence": 0.99,
-              "read_on": "2026-11-15T10:52:08.133539Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "response rate",
-              "number": null,
-              "unit": null,
-              "code": "frequency",
-              "confidence": 0.98,
-              "read_on": "2026-11-15T10:52:08.133539Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT07934914",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT07934914",
-          "title": "Endovascular Brain-Computer Interface for Upper-Limb Paralysis",
-          "phases": [
-            "not_applicable"
-          ],
-          "state": "not_started",
-          "facts_as_of": "2026-11-15T10:52:39.892525Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 2,
-              "basis": "planned"
-            },
-            "allocation": "non_randomised",
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": null,
-              "kind": "individual"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Incidence of Treatment-Emergent Adverse Events",
-                "time_frame": "From sensor implantation through post-implantation day 60"
-              },
-              {
-                "measure": "Device Technical Success Rate",
-                "time_frame": "Sensor implantation through post-implantation day 60"
-              },
-              {
-                "measure": "Effective Signal Bandwidth of the Endovascular Sensor",
-                "time_frame": "Each recording session from the first post-implantation recording through day 60"
-              }
-            ],
-            "primary_outcomes_total": 4,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "post-implantation day 60",
-              "number": 60,
-              "unit": "days",
-              "code": null,
-              "confidence": 0.99,
-              "read_on": "2026-11-15T10:52:39.892525Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Treatment-Emergent Adverse Events",
-              "number": null,
-              "unit": null,
-              "code": "side_effects",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T10:52:39.892525Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 1,
-              "field": "time_frame",
-              "words": "post-implantation day 60",
-              "number": 60,
-              "unit": "days",
-              "code": null,
-              "confidence": 0.99,
-              "read_on": "2026-11-15T10:52:39.892525Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "Success Rate",
-              "number": null,
-              "unit": null,
-              "code": "frequency",
-              "confidence": 0.95,
-              "read_on": "2026-11-15T10:52:39.892525Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 2,
-              "field": "time_frame",
-              "words": "day 60",
-              "number": 60,
-              "unit": "days",
-              "code": null,
-              "confidence": 0.98,
-              "read_on": "2026-11-15T10:52:39.892525Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 2,
-              "field": "measure",
-              "words": "Effective Signal Bandwidth",
-              "number": null,
-              "unit": null,
-              "code": "other",
-              "confidence": 0.92,
-              "read_on": "2026-11-15T10:52:39.892525Z"
-            }
-          ]
-        }
-      ],
-      "papers": [
-        {
-          "identifier": "10.1088/1741-2560/13/6/065002",
-          "url": "https://doi.org/10.1088/1741-2560/13/6/065002",
-          "record_url": "https://europepmc.org/article/MED/27739405",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT01852279",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T10:52:40.937539Z",
-          "facts": {
-            "title": "Rehabilitation of hand in subacute tetraplegic patients based on brain computer interface and functional electrical stimulation: a randomised pilot study.",
-            "journal": "Journal of neural engineering",
-            "year": 2016,
-            "kinds": [
-              "randomised_trial",
-              "article"
-            ],
-            "open_access": false,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        },
-        {
-          "identifier": "10.1088/1741-2552/ad6e19",
-          "url": "https://doi.org/10.1088/1741-2552/ad6e19",
-          "record_url": "https://europepmc.org/article/MED/39134021",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT01964261",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T10:51:23.231650Z",
-          "facts": {
-            "title": "Neural subspaces of imagined movements in parietal cortex remain stable over several years in humans.",
-            "journal": "Journal of neural engineering",
-            "year": 2024,
-            "kinds": [
-              "clinical_trial",
-              "article"
-            ],
-            "open_access": true,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        },
-        {
-          "identifier": "10.7554/elife.32904",
-          "url": "https://doi.org/10.7554/elife.32904",
-          "record_url": "https://europepmc.org/article/MED/29633714",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT01964261",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T10:52:18.302859Z",
-          "facts": {
-            "title": "Proprioceptive and cutaneous sensations in humans elicited by intracortical microstimulation.",
-            "journal": "eLife",
-            "year": 2018,
-            "kinds": [
-              "article"
-            ],
-            "open_access": true,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        },
-        {
-          "identifier": "10.1101/2023.04.24.23288977",
-          "url": "https://doi.org/10.1101/2023.04.24.23288977",
-          "record_url": "https://europepmc.org/article/MED/37162904",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT03898804",
-              "listed": "listed_by_sponsor",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T10:52:08.659821Z",
-          "facts": {
-            "title": "Reconnecting the Hand and Arm to the Brain: Efficacy of Neural Interfaces for Sensorimotor Restoration after Tetraplegia.",
-            "journal": "medRxiv : the preprint server for health sciences",
-            "year": 2023,
-            "kinds": [
-              "preprint",
-              "article"
-            ],
-            "open_access": true,
-            "retracted": false,
-            "studied_in": []
-          }
-        },
-        {
-          "identifier": "10.1088/1741-2552/ae0d31",
-          "url": "https://doi.org/10.1088/1741-2552/ae0d31",
-          "record_url": "https://europepmc.org/article/MED/41022103",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT03898804",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T10:52:09.162766Z",
-          "facts": {
-            "title": "A methodological framework for the efficient characterization of peripheral nerve stimulation parameters.",
-            "journal": "Journal of neural engineering",
-            "year": 2025,
-            "kinds": [
-              "clinical_trial",
-              "article"
-            ],
-            "open_access": true,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        },
-        {
-          "identifier": "10.1101/2025.03.29.25324704",
-          "url": "https://doi.org/10.1101/2025.03.29.25324704",
-          "record_url": "https://europepmc.org/article/MED/40661284",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT03898804",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T10:52:09.661932Z",
-          "facts": {
-            "title": "A Methodological Framework for the Efficient Characterization of Peripheral Nerve Stimulation Parameters.",
-            "journal": "medRxiv : the preprint server for health sciences",
-            "year": 2025,
-            "kinds": [
-              "preprint",
-              "article"
-            ],
-            "open_access": true,
-            "retracted": false,
-            "studied_in": []
-          }
-        },
-        {
-          "identifier": "10.1227/neu.0000000000002769",
-          "url": "https://doi.org/10.1227/neu.0000000000002769",
-          "record_url": "https://europepmc.org/article/MED/37982637",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT03898804",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T10:52:18.143114Z",
-          "facts": {
-            "title": "Reconnecting the Hand and Arm to the Brain: Efficacy of Neural Interfaces for Sensorimotor Restoration After Tetraplegia.",
-            "journal": "Neurosurgery",
-            "year": 2024,
-            "kinds": [
-              "case_report",
-              "article"
-            ],
-            "open_access": false,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        }
-      ],
+      "trials": [],
+      "papers": [],
       "background": [],
       "organisations": [
         {
@@ -11843,76 +10637,6 @@
                 "http://www.nytimes.com/2016/04/14/health/paralysis-limb-reanimation-brain-chip.html"
               ],
               "trial_ids": []
-            }
-          ]
-        },
-        {
-          "name": "Case Western Reserve University",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT07225582"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "NeuroXess Technology (shanghai) Co.,Ltd.",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT07720882"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "NHS Greater Glasgow and Clyde",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT01852279"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "University Hospitals Cleveland Medical Center",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT03898804"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "VA Office of Research and Development",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT03482310"
-              ]
             }
           ]
         }
@@ -11963,6 +10687,7 @@
       "indication": "Paralysis from spinal cord injury",
       "first_reported_date": "2019-10-03",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_1",
@@ -12581,6 +11306,7 @@
       "indication": "HER2-low advanced breast cancer",
       "first_reported_date": "2026-09-17",
       "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -14919,6 +13645,16 @@
       "indication": "postpartum depression",
       "first_reported_date": "2018-08-15",
       "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "early_human",
+        "score": 0.64,
+        "also": [
+          {
+            "stage": "late_human",
+            "score": 0.36
+          }
+        ]
+      },
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -16828,6 +15564,7 @@
       "indication": "HIV infection",
       "first_reported_date": "2021-01-21",
       "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -18336,6 +17073,7 @@
       "indication": "Cellular ageing",
       "first_reported_date": "2026-10-21",
       "evidence_stage": "in_vitro",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -18544,6 +17282,7 @@
       "indication": "High LDL cholesterol and triglycerides that are hard to treat",
       "first_reported_date": "2026-08-28",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_1",
@@ -18980,6 +17719,16 @@
       "indication": "Covid-19",
       "first_reported_date": "2021-01-23",
       "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "early_human",
+        "score": 0.64,
+        "also": [
+          {
+            "stage": "late_human",
+            "score": 0.36
+          }
+        ]
+      },
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -28169,6 +26918,7 @@
       "indication": "Coronavirus disease in hospitalized patients",
       "first_reported_date": "2020-03-26",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_2",
@@ -31918,6 +30668,7 @@
       "indication": "Non-muscle-invasive bladder cancer",
       "first_reported_date": "2019-07-04",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_1",
@@ -32652,6 +31403,16 @@
       "indication": "Infertility associated with congenital absence or abnormal formation of the uterus",
       "first_reported_date": "2018-12-05",
       "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "late_human",
+        "score": 0.55,
+        "also": [
+          {
+            "stage": "early_human",
+            "score": 0.43
+          }
+        ]
+      },
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -35614,6 +34375,7 @@
       "indication": "Alzheimer's disease",
       "first_reported_date": "2026-09-07",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -39118,6 +37880,7 @@
       "indication": "Dentine hypersensitivity",
       "first_reported_date": "2019-08-29",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -39390,6 +38153,7 @@
       "indication": "Dentine loss from tooth decay",
       "first_reported_date": "2017-09-07",
       "evidence_stage": "in_vitro",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -39504,6 +38268,7 @@
       "indication": "Dentine damage from decay or trauma",
       "first_reported_date": "2019-08-09",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -40137,6 +38902,7 @@
       "indication": "Dentine loss from tooth decay",
       "first_reported_date": "2017-01-09",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -40394,6 +39160,7 @@
       "indication": "Treatment-resistant depression",
       "first_reported_date": "2026-10-28",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_2",
@@ -41045,6 +39812,7 @@
       "indication": "COVID-19 in severely ill hospital patients",
       "first_reported_date": "2020-06-16",
       "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -42358,6 +41126,7 @@
       "indication": "Diffuse midline glioma",
       "first_reported_date": "2026-11-03",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -42706,6 +41475,7 @@
       "indication": "Early symptomatic Alzheimer’s disease",
       "first_reported_date": "2021-01-11",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -46244,6 +45014,7 @@
       "indication": "Drug-resistant epilepsy with hippocampal sclerosis",
       "first_reported_date": "2026-11-06",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "no_trial_found",
@@ -46388,7 +45159,7 @@
             "country": "United States",
             "website": "https://ucsd.edu",
             "score": 1,
-            "read_at": "2026-11-15T13:20:02.841443Z"
+            "read_at": "2026-11-15T19:59:43.565390Z"
           },
           "roles": [
             {
@@ -46427,6 +45198,7 @@
       "indication": "Enamel loss and dentine hypersensitivity",
       "first_reported_date": "2018-06-01",
       "evidence_stage": "in_vitro",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -46563,6 +45335,7 @@
       "indication": "Enamel loss from tooth decay",
       "first_reported_date": "2019-09-03",
       "evidence_stage": "in_vitro",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -46728,6 +45501,7 @@
       "indication": "Enamel erosion and early cavities",
       "first_reported_date": "2018-04-05",
       "evidence_stage": "in_vitro",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -46903,6 +45677,7 @@
       "indication": "Early enamel caries",
       "first_reported_date": "2018-04-12",
       "evidence_stage": "in_vitro",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -47221,6 +45996,7 @@
       "indication": "Endometrial cancer",
       "first_reported_date": "2026-10-26",
       "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -48000,6 +46776,7 @@
       "indication": "Preventing migraine in people who have at least four migraines a month",
       "first_reported_date": "2018-05-17",
       "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -57845,6 +56622,7 @@
       "indication": "Prevention of Ebola virus disease",
       "first_reported_date": "2020-01-07",
       "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -59387,6 +58165,16 @@
       "indication": "Major depression, including depression with suicidal thoughts",
       "first_reported_date": "2018-04-16",
       "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "early_human",
+        "score": 0.74,
+        "also": [
+          {
+            "stage": "late_human",
+            "score": 0.26
+          }
+        ]
+      },
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -61173,6 +59961,16 @@
       "indication": "Treatment-resistant depression",
       "first_reported_date": "2019-03-06",
       "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "late_human",
+        "score": 0.89,
+        "also": [
+          {
+            "stage": "early_human",
+            "score": 0.08
+          }
+        ]
+      },
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -69223,6 +68021,16 @@
       "indication": "COVID-19",
       "first_reported_date": "2020-08-17",
       "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "early_human",
+        "score": 0.53,
+        "also": [
+          {
+            "stage": "late_human",
+            "score": 0.47
+          }
+        ]
+      },
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -72246,6 +71054,7 @@
       "indication": "KRAS-mutated cancers, including colorectal cancer",
       "first_reported_date": "2020-05-12",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_1",
@@ -72769,6 +71578,7 @@
       "indication": "Mild COVID-19",
       "first_reported_date": "2020-10-06",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -73841,6 +72651,7 @@
       "indication": "Alzheimer's disease",
       "first_reported_date": "2015-03-18",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "trial_registered",
@@ -75289,6 +74100,7 @@
       "indication": "Androgenetic alopecia (pattern hair loss)",
       "first_reported_date": "2026-11-06",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -75478,6 +74290,7 @@
       "indication": "Male pattern baldness",
       "first_reported_date": "2026-10-27",
       "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -76153,6 +74966,7 @@
       "indication": "Severe heart failure",
       "first_reported_date": "2026-08-21",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_1",
@@ -76583,6 +75397,7 @@
       "indication": "Heart muscle damage after heart attack and heart failure",
       "first_reported_date": "2026-11-09",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -76763,6 +75578,7 @@
       "indication": "Heart failure after a heart attack",
       "first_reported_date": "2026-11-11",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -76922,6 +75738,7 @@
       "indication": "Chronic hepatitis B",
       "first_reported_date": "2026-10-21",
       "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "approved",
@@ -79909,6 +78726,7 @@
       "indication": "COVID-19",
       "first_reported_date": "2020-03-19",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -92804,6 +91622,16 @@
       "indication": "Preventing COVID-19 after close exposure to the coronavirus",
       "first_reported_date": "2020-06-03",
       "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "late_human",
+        "score": 0.54,
+        "also": [
+          {
+            "stage": "early_human",
+            "score": 0.46
+          }
+        ]
+      },
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -93494,6 +92322,7 @@
       "indication": "Infertility after childhood chemotherapy",
       "first_reported_date": "2026-10-08",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "trial_registered",
@@ -93976,6 +92805,7 @@
       "indication": "COVID-19",
       "first_reported_date": "2020-07-20",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -94624,6 +93454,7 @@
       "indication": "Huntington’s disease",
       "first_reported_date": "2017-12-11",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_1",
@@ -95247,6 +94078,7 @@
       "indication": "COVID-19",
       "first_reported_date": "2020-04-05",
       "evidence_stage": "in_vitro",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -111391,6 +110223,16 @@
       "indication": "Depression",
       "first_reported_date": "2016-02-01",
       "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "early_human",
+        "score": 0.79,
+        "also": [
+          {
+            "stage": "in_vitro",
+            "score": 0.2
+          }
+        ]
+      },
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -113471,6 +112313,7 @@
       "indication": "Suicidal thinking",
       "first_reported_date": "2019-02-05",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -115026,6 +113869,16 @@
       "indication": "Spina bifida",
       "first_reported_date": "2019-05-17",
       "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "early_human",
+        "score": 0.6,
+        "also": [
+          {
+            "stage": "late_human",
+            "score": 0.4
+          }
+        ]
+      },
       "checked_by_person": false,
       "status": {
         "code": "phase_1",
@@ -116725,6 +115578,7 @@
       "indication": "End-stage kidney failure",
       "first_reported_date": "2026-09-03",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_1",
@@ -117697,6 +116551,7 @@
       "indication": "Knee osteoarthritis pain",
       "first_reported_date": "2026-10-23",
       "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -123623,6 +122478,7 @@
       "indication": "tooth loss",
       "first_reported_date": "2015-04-21",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -123824,6 +122680,7 @@
       "indication": "Ageing",
       "first_reported_date": "2026-10-01",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -124002,6 +122859,7 @@
       "indication": "Chronic low back pain from degenerative disc disease",
       "first_reported_date": "2026-08-19",
       "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -124572,6 +123430,7 @@
       "indication": "Malaria",
       "first_reported_date": "2026-08-17",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_2",
@@ -125865,6 +124724,7 @@
       "indication": "Metabolic dysfunction-associated steatohepatitis (MASH)",
       "first_reported_date": "2026-10-17",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -126151,6 +125011,16 @@
       "indication": "Post-traumatic stress disorder (PTSD)",
       "first_reported_date": "2016-11-29",
       "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "late_human",
+        "score": 0.72,
+        "also": [
+          {
+            "stage": "early_human",
+            "score": 0.28
+          }
+        ]
+      },
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -134649,6 +133519,7 @@
       "indication": "Melanoma at high risk of recurrence after surgery",
       "first_reported_date": "2026-10-22",
       "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -135546,6 +134417,16 @@
       "indication": "Childhood brain injury, particularly brain injury associated with cranial radiation",
       "first_reported_date": "2020-07-28",
       "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "early_human",
+        "score": 0.86,
+        "also": [
+          {
+            "stage": "late_human",
+            "score": 0.14
+          }
+        ]
+      },
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -135936,6 +134817,7 @@
       "indication": "COVID-19",
       "first_reported_date": "2021-03-25",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -141766,6 +140648,7 @@
       "indication": "Multiple sclerosis",
       "first_reported_date": "2026-09-24",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -141953,6 +140836,7 @@
       "indication": "Muscle loss during weight-loss treatment",
       "first_reported_date": "2026-10-02",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_2",
@@ -142170,6 +141054,7 @@
       "indication": "Obesity",
       "first_reported_date": "2026-10-11",
       "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -145625,6 +144510,7 @@
       "indication": "Obesity",
       "first_reported_date": "2026-11-03",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -145891,6 +144777,16 @@
       "indication": "Alzheimer’s disease",
       "first_reported_date": "2019-11-02",
       "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "late_human",
+        "score": 0.65,
+        "also": [
+          {
+            "stage": "early_human",
+            "score": 0.35
+          }
+        ]
+      },
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -147066,6 +145962,7 @@
       "indication": "Antisocial and aggressive behavior problems in children",
       "first_reported_date": "2015-05-15",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_2",
@@ -147610,6 +146507,7 @@
       "indication": "Ovarian cancer (risk reduction)",
       "first_reported_date": "2026-08-16",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "trial_registered",
@@ -149574,6 +148472,7 @@
       "indication": "Advanced pancreatic cancer",
       "first_reported_date": "2026-09-14",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -151644,6 +150543,7 @@
       "indication": "Motor symptoms ('off' time) in Parkinson's disease",
       "first_reported_date": "2026-10-07",
       "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -152655,6 +151555,7 @@
       "indication": "Peanut allergy",
       "first_reported_date": "2026-09-02",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "no_trial_found",
@@ -152804,17 +151705,18 @@
     },
     {
       "slug": "pembrolizumab-plus-chemotherapy-the-most-common-type-of-lung",
-      "headline": "Study links pembrolizumab plus chemotherapy to longer survival in lung cancer",
-      "summary": "A major study found that adding pembrolizumab to chemotherapy improved survival odds for people with the most common type of lung cancer. Medical experts said the findings support using immunotherapy early in treatment.",
+      "headline": "Study links a pembrolizumab combination to longer survival in metastatic nonsquamous lung cancer",
+      "summary": "The 2018 KEYNOTE-189 study compared pembrolizumab plus pemetrexed and a platinum drug with chemotherapy alone in previously untreated metastatic nonsquamous non-small-cell lung cancer without sensitizing EGFR or ALK alterations. The combination improved overall and progression-free survival in that study population. These findings do not establish the same result for squamous disease, adjuvant treatment after surgery, or regimens adding other investigational agents or radiation.",
       "vertical": "cancer",
       "approach": null,
       "intervention": {
-        "name": "pembrolizumab plus chemotherapy",
+        "name": "Pembrolizumab plus pemetrexed and platinum chemotherapy",
         "synonyms": []
       },
-      "indication": "The most common type of lung cancer",
+      "indication": "Previously untreated metastatic nonsquamous non-small-cell lung cancer without sensitizing EGFR or ALK alterations",
       "first_reported_date": "2018-04-16",
       "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -152825,13 +151727,9 @@
           6849,
           6826,
           6827,
-          6834,
-          6835,
           6840,
           6841,
           6844,
-          6832,
-          6833,
           6845
         ],
         "history": [
@@ -152891,38 +151789,6 @@
           "confidence": 1
         },
         {
-          "id": 6814,
-          "type": "trial_registered",
-          "event_date": "2015-10-21",
-          "date_basis": "first posted",
-          "summary": "Trial NCT02581943 registered (Phase 2).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT02581943",
-          "trial_id": "NCT02581943",
-          "trial_phases": [
-            "phase_2"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 6836,
-          "type": "trial_registered",
-          "event_date": "2015-12-03",
-          "date_basis": "first posted",
-          "summary": "Trial NCT02621398 registered (Phase 1).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT02621398",
-          "trial_id": "NCT02621398",
-          "trial_phases": [
-            "phase_1"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
           "id": 6849,
           "type": "trial_status_change",
           "event_date": "2016-01-15",
@@ -152933,38 +151799,6 @@
           "trial_id": "NCT02578680",
           "trial_phases": [
             "phase_3"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 6815,
-          "type": "trial_status_change",
-          "event_date": "2016-06-17",
-          "date_basis": "start date",
-          "summary": "Trial NCT02581943 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT02581943",
-          "trial_id": "NCT02581943",
-          "trial_phases": [
-            "phase_2"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 6837,
-          "type": "trial_status_change",
-          "event_date": "2016-08-04",
-          "date_basis": "start date",
-          "summary": "Trial NCT02621398 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT02621398",
-          "trial_id": "NCT02621398",
-          "trial_phases": [
-            "phase_1"
           ],
           "trial_state": "started",
           "regulatory_outcome": null,
@@ -153068,106 +151902,6 @@
           "confidence": 1
         },
         {
-          "id": 6812,
-          "type": "trial_registered",
-          "event_date": "2019-11-15",
-          "date_basis": "first posted",
-          "summary": "Trial NCT04165070 registered (Phase 1/Phase 2).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04165070",
-          "trial_id": "NCT04165070",
-          "trial_phases": [
-            "phase_1",
-            "phase_2"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 6813,
-          "type": "trial_status_change",
-          "event_date": "2019-12-19",
-          "date_basis": "start date",
-          "summary": "Trial NCT04165070 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04165070",
-          "trial_id": "NCT04165070",
-          "trial_phases": [
-            "phase_1",
-            "phase_2"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 6820,
-          "type": "trial_registered",
-          "event_date": "2020-01-02",
-          "date_basis": "first posted",
-          "summary": "Trial NCT04216316 registered (Phase 1/Phase 2).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04216316",
-          "trial_id": "NCT04216316",
-          "trial_phases": [
-            "phase_1",
-            "phase_2"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 6834,
-          "type": "trial_registered",
-          "event_date": "2020-02-13",
-          "date_basis": "first posted",
-          "summary": "Trial NCT04267848 registered (Phase 3).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04267848",
-          "trial_id": "NCT04267848",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 6835,
-          "type": "trial_status_change",
-          "event_date": "2020-06-16",
-          "date_basis": "start date",
-          "summary": "Trial NCT04267848 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04267848",
-          "trial_id": "NCT04267848",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 6821,
-          "type": "trial_status_change",
-          "event_date": "2021-04-14",
-          "date_basis": "start date",
-          "summary": "Trial NCT04216316 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04216316",
-          "trial_id": "NCT04216316",
-          "trial_phases": [
-            "phase_1",
-            "phase_2"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
           "id": 6840,
           "type": "trial_registered",
           "event_date": "2021-07-09",
@@ -153247,23 +151981,6 @@
           "confidence": 1
         },
         {
-          "id": 6818,
-          "type": "trial_registered",
-          "event_date": "2022-08-15",
-          "date_basis": "first posted",
-          "summary": "Trial NCT05501665 registered (Phase 1/Phase 2).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT05501665",
-          "trial_id": "NCT05501665",
-          "trial_phases": [
-            "phase_1",
-            "phase_2"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
           "id": 6831,
           "type": "trial_results_posted",
           "event_date": "2022-11-14",
@@ -153276,39 +151993,6 @@
             "phase_2"
           ],
           "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 6816,
-          "type": "trial_status_change",
-          "event_date": "2022-12-28",
-          "date_basis": "completion date",
-          "summary": "Trial NCT02581943 completed.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT02581943",
-          "trial_id": "NCT02581943",
-          "trial_phases": [
-            "phase_2"
-          ],
-          "trial_state": "completed",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 6819,
-          "type": "trial_status_change",
-          "event_date": "2023-05-09",
-          "date_basis": "start date",
-          "summary": "Trial NCT05501665 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT05501665",
-          "trial_id": "NCT05501665",
-          "trial_phases": [
-            "phase_1",
-            "phase_2"
-          ],
-          "trial_state": "started",
           "regulatory_outcome": null,
           "confidence": 1
         },
@@ -153329,22 +152013,6 @@
           "confidence": 1
         },
         {
-          "id": 6839,
-          "type": "trial_results_posted",
-          "event_date": "2023-10-11",
-          "date_basis": "results first posted",
-          "summary": "Results posted for trial NCT02621398.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT02621398",
-          "trial_id": "NCT02621398",
-          "trial_phases": [
-            "phase_1"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
           "id": 6844,
           "type": "trial_registered",
           "event_date": "2023-10-24",
@@ -153361,38 +152029,6 @@
           "confidence": 1
         },
         {
-          "id": 6817,
-          "type": "trial_results_posted",
-          "event_date": "2024-01-05",
-          "date_basis": "results first posted",
-          "summary": "Results posted for trial NCT02581943.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT02581943",
-          "trial_id": "NCT02581943",
-          "trial_phases": [
-            "phase_2"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 6838,
-          "type": "trial_status_change",
-          "event_date": "2024-02-29",
-          "date_basis": "completion date",
-          "summary": "Trial NCT02621398 completed.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT02621398",
-          "trial_id": "NCT02621398",
-          "trial_phases": [
-            "phase_1"
-          ],
-          "trial_state": "completed",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
           "id": 6843,
           "type": "trial_results_posted",
           "event_date": "2024-05-17",
@@ -153405,38 +152041,6 @@
             "phase_3"
           ],
           "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 6832,
-          "type": "trial_registered",
-          "event_date": "2024-05-20",
-          "date_basis": "first posted",
-          "summary": "Trial NCT06422143 registered (Phase 3).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06422143",
-          "trial_id": "NCT06422143",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 6833,
-          "type": "trial_status_change",
-          "event_date": "2024-06-10",
-          "date_basis": "start date",
-          "summary": "Trial NCT06422143 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06422143",
-          "trial_id": "NCT06422143",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": "started",
           "regulatory_outcome": null,
           "confidence": 1
         },
@@ -153485,23 +152089,6 @@
             "phase_2"
           ],
           "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 6822,
-          "type": "trial_results_posted",
-          "event_date": "2026-03-24",
-          "date_basis": "results first posted",
-          "summary": "Results posted for trial NCT04216316.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT04216316",
-          "trial_id": "NCT04216316",
-          "trial_phases": [
-            "phase_1",
-            "phase_2"
-          ],
-          "trial_state": null,
           "regulatory_outcome": null,
           "confidence": 1
         },
@@ -153556,26 +152143,6 @@
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT02581943",
-          "url": "https://clinicaltrials.gov/study/NCT02581943",
-          "score": 0.99,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Effect of Pembrolizumab With or Without Carboplatin and Paclitaxel on Immune Response in Patients With Recurrent or Stage IIIB-IV Non-small Cell Lung Cancer. For: Recurrent Non-Small Cell Lung Carcinoma, Stage IIIB Non-Small Cell Lung Cancer, Stage IV Non-Small Cell Lung Cancer. Tests: Carboplatin, Laboratory Biomarker Analysis, Paclitaxel, Pembrolizumab, Quality-of-Life Assessment. Phase 2, compl."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT05501665",
-          "url": "https://clinicaltrials.gov/study/NCT05501665",
-          "score": 0.99,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Split Course Adaptive Radiation Therapy With Pembrolizumab With/Without Chemotherapy for Treating Stage IV Lung Cancer. For: Lung Non-Small Cell Carcinoma, Stage IV Lung Cancer AJCC v8, Stage III Lung Cancer. Tests: Biospecimen Collection, Carboplatin, Computed Tomography, Fludeoxyglucose F-18, Nab-paclitaxel, Pembrolizumab, Pemetrexed, Positron Emission Tomography, Radiation Therapy, [18-F] (fluo."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
           "external_id": "NCT04956692",
           "url": "https://clinicaltrials.gov/study/NCT04956692",
           "score": 0.99,
@@ -153596,16 +152163,6 @@
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT04165070",
-          "url": "https://clinicaltrials.gov/study/NCT04165070",
-          "score": 0.98,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "KEYMAKER-U01 Substudy 01A: Efficacy and Safety Study of Pembrolizumab (MK-3475) With or Without Chemotherapy When Used With Investigational Agents in Treatment-naïve Participants With Stage IV Non-small Cell Lung Cancer (NSCLC) (MK-3475-01A/KEYMAKER-U01A). For: Carcinoma, Non-Small-Cell Lung. Tests: Pembrolizumab, Carboplatin, Paclitaxel, Pemetrexed, Vibostolimab, Boserolimab, MK-4830, MK-0482, If."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
           "external_id": "NCT02039674",
           "url": "https://clinicaltrials.gov/study/NCT02039674",
           "score": 0.98,
@@ -153613,46 +152170,6 @@
           "reading": "match",
           "decided_by": "rule",
           "summary": "A Study of Pembrolizumab (MK-3475) in Combination With Chemotherapy or Immunotherapy in Participants With Non-small Cell Lung Cancer (MK-3475-021/KEYNOTE-021). For: Non-small Cell Lung Carcinoma. Tests: Pembrolizumab, Paclitaxel, Carboplatin, Bevacizumab, Pemetrexed, Ipilimumab, Erlotinib, Gefitinib. Phase 1/Phase 2, completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT06422143",
-          "url": "https://clinicaltrials.gov/study/NCT06422143",
-          "score": 0.98,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Pembrolizumab With or Without Maintenance Sacituzumab Tirumotecan (Sac-TMT; MK-2870) in Metastatic Squamous Non-small Cell Lung Cancer (NSCLC) [MK-2870-023]. For: Non-small Cell Lung Cancer, NSCLC. Tests: Pembrolizumab, sac-TMT, Carboplatin, Paclitaxel, Nab-paclitaxel. Phase 3, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT04216316",
-          "url": "https://clinicaltrials.gov/study/NCT04216316",
-          "score": 0.97,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Testing the Addition of an Anti-cancer Drug, Berzosertib (M6620, VX-970), to the Usual Treatments (Carboplatin and Gemcitabine) and to Pembrolizumab for Patients With Advanced Squamous Cell Non-small Cell Lung Cancer. For: Lung Non-Small Cell Squamous Carcinoma, Stage IV Lung Cancer AJCC v8. Tests: Berzosertib, Biospecimen Collection, Carboplatin, Computed Tomography, Gemcitabine Hydrochloride, Ma."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT02621398",
-          "url": "https://clinicaltrials.gov/study/NCT02621398",
-          "score": 0.93,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Pembrolizumab, Paclitaxel, Carboplatin, and Radiation Therapy in Treating Patients With Stage II-IIIB Non-Small Cell Lung Cancer. For: Stage II Non-Small Cell Lung Cancer, Stage IIIA Non-Small Cell Lung Cancer, Stage IIIB Non-Small Cell Lung Cancer. Tests: 3-Dimensional Conformal Radiation Therapy, Carboplatin, Intensity-Modulated Radiation Therapy, Laboratory Biomarker Analysis, Paclitaxel, Pembr."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT04267848",
-          "url": "https://clinicaltrials.gov/study/NCT04267848",
-          "score": 0.85,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Testing the Addition of a Type of Drug Called Immunotherapy to the Usual Chemotherapy Treatment for Non-small Cell Lung Cancer, an ALCHEMIST Treatment Trial (Chemo-IO [ACCIO]). For: Lung Non-Small Cell Carcinoma, Lung Non-Small Cell Squamous Carcinoma, Lung Non-Squamous Non-Small Cell Carcinoma, Stage II Lung Cancer AJCC v8, Stage IIIA Lung Cancer AJCC v8, Stage IIIB Lung Cancer AJCC v8. Tests: Bi."
         },
         {
           "source_name": "clinicaltrials.gov",
@@ -153666,53 +152183,53 @@
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT04061590",
-          "url": "https://clinicaltrials.gov/study/NCT04061590",
-          "score": 0.77,
+          "external_id": "NCT05269381",
+          "url": "https://clinicaltrials.gov/study/NCT05269381",
+          "score": 0.39,
           "state": "candidate",
-          "reading": "match",
+          "reading": "not_a_match",
           "decided_by": null,
-          "summary": "Pembrolizumab With or Without Chemotherapy Before Surgery in Treating Patients With Stage I-IIIA Non-Small Cell Lung Cancer. For: Lung Non-Small Cell Carcinoma, Stage I Lung Cancer AJCC v8, Stage IA1 Lung Cancer AJCC v8, Stage IA2 Lung Cancer AJCC v8, Stage IA3 Lung Cancer AJCC v8, Stage IB Lung Cancer AJCC v8, Stage II Lung Cancer AJCC v8, Stage IIA Lung Cancer AJCC v8, Stage IIB Lung Cancer AJCC."
+          "summary": "Personalized Neoantigen Peptide-Based Vaccine in Combination With Pembrolizumab for Treatment of Advanced Solid Tumors. For: Anatomic Stage III Breast Cancer AJCC v8, Anatomic Stage IIIA Breast Cancer AJCC v8, Anatomic Stage IIIB Breast Cancer AJCC v8, Anatomic Stage IIIC Breast Cancer AJCC v8, Anatomic Stage IV Breast Cancer AJCC v8, Clinical Stage III Cutaneous Melanoma AJCC v8, Clinical Stage I."
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT03634241",
-          "url": "https://clinicaltrials.gov/study/NCT03634241",
-          "score": 0.76,
+          "external_id": "NCT04032418",
+          "url": "https://clinicaltrials.gov/study/NCT04032418",
+          "score": 0.36,
           "state": "candidate",
-          "reading": "match",
+          "reading": "not_a_match",
           "decided_by": null,
-          "summary": "Pembrolizumab in Preventing Lung Cancer in Patients With Stage I-II Non-Small Cell Lung Cancer or High-Risk Pulmonary Nodules, the IMPRINT-Lung Study. For: Lung Non-Small Cell Carcinoma, Stage I Lung Cancer AJCC v8, Stage IA1 Lung Cancer AJCC v8, Stage IA2 Lung Cancer AJCC v8, Stage IA3 Lung Cancer AJCC v8, Stage IB Lung Cancer AJCC v8, Stage II Lung Cancer AJCC v8, Stage IIA Lung Cancer AJCC v8, ."
+          "summary": "Pembrolizumab Every 12 Weeks Versus Every 3 Weeks in Treating Patients With Non-small Cell Lung Cancer. For: Lung Non-Small Cell Carcinoma. Tests: Pembrolizumab. Phase 2, active not recruiting."
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT02085070",
-          "url": "https://clinicaltrials.gov/study/NCT02085070",
-          "score": 0.75,
+          "external_id": "NCT02402920",
+          "url": "https://clinicaltrials.gov/study/NCT02402920",
+          "score": 0.35,
           "state": "candidate",
-          "reading": "match",
+          "reading": "other_indication",
           "decided_by": null,
-          "summary": "MK-3475 in Melanoma and NSCLC Patients With Brain Metastases. For: Melanoma, Non-Small Cell Lung Cancer, Brain Metastases. Tests: MK-3475. Phase 2, completed."
+          "summary": "Pembrolizumab and Concurrent Chemoradiotherapy or Radiation Therapy in Treating Patients With Small Cell Lung Cancer. For: Extensive Stage Small Cell Lung Carcinoma, Limited Stage Small Cell Lung Carcinoma, Neuroendocrine Neoplasm. Tests: Carboplatin, Cisplatin, Etoposide, Laboratory Biomarker Analysis, Pembrolizumab, Radiation Therapy. Phase 1, completed."
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT02949843",
-          "url": "https://clinicaltrials.gov/study/NCT02949843",
-          "score": 0.7,
+          "external_id": "NCT02879994",
+          "url": "https://clinicaltrials.gov/study/NCT02879994",
+          "score": 0.35,
           "state": "candidate",
-          "reading": "match",
+          "reading": "not_a_match",
           "decided_by": null,
-          "summary": "Targeted Therapy in Treating Patients With Incurable Non-Small Cell Lung Cancer With Genetic Mutations. For: EGFR Activating Mutation, Recurrent Non-Small Cell Lung Carcinoma, Stage IV Non-Small Cell Lung Cancer. Tests: Chemotherapy, Immunotherapy, Laboratory Biomarker Analysis, Nivolumab, Pembrolizumab, Targeted Molecular Therapy, Tyrosine Kinase Inhibitor. Phase 2, terminated."
+          "summary": "Pembrolizumab in Treating Patients With EGFR Mutant, Tyrosine Kinase Inhibitor Naive Advanced Non-Small Cell Lung Cancer. For: Stage IIIA Non-Small Cell Lung Cancer, Stage IIIB Non-Small Cell Lung Cancer, Stage IV Non-Small Cell Lung Cancer. Tests: Laboratory Biomarker Analysis, Pembrolizumab. Phase 2, completed."
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT04340882",
-          "url": "https://clinicaltrials.gov/study/NCT04340882",
-          "score": 0.65,
+          "external_id": "NCT06698042",
+          "url": "https://clinicaltrials.gov/study/NCT06698042",
+          "score": 0.34,
           "state": "candidate",
-          "reading": "match",
+          "reading": "not_a_match",
           "decided_by": null,
-          "summary": "Phase 2 DoceRamPem for Patients With Metastatic or Recurrent NSCLC Who Progressed on Platinum-Doublet and PD-1/PD-L1 Blockade. For: Metastatic Non-Small Lung Cell Cancer, Recurrent Non-Small Lung Cell Cancer, Stage IV Lung Cancer AJCC v8, Stage IVA Lung Cancer AJCC v8, Stage IVB Lung Cancer AJCC v8. Tests: Docetaxel, Pembrolizumab, Ramucirumab. Phase 2, active not recruiting."
+          "summary": "A Clinical Study of Pembrolizumab (+) Berahyaluronidase Alfa (MK-3475A) to Treat Newly-diagnosed Metastatic Non-small Cell Lung Cancer (MK-3475A-F84). For: Lung Cancer, Non-Small Cell Lung Cancer. Tests: Pembrolizumab (+) Berahyaluronidase alfa, Pembrolizumab. Phase 3, active not recruiting."
         }
       ],
       "trials": [
@@ -154212,299 +152729,6 @@
           ]
         },
         {
-          "trial_id": "NCT02581943",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT02581943",
-          "title": "Effect of Pembrolizumab With or Without Carboplatin and Paclitaxel on Immune Response in Patients With Recurrent or Stage IIIB-IV Non-small Cell Lung Cancer",
-          "phases": [
-            "phase_2"
-          ],
-          "state": "completed",
-          "facts_as_of": "2026-11-15T12:52:42.321804Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 43,
-              "basis": "actual"
-            },
-            "allocation": "randomised",
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Wake Forest University Health Sciences",
-              "kind": "other"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Duration of Response",
-                "time_frame": "Up to 2 years"
-              },
-              {
-                "measure": "Change in Effect of Treatment in Immune Markers From Baseline to End of Treatment (up to 2 Years)",
-                "time_frame": "Baseline and end of treatment (up to 2 years)"
-              },
-              {
-                "measure": "Objective Response Rate (ORR), Assessed Using RECIST",
-                "time_frame": "Up to 2 years"
-              }
-            ],
-            "primary_outcomes_total": 5,
-            "why_stopped": null,
-            "results": {
-              "outcomes": [
-                {
-                  "title": "Duration of Response",
-                  "time_frame": "Up to 2 years",
-                  "unit": "days",
-                  "measure": "median",
-                  "spread_kind": "95% Confidence Interval",
-                  "rows": 1,
-                  "groups": [
-                    {
-                      "title": "Arm I (Pembrolizumab)",
-                      "analysed": "22",
-                      "value": "98",
-                      "spread": null,
-                      "lower": "0",
-                      "upper": "326"
-                    },
-                    {
-                      "title": "Arm II (Pembrolizumab, Paclitaxel, Carboplatin)",
-                      "analysed": "21",
-                      "value": "69",
-                      "spread": null,
-                      "lower": "0",
-                      "upper": "252"
-                    }
-                  ],
-                  "comparisons": [
-                    {
-                      "groups": [
-                        "Arm I (Pembrolizumab)",
-                        "Arm II (Pembrolizumab, Paclitaxel, Carboplatin)"
-                      ],
-                      "p_value": "0.366",
-                      "method": "Log Rank",
-                      "test": null
-                    }
-                  ]
-                },
-                {
-                  "title": "Change in Effect of Treatment in Immune Markers From Baseline to End of Treatment (up to 2 Years)",
-                  "time_frame": "Baseline and end of treatment (up to 2 years)",
-                  "unit": "cells",
-                  "measure": "median",
-                  "spread_kind": "Inter-Quartile Range",
-                  "rows": 7,
-                  "groups": [],
-                  "comparisons": []
-                },
-                {
-                  "title": "Objective Response Rate (ORR), Assessed Using RECIST",
-                  "time_frame": "Up to 2 years",
-                  "unit": "Participants",
-                  "measure": "count_of_participants",
-                  "spread_kind": null,
-                  "rows": 1,
-                  "groups": [
-                    {
-                      "title": "Arm I (Pembrolizumab)",
-                      "analysed": "22",
-                      "value": "6",
-                      "spread": null,
-                      "lower": null,
-                      "upper": null
-                    },
-                    {
-                      "title": "Arm II (Pembrolizumab, Paclitaxel, Carboplatin)",
-                      "analysed": "21",
-                      "value": "9",
-                      "spread": null,
-                      "lower": null,
-                      "upper": null
-                    }
-                  ],
-                  "comparisons": [
-                    {
-                      "groups": [
-                        "Arm I (Pembrolizumab)",
-                        "Arm II (Pembrolizumab, Paclitaxel, Carboplatin)"
-                      ],
-                      "p_value": "0.348",
-                      "method": "Fisher Exact",
-                      "test": null
-                    }
-                  ]
-                }
-              ],
-              "outcomes_total": 5
-            }
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "Up to 2 years",
-              "number": 2,
-              "unit": "years",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T12:52:42.321804Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Duration of Response",
-              "number": null,
-              "unit": null,
-              "code": "survival",
-              "confidence": 0.98,
-              "read_on": "2026-11-15T12:52:42.321804Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 1,
-              "field": "time_frame",
-              "words": "up to 2 years",
-              "number": 2,
-              "unit": "years",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T12:52:42.321804Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "Immune Markers",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 0.94,
-              "read_on": "2026-11-15T12:52:42.321804Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 2,
-              "field": "time_frame",
-              "words": "Up to 2 years",
-              "number": 2,
-              "unit": "years",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T12:52:42.321804Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 2,
-              "field": "measure",
-              "words": "Objective Response Rate (ORR)",
-              "number": null,
-              "unit": null,
-              "code": "frequency",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T12:52:42.321804Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT02621398",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT02621398",
-          "title": "Pembrolizumab, Paclitaxel, Carboplatin, and Radiation Therapy in Treating Patients With Stage II-IIIB Non-Small Cell Lung Cancer",
-          "phases": [
-            "phase_1"
-          ],
-          "state": "completed",
-          "facts_as_of": "2026-11-15T12:53:13.116499Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 23,
-              "basis": "actual"
-            },
-            "allocation": null,
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Rutgers, The State University of New Jersey",
-              "kind": "other"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Maximum Tolerated Dose (MTD) and Dose Limiting Toxicity (DLT) of the Combination of Pembrolizumab With Paclitaxel, Carboplatin and Radiation Therapy According to the National Cancer Institute Common Terminology Criteria for Adverse Events Version 4.0",
-                "time_frame": "Up to 30 days"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": {
-              "outcomes": [
-                {
-                  "title": "Maximum Tolerated Dose (MTD) and Dose Limiting Toxicity (DLT) of the Combination of Pembrolizumab With Paclitaxel, Carboplatin and Radiation Therapy According to the National Cancer Institute Common Terminology Criteria for Adverse Events Version 4.0",
-                  "time_frame": "Up to 30 days",
-                  "unit": "mg",
-                  "measure": "number",
-                  "spread_kind": null,
-                  "rows": 1,
-                  "groups": [
-                    {
-                      "title": "All Participants",
-                      "analysed": "23",
-                      "value": "200",
-                      "spread": null,
-                      "lower": null,
-                      "upper": null
-                    }
-                  ],
-                  "comparisons": []
-                }
-              ],
-              "outcomes_total": 1
-            }
-          },
-          "papers": [
-            "10.1001/jamaoncol.2019.6731"
-          ],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "Up to 30 days",
-              "number": 30,
-              "unit": "days",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T12:53:13.116499Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Dose Limiting Toxicity",
-              "number": null,
-              "unit": null,
-              "code": "side_effects",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T12:53:13.116499Z"
-            }
-          ]
-        },
-        {
           "trial_id": "NCT03664024",
           "source_name": "clinicaltrials.gov",
           "url": "https://clinicaltrials.gov/study/NCT03664024",
@@ -154721,362 +152945,6 @@
           ]
         },
         {
-          "trial_id": "NCT04165070",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT04165070",
-          "title": "KEYMAKER-U01 Substudy 01A: Efficacy and Safety Study of Pembrolizumab (MK-3475) With or Without Chemotherapy When Used With Investigational Agents in Treatment-naïve Participants With Stage IV Non-small Cell Lung Cancer (NSCLC) (MK-3475-01A/KEYMAKER-U01A)",
-          "phases": [
-            "phase_1",
-            "phase_2"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T12:52:41.839095Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 450,
-              "basis": "planned"
-            },
-            "allocation": "randomised",
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Merck Sharp & Dohme LLC",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Part A: Objective Response Rate (ORR) According to Response Evaluation Criteria in Solid Tumors Version 1.1 (RECIST 1.1)",
-                "time_frame": "Up to approximately 24 months"
-              },
-              {
-                "measure": "Part B: Number of Participants Who Experience One or More Adverse Events (AEs)",
-                "time_frame": "Up to approximately 27 months"
-              },
-              {
-                "measure": "Part B: Number of Participants Who Discontinue Study Intervention Due to an Adverse Event (AE)",
-                "time_frame": "Up to approximately 24 months"
-              }
-            ],
-            "primary_outcomes_total": 4,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "24 months",
-              "number": 24,
-              "unit": "months",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T12:52:41.839095Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Objective Response Rate (ORR)",
-              "number": null,
-              "unit": null,
-              "code": "frequency",
-              "confidence": 0.96,
-              "read_on": "2026-11-15T12:52:41.839095Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 1,
-              "field": "time_frame",
-              "words": "27 months",
-              "number": 27,
-              "unit": "months",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T12:52:41.839095Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "Number of Participants Who Experience One or More Adverse Events (AEs)",
-              "number": null,
-              "unit": null,
-              "code": "frequency",
-              "confidence": 1,
-              "read_on": "2026-11-15T12:52:41.839095Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 2,
-              "field": "time_frame",
-              "words": "24 months",
-              "number": 24,
-              "unit": "months",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T12:52:41.839095Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 2,
-              "field": "measure",
-              "words": "Number of Participants Who Discontinue Study Intervention Due to an Adverse Event (AE)",
-              "number": null,
-              "unit": null,
-              "code": "frequency",
-              "confidence": 1,
-              "read_on": "2026-11-15T12:52:41.839095Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT04216316",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT04216316",
-          "title": "Testing the Addition of an Anti-cancer Drug, Berzosertib (M6620, VX-970), to the Usual Treatments (Carboplatin and Gemcitabine) and to Pembrolizumab for Patients With Advanced Squamous Cell Non-small Cell Lung Cancer",
-          "phases": [
-            "phase_1",
-            "phase_2"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T12:52:43.322665Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 12,
-              "basis": "actual"
-            },
-            "allocation": "randomised",
-            "masking": "none",
-            "comparators": [
-              "active"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "National Cancer Institute (NCI)",
-              "kind": "government"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Patients Who Experienced a DLT",
-                "time_frame": "Up to completion of cycle 1"
-              },
-              {
-                "measure": "Recommended Phase 2 Dose (RP2D)",
-                "time_frame": "Up to completion of cycle 1"
-              },
-              {
-                "measure": "12-month Progression-free Survival (PFS) - Total Population",
-                "time_frame": "At 12 months"
-              }
-            ],
-            "primary_outcomes_total": 8,
-            "why_stopped": null,
-            "results": {
-              "outcomes": [
-                {
-                  "title": "Patients Who Experienced a DLT",
-                  "time_frame": "Up to completion of cycle 1",
-                  "unit": "percentage of patients",
-                  "measure": "number",
-                  "spread_kind": "95% Confidence Interval",
-                  "rows": 1,
-                  "groups": [
-                    {
-                      "title": "Dose Level -1 (Berzosertib (M6620) + Carboplatin + Gemcitabine + Pembrolizumab)",
-                      "analysed": "6",
-                      "value": "0",
-                      "spread": null,
-                      "lower": "0",
-                      "upper": "45.9"
-                    },
-                    {
-                      "title": "Dose Level 1 (Berzosertib (M6620) + Carboplatin + Gemcitabine + Pembrolizumab)",
-                      "analysed": "6",
-                      "value": "33.3",
-                      "spread": null,
-                      "lower": "4.3",
-                      "upper": "77.7"
-                    }
-                  ],
-                  "comparisons": []
-                },
-                {
-                  "title": "Recommended Phase 2 Dose (RP2D)",
-                  "time_frame": "Up to completion of cycle 1",
-                  "unit": "mg/mL*min",
-                  "measure": "number",
-                  "spread_kind": null,
-                  "rows": 1,
-                  "groups": [
-                    {
-                      "title": "Dose Level -1 (Berzosertib (M6620) + Carboplatin + Gemcitabine + Pembrolizumab)",
-                      "analysed": "6",
-                      "value": "4",
-                      "spread": null,
-                      "lower": null,
-                      "upper": null
-                    }
-                  ],
-                  "comparisons": []
-                },
-                {
-                  "title": "12-month Progression-free Survival (PFS) - Total Population",
-                  "time_frame": "At 12 months",
-                  "unit": "percentage of patients",
-                  "measure": "number",
-                  "spread_kind": "95% Confidence Interval",
-                  "rows": 1,
-                  "groups": [
-                    {
-                      "title": "Berzosertib (M6620) + Carboplatin + Gemcitabine + Pembrolizumab",
-                      "analysed": "12",
-                      "value": "28",
-                      "spread": null,
-                      "lower": "7",
-                      "upper": "54"
-                    }
-                  ],
-                  "comparisons": []
-                }
-              ],
-              "outcomes_total": 8
-            }
-          },
-          "papers": [
-            "10.1093/oncolo/oyaf373"
-          ],
-          "readings": [
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Patients Who Experienced a DLT",
-              "number": null,
-              "unit": null,
-              "code": "frequency",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T12:52:43.322665Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "Recommended Phase 2 Dose (RP2D)",
-              "number": null,
-              "unit": null,
-              "code": "other",
-              "confidence": 0.96,
-              "read_on": "2026-11-15T12:52:43.322665Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 2,
-              "field": "time_frame",
-              "words": "At 12 months",
-              "number": 12,
-              "unit": "months",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T12:52:43.322665Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 2,
-              "field": "measure",
-              "words": "Progression-free Survival",
-              "number": null,
-              "unit": null,
-              "code": "survival",
-              "confidence": 1,
-              "read_on": "2026-11-15T12:52:43.322665Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT04267848",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT04267848",
-          "title": "Testing the Addition of a Type of Drug Called Immunotherapy to the Usual Chemotherapy Treatment for Non-small Cell Lung Cancer, an ALCHEMIST Treatment Trial (Chemo-IO [ACCIO])",
-          "phases": [
-            "phase_3"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T12:52:54.831597Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 1210,
-              "basis": "planned"
-            },
-            "allocation": "randomised",
-            "masking": "none",
-            "comparators": [
-              "active"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "National Cancer Institute (NCI)",
-              "kind": "government"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Disease free survival (DFS)",
-                "time_frame": "From randomization to the first of either disease recurrence or death from any cause, assessed up to 5 years after accrual completion"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [
-            "10.1200/edbk-26-518244",
-            "10.6004/jnccn.2026.7005",
-            "10.1016/j.jtho.2026.103650",
-            "10.2217/imt-2021-0019"
-          ],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "up to 5 years",
-              "number": 5,
-              "unit": "years",
-              "code": null,
-              "confidence": 0.99,
-              "read_on": "2026-11-15T12:52:54.831597Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "survival",
-              "number": null,
-              "unit": null,
-              "code": "survival",
-              "confidence": 1,
-              "read_on": "2026-11-15T12:52:54.831597Z"
-            }
-          ]
-        },
-        {
           "trial_id": "NCT04956692",
           "source_name": "clinicaltrials.gov",
           "url": "https://clinicaltrials.gov/study/NCT04956692",
@@ -155247,97 +153115,6 @@
           ]
         },
         {
-          "trial_id": "NCT05501665",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT05501665",
-          "title": "Split Course Adaptive Radiation Therapy With Pembrolizumab With/Without Chemotherapy for Treating Stage IV Lung Cancer",
-          "phases": [
-            "phase_1",
-            "phase_2"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T12:52:42.822675Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 25,
-              "basis": "planned"
-            },
-            "allocation": "non_randomised",
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Vanderbilt-Ingram Cancer Center",
-              "kind": "other"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Incidence of adverse events",
-                "time_frame": "Up to 2 years"
-              },
-              {
-                "measure": "Best overall response rate",
-                "time_frame": "Within 6 months"
-              }
-            ],
-            "primary_outcomes_total": 2,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "2 years",
-              "number": 2,
-              "unit": "years",
-              "code": null,
-              "confidence": 0.99,
-              "read_on": "2026-11-15T12:52:42.822675Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "adverse events",
-              "number": null,
-              "unit": null,
-              "code": "side_effects",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T12:52:42.822675Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 1,
-              "field": "time_frame",
-              "words": "6 months",
-              "number": 6,
-              "unit": "months",
-              "code": null,
-              "confidence": 0.99,
-              "read_on": "2026-11-15T12:52:42.822675Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "response rate",
-              "number": null,
-              "unit": null,
-              "code": "frequency",
-              "confidence": 0.94,
-              "read_on": "2026-11-15T12:52:42.822675Z"
-            }
-          ]
-        },
-        {
           "trial_id": "NCT06096844",
           "source_name": "clinicaltrials.gov",
           "url": "https://clinicaltrials.gov/study/NCT06096844",
@@ -155399,72 +153176,6 @@
               "code": "survival",
               "confidence": 1,
               "read_on": "2026-11-15T12:53:23.904197Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT06422143",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT06422143",
-          "title": "Pembrolizumab With or Without Maintenance Sacituzumab Tirumotecan (Sac-TMT; MK-2870) in Metastatic Squamous Non-small Cell Lung Cancer (NSCLC) [MK-2870-023]",
-          "phases": [
-            "phase_3"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T12:52:54.280388Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 851,
-              "basis": "planned"
-            },
-            "allocation": "randomised",
-            "masking": "none",
-            "comparators": [
-              "active"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Merck Sharp & Dohme LLC",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Overall survival (OS)",
-                "time_frame": "Up to ~50 months"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "Up to ~50 months",
-              "number": 50,
-              "unit": "months",
-              "code": null,
-              "confidence": 0.98,
-              "read_on": "2026-11-15T12:52:54.280388Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Overall survival (OS)",
-              "number": null,
-              "unit": null,
-              "code": "survival",
-              "confidence": 1,
-              "read_on": "2026-11-15T12:52:54.280388Z"
             }
           ]
         },
@@ -156049,38 +153760,6 @@
           }
         },
         {
-          "identifier": "10.1001/jamaoncol.2019.6731",
-          "url": "https://doi.org/10.1001/jamaoncol.2019.6731",
-          "record_url": "https://europepmc.org/article/MED/32077891",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT02621398",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T12:53:22.679813Z",
-          "facts": {
-            "title": "Phase 1 Trial of Pembrolizumab Administered Concurrently With Chemoradiotherapy for Locally Advanced Non-Small Cell Lung Cancer: A Nonrandomized Controlled Trial.",
-            "journal": "JAMA oncology",
-            "year": 2020,
-            "kinds": [
-              "clinical_trial",
-              "article"
-            ],
-            "open_access": false,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        },
-        {
           "identifier": "10.1016/j.lungcan.2024.107506",
           "url": "https://doi.org/10.1016/j.lungcan.2024.107506",
           "record_url": "https://europepmc.org/article/MED/38422883",
@@ -156102,203 +153781,6 @@
             "journal": "Lung cancer (Amsterdam, Netherlands)",
             "year": 2024,
             "kinds": [
-              "article"
-            ],
-            "open_access": false,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        },
-        {
-          "identifier": "10.1093/oncolo/oyaf373",
-          "url": "https://doi.org/10.1093/oncolo/oyaf373",
-          "record_url": "https://europepmc.org/article/MED/41206673",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT04216316",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T12:52:43.392420Z",
-          "facts": {
-            "title": "Phase Ib study of berzosertib, carboplatin, gemcitabine, and pembrolizumab in patients with squamous nonsmall lung cancer (ETCTN 10313).",
-            "journal": "The oncologist",
-            "year": 2025,
-            "kinds": [
-              "clinical_trial",
-              "article"
-            ],
-            "open_access": true,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        },
-        {
-          "identifier": "10.1200/edbk-26-518244",
-          "url": "https://doi.org/10.1200/edbk-26-518244",
-          "record_url": "https://europepmc.org/article/MED/42335416",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT04267848",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T12:52:54.908301Z",
-          "facts": {
-            "title": "Optimal Use of Targeted Therapy and Immunotherapy in Early-Stage, Resectable Non-Small Cell Lung Cancer.",
-            "journal": "American Society of Clinical Oncology educational book. American Society of Clinical Oncology. Annual Meeting",
-            "year": 2026,
-            "kinds": [
-              "review",
-              "article"
-            ],
-            "open_access": false,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        },
-        {
-          "identifier": "10.6004/jnccn.2026.7005",
-          "url": "https://doi.org/10.6004/jnccn.2026.7005",
-          "record_url": "https://europepmc.org/article/MED/41911908",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT04267848",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T12:53:03.362827Z",
-          "facts": {
-            "title": "Updates on the Perioperative Management of Resectable Non-Small Cell Lung Cancer.",
-            "journal": "Journal of the National Comprehensive Cancer Network : JNCCN",
-            "year": 2026,
-            "kinds": [
-              "review",
-              "article"
-            ],
-            "open_access": false,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        },
-        {
-          "identifier": "10.1016/j.jtho.2026.103650",
-          "url": "https://doi.org/10.1016/j.jtho.2026.103650",
-          "record_url": "https://europepmc.org/article/MED/41747891",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT04267848",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T12:53:03.404520Z",
-          "facts": {
-            "title": "PROSPECT-LUNG: A National Clinical Trials Network Trial Advancing Pragmatic Innovation in Cancer Clinical Trials.",
-            "journal": "Journal of thoracic oncology : official publication of the International Association for the Study of Lung Cancer",
-            "year": 2026,
-            "kinds": [
-              "randomised_trial",
-              "clinical_trial",
-              "article"
-            ],
-            "open_access": false,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        },
-        {
-          "identifier": "10.2217/imt-2021-0019",
-          "url": "https://doi.org/10.2217/imt-2021-0019",
-          "record_url": "https://europepmc.org/article/MED/33878954",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT04267848",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T12:53:12.970207Z",
-          "facts": {
-            "title": "Integration of immunotherapy into adjuvant therapy for resected non-small-cell lung cancer: ALCHEMIST chemo-IO (ACCIO).",
-            "journal": "Immunotherapy",
-            "year": 2021,
-            "kinds": [
-              "review",
-              "article"
-            ],
-            "open_access": true,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        },
-        {
-          "identifier": "10.1016/s1470-2045(16)30053-5",
-          "url": "https://doi.org/10.1016/s1470-2045(16)30053-5",
-          "record_url": "https://europepmc.org/article/MED/27267608",
-          "roles": [
-            {
-              "role": "related",
-              "trial_id": null,
-              "listed": null,
-              "event_id": null,
-              "score": 0.97,
-              "reasons": [
-                "named_in_title",
-                "named_institution",
-                "published_before_report"
-              ],
-              "decided_by": "rule",
-              "summary": "Pembrolizumab for patients with melanoma or non-small-cell lung cancer and untreated brain metastases: early analysis of a non-randomised, open-label, phase 2 trial. 2016. article. The Lancet Oncology"
-            }
-          ],
-          "facts_as_of": "2026-11-15T12:52:37.987440Z",
-          "facts": {
-            "title": "Pembrolizumab for patients with melanoma or non-small-cell lung cancer and untreated brain metastases: early analysis of a non-randomised, open-label, phase 2 trial.",
-            "journal": "The Lancet. Oncology",
-            "year": 2016,
-            "kinds": [
-              "clinical_trial",
               "article"
             ],
             "open_access": false,
@@ -156390,9 +153872,7 @@
                 "NCT02039674",
                 "NCT02578680",
                 "NCT03664024",
-                "NCT04165070",
                 "NCT04956692",
-                "NCT06422143",
                 "NCT06731907"
               ]
             }
@@ -156408,51 +153888,7 @@
               "article_urls": [],
               "trial_ids": [
                 "NCT03793179",
-                "NCT04216316",
-                "NCT04267848",
                 "NCT06096844"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Rutgers, The State University of New Jersey",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT02621398"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Vanderbilt-Ingram Cancer Center",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT05501665"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Wake Forest University Health Sciences",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT02581943"
               ]
             }
           ]
@@ -156496,6 +153932,7 @@
       "indication": "Periodontal bone and gum tissue loss",
       "first_reported_date": "2016-03-30",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -156664,6 +154101,7 @@
       "indication": "Periodontal bone defect",
       "first_reported_date": "2015-06-29",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "no_trial_found",
@@ -156825,6 +154263,7 @@
       "indication": "Periodontitis",
       "first_reported_date": "2019-05-09",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -157141,6 +154580,7 @@
       "indication": "Diabetes-associated periodontitis",
       "first_reported_date": "2017-09-02",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -157253,7 +154693,7 @@
             "country": "United States",
             "website": "https://www.tufts.edu",
             "score": 1,
-            "read_at": "2026-11-14T18:22:38.855242Z"
+            "read_at": "2026-11-15T19:59:42.100877Z"
           },
           "roles": [
             {
@@ -157304,6 +154744,7 @@
       "indication": "missing periodontal ligament around dental implants",
       "first_reported_date": "2018-06-13",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -157629,6 +155070,7 @@
       "indication": "Periodontitis",
       "first_reported_date": "2020-10-02",
       "evidence_stage": "in_vitro",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "retracted",
@@ -157901,6 +155343,7 @@
       "indication": "Periodontitis",
       "first_reported_date": "2019-03-21",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -158099,6 +155542,7 @@
       "indication": "Periodontitis",
       "first_reported_date": "2017-12-05",
       "evidence_stage": "in_vitro",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -158295,6 +155739,7 @@
       "indication": "Pre-leukaemia blood disorders (CCUS and low-risk MDS)",
       "first_reported_date": "2026-11-07",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_2",
@@ -160193,6 +157638,16 @@
       "indication": "Chronic relapsing opioid dependence",
       "first_reported_date": "2016-09-14",
       "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "late_human",
+        "score": 0.81,
+        "also": [
+          {
+            "stage": "early_human",
+            "score": 0.19
+          }
+        ]
+      },
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -160752,6 +158207,7 @@
       "indication": "Primary aldosteronism",
       "first_reported_date": "2026-11-08",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -161542,6 +158998,16 @@
       "indication": "Depression and anxiety associated with advanced cancer",
       "first_reported_date": "2016-12-01",
       "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "early_human",
+        "score": 0.83,
+        "also": [
+          {
+            "stage": "late_human",
+            "score": 0.17
+          }
+        ]
+      },
       "checked_by_person": false,
       "status": {
         "code": "phase_2",
@@ -163346,6 +160812,7 @@
       "indication": "Major depressive disorder",
       "first_reported_date": "2016-05-17",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -172334,6 +169801,7 @@
       "indication": "Migraine",
       "first_reported_date": "2020-11-23",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_1",
@@ -173145,6 +170613,7 @@
       "indication": "Post-traumatic stress disorder",
       "first_reported_date": "2026-10-23",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "trial_registered",
@@ -174376,6 +171845,7 @@
       "indication": "Infected or lost dental pulp",
       "first_reported_date": "2017-06-12",
       "evidence_stage": "in_vitro",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -174611,6 +172081,7 @@
       "indication": "Pulp necrosis in injured immature permanent teeth",
       "first_reported_date": "2018-09-11",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "trial_registered",
@@ -175038,6 +172509,7 @@
       "indication": "Pulp loss from decay or trauma",
       "first_reported_date": "2016-12-19",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -175257,7 +172729,7 @@
             "country": "United States",
             "website": "https://www.tufts.edu",
             "score": 1,
-            "read_at": "2026-11-14T18:22:38.855242Z"
+            "read_at": "2026-11-15T19:59:42.100877Z"
           },
           "roles": [
             {
@@ -175323,6 +172795,7 @@
       "indication": "Pulp loss after root canal treatment",
       "first_reported_date": "2018-08-22",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -175478,6 +172951,16 @@
       "indication": "Hepatitis C",
       "first_reported_date": "2018-04-12",
       "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "late_human",
+        "score": 0.89,
+        "also": [
+          {
+            "stage": "early_human",
+            "score": 0.11
+          }
+        ]
+      },
       "checked_by_person": false,
       "status": {
         "code": "phase_2",
@@ -176344,6 +173827,7 @@
       "indication": "Refractory angina",
       "first_reported_date": "2026-08-24",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_2",
@@ -178945,6 +176429,7 @@
       "indication": "Pulp and dentine damage from decay",
       "first_reported_date": "2016-07-01",
       "evidence_stage": "in_vitro",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -179140,6 +176625,7 @@
       "indication": "COVID-19",
       "first_reported_date": "2020-02-27",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -181221,6 +178707,7 @@
       "indication": "Respiratory virus infections",
       "first_reported_date": "2026-09-14",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_2",
@@ -181966,6 +179453,7 @@
       "indication": "Advanced retinitis pigmentosa",
       "first_reported_date": "2026-10-07",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_1",
@@ -182548,6 +180036,7 @@
       "indication": "Accumulation of senescent cells with age",
       "first_reported_date": "2026-10-24",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -182683,6 +180172,7 @@
       "indication": "Obstructive sleep apnoea in people with overweight or obesity",
       "first_reported_date": "2026-11-09",
       "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -183045,6 +180535,7 @@
       "indication": "Paralysis from spinal cord injury",
       "first_reported_date": "2026-08-19",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -183266,6 +180757,7 @@
       "indication": "Stiff person syndrome",
       "first_reported_date": "2026-11-09",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_2",
@@ -184074,6 +181566,7 @@
       "indication": "Drug-resistant bacterial infections",
       "first_reported_date": "2026-09-28",
       "evidence_stage": "in_vitro",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -184286,6 +181779,7 @@
       "indication": "Neurodegeneration in Alzheimer's disease and other tauopathies",
       "first_reported_date": "2026-10-20",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -184740,6 +182234,7 @@
       "indication": "congenital tooth agenesis",
       "first_reported_date": "2021-03-31",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": true,
       "status": {
         "code": "phase_1",
@@ -185001,6 +182496,7 @@
       "indication": "Tourette syndrome",
       "first_reported_date": "2026-11-12",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "trial_registered",
@@ -186161,32 +183657,29 @@
     },
     {
       "slug": "triple-chronotherapy-depression-particularly-drug-resistant",
-      "headline": "Wake-based chronotherapy is reported to improve some cases of depression",
-      "summary": "The article describes wake therapy combined with lithium and morning bright light as a treatment for depression, particularly drug-resistant bipolar depression. It reports rapid improvements in some patients but notes relapse after recovery sleep, practical limits, and a possible risk of mania. Other sleep-timing approaches are also being studied.",
+      "headline": "Sleep deprivation with lithium and light therapy was studied for bipolar depression",
+      "summary": "The reported wake therapy combines repeated total sleep deprivation, lithium and morning bright light for bipolar depression, including resistant episodes. A study of 143 inpatients reported rapid symptom changes with one-month follow-up. The report notes relapse and mania risks. This combination differs from sleep-deprivation, phase-advance and light protocols that do not require lithium.",
       "vertical": "mental-health",
       "approach": null,
       "intervention": {
-        "name": "Triple chronotherapy",
+        "name": "Sleep deprivation plus lithium and bright light therapy",
         "synonyms": []
       },
-      "indication": "Depression, particularly drug-resistant bipolar depression",
+      "indication": "Bipolar depression, including treatment-resistant bipolar depression",
       "first_reported_date": "2018-01-23",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "trial_registered",
-        "overlay_years": null,
-        "updated_at": "2026-11-15T13:21:51.301048Z",
+        "overlay_years": 5,
+        "updated_at": "2026-11-15T19:59:50.440488Z",
         "explained_by": [
-          9597,
-          9593,
-          9590,
-          9602,
-          9588
+          10107
         ],
         "history": [
           {
-            "on": "2014-01-01",
+            "on": "2011-07-01",
             "code": "trial_registered"
           }
         ]
@@ -186204,14 +183697,14 @@
       "promises": [],
       "events": [
         {
-          "id": 9598,
+          "id": 10108,
           "type": "trial_status_change",
-          "event_date": "2014-01-01",
+          "event_date": "2011-07-01",
           "date_basis": "start date (month only)",
-          "summary": "Trial NCT02053649 started.",
+          "summary": "Trial NCT01431573 started.",
           "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT02053649",
-          "trial_id": "NCT02053649",
+          "source_url": "https://clinicaltrials.gov/study/NCT01431573",
+          "trial_id": "NCT01431573",
           "trial_phases": [
             "not_applicable"
           ],
@@ -186220,14 +183713,14 @@
           "confidence": 1
         },
         {
-          "id": 9597,
+          "id": 10107,
           "type": "trial_registered",
-          "event_date": "2014-02-04",
+          "event_date": "2011-09-09",
           "date_basis": "first posted",
-          "summary": "Trial NCT02053649 registered (no phase).",
+          "summary": "Trial NCT01431573 registered (no phase).",
           "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT02053649",
-          "trial_id": "NCT02053649",
+          "source_url": "https://clinicaltrials.gov/study/NCT01431573",
+          "trial_id": "NCT01431573",
           "trial_phases": [
             "not_applicable"
           ],
@@ -186236,30 +183729,14 @@
           "confidence": 1
         },
         {
-          "id": 9593,
-          "type": "trial_registered",
-          "event_date": "2014-03-17",
-          "date_basis": "first posted",
-          "summary": "Trial NCT02088580 registered (no phase).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT02088580",
-          "trial_id": "NCT02088580",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 9594,
+          "id": 10109,
           "type": "trial_status_change",
-          "event_date": "2014-04-01",
+          "event_date": "2016-08-01",
           "date_basis": "completion date (month only)",
-          "summary": "Trial NCT02088580 completed.",
+          "summary": "Trial NCT01431573 completed.",
           "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT02088580",
-          "trial_id": "NCT02088580",
+          "source_url": "https://clinicaltrials.gov/study/NCT01431573",
+          "trial_id": "NCT01431573",
           "trial_phases": [
             "not_applicable"
           ],
@@ -186268,162 +183745,18 @@
           "confidence": 1
         },
         {
-          "id": 9595,
-          "type": "trial_registered",
-          "event_date": "2014-06-27",
-          "date_basis": "first posted",
-          "summary": "Trial NCT02176824 registered (no phase).",
+          "id": 10110,
+          "type": "trial_results_posted",
+          "event_date": "2021-03-18",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT01431573.",
           "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT02176824",
-          "trial_id": "NCT02176824",
+          "source_url": "https://clinicaltrials.gov/study/NCT01431573",
+          "trial_id": "NCT01431573",
           "trial_phases": [
             "not_applicable"
           ],
           "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 9596,
-          "type": "trial_status_change",
-          "event_date": "2016-04-07",
-          "date_basis": "completion date",
-          "summary": "Trial NCT02176824 terminated.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT02176824",
-          "trial_id": "NCT02176824",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": "terminated",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 9590,
-          "type": "trial_registered",
-          "event_date": "2018-09-21",
-          "date_basis": "first posted",
-          "summary": "Trial NCT03679962 registered (no phase).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT03679962",
-          "trial_id": "NCT03679962",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 9591,
-          "type": "trial_status_change",
-          "event_date": "2019-01-25",
-          "date_basis": "start date",
-          "summary": "Trial NCT03679962 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT03679962",
-          "trial_id": "NCT03679962",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 9599,
-          "type": "trial_status_change",
-          "event_date": "2019-02-28",
-          "date_basis": "completion date",
-          "summary": "Trial NCT02053649 completed.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT02053649",
-          "trial_id": "NCT02053649",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": "completed",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 9602,
-          "type": "trial_registered",
-          "event_date": "2023-01-20",
-          "date_basis": "first posted",
-          "summary": "Trial NCT05691647 registered (no phase).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT05691647",
-          "trial_id": "NCT05691647",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 9592,
-          "type": "trial_status_change",
-          "event_date": "2023-03-14",
-          "date_basis": "completion date",
-          "summary": "Trial NCT03679962 completed.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT03679962",
-          "trial_id": "NCT03679962",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": "completed",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 9603,
-          "type": "trial_status_change",
-          "event_date": "2023-04-12",
-          "date_basis": "start date",
-          "summary": "Trial NCT05691647 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT05691647",
-          "trial_id": "NCT05691647",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 9588,
-          "type": "trial_registered",
-          "event_date": "2026-01-16",
-          "date_basis": "first posted",
-          "summary": "Trial NCT07346014 registered (no phase).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07346014",
-          "trial_id": "NCT07346014",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 9589,
-          "type": "trial_status_change",
-          "event_date": "2026-06-18",
-          "date_basis": "start date",
-          "summary": "Trial NCT07346014 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07346014",
-          "trial_id": "NCT07346014",
-          "trial_phases": [
-            "not_applicable"
-          ],
-          "trial_state": "started",
           "regulatory_outcome": null,
           "confidence": 1
         }
@@ -186432,83 +183765,13 @@
       "matches": [
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT07346014",
-          "url": "https://clinicaltrials.gov/study/NCT07346014",
-          "score": 1,
+          "external_id": "NCT01431573",
+          "url": "https://clinicaltrials.gov/study/NCT01431573",
+          "score": 0.91,
           "state": "approved",
           "reading": "match",
           "decided_by": "rule",
-          "summary": "Sleep and Circadian Interventions for College Students at High Risk of Suicide. For: Sleep Disturbance, Sleep, Depression, Suicide. Tests: Sleep Feedback + Psychoeducation, Transdiagnostic Sleep and Circadian Intervention + Bright Light (TSC+), Triple Chronotherapy (TCT+). No phase, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT03679962",
-          "url": "https://clinicaltrials.gov/study/NCT03679962",
-          "score": 1,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Triple Chronotherapy in Adolescents. For: Depressive Disorder, Major, Bipolar Depression, Suicidal Ideation. Tests: Triple Chronotherapy, Treatment as Usual. No phase, completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT02088580",
-          "url": "https://clinicaltrials.gov/study/NCT02088580",
-          "score": 1,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Feasibility and Tolerability of Adjunct Chronotherapy in Depressed Inpatients. For: Non-Psychotic Unipolar Depression, Bipolar Depression. Tests: Triple Chronotherapy. No phase, completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT02176824",
-          "url": "https://clinicaltrials.gov/study/NCT02176824",
-          "score": 0.99,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Chronotherapy Randomized Controlled Trial. For: Major Depressive Disorder, Bipolar Depression, Suicidal Ideation. Tests: Total Sleep deprivation, Sleep Phase Advance, and Bright Light Therapy, Partial Sleep deprivation, Sleep Phase Delay, and Low amber light., Treatment as usual. No phase, terminated."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT02053649",
-          "url": "https://clinicaltrials.gov/study/NCT02053649",
-          "score": 0.99,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Integrated Chronotherapy for Perinatal Depression. For: Depression, Major Depressive Disorder, Postpartum Depression. Tests: Triple Chronotherapy, Usual Care. No phase, completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT05691647",
-          "url": "https://clinicaltrials.gov/study/NCT05691647",
-          "score": 0.96,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Chronotherapy for Depressive Episodes. For: Depressive Episode. Tests: Chronotherapy, Treatment as usual. No phase, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT03010488",
-          "url": "https://clinicaltrials.gov/study/NCT03010488",
-          "score": 0.76,
-          "state": "candidate",
-          "reading": "match",
-          "decided_by": null,
-          "summary": "Are Bright Lights and Regulated Sleep Effective Treatment for Depression?. For: Sleep Phase Rhythm Disturbance, Sleep Deprivation. Tests: Morning Light Therapy, Assigned Sleep Times, Goggles. No phase, completed."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT04364646",
-          "url": "https://clinicaltrials.gov/study/NCT04364646",
-          "score": 0.59,
-          "state": "candidate",
-          "reading": "match",
-          "decided_by": null,
-          "summary": "Personalized Integrated Chronotherapy for Perinatal Depression. For: Depression, Postpartum Depression, Prenatal Disorder, Circadian Dysregulation, Pregnancy Related, Sleep Disturbance. Tests: Personalized Integrated Chronotherapy. No phase, completed."
+          "summary": "Wake Therapy in the Treatment of Depression. For: Major Depressive Disorder, Bipolar Disorder. Tests: Wake Therapy, light box, Lithium. No phase, completed."
         },
         {
           "source_name": "clinicaltrials.gov",
@@ -186533,84 +183796,19 @@
       ],
       "trials": [
         {
-          "trial_id": "NCT02053649",
+          "trial_id": "NCT01431573",
           "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT02053649",
-          "title": "Integrated Chronotherapy for Perinatal Depression",
+          "url": "https://clinicaltrials.gov/study/NCT01431573",
+          "title": "Wake Therapy in the Treatment of Depression",
           "phases": [
             "not_applicable"
           ],
           "state": "completed",
-          "facts_as_of": "2026-11-15T13:21:53.992221Z",
+          "facts_as_of": "2026-11-15T19:59:50.977261Z",
           "facts": {
             "study_kind": "interventional",
             "participants": {
-              "count": 24,
-              "basis": "actual"
-            },
-            "allocation": "randomised",
-            "masking": "single",
-            "comparators": [
-              "active"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult"
-            ],
-            "sponsor": {
-              "name": "Rhode Island Hospital",
-              "kind": "other"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Change in Depression Score",
-                "time_frame": "Change in depression score from 28 weeks of pregnancy to 6 weeks postpartum"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "6 weeks postpartum",
-              "number": 6,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 0.98,
-              "read_on": "2026-11-15T13:21:53.992221Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Depression Score",
-              "number": null,
-              "unit": null,
-              "code": "symptom_score",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T13:21:53.992221Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT02088580",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT02088580",
-          "title": "Feasibility and Tolerability of Adjunct Chronotherapy in Depressed Inpatients",
-          "phases": [
-            "not_applicable"
-          ],
-          "state": "completed",
-          "facts_as_of": "2026-11-15T13:21:52.995604Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 13,
+              "count": 8,
               "basis": "actual"
             },
             "allocation": null,
@@ -186622,367 +183820,41 @@
               "older_adult"
             ],
             "sponsor": {
-              "name": "Medical University of South Carolina",
+              "name": "New York State Psychiatric Institute",
               "kind": "other"
             },
             "primary_outcomes": [
               {
-                "measure": "Hamilton Depression Rating Scale",
-                "time_frame": "Day prior to total sleep deprivation, and then again over the next 4 consecutive days."
-              },
-              {
-                "measure": "Columbia Suicide Severity Rating Scale",
-                "time_frame": "Daily throughout the treatment (Days 0-4)"
-              }
-            ],
-            "primary_outcomes_total": 2,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "next 4 consecutive days",
-              "number": 4,
-              "unit": "days",
-              "code": null,
-              "confidence": 0.99,
-              "read_on": "2026-11-15T13:21:52.995604Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Hamilton Depression Rating Scale",
-              "number": null,
-              "unit": null,
-              "code": "symptom_score",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T13:21:52.995604Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 1,
-              "field": "time_frame",
-              "words": "Days 0-4",
-              "number": 4,
-              "unit": "days",
-              "code": null,
-              "confidence": 0.97,
-              "read_on": "2026-11-15T13:21:52.995604Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "Columbia Suicide Severity Rating Scale",
-              "number": null,
-              "unit": null,
-              "code": "symptom_score",
-              "confidence": 0.98,
-              "read_on": "2026-11-15T13:21:52.995604Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT02176824",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT02176824",
-          "title": "Chronotherapy Randomized Controlled Trial",
-          "phases": [
-            "not_applicable"
-          ],
-          "state": "terminated",
-          "facts_as_of": "2026-11-15T13:21:53.496824Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 13,
-              "basis": "actual"
-            },
-            "allocation": "randomised",
-            "masking": "double",
-            "comparators": [
-              "sham",
-              "active"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Medical University of South Carolina",
-              "kind": "other"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Hamilton Depression Rating Scale",
-                "time_frame": "Day prior to total sleep deprivation, and then again over the next 4 consecutive days. There will then be a continuation phase where data will be collected at one week, two weeks, 4 weeks, and 8 weeks."
-              },
-              {
-                "measure": "Columbia Suicide Severity Rating Scale",
-                "time_frame": "Day prior to total sleep deprivation, and then again over the next 4 consecutive days. There will then be a continuation phase where data will be collected at one week, two weeks, 4 weeks, and 8 weeks."
-              }
-            ],
-            "primary_outcomes_total": 2,
-            "why_stopped": "PI",
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "8 weeks",
-              "number": 8,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T13:21:53.496824Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Hamilton Depression Rating Scale",
-              "number": null,
-              "unit": null,
-              "code": "symptom_score",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T13:21:53.496824Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 1,
-              "field": "time_frame",
-              "words": "8 weeks",
-              "number": 8,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T13:21:53.496824Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "Columbia Suicide Severity Rating Scale",
-              "number": null,
-              "unit": null,
-              "code": "symptom_score",
-              "confidence": 0.96,
-              "read_on": "2026-11-15T13:21:53.496824Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT03679962",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT03679962",
-          "title": "Triple Chronotherapy in Adolescents",
-          "phases": [
-            "not_applicable"
-          ],
-          "state": "completed",
-          "facts_as_of": "2026-11-15T13:21:52.497121Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 64,
-              "basis": "actual"
-            },
-            "allocation": "randomised",
-            "masking": "none",
-            "comparators": [
-              "active"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "child"
-            ],
-            "sponsor": {
-              "name": "Billings Clinic",
-              "kind": "other"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Patient Health Questionnaire -Adolescent version (PHQ-A)",
-                "time_frame": "PHQ-A the day prior to total sleep deprivation, and then again over the next 3 consecutive days."
-              },
-              {
-                "measure": "Columbia Suicide Severity Rating Scale",
-                "time_frame": "Daily throughout the treatment (Days 0-4)"
-              }
-            ],
-            "primary_outcomes_total": 2,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "3 consecutive days",
-              "number": 3,
-              "unit": "days",
-              "code": null,
-              "confidence": 0.99,
-              "read_on": "2026-11-15T13:21:52.497121Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Patient Health Questionnaire -Adolescent version (PHQ-A)",
-              "number": null,
-              "unit": null,
-              "code": "symptom_score",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T13:21:52.497121Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 1,
-              "field": "time_frame",
-              "words": "Days 0-4",
-              "number": 4,
-              "unit": "days",
-              "code": null,
-              "confidence": 0.88,
-              "read_on": "2026-11-15T13:21:52.497121Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "Columbia Suicide Severity Rating Scale",
-              "number": null,
-              "unit": null,
-              "code": "symptom_score",
-              "confidence": 0.98,
-              "read_on": "2026-11-15T13:21:52.497121Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT05691647",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT05691647",
-          "title": "Chronotherapy for Depressive Episodes",
-          "phases": [
-            "not_applicable"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T13:21:54.995637Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 76,
-              "basis": "planned"
-            },
-            "allocation": "randomised",
-            "masking": "none",
-            "comparators": [
-              "active"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "St. Olavs Hospital",
-              "kind": "other"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Between-group difference in self-reported levels of depressive symptoms at week 1 after randomization",
-                "time_frame": "1 week after randomization"
+                "measure": "Structured Interview for the Hamilton Depression Scale With Atypical Depression Supplement(SIGH-ADS)",
+                "time_frame": "up to 6 weeks"
               }
             ],
             "primary_outcomes_total": 1,
             "why_stopped": null,
-            "results": null
-          },
-          "papers": [
-            "10.1136/bmjopen-2023-076039"
-          ],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "1 week after randomization",
-              "number": 1,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-15T13:21:54.995637Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "depressive symptoms",
-              "number": null,
-              "unit": null,
-              "code": "symptom_score",
-              "confidence": 0.99,
-              "read_on": "2026-11-15T13:21:54.995637Z"
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Structured Interview for the Hamilton Depression Scale With Atypical Depression Supplement(SIGH-ADS)",
+                  "time_frame": "up to 6 weeks",
+                  "unit": "score on a scale",
+                  "measure": "mean",
+                  "spread_kind": "Standard Deviation",
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "Wake Therapy + Light Box +/- Lithium",
+                      "analysed": "8",
+                      "value": "16.6",
+                      "spread": "5.5",
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": []
+                }
+              ],
+              "outcomes_total": 1
             }
-          ]
-        },
-        {
-          "trial_id": "NCT07346014",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT07346014",
-          "title": "Sleep and Circadian Interventions for College Students at High Risk of Suicide",
-          "phases": [
-            "not_applicable"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-15T13:21:52.014370Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 90,
-              "basis": "planned"
-            },
-            "allocation": "randomised",
-            "masking": "single",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult"
-            ],
-            "sponsor": {
-              "name": "University of Pittsburgh",
-              "kind": "other"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Suicidal Thoughts and Behaviors via CSSRS",
-                "time_frame": "(short term) Intervention Days 1-4"
-              },
-              {
-                "measure": "Suicidal Thoughts and Behaviors via CSSRS",
-                "time_frame": "(medium term) 2 month follow up"
-              },
-              {
-                "measure": "Suicidal Thoughts and Behaviors via CSSRS",
-                "time_frame": "(long term) 6 month follow up"
-              }
-            ],
-            "primary_outcomes_total": 10,
-            "why_stopped": null,
-            "results": null
           },
           "papers": [],
           "readings": [
@@ -186990,104 +183862,28 @@
               "kind": "follow_up",
               "outcome": 0,
               "field": "time_frame",
-              "words": "Days 1-4",
-              "number": 4,
-              "unit": "days",
+              "words": "up to 6 weeks",
+              "number": 6,
+              "unit": "weeks",
               "code": null,
-              "confidence": 0.95,
-              "read_on": "2026-11-15T13:21:52.014370Z"
+              "confidence": 0.99,
+              "read_on": "2026-11-15T19:59:50.977261Z"
             },
             {
               "kind": "measure",
               "outcome": 0,
               "field": "measure",
-              "words": "Suicidal Thoughts and Behaviors via CSSRS",
+              "words": "Hamilton Depression Scale",
               "number": null,
               "unit": null,
               "code": "symptom_score",
-              "confidence": 0.89,
-              "read_on": "2026-11-15T13:21:52.014370Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 1,
-              "field": "time_frame",
-              "words": "2 month follow up",
-              "number": 2,
-              "unit": "months",
-              "code": null,
-              "confidence": 0.99,
-              "read_on": "2026-11-15T13:21:52.014370Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "Suicidal Thoughts and Behaviors via CSSRS",
-              "number": null,
-              "unit": null,
-              "code": "symptom_score",
-              "confidence": 0.89,
-              "read_on": "2026-11-15T13:21:52.014370Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 2,
-              "field": "time_frame",
-              "words": "6 month follow up",
-              "number": 6,
-              "unit": "months",
-              "code": null,
-              "confidence": 0.99,
-              "read_on": "2026-11-15T13:21:52.014370Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 2,
-              "field": "measure",
-              "words": "Suicidal Thoughts and Behaviors via CSSRS",
-              "number": null,
-              "unit": null,
-              "code": "symptom_score",
-              "confidence": 0.89,
-              "read_on": "2026-11-15T13:21:52.014370Z"
+              "confidence": 0.98,
+              "read_on": "2026-11-15T19:59:50.977261Z"
             }
           ]
         }
       ],
-      "papers": [
-        {
-          "identifier": "10.1136/bmjopen-2023-076039",
-          "url": "https://doi.org/10.1136/bmjopen-2023-076039",
-          "record_url": "https://europepmc.org/article/MED/38171633",
-          "roles": [
-            {
-              "role": "trial_result",
-              "trial_id": "NCT05691647",
-              "listed": "linked_by_registry",
-              "event_id": null,
-              "score": null,
-              "reasons": [],
-              "decided_by": null,
-              "summary": null
-            }
-          ],
-          "facts_as_of": "2026-11-15T13:21:55.051447Z",
-          "facts": {
-            "title": "Chronotherapy for patients with a depressive episode treated in a public outpatient mental healthcare clinic in Norway: protocol for a randomised controlled trial.",
-            "journal": "BMJ open",
-            "year": 2024,
-            "kinds": [
-              "article"
-            ],
-            "open_access": true,
-            "retracted": false,
-            "studied_in": [
-              "people"
-            ]
-          }
-        }
-      ],
+      "papers": [],
       "background": [],
       "organisations": [
         {
@@ -187155,6 +183951,13 @@
                 "http://www.bbc.com/future/story/20180123-can-staying-awake-beat-depression"
               ],
               "trial_ids": []
+            },
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT01431573"
+              ]
             }
           ]
         },
@@ -187241,7 +184044,7 @@
             "country": "United States",
             "website": "https://www.tufts.edu",
             "score": 1,
-            "read_at": "2026-11-14T18:22:38.855242Z"
+            "read_at": "2026-11-15T19:59:42.100877Z"
           },
           "roles": [
             {
@@ -187268,7 +184071,7 @@
             "country": "United States",
             "website": "https://ucsd.edu",
             "score": 1,
-            "read_at": "2026-11-15T13:20:02.841443Z"
+            "read_at": "2026-11-15T19:59:43.565390Z"
           },
           "roles": [
             {
@@ -187347,77 +184150,6 @@
               "trial_ids": []
             }
           ]
-        },
-        {
-          "name": "Billings Clinic",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT03679962"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Medical University of South Carolina",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT02088580",
-                "NCT02176824"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Rhode Island Hospital",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT02053649"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "St. Olavs Hospital",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT05691647"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "University of Pittsburgh",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT07346014"
-              ]
-            }
-          ]
         }
       ],
       "reported_statements": [
@@ -187479,6 +184211,7 @@
       "indication": "Type 2 diabetes",
       "first_reported_date": "2026-08-19",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -187688,6 +184421,7 @@
       "indication": "Type 2 diabetes and obesity",
       "first_reported_date": "2026-10-27",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -187881,6 +184615,7 @@
       "indication": "Type 2 diabetes",
       "first_reported_date": "2026-08-20",
       "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -190646,6 +187381,7 @@
       "indication": "Type 2 diabetes in adults under 45",
       "first_reported_date": "2026-10-30",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "trial_registered",
@@ -191630,6 +188366,7 @@
       "indication": "Excess visceral and subcutaneous fat",
       "first_reported_date": "2026-10-19",
       "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "phase_3",
@@ -193435,6 +190172,7 @@
       "indication": "Vancomycin-resistant Enterococcus faecium infection",
       "first_reported_date": "2026-09-05",
       "evidence_stage": "in_vitro",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -193584,6 +190322,7 @@
       "indication": "Missing teeth",
       "first_reported_date": "2017-03-21",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -193820,6 +190559,7 @@
       "indication": "Missing teeth",
       "first_reported_date": "2015-12-18",
       "evidence_stage": "animal",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
@@ -194009,6 +190749,7 @@
       "indication": "Missing teeth",
       "first_reported_date": "2019-07-24",
       "evidence_stage": "in_vitro",
+      "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
         "code": "preclinical_only",
