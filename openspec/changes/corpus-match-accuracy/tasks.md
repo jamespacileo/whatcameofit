@@ -65,3 +65,9 @@
 - [x] Clarify that saved background trial counts describe when the term was gathered, preserving historical reasons after trial exclusions.
 - [x] Deploy the corrected melanoma card and rerun its four mapped corpus URLs against the released site; record exact methods in the corpus.
 - [x] Update and read back the four melanoma Sheet rows and release summary: 29 value-only cells verified; formulas, formatting and validation preserved. Native Sheet preview remains unavailable behind sign-in.
+
+## Comparator-only lung-cancer association
+
+- [x] Apply the current trial-role rule to NCT06731907: reject the comparator-only association and its two events as assistant decisions, retaining six compatible trials and the phase 3 status. Preserve raw records and prior audit history.
+- [ ] Review the normal 156-claim export, including 30 newly prepared GLP-1-topic cards, before publishing the comparator correction. These additions came from the shared private database; this correction did not create or approve them.
+- [ ] Deploy the reviewed snapshot, rerun affected corpus URLs against the released card and update the Google Sheet with the exact release and methods.
