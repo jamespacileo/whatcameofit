@@ -63,5 +63,13 @@
     "This snapshot contains automatic decisions and confidence scores, not new human reviews.",
     "Data publication does not prove native Safari behavior or inaccessible article/social content."
   ],
-  "model_calls_for_export_and_checks": 0
+  "model_calls_for_export_and_checks": 0,
+  "initial_base_commit": "506be3487de085c1ed967cc4b9eabb72c4d724a5",
+  "concurrent_publication": {
+    "commit": "1e2b124",
+    "main_at_integration": "790682b0be72ad6908e01a65d76088f450dffcfb",
+    "snapshot_generated_at": "2026-11-15T18:38:12.190342Z",
+    "claims": 126,
+    "note": "The same 42 claims were published concurrently from an earlier snapshot. Integration retains all 126 and publishes the newer NeuroLife, pembrolizumab and chronotherapy corrections, current stage readings and refreshed organisation metadata."
+  }
 }
