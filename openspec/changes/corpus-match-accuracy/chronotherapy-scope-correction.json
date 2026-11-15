@@ -1,0 +1,217 @@
+{
+  "checked_at": "2026-11-15T19:59:06.138368+00:00",
+  "claim": "triple-chronotherapy-depression-particularly-drug-resistant",
+  "primary_identity_sources": [
+    "https://pubmed.ncbi.nlm.nih.gov/24345382/",
+    "https://www.psychiatrist.com/jcp/rapid-treatment-response-suicidal-symptoms-lithium/"
+  ],
+  "records": [
+    {
+      "match_id": 14969,
+      "external_id": "NCT02053649",
+      "source_url": "https://clinicaltrials.gov/study/NCT02053649",
+      "previous_score": 0.99,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 9597,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T13:21:53.992221+00:00"
+        },
+        {
+          "id": 9598,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T13:21:53.992221+00:00"
+        },
+        {
+          "id": 9599,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T13:21:53.992221+00:00"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "Perinatal integrated chronotherapy uses light, sleep-phase advance and sleep restriction with usual care; the registry does not establish the reported lithium plus repeated total sleep-deprivation regimen for bipolar depression."
+    },
+    {
+      "match_id": 14967,
+      "external_id": "NCT02088580",
+      "source_url": "https://clinicaltrials.gov/study/NCT02088580",
+      "previous_score": 1.0,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 9593,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T13:21:52.995604+00:00"
+        },
+        {
+          "id": 9594,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T13:21:52.995604+00:00"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "The listed intervention is sleep deprivation, sleep-phase advance and bright light. Lithium is not established as a required component of this regimen."
+    },
+    {
+      "match_id": 14968,
+      "external_id": "NCT02176824",
+      "source_url": "https://clinicaltrials.gov/study/NCT02176824",
+      "previous_score": 0.99,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 9595,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T13:21:53.496824+00:00"
+        },
+        {
+          "id": 9596,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T13:21:53.496824+00:00"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "The active chronotherapy protocol combines sleep deprivation, phase advance and light; unspecified usual pharmacotherapy does not establish the required lithium component."
+    },
+    {
+      "match_id": 14966,
+      "external_id": "NCT03679962",
+      "source_url": "https://clinicaltrials.gov/study/NCT03679962",
+      "previous_score": 1.0,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 9590,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T13:21:52.497121+00:00"
+        },
+        {
+          "id": 9591,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T13:21:52.497121+00:00"
+        },
+        {
+          "id": 9592,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T13:21:52.497121+00:00"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "The adolescent protocol lists sleep deprivation, phase advance and light with usual care; it does not establish the complete lithium-containing regimen in the source."
+    },
+    {
+      "match_id": 14995,
+      "external_id": "NCT05691647",
+      "source_url": "https://clinicaltrials.gov/study/NCT05691647",
+      "previous_score": 0.96,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 9602,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T13:21:54.995637+00:00"
+        },
+        {
+          "id": 9603,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T13:21:54.995637+00:00"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "Chronotherapy plus varied usual care does not establish lithium as a required component; a shared chronotherapy label is insufficient to identify the reported regimen."
+    },
+    {
+      "match_id": 14965,
+      "external_id": "NCT07346014",
+      "source_url": "https://clinicaltrials.gov/study/NCT07346014",
+      "previous_score": 1.0,
+      "previous_decider": "rule",
+      "previous_review_state": "approved",
+      "previous_events": [
+        {
+          "id": 9588,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T13:21:52.014370+00:00"
+        },
+        {
+          "id": 9589,
+          "state": "approved",
+          "decider": "rule",
+          "fetched_at": "2026-11-15T13:21:52.014370+00:00"
+        }
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "The trial adds a transdiagnostic sleep/circadian intervention and does not establish the source regimen’s lithium component; it studies a different complete intervention."
+    }
+  ],
+  "retained_trials": {},
+  "source_calls_during_correction": 0,
+  "model_calls": 0,
+  "published_index_checked": {
+    "claims": 84,
+    "contains_this_claim": false
+  },
+  "publication": "Private database correction; no public snapshot regenerated.",
+  "previous": {
+    "intervention": "Triple chronotherapy",
+    "aliases": [],
+    "search_phrases": [],
+    "indication": "Depression, particularly drug-resistant bipolar depression",
+    "headline": "Wake-based chronotherapy is reported to improve some cases of depression",
+    "summary": "The article describes wake therapy combined with lithium and morning bright light as a treatment for depression, particularly drug-resistant bipolar depression. It reports rapid improvements in some patients but notes relapse after recovery sleep, practical limits, and a possible risk of mania. Other sleep-timing approaches are also being studied.",
+    "claim_decider": "rule",
+    "status": "trial_registered",
+    "evidence_stage": "early_human",
+    "published_at": "2026-11-15 18:38:12.190342+00:00"
+  },
+  "corrected": {
+    "intervention": "Sleep deprivation plus lithium and bright light therapy",
+    "indication": "Bipolar depression, including treatment-resistant bipolar depression",
+    "headline": "Sleep deprivation with lithium and light therapy was studied for bipolar depression",
+    "summary": "The reported wake therapy combines repeated total sleep deprivation, lithium and morning bright light for bipolar depression, including resistant episodes. A study of 143 inpatients reported rapid symptom changes with one-month follow-up. The report notes relapse and mania risks. This combination differs from sleep-deprivation, phase-advance and light protocols that do not require lithium.",
+    "aliases": [],
+    "search_phrases": [],
+    "status": "no_trial_found",
+    "evidence_stage": "early_human"
+  },
+  "prepare": {
+    "elapsed_seconds_for_two_claim_batch": 25.51,
+    "new_trial": "NCT01431573",
+    "new_match_id": 15796,
+    "decision": "approved by rule",
+    "primary_source": "https://clinicaltrials.gov/study/NCT01431573",
+    "verified_regimen": "The trial explicitly requires lithium for bipolar participants and combines alternate-night wake therapy with light therapy. The non-lithium unipolar cohort is not the basis for association.",
+    "trial_readings": {
+      "unchanged_not_read_again": 0,
+      "newly_read": 1,
+      "stored": 2
+    },
+    "status": "trial_registered",
+    "note": "Six previous incompatible associations remain rejected. The new trial is separate from the primary 143-inpatient study."
+  }
+}

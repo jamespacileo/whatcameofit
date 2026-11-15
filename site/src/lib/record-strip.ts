@@ -37,8 +37,18 @@ export interface Strip {
   records: number;
 }
 
-/** The years between two notches under the axis. */
+/** The years between two notches under the shared axis. */
 export const NOTCH_YEARS = 5;
+
+/** The years a claim's own axis reaches back before its first report, at the least. */
+export const LEAD_YEARS = 5;
+
+/** The axis a strip is drawn on: where it starts and ends, and its notches. */
+export interface StripAxis {
+  startYear: number;
+  lastChecked: string;
+  notches: { year: number; at: number }[];
+}
 
 /** What each mark is called in a key. The site's wording; checked below. */
 export const STRIP_KEY: Record<StripMarkKind | "check", string> = {
@@ -49,6 +59,10 @@ export const STRIP_KEY: Record<StripMarkKind | "check", string> = {
   promise: "Promised date",
   check: "Registries last checked",
 };
+
+/** The marks a list of claims draws: the list's own columns give promises, and the
+ * status gives a regulator's decision, so its key names three marks. */
+export const TABLE_KINDS: StripMarkKind[] = ["record", "results", "report"];
 
 /** The order a key lists the marks in: as a reader meets them, left to right. */
 export const STRIP_KEY_ORDER: (StripMarkKind | "check")[] = [
@@ -91,14 +105,35 @@ function place(date: string, startYear: number, lastChecked: string): number | n
   return at >= 0 && at <= 1 ? at : null;
 }
 
-/** The notches under the axis: one every five years after the start. */
-export function notches(startYear: number, lastChecked: string): { year: number; at: number }[] {
+/** The notches under the axis: one every `step` years after the start. */
+export function notches(startYear: number, lastChecked: string, step = NOTCH_YEARS): { year: number; at: number }[] {
   const out: { year: number; at: number }[] = [];
-  for (let year = startYear + NOTCH_YEARS; ; year += NOTCH_YEARS) {
+  for (let year = startYear + step; ; year += step) {
     const at = place(`${year}-01-01`, startYear, lastChecked);
     if (at === null) return out;
     out.push({ year, at });
   }
+}
+
+/**
+ * One claim's own axis, for its page: from the year of its earliest dated record, or
+ * five years before its first report when that is earlier, to the last check. Notched
+ * every year on a span of fifteen years or less, every five years on a longer one.
+ */
+export function claimAxis(claim: ExportedClaim, lastChecked: string): StripAxis {
+  const years = [
+    ...claim.events.map((event) => event.event_date),
+    ...claim.articles.map((article) => article.published_date),
+    ...claim.promises.map((promise) => promise.parsed_date),
+  ]
+    .filter((date): date is string => Boolean(date) && (date as string).slice(0, 10) <= lastChecked)
+    .map((date) => Number(date.slice(0, 4)));
+  const reported = claim.first_reported_date ?? claim.articles.map((article) => article.published_date).sort()[0];
+  const lastYear = Number(lastChecked.slice(0, 4));
+  const lead = (reported ? Number(reported.slice(0, 4)) : lastYear) - LEAD_YEARS;
+  const startYear = Math.min(lead, ...years);
+  const step = lastYear - startYear <= 15 ? 1 : NOTCH_YEARS;
+  return { startYear, lastChecked, notches: notches(startYear, lastChecked, step) };
 }
 
 /** A claim's strip: its marks, oldest first, and the counts shown beside it. */
