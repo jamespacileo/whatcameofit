@@ -274,6 +274,20 @@ The operator set what done looks like: 1,000 processed articles on the productio
 
 *Triage, changed the same day.* Triage was first left in its order, oldest lead first, on the estimate that it was within an hour of finishing. It was not: three hours remained and 298 of the 309 GLP-1 leads on listed outlets had no score. Triage now scores leads that name a topic first. The cost is a pattern match over the due leads for each call of twenty, which is small beside the call. *Not done here.* Screening is not reordered: it was minutes from finishing. News outlets that carry GLP-1 stories and are on no list (Axios, Vox, Business Insider, Gizmodo, El País in English) are not added: an outlet's kind is set when a lead is loaded, so adding them means setting it again on stored leads and screening them again, which is its own task. Background cards are made by `thenwhat terms`, which `prepare` does not run; for now it is run after `prepare`.
 
+## Found on the GLP-1 run (2026-11-15): 266 reads became 67 claims
+
+The topic run read 266 leads that name a GLP-1 drug: 47 joined a claim, 75 drafted one, 35 were business news, 48 not one treatment, 59 unreadable. The coverage report then listed 67 claims for the topic. Three causes, in order of size:
+
+- *A class read as one treatment.* Some fourteen drafts were for "GLP-1 receptor agonists", "GLP-1 drugs", "GLP-1 medications" or "GLP-1 analogs". The treatment-kind decision is told a class is not one treatment and still let them through, and the name rule let them through because "GLP-1" holds a digit and so counts as a code.
+- *The condition worded as an aim or an outcome.* "Weight loss", "weight loss and weight management", "reducing the risk of heart attack, stroke and death": the same condition under five wordings is five claims, because the same-claim decision is asked about names first.
+- *Two conditions in one.* "Type 2 diabetes and obesity" beside "obesity".
+
+Two fixes, both before any decision is paid for. A checked-in rule says a name that ends in a class word, or in a plural kind of thing, is a class: run over the 212 treatments the reads had drafted it marks 19, every one a class (the GLP-1 drafts, "COVID-19 vaccines", "Weight-loss medications", "β2 agonist"), and three of them are claims the corpus work archived by hand the same day for the same reason. A lead it marks ends as not one treatment with no further call. And the read is now asked for the condition as a registry files it: the disease alone, one of them, never an aim or an outcome.
+
+The rule is its own function, not part of the name rule, because the name rule also decides what the live lookup searches a registry for and that is not this change's to alter. The reworded field is shared with the lookup's read; that is one way of asking, on purpose, and the lookup's corpus should be run again after it.
+
+What it costs: an article about the class as a whole ("GLP-1 drugs linked to lower dementia risk") makes no claim. That is the unit of the product; such articles are counted in the funnel as not one treatment and listed in the register.
+
 ## Open Questions
 
 - How long leads that are unlisted or rejected are kept. They are small and hold no text.

@@ -184,6 +184,24 @@ After the read and before any claim is joined or drafted, a decision SHALL say w
 - **WHEN** the read names a claim's intervention and indication, and the decision gives neither 0.95
 - **THEN** the article is not added to that claim
 
+### Requirement: A class of treatments is not one treatment
+When the treatment the read names ends in a word for a class of treatments (agonists, inhibitors, blockers, analogs and the like, singular or plural) or in a plural kind of thing (drugs, medications, medicines, treatments, therapies, vaccines, antibodies), no claim SHALL be joined or drafted and no decision SHALL be asked. The lead's outcome SHALL be not one treatment, with what was read and that it is a class. A code in the name SHALL NOT change this. The rule is checked-in and applied from the name alone.
+
+#### Scenario: A class of treatments
+- **WHEN** a read names "GLP-1 receptor agonists" as the treatment
+- **THEN** the lead's outcome is not one treatment, its detail says a class of treatments, no claim exists and no treatment-kind decision was asked
+
+#### Scenario: One member of a class
+- **WHEN** a read names "semaglutide" as the treatment
+- **THEN** the rule does not apply and the read goes on to the treatment-kind decision
+
+### Requirement: The read names one condition as a registry files it
+The read SHALL be asked for the condition treated or prevented by the name a trial registry files it under: the disease or condition alone, never an aim or an outcome, and one condition, the one the article's main result is about when it reports several.
+
+#### Scenario: An aim reported as the condition
+- **WHEN** an article reports a drug for weight loss in people with obesity
+- **THEN** the read is instructed to give "obesity", not "weight loss"
+
 ### Requirement: An article for a claim that exists
 When the read names an intervention and an indication that an existing claim covers, the article SHALL be added to that claim as a source article, with its content hash, any archive address and its reported statements, which are checked and approved by the existing rule. The claim's headline, summary, intervention, indication, vertical and review state SHALL NOT change.
 

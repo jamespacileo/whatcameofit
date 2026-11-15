@@ -37,7 +37,7 @@ from thenwhat.domain import (
     StatementKind,
     StatementSpeaker,
 )
-from thenwhat.extract.names import is_a_name
+from thenwhat.extract.names import is_a_class, is_a_name
 from thenwhat.extract.phrases import backfill_search_phrases
 from thenwhat.extract.service import (
     ClaimNotPending,
@@ -238,6 +238,28 @@ def test_a_name_is_kept_as_another_name(name: str):
 )
 def test_a_description_is_not_another_name(description: str):
     assert not is_a_name(description)
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "GLP-1 receptor agonists",
+        "GLP-1 drugs",
+        "PD-1 inhibitor",
+        "COVID-19 vaccines",
+        "Weight-loss medications",
+        "β2 agonist",
+    ],
+)
+def test_a_class_of_treatments_is_told_from_one_treatment(name: str):
+    assert is_a_class(name)
+
+
+@pytest.mark.parametrize(
+    "name", ["semaglutide", "Wegovy", "BPL-003", "COVID-19 vaccine", "esketamine nasal spray", ""]
+)
+def test_one_treatment_is_not_a_class(name: str):
+    assert not is_a_class(name)
 
 
 def test_descriptions_the_model_returns_are_not_recorded_as_names(session: Session):
