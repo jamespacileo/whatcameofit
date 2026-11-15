@@ -102,7 +102,16 @@ class Draft(BaseModel):
             " Empty when the names above are enough."
         ),
     )
-    indication: ShortText = Field(description="The condition it is claimed to treat.")
+    indication: ShortText = Field(
+        description=(
+            "The condition it is claimed to treat, by the name a trial registry files it"
+            " under: the disease or condition alone, never an aim or an outcome. 'Obesity',"
+            " not 'weight loss'; 'cardiovascular disease', not 'reducing the risk of heart"
+            " attack and stroke'. When the article is about preventing the condition in"
+            " people who do not have it, say so: 'prevention of COVID-19'. One condition:"
+            " when the article reports several, the one its main result is about."
+        )
+    )
     paper_title: ShortText | None = Field(
         default=None, description="Title of the scientific paper reported on, if named."
     )
