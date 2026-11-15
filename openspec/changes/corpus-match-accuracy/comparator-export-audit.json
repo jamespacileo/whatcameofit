@@ -1,0 +1,482 @@
+{
+  "source": "Normal private CLI export, passed through the unchanged public-export staging validator.",
+  "generated_at": "2026-11-15T21:48:53.209887Z",
+  "before_count": 126,
+  "after_count": 156,
+  "newly_prepared_claims": [
+    {
+      "slug": "amycretin-obesity",
+      "intervention": "amycretin",
+      "indication": "Obesity",
+      "trial_ids": [
+        "NCT06049329"
+      ],
+      "source_urls": [
+        "https://www.sciencealert.com/experimental-weight-loss-pill-twice-as-effective-as-ozempic-trial-shows"
+      ]
+    },
+    {
+      "slug": "bacteroides-vulgatus-metabolite-type-2-diabetes",
+      "intervention": "Bacteroides vulgatus metabolite",
+      "indication": "Type 2 diabetes",
+      "trial_ids": [],
+      "source_urls": [
+        "https://www.sciencealert.com/scientists-may-have-found-a-natural-alternative-to-ozempic"
+      ]
+    },
+    {
+      "slug": "beta-glucan-obesity",
+      "intervention": "beta-glucan",
+      "indication": "Obesity",
+      "trial_ids": [
+        "NCT01393210",
+        "NCT01402128",
+        "NCT02041104",
+        "NCT02604316",
+        "NCT05009615",
+        "NCT07299942"
+      ],
+      "source_urls": [
+        "https://www.sciencealert.com/this-type-of-fiber-could-have-weight-loss-benefits-similar-to-ozempic"
+      ]
+    },
+    {
+      "slug": "brp-obesity",
+      "intervention": "BRP",
+      "indication": "Obesity",
+      "trial_ids": [],
+      "source_urls": [
+        "https://newatlas.com/disease/obesity/brp-natural-alternative-ozempic/",
+        "https://www.sciencedaily.com/releases/2026/07/260719230608.htm"
+      ]
+    },
+    {
+      "slug": "cagrisema-obesity",
+      "intervention": "CagriSema",
+      "indication": "Obesity",
+      "trial_ids": [
+        "NCT05394519",
+        "NCT05567796",
+        "NCT05813925",
+        "NCT05996848",
+        "NCT06131372",
+        "NCT06131437",
+        "NCT06207877",
+        "NCT06267092",
+        "NCT06388187",
+        "NCT06780449",
+        "NCT07011667",
+        "NCT07184086",
+        "NCT07357766",
+        "NCT07564414",
+        "NCT07919405"
+      ],
+      "source_urls": [
+        "https://www.theguardian.com/business/2026/feb/23/wegovy-ozempic-weight-loss-drug-novo-nordisk-cagrisema"
+      ]
+    },
+    {
+      "slug": "compounded-semaglutide-obesity",
+      "intervention": "compounded semaglutide",
+      "indication": "Obesity",
+      "trial_ids": [],
+      "source_urls": [
+        "https://www.nytimes.com/2024/08/06/well/ozempic-semaglutide-overdose-risks.html"
+      ]
+    },
+    {
+      "slug": "exenatide-parkinsons-disease",
+      "intervention": "exenatide",
+      "indication": "Parkinson\u2019s disease",
+      "trial_ids": [
+        "NCT01174810",
+        "NCT03456687",
+        "NCT04305002"
+      ],
+      "source_urls": [
+        "https://www.nytimes.com/2025/02/04/health/parkinsons-disease-exenatide-byetta.html"
+      ]
+    },
+    {
+      "slug": "harmine-and-exendin-4-diabetes-mellitus",
+      "intervention": "harmine and exendin-4",
+      "indication": "Diabetes mellitus",
+      "trial_ids": [],
+      "source_urls": [
+        "https://www.scientificamerican.com/article/combining-ayahuasca-compound-with-drugs-like-ozempic-could-help-treat/"
+      ]
+    },
+    {
+      "slug": "liraglutide-obesity",
+      "intervention": "liraglutide",
+      "indication": "Obesity",
+      "trial_ids": [
+        "NCT00422058",
+        "NCT01272219",
+        "NCT01508949"
+      ],
+      "source_urls": [
+        "https://medicalxpress.com/news/2024-09-mouse-reveals-central-action-weight.html"
+      ]
+    },
+    {
+      "slug": "lixisenatide-parkinsons-disease",
+      "intervention": "lixisenatide",
+      "indication": "Parkinson\u2019s disease",
+      "trial_ids": [
+        "NCT03439943"
+      ],
+      "source_urls": [
+        "https://www.nytimes.com/2024/04/03/health/parkinsons-ozempic-glp-1.html"
+      ]
+    },
+    {
+      "slug": "metabolite-of-bacteroides-vulgatus-type-2-diabetes",
+      "intervention": "metabolite of Bacteroides vulgatus",
+      "indication": "Type 2 diabetes",
+      "trial_ids": [],
+      "source_urls": [
+        "https://www.sciencealert.com/scientists-may-have-discovered-a-natural-alternative-to-ozempic"
+      ]
+    },
+    {
+      "slug": "microdosing-ozempic-obesity",
+      "intervention": "Microdosing Ozempic",
+      "indication": "Obesity",
+      "trial_ids": [],
+      "source_urls": [
+        "https://www.nytimes.com/2024/12/05/well/ozempic-microdose-weight-loss.html"
+      ]
+    },
+    {
+      "slug": "mounjaro-and-zepbound-prevention-of-diabetes-in-people-with",
+      "intervention": "Mounjaro and Zepbound",
+      "indication": "prevention of diabetes in people with prediabetes",
+      "trial_ids": [
+        "NCT04184622"
+      ],
+      "source_urls": [
+        "https://www.nytimes.com/2024/11/13/well/ozempic-prediabetes.html"
+      ]
+    },
+    {
+      "slug": "orforglipron-obesity",
+      "intervention": "orforglipron",
+      "indication": "Obesity",
+      "trial_ids": [
+        "NCT05051579",
+        "NCT05803421",
+        "NCT05869903",
+        "NCT05872620",
+        "NCT05931380",
+        "NCT06023095",
+        "NCT06584916",
+        "NCT06649045",
+        "NCT06672939",
+        "NCT06824051",
+        "NCT06948422",
+        "NCT06948435",
+        "NCT06952530",
+        "NCT06972459",
+        "NCT06972472",
+        "NCT06993792",
+        "NCT07153471",
+        "NCT07729332",
+        "NCT07790861"
+      ],
+      "source_urls": [
+        "https://www.cnbc.com/2025/03/24/eli-lilly-to-release-weight-loss-pill-orforglipron-trial-data-.html"
+      ]
+    },
+    {
+      "slug": "ozempic-diabetic-kidney-disease",
+      "intervention": "Ozempic",
+      "indication": "Diabetic kidney disease",
+      "trial_ids": [
+        "NCT06954090"
+      ],
+      "source_urls": [
+        "https://finance.yahoo.com/news/shares-dialysis-providers-drop-ozempics-100259954.html"
+      ]
+    },
+    {
+      "slug": "ozempic-kidney-deterioration-in-people-with-type-2-diabetes",
+      "intervention": "Ozempic",
+      "indication": "Kidney deterioration in people with type 2 diabetes",
+      "trial_ids": [
+        "NCT04175665",
+        "NCT06954090",
+        "NCT07456774"
+      ],
+      "source_urls": [
+        "https://www.cnbc.com/2025/01/28/novo-nordisks-ozempic-wins-fda-approval-for-chronic-kidney-disease.html",
+        "https://www.ctvnews.ca/health/article/health-canada-approves-ozempic-to-reduce-kidney-deterioration-in-people-with-diabetes/"
+      ]
+    },
+    {
+      "slug": "recet-combined-with-semaglutide-type-2-diabetes-mellitus",
+      "intervention": "ReCET combined with semaglutide",
+      "indication": "Type 2 diabetes mellitus",
+      "trial_ids": [],
+      "source_urls": [
+        "https://scitechdaily.com/diabetes-breakthrough-new-treatment-eliminates-insulin-for-86-of-patients/"
+      ]
+    },
+    {
+      "slug": "retatrutide-obesity",
+      "intervention": "retatrutide",
+      "indication": "Obesity",
+      "trial_ids": [
+        "NCT04881760",
+        "NCT05548231",
+        "NCT05882045",
+        "NCT05929066",
+        "NCT05929079",
+        "NCT05931367",
+        "NCT05936151",
+        "NCT06313528",
+        "NCT06383390",
+        "NCT06662383",
+        "NCT06859268",
+        "NCT07035093",
+        "NCT07232719",
+        "NCT07357415",
+        "NCT07467447",
+        "NCT07629401"
+      ],
+      "source_urls": [
+        "https://www.theatlantic.com/health/archive/2024/01/why-you-will-stop-losing-weight-ozempic/677148/",
+        "https://www.telegraph.co.uk/news/2024/05/13/new-weight-loss-jab-better-ozempic-nhs/",
+        "https://www.bloomberg.com/news/articles/2025-12-11/lilly-s-experimental-shot-reduces-body-weight-by-23-in-study",
+        "https://www.wired.com/story/people-are-already-taking-this-unapproved-new-weight-loss-drug-triple-g-retatrutide/",
+        "https://www.scientificamerican.com/article/new-glp-1-weight-loss-drugs-are-coming-and-theyre-stronger-than-wegovy-zepbound/",
+        "https://www.theguardian.com/science/2026/apr/06/is-retatrutide-experimental-weight-loss-drug-making-people-fall-out-of-love"
+      ]
+    },
+    {
+      "slug": "semaglutide-2-4-mg-covid-19",
+      "intervention": "semaglutide 2.4 mg",
+      "indication": "COVID-19",
+      "trial_ids": [],
+      "source_urls": [
+        "https://www.cnbc.com/2024/09/02/weight-loss-drugs-cut-covid-deaths.html"
+      ]
+    },
+    {
+      "slug": "semaglutide-2-4-mg-weekly-heart-failure-with-preserved",
+      "intervention": "semaglutide 2.4 mg weekly",
+      "indication": "Heart failure with preserved ejection fraction",
+      "trial_ids": [
+        "NCT04788511",
+        "NCT04916470"
+      ],
+      "source_urls": [
+        "https://www.usatoday.com/story/news/health/2023/08/25/wegovy-semaglutide-weight-loss-drugs-help-heart/70677105007/"
+      ]
+    },
+    {
+      "slug": "semaglutide-addiction",
+      "intervention": "semaglutide",
+      "indication": "Addiction",
+      "trial_ids": [
+        "NCT05530577",
+        "NCT05891587",
+        "NCT05895643",
+        "NCT06015893",
+        "NCT06548490",
+        "NCT07059377",
+        "NCT07227948",
+        "NCT07249554",
+        "NCT07509112",
+        "NCT07523633",
+        "NCT07732426"
+      ],
+      "source_urls": [
+        "https://www.cnbc.com/2023/09/10/ozempic-wegovy-drinking-smoking-what-we-know.html"
+      ]
+    },
+    {
+      "slug": "semaglutide-alzheimers-disease",
+      "intervention": "semaglutide",
+      "indication": "Alzheimer\u2019s disease",
+      "trial_ids": [
+        "NCT04777396",
+        "NCT04777409",
+        "NCT05891496",
+        "NCT07651319"
+      ],
+      "source_urls": [
+        "https://www.nbcnews.com/health/health-news/ozempic-linked-lower-alzheimers-risk-people-type-2-diabetes-rcna176821",
+        "https://www.sciencedaily.com/releases/2025/06/250625012440.htm"
+      ]
+    },
+    {
+      "slug": "semaglutide-anxiety-and-depression",
+      "intervention": "semaglutide",
+      "indication": "Anxiety and depression",
+      "trial_ids": [
+        "NCT04466345",
+        "NCT07136714",
+        "NCT07586150"
+      ],
+      "source_urls": [
+        "https://www.theguardian.com/science/2026/mar/18/glp-1-type-2-diabetes-drugs-semaglutide-anxiety-depression"
+      ]
+    },
+    {
+      "slug": "semaglutide-chronic-kidney-disease-in-people-with-type-2",
+      "intervention": "semaglutide",
+      "indication": "Chronic kidney disease in people with Type 2 diabetes",
+      "trial_ids": [
+        "NCT03819153",
+        "NCT04175665",
+        "NCT04865770",
+        "NCT06131372",
+        "NCT06954090",
+        "NCT07456774"
+      ],
+      "source_urls": [
+        "https://www.nytimes.com/2024/05/24/well/ozempic-kidney-disease-semaglutide.html"
+      ]
+    },
+    {
+      "slug": "semaglutide-prediabetes",
+      "intervention": "semaglutide",
+      "indication": "Prediabetes",
+      "trial_ids": [
+        "NCT04892199",
+        "NCT05040971",
+        "NCT05067621",
+        "NCT05119179",
+        "NCT05193578"
+      ],
+      "source_urls": [
+        "https://medicalxpress.com/news/2025-09-antipsychotic-patients-schizophrenia-benefits-semaglutide.html"
+      ]
+    },
+    {
+      "slug": "tirzepatide-long-covid",
+      "intervention": "tirzepatide",
+      "indication": "Long COVID",
+      "trial_ids": [
+        "NCT07128082"
+      ],
+      "source_urls": [
+        "https://www.wired.com/story/weight-loss-drug-zepbound-is-being-tested-as-a-treatment-for-long-covid/"
+      ]
+    },
+    {
+      "slug": "wegovy-cardiovascular-disease",
+      "intervention": "Wegovy",
+      "indication": "Cardiovascular disease",
+      "trial_ids": [
+        "NCT05870462",
+        "NCT07090343",
+        "NCT07275697"
+      ],
+      "source_urls": [
+        "https://www.statnews.com/2023/11/11/heart-attack-stroke-obesity-wegovy-novo-nordisk-select/",
+        "https://www.bloomberg.com/news/articles/2023-11-11/wegovy-weight-loss-drug-may-also-treat-heart-disease-study-shows",
+        "https://www.sciencealert.com/fda-approves-wegovy-for-heart-conditions-in-game-changing-move",
+        "https://www.nytimes.com/2024/03/11/well/live/wegovy-ozempic-heart-risk.html"
+      ]
+    },
+    {
+      "slug": "wegovy-metabolic-dysfunction-associated-steatohepatitis-mash",
+      "intervention": "Wegovy",
+      "indication": "Metabolic dysfunction-associated steatohepatitis (MASH)",
+      "trial_ids": [
+        "NCT04822181",
+        "NCT06764056"
+      ],
+      "source_urls": [
+        "https://www.nytimes.com/2025/04/30/well/wegovy-liver-disease-mash.html"
+      ]
+    },
+    {
+      "slug": "wegovy-obesity",
+      "intervention": "Wegovy",
+      "indication": "Obesity",
+      "trial_ids": [
+        "NCT05548647",
+        "NCT05579249",
+        "NCT05746039",
+        "NCT05756764",
+        "NCT05870462",
+        "NCT06005012",
+        "NCT06027567",
+        "NCT06283667",
+        "NCT06287307",
+        "NCT06380426",
+        "NCT06396416",
+        "NCT06468748",
+        "NCT06754163",
+        "NCT06764056",
+        "NCT06854614",
+        "NCT06909006",
+        "NCT06934655",
+        "NCT07018544",
+        "NCT07055607",
+        "NCT07213466",
+        "NCT07272837",
+        "NCT07275697",
+        "NCT07280221",
+        "NCT07592546",
+        "NCT07701005",
+        "NCT07732426",
+        "NCT07779343",
+        "NCT07845994",
+        "NCT07850765",
+        "NCT07858331",
+        "NCT07870538",
+        "NCT07909889"
+      ],
+      "source_urls": [
+        "https://abcnews.go.com/Health/wireStory/lost-weight-wegovy-stop-taking-109831498"
+      ]
+    },
+    {
+      "slug": "wegovy-obesity-related-heart-failure-with-preserved-ejection",
+      "intervention": "Wegovy",
+      "indication": "Obesity-related heart failure with preserved ejection fraction",
+      "trial_ids": [
+        "NCT04788511",
+        "NCT04916470"
+      ],
+      "source_urls": [
+        "https://www.biospace.com/novo-s-wegovy-shows-stronger-weight-loss-effects-in-women-than-men-study"
+      ]
+    }
+  ],
+  "changed_existing_fields": {
+    "alexander-disease-zilganersen": [
+      "organisations"
+    ],
+    "enamel-remineralisation-amelogenin-peptide": [
+      "organisations"
+    ],
+    "kidney-failure-pig-kidney-transplant": [
+      "organisations"
+    ],
+    "pancreatic-cancer-daraxonrasib": [
+      "organisations"
+    ],
+    "pembrolizumab-plus-chemotherapy-the-most-common-type-of-lung": [
+      "events",
+      "matches",
+      "trials",
+      "organisations"
+    ]
+  },
+  "removed_claims": [],
+  "person_check_flags_preserved": true,
+  "pembrolizumab_trials_after": [
+    "NCT02039674",
+    "NCT02578680",
+    "NCT03664024",
+    "NCT03793179",
+    "NCT04956692",
+    "NCT06096844"
+  ],
+  "pembrolizumab_status_unchanged": true
+}

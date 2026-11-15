@@ -1,0 +1,64 @@
+{
+  "checked_at": "2026-11-15T21:37:14.381057+00:00",
+  "claim": "pembrolizumab-plus-chemotherapy-the-most-common-type-of-lung",
+  "external_id": "NCT06731907",
+  "source_url": "https://clinicaltrials.gov/study/NCT06731907",
+  "source_fetched_at": "2026-11-15T12:53:24.036080+00:00",
+  "registry_last_updated": {
+    "date": "2026-10-16",
+    "type": "ACTUAL"
+  },
+  "requirement": "openspec/changes/social-link-backfill/specs/entity-resolution/spec.md: active comparator in a head-to-head trial",
+  "reason": "The claimed pembrolizumab/pemetrexed/platinum regimen occurs only in the active comparator. The experimental regimen is pembrolizumab plus HER3-DXd. Under the trial-role rule, this trial does not establish an evidence event for the comparator regimen.",
+  "match_id": 13613,
+  "previous_state": "approved",
+  "previous_decider": "rule",
+  "previous_score": 0.99,
+  "previous_status": "phase_3",
+  "previous_events": [
+    {
+      "id": 6846,
+      "state": "approved",
+      "decider": "rule"
+    },
+    {
+      "id": 6847,
+      "state": "approved",
+      "decider": "rule"
+    }
+  ],
+  "approved_trial_ids_before": [
+    "NCT02039674",
+    "NCT02578680",
+    "NCT03664024",
+    "NCT03793179",
+    "NCT04956692",
+    "NCT06096844",
+    "NCT06731907"
+  ],
+  "decision": "rejected",
+  "decider": "assistant",
+  "model_calls": 0,
+  "publication": "Private database decision; publication pending normal export and deployment.",
+  "approved_trial_ids_after": [
+    "NCT02039674",
+    "NCT02578680",
+    "NCT03664024",
+    "NCT03793179",
+    "NCT04956692",
+    "NCT06096844"
+  ],
+  "status_after": "phase_3",
+  "events_after": [
+    {
+      "id": 6846,
+      "state": "rejected",
+      "decider": "assistant"
+    },
+    {
+      "id": 6847,
+      "state": "rejected",
+      "decider": "assistant"
+    }
+  ]
+}
