@@ -3586,6 +3586,53 @@ main ul:not([class]) li + li {
   white-space: nowrap;
 }
 
+/* How much a claim has been tested in people: the count of trials in semibold, and the
+   largest size and whether results are posted on a grey line, as a status has its gloss.
+   Counts of records only: no colour, mark or order says more. */
+.index .tested {
+  width: 18%;
+}
+
+/* With the column, the claim's name keeps the widest share: the status takes a fixed
+   one and the date only what it needs. */
+.index:has(.tested) .status {
+  width: 21%;
+}
+
+.index:has(.tested) .when {
+  width: 1%;
+}
+
+.index:has(.tested) .promise {
+  width: 16%;
+}
+
+.index .tested-lead {
+  display: block;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.tested-note {
+  max-width: var(--measure);
+  margin: 0.4rem 0 0.7rem;
+}
+
+@media (max-width: 40rem) {
+  /* A labelled line, then the grey line beneath it. */
+  /* A block for each claim: no cell keeps a column's share. */
+  .index td.tested,
+  .index:has(.tested) .status,
+  .index:has(.tested) .when,
+  .index:has(.tested) .promise {
+    width: auto;
+  }
+
+  .index .tested-lead {
+    display: inline;
+  }
+}
+
 /* Search. */
 
 .search {

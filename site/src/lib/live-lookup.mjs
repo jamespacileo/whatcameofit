@@ -153,14 +153,15 @@ function describeResearch(research) {
   };
   const papers = (research.papers ?? []).slice(0, 5).map(paper => ({
     title: paper.title, url: paper.url,
-    detail: [paper.year, paper.kind?.replaceAll("-", " "), paper.journal].filter(Boolean).join(" · "),
+    detail: [paper.linked ? "Linked from the article" : null,
+      paper.institutions?.length ? `Authors at ${paper.institutions.join(", ")}` : null, paper.year, paper.kind?.replaceAll("-", " "), paper.journal].filter(Boolean).join(" · "),
   }));
   const organisations = (research.organisations ?? []).slice(0, 3).map(org => ({
     title: org.name, url: org.url, detail: org.country || "ROR record",
   }));
   return {
     papers, organisations,
-    paperNote: "OpenAlex search results · Unreviewed. Relevance is not evidence that a treatment works.",
+    paperNote: "OpenAlex records · Unreviewed. Relevance is not evidence that a treatment works.",
     organisationNote: "ROR identifies organisations named in the report. It does not verify their involvement or endorsement.",
     paperStatus: unavailable("OpenAlex", research.availability?.openalex) ??
       (research.availability?.openalex === "ok" && !papers.length ? "No related papers were returned by this search." : null),

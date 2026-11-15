@@ -59,6 +59,14 @@ export const GROUP_NAMES: Record<BriefGroup["code"], string> = {
 
 export const NONE = "None on record";
 
+/** What a list says of a claim's trials, and what its column is called and counts. */
+export const TESTED_WORDS = {
+  column: "Tested in people",
+  results: "Results posted",
+  no_results: "No results posted",
+  note: "“Tested in people” counts the trials on record; it does not say what they found.",
+} as const;
+
 export const QUESTIONS = {
   tested: "Tested in people?",
   first_report: "What was the first report about?",
@@ -234,6 +242,38 @@ function testedRow(trials: ExportedTrial[], lastChecked: string | null): BriefRo
   });
 }
 
+/** The trials of a claim that have posted results to the registry. */
+const postedTrials = (trials: ExportedTrial[]) => trials.filter((trial) => trial.facts?.results);
+
+/** How much a claim has been tested in people, for a row of a list: the count of trials,
+ * and beneath it the largest stated size and whether results are posted; or that none is
+ * on record, and what the first report was about. The same counts as the brief's first
+ * answer, so a row and a claim page cannot disagree. Counts only: never what a trial found. */
+export function testedSummary(claim: ExportedClaim): { lead: string; detail: string | null } {
+  const trials = claim.trials ?? [];
+  if (trials.length === 0) {
+    const stage = claim.evidence_stage ? FIRST_REPORT[claim.evidence_stage] : undefined;
+    const about = stage ? `${stage.answer.charAt(0).toLowerCase()}${stage.answer.slice(1)}` : null;
+    return { lead: NONE, detail: about ? `The first report was about ${about}` : null };
+  }
+  const one = trials.length === 1;
+  const size = largestTrial(trials)?.facts?.participants?.count;
+  const posted = postedTrials(trials).length;
+  const people = size === undefined ? null : one ? `${digits(size)} people` : `${digits(size)} people in the largest`;
+  const results =
+    posted === 0
+      ? TESTED_WORDS.no_results
+      : one
+        ? TESTED_WORDS.results
+        : posted === trials.length
+          ? `${TESTED_WORDS.results} by all ${digits(trials.length)}`
+          : `${TESTED_WORDS.results} by ${digits(posted)} of ${digits(trials.length)}`;
+  return {
+    lead: `In ${digits(trials.length)} ${plural(trials.length, "trial", "trials")}`,
+    detail: [people, results].filter((part): part is string => part !== null).join(". "),
+  };
+}
+
 const statesDesign = (trial: ExportedTrial) =>
   Boolean(trial.facts && (trial.facts.allocation || trial.facts.masking || trial.facts.comparators.length > 0));
 const namesDummy = (trial: ExportedTrial) =>
@@ -348,7 +388,7 @@ const eventsOf = (claim: ExportedClaim, trials: ExportedTrial[], type: string): 
 };
 
 function resultsRow(claim: ExportedClaim, trials: ExportedTrial[]): BriefRow {
-  const posted = trials.filter((trial) => trial.facts?.results);
+  const posted = postedTrials(trials);
   if (posted.length === 0) {
     return row({
       code: "results",
@@ -499,6 +539,7 @@ assertNeutral([
   BRIEF_TITLE,
   NONE,
   ...Object.values(GROUP_NAMES),
+  ...Object.values(TESTED_WORDS),
   ...Object.values(QUESTIONS),
   ...Object.values(DEFINITIONS),
   ...Object.values(FIRST_REPORT).flatMap((stage) => [stage.answer, stage.opened]),

@@ -7,11 +7,19 @@ Finds published papers about a claim's intervention and indication when the arti
 ## ADDED Requirements
 
 ### Requirement: Paper candidates from a literature search
-For each claim the system SHALL search the literature for the intervention's name, its other names and its search phrases, each together with the indication. Every paper found SHALL be stored as a candidate match with its source, external identifier, score and a one-line record of title, year, kind of paper and journal. At most twenty papers SHALL be kept per claim, taken in the source's own order of relevance.
+For each claim the system SHALL search the literature for the intervention's name, its other names and its search phrases, each together with the indication. Every paper found SHALL be stored as a candidate match with its source, external identifier, score and a one-line record of title, year, kind of paper and journal. The system SHALL also search the same terms, without the indication, among papers with an author at each organisation the article named and the organisation registry identified and no one rejected, three organisations at most, published from two years before the first report to a month after it when that date is known. At most twenty papers SHALL be kept per claim: those found under a named organisation first, the ones found under more organisations ahead, then the rest in the source's own order of relevance.
 
 #### Scenario: Claim whose article gave no DOI
 - **WHEN** resolution runs for a claim with no paper entity and the literature holds four papers on its intervention and indication
 - **THEN** four paper candidates are stored for the claim
+
+#### Scenario: The paper's title shares few words with the report (pipeline)
+- **WHEN** the search with the indication does not return the paper a claim's article reports, and the article named two organisations that are identified
+- **THEN** one search is sent per organisation, and a paper found under both is stored ahead of one found under one, which is ahead of the papers found with the indication
+
+#### Scenario: No organisation identified
+- **WHEN** a claim's article named no organisation that the registry identified
+- **THEN** only the search with the indication is sent
 
 #### Scenario: Paper found by two terms
 - **WHEN** the name and a search phrase both find the same paper
@@ -103,11 +111,19 @@ The system SHALL use a paper's abstract only to score and to find reasons and re
 - **THEN** the export holds the paper's title and link and no abstract text
 
 ### Requirement: Public on-demand research context
-The public lookup SHALL return bibliographic search results and identifiers for organisations explicitly named in the report, in addition to trial candidates. These SHALL be labelled unreviewed search results, separate from claim status and match confidence. The interface SHALL collapse secondary context initially. Missing keys, provider limits and failures SHALL leave trial results available. Old cached results and older extensions SHALL remain compatible.
+The public lookup SHALL return the records of papers the report links to, bibliographic search results and identifiers for organisations explicitly named in the report, in addition to trial candidates. These SHALL be labelled unreviewed search results, separate from claim status and match confidence. The interface SHALL collapse secondary context initially. Missing keys, provider limits and failures SHALL leave trial results available. Old cached results and older extensions SHALL remain compatible.
 
 #### Scenario: A report has related papers and names a university
 - **WHEN** OpenAlex finds papers and ROR selects the university's identity
 - **THEN** paper titles, metadata and source links and the ROR organisation link are available in collapsed sections, with no status change
+
+#### Scenario: The report links to its paper
+- **WHEN** the page links to a paper by DOI or PubMed number and a keyword search would not return that paper
+- **THEN** the paper's record is fetched by its identifier, listed first and marked as linked from the article
+
+#### Scenario: The paper's title shares few words with the report
+- **WHEN** the report links to no paper, names two organisations that ROR identifies, and a keyword search does not return the paper it reports
+- **THEN** works on the treatment's terms with an author at each named organisation, published around the report's date, are searched for, and a paper found this way is listed before keyword results with the organisations it was found under, those found under more organisations first
 
 #### Scenario: The free allowance cannot be established
 - **WHEN** OpenAlex's allowance is exhausted, unknown, exceeds the free budget or has prepaid credit

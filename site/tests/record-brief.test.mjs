@@ -12,6 +12,7 @@ import {
   digestBridge,
   recordBrief,
   sourceWords,
+  testedSummary,
 } from "../src/lib/record-brief.ts";
 
 const facts = (extra = {}) => ({
@@ -360,4 +361,54 @@ test("Scenario: Status with a phase", () => {
 test("Scenario: Wording with a verdict", () => {
   // The module's wording passes the check it runs when loaded; a verdict would not.
   assert.throws(() => assertNeutral(["The trial was abandoned"]), /Verdict wording "abandoned"/);
+});
+
+// Openspec site-publishing, change home-claims-list: a row of a list of claims.
+test("Scenario: Claim with three trials", () => {
+  assert.deepEqual(testedSummary(device), {
+    lead: "In 3 trials",
+    detail: "135 people in the largest. Results posted by all 3",
+  });
+  const partly = structuredClone(device);
+  partly.trials[2].facts.results = null;
+  assert.equal(testedSummary(partly).detail, "135 people in the largest. Results posted by 2 of 3");
+});
+
+test("Scenario: Claim with no trial", () => {
+  assert.deepEqual(testedSummary(claim({ evidence_stage: "animal" })), {
+    lead: NONE,
+    detail: "The first report was about a study in animals",
+  });
+  assert.deepEqual(testedSummary(claim({ evidence_stage: null })), { lead: NONE, detail: null });
+});
+
+test("Scenario: Trials with no results posted", () => {
+  const unposted = claim({
+    trials: [
+      trial("NCT1", { facts: facts({ participants: { count: 54, basis: "actual" } }) }),
+      trial("NCT2", { facts: facts({ participants: { count: 12, basis: "actual" } }) }),
+    ],
+  });
+  assert.deepEqual(testedSummary(unposted), { lead: "In 2 trials", detail: "54 people in the largest. No results posted" });
+  // One trial: its size is its own, and it is not "the largest".
+  const single = claim({ trials: [trial("NCT1", { facts: facts({ participants: { count: 54, basis: "actual" }, results: posted }) })] });
+  assert.deepEqual(testedSummary(single), { lead: "In 1 trial", detail: "54 people. Results posted" });
+  // No stated size: the count and the results, and no size.
+  assert.deepEqual(testedSummary(claim({ trials: [trial("NCT1"), trial("NCT2")] })), {
+    lead: "In 2 trials",
+    detail: "No results posted",
+  });
+});
+
+test("Scenario: Same words as the claim page", () => {
+  for (const subject of [device, claim({ trials: [trial("NCT1"), trial("NCT2")] }), claim({ evidence_stage: "animal" })]) {
+    const row = testedSummary(subject);
+    const answer = rowOf(recordBrief(subject, null), "tested").answer;
+    // The claim page's answer opens with the row's count, and names the same size.
+    assert.ok(answer.startsWith(row.lead), `${answer} / ${row.lead}`);
+    const size = row.detail?.match(/^[\d,]+ people/)?.[0];
+    if (size) assert.ok(answer.includes(size), `${answer} / ${size}`);
+  }
+  // A row never carries a result value.
+  assert.doesNotMatch(Object.values(testedSummary(device)).join(" "), /\d\.\d|p\s*[<=]/);
 });

@@ -7,6 +7,8 @@ import Pager from "./Pager.astro";
 import StageFilter from "./StageFilter.astro";
 import PromiseText from "./PromiseText.astro";
 import StatusCell from "./StatusCell.astro";
+import TestedCell from "./TestedCell.astro";
+import { TESTED_WORDS } from "../lib/record-brief";
 
 interface Props {
   claims: ExportedClaim[];
@@ -27,6 +29,10 @@ const anyPromise = claims.some((claim) => latestPromise(claim) !== null);
 ---
 
 {filter && claims.length >= FILTER_FROM && <StageFilter claims={claims} />}
+{
+  /* What the column counts, said once above a list long enough to be skimmed. */
+  claims.length >= FILTER_FROM && <p class="entry-note tested-note">{TESTED_WORDS.note}</p>
+}
 <div class="table-frame">
 <table role="table" class="index">
   <caption class="visually-hidden">{caption}</caption>
@@ -34,6 +40,7 @@ const anyPromise = claims.some((claim) => latestPromise(claim) !== null);
     <tr role="row">
       <th role="columnheader" scope="col">Claim</th>
       <th role="columnheader" scope="col">First reported</th>
+      <th role="columnheader" scope="col">{TESTED_WORDS.column}</th>
       {anyPromise && <th role="columnheader" scope="col" class="promise">Latest promise</th>}
       <th role="columnheader" scope="col">Status</th>
     </tr>
@@ -53,6 +60,9 @@ const anyPromise = claims.some((claim) => latestPromise(claim) !== null);
               ) : (
                 <span class="visually-hidden">Not recorded</span>
               )}
+            </td>
+            <td role="cell" class="tested" data-column={TESTED_WORDS.column}>
+              <TestedCell claim={claim} />
             </td>
             {anyPromise && (
             <td role="cell" class:list={["promise", { none: !promise }]} data-column="Latest promise">
