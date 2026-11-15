@@ -5,6 +5,7 @@ from thenwhat.backfill.link_screen import LinkScreen
 from thenwhat.backfill.link_triage import LinkTriage
 from thenwhat.backfill.news_search import NewsSearch
 from thenwhat.backfill.steps import Step
+from thenwhat.backfill.topics import terms_of
 from thenwhat.config import Settings
 
 
@@ -23,6 +24,7 @@ def registered_steps(settings: Settings) -> list[Step]:
             vertical_accept_above=settings.vertical_accept_above,
             same_claim_accept_above=settings.same_claim_accept_above,
             treatment_accept_above=settings.treatment_accept_above,
+            topic_terms=terms_of(),
             approve_drafts_by_rule=settings.approve_drafts_by_rule,
             match_reject_below=settings.match_reject_below,
             match_accept_above=settings.match_accept_above,

@@ -15,12 +15,12 @@ awaits `thenwhat prepare`, which searches the registries and then decides it by 
 for drafts, so that no claim is published with a status no search stands behind.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import ColumnElement, and_, exists, func, select
+from sqlalchemy import ColumnElement, and_, exists, func, or_, select
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.address import article_key, without_tracking
@@ -31,6 +31,7 @@ from thenwhat.backfill.link_screen import CLAIM, REGISTRY_TRIAL, TITLE_NAMES_CLA
 from thenwhat.backfill.link_triage import is_passed
 from thenwhat.backfill.outlet_kinds import name_of
 from thenwhat.backfill.steps import MODEL, TEXT_DOOR, Failed, ModelSpend
+from thenwhat.backfill.topics import title_names
 from thenwhat.claims.entry import (
     MAX_NAMED_CLAIMS,
     EntryError,
@@ -124,6 +125,7 @@ class LinkRead:
         approve_drafts_by_rule: bool,
         same_claim_accept_above: float = 0.6,
         treatment_accept_above: float = 0.5,
+        topic_terms: Sequence[str] = (),
         match_reject_below: float = 0.0,
         match_accept_above: float = 0.0,
         time: Time | None = None,
@@ -136,6 +138,9 @@ class LinkRead:
         self.vertical_accept_above = vertical_accept_above
         self.same_claim_accept_above = same_claim_accept_above
         self.treatment_accept_above = treatment_accept_above
+        # The words of the operator's topics. A lead whose title names one is read first,
+        # and is read when triage held it as well as when triage passed it.
+        self._names_a_topic = title_names(topic_terms)
         self.approve_drafts_by_rule = approve_drafts_by_rule
         # The rules `thenwhat resolve` decides candidates by, for those a page names.
         self.match_reject_below = match_reject_below
@@ -145,18 +150,31 @@ class LinkRead:
     # --- which leads, and in what order ---------------------------------------------
 
     def scope(self) -> ColumnElement[bool]:
-        """Leads that screening left in scope and triage passed at the two thresholds.
-        While either threshold is unset, none."""
-        return and_(
-            LinkLead.screen_outcome == ScreenOutcome.IN_SCOPE,
-            is_passed(self.pass_above, self.reject_below),
-        )
+        """Leads that screening left in scope and triage passed at the two thresholds,
+        and leads whose title names one of the operator's topics that triage held: the
+        topic is to be covered in full, and the check after the read says what each
+        article turned out to be. A lead triage rejected is never read. While either
+        threshold is unset, none."""
+        readable = is_passed(self.pass_above, self.reject_below)
+        if (
+            self._names_a_topic is not None
+            and self.pass_above is not None
+            and self.reject_below is not None
+        ):
+            held_on_a_topic = and_(
+                self._names_a_topic,
+                LinkLead.triage_score.is_not(None),
+                LinkLead.triage_score >= self.reject_below,
+            )
+            readable = or_(readable, held_on_a_topic)
+        return and_(LinkLead.screen_outcome == ScreenOutcome.IN_SCOPE, readable)
 
     def inputs(self, record: LinkLead) -> dict[str, Any]:
         return {"key": record.url_key}
 
     def order(self) -> list[ColumnElement[Any]]:
-        """First the leads linked to a registry trial, then the most shared."""
+        """First the leads whose title names one of the operator's topics, then those
+        linked to a registry trial, then the most shared."""
         linked = exists().where(
             LinkLeadLink.link_lead_id == LinkLead.id,
             LinkLeadLink.record_kind == REGISTRY_TRIAL,
@@ -166,7 +184,8 @@ class LinkRead:
             .where(LinkShare.link_lead_id == LinkLead.id)
             .scalar_subquery()
         )
-        return [linked.desc(), shared.desc()]
+        topical = [] if self._names_a_topic is None else [self._names_a_topic.desc()]
+        return [*topical, linked.desc(), shared.desc()]
 
     def check_ready(self, session: Session) -> None:
         """Refuse to read anything until triage has been measured (openspec

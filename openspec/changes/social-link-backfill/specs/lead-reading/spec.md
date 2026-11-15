@@ -7,10 +7,10 @@ Reads the article of a link lead that triage passed, once, and makes it a source
 ## ADDED Requirements
 
 ### Requirement: Which leads are read
-The reading step SHALL apply to leads that are passed at the configured thresholds. Before a lead is read, the check for an article already tracked SHALL run again; a lead that has become already tracked SHALL NOT be read.
+The reading step SHALL apply to leads that are passed at the configured thresholds, and to the held leads that name one of the operator's topics (see "Topic leads"). Before a lead is read, the check for an article already tracked SHALL run again; a lead that has become already tracked SHALL NOT be read.
 
 #### Scenario: A held lead
-- **WHEN** a lead's score is between the two thresholds
+- **WHEN** a lead's score is between the two thresholds and its title names no topic
 - **THEN** it is not read
 
 #### Scenario: Tracked since it was screened
@@ -18,11 +18,53 @@ The reading step SHALL apply to leads that are passed at the configured threshol
 - **THEN** the lead's outcome becomes already tracked, and no article is fetched and no model is called for it
 
 ### Requirement: Reading order
-Due leads SHALL be read in this order: first those linked to a registry trial, then by the sum of their shares' scores, highest first.
+Due leads SHALL be read in this order: first those whose title names one of the operator's topics, then those linked to a registry trial, then by the sum of their shares' scores, highest first.
+
+#### Scenario: A topic lead and a much-shared lead
+- **WHEN** two leads are due, and the less shared one names a topic
+- **THEN** the lead that names the topic is read first
 
 #### Scenario: Two leads, one linked to a trial
 - **WHEN** two leads are due and only the less shared one is linked to a registry trial
 - **THEN** the lead linked to a trial is read first
+
+### Requirement: Topic leads
+The operator's topics SHALL be a checked-in list of names, each with the words that mark a link lead or a claim as belonging to it. A lead's title names a topic when it holds one of the topic's words as a whole word, whatever its letter case. A lead that names a topic and that triage held SHALL be read as a passed lead is; a lead that triage rejected SHALL NOT be read. With no topic listed, only passed leads SHALL be read. A topic SHALL change only which leads are read and in what order: it SHALL NOT change a status and SHALL NOT appear in the export.
+
+#### Scenario: A held lead on a topic
+- **WHEN** a lead scored 0.4 names a GLP-1 drug in its title, and the thresholds are 0.7 and 0.2
+- **THEN** it is read, and the check after the read decides whether it becomes or joins a claim
+
+#### Scenario: A held lead on no topic
+- **WHEN** a lead scored 0.4 names no topic
+- **THEN** it is not read
+
+#### Scenario: A rejected lead on a topic
+- **WHEN** a lead scored 0.1 names a topic, and the lower threshold is 0.2
+- **THEN** it is not read
+
+#### Scenario: A word inside another word
+- **WHEN** a title holds "GLP-12" and the topic's word is "GLP-1"
+- **THEN** the title does not name the topic
+
+#### Scenario: No topics are listed
+- **WHEN** no topic is listed
+- **THEN** a held lead is not read, whatever its title
+
+### Requirement: Topic coverage
+`thenwhat backfill topics` SHALL report, for every topic or for the one named: how many link leads name it; how many of those are not screened yet, on an outlet that is not listed, already a source article, in scope and not scored yet, rejected by triage, and to be read; the outcomes of those that were read; and each unarchived claim whose intervention names the topic, with its review state or that it is published, its status, and how many articles, approved trials, approved papers and approved background cards it has. It SHALL send no request and change nothing.
+
+#### Scenario: Leads at every stage
+- **WHEN** leads that name a topic stand at different stages
+- **THEN** the report gives the number at each stage and the outcomes of those read
+
+#### Scenario: A claim with a trial and a paper
+- **WHEN** a claim for semaglutide has one article, one approved trial, one rejected trial and one approved paper
+- **THEN** the report lists it with 1 article, 1 trial, 1 paper and 0 cards
+
+#### Scenario: An unknown topic
+- **WHEN** the operator names a topic that is not listed
+- **THEN** the command fails and lists the topics
 
 ### Requirement: Outlets are asked politely
 An article SHALL be fetched only where the outlet's robots.txt allows the pipeline's client, with the contact User-Agent. No outlet SHALL be asked for two articles less than the configured interval apart, counted across every process, or less than the delay its robots.txt asks for when that is longer. An article that cannot be retrieved SHALL be looked for as an archived snapshot, as extraction does today.

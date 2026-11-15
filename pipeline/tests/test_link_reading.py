@@ -624,6 +624,61 @@ def test_new_and_established_together_decide_that_it_is_one_treatment(reader: Re
     assert lead.read_outcome is ReadOutcome.NEW_CLAIM
 
 
+# --- topic leads -----------------------------------------------------------------------
+
+
+def test_a_held_lead_that_names_a_topic_is_read_and_one_that_does_not_is_not(reader: Reader):
+    """Scenarios: A held lead on a topic, A held lead on no topic, A rejected lead on a topic"""
+    reader.step = step(topic_terms=("Zepbound", "GLP-1"))
+    held_on_topic = reader.lead("https://www.bbc.com/news/health-10", score=0.4)
+    held_on_topic.title = "New glp-1 pill cuts weight in a synthetic trial"
+    held_off_topic = reader.lead("https://www.bbc.com/news/health-11", score=0.4)
+    rejected_on_topic = reader.lead("https://www.bbc.com/news/health-12", score=0.1)
+    rejected_on_topic.title = "What Zepbound costs at a synthetic pharmacy"
+    reader.session.flush()
+
+    reader.read()
+
+    assert held_on_topic.read_outcome is ReadOutcome.NEW_CLAIM
+    assert (held_off_topic.read_outcome, rejected_on_topic.read_outcome) == (None, None)
+
+
+def test_a_word_inside_another_word_names_no_topic(reader: Reader):
+    """Scenario: A word inside another word"""
+    reader.step = step(topic_terms=("GLP-1",))
+    lead = reader.lead(score=0.4)
+    lead.title = "Synthetic study of GLP-12 receptors"
+    reader.session.flush()
+
+    reader.read()
+
+    assert lead.read_outcome is None
+
+
+def test_a_lead_that_names_a_topic_is_read_before_a_more_shared_one(reader: Reader):
+    """Scenario: A topic lead and a much-shared lead"""
+    reader.step = step(topic_terms=("Zepbound",))
+    much_shared = reader.lead("https://www.bbc.com/news/health-20", shares=900)
+    on_topic = reader.lead("https://www.theguardian.com/science/2024/jan/04/synthetic", shares=2)
+    on_topic.title = "Zepbound approved in a synthetic country"
+    reader.session.flush()
+
+    reader.read(limit=1)
+
+    assert (on_topic.read_outcome, much_shared.read_outcome) == (ReadOutcome.NEW_CLAIM, None)
+
+
+def test_with_no_topics_only_passed_leads_are_read(reader: Reader):
+    """Scenario: No topics are listed"""
+    held = reader.lead(score=0.4)
+    held.title = "Zepbound approved in a synthetic country"
+    reader.session.flush()
+
+    reader.read()
+
+    assert held.read_outcome is None
+
+
 # --- one story, several outlets --------------------------------------------------------
 
 # Four synthetic reads shaped like one much-shared story: each outlet words the treatment
