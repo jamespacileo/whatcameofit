@@ -349,6 +349,7 @@ def test_tracked_cards_require_the_condition_and_whole_regimen(session: Session)
             summary="Synthetic report.",
         )
     add_synonym(session, "combined", "EX-2 and EX-1", "PAIR-12")
+    add_synonym(session, "single", "EX-1", "ONE-BRAND")
     for intervention, indication, aliases, expected in [
         ("EX-1 plus EX-2", "Obesity", ["EX-1"], ["combined"]),
         ("EX-1", "  OBESITY ", [], ["single"]),
@@ -358,6 +359,8 @@ def test_tracked_cards_require_the_condition_and_whole_regimen(session: Session)
         ("EX-1/EX-2", "obesity", [], ["combined"]),
         ("PAIR-12", "obesity", ["EX-1 plus EX-2", "EX-1"], ["combined"]),
         ("UNTRACKED-PAIR", "obesity", [], []),
+        ("EX-1 plus EX-2", "obesity", ["ONE-BRAND"], ["combined"]),
+        ("PAIR-12", "obesity", ["ONE-BRAND"], ["combined"]),
     ]:
         found = find(
             session,

@@ -4,7 +4,7 @@
 //
 // The answer carries codes and registry fields only. The site words them.
 import { PAPER, STATED, agreeing } from "./details.mjs";
-import { isAName, nameKey, partsOf, regimenKeys } from "./names.mjs";
+import { isAName, nameKey, partsOf, regimenKeys, regimenParts } from "./names.mjs";
 import { LIKELY_FROM } from "../src/lib/live-lookup.mjs";
 import { timedOut } from "./deadline.mjs";
 
@@ -293,10 +293,19 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
     // search terms only. The names stated as whole aliases can associate a card.
     const wanted = new Set(regimenKeys(names));
     const indication = nameKey(reading.indication);
-    const tracked = Object.entries(index?.claims ?? {})
-      .filter(([, claim]) => indication && nameKey(claim.indication) === indication &&
-        regimenKeys(claim.names ?? []).some(name => wanted.has(name)))
-      .map(([slug, claim]) => ({ slug, headline: claim.headline, page: claim.page }))
+    const cards = Object.entries(index?.claims ?? {})
+      .filter(([, claim]) => indication && nameKey(claim.indication) === indication)
+      .map(([slug, claim]) => ({ slug, claim, keys: regimenKeys(claim.names ?? []) }));
+    const primary = regimenKeys(names.slice(0, 1))[0];
+    // A component's brand can look like a whole-regimen alias in a model reading.
+    // The published card's own aliases establish that it is actually a component.
+    // A named regimen's primary card can also supply its explicit component names.
+    const wholeNames = [...names, ...cards.filter(card => card.keys.includes(primary)).flatMap(card => card.claim.names ?? [])];
+    const components = new Set(regimenParts(wholeNames).filter(parts => parts.length > 1)
+      .flatMap(parts => parts.map(part => JSON.stringify([part]))));
+    const tracked = cards
+      .filter(card => card.keys.some(name => wanted.has(name)) && !card.keys.some(name => components.has(name)))
+      .map(({ slug, claim }) => ({ slug, headline: claim.headline, page: claim.page }))
       .sort((a, b) => a.slug.localeCompare(b.slug));
 
     const clinical = core({

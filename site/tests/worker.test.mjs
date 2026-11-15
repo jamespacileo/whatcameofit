@@ -256,7 +256,7 @@ test("Scenario: Treatment already tracked", async () => {
 test("tracked cards require the same condition and complete regimen without extra model work", async () => {
   const claims = {
     ageing: { names: ["EX-1"], indication: "biological ageing", headline: "Ageing", page: "/ageing" },
-    single: { names: ["EX-1"], indication: "obesity", headline: "One medicine", page: "/single" },
+    single: { names: ["EX-1", "ONE-BRAND"], indication: "obesity", headline: "One medicine", page: "/single" },
     combined: { names: ["EX-2 and EX-1", "PAIR-12", "EX-1"], indication: "obesity", headline: "Combination", page: "/combined" },
     legacy: { names: ["EX-1"], headline: "Unknown condition", page: "/legacy" },
   };
@@ -269,6 +269,8 @@ test("tracked cards require the same condition and complete regimen without extr
     ["EX-1/EX-2", "obesity", [], ["combined"]],
     ["PAIR-12", "obesity", ["EX-1 plus EX-2", "EX-1"], ["combined"]],
     ["UNTRACKED-PAIR", "obesity", [], []],
+    ["EX-1 plus EX-2", "obesity", ["ONE-BRAND"], ["combined"]],
+    ["PAIR-12", "obesity", ["ONE-BRAND"], ["combined"]],
   ]) {
     let reads = 0, scores = 0;
     const model = {

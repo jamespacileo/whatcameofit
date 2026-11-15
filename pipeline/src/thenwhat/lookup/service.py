@@ -372,7 +372,15 @@ def _parts(name: str) -> list[str]:
 
 def _regimen_names(names: list[str]) -> set[tuple[str, ...]]:
     """Whole-regimen aliases, excluding single components of a combination."""
-    parts = [
+    parts = _regimen_parts(names)
+    components = {part for one in parts if len(one) > 1 for part in one}
+    if parts and len(parts[0]) == 1 and parts[0][0] in components:
+        return set()
+    return {one for one in parts if len(one) > 1 or len(one) == 1 and one[0] not in components}
+
+
+def _regimen_parts(names: list[str]) -> list[tuple[str, ...]]:
+    return [
         tuple(
             sorted(
                 name_key(part)
@@ -382,10 +390,6 @@ def _regimen_names(names: list[str]) -> set[tuple[str, ...]]:
         )
         for name in names
     ]
-    components = {part for one in parts if len(one) > 1 for part in one}
-    if parts and len(parts[0]) == 1 and parts[0][0] in components:
-        return set()
-    return {one for one in parts if len(one) > 1 or len(one) == 1 and one[0] not in components}
 
 
 def _tracked(session: Session, names: list[str], indication: str | None) -> list[str]:
@@ -393,8 +397,8 @@ def _tracked(session: Session, names: list[str], indication: str | None) -> list
     if not indication or not name_key(indication):
         return []
     wanted = _regimen_names(names)
-    slugs = [
-        slug
+    cards = [
+        (slug, [name, *synonyms], _regimen_names([name, *synonyms]))
         for slug, condition, name, synonyms in session.execute(
             select(Claim.slug, Claim.indication, Entity.name, Entity.synonyms)
             .join(Entity, Entity.claim_id == Claim.id)
@@ -402,6 +406,12 @@ def _tracked(session: Session, names: list[str], indication: str | None) -> list
             .order_by(Claim.slug)
         )
         if name_key(condition) == name_key(indication)
-        and wanted & _regimen_names([name, *synonyms])
     ]
+    primary = _regimen_names(names[:1])
+    whole_names = [
+        *names,
+        *(name for _, aliases, keys in cards if primary & keys for name in aliases),
+    ]
+    components = {(part,) for one in _regimen_parts(whole_names) if len(one) > 1 for part in one}
+    slugs = [slug for slug, _, keys in cards if wanted & keys and not components & keys]
     return list(dict.fromkeys(slugs))
