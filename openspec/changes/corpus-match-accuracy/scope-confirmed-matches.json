@@ -1,0 +1,17 @@
+{
+  "checked_date": "2026-11-15",
+  "operation": "read-only primary-record review",
+  "records": [
+    {
+      "claim": "2r-6r-hnk-depression",
+      "match_id": 10073,
+      "trial_id": "NCT06511908",
+      "source_url": "https://clinicaltrials.gov/study/NCT06511908",
+      "fetched_at": "2026-11-15T10:50:32.203556+00:00",
+      "diagnostic_score": 0.79,
+      "outcome": "retain existing approved association; no database change",
+      "reason": "Stored primary registry title and intervention identify (2R,6R)-hydroxynorketamine, and the trial tests it in people with major depressive disorder. The broad depression claim does not state a restriction incompatible with this treatment-resistant population. A borderline diagnostic score alone does not justify reopening the association or changing its phase-2 status to preclinical-only.",
+      "exclusion": "Exclude this match from the unexecuted blanket uncertain-scope reopening script. Review remaining flags against their primary records."
+    }
+  ]
+}
