@@ -1,0 +1,29 @@
+{
+  "row": "S010",
+  "checked_date": "2026-11-15",
+  "method": "Installed Safari extension popup observed through native accessibility controls on the bound public LinkedIn post",
+  "version": "0.9.13 (22)",
+  "native_lookup_completed": true,
+  "outcome": "Named RASolute 302 now ranks first; broad-scope scoring and card coverage remain unresolved",
+  "top_trial": "NCT06625320",
+  "top_score": 0.98,
+  "displayed_possible_matches": 10,
+  "displayed_count_is_capped": true,
+  "knowledge_card": "no card",
+  "capture_preview": "not verified",
+  "repeat_reuse": "not verified",
+  "service_build": "Not exposed by native response; no exact server revision asserted",
+  "remaining_concerns": [
+    {
+      "trial": "NCT07573215",
+      "score": 1,
+      "issue": "Expanded access listed among possible matches"
+    },
+    {
+      "trial": "NCT06445062",
+      "score": 0.98,
+      "issue": "Combination record scored highly against the monotherapy reading"
+    }
+  ],
+  "note": "Public caption visible without a sign-in overlay. RASolute 302 led at 98%; first-line RASolute 303 remained second at 100%. Broad Pancreatic cancer reading returned no exact card. Safari changed windows during follow-up, so screenshot preview and repeat reuse were not observed. Raw 22/11 counts belong to the earlier service replay, not this capped popup."
+}
