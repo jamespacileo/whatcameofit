@@ -187,8 +187,8 @@ const REGISTRY_TYPES = Object.entries(REGISTRY_TYPE_WORDS).map(([type]) => type)
 const REASON_WORDS: Record<string, (reason: CardReason) => string> = {
   filed_by_registry: ({ trials, of }) =>
     of === 1
-      ? "The trial registry files this claim’s one trial under this term."
-      : `The trial registry files ${trials} of this claim’s ${of} trials under this term.`,
+      ? "When this term was gathered, the trial registry filed the claim’s one trial under it."
+      : `When this term was gathered, the trial registry filed ${trials} of the claim’s ${of} trials under it.`,
   label_equals_name: ({ name }) =>
     `The term’s label is the same as “${name}”, a name this claim uses.`,
   entry_term_equals_name: ({ entry_term, name }) =>

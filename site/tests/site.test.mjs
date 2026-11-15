@@ -1138,7 +1138,7 @@ test("Scenario: Claim with a condition card only", () => {
   assert.match(section, /<details class="glance-more">\s*<summary>\s*<span>Source and definition<\/span>\s*<span class="glance-score">High match · \d+%<\/span>/);
   assert.match(section, /<div class="card-words">[\s\S]*Definition, in the source’s words/);
   assert.match(section, /<blockquote[^>]*>A synthetic definition of the example condition\.<\/blockquote>/);
-  assert.match(section, /The trial registry files this claim’s one trial under this term\./);
+  assert.match(section, /When this term was gathered, the trial registry filed the claim’s one trial under it\./);
   // In its row, under the condition's own words.
   assert.match(section, /<div id="glance-condition">\s*<dt>Claimed for<\/dt>/);
   // At the top of the sheet, before the record in brief, and not inside the status panel.
@@ -1165,7 +1165,7 @@ test("Scenario: Broader term, and Reason shown on request", () => {
   assert.equal(count(section, 'class="card-kind"'), 2);
   assert.match(section, /A broader term than this claim’s condition/);
   assert.match(section, /Match to this claim: high, 90%/);
-  assert.match(section, /The trial registry files 5 of this claim’s 6 trials under this term\./);
+  assert.match(section, /When this term was gathered, the trial registry filed 5 of the claim’s 6 trials under it\./);
   assert.match(section, /The term’s label is the same as “examplumab”, a name this claim uses\./);
   // A term its source gives no definition says so in place of the source's words.
   assert.equal(count(section, '<div class="card-words">'), 1);
