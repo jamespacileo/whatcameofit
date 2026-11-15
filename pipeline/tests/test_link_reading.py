@@ -46,7 +46,7 @@ from thenwhat.decide.steps import (
     NO_SUCH_CLAIM,
     NOT_ONE_TREATMENT,
     SAME_CLAIM,
-    TREATMENT_REPORT,
+    TREATMENT_KIND,
 )
 from thenwhat.domain import (
     Decider,
@@ -123,7 +123,7 @@ class Verticals:
         self.same_claim_chances: dict[str, float] | None = None
         # What the same-claim decision was shown, each time it was asked.
         self.same_claim_asked: list[str] = []
-        # What the treatment-report decision answers (a new treatment unless a test says
+        # What the treatment-kind decision answers (a new treatment unless a test says
         # otherwise), with what probability, and what it was shown.
         self.report_kind = NEW_TREATMENT
         self.report_probability = 0.95
@@ -131,7 +131,7 @@ class Verticals:
 
     def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
         chosen, probability = self.vertical, self.probability
-        if step == TREATMENT_REPORT:
+        if step == TREATMENT_KIND:
             self.report_asked.append(state)
             chosen, probability = self.report_kind, self.report_probability
         if step == SAME_CLAIM:

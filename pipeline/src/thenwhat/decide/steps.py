@@ -767,12 +767,14 @@ def choose_same_claim(
     )
 
 
-TREATMENT_REPORT = "treatment_report"
+# The decision made after a read. Its own name: "treatment_report" is one of triage's
+# answers, and the decision log must not hold the two under one word.
+TREATMENT_KIND = "treatment_kind"
 NEW_TREATMENT = "new_treatment"
 ESTABLISHED_TREATMENT = "established_treatment"
 NOT_ONE_TREATMENT = "not_one_treatment"
-TREATMENT_REPORT_OPTIONS = [NEW_TREATMENT, ESTABLISHED_TREATMENT, NOT_ONE_TREATMENT]
-TREATMENT_REPORT_QUESTION = (
+TREATMENT_KIND_OPTIONS = [NEW_TREATMENT, ESTABLISHED_TREATMENT, NOT_ONE_TREATMENT]
+TREATMENT_KIND_QUESTION = (
     "An article has been read and is summarised above in our own words. Which is it?\n"
     f"- {NEW_TREATMENT}: about one treatment for one condition, where the treatment is "
     "new, experimental or being tested for that condition. A study or trial result, good "
@@ -789,8 +791,8 @@ TREATMENT_REPORT_QUESTION = (
 
 
 @dataclass(frozen=True, slots=True)
-class TreatmentReport:
-    """What the treatment-report decision answered."""
+class TreatmentKind:
+    """What the treatment-kind decision answered."""
 
     # Whichever of the new and the established treatment it thinks likelier.
     kind: str
@@ -799,12 +801,12 @@ class TreatmentReport:
     one_treatment_probability: float
 
 
-def treatment_report_state(headline: str, summary: str, intervention: str, indication: str) -> str:
-    """What the treatment-report decision is shown: what was read from the article, in
+def treatment_kind_state(headline: str, summary: str, intervention: str, indication: str) -> str:
+    """What the treatment-kind decision is shown: what was read from the article, in
     the tracker's own words, and the question. Never a word of the article."""
     return (
         f"Headline: {headline}\nSummary: {summary}\n"
-        f"Treatment: {intervention}\nCondition: {indication}\n\n{TREATMENT_REPORT_QUESTION}"
+        f"Treatment: {intervention}\nCondition: {indication}\n\n{TREATMENT_KIND_QUESTION}"
     )
 
 
@@ -818,7 +820,7 @@ def kind_of_treatment_report(
     intervention: str,
     indication: str,
     now: datetime,
-) -> TreatmentReport:
+) -> TreatmentKind:
     """Whether the backend says the article is about one treatment for one condition,
     which is what a claim is, and whether that treatment is new or established. This
     function decides nothing: the caller drafts or joins a claim only at or above its own
@@ -827,15 +829,15 @@ def kind_of_treatment_report(
     decision = decide(
         session,
         backend,
-        step=TREATMENT_REPORT,
-        state=treatment_report_state(headline, summary, intervention, indication),
-        options=TREATMENT_REPORT_OPTIONS,
+        step=TREATMENT_KIND,
+        state=treatment_kind_state(headline, summary, intervention, indication),
+        options=TREATMENT_KIND_OPTIONS,
         input_ref=ref,
         now=now,
     )
     chances = decision.probabilities
     new, established = chances.get(NEW_TREATMENT, 0.0), chances.get(ESTABLISHED_TREATMENT, 0.0)
-    return TreatmentReport(
+    return TreatmentKind(
         kind=ESTABLISHED_TREATMENT if established > new else NEW_TREATMENT,
         one_treatment_probability=1 - chances.get(NOT_ONE_TREATMENT, 0.0),
     )
