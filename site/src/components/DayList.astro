@@ -1,4 +1,5 @@
 ---
+import StripKey from "./StripKey.astro";
 // The home page's day-by-day list (openspec home-day-by-day): everything dated for the
 // published claims, newest first, under dated headings. The page is dated by the day
 // the registries were last checked. Every row is in the page as built; the script only
@@ -80,6 +81,8 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       ))
     }
   </div>
+
+  <StripKey />
 
   <slot name="narrow" />
 

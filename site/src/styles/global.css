@@ -4568,3 +4568,147 @@ main ul:not([class]) li + li {
     display: none;
   }
 }
+
+/* The record strip (openspec record-strip): a claim's dated records on one time axis
+   that every strip shares. A kind of mark differs by shape and by where it sits against
+   the axis; amber is the promised date and nothing else. The axis is one weight along
+   its whole length: a stretch with no mark is never faded or broken. */
+
+:root {
+  /* The promise amber dark enough to draw a line with: 3:1 against the page. */
+  --promise-mark: #8a6a00;
+}
+
+.record-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 1rem;
+}
+
+.strip {
+  display: block;
+  overflow: visible;
+  color: var(--ink);
+}
+
+/* Room at each end for a mark that falls on the first or the last day. */
+.record-strip .strip {
+  flex: 1 1 9rem;
+  width: 9rem;
+  max-width: 24rem;
+  margin-inline: 6px;
+}
+
+.strip-axis {
+  stroke: currentColor;
+  stroke-width: 1.25;
+}
+
+.strip-notch {
+  stroke: var(--ring);
+  stroke-width: 1;
+}
+
+.strip-record {
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.strip-results,
+.strip-decision {
+  fill: currentColor;
+}
+
+.strip-report {
+  fill: var(--paper);
+  stroke: var(--blue);
+  stroke-width: 1.75;
+}
+
+.strip-promise line {
+  stroke: var(--promise-mark);
+  stroke-width: 1.5;
+  stroke-dasharray: 2.5 2;
+}
+
+.strip-promise path {
+  fill: var(--promise-mark);
+}
+
+.strip-check {
+  stroke: currentColor;
+  stroke-width: 2.5;
+}
+
+.strip-counts {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.report-row .record-strip {
+  margin-top: 0.8rem;
+  max-width: var(--measure);
+}
+
+.strip-key {
+  margin: 0.9rem 0 0.7rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.strip-key-title {
+  margin: 0 0 0.25rem;
+}
+
+.strip-key ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 1.1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.strip-key li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+/* In a list of claims the strip sits under the status. One width for every row, so
+   the axes line up down the column. */
+.index td.status .record-strip {
+  margin-top: 0.55rem;
+}
+
+.index td.status .strip {
+  flex: none;
+  width: 11rem;
+}
+
+@media (max-width: 40rem) {
+  .index td.status .strip {
+    width: calc(100% - 12px);
+    max-width: 24rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .strip-notch,
+  .strip-report,
+  .strip-promise line {
+    stroke: CanvasText;
+  }
+
+  .strip-report {
+    fill: Canvas;
+  }
+
+  .strip-promise path {
+    fill: CanvasText;
+  }
+}
