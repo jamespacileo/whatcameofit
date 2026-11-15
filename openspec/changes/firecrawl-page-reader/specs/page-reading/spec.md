@@ -2,79 +2,94 @@
 
 ## Purpose
 
-How the pipeline fetches a news page: through one page reader, only where the outlet's own rules allow it, identified as the pipeline's client, with nothing of the page kept by the reader and no model run by it.
+How the pipeline fetches a news page: through one page reader that holds the rules about each site, what the reader answers and what the pipeline does with each answer, and what the reader must never do with a page.
 
 ## ADDED Requirements
 
 ### Requirement: One page reader
-The pipeline SHALL fetch a news page through the configured page reader and in no other way. When the reader cannot give the page, the pipeline SHALL NOT fetch the page by another route.
+The pipeline SHALL fetch a news page through the configured page reader and in no other way. When the reader does not give the page, the pipeline SHALL NOT fetch the page by another route.
 
 #### Scenario: A page drawn by scripts
 - **WHEN** an article's page holds its text only after its scripts have run
 - **THEN** the text the pipeline reads is the text of the page as drawn
 
 #### Scenario: The reader gives no page
-- **WHEN** the reader answers that the outlet did not serve the page
-- **THEN** the pipeline sends the outlet no request of its own, and the article is handled as one that could not be retrieved
+- **WHEN** the reader answers that the site did not serve the page
+- **THEN** the pipeline sends the site no request of its own
 
-### Requirement: The outlet's rules are read first
-The pipeline SHALL read the outlet's robots.txt itself, with the contact User-Agent, before the reader is asked for a page. The reader SHALL NOT be asked for a page the rules disallow for the pipeline's client, or a page of an outlet whose rules could not be read.
+### Requirement: The reader holds the rules about each site
+Whether an address may be fetched, how often a site may be asked and where a copy of a page comes from SHALL be decided by the page reader. The pipeline SHALL NOT keep rules about individual sites for fetching: it SHALL NOT read a site's robots.txt, space its requests per site, or ask an archive for a copy.
 
-#### Scenario: Robots.txt forbids the fetch
-- **WHEN** an outlet's robots.txt disallows the article's address for the pipeline's client
-- **THEN** the reader is sent no request for that address
+#### Scenario: Two articles of one outlet read side by side
+- **WHEN** two processes each ask for an article of the same outlet at the same time
+- **THEN** the pipeline sends both requests to the reader, and how far apart the outlet is asked is the reader's doing
 
-#### Scenario: Rules that could not be read
-- **WHEN** an outlet does not answer for its robots.txt or answers with a server error
-- **THEN** the reader is sent no request for any page of that outlet
+#### Scenario: A new site
+- **WHEN** an article of a site the pipeline has never read is asked for
+- **THEN** it is asked for in the same way as any other, with no setting or code of the pipeline's naming that site
 
-### Requirement: The outlet sees who is asking
-A page SHALL be asked for with the pipeline's contact User-Agent, and without any means of the reader's that hides the client from the outlet. An outlet that refuses the identified client SHALL be recorded as refusing, and SHALL NOT be asked again in a way that hides the client.
+### Requirement: The reader says what happened
+The page reader's answer to a request SHALL be one of: the page was read; the address is not allowed, with the reason; the site cannot be asked now, with when it may be asked again; the site did not serve the page, with the status it gave. The pipeline SHALL treat an answer that is none of these as the reader failing, not as the site failing.
 
-#### Scenario: The outlet refuses the identified client
-- **WHEN** the outlet answers the identified request with a refusal
-- **THEN** the page counts as failed with the outlet's answer, and no second request is made through a proxy that hides the client
+#### Scenario: Not allowed
+- **WHEN** the reader answers that an address is not allowed
+- **THEN** the article is not read, the reason the reader gave is recorded with it, and it is not asked for again
 
-#### Scenario: No contact address configured
-- **WHEN** a page is asked for and no contact address is configured
-- **THEN** the command refuses before the reader is sent anything
+#### Scenario: Not now
+- **WHEN** the reader answers that a site cannot be asked now
+- **THEN** the article is given no outcome, no attempt is counted against it, it stays due, and the run goes on with articles of other sites
 
-### Requirement: The reader keeps nothing
-Every request to the reader SHALL ask for a fresh copy of the page and SHALL tell the reader not to keep it. The pipeline SHALL hold what the reader returns only as long as it holds any article text, and SHALL NOT write it to a log, a cache or a test fixture.
+#### Scenario: The site did not serve the page
+- **WHEN** the reader answers that the site gave a status other than success
+- **THEN** the article counts as one that could not be retrieved, with that status
 
-#### Scenario: The same article read twice
-- **WHEN** one article is read twice
-- **THEN** the outlet is asked for the page both times, and neither answer came from a copy the reader kept
+#### Scenario: An answer the pipeline does not know
+- **WHEN** the reader answers in a form that is none of the four
+- **THEN** the run stops and reports the reader's answer as a fault of the reader, and the article stays due
+
+### Requirement: Conditions the reader must meet
+The pipeline SHALL be configured only with a page reader that has been checked, with the result and the date recorded in `docs/sources.md`, to do all of the following: answer not allowed for an address its site's robots.txt disallows; answer not allowed for every platform that `docs/sources.md` lists as not read; ask a site with the project's contact User-Agent and without any means that hides the client; and keep nothing of a page after it has answered. The check SHALL be made again whenever the reader's rules or version change.
+
+#### Scenario: A platform that is not read
+- **WHEN** the reader is asked for a post on a platform listed as not read
+- **THEN** it answers not allowed, and the platform is sent no request
+
+#### Scenario: The check has not been made
+- **WHEN** `docs/sources.md` holds no dated check of the reader in use
+- **THEN** the change that introduces or alters the reader is not accepted
+
+### Requirement: The pipeline holds a page only while it reads it
+The pipeline SHALL hold what the reader returns only as long as it holds any article text, and SHALL NOT write it to a log, a cache or a test fixture.
 
 #### Scenario: After a read
 - **WHEN** a read has finished, whether it succeeded or failed
 - **THEN** the page's text is stored nowhere by the pipeline
 
-### Requirement: The reader runs no model
-The reader SHALL be asked for the page and for nothing made from it by a model: no summary, no structured extraction, no answer to a prompt. Every model call on an article's text SHALL be the pipeline's own, recorded and counted as its other model calls are.
+### Requirement: The reader runs no model for the pipeline
+The pipeline SHALL ask the reader for the page and for nothing made from it by a model: no summary, no structured extraction, no answer to a prompt. Every model call on an article's text SHALL be the pipeline's own, recorded and counted as its other model calls are.
 
 #### Scenario: A read that drafts a claim
 - **WHEN** an article is read and a claim is drafted from it
 - **THEN** the only model calls made are the pipeline's, and each is in the model usage record
 
 ### Requirement: A reader that cannot be asked stops the run
-When the page reader is not configured, does not answer, or refuses the pipeline's request, the command SHALL stop and say which of these happened. It SHALL give the article no outcome and count no attempt against it. When the reader says it is asked too often, the pipeline SHALL send it no further request for the time the reader states.
+When the page reader is not configured, cannot be reached, or answers that it is itself overloaded, the command SHALL stop and say which of these happened. It SHALL give the article no outcome and count no attempt against it.
 
 #### Scenario: No reader configured
 - **WHEN** a command that reads an article is run and no reader address is configured
 - **THEN** the command refuses, names the setting that is missing, and fetches nothing
 
-#### Scenario: The reader does not answer during a backfill run
+#### Scenario: The reader's machine is down during a backfill run
 - **WHEN** the reader stops answering part way through a run that reads link leads
 - **THEN** the run ends, the leads not yet read stay due with their attempts unchanged, and the report says the reader could not be reached
 
-#### Scenario: The reader says it is asked too often
-- **WHEN** the reader answers a request with a too-many-requests refusal
-- **THEN** the run ends, the article stays due, and no request is sent to the reader until the stated time has passed
-
 ### Requirement: Outlets are measured through the reader
-`thenwhat outlets` SHALL ask for each tracked article through the page reader, under the same rules as any other read, so that its report says what the pipeline can read.
+`thenwhat outlets` SHALL ask for each tracked article through the page reader, and SHALL count per outlet the articles read, thin, refused and failed, with a refusal counted from the reader's not-allowed answer.
 
 #### Scenario: An outlet whose pages are drawn by scripts
 - **WHEN** the outlets report is made and an outlet's articles hold their text only after scripts run
 - **THEN** those articles are counted as read, not thin
+
+#### Scenario: An outlet the reader does not allow
+- **WHEN** the reader answers not allowed for an outlet's articles
+- **THEN** they are counted as refused
