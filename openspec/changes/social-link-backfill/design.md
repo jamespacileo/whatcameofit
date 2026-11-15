@@ -218,6 +218,40 @@ With the same-claim check merged, 200 leads were read again: 141 new claims, 14 
 - **A rejected draft is not a candidate.** Two of the four esketamine drafts were rejected by the name rule ("esketamine nasal spray") and then stood as candidates, taking votes from the claim that stands. A rejected claim is never shown, so nothing should join it by decision. An article equal to it as written still lands on it, as before.
 - **What this does not settle.** 34 decisions is a small sample and the gap between 0.40 and 0.55 is narrow. The arguable group is a question of how finely the tracker divides one drug's indications, which is the operator's, not a threshold's. Each decision is logged with every probability, so the rule can be measured again on the next batch.
 
+## Decided by the operator on 2026-11-15: a check at the read for what the tracker follows
+
+Of the 141 claims the reread drafted, the reviewing session found about twenty that are not reports of a new treatment: an established drug in the news for its price or safety, advice and public health, an approach with no one condition. Triage passes them as it was measured to. It is shown a headline and asked whether it reports a treatment for a condition, which a price rise for a tuberculosis drug does.
+
+The operator chose a check at the read over tightening triage or archiving by hand, and chose to keep the name rule as it is for now.
+
+- **The decision.** After the model read and before any claim is joined or drafted, `new_treatment_report` is shown the read's own headline, summary, treatment and condition and asked whether this is a report about one treatment that is new, experimental or newly being tested for one condition. Below `NEW_TREATMENT_ACCEPT_ABOVE` (0.5 unless set) no claim is made and nothing is joined; the lead's outcome is `not_a_new_treatment` with what was read and the probability.
+- **Why at the read, not in triage.** The read has the article's substance; triage has eight words of headline. And it costs one decision on a few lines of our own text for a lead that has already been paid for.
+- **Measured before it was switched on.** The decision was asked about all 141 drafts from their stored headlines and summaries. 33 scored 0.10 or less, 89 scored 0.90 or more, and 19 fell between. At 0.5, 41 would not have been drafted: 28 of the 103 pending and 13 of the 38 the name rule rejected. Read against their summaries the low group is price stories (Luxturna, cycloserine), safety alerts (faecal transplants, a face transplant's complication), established treatments (proton pump inhibitors, OxyContin, the MMR vaccine), advice and public health (water fluoridation, the Heimlich manoeuvre) and features about one patient. Arguable ones sit low too: an observational study of aspirin and prostate cancer at 0.02, an unpublished insurance-claims analysis of Enbrel at 0.29.
+- **What it does not do.** It does not judge whether a treatment works, and it is not a status. It does not fix indications that hold two conditions or a doubtful vertical.
+
+## Changed by the operator on 2026-11-15, the same day: an established treatment is wanted too
+
+The check at the read ran on its first real batch and refused 25 of the first 106 leads read. The operator asked for the refusals to be explained and then said that an article about an existing treatment is still wanted: its past trials and other records are what came of it, and are worth showing.
+
+**What the first question refused.** It asked for a treatment that is "new, experimental or newly being tested", and the model read "a drug that already exists" as "not new", whatever the article reported:
+
+| Refused | Leads | Fair |
+| --- | --- | --- |
+| Hydroxychloroquine or chloroquine for COVID-19: a trial halted, a study questioned, an authorisation | 8 | No |
+| A study or trial result on a treatment in use: aspirin and a first heart attack, antiretrovirals and HIV transmission, the HPV vaccine and cervical disease | 6 | No |
+| Ketamine for depression, where other ketamine articles in the same batch became claims | 3 | No |
+| Safety and sceptical pieces, single-patient and lifestyle features | 5 | Arguable, and wanted under the operator's note |
+| No one treatment for one condition, or a read that named the wrong treatment | 3 | Yes |
+
+The measurement before it was switched on (the section above) saw the same pattern in the low group and called it acceptable. That was the wrong call: it weighed the price stories and missed that trial results on existing drugs sat in the same group.
+
+**The decision now.** `treatment_kind` answers one of three: a new treatment for a condition, an established treatment for a condition, or neither. The first two both go on to join a claim or draft one. Only "neither" refuses: no one treatment (a class or an approach for many conditions, a research direction), not a treatment (a predictor, a risk factor, a test), or advice with no condition treated. The rule tests the probability of "neither": at or above `TREATMENT_ACCEPT_ABOVE` (0.5 unless set) for "one treatment, new or established", the read goes on. The lead's outcome for a refusal is `not_one_treatment` (migration `0020` renames `not_a_new_treatment`).
+
+- **Before a join as well as before a draft.** An article that is not about one treatment for one condition is not attached to a claim either. A price rise or a recall of a tracked treatment is now attached, as an established treatment in the news.
+- **New or established is recorded, not yet shown.** The record is the decision log's entry for step `treatment_kind` under the lead's reference; the lead's detail also says "an established treatment in the news", for a person reading the lead. The step has its own name because `treatment_report` is one of triage's answers. Showing that on the site, with the treatment's earlier trials and approval beside the article, is a change to the export and the site and is not in this change.
+- **The default is not measured yet.** 0.5 on the first question was measured on 141 drafts; this question is a different one. It is measured on the reread of the refused leads, and the figures are recorded in tasks.md before any of them is prepared.
+- **A risk for the audit.** For a treatment in use for decades the registries may hold no record of its approval, so a status derived from registry events can understate where it stands. Each such claim is checked at audit before it is published.
+
 ## Open Questions
 
 - How long leads that are unlisted or rejected are kept. They are small and hold no text.

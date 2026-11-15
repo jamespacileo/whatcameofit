@@ -258,3 +258,5 @@ class ReadOutcome(StrEnum):
     CANNOT_BE_READ = "cannot_be_read"
     NEEDS_VERTICAL = "needs_vertical"
     ENOUGH_ARTICLES = "enough_articles"
+    # Read, and not about one treatment for one condition: no claim was made.
+    NOT_ONE_TREATMENT = "not_one_treatment"

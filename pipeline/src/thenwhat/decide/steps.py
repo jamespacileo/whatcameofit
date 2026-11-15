@@ -765,3 +765,79 @@ def choose_same_claim(
         likeliest_probability=chances.get(likeliest, 0.0) if likeliest else 0.0,
         none_probability=chances.get(NO_SUCH_CLAIM, 0.0),
     )
+
+
+# The decision made after a read. Its own name: "treatment_report" is one of triage's
+# answers, and the decision log must not hold the two under one word.
+TREATMENT_KIND = "treatment_kind"
+NEW_TREATMENT = "new_treatment"
+ESTABLISHED_TREATMENT = "established_treatment"
+NOT_ONE_TREATMENT = "not_one_treatment"
+TREATMENT_KIND_OPTIONS = [NEW_TREATMENT, ESTABLISHED_TREATMENT, NOT_ONE_TREATMENT]
+TREATMENT_KIND_QUESTION = (
+    "An article has been read and is summarised above in our own words. Which is it?\n"
+    f"- {NEW_TREATMENT}: about one treatment for one condition, where the treatment is "
+    "new, experimental or being tested for that condition. A study or trial result, good "
+    "or bad; a trial starting or being halted; a first use in people; an approval or its "
+    "refusal. A drug long used for something else and now tested for this condition "
+    "belongs here.\n"
+    f"- {ESTABLISHED_TREATMENT}: about one treatment for one condition, where the "
+    "treatment is already in established use for that condition. New evidence about how "
+    "well it works, its safety, its price or supply, or how it is used.\n"
+    f"- {NOT_ONE_TREATMENT}: anything else. No one treatment (a class or an approach for "
+    "many conditions, a research direction); not a treatment (a predictor, a risk factor, "
+    "a test, a discovery about a disease); or advice with no condition treated."
+)
+
+
+@dataclass(frozen=True, slots=True)
+class TreatmentKind:
+    """What the treatment-kind decision answered."""
+
+    # Whichever of the new and the established treatment it thinks likelier.
+    kind: str
+    # The probability it gave to the article being about one treatment for one
+    # condition, new or established: one minus what it gave to neither.
+    one_treatment_probability: float
+
+
+def treatment_kind_state(headline: str, summary: str, intervention: str, indication: str) -> str:
+    """What the treatment-kind decision is shown: what was read from the article, in
+    the tracker's own words, and the question. Never a word of the article."""
+    return (
+        f"Headline: {headline}\nSummary: {summary}\n"
+        f"Treatment: {intervention}\nCondition: {indication}\n\n{TREATMENT_KIND_QUESTION}"
+    )
+
+
+def kind_of_treatment_report(
+    session: Session,
+    backend: Backend,
+    *,
+    ref: str,
+    headline: str,
+    summary: str,
+    intervention: str,
+    indication: str,
+    now: datetime,
+) -> TreatmentKind:
+    """Whether the backend says the article is about one treatment for one condition,
+    which is what a claim is, and whether that treatment is new or established. This
+    function decides nothing: the caller drafts or joins a claim only at or above its own
+    setting. An established treatment is wanted as much as a new one: its registry record
+    is what came of it."""
+    decision = decide(
+        session,
+        backend,
+        step=TREATMENT_KIND,
+        state=treatment_kind_state(headline, summary, intervention, indication),
+        options=TREATMENT_KIND_OPTIONS,
+        input_ref=ref,
+        now=now,
+    )
+    chances = decision.probabilities
+    new, established = chances.get(NEW_TREATMENT, 0.0), chances.get(ESTABLISHED_TREATMENT, 0.0)
+    return TreatmentKind(
+        kind=ESTABLISHED_TREATMENT if established > new else NEW_TREATMENT,
+        one_treatment_probability=1 - chances.get(NOT_ONE_TREATMENT, 0.0),
+    )

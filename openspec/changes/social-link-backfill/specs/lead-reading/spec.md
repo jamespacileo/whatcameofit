@@ -87,6 +87,33 @@ A source article made from a lead SHALL carry the headline its own page gives as
 - **WHEN** a lead's page gives no headline
 - **THEN** no model is called and the lead's outcome is cannot be read with that reason
 
+### Requirement: Only an article about one treatment for one condition becomes a claim
+After the read and before any claim is joined or drafted, a decision SHALL say which the article is: about one treatment for one condition where the treatment is new, experimental or being tested for it; about one treatment for one condition where the treatment is already in established use; or neither. It SHALL be shown the read's own headline, summary, treatment and condition and nothing of the article's text. An article about an established treatment SHALL be joined or drafted exactly as one about a new treatment, and the lead's detail SHALL say it is an established treatment in the news. When the probability that the article is about one treatment for one condition, new or established, is below the configured probability, 0.5 unless set, no claim SHALL be joined or drafted, and the lead's outcome SHALL be not one treatment, with what was read and the probability. The decision SHALL be logged under its own step name, `treatment_kind`, with the lead's reference; that log entry is the record of whether an article was about a new or an established treatment.
+
+#### Scenario: A trial result
+- **WHEN** the decision says a new treatment at 0.95
+- **THEN** the read goes on to join a claim or draft one
+
+#### Scenario: News about an established treatment
+- **WHEN** a read summarises a trial in which a drug long in use did not prevent a first heart attack, and the decision says an established treatment
+- **THEN** a claim is drafted as for any read, and the lead's detail says an established treatment in the news
+
+#### Scenario: News about a tracked, established treatment
+- **WHEN** the read names a claim's intervention and indication, and the decision says an established treatment
+- **THEN** the article is added to that claim
+
+#### Scenario: Unsure whether new or established
+- **WHEN** the decision gives an established treatment 0.4, a new treatment 0.3 and neither 0.3
+- **THEN** the article is about one treatment at 0.7 and the read goes on
+
+#### Scenario: An approach with no one condition
+- **WHEN** a read summarises a class of compounds proposed for four conditions, and the decision gives neither 0.95
+- **THEN** no claim is created, and the lead's outcome is not one treatment with the probability 0.05
+
+#### Scenario: Not one treatment, though it names a tracked one
+- **WHEN** the read names a claim's intervention and indication, and the decision gives neither 0.95
+- **THEN** the article is not added to that claim
+
 ### Requirement: An article for a claim that exists
 When the read names an intervention and an indication that an existing claim covers, the article SHALL be added to that claim as a source article, with its content hash, any archive address and its reported statements, which are checked and approved by the existing rule. The claim's headline, summary, intervention, indication, vertical and review state SHALL NOT change.
 
@@ -205,7 +232,7 @@ A lead linked by its title to a claim that already has the configured number of 
 - **THEN** the lead is read
 
 ### Requirement: Funnel report
-`thenwhat backfill funnel` SHALL report how many leads are loaded, in scope, scored, passed, read, could not be read by reason, added to an existing claim, made a new claim approved by rule, made a claim rejected by rule, made a claim that awaits preparation, and need a vertical. It SHALL give the model cost recorded for triage and for reading. It SHALL list the outlets whose pages gave no publication date, with how many leads each lost.
+`thenwhat backfill funnel` SHALL report how many leads are loaded, in scope, scored, passed, read, could not be read by reason, added to an existing claim, made a new claim approved by rule, made a claim rejected by rule, made a claim that awaits preparation, need a vertical, and were not about one treatment for one condition. It SHALL give the model cost recorded for triage and for reading. It SHALL list the outlets whose pages gave no publication date, with how many leads each lost.
 
 #### Scenario: After a limited run
 - **WHEN** 200 leads have been through the reading step

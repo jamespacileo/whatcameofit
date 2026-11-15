@@ -1,4 +1,5 @@
 // The claim page's timetable: for each year, what was promised and what was recorded.
+// It reads newest first: the latest year at the top and, in a year, the latest record.
 import type { ExportedClaim, ExportedEvent } from "./export";
 
 export interface PromisedEntry {
@@ -30,9 +31,12 @@ export type Row =
   | { kind: "quiet"; from: number; to: number };
 
 export interface Timetable {
+  /** Years newest first; a run of years with nothing in them is one quiet row. */
   rows: Row[];
   undated: PromisedEntry[];
   sources: { mark: string; event: ExportedEvent }[];
+  /** Promises and records, counted apart and never added: every label reads this pair. */
+  counts: { promises: number; records: number };
 }
 
 const yearOf = (isoDate: string) => Number(isoDate.slice(0, 4));
@@ -90,7 +94,7 @@ export function buildTimetable(claim: ExportedClaim, generatedAt: string): Timet
       explains: explaining.has(event.id),
     });
   }
-  for (const entries of recorded.values()) entries.sort((a, b) => (a.date < b.date ? -1 : 1));
+  for (const entries of recorded.values()) entries.sort((a, b) => (a.date < b.date ? 1 : -1));
 
   const thisYear = yearOf(generatedAt);
   const years = [
@@ -116,7 +120,16 @@ export function buildTimetable(claim: ExportedClaim, generatedAt: string): Timet
         current: year === thisYear,
       });
   }
-  return { rows, undated, sources };
+  rows.reverse();
+  return {
+    rows,
+    undated,
+    sources,
+    counts: {
+      promises: claim.promises.length,
+      records: claim.articles.length + claim.events.length,
+    },
+  };
 }
 
 // A date is read as one thing, so it never breaks across two lines.
@@ -143,7 +156,7 @@ export type RecordedLine = ReportEntry | { kind: "source"; sourceUrl: string; st
 /**
  * A year's records as lines: records that share one source (a trial's registry entry,
  * say) become one line with several dated steps, so the source is named once.
- * A line sits where its first step falls.
+ * A line sits where its first step falls, which is its newest.
  */
 export function recordedLines(entries: RecordedEntry[]): RecordedLine[] {
   const lines: RecordedLine[] = [];

@@ -4432,7 +4432,8 @@ main ul:not([class]) li + li {
 
 .brief summary {
   display: grid;
-  grid-template-columns: 17rem minmax(0, 1fr) auto;
+  /* The question gives way before the answer does: the answer keeps a readable width. */
+  grid-template-columns: minmax(8rem, 17rem) minmax(12rem, 1fr) auto;
   column-gap: 1rem;
   align-items: baseline;
   padding: 0.7rem 0;
@@ -4566,5 +4567,988 @@ main ul:not([class]) li + li {
 
   .brief summary::after {
     display: none;
+  }
+}
+
+/* ── The page frame ─────────────────────────────────────────────────────────────
+   Claim and topic pages: a navy band holding the title and the status, then a list
+   of sections, the sheet and the page's actions. Openspec page-frame. */
+
+:root {
+  /* The ground behind the white sheet, so the side columns recede. */
+  --ground: #f4f7fb;
+  --frame: 78rem;
+  --list: 13.5rem;
+  /* Secondary text on the navy. */
+  --navy-soft: #c9d9ee;
+}
+
+body.framed {
+  background: var(--ground);
+}
+
+.framed .wrap {
+  max-width: var(--frame);
+}
+
+/* The band of a record: the one band in navy. A page's task keeps the pale band. */
+.band.record {
+  background: var(--footer);
+  color: var(--paper);
+  border-bottom: 0;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12);
+  padding-block: 1.5rem 2rem;
+  display: block;
+}
+
+.band-grid {
+  display: grid;
+  grid-template-columns: var(--list) minmax(0, 1fr) 21rem;
+  column-gap: 2rem;
+  align-items: start;
+}
+
+.band-main {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.band.record .title {
+  color: var(--paper);
+  margin-top: 0.8rem;
+}
+
+.band.record a {
+  color: var(--paper);
+}
+
+.band.record .what-this-is,
+.band.record .entry-note,
+.band.record .approach {
+  color: var(--navy-soft);
+}
+
+/* The topic's chip is its own pale surface: it keeps its ink. */
+.band.record .filed a {
+  color: var(--ink);
+}
+
+.band.record :focus-visible {
+  outline-color: var(--paper);
+}
+
+.band.record ::selection {
+  background: var(--paper);
+  color: var(--footer);
+}
+
+/* The status panel is the card at the right: ink on white, level with the title. */
+.band.record .digest {
+  grid-column: 3;
+  margin-top: 0;
+  grid-template-columns: minmax(0, 1fr);
+  color: var(--ink);
+  border-color: transparent;
+}
+
+.band.record .digest a {
+  color: var(--blue);
+}
+
+.band.record .digest :focus-visible {
+  outline-color: var(--blue);
+}
+
+.band.record .digest ::selection {
+  background: var(--tag);
+  color: var(--ink);
+}
+
+.band.record .digest .says {
+  align-self: start;
+}
+
+.band.record .digest .means {
+  margin: 0;
+}
+
+.band.record .digest .bridge {
+  margin: 0.35rem 0 0;
+  font-weight: 600;
+}
+
+.frame {
+  display: grid;
+  grid-template-columns: var(--list) minmax(0, 1fr) auto;
+  column-gap: 2rem;
+  align-items: start;
+}
+
+/* The page's order is list, actions, sheet; the grid sets the actions at the right. */
+.frame > * {
+  grid-row: 1;
+}
+
+.sheet {
+  grid-column: 2;
+  min-width: 0;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-top: 0;
+  padding: 1.5rem clamp(1.1rem, 3vw, 2.4rem) 2.4rem;
+}
+
+.sheet > .lede {
+  margin: 0;
+  font-size: 1.08rem;
+  max-width: var(--measure);
+}
+
+.phone-reported {
+  display: none;
+}
+
+.rail {
+  grid-column: 3;
+  position: sticky;
+  top: 0;
+  padding-top: 1.5rem;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.rail .share {
+  justify-content: flex-start;
+  text-decoration: none;
+}
+
+.onpage {
+  grid-column: 1;
+  position: sticky;
+  top: 0;
+  max-height: 100vh;
+  overflow: auto;
+  padding: 1.5rem 0 2rem;
+}
+
+.onpage-title {
+  margin: 0;
+  padding: 0 0.6rem 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.strip {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.onpage a {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.42rem 0.6rem;
+  border-radius: 0.5rem;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.92rem;
+  line-height: 1.3;
+  transition:
+    background-color 120ms,
+    color 120ms;
+}
+
+.onpage a .n {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.onpage a:hover {
+  background: var(--tint);
+}
+
+.onpage a[aria-current] {
+  background: var(--paper);
+  box-shadow: 0 0 0 1px var(--rule);
+  color: var(--blue);
+  font-weight: 700;
+}
+
+/* A heading that folds its section: the heading holds the button, and the button's
+   reach is the whole line. What follows the heading in its section is the body. */
+.fold-head {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 0.2rem 0.75rem;
+  margin: clamp(2rem, 6vw, 2.75rem) 0 0;
+}
+
+.fold-head .bar {
+  margin: 0;
+}
+
+.fold-head + * {
+  margin-top: 0.7rem;
+}
+
+.fold {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+.fold .chev {
+  display: none;
+}
+
+.js .fold {
+  cursor: pointer;
+}
+
+.js .fold::after {
+  content: "";
+  position: absolute;
+  inset: -0.5rem 0;
+}
+
+.js .fold .chev {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: var(--tint);
+  color: var(--blue);
+  transition: background-color 120ms;
+}
+
+.js .fold:hover .chev {
+  background: var(--tag);
+}
+
+.fold .chev svg {
+  transition: rotate 200ms var(--ease-out);
+}
+
+.fold[aria-expanded="false"] .chev svg {
+  rotate: -90deg;
+}
+
+.fold-note {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.875rem;
+  text-align: right;
+}
+
+.fold-head > a {
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  font-size: 0.9rem;
+}
+
+.bar.sub {
+  font-size: 1.05rem;
+}
+
+/* The controls that narrow the timetable to one kind of entry. */
+.kind-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.9rem 0;
+}
+
+.kind-tab {
+  min-height: 2.1rem;
+  padding: 0.28rem 0.85rem;
+  border: 1px solid var(--ring);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 120ms,
+    color 120ms,
+    border-color 120ms;
+}
+
+.kind-tab .n {
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 0.2rem;
+}
+
+.kind-tab:hover {
+  background: var(--tint);
+}
+
+.kind-tab[aria-pressed="true"] {
+  background: var(--footer);
+  border-color: var(--footer);
+  color: var(--paper);
+}
+
+.kind-tab[aria-pressed="true"] .n {
+  color: var(--navy-soft);
+}
+
+@media (max-width: 40rem) {
+  .kind-tab {
+    min-height: 2.75rem;
+  }
+}
+
+@media print {
+  .kind-tabs {
+    display: none !important;
+  }
+}
+
+/* The first state of a fold is the stylesheet's, so nothing is painted open and then
+   shut. With no script, and on paper, every section is open. */
+@media screen {
+  .js .fold-head[data-fold="folded"]:not([data-state]) ~ *,
+  .js .fold-head[data-state="closed"] ~ * {
+    display: none !important;
+  }
+}
+
+@media screen and (max-width: 40rem) {
+  .js .fold-head[data-fold-phone="folded"]:not([data-state]) ~ * {
+    display: none !important;
+  }
+}
+
+/* Below this width the side columns give way: the list is one row that stays at the
+   top, and the actions sit in a row above the sheet. */
+@media (max-width: 68rem) {
+  .band-grid {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+  }
+
+  .band-main {
+    grid-column: 1;
+  }
+
+  .band.record .digest {
+    grid-column: 2;
+  }
+
+  .framed main > .wrap {
+    padding-inline: 0;
+  }
+
+  .frame {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .frame > * {
+    grid-row: auto;
+    grid-column: 1;
+  }
+
+  .onpage {
+    z-index: 5;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    background: var(--ground);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .onpage-title {
+    display: none;
+  }
+
+  .strip {
+    display: flex;
+    gap: 0.35rem;
+    overflow-x: auto;
+    padding: 0.5rem var(--gutter);
+    scrollbar-width: none;
+  }
+
+  .strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .strip li {
+    flex: none;
+  }
+
+  .onpage a {
+    min-height: 2.75rem;
+    align-items: center;
+    white-space: nowrap;
+    padding-inline: 0.85rem;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: var(--paper);
+  }
+
+  .onpage a .n {
+    margin-left: 0.1rem;
+  }
+
+  /* More names off either end of the row: that end fades. */
+  .onpage::before,
+  .onpage::after {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    bottom: 1px;
+    width: 3rem;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 150ms;
+  }
+
+  .onpage::before {
+    left: 0;
+    background: linear-gradient(to right, var(--ground) 20%, rgb(244 247 251 / 0));
+  }
+
+  .onpage::after {
+    right: 0;
+    background: linear-gradient(to left, var(--ground) 20%, rgb(244 247 251 / 0));
+  }
+
+  .onpage[data-more~="start"]::before,
+  .onpage[data-more~="end"]::after {
+    opacity: 1;
+  }
+
+  .rail {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 0.9rem var(--gutter) 0;
+    background: var(--paper);
+  }
+
+  .sheet {
+    border-inline: 0;
+    padding-inline: var(--gutter);
+  }
+
+  /* A heading reached by a link clears the row that stays at the top. */
+  .framed .bar,
+  .framed [id^="record-"],
+  .framed [id^="year-"],
+  .framed [id^="trial-"] {
+    scroll-margin-top: 4.75rem;
+  }
+}
+
+@media (max-width: 40rem) {
+  .band.record {
+    padding-block: 1.1rem 1.4rem;
+  }
+
+  .band-grid {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 1.2rem;
+  }
+
+  .band.record .digest {
+    grid-column: 1;
+  }
+
+  /* The band keeps to the title and the status; the report opens the sheet. */
+  .band-reported {
+    display: none;
+  }
+
+  .phone-reported {
+    display: block;
+    margin-bottom: 1.2rem;
+    padding-bottom: 1.1rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .phone-reported .entry-note {
+    display: block;
+  }
+
+  /* The status panel already links to the reminders; the row keeps to two. */
+  .rail [data-remind-link] {
+    display: none !important;
+  }
+
+  .rail {
+    padding-top: 0.7rem;
+  }
+
+  .sheet {
+    padding-top: 1.1rem;
+  }
+
+  .fold-head {
+    flex-wrap: wrap;
+  }
+
+  .fold-note,
+  .fold-head > a {
+    flex-basis: 100%;
+    margin-left: 2.2rem;
+    text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fold .chev svg,
+  .onpage a,
+  .onpage::before,
+  .onpage::after {
+    transition: none;
+  }
+}
+
+@media print {
+  body.framed {
+    background: none;
+  }
+
+  .onpage,
+  .rail,
+  .fold .chev,
+  .phone-reported {
+    display: none !important;
+  }
+
+  .band.record {
+    background: none;
+    color: var(--ink);
+    box-shadow: none;
+  }
+
+  .band.record .title {
+    color: var(--ink);
+  }
+
+  .band.record a {
+    color: var(--blue);
+  }
+
+  .band.record .what-this-is,
+  .band.record .entry-note,
+  .band.record .approach {
+    color: var(--muted);
+  }
+
+  .band.record .digest {
+    border-color: var(--rule);
+  }
+
+  .band-grid,
+  .frame {
+    display: block;
+  }
+
+  .band.record .digest {
+    margin-top: 1rem;
+    max-width: 24rem;
+  }
+
+  .sheet {
+    border: 0;
+    padding: 0;
+  }
+}
+
+/* The trials table: one row to read across for each trial; a row opens to the rest. */
+.trial-table {
+  --trial-cols: minmax(0, 1.45fr) minmax(0, 1.25fr) minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.trial-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--trial-cols);
+  column-gap: 1.2rem;
+  align-items: start;
+  padding: 0.8rem 1.1rem;
+}
+
+.trial-columns {
+  background: var(--footer);
+  color: var(--paper);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding-block: 0.65rem;
+}
+
+.trial-group {
+  border-top: 1px solid var(--rule-soft);
+  scroll-margin-top: 1.25rem;
+}
+
+.trial-group > .trial-row {
+  transition: background-color 120ms;
+}
+
+.js .trial-group > .trial-row:hover {
+  background: var(--panel);
+}
+
+.trial-cell {
+  font-size: 0.95rem;
+  min-width: 0;
+}
+
+.trial-cell .lbl {
+  display: none;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.trial-open {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  text-align: left;
+}
+
+.trial-open .chev {
+  display: none;
+}
+
+.js .trial-open {
+  cursor: pointer;
+}
+
+.js .trial-open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.js .trial-open .chev {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.3rem;
+  height: 1.3rem;
+  margin-top: 0.12rem;
+  border-radius: 50%;
+  background: var(--tint);
+  color: var(--blue);
+}
+
+.trial-open .chev svg {
+  transition: rotate 200ms var(--ease-out);
+}
+
+.trial-open[aria-expanded="false"] .chev svg {
+  rotate: -90deg;
+}
+
+.trial-table .trial-title {
+  font-size: inherit;
+  margin: 0;
+}
+
+.trial-table .trial-name {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.js .trial-table .trial-name {
+  margin-left: 1.9rem;
+}
+
+.trial-detail {
+  padding: 0.2rem 1.1rem 1.1rem;
+}
+
+.js .trial-detail {
+  padding-left: 3rem;
+}
+
+@media screen {
+  .js .trial-group:not([data-open]) > .trial-detail {
+    display: none;
+  }
+}
+
+.trials-rest > .trial-table {
+  margin-top: 0.7rem;
+}
+
+@media (max-width: 40rem) {
+  .trial-columns {
+    display: none;
+  }
+
+  .trial-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    row-gap: 0.7rem;
+  }
+
+  .trial-lead {
+    grid-column: 1 / -1;
+  }
+
+  .trial-cell .lbl {
+    display: block;
+  }
+
+  .trial-table .trial-group:first-of-type,
+  .trial-columns + .trial-group {
+    border-top: 0;
+  }
+
+  .js .trial-detail {
+    padding-left: 1.1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trial-open .chev svg,
+  .trial-group > .trial-row {
+    transition: none;
+  }
+}
+
+@media print {
+  .trial-open .chev {
+    display: none !important;
+  }
+
+  .trial-columns {
+    background: none;
+    color: var(--ink);
+    border-bottom: 1px solid var(--rule);
+  }
+}
+
+/* The topic page in the frame. */
+.band.record .crumbs {
+  font-size: 0.875rem;
+}
+
+.band.record .crumbs a {
+  color: var(--navy-soft);
+}
+
+.band.record .lede {
+  color: var(--paper);
+  max-width: 46rem;
+}
+
+.onpage a[aria-current="page"] {
+  background: var(--paper);
+  box-shadow: 0 0 0 1px var(--rule);
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.sheet-title {
+  margin-top: 0;
+}
+
+.word-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 24rem;
+  min-height: 2.75rem;
+  margin-bottom: 0.9rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--ring);
+  border-radius: 0.65rem;
+  background: var(--paper);
+  color: var(--muted);
+}
+
+.word-field:focus-within {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.word-field input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+}
+
+.word-field input::placeholder {
+  color: var(--muted);
+}
+
+.no-match {
+  display: grid;
+  gap: 0.9rem;
+  justify-items: start;
+  margin-top: 0.9rem;
+  padding: 1.4rem 1.5rem;
+  border: 1px dashed var(--ring);
+  border-radius: var(--radius);
+}
+
+.no-match[hidden] {
+  display: none;
+}
+
+.no-match p {
+  margin: 0;
+  max-width: 34rem;
+}
+
+@media print {
+  .word-field,
+  .no-match {
+    display: none !important;
+  }
+}
+
+/* In the sheet the claim's name leads its row at a readable width. */
+@media (min-width: 40.01rem) {
+  .sheet table.index th:first-child,
+  .sheet table.index td.claim {
+    width: 44%;
+  }
+}
+
+/* A framed page with no column of actions: the sheet takes its place. */
+.frame.no-rail .sheet {
+  grid-column: 2 / 4;
+}
+
+.band-actions {
+  flex-wrap: wrap;
+  margin-top: 1.2rem;
+}
+
+.band.record .band-actions .share {
+  color: var(--paper);
+  background: rgb(255 255 255 / 0.08);
+  border-color: rgb(255 255 255 / 0.4);
+  text-decoration: none;
+}
+
+.band.record .band-actions .share:hover {
+  background: rgb(255 255 255 / 0.18);
+  border-color: var(--paper);
+}
+
+@media (max-width: 68rem) {
+  .frame.no-rail .sheet {
+    grid-column: 1;
+  }
+}
+
+@media print {
+  .band-actions,
+  .band.record .crumbs {
+    display: none !important;
+  }
+}
+
+/* After the critique of the built page (2026-11-15). */
+
+/* A claim's actions sit in the band, under the title's column and beside the card. */
+.band-grid > .band-actions {
+  grid-column: 2;
+  align-self: end;
+}
+
+.band-grid > .digest {
+  grid-row: 1 / span 2;
+}
+
+/* Followed: the pill is filled, on white, so its words stay readable on the navy. */
+.band.record .band-actions .share[aria-pressed="true"],
+.band.record .band-actions .share.done {
+  background: var(--paper);
+  border-color: var(--paper);
+  color: var(--blue);
+}
+
+.band.record .outlet .domain {
+  color: var(--navy-soft);
+}
+
+/* A trial reached by a link is marked along its row. */
+.trial-group:target > .trial-row {
+  background: var(--tint);
+}
+
+/* A date or an identifier is read as one thing and never breaks inside itself. */
+.trial-cell {
+  overflow-wrap: normal;
+}
+
+.trial-table .trial-name a {
+  white-space: nowrap;
+}
+
+/* A note under a heading keeps to a line a reader can follow, and leaves no word alone. */
+.sheet .take-why {
+  max-width: 36rem;
+  text-wrap: pretty;
+}
+
+.digest .bridge {
+  text-wrap: pretty;
+}
+
+@media (max-width: 68rem) {
+  .band-grid > .band-actions {
+    grid-column: 1;
+  }
+
+  .band-grid > .digest {
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 40rem) {
+  /* The status panel already links to the reminders; the row keeps to two. */
+  .band-actions [data-remind-link] {
+    display: none !important;
+  }
+
+  .band-grid > .band-actions {
+    margin-top: 0;
   }
 }

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mocks: page patterns adapted from Examine</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+  .doc { max-width: 62rem; margin: 0 auto; padding: 2.4rem var(--gut) 1rem; }
+  .doc h1 { font-size: clamp(1.7rem, 4vw, 2.3rem); line-height: 1.15; letter-spacing: -0.018em; text-wrap: balance; }
+  .doc > p { max-width: 68ch; margin-top: 0.8rem; }
+  .doc h2 { font-size: 1.35rem; margin: 2.6rem 0 0.9rem; letter-spacing: -0.01em; }
+  .mocks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1.6rem; }
+  .mocks a { display: block; background: var(--paper); border: 1px solid var(--rule); border-radius: 0.85rem; padding: 1.1rem 1.2rem 1.2rem; text-decoration: none; color: var(--ink); transition: border-color 120ms, background-color 120ms; }
+  .mocks a:hover { border-color: var(--blue); background: var(--panel); }
+  .mocks b { display: block; color: var(--blue); font-size: 1.1rem; text-decoration: underline; text-underline-offset: 0.18em; text-decoration-thickness: 1px; }
+  .mocks span { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.3rem; }
+  table { width: 100%; border-collapse: collapse; background: var(--paper); border: 1px solid var(--rule); border-radius: 0.85rem; overflow: hidden; border-spacing: 0; font-size: 0.95rem; }
+  th, td { text-align: left; vertical-align: top; padding: 0.75rem 1rem; border-top: 1px solid var(--rule-soft); }
+  thead th { background: var(--footer); color: #fff; font-size: 0.82rem; border-top: 0; }
+  tbody th { font-weight: 700; width: 22%; }
+  td.no { color: var(--muted); }
+  .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem 2.5rem; }
+  .two li { padding: 0.55rem 0; border-top: 1px solid var(--rule); max-width: 60ch; }
+  .two li b { display: block; }
+  .two h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+  @media (max-width: 48rem) { .mocks, .two { grid-template-columns: minmax(0, 1fr); } tbody th { width: auto; } thead { display: none; } tr { display: block; border-top: 1px solid var(--rule); } th, td { display: block; border: 0; padding: 0.4rem 1rem; } tr > :first-child { padding-top: 0.8rem; } tr > :last-child { padding-bottom: 0.8rem; } }
+</style>
+</head>
+<body>
+<header class="mast"><div class="mast-in"><a class="name" href="home.html"><span data-mark></span><span>What came <b>of it?</b></span></a></div></header>
+
+<main class="doc">
+  <h1>Page patterns adapted from Examine, on our claim, topic and home pages</h1>
+  <p>Compared on 14 Nov 2026: our claim page for the wrist-worn nerve stimulation device, our topic and home pages, and Examine’s supplement, conditions and home pages. The mocks keep our tokens, typeface, wording and guardrails; what changes is the page frame around them. The band is deep navy, chosen on 14 Nov 2026.</p>
+
+  <div class="mocks">
+    <a href="claim.html"><b>Claim page</b><span>Band with the status card, section list, folding sections, dated timeline, trials as a table.</span></a>
+    <a href="claim-promise.html"><b>Claim page with a dated promise</b><span>Solengepras: a promise for 2029 on the timeline beside “Not yet reached”, three reports followed, trials with phases.</span></a>
+    <a href="topic.html"><b>Topic page</b><span>Status counts in the band, topics down the side, a status filter and a filter field over the claims table.</span></a>
+    <a href="home.html"><b>Home page</b><span>Centred lookup on the band, the path with counts, three lists to explore, headlines table.</span></a>
+  </div>
+
+  <h2>What was compared</h2>
+  <table>
+    <thead><tr><th scope="col">Part</th><th scope="col">Examine</th><th scope="col">Our page today</th><th scope="col">In the mocks</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Opening</th><td>A full-width band in one deep colour: breadcrumb, title, two sentences, jump buttons. A “Research Snapshot” card at the right gives the counts.</td><td>White page, 60rem column. Title, report, then the digest panel. The status starts 380px down.</td><td>The band holds the title and the report followed. The digest panel becomes the card at the right, so the status is level with the title.</td></tr>
+      <tr><th scope="row">Finding a section</th><td>A list of sections stays at the left while the page scrolls. Buttons in the band jump to the main ones.</td><td>None. 14 sections in one column, 8,800px tall at desktop width.</td><td>“On this page” at the left with counts, the current section marked. On a phone it is one row of chips that stays at the top, and the band keeps only the title and the status card: the report followed moves to the top of the sheet.</td></tr>
+      <tr><th scope="row">Section headings</th><td>A round chevron, the heading and a rule. Every section folds. A count or action sits at the right.</td><td>Headings with a grey note. Nothing folds at section level.</td><td>Same chevron and fold. Papers, Organisations and Background start folded, each with its counts on the heading line. The page opens 5,500px tall. On a phone only The record in brief and the timeline start open.</td></tr>
+      <tr><th scope="row">Questions</th><td>Overview is a list of questions that open.</td><td>The record in brief: six questions, answer in bold, each opens.</td><td>Kept as it is, on Examine’s rhythm. Ours already shows the answer without a press, which Examine’s does not.</td></tr>
+      <tr><th scope="row">Dated history</th><td>Update History: a vertical line, a dot per entry, tabs to show one kind.</td><td>A framed table by year, oldest first.</td><td>A line by year, a dot per record, tabs for the kind of record. A stretch with no record is a dotted length of the line, so a gap is still seen as a gap.</td></tr>
+      <tr><th scope="row">Tables</th><td>A dark head, a filter field, rows that open, counts that link.</td><td>A pale head. Trials are stacked entries, each about 260px tall.</td><td>Navy head. Trials are one table to read across (people, compared with, design, state, results); a row opens for the registry’s detail. Topic claims get a filter field and a status filter, with a message when nothing matches.</td></tr>
+      <tr><th scope="row">Actions</th><td>A narrow column of icon buttons at the right.</td><td>Follow and Share pills at the top, Follow again under the panel and at the end.</td><td>Follow, Share, Check again later and Report an error in the right column on a wide screen; as pills in the band on a narrow one.</td></tr>
+      <tr><th scope="row">Ground</th><td>Pale grey page, white sheet for the content.</td><td>White throughout.</td><td>A pale blue-grey ground with a white sheet, which lets the side columns recede.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Left out, and what needs your call</h2>
+  <div class="two">
+    <div>
+      <h3>Not borrowed</h3>
+      <ul>
+        <li><b>Grades and coloured outcome rows.</b>The A to D grades are Examine’s core device and the one thing the product forbids. The card shows a status in words and its place on the path, nothing else.</li>
+        <li><b>Serif headings.</b>Examine sets titles in Lora. The mocks stay in Figtree; one typeface is a principle in DESIGN.md.</li>
+        <li><b>Author portraits and the “Evidence-based” badge.</b>No person is named on our pages, and a badge would be a claim about ourselves.</li>
+        <li><b>Locked sections and sign-up boxes inside the reading column.</b></li>
+      </ul>
+    </div>
+    <div>
+      <h3>Changes to rules in DESIGN.md</h3>
+      <ul>
+        <li><b>Navy band under the masthead.</b>Chosen. Today a solid navy block is allowed only for the masthead and footer, so the rule gains the band.</li>
+        <li><b>Timeline order.</b>Newest first in the mock; the timetable is oldest first today.</li>
+        <li><b>Promised beside recorded.</b>Kept. A year with a promise carries two boxes on the line: what was promised for it, on amber, beside what was recorded in it. See the second claim mock.</li>
+        <li><b>Basis of status.</b>The diamond marks only the entries the status rule needed (3 on the first claim mock). Today it marks 12 of 13 there, so the export would have to say which events decided the status.</li>
+        <li><b>Counting.</b>Promises and records are counted apart everywhere (“4 promises · 17 records”), never as one total.</li>
+        <li><b>Page width.</b>78rem with side columns, against 60rem today.</li>
+        <li><b>Trial entries.</b>A table row per trial replaces the stacked entry DESIGN.md describes; the plain wording is kept.</li>
+      </ul>
+    </div>
+  </div>
+</main>
+
+<footer class="foot"><div class="foot-in"><b>Mocks only.</b><p>Hand-written pages with the published records of 14 Nov 2026. Nothing here is built by the site.</p></div></footer>
+<script src="mock.js"></script>
+</body>
+</html>
