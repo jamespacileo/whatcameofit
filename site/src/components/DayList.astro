@@ -752,9 +752,48 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     color: var(--blue);
   }
 
-  .row-now .track {
+  .row-now > .track {
     margin-top: 0.4rem;
     width: min(100%, 6.5rem);
+  }
+
+  /* The button in the card's corner: what the status means and why this claim is here. */
+  .row-now {
+    position: relative;
+  }
+
+  .row-now .row-label {
+    padding-right: 1.6rem;
+  }
+
+  .row-now .row-why {
+    position: absolute;
+    top: 0.3rem;
+    right: 0.3rem;
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  /* Room for the path, the reason and its links without scrolling on a laptop screen. */
+  .row-now .pop {
+    max-height: min(30rem, calc(100dvh - 2rem));
+  }
+
+  .row-now .pop-reason {
+    margin-top: 0.7rem;
+    padding: 0.55rem 0.7rem 0.6rem;
+    background: var(--panel);
+    border-radius: 0.5rem;
+  }
+
+  .row-now .pop-reason-head {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .row-now .pop-reason + .pop-note {
+    margin-top: 0.7rem;
   }
 
   .report-row .row-title {
@@ -836,9 +875,14 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       flex-basis: 100%;
     }
 
-    .row-now .track {
+    .row-now > .track {
       margin-top: 0;
       width: 5.5rem;
+    }
+
+    .row-now .row-why {
+      top: 0.05rem;
+      right: 0.05rem;
     }
   }
 
@@ -1188,6 +1232,11 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     .row-now {
       background: none;
       border: 1px solid var(--rule);
+    }
+
+    /* The claim page prints the same reasons beside its status; a row keeps to its card. */
+    .row-now .pop {
+      display: none;
     }
   }
 </style>
