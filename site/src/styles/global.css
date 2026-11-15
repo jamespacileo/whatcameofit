@@ -4587,14 +4587,14 @@ main ul:not([class]) li + li {
   gap: 0.15rem 1rem;
 }
 
-.strip {
+.strip-line {
   display: block;
   overflow: visible;
   color: var(--ink);
 }
 
 /* Room at each end for a mark that falls on the first or the last day. */
-.record-strip .strip {
+.record-strip .strip-line {
   flex: 1 1 9rem;
   width: 9rem;
   max-width: 24rem;
@@ -4686,13 +4686,13 @@ main ul:not([class]) li + li {
   margin-top: 0.55rem;
 }
 
-.index td.status .strip {
+.index td.status .strip-line {
   flex: none;
   width: 11rem;
 }
 
 @media (max-width: 40rem) {
-  .index td.status .strip {
+  .index td.status .strip-line {
     width: calc(100% - 12px);
     max-width: 24rem;
   }

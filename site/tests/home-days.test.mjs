@@ -114,7 +114,7 @@ test("Scenario: A report of an animal study, and what the records add", () => {
   assert.match(row, /Large late-stage trial in people/);
   // What the records add is drawn: the strip, with counts in numerals beside it. The
   // sentences are the strip's name and are not shown on the row (openspec record-strip).
-  assert.match(row, /<svg class="strip" role="img" aria-label="Records by date\. [^"]*trials on record[^"]*"/);
+  assert.match(row, /<svg class="strip-line" role="img" aria-label="Records by date\. [^"]*trials on record[^"]*"/);
   assert.match(row, /<span class="strip-counts">\d+ trials?( · \d+ with results posted)?<\/span>/);
   assert.ok(!row.includes("row-adds"));
   assert.ok(!/<p[^>]*>[^<]*trials on record/.test(row));

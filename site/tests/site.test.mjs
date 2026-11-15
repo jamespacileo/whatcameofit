@@ -157,7 +157,7 @@ test("Scenario: Topic index: every row of a claim list carries its record strip 
     assert.ok(rows.length > 0, file);
     for (const row of rows) {
       // One image, named in sentences, under a status label that stays in sight.
-      assert.equal(count(row, '<svg class="strip" role="img" aria-label="Records by date. '), 1, file);
+      assert.equal(count(row, '<svg class="strip-line" role="img" aria-label="Records by date. '), 1, file);
       assert.match(row, /class="status-name"/);
       // The counts are in the column beside it, not said twice.
       assert.ok(!row.includes("strip-counts"));

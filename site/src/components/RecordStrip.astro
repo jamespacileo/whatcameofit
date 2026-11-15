@@ -30,7 +30,7 @@ const marks = strip ? [...strip.marks].sort((a, b) => ORDER.indexOf(a.kind) - OR
 {
   STRIP_AXIS && strip && (
     <span class="record-strip">
-      <svg class="strip" role="img" aria-label={stripName(claim, reportDay, strip, STRIP_AXIS.lastChecked)} height="22">
+      <svg class="strip-line" role="img" aria-label={stripName(claim, reportDay, strip, STRIP_AXIS.lastChecked)} height="22">
         {STRIP_AXIS.notches.map((notch) => (
           <line class="strip-notch" x1={percent(notch.at)} x2={percent(notch.at)} y1="15" y2="20" />
         ))}

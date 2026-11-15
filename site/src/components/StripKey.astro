@@ -17,7 +17,7 @@ import StripMark from "./StripMark.astro";
       <ul>
         {STRIP_KEY_ORDER.map((kind) => (
           <li>
-            <svg class="strip" width="16" height="22" aria-hidden="true">
+            <svg class="strip-line" width="16" height="22" aria-hidden="true">
               <line class="strip-axis" x1="0" x2="16" y1="15" y2="15" />
               <svg x="8" overflow="visible">
                 <StripMark kind={kind} />
