@@ -19,7 +19,7 @@ Not in this change:
 
 - **Platforms whose posts are not read.** X, Reddit, LinkedIn, Facebook, Instagram, Threads and Telegram stay unread (`docs/sources.md`, "Platforms whose posts are not read"). Their terms decide that, not what a reader can fetch.
 - **Posts on Bluesky, Hacker News and Mastodon.** They are read through each platform's own interface for software, which stays as it is.
-- **The live lookup service and the browser extension.** `site/worker` keeps its own page reader. Until a later change moves it, the pipeline can read some pages the lookup service cannot.
+- **The live lookup service and the browser extension.** `site/worker` keeps its own page reader. The operator's service will also be reachable through a Cloudflare Tunnel so that a Worker can ask it, which makes that move possible; it is a later change, with its own decision about depending on the operator's network. Until then the pipeline can read some pages the lookup service cannot.
 - **The archived-snapshot step.** An article that cannot be retrieved is still looked for as an archived snapshot. This is a second source used when the first fails, which the operator's rule against fallbacks asks to be flagged: it is flagged in `design.md` and left for the operator to decide.
 - **Getting past an outlet's bot check** with the reader's stealth proxies. That would stop identifying the client and needs the operator's decision first (`design.md`, open decisions).
 - **PDF addresses** and **batch reads**. Each can follow once the single-page path is measured.

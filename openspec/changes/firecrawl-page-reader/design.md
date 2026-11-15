@@ -13,7 +13,7 @@ See `proposal.md` for why. What shapes the approach:
   - `headers` sets request headers, a User-Agent included. `proxy` is `basic`, `enhanced` or `auto`.
   - Firecrawl reads robots.txt "before it crawls a site" under the token `FirecrawlAgent`. The documentation does not say this covers a single-page scrape, and says the token is not necessarily the User-Agent header sent.
   - A self-hosted service is addressed by its own URL and may need no key.
-- The operator's service is self-hosted (answered 2026-11-15). The pipeline reaches it on the private network; it is not served publicly. What a self-hosted service lacks compared with the cloud one (the assistant's unchecked recollection of Firecrawl's self-hosting guide is that the stealth proxy engine is cloud-only) is confirmed in task 1.1, not assumed here.
+- The operator's service is self-hosted (answered 2026-11-15). It will be reachable two ways (operator, 2026-11-15): over Tailscale, which is how the pipeline asks it, and through a Cloudflare Tunnel, so that a Cloudflare Worker can ask it too. This change uses the Tailscale address only; the tunnel is what lets a later change move `site/worker` onto the same reader. What a self-hosted service lacks compared with the cloud one (the assistant's unchecked recollection of Firecrawl's self-hosting guide is that the stealth proxy engine is cloud-only) is confirmed in task 1.1, not assumed here.
 - Guardrails that bind here: robots.txt and a contact User-Agent; article text kept nowhere, logs and caches included; no model IDs in code; no fallback paths; no live requests in tests.
 
 ## Goals / Non-Goals
@@ -81,13 +81,21 @@ The outlet's own status is taken from `metadata.statusCode` in the answer. A fai
 
 ### 7. Configuration
 
-`FIRECRAWL_API_URL` (required to read any page) and `FIRECRAWL_API_KEY` (optional: a self-hosted service may need none). Both in `Settings` and `.env.example`. No default address: the service is the operator's own, and pointing the pipeline at the cloud service instead must be a deliberate choice because of decision 8.
+`FIRECRAWL_API_URL` (required to read any page; for the pipeline, the Tailscale address) and `FIRECRAWL_API_KEY` (sent when set). The key is optional only in the pipeline's settings: because the service is also reachable through a tunnel, the service itself must require authentication on that route (decision 9). Both in `Settings` and `.env.example`. No default address: the service is the operator's own, and pointing the pipeline at the cloud service instead must be a deliberate choice because of decision 8.
 
 ### 8. Retention on the reader's side is checked, not assumed
 
 `storeInCache: false` covers Firecrawl's result cache. On the operator's self-hosted service it does not cover the job queue, which holds a finished job's result for a time, or the containers' logs. Task 1.1 reads the service's own configuration and records in `docs/sources.md` what each keeps, and for how long, and sets them so that a page does not outlive its read. A reader that keeps article text longer than a read takes fails the guardrail and blocks the change.
 
+### 9. The tunnel route is closed to everyone but the project's own Worker
+
+A Firecrawl service that answers anyone is an open proxy: a stranger could fetch any page through it, in the project's name and from the operator's network. So the tunnel's hostname must refuse every request that does not carry a credential only the project's Worker holds, checked at Cloudflare before the request reaches the service (a Cloudflare Access service token), with the service's own key as a second check. Nothing in this change's code depends on the tunnel, but task 1.1 does not pass while the tunnel is up and open.
+
+The pipeline does not use the tunnel. It would add a public hop and a second address for the same thing.
+
 ## Risks / Trade-offs
+
+- [The tunnel exposes the reader to the internet] → Decision 9; verified in task 1.1 by an unauthenticated request to the tunnel's hostname being refused.
 
 - [The reader is a single point of failure: no reader, no reads] → Accepted, and deliberate. The run stops with a clear reason and records stay due (decision 6).
 - [A rendered read is slower than a plain request] → The outlet interval already spaces reads; the request timeout is raised to cover rendering. Measured in task 4.2.
@@ -110,4 +118,5 @@ For the operator. None changes this change's specs or tasks; each would be its o
 
 - **The archived-snapshot step.** It is a second source used when the first fails, already in `claim-extraction` and `lead-reading`. Keep it, or remove it so that an unretrievable article is simply recorded as such?
 - **Stealth proxies.** medicalxpress.com answers the identified client with 403. Firecrawl's `enhanced` proxy would probably read it, by not identifying the client. This change forbids it. Is that the standing answer?
+- **The tunnel and the home-network rule.** `CLAUDE.md` says nothing public is served from the home network. If the service runs there, a tunnel that the public lookup service depends on puts a reader-facing answer behind the home network, even with the route closed to strangers. Is that an accepted exception, or does the Worker's use wait for the service to run elsewhere? To be settled in the change that moves `site/worker`, and recorded as an ADR if it is an exception.
 - **Platform terms.** Nothing here reads X, Reddit, LinkedIn, Meta or Telegram. Confirm that a capable reader does not reopen the decisions in `docs/sources.md`.
