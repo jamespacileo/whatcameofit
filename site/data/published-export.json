@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-15T20:30:54.892996Z",
+  "generated_at": "2026-11-15T20:49:06.363368Z",
   "last_checked_at": "2026-11-15T19:59:50.977261Z",
   "preview": false,
   "sources": [
@@ -10191,7 +10191,7 @@
             "country": "United States",
             "website": "https://www.cedars-sinai.org/",
             "score": 1,
-            "read_at": "2026-11-14T19:53:42.764467Z"
+            "read_at": "2026-11-15T20:38:31.621022Z"
           },
           "roles": [
             {
@@ -10352,7 +10352,7 @@
             "country": "United States",
             "website": "https://www.mayoclinic.org",
             "score": 1,
-            "read_at": "2026-11-14T19:53:44.261737Z"
+            "read_at": "2026-11-15T20:38:54.949600Z"
           },
           "roles": [
             {
@@ -10393,7 +10393,7 @@
             "country": "United States",
             "website": "https://uthscsa.edu",
             "score": 1,
-            "read_at": "2026-11-14T19:53:43.303909Z"
+            "read_at": "2026-11-15T20:42:45.881714Z"
           },
           "roles": [
             {
@@ -15478,7 +15478,7 @@
             "country": "United States",
             "website": "https://www.fda.gov/",
             "score": 1,
-            "read_at": "2026-11-14T18:20:51.899935Z"
+            "read_at": "2026-11-15T20:37:43.164955Z"
           },
           "roles": [
             {
@@ -16937,7 +16937,7 @@
             "country": "United States",
             "website": "https://www.fda.gov/",
             "score": 1,
-            "read_at": "2026-11-14T18:20:51.899935Z"
+            "read_at": "2026-11-15T20:37:43.164955Z"
           },
           "roles": [
             {
@@ -17218,7 +17218,7 @@
             "country": "Germany",
             "website": "https://www.uni-bonn.de",
             "score": 1,
-            "read_at": "2026-11-14T18:20:00.258125Z"
+            "read_at": "2026-11-15T20:40:52.686248Z"
           },
           "roles": [
             {
@@ -17574,7 +17574,7 @@
             "country": "United States",
             "website": "https://my.clevelandclinic.org/",
             "score": 1,
-            "read_at": "2026-11-14T19:56:17.132004Z"
+            "read_at": "2026-11-15T20:36:54.151489Z"
           },
           "roles": [
             {
@@ -34170,7 +34170,7 @@
             "country": "United Kingdom",
             "website": "https://www.imperial.ac.uk",
             "score": 1,
-            "read_at": "2026-11-14T20:10:13.419118Z"
+            "read_at": "2026-11-15T20:38:24.007154Z"
           },
           "roles": [
             {
@@ -37672,7 +37672,7 @@
             "country": "China",
             "website": null,
             "score": 1,
-            "read_at": "2026-11-14T20:37:53.419989Z"
+            "read_at": "2026-11-15T20:38:04.254732Z"
           },
           "roles": [
             {
@@ -37725,7 +37725,7 @@
             "country": "Taiwan",
             "website": "https://www.cgmh.org.tw/eng/about/system/4",
             "score": 1,
-            "read_at": "2026-11-14T20:37:54.403531Z"
+            "read_at": "2026-11-15T20:40:09.410133Z"
           },
           "roles": [
             {
@@ -38648,7 +38648,7 @@
             "country": "China",
             "website": "https://www.pku.edu.cn",
             "score": 1,
-            "read_at": "2026-11-14T18:20:15.035325Z"
+            "read_at": "2026-11-15T20:38:07.264322Z"
           },
           "roles": [
             {
@@ -38768,7 +38768,7 @@
             "country": "United States",
             "website": "https://uthscsa.edu",
             "score": 1,
-            "read_at": "2026-11-14T19:53:43.303909Z"
+            "read_at": "2026-11-15T20:42:45.881714Z"
           },
           "roles": [
             {
@@ -39056,7 +39056,7 @@
             "country": "United Kingdom",
             "website": "https://www.kcl.ac.uk/",
             "score": 1,
-            "read_at": "2026-11-15T13:19:19.275359Z"
+            "read_at": "2026-11-15T20:39:38.545599Z"
           },
           "roles": [
             {
@@ -45132,7 +45132,7 @@
             "country": "United Kingdom",
             "website": null,
             "score": 1,
-            "read_at": "2026-11-15T11:52:13.476794Z"
+            "read_at": "2026-11-15T20:40:41.258371Z"
           },
           "roles": [
             {
@@ -45425,7 +45425,7 @@
             "country": "China",
             "website": "https://www.pku.edu.cn",
             "score": 1,
-            "read_at": "2026-11-14T18:20:15.035325Z"
+            "read_at": "2026-11-15T20:38:07.264322Z"
           },
           "roles": [
             {
@@ -45628,7 +45628,7 @@
             "country": "United States",
             "website": "https://www.fda.gov/",
             "score": 1,
-            "read_at": "2026-11-14T18:20:51.899935Z"
+            "read_at": "2026-11-15T20:37:43.164955Z"
           },
           "roles": [
             {
@@ -71460,7 +71460,7 @@
             "country": "United States",
             "website": "https://usc.edu",
             "score": 1,
-            "read_at": "2026-11-14T18:21:15.427773Z"
+            "read_at": "2026-11-15T20:38:27.744376Z"
           },
           "roles": [
             {
@@ -72543,7 +72543,7 @@
             "country": "United States",
             "website": null,
             "score": 1,
-            "read_at": "2026-11-14T19:55:41.598889Z"
+            "read_at": "2026-11-15T20:40:08.915783Z"
           },
           "roles": [
             {
@@ -73976,7 +73976,7 @@
             "country": "Australia",
             "website": "https://www.uq.edu.au",
             "score": 1,
-            "read_at": "2026-11-15T12:00:53.942137Z"
+            "read_at": "2026-11-15T20:39:56.427151Z"
           },
           "roles": [
             {
@@ -92173,7 +92173,7 @@
             "country": "United States",
             "website": "https://my.clevelandclinic.org/",
             "score": 1,
-            "read_at": "2026-11-14T19:56:17.132004Z"
+            "read_at": "2026-11-15T20:36:54.151489Z"
           },
           "roles": [
             {
@@ -92687,7 +92687,7 @@
             "country": "United Kingdom",
             "website": "https://www.ed.ac.uk",
             "score": 1,
-            "read_at": "2026-11-14T20:04:03.790841Z"
+            "read_at": "2026-11-15T20:42:07.255159Z"
           },
           "roles": [
             {
@@ -93958,7 +93958,7 @@
             "country": "United Kingdom",
             "website": null,
             "score": 1,
-            "read_at": "2026-11-15T11:52:13.476794Z"
+            "read_at": "2026-11-15T20:40:41.258371Z"
           },
           "roles": [
             {
@@ -111990,7 +111990,7 @@
             "country": "United States",
             "website": null,
             "score": 1,
-            "read_at": "2026-11-14T20:04:34.325536Z"
+            "read_at": "2026-11-15T20:36:26.230820Z"
           },
           "roles": [
             {
@@ -116382,7 +116382,7 @@
             "country": "United States",
             "website": null,
             "score": 1,
-            "read_at": "2026-11-14T20:04:34.325536Z"
+            "read_at": "2026-11-15T20:36:26.230820Z"
           },
           "roles": [
             {
@@ -121895,7 +121895,7 @@
             "country": "United States",
             "website": "https://www.mayoclinic.org",
             "score": 1,
-            "read_at": "2026-11-14T19:53:44.261737Z"
+            "read_at": "2026-11-15T20:38:54.949600Z"
           },
           "roles": [
             {
@@ -121922,7 +121922,7 @@
             "country": "France",
             "website": null,
             "score": 1,
-            "read_at": "2026-11-14T20:05:47.755721Z"
+            "read_at": "2026-11-15T20:37:40.906257Z"
           },
           "roles": [
             {
@@ -122154,7 +122154,7 @@
             "country": "Taiwan",
             "website": "https://www.ntuh.gov.tw/",
             "score": 1,
-            "read_at": "2026-11-14T20:05:46.217371Z"
+            "read_at": "2026-11-15T20:40:01.417165Z"
           },
           "roles": [
             {
@@ -122290,7 +122290,7 @@
             "country": "United States",
             "website": "https://www.uchicago.edu",
             "score": 1,
-            "read_at": "2026-11-14T20:05:45.191370Z"
+            "read_at": "2026-11-15T20:38:34.084751Z"
           },
           "roles": [
             {
@@ -122373,7 +122373,7 @@
             "country": "United States",
             "website": "https://www.utah.edu",
             "score": 1,
-            "read_at": "2026-11-14T20:05:40.165289Z"
+            "read_at": "2026-11-15T20:40:07.974360Z"
           },
           "roles": [
             {
@@ -122428,7 +122428,7 @@
             "country": "Egypt",
             "website": "https://www.zu.edu.eg",
             "score": 1,
-            "read_at": "2026-11-14T20:05:41.661193Z"
+            "read_at": "2026-11-15T20:39:15.902758Z"
           },
           "roles": [
             {
@@ -122636,7 +122636,7 @@
             "country": "United States",
             "website": "https://usc.edu",
             "score": 1,
-            "read_at": "2026-11-14T18:21:15.427773Z"
+            "read_at": "2026-11-15T20:38:27.744376Z"
           },
           "roles": [
             {
@@ -133506,17 +133506,19 @@
     {
       "slug": "melanoma-mrna-vaccine-intismeran",
       "headline": "A personalised mRNA vaccine given with pembrolizumab was reported to cut the risk of melanoma returning or causing death by 42% in a Phase 3 trial",
-      "summary": "Moderna and Merck reported Phase 3 results for a vaccine made individually for each patient's tumour and given with the immunotherapy pembrolizumab. The risk of the melanoma returning or of death was 42% lower than with pembrolizumab alone. The vaccine is not yet approved.",
+      "summary": "In October 2026, Moderna and Merck reported results from INTerpath-001, comparing intismeran autogene plus pembrolizumab with pembrolizumab alone after complete resection of stage IIB–IV cutaneous melanoma. The combination reduced the reported risk of recurrence or death by 42%. This finding concerns the combined postoperative regimen, not intismeran alone or treatment of unresectable melanoma.",
       "vertical": "cancer",
       "approach": "vaccine",
       "intervention": {
-        "name": "Intismeran autogene",
+        "name": "Intismeran autogene plus pembrolizumab",
         "synonyms": [
-          "experimental personalized mRNA vaccine",
-          "Individualized neoantigen therapy"
+          "Intismeran plus pembrolizumab",
+          "Intismeran autogene plus Keytruda",
+          "V940 plus pembrolizumab",
+          "mRNA-4157 plus pembrolizumab"
         ]
       },
-      "indication": "Melanoma at high risk of recurrence after surgery",
+      "indication": "Completely resected stage IIB–IV cutaneous melanoma",
       "first_reported_date": "2026-10-22",
       "evidence_stage": "late_human",
       "evidence_stage_reading": null,
@@ -133654,38 +133656,6 @@
           "trial_state": "started",
           "regulatory_outcome": null,
           "confidence": 1
-        },
-        {
-          "id": 47,
-          "type": "trial_registered",
-          "event_date": "2025-05-07",
-          "date_basis": "first posted",
-          "summary": "Trial NCT06961006 registered (Phase 2).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06961006",
-          "trial_id": "NCT06961006",
-          "trial_phases": [
-            "phase_2"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 48,
-          "type": "trial_status_change",
-          "event_date": "2025-05-29",
-          "date_basis": "start date",
-          "summary": "Trial NCT06961006 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06961006",
-          "trial_id": "NCT06961006",
-          "trial_phases": [
-            "phase_2"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
         }
       ],
       "failure_flags": [],
@@ -133704,16 +133674,6 @@
           "source_name": "clinicaltrials.gov",
           "external_id": "NCT03897881",
           "url": "https://clinicaltrials.gov/study/NCT03897881",
-          "score": 0.99,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "assistant",
-          "summary": null
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT06961006",
-          "url": "https://clinicaltrials.gov/study/NCT06961006",
           "score": 0.99,
           "state": "approved",
           "reading": "match",
@@ -133866,72 +133826,6 @@
               "read_on": "2026-11-11T21:02:02.085579Z"
             }
           ]
-        },
-        {
-          "trial_id": "NCT06961006",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT06961006",
-          "title": "A Clinical Study of Intismeran Autogene (V940) and Pembrolizumab (MK-3475) in People With Melanoma (V940-012/INTerpath-012)",
-          "phases": [
-            "phase_2"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-11T21:02:03.072854Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 160,
-              "basis": "planned"
-            },
-            "allocation": "randomised",
-            "masking": "triple",
-            "comparators": [
-              "active"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Merck Sharp & Dohme LLC",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Progression-free Survival (PFS)",
-                "time_frame": "Up to approximately 36 months"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "36 months",
-              "number": 36,
-              "unit": "months",
-              "code": null,
-              "confidence": 0.98,
-              "read_on": "2026-11-11T21:02:03.072854Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Progression-free Survival (PFS)",
-              "number": null,
-              "unit": null,
-              "code": "survival",
-              "confidence": 0.99,
-              "read_on": "2026-11-11T21:02:03.072854Z"
-            }
-          ]
         }
       ],
       "papers": [
@@ -133949,6 +133843,20 @@
               "reasons": [],
               "decided_by": null,
               "summary": null
+            },
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 0.95,
+              "reasons": [
+                "named_in_title",
+                "named_institution",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "Intismeran Autogene Plus Pembrolizumab Versus Pembrolizumab Alone in High-Risk Resected Melanoma: 5-Year Update of the Randomized Phase IIb KEYNOTE-942 Study. 2026. article. Journal of Clinical Oncology"
             }
           ],
           "facts_as_of": "2026-11-14T20:08:51.467766Z",
@@ -134000,12 +133908,110 @@
               "people"
             ]
           }
+        },
+        {
+          "identifier": "10.1056/nejmoa2609762",
+          "url": "https://doi.org/10.1056/nejmoa2609762",
+          "record_url": "https://europepmc.org/article/MED/43013837",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "named_institution"
+              ],
+              "decided_by": "rule",
+              "summary": "Intismeran Autogene plus Pembrolizumab for Resected Stage IIB to IV Melanoma. 2026. article. New England Journal of Medicine"
+            }
+          ],
+          "facts_as_of": "2026-11-14T20:08:47.156896Z",
+          "facts": {
+            "title": "Intismeran Autogene plus Pembrolizumab for Resected Stage IIB to IV Melanoma.",
+            "journal": "The New England journal of medicine",
+            "year": 2026,
+            "kinds": [
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": []
+          }
+        },
+        {
+          "identifier": "10.1200/oa-25-00008",
+          "url": "https://doi.org/10.1200/oa-25-00008",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_institution",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "Three-Year Update of a Randomized Phase IIb Study of the Individualized Neoantigen Therapy Intismeran Autogene (mRNA-4157, V940) Plus Pembrolizumab Versus Pembrolizumab in Resected Melanoma. 2026. article. JCO oncology advances."
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
+        },
+        {
+          "identifier": "10.1158/1538-7445.am2025-855",
+          "url": "https://doi.org/10.1158/1538-7445.am2025-855",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_institution",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "Abstract 855: Dynamics of T cell and T cell receptor following mRNA-4157 (V940) plus pembrolizumab or pembrolizumab alone in resected melanoma from the mRNA-4157-P201 (KEYNOTE-942) trial. 2025. conference-abstract. Cancer Research"
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
+        },
+        {
+          "identifier": "10.1200/jco.2026.44.16_suppl.9500",
+          "url": "https://doi.org/10.1200/jco.2026.44.16_suppl.9500",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 0.98,
+              "reasons": [
+                "named_institution",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "Individualized neoantigen therapy intismeran autogene (intismeran) plus pembrolizumab (pembro) in resected melanoma: 5-year update of the KEYNOTE-942 study. 2026. conference-abstract. Journal of Clinical Oncology"
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
         }
       ],
       "background": [
         {
           "kind": "condition",
-          "fit": "exact",
+          "fit": "broader",
           "label": "Melanoma",
           "name": null,
           "definition": "A malignant neoplasm derived from cells that are capable of forming melanin, which may occur in the skin of any part of the body, in the eye, or, rarely, in the mucous membranes of the genitalia, anus, oral cavity, or other sites. It occurs mostly in adults and may originate de novo or from a pigmented nevus or malignant lentigo. Melanomas frequently metastasize widely, and the regional lymph nodes, liver, lungs, and brain are likely to be involved. The incidence of malignant skin melanomas is rising rapidly in all parts of the world. (Stedman, 25th ed; from Rook et al., Textbook of Dermatology, 4th ed, p2445)",
@@ -134031,81 +134037,8 @@
               "sources": null
             }
           ],
-          "decided_by": "rule",
+          "decided_by": "assistant",
           "read_at": "2026-11-14T18:27:48.911077Z"
-        },
-        {
-          "kind": "intervention",
-          "fit": "kind",
-          "label": "Vaccines",
-          "name": null,
-          "definition": "Suspensions of killed or attenuated microorganisms (bacteria, viruses, fungi, protozoa), antigenic proteins, synthetic constructs, or other bio-molecular derivatives, administered for the prevention, amelioration, or treatment of infectious and other diseases.",
-          "definition_source": null,
-          "url": "https://id.nlm.nih.gov/mesh/D014612",
-          "source": "mesh",
-          "external_id": "D014612",
-          "version": "2026",
-          "score": 0.97,
-          "molecule_kind": null,
-          "mechanisms": [],
-          "facts_source": null,
-          "reasons": [
-            {
-              "code": "kind_chosen",
-              "trials": null,
-              "of": null,
-              "name": null,
-              "entry_term": null,
-              "kind": "vaccine",
-              "type": null,
-              "word": null,
-              "sources": null
-            },
-            {
-              "code": "registry_lists_type",
-              "trials": 2,
-              "of": null,
-              "name": null,
-              "entry_term": null,
-              "kind": null,
-              "type": "BIOLOGICAL",
-              "word": null,
-              "sources": null
-            }
-          ],
-          "decided_by": "rule",
-          "read_at": "2026-11-14T20:51:42.841163Z"
-        },
-        {
-          "kind": "drug",
-          "fit": "exact",
-          "label": "INTISMERAN AUTOGENE",
-          "name": null,
-          "definition": null,
-          "definition_source": null,
-          "url": "https://platform.opentargets.org/drug/CHEMBL6068256",
-          "source": "opentargets",
-          "external_id": "CHEMBL6068256",
-          "version": null,
-          "score": null,
-          "molecule_kind": "oligonucleotide",
-          "mechanisms": [],
-          "facts_source": "chembl",
-          "reasons": [
-            {
-              "code": "drug_name_equals_name",
-              "trials": null,
-              "of": null,
-              "name": "Intismeran autogene",
-              "entry_term": null,
-              "kind": null,
-              "type": null,
-              "word": null,
-              "sources": null
-            }
-          ],
-          "decided_by": "rule",
-          "read_at": "2026-11-14T21:50:02.254068Z"
         }
       ],
       "organisations": [
@@ -134124,7 +134057,7 @@
             "country": "United States",
             "website": null,
             "score": 1,
-            "read_at": "2026-11-14T20:09:04.611562Z"
+            "read_at": "2026-11-15T20:45:52.581892Z"
           },
           "roles": [
             {
@@ -134149,7 +134082,7 @@
             "country": "Switzerland",
             "website": null,
             "score": 1,
-            "read_at": "2026-11-14T20:09:02.570320Z"
+            "read_at": "2026-11-15T20:45:49.785061Z"
           },
           "roles": [
             {
@@ -134174,7 +134107,7 @@
             "country": "Australia",
             "website": "https://melanoma.org.au/",
             "score": 1,
-            "read_at": "2026-11-14T20:09:04.081177Z"
+            "read_at": "2026-11-15T20:45:52.115337Z"
           },
           "roles": [
             {
@@ -134199,7 +134132,7 @@
             "country": "United States",
             "website": "https://www.mskcc.org/",
             "score": 1,
-            "read_at": "2026-11-14T20:09:02.138508Z"
+            "read_at": "2026-11-15T20:40:51.169240Z"
           },
           "roles": [
             {
@@ -134290,8 +134223,7 @@
               "role": "sponsor",
               "article_urls": [],
               "trial_ids": [
-                "NCT05933577",
-                "NCT06961006"
+                "NCT05933577"
               ]
             }
           ]
@@ -146444,7 +146376,7 @@
             "country": "United States",
             "website": "https://www.upenn.edu",
             "score": 1,
-            "read_at": "2026-11-14T20:13:19.223924Z"
+            "read_at": "2026-11-15T20:38:03.840720Z"
           },
           "roles": [
             {
@@ -148218,7 +148150,7 @@
             "country": "United Kingdom",
             "website": null,
             "score": 1,
-            "read_at": "2026-11-14T20:09:48.630971Z"
+            "read_at": "2026-11-15T20:41:51.620609Z"
           },
           "roles": [
             {
@@ -148313,7 +148245,7 @@
             "country": "United States",
             "website": "https://www.mskcc.org/",
             "score": 1,
-            "read_at": "2026-11-14T20:09:02.138508Z"
+            "read_at": "2026-11-15T20:40:51.169240Z"
           },
           "roles": [
             {
@@ -148340,7 +148272,7 @@
             "country": "The Netherlands",
             "website": "https://www.radboudumc.nl",
             "score": 1,
-            "read_at": "2026-11-14T20:09:51.651295Z"
+            "read_at": "2026-11-15T20:42:48.344302Z"
           },
           "roles": [
             {
@@ -148395,7 +148327,7 @@
             "country": "Sweden",
             "website": "https://www.umu.se",
             "score": 1,
-            "read_at": "2026-11-14T20:09:50.631892Z"
+            "read_at": "2026-11-15T20:42:13.759241Z"
           },
           "roles": [
             {
@@ -150306,7 +150238,7 @@
             "country": "United Kingdom",
             "website": "https://www.imperial.ac.uk",
             "score": 1,
-            "read_at": "2026-11-14T20:10:13.419118Z"
+            "read_at": "2026-11-15T20:38:24.007154Z"
           },
           "roles": [
             {
@@ -154960,7 +154892,7 @@
             "country": "United States",
             "website": "https://www.rice.edu",
             "score": 1,
-            "read_at": "2026-11-14T18:22:10.952252Z"
+            "read_at": "2026-11-15T20:39:20.411753Z"
           },
           "roles": [
             {
@@ -157399,7 +157331,7 @@
             "country": "United States",
             "website": "https://usc.edu",
             "score": 1,
-            "read_at": "2026-11-14T18:21:15.427773Z"
+            "read_at": "2026-11-15T20:38:27.744376Z"
           },
           "roles": [
             {
@@ -157510,7 +157442,7 @@
             "country": "United States",
             "website": "https://www.mayoclinic.org",
             "score": 1,
-            "read_at": "2026-11-14T19:53:44.261737Z"
+            "read_at": "2026-11-15T20:38:54.949600Z"
           },
           "roles": [
             {
@@ -171769,7 +171701,7 @@
             "country": "United States",
             "website": null,
             "score": 1,
-            "read_at": "2026-11-14T20:04:34.325536Z"
+            "read_at": "2026-11-15T20:36:26.230820Z"
           },
           "roles": [
             {
@@ -172444,7 +172376,7 @@
             "country": "United States",
             "website": "https://www.upenn.edu",
             "score": 1,
-            "read_at": "2026-11-14T20:13:19.223924Z"
+            "read_at": "2026-11-15T20:38:03.840720Z"
           },
           "roles": [
             {
@@ -172902,7 +172834,7 @@
             "country": "United States",
             "website": "https://www.rice.edu",
             "score": 1,
-            "read_at": "2026-11-14T18:22:10.952252Z"
+            "read_at": "2026-11-15T20:39:20.411753Z"
           },
           "roles": [
             {
@@ -176263,7 +176195,7 @@
             "country": "United Kingdom",
             "website": "https://www.imperial.ac.uk",
             "score": 1,
-            "read_at": "2026-11-14T20:10:13.419118Z"
+            "read_at": "2026-11-15T20:38:24.007154Z"
           },
           "roles": [
             {
@@ -176318,7 +176250,7 @@
             "country": "Poland",
             "website": "https://www.wum.edu.pl",
             "score": 1,
-            "read_at": "2026-11-14T20:14:20.343692Z"
+            "read_at": "2026-11-15T20:39:40.868176Z"
           },
           "roles": [
             {
@@ -176361,7 +176293,7 @@
             "country": "The Netherlands",
             "website": "https://www.umcutrecht.nl",
             "score": 1,
-            "read_at": "2026-11-14T20:14:18.281811Z"
+            "read_at": "2026-11-15T20:37:45.045299Z"
           },
           "roles": [
             {
@@ -176562,7 +176494,7 @@
             "country": "United Kingdom",
             "website": "https://www.nottingham.ac.uk/",
             "score": 1,
-            "read_at": "2026-11-14T18:18:44.817497Z"
+            "read_at": "2026-11-15T20:39:06.430133Z"
           },
           "roles": [
             {
@@ -178536,7 +178468,7 @@
             "country": "United States",
             "website": "https://www.uchicago.edu",
             "score": 1,
-            "read_at": "2026-11-14T20:05:45.191370Z"
+            "read_at": "2026-11-15T20:38:34.084751Z"
           },
           "roles": [
             {
@@ -180689,7 +180621,7 @@
             "country": "Israel",
             "website": null,
             "score": 1,
-            "read_at": "2026-11-14T18:22:55.984825Z"
+            "read_at": "2026-11-15T20:39:13.923954Z"
           },
           "roles": [
             {
@@ -181447,7 +181379,7 @@
             "country": "United States",
             "website": "https://www.mayoclinic.org",
             "score": 1,
-            "read_at": "2026-11-14T19:53:44.261737Z"
+            "read_at": "2026-11-15T20:38:54.949600Z"
           },
           "roles": [
             {
@@ -182137,7 +182069,7 @@
             "country": "United States",
             "website": null,
             "score": 1,
-            "read_at": "2026-11-14T19:55:41.598889Z"
+            "read_at": "2026-11-15T20:40:08.915783Z"
           },
           "roles": [
             {
@@ -183587,7 +183519,7 @@
             "country": "United Kingdom",
             "website": "https://www.nottingham.ac.uk/",
             "score": 1,
-            "read_at": "2026-11-14T18:18:44.817497Z"
+            "read_at": "2026-11-15T20:39:06.430133Z"
           },
           "roles": [
             {
@@ -187286,7 +187218,7 @@
             "country": "United Kingdom",
             "website": "https://www.imperial.ac.uk",
             "score": 1,
-            "read_at": "2026-11-14T20:10:13.419118Z"
+            "read_at": "2026-11-15T20:38:24.007154Z"
           },
           "roles": [
             {
@@ -188170,7 +188102,7 @@
             "country": "Canada",
             "website": "https://www.ualberta.ca",
             "score": 1,
-            "read_at": "2026-11-14T20:16:47.096882Z"
+            "read_at": "2026-11-15T20:39:12.419973Z"
           },
           "roles": [
             {
@@ -188195,7 +188127,7 @@
             "country": "United Kingdom",
             "website": "https://le.ac.uk",
             "score": 1,
-            "read_at": "2026-11-14T20:16:46.665224Z"
+            "read_at": "2026-11-15T20:37:08.894151Z"
           },
           "roles": [
             {
@@ -188247,7 +188179,7 @@
             "country": "United States",
             "website": "https://llu.edu",
             "score": 1,
-            "read_at": "2026-11-14T20:16:48.229421Z"
+            "read_at": "2026-11-15T20:40:08.417723Z"
           },
           "roles": [
             {
