@@ -63,3 +63,7 @@ See `proposal.md` for why. What shapes the approach:
 ## Open Questions
 
 None.
+
+## After `recent-headlines` (merged 2026-11-15)
+
+The report row was rebuilt in two columns by `recent-headlines` while this change was open: the status leads on the left, the report is on the right, and a second part (evidence stage when first reported, gloss, no-signal note, latest promise) opens under the row on hover or focus. The record strip sits in the right column under the quoted title and is always in sight. The row sentences stay out of the second part: they are the strip's text alternative, so a screen reader is given what the records add once, by the strip, and a sighted reader is given it by the marks and the counts. `recent-headlines` words the second part as carrying "what the records add"; where the two changes differ, this one holds for the report row.

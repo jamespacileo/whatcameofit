@@ -102,3 +102,32 @@ Menus and lists of topics SHALL include a vertical only when at least one publis
 #### Scenario: One listed topic
 - **WHEN** exactly one vertical has published claims
 - **THEN** the menu names that topic and links straight to its index
+
+## MODIFIED Requirements
+
+### Requirement: A report row sets the report beside the record
+A news report's row SHALL show the claim's status now with its place on the path, set apart from the report on the ground of what is on record; and beside it the outlet's title in quotation marks with the outlet and the date, the title leading to the claim page, then the intervention and what it is claimed for. The row SHALL also carry the evidence stage when the claim was first reported with its date, the status's gloss, its no-signal note, what the records add, and the claim's latest promise, marked as a promise. On a screen with a pointer that can rest on a row, that second part SHALL be closed until the pointer rests on the row or focus is inside it. It SHALL always be open on a touch screen, on a narrow screen and on paper, and SHALL always be in the page for a screen reader, open or closed. Reports of one claim dated the same day SHALL share one row that names each outlet. The site SHALL add no wording of its own about a title.
+
+#### Scenario: A report of an animal study
+- **WHEN** a claim first reported from an animal study stands at preclinical only and has a report dated 11 November 2026
+- **THEN** the row shows "Preclinical only" with the first place on the path marked, beside the quoted title with its outlet and date, and carries "Animal study when first reported" and "No trial in people on record"
+
+#### Scenario: The pointer rests on a row
+- **WHEN** a reader with a mouse rests the pointer on a report row, or moves focus to a link in it
+- **THEN** the evidence stage when first reported, the gloss, what the records add and the latest promise open under the row, and close when the pointer and focus leave
+
+#### Scenario: A phone
+- **WHEN** the row is read on a touch screen or a narrow screen
+- **THEN** the second part is open without any action, and the status is above the report
+
+#### Scenario: Read aloud or printed
+- **WHEN** the row is read by a screen reader or printed
+- **THEN** the evidence stage when first reported, the gloss, what the records add and the latest promise are all given
+
+#### Scenario: Two outlets on one day
+- **WHEN** two outlets report the same claim on 6 October 2026
+- **THEN** the list has one row for that claim that day, with the first title quoted and both outlets named
+
+#### Scenario: One claim reported on two days
+- **WHEN** a claim has reports dated 6 October and 13 October 2026
+- **THEN** it has a row under each date

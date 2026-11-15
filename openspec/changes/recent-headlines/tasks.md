@@ -25,3 +25,8 @@ Needs the `.env` settings named in `backfill-dental-regeneration` task 1.1.
 - [ ] 3.2 Finish the 8 broad-name claims and run `thenwhat prepare` over all of them so items are approved by rule (ADR 0001); verify every claim is published or its page states why a match was not approved
 - [ ] 3.3 Export and rebuild the site; verify the home page lists the newest reports and each new topic with a published claim appears under Topics
 - [ ] 3.4 Check five of the new claim pages by hand against their sources, including two whose headline says more than the status; verify the page reads as the outlet's words beside the site's status
+
+## 4. Report row
+
+- [x] 4.1 Report row leads with the status in its own column; the evidence when first reported and what the records add open on hover or focus, always open on touch, narrow screens and paper (`site/src/components/DayReport.astro`, `DayList.astro`, chosen by the operator on 2026-11-15 from three live variants); verified by `site/tests/home-days.test.mjs` and in the browser at desktop and 375px
+- [ ] 4.2 Look at the report row in the dark theme and in print; verify the closed part is open on paper

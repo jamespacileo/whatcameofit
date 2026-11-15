@@ -1,6 +1,8 @@
 ---
-// A news report in the day-by-day list: the outlet's title, quoted, beside the record.
-// What was reported is on white; what is on record is on the panel blue.
+// A news report in the day-by-day list: what is on record leads in its own column, on
+// the panel blue; the outlet's title, quoted, is beside it on white. What the evidence
+// was when first reported opens under the row on hover or focus, and is always shown
+// on a touch screen, on paper and to a screen reader.
 import type { ReportRow } from "../lib/day-list";
 import { followedNameFor } from "../lib/reports";
 import { EVIDENCE_STAGES, STATUS_GLOSSES, STATUS_LABELS, latestPromise, overlayText } from "../lib/status";
@@ -26,6 +28,7 @@ const name = picked ? null : followedNameFor(claim, first.url);
 const promise = latestPromise(claim);
 const overlay = overlayText(claim.status.overlay_years);
 const stage = claim.evidence_stage ? EVIDENCE_STAGES[claim.evidence_stage] : null;
+const gloss = `${STATUS_GLOSSES[claim.status.code]}${overlay ? `. ${overlay}` : ""}`;
 ---
 
 <li
@@ -37,50 +40,52 @@ const stage = claim.evidence_stage ? EVIDENCE_STAGES[claim.evidence_stage] : nul
   data-on={row.date}
   data-picked={picked ? "" : undefined}
 >
-  <p class="row-source">
-    <span class="visually-hidden">News report. </span>
-    {row.reports.map((report) => <Outlet url={report.url} outlet={report.outlet} />)}
-    <span class="when">{formatDate(row.date)}</span>
-    <span class="row-topic">{topic}</span>
-  </p>
-  <h4 class="row-title">
-    <a
-      class="followed"
-      href={`/${claim.slug}`}
-      style={name ? `view-transition-name: ${name}` : undefined}
-    >
-      “{first.title}”
-    </a>
-  </h4>
-  <div class="then-now">
-    <div class="then">
-      <span class="row-label">Evidence when first reported</span>
-      <strong class="then-stage">{stage ?? "Not recorded"}</strong>
-      {claim.first_reported_date && <span class="gloss">{formatDate(claim.first_reported_date)}</span>}
-    </div>
-    <div class="now">
-      <span class="row-label">On record now</span>
-      <strong class="status-name">{STATUS_LABELS[claim.status.code]}</strong>
-      <span class="gloss">{STATUS_GLOSSES[claim.status.code]}{overlay && `. ${overlay}`}</span>
-      <StageTrack code={claim.status.code} />
+  <div class="row-now">
+    <span class="row-label">On record now</span>
+    <strong class="status-name">{STATUS_LABELS[claim.status.code]}</strong>
+    <StageTrack code={claim.status.code} />
+  </div>
+  <div class="row-main">
+    <p class="row-source">
+      <span class="visually-hidden">News report. </span>
+      {row.reports.map((report) => <Outlet url={report.url} outlet={report.outlet} />)}
+      <span class="when">{formatDate(row.date)}</span>
+      <span class="row-topic">{topic}</span>
+    </p>
+    <h4 class="row-title">
+      <a
+        class="followed"
+        href={`/${claim.slug}`}
+        style={name ? `view-transition-name: ${name}` : undefined}
+      >
+        “{first.title}”
+      </a>
+    </h4>
+    {/* What the records add: where each is dated, on the scale every row shares, and the
+        counts in numerals. The sentences that say it are the strip's name. */}
+    <RecordStrip claim={claim} reportDay={row.date} />
+    <p class="row-foot">
+      <span class="row-claim">
+        {claim.intervention.name} · {claim.indication}
+      </span>
+      <a href={`/${claim.slug}`}>
+        See the records<span class="visually-hidden"> for {claim.intervention.name}</span>
+      </a>
+    </p>
+    <div class="row-more">
+      <div>
+        <p class="row-then">
+          <strong>{stage ?? "Not recorded"}</strong>{" "}
+          {[`when first reported${claim.first_reported_date ? `, ${formatDate(claim.first_reported_date)}` : ""}.`, `${gloss}.`].join(" ")}
+        </p>
+        {
+          promise && (
+            <p class="row-promise">
+              <span class="row-label">Promised</span> <PromiseText promise={promise} />
+            </p>
+          )
+        }
+      </div>
     </div>
   </div>
-  {/* What the records add: where each is dated, on the scale every row shares, and the
-      counts in numerals. The sentences that say it are the strip's name. */}
-  <RecordStrip claim={claim} reportDay={row.date} />
-  {
-    promise && (
-      <p class="row-promise">
-        <span class="row-label">Promised</span> <PromiseText promise={promise} />
-      </p>
-    )
-  }
-  <p class="row-foot">
-    <span class="row-claim">
-      {claim.intervention.name} · {claim.indication}
-    </span>
-    <a href={`/${claim.slug}`}>
-      See the records<span class="visually-hidden"> for {claim.intervention.name}</span>
-    </a>
-  </p>
 </li>
