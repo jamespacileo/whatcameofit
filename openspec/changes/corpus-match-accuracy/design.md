@@ -124,3 +124,7 @@ Native Safari 0.9.10 exposed a presentation defect on corpus A041: the scorer co
 ## Historical background gathering reasons
 
 A correction can remove an approved trial after a vocabulary term was gathered. Keep the original stored gathering counts and reading date, but word the public registry-filing reason in the past tense and explicitly say when the term was gathered. This preserves provenance without presenting a historical trial set as the current set. No new scoring or source request.
+
+## Registry condition-query refusal
+
+ClinicalTrials.gov refused the precise first-line nonsquamous lung-cancer condition as too complicated. The client already tries a condition's telling words after a valid empty response, but a parser refusal skipped that bounded fallback. Distinguish an explicitly named condition-field refusal from treatment and unknown-field refusals, and share the existing two-wording search between broad-name and search-phrase discovery. Try a distinct fallback at most once; retain the hundred-candidate cap and source pacing. If no usable query remains, report the refusal rather than claiming a successful empty search. Only candidate discovery wording changes: the stored claim and full indication used by scoring remain unchanged. No model call or additional ordinary-success request is introduced.
