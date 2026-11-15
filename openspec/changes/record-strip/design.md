@@ -67,3 +67,12 @@ None.
 ## After `recent-headlines` (merged 2026-11-15)
 
 The report row was rebuilt in two columns by `recent-headlines` while this change was open: the status leads on the left, the report is on the right, and a second part (evidence stage when first reported, gloss, no-signal note, latest promise) opens under the row on hover or focus. The record strip sits in the right column under the quoted title and is always in sight. The row sentences stay out of the second part: they are the strip's text alternative, so a screen reader is given what the records add once, by the strip, and a sighted reader is given it by the marks and the counts. `recent-headlines` words the second part as carrying "what the records add"; where the two changes differ, this one holds for the report row.
+
+## Revision after the critique of 2026-11-15
+
+A critique of the built strip (`.impeccable/critique/2026-11-15T19-43-44Z__site-src-components-recordstrip-astro.md`, 16/32) found that on the shared 2005 axis 47% of the home page's marks fell in the rightmost tenth of a row's strip, 49 of the first 100 strips held only a report ring on an empty line, the strip repeated the counts beside it, and the key took 116px (144px on a phone) before the first headline. Hiding the strip in the row's hover panel would not help: that panel is always open on touch screens and below 34rem. The operator chose:
+
+11. **Home report row: counts in words, no drawing.** The row keeps the counts line in sight and the sentences for a screen reader. The day list has no strip and no key.
+12. **Claim page: the claim's own axis.** At the head of "Recorded", from the earlier of the earliest dated record and five years before the first report, to the last check; notched yearly up to fifteen years, else every five. The first year and "Last checked" with the day are written under the ends, so the key under it names only the marks drawn and not the end stop.
+13. **Lists: three marks.** A table's strip draws registry records, posted results and news reports; its key names those three under the axis's years. Promises have the list's column; a decision is the status.
+14. **One width wherever the strip is shared.** The drawing sits in a frame so a counts line beside it cannot narrow it.
