@@ -92,10 +92,14 @@ class Web:
     def __init__(self) -> None:
         self.pages: dict[str, str] = {}
         self.forbidding: set[str] = set()
+        # Hosts whose robots.txt cannot be served just now.
+        self.failing: set[str] = set()
         self.asked: list[str] = []
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
         host, path = request.url.host, request.url.path
+        if path == "/robots.txt" and host in self.failing:
+            return httpx.Response(503)
         if path == "/robots.txt":
             rules = "Disallow: /" if host in self.forbidding else "Allow: /"
             return httpx.Response(200, text=f"User-agent: *\n{rules}\n")
@@ -406,6 +410,28 @@ def test_an_outlet_that_forbids_the_fetch_is_not_asked_for_the_page(reader: Read
     assert (lead.read_outcome, lead.read_detail) == (ReadOutcome.CANNOT_BE_READ, REFUSED_BY_ROBOTS)
     assert (first.nothing_found, second.processed) == (1, 0)
     assert (reader.web.asked, reader.prompts) == ([], [])
+
+
+def test_an_outlet_whose_rules_cannot_be_read_is_asked_again_on_a_later_run(reader: Reader):
+    """Scenario: Robots.txt cannot be read"""
+    lead = reader.lead()
+    reader.web.failing.add("www.theguardian.com")
+
+    first = reader.read()
+
+    # Not fetched and not settled: the lead has no outcome, and its failure is on record.
+    assert (lead.read_outcome, reader.web.asked, reader.prompts) == (None, [], [])
+    assert (first.failed, reader.entry(lead).outcome) == (1, WorkOutcome.FAILED)
+    assert "robots.txt could not be read" in (reader.entry(lead).error or "")
+
+    # A later run, with the outlet answering again, reads it.
+    reader.web.failing.clear()
+    reader.client.retriever = ArticleRetriever(
+        contact_email="ops@thenwhat.test", transport=httpx.MockTransport(reader.web)
+    )
+    reader.read()
+
+    assert lead.read_outcome is ReadOutcome.NEW_CLAIM
 
 
 def test_an_outlet_with_no_display_name_is_not_fetched(reader: Reader):

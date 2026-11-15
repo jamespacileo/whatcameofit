@@ -67,6 +67,7 @@ NO_NAME = "its outlet has no display name"
 NO_DATE = "the page gives no publication date"
 NO_HEADLINE = "the page gives no headline"
 REFUSED_BY_ROBOTS = "the outlet's robots.txt does not allow the fetch"
+ROBOTS_UNKNOWN = "the outlet's robots.txt could not be read, so its page was not asked for"
 NO_PAGE = "the page could not be retrieved and no archived snapshot was found"
 # The name a lead's read is recorded under in the usage ledger, apart from articles an
 # operator has read, so the funnel can say what reading leads has cost.
@@ -340,6 +341,11 @@ class LinkRead:
 
         # The outlet is asked: robots.txt first, then the page, a set interval apart.
         if not client.retriever.allowed(record.url):
+            if client.retriever.rules_unknown(record.url):
+                # The outlet has not refused: its rules could not be read just now. The
+                # lead stays due and is tried again on a later run, not settled as
+                # refused for good.
+                return Failed(ROBOTS_UNKNOWN)
             return self._finish(record, ReadOutcome.CANNOT_BE_READ, REFUSED_BY_ROBOTS)
         client.allowances.claim(
             outlet_source(record.outlet),

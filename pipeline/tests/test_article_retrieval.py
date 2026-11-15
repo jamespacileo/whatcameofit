@@ -109,6 +109,46 @@ def test_unreadable_robots_txt_counts_as_disallowed():
     assert ARTICLE_URL not in web.urls
 
 
+class Unreachable(Web):
+    """A site that does not answer at all."""
+
+    def __call__(self, request: httpx.Request) -> httpx.Response:
+        self.requests.append(request)
+        raise httpx.ConnectTimeout("timed out", request=request)
+
+
+@pytest.mark.parametrize("status", [500, 503, 429])
+def test_rules_a_site_could_not_serve_are_unknown_and_nothing_is_fetched(status: int):
+    web = Web({"https://news.example.org/robots.txt": httpx.Response(status)})
+    site = retriever(web)
+
+    assert site.allowed(ARTICLE_URL) is False
+    assert site.rules_unknown(ARTICLE_URL) is True
+    assert ARTICLE_URL not in web.urls
+
+
+def test_rules_of_a_site_that_does_not_answer_are_unknown():
+    site = retriever(Unreachable({}))
+
+    assert site.allowed(ARTICLE_URL) is False
+    assert site.rules_unknown(ARTICLE_URL) is True
+
+
+@pytest.mark.parametrize(
+    "robots",
+    [
+        httpx.Response(200, text="User-agent: *\nDisallow: /\n"),
+        httpx.Response(403),
+        httpx.Response(404),
+        httpx.Response(200, text="User-agent: *\nAllow: /\n"),
+    ],
+)
+def test_rules_a_site_answered_with_are_known(robots: httpx.Response):
+    web = Web({"https://news.example.org/robots.txt": robots})
+
+    assert retriever(web).rules_unknown(ARTICLE_URL) is False
+
+
 def test_dead_link_with_a_snapshot_uses_the_snapshot():
     """Scenario: Dead link with a snapshot"""
     web = Web(
