@@ -259,6 +259,7 @@ test("tracked cards require the same condition and complete regimen without extr
     single: { names: ["EX-1", "ONE-BRAND"], indication: "obesity", headline: "One medicine", page: "/single" },
     combined: { names: ["EX-2 and EX-1", "PAIR-12", "EX-1"], indication: "obesity", headline: "Combination", page: "/combined" },
     legacy: { names: ["EX-1"], headline: "Unknown condition", page: "/legacy" },
+    triple: { names: ["EX-1 plus EX-2 plus EX-3", "TRIPLE-123"], indication: "obesity", headline: "Triple", page: "/triple" },
   };
   for (const [intervention, indication, aliases, expected] of [
     ["EX-1 plus EX-2", "Obesity", ["EX-1"], ["combined"]],
@@ -271,6 +272,8 @@ test("tracked cards require the same condition and complete regimen without extr
     ["UNTRACKED-PAIR", "obesity", [], []],
     ["EX-1 plus EX-2", "obesity", ["ONE-BRAND"], ["combined"]],
     ["PAIR-12", "obesity", ["ONE-BRAND"], ["combined"]],
+    ["EX-1 plus EX-2 plus EX-3", "obesity", ["EX-1 plus EX-2"], ["triple"]],
+    ["TRIPLE-123", "obesity", ["PAIR-12"], ["triple"]],
   ]) {
     let reads = 0, scores = 0;
     const model = {

@@ -408,10 +408,24 @@ def _tracked(session: Session, names: list[str], indication: str | None) -> list
         if name_key(condition) == name_key(indication)
     ]
     primary = _regimen_names(names[:1])
-    whole_names = [
-        *names,
-        *(name for _, aliases, keys in cards if primary & keys for name in aliases),
-    ]
+    named_aliases = [name for _, aliases, keys in cards if primary & keys for name in aliases]
+    primary_parts = {one for one in _regimen_parts(names[:1]) if len(one) > 1}
+    named_parts = {one for one in _regimen_parts(named_aliases) if len(one) > 1}
+    full_regimens = (
+        primary_parts or named_parts or {one for one in _regimen_parts(names) if len(one) > 1}
+    )
+    if len(full_regimens) > 1:
+        return []
+    whole_names = [*names, *named_aliases]
     components = {(part,) for one in _regimen_parts(whole_names) if len(one) > 1 for part in one}
-    slugs = [slug for slug, _, keys in cards if wanted & keys and not components & keys]
+    slugs = [
+        slug
+        for slug, aliases, keys in cards
+        if wanted & keys
+        and not components & keys
+        and (
+            not full_regimens
+            or all(one in full_regimens for one in _regimen_parts(aliases) if len(one) > 1)
+        )
+    ]
     return list(dict.fromkeys(slugs))

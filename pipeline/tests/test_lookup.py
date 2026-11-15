@@ -338,6 +338,7 @@ def test_tracked_cards_require_the_condition_and_whole_regimen(session: Session)
         ("ageing", "EX-1", "biological ageing"),
         ("single", "EX-1", "obesity"),
         ("combined", "EX-2 and EX-1", "obesity"),
+        ("triple", "EX-1 plus EX-2 plus EX-3", "obesity"),
     ]:
         add_claim(
             session,
@@ -350,6 +351,7 @@ def test_tracked_cards_require_the_condition_and_whole_regimen(session: Session)
         )
     add_synonym(session, "combined", "EX-2 and EX-1", "PAIR-12")
     add_synonym(session, "single", "EX-1", "ONE-BRAND")
+    add_synonym(session, "triple", "EX-1 plus EX-2 plus EX-3", "TRIPLE-123")
     for intervention, indication, aliases, expected in [
         ("EX-1 plus EX-2", "Obesity", ["EX-1"], ["combined"]),
         ("EX-1", "  OBESITY ", [], ["single"]),
@@ -361,6 +363,8 @@ def test_tracked_cards_require_the_condition_and_whole_regimen(session: Session)
         ("UNTRACKED-PAIR", "obesity", [], []),
         ("EX-1 plus EX-2", "obesity", ["ONE-BRAND"], ["combined"]),
         ("PAIR-12", "obesity", ["ONE-BRAND"], ["combined"]),
+        ("EX-1 plus EX-2 plus EX-3", "obesity", ["EX-1 plus EX-2"], ["triple"]),
+        ("TRIPLE-123", "obesity", ["PAIR-12"], ["triple"]),
     ]:
         found = find(
             session,

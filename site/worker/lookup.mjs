@@ -297,14 +297,22 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
       .filter(([, claim]) => indication && nameKey(claim.indication) === indication)
       .map(([slug, claim]) => ({ slug, claim, keys: regimenKeys(claim.names ?? []) }));
     const primary = regimenKeys(names.slice(0, 1))[0];
+    const namedCards = cards.filter(card => card.keys.includes(primary));
+    const primaryParts = regimenParts(names.slice(0, 1)).filter(parts => parts.length > 1);
+    const namedParts = regimenParts(namedCards.flatMap(card => card.claim.names ?? [])).filter(parts => parts.length > 1);
+    const fullRegimens = new Set((primaryParts.length ? primaryParts : namedParts.length ? namedParts :
+      regimenParts(names).filter(parts => parts.length > 1)).map(parts => JSON.stringify(parts)));
     // A component's brand can look like a whole-regimen alias in a model reading.
     // The published card's own aliases establish that it is actually a component.
     // A named regimen's primary card can also supply its explicit component names.
-    const wholeNames = [...names, ...cards.filter(card => card.keys.includes(primary)).flatMap(card => card.claim.names ?? [])];
+    const wholeNames = [...names, ...namedCards.flatMap(card => card.claim.names ?? [])];
     const components = new Set(regimenParts(wholeNames).filter(parts => parts.length > 1)
       .flatMap(parts => parts.map(part => JSON.stringify([part]))));
     const tracked = cards
       .filter(card => card.keys.some(name => wanted.has(name)) && !card.keys.some(name => components.has(name)))
+      .filter(card => fullRegimens.size <= 1 && (!fullRegimens.size ||
+        regimenParts(card.claim.names ?? []).filter(parts => parts.length > 1)
+          .every(parts => fullRegimens.has(JSON.stringify(parts)))))
       .map(({ slug, claim }) => ({ slug, headline: claim.headline, page: claim.page }))
       .sort((a, b) => a.slug.localeCompare(b.slug));
 
