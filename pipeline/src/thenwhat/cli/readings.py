@@ -9,6 +9,7 @@ from thenwhat.claims.entry import claim_by_slug
 from thenwhat.cli import extract
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
+from thenwhat.cli.session import settings_or_exit
 from thenwhat.readings.service import ReadingsRun, published_claims, read_trials, trials_of
 
 
@@ -41,7 +42,13 @@ def readings_command(
                 " with a planned primary outcome."
             )
             return
-        run = read_trials(session, extract.make_llm(session), trials, now=datetime.now(UTC))
+        run = read_trials(
+            session,
+            extract.make_llm(session),
+            trials,
+            now=datetime.now(UTC),
+            at_once=settings_or_exit().readings_at_once,
+        )
         for trial_id, said in run.failed:
             err.print(f"{trial_id} was not read: {said}", markup=False)
         out.print(summary_line(run), markup=False)

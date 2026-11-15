@@ -134,7 +134,7 @@ thenwhat statements --missing           # every published claim with such an art
 thenwhat statements claim-one --again   # read them again; pending statements are replaced
 ```
 
-Record readings are what the configured model reads from a trial's stored registry record into fixed codes: for each planned primary outcome, how long it was followed and what kind of measure it is, each with the words read (`docs/adr/0003-a-model-reads-records-into-fixed-codes.md`). A rule checks every reading against the record before it is kept, a trial whose record has not changed is not read again, and the run stops at the monthly spend ceiling. `thenwhat prepare` runs it as its last step: A reading the model gives less than `READING_ACCEPT_ABOVE` confidence (0.8 by default) is not exported, and the page gives the registry's own words for that answer.
+Record readings are what the configured model reads from a trial's stored registry record into fixed codes: for each planned primary outcome, how long it was followed and what kind of measure it is, each with the words read (`docs/adr/0003-a-model-reads-records-into-fixed-codes.md`). A rule checks every reading against the record before it is kept, a trial whose record has not changed is not read again, and the run stops at the monthly spend ceiling. Trials are asked about a few at a time (`READINGS_AT_ONCE`, 6 unless set), and the ceiling is looked at before each group. `thenwhat prepare` runs it as its last step: A reading the model gives less than `READING_ACCEPT_ABOVE` confidence (0.8 by default) is not exported, and the page gives the registry's own words for that answer.
 
 ```sh
 thenwhat readings claim-one             # the trials of the named claims
