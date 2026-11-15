@@ -33,7 +33,7 @@ from thenwhat.decide.steps import (
 from thenwhat.domain import Decider, EventType, ReviewState, TermFit, TermRole
 from thenwhat.review.decisions import record_decision
 from thenwhat.review.queue import decide_item, pending_items
-from thenwhat.sources.base import SourceRecord
+from thenwhat.sources.base import SourceError, SourceRecord
 from thenwhat.sources.mesh import LabelledTerm, Mesh
 from thenwhat.sources.opentargets import NamedTarget, OpenTargets
 from thenwhat.terms.candidates import (
@@ -782,6 +782,40 @@ def test_terms_pending_rescore_requires_named_claims(run, session: Session, knee
     refused = run("terms", "--all", "--rescore-pending")
     assert refused.exit_code == 1 and "Name the claims" in refused.output
     assert len(term_logs(session)) == before + 1
+
+
+def test_terms_source_failure_keeps_completed_claims(
+    run, session: Session, knee_claim: Claim, monkeypatch
+):
+    new_claim(session, slug="failing-claim", intervention="EX-FAIL")
+    session.flush()
+
+    @contextmanager
+    def transaction():
+        with session.begin_nested():
+            yield session
+
+    class FailingVocabulary(Vocabulary):
+        def terms_labelled(self, name: str):
+            if name == "EX-FAIL":
+                raise SourceError("mesh unavailable")
+            return super().terms_labelled(name)
+
+    monkeypatch.setattr("thenwhat.cli.entry.open_session", transaction)
+    monkeypatch.setattr(
+        "thenwhat.cli.terms.make_vocabulary",
+        lambda s: FailingVocabulary(
+            {"D010455": "Compounds of AMINO ACIDS joined by peptide bonds."}
+        ),
+    )
+    result = run("terms", SLUG, "failing-claim")
+
+    assert result.exit_code == 1 and "mesh unavailable" in result.output
+    assert links(session, knee_claim)["Osteoarthritis, Knee"].review_state is ReviewState.APPROVED
+    before = len(term_logs(session))
+    assert before == 2
+    assert run("terms", SLUG).exit_code == 0
+    assert len(term_logs(session)) == before, "Completed paid readings must be reused."
 
 
 # --- entry terms -------------------------------------------------------------------

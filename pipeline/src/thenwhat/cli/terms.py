@@ -117,12 +117,17 @@ def terms_command(
                 else "Every published claim has a candidate subject term."
             )
             return
-        vocabulary = make_vocabulary(session)
-        genes = make_genes(session)
-        drugs = make_drugs(session)
-        backend = resolve.make_backend(session)
-        accept, reject = settings.match_accept_above, settings.match_reject_below
-        for claim in claims:
+        selected = [claim.slug for claim in claims]
+    # Commit each completed claim before asking for the next. A source outage must
+    # not discard earlier paid readings, decisions or reusable source records.
+    for slug in selected:
+        with entry_session() as session:
+            claim = claim_by_slug(session, slug)
+            vocabulary = make_vocabulary(session)
+            genes = make_genes(session)
+            drugs = make_drugs(session)
+            backend = resolve.make_backend(session)
+            accept, reject = settings.match_accept_above, settings.match_reject_below
             now = datetime.now(UTC)
             run = link_terms(
                 session,
