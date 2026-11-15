@@ -1,4 +1,5 @@
 ---
+import FoldHead from "./FoldHead.astro";
 // Reported statements: what each news report said about the treatment, in the site's
 // own words, framed as the report's and grouped under the report. Openspec
 // site-publishing: "Reported statements on the claim page". Between the summary and
@@ -36,7 +37,7 @@ const groups = articles
 ---
 
 <section class="matched statements" data-pagefind-ignore>
-  <h2 class="bar" id="reported-statements">{statementsHeading(groups.length)}</h2>
+  <FoldHead id="reported-statements" phone="folded">{statementsHeading(groups.length)}</FoldHead>
   <p class="take-why">
     {statementsNote(groups.length)} <a href="/how-it-works#what-a-report-said">How statements are found</a>
   </p>

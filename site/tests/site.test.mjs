@@ -715,7 +715,9 @@ test("Scenario: Every answer opens to something", () => {
     assert.equal(count(section, 'class="brief-source"'), answers);
     // Closed until opened, and opened by the browser alone.
     assert.equal(count(section, "<details open"), 0);
-    assert.doesNotMatch(section, /<script|<button/);
+    // The heading folds the section with a button; the answers themselves need none.
+    const answersOnly = section.slice(section.indexOf("</h2>"));
+    assert.doesNotMatch(answersOnly, /<script|<button/);
   }
 });
 
@@ -1024,7 +1026,7 @@ test("Scenario: Definition in the vocabulary's style, and Vocabulary that asks f
 test("Scenario: Card for a drug class with approved uses", () => {
   // The background section is never inside or beside the status.
   const html = page("phase-claim/index.html");
-  const digest = html.match(/<section class="reported"[\s\S]*?<\/section>/)[0];
+  const digest = html.match(/<section class="reported[^"]*"[\s\S]*?<\/section>/)[0];
   assert.ok(!digest.includes("card-kind") && !digest.includes("Background"));
 });
 
@@ -1287,7 +1289,7 @@ const organisationsSection = (html) =>
 test("Scenario: Claim with a university and a company", () => {
   const section = organisationsSection(page("phase-claim/index.html"));
   assert.ok(section, "the claim names organisations, so the page lists them");
-  assert.match(section, /id="organisations"[^>]*>Organisations named</);
+  assert.match(section, /<h2 class="bar" id="organisations">[\s\S]*?Organisations named\s*<\/span><\/button><\/h2>/);
   // Named in the report first, then sponsors; each group by name.
   const names = [...section.matchAll(/class="organisation-name"[^>]*>([^<]+)</g)].map(([, name]) => name);
   assert.deepEqual(names, ["Example University", "Zed Start-up", "Synthetic Institute"]);
@@ -1329,7 +1331,7 @@ test("Scenario: Trial sponsored by a person", () => {
 
 test("Scenario: University press release on the claim page", () => {
   const html = page("approved-claim/index.html");
-  const reported = html.match(/<section class="reported"[\s\S]*?<\/section>/)[0];
+  const reported = html.match(/<section class="reported[^"]*"[\s\S]*?<\/section>/)[0];
   assert.match(reported, /This report is on Other Example Hospital’s website\./);
   // The timetable names the report too, with the same note beside it.
   assert.equal(count(html, "This report is on Other Example Hospital’s website."), 2);
@@ -1377,7 +1379,7 @@ test("Scenario: Claim with three statements from one report", () => {
   const html = page("phase-claim/index.html");
   const section = statementsOf(html);
   assert.ok(section, "no statements section");
-  assert.match(section, /<h2 class="bar" id="reported-statements">What the report said<\/h2>/);
+  assert.match(section, /<h2 class="bar" id="reported-statements">[\s\S]*?What the report said\s*<\/span><\/button><\/h2>/);
   // One report, named by its title, outlet and date, with the three statements under it.
   assert.equal(count(section, 'class="matched-group statement-report"'), 1);
   assert.match(section, /href="https:\/\/uk\.news\.example\.org\/3"[^>]*>\s*“Example report 3”/);
@@ -1394,7 +1396,8 @@ test("Scenario: Claim with three statements from one report", () => {
   assert.ok(html.indexOf('id="reported-statements"') > html.indexOf('class="lede"'));
   assert.ok(html.indexOf('id="reported-statements"') < html.indexOf('id="timetable"'));
   // Not inside the status panel.
-  const digest = html.match(/<div class="digest">[\s\S]*?<p class="lede"/)[0];
+  // The panel is the band's last element, so it ends where the band does.
+  const digest = html.match(/<div class="digest">[\s\S]*?<\/section>/)[0];
   assert.ok(!digest.includes("statement"));
 });
 

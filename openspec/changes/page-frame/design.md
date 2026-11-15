@@ -76,6 +76,12 @@ The frame needs two: one below which the side columns give way (the section list
 
 Three pull requests, each leaving `make check` green: the status rule and regenerated seed export; the frame on the claim page; the topic page, print and DESIGN.md. The first is independent of the others.
 
+### 9. Found while building
+
+- The site already had a pale band (`.band`) on the home, about, extension and audience pages, and `Base.astro` already had the band slot, the skip link and the id on `<main>`. The operator decided on 15 Nov 2026 that claim and topic pages take the navy band and the other pages keep the pale one: pale for a page's task, navy for a record's status. DESIGN.md records both.
+- The folding heading is one component, `FoldHead.astro`, put in place of each section's `h2`. Everything after it in its section is the fold's body, hidden by a sibling rule, so no section needed a wrapper and the components that own their heading (`RecordBrief`, `Statements`, `Organisations`, `Background`) changed by one line each. This replaces the `FoldSection` wrapper named in decision 1. Its script is `src/scripts/folds.ts`, loaded by the base layout, so that no section's markup holds a script.
+- The actions keep their words (Follow, Share, Check again later, Report an error) beside their icons, in place of the mock's icon-only column: the first critique found the icon-only column unexplained without hover.
+
 ## Risks / Trade-offs
 
 - [The claim page template is being restructured while three other changes touch it] → Land the status rule first; rebase the frame work on main immediately before starting and keep it to one pull request for the claim page.

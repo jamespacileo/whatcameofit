@@ -1,4 +1,5 @@
 ---
+import FoldHead from "./FoldHead.astro";
 // Background cards: what an open vocabulary says of the claim's condition and
 // treatment. The label and definition are the source's; the site adds the credit, the
 // score and the reasons. Openspec site-publishing: "Background cards on the claim page".
@@ -53,7 +54,9 @@ const day = (stamp: string) =>
 ---
 
 <section class="matched background" data-pagefind-ignore>
-  <h2 class="bar" id="background">Background</h2>
+  <FoldHead id="background" start="folded" note={`${cards.length} ${cards.length === 1 ? "term" : "terms"}, in their source’s words`}>
+    Background
+  </FoldHead>
   <p class="take-why">
     {BACKGROUND_NOTE}
     {cards.some((card) => isTarget(card) && !isDrugsTarget(card)) && ` ${TARGET_NOTE}`}
