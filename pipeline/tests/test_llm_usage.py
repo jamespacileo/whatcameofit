@@ -151,6 +151,14 @@ def test_paid_usage_survives_the_callers_rollback(engine: Engine):
             entry = reader.scalar(select(LlmUsage).where(LlmUsage.purpose == purpose))
             assert entry is not None, "Rolling back claim work cannot undo provider usage."
             assert entry.input_tokens > 0 and entry.output_tokens > 0 and entry.cost_usd > 0
+            with pytest.raises(BudgetExceeded):
+                ask(
+                    llm(reader, scripted({"word": "ok"}), monthly_budget_usd=entry.cost_usd),
+                    purpose=purpose,
+                )
+            assert (
+                len(reader.scalars(select(LlmUsage).where(LlmUsage.purpose == purpose)).all()) == 1
+            )
     finally:
         with engine.begin() as connection:
             connection.execute(delete(LlmUsage).where(LlmUsage.purpose == purpose))
