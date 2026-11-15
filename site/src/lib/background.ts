@@ -267,7 +267,7 @@ export function definitionCreditText(source: Pick<ExportedCardSource, "credit" |
 
 /** What the section says of itself, once, above the cards. */
 export const BACKGROUND_NOTE =
-  "What an open vocabulary says about the terms this claim uses. Each definition is its source’s own wording, written for indexing research, and is not this site’s. Where the vocabulary has no term for the treatment itself, the note is for the kind of treatment it is, and says so. These notes describe terms. They are not about this claim’s evidence and they are not medical advice. A score is about how well a term fits the claim, not about the treatment. Naming a source does not mean it endorses this site.";
+  "These notes describe the terms this claim uses, in their sources’ own words and not this site’s; naming a source does not mean it endorses this site. They are not about this claim’s evidence and they are not medical advice, and a score is about how well a term fits the claim, not about the treatment.";
 
 export const DEFINITION_LABEL = "Definition, in the source’s words";
 export const NO_DEFINITION = "The source gives this term no definition.";
