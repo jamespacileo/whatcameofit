@@ -1,0 +1,132 @@
+{
+  "release_commit": "fb70f630e6880b99c80f2aad455ac1f57d64797b",
+  "started_at": "2026-11-15T22:38:08.393Z",
+  "completed_at": "2026-11-15T22:38:41.696Z",
+  "installed_version": "0.9.14",
+  "installed_resource_replay": {
+    "method": "Pure functions from the installed signed app with the released index; not a native popup",
+    "new_card_attached": true,
+    "broad_condition_excluded": true,
+    "original_check_time_preserved": true,
+    "model_requests": 0
+  },
+  "row": "A033",
+  "url": "https://www.foxnews.com/health/new-pancreatic-cancer-pill-could-reshape-treatment-early-trial-results-stun-researchers.amp",
+  "shared_reuse": "verified cache-only and ordinary hits; original check time and clinical candidates preserved",
+  "worker": "e4fa0bcd-2f57-481f-a8b6-00376bd6a244",
+  "deployed_at": "2026-11-15T22:37:18Z",
+  "production_run": 43769937777,
+  "requests": [
+    {
+      "method": "released address lookup",
+      "checked_at": "2026-11-15T22:38:15.413Z",
+      "http": 200,
+      "elapsed_ms": 7016,
+      "server_timing": "registry;dur=76, papers;dur=0, read;dur=5691, research;dur=48, score;dur=1034, core;dur=6801, total;dur=6801",
+      "treatment": "daraxonrasib",
+      "condition": "Metastatic pancreatic cancer",
+      "tracked": [],
+      "cache": null,
+      "trial_records": 22,
+      "top_trials": [
+        {
+          "id": "NCT06625320",
+          "score": 1,
+          "answer": "match",
+          "agrees": [
+            "trial_name",
+            "participants"
+          ]
+        },
+        {
+          "id": "NCT07573215",
+          "score": 0.71,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06445062",
+          "score": 0.67,
+          "answer": "match",
+          "agrees": []
+        }
+      ]
+    },
+    {
+      "method": "released cache-only probe",
+      "checked_at": "2026-11-15T22:38:28.560Z",
+      "http": 200,
+      "elapsed_ms": 144,
+      "server_timing": null,
+      "treatment": "daraxonrasib",
+      "condition": "Metastatic pancreatic cancer",
+      "tracked": [],
+      "cache": {
+        "checkedAt": 1794782295342,
+        "shared": true
+      },
+      "trial_records": 22,
+      "top_trials": [
+        {
+          "id": "NCT06625320",
+          "score": 1,
+          "answer": "match",
+          "agrees": [
+            "trial_name",
+            "participants"
+          ]
+        },
+        {
+          "id": "NCT07573215",
+          "score": 0.71,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06445062",
+          "score": 0.67,
+          "answer": "match",
+          "agrees": []
+        }
+      ]
+    },
+    {
+      "method": "released ordinary cache hit",
+      "checked_at": "2026-11-15T22:38:41.695Z",
+      "http": 200,
+      "elapsed_ms": 132,
+      "server_timing": null,
+      "treatment": "daraxonrasib",
+      "condition": "Metastatic pancreatic cancer",
+      "tracked": [],
+      "cache": {
+        "checkedAt": 1794782295342,
+        "shared": true
+      },
+      "trial_records": 22,
+      "top_trials": [
+        {
+          "id": "NCT06625320",
+          "score": 1,
+          "answer": "match",
+          "agrees": [
+            "trial_name",
+            "participants"
+          ]
+        },
+        {
+          "id": "NCT07573215",
+          "score": 0.71,
+          "answer": "match",
+          "agrees": []
+        },
+        {
+          "id": "NCT06445062",
+          "score": 0.67,
+          "answer": "match",
+          "agrees": []
+        }
+      ]
+    }
+  ]
+}
