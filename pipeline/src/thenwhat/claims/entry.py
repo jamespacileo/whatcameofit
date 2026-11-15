@@ -195,11 +195,12 @@ MAX_NAMED_CLAIMS = 8
 
 @dataclass(frozen=True, slots=True)
 class NamedClaim:
-    """A claim as the same-claim decision is shown it: what it is for, never its text."""
+    """Claim identity and its own summary, never source article text."""
 
     slug: str
     intervention: str
     indication: str
+    summary: str
 
 
 def named_claims(session: Session, claim_ids: Sequence[int]) -> list[NamedClaim]:
@@ -208,7 +209,7 @@ def named_claims(session: Session, claim_ids: Sequence[int]) -> list[NamedClaim]
     if not claim_ids:
         return []
     rows = session.execute(
-        select(Claim.slug, Entity.name, Claim.indication)
+        select(Claim.slug, Entity.name, Claim.indication, Claim.summary)
         .join(Entity, Entity.claim_id == Claim.id)
         .where(
             Entity.type == EntityType.INTERVENTION,
@@ -217,7 +218,7 @@ def named_claims(session: Session, claim_ids: Sequence[int]) -> list[NamedClaim]
         )
         .order_by(Claim.id)
     )
-    return [NamedClaim(slug, name, indication) for slug, name, indication in rows]
+    return [NamedClaim(slug, name, indication, summary) for slug, name, indication, summary in rows]
 
 
 def _one_within_the_other(first: list[str], second: list[str]) -> bool:
@@ -230,34 +231,39 @@ def _one_within_the_other(first: list[str], second: list[str]) -> bool:
     )
 
 
-def claims_sharing_a_name(session: Session, names: Sequence[str]) -> list[NamedClaim]:
+def claims_sharing_a_name(
+    session: Session, names: Sequence[str], *, indication: str = ""
+) -> list[NamedClaim]:
     """Claims whose intervention shares a name with one of these names.
 
     A name is shared when a claim's intervention name or synonym is one of the names, or
     when one sits whole inside the other, word for word: "esketamine" inside "esketamine
     nasal spray". This finds candidates and decides nothing: two claims for one drug and
     two conditions both come back. Claims whose name is equal come first, then the oldest.
+    The exact name and condition pair comes first so the limit cannot hide it.
     A rejected draft is never a candidate: it would only take the decision's votes from
     the claim that stands.
     """
     wanted = [words for name in names if (words := name_key(name).split())]
     if not wanted:
         return []
-    found: list[tuple[bool, int, NamedClaim]] = []
+    found: list[tuple[bool, bool, int, NamedClaim]] = []
+    wanted_condition = name_key(indication)
     rows = session.execute(
-        select(Claim.id, Claim.slug, Claim.indication, Entity.name, Entity.synonyms)
+        select(Claim.id, Claim.slug, Claim.indication, Entity.name, Entity.synonyms, Claim.summary)
         .join(Entity, Entity.claim_id == Claim.id)
         .where(Entity.type == EntityType.INTERVENTION, Claim.review_state != ReviewState.REJECTED)
         .order_by(Claim.id)
     )
-    for claim_id, slug, indication, name, synonyms in rows:
+    for claim_id, slug, condition, name, synonyms, summary in rows:
         known = [name_key(known_name).split() for known_name in (name, *synonyms)]
         if not any(_one_within_the_other(mine, theirs) for mine in wanted for theirs in known):
             continue
         equal = any(mine == theirs for mine in wanted for theirs in known)
-        found.append((not equal, claim_id, NamedClaim(slug, name, indication)))
-    found.sort(key=lambda entry: entry[:2])
-    return [claim for _, _, claim in found[:MAX_NAMED_CLAIMS]]
+        exact = equal and name_key(condition) == wanted_condition
+        found.append((not exact, not equal, claim_id, NamedClaim(slug, name, condition, summary)))
+    found.sort(key=lambda entry: entry[:3])
+    return [claim for _, _, _, claim in found[:MAX_NAMED_CLAIMS]]
 
 
 def add_claim(

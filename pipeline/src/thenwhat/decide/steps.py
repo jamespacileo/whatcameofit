@@ -8,7 +8,7 @@ from datetime import datetime
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.entities import development_codes
+from thenwhat.claims.entities import development_codes, whole_intervention_names
 from thenwhat.claims.entry import NamedClaim
 from thenwhat.claims.verticals import VERTICALS
 from thenwhat.db.models import Claim, ClaimTerm, DecisionLog, Entity, EntityMatch
@@ -16,6 +16,7 @@ from thenwhat.decide.core import Backend, Decision, DecisionFailed, decide, deci
 from thenwhat.domain import EntityType, EvidenceStage, TermRole
 from thenwhat.sources import openalex
 from thenwhat.sources.base import SourceRecord
+from thenwhat.terms.candidates import ENTRY_TERM_EQUALS_NAME
 
 EVIDENCE_STAGE = "evidence_stage"
 ENTITY_MATCH = "entity_match"
@@ -30,11 +31,31 @@ MAX_CANDIDATE_CHARACTERS = 1500
 TRIAL_OPTIONS = [MATCH, OTHER_INDICATION, NOT_A_MATCH]
 TRIAL_QUESTION = (
     "Is this record a trial of the claim's intervention for the claim's indication?\n"
-    f"- {MATCH}: it tests this intervention in the claim's indication, in a form of"
-    " that condition, or in patients who have it.\n"
-    f"- {OTHER_INDICATION}: it tests this intervention for a different condition,"
-    " or only in healthy volunteers.\n"
-    f"- {NOT_A_MATCH}: it is not a trial of this intervention."
+    f"- {MATCH}: the record establishes the same complete intervention, including any"
+    " explicit route, formulation, stereoisomer and regimen, in the claim's indication,"
+    " in a form of"
+    " that condition, or in patients who have it, respecting any explicit patient"
+    " population or treatment setting in the claim.\n"
+    f"- {OTHER_INDICATION}: it tests the same complete intervention for a different condition,"
+    " an incompatible patient population or treatment setting, or only in healthy volunteers.\n"
+    f"- {NOT_A_MATCH}: it is not a trial of this intervention, including a conflicting"
+    " route, formulation, stereoisomer or regimen.\n"
+    "Explicit restrictions such as prior treatment, disease stage, biomarkers or age"
+    " are part of the indication. Compare prior treatment within the disease setting"
+    " specified by the claim. First-line and later-line requirements conflict when"
+    " they concern the same setting. Prior adjuvant or neoadjuvant treatment alone"
+    " does not establish that conflict. A trial mentioned in the article"
+    " may be a separate study; its mention does not override a conflicting setting."
+    " If the record does not establish compatibility with an explicit restriction,"
+    " retain uncertainty. Do not invent restrictions when the claim gives none."
+    " Explicit route, formulation, stereoisomer and combination-regimen restrictions"
+    " are part of the intervention. A conflicting intervention is not_a_match."
+    " Check intervention descriptions and arm membership: separate arms testing A"
+    " and B do not establish a trial of A plus B. Missing or truncated details do"
+    " not establish compatibility; retain uncertainty about explicit restrictions."
+    " A generic drug name alone does not establish an explicitly claimed route or"
+    " formulation. If that detail is absent, spread uncertainty across the options"
+    " rather than assuming the restriction is satisfied."
 )
 
 PAPER_MATCH = "paper_match"
@@ -80,7 +101,9 @@ TERM_QUESTIONS = {
         f"- {BROADER}: it names a class or kind of treatment that includes the claim's"
         " intervention.\n"
         f"- {SOMETHING_ELSE}: it names a different treatment, such as another drug given"
-        " in the same trials, or something that is not the claim's intervention."
+        " in the same trials, just one component of the claim's combination regimen,"
+        " or something that is not the claim's intervention. A component is neither"
+        " the complete regimen nor a broader class containing that regimen."
     ),
 }
 
@@ -157,9 +180,12 @@ def _intervention_text(session: Session, claim: Claim) -> str:
     ).first()
     names = ""
     if intervention is not None:
-        also = (
-            f" (also known as: {', '.join(intervention.synonyms)})" if intervention.synonyms else ""
-        )
+        aliases = [
+            name
+            for name in whole_intervention_names([intervention.name, *intervention.synonyms])
+            if name != intervention.name
+        ]
+        also = f" (also known as: {', '.join(aliases)})" if aliases else ""
         codes = development_codes(session, intervention)
         coded = f" (development codes: {', '.join(codes)})" if codes else ""
         names = f"\nIntervention: {intervention.name}{also}{coded}."
@@ -167,16 +193,18 @@ def _intervention_text(session: Session, claim: Claim) -> str:
     return f"Claim: {claim.headline}{summary}{names}"
 
 
-def has_stage_suggestion(session: Session, claim: Claim) -> bool:
-    return (
+def latest_stage_suggestion(session: Session, claim: Claim) -> Decision | None:
+    """Reuse the most recent successful stage reading, including its confidence."""
+    return _logged(
         session.scalars(
-            select(DecisionLog.id).where(
+            select(DecisionLog)
+            .where(
                 DecisionLog.step == EVIDENCE_STAGE,
                 DecisionLog.input_ref == f"claim:{claim.id}",
                 DecisionLog.error.is_(None),
             )
+            .order_by(DecisionLog.id.desc())
         ).first()
-        is not None
     )
 
 
@@ -184,7 +212,7 @@ def suggest_evidence_stage(
     session: Session, backend: Backend, claim: Claim, *, now: datetime
 ) -> Decision:
     """Suggest the stage of evidence at announcement. The claim's stage is not set here:
-    it stays empty until an operator confirms it."""
+    it stays empty until the operator or a separate threshold rule confirms it."""
     return decide(
         session,
         backend,
@@ -287,9 +315,18 @@ def term_ref(term: ClaimTerm) -> str:
 
 
 def term_text(term: ClaimTerm, definition: str | None) -> str:
-    """A subject term as it is shown to the backend: its label and its definition."""
+    """The vocabulary label, verified entry-name evidence and definition."""
+    entry_matches = [
+        reason for reason in term.reasons if reason.get("code") == ENTRY_TERM_EQUALS_NAME
+    ]
+    provenance = (
+        f"Vocabulary entry-name evidence: {json.dumps(entry_matches, ensure_ascii=False)}\n"
+        if entry_matches
+        else ""
+    )
     return (
         f"Candidate term ({term.source_name} {term.external_id}): {term.label}\n"
+        f"{provenance}"
         f"Definition: {definition or 'none given'}"
     )
 
@@ -315,7 +352,13 @@ def check_terms(
         backend,
         step=TERM_MATCH,
         intro=_claim_text(session, claim),
-        question=TERM_QUESTIONS[role],
+        question=TERM_QUESTIONS[role]
+        + (
+            "\nEntry-name evidence explains why the vocabulary record was proposed."
+            " An entry term can name a narrower concept within the record; it does not"
+            " by itself prove that the record is the same as the claim. Evaluate its"
+            " meaning and the whole claim, and retain uncertainty when evidence is insufficient."
+        ),
         items=[
             (ref, term_text(term, definition))
             for ref, (term, definition) in zip(refs, candidates, strict=True)
@@ -564,22 +607,39 @@ def choose_origin_paper(
     )
 
 
+def _excerpt(value: str | None, limit: int) -> str | None:
+    if value is None or len(value) <= limit:
+        return value
+    return value[: limit - len(" [truncated]")] + " [truncated]"
+
+
 def _describe(candidate: SourceRecord) -> str:
     """What the record says, with a trial's conditions and interventions first so that a
     long record is never cut off before them."""
     section = candidate.payload.get("protocolSection")
     if isinstance(section, dict):
         identification = section.get("identificationModule", {})
+        treatment = section.get("armsInterventionsModule", {})
         described = {
-            "title": identification.get("briefTitle"),
-            "official_title": identification.get("officialTitle"),
             "conditions": section.get("conditionsModule", {}).get("conditions", []),
+            "title": _excerpt(identification.get("briefTitle"), 240),
             "interventions": [
-                intervention.get("name")
-                for intervention in section.get("armsInterventionsModule", {}).get(
-                    "interventions", []
-                )
+                {
+                    "name": intervention.get("name"),
+                    "description": _excerpt(intervention.get("description"), 350),
+                    "arms": intervention.get("armGroupLabels", []),
+                }
+                for intervention in treatment.get("interventions", [])
             ],
+            "arms": [
+                {
+                    "label": arm.get("label"),
+                    "interventions": arm.get("interventionNames", []),
+                    "description": _excerpt(arm.get("description"), 350),
+                }
+                for arm in treatment.get("armGroups", [])
+            ],
+            "official_title": _excerpt(identification.get("officialTitle"), 240),
             "phases": section.get("designModule", {}).get("phases", []),
             "status": section.get("statusModule", {}).get("overallStatus"),
             "sponsor": section.get("sponsorCollaboratorsModule", {})
@@ -587,11 +647,13 @@ def _describe(candidate: SourceRecord) -> str:
             .get("name"),
         }
         text = json.dumps(
-            {name: value for name, value in described.items() if value}, ensure_ascii=False
+            {name: value for name, value in described.items() if value},
+            ensure_ascii=False,
+            separators=(",", ":"),
         )
     else:
         text = json.dumps(candidate.payload, ensure_ascii=False, sort_keys=True)
-    return text[:MAX_CANDIDATE_CHARACTERS]
+    return _excerpt(text, MAX_CANDIDATE_CHARACTERS) or ""
 
 
 # --- link lead triage (openspec lead-triage) -----------------------------------------
@@ -699,22 +761,34 @@ SAME_CLAIM = "same_claim"
 NO_SUCH_CLAIM = "none-of-these"
 SAME_CLAIM_QUESTION = (
     "An article has been read. Does it report the same treatment for the same condition "
-    "as one of the claims below? Choose a claim only when its treatment is the article's "
-    "treatment and its condition is the article's condition: worded differently, more "
-    "narrowly or more generally, it is still the same condition. A different condition, "
-    f"or a different treatment that shares a word of the name, is {NO_SUCH_CLAIM}."
+    "as one of the claims below? Use the names AND the summaries to establish identity. "
+    "Equal generic category names do not establish that two products are the same. "
+    "Different vaccine products, stereoisomers, routes, formulations or complete regimens "
+    f"are {NO_SUCH_CLAIM}; separate treatments are not a combination. "
+    "Different wording of the same condition may agree, but preserve explicit patient "
+    "population and treatment-setting restrictions: prior-treated and first-line claims "
+    "are not interchangeable. Choose a claim only when the complete treatment and "
+    "condition agree. When missing or truncated detail prevents establishing identity, "
+    f"prefer {NO_SUCH_CLAIM}; do not infer an equivalence from a shared name alone."
 )
 
 
-def same_claim_state(intervention: str, indication: str, candidates: Sequence[NamedClaim]) -> str:
-    """What the same-claim decision is shown: the treatment and condition read from the
-    article, the question, and each candidate claim's treatment and condition. Never a
-    word of the article."""
+def same_claim_state(
+    intervention: str, indication: str, summary: str, candidates: Sequence[NamedClaim]
+) -> str:
+    """Bounded identity context from our summaries, never the source article's text."""
+
+    def bounded(value: str) -> str:
+        return value if len(value) <= 500 else value[:486] + " [truncated]"
+
     listed = "\n".join(
-        f"- {claim.slug}: {claim.intervention} for {claim.indication}" for claim in candidates
+        f"- {claim.slug}: {claim.intervention} for {claim.indication}\n"
+        f"  Claim summary: {bounded(claim.summary)}"
+        for claim in candidates
     )
     return (
         f"Article's treatment: {intervention}\nArticle's condition: {indication}\n\n"
+        f"Article summary: {bounded(summary)}\n\n"
         f"{SAME_CLAIM_QUESTION}\n{listed}\n- {NO_SUCH_CLAIM}"
     )
 
@@ -739,6 +813,7 @@ def choose_same_claim(
     ref: str,
     intervention: str,
     indication: str,
+    summary: str,
     candidates: Sequence[NamedClaim],
     now: datetime,
 ) -> SameClaim:
@@ -750,7 +825,7 @@ def choose_same_claim(
         session,
         backend,
         step=SAME_CLAIM,
-        state=same_claim_state(intervention, indication, candidates),
+        state=same_claim_state(intervention, indication, summary, candidates),
         options=[*(claim.slug for claim in candidates), NO_SUCH_CLAIM],
         input_ref=ref,
         now=now,
@@ -772,8 +847,10 @@ def choose_same_claim(
 TREATMENT_KIND = "treatment_kind"
 NEW_TREATMENT = "new_treatment"
 ESTABLISHED_TREATMENT = "established_treatment"
+# About one treatment for one condition, but not about what the treatment does.
+BUSINESS_NEWS = "business_news"
 NOT_ONE_TREATMENT = "not_one_treatment"
-TREATMENT_KIND_OPTIONS = [NEW_TREATMENT, ESTABLISHED_TREATMENT, NOT_ONE_TREATMENT]
+TREATMENT_KIND_OPTIONS = [NEW_TREATMENT, ESTABLISHED_TREATMENT, BUSINESS_NEWS, NOT_ONE_TREATMENT]
 TREATMENT_KIND_QUESTION = (
     "An article has been read and is summarised above in our own words. Which is it?\n"
     f"- {NEW_TREATMENT}: about one treatment for one condition, where the treatment is "
@@ -782,8 +859,12 @@ TREATMENT_KIND_QUESTION = (
     "refusal. A drug long used for something else and now tested for this condition "
     "belongs here.\n"
     f"- {ESTABLISHED_TREATMENT}: about one treatment for one condition, where the "
-    "treatment is already in established use for that condition. New evidence about how "
-    "well it works, its safety, its price or supply, or how it is used.\n"
+    "treatment is already in established use for that condition, and the article is "
+    "about what the treatment does: new evidence about how well it works or about its "
+    "safety, a new use of it, or a change to its approval.\n"
+    f"- {BUSINESS_NEWS}: about one treatment for one condition, but not about what the "
+    "treatment does: its price, sales, supply or shortage, a lawsuit, insurance cover, "
+    "marketing, or who is taking it.\n"
     f"- {NOT_ONE_TREATMENT}: anything else. No one treatment (a class or an approach for "
     "many conditions, a research direction); not a treatment (a predictor, a risk factor, "
     "a test, a discovery about a disease); or advice with no condition treated."
@@ -794,11 +875,15 @@ TREATMENT_KIND_QUESTION = (
 class TreatmentKind:
     """What the treatment-kind decision answered."""
 
-    # Whichever of the new and the established treatment it thinks likelier.
+    # Whichever it thinks likeliest of a new treatment, an established treatment and
+    # business news about a treatment.
     kind: str
     # The probability it gave to the article being about one treatment for one
-    # condition, new or established: one minus what it gave to neither.
+    # condition, of any of those three kinds: one minus what it gave to none.
     one_treatment_probability: float
+    # The probability it gave to the article being about what the treatment does, new
+    # or established: evidence, safety, a new use, an approval.
+    evidence_probability: float
 
 
 def treatment_kind_state(headline: str, summary: str, intervention: str, indication: str) -> str:
@@ -822,10 +907,11 @@ def kind_of_treatment_report(
     now: datetime,
 ) -> TreatmentKind:
     """Whether the backend says the article is about one treatment for one condition,
-    which is what a claim is, and whether that treatment is new or established. This
-    function decides nothing: the caller drafts or joins a claim only at or above its own
-    setting. An established treatment is wanted as much as a new one: its registry record
-    is what came of it."""
+    which is what a claim is; whether that treatment is new or established; and whether
+    the article is about what the treatment does or about its business. This function
+    decides nothing: the caller drafts or joins a claim only by its own rule. An
+    established treatment is wanted as much as a new one: its registry record is what
+    came of it."""
     decision = decide(
         session,
         backend,
@@ -836,8 +922,10 @@ def kind_of_treatment_report(
         now=now,
     )
     chances = decision.probabilities
-    new, established = chances.get(NEW_TREATMENT, 0.0), chances.get(ESTABLISHED_TREATMENT, 0.0)
+    kinds = (NEW_TREATMENT, ESTABLISHED_TREATMENT, BUSINESS_NEWS)
     return TreatmentKind(
-        kind=ESTABLISHED_TREATMENT if established > new else NEW_TREATMENT,
+        kind=max(kinds, key=lambda kind: chances.get(kind, 0.0)),
         one_treatment_probability=1 - chances.get(NOT_ONE_TREATMENT, 0.0),
+        evidence_probability=chances.get(NEW_TREATMENT, 0.0)
+        + chances.get(ESTABLISHED_TREATMENT, 0.0),
     )

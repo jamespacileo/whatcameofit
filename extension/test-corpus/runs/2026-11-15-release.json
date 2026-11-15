@@ -1,0 +1,4388 @@
+{
+  "date": "2026-11-15",
+  "initial_release": {
+    "commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+    "pr": 124,
+    "ci_run": 43714437328,
+    "worker_version": "12acaad3-45f2-4f36-9819-86c7d1683898"
+  },
+  "followup_release": {
+    "commit": "907848f16759e8d752f5729193cdcb6db2386ddd",
+    "pr": 131,
+    "ci_run": 43717386624,
+    "worker_version": "a2438aac-a516-4b10-a263-7e502a79a9bb",
+    "safari": "0.9.5 (14)"
+  },
+  "counts": {
+    "review": 18,
+    "pass": 15,
+    "partial": 2,
+    "fail": 2
+  },
+  "browser_median_ms": 5088,
+  "cache_timings": {
+    "N003": {
+      "http": 200,
+      "ms": 104,
+      "cache": {
+        "checkedAt": 1794748401526,
+        "shared": true
+      },
+      "about_a_treatment": false,
+      "server_timing": null,
+      "checked_at": "2026-11-15T13:16:37.362Z",
+      "release_commit": "907848f16759e8d752f5729193cdcb6db2386ddd"
+    },
+    "N004": {
+      "http": 200,
+      "ms": 69,
+      "cache": {
+        "checkedAt": 1794748446520,
+        "shared": true
+      },
+      "about_a_treatment": false,
+      "server_timing": null,
+      "checked_at": "2026-11-15T13:16:37.435Z",
+      "release_commit": "907848f16759e8d752f5729193cdcb6db2386ddd"
+    },
+    "N005": {
+      "http": 200,
+      "ms": 21,
+      "cache": {
+        "checkedAt": 1794748544153,
+        "shared": true
+      },
+      "about_a_treatment": false,
+      "server_timing": null,
+      "checked_at": "2026-11-15T13:16:37.456Z",
+      "release_commit": "907848f16759e8d752f5729193cdcb6db2386ddd"
+    }
+  },
+  "cases": {
+    "S004": {
+      "url": "https://www.reddit.com/r/science/comments/1xv3bsz/landmark_phase_3_multicenter_center_study_finds/",
+      "site": {
+        "http": 422,
+        "ms": 273,
+        "checked_at": "2026-11-15T12:38:48.370Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 3592,
+        "checked_at": "2026-11-15T12:48:25.681Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "Personalised melanoma cancer vaccine",
+        "condition": "Melanoma",
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Released collectFromPage executed on live Chrome DOM; caption/text only; production service; full video and installed Safari not implied.",
+      "safari": null,
+      "verdict": "review",
+      "reason": "Melanoma-vaccine claim identified, but this generic caption does not establish the particular phase-3 study. Released rerun returned no registry candidates.",
+      "knowledge_card_result": "review",
+      "knowledge_card_notes": "Treatment identity, indication, multiple claims or available media are insufficient for a unique accurate card association."
+    },
+    "S005": {
+      "url": "https://www.reddit.com/r/science/comments/1xuc21w/showing_ai_chatbots_a_drug_ad_changed_which/",
+      "site": {
+        "http": 422,
+        "ms": 42,
+        "checked_at": "2026-11-15T12:38:48.672Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 2728,
+        "checked_at": "2026-11-15T12:48:41.412Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": false,
+        "treatment": null,
+        "condition": null,
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "pass",
+      "reason": "The drug-ad/AI experiment correctly produces no specific treatment claim.",
+      "knowledge_card_result": "not applicable",
+      "knowledge_card_notes": "Negative control: a treatment knowledge card should not be inferred from incidental drug mentions."
+    },
+    "S014": {
+      "url": "https://www.tiktok.com/@cnn/video/7630975820005264653",
+      "site": {
+        "http": 422,
+        "ms": 19,
+        "checked_at": "2026-11-15T12:38:48.696Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 2832,
+        "checked_at": "2026-11-15T13:14:14.994Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "907848f16759e8d752f5729193cdcb6db2386ddd",
+        "about_a_treatment": true,
+        "treatment": "mRNA vaccine",
+        "condition": "Pancreatic cancer",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT03468244",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03948763",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06156267",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06913218",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07745790",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06326736",
+            "score": 0.99,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06577532",
+            "score": 0.99,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06496373",
+            "score": 0.84,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06353646",
+            "score": 0.69,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06141369",
+            "score": 0.52,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07114666",
+            "score": 0.19,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05556720",
+            "score": 0.01,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT07594964",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader on live Chrome after requested post metadata loaded; caption only; no audio/full video. Login overlay not completed.",
+      "safari": {
+        "version": "0.9.5 (14)",
+        "checked_at": "2026-11-15T13:10:19.405Z",
+        "service_commit": "pre-followup rollout; lookup source as 55540f1",
+        "method": "Installed Safari popup on requested CNN TikTok URL",
+        "outcome": "mRNA vaccine for Pancreatic cancer; 10 possible matches",
+        "top_record": "NCT03468244",
+        "verdict": "pass",
+        "note": "Correct caption; login overlay prevents full-video review. Candidate confidence does not confirm the specific reported trial. Final production reader rerun recorded separately."
+      },
+      "verdict": "pass",
+      "reason": "Requested CNN pancreatic-cancer vaccine caption is identified, rather than a recommended video. Installed Safari confirms the corrected subject; the specific trial and full video are not confirmed.",
+      "knowledge_card_result": "review",
+      "knowledge_card_notes": "Treatment identity, indication, multiple claims or available media are insufficient for a unique accurate card association."
+    },
+    "N003": {
+      "url": "https://www.timeslive.co.za/news/world/2026-11-04-novo-nordisk-lifts-2026-outlook-as-wegovy-pill-surges/",
+      "site": {
+        "http": 200,
+        "ms": 4726,
+        "checked_at": "2026-11-15T12:38:53.499Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": false,
+        "treatment": null,
+        "condition": null,
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "browser": {
+        "http": 200,
+        "ms": 3089,
+        "checked_at": "2026-11-15T12:48:57.519Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": false,
+        "treatment": null,
+        "condition": null,
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": {
+        "version": "0.9.5 (14)",
+        "checked_at": "2026-11-15T13:13:40.745Z",
+        "service_commit": "907848f",
+        "method": "Installed Safari popup; Search again against final release",
+        "outcome": "No specific treatment; registry not searched",
+        "verdict": "pass",
+        "note": "Earnings story; reopening showed a dated saved result before explicit refresh."
+      },
+      "verdict": "pass",
+      "reason": "Earnings story correctly returns no specific treatment; confirmed by production address, browser reader and installed Safari.",
+      "knowledge_card_result": "not applicable",
+      "knowledge_card_notes": "Negative control: a treatment knowledge card should not be inferred from incidental drug mentions."
+    },
+    "N004": {
+      "url": "https://www.theguardian.com/business/2026/nov/10/pharma-firms-weight-loss-drugs-insulin-glp-1-ozempic-mounjaro",
+      "site": {
+        "http": 200,
+        "ms": 4221,
+        "checked_at": "2026-11-15T12:39:10.747Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": false,
+        "treatment": null,
+        "condition": null,
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "browser": {
+        "http": 200,
+        "ms": 3275,
+        "checked_at": "2026-11-15T12:49:13.796Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": false,
+        "treatment": null,
+        "condition": null,
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": {
+        "version": "0.9.5 (14)",
+        "checked_at": "2026-11-15T13:14:47.759Z",
+        "service_commit": "907848f",
+        "method": "Installed Safari popup on Guardian supply story",
+        "outcome": "No specific treatment; registry not searched",
+        "verdict": "pass"
+      },
+      "verdict": "pass",
+      "reason": "Insulin supply/business story correctly returns no specific treatment; confirmed by production address, browser reader and installed Safari.",
+      "knowledge_card_result": "not applicable",
+      "knowledge_card_notes": "Negative control: a treatment knowledge card should not be inferred from incidental drug mentions."
+    },
+    "N005": {
+      "url": "https://www.mirror.co.uk/news/health/ozempic-side-effect-vision-blindness-37873301",
+      "site": {
+        "http": 200,
+        "ms": 5443,
+        "checked_at": "2026-11-15T12:39:29.311Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": false,
+        "treatment": null,
+        "condition": null,
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "browser": {
+        "http": 200,
+        "ms": 5647,
+        "checked_at": "2026-11-15T12:49:32.446Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": false,
+        "treatment": null,
+        "condition": null,
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": {
+        "version": "0.9.5 (14)",
+        "checked_at": "2026-11-15T13:16:02.088Z",
+        "service_commit": "907848f",
+        "method": "Installed Safari popup on Mirror lawsuit story",
+        "outcome": "No specific treatment; registry not searched",
+        "verdict": "pass"
+      },
+      "verdict": "pass",
+      "reason": "Ozempic lawsuit story correctly returns no specific treatment; confirmed by production address, browser reader and installed Safari.",
+      "knowledge_card_result": "not applicable",
+      "knowledge_card_notes": "Negative control: a treatment knowledge card should not be inferred from incidental drug mentions."
+    },
+    "S021": {
+      "url": "https://www.threads.com/@nejm/post/DWoQyh3jk7R/new-in-the-april-2-2026-issue-of-nejmenfortumab-vedotin-and-pembrolizumab-in-bla",
+      "site": {
+        "http": 422,
+        "ms": 174,
+        "checked_at": "2026-11-15T12:39:42.632Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 2446,
+        "checked_at": "2026-11-15T13:13:14.904Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "907848f16759e8d752f5729193cdcb6db2386ddd",
+        "about_a_treatment": false,
+        "treatment": null,
+        "condition": null,
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Final released service; real NEJM multi-study roundup.",
+      "safari": {
+        "version": "0.9.5 (14)",
+        "checked_at": "2026-11-15T13:11:31.145Z",
+        "service_commit": "rollout boundary; final production reader run recorded separately",
+        "method": "Installed Safari popup; requested Threads post",
+        "outcome": "Specific treatment and condition could not be identified; registry not searched",
+        "verdict": "review",
+        "note": "Three unrelated studies remain separate; selecting a particular claim is needed."
+      },
+      "verdict": "review",
+      "reason": "Addressed Threads roundup is read and unrelated studies are not merged. A particular claim must be selected to resolve this multi-study post.",
+      "knowledge_card_result": "review",
+      "knowledge_card_notes": "Treatment identity, indication, multiple claims or available media are insufficient for a unique accurate card association."
+    },
+    "S026": {
+      "url": "https://www.instagram.com/p/DFkxSEXRJT_/",
+      "site": {
+        "http": 422,
+        "ms": 39,
+        "checked_at": "2026-11-15T12:39:42.677Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 3226,
+        "checked_at": "2026-11-15T13:12:13.427Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "907848f16759e8d752f5729193cdcb6db2386ddd",
+        "about_a_treatment": false,
+        "treatment": null,
+        "condition": null,
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Final released service; company-profile caption only, separate from image-aware Safari result.",
+      "safari": {
+        "version": "0.9.5 (14)",
+        "checked_at": "2026-11-15T13:22:46.532Z",
+        "service_commit": "907848f",
+        "method": "Installed Safari popup; first visible slide plus company-profile caption",
+        "outcome": "Unnamed non-narcotic painkiller for Pain; no matching CTG record",
+        "verdict": "partial",
+        "note": "Second carousel slide explicitly names suzetrigine/Journavx for moderate-to-severe pain. Released collector retains the original image outside the carousel visible pane instead of selecting the visible second slide; caption-only company history correctly stays negative."
+      },
+      "verdict": "partial",
+      "reason": "Caption-only company history correctly stays negative. Installed Safari identifies an unnamed non-narcotic painkiller from slide 1 but no likely trial. Slide 2 explicitly names suzetrigine/Journavx; the collector still selects the original image outside the visible carousel pane.",
+      "knowledge_card_result": "no card",
+      "knowledge_card_notes": "No card returned; treatment name is visible on carousel slide 2, which the released media reader does not select correctly."
+    },
+    "S027": {
+      "url": "https://t.me/s/pezeshkangil/10951",
+      "site": {
+        "http": 422,
+        "ms": 34,
+        "checked_at": "2026-11-15T12:39:42.711Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 5088,
+        "checked_at": "2026-11-15T12:50:26.089Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": false,
+        "treatment": null,
+        "condition": null,
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "review",
+      "reason": "Exact Telegram message 10951 is a health-roundup continuation. It does not borrow the suzetrigine claim from neighbouring message 10940.",
+      "knowledge_card_result": "review",
+      "knowledge_card_notes": "Treatment identity, indication, multiple claims or available media are insufficient for a unique accurate card association."
+    },
+    "S028": {
+      "url": "https://www.reddit.com/r/medicine/comments/1mz19xa/how_do_we_feel_about_suzetrigine_so_far/",
+      "site": {
+        "http": 422,
+        "ms": 43,
+        "checked_at": "2026-11-15T12:39:42.754Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 5464,
+        "checked_at": "2026-11-15T12:50:44.562Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "Suzetrigine",
+        "condition": "Moderate-to-severe acute pain",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT05553366",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05558410",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06887959",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06887972",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07257133",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07463430",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07534709",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07538570",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07600697",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07654296",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07796152",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07836010",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07856654",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04977336",
+            "score": 0.99,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05034952",
+            "score": 0.99,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07145346",
+            "score": 0.99,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07355166",
+            "score": 0.99,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07357376",
+            "score": 0.99,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07795827",
+            "score": 0.99,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07843134",
+            "score": 0.99,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07539623",
+            "score": 0.98,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07864896",
+            "score": 0.98,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05661734",
+            "score": 0.97,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07575230",
+            "score": 0.97,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07821931",
+            "score": 0.97,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07839715",
+            "score": 0.96,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07905404",
+            "score": 0.96,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06774625",
+            "score": 0.95,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07195669",
+            "score": 0.95,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07723352",
+            "score": 0.95,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07866638",
+            "score": 0.95,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07219888",
+            "score": 0.93,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07226700",
+            "score": 0.93,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07548385",
+            "score": 0.93,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07672015",
+            "score": 0.93,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07928011",
+            "score": 0.93,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07829718",
+            "score": 0.89,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07820969",
+            "score": 0.85,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07624526",
+            "score": 0.66,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07525219",
+            "score": 0.53,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07511400",
+            "score": 0.52,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07231419",
+            "score": 0.05,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT05660538",
+            "score": 0.04,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT06176196",
+            "score": 0.03,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT06628908",
+            "score": 0.03,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT06696443",
+            "score": 0.03,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT06972212",
+            "score": 0.03,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT05704556",
+            "score": 0.02,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT05818852",
+            "score": 0.01,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT07296770",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05455502",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT05541471",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT05560464",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT05635110",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT05851157",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT06336096",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT06820307",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT06834009",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT07378865",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT07570069",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "pass",
+      "reason": "Suzetrigine for acute postoperative pain is identified and matching registry candidates are returned.",
+      "knowledge_card_result": "no card",
+      "knowledge_card_notes": "No knowledge card returned. Full-sheet audit must check whether an appropriate published card or evidence-backed new card is available."
+    },
+    "S029": {
+      "url": "https://www.reddit.com/r/Health/comments/1ixt7z1/covid_shots_protect_kids_from_long_covidand_dont/",
+      "site": {
+        "http": 422,
+        "ms": 37,
+        "checked_at": "2026-11-15T12:39:42.791Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 9574,
+        "checked_at": "2026-11-15T12:51:07.140Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "COVID-19 vaccination",
+        "condition": "Prevention of long COVID in children and adolescents",
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "review",
+      "reason": "COVID vaccination and long-COVID prevention are identified, but the cited observational report is not established as a registered trial; this rerun returned no candidates.",
+      "knowledge_card_result": "review",
+      "knowledge_card_notes": "Treatment identity, indication, multiple claims or available media are insufficient for a unique accurate card association."
+    },
+    "N013": {
+      "url": "https://www.instagram.com/p/DJhIT60oG4N/",
+      "site": {
+        "http": 422,
+        "ms": 14,
+        "checked_at": "2026-11-15T12:39:42.805Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 2940,
+        "checked_at": "2026-11-15T12:51:23.089Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": false,
+        "treatment": null,
+        "condition": null,
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "review",
+      "reason": "Several interventions/conditions are discussed; no unique treatment claim is selected. The multi-claim post remains review.",
+      "knowledge_card_result": "review",
+      "knowledge_card_notes": "Treatment identity, indication, multiple claims or available media are insufficient for a unique accurate card association."
+    },
+    "N014": {
+      "url": "https://tseenergy.substack.com/p/discovering-the-medical-ketogenic",
+      "site": {
+        "http": 200,
+        "ms": 5429,
+        "checked_at": "2026-11-15T12:39:48.235Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": false,
+        "treatment": null,
+        "condition": null,
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "browser": {
+        "http": 200,
+        "ms": 5372,
+        "checked_at": "2026-11-15T12:51:41.475Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": false,
+        "treatment": null,
+        "condition": null,
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "review",
+      "reason": "Retrospective discussion and several diagnoses do not establish one new treatment-study claim; no unique pair is returned.",
+      "knowledge_card_result": "review",
+      "knowledge_card_notes": "Treatment identity, indication, multiple claims or available media are insufficient for a unique accurate card association."
+    },
+    "S030": {
+      "url": "https://news.ycombinator.com/item?id=45826995",
+      "site": {
+        "http": 200,
+        "ms": 10993,
+        "checked_at": "2026-11-15T12:40:12.301Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "protein-based gel for enamel repair",
+        "condition": "Demineralized or eroded dental enamel",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT07244991",
+            "score": 0.08,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06837779",
+            "score": 0.02,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07111403",
+            "score": 0.02,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00752089",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07866482",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03976583",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04514094",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "browser": {
+        "http": 200,
+        "ms": 6308,
+        "checked_at": "2026-11-15T12:52:00.787Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "protein-based gel",
+        "condition": "Demineralized or eroded tooth enamel",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT07244991",
+            "score": 0.07,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03963791",
+            "score": 0.03,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07866482",
+            "score": 0.03,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00388297",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00752089",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01049451",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03337243",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04158388",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04213313",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04766996",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04886011",
+            "score": 0.01,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT05627791",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06135259",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06537115",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06733142",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07111403",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07201376",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07717346",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07754760",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00051831",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00589472",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00601640",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00762450",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01353937",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01599494",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01642732",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01753401",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01799954",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02168062",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02176356",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02446886",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02779153",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02931175",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02998645",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03279549",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03465111",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03649698",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03976583",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04286178",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04423211",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04514094",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04713332",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05713019",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05963516",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06059118",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06514586",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06627114",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06777199",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06837779",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06896461",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06986356",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07021495",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07037498",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07136051",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07142551",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07287917",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07568574",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07732452",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "pass",
+      "reason": "Protein-based enamel-repair gel is identified. Registry candidates are possible related studies, not proof that the preclinical material has completed human testing.",
+      "knowledge_card_result": "no card",
+      "knowledge_card_notes": "No knowledge card returned. Full-sheet audit must check whether an appropriate published card or evidence-backed new card is available."
+    },
+    "S031": {
+      "url": "https://news.ycombinator.com/item?id=44922571",
+      "site": {
+        "http": 200,
+        "ms": 8200,
+        "checked_at": "2026-11-15T12:40:33.508Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "Keratin",
+        "condition": "Tooth enamel damage and early tooth decay",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT06292026",
+            "score": 0.03,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT05062070",
+            "score": 0.02,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00428896",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00694252",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00773071",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01052818",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02345473",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03128918",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03564795",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05198895",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05476016",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06605768",
+            "score": 0.01,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT07458828",
+            "score": 0.01,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT00001292",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00279643",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01140763",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01321619",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01987726",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02027649",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02707575",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02724345",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02896725",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT02951897",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03206567",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03300440",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03308916",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03374995",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT03559218",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03640572",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03859843",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04249128",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT04475276",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04489576",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT04781244",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04884347",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05339958",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05641246",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05658172",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05797285",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT06153641",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06261944",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06406387",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06612866",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT07003776",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07027345",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07039357",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07333170",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07520019",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "browser": {
+        "http": 200,
+        "ms": 4747,
+        "checked_at": "2026-11-15T12:52:18.547Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "Keratin",
+        "condition": "Tooth enamel damage and early tooth decay",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT06292026",
+            "score": 0.05,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT05062070",
+            "score": 0.02,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01321619",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03128918",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03206567",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03300440",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03564795",
+            "score": 0.01,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT05339958",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05641246",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05797285",
+            "score": 0.01,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT06153641",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06605768",
+            "score": 0.01,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT06612866",
+            "score": 0.01,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT00001292",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00279643",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00428896",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00694252",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00773071",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01052818",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01140763",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01987726",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02027649",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02345473",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02707575",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02724345",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02896725",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT02951897",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03308916",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03374995",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT03559218",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03640572",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03859843",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04249128",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT04475276",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04489576",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT04781244",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04884347",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05198895",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05476016",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05658172",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06261944",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06406387",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07003776",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07027345",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07039357",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07333170",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07458828",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07520019",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "pass",
+      "reason": "Keratin for dental-enamel repair is identified without presenting the preclinical work as human efficacy.",
+      "knowledge_card_result": "no card",
+      "knowledge_card_notes": "No knowledge card returned. Full-sheet audit must check whether an appropriate published card or evidence-backed new card is available."
+    },
+    "S032": {
+      "url": "https://news.ycombinator.com/item?id=46811037",
+      "site": {
+        "http": 200,
+        "ms": 6550,
+        "checked_at": "2026-11-15T12:40:53.092Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "ER-100",
+        "condition": "Glaucoma",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT07290244",
+            "score": 1,
+            "answer": "match",
+            "agrees": [
+              "stated",
+              "sponsor"
+            ]
+          },
+          {
+            "id": "NCT01517711",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00239564",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00325858",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00348452",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00361504",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00486811",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00487435",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00594516",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00744237",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01063868",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01273532",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01309386",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01309425",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01800682",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "browser": {
+        "http": 200,
+        "ms": 6805,
+        "checked_at": "2026-11-15T12:52:38.363Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "ER-100",
+        "condition": "Glaucoma",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT07290244",
+            "score": 1,
+            "answer": "match",
+            "agrees": [
+              "stated",
+              "sponsor"
+            ]
+          },
+          {
+            "id": "NCT00239564",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": [
+              "participants"
+            ]
+          },
+          {
+            "id": "NCT00361504",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00325858",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00348452",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00486811",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00487435",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00594516",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00744237",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01063868",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01273532",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01309386",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01309425",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01517711",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01800682",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "review",
+      "reason": "ER-100 eye-treatment research is identified; the trial-start/rejuvenation framing must not be read as treatment approval or anti-ageing efficacy.",
+      "knowledge_card_result": "no card",
+      "knowledge_card_notes": "No knowledge card returned. Full-sheet audit must check whether an appropriate published card or evidence-backed new card is available."
+    },
+    "S033": {
+      "url": "https://www.reddit.com/r/tressless/comments/1s6gl49/pelage_pp405_new_hair_growth_from_inactive/",
+      "site": {
+        "http": 422,
+        "ms": 108,
+        "checked_at": "2026-11-15T12:41:06.205Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 6642,
+        "checked_at": "2026-11-15T12:52:58.768Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "PP405",
+        "condition": "Alopecia (hair loss)",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT06393452",
+            "score": 1,
+            "answer": "match",
+            "agrees": [
+              "stated",
+              "participants"
+            ]
+          },
+          {
+            "id": "NCT07819435",
+            "score": 0.99,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07907783",
+            "score": 0.99,
+            "answer": "match",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "pass",
+      "reason": "PP405 for hair loss is identified and matching trial candidates are returned.",
+      "knowledge_card_result": "no card",
+      "knowledge_card_notes": "No knowledge card returned. Full-sheet audit must check whether an appropriate published card or evidence-backed new card is available."
+    },
+    "S034": {
+      "url": "https://www.reddit.com/r/science/comments/1oobkrk/researchers_have_developed_a_gel_that_uses/",
+      "site": {
+        "http": 422,
+        "ms": 26,
+        "checked_at": "2026-11-15T12:41:06.321Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 6332,
+        "checked_at": "2026-11-15T12:53:18.116Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "amelogenin-like protein gel",
+        "condition": "Tooth enamel damage and loss",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT07718932",
+            "score": 0.02,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01030666",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02810054",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04274244",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07339605",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07841301",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04449393",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05858411",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06105112",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06504329",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07230522",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07233733",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07737834",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "pass",
+      "reason": "Amelogenin-like enamel-repair gel is identified; the report is preclinical.",
+      "knowledge_card_result": "no card",
+      "knowledge_card_notes": "No knowledge card returned. Full-sheet audit must check whether an appropriate published card or evidence-backed new card is available."
+    },
+    "S035": {
+      "url": "https://www.reddit.com/r/immortalists/comments/1w53eel/how_much_of_the_longevity_hype_is_actually_real/",
+      "site": {
+        "http": 422,
+        "ms": 17,
+        "checked_at": "2026-11-15T12:41:06.339Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 6804,
+        "checked_at": "2026-11-15T12:53:37.940Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "ER-100",
+        "condition": "Slowing biological aging",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT07290244",
+            "score": 0.07,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT00325858",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00361504",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01309386",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00239564",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00348452",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00486811",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00487435",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00594516",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00744237",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01063868",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01273532",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01309425",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01517711",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01800682",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "review",
+      "reason": "The linked ER-100 trial can be identified, but this broad longevity discussion must not transfer an eye-trial result to ageing generally.",
+      "knowledge_card_result": "no card",
+      "knowledge_card_notes": "No knowledge card returned. Full-sheet audit must check whether an appropriate published card or evidence-backed new card is available."
+    },
+    "S036": {
+      "url": "https://www.linkedin.com/posts/torresphd_results-from-phase-2-courage-trial-demonstrating-activity-7511422117729472512-JZUS",
+      "site": {
+        "http": 422,
+        "ms": 11,
+        "checked_at": "2026-11-15T12:41:06.351Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 7337,
+        "checked_at": "2026-11-15T12:53:58.312Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "Trevogrumab plus semaglutide",
+        "condition": "Obesity",
+        "error": null,
+        "tracked": [
+          "biological-ageing-glp-1-drugs"
+        ],
+        "candidates": [
+          {
+            "id": "NCT06299098",
+            "score": 0.99,
+            "answer": "match",
+            "agrees": [
+              "trial_name",
+              "sponsor"
+            ]
+          },
+          {
+            "id": "NCT01963598",
+            "score": 0.05,
+            "answer": "other_indication",
+            "agrees": [
+              "sponsor"
+            ]
+          },
+          {
+            "id": "NCT02741739",
+            "score": 0.04,
+            "answer": "other_indication",
+            "agrees": [
+              "sponsor"
+            ]
+          },
+          {
+            "id": "NCT02250053",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": [
+              "trial_name"
+            ]
+          },
+          {
+            "id": "NCT03710941",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": [
+              "sponsor"
+            ]
+          },
+          {
+            "id": "NCT04944784",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": [
+              "trial_name"
+            ]
+          },
+          {
+            "id": "NCT06202183",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": [
+              "trial_name"
+            ]
+          },
+          {
+            "id": "NCT06524206",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": [
+              "trial_name"
+            ]
+          },
+          {
+            "id": "NCT01507402",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": [
+              "sponsor"
+            ]
+          },
+          {
+            "id": "NCT01720576",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": [
+              "sponsor"
+            ]
+          },
+          {
+            "id": "NCT01910220",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": [
+              "sponsor"
+            ]
+          },
+          {
+            "id": "NCT02943239",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": [
+              "sponsor"
+            ]
+          },
+          {
+            "id": "NCT03545464",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": [
+              "trial_name"
+            ]
+          },
+          {
+            "id": "NCT05371665",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": [
+              "trial_name"
+            ]
+          },
+          {
+            "id": "NCT05442775",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": [
+              "trial_name"
+            ]
+          },
+          {
+            "id": "NCT05653986",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": [
+              "trial_name"
+            ]
+          },
+          {
+            "id": "NCT06276998",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": [
+              "trial_name"
+            ]
+          },
+          {
+            "id": "NCT06424483",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": [
+              "trial_name"
+            ]
+          },
+          {
+            "id": "NCT06914037",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": [
+              "trial_name"
+            ]
+          },
+          {
+            "id": "NCT07560085",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": [
+              "trial_name"
+            ]
+          },
+          {
+            "id": "NCT06754163",
+            "score": 0.18,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07769047",
+            "score": 0.15,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05606471",
+            "score": 0.13,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04263415",
+            "score": 0.12,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06986993",
+            "score": 0.09,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06374875",
+            "score": 0.08,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06751589",
+            "score": 0.08,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05071898",
+            "score": 0.07,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06005012",
+            "score": 0.07,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03292315",
+            "score": 0.06,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05078255",
+            "score": 0.05,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07272837",
+            "score": 0.05,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05819853",
+            "score": 0.04,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04979130",
+            "score": 0.03,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05746039",
+            "score": 0.03,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07702461",
+            "score": 0.03,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05813249",
+            "score": 0.02,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07592546",
+            "score": 0.02,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07732218",
+            "score": 0.02,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05670379",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05671653",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05870462",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06027567",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06738979",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06820047",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07411378",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07701005",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04019197",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04174755",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05302596",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05616013",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06234111",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06396416",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06533527",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06715514",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06803888",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06967389",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07368855",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07457424",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07858331",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader in live Chrome; LinkedIn redirected to https://www.linkedin.com/posts/torresphd_results-from-phase-2-courage-trial-demonstrating-share-7511422114776641537-Ssql/. Verified same Torres COURAGE post in visible page; harness source URL normalized to corpus URL. Text only; production service.",
+      "safari": null,
+      "verdict": "fail",
+      "reason": "COURAGE trevogrumab plus semaglutide claim is identified, but the released answer attaches a GLP-1 biological-ageing card to an obesity/body-composition claim. Card identity remains a failure.",
+      "knowledge_card_result": "wrong card",
+      "knowledge_card_notes": "biological-ageing-glp-1-drugs concerns biological ageing, not this obesity/body-composition regimen. Name-only card association needs correction."
+    },
+    "S038": {
+      "url": "https://www.instagram.com/p/De1Sw5Pj-xV/",
+      "site": {
+        "http": 422,
+        "ms": 221,
+        "checked_at": "2026-11-15T12:41:06.601Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 4024,
+        "checked_at": "2026-11-15T12:54:15.345Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "PP405",
+        "condition": "Androgenetic alopecia",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT06393452",
+            "score": 1,
+            "answer": "match",
+            "agrees": [
+              "participants"
+            ]
+          },
+          {
+            "id": "NCT07819435",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07907783",
+            "score": 0.99,
+            "answer": "match",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "pass",
+      "reason": "PP405 phase-2a hair-growth claim is identified and matching candidates are returned.",
+      "knowledge_card_result": "no card",
+      "knowledge_card_notes": "No knowledge card returned. Full-sheet audit must check whether an appropriate published card or evidence-backed new card is available."
+    },
+    "S039": {
+      "url": "https://www.instagram.com/reel/Da5ZfzDAqDd/",
+      "site": {
+        "http": 422,
+        "ms": 50,
+        "checked_at": "2026-11-15T12:41:06.652Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 4442,
+        "checked_at": "2026-11-15T12:54:32.792Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "Unnamed medicine",
+        "condition": "Regrowing a third set of teeth",
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "review",
+      "reason": "Caption describes an unnamed tooth-regrowth medicine. It does not uniquely establish the product named elsewhere in the video; no trial candidates returned.",
+      "knowledge_card_result": "review",
+      "knowledge_card_notes": "Treatment identity, indication, multiple claims or available media are insufficient for a unique accurate card association."
+    },
+    "S040": {
+      "url": "https://www.instagram.com/reel/DIbvYDvJYzP/",
+      "site": {
+        "http": 422,
+        "ms": 24,
+        "checked_at": "2026-11-15T12:41:06.678Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 6563,
+        "checked_at": "2026-11-15T12:54:52.365Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "personalized secretome products",
+        "condition": "Skin rejuvenation",
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "review",
+      "reason": "Cosmetic secretome promotion has several proposed uses and no uniquely identified study; no registry candidates returned.",
+      "knowledge_card_result": "review",
+      "knowledge_card_notes": "Treatment identity, indication, multiple claims or available media are insufficient for a unique accurate card association."
+    },
+    "S041": {
+      "url": "https://www.instagram.com/p/De8fBncquDV/",
+      "site": {
+        "http": 422,
+        "ms": 27,
+        "checked_at": "2026-11-15T12:41:06.705Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 5368,
+        "checked_at": "2026-11-15T12:55:10.742Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "self-destruction toxin approach",
+        "condition": "Cancer",
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "review",
+      "reason": "Vague cancer-cell toxin research does not uniquely identify a product, cancer indication or study.",
+      "knowledge_card_result": "review",
+      "knowledge_card_notes": "Treatment identity, indication, multiple claims or available media are insufficient for a unique accurate card association."
+    },
+    "S042": {
+      "url": "https://www.instagram.com/p/DdKl43tSw-v/",
+      "site": {
+        "http": 422,
+        "ms": 14,
+        "checked_at": "2026-11-15T12:41:06.720Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 3979,
+        "checked_at": "2026-11-15T12:55:27.735Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "Cancer vaccine",
+        "condition": "Cancer",
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "review",
+      "reason": "Unspecified cancer vaccine and strong availability wording require review; a product or applicable trial is not established.",
+      "knowledge_card_result": "review",
+      "knowledge_card_notes": "Treatment identity, indication, multiple claims or available media are insufficient for a unique accurate card association."
+    },
+    "S043": {
+      "url": "https://www.instagram.com/reel/DZyROckBpjD/",
+      "site": {
+        "http": 422,
+        "ms": 26,
+        "checked_at": "2026-11-15T12:41:06.748Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 3269,
+        "checked_at": "2026-11-15T12:55:44.015Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": false,
+        "treatment": null,
+        "condition": null,
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "review",
+      "reason": "Caption names ER-100 dosing without a condition. The model does not invent glaucoma from the name; video content remains unverified.",
+      "knowledge_card_result": "review",
+      "knowledge_card_notes": "Treatment identity, indication, multiple claims or available media are insufficient for a unique accurate card association."
+    },
+    "S044": {
+      "url": "https://www.instagram.com/reel/DaKnG-sC9pm/",
+      "site": {
+        "http": 422,
+        "ms": 13,
+        "checked_at": "2026-11-15T12:41:06.761Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 5997,
+        "checked_at": "2026-11-15T12:56:03.020Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": true,
+        "treatment": "Rejuran",
+        "condition": "Skin healing and skin quality",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT07912814",
+            "score": 0.6,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07912879",
+            "score": 0.32,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT06376838",
+            "score": 0.29,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT06402058",
+            "score": 0.29,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT06428253",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader executed in live Chrome; text/caption only; production service.",
+      "safari": null,
+      "verdict": "review",
+      "reason": "Rejuran/skin-quality claim yields possible candidates, but the testimonial and periodontal analogy are not a uniquely identified trial report.",
+      "knowledge_card_result": "no card",
+      "knowledge_card_notes": "No knowledge card returned. Full-sheet audit must check whether an appropriate published card or evidence-backed new card is available."
+    },
+    "S045": {
+      "url": "https://www.instagram.com/p/DWox5WkghE-/",
+      "site": {
+        "http": 422,
+        "ms": 11,
+        "checked_at": "2026-11-15T12:41:06.772Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 7028,
+        "checked_at": "2026-11-15T13:12:46.457Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "907848f16759e8d752f5729193cdcb6db2386ddd",
+        "about_a_treatment": true,
+        "treatment": "Bimagrumab",
+        "condition": "Obesity",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT05616013",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06643728",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06901349",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05933499",
+            "score": 0.98,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03005288",
+            "score": 0.8,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02468674",
+            "score": 0.02,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT01669174",
+            "score": 0.01,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT02333331",
+            "score": 0.01,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT02573467",
+            "score": 0.01,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT07920887",
+            "score": 0.01,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT01423110",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT01433263",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT01601600",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT01868685",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT01925209",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT02152761",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT02250443",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT06890611",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "method": "Final released service; real BELIEVE caption, comparative trial arms.",
+      "safari": {
+        "version": "0.9.5 (14)",
+        "checked_at": "2026-11-15T13:19:32.577Z",
+        "service_commit": "907848f",
+        "method": "Installed Safari popup; real BELIEVE post",
+        "outcome": "bimagrumab plus semaglutide for Obesity; BELIEVE NCT05616013 at 98%",
+        "top_record": "NCT05616013",
+        "verdict": "fail",
+        "note": "Treatment/trial correction passes, but biological-ageing-glp-1-drugs is shown as Reviewed claim for a different condition. Full-sheet goal requires correcting card identity."
+      },
+      "verdict": "fail",
+      "reason": "BELIEVE monotherapy/combination arms are now identified correctly. Installed Safari returns NCT05616013, but also shows an unrelated biological-ageing card as a reviewed claim. Card identity remains a failure.",
+      "knowledge_card_result": "wrong card",
+      "knowledge_card_notes": "biological-ageing-glp-1-drugs concerns biological ageing, not this obesity/body-composition regimen. Name-only card association needs correction."
+    },
+    "S037": {
+      "url": "https://www.youtube.com/watch?v=_4spcgzPcEk",
+      "site": {
+        "http": 422,
+        "ms": 27,
+        "checked_at": "2026-11-15T12:41:06.379Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 3017,
+        "checked_at": "2026-11-15T12:56:37.417Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": false,
+        "treatment": null,
+        "condition": null,
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader on live Chrome YouTube page; loaded title/description only; captions unavailable, no audio or full-video analysis; production service.",
+      "safari": null,
+      "verdict": "review",
+      "reason": "YouTube now loads. Its loaded title/description yields no specific treatment-condition pair; captions are unavailable and full video/audio were not analysed. This is review, not a browser-navigation block.",
+      "knowledge_card_result": "review",
+      "knowledge_card_notes": "Treatment identity, indication, multiple claims or available media are insufficient for a unique accurate card association."
+    },
+    "S048": {
+      "url": "https://www.tiktok.com/@teethtalkgirl/video/7580143683463318814",
+      "site": {
+        "http": 422,
+        "ms": 12,
+        "checked_at": "2026-11-15T12:41:06.810Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 5253,
+        "checked_at": "2026-11-15T13:13:46.160Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "907848f16759e8d752f5729193cdcb6db2386ddd",
+        "about_a_treatment": true,
+        "treatment": "drug targeting dormant tooth buds",
+        "condition": "Regrowing missing teeth",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT01628367",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04804514",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07339605",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07548203",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01030666",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01805388",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01976065",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02842515",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02922075",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03102879",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03804450",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04190914",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04776785",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05064137",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05222243",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05266859",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05304338",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05765240",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06293807",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06566833",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06920485",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07252167",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07520097",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07522723",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07555366",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07779421",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07891611",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07921355",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader on live Chrome after page hydration; caption only; production service; no full video.",
+      "safari": null,
+      "verdict": "review",
+      "reason": "Caption identifies an unnamed dormant-tooth-bud drug, with no likely registry candidate. The product identity found in an earlier video review is not established by this caption alone.",
+      "knowledge_card_result": "review",
+      "knowledge_card_notes": "Treatment identity, indication, multiple claims or available media are insufficient for a unique accurate card association."
+    },
+    "S046": {
+      "url": "https://www.tiktok.com/@dentist_emi/photo/7654083124820856086",
+      "site": {
+        "http": 422,
+        "ms": 13,
+        "checked_at": "2026-11-15T12:41:06.785Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 7027,
+        "checked_at": "2026-11-15T13:14:48.023Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "907848f16759e8d752f5729193cdcb6db2386ddd",
+        "about_a_treatment": true,
+        "treatment": "USAG-1-blocking drug",
+        "condition": "Tooth loss",
+        "error": null,
+        "tracked": [
+          "tooth-regrowth-usag1"
+        ],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader on live Chrome after requested post metadata loaded; caption only; no audio/full video. Login overlay not completed.",
+      "safari": null,
+      "verdict": "partial",
+      "reason": "USAG-1-blocking tooth-regrowth claim identified; no ClinicalTrials.gov candidate returned. A USAG-1 card is linked, but its congenital-tooth-agenesis scope needs comparison with this broader tooth-loss claim.",
+      "knowledge_card_result": "review",
+      "knowledge_card_notes": "Returned tooth-regrowth-usag1; same treatment family, but congenital tooth agenesis is narrower than general tooth loss."
+    },
+    "S047": {
+      "url": "https://www.tiktok.com/@popularmechanics/video/7639395090804264205",
+      "site": {
+        "http": 422,
+        "ms": 11,
+        "checked_at": "2026-11-15T12:41:06.797Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 3444,
+        "checked_at": "2026-11-15T13:15:17.470Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "907848f16759e8d752f5729193cdcb6db2386ddd",
+        "about_a_treatment": false,
+        "treatment": null,
+        "condition": null,
+        "error": null,
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader on live Chrome after requested post metadata loaded; caption only; no audio/full video. Login overlay not completed.",
+      "safari": null,
+      "verdict": "review",
+      "reason": "Requested caption does not identify the tooth-regrowth antibody sufficiently; no treatment is returned. This rerun is caption-only, not a complete video check.",
+      "knowledge_card_result": "review",
+      "knowledge_card_notes": "Treatment identity, indication, multiple claims or available media are insufficient for a unique accurate card association."
+    },
+    "S049": {
+      "url": "https://www.tiktok.com/@skinandsweat/video/7637182028349328654",
+      "site": {
+        "http": 422,
+        "ms": 29,
+        "checked_at": "2026-11-15T12:41:06.839Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 4257,
+        "checked_at": "2026-11-15T13:15:47.729Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "907848f16759e8d752f5729193cdcb6db2386ddd",
+        "about_a_treatment": true,
+        "treatment": "PP405",
+        "condition": "Hair growth",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT07819435",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06393452",
+            "score": 0.99,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07907783",
+            "score": 0.99,
+            "answer": "match",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader on live Chrome after requested post metadata loaded; caption only; no audio/full video. Login overlay not completed.",
+      "safari": null,
+      "verdict": "pass",
+      "reason": "The explicit hair-growth target is accepted without requiring a formal diagnosis. PP405 and matching trial candidates are returned.",
+      "knowledge_card_result": "no card",
+      "knowledge_card_notes": "No knowledge card returned. Full-sheet audit must check whether an appropriate published card or evidence-backed new card is available."
+    },
+    "S050": {
+      "url": "https://www.tiktok.com/@drkopelman/video/7522805190295063839",
+      "site": {
+        "http": 422,
+        "ms": 23,
+        "checked_at": "2026-11-15T12:41:06.862Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 4305,
+        "checked_at": "2026-11-15T13:16:18.036Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "907848f16759e8d752f5729193cdcb6db2386ddd",
+        "about_a_treatment": true,
+        "treatment": "PP405",
+        "condition": "Hair loss",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT06393452",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07819435",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT07907783",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader on live Chrome after requested post metadata loaded; caption only; no audio/full video. Login overlay not completed.",
+      "safari": null,
+      "verdict": "pass",
+      "reason": "Requested caption identifies PP405 for hair loss and matching candidates.",
+      "knowledge_card_result": "no card",
+      "knowledge_card_notes": "No knowledge card returned. Full-sheet audit must check whether an appropriate published card or evidence-backed new card is available."
+    },
+    "S051": {
+      "url": "https://www.tiktok.com/@fredhutch/video/7700340480931908878",
+      "site": {
+        "http": 422,
+        "ms": 10,
+        "checked_at": "2026-11-15T12:41:06.873Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 4616,
+        "checked_at": "2026-11-15T13:16:48.655Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "907848f16759e8d752f5729193cdcb6db2386ddd",
+        "about_a_treatment": true,
+        "treatment": "Personalized cancer vaccine",
+        "condition": "Melanoma",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT03480152",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05269381",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06529822",
+            "score": 1,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02035956",
+            "score": 0.99,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03597282",
+            "score": 0.99,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03897881",
+            "score": 0.99,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03929029",
+            "score": 0.98,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05098210",
+            "score": 0.98,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04072900",
+            "score": 0.97,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04930783",
+            "score": 0.97,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03633110",
+            "score": 0.96,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03715985",
+            "score": 0.94,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01970358",
+            "score": 0.92,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03552718",
+            "score": 0.92,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05235607",
+            "score": 0.81,
+            "answer": "match",
+            "agrees": []
+          },
+          {
+            "id": "NCT05309421",
+            "score": 0.62,
+            "answer": "match",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader on live Chrome after requested metadata loaded; caption only; no audio/full video; login overlay not completed.",
+      "safari": null,
+      "verdict": "pass",
+      "reason": "Requested caption identifies personalized cancer vaccination for melanoma and returns candidates. It does not establish which individual vaccine or trial the full video describes.",
+      "knowledge_card_result": "review",
+      "knowledge_card_notes": "Treatment identity, indication, multiple claims or available media are insufficient for a unique accurate card association."
+    },
+    "S052": {
+      "url": "https://www.tiktok.com/@drsermedmezher/video/7606090347172695318",
+      "site": {
+        "http": 422,
+        "ms": 13,
+        "checked_at": "2026-11-15T12:41:06.887Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 10799,
+        "checked_at": "2026-11-15T13:17:25.458Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "907848f16759e8d752f5729193cdcb6db2386ddd",
+        "about_a_treatment": true,
+        "treatment": "ER-100",
+        "condition": "Optic neuropathies, including open-angle glaucoma and non-arteritic anterior ischemic optic neuropathy (NAION)",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT07290244",
+            "score": 1,
+            "answer": "match",
+            "agrees": [
+              "stated",
+              "sponsor"
+            ]
+          },
+          {
+            "id": "NCT01309386",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01517711",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00239564",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00325858",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00348452",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00361504",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00486811",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00487435",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00594516",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT00744237",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01063868",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01273532",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01309425",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01800682",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader on live Chrome after requested metadata loaded; caption only; no audio/full video; login overlay not completed.",
+      "safari": null,
+      "verdict": "review",
+      "reason": "Linked article yields ER-100/optic-neuropathy candidates, but the caption’s wound-healing claim conflicts with the eye-treatment context. That contradiction remains review.",
+      "knowledge_card_result": "no card",
+      "knowledge_card_notes": "No knowledge card returned. Full-sheet audit must check whether an appropriate published card or evidence-backed new card is available."
+    },
+    "S053": {
+      "url": "https://www.tiktok.com/@thediabetescollective/video/7534037117530344759",
+      "site": {
+        "http": 422,
+        "ms": 12,
+        "checked_at": "2026-11-15T12:41:06.900Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "55540f1b3cef3792515fb9c0393c5c13a73f3be9",
+        "about_a_treatment": null,
+        "treatment": null,
+        "condition": null,
+        "error": "post",
+        "tracked": [],
+        "candidates": [],
+        "papers_unchecked": null
+      },
+      "browser": {
+        "http": 200,
+        "ms": 6294,
+        "checked_at": "2026-11-15T13:17:57.755Z",
+        "endpoint": "https://whatcameofit.com/api/lookup",
+        "release_commit": "907848f16759e8d752f5729193cdcb6db2386ddd",
+        "about_a_treatment": true,
+        "treatment": "Bimagrumab plus semaglutide",
+        "condition": "Obesity",
+        "error": null,
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT05616013",
+            "score": 0.88,
+            "answer": "match",
+            "agrees": [
+              "participants"
+            ]
+          },
+          {
+            "id": "NCT07920887",
+            "score": 0.01,
+            "answer": "other_indication",
+            "agrees": [
+              "participants"
+            ]
+          },
+          {
+            "id": "NCT01669174",
+            "score": 0.02,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT05933499",
+            "score": 0.02,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01433263",
+            "score": 0.01,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT01925209",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02333331",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02468674",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03005288",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06643728",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06890611",
+            "score": 0.01,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01423110",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT01593865",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01601600",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT01611194",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT01868685",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT02059655",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02152761",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT02250443",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": []
+          },
+          {
+            "id": "NCT02573467",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT03334110",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT04639089",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          },
+          {
+            "id": "NCT06901349",
+            "score": 0,
+            "answer": "not_a_match",
+            "agrees": []
+          }
+        ],
+        "papers_unchecked": 0
+      },
+      "method": "Released reader on live Chrome after requested metadata loaded; caption only; no audio/full video; login overlay not completed.",
+      "safari": null,
+      "verdict": "pass",
+      "reason": "The bimagrumab plus semaglutide regimen is retained and the BELIEVE candidate is returned. No knowledge card was returned in this final caption run.",
+      "knowledge_card_result": "no card",
+      "knowledge_card_notes": "No knowledge card returned. Full-sheet audit must check whether an appropriate published card or evidence-backed new card is available."
+    }
+  }
+}

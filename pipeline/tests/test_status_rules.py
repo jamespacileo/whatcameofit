@@ -112,7 +112,7 @@ def test_rejected_events_do_not_count():
         )
     ]
 
-    assert result(events).status is ClaimStatus.PRECLINICAL_ONLY
+    assert result(events).status is ClaimStatus.NO_TRIAL_FOUND
 
 
 # --- standing trials and stage ---------------------------------------------
@@ -211,9 +211,9 @@ def test_withdrawn_trial_is_not_standing():
     assert result(events).status is ClaimStatus.TERMINATED
 
 
-def test_no_trials_is_preclinical_only():
+def test_no_trials_with_unknown_stage_is_no_trial_found():
     """Scenario: No trials"""
-    assert result([paper(), paper(doi="10.1000/second")]).status is ClaimStatus.PRECLINICAL_ONLY
+    assert result([paper(), paper(doi="10.1000/second")]).status is ClaimStatus.NO_TRIAL_FOUND
 
 
 @pytest.mark.parametrize("stage", [EvidenceStage.EARLY_HUMAN, EvidenceStage.LATE_HUMAN])
@@ -224,7 +224,7 @@ def test_study_in_people_with_no_trial_is_no_trial_found(stage: EvidenceStage):
     assert (outcome.status, outcome.explaining_event_ids) == (ClaimStatus.NO_TRIAL_FOUND, ())
 
 
-@pytest.mark.parametrize("stage", [EvidenceStage.IN_VITRO, EvidenceStage.ANIMAL, None])
+@pytest.mark.parametrize("stage", [EvidenceStage.IN_VITRO, EvidenceStage.ANIMAL])
 def test_laboratory_or_animal_work_with_no_trial_is_preclinical_only(
     stage: EvidenceStage | None,
 ):
@@ -329,7 +329,9 @@ def test_origin_paper_is_matched_whatever_the_letter_case_of_its_doi():
 
 def test_quiet_preclinical_claim_carries_the_overlay():
     """Scenario: Quiet preclinical claim"""
-    outcome = result([paper(on=date(2020, 3, 1))], as_of=date(2024, 5, 1))
+    outcome = result(
+        [paper(on=date(2020, 3, 1))], as_of=date(2024, 5, 1), evidence_stage=EvidenceStage.ANIMAL
+    )
 
     assert (outcome.status, outcome.overlay_years) == (ClaimStatus.PRECLINICAL_ONLY, 4)
 
@@ -398,7 +400,7 @@ def test_overlay_starts_at_three_whole_years(as_of, expected):
 def test_claim_with_no_events_is_measured_from_its_first_reported_date():
     outcome = result([], first_reported_date=date(2018, 6, 1), as_of=date(2024, 6, 1))
 
-    assert (outcome.status, outcome.overlay_years) == (ClaimStatus.PRECLINICAL_ONLY, 6)
+    assert (outcome.status, outcome.overlay_years) == (ClaimStatus.NO_TRIAL_FOUND, 6)
 
 
 def test_claim_with_no_events_and_no_first_reported_date_has_no_overlay():
@@ -591,7 +593,7 @@ def test_history_starts_at_the_first_report_and_gains_an_entry_per_change():
     changes = rules.history(events, first_reported_date=FIRST_REPORTED)
 
     assert [(change.on, change.status) for change in changes] == [
-        (FIRST_REPORTED, ClaimStatus.PRECLINICAL_ONLY),
+        (FIRST_REPORTED, ClaimStatus.NO_TRIAL_FOUND),
         (REGISTERED_ON, ClaimStatus.TRIAL_REGISTERED),
         (REGISTERED_ON + timedelta(days=90), ClaimStatus.PHASE_1),
     ]
@@ -603,7 +605,7 @@ def test_history_has_no_entry_for_an_event_that_leaves_the_status_as_it_was():
     changes = rules.history(events, first_reported_date=FIRST_REPORTED)
 
     assert [change.status for change in changes] == [
-        ClaimStatus.PRECLINICAL_ONLY,
+        ClaimStatus.NO_TRIAL_FOUND,
         ClaimStatus.TRIAL_REGISTERED,
         ClaimStatus.PHASE_1,
     ]

@@ -129,8 +129,8 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
     </li>
     <li>
       With no trial found at all, the status depends on what the first reports described. If it was
-      a study in people, the status is “{STATUS_LABELS.no_trial_found}”. If it was laboratory or
-      animal work, the status is “{STATUS_LABELS.preclinical_only}”.
+      confirmed laboratory or animal work, the status is “{STATUS_LABELS.preclinical_only}”.
+      A study in people, or an unconfirmed evidence stage, gives “{STATUS_LABELS.no_trial_found}”.
     </li>
   </ol>
   <p>

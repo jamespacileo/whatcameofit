@@ -30,6 +30,7 @@ from thenwhat.backfill.link_load import load_links
 from thenwhat.backfill.link_read import LinkRead, ReadClient
 from thenwhat.backfill.link_readers import posts_of
 from thenwhat.backfill.link_report import IN_SCOPE_KINDS, screening_report
+from thenwhat.backfill.link_topics import coverage
 from thenwhat.backfill.link_triage import DecisionClient, LinkTriage, Standing
 from thenwhat.backfill.mediacloud import MediaCloud
 from thenwhat.backfill.registered import registered_steps
@@ -56,6 +57,7 @@ from thenwhat.backfill.steps import (
     find_step,
     model_spend_of,
 )
+from thenwhat.backfill.topics import TOPICS
 from thenwhat.cli import session as cli_session
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
@@ -737,6 +739,40 @@ def spot_check_leads_command(
             )
 
 
+@backfill_app.command("topics")
+def topics_command(
+    topic: Annotated[
+        str | None, typer.Argument(help="A topic's name. Leave out for every topic.")
+    ] = None,
+) -> None:
+    """Show how far each of the operator's topics is covered: where the link leads that
+    name it stand, and what each claim for it holds.
+
+    A topic is a name and its words, kept in `backfill/topics.py`. A lead whose title
+    names one is read first, and is read when triage held it. Sends no request and
+    changes nothing.
+    """
+    settings = settings_or_exit()
+    lines: list[str] = []
+    with refusals(), open_session() as session:
+        for name in [topic] if topic else list(TOPICS):
+            found = coverage(session, name, reject_below=settings.lead_reject_below)
+            lines.append(f"{found.topic}: {found.named:,} link leads name it")
+            lines += [f"  {label}: {count:,}" for label, count in found.standing.items() if count]
+            lines += [
+                f"  read, {outcome}: {count:,}" for outcome, count in sorted(found.read.items())
+            ]
+            lines.append(f"  claims: {len(found.claims)}")
+            for claim in found.claims:
+                where = "published" if claim.published else claim.review_state
+                lines.append(
+                    f"    {claim.slug} ({where}, {claim.status}): {claim.articles} article(s), "
+                    f"{claim.trials} trial(s), {claim.papers} paper(s), {claim.cards} card(s)"
+                )
+    for line in lines:
+        out.print(line, markup=False)
+
+
 @backfill_app.command("funnel")
 def funnel_command() -> None:
     """Show where the link leads stand, from loading to a claim, and what the model
@@ -776,7 +812,9 @@ def funnel_command() -> None:
         lines.append(f"  new claim, decided otherwise: {found.new_otherwise:,}")
     lines += [
         f"  needs a vertical, no claim made: {found.needs_vertical:,}",
+        f"  claim identity unresolved, no claim joined or made: {found.identity_unresolved:,}",
         f"  not about one treatment for one condition, no claim made: {found.not_one_treatment:,}",
+        f"  on a topic, business news about a treatment, no claim made: {found.business_news:,}",
         f"held, the claim has enough articles: {found.enough_articles:,}",
         f"could not be read: {sum(found.cannot_be_read.values()):,}",
     ]
@@ -787,7 +825,7 @@ def funnel_command() -> None:
     lines += [
         f"model cost recorded for triage: {_dollars(found.triage_cost_usd)}",
         f"model cost recorded for reading: {_dollars(found.reading_cost_usd)} "
-        "(the reads and the vertical decisions; checks of reported statements are "
+        "(the reads, treatment-kind, claim-identity and vertical decisions; statement checks are "
         "recorded with all statement checks)",
     ]
     for line in lines:

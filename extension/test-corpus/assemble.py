@@ -168,7 +168,8 @@ def main():
             "http_status": c.get("http_status", ""), "redirects_to": c.get("redirects_to", ""), "page_title": c.get("page_title", ""),
             "link_checked": c.get("link_checked", ""), "source_of_row": row["source_of_row"],
             "notes": "; ".join(x for x in [note, row["notes"]] if x),
-            **{key: rerun.get(key, "") for key in ["last_tested", "tested_build", "site_result", "extension_result"]},
+            **{key: rerun.get(key, "") for key in ["last_tested", "tested_build", "site_result", "extension_result",
+                "knowledge_card_result", "knowledge_card_notes"]},
         })
     write_workbook(out)
     print(len(out), "rows", dict(Counter(o["test_result"] for o in out)))
@@ -190,7 +191,8 @@ def write_workbook(out):
     widths = {"id": 7, "group": 9, "page_type": 26, "url": 46, "outlet": 20, "intervention_condition": 36, "expected_answer": 28,
               "test_result": 10, "how_read": 22, "lookup_answer": 40, "top_record": 50, "tracked_claim": 26,
               "closest_tracked_claim": 26, "notes": 50, "page_title": 40, "redirects_to": 30,
-              "last_tested": 24, "tested_build": 42, "site_result": 60, "extension_result": 70}
+              "last_tested": 24, "tested_build": 42, "site_result": 60, "extension_result": 70,
+              "knowledge_card_result": 22, "knowledge_card_notes": 70}
     for i, name in enumerate(cols, 1):
         ws.column_dimensions[get_column_letter(i)].width = widths.get(name, 10)
     last = len(out) + 1
@@ -239,6 +241,7 @@ def write_workbook(out):
         ("last_tested / tested_build", "UTC rerun timestamp and exact base commit plus correction fingerprint. Local-source results are not evidence of deployment."),
         ("site_result / extension_result", "Separate deployed-site address checks from corrected local-service results and the extension reading method. DOM replay, live caption, bounded visible frame and blocked browser attempts are distinguished. A caption check does not verify the full video or installed extension."),
         ("Rerun evidence", "extension/test-corpus/reruns.json preserves adjudicated rerun results across syncs. runs/ contains structured summaries without copied post text or screenshots. Existing findings outside the selected rerun remain open."),
+        ("knowledge_card_result / knowledge_card_notes", "Separate card identity from registry candidates. wrong card: a returned card concerns another intervention or condition. no card: none was returned; this does not prove no related card exists. review: relationship needs judgment. not applicable: negative control. Blank: not yet audited for card accuracy."),
     ]:
         k.append(record)
     k["A1"].font = bold

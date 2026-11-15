@@ -15,12 +15,12 @@ awaits `thenwhat prepare`, which searches the registries and then decides it by 
 for drafts, so that no claim is published with a status no search stands behind.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import ColumnElement, and_, exists, func, select
+from sqlalchemy import ColumnElement, and_, exists, func, or_, select
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.address import article_key, without_tracking
@@ -31,6 +31,7 @@ from thenwhat.backfill.link_screen import CLAIM, REGISTRY_TRIAL, TITLE_NAMES_CLA
 from thenwhat.backfill.link_triage import is_passed
 from thenwhat.backfill.outlet_kinds import name_of
 from thenwhat.backfill.steps import MODEL, TEXT_DOOR, Failed, ModelSpend
+from thenwhat.backfill.topics import names_one, other_names_of, title_names
 from thenwhat.claims.entry import (
     MAX_NAMED_CLAIMS,
     EntryError,
@@ -125,6 +126,7 @@ class LinkRead:
         approve_drafts_by_rule: bool,
         same_claim_accept_above: float = 0.6,
         treatment_accept_above: float = 0.5,
+        topic_terms: Sequence[str] = (),
         match_reject_below: float = 0.0,
         match_accept_above: float = 0.0,
         time: Time | None = None,
@@ -137,6 +139,10 @@ class LinkRead:
         self.vertical_accept_above = vertical_accept_above
         self.same_claim_accept_above = same_claim_accept_above
         self.treatment_accept_above = treatment_accept_above
+        # The words of the operator's topics. A lead whose title names one is read first,
+        # and is read when triage held it as well as when triage passed it.
+        self._names_a_topic = title_names(topic_terms)
+        self._topic_terms = tuple(topic_terms)
         self.approve_drafts_by_rule = approve_drafts_by_rule
         # The rules `thenwhat resolve` decides candidates by, for those a page names.
         self.match_reject_below = match_reject_below
@@ -146,18 +152,31 @@ class LinkRead:
     # --- which leads, and in what order ---------------------------------------------
 
     def scope(self) -> ColumnElement[bool]:
-        """Leads that screening left in scope and triage passed at the two thresholds.
-        While either threshold is unset, none."""
-        return and_(
-            LinkLead.screen_outcome == ScreenOutcome.IN_SCOPE,
-            is_passed(self.pass_above, self.reject_below),
-        )
+        """Leads that screening left in scope and triage passed at the two thresholds,
+        and leads whose title names one of the operator's topics that triage held: the
+        topic is to be covered in full, and the check after the read says what each
+        article turned out to be. A lead triage rejected is never read. While either
+        threshold is unset, none."""
+        readable = is_passed(self.pass_above, self.reject_below)
+        if (
+            self._names_a_topic is not None
+            and self.pass_above is not None
+            and self.reject_below is not None
+        ):
+            held_on_a_topic = and_(
+                self._names_a_topic,
+                LinkLead.triage_score.is_not(None),
+                LinkLead.triage_score >= self.reject_below,
+            )
+            readable = or_(readable, held_on_a_topic)
+        return and_(LinkLead.screen_outcome == ScreenOutcome.IN_SCOPE, readable)
 
     def inputs(self, record: LinkLead) -> dict[str, Any]:
         return {"key": record.url_key}
 
     def order(self) -> list[ColumnElement[Any]]:
-        """First the leads linked to a registry trial, then the most shared."""
+        """First the leads whose title names one of the operator's topics, then those
+        linked to a registry trial, then the most shared."""
         linked = exists().where(
             LinkLeadLink.link_lead_id == LinkLead.id,
             LinkLeadLink.record_kind == REGISTRY_TRIAL,
@@ -167,7 +186,8 @@ class LinkRead:
             .where(LinkShare.link_lead_id == LinkLead.id)
             .scalar_subquery()
         )
-        return [linked.desc(), shared.desc()]
+        topical = [] if self._names_a_topic is None else [self._names_a_topic.desc()]
+        return [*topical, linked.desc(), shared.desc()]
 
     def check_ready(self, session: Session) -> None:
         """Refuse to read anything until triage has been measured (openspec
@@ -267,17 +287,16 @@ class LinkRead:
     def _claim_it_reports(
         self, session: Session, record: LinkLead, draft: Draft, client: ReadClient, now: datetime
     ) -> tuple[str | None, str | None]:
-        """The slug of the claim that exists for what the read names, and how it was found
-        when a decision found it. A claim with the same intervention and indication as
-        written is that claim. Otherwise the candidates are the claims whose intervention
-        shares a name with the read's, then the claims screening found named in the
-        lead's title; the article joins one only by the rule below. The decision is logged
-        either way."""
-        exact = slug_of_claim_covering(session, draft.intervention, draft.indication)
-        if exact is not None:
-            return exact, None
+        """Choose among named candidates using their summaries as well as their names.
+
+        Even equal names are candidates only: a generic category can hide different
+        products. The single bounded decision is logged either way.
+        """
+        names = [draft.intervention, *draft.intervention_synonyms]
+        # A topic's list knows a drug's brand and generic names; a claim under any of
+        # them is a candidate, though the names share no word.
         candidates = claims_sharing_a_name(
-            session, [draft.intervention, *draft.intervention_synonyms]
+            session, [*names, *other_names_of(names)], indication=draft.indication
         )
         linked_by_title = named_claims(
             session,
@@ -302,6 +321,7 @@ class LinkRead:
             ref=lead_ref(record.id),
             intervention=draft.intervention,
             indication=draft.indication,
+            summary=draft.summary,
             candidates=candidates,
             now=now,
         )
@@ -400,9 +420,31 @@ class LinkRead:
                 f"{draft.intervention} for {draft.indication}; about one treatment for "
                 f"one condition at {report.one_treatment_probability:.2f}",
             )
-        established = (
-            "an established treatment in the news" if report.kind == ESTABLISHED_TREATMENT else None
+        # Business news is about one treatment, but not about what it does: its price,
+        # supply, sales, a lawsuit. Two rules, both the operator's (2026-11-15). It never
+        # starts a claim: a claim rests on something reported of the treatment. And a
+        # topic is covered by evidence, safety, new uses and approvals only, so on a
+        # topic it does not join a claim either. The lead is on a topic when its title
+        # or the treatment the read names holds one of the topic's words: a link is
+        # often shared under a title that names nothing.
+        business = report.evidence_probability < self.treatment_accept_above
+        on_a_topic = any(
+            names_one(text, self._topic_terms)
+            for text in (record.title, draft.intervention, *draft.intervention_synonyms)
         )
+        if business and on_a_topic:
+            return self._finish(
+                record,
+                ReadOutcome.BUSINESS_NEWS,
+                f"{draft.intervention} for {draft.indication}; on a topic, and about what "
+                f"the treatment does at {report.evidence_probability:.2f}",
+            )
+        if business:
+            established = "business news about a treatment"
+        elif report.kind == ESTABLISHED_TREATMENT:
+            established = "an established treatment in the news"
+        else:
+            established = None
         address = without_tracking(record.url)
         # One read at a time from here to the end of its transaction: whichever claim
         # another read has just made for this story is found, not made again.
@@ -429,6 +471,23 @@ class LinkRead:
                 detail = "; ".join(part for part in (established, how, note) if part) or None
                 return self._finish(record, ReadOutcome.ADDED_TO_CLAIM, detail)
 
+            collision = slug_of_claim_covering(session, draft.intervention, draft.indication)
+            if collision is not None:
+                # The names are already taken, but identity was not established. Neither
+                # force the article onto that claim nor pay to retry an unchanged read.
+                return self._finish(
+                    record,
+                    ReadOutcome.IDENTITY_UNRESOLVED,
+                    f"{draft.intervention} for {draft.indication}; names overlap {collision}, "
+                    "but the same treatment and condition were not established",
+                )
+            if business:
+                return self._finish(
+                    record,
+                    ReadOutcome.BUSINESS_NEWS,
+                    f"{draft.intervention} for {draft.indication}; no claim to join, and "
+                    f"about what the treatment does at {report.evidence_probability:.2f}",
+                )
             slug = free_slug_for(session, draft.intervention, draft.indication)
             vertical, probability = choose_vertical(
                 session,
