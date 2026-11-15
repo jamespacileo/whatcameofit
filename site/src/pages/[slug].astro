@@ -437,36 +437,37 @@ const sections = [
           }
         </div>
       </div>
+        {/* In the band, before the content in the page's order, so a keyboard reaches them
+            first. On a phone they close the band, under the status. */}
+      <div class="page-actions band-actions" data-pagefind-ignore>
+          {/* Following lists the claim on the home page, in this browser only. Shown by
+              the script, where the browser lets it keep the list. */}
+          <button
+            type="button"
+            class="share"
+            data-follow
+            data-slug={claim.slug}
+            data-headline={claim.headline}
+            data-status={STATUS_LABELS[claim.status.code]}
+            aria-pressed="false"
+            hidden
+          >
+            <Bookmark size={16} stroke-width={1.9} aria-hidden="true" />
+            <span data-follow-text>Follow</span>
+          </button>
+          <SharePill />
+        <a class="share" href="#check-again" hidden data-remind-link>
+          <Clock size={16} stroke-width={1.9} aria-hidden="true" />
+          <span>Check again later</span>
+        </a>
+        <ReportError page={`/${claim.slug}`} short />
+      </div>
     </div>
   </section>
 
-  <div class="frame">
+  <div class="frame no-rail">
     <SectionList label="On this page" items={sections} />
 
-    {/* Before the content in the page's order, so a keyboard reaches them first. */}
-    <div class="rail page-actions" data-pagefind-ignore>
-        {/* Following lists the claim on the home page, in this browser only. Shown by
-            the script, where the browser lets it keep the list. */}
-        <button
-          type="button"
-          class="share"
-          data-follow
-          data-slug={claim.slug}
-          data-headline={claim.headline}
-          data-status={STATUS_LABELS[claim.status.code]}
-          aria-pressed="false"
-          hidden
-        >
-          <Bookmark size={16} stroke-width={1.9} aria-hidden="true" />
-          <span data-follow-text>Follow</span>
-        </button>
-        <SharePill />
-      <a class="share" href="#check-again" hidden data-remind-link>
-        <Clock size={16} stroke-width={1.9} aria-hidden="true" />
-        <span>Check again later</span>
-      </a>
-      <ReportError page={`/${claim.slug}`} short />
-    </div>
 
   <article class="sheet" data-pagefind-body>
     {
@@ -767,7 +768,6 @@ const sections = [
                                     ? `, ${line.steps[0].event.trial_id}`
                                     : ""}
                                 </a>
-                                <TrialDetailsLink url={line.sourceUrl} />
                                 {
                                   /* A record read from a registry is certain. One found by
                                      rule, such as a follow-up paper, says how sure it is. */

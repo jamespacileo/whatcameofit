@@ -1724,7 +1724,7 @@ test("Scenario: Tabbing into a claim page", () => {
   // The skip link is the page's first link, and the actions come before the content.
   assert.ok(html.indexOf('<a class="skip"') < html.indexOf('class="masthead"'));
   assert.ok(html.indexOf("data-follow") < html.indexOf('<article class="sheet"'));
-  assert.ok(html.indexOf('<nav class="onpage"') < html.indexOf("data-follow"));
+  assert.ok(html.indexOf("data-follow") < html.indexOf('<nav class="onpage"'));
 });
 
 test("Scenario: Topic among ten", () => {

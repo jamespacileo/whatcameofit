@@ -14,7 +14,7 @@ A claim page and a topic page SHALL open, directly under the masthead, with a fu
 - **THEN** the band shows the topic's name and a count of one at each of those statuses, each named in words
 
 ### Requirement: The band stays short on a phone
-Below the site's phone breakpoint the band of a claim page SHALL hold only the breadcrumb, the title, the link to the method and the status panel. The reports followed and the follow and share controls SHALL open the content below the band. When a claim follows more than one report, the first SHALL be shown there and the rest SHALL be reached by one link to the timetable.
+Below the site's phone breakpoint the band of a claim page SHALL hold only the breadcrumb, the title, the link to the method and the status panel. The reports followed SHALL open the content below the band, and the follow and share controls SHALL close the band, under the status panel. When a claim follows more than one report, the first SHALL be shown there and the rest SHALL be reached by one link to the timetable.
 
 #### Scenario: Claim page on a phone
 - **WHEN** a claim page is opened at 375 by 812 pixels
