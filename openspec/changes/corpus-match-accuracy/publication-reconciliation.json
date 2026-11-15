@@ -73,5 +73,6 @@
     "claims": 126,
     "note": "The same 42 claims were published concurrently from an earlier snapshot. Integration retains all 126 and publishes the newer NeuroLife, pembrolizumab and chronotherapy corrections, current stage readings and refreshed organisation metadata."
   },
-  "stale_candidate_correction": "stale-candidate-corrections.json"
+  "stale_candidate_correction": "stale-candidate-corrections.json",
+  "rechecked_at": "2026-11-15T20:33:16.121086+00:00"
 }
