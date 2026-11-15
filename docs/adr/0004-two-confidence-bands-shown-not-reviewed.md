@@ -29,3 +29,5 @@ Status is derived only by the pure rules in `pipeline/src/thenwhat/status`, from
 - A reader sees more uncertain material than before, each piece labelled. The label is the safeguard, so the site must show the score wherever it shows the item.
 - A stage reading that is wrong but sure is confirmed and decides between the two no-trial statuses until someone archives or corrects it. The threshold for the sure band is the control on how often.
 - The guardrail in `CLAUDE.md` now says "confirmed", not "reviewed".
+- A reading is exported only while the stage is empty, and with an empty stage and no trial the status is "no trial record found". So a page never shows "preclinical only" beside a low-confidence reading of a study in people: "preclinical only" needs a confirmed stage, and a confirmed stage has no reading beside it.
+- Neither number was measured. The show probability (0.5) is "the reading's first choice has a majority"; the floor for listing another stage (0.05) only keeps noise off the page. Both are settings or constants to revisit once readings have been audited against their articles.
