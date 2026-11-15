@@ -767,32 +767,48 @@ def choose_same_claim(
     )
 
 
-NEW_TREATMENT_REPORT = "new_treatment_report"
-REPORTS_A_NEW_TREATMENT = "new_treatment"
-ANOTHER_KIND_OF_STORY = "other"
-NEW_TREATMENT_QUESTION = (
-    "An article has been read and is summarised above in our own words. Is it a report "
-    "about one treatment that is new, experimental or newly being tested for one "
-    "condition: a study or trial result, the start of a trial, a first use in people, an "
-    f"approval, or other progress of that treatment? Answer {REPORTS_A_NEW_TREATMENT} for "
-    f"that. Answer {ANOTHER_KIND_OF_STORY} for anything else, including: news about a "
-    "treatment long in established use (its safety, side effects, price, marketing, "
-    "prescribing or policy); advice, lifestyle and public health measures; a predictor, a "
-    "risk factor, a test or a discovery that is not a treatment; and a research direction "
-    "or an approach with no one treatment for one condition."
+TREATMENT_REPORT = "treatment_report"
+NEW_TREATMENT = "new_treatment"
+ESTABLISHED_TREATMENT = "established_treatment"
+NOT_ONE_TREATMENT = "not_one_treatment"
+TREATMENT_REPORT_OPTIONS = [NEW_TREATMENT, ESTABLISHED_TREATMENT, NOT_ONE_TREATMENT]
+TREATMENT_REPORT_QUESTION = (
+    "An article has been read and is summarised above in our own words. Which is it?\n"
+    f"- {NEW_TREATMENT}: about one treatment for one condition, where the treatment is "
+    "new, experimental or being tested for that condition. A study or trial result, good "
+    "or bad; a trial starting or being halted; a first use in people; an approval or its "
+    "refusal. A drug long used for something else and now tested for this condition "
+    "belongs here.\n"
+    f"- {ESTABLISHED_TREATMENT}: about one treatment for one condition, where the "
+    "treatment is already in established use for that condition. New evidence about how "
+    "well it works, its safety, its price or supply, or how it is used.\n"
+    f"- {NOT_ONE_TREATMENT}: anything else. No one treatment (a class or an approach for "
+    "many conditions, a research direction); not a treatment (a predictor, a risk factor, "
+    "a test, a discovery about a disease); or advice with no condition treated."
 )
 
 
-def new_treatment_state(headline: str, summary: str, intervention: str, indication: str) -> str:
-    """What the new-treatment decision is shown: what was read from the article, in the
-    tracker's own words, and the question. Never a word of the article."""
+@dataclass(frozen=True, slots=True)
+class TreatmentReport:
+    """What the treatment-report decision answered."""
+
+    # Whichever of the new and the established treatment it thinks likelier.
+    kind: str
+    # The probability it gave to the article being about one treatment for one
+    # condition, new or established: one minus what it gave to neither.
+    one_treatment_probability: float
+
+
+def treatment_report_state(headline: str, summary: str, intervention: str, indication: str) -> str:
+    """What the treatment-report decision is shown: what was read from the article, in
+    the tracker's own words, and the question. Never a word of the article."""
     return (
         f"Headline: {headline}\nSummary: {summary}\n"
-        f"Treatment: {intervention}\nCondition: {indication}\n\n{NEW_TREATMENT_QUESTION}"
+        f"Treatment: {intervention}\nCondition: {indication}\n\n{TREATMENT_REPORT_QUESTION}"
     )
 
 
-def reports_a_new_treatment(
+def kind_of_treatment_report(
     session: Session,
     backend: Backend,
     *,
@@ -802,17 +818,24 @@ def reports_a_new_treatment(
     intervention: str,
     indication: str,
     now: datetime,
-) -> float:
-    """The probability the backend gives to the article being a report of a new treatment
-    for a condition, which is what the tracker follows. This function decides nothing:
-    the caller drafts or joins a claim only at or above its own setting."""
+) -> TreatmentReport:
+    """Whether the backend says the article is about one treatment for one condition,
+    which is what a claim is, and whether that treatment is new or established. This
+    function decides nothing: the caller drafts or joins a claim only at or above its own
+    setting. An established treatment is wanted as much as a new one: its registry record
+    is what came of it."""
     decision = decide(
         session,
         backend,
-        step=NEW_TREATMENT_REPORT,
-        state=new_treatment_state(headline, summary, intervention, indication),
-        options=[REPORTS_A_NEW_TREATMENT, ANOTHER_KIND_OF_STORY],
+        step=TREATMENT_REPORT,
+        state=treatment_report_state(headline, summary, intervention, indication),
+        options=TREATMENT_REPORT_OPTIONS,
         input_ref=ref,
         now=now,
     )
-    return decision.probabilities[REPORTS_A_NEW_TREATMENT]
+    chances = decision.probabilities
+    new, established = chances.get(NEW_TREATMENT, 0.0), chances.get(ESTABLISHED_TREATMENT, 0.0)
+    return TreatmentReport(
+        kind=ESTABLISHED_TREATMENT if established > new else NEW_TREATMENT,
+        one_treatment_probability=1 - chances.get(NOT_ONE_TREATMENT, 0.0),
+    )
