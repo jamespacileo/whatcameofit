@@ -13,7 +13,7 @@ See `proposal.md` for why. What shapes the approach:
   - `headers` sets request headers, a User-Agent included. `proxy` is `basic`, `enhanced` or `auto`.
   - Firecrawl reads robots.txt "before it crawls a site" under the token `FirecrawlAgent`. The documentation does not say this covers a single-page scrape, and says the token is not necessarily the User-Agent header sent.
   - A self-hosted service is addressed by its own URL and may need no key.
-- The operator's service is self-hosted (answered 2026-11-15). The pipeline reaches it on the private network; it is not served publicly. What a self-hosted service lacks compared with the cloud one (the operator's recollection of Firecrawl's self-hosting guide is that the stealth proxy engine is cloud-only) is confirmed in task 1.1, not assumed here.
+- The operator's service is self-hosted (answered 2026-11-15). The pipeline reaches it on the private network; it is not served publicly. What a self-hosted service lacks compared with the cloud one (the assistant's unchecked recollection of Firecrawl's self-hosting guide is that the stealth proxy engine is cloud-only) is confirmed in task 1.1, not assumed here.
 - Guardrails that bind here: robots.txt and a contact User-Agent; article text kept nowhere, logs and caches included; no model IDs in code; no fallback paths; no live requests in tests.
 
 ## Goals / Non-Goals
