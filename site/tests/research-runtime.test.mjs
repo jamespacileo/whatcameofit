@@ -37,10 +37,10 @@ test("Workers runtime retrieves both sources and reuses KV without outbound requ
     assert.deepEqual(result.availability, {openalex:"ok",ror:"ok"});
     assert.equal(result.papers.length, 10);
     assert.equal(result.organisations[0].name, "Kyoto University");
-    assert.equal(calls.length, 3);
+    assert.equal(calls.length, 5); // allowance and search twice (by keyword, by organisation), and ROR
     const again = await (await mf.dispatchFetch("https://worker.test/")).json();
     assert.deepEqual(again, result);
-    assert.equal(calls.length, 3);
+    assert.equal(calls.length, 5); // allowance and search twice (by keyword, by organisation), and ROR
   } finally { await mf.dispose(); }
 });
 

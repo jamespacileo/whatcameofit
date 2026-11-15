@@ -111,11 +111,19 @@ The system SHALL use a paper's abstract only to score and to find reasons and re
 - **THEN** the export holds the paper's title and link and no abstract text
 
 ### Requirement: Public on-demand research context
-The public lookup SHALL return bibliographic search results and identifiers for organisations explicitly named in the report, in addition to trial candidates. These SHALL be labelled unreviewed search results, separate from claim status and match confidence. The interface SHALL collapse secondary context initially. Missing keys, provider limits and failures SHALL leave trial results available. Old cached results and older extensions SHALL remain compatible.
+The public lookup SHALL return the records of papers the report links to, bibliographic search results and identifiers for organisations explicitly named in the report, in addition to trial candidates. These SHALL be labelled unreviewed search results, separate from claim status and match confidence. The interface SHALL collapse secondary context initially. Missing keys, provider limits and failures SHALL leave trial results available. Old cached results and older extensions SHALL remain compatible.
 
 #### Scenario: A report has related papers and names a university
 - **WHEN** OpenAlex finds papers and ROR selects the university's identity
 - **THEN** paper titles, metadata and source links and the ROR organisation link are available in collapsed sections, with no status change
+
+#### Scenario: The report links to its paper
+- **WHEN** the page links to a paper by DOI or PubMed number and a keyword search would not return that paper
+- **THEN** the paper's record is fetched by its identifier, listed first and marked as linked from the article
+
+#### Scenario: The paper's title shares few words with the report
+- **WHEN** the report links to no paper, names two organisations that ROR identifies, and a keyword search does not return the paper it reports
+- **THEN** works on the treatment's terms with an author at each named organisation, published around the report's date, are searched for, and a paper found this way is listed before keyword results with the organisations it was found under, those found under more organisations first
 
 #### Scenario: The free allowance cannot be established
 - **WHEN** OpenAlex's allowance is exhausted, unknown, exceeds the free budget or has prepaid credit

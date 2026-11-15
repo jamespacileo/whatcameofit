@@ -1,0 +1,930 @@
+{
+  "article": "https://www.kcl.ac.uk/news/lab-grown-teeth-might-become-an-alternative-to-fillings-following-research-breakthrough",
+  "expected_doi": "10.1021/acsmacrolett.4c00520",
+  "within": 5,
+  "recorded": {
+    "fetched_at": "2026-11-14T23:19:57.135Z",
+    "reading": {
+      "intervention": "Lab-grown teeth",
+      "indication": "Missing or damaged teeth",
+      "searchPhrases": [
+        "tooth regeneration",
+        "bioengineered tooth"
+      ],
+      "organisations": [
+        "King’s College London",
+        "Imperial College London"
+      ],
+      "published": "2025-04-14T09:00:00"
+    },
+    "linked": [
+      {
+        "pubmedId": "39532305"
+      }
+    ],
+    "responses": {
+      "https://api.ror.org/v2/organizations?affiliation=King%E2%80%99s+College+London": {
+        "items": [
+          {
+            "substring": "King’s College London",
+            "score": 1,
+            "matching_type": "SINGLE SEARCH",
+            "chosen": true,
+            "organization": {
+              "admin": {
+                "created": {
+                  "date": "2018-11-14",
+                  "schema_version": "1.0"
+                },
+                "last_modified": {
+                  "date": "2026-10-06",
+                  "schema_version": "2.1"
+                }
+              },
+              "domains": [
+                "kcl.ac.uk"
+              ],
+              "established": 1829,
+              "external_ids": [
+                {
+                  "all": [
+                    "100009360",
+                    "501100004074",
+                    "501100000656",
+                    "501100000764",
+                    "100011885",
+                    "100013376",
+                    "100014542"
+                  ],
+                  "preferred": "100009360",
+                  "type": "fundref"
+                },
+                {
+                  "all": [
+                    "grid.13097.3c"
+                  ],
+                  "preferred": "grid.13097.3c",
+                  "type": "grid"
+                },
+                {
+                  "all": [
+                    "0000 0001 2322 6764"
+                  ],
+                  "preferred": null,
+                  "type": "isni"
+                },
+                {
+                  "all": [
+                    "Q245247"
+                  ],
+                  "preferred": null,
+                  "type": "wikidata"
+                }
+              ],
+              "id": "https://ror.org/0220mzb33",
+              "links": [
+                {
+                  "type": "website",
+                  "value": "https://www.kcl.ac.uk/"
+                },
+                {
+                  "type": "wikipedia",
+                  "value": "http://en.wikipedia.org/wiki/King's_College_London"
+                }
+              ],
+              "locations": [
+                {
+                  "geonames_details": {
+                    "continent_code": "EU",
+                    "continent_name": "Europe",
+                    "country_code": "GB",
+                    "country_name": "United Kingdom",
+                    "country_subdivision_code": "ENG",
+                    "country_subdivision_name": "England",
+                    "lat": 51.50853,
+                    "lng": -0.12574,
+                    "name": "London"
+                  },
+                  "geonames_id": 2643743
+                }
+              ],
+              "names": [
+                {
+                  "lang": "cy",
+                  "types": [
+                    "label"
+                  ],
+                  "value": "Coleg y Brenin, Llundain"
+                },
+                {
+                  "lang": null,
+                  "types": [
+                    "acronym"
+                  ],
+                  "value": "KCL"
+                },
+                {
+                  "lang": "en",
+                  "types": [
+                    "ror_display",
+                    "label"
+                  ],
+                  "value": "King's College London"
+                }
+              ],
+              "relationships": [
+                {
+                  "label": "Wellcome EPSRC Centre for Medical Engineering",
+                  "type": "child",
+                  "id": "https://ror.org/04s9kfd63"
+                },
+                {
+                  "label": "Centre for Ultrastructural Imaging",
+                  "type": "child",
+                  "id": "https://ror.org/02sbfag17"
+                },
+                {
+                  "label": "MRC Centre for Neurodevelopmental Disorders",
+                  "type": "child",
+                  "id": "https://ror.org/01mcnhb78"
+                },
+                {
+                  "label": "University of London",
+                  "type": "parent",
+                  "id": "https://ror.org/04cw6st05"
+                },
+                {
+                  "label": "Croydon University Hospital",
+                  "type": "related",
+                  "id": "https://ror.org/04e2jep17"
+                },
+                {
+                  "label": "Guy's Hospital",
+                  "type": "related",
+                  "id": "https://ror.org/04r33pf22"
+                },
+                {
+                  "label": "King's College Hospital",
+                  "type": "related",
+                  "id": "https://ror.org/044nptt90"
+                },
+                {
+                  "label": "St Thomas' Hospital",
+                  "type": "related",
+                  "id": "https://ror.org/054gk2851"
+                },
+                {
+                  "label": "King's College Hospital NHS Foundation Trust",
+                  "type": "related",
+                  "id": "https://ror.org/01n0k5m85"
+                }
+              ],
+              "status": "active",
+              "types": [
+                "education",
+                "funder"
+              ]
+            }
+          }
+        ]
+      },
+      "https://api.openalex.org/works?search=Lab-grown+teeth+Missing+or+damaged+teeth&per_page=10&select=id%2Ctitle%2Cdoi%2Cpublication_year%2Ctype%2Cprimary_location": {
+        "results": [
+          {
+            "id": "https://openalex.org/W7223596399",
+            "title": "The Long Teeth of Memory",
+            "doi": null,
+            "publication_year": 2022,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "OpenSPACES@UNK"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W2728585848",
+            "title": "Toxicity of dioxin to developing teeth and salivary glands : an experimental study",
+            "doi": null,
+            "publication_year": 2006,
+            "type": "dissertation",
+            "primary_location": {
+              "source": {
+                "display_name": "Työväentutkimus Vuosikirja"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W3122508315",
+            "title": "Baby tyrannosaurid bones and teeth from the Late Cretaceous of western North America1",
+            "doi": "https://doi.org/10.1139/cjes-2020-0169",
+            "publication_year": 2021,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Canadian Journal of Earth Sciences"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W3176614713",
+            "title": "Cell homing of immature permanent teeth implanted in rodents during pulp regeneration",
+            "doi": "https://doi.org/10.5167/uzh-204542",
+            "publication_year": 2016,
+            "type": "dissertation",
+            "primary_location": {
+              "source": {
+                "display_name": "Zurich Open Repository and Archive (University of Zurich)"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W7217074123",
+            "title": "IS PREVENTIVE CANAL THERAPY NECESSARY IN TEETH INVOLVED IN RADICULAR CYSTS? A CASE SERIES",
+            "doi": null,
+            "publication_year": 2021,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "PORTO@Iris"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W1514308940",
+            "title": "Forensic Dentistry And Its Application In Age Estimation From The Teeth Using A Modified Demirjian System",
+            "doi": null,
+            "publication_year": 2005,
+            "type": "dissertation",
+            "primary_location": {
+              "source": {
+                "display_name": "The Sydney eScholarship Repository (The University of Sydney)"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W3122060104",
+            "title": "Just Like Pulling Teeth: How Dental Education’s Crisis Shows the Way Forward for Law Schools",
+            "doi": null,
+            "publication_year": 2017,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Seton Hall Law Review"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W7220648136",
+            "title": "A dental dilemma: bear teeth reveal a spatial gradient in age of primiparity, but temporal trends muddled when bears grew fast",
+            "doi": "https://doi.org/10.1098/rsos.252109",
+            "publication_year": 2026,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Royal Society Open Science"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4402847979",
+            "title": "Automatic Joint Teeth Segmentation in Panoramic Dental Images using Mask R-CNN with Residual Feature Extraction: Can it be useful in Oral Cancer Diagnosis and Management?",
+            "doi": "https://doi.org/10.59667/sjoranm.v12i1.18",
+            "publication_year": 2024,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Swiss Journal of Radiology and Nuclear Medicine"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W45748855",
+            "title": "Who is missing? A study of missing persons in B.C.",
+            "doi": null,
+            "publication_year": 2005,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Summit (Simon Fraser University)"
+              }
+            }
+          }
+        ]
+      },
+      "https://api.ror.org/v2/organizations?affiliation=Imperial+College+London": {
+        "items": [
+          {
+            "substring": "Imperial College London",
+            "score": 1,
+            "matching_type": "SINGLE SEARCH",
+            "chosen": true,
+            "organization": {
+              "admin": {
+                "created": {
+                  "date": "2018-11-14",
+                  "schema_version": "1.0"
+                },
+                "last_modified": {
+                  "date": "2026-10-06",
+                  "schema_version": "2.1"
+                }
+              },
+              "domains": [
+                "imperial.ac.uk"
+              ],
+              "established": 1907,
+              "external_ids": [
+                {
+                  "all": [
+                    "501100000761",
+                    "501100000850",
+                    "501100014534",
+                    "501100022211",
+                    "501100024012",
+                    "501100024415"
+                  ],
+                  "preferred": "501100000761",
+                  "type": "fundref"
+                },
+                {
+                  "all": [
+                    "grid.7445.2"
+                  ],
+                  "preferred": "grid.7445.2",
+                  "type": "grid"
+                },
+                {
+                  "all": [
+                    "0000 0001 2113 8111"
+                  ],
+                  "preferred": null,
+                  "type": "isni"
+                },
+                {
+                  "all": [
+                    "Q189022"
+                  ],
+                  "preferred": null,
+                  "type": "wikidata"
+                }
+              ],
+              "id": "https://ror.org/041kmwe10",
+              "links": [
+                {
+                  "type": "website",
+                  "value": "https://www.imperial.ac.uk"
+                },
+                {
+                  "type": "wikipedia",
+                  "value": "http://en.wikipedia.org/wiki/Imperial_College_London"
+                }
+              ],
+              "locations": [
+                {
+                  "geonames_details": {
+                    "continent_code": "EU",
+                    "continent_name": "Europe",
+                    "country_code": "GB",
+                    "country_name": "United Kingdom",
+                    "country_subdivision_code": "ENG",
+                    "country_subdivision_name": "England",
+                    "lat": 51.50853,
+                    "lng": -0.12574,
+                    "name": "London"
+                  },
+                  "geonames_id": 2643743
+                }
+              ],
+              "names": [
+                {
+                  "lang": "cy",
+                  "types": [
+                    "label"
+                  ],
+                  "value": "Coleg Imperial Llundain"
+                },
+                {
+                  "lang": "en",
+                  "types": [
+                    "ror_display",
+                    "label"
+                  ],
+                  "value": "Imperial College London"
+                },
+                {
+                  "lang": "en",
+                  "types": [
+                    "alias"
+                  ],
+                  "value": "Imperial College of Science, Technology and Medicine"
+                }
+              ],
+              "relationships": [
+                {
+                  "label": "MRC London Institute of Medical Sciences",
+                  "type": "child",
+                  "id": "https://ror.org/05p1n6x86"
+                },
+                {
+                  "label": "MRC Centre for Environment and Health",
+                  "type": "child",
+                  "id": "https://ror.org/01vw4c203"
+                },
+                {
+                  "label": "John Adams Institute for Accelerator Science",
+                  "type": "child",
+                  "id": "https://ror.org/00wgpgb78"
+                },
+                {
+                  "label": "KIOS Research and Innovation Center of Excellence",
+                  "type": "child",
+                  "id": "https://ror.org/037ez2r19"
+                },
+                {
+                  "label": "MRC Centre of Research Excellence in Restorative Neural Dynamics",
+                  "type": "child",
+                  "id": "https://ror.org/01fj67v51"
+                },
+                {
+                  "label": "Abraham de Moivre",
+                  "type": "child",
+                  "id": "https://ror.org/04ed89255"
+                },
+                {
+                  "label": "Ayrton- Blériot Engineering Laboratory",
+                  "type": "child",
+                  "id": "https://ror.org/056v5ya86"
+                },
+                {
+                  "label": "\"Antoine Lavoisier\" Multiscale Metabolism International Research Laboratory",
+                  "type": "child",
+                  "id": "https://ror.org/05yp6fj56"
+                },
+                {
+                  "label": "Charing Cross Hospital",
+                  "type": "related",
+                  "id": "https://ror.org/02gcp3110"
+                },
+                {
+                  "label": "Ealing Hospital",
+                  "type": "related",
+                  "id": "https://ror.org/05a90fj07"
+                },
+                {
+                  "label": "Hammersmith Hospital",
+                  "type": "related",
+                  "id": "https://ror.org/05jg8yp15"
+                },
+                {
+                  "label": "Harefield Hospital",
+                  "type": "related",
+                  "id": "https://ror.org/04fwa4t58"
+                },
+                {
+                  "label": "Hillingdon Hospital",
+                  "type": "related",
+                  "id": "https://ror.org/00jpae132"
+                },
+                {
+                  "label": "Mount Vernon Hospital",
+                  "type": "related",
+                  "id": "https://ror.org/04am5a125"
+                },
+                {
+                  "label": "Northwick Park Hospital",
+                  "type": "related",
+                  "id": "https://ror.org/030j6qm79"
+                },
+                {
+                  "label": "Royal Marsden Hospital",
+                  "type": "related",
+                  "id": "https://ror.org/034vb5t35"
+                },
+                {
+                  "label": "St Mark's Hospital",
+                  "type": "related",
+                  "id": "https://ror.org/05am5g719"
+                },
+                {
+                  "label": "St Mary's Hospital",
+                  "type": "related",
+                  "id": "https://ror.org/01aysdw42"
+                },
+                {
+                  "label": "St Peter's Hospital",
+                  "type": "related",
+                  "id": "https://ror.org/0159cmf83"
+                },
+                {
+                  "label": "West Middlesex University Hospital",
+                  "type": "related",
+                  "id": "https://ror.org/05vgg2c14"
+                },
+                {
+                  "label": "The George Institute for Global Health",
+                  "type": "related",
+                  "id": "https://ror.org/023331s46"
+                },
+                {
+                  "label": "Chelsea and Westminster Hospital NHS Foundation Trust",
+                  "type": "related",
+                  "id": "https://ror.org/02gd18467"
+                }
+              ],
+              "status": "active",
+              "types": [
+                "education",
+                "funder"
+              ]
+            }
+          }
+        ]
+      },
+      "https://api.openalex.org/works?search=tooth+regeneration+Missing+or+damaged+teeth&per_page=10&select=id%2Ctitle%2Cdoi%2Cpublication_year%2Ctype%2Cprimary_location": {
+        "results": [
+          {
+            "id": "https://openalex.org/W2493830439",
+            "title": "Tissue Engineering for Tooth Regeneration",
+            "doi": "https://doi.org/10.1142/9781848161832_0030",
+            "publication_year": 2008,
+            "type": "book-chapter",
+            "primary_location": {
+              "source": {
+                "display_name": "IMPERIAL COLLEGE PRESS eBooks"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W2135484569",
+            "title": "Functional Tooth Regeneration Using a Bioengineered Tooth Unit as a Mature Organ Replacement Regenerative Therapy",
+            "doi": "https://doi.org/10.1371/journal.pone.0021531",
+            "publication_year": 2011,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "PLoS ONE"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W2898480810",
+            "title": "Tooth Repair and Regeneration",
+            "doi": "https://doi.org/10.1007/s40496-018-0196-9",
+            "publication_year": 2018,
+            "type": "review",
+            "primary_location": {
+              "source": {
+                "display_name": "Current Oral Health Reports"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W2676792084",
+            "title": "Stem cell‐based tooth and periodontal regeneration",
+            "doi": "https://doi.org/10.1111/odi.12703",
+            "publication_year": 2017,
+            "type": "review",
+            "primary_location": {
+              "source": {
+                "display_name": "Oral Diseases"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W2088618617",
+            "title": "Tooth regeneration: a revolution in stomatology and evolution in regenerative medicine",
+            "doi": "https://doi.org/10.4248/ijos11042",
+            "publication_year": 2011,
+            "type": "review",
+            "primary_location": {
+              "source": {
+                "display_name": "International Journal of Oral Science"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4311600447",
+            "title": "Dentin regeneration based on tooth tissue engineering: A review",
+            "doi": "https://doi.org/10.1002/btpr.3319",
+            "publication_year": 2022,
+            "type": "review",
+            "primary_location": {
+              "source": {
+                "display_name": "Biotechnology Progress"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W2087406281",
+            "title": "Review scaffold design and stem cells for tooth regeneration",
+            "doi": "https://doi.org/10.1016/j.jdsr.2012.09.001",
+            "publication_year": 2012,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Japanese Dental Science Review"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W2972446371",
+            "title": "Healing the Tooth: Important Advances in Tooth Repair",
+            "doi": "https://doi.org/10.3389/frym.2019.00108",
+            "publication_year": 2019,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Frontiers for Young Minds"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W3082882489",
+            "title": "Development of tooth regenerative medicine strategies by controlling the number of teeth using targeted molecular therapy",
+            "doi": "https://doi.org/10.1186/s41232-020-00130-x",
+            "publication_year": 2020,
+            "type": "review",
+            "primary_location": {
+              "source": {
+                "display_name": "Inflammation and Regeneration"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W2892269809",
+            "title": "From understanding tooth development to bioengineering of teeth",
+            "doi": "https://doi.org/10.1111/eos.12421",
+            "publication_year": 2018,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "European Journal Of Oral Sciences"
+              }
+            }
+          }
+        ]
+      },
+      "https://api.openalex.org/works?search=%28Lab-grown+teeth%29+OR+%28tooth+regeneration%29&filter=authorships.institutions.ror%3Ahttps%3A%2F%2Fror.org%2F0220mzb33%2Cfrom_publication_date%3A2023-04-15%2Cto_publication_date%3A2025-05-15&per_page=10&select=id%2Ctitle%2Cdoi%2Cpublication_year%2Ctype%2Cprimary_location": {
+        "results": [
+          {
+            "id": "https://openalex.org/W4385480825",
+            "title": "Spatiotemporal monitoring of hard tissue development reveals unknown features of tooth and bone development",
+            "doi": "https://doi.org/10.1126/sciadv.adi0482",
+            "publication_year": 2023,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Science Advances"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4390823078",
+            "title": "Lithiated porous silicon nanowires stimulate periodontal regeneration",
+            "doi": "https://doi.org/10.1038/s41467-023-44581-5",
+            "publication_year": 2024,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Nature Communications"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4406661641",
+            "title": "The Secretome of the Inductive Tooth Germ Exhibits Signals Required for Tooth Development",
+            "doi": "https://doi.org/10.3390/bioengineering12020096",
+            "publication_year": 2025,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Bioengineering"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4394980279",
+            "title": "Exploring the Therapeutic Potential of Curcumin for Periodontal Regeneration",
+            "doi": "https://doi.org/10.29011/2574-7347.100207",
+            "publication_year": 2024,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Dentistry Advanced Research"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4408683653",
+            "title": "Integrated multi-omics profiling characterizes the crucial role of human dental epithelium during tooth development",
+            "doi": "https://doi.org/10.1016/j.celrep.2025.115437",
+            "publication_year": 2025,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Cell Reports"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4386067261",
+            "title": "Bat teeth illuminate the diversification of mammalian tooth classes",
+            "doi": "https://doi.org/10.1038/s41467-023-40158-4",
+            "publication_year": 2023,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Nature Communications"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4407720546",
+            "title": "An axolotl limb regeneration-inspired strategy to enhance alveolar bone regeneration",
+            "doi": "https://doi.org/10.1016/j.bioactmat.2025.02.020",
+            "publication_year": 2025,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Bioactive Materials"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4404326590",
+            "title": "Generating Tooth Organoids Using Defined Bioorthogonally Cross-Linked Hydrogels",
+            "doi": "https://doi.org/10.1021/acsmacrolett.4c00520",
+            "publication_year": 2024,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "ACS Macro Letters"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4392194567",
+            "title": "Tooth loss during supportive periodontal care: A prospective study",
+            "doi": "https://doi.org/10.1111/jcpe.13943",
+            "publication_year": 2024,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Journal Of Clinical Periodontology"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4408801082",
+            "title": "Therapeutic potential of curcumin in regenerative dentistry",
+            "doi": "https://doi.org/10.3389/fdmed.2025.1537478",
+            "publication_year": 2025,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Frontiers in Dental Medicine"
+              }
+            }
+          }
+        ]
+      },
+      "https://api.openalex.org/works?search=%28Lab-grown+teeth%29+OR+%28tooth+regeneration%29&filter=authorships.institutions.ror%3Ahttps%3A%2F%2Fror.org%2F041kmwe10%2Cfrom_publication_date%3A2023-04-15%2Cto_publication_date%3A2025-05-15&per_page=10&select=id%2Ctitle%2Cdoi%2Cpublication_year%2Ctype%2Cprimary_location": {
+        "results": [
+          {
+            "id": "https://openalex.org/W4390823078",
+            "title": "Lithiated porous silicon nanowires stimulate periodontal regeneration",
+            "doi": "https://doi.org/10.1038/s41467-023-44581-5",
+            "publication_year": 2024,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Nature Communications"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4404326590",
+            "title": "Generating Tooth Organoids Using Defined Bioorthogonally Cross-Linked Hydrogels",
+            "doi": "https://doi.org/10.1021/acsmacrolett.4c00520",
+            "publication_year": 2024,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "ACS Macro Letters"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4392712116",
+            "title": "Association of tooth location, occlusal support and chewing ability with cognitive decline and incident dementia",
+            "doi": "https://doi.org/10.1111/jcpe.13970",
+            "publication_year": 2024,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Journal Of Clinical Periodontology"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4409150134",
+            "title": "Correlation between oral microbiota and dry socket at different time periods on tooth extraction",
+            "doi": "https://doi.org/10.1080/20002297.2025.2485210",
+            "publication_year": 2025,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Journal of Oral Microbiology"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4400765454",
+            "title": "Bioactive coatings on 3D printed scaffolds for bone regeneration: Use of Laponite® to deliver BMP-2 in an ovine femoral condyle defect model",
+            "doi": "https://doi.org/10.1016/j.bioadv.2024.213959",
+            "publication_year": 2024,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Biomaterials Advances"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4409478111",
+            "title": "Optimization of Electric Vehicle Drivetrain Fluid with a New System-Level Approach",
+            "doi": "https://doi.org/10.1080/10402004.2025.2488799",
+            "publication_year": 2025,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "Tribology Transactions"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4366088584",
+            "title": "Notch and Wnt Signaling Modulation to Enhance DPSC Stemness and Therapeutic Potential",
+            "doi": "https://doi.org/10.3390/ijms24087389",
+            "publication_year": 2023,
+            "type": "review",
+            "primary_location": {
+              "source": {
+                "display_name": "International Journal of Molecular Sciences"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4388911664",
+            "title": "Spontaneous activity in peripheral sensory nerves: a systematic review",
+            "doi": "https://doi.org/10.1097/j.pain.0000000000003115",
+            "publication_year": 2023,
+            "type": "review",
+            "primary_location": {
+              "source": {
+                "display_name": "Pain"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4382894103",
+            "title": "Association and comparison of periodontal and oral hygiene status with serum HbA1c levels: a cross-sectional study",
+            "doi": "https://doi.org/10.1186/s12903-023-03042-7",
+            "publication_year": 2023,
+            "type": "article",
+            "primary_location": {
+              "source": {
+                "display_name": "BMC Oral Health"
+              }
+            }
+          },
+          {
+            "id": "https://openalex.org/W4404933329",
+            "title": "Insights on the Genetic and Phenotypic Complexities of Optic Neuropathies",
+            "doi": "https://doi.org/10.3390/genes15121559",
+            "publication_year": 2024,
+            "type": "review",
+            "primary_location": {
+              "source": {
+                "display_name": "Genes"
+              }
+            }
+          }
+        ]
+      },
+      "https://api.openalex.org/works/pmid:39532305?select=id%2Ctitle%2Cdoi%2Cpublication_year%2Ctype%2Cprimary_location": {
+        "id": "https://openalex.org/W4404326590",
+        "title": "Generating Tooth Organoids Using Defined Bioorthogonally Cross-Linked Hydrogels",
+        "doi": "https://doi.org/10.1021/acsmacrolett.4c00520",
+        "publication_year": 2024,
+        "type": "article",
+        "primary_location": {
+          "source": {
+            "display_name": "ACS Macro Letters"
+          }
+        }
+      }
+    }
+  }
+}

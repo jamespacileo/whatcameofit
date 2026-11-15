@@ -102,6 +102,14 @@ function registryQueue(signal) {
   });
 }
 
+/** The papers the page links to, by DOI or PubMed number. */
+function linkedPapers(page) {
+  return [
+    ...(page?.dois ?? []).map((doi) => ({ doi })),
+    ...(page?.pubmedIds ?? []).map((pubmedId) => ({ pubmedId })),
+  ].slice(0, MAX_PAPERS);
+}
+
 /** The registry numbers given by the papers the page links to, and how many of those
  * papers could not be looked up: one that failed, that its host did not answer in time,
  * or that the allowance for them all ran out before. The lookup goes on without such a
@@ -109,10 +117,7 @@ function registryQueue(signal) {
  * one is still waited on. Aborting `signal` ends the requests in flight and asks no more. */
 async function paperNumbers(page, papers, signal, { allowanceMs, spacingMs }) {
   if (!page || !papers) return { numbers: [], unchecked: 0 };
-  const linked = [
-    ...(page.dois ?? []).map((doi) => ({ doi })),
-    ...(page.pubmedIds ?? []).map((pubmedId) => ({ pubmedId })),
-  ].slice(0, MAX_PAPERS);
+  const linked = linkedPapers(page);
   if (!linked.length || signal.aborted) return { numbers: [], unchecked: 0 };
   const allowance = new AbortController();
   const end = () => allowance.abort(signal.reason ?? stopped());
@@ -206,6 +211,8 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
       indication: reading.indication,
       searchPhrases: reading.search_phrases ?? [],
       organisations: [...(Array.isArray(reading.organisations) ? reading.organisations : []), reading.sponsor].filter(Boolean),
+      linked: linkedPapers(page),
+      published: page?.published ?? null,
     })).catch(() => ({ papers: [], organisations: [], availability: { openalex: "unavailable", ror: "unavailable" } }))
       .finally(() => took("research_ms", researchStarted)) : null;
 
