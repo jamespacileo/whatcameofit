@@ -40,7 +40,8 @@ MAX_PAPERS = 3
 
 
 INSTRUCTIONS = """\
-You read one news article or social media post and identify a specific medical treatment claim it reports.
+You read one news article or social media post and identify a specific medical
+treatment claim it reports.
 Report only what the text says. Do not add facts, and do not judge the claim.
 The one exception is the field for names you know: there, and only there, use your own knowledge.
 If the text is not about a specific treatment for a specific condition, say so and leave
