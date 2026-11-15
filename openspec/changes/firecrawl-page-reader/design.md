@@ -13,8 +13,35 @@ See `proposal.md` for why. What shapes the approach:
   - Rules about individual sites are delegated to the service, research papers included. Where an address is not allowed, a site is rate limited, or another limit applies, the service says so in its answer and the project handles the answer. Code and decisions in this project that handle particular addresses directly are to be pruned: "an opportunity to simplify things".
   - The service is never called from a reader's browser or the extension; the project's backend makes the calls.
   - When the home machine is down, readers are shown a service-overloaded error.
-- Read from Firecrawl's documentation on 2026-11-15, not tried against a running service: `POST /v2/scrape` returns `markdown`, `html` (page furniture removed) or `rawHtml`; results are cached for two days unless `maxAge: 0` and `storeInCache: false`; `headers` can set the User-Agent; robots.txt is read "before it crawls a site", with no statement that this covers a single-page scrape. Stock Firecrawl has no answer of the kinds this design needs ("not allowed, because", "not now, until"), so the operator's service is assumed to add them. Its interface has not been seen.
+- Read from Firecrawl's documentation on 2026-11-15, not tried against a running service: `POST /v2/scrape` returns `markdown`, `html` (page furniture removed) or `rawHtml`; results are cached for two days unless `maxAge: 0` and `storeInCache: false`; `headers` can set the User-Agent; robots.txt is read "before it crawls a site", with no statement that this covers a single-page scrape.
+- The operator's guide to the service, given on 2026-11-15, is summarised under "The service as it is today". It is the standard Firecrawl v2 interface with a router in front of single scrapes. It has no answer of the kinds this design needs ("not allowed, because", "not now, until"), and its router reads platforms this project has decided not to read. So the service has work to do before this change can be applied.
 - Guardrails that bind here, wherever they are enforced: robots.txt and published rate limits; a contact User-Agent; article text kept nowhere; no model IDs in code; no fallback paths; no live requests in tests.
+
+## The service as it is today
+
+From the operator's guide (2026-11-15). Addresses and the key are not written here or anywhere in the repository; they are settings.
+
+- **Interface:** Firecrawl v2 (`/v2/scrape`, `/v2/batch/scrape`, `/v2/crawl`, `/v2/map`). A bearer key is required on both routes; without it the answer is 401.
+- **Answers:** `success` and `data` with `markdown`, other formats, and `metadata`; or an error status. 5xx, timeouts and connection errors mean the machine is down or busy. A 500 on a Reddit address means Reddit is throttling the machine.
+- **Router on single scrapes:** X, Bluesky, YouTube (with captions), Facebook, Instagram, Threads, TikTok and Reddit are read by special routes, named in `metadata.socialRouter`, which return markdown and metadata only. Post routes return the author. `skipSocialRouter` bypasses the router. When a special route fails the router silently falls back to a normal scrape.
+- **Model features:** structured extraction and image descriptions, run on the server with the operator's model credits, only when asked for.
+- **Limits:** one small machine; at most 4 requests in flight; allow 120 seconds.
+- **Warned in the guide:** success does not mean good content. A login wall, a challenge page or empty markdown can come back as success.
+
+What this change needs and the service does not yet give:
+
+| Needed | Today | Consequence |
+| --- | --- | --- |
+| `not_allowed`, with a reason | No such answer. Nothing in the guide says robots.txt is read on a single scrape | The pipeline's robots.txt reading cannot be pruned until the service refuses what robots.txt disallows and says so |
+| The platforms `docs/sources.md` lists as not read are refused | The router reads X, Reddit, Facebook, Instagram, Threads and YouTube captions | The service does the opposite of the project's recorded decisions. Either the service refuses them for this project, or the operator revisits those decisions. Not decided here |
+| `not_now`, with when | No such answer; a throttled site shows as a 500 | A site's limit cannot be told from the machine failing, so a throttled site would stop a whole run |
+| The site's status for a page not served | `metadata.statusCode` on a normal scrape (Firecrawl's field; to confirm) | Likely met |
+| The client identified to the site | Not stated | To check; `headers` can carry the contact User-Agent if the service passes it on |
+| Nothing kept | Not stated; Firecrawl caches for two days by default | The pipeline sends `maxAge: 0` and `storeInCache: false`; the service's queue and logs are checked |
+| A post's author never returned | Post routes return the author | Matters for the posts prune, not for this change |
+| No silent second route | The router falls back to a normal scrape when a route fails | A fallback of the kind the operator's rule asks to be flagged. It decides nothing in this change, which sends no post to the router |
+
+The service is shared with the operator's other projects, which may want what this project refuses. So the rules this project needs are best held in the service as a named set of rules that a caller asks for by name. The pipeline then names its rule set and still holds no rule about any site.
 
 ## Goals / Non-Goals
 
@@ -54,6 +81,10 @@ What the pipeline needs, whatever the wire format:
 
 Anything else, or no answer, is the reader failing (decision 4).
 
+On the wire, as far as the guide settles it: the request is `POST /v2/scrape` with `formats: ["rawHtml", "html"]`, `maxAge: 0`, `storeInCache: false`, and the name of this project's rule set once the service has one. `read` is `success` with `metadata.statusCode` 200. `not_served` is `success` with another status. `not_allowed` and `not_now` have no form yet; task 1.1 is the service gaining them. The pipeline never asks for `json`, `summary` or `describeImages`, and never uses batch or crawl.
+
+Success is not trusted as good content. The pipeline keeps its own checks on what came back: a body under the existing length is thin, and a page with no headline or date is not read. Those are checks on a page, not rules about a site.
+
 `not_now` replaces three things the pipeline did itself: the per-outlet interval, the crawl delay, and the retry of an outlet whose rules could not be read.
 
 ### 3. Text is plain; metadata comes from the page as drawn
@@ -68,7 +99,7 @@ Not configured: the command refuses, as it does with no contact address. Unreach
 
 ### 5. One allowance, for the reader
 
-The read step's source becomes `reader`, with one configured allowance, so `source-allowances` still holds: the plan shows it, and a missing allowance refuses the run. The `outlet:` sources and `outlet_source` are removed. The allowance is a ceiling on how hard the pipeline drives the home machine; spacing per site is the reader's.
+The read step's source becomes `reader`, with one configured allowance, so `source-allowances` still holds: the plan shows it, and a missing allowance refuses the run. The `outlet:` sources and `outlet_source` are removed. The allowance is a ceiling on how hard the pipeline drives the home machine; spacing per site is the reader's. The machine takes at most 4 requests in flight and is shared with other projects, so the pipeline's reads side by side are capped at 2 by a setting, and the request timeout is 120 seconds.
 
 ### 6. The guardrails become a conformance check
 
@@ -88,7 +119,9 @@ The check is repeated when the service's rules or version change. `docs/sources.
 
 ### 8. The tunnel route is closed to everyone but the project's backend
 
-A reader that answers anyone is an open proxy: a stranger could fetch any page through it, in the project's name and from the operator's network. The tunnel's hostname refuses every request without a credential only the project's Worker holds, checked at Cloudflare (an Access service token), with the service's key as a second check. A reader's browser and the extension never hold that credential and never call the reader. Recorded in `docs/adr/0005`; verified in task 1.2 by an unauthenticated request being refused.
+A reader that answers anyone is an open proxy: a stranger could fetch any page through it, in the project's name and from the operator's network. As built, both routes require the service's bearer key and answer 401 without it, and the service's admin paths answer 404. That closes the route. A reader's browser and the extension never hold the key and never call the reader. Recorded in `docs/adr/0005`; verified in task 1.2 by an unauthenticated request being refused.
+
+Not in place, and the operator's to weigh: a check at Cloudflare before a request reaches the home machine (an Access service token). With the key alone, every guess at the key and every flood of requests arrives at the machine itself.
 
 ## Next prunes
 
@@ -108,7 +141,8 @@ Kept, because they are not rules about fetching: `backfill/address.py` and `site
 - [The project's guardrails now rest on a service this repository does not contain] → Decision 6: a dated check in `docs/sources.md`, repeated on change. The pipeline's tests cover its handling of each answer, not the service's rules.
 - [The reader is a single point of failure] → Accepted by the operator. The run stops with a clear reason and records stay due.
 - [A `not_now` for a busy site could leave leads due for a long time] → They cost nothing while due; the funnel report counts them.
-- [The service's interface is unseen, so the wire format may not carry all four outcomes] → Task 1.1 settles it before any code. If an outcome cannot be told apart, the change stops there.
+- [The service cannot yet answer `not_allowed` or `not_now`, and reads platforms the project does not] → Task 1.1: the service gains them first. Until then nothing is pruned and the pipeline keeps reading robots.txt itself.
+- [A challenge or login page comes back as success and is read as an article] → The pipeline's own thin, headline and date checks stay. The outlets report before and after shows any outlet whose Read count rises on pages that are not articles; task 5.2 samples them.
 - [The tunnel exposes the reader] → Decision 8.
 - [Content hashes change for articles read again] → Nothing compares a new hash with an old one to decide whether to read; task 3.5 verifies that.
 - [Main content cut too eagerly drops part of an article] → The before and after outlets report shows Read falling for any outlet where this happens.
@@ -122,5 +156,7 @@ Kept, because they are not rules about fetching: `backfill/address.py` and `site
 5. Rollback is reverting the commit. No data migration either way.
 
 ## Open Questions
+
+- **The platforms not read.** The service was built to read X, Reddit, Meta's platforms and YouTube captions. `docs/sources.md` records, platform by platform, why this project does not: X's robots.txt disallows its embed interface and its terms forbid scraping; Reddit's robots.txt disallows everything; Meta's embed terms forbid extracting content. This change keeps them refused, because it sends no post to the reader at all. The question becomes live with the posts prune, and it is the operator's: keep those decisions, with the service refusing for this project, or revisit them one platform at a time in `docs/sources.md`.
 
 - **Stealth proxies.** medicalxpress.com answers the identified client with 403. This change's conformance check forbids hiding the client, so it stays unread. Whether that is the standing answer is the operator's; it changes nothing in this change.

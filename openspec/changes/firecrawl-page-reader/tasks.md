@@ -2,14 +2,14 @@
 
 ## 1. The reader as a source
 
-- [ ] 1.1 Get the service's interface from the operator and write down, in `design.md` decision 2, the wire format of the four outcomes (`read`, `not_allowed`, `not_now`, `not_served`), of the service being overloaded, and whether the text is offered as HTML or only as markdown; verify each outcome can be told from the others in a real answer, and stop the change if one cannot or if only markdown is offered
-- [ ] 1.2 Run the conformance check of `design.md` decision 6 against the running service, by hand and outside tests, and write its entry in `docs/sources.md` with the date: where it runs, its two routes and how each is authenticated, its version, and the result of each of the five checks; verify an unauthenticated request to the tunnel's hostname is refused, and stop the change if any check fails
+- [ ] 1.1 (waits on the service, which is outside this repository) Have the service gain what `design.md` "The service as it is today" lists as missing: a rule set this project asks for by name; a `not_allowed` answer with a reason, given for an address robots.txt disallows and for each platform `docs/sources.md` lists as not read; a `not_now` answer with a time, told apart from the machine failing; the contact User-Agent passed on to the site. Then write the wire format of all four outcomes and of the machine being overloaded into `design.md` decision 2; verify each outcome can be told from the others in a real answer. Groups 3 to 5 do not start before this is done
+- [ ] 1.2 Run the conformance check of `design.md` decision 6 against the running service, by hand and outside tests, and write its entry in `docs/sources.md` with the date: where it runs, its two routes and that each needs the key, its version, and the result of each of the five checks, without writing any address or the key into the repository; verify an unauthenticated request on each route is refused, that `rawHtml` and `html` come back for an ordinary article, and stop the change if any check fails
 - [ ] 1.3 Add page reader to `GLOSSARY.md`, saying it fetches a page and holds the rules about each site; verify the term matches the words in `specs/page-reading/spec.md`
 - [ ] 1.4 Run `thenwhat outlets` on main before any code changes and keep the report outside the repository as the baseline; verify it lists Read, Thin, Refused and Failed for every outlet in `docs/outlets.md`
 
 ## 2. Configuration
 
-- [ ] 2.1 Add `FIRECRAWL_API_URL` and `FIRECRAWL_API_KEY` to `Settings` and `.env.example`, with no default address, and a default allowance named `reader`; verify `make check` passes and `thenwhat backfill plan` shows the reading step's source as the reader
+- [ ] 2.1 Add `FIRECRAWL_API_URL` and `FIRECRAWL_API_KEY` to `Settings` and `.env.example`, with no default address, a default allowance named `reader`, a setting for reads side by side that defaults to 2, and a 120 second request timeout; verify `make check` passes, `thenwhat backfill plan` shows the reading step's source as the reader, and a test shows no more than the configured number of requests in flight
 - [ ] 2.2 Make every command that builds a retriever refuse when no reader address is configured, naming the setting; verify one CLI test per command family (`extract`, `lookup`, `statements`, `outlets`, `backfill run` of the reading step) shows the refusal and that no request is sent
 
 ## 3. The page fetch
@@ -17,7 +17,7 @@
 - [ ] 3.1 Replace the insides of `ArticleRetriever.retrieve()` with one request to the reader, mapping its answers as in `design.md` decisions 2 and 4, and add `ReaderUnavailable` to `backfill/errors.py`; verify tests on synthetic answers cover each of the four outcomes, an unknown answer, no answer, and the service overloaded, and that none of the last three is recorded against an outlet
 - [ ] 3.2 Read page metadata from the page as drawn and the text from its main content (`design.md` decision 3); verify tests cover a page whose text exists only in the drawn copy, and one whose headline, date, DOI and registry number are in the head and links
 - [ ] 3.3 Record the archive address when a `read` answer carries one; verify a test shows the source article keeps it and that the pipeline sends the Internet Archive nothing
-- [ ] 3.4 Verify with a test that the request asks for no summary, structured extraction or prompt, and that a reader answer's text appears in no log record and in no fixture
+- [ ] 3.4 Verify with a test that the request is a single scrape with exactly `rawHtml` and `html`, `maxAge` 0, `storeInCache` false and the project's rule set, asks for no `json`, `summary` or `describeImages`, never uses batch or crawl, and that a reader answer's text appears in no log record and in no fixture
 - [ ] 3.5 Verify with a test that no code path decides whether to read an article by comparing content hashes
 
 ## 4. Pruning the pipeline's site rules
@@ -30,5 +30,5 @@
 ## 5. Outlets and acceptance
 
 - [ ] 5.1 Make `probe()` ask the reader and count a `not_allowed` answer as refused; verify `test_outlet_readability.py` passes on synthetic answers, including an outlet counted as read whose pages are drawn by scripts and one counted as refused
-- [ ] 5.2 Run `thenwhat outlets` with the change and regenerate `docs/outlets.md` and `docs/outlets-articles.csv`; verify against the baseline of 1.4 that Thin falls, that Read falls for no outlet, that every outlet refused before is still refused, and record the mean time per read. Report any outlet that got worse, or that is newly read after being refused, to the operator before merging
+- [ ] 5.2 Run `thenwhat outlets` with the change and regenerate `docs/outlets.md` and `docs/outlets-articles.csv`; verify against the baseline of 1.4 that Thin falls, that Read falls for no outlet, that every outlet refused before is still refused, and record the mean time per read. For each outlet whose Read count rose, open three of its newly read articles' reports and confirm a headline and date were found, so that a challenge or login page is not being counted as an article. Report any outlet that got worse, or that is newly read after being refused, to the operator before merging
 - [ ] 5.3 Run `make check`; verify ruff, ty, pytest and the site build pass with no live request made

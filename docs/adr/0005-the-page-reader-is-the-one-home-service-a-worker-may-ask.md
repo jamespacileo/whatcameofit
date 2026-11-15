@@ -13,7 +13,7 @@ The operator decided on 2026-11-15. On hosting: "it's an education/academic proj
 ## Decision
 
 - The page reader is the one service on the home network that a public Worker may ask.
-- The tunnel's hostname refuses every request that does not carry a credential only the project's Worker holds, checked at Cloudflare before the request reaches the service, with the service's own key as a second check.
+- The tunnel's hostname refuses every request that does not carry the service's key, which only the project's backend holds. As built on 2026-11-15 the service itself makes that check. A check at Cloudflare before a request reaches the home machine is not in place; adding one is the operator's to weigh.
 - Only the reader is reachable through the tunnel. The pipeline and the database are not, and no route to them is added.
 - The reader is never called from a reader's browser or from the extension. The project's backend makes the calls.
 - When the reader's machine cannot be reached, a lookup shows a service-overloaded error (the operator's wording, 2026-11-15). No second reader stands in for it.
