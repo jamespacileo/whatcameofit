@@ -68,6 +68,9 @@ LEAD_READING = "extraction:link_lead"
 # Held, until its transaction ends, by the one read that is settling which claim its
 # article belongs to. A claim another read has just drafted is then there to be found.
 CLAIM_IDENTITY_LOCK = 7_468_656_001
+# An article joins a candidate claim only when the same-claim decision gives that claim
+# more than every other answer together.
+SAME_CLAIM_MAJORITY = 0.5
 
 
 class NotMeasured(BackfillError):
@@ -113,7 +116,7 @@ class LinkRead:
         reads_per_claim: int,
         vertical_accept_above: float,
         approve_drafts_by_rule: bool,
-        same_claim_accept_above: float = 0.8,
+        same_claim_accept_above: float = 0.6,
         match_reject_below: float = 0.0,
         match_accept_above: float = 0.0,
         time: Time | None = None,
@@ -259,8 +262,8 @@ class LinkRead:
         when a decision found it. A claim with the same intervention and indication as
         written is that claim. Otherwise the candidates are the claims whose intervention
         shares a name with the read's, then the claims screening found named in the
-        lead's title; the article joins one only when the decision chooses it at or above
-        the setting. The decision is logged either way."""
+        lead's title; the article joins one only by the rule below. The decision is logged
+        either way."""
         exact = slug_of_claim_covering(session, draft.intervention, draft.indication)
         if exact is not None:
             return exact, None
@@ -284,7 +287,7 @@ class LinkRead:
         candidates = candidates[:MAX_NAMED_CLAIMS]
         if not candidates:
             return None, None
-        chosen, probability = choose_same_claim(
+        answer = choose_same_claim(
             session,
             client.make_backend(session),
             ref=lead_ref(record.id),
@@ -293,11 +296,23 @@ class LinkRead:
             candidates=candidates,
             now=now,
         )
-        if chosen is None or probability < self.same_claim_accept_above:
+        # Two tests, both measured on the first reads (openspec lead-reading). That the
+        # article reports one of the candidates must be likely enough: the decision
+        # gives "none of these" 0.99 when the condition is another one and 0.40 or less
+        # when it is the same story, whatever it gives each candidate. And one candidate
+        # must be likelier than all other answers together, so that two claims for two
+        # conditions of one drug are never settled by a near tie.
+        one_of_them = 1 - answer.none_probability
+        if (
+            answer.likeliest is None
+            or one_of_them < self.same_claim_accept_above
+            or answer.likeliest_probability < SAME_CLAIM_MAJORITY
+        ):
             return None, None
-        return chosen, (
-            f"read as {draft.intervention} for {draft.indication}; "
-            f"the same claim by decision at {probability:.2f}"
+        return answer.likeliest, (
+            f"read as {draft.intervention} for {draft.indication}; the same claim by "
+            f"decision at {answer.likeliest_probability:.2f}, none of the candidates at "
+            f"{answer.none_probability:.2f}"
         )
 
     def run(self, session: Session, record: LinkLead, client: ReadClient) -> WorkOutcome | Failed:
