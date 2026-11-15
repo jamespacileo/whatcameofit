@@ -164,6 +164,8 @@ test('public LinkedIn binds the attributed post despite a different activity ID'
  for (const body of [
   card(caption).replace('ugcPost:1234567890123456789','ugcPost:9999999999999999999'),
   card(caption)+card(caption),
+  card(caption)+card(caption).replaceAll('activity:2345678901234567890','activity:9999999999999999999'),
+  card(caption)+card(caption).replace('data-featured-activity-urn="urn:li:activity:2345678901234567890"','data-featured-activity-urn="urn:li:activity:9999999999999999999"'),
   '<main aria-hidden="true">'+card(caption+image)+'</main>',
   card(caption+image).replace('data-featured-activity-urn="urn:li:activity:2345678901234567890"','data-featured-activity-urn="urn:li:activity:9999999999999999999"'),
  ]) {
