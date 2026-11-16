@@ -318,3 +318,30 @@ def test_a_reads_claim_under_a_live_claims_substance_and_condition_is_rejected(
     drafted_by_a_read(session, "after-archive")
 
     assert decide_prepared_lead_claim(session, "after-archive", now=NOW) is ReviewState.APPROVED
+
+
+def test_a_combination_never_shares_a_single_drugs_substance(session: Session):
+    """Scenario: A combination under one substance"""
+    from thenwhat.claims.entry import add_claim
+
+    claim_with_articles(session, "single-drug")
+    add_claim(
+        session,
+        slug="bimagrumab-plus-semaglutide-obesity",
+        headline="Combination for obesity",
+        vertical="mouth-and-teeth",
+        intervention="bimagrumab plus semaglutide",
+        indication="tooth agenesis",
+        summary="A combination.",
+    )
+    for slug in ("single-drug", "bimagrumab-plus-semaglutide-obesity"):
+        under_substance(session, slug, "s-1")
+    single = find_claim(session, "single-drug")
+    assert single is not None
+    record_decision(single, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+    drafted_by_a_read(session, "bimagrumab-plus-semaglutide-obesity")
+
+    assert (
+        decide_prepared_lead_claim(session, "bimagrumab-plus-semaglutide-obesity", now=NOW)
+        is ReviewState.APPROVED
+    )

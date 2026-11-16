@@ -30,6 +30,7 @@ from thenwhat.db.models import (
 )
 from thenwhat.domain import Decider, EntityType, ReadOutcome, ReviewState
 from thenwhat.extract.names import is_a_name
+from thenwhat.resolve.service import combination_search
 from thenwhat.review.decisions import record_decision
 
 
@@ -137,7 +138,11 @@ def claim_sharing_its_substance(session: Session, claim: Claim) -> str | None:
 
     An archived claim does not count, so a claim archived for a fault can be replaced.
     Nor does one named in another form, such as an oral or nasal form of the substance.
+    A combination never shares a substance with anything: "bimagrumab plus semaglutide"
+    is not semaglutide, whatever single substance its names were filed under.
     """
+    if _is_a_combination(session, claim.id):
+        return None
     substance = session.scalar(
         select(EntitySubstance.external_id)
         .join(Entity, Entity.id == EntitySubstance.entity_id)
@@ -160,11 +165,26 @@ def claim_sharing_its_substance(session: Session, claim: Claim) -> str | None:
     )
     forms = _forms(session, claim)
     for slug, other_id, indication in others:
-        if _conditions_overlap(claim.indication, indication) and forms == _forms_of(
-            session, other_id
+        if (
+            _conditions_overlap(claim.indication, indication)
+            and forms == _forms_of(session, other_id)
+            and not _is_a_combination(session, other_id)
         ):
             return slug
     return None
+
+
+def _is_a_combination(session: Session, claim_id: int) -> bool:
+    """Whether the claim's intervention names several treatments, by its name or by any
+    of its other names."""
+    row = session.execute(
+        select(Entity.name, Entity.synonyms).where(
+            Entity.claim_id == claim_id, Entity.type == EntityType.INTERVENTION
+        )
+    ).first()
+    if row is None:
+        return False
+    return any(combination_search(name) is not None for name in [row.name, *row.synonyms])
 
 
 # Words that name a route or a form that makes another product of one substance: oral
