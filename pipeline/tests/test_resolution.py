@@ -857,14 +857,54 @@ def test_names_listed_under_two_substances_give_no_code(session: Session):
         indication="tooth agenesis",
     )
     add_synonym(session, claim.slug, "exampletinib", "Toothgrow")
-    salt = substance("s-2", "Exampletinib mesylate", ("Toothgrow", "bn"), ("XYZ-9", "cd"))
-    registry = FakeSubstances({"exampletinib": [EX1], "Toothgrow": [salt]})
+    other = substance("s-2", "Otherstatin", ("Toothgrow", "bn"), ("XYZ-9", "cd"))
+    registry = FakeSubstances({"exampletinib": [EX1], "Toothgrow": [other]})
 
     answer = give_development_codes(session, claim, substances=registry)
 
     assert answer is not None and answer.listing is Listing.SEVERAL_SUBSTANCES
     assert answer.codes == []
     assert session.scalars(select(EntitySubstance)).all() == []
+
+
+def test_a_substance_and_its_forms_are_one_substance(session: Session):
+    """Scenario: A brand listed under a substance and its salt"""
+    claim = add_claim(
+        session,
+        slug="tooth-regrowth",
+        headline="Drug regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="Toothgrow",
+        indication="tooth agenesis",
+    )
+    salt = substance("s-2", "Exampletinib mesylate", ("Toothgrow", "bn"), ("XYZ-9", "cd"))
+    suffixed = substance("s-3", "EXAMPLETINIB-ABCD", ("Toothgrow", "bn"))
+    registry = FakeSubstances({"Toothgrow": [salt, EX1, suffixed]})
+
+    answer = give_development_codes(session, claim, substances=registry)
+
+    assert answer is not None and answer.listing is Listing.ONE_SUBSTANCE
+    assert (answer.substances, answer.codes) == (["Exampletinib (UNII UNII000001)"], ["ABC-123"])
+    [kept] = session.scalars(select(EntitySubstance)).all()
+    assert kept.external_id == "s-1"
+
+
+def test_a_name_that_only_begins_like_another_is_another_substance(session: Session):
+    """Exampletinib and exampletinibat share letters, not a name: they stay two."""
+    claim = add_claim(
+        session,
+        slug="tooth-regrowth",
+        headline="Drug regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="Toothgrow",
+        indication="tooth agenesis",
+    )
+    lookalike = substance("s-4", "Exampletinibat", ("Toothgrow", "bn"))
+    registry = FakeSubstances({"Toothgrow": [EX1, lookalike]})
+
+    answer = give_development_codes(session, claim, substances=registry)
+
+    assert answer is not None and answer.listing is Listing.SEVERAL_SUBSTANCES
 
 
 def test_a_substance_no_longer_listed_loses_its_codes(session: Session):
