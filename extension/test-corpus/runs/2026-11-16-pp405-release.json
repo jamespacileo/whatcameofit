@@ -1,0 +1,190 @@
+{
+  "release_commit": "dd829eb1475f6490471c6fcbcd8fafcef6f62a12",
+  "deployment": {
+    "pull_request": 206,
+    "reviewed_head": "d17a35ddd12e634f3ae4c31f8947b6dec8f94a61",
+    "main_commit": "dd829eb1475f6490471c6fcbcd8fafcef6f62a12",
+    "production_run": 43825309273,
+    "conclusion": "success",
+    "reviews": {
+      "standards": "clear",
+      "spec": "clear"
+    }
+  },
+  "checked_at": "2026-11-16T07:50:40.898Z",
+  "public_cards": 176,
+  "public_data_matches_rehearsed_build": true,
+  "index_fetch_ms": 25142,
+  "installed_extension": {
+    "version": "0.9.21",
+    "build": 29,
+    "resource_hashes_verified": 35,
+    "source_commit": "50f3a7ce6b25e7aaa363fb5d4e6f66394c5a6ab5",
+    "native_verified": false,
+    "method": "Installed resource hashes and exact-address state checked against released index. Native collector/popup/storage remain unavailable."
+  },
+  "social_source_review": {
+    "date": "2026-11-16",
+    "S033": {
+      "url": "https://www.reddit.com/r/tressless/comments/1s6gl49/pelage_pp405_new_hair_growth_from_inactive/",
+      "access": "Public requested post readable in browser; no CAPTCHA solved.",
+      "scope": "Post title, text and two outgoing links only; images, full video and comments not used.",
+      "article": "https://www.dermatologytimes.com/view/reactivating-the-follicle-pp405-moves-toward-late-stage-trials-for-alopecia",
+      "article_title": "Reactivating the Follicle: PP405 Moves Toward Late-Stage Trials for Alopecia",
+      "article_published": "2026-03-28",
+      "article_review": "Direct interview with Pelage's chief medical officer and chief executive names topical PP405 and NCT06393452, 78 participants, safety/pharmacokinetic objectives and exploratory findings. Same trial as the verified AGA card. The source's generic alopecia wording alone would be insufficient, but the explicit trial identity resolves the report. Later phase plans are dated claims, not proof a trial had begun."
+    },
+    "S038": {
+      "url": "https://www.instagram.com/p/De1Sw5Pj-xV/",
+      "access": "Public caption readable in browser.",
+      "scope": "Requested caption only, with no comments, image or video inspection.",
+      "finding": "Explicit PP405 and androgenetic alopecia, initial 78 participants and exploratory male subgroup, plus later AWAKEN. The app may match this precise indication without broadening hair-loss matching."
+    },
+    "S049": {
+      "url": "https://www.tiktok.com/@skinandsweat/video/7637182028349328654",
+      "access": "Login overlay; Skip opens a date-of-birth requirement. No date supplied, account created or age verification completed.",
+      "scope": "No current caption or media available. Earlier reading remains historical."
+    },
+    "S050": {
+      "url": "https://www.tiktok.com/@drkopelman/video/7522805190295063839",
+      "access": "Login overlay; Skip opens a date-of-birth requirement. No date supplied, account created or age verification completed.",
+      "scope": "No current caption or media available. Earlier reading remains historical."
+    },
+    "storage": "No source bodies, media or screenshots retained. Caption text is held transiently only for installed-function composition and released-service checks; collector/popup/storage remain unverified."
+  },
+  "website_verification": "Released index and card HTTP response checked; website form could not be rerun because browser control timed out twice. No native Safari collector/popup/storage check.",
+  "timing_limits": "Mac load average was 55.32 during this check; local timings are observations under load, not representative performance. Server-Timing reports Instagram core 7790 ms and Reddit core 9176 ms.",
+  "pending_fix": "Verified Dermatology Times reference attached privately. Normal export is still running; reference is not released yet. Instagram reading wording does not exactly match the card identity; no broad matching was introduced.",
+  "summary": {
+    "corpus_verdicts": {
+      "review": 31,
+      "pass": 144,
+      "partial": 53,
+      "blocked": 30
+    },
+    "knowledge_cards": {
+      "review": 32,
+      "not applicable": 10,
+      "no card": 52,
+      "not checked": 30,
+      "match": 134
+    }
+  },
+  "request_checks": {
+    "A072": {
+      "url": "https://pelagepharma.com/press-releases/pelage-pharmaceuticals-announces-positive-phase-2a-clinical-trial-results-for-pp405-in-regenerative-hair-loss-therapy/",
+      "slug": "pp405-androgenetic-alopecia",
+      "ms": 837.762,
+      "index_fetch_ms": 25142,
+      "kind": "tracked",
+      "model_requests": 0,
+      "registry_requests": 0,
+      "article_requests": 0,
+      "lookup_api_requests": 0,
+      "method": "Original article address through installed Safari exact-address state with freshly fetched released index. Local duration excludes index fetch. Native collector/popup/storage unverified."
+    },
+    "S038": {
+      "url": "https://www.instagram.com/p/De1Sw5Pj-xV/",
+      "http": 200,
+      "ms": 11523,
+      "treatment": "Topical PP405",
+      "condition": "Hair loss due to androgenetic alopecia in men and women; the reported hair-density result was in a subgroup of men with advanced hair loss.",
+      "names": [
+        "Topical PP405"
+      ],
+      "registry_numbers": [],
+      "candidates": [
+        {
+          "id": "NCT06393452",
+          "title": "Safety, Pharmacokinetics and Efficacy of PP405 in Adults With AGA",
+          "score": 1
+        },
+        {
+          "id": "NCT07819435",
+          "title": "Phase 2/3 Efficacy and Safety of PP405 in Adult Males",
+          "score": 0.97
+        },
+        {
+          "id": "NCT07907783",
+          "title": "Phase 2 Efficacy and Safety of PP405 in Adult Females With Androgenetic Alopecia",
+          "score": 0.87
+        }
+      ],
+      "tracked": [],
+      "source": "Read by your browser from the post on Instagram you have open. No article was found among its links, so only the post was used.",
+      "checked_at": "2026-11-16T07:54:01.322Z",
+      "method": "Current visible caption manually supplied to installed Safari 0.9.21 composition and released service. Native collector/popup/storage and media not checked.",
+      "server_timing": "registry;dur=246, papers;dur=0, read;dur=5801, research;dur=870, score;dur=1743, core;dur=7790, total;dur=7790"
+    },
+    "S033": {
+      "url": "https://www.reddit.com/r/tressless/comments/1s6gl49/pelage_pp405_new_hair_growth_from_inactive/",
+      "http": 200,
+      "ms": 11991,
+      "treatment": "Topical PP405 (0.05%)",
+      "condition": "Alopecia; intended to promote terminal hair growth and activate dormant hair follicles",
+      "names": [
+        "Topical PP405 (0.05%)"
+      ],
+      "registry_numbers": [
+        "NCT06393452"
+      ],
+      "candidates": [
+        {
+          "id": "NCT06393452",
+          "title": "Safety, Pharmacokinetics and Efficacy of PP405 in Adults With AGA",
+          "score": 1
+        },
+        {
+          "id": "NCT07819435",
+          "title": "Phase 2/3 Efficacy and Safety of PP405 in Adult Males",
+          "score": 0.99
+        },
+        {
+          "id": "NCT07907783",
+          "title": "Phase 2 Efficacy and Safety of PP405 in Adult Females With Androgenetic Alopecia",
+          "score": 0.98
+        }
+      ],
+      "tracked": [],
+      "source": "Read by your browser from the post on Reddit you have open and the article it links to at dermatologytimes.com.",
+      "post": {
+        "platform": "Reddit",
+        "article": "https://www.dermatologytimes.com/view/reactivating-the-follicle-pp405-moves-toward-late-stage-trials-for-alopecia",
+        "article_host": "dermatologytimes.com",
+        "article_read": true,
+        "read_in_browser": true
+      },
+      "checked_at": "2026-11-16T08:00:52.799Z",
+      "method": "Current public post text and links manually supplied through installed Safari 0.9.21 composition to released service. Images, videos and native collector/popup/storage unverified.",
+      "server_timing": "registry;dur=420, papers;dur=0, read;dur=7070, research;dur=554, score;dur=1720, core;dur=9176, total;dur=9176"
+    }
+  },
+  "sheet_verification": {
+    "checked_at": "2026-11-16T08:09:48.472Z",
+    "spreadsheet_id": "15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA",
+    "url": "https://docs.google.com/spreadsheets/d/15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA/edit?ouid=118272730050776001505",
+    "changed_values": 81,
+    "values_verified": true,
+    "preserved_inspected_cells": 161,
+    "metadata_preserved": true,
+    "summary_total": [
+      "Total",
+      "258",
+      "144",
+      "53",
+      "0",
+      "30",
+      "31",
+      "0"
+    ],
+    "visual_layout": "Native Google-rendered layout unavailable; existing formats and structure checked through cell metadata."
+  },
+  "recorded_at": "2026-11-16T08:05:16.934Z",
+  "rows": {
+    "A072": {"lookup_answer":"PP405 for Androgenetic alopecia","tracked_claim":"pp405-androgenetic-alopecia","trial_records":"","likely_records":"","top_record":"NCT06393452, NCT07819435 and NCT07907783 · verified released card; no fresh scoring","test_result":"pass","reason":"The original Pelage article reaches the verified PP405 / androgenetic alopecia card through the released index. The card separates the completed 78-person study, later 600-person AWAKEN study and planned 200-person women-only study; exploratory subgroup findings remain attributed. Installed exact-address function passes. Website form and native Safari collector/popup/storage remain unverified.","how_read":"released public index/card response; installed Safari exact-address function","ms":837.762,"last_tested":"2026-11-16T07:50:40.898Z","tested_build":"site dd829eb1475f; installed Safari 0.9.21 (29)","site_result":"Released 176-card index matches the rehearsed build; original A072 address maps to the PP405 card. Card HTTP 200 contains all three trial identities and qualified exploratory evidence. Website form check unavailable after browser-control timeouts.","extension_result":"Installed signed Safari 0.9.21 (29), 35 resource hashes verified. Exact address matches in 837.762 ms after a 25142 ms index fetch under heavy Mac load; zero model, registry, article-body or lookup-API requests. Native collector/popup/storage unverified.","knowledge_card_result":"match","knowledge_card_notes":"pp405-androgenetic-alopecia; precise original-source association. Timing is not representative performance because the Mac load average was 55.32.","pp405_release":"runs/2026-11-16-pp405-release.json","closest_tracked_claim":""},
+    "S033": {"lookup_answer":"Topical PP405 (0.05%) for Alopecia; intended to promote terminal hair growth and activate dormant hair follicles","tracked_claim":"","trial_records":3,"likely_records":3,"top_record":"NCT06393452 · 100% · Safety, Pharmacokinetics and Efficacy of PP405 in Adults With AGA","test_result":"partial","reason":"The current post and its interview link return the correct three trial candidates, but their broad alopecia wording does not exactly match the card. The verified linked interview names NCT06393452; its reference is attached privately and awaits publication. No broader automatic match was introduced. Images, video and native Safari remain unverified.","how_read":"current public caption/text and links manually supplied to installed Safari request functions → released service","ms":11991,"last_tested":"2026-11-16T08:00:52.799Z","tested_build":"site dd829eb1475f; installed Safari 0.9.21 (29)","site_result":"Released service HTTP 200 in 11991 ms including local overhead; three trial candidates and no card. registry;dur=420, papers;dur=0, read;dur=7070, research;dur=554, score;dur=1720, core;dur=9176, total;dur=9176. Website form not rerun after browser-control timeouts.","extension_result":"Current public post text and links manually supplied through installed Safari 0.9.21 composition to released service. Images, videos and native collector/popup/storage unverified. Read by your browser from the post on Reddit you have open and the article it links to at dermatologytimes.com.","knowledge_card_result":"no card","knowledge_card_notes":"The current post and its interview link return the correct three trial candidates, but their broad alopecia wording does not exactly match the card. The verified linked interview names NCT06393452; its reference is attached privately and awaits publication.","pp405_release":"runs/2026-11-16-pp405-release.json","closest_tracked_claim":""},
+    "S038": {"lookup_answer":"Topical PP405 for Hair loss due to androgenetic alopecia in men and women; the reported hair-density result was in a subgroup of men with advanced hair loss.","tracked_claim":"","trial_records":3,"likely_records":3,"top_record":"NCT06393452 · 100% · Safety, Pharmacokinetics and Efficacy of PP405 in Adults With AGA","test_result":"partial","reason":"The current caption explicitly names PP405 and androgenetic alopecia, but the reader returned a route-qualified product name and a long condition description that do not exactly match the card identity. No broader automatic match was introduced. Images, video and native Safari remain unverified.","how_read":"current public caption/text and links manually supplied to installed Safari request functions → released service","ms":11523,"last_tested":"2026-11-16T07:54:01.322Z","tested_build":"site dd829eb1475f; installed Safari 0.9.21 (29)","site_result":"Released service HTTP 200 in 11523 ms including local overhead; three trial candidates and no card. registry;dur=246, papers;dur=0, read;dur=5801, research;dur=870, score;dur=1743, core;dur=7790, total;dur=7790. Website form not rerun after browser-control timeouts.","extension_result":"Current visible caption manually supplied to installed Safari 0.9.21 composition and released service. Native collector/popup/storage and media not checked. Read by your browser from the post on Instagram you have open. No article was found among its links, so only the post was used.","knowledge_card_result":"no card","knowledge_card_notes":"The current caption explicitly names PP405 and androgenetic alopecia, but the reader returned a route-qualified product name and a long condition description that do not exactly match the card identity.","pp405_release":"runs/2026-11-16-pp405-release.json","closest_tracked_claim":""},
+    "S049": {"lookup_answer":"","tracked_claim":"","trial_records":"","likely_records":"","top_record":"","test_result":"blocked","reason":"Current TikTok page requires a date of birth after its login overlay is skipped. No age verification was completed and no current caption or media was read. The earlier partial result is retained in service_history; it is not a fresh released match.","how_read":"current browser access check only; login/date-of-birth barrier","ms":null,"last_tested":"2026-11-16T08:05:16.934Z","tested_build":"site dd829eb1475f; installed Safari 0.9.21 (29)","site_result":"No fresh service or website lookup: no current public post content was available.","extension_result":"Installed Safari 0.9.21 (29) remains present, but this row was not submitted to its request functions. Native collector/popup/storage and current video/audio remain unverified.","knowledge_card_result":"not checked","knowledge_card_notes":"The PP405 / androgenetic alopecia card is now published, but this current source cannot be verified through the age gate. Earlier broad Hair growth/Hair loss wording is not enough to assert a match.","pp405_release":"runs/2026-11-16-pp405-release.json","closest_tracked_claim":""},
+    "S050": {"lookup_answer":"","tracked_claim":"","trial_records":"","likely_records":"","top_record":"","test_result":"blocked","reason":"Current TikTok page requires a date of birth after its login overlay is skipped. No age verification was completed and no current caption or media was read. The earlier partial result is retained in service_history; it is not a fresh released match.","how_read":"current browser access check only; login/date-of-birth barrier","ms":null,"last_tested":"2026-11-16T08:05:16.934Z","tested_build":"site dd829eb1475f; installed Safari 0.9.21 (29)","site_result":"No fresh service or website lookup: no current public post content was available.","extension_result":"Installed Safari 0.9.21 (29) remains present, but this row was not submitted to its request functions. Native collector/popup/storage and current video/audio remain unverified.","knowledge_card_result":"not checked","knowledge_card_notes":"The PP405 / androgenetic alopecia card is now published, but this current source cannot be verified through the age gate. Earlier broad Hair growth/Hair loss wording is not enough to assert a match.","pp405_release":"runs/2026-11-16-pp405-release.json","closest_tracked_claim":""}
+  }
+}
