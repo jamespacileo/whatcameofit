@@ -1,7 +1,7 @@
 // Draws every popup state in its own frame, using the real stylesheet and view code.
 import { SITE } from "./config.js";
 import { render } from "./view.js";
-import { LIVE } from "./live-lookup.js";
+import { LIVE, describeAnswer } from "./live-lookup.js";
 import { NOTICES } from "./notices.js";
 
 const notices = [...NOTICES];
@@ -99,6 +99,12 @@ const states = [
   ["Sensitive content", { kind: "refused", code: "capture_sensitive" }],
   ["Searching", { kind: "searching" }],
   ["Answer from a post", { kind: "answer", shown: answer }],
+  ["Synthetic roundup: separate claims", { kind: "answer", shown: describeAnswer({ about_a_treatment: true, claims: [
+    { about_a_treatment: true, treatment: "EX-1", condition: "Example condition one", check_state: "complete",
+      tracked: [{ headline: "Synthetic EX-1 knowledge card", page: "/example-card" }],
+      candidates: [{ id: "NCT00000001", title: "Synthetic trial of EX-1", url: "https://clinicaltrials.gov/study/NCT00000001", answer: "match", score: .91, phases: ["PHASE2"], state: "COMPLETED" }] },
+    { about_a_treatment: true, treatment: "EX-2 plus EX-3", condition: "Example condition two", check_state: "unchecked", check_reason: "work_limit", candidates: [], tracked: [] },
+  ] }) }],
   ["Image post, long candidate", { kind: "answer", canVisual: true, shown: { ...answer,
     subject: { treatment: "Tooth-regenerating patch", condition: "Dental caries (cavities)" },
     source: "Read from the visible screenshot and caption. This identifies what the post claims; it does not establish that the claim is true.",

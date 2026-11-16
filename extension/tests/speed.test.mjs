@@ -405,7 +405,7 @@ test("the shared probe starts while the page is still being collected, after its
   });
   const opening = controller.open();
   await until(() => calls.probes.length === 1);
-  assert.deepEqual(calls.probes[0], { cacheOnly: true, pageUrl: tab.url });
+  assert.deepEqual(calls.probes[0], { cacheOnly: true, pageUrl: tab.url, claimResults: true });
   collecting.resolve();
   await opening;
   assert.equal(calls.posts.length, 0);
