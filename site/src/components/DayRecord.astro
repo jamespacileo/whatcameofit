@@ -1,28 +1,35 @@
 ---
-// A registry record in the day-by-day list, on the panel blue: what was recorded, the
-// claim it belongs to and where that claim stands, then the report a reader may know it by.
+// A registry record in the day-by-day list (openspec latest-rows): the claim's newest
+// report leads, quoted, with how long ago the claim was first reported when that was in
+// an earlier year; then the claim, and what was recorded as one dated item on the panel
+// blue. Where the claim stands is the column on the right, as on a report row.
 import type { RecordRow } from "../lib/day-list";
-import { changeSummary } from "../lib/changes";
 import { confidenceLabel } from "../lib/confidence";
 import { followedReports } from "../lib/reports";
-import { STATUS_LABELS, eventLabel, sourceName } from "../lib/status";
+import { eventLabel, sourceName } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 import Outlet from "./Outlet.astro";
-import StageTrack from "./StageTrack.astro";
+import RowStanding from "./RowStanding.astro";
 
 interface Props {
   row: RecordRow;
+  topic: string;
 }
 
-const { row } = Astro.props;
+const { row, topic } = Astro.props;
 const { claim, event, change } = row;
 const [report] = followedReports(claim);
 const confidence = event.confidence ?? 1;
 // A trial's record is named by its identifier; any other by where it is kept.
 const sourceText = event.trial_id ?? sourceName(event.source_name);
-const said = change
-  ? changeSummary({ claim, on: row.date, code: change.code, before: change.before })
-  : null;
+// What was recorded, said of the record, never in a status's words: "registered",
+// "results posted", "terminated". A record with no trial keeps its own name.
+const label = eventLabel(event);
+const recorded = event.trial_id && label.startsWith("Trial ") ? label.slice(6) : label;
+// Years between the claim's first report and this record, said only when it is one or more.
+const firstYear = claim.first_reported_date?.slice(0, 4);
+const years = firstYear ? Number(row.date.slice(0, 4)) - Number(firstYear) : 0;
+const moreId = `more-${claim.slug}-${row.date}-${event.id}`;
 ---
 
 <li
@@ -33,43 +40,42 @@ const said = change
   data-topic={claim.vertical}
   data-on={row.date}
 >
-  <p class="row-source">
-    <span class="row-label">{event.trial_id ? "Registry record" : "Record"}</span>
-    <a href={event.source_url}>{sourceText}</a>
-    <span class="when">{formatDate(row.date)}</span>
-  </p>
-  <p class="row-what">
-    <strong>{eventLabel(event)}.</strong>{" "}
-    <a href={`/${claim.slug}`}>{claim.intervention.name}</a> · {claim.indication}
-  </p>
-  {/* A record with no trial behind it (a regulator's decision, a paper) is given in its own words. */}
-  {!event.trial_id && <p class="row-detail">{event.summary}</p>}
-  {confidence < 1 && <p class="row-detail">{confidenceLabel(confidence)}</p>}
-  <p class="row-status">
-    {
-      said ? (
-        <>
-          <span class="new-tag">Changed</span>
-          <span>{said}</span>
-          <StageTrack code={change!.code} />
-        </>
-      ) : (
-        <>
-          <span>
-            Status now: <strong class="status-name">{STATUS_LABELS[claim.status.code]}</strong>
-          </span>
-          <StageTrack code={claim.status.code} />
-        </>
-      )
-    }
-  </p>
-  {
-    report && (
-      <p class="row-about">
-        The report: <a href={`/${claim.slug}`}>“{report.title}”</a>{" "}
-        <Outlet url={report.url} outlet={report.outlet} link={false} />{" "}
-        <span class="when">{formatDate(report.published_date)}</span>
-      </p>
-    )
-  }
+  <div class="row-main">
+    <p class="row-source">
+      <span class="visually-hidden">Registry record. </span>
+      {years > 0 && <span class="row-age">First reported {years} {years === 1 ? "year" : "years"} ago</span>}
+      {topic && <span class="row-topic">{topic}</span>}
+    </p>
+    <h4 class="row-title">
+      {
+        report ? (
+          <a href={`/${claim.slug}`}>“{report.title}”</a>
+        ) : (
+          <a href={`/${claim.slug}`}>{claim.intervention.name}</a>
+        )
+      }
+    </h4>
+    <p class="row-claim">
+      <span class="row-intervention">{claim.intervention.name}</span> · {claim.indication}
+    </p>
+    <ul class="row-items" aria-label="Dated for this claim">
+      {
+        report && (
+          <li class="row-item is-report">
+            <Outlet url={report.url} outlet={report.outlet} link={false} />
+            <span class="when">{formatDate(report.published_date)}</span>
+          </li>
+        )
+      }
+      <li class="row-item is-record">
+        <a href={event.source_url}>{sourceText}</a>
+        <span>{recorded}</span>
+        <span class="when">{formatDate(row.date)}</span>
+      </li>
+    </ul>
+    {/* A record with no trial behind it (a regulator's decision, a paper) is given in its own words. */}
+    {!event.trial_id && <p class="row-detail">{event.summary}</p>}
+    {confidence < 1 && <p class="row-detail">{confidenceLabel(confidence)}</p>}
+  </div>
+  <RowStanding claim={claim} date={row.date} id={moreId} change={change} />
 </li>

@@ -74,7 +74,12 @@ def steps_for(plan: ClaimPlan) -> list[list[str]]:
     stored trial records read into record readings, then propose the claim's subject
     terms, kind and drug record, which its background cards come from."""
     return [
-        *(["extract", "article", plan.slug, "--article-url", url] for url in plan.unread_articles),
+        # An outlet the page reader has stopped is not asked: the article is left for
+        # later (`--unless-held`), and the claim's other steps still run.
+        *(
+            ["extract", "article", plan.slug, "--article-url", url, "--unless-held"]
+            for url in plan.unread_articles
+        ),
         ["resolve", plan.slug],
         ["fetch", plan.slug],
         ["readings", plan.slug],

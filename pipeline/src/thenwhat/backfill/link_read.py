@@ -17,14 +17,12 @@ for drafts, so that no claim is published with a status no search stands behind.
 
 import re
 import threading
-from collections.abc import Callable, Generator, Sequence
-from contextlib import contextmanager
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import ColumnElement, and_, exists, func, or_, select
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.address import article_key, without_tracking
@@ -34,6 +32,7 @@ from thenwhat.backfill.ledger import due_records
 from thenwhat.backfill.link_evaluation import reading_refusal
 from thenwhat.backfill.link_screen import CLAIM, REGISTRY_TRIAL, TITLE_NAMES_CLAIM
 from thenwhat.backfill.link_triage import is_passed
+from thenwhat.backfill.outlet_hold import OUTLET_HOLD, asking, keep
 from thenwhat.backfill.outlet_kinds import name_of
 from thenwhat.backfill.steps import TEXT_DOOR, Deferred, Failed, ModelSpend
 from thenwhat.backfill.topics import (
@@ -81,7 +80,6 @@ from thenwhat.extract.names import (
 from thenwhat.extract.page import Page, published_day
 from thenwhat.extract.retrieve import (
     READER,
-    WAIT_MOST,
     ArticleRetriever,
     NotAllowed,
     NotNow,
@@ -128,11 +126,8 @@ OUTLET_NOT_NOW = "not asked in this run: the page reader could not get its outle
 # for an outlet it has stopped because the outlet refuses it. Until that wait is over
 # the outlet's leads are left without a request, in this run and in every later one.
 # The backfill of 2026-11-16 asked two outlets that had banned the reader's machine
-# three times in every run. The hold is kept under this name and the outlet's.
-OUTLET_HOLD = "reader:"
+# three times in every run. The hold itself is `thenwhat.backfill.outlet_hold`.
 OUTLET_STOPPED = "not asked: the page reader says its outlet cannot be asked before"
-# The first key of the lock that gives one worker at a time an outlet's turn.
-OUTLET_TURN_LOCK = 7_468
 # Outcomes only a page the reader got can give.
 READ_FROM_A_PAGE = (
     ReadOutcome.ADDED_TO_CLAIM,
@@ -252,25 +247,6 @@ def held_outlets(
     )
     held = [HeldOutlet(outlet, holds[outlet], leads) for outlet, leads in due.items()]
     return sorted(held, key=lambda one: (-one.leads, one.outlet))
-
-
-@contextmanager
-def _asking(session: Session, outlet: str) -> Generator[None]:
-    """Hold the outlet's turn, among every worker of every process, while its hold is
-    looked at and the page reader is asked. The lock is the connection's and is given
-    back as soon as the reader has answered: the read that follows needs no turn."""
-    key = func.hashtext(OUTLET_HOLD + outlet)
-    session.execute(select(func.pg_advisory_lock(OUTLET_TURN_LOCK, key)))
-    try:
-        yield
-    finally:
-        try:
-            session.execute(select(func.pg_advisory_unlock(OUTLET_TURN_LOCK, key)))
-        except SQLAlchemyError:
-            # The turn could not be given back on a transaction that has failed. The
-            # connection is closed instead of returned to its pool, which gives it back.
-            session.connection().invalidate()
-            raise
 
 
 class NotMeasured(BackfillError):
@@ -631,7 +607,7 @@ class LinkRead:
         # One request at a time for an outlet, in this process or any other, from the
         # look at its hold to the reader's answer: a worker never asks an outlet while
         # another's request may be about to stop it.
-        with _asking(session, record.outlet):
+        with asking(session, record.outlet):
             page = self._ask_for_the_page(session, record, client, now)
         if not isinstance(page, Retrieved):
             return page
@@ -679,10 +655,7 @@ class LinkRead:
             if later.retry_after_seconds:
                 # Kept in its own short transaction, as a claim on an allowance is, and
                 # before the outlet's turn is given up: the next worker finds it.
-                client.allowances.hold(
-                    OUTLET_HOLD + record.outlet,
-                    now + timedelta(seconds=min(later.retry_after_seconds, WAIT_MOST)),
-                )
+                keep(client.allowances, record.outlet, now, later.retry_after_seconds)
             return Deferred(str(later))
         except NotAllowed as refused:
             return self._finish(

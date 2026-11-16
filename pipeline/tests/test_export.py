@@ -523,11 +523,17 @@ def test_trial_with_four_approved_events_is_listed_once_with_its_facts(
         "facts_as_of": "2026-10-03T08:00:00Z",
         "papers": ["pmid:26048637"],
         "readings": [],
+        "claim_arm": None,
     }
     facts = trial["facts"]
     assert facts["participants"] == {"count": 20, "basis": "actual"}
     assert (facts["allocation"], facts["masking"]) == ("randomised", "double")
     assert facts["sponsor"] == {"name": "Mclean Hospital", "kind": "other"}
+    # The record's arms, in its order, with the registry's "Dietary Supplement: " dropped.
+    assert facts["arms"] == [
+        {"label": "Placebo", "kind": "placebo_comparator", "interventions": ["Placebo"]},
+        {"label": "Kudzu", "kind": "active_comparator", "interventions": ["Kudzu"]},
+    ]
     [outcome] = facts["results"]["outcomes"]
     assert [(group["title"], group["analysed"], group["value"]) for group in outcome["groups"]] == [
         ("Placebo", "10", "3.4"),
@@ -601,6 +607,7 @@ def test_trial_entered_by_hand_is_listed_without_facts(session: Session):
             "facts": None,
             "papers": [],
             "readings": [],
+            "claim_arm": None,
         },
         {
             "trial_id": "NCT2",
@@ -613,6 +620,7 @@ def test_trial_entered_by_hand_is_listed_without_facts(session: Session):
             "facts": None,
             "papers": [],
             "readings": [],
+            "claim_arm": None,
         },
     ]
 
@@ -632,6 +640,7 @@ def test_seed_claims_jrct_trial_is_listed_without_facts(session: Session):
             "facts": None,
             "papers": [],
             "readings": [],
+            "claim_arm": None,
         }
     ]
 
@@ -1128,6 +1137,8 @@ def test_claim_with_no_approved_term_or_no_stored_record_has_no_card(session: Se
         "ClinicalTrials.gov",
         "Europe PMC",
         "Crossref",
+        # Listed always: its terms ask for a statement, which the site shows by the list.
+        "RxNorm",
     ]
 
 

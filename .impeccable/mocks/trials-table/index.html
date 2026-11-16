@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trials on record: variants</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..800&display=swap" rel="stylesheet">
+<style>
+/* Tokens copied from site/src/styles/global.css (DESIGN.md: light only). */
+:root {
+  --paper: #ffffff; --ink: #0f1f38; --blue: #14427f; --muted: #46566b;
+  --panel: #f1f5fb; --tint: #e6eef8; --tag: #d6e2f2; --rule: #d9e2ee; --rule-soft: #e9eff5;
+  --footer: #0b2545; --navy-soft: #c9d9ee; --ground: #f4f7fb;
+  --face: "Figtree", "Helvetica Neue", Arial, sans-serif;
+  --radius: 0.85rem; --gutter: clamp(1rem, 4vw, 2rem);
+}
+* { box-sizing: border-box; }
+html { font-size: 106.25%; scrollbar-color: var(--blue) var(--tint); }
+body { margin: 0; font-family: var(--face); color: var(--ink); background: var(--ground); line-height: 1.55; font-variant-numeric: tabular-nums lining-nums; }
+::selection { background: var(--tag); color: var(--ink); }
+a { color: var(--blue); text-underline-offset: 0.18em; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 4px; }
+svg.i { width: 0.85em; height: 0.85em; vertical-align: -0.05em; flex: none; }
+
+/* Mock chrome */
+.mast { background: var(--footer); color: var(--paper); padding: 1rem var(--gutter); }
+.mast-in { max-width: 62rem; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 1.5rem; }
+.mast h1 { font-size: 1.05rem; margin: 0; font-weight: 700; }
+.mast p { margin: 0; color: var(--navy-soft); font-size: 0.85rem; }
+.jump { position: sticky; top: 0; z-index: 5; background: var(--paper); border-bottom: 1px solid var(--rule); }
+.jump-in { max-width: 62rem; margin: 0 auto; padding: 0.55rem var(--gutter); display: flex; gap: 0.4rem; overflow-x: auto; }
+.jump a { flex: none; font-size: 0.85rem; font-weight: 600; text-decoration: none; padding: 0.3rem 0.8rem; border-radius: 999px; background: var(--tint); }
+.jump a:hover { background: var(--tag); }
+main { max-width: 62rem; margin: 0 auto; padding: 1.5rem var(--gutter) 4rem; }
+.variant { margin-top: 3rem; scroll-margin-top: 4rem; }
+.variant:first-child { margin-top: 0.5rem; }
+.vhead { margin: 0 0 0.25rem; font-size: 1.05rem; }
+.vhead b { color: var(--blue); }
+.vwhy { margin: 0 0 1rem; color: var(--muted); font-size: 0.92rem; max-width: 70ch; }
+.sheet { background: var(--paper); border: 1px solid var(--rule); border-radius: var(--radius); padding: 1.6rem clamp(1rem, 3vw, 1.8rem); }
+
+/* Section head shared by every variant (FoldHead) */
+.sec-h { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin: 0 0 0.5rem; }
+.sec-h h3 { margin: 0; font-size: 1.2rem; }
+.sec-h .count { color: var(--muted); font-size: 0.9rem; }
+.note { color: var(--muted); font-size: 0.9rem; max-width: 66ch; margin: 0 0 1.1rem; }
+.more { display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.9rem; font-weight: 600; color: var(--blue); background: none; border: 0; padding: 0.4rem 0; font: inherit; cursor: pointer; }
+.muted { color: var(--muted); }
+.small { font-size: 0.85rem; }
+.id { white-space: nowrap; }
+
+/* ---------- 0. Current ---------- */
+.t0 { border: 1px solid var(--rule); border-radius: var(--radius); overflow: hidden; }
+.t0 .row { display: grid; grid-template-columns: 1.45fr 1.25fr 1.2fr 1fr 1fr; column-gap: 1.2rem; padding: 0.8rem 1.1rem; border-top: 1px solid var(--rule-soft); font-size: 0.95rem; }
+.t0 .head { background: var(--footer); color: var(--paper); font-weight: 700; font-size: 0.82rem; border: 0; padding-block: 0.65rem; }
+.t0 .lead b { display: block; font-size: 1.02rem; }
+.t0 .lead span { display: block; color: var(--muted); font-size: 0.88rem; }
+.t0 .alt { font-size: 0.8rem; margin-left: 0.65em; }
+
+/* ---------- A. Tightened table ---------- */
+.sumline { display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; margin: 0 0 1rem; padding: 0.7rem 1rem; background: var(--panel); border-radius: 0.65rem; font-size: 0.9rem; }
+.sumline b { font-weight: 700; }
+.tA { border: 1px solid var(--rule); border-radius: var(--radius); overflow: hidden; }
+.tA .cols, .tA summary { display: grid; grid-template-columns: 1.1fr 1.15fr 1.5fr 0.8fr 1.6rem; column-gap: 1.1rem; align-items: start; padding: 0.75rem 1rem; }
+.tA .cols { background: var(--footer); color: var(--paper); font-size: 0.82rem; font-weight: 700; padding-block: 0.6rem; }
+.tA details { border-top: 1px solid var(--rule-soft); }
+.tA summary { list-style: none; cursor: pointer; font-size: 0.95rem; }
+.tA summary::-webkit-details-marker { display: none; }
+.tA summary:hover { background: var(--panel); }
+.tA .size { font-weight: 700; display: block; }
+.tA .ph { display: block; color: var(--muted); font-size: 0.85rem; }
+.tA .sub { display: block; color: var(--muted); font-size: 0.85rem; }
+.tA .chev { justify-self: end; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--tint); display: grid; place-items: center; color: var(--blue); transition: transform 160ms cubic-bezier(0.16,1,0.3,1); }
+.tA details[open] .chev { transform: rotate(180deg); }
+.tA .lbl { display: none; }
+.fold { margin: 0 1rem 1rem; padding: 0.9rem 1.1rem; background: var(--panel); border-radius: 0.65rem; font-size: 0.92rem; }
+.fold dl { margin: 0; display: grid; grid-template-columns: 11rem 1fr; gap: 0.35rem 1rem; }
+.fold dt { color: var(--muted); }
+.fold dd { margin: 0; }
+.fold .links { margin: 0.7rem 0 0; display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; font-weight: 600; }
+
+/* ---------- B. Grouped by phase ---------- */
+.grp + .grp { margin-top: 1.3rem; }
+.grp-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.8rem; padding: 0 0 0.4rem; border-bottom: 2px solid var(--footer); }
+.grp-h h4 { margin: 0; font-size: 1rem; }
+.grp-h span { color: var(--muted); font-size: 0.88rem; }
+.tB .r { display: grid; grid-template-columns: 6.5rem 9rem minmax(0,1fr) 7rem 7.3rem; column-gap: 1rem; align-items: baseline; padding: 0.55rem 0.2rem; border-bottom: 1px solid var(--rule-soft); font-size: 0.92rem; }
+.tB .r:hover { background: var(--panel); }
+.tB .n { font-weight: 700; }
+.tB .n small { font-weight: 400; color: var(--muted); font-size: 0.8rem; }
+.tB .what { min-width: 0; }
+.tB .what span { display: block; color: var(--muted); font-size: 0.84rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tB .lbl { display: block; color: var(--muted); font-size: 0.78rem; }
+.tB .st { font-weight: 600; }
+
+/* ---------- C. Drawn by size ---------- */
+.keyC { display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; font-size: 0.85rem; color: var(--muted); margin: 0 0 1rem; }
+.keyC span { display: inline-flex; align-items: center; gap: 0.45rem; }
+.sw { width: 1.6rem; height: 0.7rem; border-radius: 3px; display: inline-block; }
+.sw.done { background: var(--blue); }
+.sw.plan { background: repeating-linear-gradient(135deg, var(--tag) 0 4px, var(--paper) 4px 7px); border: 1.5px solid var(--blue); }
+.tC .gl { font-size: 0.82rem; font-weight: 700; color: var(--muted); margin: 1rem 0 0.3rem; }
+.tC .gl:first-child { margin-top: 0; }
+.tC a.r { display: grid; grid-template-columns: 7.2rem minmax(0,1fr) 8.2rem; column-gap: 0.9rem; align-items: center; padding: 0.3rem 0.4rem; border-radius: 0.45rem; text-decoration: none; color: var(--ink); font-size: 0.88rem; }
+.tC a.r:hover { background: var(--panel); }
+.tC a.r:hover .id { text-decoration: underline; }
+.tC .id { color: var(--blue); font-weight: 600; }
+.tC .track { position: relative; height: 1.15rem; }
+.tC .bar { position: absolute; left: 0; top: 0.15rem; height: 0.85rem; border-radius: 3px; }
+.tC .bar.done { background: var(--blue); }
+.tC .bar.plan { background: repeating-linear-gradient(135deg, var(--tag) 0 4px, var(--paper) 4px 7px); border: 1.5px solid var(--blue); }
+.tC .num { position: absolute; top: 0; font-weight: 700; font-size: 0.85rem; white-space: nowrap; padding-left: 0.45rem; }
+.tC .st { color: var(--muted); }
+.axis { display: grid; grid-template-columns: 7.2rem minmax(0,1fr) 8.2rem; column-gap: 0.9rem; padding: 0.4rem 0.4rem 0; margin-top: 0.4rem; border-top: 1px solid var(--rule); font-size: 0.76rem; color: var(--muted); }
+.axis .ticks { position: relative; height: 1rem; }
+.axis .ticks span { position: absolute; transform: translateX(-50%); }
+.axis .ticks span:first-child { transform: none; }
+
+/* ---------- D. Plain sentences ---------- */
+.tD { list-style: none; margin: 0; padding: 0; }
+.tD li { padding: 1rem 0; border-top: 1px solid var(--rule-soft); display: grid; grid-template-columns: minmax(0,1fr) auto; column-gap: 1.5rem; }
+.tD li:first-child { border-top: 0; padding-top: 0.2rem; }
+.tD h4 { margin: 0; font-size: 1.1rem; line-height: 1.35; }
+.tD .facts { margin: 0.3rem 0 0; font-weight: 600; font-size: 0.92rem; display: flex; flex-wrap: wrap; gap: 0.15rem 1.1rem; }
+.tD .say { margin: 0.35rem 0 0; max-width: 62ch; }
+.tD .notes { margin: 0.3rem 0 0; color: var(--muted); font-size: 0.84rem; }
+.tD .side { text-align: right; font-size: 0.9rem; display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-end; }
+.tD .side a { font-weight: 600; }
+
+/* ---------- Phone: one breakpoint at 40rem, as on the site ---------- */
+@media (max-width: 40rem) {
+  .t0 .head { display: none; }
+  .t0 .row { grid-template-columns: 1fr; row-gap: 0.3rem; }
+  .tA .cols { display: none; }
+  .tA summary { grid-template-columns: minmax(0,1fr) 1.6rem; row-gap: 0.35rem; }
+  .tA summary > :not(.lead):not(.chev) { grid-column: 1; }
+  .tA .chev { grid-column: 2; grid-row: 1; }
+  .tA .lbl { display: block; color: var(--muted); font-size: 0.78rem; }
+  .fold { margin-inline: 0.6rem; }
+  .fold dl { grid-template-columns: 1fr; }
+  .fold dt { margin-top: 0.4rem; }
+  .tB .r { grid-template-columns: minmax(0,1fr) auto; row-gap: 0.15rem; padding-block: 0.7rem; }
+  .tB .r > .what, .tB .r > .cmp { grid-column: 1 / -1; }
+  .tB .what span { white-space: normal; }
+  .tB .lbl { display: inline; color: var(--muted); }
+  .tC a.r, .axis { grid-template-columns: 6.4rem minmax(0,1fr); }
+  .tC .st { grid-column: 2; font-size: 0.8rem; }
+  .axis > :last-child { display: none; }
+  .tD li { grid-template-columns: 1fr; }
+  .tD .side { text-align: left; align-items: flex-start; flex-direction: row; flex-wrap: wrap; gap: 0.2rem 1rem; margin-top: 0.5rem; }
+}
+</style>
+</head>
+<body>
+<header class="mast"><div class="mast-in">
+  <h1>Trials on record: four directions</h1>
+  <p>Real data: ivonescimab, lung cancer, 15 trials. Light theme per DESIGN.md.</p>
+</div></header>
+<nav class="jump" aria-label="Variants"><div class="jump-in">
+  <a href="#v0">Now</a><a href="#vA">A · Tightened table</a><a href="#vB">B · Grouped by phase</a><a href="#vC">C · Drawn by size</a><a href="#vD">D · Plain sentences</a>
+</div></nav>
+<main id="main"></main>
+
+<script>
+const EXT = '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>';
+const CHEV = '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+
+// From site/data/published-export.json, claim ivonescimab-lung-cancer. Furthest phase first.
+// rank: 3 = Phase 3, 2 = Phase 2 or Phase 1/Phase 2, 0 = no phase.
+const T = [
+ {id:"NCT06767514",ph:"Phase 3",rank:3,n:780,plan:true,cmp:"Another treatment",alloc:"Assigned at random",mask:"Blinded",st:"Under way",by:"Summit Therapeutics",m:"Overall survival",tf:"up to about 36 months",title:"Clinical Study of Ivonescimab for First-line Treatment of Metastatic NSCLC Patients"},
+ {id:"NCT05840016",ph:"Phase 3",rank:3,n:532,plan:false,cmp:"Another treatment",alloc:"Assigned at random",mask:"Blinded",st:"Under way",by:"Akeso",m:"Progression-free survival",tf:"up to about 2 years",title:"AK112 in Combination With Chemotherapy in Advanced Squamous Non-Small Cell Lung Cancer"},
+ {id:"NCT06396065",ph:"Phase 3",rank:3,n:420,plan:false,cmp:"Another treatment",alloc:"Assigned at random",mask:"Blinded",st:"Under way",by:"Summit Therapeutics",m:"Progression-free survival",tf:"up to 2 years",title:"Phase III Study of AK112 for NSCLC Patients"},
+ {id:"NCT05184712",ph:"Phase 3",rank:3,n:322,plan:false,cmp:"A placebo",alloc:"Assigned at random",mask:"Blinded",st:"Under way",by:"Akeso",m:"Progression-free survival",tf:"up to 2 years",title:"Phase 3 Clinical Study of AK112 for NSCLC Patients"},
+ {id:"NCT07742956",ph:"Phase 2",rank:2,n:156,plan:true,cmp:null,alloc:"Assigned at random",mask:"Open label",st:"Not started",by:"Shanghai Allink Biotherapeutics",m:"Side effects (TEAEs)",tf:"up to 24 months",title:"Phase II Clinical Study to Evaluate the Safety, Tolerability, Pharmacokinetics and Antitumor Activity"},
+ {id:"NCT04900363",ph:"Phase 1/Phase 2",rank:2,n:108,plan:false,cmp:null,alloc:null,mask:"Open label",st:"Finished",by:"Akeso",m:"Objective response rate",tf:"up to about 2 years",title:"A Trial of AK112 (PD-1/VEGF Bispecific Antibody) in Patients With NSCLC",papers:1},
+ {id:"NCT07241819",ph:"Phase 2",rank:2,n:66,plan:true,cmp:"Another treatment",alloc:"Assigned at random",mask:"Open label",st:"Not started",by:"Peking University Cancer Hospital",m:"Pathological complete response rate",tf:"up to about 2 years",title:"Ivonescimab Monotherapy or in Combination With Chemotherapy as Neoadjuvant/Adjuvant Therapy"},
+ {id:"NCT07204548",ph:"Phase 2",rank:2,n:63,plan:true,cmp:null,alloc:null,mask:"Open label",st:"Not started",by:"Sun Yat-sen University",m:"12-month progression-free survival rate",tf:"12 months",title:"The IVO-LUNG Study"},
+ {id:"NCT07057791",ph:"Phase 2",rank:2,n:60,plan:true,cmp:null,alloc:"Assigned at random",mask:"Open label",st:"Under way",by:"PrECOG, LLC.",m:"Overall response rate",tf:"18 months",title:"Phase II Study of Platinum/Etoposide Plus Ivonescimab for Extensive-Stage Small Cell Lung Cancer"},
+ {id:"NCT07158840",ph:"Phase 2",rank:2,n:60,plan:true,cmp:null,alloc:null,mask:"Open label",st:"Not started",by:"Akeso",m:"Overall response",tf:"up to 2 years",title:"AK112 in Non-squamous NSCLC Patients With Actionable Genomic Alterations"},
+ {id:"NCT05636267",ph:"Phase 1/Phase 2",rank:2,n:59,plan:false,cmp:null,alloc:"Not assigned at random",mask:"Open label",st:"Stopped early",by:"Akeso",m:"Dose-limiting toxicities",tf:"first 3 weeks",title:"Study of AK119 and AK112 With or Without Chemotherapy for NSCLC Patients"},
+ {id:"NCT07405190",ph:"Phase 2",rank:2,n:46,plan:true,cmp:null,alloc:"Not assigned at random",mask:"Open label",st:"Under way",by:"Massachusetts General Hospital",m:"Objective response rate",tf:"up to 2 years",title:"Ivonescimab Alone And With Carboplatin/Pemetrexed For NSCLC"},
+ {id:"NCT07936578",ph:"Phase 2",rank:2,n:40,plan:true,cmp:null,alloc:null,mask:"Open label",st:"Not started",by:"Guizhou Medical University",m:"Objective response rate",tf:"to week 24",title:"Ivonescimab Combined With Concurrent Chemoradiotherapy"},
+ {id:"NCT07594522",ph:"Phase 1/Phase 2",rank:2,n:36,plan:true,cmp:null,alloc:null,mask:"Open label",st:"Under way",by:"Memorial Sloan Kettering Cancer Center",m:"24-month event-free survival",tf:"24 months",title:"A Study of Ivonescimab in People With Non-Small Cell Lung Cancer"},
+ {id:"NCT07696832",ph:null,rank:0,n:265,plan:true,cmp:null,alloc:null,mask:null,st:"Under way",by:"Guangdong Association of Clinical Trials",m:"Median real-world progression-free survival",tf:"up to 36 months",title:"Efficacy and Safety of Ivonescimab Monotherapy as First-Line Treatment for PD-L1-Positive NSCLC"},
+];
+const NONE_CMP = "None named in the record";
+const reg = id => `https://clinicaltrials.gov/study/${id}`;
+const here = id => `/trials/${id}`;
+const people = t => `${t.n.toLocaleString("en-GB")} people${t.plan ? " planned" : ""}`;
+const design = t => [t.alloc, t.mask].filter(Boolean).join(" · ") || "Not stated in the record";
+const total = T.length;
+const sumPeople = list => list.reduce((s, t) => s + t.n, 0).toLocaleString("en-GB");
+const secHead = (note) => `<div class="sec-h"><h3>Trials on record</h3><span class="count">${total} trials</span></div>${note ? `<p class="note">${note}</p>` : ""}`;
+const NOTE = "Each trial on record for this treatment and condition, furthest phase first. The facts are a selection, unaltered, from the trial's registry record. Results are the numbers the trial's sponsor posted to the registry. A score is about the match, not about the treatment.";
+const variant = (id, name, why, body) => `<section class="variant" id="${id}"><h2 class="vhead">${name}</h2><p class="vwhy">${why}</p><div class="sheet">${body}</div></section>`;
+
+// 0. Now
+function v0() {
+  const rows = T.slice(0,5).map(t => `<div class="row">
+    <div class="lead"><b>${people(t)}</b><span>${t.ph} · <a href="${reg(t.id)}">${t.id} ${EXT}</a> <a class="alt" href="${here(t.id)}">View trial details here</a></span></div>
+    <div>${t.cmp ?? NONE_CMP}</div><div>${design(t)}</div><div>${t.st}</div><div>None posted</div></div>`).join("");
+  return variant("v0","Now","As built, for comparison. Two of five columns say the same thing on every row; the two links per trial compete; the phase line ends on a stray dot.",
+    secHead(NOTE) + `<div class="t0"><div class="row head"><span>Trial</span><span>Compared with</span><span>Design</span><span>State</span><span>Results</span></div>${rows}</div>
+    <button class="more" type="button">The other 10 of 15 trials ${CHEV}</button>`);
+}
+
+// Shared fold for A
+function fold(t) {
+  return `<div class="fold"><dl>
+    <dt>Run by</dt><dd>${t.by}</dd>
+    <dt>The registry's title</dt><dd>${t.title}</dd>
+    <dt>Main measure planned</dt><dd>${t.m}, ${t.tf}</dd>
+    <dt>Design</dt><dd>${design(t)}</dd>
+    <dt>Results</dt><dd>None posted</dd>
+  </dl><p class="links"><a href="${here(t.id)}">Everything in its record, here</a><a href="${reg(t.id)}">${t.id} at ClinicalTrials.gov ${EXT}</a></p></div>`;
+}
+
+// A. Tightened table
+function vA() {
+  const rows = T.slice(0,5).map(t => `<details><summary>
+    <span class="lead"><span class="size">${people(t)}</span><span class="ph">${t.ph ?? "No phase given"} · <span class="id">${t.id}</span></span></span>
+    <span><span class="lbl">Compared with</span>${t.cmp ?? NONE_CMP}<span class="sub">${design(t)}</span></span>
+    <span><span class="lbl">Sets out to measure</span>${t.m}<span class="sub">${t.tf}</span></span>
+    <span><span class="lbl">State</span>${t.st}</span>
+    <span class="chev">${CHEV}</span></summary>${fold(t)}</details>`).join("");
+  return variant("vA","A · Tightened table","Same table, kept honest. A column that is the same on every row becomes one line above the table. Results earn their column back only when one trial has posted. The freed width goes to what each trial measures, the thing that tells them apart. One link per row: the row opens; the registry link sits inside.",
+    secHead(NOTE) + `<p class="sumline"><span><b>4</b> in Phase 3</span><span><b>10</b> in Phase 2 or 1/2</span><span><b>1</b> with no phase</span><span><b>None</b> has posted results</span></p>
+    <div class="tA"><div class="cols"><span>Trial</span><span>Compared with</span><span>Sets out to measure</span><span>State</span><span></span></div>${rows}</div>
+    <button class="more" type="button">The other 10 of 15 trials ${CHEV}</button>`);
+}
+
+// B. Grouped by phase
+function vB() {
+  const groups = [
+    ["Phase 3", T.filter(t => t.rank === 3)],
+    ["Phase 2 and Phase 1/Phase 2", T.filter(t => t.rank === 2)],
+    ["No phase given", T.filter(t => t.rank === 0)],
+  ];
+  const body = groups.map(([name, list]) => `<div class="grp">
+    <div class="grp-h"><h4>${name}</h4><span>${list.length} ${list.length === 1 ? "trial" : "trials"}, ${sumPeople(list)} people taking part or planned</span></div>
+    <div class="tB">${list.map(t => `<div class="r">
+      <span class="n">${t.n.toLocaleString("en-GB")} <small>${t.plan ? "planned" : "people"}</small></span>
+      <span class="cmp"><span class="lbl">Compared with </span>${t.cmp ? t.cmp.replace("Another","another").replace("A placebo","a placebo") : "<span class=muted>none named</span>"}</span>
+      <span class="what">${t.m}<span>${t.by}</span></span>
+      <span class="st">${t.st}</span>
+      <a class="id" href="${here(t.id)}">${t.id}</a></div>`).join("")}</div></div>`).join("");
+  return variant("vB","B · Grouped by phase","The whole set in one screen and a half, no fold. Phase becomes the group heading, so it is said once per group; each trial is one line: size, comparison, what it measures and who runs it, state, identifier. Design and results move into the trial's own page, since none here has results.",
+    secHead("Every trial on record for this treatment and condition, grouped by phase. Facts are unaltered from each registry record; none of these trials has posted results.") + body);
+}
+
+// C. Drawn by size
+function vC() {
+  const max = 1000;
+  const pct = n => (n / max * 100);
+  const groups = [["Phase 3", 3], ["Phase 2 and Phase 1/Phase 2", 2], ["No phase given", 0]];
+  const body = groups.map(([name, r]) => `<p class="gl">${name}</p>` + T.filter(t => t.rank === r).map(t => `<a class="r" href="${here(t.id)}" aria-label="${t.id}: ${people(t)}, ${t.st.toLowerCase()}">
+      <span class="id">${t.id}</span>
+      <span class="track"><span class="bar ${t.plan ? "plan" : "done"}" style="width:${pct(t.n)}%"></span><span class="num" style="left:${pct(t.n)}%">${t.n}</span></span>
+      <span class="st">${t.st}</span></a>`).join("")).join("");
+  const ticks = [0,250,500,750,1000].map(v => `<span style="left:${pct(v)}%">${v}</span>`).join("");
+  return variant("vC","C · Drawn by size","A drawing first, the table second. Each trial is a bar as long as the number of people it took in or plans to take in, so the reader sees at once that four large late-stage trials carry most of the weight. Solid means taken in, hatched means planned; the key says so once. Nothing is coloured by outcome. Each bar leads to the trial.",
+    secHead("Each trial on record for this treatment and condition, by phase and by how many people it took in or plans to. Every trial below is also listed as a row with its full facts.") +
+    `<p class="keyC"><span><i class="sw done"></i>People taken in</span><span><i class="sw plan"></i>People planned</span><span>None of the 15 has posted results</span></p>
+    <div class="tC">${body}</div><div class="axis"><span>People</span><span class="ticks">${ticks}</span><span></span></div>`);
+}
+
+// D. Plain sentences
+function vD() {
+  const items = T.slice(0,5).map(t => `<li><div>
+      <h4>${people(t)}, ${t.cmp ? "compared with " + t.cmp.charAt(0).toLowerCase() + t.cmp.slice(1) : "with no comparison named"}</h4>
+      <p class="facts"><span>${t.ph ?? "No phase given"}</span>${t.alloc ? `<span>${t.alloc}</span>` : ""}<span>${t.mask === "Open label" ? "Open label: everyone knew what they had" : t.mask}</span><span>${t.st}</span></p>
+      <p class="say">It sets out to measure ${t.m.charAt(0).toLowerCase() + t.m.slice(1)}, ${t.tf}. Run by ${t.by}.</p>
+      <p class="notes">No results posted · ClinicalTrials.gov record read 16 Nov 2026</p>
+    </div><div class="side"><a href="${here(t.id)}">Trial details</a><a href="${reg(t.id)}" class="small">${t.id} ${EXT}</a></div></li>`).join("");
+  return variant("vD","D · Plain sentences","No table at all. Each trial reads as a short sentence a reader can repeat: how many people, against what, and what it sets out to measure, with the facts on one line. Closest to the trial entry the spec describes, and the same at every width, so the phone needs no second layout.",
+    secHead(NOTE) + `<ul class="tD">${items}</ul><button class="more" type="button">The other 10 of 15 trials ${CHEV}</button>`);
+}
+
+document.getElementById("main").innerHTML = v0() + vA() + vB() + vC() + vD();
+document.querySelectorAll('a[href^="/trials/"]').forEach(a => a.addEventListener("click", e => e.preventDefault()));
+</script>
+</body>
+</html>

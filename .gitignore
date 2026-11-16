@@ -28,3 +28,6 @@ extension/safari/
 .impeccable/review/
 .impeccable/questions/
 .impeccable/config.local.json
+
+# bulk link files fetched for the social-link backfill
+data/link-files/

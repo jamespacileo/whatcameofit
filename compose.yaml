@@ -26,16 +26,33 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://thenwhat:${POSTGRES_PASSWORD:-thenwhat}@db:5432/thenwhat
       EXPORT_PATH: /export/export.json
+      # MEASURE_DIR in .env names a folder on this machine. Inside the container the
+      # measurements are written to /measure, which is that folder mounted, so they
+      # outlive `docker compose run --rm`. Unset, measuring stays off and /measure is an
+      # unused empty volume.
+      MEASURE_DIR: ${MEASURE_DIR:+/measure}
     volumes:
       - ./data/seed:/seed:ro
       - export-data:/export
+      - ${MEASURE_DIR:-measure-off}:/measure
     # Bring the schema up to date, load the seed claim if it is not there yet, write the
     # export for the site, then stay up for `docker compose run pipeline thenwhat ...`.
+    # The marker says this start's export is written. The export file itself cannot say
+    # so: the volume keeps the one an earlier image wrote, perhaps in an older shape.
     command: >
-      sh -c "alembic upgrade head
+      sh -c "rm -f /tmp/export-ready
+      && alembic upgrade head
       && thenwhat seed load /seed/*.json
       && thenwhat export
+      && touch /tmp/export-ready
       && exec sleep infinity"
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/export-ready"]
+      interval: 2s
+      timeout: 3s
+      retries: 5
+      # Migrations and the export take as long as the database is large.
+      start_period: 600s
     depends_on:
       db:
         condition: service_healthy
@@ -48,9 +65,12 @@ services:
       - export-data:/app/live:ro
     ports:
       - "127.0.0.1:${SITE_PORT:-4321}:4321"
+    # The site builds from the export when it starts, so it waits for this start's export.
     depends_on:
-      - pipeline
+      pipeline:
+        condition: service_healthy
 
 volumes:
   db-data:
   export-data:
+  measure-off:

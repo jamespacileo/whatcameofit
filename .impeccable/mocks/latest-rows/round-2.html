@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Latest rows, round 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..800&display=swap" rel="stylesheet">
+<style>
+/* Light only, as DESIGN.md says. One accent for every status; colour marks the kind of item. */
+:root {
+  --paper: #ffffff; --ink: #0f1f38; --blue: #14427f; --muted: #46566b;
+  --panel: #f1f5fb; --tint: #e6eef8; --tag: #d6e2f2; --rule: #d9e2ee; --rule-soft: #e9eff5;
+  --promise: #fff7df; --promise-rule: #d9c88a; --ground: #f4f7fb; --hover: #f8fafd;
+  --dot: #b7c5d8;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { font-size: 106.25%; }
+body {
+  margin: 0; background: var(--ground); color: var(--ink);
+  font-family: Figtree, "Helvetica Neue", Arial, sans-serif; line-height: 1.55;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+::selection { background: var(--tag); color: var(--ink); }
+a { color: var(--blue); text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 6px; }
+button { font: inherit; color: inherit; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.wrap { max-width: 50rem; margin: 0 auto; padding: 2rem clamp(1rem, 4vw, 2rem) 4rem; }
+.intro { display: flex; flex-wrap: wrap; gap: 0.75rem 2rem; align-items: end; justify-content: space-between; }
+.intro h1 { margin: 0; font-size: clamp(1.5rem, 4vw, 1.9rem); line-height: 1.15; }
+.intro p { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.9rem; max-width: 60ch; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; padding: 3px; background: var(--paper); }
+.seg button {
+  border: 0; background: none; min-height: 32px; padding: 0 0.9rem; border-radius: 999px; cursor: pointer;
+  font-size: 0.85rem; font-weight: 600; color: var(--muted);
+}
+.seg button[aria-pressed="true"] { background: var(--blue); color: var(--paper); }
+
+.sheet {
+  margin-top: 1.25rem; background: var(--paper); border: 1px solid var(--rule); border-radius: 0.85rem;
+  padding: 1.1rem clamp(0.9rem, 3vw, 1.6rem) 1.3rem;
+}
+.sheet-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.25rem 1rem; flex-wrap: wrap; }
+.sheet-top h2 { margin: 0; font-size: 1.45rem; }
+.sheet-top span { font-size: 0.82rem; color: var(--muted); }
+
+/* The key: four marks, one line on a wide screen, named once. */
+.key {
+  margin: 0.8rem 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 0.35rem 1.1rem;
+  font-size: 0.78rem; color: var(--muted);
+}
+.key li { display: inline-flex; align-items: center; gap: 0.4rem; }
+
+.day { margin-top: 1.2rem; }
+.day-head {
+  display: flex; flex-wrap: wrap; gap: 0 0.6rem; align-items: baseline; margin: 0;
+  padding-bottom: 0.45rem; border-bottom: 1px solid var(--rule); font-size: 0.95rem;
+}
+.day-head span { color: var(--muted); font-size: 0.82rem; font-weight: 400; }
+.rows { list-style: none; margin: 0; padding: 0; }
+.empty { color: var(--muted); padding: 1rem 0; margin: 0; }
+mark { background: var(--tag); color: inherit; border-radius: 3px; padding: 0 0.1em; }
+
+/* ---------- One row per claim ---------- */
+.row {
+  display: grid; grid-template-columns: minmax(0, 1fr) 11.5rem; gap: 0 1.5rem;
+  padding: 1rem 0; border-bottom: 1px solid var(--rule-soft);
+}
+.row:last-child { border-bottom: 0; }
+.main { min-width: 0; }
+.topline { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.6rem; font-size: 0.8rem; color: var(--muted); }
+.age { font-weight: 700; color: var(--ink); }
+.title { margin: 0.2rem 0 0.15rem; font-size: 1.1rem; line-height: 1.3; font-weight: 700; text-wrap: pretty; }
+.title.old { font-size: 1rem; font-weight: 600; }
+.title a { color: inherit; text-decoration: none; }
+.title a:hover { text-decoration: underline; text-decoration-color: var(--rule); text-decoration-thickness: 1px; }
+.claim { margin: 0; font-size: 0.86rem; color: var(--muted); }
+.claim b { color: var(--ink); font-weight: 600; }
+
+/* What was dated, as chips: white a news report, panel blue a registry record, amber a promise. */
+.events { margin: 0.6rem 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.ev {
+  display: inline-flex; align-items: center; gap: 0.4rem; min-height: 26px; padding: 0.1rem 0.65rem 0.1rem 0.3rem;
+  border-radius: 999px; font-size: 0.78rem; background: var(--panel); color: var(--ink);
+}
+.ev.news { background: var(--paper); box-shadow: inset 0 0 0 1px var(--rule); }
+.ev.promise { background: var(--promise); box-shadow: inset 0 0 0 1px var(--promise-rule); padding-left: 0.65rem; }
+.ev .d { color: var(--muted); }
+.ev a { font-weight: 600; }
+.ev svg { flex: none; }
+.tile {
+  flex: none; width: 18px; height: 18px; border-radius: 5px; display: inline-grid; place-items: center;
+  font-size: 10.5px; font-weight: 800; line-height: 1; background: var(--tint); color: var(--ink);
+}
+.reg { flex: none; width: 18px; height: 18px; border-radius: 5px; display: inline-grid; place-items: center; background: var(--tag); color: var(--blue); }
+.ic { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- Status: a button that opens the row's detail ---------- */
+.status {
+  align-self: start; width: 100%; text-align: left; cursor: pointer;
+  display: grid; gap: 0.3rem; padding: 0.6rem 0.7rem 0.65rem; border-radius: 0.65rem;
+  border: 1px solid transparent; background: var(--panel);
+  transition: border-color 160ms ease-out, background-color 160ms ease-out;
+}
+.status:hover { border-color: var(--rule); background: var(--tint); }
+.status-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.4rem; }
+.label { color: var(--blue); font-weight: 700; font-size: 0.95rem; line-height: 1.2; }
+.chev { flex: none; width: 16px; height: 16px; margin-top: 1px; color: var(--muted); transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1); }
+.status[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.facts { font-size: 0.76rem; color: var(--muted); line-height: 1.35; }
+.facts b { color: var(--ink); font-weight: 600; }
+.changed { font-size: 0.76rem; color: var(--ink); line-height: 1.35; }
+.quiet { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.76rem; font-weight: 600; color: var(--ink); }
+
+/* Position on the path: six equal dots on a flat line, one filled. No rise, no fill-up. */
+.pos { display: block; }
+.pos line { stroke: var(--dot); stroke-width: 1.5; }
+.pos circle { fill: var(--paper); stroke: var(--dot); stroke-width: 1.5; }
+.pos circle.here { fill: var(--blue); stroke: var(--blue); }
+/* Off the path: the line drawn without a place on it, and a square beside it. */
+.pos.off circle { fill: var(--paper); stroke: var(--rule); }
+.pos.off line { stroke: var(--rule); stroke-dasharray: 2 3; }
+.pos .sq { fill: var(--paper); stroke: var(--blue); stroke-width: 1.8; }
+
+/* ---------- Drawer ---------- */
+.drawer { grid-column: 1 / -1; display: grid; grid-template-rows: 0fr; transition: grid-template-rows 280ms cubic-bezier(0.22, 1, 0.36, 1); }
+.drawer > div { overflow: hidden; min-height: 0; }
+.open .drawer { grid-template-rows: 1fr; }
+.detail {
+  margin-top: 0.75rem; padding: 0.85rem 1rem; border-radius: 0.7rem; background: var(--panel);
+  display: grid; gap: 0.7rem; font-size: 0.86rem;
+}
+.detail p { margin: 0; }
+.k { display: block; font-size: 0.74rem; font-weight: 700; color: var(--muted); margin-bottom: 0.1rem; }
+.path { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px; }
+.path span {
+  font-size: 0.72rem; text-align: center; padding: 0.35rem 0.15rem; border-radius: 5px; background: var(--paper);
+  color: var(--muted); line-height: 1.2; hyphens: manual;
+}
+.path span.here { background: var(--blue); color: var(--paper); font-weight: 700; }
+.path-note { font-size: 0.78rem; color: var(--muted); margin-top: 0.3rem; }
+.detail .promise { background: var(--promise); border-radius: 0.5rem; padding: 0.45rem 0.65rem; box-shadow: inset 0 0 0 1px var(--promise-rule); }
+.links { display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; font-weight: 600; font-size: 0.84rem; }
+.links a { display: inline-flex; align-items: center; min-height: 32px; }
+
+@media (max-width: 40rem) {
+  .row { grid-template-columns: minmax(0, 1fr); }
+  /* The status keeps a right edge on a phone: it sits under the claim, full width, label left, dots right. */
+  .status { margin-top: 0.7rem; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 0.75rem; }
+  .status-head { grid-column: 1; }
+  .status .pos, .status .quiet-wrap { grid-column: 2; grid-row: 1; }
+  .status .facts, .status .changed, .status .nosig { grid-column: 1 / -1; }
+  .status .chev { display: none; }
+  .key { gap: 0.3rem 0.9rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0s !important; }
+}
+@media print {
+  .drawer { grid-template-rows: 1fr; }
+  .status .chev, .seg { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="intro">
+    <div>
+      <h1>Latest, one row per claim</h1>
+      <p>Round 2 after the critique. Rows marked “Example” are invented to show statuses off the path and a promise; nothing here is a record.</p>
+    </div>
+    <div class="seg" role="group" aria-label="List shown">
+      <button type="button" data-view="latest" aria-pressed="true">Latest</button>
+      <button type="button" data-view="search" aria-pressed="false">Search “cancer”</button>
+    </div>
+  </header>
+
+  <section class="sheet" aria-labelledby="list-title">
+    <div class="sheet-top"><h2 id="list-title">Latest</h2><span>Registries last checked Monday 16 November 2026</span></div>
+    <ul class="key" id="key" aria-label="Key"></ul>
+    <div id="list"></div>
+  </section>
+</div>
+
+<script>
+const PATH = [
+  ["preclinical_only", "Pre­clinical"], ["trial_registered", "Regis­tered"], ["phase_1", "Phase 1"],
+  ["phase_2", "Phase 2"], ["phase_3", "Phase 3"], ["approved", "Approved"],
+];
+const LABELS = {
+  preclinical_only: "Preclinical only", no_trial_found: "No trial record found", trial_registered: "Trial registered",
+  phase_1: "Phase 1 trial", phase_2: "Phase 2 trial", phase_3: "Phase 3 trial", approved: "Approved",
+  failed: "Trial missed its primary endpoint", terminated: "Trials ended early", retracted: "Origin paper retracted",
+};
+const MEANINGS = {
+  preclinical_only: "The confirmed first-report evidence is laboratory or animal work. No clinical trial was found in the registries checked.",
+  trial_registered: "A clinical trial is registered. No trial with a phase has started.",
+  phase_3: "The furthest trial that has started is a Phase 3 trial.",
+  terminated: "Every registered trial was terminated or withdrawn.",
+  retracted: "The paper the first news reports were about has been retracted.",
+};
+const EVIDENCE = { animal: "Animal study", early_human: "Early human study", late_human: "Late human study", in_vitro: "Laboratory (in vitro)" };
+
+// Each claim, with everything dated for it, newest first. Example rows are invented.
+const CLAIMS = [
+  { slug: "ivonescimab-lung-cancer", name: "ivonescimab", indication: "Lung cancer", topic: "Cancer",
+    status: "phase_3", since: "13 Nov 2026", trials: 15, results: 0, firstReported: "15 Nov 2026", then: "late_human",
+    reason: "A Phase 3 trial of ivonescimab for lung cancer is on record (NCT07936578).",
+    events: [
+      { kind: "news", on: "2026-11-15", outlet: "The New York Times", date: "15 Nov", title: "F.D.A. Rejects Closely Watched Lung Cancer Drug From China" },
+      { kind: "record", on: "2026-11-13", id: "NCT07936578", what: "registered", date: "13 Nov" },
+    ] },
+  { slug: "intismeran-melanoma", name: "Intismeran autogene plus pembrolizumab", indication: "Completely resected stage IIB–IV cutaneous melanoma",
+    topic: "Cancer", status: "phase_3", since: "2 Oct 2026", trials: 2, results: 0, firstReported: "13 Nov 2026", then: "late_human",
+    reason: "Two trials are on record; the furthest that has started is Phase 3.",
+    promise: "An application for approval, promised for 2027",
+    events: [
+      { kind: "news", on: "2026-11-13", outlet: "The Morse Method", date: "13 Nov", title: "A Personalized mRNA Cancer Vaccine Just Won a Phase 3 Trial. Here’s What It Did." },
+      { kind: "promise", text: "Approval application, 2027" },
+    ] },
+  { slug: "median-nerve-stimulation-tourette", name: "Wrist-worn median nerve stimulation device", indication: "Tourette syndrome",
+    topic: "Brain and nerves", status: "trial_registered", since: "4 Jun 2025", trials: 3, results: 3, firstReported: "12 Nov 2026", then: "early_human",
+    reason: "Three trials are registered with no phase given; all three have results posted.",
+    events: [
+      { kind: "news", on: "2026-11-12", outlet: "BBC News", date: "12 Nov", title: "Tourette syndrome: The life-changing device helping to stop tics" },
+    ] },
+  { slug: "intracortical-bci-locked-in", name: "Intracortical brain-computer interface", indication: "Locked-in syndrome",
+    topic: "Brain and nerves", status: "trial_registered", since: "12 Nov 2026", trials: 1, results: 0, firstReported: "26 Mar 2022", then: "early_human",
+    reason: "One trial is registered (NCT07933549), dated 12 Nov 2026.",
+    oldReport: { outlet: "The Independent", year: 2022, date: "26 Mar 2022", title: "Paralysed man communicates first words in months using brain implant: ‘I want a beer’" },
+    events: [
+      { kind: "record", on: "2026-11-12", id: "NCT07933549", what: "registered", date: "12 Nov" },
+    ] },
+  { slug: "heart-repair-heart-failure", name: "Temporary genetic instructions injected into the heart to activate repair proteins",
+    indication: "Heart failure after a heart attack", topic: "Heart, blood and circulation", status: "preclinical_only",
+    since: "11 Nov 2026", trials: 0, results: 0, firstReported: "11 Nov 2026", then: "animal",
+    reason: "Animal study when first reported. No trial in people on record.",
+    events: [
+      { kind: "news", on: "2026-11-11", outlet: "Extra.ie", date: "11 Nov", title: "Scientists suggest new treatment could see hearts repair themselves in major breakthrough" },
+    ] },
+  { slug: "suzetrigine-acute-pain", name: "suzetrigine", indication: "Acute pain", topic: "Pain",
+    status: "phase_3", since: "10 Nov 2026", trials: 6, results: 4, firstReported: "20 Aug 2024", then: "late_human",
+    reason: "A Phase 3 trial of suzetrigine for acute pain is on record.",
+    oldReport: { outlet: "Scientific American", year: 2024, date: "20 Aug 2024", title: "New Painkiller Could Bring Relief to Millions—Without Addiction Risk" },
+    events: [
+      { kind: "record", on: "2026-11-10", id: "NCT07928011", what: "registered", date: "10 Nov" },
+    ] },
+  { slug: "example-terminated", name: "Example antibody", indication: "Early Alzheimer’s disease", topic: "Brain and nerves",
+    status: "terminated", changedFrom: "phase_2", since: "9 Nov 2026", trials: 2, results: 0, firstReported: "3 May 2023", then: "early_human",
+    reason: "Both registered trials are marked terminated; the second on 9 Nov 2026.",
+    oldReport: { outlet: "Example Daily", year: 2023, date: "3 May 2023", title: "Example headline: antibody clears brain plaques in early trial" },
+    events: [
+      { kind: "record", on: "2026-11-09", id: "NCT05550000", what: "terminated", date: "9 Nov" },
+    ] },
+  { slug: "example-retracted", name: "Example insulin patch", indication: "Type 1 diabetes", topic: "Hormones and metabolism",
+    status: "retracted", changedFrom: "preclinical_only", since: "9 Nov 2026", trials: 0, results: 0, firstReported: "14 Jan 2021", then: "animal",
+    reason: "A retraction notice for the origin paper is dated 9 Nov 2026.",
+    oldReport: { outlet: "Example Science News", year: 2021, date: "14 Jan 2021", title: "Example headline: smart patch could end insulin injections" },
+    events: [
+      { kind: "record", on: "2026-11-09", id: "Retraction notice", what: "", date: "9 Nov", source: "Crossref" },
+    ] },
+  { slug: "example-no-signal", name: "Example nasal spray", indication: "Hay fever", topic: "Allergy and immunity",
+    status: "preclinical_only", quiet: 3, since: "8 Nov 2023", trials: 0, results: 0, firstReported: "8 Nov 2023", then: "animal",
+    reason: "Animal study when first reported. No trial in people on record, and no new record in 3 years.",
+    promise: "A first trial in people, promised for 2026",
+    oldReport: { outlet: "Example Health", year: 2023, date: "8 Nov 2023", title: "Example headline: one spray a year could stop hay fever" },
+    events: [
+      { kind: "promise", on: "2026-11-08", text: "First trial in people, 2026" },
+    ] },
+];
+const DAY_NAMES = {
+  "2026-11-15": "Sunday 15 November", "2026-11-13": "Friday 13 November", "2026-11-12": "Thursday 12 November",
+  "2026-11-11": "Wednesday 11 November", "2026-11-10": "Tuesday 10 November", "2026-11-09": "Monday 9 November",
+  "2026-11-08": "Sunday 8 November",
+};
+
+const I = {
+  reg: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 11h6M9 15h4"/></svg>',
+  chev: '<svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
+  clock: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+};
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+let query = "";
+const hl = (s) => (query ? esc(s).replace(new RegExp(`(${query})`, "ig"), "<mark>$1</mark>") : esc(s));
+const onPath = (code) => PATH.findIndex(([c]) => c === code);
+
+// Six equal dots on a flat line. On the path, one is filled; off it, none is, and a square follows.
+function pos(code) {
+  const place = onPath(code);
+  const dots = PATH.map((_, i) => `<circle cx="${5 + i * 13}" cy="6" r="3.6" class="${i === place ? "here" : ""}"/>`).join("");
+  const sq = place < 0 ? '<rect class="sq" x="84" y="2" width="8" height="8" rx="1.5"/>' : "";
+  return `<svg class="pos${place < 0 ? " off" : ""}" width="${place < 0 ? 94 : 76}" height="12" viewBox="0 0 ${place < 0 ? 94 : 76} 12" aria-hidden="true"><line x1="5" y1="6" x2="70" y2="6"/>${dots}${sq}</svg>`;
+}
+const tile = (outlet) => `<span class="tile" aria-hidden="true">${esc(outlet.charAt(0))}</span>`;
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+function chip(c, e) {
+  if (e.kind === "news") return `<li class="ev news">${tile(e.outlet)}<span>${esc(e.outlet)}</span><span class="d">${e.date}</span></li>`;
+  if (e.kind === "promise") return `<li class="ev promise"><span><span class="vh">Promised: </span>${esc(e.text)}</span></li>`;
+  const label = e.source ? `${esc(e.id)}, ${e.source}` : `<a href="#">${e.id}</a> ${e.what}`;
+  return `<li class="ev"><span class="reg" aria-hidden="true">${I.reg}</span><span>${label}</span><span class="d">${e.date}</span></li>`;
+}
+
+function row(c, id) {
+  const news = c.events.find((e) => e.kind === "news");
+  const label = LABELS[c.status];
+  const place = onPath(c.status);
+  const topline = [`<span>${esc(c.topic)}</span>`];
+  let title;
+  if (news) {
+    title = `<h3 class="title"><a href="#">“${hl(news.title)}”</a></h3>`;
+  } else {
+    const years = 2026 - c.oldReport.year;
+    topline.push(`<span class="age">First reported ${plural(years, "year", "years")} ago</span>`);
+    title = `<h3 class="title old"><a href="#">“${hl(c.oldReport.title)}”</a></h3>`;
+  }
+  const chips = [
+    ...(news ? [] : [`<li class="ev news">${tile(c.oldReport.outlet)}<span>${esc(c.oldReport.outlet)}</span><span class="d">${c.oldReport.date}</span></li>`]),
+    ...c.events.map((e) => chip(c, e)),
+  ].join("");
+
+  const facts = [
+    plural(c.trials, "trial", "trials") + (c.results ? `, ${c.results} with results` : ""),
+  ];
+  const statusExtra = c.changedFrom
+    ? `<span class="changed">Changed from ${LABELS[c.changedFrom]}, ${c.since}</span>`
+    : c.quiet
+      ? `<span class="nosig"><span class="quiet">${I.clock}No signal for ${plural(c.quiet, "year", "years")}</span></span>`
+      : "";
+  const path = PATH.map(([code, name]) => `<span class="${code === c.status ? "here" : ""}">${name}</span>`).join("");
+  const pathNote = place < 0
+    ? `<p class="path-note">“${label}” is not a place on this path.</p>`
+    : `<p class="path-note">A position, not progress: a claim can reach a place without passing the others.</p>`;
+
+  return `<li class="row" data-row>
+    <div class="main">
+      <div class="topline">${topline.join("")}</div>
+      ${title}
+      <p class="claim"><b>${hl(c.name)}</b> · ${hl(c.indication)}</p>
+      <ul class="events" aria-label="Dated for this claim">${chips}</ul>
+    </div>
+    <button class="status" type="button" aria-expanded="false" aria-controls="${id}">
+      <span class="status-head"><span class="label"><span class="vh">On record now: </span>${label}</span>${I.chev}</span>
+      ${place >= 0 ? pos(c.status) : `<span class="quiet-wrap">${pos(c.status)}</span>`}
+      ${statusExtra}
+      <span class="facts">${facts.join("")}${c.changedFrom ? "" : `<br>Status since ${c.since}`}</span>
+    </button>
+    <div class="drawer" id="${id}" role="region" aria-label="Detail for ${esc(c.name)}" inert><div><div class="detail">
+      <div><span class="k">${label}</span><p>${MEANINGS[c.status]}</p></div>
+      <div><div class="path" aria-hidden="true">${path}</div>${pathNote}</div>
+      <p><span class="k">Why this claim is here</span>${c.reason}</p>
+      <p><span class="k">When first reported, ${c.firstReported}</span>${EVIDENCE[c.then]}</p>
+      ${c.promise ? `<p class="promise"><span class="k">Promised</span>${c.promise}</p>` : ""}
+      <div class="links"><a href="#">See the records</a><a href="#">What “${label}” does and does not tell you</a></div>
+    </div></div></div>
+  </li>`;
+}
+
+const matches = (c) => !query || [c.name, c.indication, c.topic, ...c.events.map((e) => e.title || ""), c.oldReport?.title || ""]
+  .join(" ").toLowerCase().includes(query);
+const newest = (c) => c.events.map((e) => e.on).filter(Boolean).sort().at(-1);
+
+function render() {
+  const claims = CLAIMS.filter(matches);
+  const list = document.getElementById("list");
+  document.getElementById("list-title").textContent = query ? `Search: “${query}”` : "Latest";
+  if (!claims.length) { list.innerHTML = `<p class="empty">No tracked claim mentions “${esc(query)}”.</p>`; return; }
+  if (query) {
+    // A search lists claims once each, newest first, with no day headings.
+    list.innerHTML = `<section class="day"><h3 class="day-head">${plural(claims.length, "claim", "claims")} <span>mention “${esc(query)}”</span></h3>
+      <ul class="rows">${claims.map((c) => row(c, `d-${c.slug}`)).join("")}</ul></section>`;
+    return;
+  }
+  const byDay = new Map();
+  for (const c of claims) {
+    const day = newest(c);
+    if (!byDay.has(day)) byDay.set(day, []);
+    byDay.get(day).push(c);
+  }
+  list.innerHTML = [...byDay.keys()].sort().reverse().map((day) => {
+    const cs = byDay.get(day);
+    const evs = cs.flatMap((c) => c.events.filter((e) => e.on === day));
+    const n = (k) => evs.filter((e) => e.kind === k).length;
+    const said = [n("news") && plural(n("news"), "report", "reports"), n("record") && plural(n("record"), "record", "records"), n("promise") && plural(n("promise"), "promise", "promises")].filter(Boolean).join(", ");
+    return `<section class="day"><h3 class="day-head">${DAY_NAMES[day]} <span>${said}</span></h3>
+      <ul class="rows">${cs.map((c) => row(c, `d-${c.slug}`)).join("")}</ul></section>`;
+  }).join("");
+}
+
+document.getElementById("key").innerHTML = `
+  <li>${pos("phase_3")} Place on the path, preclinical to approved</li>
+  <li>${pos("terminated")} Off the path</li>
+  <li><span class="ev news" style="padding-right:.5rem">${tile("A")}News report</span></li>
+  <li><span class="ev"><span class="reg" aria-hidden="true">${I.reg}</span>Registry record</span></li>
+  <li><span class="ev promise">Promise</span></li>`;
+
+document.addEventListener("click", (e) => {
+  const s = e.target.closest(".status");
+  if (s) {
+    const open = s.getAttribute("aria-expanded") !== "true";
+    s.setAttribute("aria-expanded", String(open));
+    s.closest("[data-row]").classList.toggle("open", open);
+    document.getElementById(s.getAttribute("aria-controls")).inert = !open;
+    return;
+  }
+  const v = e.target.closest("[data-view]");
+  if (v) {
+    document.querySelectorAll("[data-view]").forEach((b) => b.setAttribute("aria-pressed", String(b === v)));
+    query = v.dataset.view === "search" ? "cancer" : "";
+    render();
+  }
+});
+render();
+</script>
+</body>
+</html>

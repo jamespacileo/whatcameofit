@@ -45,6 +45,10 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `gsrs/names_baxdrostat.json` | `GET /api/v1/substances(d050debb-84b5-4703-90a9-afc4fd2c21c6)/names`: twelve names, three of the kind `cd` (2026-11-14) |
 | `gsrs/search_cin_107_spaced.json` | the search for `"^cin 107$"`, which GSRS answers with the substance coded "CIN-107"; the client refuses it (2026-11-14) |
 | `gsrs/search_nothing.json` | the search for `"^faecal microbiota transplant$"`: `total` 0 (2026-11-14) |
+| `rxnorm/rxcui_elevidys.json`, `rxnorm/properties_2641681.json`, `rxnorm/related_in_2641681.json` | `GET rxnav.nlm.nih.gov/REST/rxcui.json?name=Elevidys&search=0`, then `GET /REST/rxcui/2641681/properties.json` and `GET /REST/rxcui/2641681/related.json?tty=IN`: a brand of one ingredient (2026-11-16) |
+| `rxnorm/rxcui_advair.json`, `rxnorm/properties_301543.json`, `rxnorm/related_in_301543.json` | the same three for "Advair": a brand of two ingredients (2026-11-16) |
+| `rxnorm/rxcui_corbevax.json` | the exact search for "Corbevax", which RxNorm does not list: an empty `idGroup` (2026-11-16) |
+| `rxnorm/rxcui_aspirin.json`, `rxnorm/properties_1191.json` | the exact search for "aspirin" and its concept's record: an ingredient, not a brand (2026-11-16) |
 | `mesh/term_ketogenic_diet.json` | `GET /mesh/lookup/term?label=Ketogenic Diet&match=exact&limit=10&year=2026`: an entry term of a descriptor labelled otherwise (2026-11-14) |
 | `mesh/term_orforglipron.json`, `mesh/term_obesity.json` | the same lookup for "orforglipron" (the term of a supplementary record) and "Obesity" (2026-11-14) |
 | `mesh/term_tirzepatide.json`, `mesh/owner_tirzepatide.json` | the term lookup and the owner query for "tirzepatide": the term belongs to a descriptor and to a withdrawn supplementary record labelled "[OBSOLETE] tirzepatide", whose own address answers an empty object (2026-11-14) |
@@ -76,6 +80,7 @@ Changes made to the recordings, for copyright and size:
 - OpenAlex works: each `abstract_inverted_index` is replaced by a placeholder sentence. The key was sent in a header and is in no recording.
 - MeSH: none. The records are NLM's own and are kept whole, re-indented.
 - GSRS: none. The data is CC0 and the records are kept whole, re-indented.
+- RxNorm: none. The answers are NLM's own and are kept whole, re-indented.
 - Open Targets: none. The answers are kept whole, re-indented. Function descriptions are UniProt's (CC BY 4.0); a drug's kind of molecule and mechanisms are ChEMBL's (CC BY-SA 3.0 Unported).
 - ROR: only the first two items of each answer are kept.
 - Crossref works: `abstract` removed; `reference` removed from `work_srep39654.json`.

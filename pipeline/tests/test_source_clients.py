@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.db.models import HttpCache
+from thenwhat.resolve.codes import one_substance
 from thenwhat.sources import mesh, openalex, opentargets, ror
 from thenwhat.sources.base import (
     AllowanceUsedUp,
@@ -30,6 +31,7 @@ from thenwhat.sources.mesh import Mesh
 from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.opentargets import OpenTargets
 from thenwhat.sources.ror import Ror
+from thenwhat.sources.rxnorm import RxNorm
 
 CONTACT = "ops@thenwhat.test"
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -1482,6 +1484,137 @@ def test_substance_retry_still_honours_a_long_source_delay(
     )
     assert source.substances_named("baxdrostat") == []
     assert len(requests) == 2 and requests[1] - requests[0] >= 30
+
+
+# --- RxNorm ----------------------------------------------------------------------
+
+
+def brands(session: Session, fake_time, fixture_json, search: str) -> tuple[RxNorm, Replay]:
+    """RxNorm answering the name search from one recording, and each concept's own
+    record and ingredients from the recordings named by its identifier."""
+
+    def route(request: httpx.Request):
+        path = request.url.path
+        if path.endswith("/REST/rxcui.json"):
+            return fixture_json(f"rxnorm/{search}.json")
+        identifier = path.split("/")[-2]
+        if path.endswith("/properties.json"):
+            return fixture_json(f"rxnorm/properties_{identifier}.json")
+        if path.endswith("/related.json"):
+            return fixture_json(f"rxnorm/related_in_{identifier}.json")
+        return NOT_FOUND
+
+    replay = Replay(route)
+    source = RxNorm(
+        session, contact_email=CONTACT, transport=httpx.MockTransport(replay), time=fake_time
+    )
+    return source, replay
+
+
+def test_brand_is_found_under_its_one_ingredient(session: Session, fake_time, fixture_json):
+    """Scenario: Brand listed under one ingredient"""
+    source, replay = brands(session, fake_time, fixture_json, "rxcui_elevidys")
+
+    # Case and runs of spaces are set aside, and nothing else.
+    [record] = source.substances_named("  elevidys ")
+
+    assert (record.source_name, record.external_id) == ("rxnorm", "2641675")
+    assert record.url.endswith("searchTerm=2641675")
+    assert record.fetched_at == fake_time.now()
+    assert record.payload["substance"]["_name"] == "delandistrogene moxeparvovec"
+    assert record.payload["brand"] == fixture_json("rxnorm/properties_2641681.json")["properties"]
+    assert record.payload["ingredients"] == fixture_json("rxnorm/related_in_2641681.json")
+    assert label_of(record) == "delandistrogene moxeparvovec (RxCUI 2641675)"
+    # An ingredient is a name to search for: RxNorm marks no name as a code.
+    assert codes_of(record) == []
+    asked = replay.requests[0].url.params
+    assert (asked["name"], asked["search"]) == ("elevidys", "0")
+    assert replay.requests[2].url.params["tty"] == "IN"
+    assert CONTACT in replay.requests[0].headers["User-Agent"]
+
+
+def test_a_brand_the_source_does_not_list_finds_nothing(session: Session, fake_time, fixture_json):
+    """Scenario: Brand the source does not list"""
+    source, replay = brands(session, fake_time, fixture_json, "rxcui_corbevax")
+
+    assert source.substances_named("Corbevax") == []
+    assert len(replay.requests) == 1
+
+
+def test_a_brand_of_two_ingredients_is_two_substances(session: Session, fake_time, fixture_json):
+    """Scenario: Brand listed under two ingredients"""
+    source, _ = brands(session, fake_time, fixture_json, "rxcui_advair")
+
+    found = source.substances_named("Advair")
+
+    assert [record.payload["substance"]["_name"] for record in found] == [
+        "salmeterol",
+        "fluticasone",
+    ]
+    assert one_substance(found) is None
+
+
+def test_a_name_that_is_not_a_brand_finds_nothing(session: Session, fake_time, fixture_json):
+    """Scenario: Name that is not a brand"""
+    source, replay = brands(session, fake_time, fixture_json, "rxcui_aspirin")
+
+    # RxNorm lists aspirin as an ingredient; its ingredients are not asked for.
+    assert source.substances_named("aspirin") == []
+    assert len(replay.requests) == 2
+
+
+def test_a_concept_named_otherwise_than_asked_finds_nothing(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Name that only resembles a brand"""
+    # The name search answering with a brand whose own name is another.
+    source, replay = brands(session, fake_time, fixture_json, "rxcui_elevidys")
+
+    assert source.substances_named("Elevidy") == []
+    assert len(replay.requests) == 2
+
+
+def test_a_name_too_many_concepts_carry_finds_nothing(session: Session, fake_time):
+    """Scenario: Name more concepts carry than are read"""
+    replay = Replay(lambda request: {"idGroup": {"rxnormId": [str(n) for n in range(1, 7)]}})
+    source = RxNorm(
+        session, contact_email=CONTACT, transport=httpx.MockTransport(replay), time=fake_time
+    )
+
+    # Six concepts: none is read, not the first five.
+    assert source.substances_named("Elevidys") == []
+    assert len(replay.requests) == 1
+
+
+@pytest.mark.parametrize("missing", ["properties", "related"])
+def test_a_brand_with_part_of_its_answer_missing_finds_nothing(
+    session: Session, fake_time, fixture_json, missing: str
+):
+    """Scenario: Part of a brand's answer is missing"""
+    # Two brand concepts carry the name. The first answers whole, with one ingredient;
+    # the second's own record, or its list of ingredients, is not found.
+    second = fixture_json("rxnorm/properties_2641681.json")
+    second["properties"]["rxcui"] = "2641682"
+
+    def route(request: httpx.Request):
+        path = request.url.path
+        if path.endswith("/REST/rxcui.json"):
+            return {"idGroup": {"rxnormId": ["2641681", "2641682"]}}
+        identifier, asked = path.split("/")[-2], path.split("/")[-1].removesuffix(".json")
+        if identifier == "2641682":
+            return NOT_FOUND if asked == missing else second
+        return fixture_json(
+            f"rxnorm/{'properties' if asked == 'properties' else 'related_in'}_{identifier}.json"
+        )
+
+    source = RxNorm(
+        session,
+        contact_email=CONTACT,
+        transport=httpx.MockTransport(Replay(route)),
+        time=fake_time,
+    )
+
+    assert source.substances_named("Elevidys") == []
 
 
 # --- Open Targets: a drug by its own name -------------------------------------------
