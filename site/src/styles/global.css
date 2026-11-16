@@ -59,6 +59,16 @@
   --page: 60rem;
   --gutter: clamp(1rem, 4vw, 2rem);
   --radius: 0.85rem;
+  /* The claim page's one scale. Every list, table and panel on it takes its row
+     padding, row rule, label size, note size and panel padding from here, so the
+     sections read as one system (openspec claim-primitives; a test holds them to it). */
+  --radius-s: 0.65rem;
+  --row-pad: 0.8rem;
+  --row-rule: var(--rule-soft);
+  --label-size: 0.82rem;
+  --note-size: 0.85rem;
+  --panel-pad: 0.85rem 1rem;
+  --label-col: 11rem;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -420,7 +430,7 @@ p {
   margin-inline: -0.9rem -0.55rem;
   padding: 0;
   border: 0;
-  border-radius: 0.65rem;
+  border-radius: var(--radius-s);
   background: transparent;
   color: var(--on-navy-ink);
   cursor: pointer;
@@ -956,7 +966,7 @@ a.share {
   width: 100%;
   height: auto;
   border: 1px solid var(--rule);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-s);
 }
 
 @media (max-width: 40rem) {
@@ -1068,13 +1078,14 @@ dialog.mastodon input {
   font-weight: 600;
   color: var(--blue);
   width: fit-content;
+  font-size: 0.9rem;
 }
 
 .embed-how pre {
   margin: 0.6rem 0;
   padding: 0.8rem 1rem;
   background: var(--panel);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-s);
   font-size: 0.8rem;
   line-height: 1.5;
   white-space: pre-wrap;
@@ -1145,7 +1156,7 @@ body.embed {
 
 .embed-status {
   background: var(--panel);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-s);
   padding: 0.6rem 0.8rem;
 }
 
@@ -1767,7 +1778,7 @@ main nav.contents ul li + li {
   gap: 0.3rem;
   padding: 0.55rem 0.75rem 0.6rem;
   background: var(--panel);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-s);
 }
 
 .hit-main {
@@ -2055,10 +2066,10 @@ main nav.contents ul li + li {
 
 .glance-rows > div {
   display: grid;
-  grid-template-columns: 11rem minmax(0, 1fr);
+  grid-template-columns: var(--label-col) minmax(0, 1fr);
   gap: 0.15rem 1.25rem;
-  padding: 0.9rem 0;
-  border-bottom: 1px solid var(--rule);
+  padding: var(--row-pad) 0;
+  border-bottom: 1px solid var(--row-rule);
 }
 
 /* A row reached from the band is marked, as a record reached by a link is. */
@@ -2074,7 +2085,7 @@ main nav.contents ul li + li {
 
 .glance-rows dt,
 .glance-facts dt {
-  font-size: 0.9rem;
+  font-size: var(--label-size);
   color: var(--muted);
   padding-top: 0.1rem;
 }
@@ -2144,7 +2155,7 @@ main nav.contents ul li + li {
   min-height: 2rem;
   cursor: pointer;
   list-style: none;
-  font-size: 0.82rem;
+  font-size: var(--note-size);
   color: var(--muted);
 }
 
@@ -2213,7 +2224,7 @@ main nav.contents ul li + li {
   margin: 0.7rem 0 0;
   max-width: 52ch;
   text-wrap: pretty;
-  font-size: 0.85rem;
+  font-size: var(--note-size);
   color: var(--muted);
 }
 
@@ -2249,13 +2260,13 @@ main nav.contents ul li + li {
 .index td {
   text-align: left;
   vertical-align: top;
-  padding: 0.7rem 0.85rem;
-  border-top: 1px solid var(--rule-soft);
+  padding: var(--row-pad) 0.85rem;
+  border-top: 1px solid var(--row-rule);
 }
 
 .timetable thead th,
 .index thead th {
-  font-size: 0.8rem;
+  font-size: var(--label-size);
   font-weight: 600;
   color: var(--muted);
   background: var(--table-head);
@@ -2349,7 +2360,7 @@ main nav.contents ul li + li {
 .entry-note {
   display: block;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: var(--note-size);
 }
 
 /* One record on one line: what kind, when, what, and where to check it. */
@@ -2386,7 +2397,7 @@ main nav.contents ul li + li {
 .record .origin {
   grid-column: 3;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: var(--note-size);
 }
 
 .kind {
@@ -2677,7 +2688,7 @@ main nav.contents ul li + li {
   overscroll-behavior: contain;
   padding: 0.8rem 0.95rem;
   border: 1px solid var(--rule);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-s);
   background: var(--paper);
   color: var(--ink);
   font-size: 0.9rem;
@@ -3796,7 +3807,7 @@ body:has(.band.home) .table-frame {
   max-width: 100%;
   padding: 0.5rem 0.8rem;
   border: 1.5px solid var(--blue);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-s);
   background: var(--paper);
   color: var(--ink);
   caret-color: var(--blue);
@@ -4157,8 +4168,8 @@ main ul:not([class]) li + li {
 }
 
 .record-row {
-  padding: 0.85rem 0;
-  border-bottom: 1px solid var(--rule-soft);
+  padding: var(--row-pad) 0;
+  border-bottom: 1px solid var(--row-rule);
 }
 
 .record-row:first-child {
@@ -4255,6 +4266,7 @@ main ul:not([class]) li + li {
 
 .record-fields dt {
   color: var(--muted);
+  font-size: var(--label-size);
 }
 
 .record-fields dd {
@@ -4315,9 +4327,9 @@ main ul:not([class]) li + li {
   display: grid;
   gap: 0.55rem;
   margin-top: 0.6rem;
-  padding: 0.85rem 1rem 0.95rem;
+  padding: var(--panel-pad);
   border: 1px solid var(--rule);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-s);
   max-width: 64ch;
 }
 
@@ -4389,7 +4401,7 @@ main ul:not([class]) li + li {
   margin: 0.3rem 0 0;
   padding: 0.7rem 0.9rem;
   background: var(--panel);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-s);
   max-width: 62ch;
   overflow-wrap: anywhere;
 }
@@ -4398,9 +4410,9 @@ main ul:not([class]) li + li {
    same pale panel a definition uses, always open since they are short. */
 .card-facts {
   margin-top: 0.3rem;
-  padding: 0.7rem 0.9rem;
+  padding: var(--panel-pad);
   background: var(--panel);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-s);
   max-width: 62ch;
   overflow-wrap: anywhere;
 }
@@ -4590,15 +4602,19 @@ main ul:not([class]) li + li {
 }
 
 .trial-more summary,
-.trials-rest > summary {
+/* Fold line: "the other N of M" under a list, the same wherever a list folds its rest. */
+.trials-rest > summary,
+.papers-rest > summary {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
   width: fit-content;
+  margin-top: 0.9rem;
   cursor: pointer;
   list-style: none;
   color: var(--blue);
   font-weight: 600;
+  font-size: 0.9rem;
 }
 
 .trial-more summary {
@@ -4618,10 +4634,6 @@ main ul:not([class]) li + li {
 
 .trials-rest {
   max-width: var(--measure);
-}
-
-.trials-rest > summary {
-  margin-top: 0.9rem;
 }
 
 /* Papers on record: each paper once, in the group of its first role. An entry is built
@@ -4684,18 +4696,6 @@ main ul:not([class]) li + li {
   max-width: var(--measure);
 }
 
-.papers-rest > summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  width: fit-content;
-  margin-top: 0.9rem;
-  cursor: pointer;
-  list-style: none;
-  color: var(--blue);
-  font-weight: 600;
-}
-
 .papers-rest > summary::-webkit-details-marker {
   display: none;
 }
@@ -4708,13 +4708,13 @@ main ul:not([class]) li + li {
   display: grid;
   gap: 0.7rem;
   margin: 0.6rem 0 0.3rem;
-  padding: 0.8rem 1rem;
+  padding: var(--panel-pad);
   background: var(--panel);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-s);
 }
 
 .trial-facts dt {
-  font-size: 0.8rem;
+  font-size: var(--label-size);
   color: var(--muted);
 }
 
@@ -4790,7 +4790,7 @@ main ul:not([class]) li + li {
 .result-table th,
 .result-table td {
   padding: 0.35rem 0;
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--row-rule);
   text-align: left;
   font-weight: 400;
   vertical-align: top;
@@ -5078,7 +5078,7 @@ main ul:not([class]) li + li {
   font: inherit;
   padding: 0.7rem 0.9rem;
   border: 1.5px solid var(--blue);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-s);
   background: var(--paper);
   color: var(--ink);
   caret-color: var(--blue);
@@ -5093,7 +5093,7 @@ main ul:not([class]) li + li {
   font-weight: 700;
   padding: 0.7rem 1.2rem;
   border: 1.5px solid var(--blue-fill);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-s);
   background: var(--blue-fill);
   color: var(--on-blue);
   cursor: pointer;
@@ -5696,7 +5696,7 @@ main ul:not([class]) li + li {
   margin-top: 1rem;
   padding: 0.6rem 0.85rem;
   border: 1px dashed var(--muted);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-s);
   font-size: 0.9rem;
 }
 
@@ -5738,7 +5738,7 @@ main ul:not([class]) li + li {
   margin-top: 0.9rem;
   padding: 0.6rem 1rem;
   border: 1.5px solid var(--blue);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-s);
   background: none;
   color: var(--blue);
   font: inherit;
@@ -5797,7 +5797,7 @@ main ul:not([class]) li + li {
 .results .live-text textarea {
   padding: 0.7rem 0.85rem;
   border: 1.5px solid var(--ring);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-s);
   background: none;
   color: inherit;
   font: inherit;
@@ -5826,7 +5826,7 @@ main ul:not([class]) li + li {
 
 .brief-group {
   display: grid;
-  grid-template-columns: 11rem minmax(0, 1fr);
+  grid-template-columns: var(--label-col) minmax(0, 1fr);
   column-gap: 1.5rem;
   border-top: 1px solid var(--ring);
   padding-top: 0.2rem;
@@ -5909,8 +5909,8 @@ main ul:not([class]) li + li {
   display: grid;
   gap: 0.4rem;
   margin: 0 0 0.85rem;
-  padding: 0.85rem 1.1rem;
-  border-radius: 0.65rem;
+  padding: var(--panel-pad);
+  border-radius: var(--radius-s);
   background: var(--panel);
 }
 
@@ -6901,15 +6901,15 @@ body.framed {
   grid-template-columns: var(--trial-cols);
   column-gap: 1.2rem;
   align-items: start;
-  padding: 0.8rem 1.1rem;
+  padding: var(--row-pad) 1.1rem;
 }
 
 .trial-columns {
-  background: var(--footer);
-  color: var(--on-navy-ink);
-  font-size: 0.82rem;
-  font-weight: 700;
-  padding-block: 0.65rem;
+  background: var(--table-head);
+  color: var(--muted);
+  font-size: var(--label-size);
+  font-weight: 600;
+  padding-block: 0.5rem;
 }
 
 .trial-group {
@@ -7204,7 +7204,7 @@ body.framed {
   margin-bottom: 0.9rem;
   padding: 0 0.75rem;
   border: 1px solid var(--ring);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-s);
   background: var(--paper);
   color: var(--muted);
 }
