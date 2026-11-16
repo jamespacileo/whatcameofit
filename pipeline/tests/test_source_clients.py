@@ -1574,6 +1574,49 @@ def test_a_concept_named_otherwise_than_asked_finds_nothing(
     assert len(replay.requests) == 2
 
 
+def test_a_name_too_many_concepts_carry_finds_nothing(session: Session, fake_time):
+    """Scenario: Name more concepts carry than are read"""
+    replay = Replay(lambda request: {"idGroup": {"rxnormId": [str(n) for n in range(1, 7)]}})
+    source = RxNorm(
+        session, contact_email=CONTACT, transport=httpx.MockTransport(replay), time=fake_time
+    )
+
+    # Six concepts: none is read, not the first five.
+    assert source.substances_named("Elevidys") == []
+    assert len(replay.requests) == 1
+
+
+@pytest.mark.parametrize("missing", ["properties", "related"])
+def test_a_brand_with_part_of_its_answer_missing_finds_nothing(
+    session: Session, fake_time, fixture_json, missing: str
+):
+    """Scenario: Part of a brand's answer is missing"""
+    # Two brand concepts carry the name. The first answers whole, with one ingredient;
+    # the second's own record, or its list of ingredients, is not found.
+    second = fixture_json("rxnorm/properties_2641681.json")
+    second["properties"]["rxcui"] = "2641682"
+
+    def route(request: httpx.Request):
+        path = request.url.path
+        if path.endswith("/REST/rxcui.json"):
+            return {"idGroup": {"rxnormId": ["2641681", "2641682"]}}
+        identifier, asked = path.split("/")[-2], path.split("/")[-1].removesuffix(".json")
+        if identifier == "2641682":
+            return NOT_FOUND if asked == missing else second
+        return fixture_json(
+            f"rxnorm/{'properties' if asked == 'properties' else 'related_in'}_{identifier}.json"
+        )
+
+    source = RxNorm(
+        session,
+        contact_email=CONTACT,
+        transport=httpx.MockTransport(Replay(route)),
+        time=fake_time,
+    )
+
+    assert source.substances_named("Elevidys") == []
+
+
 # --- Open Targets: a drug by its own name -------------------------------------------
 
 

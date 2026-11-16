@@ -20,7 +20,7 @@ PAGE = "https://mor.nlm.nih.gov/RxNav/search?searchBy=RXCUI&searchTerm={}"
 # RxNorm's term types for a brand name and for an ingredient.
 BRAND = "BN"
 INGREDIENT = "IN"
-# A name that more concepts than this carry identifies none; no more are read.
+# A name that more concepts than this carry identifies none, and none is read.
 MAX_CONCEPTS = 5
 # A brand's ingredients change rarely. NLM recommends keeping answers 12 to 24 hours at
 # least; the vocabulary itself is released monthly.
@@ -46,6 +46,17 @@ def _concepts(related: Any) -> list[dict[str, Any]]:
     ]
 
 
+def _brand(record: dict[str, Any], asked: str) -> dict[str, Any] | None:
+    """The concept's own record, when it is a brand whose name is the name asked."""
+    properties = record.get("properties")
+    if not isinstance(properties, dict) or properties.get("tty") != BRAND:
+        return None
+    listed = properties.get("name")
+    if not isinstance(listed, str) or _key(listed) != _key(asked):
+        return None
+    return properties
+
+
 class RxNorm(Source):
     name = "rxnorm"
     # NLM allows 20 requests a second from one address. Two is ample for a fallback.
@@ -66,6 +77,11 @@ class RxNorm(Source):
         Only a brand is resolved. A name RxNorm gives an ingredient, a dose form or a
         pack finds nothing here: an ingredient's own name is the substance registry's
         to answer.
+
+        The answer is whole or it is nothing. A name more than `MAX_CONCEPTS` concepts
+        carry finds nothing, and so does a brand when a concept's own record or its
+        list of ingredients is missing: part of an answer could show one ingredient
+        where the brand has two.
         """
         asked = " ".join(name.split())
         if not asked:
@@ -74,18 +90,23 @@ class RxNorm(Source):
         if found is None or not isinstance(found.payload, dict):
             return []
         identifiers = (found.payload.get("idGroup") or {}).get("rxnormId") or []
+        if len(identifiers) > MAX_CONCEPTS:
+            return []
         records: dict[str, SourceRecord] = {}
-        for identifier in identifiers[:MAX_CONCEPTS]:
+        for identifier in identifiers:
             if not isinstance(identifier, str) or not identifier.isdigit():
-                continue
-            brand = self._brand(identifier, asked)
+                return []
+            fetched = self._get(f"{API}/rxcui/{identifier}/properties.json", ttl=KEPT_FOR)
+            if fetched is None or not isinstance(fetched.payload, dict):
+                return []
+            brand = _brand(fetched.payload, asked)
             if brand is None:
                 continue
             related = self._get(
                 f"{API}/rxcui/{identifier}/related.json", {"tty": INGREDIENT}, ttl=KEPT_FOR
             )
             if related is None or not isinstance(related.payload, dict):
-                continue
+                return []
             for ingredient in _concepts(related.payload):
                 records.setdefault(
                     ingredient["rxcui"],
@@ -102,16 +123,3 @@ class RxNorm(Source):
                     ),
                 )
         return list(records.values())
-
-    def _brand(self, identifier: str, asked: str) -> dict[str, Any] | None:
-        """The concept's own record, when it is a brand whose name is the name asked."""
-        fetched = self._get(f"{API}/rxcui/{identifier}/properties.json", ttl=KEPT_FOR)
-        if fetched is None or not isinstance(fetched.payload, dict):
-            return None
-        properties = fetched.payload.get("properties")
-        if not isinstance(properties, dict) or properties.get("tty") != BRAND:
-            return None
-        listed = properties.get("name")
-        if not isinstance(listed, str) or _key(listed) != _key(asked):
-            return None
-        return properties

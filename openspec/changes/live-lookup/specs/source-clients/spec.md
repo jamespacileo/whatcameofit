@@ -18,7 +18,7 @@ A substance registry client SHALL return the substances the registry lists under
 - **THEN** no substance is returned and nothing else is asked
 
 ### Requirement: A brand is looked up by its exact name
-A client of a source that files brand names under ingredients SHALL return the ingredients the source lists for the brand of a given name, one record for each ingredient, each with the ingredient's identifier, its page, its name, the brand's own record and the source's answer listing the brand's ingredients as fetched, and the fetch time. A brand SHALL be found only when the source's own exact search answers the name with a concept the source marks as a brand and whose name equals the name asked for, ignoring letter case and runs of spaces and nothing else. The client SHALL NOT use the source's normalised or approximate search, try a part of the name or another spelling, or resolve a name the source lists as anything other than a brand. It SHALL use the same shorter network waits as the optional substance lookup.
+A client of a source that files brand names under ingredients SHALL return the ingredients the source lists for the brand of a given name, one record for each ingredient, each with the ingredient's identifier, its page, its name, the brand's own record and the source's answer listing the brand's ingredients as fetched, and the fetch time. A brand SHALL be found only when the source's own exact search answers the name with a concept the source marks as a brand and whose name equals the name asked for, ignoring letter case and runs of spaces and nothing else. The client SHALL NOT use the source's normalised or approximate search, try a part of the name or another spelling, or resolve a name the source lists as anything other than a brand. An answer SHALL be whole or nothing: when more concepts carry the name than the client reads, or a concept's own record or its list of ingredients is missing, the client SHALL return nothing. It SHALL use the same shorter network waits as the optional substance lookup.
 
 #### Scenario: Brand listed under one ingredient
 - **WHEN** the source lists the name asked for as a brand of one ingredient
@@ -31,6 +31,14 @@ A client of a source that files brand names under ingredients SHALL return the i
 #### Scenario: Brand listed under two ingredients
 - **WHEN** the source lists the brand under two ingredients
 - **THEN** two records are returned, which do not count as one substance
+
+#### Scenario: Name more concepts carry than are read
+- **WHEN** the source's exact search answers the name with more concepts than the client's limit
+- **THEN** nothing is returned and no concept is read
+
+#### Scenario: Part of a brand's answer is missing
+- **WHEN** two brand concepts carry the name and the record or the list of ingredients of one is not found
+- **THEN** nothing is returned
 
 #### Scenario: Name that is not a brand
 - **WHEN** the source lists the name as an ingredient and not as a brand
