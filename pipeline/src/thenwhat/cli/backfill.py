@@ -407,8 +407,9 @@ def load_trials_command(
     trials: Annotated[
         str | None,
         typer.Option(
-            help="A named set of interventional trials of a drug or biological: "
-            "phase-3 (the default) or active-phase-2-3, those under way now."
+            help="A named set of trials: phase-3 (the default) or active-phase-2-3, "
+            "interventional trials of a drug or biological, the second those under way "
+            "now; or interventional, every interventional study."
         ),
     ] = None,
     changes_only: Annotated[
@@ -423,6 +424,9 @@ def load_trials_command(
 
     The trials are kept whether or not any claim refers to them. They are not evidence
     events and never reach the export. Loading again updates each trial in place.
+    With --changes-only, only trials updated since the last completed load of the same
+    set are asked for; with none completed, every trial is. A load that reaches the
+    registry's allowance stops with what it stored, says so, and is not an error.
     """
     settings = settings_or_exit()
     if condition is not None and trials is not None:
@@ -448,6 +452,7 @@ def load_trials_command(
                 changes_only=changes_only,
                 now=lambda: datetime.now(UTC),
                 before_request=lambda: allowances.claim(registry.name),
+                refused=lambda wait: allowances.refused(registry.name, wait),
             )
     since = f" updated since {report.changes_since}" if report.changes_since else ""
     out.print(
@@ -455,6 +460,11 @@ def load_trials_command(
         f"requests: {report.added:,} new, {report.updated:,} already stored.",
         markup=False,
     )
+    if report.stopped:
+        out.print(
+            f"Stopped: {report.stopped} Run the same command again later to go on.",
+            markup=False,
+        )
 
 
 @backfill_app.command("load-links")

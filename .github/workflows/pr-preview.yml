@@ -33,37 +33,66 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+    # The settings a copy is built with. The token is given only to the two steps that ask Cloudflare.
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      SUGGEST_URL: ${{ vars.SUGGEST_URL }}
+      CORRECTIONS_URL: ${{ vars.CORRECTIONS_URL }}
+      CHROME_STORE_URL: ${{ vars.CHROME_STORE_URL }}
+      SAFARI_STORE_URL: ${{ vars.SAFARI_STORE_URL }}
+      CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
           # The base is the checkout's first parent: the comment lists the claims added since it.
           fetch-depth: 2
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: site/package-lock.json
-      - name: Build and publish
-        id: preview
-        run: make pr-preview
+      # A push that changes nothing the site is made from leaves the copy as it is:
+      # the copy says what it was made from, and that is compared with this commit.
+      - name: See whether the copy is already this commit's
+        id: state
+        run: make pr-preview-state
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          SUGGEST_URL: ${{ vars.SUGGEST_URL }}
-          CORRECTIONS_URL: ${{ vars.CORRECTIONS_URL }}
-          CHROME_STORE_URL: ${{ vars.CHROME_STORE_URL }}
-          SAFARI_STORE_URL: ${{ vars.SAFARI_STORE_URL }}
-          CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        if: steps.state.outputs.published != 'true'
+        with:
+          node-version: 24
+      # The installed dependencies, whole, so nothing is installed when the lock file is unchanged.
+      - name: Restore dependencies
+        id: deps
+        if: steps.state.outputs.published != 'true'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: site/node_modules
+          key: site-deps-${{ runner.os }}-node24-${{ hashFiles('site/package-lock.json') }}
+      # Drawing the card images is most of a build; a drawn card is kept by what decides
+      # its pixels (site/src/lib/card-image.ts), so only changed cards are drawn again.
+      - name: Restore drawn cards
+        id: cards
+        if: steps.state.outputs.published != 'true'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: site/.cache/cards
+          key: site-cards-${{ hashFiles('site/data/published-export.json', 'site/src/lib/card*.ts', 'site/package-lock.json') }}
+          restore-keys: site-cards-
+      - name: Build and publish
+        id: preview
+        if: steps.state.outputs.published != 'true'
+        run: |
+          # Restored folders carry their old dates; make must not take them for stale.
+          if [ -d site/node_modules ]; then touch site/node_modules; fi
+          make pr-preview
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       # One comment, edited in place on every run and re-run, whether the build passed or not.
       - name: Update the pull request's comment
         if: ${{ !cancelled() }}
         env:
           GH_TOKEN: ${{ github.token }}
-          STATE: ${{ steps.preview.outcome == 'success' && 'published' || 'failed' }}
-          PREVIEW_URL: ${{ steps.preview.outputs.url }}
+          STATE: ${{ (steps.state.outputs.published == 'true' || steps.preview.outcome == 'success') && 'published' || 'failed' }}
+          PREVIEW_URL: ${{ steps.preview.outputs.url || steps.state.outputs.url }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           node site/scripts/pr-preview-comment.mjs > comment.md
           comments="repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments"
@@ -73,6 +102,22 @@ jobs:
           else
             gh api --method POST "$comments" -F body=@comment.md --silent
           fi
+      # Kept for the next push, after the copy is already published and announced.
+      - name: Keep dependencies
+        if: steps.preview.outcome == 'success' && steps.deps.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: site/node_modules
+          key: ${{ steps.deps.outputs.cache-primary-key }}
+      - name: Drop cards no longer drawn
+        if: steps.preview.outcome == 'success' && steps.cards.outputs.cache-hit != 'true'
+        run: find site/.cache/cards -type f -mmin +30 -delete
+      - name: Keep drawn cards
+        if: steps.preview.outcome == 'success' && steps.cards.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: site/.cache/cards
+          key: ${{ steps.cards.outputs.cache-primary-key }}
 
   remove:
     name: Remove preview
