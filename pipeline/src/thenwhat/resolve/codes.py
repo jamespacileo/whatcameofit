@@ -14,7 +14,7 @@ from typing import Protocol
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entities import entities_of
-from thenwhat.claims.entry import name_key
+from thenwhat.claims.entry import core_name, name_key
 from thenwhat.db.models import Claim, Entity, EntitySubstance
 from thenwhat.domain import EntityType
 from thenwhat.sources.base import SourceRecord
@@ -93,7 +93,11 @@ def give_development_codes(
     intervention = intervention_of(session, claim)
     if intervention is None:
         return None
-    answer = codes_for(substances, [intervention.name, *intervention.synonyms])
+    names = [intervention.name, *intervention.synonyms]
+    # A dose or schedule in a name stops the registry from finding the substance:
+    # "semaglutide 2.4 mg" is looked up as "semaglutide" too (batch 5's audit).
+    cores = [core for name in names if (core := core_name(name)) and core != name_key(name)]
+    answer = codes_for(substances, [*names, *cores])
     kept = session.get(EntitySubstance, intervention.id)
     if answer.record is None:
         if kept is not None:
