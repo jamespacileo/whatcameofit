@@ -28,6 +28,15 @@ function addressProblem(siteUrl) {
 }
 
 /**
+ * The Worker that serves one pull request's copy of the site, or null when the
+ * number is not a pull request's. The name is the only thing that separates a
+ * copy from production, so nothing but a plain positive number is accepted.
+ */
+export function pullRequestWorker(number) {
+  return /^[1-9]\d{0,6}$/.test(String(number ?? "")) ? `thenwhat-pr-${number}` : null;
+}
+
+/**
  * Why this export must not be deployed to this address: one sentence each, all at once.
  * An empty list means the deployment may go ahead.
  */

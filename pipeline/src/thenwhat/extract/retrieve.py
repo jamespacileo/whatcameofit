@@ -116,6 +116,11 @@ class Probe:
 BUSY_TRIES = 5
 BUSY_WAIT_MOST = 120.0
 
+# The longest wait a "not now" is taken to state. The reader documents waits of at most
+# six hours; anything past a day is a unit mistaken or a sentinel, and is read as a day,
+# so no outlet is left for weeks and no time is computed that cannot be.
+WAIT_MOST = 24 * 60 * 60.0
+
 _turns: dict[int, threading.BoundedSemaphore] = {}
 _turns_lock = threading.Lock()
 
@@ -264,7 +269,10 @@ def _answer_of(response: httpx.Response) -> _Answer:
         answered = response.json()
     except ValueError:
         answered = None
-    if isinstance(answered, dict) and answered.get("success") is False:
+    # A refusal carried on a 429 is still the reader's answer about the site, however
+    # long the wait it states: an outlet the reader has stopped for hours is not the
+    # reader being overloaded.
+    if isinstance(answered, dict) and answered.get("success") is not True:
         code = answered.get("code")
         reason = answered.get("reason")
         if code == NOT_ALLOWED_CODE and isinstance(reason, str) and reason.strip():
@@ -277,7 +285,11 @@ def _answer_of(response: httpx.Response) -> _Answer:
                 and math.isfinite(retry)
                 and retry >= 0
             ):
-                return _Answer(NOT_NOW, reason=reason.strip(), retry_after_seconds=float(retry))
+                return _Answer(
+                    NOT_NOW,
+                    reason=reason.strip(),
+                    retry_after_seconds=min(float(retry), WAIT_MOST),
+                )
             raise _unknown(response)
     if response.status_code in (401, 403):
         raise ReaderUnavailable(
