@@ -1,5 +1,12 @@
 # Tasks
 
+## Emrusolmin MSA coverage
+
+- [x] Verify the public S008 post, linked MSA Leben report, Teva announcement and primary registry records. Prepare one card through the normal workflow in 131 seconds; retain the two MSA trials, exclude six wrong-indication studies and reject the wrong company identity. Approve the card and early-human stage as assistant. Distinguish the reported planned discontinuation from current registry-derived phase 2.
+- [x] Stage the normal 175-card snapshot, verifying all prior 174 cards unchanged, and pass the public rehearsal. Guarded candidate Worker check returns S008's exact card in 291 ms with two official-source requests and no model, registry or article-body requests.
+- [ ] Complete independent reviews and CI deployment, then rerun released S008 through the website and installed extension functions and update/read back its corpus and Google Sheet result. Native Safari remains separately unverified.
+- [ ] Diagnose the observed optional GSRS delay (95-second resolution, four failed attempts), preserve source pacing and accurate refusal behavior, and measure any bounded correction before release.
+
 ## Journal and Substack melanoma sources
 
 - [x] Review S019's public Substack article and S006's public Bluesky post, NEJM short-link destination and public abstract. Verify the complete intismeran-plus-pembrolizumab regimen, resected stage IIB–IV cutaneous melanoma and NCT05933577. Add the two canonical references through normal article entry; retain no source body, bypass no subscription restriction and change no clinical evidence decision.
