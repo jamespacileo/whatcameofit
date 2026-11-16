@@ -123,7 +123,7 @@ A device holds a token for the ingest address, scoped to registering runs, handi
 - A lookup of an untracked article stores a link lead for the article (address, outlet, title, date) with a share whose platform is `reader` and no community, and registers the registry trials it found in the registry corpus with their payloads.
 - It stores its reading of the article (treatment, condition) as a record awaiting the rules, with its scores and reasons, not as a claim.
 - The lead then goes through the steps a lead from a file goes through. A claim drafted from it is approved by rule and is **not** held for audit: the next export publishes it, marked as not checked by a person. The audit hold of `docs/adr/0007` stays for claims drafted from a backfill's read batch, which the operator confirmed the same day.
-- Proposed by the assistant, not yet confirmed: a daily list of claims published from readers' leads, as a report and not a gate.
+- The operator can list, by day, the claims published from readers' leads. Proposed by the assistant and accepted by the operator on 2026-11-16. A report, not a gate.
 - Nothing in the answer the reader sees changes: it is still marked automatic and is still not a status.
 
 What this means: a person who is not the operator can cause a claim to be published by asking about an article on a listed outlet that the rules then approve. The outlet list, the rate limits, the extraction and the rules are the whole of the gate on this route. The lookup itself still creates no claim: the claim is made by processing the lead.
@@ -179,6 +179,6 @@ Rollback before step 5 is to do nothing. After step 5 it is to point CI back at 
 - **Answered on 2026-11-16:** on-demand processing is queued and finishes within minutes (decision 7).
 - **Moot:** the 3 GB criterion was met at 504 MB.
 - **Answered on 2026-11-16:** the D1 database and the R2 bucket are created in the European Union jurisdiction. Read from Cloudflare's documentation that day: the jurisdictions offered are `eu` and `fedramp`, there is none for the United Kingdom alone, and a jurisdiction is set when the database is created and cannot be added or changed afterwards.
-- **Is the daily list of claims published from readers' leads wanted?** Proposed by the assistant with decision 6.
+- **Answered on 2026-11-16:** the daily list of claims published from readers' leads is wanted (decision 6).
 - **Where does the Queue's Python consumer run:** as a Python Worker on Cloudflare, or on a device? The spike showed the first works; its limits under a real read (a page fetch through the reader at home, a model call) were not tested.
 - **Which Postgres provider, if the fallback is taken.** Prices were read; terms were not.

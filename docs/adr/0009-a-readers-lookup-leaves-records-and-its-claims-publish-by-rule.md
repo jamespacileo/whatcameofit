@@ -35,7 +35,7 @@ A backfill arrives hundreds of claims at a time, and `0007` was written after tw
 
 - A person who is not the operator can cause a claim to be published, by asking about an article on a listed outlet that the rules then approve. What stands between the asking and the publishing is the outlet list, the rate limits, the extraction and the rules. No person and no audit.
 - That makes the outlet list and the rules the whole of the gate for this route. A change to either deserves the care a change to publishing would get.
-- Proposed by the assistant and not yet confirmed by the operator: a daily list of the claims published from readers' leads, so a wrong one is seen and archived quickly. It is a report, not a gate.
+- The operator can list, by day, the claims published from readers' leads, so a wrong one is seen and archived quickly. Proposed by the assistant and accepted by the operator on 2026-11-16. It is a report, not a gate.
 - The promise the site makes beside a search changes from "the site keeps none of it" to saying what is kept: the article's address and the trial records found, and nothing about the reader.
 - The page reader at home (`0005`) is now asked on a path that leads to publication, through the queue's consumer, not only on one that answers a reader.
 - Model spend for processing readers' leads comes from the store-side share of the monthly ceiling, set by the operator on 2026-11-16 at 40 US dollars of 100; the cap on the lookups themselves is separate and unchanged.

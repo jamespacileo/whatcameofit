@@ -54,7 +54,7 @@
 - [ ] 6.7 Word the offer to say what is kept; verify the site build passes its wording checks and the extension shows the same words
 - [ ] 6.8 Answer a tracked address from the store, never for a claim that is held, pending or archived; verify tests for a claim published after the last build and for a held claim
 - [ ] 6.9 Queue a reader's lead when it is stored and process it with a Python consumer through the steps a file's lead goes through, without the audit mark; verify one lead goes from a lookup in preview to an approved claim in the next export within minutes, and that a failed one is retried and then left with its error
-- [ ] 6.10 Add the list of claims published from readers' leads by day, if the operator confirms it; verify a test of a day with two
+- [ ] 6.10 Add the list of claims published from readers' leads by day, each with its article, its matches and their scores, which the operator accepted on 2026-11-16; verify a test of a day with two and of a day with none
 
 ## 7. Records and guardrails
 
