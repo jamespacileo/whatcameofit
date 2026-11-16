@@ -1201,14 +1201,19 @@ def build_export(
     Each claim's status is derived again first, because the no-signal overlay depends
     on today's date. A claim exported for the first time gets its published time.
 
-    Every approved, unarchived claim is included, whoever decided it; a claim the
-    assistant decided says it was not checked by a person.
+    Every approved, unarchived claim is included, whoever decided it, except one held
+    awaiting the audit of its batch; a claim the assistant decided says it was not
+    checked by a person.
     """
     claims: list[ExportedClaim] = []
     last_checked: datetime | None = None
     for claim in session.scalars(
         select(Claim)
-        .where(Claim.review_state == ReviewState.APPROVED, Claim.archived_at.is_(None))
+        .where(
+            Claim.review_state == ReviewState.APPROVED,
+            Claim.archived_at.is_(None),
+            Claim.awaiting_audit_at.is_(None),
+        )
         .order_by(Claim.slug)
     ):
         # Every approved claim is published, whoever decided it (openspec auto-publish).

@@ -13,6 +13,7 @@ from thenwhat.claims.entry import (
     ClaimNotFound,
     add_article,
     add_claim,
+    awaiting_audit,
     find_article,
     find_claim,
 )
@@ -173,6 +174,8 @@ def test_a_claim_a_read_drafted_is_approved_by_rule_once_it_is_prepared(session:
     claim = find_claim(session, "one")
     assert claim is not None
     assert (claim.review_state, claim.reviewed_by) == (ReviewState.APPROVED, Decider.RULE)
+    # Held off the site until the audit of its batch clears it.
+    assert claim.awaiting_audit_at == NOW
     # Decided once: asking again changes nothing.
     assert decide_prepared_lead_claim(session, "one", now=NOW) is None
 
@@ -185,6 +188,31 @@ def test_a_pending_claim_no_read_drafted_keeps_waiting_for_the_operator(session:
 
     claim = find_claim(session, "one")
     assert claim is not None and claim.review_state is ReviewState.PENDING
+
+
+# --- the audit of a prepared batch --------------------------------------------------------
+
+
+def test_audit_clear_releases_held_claims_and_refuses_one_not_held(run, session: Session):
+    """Scenarios: Audit passed, Not awaiting audit"""
+    for slug in ("held", "also-held", "never-held"):
+        claim_with_articles(session, slug)
+    for slug in ("held", "also-held"):
+        drafted_by_a_read(session, slug)
+        decide_prepared_lead_claim(session, slug, now=NOW)
+
+    refused, _ = run("audit", "clear", "held", "never-held")
+
+    assert refused.exit_code == 1
+    assert "never-held" in refused.output and "Nothing was cleared" in refused.output
+    assert [claim.slug for claim in awaiting_audit(session)] == ["also-held", "held"]
+
+    cleared, _ = run("audit", "clear", "held")
+
+    assert cleared.exit_code == 0, cleared.output
+    assert [claim.slug for claim in awaiting_audit(session)] == ["also-held"]
+    listed, _ = run("audit", "list")
+    assert "also-held" in listed.output and "1 claim awaits audit" in listed.output
 
 
 def test_prepare_approves_a_reads_claim_only_when_every_step_succeeded(run, session: Session):

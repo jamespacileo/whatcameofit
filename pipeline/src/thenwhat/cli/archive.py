@@ -28,4 +28,11 @@ def unarchive_command(slug: Annotated[str, typer.Argument(help="The claim's slug
     """Put an archived claim back on the public site from the next export on."""
     with entry_session() as session:
         claim = unarchive_claim(session, slug)
+        if claim.awaiting_audit_at is not None:
+            out.print(
+                f"Unarchived {claim.slug}. It still awaits audit and stays off the site"
+                " until `thenwhat audit clear`.",
+                markup=False,
+            )
+            return
         out.print(f"Unarchived {claim.slug}. Export and deploy to put it back.", markup=False)
