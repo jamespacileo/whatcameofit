@@ -496,9 +496,12 @@ class Reading(Base):
 
 class DecisionLog(Base):
     __tablename__ = "decision_log"
+    # A decision is looked up by its step and what it was about; a step alone uses the
+    # same index.
+    __table_args__ = (Index("ix_decision_log_step_input_ref", "step", "input_ref"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    step: Mapped[str] = mapped_column(Text, index=True)
+    step: Mapped[str] = mapped_column(Text)
     input_ref: Mapped[str] = mapped_column(Text)
     backend: Mapped[str] = mapped_column(Text)
     model: Mapped[str | None] = mapped_column(Text)
@@ -592,6 +595,8 @@ class WorkEntry(Base):
             name="uq_work_entry_record_step_version",
         ),
         CheckConstraint("(outcome = 'failed') = (error IS NOT NULL)", name="failure_has_error"),
+        # The unique index leads with the record, so a step's entries need their own.
+        Index("ix_work_entry_step_step_version", "step", "step_version"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -697,6 +702,24 @@ class LinkLead(Base):
     Who shared it is never stored. Behavior: openspec link-leads."""
 
     __tablename__ = "link_lead"
+    __table_args__ = (
+        # A lead found already tracked points at its claim with no article, so a claim
+        # may stand alone; an article may not.
+        CheckConstraint(
+            "source_article_id IS NULL OR claim_id IS NOT NULL", name="article_has_claim"
+        ),
+        CheckConstraint(
+            "read_outcome IS NULL OR read_outcome NOT IN ('added_to_claim', 'new_claim')"
+            " OR claim_id IS NOT NULL",
+            name="made_outcome_has_claim",
+        ),
+        # Few leads have been read, and the funnel counts them by how the read ended.
+        Index(
+            "ix_link_lead_read_outcome",
+            "read_outcome",
+            postgresql_where=text("read_outcome IS NOT NULL"),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     url: Mapped[str] = mapped_column(Text)
