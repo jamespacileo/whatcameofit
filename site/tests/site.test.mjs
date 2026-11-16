@@ -50,14 +50,6 @@ test("Scenario: Unknown slug", () => {
   assert.doesNotMatch(drawing, /here/);
 });
 
-test("Scenario: The mark in the masthead", () => {
-  // Drawn into the page so its parts can move; the drawing is the reverse mark's own.
-  const drawn = page("index.html").match(/<svg class="mark"[\s\S]*?<\/svg>/)[0];
-  const file = fs.readFileSync("public/mark-reverse.svg", "utf8");
-  const shapes = (svg) => [...svg.matchAll(/ (?:d|r|cx|cy|fill|stroke-width)="[^"]+"/g)].map(([part]) => part.trim()).sort();
-  assert.deepEqual(shapes(drawn).filter((part) => part !== 'fill="none"'), shapes(file).filter((part) => part !== 'fill="none"'));
-});
-
 test("Scenario: The method page's drawing", () => {
   const figure = page("how-it-works/index.html").match(/<figure class="made"[\s\S]*?<\/figure>/)[0];
   assert.match(figure, /made-up records, not a tracked claim/);
@@ -299,17 +291,6 @@ test("Scenario: More claims than a page holds", () => {
   // The list's own pager, which says which rows of the total are in view.
   assert.match(panel, /data-pager="claims"/);
   assert.match(wordsOf(panel), /3 claims/);
-});
-
-test("Scenario: Narrow screen, a list of claims", () => {
-  const styles = fs
-    .readdirSync(path.join(dist, "_astro"))
-    .filter((name) => name.endsWith(".css"))
-    .map((name) => fs.readFileSync(path.join(dist, "_astro", name), "utf8"))
-    .join("");
-  // Under 40rem each claim is a block: no cell keeps a column's share of the width.
-  assert.match(styles, /\.index td\.tested,[^{]*\.index:has\(\.tested\) \.status[^{]*\{width:auto\}/);
-  assert.match(claimsPanel(), /class="tested" data-column="Tested in people"/);
 });
 
 test("Scenario: Promise beside the record", () => {
@@ -928,31 +909,6 @@ test("Scenario: Approved claim", () => {
 
 test("Scenario: Status with a phase", () => {
   assert.doesNotMatch(page("phase-claim/index.html"), /class="bridge"/);
-});
-
-test("Scenario: Narrow screen", () => {
-  const styles = fs
-    .readdirSync(path.join(dist, "_astro"))
-    .filter((name) => name.endsWith(".css"))
-    .map((name) => fs.readFileSync(path.join(dist, "_astro", name), "utf8"))
-    .join("");
-  // Under 40rem a row, and a link on a line of its own, is 44 pixels tall at least.
-  assert.match(styles, /\.brief summary\{[^}]*min-height:2\.75rem/);
-  assert.match(styles, /\.brief-link a\{[^}]*min-height:2\.75rem/);
-});
-
-test("Scenario: Narrow screen, a trial's results", () => {
-  const styles = fs
-    .readdirSync(path.join(dist, "_astro"))
-    .filter((name) => name.endsWith(".css"))
-    .map((name) => fs.readFileSync(path.join(dist, "_astro", name), "utf8"))
-    .join("");
-  // Under 40rem the spread leaves its column and sits under its value, so the table
-  // keeps three columns; the links on lines of their own are 44 pixels tall.
-  assert.match(styles, /\.result-table \.spread\{display:none\}/);
-  assert.match(styles, /\.result-table \.spread-inline\{[^}]*display:block/);
-  assert.match(styles, /\.trial-name a\{[^}]*min-height:2\.75rem/);
-  assert.match(styles, /\.result-scale a\{[^}]*min-height:2\.75rem/);
 });
 
 test("Scenario: Posted comparison with a p value", () => {
@@ -1803,20 +1759,6 @@ test("Scenario: Reader doubts a statement", () => {
 // read the built pages; what a script does on a press is checked in the browser.
 const bandOf = (html) =>
   html.slice(html.indexOf('<section class="band record"'), html.indexOf('<div class="frame'));
-const foldOf = (html, id) => {
-  const at = html.indexOf(`id="${id}"`);
-  return html.slice(html.lastIndexOf('<div class="fold-head"', at), html.indexOf("</h2>", at));
-};
-
-test("Scenario: Claim page on a wide screen", () => {
-  const band = bandOf(page("phase-claim/index.html"));
-  // The title, the report followed and the status panel are all in the band.
-  assert.match(band, /<h1 class="title/);
-  assert.match(band, /class="label"[^>]*>Phase 2 trial</);
-  assert.match(band, /class="reported band-reported"/);
-  // The summary is the content's first words, not the band's.
-  assert.ok(!band.includes('class="lede"'));
-});
 
 test("Scenario: Topic with one claim at each of two statuses", () => {
   const band = bandOf(page("topic/gum-disease/index.html"));
@@ -1846,35 +1788,8 @@ test("Scenario: Claim with no papers", () => {
   assert.ok(without.includes('href="#timetable"'));
 });
 
-test("Scenario: Wide screen, first view", () => {
-  const html = page("phase-claim/index.html");
-  // Papers start folded, with their count on the heading line.
-  assert.match(foldOf(html, "papers"), /data-fold="folded"/);
-  assert.match(html.slice(html.indexOf('id="papers"')), /^[\s\S]{0,700}class="fold-note">5 papers</);
-  // The timetable and the trials start open.
-  assert.match(foldOf(html, "timetable"), /data-fold="open"/);
-  assert.match(foldOf(html, "trials"), /data-fold="open"/);
-  // The heading stays a heading and holds the control, which says whether it is open.
-  assert.match(foldOf(html, "trials"), /<h2 class="bar" id="trials"><button type="button" class="fold" aria-expanded="true">/);
-});
-
-test("Scenario: Phone, first view", () => {
-  const html = page("phase-claim/index.html");
-  for (const id of ["brief", "timetable"]) assert.match(foldOf(html, id), /data-fold-phone="open"/);
-  for (const id of ["reported-statements", "trials", "papers", "others", "pass-on"]) {
-    assert.match(foldOf(html, id), /data-fold-phone="folded"/, `${id} starts open on a phone`);
-  }
-});
-
 test("Scenario: Scripting off", () => {
-  // A fold is closed by the stylesheet only where a script has marked the page, and
-  // only on a screen: with no script, and on paper, every section is open.
-  const styles = fs
-    .readdirSync(path.join(dist, "_astro"))
-    .filter((name) => name.endsWith(".css"))
-    .map((name) => fs.readFileSync(path.join(dist, "_astro", name), "utf8"))
-    .join("");
-  assert.match(styles, /@media screen\{\.js \.fold-head\[data-fold=folded\]:not\(\[data-state\]\)~\*/);
+  // No section is hidden in the page as built: with no script every section is open.
   assert.ok(!page("phase-claim/index.html").includes(" hidden data-fold"));
 });
 

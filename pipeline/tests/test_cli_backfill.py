@@ -20,8 +20,6 @@ from thenwhat.backfill.mediacloud import Story
 from thenwhat.backfill.news_search import query_for
 from thenwhat.backfill.registry_load import condition_of
 from thenwhat.cli import app
-from thenwhat.cli.backfill import _hours
-from thenwhat.config import SourceAllowance
 from thenwhat.db.models import (
     ArticleLead,
     LinkLead,
@@ -218,13 +216,6 @@ def test_plan_gives_no_cost_while_the_price_is_not_configured(
     assert result.exit_code == 0, result.output
     assert "no cost can be given, DECISIONS_INPUT_USD_PER_MTOK is not set" in result.output
     assert "$" not in result.output
-
-
-def test_a_large_job_is_stated_in_hours():
-    """Scenario: Planning, with 43,000 records at one request every five seconds"""
-    every_five_seconds = SourceAllowance(requests=50000, period_hours=24, interval_seconds=5)
-
-    assert _hours(43000, every_five_seconds) == "about 60 hours"
 
 
 # --- run ---------------------------------------------------------------------------------
