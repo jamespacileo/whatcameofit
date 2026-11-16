@@ -271,7 +271,7 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
       const given = await Promise.all(fromPapers.map((number) => ask(FROM_PAPERS, () => registry.fetch(number, asking))));
       return { fromPapers, unchecked, given };
     });
-    const byName = details.trial_name ? ask(BY_NAME, () => registry.named(details.trial_name, asking)) : Promise.resolve([]);
+    const byName = details.trial_name ? ask(BY_NAME, () => registry.named(details.trial_name, { ...asking, condition: reading.indication })) : Promise.resolve([]);
     const bySearch = Promise.all(terms.map((term) => ask(BY_SEARCH, () => registry.search(term, reading.indication, asking))));
     const [stated, { fromPapers, unchecked: papersUnchecked, given }, named, searched] =
       await Promise.all([stating, byPapers, byName, bySearch]);
@@ -332,7 +332,7 @@ async function lookUpMany({ claims, model, registry, index, numbers, linking, st
     return { reading, names, known, details, records: [], selected: [], scores: [], queries: [], searched: new Set(), missing: false,
       intro: `Claim: ${reading.gist ?? ""}\nIntervention: ${names[0]}${also.length ? ` (also known as: ${also.join(", ")})` : ""}.\nIndication: ${reading.indication}.\n\nEntity to match (intervention): ${names[0]}`,
       jobs: [
-        ...(details.trial_name ? [{ key: ["named", details.trial_name], priority: BY_NAME, work: () => registry.named(details.trial_name, asking) }] : []),
+        ...(details.trial_name ? [{ key: ["named", details.trial_name, reading.indication], priority: BY_NAME, work: () => registry.named(details.trial_name, { ...asking, condition: reading.indication }) }] : []),
         ...terms.map(term => ({ key: ["search", term, reading.indication], priority: BY_SEARCH, work: () => registry.search(term, reading.indication, asking) })),
       ],
     };

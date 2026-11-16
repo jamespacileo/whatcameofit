@@ -81,17 +81,23 @@ export function makeRegistry({ fetch, contact, timeoutMs = TIMEOUT_MS, cache, ca
      * The trials that carry this name in their acronym or title, such as SURMOUNT-5.
      * None when so many do that the name does not identify a trial.
      */
-    async named(name, { signal } = {}) {
+    async named(name, { signal, condition } = {}) {
       const phrase = String(name ?? "").replaceAll('"', " ").trim();
       if (!phrase) return [];
-      const body = await get("/studies", {
+      const params = {
         "query.titles": `"${phrase}"`,
         pageSize: String(MAX_NAMED_TRIALS),
         fields: SEARCH_FIELDS,
         countTotal: "true",
-      }, signal);
-      const studies = body?.studies ?? [];
-      return (body?.totalCount ?? studies.length) > MAX_NAMED_TRIALS ? [] : studies;
+      };
+      // Common acronyms can identify one study within the stated condition.
+      // Narrow at most once; never paginate a broad or still ambiguous name.
+      for (const within of condition ? [null, condition] : [null]) {
+        const body = await get("/studies", { ...params, ...(within ? { "query.cond": within } : {}) }, signal);
+        const studies = body?.studies ?? [];
+        if ((body?.totalCount ?? studies.length) <= MAX_NAMED_TRIALS) return studies;
+      }
+      return [];
     },
 
     /**
