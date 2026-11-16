@@ -15,7 +15,14 @@ from thenwhat.backfill.link_topics import (
     UNLISTED,
     coverage,
 )
-from thenwhat.backfill.topics import TOPICS, UnknownTopic, names_one, other_names_of, terms_of
+from thenwhat.backfill.topics import (
+    TOPICS,
+    UnknownTopic,
+    names_one,
+    names_only_a_class,
+    other_names_of,
+    terms_of,
+)
 from thenwhat.claims.entry import add_article, add_claim
 from thenwhat.db.models import Entity, EntityMatch, LinkLead
 from thenwhat.domain import Decider, OutletKind, ReadOutcome, ReviewState, ScreenOutcome
@@ -148,3 +155,24 @@ def test_coverage_lists_each_claim_for_the_topic_with_what_it_holds(session: Ses
     )
     assert (found.review_state, found.published) == ("pending", False)
     assert (found.articles, found.trials, found.papers, found.cards) == (1, 1, 1, 0)
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["GLP-1", "GLP-1 metabolic therapy", "Daily GLP-1 therapy", "Compounded GLP-1 injections"],
+)
+def test_a_topics_class_word_with_no_drug_and_no_name_is_the_class(name: str):
+    assert names_only_a_class([name])
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "semaglutide",
+        "oral GLP-1 pill orforglipron",
+        "Oral engineered E. coli that senses glucose and releases GLP-1",
+        "esketamine",
+    ],
+)
+def test_a_drug_or_a_described_treatment_is_not_the_topics_class(name: str):
+    assert not names_only_a_class([name])
