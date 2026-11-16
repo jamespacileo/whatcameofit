@@ -119,10 +119,14 @@ class Brands:
             raise SourceUnavailable("rxnorm did not answer after 2 attempts.")
         if name == "Unsetvax":
             raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
-        if name != "Toothvax":
+        if name not in ("Toothvax", "Gumvax"):
             return []
         concept = {"rxcui": "111", "name": "examplevirus antigen", "tty": "IN"}
-        payload = {"substance": concept | {"_name": concept["name"]}, "brand": {}}
+        payload: dict = {"substance": concept | {"_name": concept["name"]}, "brand": {}}
+        if name == "Gumvax":
+            # RxNorm marks this brand a vaccine: its branded drug has a CVX code.
+            cvx = {"propName": "CVX", "propValue": "204"}
+            payload["product_codes"] = {"112": {"propConceptGroup": {"propConcept": [cvx]}}}
         return [SourceRecord("rxnorm", "111", "https://rxnorm.test/111", payload, NOW)]
 
 
@@ -353,6 +357,30 @@ def test_entity_codes_goes_on_past_a_claim_whose_source_did_not_answer(run, sess
     # The claim after it is still looked up, and nothing is kept for the one that failed.
     assert "b-branded: GSRS lists no substance named 'Toothvax'. RxNorm lists it" in said
     assert "1 were not looked up" in said
+    [kept] = session.scalars(select(EntitySubstance)).all()
+    assert kept.external_id == "111"
+
+
+def test_entity_codes_says_a_vaccine_brands_antigen_is_not_searched(run, session: Session):
+    """Scenario: A brand the source of brands marks a vaccine"""
+    add_claim(
+        session,
+        slug="gum-vaccine",
+        headline="Vaccine regrows gums",
+        vertical="mouth-and-teeth",
+        intervention="Gumvax",
+        indication="gum recession",
+    )
+
+    result = run("entity", "codes", "gum-vaccine")
+
+    assert result.exit_code == 0, result.output
+    said = " ".join(result.output.split())
+    assert (
+        "gum-vaccine: GSRS lists no substance named 'Gumvax'. RxNorm lists it as a brand of"
+        " examplevirus antigen (RxCUI 111), and as a vaccine (CVX 204): the ingredient is an"
+        " antigen, kept but not searched as a name."
+    ) in said
     [kept] = session.scalars(select(EntitySubstance)).all()
     assert kept.external_id == "111"
 
