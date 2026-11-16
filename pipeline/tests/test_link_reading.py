@@ -1522,3 +1522,22 @@ def test_one_outlets_pages_are_not_asked_for_back_to_back(reader: Reader):
     reader.read()
 
     assert first.read_outcome is not None and second.read_outcome is not None
+
+
+def test_a_run_narrowed_to_a_period_leaves_older_leads_due(reader: Reader):
+    """With a first day set, only leads first shared on or after it are read; an older
+    lead is not read and stays out of the run's count of what is due."""
+    older = reader.lead(
+        "https://www.theguardian.com/science/2019/may/04/synthetic-teeth",
+        shared_at=datetime(2024, 6, 1, tzinfo=UTC),
+    )
+    newer = reader.lead(
+        "https://www.bbc.co.uk/news/health-synthetic-teeth",
+        shared_at=datetime(2025, 3, 1, tzinfo=UTC),
+    )
+    reader.step = step(read_since=date(2025, 1, 1))
+
+    report = reader.read()
+
+    assert (older.read_outcome, report.remaining_due) == (None, 0)
+    assert newer.read_outcome is not None

@@ -8,6 +8,7 @@ time it is asked, so changing a threshold scores nothing again.
 
 from collections import Counter
 from collections.abc import Callable, Sequence
+from datetime import UTC, date, datetime
 from enum import StrEnum
 from typing import Any
 
@@ -125,8 +126,16 @@ class LinkTriage:
     # sent with every headline, so a headline costs far more than its own words.
     model_spend = ModelSpend(input_tokens=300)
 
-    def __init__(self, time: Time | None = None, *, topic_terms: Sequence[str] = ()) -> None:
+    def __init__(
+        self,
+        time: Time | None = None,
+        *,
+        topic_terms: Sequence[str] = (),
+        since: date | None = None,
+    ) -> None:
         self._time = time or SystemTime()
+        # Only leads first shared on or after this day are scored; None scores any.
+        self.since = since
         # The words of the operator's topics. Leads whose title names one are scored
         # first, so a topic need not wait for every older lead.
         self._names_a_topic = title_names(topic_terms)
@@ -138,7 +147,11 @@ class LinkTriage:
 
     def scope(self) -> ColumnElement[bool]:
         """Leads that screening left in scope: on a listed outlet and not yet tracked."""
-        return LinkLead.screen_outcome == ScreenOutcome.IN_SCOPE
+        in_scope = LinkLead.screen_outcome == ScreenOutcome.IN_SCOPE
+        if self.since is None:
+            return in_scope
+        since = datetime.combine(self.since, datetime.min.time(), tzinfo=UTC)
+        return and_(in_scope, LinkLead.first_shared_at >= since)
 
     def inputs(self, record: LinkLead) -> dict[str, Any]:
         return {

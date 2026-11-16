@@ -19,7 +19,7 @@ import re
 import threading
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import ColumnElement, and_, exists, func, or_, select
@@ -258,6 +258,7 @@ class LinkRead:
         match_reject_below: float = 0.0,
         match_accept_above: float = 0.0,
         outlet_gap_seconds: float = 0.0,
+        read_since: date | None = None,
         time: Time | None = None,
     ) -> None:
         self.pass_above = pass_above
@@ -280,6 +281,8 @@ class LinkRead:
         # How many of each outlet's pages the reader has just said it cannot get, one
         # after another, in this run. Kept for the run only.
         self._not_now: dict[str, int] = {}
+        # Only leads first shared on or after this day are read; None reads any.
+        self.read_since = read_since
         # The least time between two pages asked of one outlet in this run, and when
         # each outlet was last asked.
         self._outlet_gap = outlet_gap_seconds
@@ -307,7 +310,11 @@ class LinkRead:
                 LinkLead.triage_score >= self.reject_below,
             )
             readable = or_(readable, held_on_a_topic)
-        return and_(LinkLead.screen_outcome == ScreenOutcome.IN_SCOPE, readable)
+        in_scope = and_(LinkLead.screen_outcome == ScreenOutcome.IN_SCOPE, readable)
+        if self.read_since is not None:
+            since = datetime.combine(self.read_since, datetime.min.time(), tzinfo=UTC)
+            in_scope = and_(in_scope, LinkLead.first_shared_at >= since)
+        return in_scope
 
     def inputs(self, record: LinkLead) -> dict[str, Any]:
         return {"key": record.url_key}
