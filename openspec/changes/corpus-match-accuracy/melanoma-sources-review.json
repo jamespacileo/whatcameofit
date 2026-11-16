@@ -13,7 +13,7 @@
       "linked_paper": "https://www.nejm.org/doi/full/10.1056/NEJMoa2609762",
       "primary_record": "https://clinicaltrials.gov/study/NCT05933577",
       "mutations_performed": true,
-      "remaining": "Canonical source reference added through normal article entry. Release and fresh corpus/Sheet verification pending."
+      "remaining": "Released source/card verification and corpus/Sheet update completed. Native Safari collector/popup/storage remain unverified."
     },
     {
       "id": "S006",
@@ -87,9 +87,55 @@
     "limits": "Candidate Worker with live official Bluesky and robots-permitted shortener replies, guarded against model/registry/article work. Not released or native Safari verification. No source bodies retained."
   },
   "verification": {
-    "regressions": "make check passed: 1,562 pipeline, 660 site and 170 extension tests; lint and types passed. Both journal-short-link tests pass after the reproduced failure. Strict OpenSpec validation passed.",
-    "public_rehearsal": "make deploy-ci-check passed for the normal 174-card snapshot; no production publication yet.",
-    "release": "pending",
-    "native_safari": "unverified; computer control still reports locked"
+    "regressions": "make check passed: 1,562 pipeline, 660 site and 170 extension tests; lint and types passed. Both journal-short-link tests pass after the reproduced failure. Strict OpenSpec validation passed. Nine corpus-cache checks also pass.",
+    "public_rehearsal": "Passed locally and in successful PR/main CI; production snapshot and lookup index exactly match the rehearsed build.",
+    "release": {
+      "pull_request": 202,
+      "reviewed_head": "1fcad8d47f29a21313e7d43c6457a0e1ffd649f9",
+      "main_commit": "50f3a7ce6b25e7aaa363fb5d4e6f66394c5a6ab5",
+      "production_run": 43817780787,
+      "conclusion": "success",
+      "worker_version": "7e986144-5923-4d17-8c2b-f9c0f671d4d6",
+      "deployed_at": "2026-11-16T06:40:10.4118564Z",
+      "reviews": {
+        "standards": "clear",
+        "spec": "clear"
+      }
+    },
+    "native_safari": "unverified; computer control still reports locked",
+    "released_result_file": "extension/test-corpus/runs/2026-11-16-melanoma-sources-release.json",
+    "installed_safari": {
+      "version": "0.9.21",
+      "build": 29,
+      "resource_hashes_verified": 35,
+      "source_commit": "50f3a7ce6b25e7aaa363fb5d4e6f66394c5a6ab5",
+      "native_verified": false,
+      "method": "Signed installed resources matched; shortener classification, request composition, exact-source state and shared presenter checked. Native collector/popup/storage unverified."
+    },
+    "sheet_read_back": {
+      "checked_at": "2026-11-16T06:42:53.226Z",
+      "spreadsheet_id": "15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA",
+      "ranges": [
+        "URLs!H7:P7",
+        "URLs!Z7:AF7",
+        "URLs!H20:P20",
+        "URLs!Z20:AF20",
+        "Summary!B1"
+      ],
+      "values_verified": 33,
+      "other_cells_preserved": 127,
+      "formats_formulas_validation_notes_chips_preserved": true,
+      "summary_total": [
+        "Total",
+        "258",
+        "142",
+        "57",
+        "0",
+        "28",
+        "31",
+        "0"
+      ],
+      "native_layout": "Unverified: previous browser access requires identity verification; existing styles preserved and checked through native cell metadata."
+    }
   }
 }
