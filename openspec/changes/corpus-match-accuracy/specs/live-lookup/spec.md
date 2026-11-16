@@ -145,6 +145,22 @@ When a study-name search exceeds twenty records, both lookup implementations SHA
 - **WHEN** a completed answer predates this discovery correction
 - **THEN** it is invalidated while public source responses remain reusable
 
+### Requirement: Study-only interventions retain their study identity
+When a report identifies an intervention only by its trial or paper, both scorers SHALL require the candidate to establish the same study identity. Similar conditions or outcomes SHALL NOT supply the missing intervention. Registry acronyms SHALL be preserved within the existing bounded candidate context. Differently named studies of a specifically identified intervention SHALL remain eligible. Corrected completed answers SHALL replace older saved results without clearing source caches.
+
+#### Scenario: Unnamed intervention and unrelated same-condition study
+- **WHEN** the reported intervention is identified only by a study name and a candidate does not establish that study identity
+- **THEN** the scorer is instructed to reject the candidate instead of inferring its intervention from the shared condition
+
+#### Scenario: Registry acronym carries the identity
+- **WHEN** a candidate's acronym identifies the reported study but its title and long descriptions do not
+- **THEN** the acronym still reaches clinical scoring within the existing candidate text limit
+- **AND** the name alone does not override a clinical conflict
+
+#### Scenario: Treatment is specifically identified
+- **WHEN** the claim names the complete treatment and a compatible trial has a different study name
+- **THEN** that different name alone does not disqualify the trial
+
 ### Requirement: Presentation correction reuses bounded saved answers
 The existing ten-record display cap SHALL apply across both groups, prioritising possible matches. The corrected presentation SHALL apply to saved answers without invalidation and SHALL add no model or source requests.
 

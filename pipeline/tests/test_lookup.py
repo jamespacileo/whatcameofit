@@ -168,6 +168,7 @@ def test_scoring_receives_route_and_separate_arm_details(session: Session, descr
     record = trial("NCT00000001", "EX-1 trial", condition="Example disease")
     section = record.payload["protocolSection"]
     section["designModule"]["studyType"] = "INTERVENTIONAL"
+    section["identificationModule"]["acronym"] = "EXAMPLE-2"
     section["identificationModule"]["officialTitle"] = "A long official title " * 150
     section["armsInterventionsModule"] = {
         "interventions": [
@@ -207,6 +208,7 @@ def test_scoring_receives_route_and_separate_arm_details(session: Session, descr
     found = look_up(session, model, Capture(), FakeTrials({"EX-1": [record]}), text=TEXT, now=NOW)
 
     assert len(states) == 1
+    assert '"acronym":"EXAMPLE-2"' in states[0]
     assert '"study_type":"INTERVENTIONAL"' in states[0]
     assert '"type":"ACTIVE_COMPARATOR"' in states[0]
     assert '"type":"EXPERIMENTAL"' in states[0]
@@ -222,6 +224,28 @@ def test_scoring_receives_route_and_separate_arm_details(session: Session, descr
     assert len(described) <= 1500
     assert "[truncated]" in described
     assert found.candidates[0].answer == "not_a_match"
+
+
+def test_study_identity_reaches_scoring_ahead_of_oversized_conditions(session: Session):
+    record = trial("NCT00000001", "Synthetic study", "Synthetic condition " * 150)
+    record.payload["protocolSection"]["identificationModule"]["acronym"] = "EXAMPLE-2"
+    states = []
+
+    class Capture:
+        name = "capture"
+
+        def answer(self, step, state, options):
+            states.append(state)
+            return BackendAnswer("not_a_match", {o: float(o == "not_a_match") for o in options})
+
+    model, _ = llm(session, READING)
+    look_up(session, model, Capture(), FakeTrials({"EX-1": [record]}), text=TEXT, now=NOW)
+    assert len(states) == 1
+    assert '"acronym":"EXAMPLE-2"' in states[0]
+    described = states[0].split("Candidate record from clinicaltrials.gov (NCT00000001):\n")[1]
+    described = described.split("\n\n", 1)[0]
+    assert len(described) <= 1500
+    assert described.endswith(" [truncated]")
 
 
 def test_repeated_arm_labels_leave_room_for_combination_activation(session: Session):

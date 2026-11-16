@@ -48,3 +48,5 @@ Released corpus checks found a trial match accompanied by a knowledge card for a
 ## Impact
 
 Public lookup index, Worker and Python lookup matching, extension collector/capture/cache, corpus tooling and existing Google Sheet. No additional provider call for card matching, no new permissions, no video/audio download, and no fabricated positive results or medical advice. Deployment continues through reviewed CI; Safari updates preserve signing and rollback.
+
+- Require established study identity when the intervention is named only by a study; preserve registry acronyms in bounded scoring context and reject unrelated same-condition candidates.
