@@ -139,7 +139,14 @@ export async function handle(request, env, tools) {
     // A page the operator archived answers 410; everything else is a file of the site.
     const slug = here.pathname.replace(/^\/+|\/+$/g, "");
     if (slug && !slug.includes("/") && !slug.includes(".")) {
-      const on = (await goneList(env.ASSETS, here.origin)).get(slug);
+      const { on, to } = (await goneList(env.ASSETS, here.origin)).get(slug) ?? {};
+      // A claim merged into another, or renamed: its address leads to the page it is at now.
+      if (to) {
+        return new Response(null, {
+          status: 301,
+          headers: { Location: new URL(`/${to}${here.search}`, here.origin).href, "Cache-Control": "public, max-age=3600" },
+        });
+      }
       if (on) {
         return new Response(gonePage(on, SITE.name), {
           status: 410,
