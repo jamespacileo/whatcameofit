@@ -1,6 +1,7 @@
 @import "@fontsource-variable/figtree/wght.css";
 
-:root {
+:root,
+.theme-light {
   --paper: #ffffff;
   --ink: #0f1f38;
   --blue: #14427f;
@@ -10,9 +11,48 @@
   --tag: #d6e2f2;
   --rule: #d9e2ee;
   --rule-soft: #e9eff5;
+  /* A plain table's head row. */
+  --table-head: #f8fafd;
   --promise: #fff7df;
   --promise-rule: #d9c88a;
+  /* The promise amber dark enough to draw a line with: 3:1 against the page. */
+  --promise-mark: #8a6a00;
   --footer: #0b2545;
+  /* The ground behind the white sheet, so the side columns recede. */
+  --ground: #f4f7fb;
+  /* Secondary text on the navy. */
+  --navy-soft: #c9d9ee;
+  /* Lettering on the navy grounds (masthead, record band, footer): white in both themes. */
+  --on-navy-ink: #ffffff;
+  /* Hairlines on the navy grounds: a white wash, the same in both themes. */
+  --on-navy-rule: rgb(255 255 255 / 0.22);
+  /* A card that sits on a band: the status card. White on the light page; in the dark
+     theme the lightest surface, so it lifts off the navy rather than sinking into it. */
+  --raised: #ffffff;
+  --raised-rule: #d9e2ee;
+  /* The status card's edge on the navy record band: none on the light page, where the
+     white card stands out alone; a faint blue ring in the dark theme. */
+  --band-card-rule: transparent;
+  /* Lettering on a filled blue control, and that control's hover ground. */
+  --on-blue: #ffffff;
+  --blue-hover: #0b2545;
+  /* A filled blue control's ground. The accent itself in the light theme; in the dark
+     theme a step down from it, so the page's main button is not its brightest patch. */
+  --blue-fill: #14427f;
+  /* The lift under the home page's search box. */
+  --lift: rgb(11 37 69 / 0.35);
+  /* Photographs and video frames: full strength on the light page. */
+  --media-dim: none;
+  /* A video not yet started, in the dark theme a further step down: its poster is
+     otherwise the brightest patch of the page. */
+  --media-rest: none;
+  /* The status card's lift off the navy band. */
+  --band-card-shadow: none;
+  /* The home band's dots. */
+  --dot: rgb(11 37 69 / 0.11);
+  /* The outline of an empty place on the path: 3:1 against the page. */
+  --ring: #7f90a3;
+  color-scheme: light;
 
   --face: "Figtree Variable", "Helvetica Neue", Arial, sans-serif;
   --measure: 66ch;
@@ -20,10 +60,74 @@
   --gutter: clamp(1rem, 4vw, 2rem);
   --radius: 0.85rem;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  /* The outline of an empty place on the path: 3:1 against the page. */
-  --ring: #7f90a3;
-  /* Light only: form controls and scrollbars must not turn dark on their own. */
-  color-scheme: light;
+}
+
+/* The dark theme: the same navy evidence digest under low light. The page is a deep
+   neutral slate so the masthead and the record band keep their navy as a hue of their
+   own; the accent is the lifted blue the masthead already uses. It follows the device
+   until the reader picks one (html[data-theme]), and paper is always printed light. */
+@media screen {
+  :root[data-theme="dark"] {
+    --paper: #121821;
+    --ink: #e4eaf3;
+    --blue: #8ec1f5;
+    --muted: #a3b0c2;
+    --panel: #17202d;
+    --tint: #1d2838;
+    --tag: #2a4163;
+    --rule: #2b3546;
+    --rule-soft: #1f2733;
+    --table-head: #161d28;
+    --raised: #202c40;
+    --raised-rule: rgb(142 193 245 / 0.24);
+    --band-card-rule: rgb(142 193 245 / 0.32);
+    --promise: #362b10;
+    --promise-rule: #8a7230;
+    --promise-mark: #d9b44a;
+    --ground: #0c1118;
+    --on-blue: #0c1118;
+    --blue-hover: #c4ddf8;
+    --blue-fill: #6fa6e0;
+    --lift: rgb(0 0 0 / 0.55);
+    --media-dim: brightness(0.85);
+    --media-rest: brightness(0.7);
+    --band-card-shadow: 0 14px 32px -14px rgb(0 0 0 / 0.7);
+    --dot: rgb(142 193 245 / 0.07);
+    --ring: #6d7c90;
+    color-scheme: dark;
+  }
+}
+
+@media screen and (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --paper: #121821;
+    --ink: #e4eaf3;
+    --blue: #8ec1f5;
+    --muted: #a3b0c2;
+    --panel: #17202d;
+    --tint: #1d2838;
+    --tag: #2a4163;
+    --rule: #2b3546;
+    --rule-soft: #1f2733;
+    --table-head: #161d28;
+    --raised: #202c40;
+    --raised-rule: rgb(142 193 245 / 0.24);
+    --band-card-rule: rgb(142 193 245 / 0.32);
+    --promise: #362b10;
+    --promise-rule: #8a7230;
+    --promise-mark: #d9b44a;
+    --ground: #0c1118;
+    --on-blue: #0c1118;
+    --blue-hover: #c4ddf8;
+    --blue-fill: #6fa6e0;
+    --lift: rgb(0 0 0 / 0.55);
+    --media-dim: brightness(0.85);
+    --media-rest: brightness(0.7);
+    --band-card-shadow: 0 14px 32px -14px rgb(0 0 0 / 0.7);
+    --dot: rgb(142 193 245 / 0.07);
+    --ring: #6d7c90;
+    color-scheme: dark;
+  }
 }
 
 *,
@@ -128,15 +232,15 @@ p {
   /* The name's dot and the links' underline: the accent, lifted to read on navy. */
   --on-navy: #8ec1f5;
   background: var(--footer);
-  color: var(--paper);
+  color: var(--on-navy-ink);
 }
 
 .masthead :focus-visible {
-  outline-color: var(--paper);
+  outline-color: var(--on-navy-ink);
 }
 
 .masthead ::selection {
-  background: var(--paper);
+  background: var(--on-navy-ink);
   color: var(--footer);
 }
 
@@ -155,7 +259,7 @@ p {
   gap: 0;
   font-size: 1.25rem;
   letter-spacing: -0.01em;
-  color: var(--paper);
+  color: var(--on-navy-ink);
   text-decoration: none;
 }
 
@@ -280,7 +384,7 @@ p {
 }
 
 .masthead nav a {
-  color: var(--paper);
+  color: var(--on-navy-ink);
   font-weight: 600;
   font-size: 0.95rem;
   text-decoration: none;
@@ -294,6 +398,88 @@ p {
   text-decoration-thickness: 2px;
   text-underline-offset: 0.35em;
   text-decoration-color: var(--on-navy);
+}
+
+/* Appearance: one drawn mark, pressed to switch between light and dark. Only where a
+   script can act on it. */
+.masthead nav {
+  margin-inline-start: auto;
+}
+
+.masthead .theme {
+  display: none;
+}
+
+.js .masthead .theme {
+  display: inline-grid;
+  place-items: center;
+  align-self: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  margin-block: -0.5rem;
+  margin-inline: -0.9rem -0.55rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: var(--on-navy-ink);
+  cursor: pointer;
+  transition: background-color 120ms ease-out;
+}
+
+.masthead .theme:hover {
+  background: rgb(255 255 255 / 0.1);
+}
+
+.masthead .theme svg {
+  width: 1.3rem;
+  height: 1.3rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The mark is the look a press switches to: a moon while the page is light, a sun
+   while it is dark, whether the look is the device's or the reader's. */
+.masthead .theme .i-dark {
+  display: block;
+}
+
+.masthead .theme .i-light {
+  display: none;
+}
+
+:root[data-theme="dark"] .masthead .theme .i-dark {
+  display: none;
+}
+
+:root[data-theme="dark"] .masthead .theme .i-light {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .masthead .theme .i-dark {
+    display: none;
+  }
+
+  :root:not([data-theme]) .masthead .theme .i-light {
+    display: block;
+  }
+}
+
+/* For the frame of a theme change: every colour moves at once. */
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
+}
+
+@media print {
+  .masthead .theme {
+    display: none !important;
+  }
 }
 
 main {
@@ -347,8 +533,8 @@ main > .wrap {
 /* A panel on the band would be blue on blue: there the answer is drawn on white,
    in a hairline frame. */
 .band .digest {
-  background: var(--paper);
-  border: 1px solid var(--rule);
+  background: var(--raised);
+  border: 1px solid var(--raised-rule);
 }
 
 .band textarea {
@@ -931,16 +1117,16 @@ body.embed {
 
 .embed-name a {
   font-weight: 700;
-  color: var(--paper);
+  color: var(--on-navy-ink);
   text-decoration: none;
 }
 
 .embed-name a:focus-visible {
-  outline-color: var(--paper);
+  outline-color: var(--on-navy-ink);
 }
 
 .embed-name ::selection {
-  background: var(--paper);
+  background: var(--on-navy-ink);
   color: var(--footer);
 }
 
@@ -1126,6 +1312,15 @@ body.embed {
   background: var(--paper);
   border: 1px solid var(--rule);
   border-radius: var(--radius);
+  filter: var(--media-dim);
+}
+
+.explainer video {
+  transition: filter 200ms ease-out;
+}
+
+.explainer:not([data-started]) video:not(:hover, :focus-visible) {
+  filter: var(--media-rest);
 }
 
 .explainer figcaption {
@@ -1980,7 +2175,7 @@ main nav.contents ul li + li {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--muted);
-  background: #f8fafd;
+  background: var(--table-head);
   border-top: 0;
   padding-block: 0.5rem;
 }
@@ -2855,7 +3050,7 @@ body:has(.band.home) .table-frame {
   /* A fine grid of dots, so the band reads as a surface of its own. The one texture
      on the site. */
   background:
-    radial-gradient(circle at 1px 1px, rgb(11 37 69 / 0.11) 1px, transparent 1.5px) 0 0 / 22px 22px,
+    radial-gradient(circle at 1px 1px, var(--dot) 1px, transparent 1.5px) 0 0 / 22px 22px,
     var(--panel);
 }
 
@@ -2893,7 +3088,7 @@ body:has(.band.home) .table-frame {
   font-size: 1.15rem;
   padding-inline: 1.2rem;
   border-width: 2px;
-  box-shadow: 0 10px 28px -14px rgb(11 37 69 / 0.35);
+  box-shadow: 0 10px 28px -14px var(--lift);
 }
 
 .band.home .search button {
@@ -3572,6 +3767,13 @@ main ul:not([class]) li + li {
 
 .plain li:first-child {
   border-top: 1px solid var(--rule-soft);
+}
+
+/* On the navy record band the page's hairline would vanish into the ground. */
+@media screen {
+  .band.record .plain li {
+    border-color: var(--on-navy-rule);
+  }
 }
 
 /* A promise is always on pale amber with dashed rules, wherever it appears. */
@@ -4427,16 +4629,16 @@ main ul:not([class]) li + li {
   font: inherit;
   font-weight: 700;
   padding: 0.7rem 1.2rem;
-  border: 1.5px solid var(--blue);
+  border: 1.5px solid var(--blue-fill);
   border-radius: 0.65rem;
-  background: var(--blue);
-  color: var(--paper);
+  background: var(--blue-fill);
+  color: var(--on-blue);
   cursor: pointer;
 }
 
 .search button:hover {
-  background: var(--footer);
-  border-color: var(--footer);
+  background: var(--blue-hover);
+  border-color: var(--blue-hover);
 }
 
 .results {
@@ -4455,21 +4657,21 @@ main ul:not([class]) li + li {
 
 .colophon {
   background: var(--footer);
-  color: var(--paper);
+  color: var(--on-navy-ink);
   padding-block: 2rem 2.5rem;
   font-size: 0.92rem;
 }
 
 .colophon a {
-  color: var(--paper);
+  color: var(--on-navy-ink);
 }
 
 .colophon :focus-visible {
-  outline-color: var(--paper);
+  outline-color: var(--on-navy-ink);
 }
 
 .colophon ::selection {
-  background: var(--paper);
+  background: var(--on-navy-ink);
   color: var(--footer);
 }
 
@@ -4504,7 +4706,7 @@ main ul:not([class]) li + li {
 .colophon .details {
   margin-top: 1.25rem;
   padding-top: 1.1rem;
-  border-top: 1px solid color-mix(in oklch, var(--paper) 30%, var(--footer));
+  border-top: 1px solid color-mix(in oklch, var(--on-navy-ink) 30%, var(--footer));
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem 3rem;
@@ -5083,8 +5285,8 @@ main ul:not([class]) li + li {
 
 .results .live-offer:hover,
 .results .live-text button:hover {
-  background: var(--blue);
-  color: var(--paper);
+  background: var(--blue-fill);
+  color: var(--on-blue);
 }
 
 .results .live .unchecked {
@@ -5343,11 +5545,6 @@ main ul:not([class]) li + li {
    the axis; amber is the promised date and nothing else. The axis is one weight along
    its whole length: a stretch with no mark is never faded or broken. */
 
-:root {
-  /* The promise amber dark enough to draw a line with: 3:1 against the page. */
-  --promise-mark: #8a6a00;
-}
-
 .record-strip {
   display: flex;
   flex-wrap: wrap;
@@ -5542,12 +5739,8 @@ main ul:not([class]) li + li {
    of sections, the sheet and the page's actions. Openspec page-frame. */
 
 :root {
-  /* The ground behind the white sheet, so the side columns recede. */
-  --ground: #f4f7fb;
   --frame: 78rem;
   --list: 13.5rem;
-  /* Secondary text on the navy. */
-  --navy-soft: #c9d9ee;
 }
 
 body.framed {
@@ -5561,7 +5754,7 @@ body.framed {
 /* The band of a record: the one band in navy. A page's task keeps the pale band. */
 .band.record {
   background: var(--footer);
-  color: var(--paper);
+  color: var(--on-navy-ink);
   border-bottom: 0;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12);
   padding-block: 1.5rem 2rem;
@@ -5581,12 +5774,12 @@ body.framed {
 }
 
 .band.record .title {
-  color: var(--paper);
+  color: var(--on-navy-ink);
   margin-top: 0.8rem;
 }
 
 .band.record a {
-  color: var(--paper);
+  color: var(--on-navy-ink);
 }
 
 .band.record .what-this-is,
@@ -5601,11 +5794,11 @@ body.framed {
 }
 
 .band.record :focus-visible {
-  outline-color: var(--paper);
+  outline-color: var(--on-navy-ink);
 }
 
 .band.record ::selection {
-  background: var(--paper);
+  background: var(--on-navy-ink);
   color: var(--footer);
 }
 
@@ -5634,7 +5827,7 @@ body.framed {
   gap: 0 0.4rem;
   min-height: 2.75rem;
   padding-block: 0.55rem;
-  color: var(--paper);
+  color: var(--on-navy-ink);
   text-decoration: none;
 }
 
@@ -5669,7 +5862,8 @@ body.framed {
   margin-top: 0;
   grid-template-columns: minmax(0, 1fr);
   color: var(--ink);
-  border-color: transparent;
+  border-color: var(--band-card-rule);
+  box-shadow: var(--band-card-shadow);
 }
 
 .band.record .digest a {
@@ -5926,7 +6120,7 @@ body.framed {
 .kind-tab[aria-pressed="true"] {
   background: var(--footer);
   border-color: var(--footer);
-  color: var(--paper);
+  color: var(--on-navy-ink);
 }
 
 .kind-tab[aria-pressed="true"] .n {
@@ -6047,12 +6241,12 @@ body.framed {
 
   .onpage::before {
     left: 0;
-    background: linear-gradient(to right, var(--ground) 20%, rgb(244 247 251 / 0));
+    background: linear-gradient(to right, var(--ground) 20%, transparent);
   }
 
   .onpage::after {
     right: 0;
-    background: linear-gradient(to left, var(--ground) 20%, rgb(244 247 251 / 0));
+    background: linear-gradient(to left, var(--ground) 20%, transparent);
   }
 
   .onpage[data-more~="start"]::before,
@@ -6226,7 +6420,7 @@ body.framed {
 
 .trial-columns {
   background: var(--footer);
-  color: var(--paper);
+  color: var(--on-navy-ink);
   font-size: 0.82rem;
   font-weight: 700;
   padding-block: 0.65rem;
@@ -6397,7 +6591,7 @@ body.framed {
 }
 
 .band.record .lede {
-  color: var(--paper);
+  color: var(--on-navy-ink);
   max-width: 46rem;
 }
 
@@ -6490,7 +6684,7 @@ body.framed {
 }
 
 .band.record .band-actions .share {
-  color: var(--paper);
+  color: var(--on-navy-ink);
   background: rgb(255 255 255 / 0.08);
   border-color: rgb(255 255 255 / 0.4);
   text-decoration: none;
@@ -6498,7 +6692,7 @@ body.framed {
 
 .band.record .band-actions .share:hover {
   background: rgb(255 255 255 / 0.18);
-  border-color: var(--paper);
+  border-color: var(--on-navy-ink);
 }
 
 @media (max-width: 68rem) {
@@ -6529,9 +6723,9 @@ body.framed {
 /* Followed: the pill is filled, on white, so its words stay readable on the navy. */
 .band.record .band-actions .share[aria-pressed="true"],
 .band.record .band-actions .share.done {
-  background: var(--paper);
-  border-color: var(--paper);
-  color: var(--blue);
+  background: var(--on-navy-ink);
+  border-color: var(--on-navy-ink);
+  color: var(--footer);
 }
 
 .band.record .outlet .domain {
