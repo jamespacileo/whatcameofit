@@ -361,6 +361,21 @@ A lead linked by its title to a claim that already has the configured number of 
 - **WHEN** 200 leads have been through the reading step
 - **THEN** the report gives each count and the two costs, and no request is sent
 
+### Requirement: A read does not draft a duplicate of a claim by its dose or form
+A read SHALL offer the same-claim decision every claim whose intervention shares a name with the read's treatment once dose, schedule, form and any "-assisted" therapy are left out of the names ("semaglutide 2.4 mg once-weekly injections" and "MDMA-assisted psychotherapy" give "semaglutide" and "MDMA"). A route or form that makes another product, such as "nasal spray", "oral", "pill" or "tablets", SHALL be kept. When the decision does not join the article to a claim, and a claim that is not rejected has that same treatment and a condition that is the read's, or the read's with words in front that only narrow it, the read SHALL draft no claim and SHALL record the lead as identity unresolved, naming that claim. A condition that only ends with the other's words after "in", "with" or the like is another condition. Words in brackets are left out of the comparison. This rule SHALL never join an article to a claim: only the decision joins.
+
+#### Scenario: A name with a dose or an assisted therapy
+- **WHEN** a read names "MDMA-assisted psychotherapy" for post-traumatic stress disorder and a claim exists for MDMA for post-traumatic stress disorder (PTSD)
+- **THEN** that claim is offered to the same-claim decision
+
+#### Scenario: A duplicate refused
+- **WHEN** the decision does not establish the same claim, and the read's treatment and condition are a claim's once dose and form are left out
+- **THEN** no claim is drafted, and the lead is identity unresolved, naming that claim
+
+#### Scenario: Another condition that ends with the same words
+- **WHEN** a read names orforglipron for obstructive sleep apnoea in people with obesity and a claim exists for orforglipron for obesity
+- **THEN** that claim does not stop the read from drafting a claim
+
 ### Requirement: An outlet that refuses the reader page after page is not asked again
 Before asking the page reader for a lead's page, the read SHALL count the outlet's leads whose page the site answered with 401. When there are at least five and none of the outlet's leads has given an outcome only a served page gives (added to a claim, a new claim, needs a vertical, not one treatment, business news, identity unresolved), the lead SHALL be finished as cannot be read, saying the outlet answered 401 for that many pages and served none, and the reader SHALL NOT be asked. Whether a site is asked stays the reader's decision (ADR 0006): this acts on the site's own answers, and only on 401.
 

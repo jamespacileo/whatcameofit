@@ -200,6 +200,11 @@ Batch 1's audit (2026-11-16) archived 10 claims for missed or wrong trials. None
 
 - [x] 13.1 Search a combination's treatments together, joined by AND, besides its name as written; verify with a test that the joined search runs and its trial becomes a candidate.
 - [x] 13.2 Have `thenwhat prepare` run `terms` after `readings`, so every prepared claim gets its subject terms and background cards (part of 10.5); a terms failure is reported and does not keep the claim waiting.
+## 14. Batch 1 audit faults: duplicates by dose or form
+
+Batch 1's audit (2026-11-16) archived 7 claims as duplicates of live ones, drafted because a dose, a schedule or "-assisted psychotherapy" kept the names from matching. Measured on 336 claims, the rule below pairs 13, every one a duplicate the audit archived or would archive, and none for another condition once "in", "with" and the like stop a match.
+
+- [x] 14.1 Offer the same-claim decision the claims sharing a read's core name, and refuse a new claim whose core name and condition are a claim's; record the lead as identity unresolved. Verify with tests: the claim is offered, the duplicate is refused, and a condition about other people is not matched.
 ## 15. Outlets that refuse the reader
 
 Batch 1 (2026-11-16) spent 83 of its 300 reader requests on two outlets that answered 401 to every page: reuters.com (44) and wsj.com (39). By batch 2 they stood at 50 and 43, with no page served.
