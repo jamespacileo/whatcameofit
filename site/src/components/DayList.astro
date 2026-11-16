@@ -546,8 +546,8 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
 
   @media (min-width: 56rem) {
     .days-body {
-      grid-template-columns: 13.5rem minmax(0, 1fr);
-      gap: 0 2rem;
+      grid-template-columns: var(--list) minmax(0, 1fr);
+      gap: 0 var(--column-gap);
     }
 
     /* The list is the one white sheet on the pale ground. */
@@ -566,7 +566,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
 
   @media (min-width: 72rem) {
     .days-body {
-      grid-template-columns: 13.5rem minmax(0, 1fr) 15rem;
+      grid-template-columns: var(--list) minmax(0, 1fr) var(--rail);
     }
 
     .days-rail {

@@ -368,7 +368,7 @@ test("Scenario: Anniversaries on the home page", () => {
   const html = page("index.html");
   const block = html.slice(html.indexOf("data-on-this-day"), html.indexOf('id="topics"'));
   // Out of sight until the reader's date picks a day; every day with a report is there.
-  assert.match(html, /<section class="on-this-day"[^>]*hidden/);
+  assert.match(html, /<section class="[^"]*\bon-this-day"[^>]*hidden/);
   for (const day of ["05-01", "05-03", "05-04"]) assert.ok(block.includes(`data-day="${day}"`), day);
   assert.match(block, /data-year="2019"/);
   assert.match(block, /href="\/anniversaries"/);
@@ -378,7 +378,7 @@ test("Scenario: A returning reader's home page", () => {
   const html = page("index.html");
   // Filled in by the reader's browser: nothing about a visit is in the built page.
   assert.match(html, /<p class="since"[^>]*hidden/);
-  assert.match(html, /<section class="following"[^>]*hidden/);
+  assert.match(html, /<section class="[^"]*\bfollowing"[^>]*hidden/);
   assert.match(html, /Kept in this browser only\./);
   // Each dated row carries its day, so the browser can count what is dated since a visit.
   assert.match(html, /<tr[^>]*data-on="2019-05-03"/);
@@ -386,7 +386,7 @@ test("Scenario: A returning reader's home page", () => {
   assert.match(moved, /data-on="2023-02-01"/);
   // How to keep up is said in the open, under the lists: the feed by a plain name, and,
   // for a reader who follows nothing yet, what following is (shown by their browser).
-  const keep = html.slice(html.indexOf('class="keep-up"'), html.indexOf("data-on-this-day"));
+  const keep = html.slice(html.indexOf('keep-up"'), html.indexOf("data-on-this-day"));
   assert.match(keep, /<a class="share" href="\/changes\.xml">/);
   assert.match(keep, /Subscribe to status changes/);
   assert.match(keep, /<p class="keep-hint" hidden data-follow-hint>/);

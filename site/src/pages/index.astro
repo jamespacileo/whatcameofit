@@ -154,7 +154,7 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
   }
 
   {/* The claims this reader follows, read from this browser's own storage by the script. */}
-  <section class="following" id="following" hidden data-following>
+  <section class="home-section following" id="following" hidden data-following>
     <h2 class="bar">Following</h2>
     <ul class="plain" data-following-list></ul>
     <p class="entry-note">Kept in this browser only.</p>
@@ -514,7 +514,7 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
 
   {/* How to hear of a change without looking for one. The first line is for a reader who
       follows nothing yet, and is shown only where this browser can keep a list. */}
-  <section class="keep-up">
+  <section class="home-section keep-up">
     <h2 class="bar">Keep up</h2>
     <p class="keep-hint" hidden data-follow-hint>
       Follow a claim from its page and it is listed at the top of this page, with a note when
@@ -534,7 +534,7 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
       reports, or the next day that has one. */}
   {
     calendarDays.length > 0 && (
-      <section class="on-this-day" hidden data-on-this-day>
+      <section class="home-section on-this-day" hidden data-on-this-day>
         <div class="bar-row">
           <h2 class="bar" data-title>On this day</h2>
           <a href="/anniversaries">All anniversaries</a>
@@ -564,7 +564,7 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
   }
 
   {/* On a wide screen the list's side column already holds the topics. */}
-  <div class:list={["home-topics", { beside: days }]}>
+  <div class:list={["home-section", "home-topics", { beside: days }]}>
   <h2 class="bar" id="topics">Topics</h2>
   <ul class="chips">
     {
@@ -585,7 +585,7 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
   </div>
   {
     years.length > 0 && (
-      <>
+      <section class="home-section years" aria-labelledby="years">
         <h2 class="bar" id="years">By year first reported</h2>
         <ul class="chips">
           {years.map(([year, count]) => (
@@ -600,13 +600,13 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
             </li>
           ))}
         </ul>
-      </>
+      </section>
     )
   }
   {/* Where the question arises is the article itself: the extension answers there. */}
   {
     EXTENSION_OFFERED && (
-      <section class="closing">
+      <section class="home-section closing">
         <h2 class="bar">Reading it somewhere else?</h2>
         <p class="suggest">
           The browser extension shows what came of a report from the article itself:{" "}
@@ -618,7 +618,7 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
   {/* The page ends on something to do: the one way a reader adds to what is tracked. */}
   {
     suggest && (
-      <section class="closing">
+      <section class="home-section closing">
         <h2 class="bar">Not here yet?</h2>
         <p class="suggest">
           Seen a reported breakthrough we do not track? Send the address of the news article:{" "}
@@ -1004,7 +1004,7 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
   }
 
   @media (min-width: 56rem) and (scripting: enabled) {
-    .home-topics.beside {
+    .home-section.home-topics.beside {
       display: none;
     }
   }

@@ -87,6 +87,7 @@ Figures are tabular and lining throughout. Reading measure is 66 characters. A n
 ## Layout
 
 - Page width 60rem, gutter `clamp(1rem, 4vw, 2rem)`. Claim and topic pages are laid out in the frame: 78rem wide, a list 13.5rem wide at the left, and the white sheet, on the pale ground `--ground`.
+- The home page keeps its day-by-day list's columns all the way down (`--list`, `--rail`, `--column-gap`). From 56rem what is under the list takes the frame's full width. From 72rem each section's heading stands in the left column, under the Browse links, and what it holds spans the sheet and the right column; the lists' heading stays in sight beside them. One hairline across the frame parts each section from the next, with equal space above and below it, as the right column's hairlines part its three parts.
 - Corner radius `0.85rem` on panels and table frames, `0.65rem` on the search field and button, full on the topic chip.
 - The frame's side columns give way below 68rem: the list becomes one row of chips that stays at the top. This is the only width besides 40rem at which layout changes.
 - One breakpoint at 40rem. Below it the digest stacks, and both table types become labelled blocks: each year is a block with a pale amber "Promised for this year" box above "Recorded this year".
