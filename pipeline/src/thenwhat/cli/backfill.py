@@ -29,6 +29,7 @@ from thenwhat.backfill.link_funnel import funnel
 from thenwhat.backfill.link_load import load_links
 from thenwhat.backfill.link_read import LinkRead, ReadClient, retry_outlet
 from thenwhat.backfill.link_readers import posts_of
+from thenwhat.backfill.link_rekey import refuse_stale_keys, rekey_links, survey
 from thenwhat.backfill.link_report import IN_SCOPE_KINDS, screening_report
 from thenwhat.backfill.link_topics import coverage
 from thenwhat.backfill.link_triage import DecisionClient, LinkTriage, Standing
@@ -316,6 +317,11 @@ def run_command(
                 f"`{step.name}` publishes what it makes, so a run says how many records it "
                 "may process. Run it again with --limit."
             )
+        if step.record_kind == "link_lead":
+            # A lead keyed under an earlier form would be compared with addresses in
+            # the current one, and miss.
+            with open_session() as session:
+                refuse_stale_keys(session)
         check_ready = getattr(step, "check_ready", None)
         if check_ready is not None:
             with open_session() as session:
@@ -461,6 +467,51 @@ def load_links_command(
     )
     for reason, number in sorted(report.skipped.items()):
         out.print(f"  skipped, {reason.value}: {number:,}", markup=False)
+
+
+@backfill_app.command("rekey-links")
+def rekey_links_command(
+    apply: Annotated[
+        bool,
+        typer.Option("--apply", help="Do it. Without this, only say what would be done."),
+    ] = False,
+) -> None:
+    """Bring stored link leads to the current form of the address key.
+
+    Needed once after the address key changes; loading and the link steps are refused
+    until it is done. Two leads that are one article under the current form become one
+    lead with the shares of both, and the one that was scored or read is kept. Sends no
+    request and calls no model, and makes no lead due again for a step that does. It
+    can be stopped and run again.
+    """
+    settings = settings_or_exit()
+    with refusals():
+        steps = steps_for(settings)
+        if not apply:
+            with open_session() as session:
+                report = survey(session)
+            out.print(
+                f"{report.checked:,} link leads are keyed under an earlier form: "
+                f"{report.unchanged:,} keep their key, {report.rekeyed:,} would get a new "
+                f"key, {report.merged:,} would be merged into another lead. Nothing was "
+                "changed. Run it again with --apply.",
+                markup=False,
+            )
+            return
+        report = rekey_links(open_session, steps)
+    out.print(
+        f"Brought {report.checked:,} link leads up to date: {report.unchanged:,} kept "
+        f"their key, {report.rekeyed:,} got a new key, {report.merged:,} were merged into "
+        f"another lead ({report.shares_moved:,} shares moved).",
+        markup=False,
+    )
+    for one, other in sorted(set(report.claims_to_compare)):
+        out.print(
+            f"  claims {one} and {other} each came from a lead of one article: compare them.",
+            markup=False,
+        )
+    if report.merged or report.rekeyed:
+        out.print("Run `thenwhat backfill run link_screen` to screen them again.", markup=False)
 
 
 @backfill_app.command("retry-outlet")
