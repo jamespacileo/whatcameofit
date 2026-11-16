@@ -532,6 +532,99 @@ def test_the_model_is_shown_the_text(session: Session):
     assert TEXT in prompts[0]
 
 
+def test_independent_claims_share_reading_and_records_but_not_scores_or_cards(session: Session):
+    one: dict[str, Any] = {**READING, "other_names": [], "search_phrases": []}
+    two = {**one, "intervention": "EX-2 plus EX-3", "indication": "example condition"}
+    for slug, reading in [("one", one), ("two", two)]:
+        add_claim(
+            session,
+            slug=slug,
+            headline=slug,
+            vertical="mouth-and-teeth",
+            intervention=reading["intervention"],
+            indication=reading["indication"],
+            summary="Synthetic claim.",
+        )
+    model, prompts = llm(session, {**one, "additional_claims": [two]})
+    fetched = []
+
+    class SharedTrials(FakeTrials):
+        def fetch_trial(self, nct_id):
+            fetched.append(nct_id)
+            return super().fetch_trial(nct_id)
+
+    class PerClaim:
+        name = "fake"
+
+        def answer(self, step, state, options):
+            claim_text, record_text = state.split("Candidate record", 1)
+            compatible = ("Indication: tooth agenesis" in claim_text) == (
+                "Tooth Agenesis" in record_text
+            )
+            choice = "match" if compatible else "other_indication"
+            return BackendAnswer(
+                choice, {option: 1.0 if option == choice else 0.0 for option in options}
+            )
+
+    records = {
+        "NCT00000001": trial("NCT00000001", "EX-1 trial"),
+        "NCT00000002": trial("NCT00000002", "Combination trial", "Example Condition"),
+    }
+    found = look_up(
+        session,
+        model,
+        PerClaim(),
+        SharedTrials({}, records),
+        text="Synthetic roundup NCT00000001 NCT00000002",
+        now=NOW,
+    )
+    assert len(prompts) == 1
+    assert fetched == list(records)
+    assert found.intervention is None and found.candidates == [] and found.tracked == []
+    assert [claim.intervention for claim in found.claims] == ["EX-1", "EX-2 plus EX-3"]
+    assert [claim.tracked for claim in found.claims] == [["one"], ["two"]]
+    assert [
+        [record.external_id for record in claim.candidates if record.answer == "match"]
+        for claim in found.claims
+    ] == [["NCT00000001"], ["NCT00000002"]]
+    assert all(claim.check_state == "complete" for claim in found.claims)
+
+
+def test_roundup_has_one_discovery_and_scoring_allowance(session: Session):
+    readings: list[dict[str, Any]] = [
+        {
+            **READING,
+            "intervention": f"EX-{at}",
+            "other_names": [],
+            "search_phrases": [],
+            "known_names": [f"alias-{at}-{n}" for n in range(5)],
+        }
+        for at in range(4)
+    ]
+    model, _ = llm(session, {**readings[0], "additional_claims": readings[1:]})
+    records = [trial(f"NCT{at:08}", "Synthetic trial") for at in range(70)]
+    trials = FakeTrials(
+        {
+            name: records
+            for reading in readings
+            for name in [reading["intervention"], *reading["known_names"]]
+        }
+    )
+    found = look_up(session, model, ByCondition(), trials, text="Synthetic roundup", now=NOW)
+    assert len(trials.searched) == 12
+    assert [name for name, _ in trials.searched[:4]] == [
+        reading["intervention"] for reading in readings
+    ]
+    assert [len(claim.candidates) for claim in found.claims] == [15] * 4
+    assert [claim.known_names for claim in found.claims] == [
+        [f"alias-{at}-0", f"alias-{at}-1"] for at in range(4)
+    ]
+    assert all(
+        claim.check_state == "partial" and claim.check_reason == "work_limit"
+        for claim in found.claims
+    )
+
+
 # --- development codes -------------------------------------------------------------
 
 

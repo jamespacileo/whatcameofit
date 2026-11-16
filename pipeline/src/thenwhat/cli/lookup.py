@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from thenwhat.decide.core import Backend
     from thenwhat.extract.page import Page
     from thenwhat.llm.client import Llm
-    from thenwhat.lookup.service import Papers, Trials
+    from thenwhat.lookup.service import Lookup, Papers, Trials
     from thenwhat.resolve.codes import Substances
 
 # Why a record is ranked where it is, in the operator's words.
@@ -156,6 +156,15 @@ def lookup_command(
     if as_json:
         out.print(json.dumps(asdict(found), ensure_ascii=False, indent=2), markup=False)
         return
+    _print_lookup(found)
+
+
+def _print_lookup(found: "Lookup") -> None:
+    if found.claims:
+        out.print(f"{len(found.claims)} separate treatment claims")
+        for claim in found.claims:
+            _print_lookup(claim)
+        return
     if found.intervention is None:
         out.print("This text does not report a specific treatment for a condition.")
         if found.gist:
@@ -180,6 +189,11 @@ def lookup_command(
     else:
         out.print("GSRS lists no development code for the names the text gives.")
     out.print(f"Condition: {found.indication}", markup=False)
+    if found.check_state != "complete":
+        out.print(
+            f"This claim is {found.check_state}: {found.check_reason}. "
+            "Missing results do not rule out trials."
+        )
     said = [
         f"trial name {found.details.trial_name}" if found.details.trial_name else "",
         f"{found.details.participants} participants" if found.details.participants else "",
@@ -196,7 +210,8 @@ def lookup_command(
     likely = [c for c in found.candidates if c.likely]
     other = [c for c in found.candidates if c not in likely]
     if not found.candidates:
-        out.print("No trial record was found in the registry searched.")
+        if found.check_state == "complete":
+            out.print("No trial record was found in the registry searched.")
         return
     out.print(
         f"{len(likely)} likely trial {'record' if len(likely) == 1 else 'records'},"

@@ -292,7 +292,7 @@ test("a completed non-treatment answer of a public page is shared; one missing a
   assert.doesNotMatch([...store.values.values()][0], /PRIVATE GIST/);
   const found = await previousResult(store, "https://news.example.org/a", 1001);
   assert.deepEqual([found.about_a_treatment, found.candidates, found.papers_unchecked, found.cache.checkedAt], [false, [], 0, 1000]);
-  assert.match([...store.values.keys()][0], /^visual-v12:[0-9a-f]{64}$/);
+  assert.match([...store.values.keys()][0], /^visual-v13:[0-9a-f]{64}$/);
 });
 
 test("shared results kept under the earlier rules are not read", async () => {

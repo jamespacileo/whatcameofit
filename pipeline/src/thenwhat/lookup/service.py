@@ -6,7 +6,7 @@ is a ranked list of candidates, not a reviewed status.
 """
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from typing import Protocol
 
@@ -82,7 +82,7 @@ fields and a gist explaining that the treatment could not be identified from wha
 Do not fill this gap from a linked URL, the condition or your own knowledge.
 Trial permission is not approval of
 a treatment, and animal or laboratory findings are not evidence of human efficacy.
-Identify one intervention-condition pair. A real combination regimen is one
+Identify each independently reported intervention-condition pair. A real combination regimen is one
 intervention, but unrelated treatments listed in a round-up are not a combination.
 Different arms of one trial are not unrelated roundup items. A report comparing
 monotherapy with a combination still reports a treatment study: identify the main
@@ -95,14 +95,18 @@ An ingredient used only to activate the treatment, a vaccine adjuvant, or suppor
 care is not a second experimental treatment. Keep its stated role in the gist,
 without turning the product into a combination regimen. Apply this only when the
 text explicitly establishes that role; do not infer it from a medicine's name.
-Choose a single pair only when it is clearly the main subject. Otherwise return
-about_a_treatment false with empty identification fields and explain in the gist
-that the text contains several separate claims, rather than merging their names.
+Put the first identifiable claim in source order in the top-level fields. Put every
+other independently reported claim in additional_claims, with its own indication,
+names and trial details. Do not merge unrelated treatments, borrow details between
+claims, or list background mentions and comparator arms as independent findings.
+Keep additional_claims empty for a single claim. If no treatment is identifiable,
+return about_a_treatment false and empty additional_claims. Unspecified references
+do not establish additional claims. Be concise; do not repeat the same claim.
 """
 
 
-class Reading(BaseModel):
-    """What the model must return for one piece of text."""
+class ClaimReading(BaseModel):
+    """One independently reported treatment and condition."""
 
     about_a_treatment: bool = Field(
         description="Whether the text reports a specific treatment for a specific condition."
@@ -183,6 +187,19 @@ class Reading(BaseModel):
     )
 
 
+class Reading(ClaimReading):
+    """One page read once, with unrelated claims kept separate."""
+
+    additional_claims: list[ClaimReading] = Field(
+        default_factory=list,
+        description=(
+            "Every other independently reported treatment-condition claim in source order."
+            " Empty for a single claim or no identifiable treatment. Never separate a genuine"
+            " combination into its components."
+        ),
+    )
+
+
 class Trials(Protocol):
     def search_trials(
         self, intervention: str, condition: str | None = None
@@ -239,6 +256,10 @@ class Lookup:
     # Slugs of claims for the complete intervention and the same indication.
     tracked: list[str] = field(default_factory=list)
     candidates: list[Candidate] = field(default_factory=list)
+    claims: list["Lookup"] = field(default_factory=list)
+    check_state: str = "complete"
+    check_reason: str | None = None
+    unscored: int = 0
 
 
 def look_up(
@@ -267,7 +288,15 @@ def look_up(
     """
     stated = [number.upper() for number in REGISTRY_NUMBER.findall(text)]
     numbers = list(dict.fromkeys([*stated, *(page.registry_numbers if page else ())]))
-    reading = llm.run("lookup", instructions=INSTRUCTIONS, prompt=text, output_type=Reading)
+    page_reading = llm.run("lookup", instructions=INSTRUCTIONS, prompt=text, output_type=Reading)
+    claims = [
+        one
+        for one in [page_reading, *page_reading.additional_claims]
+        if one.about_a_treatment and one.intervention
+    ]
+    if len(claims) > 1:
+        return _look_up_many(session, backend, trials, claims, numbers, page, papers, now)
+    reading = claims[0] if claims else page_reading
     if not reading.about_a_treatment or not reading.intervention:
         return Lookup(reading.gist, None, None, registry_numbers=numbers)
 
@@ -358,6 +387,195 @@ def look_up(
         tracked=_tracked(session, names, reading.indication),
         candidates=candidates,
     )
+
+
+@dataclass
+class _ClaimSearch:
+    reading: ClaimReading
+    answer: Lookup
+    intro: str
+    jobs: list[tuple[str, str, str | None]]
+    records: dict[str, SourceRecord] = field(default_factory=dict)
+    selected: list[SourceRecord] = field(default_factory=list)
+    searched: set[str] = field(default_factory=set)
+    missing: bool = False
+
+
+def _look_up_many(
+    session: Session,
+    backend: Backend,
+    trials: Trials,
+    readings: list[ClaimReading],
+    numbers: list[str],
+    page: Page | None,
+    papers: Papers | None,
+    now: datetime,
+) -> Lookup:
+    """Share discovery and scoring bounds across independently identified claims."""
+    plans: list[_ClaimSearch] = []
+    for reading in readings:
+        assert reading.intervention is not None
+        names = list(
+            dict.fromkeys(
+                [
+                    reading.intervention,
+                    *(
+                        name
+                        for name in reading.other_names
+                        if is_a_name(name) and not REGISTRY_NUMBER.fullmatch(name.strip())
+                    ),
+                ]
+            )
+        )
+        known = [
+            name
+            for name in dict.fromkeys(reading.known_names)
+            if is_a_name(name) and not REGISTRY_NUMBER.fullmatch(name.strip()) and name not in names
+        ]
+        parts = [part for name in names for part in _parts(name)]
+        terms = list(dict.fromkeys([*names, *parts, *known, *reading.search_phrases]))
+        details = Details(reading.trial_name, reading.participants, reading.sponsor)
+        also = [*names[1:], *known]
+        aliases = f" (also known as: {', '.join(also)})" if also else ""
+        plans.append(
+            _ClaimSearch(
+                reading,
+                Lookup(
+                    reading.gist,
+                    names[0],
+                    reading.indication,
+                    names=names,
+                    known_names=known,
+                    codes_not_looked_up="Not checked within this page's search allowance.",
+                    registry_numbers=numbers,
+                    details=details,
+                    tracked=_tracked(session, names, reading.indication),
+                ),
+                f"Claim: {reading.gist}\nIntervention: {names[0]}{aliases}.\n"
+                f"Indication: {reading.indication}.\n\nEntity to match (intervention): {names[0]}",
+                [
+                    *([("named", details.trial_name, None)] if details.trial_name else []),
+                    *(("search", term, reading.indication) for term in terms),
+                ],
+            )
+        )
+    from_papers: list[str] = []
+    failure: str | None = None
+    try:
+        from_papers = [number for number in _paper_numbers(page, papers) if number not in numbers]
+        shared_records: dict[str, SourceRecord] = {}
+        for number in [*numbers, *from_papers]:
+            record = trials.fetch_trial(number)
+            if record is not None:
+                shared_records.setdefault(record.external_id, record)
+        for plan in plans:
+            plan.records.update(shared_records)
+        queries: dict[tuple[str, str, str | None], list[SourceRecord]] = {}
+        for at in range(max(len(plan.jobs) for plan in plans)):
+            for plan in plans:
+                if at >= len(plan.jobs):
+                    continue
+                job = plan.jobs[at]
+                if job not in queries:
+                    if len(queries) >= 12:
+                        plan.missing = True
+                        continue
+                    kind, term, indication = job
+                    queries[job] = (
+                        trials.named_trials(term)
+                        if kind == "named"
+                        else trials.search_trials(term, indication)
+                    )
+                for record in queries[job]:
+                    plan.records.setdefault(record.external_id, record)
+                if job[0] == "search":
+                    plan.searched.add(job[1])
+    except SourceError:
+        failure = "source_unavailable"
+
+    pairs: list[tuple[int, SourceRecord]] = []
+    if failure is None:
+        ordered = [list(plan.records.values()) for plan in plans]
+        for at in range(max(len(records) for records in ordered)):
+            for number, plan in enumerate(plans):
+                if len(pairs) >= MAX_CANDIDATES:
+                    break
+                if at < len(ordered[number]):
+                    record = ordered[number][at]
+                    plan.selected.append(record)
+                    pairs.append((number, record))
+            if len(pairs) >= MAX_CANDIDATES:
+                break
+    decisions = (
+        decide_many(
+            session,
+            backend,
+            step=STEP,
+            intro=(
+                "Each item contains its own independent claim and one candidate record. Compare"
+                " only that item's claim and record; never transfer an identity or score"
+                " between items."
+            ),
+            question=TRIAL_QUESTION,
+            items=[
+                (
+                    f"lookup:{number}:{record.external_id}",
+                    f"{plans[number].intro}\n\n{candidate_text(record)}",
+                )
+                for number, record in pairs
+            ],
+            options=TRIAL_OPTIONS,
+            now=now,
+        )
+        if pairs
+        else []
+    )
+    for (number, record), decision in zip(pairs, decisions, strict=True):
+        plan = plans[number]
+        plan.answer.candidates.append(
+            Candidate(
+                record.external_id,
+                record.url,
+                decision.probabilities[MATCH],
+                decision.choice,
+                what_it_says(record) or "",
+                [
+                    *([STATED] if record.external_id in numbers else []),
+                    *([PAPER] if record.external_id in from_papers else []),
+                    *agreeing(record.payload, plan.answer.details),
+                ],
+            )
+        )
+    answers = []
+    for plan in plans:
+        candidates = sorted(
+            plan.answer.candidates,
+            key=lambda candidate: (
+                STATED not in candidate.agrees,
+                candidate.score < LIKELY_FROM,
+                -len(candidate.agrees),
+                -candidate.score,
+                candidate.external_id,
+            ),
+        )
+        unscored = len(plan.records) - len(candidates)
+        reason = failure or ("work_limit" if plan.missing or unscored else None)
+        answers.append(
+            replace(
+                plan.answer,
+                candidates=candidates,
+                known_names=(
+                    []
+                    if failure
+                    else [name for name in plan.answer.known_names if name in plan.searched]
+                ),
+                paper_numbers=from_papers,
+                unscored=unscored,
+                check_reason=reason,
+                check_state=("partial" if candidates else "unchecked") if reason else "complete",
+            )
+        )
+    return Lookup("", None, None, registry_numbers=numbers, claims=answers)
 
 
 def _codes(

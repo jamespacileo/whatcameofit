@@ -365,12 +365,23 @@ const sentenceJson = sentences
   // Nothing is sent until the reader presses the button. The answer is an automatic
   // search and is marked as one before anything else is shown.
 
-  function liveAnswer(found: Parameters<typeof describeAnswer>[0]) {
+  function liveAnswer(found: Parameters<typeof describeAnswer>[0], nested = false) {
     const shown = describeAnswer(found);
     const block = element("div", undefined, "live");
-    if (shown.marked) block.append(element("p", shown.marked, "unchecked"));
-    block.append(element("p", shown.lead));
+    if (shown.marked && !nested) block.append(element("p", shown.marked, "unchecked"));
+    block.append(element(nested ? "h2" : "p", shown.subject?.treatment && nested ? shown.subject.treatment : shown.lead));
+    if (nested && shown.subject?.condition) block.append(element("p", shown.subject.condition));
     if (shown.source) block.append(element("p", shown.source, "entry-note"));
+    if (Array.isArray(found.claims)) {
+      for (const claim of found.claims) {
+        const section = liveAnswer({ ...claim, cache: found.cache }, true);
+        section.classList.add("independent-claim");
+        block.append(section);
+      }
+      for (const notice of shown.notices) block.append(element("p", notice, "entry-note"));
+      return block;
+    }
+    if (shown.unchecked) block.append(element("p", shown.unchecked));
     if (shown.searchedAlso) block.append(element("p", shown.searchedAlso, "entry-note"));
     if (shown.trialSaid) block.append(element("p", shown.trialSaid, "entry-note"));
     if (shown.tracked.length > 0) {
@@ -442,7 +453,7 @@ const sentenceJson = sentences
         block.append(panel);
       }
     }
-    for (const notice of shown.notices) block.append(element("p", notice, "entry-note"));
+    if (!nested) for (const notice of shown.notices) block.append(element("p", notice, "entry-note"));
     return block;
   }
 
@@ -514,7 +525,7 @@ const sentenceJson = sentences
       const response = await fetch(liveAddress!, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, claimResults: true }),
       });
       status = response.status;
       found = await response.json();

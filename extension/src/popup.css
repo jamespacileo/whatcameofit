@@ -676,3 +676,8 @@ h1 + p {
 .research-list li + li { margin-top: 1rem; }
 .research-list a { font-weight: 650; overflow-wrap: anywhere; }
 .research-list .small { margin-top: 0.25rem; }
+:root .independent-claim {
+  margin-block-start: 24px;
+  padding-block-start: 20px;
+  border-top: 1px solid var(--rule);
+}

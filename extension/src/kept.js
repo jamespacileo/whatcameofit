@@ -37,13 +37,19 @@ export function answerOf(state) {
   }
   if (state.kind === "answer") {
     const { shown } = state;
+    if (shown.claims) return {
+      kind: "searched", unreviewed: shown.marked ?? null, lead: shown.lead,
+      limitation: shown.claims.filter(claim => claim.unchecked || claim.none).map(claim => [claim.subject?.treatment, claim.subject?.condition,
+        claim.unchecked ?? claim.none].filter(Boolean).join(" · ")).join("; "),
+      groups: shown.claims.map(claim => ({ subject: claim.subject, ...answerOf({ kind: "answer", shown: claim }) })),
+    };
     return {
       kind: "searched",
       // An automatic search stays marked as unreviewed wherever it is shown again.
       unreviewed: shown.marked ?? null,
       lead: shown.lead ?? null,
       // Retain the generated limitation, never article text or a screenshot.
-      limitation: shown.none ?? (!shown.subject ? shown.lead ?? null : null),
+      limitation: shown.unchecked ?? shown.none ?? (!shown.subject ? shown.lead ?? null : null),
       claims: (shown.tracked ?? []).map(({ headline, page }) => ({ headline, page })),
       records: (shown.likely ?? []).map(({ title, url }) => ({ title, url })),
     };
@@ -54,6 +60,8 @@ export function answerOf(state) {
 /** Everything an entry can open: tracked claim pages first, then registry records. */
 export function candidatesOf(entry, site) {
   const { answer } = entry;
+  if (answer.groups) return answer.groups.flatMap(group => candidatesOf({ answer: group }, site)
+    .map(candidate => ({ ...candidate, title: `${group.subject.treatment}${group.subject.condition ? ` for ${group.subject.condition}` : ""} — ${candidate.title}` })));
   return [
     ...(answer.claims ?? []).map((claim) => ({ title: claim.headline, url: site.url + claim.page, status: claim.status ?? null })),
     ...(answer.records ?? []).map((record) => ({ title: record.title, url: record.url, status: null })),
