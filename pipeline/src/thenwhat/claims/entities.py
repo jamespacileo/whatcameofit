@@ -69,8 +69,9 @@ def whole_intervention_names(names: Sequence[str]) -> list[str]:
 
 def substance_name(session: Session, entity: Entity) -> str | None:
     """What the registry of substances calls the intervention's one substance, such as
-    "Semaglutide" for Wegovy or "Aducanumab" for Aduhelm. None when the registry does
-    not list it under one substance, or was never asked."""
+    "Semaglutide" for Wegovy or "Aducanumab" for Aduhelm, or the one ingredient a
+    source of brands lists a brand under when the registry does not list the brand. None
+    when neither lists it under one substance, or neither was asked."""
     kept = session.get(EntitySubstance, entity.id)
     if kept is None:
         return None

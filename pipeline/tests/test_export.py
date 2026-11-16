@@ -1128,6 +1128,8 @@ def test_claim_with_no_approved_term_or_no_stored_record_has_no_card(session: Se
         "ClinicalTrials.gov",
         "Europe PMC",
         "Crossref",
+        # Listed always: its terms ask for a statement, which the site shows by the list.
+        "RxNorm",
     ]
 
 
