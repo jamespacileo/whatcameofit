@@ -29,5 +29,7 @@
 ## 5. Left for later
 
 - [ ] 5.1 Browser extension: a followed claim that was merged or re-slugged follows its new address
+- [x] 2.8 Second review: a pending or rejected merged claim makes the kept claim await audit; unmerge releases no hold; evidence stages recorded; a registry search stays due unless all of it succeeded
+- [ ] 5.4 The funnel report counts a moved `new_claim` lead against the kept claim's review state
 - [ ] 5.3 `prepare` decides by the rule for drafts any pending claim a `new_claim` lead points at: after a merge into a pending, operator-entered claim that lead points at the kept claim. The outcome is held for audit, never published unheld
 - [ ] 5.2 Compare a merged claim's articles with the kept claim's by address key (after `idempotent-runs-and-one-address` 5.1)

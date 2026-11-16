@@ -9,6 +9,10 @@ The operator SHALL be able to merge one claim into another that stands for the s
 - **WHEN** the operator merges a claim for "VSV-EBOV" into the claim for "Ervebo", both for "Ebola virus disease", with a reason
 - **THEN** the kept claim has both claims' articles, promises and reported statements, "VSV-EBOV" is a synonym of its intervention, and the merged claim is archived with the reason and points at the kept claim
 
+#### Scenario: Evidence stages differ
+- **WHEN** the merged claim has an evidence stage and the kept claim has another, or none
+- **THEN** the kept claim's stage is unchanged, the operator is told both, and the record of the merge holds both
+
 #### Scenario: Merge decided by an assistant
 - **WHEN** an assistant merges two claims with `--as-assistant`
 - **THEN** the merge is recorded as decided by an assistant, not by the operator
@@ -64,14 +68,22 @@ A merge SHALL be refused unless the two interventions share a name or synonym, t
 - **THEN** the merge is refused and the claim awaiting audit is named
 
 ### Requirement: A hold for audit follows what it was for
-A merge SHALL NOT clear or shorten any claim's hold for audit. When the merged claim is awaiting audit and the kept claim is not, the kept claim SHALL be held awaiting audit from the same time, so that nothing unaudited is published by the merge, and the operator SHALL be told that the kept claim leaves the site until its audit is cleared.
+What has not passed an audit SHALL NOT reach the site through a merge or through its undoing. A merge SHALL NOT clear or shorten any claim's hold for audit. When the merged claim is awaiting audit, is still pending or was rejected, the merge SHALL be refused unless the decider states that explicitly, and the kept claim, when it has no hold, SHALL then be held awaiting audit: from the merged claim's hold, or from the time of the merge when the merged claim had none. The operator SHALL be told that the kept claim leaves the site until its audit is cleared. Undoing a merge SHALL NOT release any hold.
 
 #### Scenario: A hold follows what it was for
 - **WHEN** a claim awaiting audit is merged, with `--awaiting-audit-accepted`, into a published claim
 - **THEN** both claims await audit, the kept claim is left out of the next export, and it is published again only after `thenwhat audit clear`
 
+#### Scenario: Merged claim was never approved
+- **WHEN** a pending or rejected claim is merged, with `--awaiting-audit-accepted`, into an approved claim that is not held
+- **THEN** the kept claim awaits audit from the time of the merge and is left out of the next export
+
+#### Scenario: Unmerge after the kept claim was held again
+- **WHEN** the kept claim's hold from a merge was cleared, the claim was then held again for another reason, and the merge is undone
+- **THEN** the kept claim still awaits audit
+
 ### Requirement: A merge can be undone
-The operator SHALL be able to undo a merge. Undoing SHALL return to the merged claim every row the merge moved, SHALL remove from the kept claim's entities the names the merge added, SHALL make the merged claim stand for its intervention again, unarchived unless it was archived before the merge, and SHALL mark both claims' registry searches due. A hold the kept claim took with the merge SHALL be released; the merged claim's own hold SHALL stay. The record of the merge SHALL be kept, with who undid it, when and why. `unarchive` SHALL refuse a merged claim and name the command that undoes the merge.
+The operator SHALL be able to undo a merge. Undoing SHALL return to the merged claim every row the merge moved, SHALL remove from the kept claim's entities the names the merge added, SHALL make the merged claim stand for its intervention again, unarchived unless it was archived before the merge, and SHALL mark both claims' registry searches due. No hold SHALL be released: the operator SHALL be told when the kept claim still awaits audit. The record of the merge SHALL be kept, with who undid it, when and why. `unarchive` SHALL refuse a merged claim and name the command that undoes the merge.
 
 #### Scenario: Merge undone
 - **WHEN** the operator undoes the merge of "VSV-EBOV" into "Ervebo"
@@ -101,7 +113,7 @@ The operator SHALL be able to correct the name of a claim's intervention. The ol
 - **THEN** the rename is refused and the operator is given the `claim merge` command for the two claims
 
 ### Requirement: Registry search due after a merge or a rename
-A rename SHALL mark the claim's registry search as due, and a merge SHALL mark the kept claim's. `thenwhat prepare --due` SHALL prepare every claim whose registry search is due and that was not merged into another. A registry search of the claim that succeeds SHALL clear the mark.
+A rename SHALL mark the claim's registry search as due, and a merge SHALL mark the kept claim's. `thenwhat prepare --due` SHALL prepare every claim whose registry search is due and that was not merged into another. A registry search of the claim SHALL clear the mark only when every step of it succeeded and every name could be searched for.
 
 #### Scenario: Search due after a rename
 - **WHEN** an approved claim's intervention was renamed and the operator runs `thenwhat prepare --due`
