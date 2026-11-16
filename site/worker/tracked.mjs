@@ -3,6 +3,7 @@
 import { nameKey, regimenKeys, regimenParts } from "./names.mjs";
 
 export function withCurrentClaims(found, index) {
+  if (Array.isArray(found?.claims)) return { ...found, tracked: [], claims: found.claims.map(claim => withCurrentClaims(claim, index)) };
   // Exact source-address responses have no clinical reading to reassociate.
   if (found?.about_a_treatment !== true) return found;
   const names = (Array.isArray(found.names) && found.names.length ? found.names : [found.treatment])

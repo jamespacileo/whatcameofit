@@ -51,6 +51,7 @@ function sourceOf(post, articleTracked) {
 const PASTE_INSTEAD = "Paste its text below, or put the address of the article it links to in the box above.";
 
 const REFUSALS = {
+  multiple_claims: "This page reports several separate treatments. Update the extension or open this site's current search to see each claim separately.",
   unreadable_robots:
     "That site does not allow software to read its articles, so this one was not read. Paste its headline and opening paragraphs below instead.",
   unreadable: "The article could not be opened. It may be behind a paywall. Paste its headline and opening paragraphs below instead.",
@@ -148,6 +149,7 @@ function matchConfidence(score) {
 function describeResearch(research) {
   if (!research) return null; // Old shared/browser caches remain readable.
   const unavailable = (source, status) => {
+    if (status === "not_checked") return `${source} was not checked within this page's search allowance.`;
     if (status === "limit") return `${source} is paused at its free usage limit. Try again later.`;
     if (status === "not_configured") return `${source} is not configured.`;
     if (status === "unavailable") return `${source} could not be reached. Try again later.`;
@@ -197,6 +199,10 @@ export function describeAnswer(answer) {
     ? "Read from the visible screenshot and caption. A video contributes only its current frame, not its audio. This identifies what the post claims; it does not establish that the claim is true."
     : sourceOf(answer.post, answer.article_tracked);
   const nothing = { subject: null, searchedAlso: null, trialSaid: null, tracked: [], likely: [], mentioned: [], mentionedLead: LIVE.mentionedLead, rest: null, none: null, papersUnchecked: null, research: null };
+  if (Array.isArray(answer.claims)) {
+    return { ...nothing, marked, source, notices, lead: `${answer.claims.length} separate treatment claims`,
+      claims: answer.claims.map(claim => describeAnswer({ ...claim, cache: answer.cache })) };
+  }
   // A post that links to an article the site tracks: its reviewed page is the answer,
   // and no automatic search was made, so nothing is marked as one.
   if (answer.article_tracked) {
@@ -247,7 +253,10 @@ export function describeAnswer(answer) {
       others > 0
         ? `${others} other ${others === 1 ? "record was" : "records were"} found and read as not being trials of this treatment for this condition.`
         : null,
-    none: likely.length === 0 ? LIVE.none : null,
+    none: likely.length === 0 && !["partial", "unchecked"].includes(answer.check_state) ? LIVE.none : null,
+    unchecked: ["partial", "unchecked"].includes(answer.check_state)
+      ? `${answer.check_state === "partial" ? "This claim was only partly checked" : "This claim remains unchecked"}${answer.check_reason === "timeout" ? " because the search ran out of time" : answer.check_reason === "source_unavailable" ? " because a source could not be reached" : " within this page's search allowance"}. Missing results do not rule out trials. Search this claim separately to continue.`
+      : null,
     papersUnchecked: papersUnchecked(answer.papers_unchecked),
     notices,
     research: describeResearch(answer.research),

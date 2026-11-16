@@ -235,14 +235,14 @@ function disclosure(label, children, className = "") {
   ]);
 }
 
-function recordCard(item, address, automatic, actions, confidenceMeaning) {
+function recordCard(item, address, automatic, actions, confidenceMeaning, heading = "h2") {
   // New answers carry separate fields; older cached wording remains usable.
   const metadata = item.registryId
     ? [["phase", item.phase], ["people", item.state]]
     : (item.detail ?? "").split(" · ").filter(Boolean).map((value) => [null, value]);
   const confidence = item.confidenceLabel ?? text.confidenceUnavailable;
   return el("li", "result-card", [
-    el("h2", "result-title", [link(item.title ?? item.headline, address, null, actions.open)]),
+    el(heading, "result-title", [link(item.title ?? item.headline, address, null, actions.open)]),
     metadata.some(([, value]) => value) && el("p", "tags result-detail", metadata.filter(([, value]) => value).map(([name, value]) =>
       el("span", "tag", [name && icon(name), value]))),
     automatic ? disclosure([
@@ -257,14 +257,31 @@ function recordCard(item, address, automatic, actions, confidenceMeaning) {
 
 function answerBlock(state, site, actions) {
   const { shown } = state;
+  if (shown.claims) return [
+    shown.marked && disclosure([icon("search"), el("span", null, "Automatic · Unreviewed")], [el("p", null, shown.marked)], "provenance"),
+    state.cachedAt && el("p", "cache-note", [icon("clock"), `Previous result · ${day.format(new Date(state.cachedAt))}`]),
+    el("h1", "lead", shown.lead),
+    shown.source && el("p", "small", shown.source),
+    ...shown.claims.map(claim => el("section", "independent-claim", answerBlock({
+      ...state, nested: true, cachedAt: null, research: null,
+      shown: { ...claim, marked: null, notices: [], confidenceMeaning: shown.confidenceMeaning, likelyLead: shown.likelyLead },
+    }, site, actions))),
+    el("footer", "answer-notes", [
+      disclosure([icon("info"), el("span", null, "Sources & privacy")], [
+        ...shown.notices.map(notice => el("p", null, notice)), privacyNote(site, actions),
+      ]),
+      el("p", "medical-note", "Not medical advice. A trial is not a treatment option."),
+    ]),
+  ];
   const records = (items, address, automatic = false) => el("ul", "records", items.map((item) =>
-    recordCard(item, address(item), automatic, actions, shown.confidenceMeaning)));
+    recordCard(item, address(item), automatic, actions, shown.confidenceMeaning, state.nested ? "h3" : "h2")));
   const context = [shown.source, shown.searchedAlso, shown.trialSaid].filter(Boolean);
   return [
     shown.marked && disclosure([icon("search"), el("span", null, "Automatic · Unreviewed")], [el("p", null, shown.marked)], "provenance"),
     state.cachedAt && el("p", "cache-note", [icon("clock"), `Previous result · ${day.format(new Date(state.cachedAt))}`]),
-    el("h1", "lead", shown.subject?.treatment ?? shown.lead),
+    el(state.nested ? "h2" : "h1", "lead", shown.subject?.treatment ?? shown.lead),
     shown.subject?.condition && el("p", "indication", shown.subject.condition),
+    shown.unchecked && el("p", "empty-result", shown.unchecked),
     shown.tracked.length > 0 && records(shown.tracked, (claim) => site.url + claim.page),
     shown.likely.length > 0 && el("p", "listed", `${shown.likely.length} possible ${shown.likely.length === 1 ? "match" : "matches"}`),
     shown.likely.length > 0 && records(shown.likely, (record) => record.url, true),
@@ -347,7 +364,7 @@ function recentCard(entry, actions) {
     candidates.length === 1 && only.status && el("p", "kept-status", only.status),
     candidates.length === 1 && link(opening(only.status ? text.open : only.title), only.url, "button quiet", actions.open),
     candidates.length > 1 && press(text.possible(candidates.length), "button quiet", () => actions.showEntry(entry.key)),
-    candidates.length === 0 && el("p", "small", entry.answer.limitation || text.noneThen),
+    (entry.answer.limitation || candidates.length === 0) && el("p", "small", entry.answer.limitation || text.noneThen),
   ]);
 }
 
