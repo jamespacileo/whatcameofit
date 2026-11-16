@@ -15,6 +15,7 @@ awaits `thenwhat prepare`, which searches the registries and then decides it by 
 for drafts, so that no claim is published with a status no search stands behind.
 """
 
+import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -118,6 +119,35 @@ CLAIM_IDENTITY_LOCK = 7_468_656_001
 # An article joins a candidate claim only when the same-claim decision gives that claim
 # more than every other answer together.
 SAME_CLAIM_MAJORITY = 0.5
+
+
+# How a read that would duplicate a claim names that claim in its detail.
+NAMES_OVERLAP = "names overlap"
+_OVERLAPPING = re.compile(rf"; {NAMES_OVERLAP} ([a-z0-9-]+),")
+
+
+def reads_naming_archived_claims(session: Session) -> list[tuple[LinkLead, Claim]]:
+    """Leads whose read was left identity unresolved because its treatment and condition
+    overlap a claim that is now archived, with that claim, oldest lead first. A claim
+    archived at audit for a fault can then be fixed and unarchived, and its leads read
+    again, instead of the reads staying unresolved."""
+    leads = session.scalars(
+        select(LinkLead)
+        .where(LinkLead.read_outcome == ReadOutcome.IDENTITY_UNRESOLVED)
+        .order_by(LinkLead.id)
+    )
+    named = [
+        (lead, found[1]) for lead in leads if (found := _OVERLAPPING.search(lead.read_detail or ""))
+    ]
+    archived = {
+        claim.slug: claim
+        for claim in session.scalars(
+            select(Claim).where(
+                Claim.slug.in_({slug for _, slug in named}), Claim.archived_at.is_not(None)
+            )
+        )
+    }
+    return [(lead, archived[slug]) for lead, slug in named if slug in archived]
 
 
 class NothingToRetry(BackfillError):
@@ -625,7 +655,7 @@ class LinkRead:
                 return self._finish(
                     record,
                     ReadOutcome.IDENTITY_UNRESOLVED,
-                    f"{draft.intervention} for {draft.indication}; names overlap {collision}, "
+                    f"{draft.intervention} for {draft.indication}; {NAMES_OVERLAP} {collision}, "
                     "but the same treatment and condition were not established",
                 )
             if business:
