@@ -1,7 +1,7 @@
 {
   "checked_at": "2026-11-16T02:05:00.182779+00:00",
   "base_commit": "e7c29246facc0ccdeb2b992ee33c7e6ac19480a4",
-  "released": false,
+  "released": true,
   "scope": "Reading instructions and saved-answer invalidation; two normally extracted and prepared cards. No change to trial-scoring instructions, registry limits, clinical status rules or permissions.",
   "reading_diagnosis": {
     "baseline": "Fresh configured-model readings reduced the insert alias to its ingredient, omitted the lung-disease population, and named ER-100 plus its activation agent as a combination. Earlier released N007 preferred an oral-drug trial. The minimal two-record reproduction used a synthetic scope-only gist, not the discarded released gist.",
@@ -99,7 +99,11 @@
       "lint_and_types": "passed"
     },
     "strict_spec": "passed",
-    "public_rehearsal": "passed; final build verification to be repeated sequentially after full check"
+    "public_rehearsal": "passed; repeated sequentially after full checks",
+    "independent_reviews": {
+      "standards": "clear",
+      "specification": "clear"
+    }
   },
   "cards": [
     {
@@ -198,14 +202,21 @@
   },
   "safari": {
     "candidate_version": "0.9.17",
-    "installed_version": "0.9.15 (24)",
-    "note": "0.9.16 belongs to the separate unaccepted draft experiment and is skipped. Native checks remain blocked: computer control still reports locked after user confirmation."
+    "installed_version": "0.9.17 (25)",
+    "note": "Signed universal update installed with unchanged permissions and a 0.9.15 rollback. All 35 packaged resources and installed mapping/reuse functions verified; native popup and browser storage remain unverified."
   },
   "remaining": [
-    "review and deploy this change",
-    "install signed Safari update",
-    "rerun released affected URLs and update corpus/Sheet",
     "native popup and storage reuse remain unverified",
+    "N007 bounded live scorer remains uncertain about LUCIA despite correct exact-card coverage",
     "A052 card and other corpus coverage remain incomplete"
-  ]
+  ],
+  "release": {
+    "pull_request": 186,
+    "commit": "17437c8b19169727a188fc381ed73588f5169184",
+    "ci_run": 43790600268,
+    "result": "success",
+    "worker_id": "066c1802-430c-4560-8560-772122b61d8d",
+    "deployed_at": "2026-11-16T02:15:38.9708768Z",
+    "evidence": "extension/test-corpus/runs/2026-11-16-reading-scope-release.json"
+  }
 }
