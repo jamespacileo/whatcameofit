@@ -1,5 +1,14 @@
 # Tasks
 
+## Linked social coverage and enamel evidence
+
+- [x] Verify S030/S031 link distinct 2025 Nottingham and King's College London laboratory studies. Create and prepare separate cards, retain the specific materials and origin papers, confirm in-vitro stages as assistant, and reject four unsupported clinical/comparative statements. Normal batch preparation completes in 12 seconds.
+- [x] Verify S023's public caption and NIH-to-ASCO destination. Attach the May 31 ASCO reference to the existing later-line daraxonrasib card. Fresh production caption lookup returns the exact card and NCT06625320 at 99% in 6.1 seconds; this is installed-function composition, not native collection/popup verification. Respect the NIH shortener's robots refusal; do not add a bypass.
+- [x] Stage the normal 173-card export: two new enamel cards, one added daraxonrasib reference, all other 170 cards unchanged. Local Worker checks using fresh official Hacker News API data return both correct cards with one post request each and zero model, article or registry calls.
+- [x] Correct literature subject-tag wording and record counts after the extracted-teeth paper exposed a false implication of human study. Preserve source metadata and confirmed evidence stage; check laboratory, missing-metadata, mixed-record and legacy-export cases.
+- [ ] Complete independent review, checks and production deployment; verify the new cards, affected social URLs and installed Safari functions against the release, then update corpus and native Sheet.
+- [ ] Finish fresh S034 verification when its Reddit page is accessible; current access presents a CAPTCHA, so no fresh pass is recorded.
+
 ## 1. Released baseline
 
 - [x] 1.1 Record the 37 released reruns with separate card results; verify native Sheet values/formulas/formatting and nine corpus-cache tests.
