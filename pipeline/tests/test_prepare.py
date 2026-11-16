@@ -222,7 +222,9 @@ def test_prepare_approves_a_reads_claim_only_when_every_step_succeeded(run, sess
     for slug in ("searched", "unsearched"):
         drafted_by_a_read(session, slug)
 
-    result, _ = run("prepare", "--pending")
+    # One at a time: every claim's thread would otherwise share the one test session, and
+    # two flushing it at once fail with "Session is already flushing".
+    result, _ = run("prepare", "--pending", "--workers", "1")
 
     assert result.exit_code == 0, result.output
     assert "approved by rule, now that its registries have been searched" in result.output
