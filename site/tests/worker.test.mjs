@@ -314,6 +314,21 @@ test("Scenario: Text that names the trial", async () => {
   assert.deepEqual(found.candidates.map((c) => [c.id, c.agrees]), [["NCT00000009", ["trial_name"]], ["NCT00000001", []]]);
 });
 
+test("study identity reaches scoring ahead of an oversized condition list", async () => {
+  const record = study("NCT00000001", "Synthetic study", "Synthetic condition ".repeat(150), { acronym: "EXAMPLE-2" });
+  const model = fakeModel();
+  const scored = [];
+  model.score = async (_intro, items) => {
+    scored.push(...items);
+    return items.map(() => ({ answer: "not_a_match", probabilities: { match: 0 } }));
+  };
+  await lookUp({ text: TEXT, model, registry: fakeRegistry({ "EX-1": [record] }), index: INDEX });
+  assert.equal(scored.length, 1);
+  assert.ok(scored[0].includes('"acronym":"EXAMPLE-2"'));
+  assert.ok(scored[0].endsWith(" [truncated]"));
+  assert.ok(scored[0].split("\n").slice(1).join("\n").length <= 1500);
+});
+
 test("a study name written as a hashtag agrees with its spaced registry name", async () => {
   const named = study("NCT00000009", "EX-1 in tooth agenesis", "Tooth Agenesis", { acronym: "REGROW 2" });
   const other = study("NCT00000001", "EX-1 in tooth agenesis", "Tooth Agenesis", { acronym: "REGROW 21" });

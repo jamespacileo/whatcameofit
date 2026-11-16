@@ -671,9 +671,9 @@ def _describe(candidate: SourceRecord) -> str:
         # Preserve a complete short title's population before verbose descriptions.
         title = official if official and len(official) <= 240 else identification.get("briefTitle")
         described = {
+            "acronym": _excerpt(identification.get("acronym"), 240),
             "conditions": section.get("conditionsModule", {}).get("conditions", []),
             "study_type": section.get("designModule", {}).get("studyType"),
-            "acronym": _excerpt(identification.get("acronym"), 240),
             "title": _excerpt(title, 240),
             # Keep roles and membership ahead of verbose descriptions under the cap.
             "arms": [
