@@ -21,7 +21,7 @@ from thenwhat.claims.entities import entities_of
 from thenwhat.claims.entry import add_claim, claim_by_slug
 from thenwhat.cli import app
 from thenwhat.cli.resolve import Research, make_brands
-from thenwhat.db.models import DecisionLog, EntityMatch, EntitySubstance
+from thenwhat.db.models import Claim, DecisionLog, EntityMatch, EntitySubstance
 from thenwhat.decide.core import BackendAnswer
 from thenwhat.domain import ClaimStatus, Decider, EvidenceStage, ReviewState
 from thenwhat.llm.client import Llm, LlmSettings
@@ -119,10 +119,14 @@ class Brands:
             raise SourceUnavailable("rxnorm did not answer after 2 attempts.")
         if name == "Unsetvax":
             raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
-        if name != "Toothvax":
+        if name not in ("Toothvax", "Gumvax"):
             return []
         concept = {"rxcui": "111", "name": "examplevirus antigen", "tty": "IN"}
-        payload = {"substance": concept | {"_name": concept["name"]}, "brand": {}}
+        payload: dict = {"substance": concept | {"_name": concept["name"]}, "brand": {}}
+        if name == "Gumvax":
+            # RxNorm marks this brand a vaccine: its branded drug has a CVX code.
+            cvx = {"propName": "CVX", "propValue": "204"}
+            payload["product_codes"] = {"112": {"propConceptGroup": {"propConcept": [cvx]}}}
         return [SourceRecord("rxnorm", "111", "https://rxnorm.test/111", payload, NOW)]
 
 
@@ -357,6 +361,30 @@ def test_entity_codes_goes_on_past_a_claim_whose_source_did_not_answer(run, sess
     assert kept.external_id == "111"
 
 
+def test_entity_codes_says_a_vaccine_brands_antigen_is_not_searched(run, session: Session):
+    """Scenario: A brand the source of brands marks a vaccine"""
+    add_claim(
+        session,
+        slug="gum-vaccine",
+        headline="Vaccine regrows gums",
+        vertical="mouth-and-teeth",
+        intervention="Gumvax",
+        indication="gum recession",
+    )
+
+    result = run("entity", "codes", "gum-vaccine")
+
+    assert result.exit_code == 0, result.output
+    said = " ".join(result.output.split())
+    assert (
+        "gum-vaccine: GSRS lists no substance named 'Gumvax'. RxNorm lists it as a brand of"
+        " examplevirus antigen (RxCUI 111), and as a vaccine (CVX 204): the ingredient is an"
+        " antigen, kept but not searched as a name."
+    ) in said
+    [kept] = session.scalars(select(EntitySubstance)).all()
+    assert kept.external_id == "111"
+
+
 def test_entity_codes_stops_at_a_setup_that_cannot_ask_any_source(run, session: Session):
     for slug, intervention in [("a-unset", "Unsetvax"), ("b-branded", "Toothvax")]:
         add_claim(
@@ -469,10 +497,16 @@ def test_resolve_approves_a_confident_candidate_by_rule_by_default(
 ):
     monkeypatch.delenv("MATCH_ACCEPT_ABOVE")
 
+    claim = session.scalars(select(Claim).where(Claim.slug == SLUG)).one()
+    claim.registry_search_due_at = datetime(2026, 11, 16, tzinfo=UTC)
+    session.flush()
+
     result = run("resolve", SLUG)
 
     assert result.exit_code == 0, result.output
     assert "1 approved by rule" in result.output
+    # A search that was due after a merge or a rename, and succeeded, is due no more.
+    assert claim.registry_search_due_at is None
     [match] = session.scalars(select(EntityMatch)).all()
     assert match.reviewed_by is Decider.RULE
 
@@ -568,10 +602,17 @@ def test_resolve_keeps_its_trial_candidates_when_the_paper_search_breaks(
             raise KeyError("results")
 
     monkeypatch.setattr("thenwhat.cli.resolve.make_research", lambda s: research(BrokenPapers()))
+    due = datetime(2026, 11, 16, tzinfo=UTC)
+    claim = session.scalars(select(Claim).where(Claim.slug == SLUG)).one()
+    claim.registry_search_due_at = due
+    session.flush()
 
     result = run("resolve", SLUG)
 
     assert result.exit_code == 0, result.output
+    # A step failed, so a search that was due after a merge or a rename stays due.
+    assert claim.registry_search_due_at == due
+    assert "The registry search stays due" in result.output
     assert "Papers were not searched for" in result.output
     assert session.scalars(select(EntityMatch)).one().source_name == "clinicaltrials.gov"
 

@@ -26,10 +26,21 @@ SEARCH_FIELDS = (
     ",InterventionDescription,InterventionArmGroupLabel"
     ",ArmGroupLabel,ArmGroupType,ArmGroupDescription,ArmGroupInterventionName"
 )
-# What a bulk load keeps of each trial. No free text beyond the title.
+# What a bulk load keeps of each trial: what identifies it, its activity and results
+# dates, its sponsor, size, references and planned primary outcome. Never its
+# descriptions, eligibility, locations, contacts, results sections or reference
+# citations. Each date is asked with its type, so that actual and anticipated dates are
+# told apart.
 LIST_FIELDS = (
     "NCTId,BriefTitle,Condition,InterventionType,InterventionName,InterventionOtherName"
-    ",Phase,OverallStatus,StartDate,LeadSponsorClass"
+    ",Phase,OverallStatus,StartDate,StartDateType,LeadSponsorClass"
+    ",LastUpdatePostDate,StudyFirstPostDate"
+    ",PrimaryCompletionDate,PrimaryCompletionDateType,CompletionDate,CompletionDateType"
+    ",ResultsFirstPostDate,HasResults,WhyStopped"
+    ",Acronym,OfficialTitle,OrgStudyId,SecondaryId,SecondaryIdType"
+    ",LeadSponsorName,CollaboratorName,CollaboratorClass,EnrollmentCount,EnrollmentType"
+    ",ReferencePMID,ReferenceType,SeeAlsoLinkURL,SeeAlsoLinkLabel"
+    ",PrimaryOutcomeMeasure,PrimaryOutcomeTimeFrame"
 )
 # The most trials the registry returns in one page.
 LIST_PAGE_SIZE = 1000

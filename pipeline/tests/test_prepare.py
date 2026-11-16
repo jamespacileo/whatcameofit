@@ -154,6 +154,25 @@ def test_prepare_runs_every_step_and_carries_on_after_an_article_that_cannot_be_
     assert "one" in result.output and "could not be read" in result.output
 
 
+def test_prepare_due_prepares_the_claims_whose_registry_search_is_due(run, session: Session):
+    """Scenario: Search due after a rename (openspec claims)"""
+    claim_with_articles(session, "not-due", "https://news.example.org/a")
+    due = find_claim(session, "not-due")
+    assert due is not None
+    record_decision(due, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+    claim_with_articles(session, "renamed", "https://news.example.org/b")
+    renamed = find_claim(session, "renamed")
+    assert renamed is not None
+    record_decision(renamed, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+    renamed.registry_search_due_at = NOW
+    session.flush()
+
+    result, ran = run("prepare", "--due")
+
+    assert result.exit_code == 0, result.output
+    assert {step[1] for step in ran if step[0] == "resolve"} == {"renamed"}
+
+
 def test_prepare_with_no_claims_named_explains_and_exits_1(run):
     result, ran = run("prepare")
 
@@ -287,8 +306,9 @@ def test_a_claim_whose_terms_failed_is_still_decided(run, session: Session):
     assert claim is not None and claim.review_state is ReviewState.APPROVED
 
 
-def test_audit_list_shows_reads_that_overlap_an_archived_claim(run, session: Session):
-    """Scenario: A read that overlaps an archived claim"""
+def test_audit_list_shows_reads_that_overlap_a_claim(run, session: Session):
+    """Scenarios: A read that overlaps an archived claim, A read that overlaps a claim
+    that is not archived"""
     from thenwhat.backfill.link_read import NAMES_OVERLAP
     from thenwhat.claims.entry import archive_claim
 
@@ -314,9 +334,14 @@ def test_audit_list_shows_reads_that_overlap_an_archived_claim(run, session: Ses
     listed, _ = run("audit", "list")
 
     assert listed.exit_code == 0, listed.output
-    assert "overlaps archived archived-one  https://news.example.org/overlap-0" in listed.output
-    assert "live-one" not in listed.output
-    assert "1 read overlaps an archived claim" in listed.output
+    said = " ".join(listed.output.split())
+    assert "overlaps archived archived-one https://news.example.org/overlap-0" in said
+    assert "1 read overlaps an archived claim" in said
+    # A read that overlaps a claim that is not archived is never read again, so it is
+    # listed apart, for the operator to attach or leave.
+    assert "overlaps live-one (pending) https://news.example.org/overlap-1" in said
+    assert "1 read overlaps a claim that is not archived and made no claim" in said
+    assert said.index("overlap-0") < said.index("overlap-1")
 
 
 def under_substance(session: Session, slug: str, substance: str) -> None:

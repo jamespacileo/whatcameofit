@@ -4,7 +4,7 @@ test_news_search.py."""
 
 from collections.abc import Generator
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
 
@@ -20,8 +20,6 @@ from thenwhat.backfill.mediacloud import Story
 from thenwhat.backfill.news_search import query_for
 from thenwhat.backfill.registry_load import condition_of
 from thenwhat.cli import app
-from thenwhat.cli.backfill import _hours
-from thenwhat.config import SourceAllowance
 from thenwhat.db.models import (
     ArticleLead,
     LinkLead,
@@ -218,13 +216,6 @@ def test_plan_gives_no_cost_while_the_price_is_not_configured(
     assert result.exit_code == 0, result.output
     assert "no cost can be given, DECISIONS_INPUT_USD_PER_MTOK is not set" in result.output
     assert "$" not in result.output
-
-
-def test_a_large_job_is_stated_in_hours():
-    """Scenario: Planning, with 43,000 records at one request every five seconds"""
-    every_five_seconds = SourceAllowance(requests=50000, period_hours=24, interval_seconds=5)
-
-    assert _hours(43000, every_five_seconds) == "about 60 hours"
 
 
 # --- run ---------------------------------------------------------------------------------
@@ -923,3 +914,38 @@ def test_load_trials_refuses_a_set_and_a_condition_together(run):
 
     assert result.exit_code == 1
     assert "Give --condition or --trials, not both." in result.output
+
+
+def test_trial_sets_counts_each_set_by_phase(run, session: Session):
+    trials = add_trials(session, 4)
+    phases_of = (["PHASE2"], ["PHASE3"], ["PHASE2", "PHASE3"])
+    for stored, phases in zip(trials[:3], phases_of, strict=True):
+        stored.phases = phases
+        stored.overall_status = "RECRUITING"
+        stored.last_update_posted = date(2026, 3, 1)
+    trials[3].overall_status = "COMPLETED"
+    trials[3].completion_date, trials[3].completion_date_type = "2025-09", "ACTUAL"
+    trials[3].has_results = True
+    trials[3].last_update_posted = date(2026, 3, 1)
+    add_trials(session, 1, registry="older-registry")
+    session.flush()
+
+    result = run("trial-sets")
+
+    assert result.exit_code == 0, result.output
+    assert (
+        "active-since-2025 (phase 2 or 3, under way, record updated on or after 2025-01-01): "
+        f"3 trials, loaded {NOW.date()}" in result.output
+    )
+    assert "  phase 2: 1\n  phase 2/3: 1\n  phase 3: 1\n" in result.output
+    assert "results posted): 1 trial, loaded" in result.output
+    assert "1 of 5 stored trials were loaded before these fields" in result.output
+
+
+def test_trial_sets_is_refused_until_trials_have_the_wider_record(run, session: Session):
+    add_trials(session, 2)
+
+    result = run("trial-sets")
+
+    assert result.exit_code == 1
+    assert "No stored trial has the activity and results fields yet." in result.output

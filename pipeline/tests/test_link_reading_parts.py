@@ -322,6 +322,53 @@ def test_a_claim_shares_a_name_the_registry_of_substances_gives_its_substance(se
     assert sharing(session, "moodera") == []
 
 
+@pytest.mark.parametrize(
+    ("product_codes", "offered"),
+    [
+        # A drug: its ingredient is a name of it.
+        ({"2": {}}, True),
+        # A monoclonal antibody CDC gives a CVX code (306) is still a drug.
+        (
+            {"2": {"propConceptGroup": {"propConcept": [{"propName": "CVX", "propValue": "306"}]}}},
+            True,
+        ),
+        # A vaccine (CVX 204): its ingredient is an antigen another vaccine can share.
+        (
+            {"2": {"propConceptGroup": {"propConcept": [{"propName": "CVX", "propValue": "204"}]}}},
+            False,
+        ),
+        # Kept before vaccines were told apart: not known to be no vaccine.
+        (None, False),
+    ],
+)
+def test_an_ingredient_from_rxnorm_finds_a_claim_only_when_its_brand_is_no_vaccine(
+    session: Session, product_codes, offered: bool
+):
+    from thenwhat.db.models import EntitySubstance
+
+    named(session, "toothvax-agenesis", "Toothvax", "tooth agenesis")
+    entity = session.scalars(select(Entity).where(Entity.name == "Toothvax")).one()
+    payload: dict = {"substance": {"rxcui": "1", "_name": "examplevirus glycoprotein"}}
+    if product_codes is not None:
+        payload["product_codes"] = product_codes
+    session.add(
+        EntitySubstance(
+            entity_id=entity.id,
+            source_name="rxnorm",
+            external_id="1",
+            url="https://rxnorm.test/1",
+            payload=payload,
+            fetched_at=datetime(2026, 11, 16, tzinfo=UTC),
+            codes=[],
+        )
+    )
+    session.flush()
+
+    found = claims_of_a_named_substance(session, ["examplevirus glycoprotein"])
+
+    assert [claim.slug for claim in found] == (["toothvax-agenesis"] if offered else [])
+
+
 def test_no_more_claims_are_offered_than_the_decision_is_shown(session: Session):
     for number in range(MAX_NAMED_CLAIMS + 2):
         named(session, f"esketamine-condition-{number}", "esketamine", f"condition {number}")

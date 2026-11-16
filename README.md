@@ -210,6 +210,8 @@ After changing what the export contains, regenerate its schema: `thenwhat export
 
 `thenwhat archive <slug> --reason "why"` takes a published claim off the site from the next export: its address answers 410 with the date, and it leaves every feed, the sitemap, the lookup file and the data file. The reason stays in the database. `thenwhat unarchive <slug>` puts it back.
 
+Two claims for one intervention and indication are merged, not archived: `thenwhat claim merge <duplicate> <kept> --reason "why"` moves the duplicate's articles, promises, reported statements, names and named entities to the kept claim and archives the duplicate; `thenwhat claim unmerge <duplicate> --reason "why"` undoes it. Its registry matches and events are not moved; the kept claim's registries are searched again. A wrong intervention name is corrected with `thenwhat entity rename <slug> "<old name>" "<new name>"` (`--old-is-description` drops the old name, `--reslug` makes the slug again). After either, run `thenwhat prepare --due`, then export: the old address redirects to the claim's page.
+
 ### CSV import
 
 `thenwhat claim import-csv claims.csv` imports every row or none. Inside the container the file must be reachable, for example `docker compose run --rm -v "$PWD/data/seed:/seed" pipeline thenwhat claim import-csv /seed/claims.csv`.
@@ -244,6 +246,7 @@ thenwhat backfill steps                       # the steps that exist
 thenwhat backfill plan                        # what is due, the requests and hours it needs
 thenwhat backfill run news_search --limit 200 # search the news for 200 trials
 thenwhat backfill leads                       # how many searched trials have an article
+thenwhat backfill trial-sets                  # active-since-2025 and completed-with-results-since-2025, by phase
 ```
 
 - `plan` sends nothing. Run it before `run`: it shows how many records are due, how many requests they need, and how much of the source's allowance is left.

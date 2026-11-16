@@ -9,6 +9,7 @@ import typer
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from thenwhat.claims.corrections import rename_intervention
 from thenwhat.claims.entities import (
     add_entity,
     add_search_phrase,
@@ -60,7 +61,7 @@ from thenwhat.sources.europepmc import EuropePmc
 from thenwhat.sources.gsrs import Gsrs
 from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.ror import Ror
-from thenwhat.sources.rxnorm import RxNorm
+from thenwhat.sources.rxnorm import RxNorm, vaccine_codes
 from thenwhat.sources.terms import SOURCES
 
 entity_app = typer.Typer(help="Add entities, synonyms and the origin paper.", no_args_is_help=True)
@@ -155,6 +156,13 @@ def say_codes(slug: str, answer: Codes) -> None:
             f" ({'; '.join(answer.substances)}), so none was taken. No development code"
             " was added."
         )
+    elif fell_back and answer.record is not None and vaccine_codes(answer.record.payload):
+        said = (
+            f"{nothing}. {by} lists it as a brand of {answer.substances[0]}, and as a"
+            f" vaccine (CVX {', '.join(vaccine_codes(answer.record.payload))}): the"
+            " ingredient is an antigen, kept but not searched as a name. No development"
+            " code was added."
+        )
     elif fell_back:
         said = (
             f"{nothing}. {by} lists it as a brand of {answer.substances[0]}, which is"
@@ -228,6 +236,68 @@ def entity_synonym(
         entity = add_synonym(session, claim_slug, entity_name, synonym)
         names = ", ".join(entity.synonyms)
         out.print(f"{entity.name} is also known as: {names}.", markup=False)
+
+
+@entity_app.command("rename")
+def entity_rename(
+    claim_slug: Annotated[str, typer.Argument(help="Slug of the claim.")],
+    old_name: Annotated[str, typer.Argument(help="What the intervention is called now.")],
+    new_name: Annotated[str, typer.Argument(help="Its name alone: no maker, dose or brackets.")],
+    old_is_description: Annotated[
+        bool,
+        typer.Option(
+            "--old-is-description",
+            help="The old name is a description, a dose or carries brackets: drop it."
+            " Without this it is kept as a synonym.",
+        ),
+    ] = False,
+    reslug: Annotated[
+        bool,
+        typer.Option(
+            "--reslug",
+            help="Make the slug again by rule from the new name. The old address leads"
+            " to the new one.",
+        ),
+    ] = False,
+    as_assistant: Annotated[
+        bool,
+        typer.Option(
+            "--as-assistant",
+            help="Record the rename as decided by an AI assistant, not by the operator.",
+        ),
+    ] = False,
+) -> None:
+    """Correct the name of a claim's intervention. Its registries are due to be searched
+    again under the new name (`thenwhat prepare --due`)."""
+    with entry_session() as session:
+        done = rename_intervention(
+            session,
+            claim_slug,
+            old_name,
+            new_name,
+            by=Decider.ASSISTANT if as_assistant else Decider.HUMAN,
+            now=datetime.now(UTC),
+            old_is_description=old_is_description,
+            reslug=reslug,
+        )
+        by = ", decided by the assistant" if as_assistant else ""
+        kept = "kept as a synonym" if done.kept_as_synonym else "dropped"
+        out.print(
+            f"Renamed the intervention of {done.claim.slug} to {done.entity.name}{by}."
+            f" '{done.old_name}' was {kept}.",
+            markup=False,
+        )
+        if done.old_slug is not None:
+            out.print(
+                f"The slug is now {done.claim.slug}. After the next export and deploy,"
+                f" /{done.old_slug} leads to it.",
+                markup=False,
+            )
+        out.print(
+            f"Its registry search is due again: run `thenwhat prepare {done.claim.slug}`"
+            " or `thenwhat prepare --due`.",
+            markup=False,
+        )
 
 
 @entity_app.command("phrase")
@@ -486,6 +556,10 @@ def _related_research(
         out.print(papers.usage.line(), markup=False)
 
 
+# The steps of the registry search now running that failed and were carried on past.
+STEPS_FAILED: list[str] = []
+
+
 def _step[T](session: Session, what_failed: str, work: Callable[[], T]) -> T | None:
     """Run one step of related research in a savepoint. A decision that failed is
     reported and its log entry kept; anything else undoes the step and is reported."""
@@ -495,9 +569,11 @@ def _step[T](session: Session, what_failed: str, work: Callable[[], T]) -> T | N
                 return work()
             except DecisionFailed as failed:
                 err.print(f"{what_failed}: {failed}", markup=False)
+                STEPS_FAILED.append(what_failed)
                 return None
     except Exception as failed:
         err.print(f"{what_failed}: {failed or type(failed).__name__}", markup=False)
+        STEPS_FAILED.append(what_failed)
         return None
 
 
@@ -632,6 +708,7 @@ def resolve_command(
         reject_below = settings.match_reject_below
         accept_above = settings.match_accept_above
         refused: dict[str, str] = {}
+        STEPS_FAILED.clear()
 
         def unsearchable(term: UnsearchableTerm) -> None:
             """Say once that the registry cannot search for a term, and go on with the
@@ -721,6 +798,16 @@ def resolve_command(
             # model's recorded cost and the registries' cached answers are to be kept.
             failure = str(failed)
         else:
+            # The search this claim was due after a merge or a rename has been made only
+            # when every step succeeded and every name could be searched for: otherwise
+            # it stays due.
+            if not STEPS_FAILED and not refused:
+                claim.registry_search_due_at = None
+            elif claim.registry_search_due_at is not None:
+                err.print(
+                    "The registry search stays due: a step failed or a name was not searched for.",
+                    markup=False,
+                )
             _say_matches(
                 claim,
                 added,

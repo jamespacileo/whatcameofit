@@ -123,6 +123,10 @@ class Claim(Reviewed, Base):
             "(archived_at IS NULL) = (archive_reason IS NULL)",
             name="archive_has_reason",
         ),
+        CheckConstraint(
+            "merged_into_id IS NULL OR (archived_at IS NOT NULL AND merged_into_id <> id)",
+            name="merged_is_archived",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -152,7 +156,61 @@ class Claim(Reviewed, Base):
     # Approved by `thenwhat prepare` for a link lead's read, and held off the site until
     # the batch it came in has been audited (`thenwhat audit clear`). Never exported.
     awaiting_audit_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
+    # The claim this one was merged into (`thenwhat claim merge`). A merged claim is
+    # archived, stands for no intervention any more, and its address leads to that claim.
+    merged_into_id: Mapped[int | None] = mapped_column(ForeignKey("claim.id"), index=True)
+    # Set when the intervention gained or changed a name, so its registries are to be
+    # searched again (`thenwhat prepare --due`). Cleared by a registry search that succeeds.
+    registry_search_due_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
+
+
+class ClaimChange(Base):
+    """A correction to which claim stands for a treatment, or to what its intervention
+    is called: a merge of one claim into another, or a rename. Kept for good, with who
+    decided it. Behavior: openspec claims, "Merging duplicate claims" and "Renaming an
+    intervention"."""
+
+    __tablename__ = "claim_change"
+    __table_args__ = (
+        CheckConstraint("kind IN ('merge', 'rename')", name="kind_known"),
+        CheckConstraint("decided_by IN ('human', 'assistant')", name="decided_by_a_reader"),
+        CheckConstraint("(kind = 'merge') = (into_claim_id IS NOT NULL)", name="merge_has_target"),
+        CheckConstraint(
+            "(kind = 'rename') = (old_name IS NOT NULL) AND (kind = 'rename') ="
+            " (new_name IS NOT NULL)",
+            name="rename_has_names",
+        ),
+        CheckConstraint("kind = 'rename' OR former_slug IS NULL", name="former_slug_of_a_rename"),
+        CheckConstraint("(kind = 'merge') = (record IS NOT NULL)", name="merge_has_record"),
+        CheckConstraint(
+            "(undone_at IS NULL) = (undone_by IS NULL) AND (undone_at IS NULL OR kind = 'merge')"
+            " AND (undone_by IS NULL OR undone_by IN ('human', 'assistant'))",
+            name="undone_is_recorded",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # The claim that was merged away, or whose intervention was renamed.
+    claim_id: Mapped[int] = mapped_column(ForeignKey("claim.id"), index=True)
+    kind: Mapped[str] = mapped_column(Text)
+    into_claim_id: Mapped[int | None] = mapped_column(ForeignKey("claim.id"))
+    old_name: Mapped[str | None] = mapped_column(Text)
+    new_name: Mapped[str | None] = mapped_column(Text)
+    # The slug the claim had before a rename made it a new one. The address stays taken,
+    # and leads to the claim's page wherever that now is.
+    former_slug: Mapped[str | None] = mapped_column(Text, unique=True)
+    # Private, like an archive reason: never exported.
+    reason: Mapped[str | None] = mapped_column(Text)
+    decided_by: Mapped[Decider] = mapped_column(_enum(Decider, "decided_by"))
+    decided_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    # For a merge: every row it moved and every name it added, by id, with what shows
+    # the two interventions are one treatment. `claim unmerge` puts back exactly these.
+    record: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    # Set when a merge was undone, with who undid it and why. The row is kept.
+    undone_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
+    undone_by: Mapped[Decider | None] = mapped_column(_enum(Decider, "undone_by"))
+    undone_reason: Mapped[str | None] = mapped_column(Text)
 
 
 class SourceArticle(Base):
@@ -681,6 +739,13 @@ class RegistryTrial(Base):
         UniqueConstraint(
             "registry_name", "external_id", name="uq_registry_trial_registry_external"
         ),
+        # What the named sets of stored trials select on (backfill/trial_sets.py).
+        Index("ix_registry_trial_overall_status", "overall_status"),
+        Index(
+            "ix_registry_trial_completion_with_results",
+            "completion_date",
+            postgresql_where=text("has_results AND completion_date_type = 'ACTUAL'"),
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -699,6 +764,22 @@ class RegistryTrial(Base):
     # Worked out by rule on load; empty when the registry gives no usable name.
     search_name: Mapped[str | None] = mapped_column(Text)
     search_indication: Mapped[str | None] = mapped_column(Text)
+    # What the registry states of the trial's activity and results, as it gives them.
+    # Empty where the registry gives nothing, and on trials loaded before these were
+    # asked for; never inferred. A completion date can be a month without a day, and its
+    # type says whether it is ACTUAL or anticipated (ESTIMATED).
+    start_date_type: Mapped[str | None] = mapped_column(Text)
+    last_update_posted: Mapped[date | None] = mapped_column(index=True)
+    study_first_posted: Mapped[date | None]
+    primary_completion_date: Mapped[str | None] = mapped_column(Text)
+    primary_completion_date_type: Mapped[str | None] = mapped_column(Text)
+    completion_date: Mapped[str | None] = mapped_column(Text)
+    completion_date_type: Mapped[str | None] = mapped_column(Text)
+    results_first_posted: Mapped[date | None]
+    has_results: Mapped[bool | None]
+    acronym: Mapped[str | None] = mapped_column(Text)
+    # Empty when the lead sponsor is an individual: a person's name is not kept here.
+    lead_sponsor_name: Mapped[str | None] = mapped_column(Text)
     raw_payload: Mapped[dict[str, Any]] = mapped_column(JSONB)
     fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
 
