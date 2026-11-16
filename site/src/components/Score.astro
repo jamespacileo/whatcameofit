@@ -1,0 +1,31 @@
+---
+// One score, wherever the claim page shows one: a small chip with the band in words and
+// the percentage in sight, and a panel that says what the number is about. The chip's
+// text is the whole phrase ("Match to this claim: high, 92%"); where the row already
+// says what is matched, the opening words are kept for a screen reader and for paper.
+// A reading in the lower band is outlined in dashes and says "Low confidence" in words.
+// Openspec score-chip.
+import { nextScoreId } from "../lib/score-id";
+import Pop from "./Pop.astro";
+
+interface Props {
+  /** What the score is of: "Match to this claim", "Term match". Left out when the words say it. */
+  about?: string;
+  /** The band and the percentage: "high, 92%". */
+  words: string;
+  /** Show `about` in the chip, where nothing beside it says what is matched. */
+  shown?: boolean;
+  /** A reading in the lower band, which decides nothing. */
+  low?: boolean;
+}
+
+const { about, words, shown = false, low = false } = Astro.props;
+const id = nextScoreId();
+---
+
+<Pop id={id} class={low ? "score low" : "score"} inline>
+  <Fragment slot="trigger">
+    {about && <span class={shown ? "score-about" : "visually-hidden"}>{about}: </span>}<span class="score-words">{words}</span>
+  </Fragment>
+  <slot />
+</Pop>

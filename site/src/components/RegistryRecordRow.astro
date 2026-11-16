@@ -6,10 +6,11 @@
 // trial details here"); a matched record's match note; then what it is for and names.
 // Openspec registry-record-rows.
 import ExternalLink from "@lucide/astro/icons/external-link";
-import { matchNote, possibleMatchNote } from "../lib/confidence";
+import { MATCH_MEANING, matchWords, readingOf } from "../lib/confidence";
 import type { ExportedMatch } from "../lib/export";
 import { FOR_LABEL, NAMED_LABEL, NOT_READ_YET, phaseOf, sizeOf, stateOf } from "../lib/registry-records";
 import { sourceName } from "../lib/status";
+import Score from "./Score.astro";
 import TrialDetailsLink from "./TrialDetailsLink.astro";
 
 interface Props {
@@ -22,19 +23,23 @@ const record = match.record ?? null;
 const title = record?.title ?? `Registry record ${match.external_id}`;
 const at = `${match.external_id} at ${sourceName(match.source_name)}`;
 const size = record ? sizeOf(record) : null;
-const standing = [
-  ...(possible ? [possibleMatchNote(match.score)] : []),
-  ...(record ? [phaseOf(record), ...(size ? [size] : []), stateOf(record)] : []),
-];
+const standing = record ? [phaseOf(record), ...(size ? [size] : []), stateOf(record)] : [];
 ---
 
 <li class="record-row">
-  <p class="record-title">{title}</p>
+  <div class="record-head">
+    <p class="record-title">{title}</p>
+    {/* A possible record says so in sight, before its phase and state. */}
+    <Score about={possible ? "Possible match" : "Match to this claim"} words={matchWords(match.score)} shown={possible}>
+      <span>{readingOf(match.reading)}</span>
+      <span>{MATCH_MEANING}</span>
+    </Score>
+  </div>
   {
     standing.length > 0 && (
       <p class="record-meta">
         {standing.map((part, index) => (
-          <span class={possible && index === 0 ? "record-possible" : undefined}>{part}</span>
+          <span>{part}</span>
         ))}
       </p>
     )
@@ -53,7 +58,6 @@ const standing = [
     }
     <TrialDetailsLink url={match.url} />
   </p>
-  {!possible && <p class="record-match">{matchNote(match.score)}</p>}
   {
     record && (record.conditions.length > 0 || record.interventions.length > 0) && (
       <dl class="record-fields">
