@@ -138,6 +138,23 @@ test("an updated index removes an old exact-source association", async () => {
   assert.equal(calls.states.some(state => state.kind === "tracked"), false);
 });
 
+test("closing while the saved index loads starts no late revalidation", async () => {
+  const saved = deferred();
+  const begun = deferred();
+  const writes = [];
+  const { controller, calls } = setup({
+    storage: { get: async key => { if (key !== "lookup") return {}; begun.resolve(); return saved.promise; }, set: async value => writes.push(value) },
+  });
+  const opening = controller.open();
+  await begun.promise;
+  controller.close();
+  saved.resolve({ lookup: { version: 2, index, etag: '"old"', savedAt: Date.now() } });
+  await opening;
+  assert.equal(calls.fetch.length, 0);
+  assert.equal(writes.length, 0);
+  assert.deepEqual(calls.states.map(state => state.kind), ["checking"]);
+});
+
 test("failed or stalled revalidation uses the dated saved index and never writes a late response", async () => {
   const savedAt = Date.now() - 1000;
   const saved = { ...index, articles: { [tab.key]: ["old"] }, claims: { old: { page: "/old", headline: "Saved card" } } };

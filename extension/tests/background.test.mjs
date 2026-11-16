@@ -26,7 +26,7 @@ async function background(notifications, action) {
       storage: { local: { get: async () => structuredClone(saved), set: async value => Object.assign(saved, value) }, onChanged: event("changed") },
       ...(notifications ? { notifications: { create: async (id, message) => { delivered.push({ id, ...message }); return id; }, clear: async () => {}, onClicked: event("clicked") } } : {}),
     };
-    globalThis.fetch = async () => Response.json({ claims: { example: { page: "/example", headline: "Synthetic claim", status: "Phase 1 trial", place: 3 } } });
+    globalThis.fetch = async () => Response.json({ claims: { example: { page: "/example", headline: "Synthetic claim", status: "Phase 1 trial", place: 3 } } }, { headers: { ETag: '"current"' } });
     await import(pathToFileURL(path.join(directory, "background.js")));
     await action({ listeners, alarms, delivered, saved });
   } finally {
@@ -44,6 +44,7 @@ test("Safari background starts and refreshes without notifications, preserving u
     assert.ok(alarms.some(alarm => alarm.name === "refresh"));
     await listeners.alarm({ name: "refresh" });
     assert.equal(saved.lookup.index.claims.example.status, "Phase 1 trial");
+    assert.equal(saved.lookup.etag, '"current"', "the next popup can revalidate this background copy without downloading it again");
     assert.deepEqual(saved.told, {});
     await listeners.alarm({ name: "remind:/example|2026-01-01" });
     assert.equal(saved.reminders.length, 1);

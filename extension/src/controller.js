@@ -172,6 +172,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
 
   async function loadIndex() {
     const { lookup: saved = null } = await storage.get("lookup").catch(() => ({}));
+    if (closed) return { index: null, savedAt: null };
     // Publication can add or remove a card while a clinical answer is still reusable.
     // Revalidate before either path, transferring no body when the index is unchanged.
     const etag = saved?.version === CACHE_VERSION && typeof saved.etag === "string" ? saved.etag : null;
@@ -184,6 +185,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
         if (!response.ok) throw new Error(`status ${response.status}`);
         return { index: await response.json(), etag: response.headers?.get("ETag") ?? null };
       });
+      if (closed) return { index: null, savedAt: null };
       await storage.set({ lookup: { version: CACHE_VERSION, ...refreshed, savedAt: Date.now() } }).catch(() => {});
       return { index: refreshed.index, savedAt: null };
     } catch {
