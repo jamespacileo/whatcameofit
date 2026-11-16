@@ -40,6 +40,7 @@ function candidateText(study) {
   const described = {
     conditions: section.conditionsModule?.conditions ?? [],
     study_type: section.designModule?.studyType,
+    acronym: excerpt(section.identificationModule?.acronym, 240),
     title: excerpt(title, 240),
     // Arm roles and membership precede verbose descriptions: these establish
     // what is tested even when the record's later details exceed the limit.

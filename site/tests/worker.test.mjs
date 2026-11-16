@@ -134,6 +134,7 @@ test("repeated arm labels do not crowd out how a combination is activated", asyn
 test("scoring retains routes and separate arms before a long official title", async () => {
   for (const description of ["Delivered by inhalation", "Subcutaneous injection"]) {
     const record = study("NCT00000001", "EX-1 trial");
+    record.protocolSection.identificationModule.acronym = "EXAMPLE-2";
     record.protocolSection.identificationModule.officialTitle = "A long official title ".repeat(150);
     record.protocolSection.armsInterventionsModule = {
       interventions: [
@@ -154,6 +155,7 @@ test("scoring retains routes and separate arms before a long official title", as
     };
     const found = await lookUp({text: TEXT, model, registry: fakeRegistry({"EX-1": [record]}), index: INDEX});
     assert.equal(scored.length, 1);
+    assert.ok(scored[0].includes('"acronym":"EXAMPLE-2"'));
     assert.ok(scored[0].includes(description));
     assert.ok(scored[0].includes('"interventions":["Drug: EX-1"]') && scored[0].includes('"interventions":["Drug: EX-2"]'));
     assert.ok(scored[0].includes('"arms":["unpaired","suffix-conflict"]'));

@@ -168,6 +168,7 @@ def test_scoring_receives_route_and_separate_arm_details(session: Session, descr
     record = trial("NCT00000001", "EX-1 trial", condition="Example disease")
     section = record.payload["protocolSection"]
     section["designModule"]["studyType"] = "INTERVENTIONAL"
+    section["identificationModule"]["acronym"] = "EXAMPLE-2"
     section["identificationModule"]["officialTitle"] = "A long official title " * 150
     section["armsInterventionsModule"] = {
         "interventions": [
@@ -207,6 +208,7 @@ def test_scoring_receives_route_and_separate_arm_details(session: Session, descr
     found = look_up(session, model, Capture(), FakeTrials({"EX-1": [record]}), text=TEXT, now=NOW)
 
     assert len(states) == 1
+    assert '"acronym":"EXAMPLE-2"' in states[0]
     assert '"study_type":"INTERVENTIONAL"' in states[0]
     assert '"type":"ACTIVE_COMPARATOR"' in states[0]
     assert '"type":"EXPERIMENTAL"' in states[0]

@@ -49,6 +49,12 @@ TRIAL_QUESTION = (
     " has another role in the trial, such as the anaesthetic for a procedure.\n"
     f"- {NOT_A_MATCH}: it is not a trial of this intervention, including a conflicting"
     " route, formulation, stereoisomer or regimen.\n"
+    "When the intervention is identified only as the experimental treatment in a named trial or"
+    " paper, the candidate must establish that same study identity. A similar condition, outcome"
+    " or broad treatment category cannot establish the unspecified intervention. If that identity"
+    " is absent or conflicting, choose not_a_match; never infer a missing intervention from the"
+    " candidate. This does not exclude other studies of a specifically named treatment merely"
+    " because their study names differ. "
     "Explicit restrictions such as prior treatment, disease stage, biomarkers or age"
     " are part of the indication. Compare prior treatment within the disease setting"
     " specified by the claim. First-line and later-line requirements conflict when"
@@ -667,6 +673,7 @@ def _describe(candidate: SourceRecord) -> str:
         described = {
             "conditions": section.get("conditionsModule", {}).get("conditions", []),
             "study_type": section.get("designModule", {}).get("studyType"),
+            "acronym": _excerpt(identification.get("acronym"), 240),
             "title": _excerpt(title, 240),
             # Keep roles and membership ahead of verbose descriptions under the cap.
             "arms": [
