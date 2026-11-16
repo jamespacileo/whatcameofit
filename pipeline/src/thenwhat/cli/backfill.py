@@ -35,8 +35,9 @@ from thenwhat.backfill.link_triage import DecisionClient, LinkTriage, Standing
 from thenwhat.backfill.mediacloud import MediaCloud
 from thenwhat.backfill.registered import registered_steps
 from thenwhat.backfill.registry_load import (
-    PHASE_3_DRUG_OR_BIOLOGICAL,
     TrialList,
+    UnknownTrialSet,
+    condition_of,
     load_trials,
 )
 from thenwhat.backfill.runner import RunReport, run_step
@@ -366,12 +367,19 @@ def run_command(
 @backfill_app.command("load-trials")
 def load_trials_command(
     condition: Annotated[
-        str,
+        str | None,
         typer.Option(
             help="Which trials to load, in the registry's own expression language. "
-            "The default is phase 3 interventional trials of a drug or biological."
+            "Use this or --trials, not both."
         ),
-    ] = PHASE_3_DRUG_OR_BIOLOGICAL,
+    ] = None,
+    trials: Annotated[
+        str | None,
+        typer.Option(
+            help="A named set of interventional trials of a drug or biological: "
+            "phase-3 (the default) or active-phase-2-3, those under way now."
+        ),
+    ] = None,
     changes_only: Annotated[
         bool,
         typer.Option(
@@ -386,6 +394,15 @@ def load_trials_command(
     events and never reach the export. Loading again updates each trial in place.
     """
     settings = settings_or_exit()
+    if condition is not None and trials is not None:
+        err.print("Give --condition or --trials, not both.")
+        raise typer.Exit(code=1)
+    if condition is None:
+        try:
+            condition = condition_of(trials or "phase-3")
+        except UnknownTrialSet as unknown:
+            err.print(str(unknown))
+            raise typer.Exit(code=1) from None
     with refusals():
         steps = steps_for(settings)
         allowances = make_allowances(settings)
