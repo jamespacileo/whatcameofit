@@ -1,10 +1,13 @@
 ---
 // "At a glance": the claim's treatment and condition, what kind of thing the treatment
-// is and a gene, one line each, then the claim's own facts (passed in as rows). Each
-// line taken from a background card has one disclosure, closed until asked for, with
-// the term's match in sight on its summary and the source's words, credit and reasons
-// inside. Before the record in brief, never inside the status panel: a card describes
-// a term, not the evidence. Openspec site-publishing: "Background cards on the claim page".
+// is and a gene, one row each, then the claim's own facts (passed in as rows) in a line
+// of their own. A row taken from a background card shows the source's definition in
+// quotation marks, then one grey line: whose words they are, the claim's words beside
+// the source's term when they differ, and the term's match. That line is the summary of
+// the row's one disclosure, which opens to the card's credit and reasons. Before the
+// record in brief, never inside the status panel: a card describes a term, not the
+// evidence. Openspec site-publishing: "Background cards on the claim page".
+import ArrowRight from "@lucide/astro/icons/arrow-right";
 import ChevronDown from "@lucide/astro/icons/chevron-down";
 import FoldHead from "./FoldHead.astro";
 import TermCard from "./TermCard.astro";
@@ -12,13 +15,16 @@ import { BACKGROUND_NOTE, type ExportedCard, type ExportedCardSource } from "../
 import {
   GLANCE_ID,
   GLANCE_TITLE,
+  SHORT_DEFINITION,
   drugLine,
   drugName,
+  filedAs,
   glanceCards,
   rowId,
   rowLabel,
   sentenceCase,
   termMatchText,
+  wordsLine,
   type GlanceRow,
 } from "../lib/glance";
 
@@ -31,6 +37,7 @@ interface Props {
 
 const { intervention, indication, cards, sources } = Astro.props;
 const found = glanceCards(cards);
+const sourceOf = (name: string) => sources.find((each) => each.name === name);
 
 interface Row {
   row: GlanceRow;
@@ -70,46 +77,81 @@ const rows: Row[] = [
   <FoldHead id={GLANCE_ID}>{GLANCE_TITLE}</FoldHead>
   <dl class="glance-rows">
     {
-      rows.map(({ row, value, detail, cards: rowCards }) => (
-        // Reached from the band's links: the row takes focus and is marked.
-        <div id={rowId(row)} tabindex="-1">
-          <dt>{rowLabel(row, rowCards[0])}</dt>
-          <dd>
-            <span class="glance-value">{value}</span>
-            {detail && <span class="aka">{detail}</span>}
-            {row === "treatment" && intervention.synonyms.length > 0 && (
-              <span class="aka">
-                also known as{" "}
-                {
-                  /* A name such as "TRG-035" must not break at its hyphen. */
-                  intervention.synonyms.map((name, index) => (
-                    <>
-                      {index > 0 && ", "}
-                      {name.includes("-") && name.length <= 16 ? <span class="unbroken">{name}</span> : name}
-                    </>
-                  ))
-                }
-              </span>
-            )}
-            {rowCards.length > 0 && (
-              <details class="glance-more">
-                <summary>
-                  <span class="glance-more-label">
-                    <span class="glance-more-words">Source and definition</span>
-                    <span class="visually-hidden"> for {value}</span>
-                    <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
-                  </span>
-                  <span class="glance-score">{termMatchText(rowCards[0])}</span>
-                </summary>
-                {rowCards.map((card) => (
-                  <TermCard card={card} sources={sources} label={card.kind === "drug" ? drugName(card) : card.label} />
-                ))}
-              </details>
-            )}
-          </dd>
-        </div>
-      ))
+      rows.map(({ row, value, detail, cards: rowCards }) => {
+        const card = rowCards[0];
+        // A definition is the source's words, shown in its row in quotation marks. A
+        // drug's record has none: what it is and what it acts on are its row's value.
+        const words = card && card.kind !== "drug" ? card.definition : null;
+        const short = words !== null && words.length <= SHORT_DEFINITION;
+        const wordsBy = card && sourceOf(card.definition_source ?? card.source);
+        // The claim's words the term was matched on: a rule names them (a synonym, the
+        // condition as written); otherwise the treatment's name or the condition.
+        const claimWords =
+          card?.reasons.find((reason) => reason.name)?.name ??
+          (row === "condition" ? indication : intervention.name);
+        const filed = card && filedAs(row, card, claimWords);
+        return (
+          // Reached from the band's links: the row takes focus and is marked.
+          <div id={rowId(row)} tabindex="-1">
+            <dt>{rowLabel(row, card)}</dt>
+            <dd>
+              <span class="glance-value">{value}</span>
+              {detail && <span class="aka">{detail}</span>}
+              {row === "treatment" && intervention.synonyms.length > 0 && (
+                <span class="aka">
+                  also known as{" "}
+                  {
+                    /* A name such as "TRG-035" must not break at its hyphen. */
+                    intervention.synonyms.map((name, index) => (
+                      <>
+                        {index > 0 && ", "}
+                        {name.includes("-") && name.length <= 16 ? <span class="unbroken">{name}</span> : name}
+                      </>
+                    ))
+                  }
+                </span>
+              )}
+              {words && (
+                <blockquote class:list={["glance-words", { "glance-words-long": !short }]} cite={card.url}>
+                  {words}
+                </blockquote>
+              )}
+              {card && (
+                <details class="glance-more">
+                  <summary>
+                    <span>{wordsLine(card, words ? wordsBy! : sourceOf(card.source)!, words !== null)}</span>
+                    {filed && (
+                      <span class="glance-filed">
+                        {claimWords}
+                        <ArrowRight size={13} stroke-width={2} aria-hidden="true" />
+                        <span class="visually-hidden">is filed there as</span>
+                        {filed}
+                      </span>
+                    )}
+                    <span>{termMatchText(card)}</span>
+                    <span class="glance-more-label">
+                      <span class="glance-more-words">Why this term</span>
+                      <span class="visually-hidden"> for {value}</span>
+                      <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+                    </span>
+                  </summary>
+                  {rowCards.map((each, index) => (
+                    <TermCard
+                      card={each}
+                      sources={sources}
+                      label={each.kind === "drug" ? drugName(each) : each.label}
+                      wordsInRow={index === 0 && short}
+                    />
+                  ))}
+                </details>
+              )}
+            </dd>
+          </div>
+        );
+      })
     }
+  </dl>
+  <dl class="glance-facts">
     <slot />
   </dl>
   {

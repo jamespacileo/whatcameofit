@@ -9,6 +9,7 @@ import {
   mechanismTexts,
   moleculeKindText,
   type ExportedCard,
+  type ExportedCardSource,
 } from "./background";
 import { matchWords } from "./confidence";
 
@@ -109,4 +110,34 @@ const RULE_MATCH_WORDS: Record<string, string> = {
  * treatment: "Term match: high, 81%", or the rule that stands for it. */
 export function termMatchText(card: Pick<ExportedCard, "kind" | "score">): string {
   return `Term match: ${card.score === null ? RULE_MATCH_WORDS[card.kind] : matchWords(card.score)}`;
+}
+
+/** A source's short name for a row's grey line: the abbreviation its title gives in
+ * brackets ("MeSH"), or its title up to any "through …" ("ChEMBL"). The full credit is
+ * inside the row's disclosure. */
+export function sourceName(source: Pick<ExportedCardSource, "title">): string {
+  const bracketed = source.title.match(/\(([^)]+)\)\s*$/);
+  return bracketed ? bracketed[1] : source.title.split(",")[0];
+}
+
+/** A definition this long or shorter is shown whole in its row and not again in the
+ * card; a longer one is shown in its row cut to three lines, and whole in the card. */
+export const SHORT_DEFINITION = 240;
+
+/** The source's term for a row matched from the claim's own words (the treatment, the
+ * drug, the condition), when it differs from those words other than in case: the claim
+ * says "Lung cancer", the vocabulary files it as "Lung Neoplasms". Otherwise null. */
+export function filedAs(row: GlanceRow, card: Pick<ExportedCard, "label">, claimWords: string): string | null {
+  if (row !== "treatment" && row !== "drug" && row !== "condition") return null;
+  return card.label.toLowerCase() === claimWords.toLowerCase() ? null : card.label;
+}
+
+/** The start of a row's grey line: whose words the definition above it is, or, with no
+ * definition in the row, which source the term is from. A gene's definition says what
+ * its product does, as its card does. */
+export function wordsLine(card: Pick<ExportedCard, "kind">, source: Pick<ExportedCardSource, "title">, withWords: boolean): string {
+  const name = sourceName(source);
+  if (!withWords) return `From ${name}`;
+  const whose = name.endsWith("s") ? `${name}’` : `${name}’s`;
+  return card.kind === "target" ? `What this gene’s product does, in ${whose} words` : `In ${whose} words`;
 }

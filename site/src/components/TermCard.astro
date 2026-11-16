@@ -32,9 +32,11 @@ interface Props {
   /** The label to show when the claim's own wording of it is known (a drug matched by
    * its exact name); otherwise the source's. */
   label?: string;
+  /** The definition is already shown whole in the card's row, so it is not repeated. */
+  wordsInRow?: boolean;
 }
 
-const { card, sources, label = card.label } = Astro.props;
+const { card, sources, label = card.label, wordsInRow = false } = Astro.props;
 const source = sources.find((each) => each.name === card.source)!;
 // The source a definition's words are from, when it is not the card's own source.
 const wordsBy =
@@ -79,7 +81,7 @@ const day = (stamp: string) =>
           <p class="entry-note">{NO_MECHANISM}</p>
         )}
       </div>
-    ) : card.definition ? (
+    ) : card.definition && wordsInRow ? null : card.definition ? (
       <div class="card-words">
         <p class="card-words-label">{isTarget ? TARGET_DEFINITION_LABEL : DEFINITION_LABEL}</p>
         <blockquote cite={card.url}>{card.definition}</blockquote>
