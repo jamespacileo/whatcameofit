@@ -215,6 +215,8 @@ class Source:
 
     name: str
     default_rate_per_second: float
+    default_max_attempts: int = 4
+    request_timeout: float = 30.0
 
     def __init__(
         self,
@@ -224,7 +226,7 @@ class Source:
         transport: httpx.BaseTransport | None = None,
         rate_per_second: float | None = None,
         cache_ttl: timedelta = timedelta(hours=24),
-        max_attempts: int = 4,
+        max_attempts: int | None = None,
         time: Time | None = None,
         pacer: Turns | None = None,
     ) -> None:
@@ -233,11 +235,13 @@ class Source:
         self._time = time or SystemTime()
         self._interval = 1.0 / (rate_per_second or self.default_rate_per_second)
         self._cache_ttl = cache_ttl
-        self._max_attempts = max_attempts
+        self._max_attempts = self.default_max_attempts if max_attempts is None else max_attempts
         # Every client of this source, in every process, takes turns with this one,
         # unless it is handed a pacer of its own.
         self._pacer: Turns = pacer or SharedTurns(session, self.name)
-        self._client = httpx.Client(transport=transport, timeout=30.0, follow_redirects=True)
+        self._client = httpx.Client(
+            transport=transport, timeout=self.request_timeout, follow_redirects=True
+        )
 
     def _get(
         self,

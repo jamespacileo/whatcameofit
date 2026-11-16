@@ -15,7 +15,13 @@ from sqlalchemy.orm import Session
 
 from thenwhat.db.models import HttpCache
 from thenwhat.sources import mesh, openalex, opentargets, ror
-from thenwhat.sources.base import AllowanceUsedUp, MissingKey, SourceError, UnsearchableTerm
+from thenwhat.sources.base import (
+    AllowanceUsedUp,
+    MissingKey,
+    SourceError,
+    SourceUnavailable,
+    UnsearchableTerm,
+)
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref, Notice
 from thenwhat.sources.europepmc import EuropePmc, describe
@@ -1392,6 +1398,58 @@ def test_a_name_the_registry_does_not_list_finds_no_substance(
 
     assert source.substances_named("faecal microbiota transplant") == []
     assert len(replay.requests) == 1
+
+
+@pytest.mark.parametrize("failure", [httpx.ReadTimeout, httpx.ConnectTimeout])
+def test_optional_substance_outage_returns_promptly_without_caching_empty_success(
+    session: Session, fake_time, fixture_json, failure
+):
+    """An unavailable optional code lookup must not hold up preparation for minutes."""
+    requests = []
+    recovered = False
+
+    def answer(request: httpx.Request):
+        requests.append(request)
+        if recovered:
+            return httpx.Response(200, json=fixture_json("gsrs/search_nothing.json"))
+        phase = "read" if failure is httpx.ReadTimeout else "connect"
+        fake_time.sleep(request.extensions["timeout"][phase])
+        raise failure("simulated unavailable source", request=request)
+
+    source = Gsrs(
+        session, contact_email=CONTACT, transport=httpx.MockTransport(answer), time=fake_time
+    )
+    with pytest.raises(SourceUnavailable):
+        source.substances_named("baxdrostat")
+
+    assert len(requests) == 2
+    assert fake_time.elapsed <= 15
+    assert session.scalars(select(HttpCache).where(HttpCache.source_name == "gsrs")).all() == []
+
+    recovered = True
+    assert source.substances_named("baxdrostat") == []
+    assert len(requests) == 3
+    assert source.substances_named("baxdrostat") == []
+    assert len(requests) == 3  # Only the later successful empty answer is reusable.
+
+
+def test_substance_retry_still_honours_a_long_source_delay(
+    session: Session, fake_time, fixture_json
+):
+    """The shorter network timeout never overrides a server's Retry-After."""
+    requests = []
+
+    def answer(request: httpx.Request):
+        requests.append(fake_time.monotonic())
+        if len(requests) == 1:
+            return httpx.Response(429, headers={"Retry-After": "30"})
+        return httpx.Response(200, json=fixture_json("gsrs/search_nothing.json"))
+
+    source = Gsrs(
+        session, contact_email=CONTACT, transport=httpx.MockTransport(answer), time=fake_time
+    )
+    assert source.substances_named("baxdrostat") == []
+    assert len(requests) == 2 and requests[1] - requests[0] >= 30
 
 
 # --- Open Targets: a drug by its own name -------------------------------------------
