@@ -32,8 +32,17 @@ A company history listing its founding, offices and products remains a company
 profile even if one product's indication, mechanism or past regulatory approval is
 stated. Those catalogue facts are not the post's own therapeutic research claim.
 Do not select a product from that history or turn its hashtags into a new finding.
-An unnamed but described treatment can be a valid claim: keep its descriptive name
-and uncertainty instead of inventing a product. Trial permission is not approval of
+A product name is not required. A specifically described method, material or target
+(such as median nerve electrical stimulation or an antibody against a named protein)
+is a valid intervention: set about_a_treatment true and retain its description.
+An explicit trial or paper identifier for the reported experimental treatment also
+qualifies; use "experimental treatment in [identifier]" if no better name is supplied.
+A bare citation in unrelated material does not qualify. Do not invent products or aliases.
+A disease, hoped-for benefit and "new drug" or "unnamed treatment" alone do NOT identify
+an intervention. In that case return about_a_treatment false, empty identification
+fields and a gist explaining that the treatment could not be identified from what was read.
+Do not fill this gap from a linked URL, the condition or your own knowledge.
+Trial permission is not approval of
 a treatment, and animal or laboratory findings are not evidence of human efficacy.
 Identify one intervention-condition pair. A real combination regimen is one
 intervention, but unrelated treatments listed in a round-up are not a combination.
@@ -119,7 +128,7 @@ const READING = {
   properties: {
     about_a_treatment: { type: "boolean", description: "Whether the text reports a specific treatment for a specific condition." },
     gist: text("What was reported, in one neutral line of your own words, retaining explicit route, formulation, delivery and activation details."),
-    intervention: { type: ["string", "null"], description: "The drug, device or method, by its name alone: no maker or mechanism." },
+    intervention: { type: ["string", "null"], description: "The drug, device or method by its name, or a short specific description when no product name is given. Null when only a disease, benefit and generic drug wording are supplied." },
     other_names: names("Other names the text gives the same complete product: a brand name, a code such as ABC-123, or a generic name retaining any explicit route or formulation. For a combination, only whole-regimen aliases, never individual components. Never a description such as 'the drug'. Empty if there is none."),
     known_names: names("From your own knowledge, not the text: other names this exact treatment goes by that the text does not give, such as a development code, a generic name or a brand name. For a combination, also the name of each part. Only names you are sure of. At most five. Empty if you know none."),
     search_phrases: names("Up to three short phrases a clinical trial registry would use for this treatment when it has no product name, most specific first, for example 'median nerve stimulation'. Empty when the names above are enough."),

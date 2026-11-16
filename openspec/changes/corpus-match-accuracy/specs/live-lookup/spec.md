@@ -4,6 +4,21 @@ Associates automatic article and post lookups with existing knowledge cards only
 
 ## ADDED Requirements
 
+### Requirement: An unspecified drug does not establish treatment identity
+Both lookup readers SHALL distinguish a specifically described unnamed intervention from disease and generic drug wording alone. The latter SHALL produce a negative identification without invented products or aliases, term search, scoring or research enrichment. Specific descriptions and reported study identities SHALL remain usable evidence, without automatically establishing a match. Obsolete saved answers SHALL be invalidated; no extra model call SHALL be added.
+
+#### Scenario: Linked article is unavailable and headline names no treatment
+- **WHEN** only a headline about a new drug and longer survival for a disease can be read
+- **THEN** the reader reports that the treatment could not be identified and no clinical match or card is inferred from the disease alone
+
+#### Scenario: Specific unnamed treatment is described
+- **WHEN** a report describes a wrist device applying electrical stimulation to the median nerve for tics without a product name
+- **THEN** the descriptive treatment remains eligible for lookup
+
+#### Scenario: Report supplies its study identity
+- **WHEN** a report omits the product name but explicitly identifies its reported trial or paper
+- **THEN** the existing identifier lookup remains available and any candidate still requires comparison with the reported claim
+
 ### Requirement: A tracked linked article is described as deliberately reused
 When a post links to an article already in the published index, the shared presenter SHALL say its card is shown without another article read or automatic search. It SHALL retain whether the service or browser read the post, and SHALL NOT describe the skipped read as a failure. Saved answers SHALL receive the correction without invalidation or extra requests.
 
