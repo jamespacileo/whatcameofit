@@ -57,7 +57,7 @@ When the intervention's name or one of its other names joins several treatments 
 - **THEN** only its names, phrases and codes are searched, as before
 
 ### Requirement: A treatment is also searched by its substance's name
-When the registry of substances lists the intervention's names under one substance, the registry search SHALL also search the name it gives that substance, as a name, unless it equals a name already searched. A brand such as Mosquirix, Aduhelm or Wegovy then finds the trials filed under the substance. Every trial found is a candidate scored like any other.
+The registry of substances SHALL be asked for each of the intervention's names and, where a name carries a dose or schedule, for its core name too ("semaglutide 2.4 mg" as "semaglutide"). When it lists those names under one substance, the registry search SHALL also search the name it gives that substance, as a name, unless it equals a name already searched. A brand such as Mosquirix, Aduhelm or Wegovy then finds the trials filed under the substance. Every trial found is a candidate scored like any other.
 
 #### Scenario: A brand name and its substance
 - **WHEN** a claim's intervention is a brand that the registry of substances lists under a substance with another name

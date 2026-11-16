@@ -826,6 +826,24 @@ def test_a_brand_is_also_searched_by_its_substances_name(session: Session):
     assert [match.external_id for match in added] == ["NCT00000008"]
 
 
+def test_a_name_with_a_dose_is_looked_up_by_its_core_name(session: Session):
+    """Scenario: A dose in the name"""
+    claim = add_claim(
+        session,
+        slug="exampletinib-dose",
+        headline="Drug regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="exampletinib 2.4 mg weekly",
+        indication="tooth agenesis",
+    )
+    registry = FakeSubstances({"exampletinib": [EX1]})
+
+    answer = give_development_codes(session, claim, substances=registry)
+
+    assert answer is not None and answer.listing is Listing.ONE_SUBSTANCE
+    assert registry.asked == ["exampletinib 2.4 mg weekly", "exampletinib"]
+
+
 def test_an_intervention_the_registry_does_not_list_gets_no_code(session: Session):
     """Scenario: Intervention the substance registry does not list"""
     claim = add_claim(

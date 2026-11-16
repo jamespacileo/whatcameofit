@@ -227,6 +227,8 @@ Batch 2's audit (2026-11-16) archived 39 of 132 claims; batch 3's archived 54 of
 
 - [x] 16.3 Refuse at the read a class named by its plural, a vaccine or schedule name with no product, a condition that is no one condition ("Cancer") and an animal's condition. Measured on the database: of 619 claims these refuse 1 live ("COVID-19 vaccination" for cardiovascular events) and 28 archived. A target-and-kind rule ("anti-PD-1 immunotherapy") was dropped: it also refused anti-USAG-1 antibody and CAR-T for stiff person syndrome. Verify with tests.
 
+- [x] 16.4 Ask the registry of substances for a name's core name too, so a dose does not stop the lookup (batch 5's audit: "semaglutide 2.4 mg" for COVID-19 had no substance beside "Wegovy" for COVID-19). Verify with a test.
+
 ## 17. Backfill of 2026-11-16: stopped outlets and second claims
 
 The backfill of 2026-11-16 read about 800 pages and drafted 257 claims; the audit archived 152. The page reader now stops an outlet that refuses it and answers `NOT_NOW` on HTTP 429 with a wait of minutes to hours; the read step left such an outlet after three answers in a run and asked it again in the next. 39 of the archives were second claims for a treatment that already had one, drafted because the article used a brand, a code or a description and the claim another name.
