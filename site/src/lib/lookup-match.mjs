@@ -8,7 +8,7 @@ const SHORTENERS = new Set([
   "dlvr.it", "ift.tt", "is.gd", "rb.gy", "shorturl.at", "tiny.cc", "cutt.ly", "flip.it",
   "apple.news", "news.google.com", "share.google", "search.app", "redd.it", "youtu.be",
   "bbc.in", "nyti.ms", "wapo.st", "reut.rs", "cnn.it", "dailym.ai", "mol.im", "tgr.ph", "ind.pn",
-  "econ.st", "n.pr", "gu.com", "on.ft.com", "fxn.ws", "nyp.st", "thesun.uk", "mirror.co",
+  "econ.st", "n.pr", "gu.com", "on.ft.com", "fxn.ws", "nyp.st", "thesun.uk", "mirror.co", "nej.md",
 ]);
 
 // Platforms where an address is a post or a video, not a news article: the name a reader

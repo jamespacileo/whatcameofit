@@ -22,6 +22,11 @@ Both lookup readers SHALL distinguish a specifically described unnamed intervent
 ### Requirement: A tracked linked article is described as deliberately reused
 When a post links to an article already in the published index, the shared presenter SHALL say its card is shown without another article read or automatic search. It SHALL retain whether the service or browser read the post, and SHALL NOT describe the skipped read as a failure. Saved answers SHALL receive the correction without invalidation or extra requests.
 
+#### Scenario: Journal short link leads to a tracked article
+- **WHEN** a service-read or browser-read post links through `nej.md` and its current robots rules permit the redirect lookup
+- **THEN** the existing bounded short-link reader resolves its destination and returns any exact tracked card without reading the article or searching
+- **AND** a shortener refusal remains a refusal, with no alternate fetch route
+
 #### Scenario: Browser post links to a tracked source
 - **WHEN** a browser-read post returns an exact tracked linked-article answer
 - **THEN** its source wording identifies the browser reading and deliberate reuse of the tracked card

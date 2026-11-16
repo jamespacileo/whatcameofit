@@ -177,6 +177,7 @@ Reddit submission dumps published by third parties are a separate matter, decide
 - **Checked:** 2026-11-12, by reading each one's robots.txt.
 - **Followed by the service:** a shortened link in a post, when the shortener's robots.txt allows it. `bit.ly`, `trib.al`, `tinyurl.com` and `buff.ly` allowed everything on that date; `redd.it` too. Only the redirect is read (`site/worker/short.mjs`), four steps at most, three links per post.
 - **Not followed by the service:** `t.co`, X's shortener, whose robots.txt says `Disallow: /` to every client but named search engines.
+- **NEJM short links, checked 2026-11-16:** `nej.md` uses the same bounded redirect reader. Its robots rules allowed the checked path, which returned a 301 to the canonical journal article. No journal text is fetched by the redirect reader; the normal current robots check remains required on every lookup. A tracked destination returns its existing card without an article read or model search.
 - **Opened by the reader's browser instead:** the extension asks `t.co` for the link's page, as a click would, without cookies or a referrer, and reads the address the page names (observed: a 200 page that gives the address in a refresh tag, in its title and in a script). It does not go on to the article. One request per link, three links at most per search (`extension/src/short-links.js`).
 
 
