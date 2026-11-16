@@ -240,6 +240,13 @@ function popup(overrides = {}) {
   // One staged body per paid request, the first ready before it is asked for.
   const streams = [staged()];
   let current = true;
+  const send = async (_url, options) => {
+    const body = JSON.parse(options.body);
+    if (body.cacheOnly) { calls.probes.push(body); return Response.json({ cacheMiss: true }); }
+    calls.posts.push({ body, signal: options.signal });
+    if (calls.posts.length > streams.length) streams.push(staged());
+    return streams[calls.posts.length - 1].response;
+  };
   const controller = createPopupController({
     site: { url: "https://service.example.org" },
     storage: { get: async () => stored, set: async (values) => { calls.writes.push(values); Object.assign(stored, values); } },
@@ -247,16 +254,11 @@ function popup(overrides = {}) {
     isCurrentPage: async () => current,
     readPage: async () => articleRequest,
     capturePage: async () => { calls.captures += 1; return { image: { dataUrl: "data:image/jpeg;base64,AAAA", width: 1, height: 1 }, pageUrl: tab.url }; },
-    fetch: async (_url, options) => {
-      const body = JSON.parse(options.body);
-      if (body.cacheOnly) { calls.probes.push(body); return Response.json({ cacheMiss: true }); }
-      calls.posts.push({ body, signal: options.signal });
-      if (calls.posts.length > streams.length) streams.push(staged());
-      return streams[calls.posts.length - 1].response;
-    },
     describeAnswer: (found) => ({ ...found }),
     present: (state) => calls.states.push(state),
     ...overrides,
+    fetch: (url, options) => options.method === "POST"
+      ? (overrides.fetch ?? send)(url, options) : Promise.resolve(Response.json(stored.lookup.index)),
   });
   return { controller, calls, stored, stream: streams[0], streams, navigate: () => { current = false; } };
 }
@@ -436,6 +438,7 @@ test("a page with a saved answer waits for its fingerprint: a match sends nothin
       readTab: async () => tab, isCurrentPage: async () => true,
       readPage: async (_tab, _signal, { onContext } = {}) => { onContext({ pageUrl: tab.url }); await pause(5); read = true; return { ...articleRequest, contentFingerprint: print }; },
       fetch: async (_url, options) => {
+        if (options.method !== "POST") return Response.json(index);
         const body = JSON.parse(options.body);
         if (body.cacheOnly) { calls.probes.push(read); return Response.json({ cacheMiss: true }); }
         calls.posts.push(body);
@@ -467,7 +470,10 @@ test("reused popup answers rebind cards against the loaded index without another
       storage: { get: async () => stored, set: async values => Object.assign(stored, values) },
       readTab: async () => tab, isCurrentPage: async () => true,
       readPage: async () => ({ ...articleRequest, contentFingerprint: "article-print" }),
-      fetch: async () => assert.fail("a saved answer and available index need no request"),
+      fetch: async (_url, options) => {
+        assert.notEqual(options.method, "POST", "saved clinical work is reused");
+        return Response.json(current);
+      },
       describeAnswer: answer => ({ ...answer }), present: state => states.push(state),
     });
     await controller.open();
