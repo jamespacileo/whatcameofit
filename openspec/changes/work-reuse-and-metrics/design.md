@@ -67,6 +67,7 @@ Built first because every other decision here is a guess until it exists. It can
 
 - **On a device:** `spans.jsonl` in the run folder. Pushed with the run as daily totals, not span by span.
 - **Store-side and in the Worker:** written to Workers Analytics Engine or logs for the raw spans, kept for days, and to a `measure_daily` table in D1 for totals by day, step, step version, writer and outcome.
+- **How long:** single-step measurements are kept 30 days where they were made, and those of readers' lookups 7 days, set by the operator on 2026-11-16.
 - **In D1 for good:** only the daily totals. At a million leads a month that is a few thousand rows a month, not millions.
 - **For each published claim:** the sum of the spans that led to it, stored with the claim's run: total time from first seen, time working, cost.
 
@@ -115,11 +116,24 @@ A small text classifier, trained on stored triage scores (357,964 to begin with)
 - **It is checked as it runs.** A set share of the leads it settles is sent to the decision step anyway. If more of that sample passes than the required recall allows, the prefilter stops settling and says so.
 - **It is a model, and is treated as one:** versioned, its training data and held-out figures recorded, no identifier of it in code.
 - **It decides one thing:** whether a headline is worth asking about. It approves nothing and is never shown on the site.
-- **Its teacher is triage, which is itself imperfect.** The 560 assistant-labelled leads are the only independent check today. More labels, by the operator or an assistant marked as such, are part of the work.
+- **Its teacher is triage, which is itself imperfect.** The 560 assistant-labelled leads are the only independent check today. Decided by the operator on 2026-11-16, following their decision of 2026-11-14 that an assistant's labels count: an assistant labels a fresh sample of about 1,000 headlines without seeing scores, recorded as assistant-made and never as a person's, and the operator checks 50 of them.
 
 Which library: a linear model over word and character n-grams (scikit-learn) is tried first. It trains in seconds on this much text, runs anywhere Python does, and its misses can be read. An embedding model is tried only if the linear one cannot reach the recall.
 
-Estimate, not measured: at 99% recall this settles most of the 97.3% that triage rejects today.
+**Required recall, set by the operator on 2026-11-16: 99%.**
+
+Tried the same day, as a probe and not the classifier of task 5.3: a linear model over word and character n-grams of the headline and outlet, trained on 250,574 stored scores and tested on 107,390 it had not seen (one random split, nothing tuned, 20 seconds to fit and score). In the test set 2,845 leads had passed or been held, 1,457 had passed, and 288 had led to a claim.
+
+| Required recall | Leads settled with no model call | Passed leads kept | Leads that led to a claim kept | Passed-or-held lost in 100,000 leads |
+| --- | --- | --- | --- | --- |
+| 99.9% | 22.3% | 100.0% | 100.0% | 2 |
+| 99.5% | 58.4% | 100.0% | 100.0% | 13 |
+| 99.0% | 72.3% | 99.9% | 100.0% | 26 |
+| 98.0% | 85.8% | 99.6% | 100.0% | 52 |
+| 95.0% | 93.1% | 98.7% | 99.3% | 132 |
+| 90.0% | 95.6% | 97.1% | 96.9% | 264 |
+
+What is lost at 99% is nearly all held leads, not passed ones. Of the assistant-labelled leads that fell in the test set, all 30 treatment reports were kept at 99%, 93% of 46 health-but-not-treatment, and 17% of 86 not-health. So at the operator's setting about seven in ten triage calls are not made. The figures are from one split of one probe and are to be measured again.
 
 Considered: making the decision step cheaper and stopping there (decision 6). Both are done; they multiply.
 
@@ -131,7 +145,11 @@ The Decisions API takes one shared input and up to 400 questions, each with its 
 2. More headlines to a call.
 3. Both.
 
-A shape replaces the present one only if its scores agree with the present ones on that sample within a tolerance the operator sets, and the triage version rises when it does. If no shape holds, the present one stays and decision 5 carries the saving.
+A shape replaces the present one only if its scores agree with the present ones on that sample within the tolerance, and the triage version rises when it does.
+
+**Tolerance, set by the operator on 2026-11-16:** at least 98% of the sample's leads fall in the same band (rejected, held, passed) as their stored score, and no lead that passes today is rejected by the new shape.
+
+The floor for any such figure, measured the same day: 588 headlines were scored twice by the present triage, and 582 (99.0%) fell in the same band both times; none went from passed to rejected, one from passed to held, one from rejected to passed; of 7 first held, 5 stayed held. The repeats are few, mostly rejected, and some may span a rewording, so 99.0% is an indication. If no shape holds, the present one stays and decision 5 carries the saving.
 
 Estimate, not measured: up to ten times fewer input tokens.
 
@@ -174,8 +192,7 @@ Steps 3 to 6 are each kept or dropped on what step 1 shows.
 
 ## Open Questions
 
-- **The required recall for the prefilter.** 99% is the assistant's starting suggestion.
-- **The tolerance for a reshaped triage call.**
-- **How long raw spans are kept** on a device and store-side.
-- **Whether the operator will label a sample**, or an assistant's labels, marked as such, are to be used.
+- **Answered on 2026-11-16:** required recall 99% (decision 5); tolerance 98% in the same band and no passing lead rejected (decision 6); single-step measurements kept 30 days, and 7 days for those of readers' lookups (decision 2); an assistant labels a sample of about 1,000 headlines, marked as assistant-made, and the operator checks 50 of them (decision 5).
+- **The sample's make-up.** Proposed by the assistant: 300 from what the prefilter would settle, 300 held, 200 passed, 200 rejected, drawn without scores shown.
+- **What counts as too much disagreement** between the operator's 50 and the assistant's labels for the same headlines.
 - **Whether Workers Analytics Engine is wanted** for store-side spans, or logs suffice. Its terms and limits have not been read.

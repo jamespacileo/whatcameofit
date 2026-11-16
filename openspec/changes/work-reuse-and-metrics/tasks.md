@@ -2,8 +2,8 @@
 
 ## 1. Decisions before code
 
-- [ ] 1.1 Ask the operator for the required recall of the prefilter, the tolerance for a reshaped triage call, and how many days single-step measurements are kept; verify each is in `design.md` in place of its open question and in `.env.example` with no default
-- [ ] 1.2 Ask the operator whether they will label a sample of leads or an assistant's labels, marked as such, are used; verify the answer is in `design.md`
+- [x] 1.1 Ask the operator for the required recall of the prefilter, the tolerance for a reshaped triage call, and how many days single-step measurements are kept; verify each is in `design.md` in place of its open question and in `.env.example` with no default Answered 2026-11-16: recall 99%; tolerance 98% in the same band and no passing lead rejected; 30 days, and 7 for readers' lookups. In `design.md`; `.env.example` follows with the settings in section 2 and 5
+- [x] 1.2 Ask the operator whether they will label a sample of leads or an assistant's labels, marked as such, are used; verify the answer is in `design.md` Answered 2026-11-16: an assistant labels about 1,000, marked assistant-made, and the operator checks 50
 - [ ] 1.3 Read the terms, limits and price of Workers Analytics Engine and write its entry in `docs/sources.md`, or record that logs are used in its place; verify the entry or the decision exists
 - [ ] 1.4 Add span, trace, unit of work, stored result, prefilter and settled to `GLOSSARY.md`; verify the terms match the specs
 
@@ -22,7 +22,7 @@
 
 - [ ] 3.1 Draw a fixed sample of 2,000 stored leads across the score range and record its present scores; verify the sample's identifiers and the draw's seed are stored, with no title in the repository
 - [ ] 3.2 Try the three shapes of `design.md` decision 6 on the sample; record here, for each, input tokens for a headline, cost, time, and agreement with present scores
-- [ ] 3.3 Adopt a shape only if it is within the tolerance of 1.1, under a new triage version; verify the recorded fixture for the decision backend is re-recorded on synthetic titles and the tests pass with no live call
+- [ ] 3.3 Adopt a shape only if at least 98% of the sample falls in the same band and no passing lead is rejected, under a new triage version; verify the recorded fixture for the decision backend is re-recorded on synthetic titles and the tests pass with no live call
 
 ## 4. Stored results
 
@@ -39,8 +39,8 @@
 
 - [ ] 5.1 Record the free signals for each lead in the load and screening, and keep each outlet's pass rate from stored scores; verify tests for a known outlet, a new outlet, a section in the address and a topic word
 - [ ] 5.2 Order triage and reading by the signals; verify a test of the order, and that no lead is dropped by a signal
-- [ ] 5.3 Train a linear classifier on stored triage scores with a held-out set, and record its recall and the share it settles at each threshold; verify the record names the sizes of both sets and holds no title
-- [ ] 5.4 Score the 560 assistant-labelled leads with it and record the figures as the independent check; with the answer to 1.2, add labels and record the figures again
+- [ ] 5.3 Train a linear classifier on stored triage scores with a held-out set, and record its recall and the share it settles at each threshold beside the probe's figures in `design.md` decision 5; verify the record names the sizes of both sets, uses more than one split, and holds no title
+- [ ] 5.4 Score the 560 assistant-labelled leads with it and record the figures as the independent check; draw about 1,000 headlines without scores shown (300 the prefilter would settle, 300 held, 200 passed, 200 rejected), label them with `--as-assistant`, give the operator 50 to check, and record the figures again with how often the operator's 50 agreed
 - [ ] 5.5 Add the prefilter stage before triage: settle below the threshold that meets the required recall, with the classifier's version and probability on the lead; verify tests for a settled lead, an unsure one, no recall configured, and a classifier that cannot meet it
 - [ ] 5.6 Send the set share of settled leads to the decision step, stop settling when the sample disagrees, and leave the leads settled since the last good sample due; verify a test of a steady sample and of a drifting one
 - [ ] 5.7 Send a settled lead to the decision step when a new classifier version would not settle it or the operator names it; verify a test
