@@ -36,3 +36,6 @@ data/link-files/
 store/proof/sample/
 store/proof/out/
 store/proof/.wrangler/
+
+# drawn card images kept between builds
+site/.cache/
