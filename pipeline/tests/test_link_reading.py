@@ -24,9 +24,7 @@ from thenwhat.backfill.link_read import (
     NO_NAME,
     NO_PAGE,
     NOT_ALLOWED,
-    OUTLET_HOLD,
     OUTLET_REFUSES,
-    OUTLET_TURN_LOCK,
     REFUSALS_BEFORE_STOPPING,
     LinkRead,
     NotMeasured,
@@ -34,6 +32,7 @@ from thenwhat.backfill.link_read import (
     held_outlets,
 )
 from thenwhat.backfill.link_screen import REGISTRY_TRIAL, TITLE_NAMES_CLAIM
+from thenwhat.backfill.outlet_hold import OUTLET_HOLD, OUTLET_TURN_LOCK
 from thenwhat.backfill.runner import RunReport, run_step
 from thenwhat.claims.entry import add_article, add_claim, articles_of
 from thenwhat.config import SourceAllowance

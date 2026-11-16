@@ -206,3 +206,23 @@ def test_statements_without_claims_or_missing_explains_and_exits_1(run):
 
     assert result.exit_code == 1
     assert "--missing" in output(result)
+
+
+def test_an_outlet_the_reader_has_stopped_is_not_asked_again_by_statements(
+    run, session: Session, article: SourceArticle
+):
+    """Scenario: A stopped outlet is held for every command that reads articles"""
+    from thenwhat.extract.retrieve import NotNow
+
+    stopped = run("statements", SLUG, web=NotNow(URL, "news.example.org is stopped", 3600))
+
+    assert stopped.exit_code == 1 and "cannot ask for" in output(stopped)
+
+    # The reader would now give the page, but its wait is not over: it is not asked.
+    held = run("statements", SLUG, web=Retrieved(TEXT))
+
+    assert held.exit_code == 1
+    assert "was not asked for: the page reader said news.example.org cannot be asked before" in (
+        output(held)
+    )
+    assert statements(session) == []
