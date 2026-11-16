@@ -986,6 +986,40 @@ def test_a_brand_the_registry_does_not_list_is_searched_by_its_ingredient(sessio
     assert [match.external_id for match in added] == ["NCT00000009"]
 
 
+def test_a_vaccine_brands_antigen_is_kept_and_not_searched_as_a_name(session: Session):
+    """Scenario: A brand the source of brands marks a vaccine"""
+    claim = add_claim(
+        session,
+        slug="toothvax-tooth-agenesis",
+        headline="Vaccine regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="Toothvax",
+        indication="tooth agenesis",
+    )
+    found = ingredient("111", "examplevirus antigen", "Toothvax")
+    found.payload["product_codes"] = {
+        "b-2": {"propConceptGroup": {"propConcept": [{"propName": "CVX", "propValue": "999"}]}}
+    }
+    trials = FakeTrials(
+        {"examplevirus antigen": [trial("NCT00000009", "Another maker's examplevirus vaccine")]}
+    )
+
+    answer = give_development_codes(
+        session, claim, substances=FakeSubstances({}), brands=FakeBrands({"Toothvax": [found]})
+    )
+    added = resolve_claim(
+        session, claim, trials=trials, dois=FakeDois(set()), backend=Scoring(0.9), now=NOW
+    )
+
+    assert answer is not None and answer.listing is Listing.ONE_SUBSTANCE
+    [intervention] = entities_of(session, claim)
+    kept = session.get(EntitySubstance, intervention.id)
+    # What the source said is kept, the vaccine code with it.
+    assert kept is not None and kept.payload == found.payload
+    assert trials.searched == ["Toothvax"]
+    assert added == []
+
+
 def test_the_source_of_brands_is_not_asked_when_the_registry_answered(session: Session):
     """Scenario: The substance registry lists the intervention"""
     claim = add_claim(

@@ -47,6 +47,8 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `gsrs/search_nothing.json` | the search for `"^faecal microbiota transplant$"`: `total` 0 (2026-11-14) |
 | `rxnorm/rxcui_elevidys.json`, `rxnorm/properties_2641681.json`, `rxnorm/related_in_2641681.json` | `GET rxnav.nlm.nih.gov/REST/rxcui.json?name=Elevidys&search=0`, then `GET /REST/rxcui/2641681/properties.json` and `GET /REST/rxcui/2641681/related.json?tty=IN`: a brand of one ingredient (2026-11-16) |
 | `rxnorm/rxcui_advair.json`, `rxnorm/properties_301543.json`, `rxnorm/related_in_301543.json` | the same three for "Advair": a brand of two ingredients (2026-11-16) |
+| `rxnorm/related_sbd_2641681.json`, `rxnorm/property_cvx_2641685.json` | `GET /REST/rxcui/2641681/related.json?tty=SBD` and `GET /REST/rxcui/2641685/property.json?propName=CVX`: Elevidys's one branded drug, with no vaccine code (`{}`) (2026-11-16) |
+| `rxnorm/rxcui_ervebo.json`, `rxnorm/properties_2624748.json`, `rxnorm/related_in_2624748.json`, `rxnorm/related_sbd_2624748.json`, `rxnorm/property_cvx_2624752.json` | the same five for "Ervebo": a vaccine filed under its antigen, whose branded drug has CVX 204 (2026-11-16) |
 | `rxnorm/rxcui_corbevax.json` | the exact search for "Corbevax", which RxNorm does not list: an empty `idGroup` (2026-11-16) |
 | `rxnorm/rxcui_aspirin.json`, `rxnorm/properties_1191.json` | the exact search for "aspirin" and its concept's record: an ingredient, not a brand (2026-11-16) |
 | `mesh/term_ketogenic_diet.json` | `GET /mesh/lookup/term?label=Ketogenic Diet&match=exact&limit=10&year=2026`: an entry term of a descriptor labelled otherwise (2026-11-14) |

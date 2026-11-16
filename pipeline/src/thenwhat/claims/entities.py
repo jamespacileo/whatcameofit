@@ -27,6 +27,7 @@ from thenwhat.db.models import (
 )
 from thenwhat.domain import EntityType, NamedBy
 from thenwhat.extract.names import is_a_search_phrase
+from thenwhat.sources.rxnorm import vaccine_codes
 
 
 class EntityNotFound(EntryError):
@@ -71,9 +72,12 @@ def substance_name(session: Session, entity: Entity) -> str | None:
     """What the registry of substances calls the intervention's one substance, such as
     "Semaglutide" for Wegovy or "Aducanumab" for Aduhelm, or the one ingredient a
     source of brands lists a brand under when the registry does not list the brand. None
-    when neither lists it under one substance, or neither was asked."""
+    when neither lists it under one substance, or neither was asked.
+
+    None too when the source of brands marks the brand a vaccine: its ingredient is an
+    antigen, which another maker's vaccine can share, so it is kept but not searched."""
     kept = session.get(EntitySubstance, entity.id)
-    if kept is None:
+    if kept is None or vaccine_codes(kept.payload):
         return None
     name = (kept.payload.get("substance") or {}).get("_name")
     return " ".join(name.split()) if isinstance(name, str) and name.strip() else None

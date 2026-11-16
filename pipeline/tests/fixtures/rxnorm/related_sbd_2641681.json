@@ -1,0 +1,21 @@
+{
+  "relatedGroup": {
+    "rxcui": null,
+    "conceptGroup": [
+      {
+        "tty": "SBD",
+        "conceptProperties": [
+          {
+            "rxcui": "2641685",
+            "name": "10 ML delandistrogene moxeparvovec-rokl 13300000000000 VECTOR-GENOMES/ML Injection [Elevidys]",
+            "synonym": "Elevidys 13300000000000 VECTOR-GENOMES per 10 ML Injection",
+            "tty": "SBD",
+            "language": "ENG",
+            "suppress": "N",
+            "umlscui": ""
+          }
+        ]
+      }
+    ]
+  }
+}
