@@ -4,6 +4,34 @@ Associates automatic article and post lookups with existing knowledge cards only
 
 ## ADDED Requirements
 
+### Requirement: Readings preserve formulation, population and activation roles
+Both lookup readers SHALL preserve explicit formulation, route and population constraints. The transient gist supplied to scoring SHALL retain delivery and activation details. The indication SHALL retain the reported target and studied population without inflating surrogate benefits. Only experimental treatments SHALL form combination names; explicitly identified activation agents, adjuvants and supportive care SHALL retain their stated roles.
+
+#### Scenario: Eye insert and oral ingredient
+- **WHEN** a report names an intravitreal insert and its active ingredient
+- **THEN** the reading retains the insert formulation and does not reduce its product alias to the unrestricted ingredient
+- **AND** a trial of the oral ingredient does not become a compatible formulation
+
+#### Scenario: Aging biomarkers in people with a lung disease
+- **WHEN** a report measures aging-clock estimates in participants with idiopathic pulmonary fibrosis
+- **THEN** the indication retains both the measured aging target and that disease population, without claiming demonstrated longevity or an effect in healthy people
+
+#### Scenario: Treatment requires an activation agent
+- **WHEN** the report explicitly says a substance only activates the experimental gene therapy
+- **THEN** the intervention remains the gene therapy and the gist retains the activation role
+- **AND** a genuine multi-treatment experimental regimen remains a complete combination
+
+### Requirement: Scope corrections replace obsolete saved answers
+The scope-reading correction SHALL add no model or source calls to the lookup workflow. Shared and extension storage SHALL invalidate completed answers made before this correction while retaining normal reuse of complete new answers.
+
+#### Scenario: Older reading is saved
+- **WHEN** shared or extension storage contains a pre-correction reading
+- **THEN** it is not reused and the normal fresh-reading path remains available
+
+#### Scenario: Complete corrected reading is saved
+- **WHEN** a complete corrected answer is requested again within its unchanged lifetime
+- **THEN** it is reused without repeating model or registry calls
+
 ### Requirement: Reused clinical answers use the available publication index
 Reused clinical answers SHALL recompute tracked-claim associations using the fresh lookup's whole-intervention and exact-condition comparison. Shared answers SHALL use the current static index; local answers SHALL use the extension's loaded index. Reuse SHALL preserve the clinical reading, trial scores, check time, lifetime and index refresh policy, without repeating model, registry or paper work. Exact source-address responses and non-treatment answers SHALL remain separate.
 

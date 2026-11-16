@@ -49,6 +49,14 @@ the other fields empty.
 A condition or intended benefit may use everyday words: studying a topical for hair
 growth or a drug to regrow missing teeth is specific enough without a formal
 diagnosis. Keep that stated target; do not invent a diagnosis from a drug name alone.
+Keep the explicitly studied population and treatment setting in the indication.
+If the report measures a biomarker or other surrogate in people with a stated
+disease, retain both that measured target and that population; do not turn it into
+a general claim about healthy people or replace the reported target with the disease.
+Keep any explicit route, formulation and delivery restriction in the gist, even
+when the intervention itself is a short product name. A product and its active
+ingredient are not interchangeable across formulations. Other names must describe
+the same complete product, not discard its explicit route or formulation.
 First distinguish a treatment report from incidental mentions of medicines. A report
 describes a therapeutic claim, medical research, a trial starting or its results
 (including negative results), preclinical work, or observational treatment evidence.
@@ -74,6 +82,10 @@ When the reported experiment adds one named treatment to another, name the compl
 combination in intervention (A plus B), even if the report also highlights an A-only
 arm. Do not reduce that combination to its newest or most discussed component.
 Use A alone only when the report's main therapeutic claim is explicitly A alone.
+An ingredient used only to activate the treatment, a vaccine adjuvant, or supportive
+care is not a second experimental treatment. Keep its stated role in the gist,
+without turning the product into a combination regimen. Apply this only when the
+text explicitly establishes that role; do not infer it from a medicine's name.
 Choose a single pair only when it is clearly the main subject. Otherwise return
 about_a_treatment false with empty identification fields and explain in the gist
 that the text contains several separate claims, rather than merging their names.
@@ -89,7 +101,10 @@ class Reading(BaseModel):
     gist: str = Field(
         default="",
         max_length=300,
-        description="What was reported, in one neutral line of your own words.",
+        description=(
+            "What was reported, in one neutral line of your own words, retaining explicit"
+            " route, formulation, delivery and activation details."
+        ),
     )
     intervention: ShortText | None = Field(
         default=None,
@@ -98,8 +113,9 @@ class Reading(BaseModel):
     other_names: list[ShortText] = Field(
         default_factory=list,
         description=(
-            "Other names the text gives it: a brand name, a code such as ABC-123, or a generic"
-            " name. For a combination, only whole-regimen aliases, never individual components."
+            "Other names the text gives the same complete product: a brand name, a code such"
+            " as ABC-123, or a generic name retaining any explicit route or formulation."
+            " For a combination, only whole-regimen aliases, never individual components."
             " Never a description such as 'the drug'. Empty if there is none."
         ),
     )
@@ -123,7 +139,12 @@ class Reading(BaseModel):
         ),
     )
     indication: ShortText | None = Field(
-        default=None, description="The condition it is reported to treat, in medical words."
+        default=None,
+        description=(
+            "The reported condition or intended benefit, retaining any explicitly studied"
+            " patient population and treatment setting. A measured biomarker is not proof"
+            " of a broader clinical benefit."
+        ),
     )
     trial_name: ShortText | None = Field(
         default=None,
