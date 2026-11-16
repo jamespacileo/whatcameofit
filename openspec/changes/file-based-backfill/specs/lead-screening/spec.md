@@ -14,11 +14,15 @@ Screening SHALL send no request, call no model and record no spend. It SHALL dec
 - **THEN** it refuses and names the pull command
 
 ### Requirement: Outlet rule
-A lead SHALL go on only when its outlet kind is general news, health or clinical trade press, or press release. The load applies this rule: a run holds no lead on an outlet that is on no list. No model decides an outlet's kind.
+A lead SHALL go on to scoring only when its outlet kind is general news, health or clinical trade press, or press release. A lead whose outlet kind is journal or paper index, regulator, video, or social SHALL be kept with the outcome awaiting a route, and SHALL NOT be scored or read until a route for its kind exists. The load applies the list: a run holds no lead on an outlet that is on no list. No model decides an outlet's kind.
 
 #### Scenario: A link to a listed outlet
 - **WHEN** a post links to an outlet listed as general news
 - **THEN** the run holds a lead for it and its outcome is in scope
+
+#### Scenario: A link to a journal
+- **WHEN** a post links to a paper on a listed journal's site
+- **THEN** the run holds a lead for it with the outcome awaiting a route, and no model call is made for it
 
 #### Scenario: A link to a code repository
 - **WHEN** a post links to a domain that is on no list

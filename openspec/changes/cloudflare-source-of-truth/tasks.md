@@ -3,9 +3,9 @@
 ## 1. Decisions before any build
 
 - [x] 1.1 Confirm on the MacBook Pro, where the operator believes it is, the database that holds the published claims and the link leads, by counting both there; verify its host, its counts and how to dump it are written in `design.md` in place of the open question. Done 2026-11-16: database `thenwhat`, 829 claims, 2,686,680 leads, 3,912 MB; figures and the dump's checksum are in `design.md`, Context
-- [ ] 1.2 Ask the operator whether a lookup makes drafts only (`design.md` decision 6); verify the answer replaces the open question and, if it differs, that `specs/on-demand-records` is revised before any task in section 6
-- [ ] 1.3 Ask the operator whether on-demand processing must finish while the reader waits; verify the answer is in `design.md` decision 7
-- [ ] 1.4 Ask the operator to confirm or change the 3 GB criterion and whether the store is placed in the European Union jurisdiction; verify both are in `design.md` decision 1
+- [x] 1.2 Ask the operator whether a lookup makes drafts only (`design.md` decision 6); verify the answer replaces the open question and, if it differs, that `specs/on-demand-records` is revised before any task in section 6 Answered 2026-11-16: no. A claim a reader's lookup starts is published by rule with no audit hold; the audit hold stays for backfill batches. `docs/adr/0009`, `design.md` decision 6 and `specs/on-demand-records` are revised
+- [x] 1.3 Ask the operator whether on-demand processing must finish while the reader waits; verify the answer is in `design.md` decision 7 Answered 2026-11-16: queued, within minutes
+- [x] 1.4 Ask the operator to confirm or change the 3 GB criterion and whether the store is placed in the European Union jurisdiction; verify both are in `design.md` decision 1 Answered 2026-11-16: European Union jurisdiction for D1 and R2; the 3 GB criterion was met at 504 MB
 - [ ] 1.5 Read the current terms and limits of D1, R2, Hyperdrive, Queues and Workflows and write an entry for each in `docs/sources.md` with the date; verify each states its limits and price as read
 
 ## 2. Spike
@@ -19,7 +19,7 @@
 
 ## 3. The store
 
-- [ ] 3.1 Create the store and its payload bucket in a preview environment; verify `docs/deploy.md` says how, and that nothing is reachable without a binding or a token
+- [ ] 3.1 Create the store and its payload bucket in a preview environment, both with the European Union jurisdiction, which cannot be set afterwards; verify `docs/deploy.md` says how, and that nothing is reachable without a binding or a token
 - [ ] 3.2 Write the schema and its migrations for the chosen store; verify they apply to an empty store and that every table of `db/models.py` but the HTTP cache has its counterpart
 - [ ] 3.3 Store and read back a raw payload with its checksum and fetch time; verify one test of a round trip and one of a payload that fails its checksum
 - [ ] 3.4 Add run registration and the added-by and changed-by run on every record; verify a test that asks which records one run added
@@ -53,11 +53,12 @@
 - [ ] 6.6 Verify with a test that a request refused by the rate limit writes nothing
 - [ ] 6.7 Word the offer to say what is kept; verify the site build passes its wording checks and the extension shows the same words
 - [ ] 6.8 Answer a tracked address from the store, never for a claim that is held, pending or archived; verify tests for a claim published after the last build and for a held claim
-- [ ] 6.9 Carry a reader's lead into the steps a file's lead goes through, by the shape decided in 1.3; verify one lead goes from a lookup in preview to a claim awaiting audit
+- [ ] 6.9 Queue a reader's lead when it is stored and process it with a Python consumer through the steps a file's lead goes through, without the audit mark; verify one lead goes from a lookup in preview to an approved claim in the next export within minutes, and that a failed one is retried and then left with its error
+- [ ] 6.10 Add the list of claims published from readers' leads by day, if the operator confirms it; verify a test of a day with two
 
 ## 7. Records and guardrails
 
-- [ ] 7.1 Write the ADRs `design.md` names: the database is no longer private, lookups leave records (amending `0001`, `0005` and `0007`); verify each says what it supersedes
+- [x] 7.1 Write the ADRs `design.md` names: the database is no longer private, lookups leave records (amending `0001`, `0005` and `0007`); verify each says what it supersedes. Done 2026-11-16: `docs/adr/0008` and `docs/adr/0009`
 - [ ] 7.2 Revise `CLAUDE.md`'s conventions and layout to the new shape; verify no line still says the site's only input is a committed export or that the database is on the home network
 - [ ] 7.3 Add truth store, run, merge and reader share to `GLOSSARY.md`; verify the terms match the specs
 - [x] 7.4 Withdraw `openspec/changes/portable-backfill-promotion`; verify it is removed or marked superseded by this change and `file-based-backfill`. Removed on 2026-11-16: it was never committed

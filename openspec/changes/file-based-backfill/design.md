@@ -72,6 +72,19 @@ The load reads each bulk file through the existing reader, computes the address 
 
 Adding an outlet later means starting a run over the same bulk files: the reference file (decision 5) then leaves out everything already handled, so only the new outlet's leads cost anything.
 
+**Outlets added, decided by the operator on 2026-11-16.** Asked which of four groups of unlisted outlets to add, from counts over the 2,328,716 unlisted leads in the present database (400,729 domains), the operator chose all four:
+
+| Group | Examples | Leads | Titles with a health word |
+| --- | --- | --- | --- |
+| News | arstechnica.com, vox.com, gizmodo.com, axios.com, businessinsider.com, newyorker.com, theverge.com, techcrunch.com, technologyreview.com, politico.com | about 145,000 | about 2,100 |
+| Science news | phys.org, neurosciencenews.com, news.mit.edu | 16,112 | 461 |
+| Journals and paper indexes | nature.com, science.org, jamanetwork.com, nejm.org, thelancet.com, bmj.com, pubmed, medrxiv.org | 26,891 | 2,173 |
+| Regulator, video and social | fda.gov; youtube.com, twitter.com, medium.com | 203,858 | 967 |
+
+The health-word count is the assistant's rough keyword match on titles, not triage.
+
+The first two groups are news reports and go on as general news or press release, through the steps that exist. The other two are not news reports: a paper is evidence, a regulator's notice is evidence, and a video or a post is a way to an article. The rule that a claim needs a news article stands. So their kinds are added to the outlet list now and the load keeps their links as leads, with the screening outcome awaiting a route; each gets its route by its own change (papers; regulators' notices; video and posts), and until then none is scored or read. Keeping them costs rows and no money.
+
 Score is not a filter. 29,263 of the 64,130 listed Hacker News shares have a score under 3; a post's score says who saw it, not what the article reports.
 
 ### 4. Paid results are on disk before the next call
@@ -98,6 +111,8 @@ Before each batch a stage adds the usage lines in the run folder to the month's 
 
 Two devices working at once can together pass a ceiling each respects alone. The ceiling a device is given is therefore its own share, set in its `.env`.
 
+**Set by the operator on 2026-11-16:** 100 US dollars a month in all: 40 for store-side processing, 30 for the Mac mini, 30 for the MacBook Pro. The separate cap of 13 dollars a month on readers' lookups is unchanged. For scale: scoring all 357,964 leads on listed outlets costs about 2 dollars at the price noted in `docs/sources.md`; reads are where the money goes.
+
 ### 7. Reconciliation, quarantine, budget
 
 - Load: posts read equal shares written, plus posts skipped for each reason (no link, removed, own platform, no title, unusable address, outlet not listed), plus rows quarantined. A mismatch fails the stage.
@@ -117,9 +132,11 @@ Two devices working at once can together pass a ceiling each respects alone. The
 
 `--report-only` stops after the merge's dry-run report. Pushing a pushed run is refused by the store as already merged, which is the retry.
 
-What is pushed for a lead that was not read: its address key, shares, screening outcome, triage score and version. That is how the next device knows not to score it again. What is not pushed: anything on an unlisted outlet, and the tally, which stays with the files.
+What is pushed for a lead that was not read: its address key, shares, screening outcome, triage score and version. That is how the next device knows not to score it again. **Confirmed by the operator on 2026-11-16:** every scored lead is pushed, rejected ones included, so triage can still be measured against its rejections; a lead that was screened and never scored is not. What is not pushed: anything on an unlisted outlet, and the tally, which stays with the files.
 
 ### 9. Preparing and auditing happen against the store
+
+**Confirmed by the operator on 2026-11-16:** prepare runs store-side, in the same Python consumer that processes readers' leads, and the audit hold stays for claims drafted from a backfill's reads (it does not apply to claims a reader's lookup starts: `docs/adr/0009`).
 
 A read drafts a claim; `prepare` searches registries for it and approves by rule; the audit then releases it. Under this change a run's `results` carry drafted claims with their reads' records, marked awaiting audit. Registry search and approval by rule run as they do today, against the store, after the push: they need the store's whole view of a claim (its other articles, its existing matches), which a run folder does not have.
 
@@ -156,8 +173,7 @@ The ledger, the runner and the session-based `news_search` step stay as they are
 
 ## Open Questions
 
-- **Does the operator want a device to be able to prepare and audit a batch on its own**, or is store-side preparation (decision 9) right?
-- **Each device's share of the monthly ceiling.** Decision 6 needs a figure per device.
+- **Answered on 2026-11-16:** prepare is store-side (decision 9); the ceiling is 100 dollars split 40, 30 and 30 (decision 6); all scored leads are pushed (decision 8); all four groups of outlets are added (decision 3).
 - **Reddit's listed share.** Unmeasured until the fetch finishes. r/science links mostly to journals and university sites.
-- **Which unlisted outlets are added first.** From the tally: vox.com, gizmodo.com, thetimes.com, english.elpais.com carry GLP-1 titles.
-- **Whether leads that were screened but never scored are pushed.** Decision 8 pushes scored leads; pushing every in-scope lead would put about 55,000 rows a platform in the store for little use.
+- **The exact domains in each group.** The groups are decided; the lists are drawn up from the tally in task 2.8 and shown to the operator.
+- **Order of the three routes** for papers, regulators' notices, and video and posts.

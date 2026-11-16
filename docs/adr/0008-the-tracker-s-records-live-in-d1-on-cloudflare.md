@@ -46,8 +46,7 @@ Cost, read from the providers' pages that day: on the paid Workers plan the oper
 
 ## What this does not decide
 
-- Whether a reader's lookup leaves records, and what it may create. The change proposes that it makes drafts only; the operator has not confirmed it. It needs its own record, amending `0001`, `0005` and `0007`.
-- Whether on-demand processing finishes while the reader waits.
+- Whether a reader's lookup leaves records, what it may create, and when it is processed. Decided later the same day in `0009`.
 - Where subscriber emails will live in Phase 2.
 - How a device processes a dataset (`openspec/changes/file-based-backfill`).
 
@@ -59,5 +58,5 @@ Cost, read from the providers' pages that day: on the paid Workers plan the oper
 - The migration is about 1.3 million rows and was not tried at that size.
 - The Python SDK needed a private name to send a batch of prepared statements. If that stays so, the merge is written in JavaScript in the Worker and Python keeps the processing.
 - The store can be restored to any minute of the last 30 days, which the laptop database could not.
-- The operator's data is on Cloudflare, under Cloudflare's terms, which are to be noted in `docs/sources.md` before the store is created. Where the database is placed (the European Union jurisdiction or not) is still to be chosen.
+- The operator's data is on Cloudflare, under Cloudflare's terms, which are to be noted in `docs/sources.md` before the store is created. The operator chose the European Union jurisdiction for the database and the bucket later the same day; it is set at creation and cannot be changed afterwards.
 - The laptop database is kept, read-only, for 30 days after the migration. A dump of it taken on 2026-11-16 is held on two machines.

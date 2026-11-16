@@ -116,22 +116,25 @@ Considered: letting each writer upsert tables directly. The rules would then be 
 
 A device holds a token for the ingest address, scoped to registering runs, handing over records and reading the reference export. It cannot run arbitrary statements. Tokens are per device and revocable one by one. Under Postgres the same is a role with rights on staging tables and on the merge function only.
 
-### 6. A lookup makes records, by default drafts
+### 6. A lookup makes records, and a claim it starts is published by rule
 
-Proposed default, to be confirmed by the operator (Open Questions):
+**Decided by the operator on 2026-11-16** (`docs/adr/0009`): of four answers offered, publication by rule with no audit hold. The assistant had recommended drafts held for audit.
 
 - A lookup of an untracked article stores a link lead for the article (address, outlet, title, date) with a share whose platform is `reader` and no community, and registers the registry trials it found in the registry corpus with their payloads.
 - It stores its reading of the article (treatment, condition) as a record awaiting the rules, with its scores and reasons, not as a claim.
-- The lead then goes through the steps a lead from a file goes through. A claim drafted from it is approved by rule and held for audit as `docs/adr/0007` says.
+- The lead then goes through the steps a lead from a file goes through. A claim drafted from it is approved by rule and is **not** held for audit: the next export publishes it, marked as not checked by a person. The audit hold of `docs/adr/0007` stays for claims drafted from a backfill's read batch, which the operator confirmed the same day.
+- Proposed by the assistant, not yet confirmed: a daily list of claims published from readers' leads, as a report and not a gate.
 - Nothing in the answer the reader sees changes: it is still marked automatic and is still not a status.
 
-Considered: publishing a lookup's result as a claim at once. It would let any reader add a public claim by pasting an address, which is exactly what the audit hold exists to prevent.
+What this means: a person who is not the operator can cause a claim to be published by asking about an article on a listed outlet that the rules then approve. The outlet list, the rate limits, the extraction and the rules are the whole of the gate on this route. The lookup itself still creates no claim: the claim is made by processing the lead.
 
 The KV cache stays as a cache. What is new is the durable record beside it.
 
 ### 7. Where on-demand processing runs
 
-Two shapes, chosen by spike criterion 5:
+**Decided by the operator on 2026-11-16: queued, within minutes.** The second shape below, with the Queue's consumer in Python. The reader's answer never waits on it.
+
+The two shapes that were considered:
 
 - **Python on Cloudflare.** A Python Workflow runs the lookup's steps and the same rule code the pipeline runs. One implementation of the rules.
 - **Record and queue.** The JavaScript Worker answers the reader as it does now, writes the lead and the found trials through the merge, and puts the lead on a Queue. A Python process, on Cloudflare or on a device, takes it from there. The reader's answer is immediate; the tracker's record follows in minutes.
@@ -172,8 +175,10 @@ Rollback before step 5 is to do nothing. After step 5 it is to point CI back at 
 - **Answered on 2026-11-16: where the present database is.** `thenwhat` on the MacBook Pro, confirmed there by its counts and by being the only database at the newest revision; see Context. The figure of 971,734 leads in earlier notes was the separate database `thenwhat_links`.
 - **Is the registry-first route's part of `work_entry` migrated?** The link steps' entries are not. Whether the `news_search` entries for the 43,320 trials are needed depends on whether that route keeps its ledger; not yet looked at.
 - **The dump sits on the same disk as the database.** A second copy elsewhere is the operator's step.
-- **Does the operator accept decision 6's default**, that a lookup makes drafts and never a public claim directly?
-- **Must on-demand processing finish while the reader waits**, or is "recorded now, processed within minutes" acceptable? Decision 7 turns on it.
-- **Is the 3 GB criterion right?**
-- **Region.** D1 lets a database be placed by jurisdiction; whether the operator wants the European Union jurisdiction set was not asked.
+- **Answered on 2026-11-16:** a claim a reader's lookup starts is published by rule with no audit hold (decision 6, `docs/adr/0009`).
+- **Answered on 2026-11-16:** on-demand processing is queued and finishes within minutes (decision 7).
+- **Moot:** the 3 GB criterion was met at 504 MB.
+- **Answered on 2026-11-16:** the D1 database and the R2 bucket are created in the European Union jurisdiction. Read from Cloudflare's documentation that day: the jurisdictions offered are `eu` and `fedramp`, there is none for the United Kingdom alone, and a jurisdiction is set when the database is created and cannot be added or changed afterwards.
+- **Is the daily list of claims published from readers' leads wanted?** Proposed by the assistant with decision 6.
+- **Where does the Queue's Python consumer run:** as a Python Worker on Cloudflare, or on a device? The spike showed the first works; its limits under a real read (a page fetch through the reader at home, a model call) were not tested.
 - **Which Postgres provider, if the fallback is taken.** Prices were read; terms were not.

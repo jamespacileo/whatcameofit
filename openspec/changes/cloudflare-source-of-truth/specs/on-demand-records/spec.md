@@ -35,12 +35,38 @@ What a lookup read the article to report SHALL be stored with the lead as a read
 - **WHEN** a lookup reads an article as reporting a treatment for a condition and finds one trial of it
 - **THEN** the numbers of claims, approved events and approved matches in the store are unchanged
 
-### Requirement: Nothing a lookup added is public by a new route
-A lead from a reader SHALL go through the steps a lead from a file goes through. A claim drafted from it SHALL be approved only by the rules that approve any claim and SHALL be held awaiting audit until released. Until then no export SHALL contain it.
+### Requirement: A claim a reader's lead starts is published by rule
+A lead from a reader SHALL go through the steps a lead from a file goes through. A claim drafted from it SHALL be approved only by the rules that approve any claim. It SHALL NOT be marked awaiting audit. Once approved it SHALL be in the next export, marked as not checked by a person. A claim that is not approved SHALL NOT be in any export.
 
 #### Scenario: A reader asks about a new treatment report
-- **WHEN** a reader's lookup leaves a lead, the lead is later read, and a claim is drafted and approved by rule
-- **THEN** the claim is awaiting audit and the next export leaves it out
+- **WHEN** a reader's lookup leaves a lead, the lead is read, and a claim is drafted and approved by rule
+- **THEN** the next export contains the claim, marked as not checked by a person
+
+#### Scenario: The rules do not approve it
+- **WHEN** the claim drafted from a reader's lead has no trial that tests its intervention for its indication and no confirmed evidence stage
+- **THEN** it stays pending and no export contains it
+
+#### Scenario: A backfill's claim beside a reader's
+- **WHEN** one claim is drafted from a backfill's read batch and another from a reader's lead, and both are approved by rule
+- **THEN** the first is awaiting audit and left out of the next export, and the second is in it
+
+### Requirement: A reader's lead is processed within minutes and never while the reader waits
+The answer a reader gets SHALL NOT wait on reading the article into a claim. A reader's lead SHALL be queued when it is stored and processed without anyone starting a run. A lead whose processing fails SHALL be tried again a set number of times and then left with its error, and SHALL NOT be lost.
+
+#### Scenario: A slow outlet
+- **WHEN** the article's outlet takes a minute to answer the page reader
+- **THEN** the reader already has the automatic answer, and the lead is processed when the page arrives
+
+#### Scenario: Processing stops at the spend ceiling
+- **WHEN** the store-side share of the month's ceiling is used up
+- **THEN** readers' leads stay queued or due, readers still get their answers, and processing resumes next month or when the share is raised
+
+### Requirement: Claims published from readers' leads can be listed
+The operator SHALL be able to list the claims published from readers' leads on a given day, with each claim's article and the rules that approved it.
+
+#### Scenario: Looking over yesterday's
+- **WHEN** the operator asks for the claims published from readers' leads yesterday
+- **THEN** each is listed with its article, its matches and their scores
 
 ### Requirement: Nothing about the reader is kept
 A record a lookup leaves SHALL hold nothing that identifies the reader or the request: no network address, no identifier, no user agent, no text or image the reader's browser sent, and no time finer than the day.

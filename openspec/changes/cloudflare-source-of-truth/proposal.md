@@ -18,7 +18,8 @@ Three things follow from the present shape that the operator does not want. A lo
 - **The store is D1, with raw payloads in R2.** Decided by the operator on 2026-11-16 after a spike met five stated criteria (`docs/adr/0008`). A hosted Postgres reached through Hyperdrive is the fallback.
 - **One merge path for every writer.** A reader's lookup, a backfill pushed from a device and a scheduled refresh all hand records to the same merge, which matches by natural key, is safe to repeat, and applies the same conflict rules.
 - **Lookups leave records.** **BREAKING** for `live-lookup`: a lookup of an article the tracker does not hold stores the article's address, outlet, title and date and the registry records found, as records awaiting the rules. It still stores no text and nothing about who asked.
-- **Publishing rules do not loosen.** A record a lookup made is published only by the rules that publish any record (`docs/adr/0001`), and a claim drafted from one is held for audit like a claim drafted from a read (`docs/adr/0007`).
+- **A claim a reader's lookup starts is published by rule, without the audit hold.** Decided by the operator on 2026-11-16 (`docs/adr/0009`). It is approved only by the rules that approve any claim (`docs/adr/0001`) and is marked as not checked by a person. The audit hold of `docs/adr/0007` stays for backfill batches. Processing is queued and finishes within minutes; the reader's answer never waits on it.
+- **The store is in the European Union jurisdiction**, set when it is created.
 - **The site is still a static build**, from an export taken from the truth store when it is built, not from a file committed by hand. **BREAKING** for `deployment`.
 - **Every write says where it came from**: which run, which device or which kind of reader request, which code.
 - **Processing stays in Python.** Whether any of it runs on Cloudflare is a question for the spike.

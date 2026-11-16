@@ -2,9 +2,9 @@
 
 ## 1. Decisions before code
 
-- [ ] 1.1 Ask the operator whether preparing and auditing a batch stay store-side (`design.md` decision 9); verify the answer replaces the open question
-- [ ] 1.2 Ask the operator for each device's share of the monthly ceiling; verify the figures are in `design.md` decision 6 and `.env.example` names the setting with no default
-- [ ] 1.3 Ask the operator whether leads that were screened and never scored are pushed; verify the answer is in `design.md` decision 8 and `specs/backfill-run-files` agrees
+- [x] 1.1 Ask the operator whether preparing and auditing a batch stay store-side (`design.md` decision 9); verify the answer replaces the open question Answered 2026-11-16: store-side, and the audit hold stays for backfill batches
+- [x] 1.2 Ask the operator for each device's share of the monthly ceiling; verify the figures are in `design.md` decision 6 and `.env.example` names the setting with no default Answered 2026-11-16: 100 US dollars in all; store-side 40, Mac mini 30, MacBook Pro 30
+- [x] 1.3 Ask the operator whether leads that were screened and never scored are pushed; verify the answer is in `design.md` decision 8 and `specs/backfill-run-files` agrees Answered 2026-11-16: no. Every scored lead is pushed, rejected ones included; a lead never scored is not
 - [ ] 1.4 Add run, stage, reference file, tally and work slice to `GLOSSARY.md`; verify the terms match the specs
 - [ ] 1.5 Add the dataframe library of `design.md` decision 2 to the pipeline's dependencies; verify `make check` passes with it installed and nothing yet imports it outside `backfill/run/`
 
@@ -18,7 +18,7 @@
 - [ ] 2.5 Add `--dry-run`; verify one CLI test that it prints the report and writes only the tally
 - [ ] 2.6 Verify with a test that a Reddit line carrying an author, an id, a permalink and text leaves none of them in any file of the run
 - [ ] 2.7 Dry-run the 23 Hacker News files and the Reddit files in `data/link-files/`; record the counts here beside the figures in `design.md` and show the operator the tally's top domains and topic domains
-- [ ] 2.8 With the operator, choose unlisted outlets to add from the tally; verify each is in `backfill/outlet_kinds.py` with its kind and the list's version is raised
+- [ ] 2.8 Draw up the domains for the four groups the operator chose on 2026-11-16 (`design.md` decision 3) from the tally and show the operator the lists; add the outlet kinds journal or paper index, regulator, video and social, and the screening outcome awaiting a route; verify each domain is in `backfill/outlet_kinds.py` with its kind, the list's version is raised, and a test shows a journal's link kept, not scored and not read
 
 ## 3. Reference file
 
@@ -66,3 +66,4 @@
 - [ ] 8.2 Record in `docs/sources.md` that unlisted links are no longer stored anywhere and where a run's tally and quarantine are kept
 - [ ] 8.3 After two batches have gone through this route, remove the session-based link steps, `load-links` into a database and the script of 3.4; verify `make check` passes and the registry-first route's tests are untouched
 - [ ] 8.4 Open a change for ordering the registry-first news search by trial status and completion date; verify it is named here
+- [ ] 8.5 Open one change each for the routes the kept leads wait on: shared papers, regulators' notices, and video and posts; verify each is named here and says what a lead of its kind becomes

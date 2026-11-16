@@ -35,6 +35,13 @@ The store SHALL NOT hold the text of an article or of a post, the author of a po
 - **WHEN** a reader pastes an article's text and asks for a search
 - **THEN** no row and no stored object holds any of that text
 
+### Requirement: The store is kept in the European Union
+The store and the raw payloads SHALL be created under the European Union jurisdiction, so that they are stored and run only there. A store found not to be under it SHALL NOT be used.
+
+#### Scenario: Creating the store
+- **WHEN** the store is created for preview or production
+- **THEN** its jurisdiction is the European Union, and the deployment check reads that back before any record is written
+
 ### Requirement: The store is not served
 The store SHALL be reachable only by the site's own service through its binding, and by a device holding a token for the ingest address. It SHALL NOT be reachable as a database from the public internet, and no token SHALL permit an arbitrary statement.
 
