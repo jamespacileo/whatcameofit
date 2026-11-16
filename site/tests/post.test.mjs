@@ -246,6 +246,7 @@ test("Scenario: Post that links to a tracked article", async () => {
   const said = describeAnswer(found);
   assert.deepEqual([said.marked, said.likely, said.none], [null, [], null]);
   assert.match(said.lead, /links to an article we track/);
+  assert.equal(said.source, "Read from a post on Bluesky. The linked article at news.example.org is already tracked; its card is shown without another article read or automatic search.");
 });
 
 test("Scenario: Post on a platform that cannot be read", async () => {
@@ -308,6 +309,7 @@ test("a link-only post pointing at a reviewed article keeps the no-model path", 
   assert.equal(found.article_tracked, true);
   assert.deepEqual(shown, []);
   assert.deepEqual(net.addresses(), []);
+  assert.equal(describeAnswer(found).source, "Read by your browser from the post on X you have open. The linked article at news.example.org is already tracked; its card is shown without another article read or automatic search.");
 });
 
 test("a post whose only link is a shortened one is looked up from its own words, and the answer says why", async () => {
@@ -358,6 +360,43 @@ test("a shortened link that leads nowhere, or round in a circle, is given up on"
     const found = await (await send({ text: "EX-1 restored missing teeth in a first trial in people", links: [link], platform: "X" })).json();
     assert.deepEqual([found.post.article, found.post.only_short_links], [null, true], link);
   }
+});
+
+test("a journal short link reaches a tracked card without reading the article or searching", async () => {
+  const short = "https://nej.md/example";
+  const tracked = structuredClone(BLUESKY_ANSWER);
+  tracked.thread.post.embed.external.uri = short;
+  tracked.thread.post.record.facets = [];
+  const pages = {
+    [BLUESKY_API]: tracked,
+    "https://nej.md/robots.txt": "User-agent: *\nDisallow:",
+    [short]: { leadsTo: "https://news.example.org/tracked-story" },
+  };
+  for (const browserRead of [false, true]) {
+    const { ask, send, shown, net } = service(pages);
+    const response = browserRead
+      ? await send({ text: "", links: [short], platform: "Bluesky" })
+      : await ask(BLUESKY_POST);
+    const found = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(found.article_tracked, true);
+    assert.deepEqual(found.tracked.map((claim) => claim.slug), ["tooth-regrowth-ex1"]);
+    assert.equal(found.post.article_read, false);
+    assert.deepEqual(found.candidates, []);
+    assert.deepEqual(shown, []);
+    assert.deepEqual(net.addresses(), [
+      ...(browserRead ? [] : [BLUESKY_API]), "https://nej.md/robots.txt", short,
+    ]);
+  }
+});
+
+test("a journal short link that refuses software is not followed", async () => {
+  const { send, shown, net } = service({ "https://nej.md/robots.txt": "User-agent: *\nDisallow: /" });
+  const response = await send({ text: "", links: ["https://nej.md/example"], platform: "Bluesky" });
+  assert.equal(response.status, 422);
+  assert.deepEqual(await response.json(), { error: "post_unreadable", platform: "Bluesky" });
+  assert.deepEqual(shown, []);
+  assert.deepEqual(net.addresses(), ["https://nej.md/robots.txt"]);
 });
 
 test("a post read by the browser that links to a tracked article is answered with the claim's page", async () => {

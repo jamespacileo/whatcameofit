@@ -5,6 +5,8 @@ often as it names it. Recorded as another name, a description is sent to the reg
 as a search term and brings back thousands of unrelated trials.
 """
 
+import re
+
 # Words that open a description, never a name.
 OPENERS = frozenset(
     [
@@ -73,10 +75,10 @@ KINDS = frozenset(
     ]
 )
 
-# What the name of a class of treatments ends in: every member of the class, not one of
-# them. A code in the phrase does not make it one treatment: "GLP-1 receptor agonists",
-# "PD-1 inhibitor".
-CLASS_ENDINGS = frozenset(
+# Words for a class of treatments: every member of the class, not one of them. A code
+# in the phrase does not make it one treatment: "GLP-1 receptor agonists", "PD-1
+# inhibitor". "Receptor" goes with them, since it names a target, not a treatment.
+CLASS_WORDS = frozenset(
     [
         "agonist",
         "agonists",
@@ -94,7 +96,13 @@ CLASS_ENDINGS = frozenset(
         "modulators",
         "mimetic",
         "mimetics",
-        # Kinds of thing in the plural: several treatments, whatever comes before.
+        "receptor",
+        "receptors",
+    ]
+)
+# Kinds of thing in the plural: several treatments, whatever comes before.
+PLURAL_KINDS = frozenset(
+    [
         "drugs",
         "medications",
         "medicines",
@@ -102,15 +110,38 @@ CLASS_ENDINGS = frozenset(
         "therapies",
         "vaccines",
         "antibodies",
+        "prescriptions",
     ]
 )
+# The plural of a code: "GLP-1s", "SGLT2s". A code names a target or a family when it
+# takes a plural; one product does not.
+PLURAL_CODE = re.compile(r"[A-Za-z]{2,}-?\d+[A-Za-z]?s")
+# What a name is said to be for, set aside before it is judged: "GLP-1 drugs for obesity".
+FOR = re.compile(r"\bfor\b", re.IGNORECASE)
+PUNCTUATION = ".,;:()[]"
 
 
 def is_a_class(text: str) -> bool:
-    """Whether the text names a class of treatments, not one treatment: it ends in a word
-    for a class, with or without a code. "Semaglutide" is one; "GLP-1 drugs" is many."""
-    words = text.split()
-    return bool(words) and words[-1].lower().strip(".,;:") in CLASS_ENDINGS
+    """Whether the text names a class of treatments, not one treatment, with or without
+    a code. "Semaglutide" is one; "GLP-1 drugs", "GLP-1s" and "GLP-1 receptor agonist
+    prescriptions" are many. What the name is said to be for is set aside first.
+
+    What comes before a word for a class is its target ("glucagon receptor agonist"), so
+    a class word marks the name unless a name follows it: "PD-1 inhibitor pembrolizumab"
+    names pembrolizumab, "PD-1 inhibitor" names none. A kind of thing after it ("agonist
+    pill") is no name.
+    """
+    words = [word.strip(PUNCTUATION) for word in FOR.split(text, maxsplit=1)[0].split()]
+    words = [word for word in words if word]
+    if not words:
+        return False
+    if words[-1].lower() in PLURAL_KINDS or any(PLURAL_CODE.fullmatch(word) for word in words):
+        return True
+    marked = [at for at, word in enumerate(words) if word.lower() in CLASS_WORDS]
+    if not marked:
+        return False
+    after = [word for word in words[marked[-1] + 1 :] if word.lower() not in KINDS]
+    return not after or not is_a_name(" ".join(after))
 
 
 def is_a_name(text: str) -> bool:

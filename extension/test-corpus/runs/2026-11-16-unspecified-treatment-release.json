@@ -1,0 +1,267 @@
+{
+  "release_commit": "3690b4ffeaa932d5d16557c99f989bae98689a70",
+  "started_at": "2026-11-16T06:11:41.857Z",
+  "public_cards": 174,
+  "public_index_matches_rehearsal": true,
+  "source_identity": {
+    "text_characters": 146,
+    "registry_numbers": [
+      "NCT06625320"
+    ],
+    "registry_link_supplied": true,
+    "article_readable": false,
+    "primary_record_checked_at": "2026-11-16T06:11:41.857Z",
+    "primary_record": {
+      "id": "NCT06625320",
+      "title": "Phase 3 Study of Daraxonrasib (RMC-6236) in Patients With Previously Treated Metastatic Pancreatic Ductal Adenocarcinoma (PDAC)",
+      "conditions": [
+        "Pancreatic Cancer",
+        "PDAC",
+        "PDAC - Pancreatic Ductal Adenocarcinoma"
+      ],
+      "interventions": [
+        "RMC-6236",
+        "Gemcitabine",
+        "nab-paclitaxel",
+        "Irinotecan",
+        "Liposomal irinotecan",
+        "5-fluorouracil",
+        "leucovorin",
+        "Oxaliplatin"
+      ]
+    }
+  },
+  "checks": {
+    "original_url": {
+      "checked_at": "2026-11-16T06:11:56.538Z",
+      "http": 200,
+      "ms": 14680,
+      "about_a_treatment": true,
+      "treatment": "experimental treatment in NCT06625320",
+      "condition": "Pancreatic cancer; the post suggests the drug might lead to much longer survival.",
+      "registry_numbers": [
+        "NCT06625320"
+      ],
+      "candidates": 1,
+      "likely": 1,
+      "cited": {
+        "id": "NCT06625320",
+        "score": 0.97,
+        "answer": "match",
+        "agrees": [
+          "stated"
+        ]
+      },
+      "tracked": [],
+      "post": {
+        "platform": "Hacker News",
+        "article": "https://economist.com/science-and-technology/2026/06/12/treating-pancreatic-tumours-may-have-revealed-cancers-master-switch",
+        "article_host": "economist.com",
+        "article_read": false
+      },
+      "timings": "registry;dur=217, papers;dur=0, read;dur=13224, research;dur=488, score;dur=880, core;dur=14301, total;dur=14301",
+      "pass": true
+    },
+    "installed_composition": {
+      "checked_at": "2026-11-16T06:12:04.530Z",
+      "http": 200,
+      "ms": 7990,
+      "about_a_treatment": true,
+      "treatment": "experimental treatment in NCT06625320",
+      "condition": "Pancreatic cancer; the post suggests it might enable longer survival.",
+      "registry_numbers": [
+        "NCT06625320"
+      ],
+      "candidates": 1,
+      "likely": 1,
+      "cited": {
+        "id": "NCT06625320",
+        "score": 0.99,
+        "answer": "match",
+        "agrees": [
+          "stated"
+        ]
+      },
+      "tracked": [],
+      "post": {
+        "platform": "Hacker News",
+        "article": "https://economist.com/science-and-technology/2026/06/12/treating-pancreatic-tumours-may-have-revealed-cancers-master-switch",
+        "article_host": "economist.com",
+        "article_read": false,
+        "read_in_browser": true
+      },
+      "timings": "registry;dur=6, papers;dur=0, read;dur=6615, research;dur=327, score;dur=1299, core;dur=7917, total;dur=7917",
+      "pass": true
+    }
+  },
+  "installed_extension": {
+    "version": "0.9.20",
+    "build": 28,
+    "source_commit": "3690b4ffeaa932d5d16557c99f989bae98689a70",
+    "resource_hashes_verified": 35,
+    "native_verified": false,
+    "method": "Installed signed resource functions; complete official public post text and outgoing links supplied transiently to composition. Native collector/popup/storage not exercised.",
+    "completed_answer_reuse": true,
+    "old_local_answers_refused": true
+  },
+  "checked_at": "2026-11-16T06:12:04.533Z",
+  "website_observation": {
+    "recorded_at": "2026-11-16T06:12:41.992Z",
+    "verified": true,
+    "finding": "Released original-URL website form reuses the fresh 06:11:56 result and displays the explicitly cited NCT06625320 at 97%, with the unreadable linked article disclosed and no tracked-card link."
+  },
+  "deployment": {
+    "pull_request": 200,
+    "main_commit": "3690b4ffeaa932d5d16557c99f989bae98689a70",
+    "production_run": 43813721268,
+    "worker_version": "8c9f5242-a601-4d8d-b173-7fbca44babf3",
+    "conclusion": "success"
+  },
+  "verification_correction": {
+    "finding": "The complete official Hacker News post supplies NCT06625320 in its text and links. The direct lookup did not invent that number. The first manually composed extension request omitted the post body and registry link, so its negative answer was expected for its incomplete input.",
+    "initial_run": {
+      "release_commit": "3690b4ffeaa932d5d16557c99f989bae98689a70",
+      "started_at": "2026-11-16T06:03:25.533Z",
+      "public_cards": 174,
+      "public_index_matches_rehearsal": true,
+      "checks": {
+        "original_url": {
+          "checked_at": "2026-11-16T06:03:37.379Z",
+          "http": 200,
+          "ms": 11845,
+          "about_a_treatment": true,
+          "treatment": "Experimental treatment in NCT06625320",
+          "condition": "Longer survival in people with pancreatic cancer",
+          "candidates": 1,
+          "tracked": [],
+          "post": {
+            "platform": "Hacker News",
+            "article": "https://economist.com/science-and-technology/2026/06/12/treating-pancreatic-tumours-may-have-revealed-cancers-master-switch",
+            "article_host": "economist.com",
+            "article_read": false
+          },
+          "timings": "registry;dur=221, papers;dur=0, read;dur=10155, research;dur=483, score;dur=1160, core;dur=11516, total;dur=11516",
+          "pass": false
+        },
+        "installed_composition": {
+          "checked_at": "2026-11-16T06:03:39.982Z",
+          "http": 200,
+          "ms": 2602,
+          "about_a_treatment": false,
+          "treatment": null,
+          "condition": null,
+          "candidates": 0,
+          "tracked": [],
+          "post": {
+            "platform": "Hacker News",
+            "article": "https://economist.com/science-and-technology/2026/06/12/treating-pancreatic-tumours-may-have-revealed-cancers-master-switch",
+            "article_host": "economist.com",
+            "article_read": false,
+            "read_in_browser": true
+          },
+          "timings": "registry;dur=0, papers;dur=0, read;dur=2548, core;dur=2548, total;dur=2548",
+          "pass": true
+        }
+      },
+      "installed_extension": {
+        "version": "0.9.20",
+        "build": 28,
+        "source_commit": "3690b4ffeaa932d5d16557c99f989bae98689a70",
+        "resource_hashes_verified": 35,
+        "native_verified": false,
+        "method": "Installed signed resource functions; official public post title/link supplied to composition. Native collector/popup/storage not exercised.",
+        "completed_negative_reuse": true,
+        "old_local_answers_refused": true
+      },
+      "checked_at": "2026-11-16T06:03:39.984Z"
+    },
+    "action": "Reran both paths using complete source information, checked the stated trial against its primary registry record, and preserved the initial run as a test-input correction. The unneeded draft trial-number guard was not committed, deployed or installed."
+  },
+  "baseline": {
+    "id": "S016",
+    "url": "https://news.ycombinator.com/item?id=48517199",
+    "checked_at": "2026-11-16T05:38:00.484Z",
+    "http": 200,
+    "ms": 7169,
+    "keys": [
+      "about_a_treatment",
+      "gist",
+      "treatment",
+      "condition",
+      "names",
+      "known_names",
+      "registry_numbers",
+      "paper_numbers",
+      "papers_unchecked",
+      "details",
+      "candidates",
+      "unscored",
+      "tracked",
+      "research",
+      "post"
+    ],
+    "treatment": "unnamed new pancreatic cancer drug",
+    "condition": "Pancreatic cancer; longer survival times",
+    "post": {
+      "platform": "Hacker News",
+      "article": "https://economist.com/science-and-technology/2026/06/12/treating-pancreatic-tumours-may-have-revealed-cancers-master-switch",
+      "article_host": "economist.com",
+      "article_read": false
+    },
+    "tracked": [],
+    "candidates": 1,
+    "top": [
+      {
+        "id": "NCT06625320",
+        "score": 0.87
+      }
+    ],
+    "timings": "registry;dur=974, papers;dur=0, read;dur=4356, research;dur=1247, score;dur=1330, core;dur=6639, total;dur=6639",
+    "browser_source_access": "Fresh Economist page reports access temporarily restricted; no challenge or feedback submitted."
+  },
+  "summary": {
+    "corpus_verdicts": {
+      "review": 31,
+      "pass": 140,
+      "partial": 59,
+      "blocked": 28
+    },
+    "knowledge_cards": {
+      "review": 32,
+      "not applicable": 10,
+      "no card": 58,
+      "not checked": 28,
+      "match": 130
+    }
+  },
+  "sheet_verification": {
+    "checked_at": "2026-11-16T06:15:10.347Z",
+    "spreadsheet_url": "https://docs.google.com/spreadsheets/d/15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA/edit?ouid=118272730050776001505",
+    "ids": [
+      "S016"
+    ],
+    "ranges": [
+      "URLs!H17:P17",
+      "URLs!Z17:AF17",
+      "Summary!B1"
+    ],
+    "values_verified": 17,
+    "other_inspected_cells_preserved": 97,
+    "formats_formulas_notes_validation_chips_preserved": true,
+    "summary_total": [
+      "Total",
+      "258",
+      "140",
+      "59",
+      "0",
+      "28",
+      "31",
+      "0"
+    ],
+    "rendered_layout_verified": false,
+    "layout_limit": "Native sheet requires identity verification; existing formatting inspected and preserved."
+  },
+  "rows": {
+    "S016": {"lookup_answer": "experimental treatment in NCT06625320 for Pancreatic cancer; the post suggests the drug might lead to much longer survival.", "tracked_claim": "", "trial_records": 1, "likely_records": 1, "top_record": "NCT06625320 · explicitly stated; 97% automatic match", "test_result": "partial", "reason": "The complete official Hacker News post explicitly supplies NCT06625320 in its text and registry link. Fresh released original-URL and installed-function requests retain that cited trial at 97% and 99%; the primary record confirms daraxonrasib in previously treated metastatic pancreatic cancer. No tracked card is returned, and the linked Economist article remains unreadable. The earlier title-only extension input omitted this citation and is superseded.", "how_read": "fresh released service; complete official Hacker News post and links; linked article unreadable; installed Safari functions", "ms": 14680, "last_tested": "2026-11-16T06:12:04.533Z", "tested_build": "site 3690b4ffeaa9; installed Safari 0.9.20 (28)", "site_result": "Released original-URL website form reuses the fresh 06:11:56 result and displays the explicitly cited NCT06625320 at 97%, with the unreadable linked article disclosed and no tracked-card link.", "extension_result": "Signed Safari 0.9.20 (28), signature and all 35 resources verified. Complete official public post text and links supplied transiently to installed request composition; released service returns stated NCT06625320 at 99% in 7990 ms. Installed presenter and local reuse/cache-version functions pass. Native collector/popup/storage remain unverified; automation reports locked.", "knowledge_card_result": "no card", "knowledge_card_notes": "No card returned for the reported study identity and broad pancreatic-cancer target. The source explicitly cites the daraxonrasib trial; the full Economist article remains unreadable. Do not infer an exact card association from disease alone.", "unspecified_treatment_release": "runs/2026-11-16-unspecified-treatment-release.json", "website_observation": {"recorded_at": "2026-11-16T06:12:41.992Z", "verified": true, "finding": "Released original-URL website form reuses the fresh 06:11:56 result and displays the explicitly cited NCT06625320 at 97%, with the unreadable linked article disclosed and no tracked-card link."}}
+  }
+}

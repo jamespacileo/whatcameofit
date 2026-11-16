@@ -28,7 +28,7 @@ test("only a publishable export replaces the public snapshot; failures preserve 
     assert.notEqual(run().status, 0);
     assert.equal(fs.readFileSync(target, "utf8"), "previous snapshot");
     // A claim no person checked is published, marked as such (openspec auto-publish).
-    const good = { schema_version: 1, preview: false, claims: [{ slug: "reviewed", checked_by_person: true }, { slug: "by-rule", checked_by_person: false }], verticals: [{ slug: "new-topic" }] };
+    const good = { schema_version: 2, preview: false, claims: [{ slug: "reviewed", checked_by_person: true }, { slug: "by-rule", checked_by_person: false }], verticals: [{ slug: "new-topic" }] };
     fs.writeFileSync(source, JSON.stringify(good));
     const result = run();
     assert.equal(result.status, 0, result.stderr);

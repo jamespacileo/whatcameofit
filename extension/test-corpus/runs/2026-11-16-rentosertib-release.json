@@ -1,0 +1,55 @@
+{
+  "release_commit": "db09bbe6ed37c6e5134f8c9e8accfab4a6b4ef2e",
+  "checked_at": "2026-11-16T02:38:10.621Z",
+  "public_cards": 168,
+  "public_data_matches_rehearsed_build": true,
+  "corpus": {
+    "rows": 258,
+    "changed_rows": [
+      "A052"
+    ],
+    "method": "All exact address mappings, not a fresh 258-page reading."
+  },
+  "installed_extension": {
+    "version": "0.9.17",
+    "build": 25,
+    "resource_hashes_verified": 35,
+    "native_verified": false,
+    "method": "Signed installed exact-address function replay; not native popup or browser storage."
+  },
+  "pr": 188,
+  "ci_run": 43792862635,
+  "worker_id": "b62c777a-bf12-49d5-88c6-10549e46b42e",
+  "deployed_at": "2026-11-16T02:37:43.4710223Z",
+  "checks": {
+    "pipeline": 1562,
+    "site": 656,
+    "extension": 170,
+    "lint_types": "passed",
+    "independent_reviews": "standards and specification clear"
+  },
+  "website_browser": {
+    "verified": true,
+    "verified_at": "2026-11-16T02:38:37Z",
+    "method": "Submitted exact Medical News Today URL in released homepage, opened returned card, observed sole NCT05938920, Phase 2, 42/71 distinction, and explicit biomarker limitation in rendered page."
+  },
+  "summary": {
+    "corpus_verdicts": {
+      "review": 32,
+      "pass": 121,
+      "partial": 79,
+      "blocked": 26
+    },
+    "knowledge_cards": {
+      "review": 32,
+      "not applicable": 10,
+      "no card": 79,
+      "match": 111,
+      "not checked": 26
+    }
+  },
+  "sheet_verification": {"verified_at": "2026-11-16T02:39:26.658Z", "changed_cells": 17, "preserved_cells": 65, "formulas_formats_validation_chips_preserved": true, "summary": ["Total", "258", "121", "79", "0", "26", "32", "0"], "native_layout_verified": false, "note": "Google-rendered Sheet remains behind sign-in; best-effort API structure/format validation."},
+  "rows": {
+    "A052": {"lookup_answer": "rentosertib for Proteomic biological-age markers in idiopathic pulmonary fibrosis", "tracked_claim": "rentosertib-proteomic-ageing-ipf", "trial_records": "", "likely_records": "", "top_record": "NCT05938920 · verified released card; no fresh scoring", "test_result": "pass", "reason": "Released website recognizes the exact Medical News Today URL and opens the rentosertib proteomic-ageing card for IPF. Only the primary paper's NCT05938920 sets Phase 2; 42 complete proteomic samples are distinguished from 71 trial participants. Other IPF trials and inhaled-formulation papers are excluded. Biomarkers do not establish longer life or reversed ageing.", "how_read": "released website URL lookup and card; installed Safari exact-address function replay", "ms": null, "last_tested": "2026-11-16T02:38:37Z", "tested_build": "site db09bbe6ed37; Safari 0.9.17 (25), native popup unverified", "site_result": "2026-11-16T02:38:37Z: production db09bbe6ed37. Released website recognizes the exact Medical News Today URL and opens the rentosertib proteomic-ageing card for IPF. Only the primary paper's NCT05938920 sets Phase 2; 42 complete proteomic samples are distinguished from 71 trial participants. Other IPF trials and inhaled-formulation papers are excluded. Biomarkers do not establish longer life or reversed ageing.", "extension_result": "Installed signed Safari 0.9.17 (25): all 35 resource hashes verified; installed exact-address function returns the released card. Function replay only; native popup and browser storage remain unverified. No new model request.", "knowledge_card_result": "match", "knowledge_card_notes": "rentosertib-proteomic-ageing-ipf; exact source, trial and biomarker/IPF scope verified. Native Safari popup remains unverified.", "trial_role_release": "runs/2026-11-15-trial-role-release.json", "reading_scope_release": "runs/2026-11-16-reading-scope-release.json", "rentosertib_release": "runs/2026-11-16-rentosertib-release.json"}
+  }
+}

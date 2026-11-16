@@ -45,7 +45,7 @@ make lookup-dev                                  # the site with its lookup serv
 SITE_URL=http://localhost:8787 make extension    # in a second terminal
 ```
 
-Load `extension/dist` in Chrome as above. If it was loaded before, press its reload arrow on `chrome://extensions`. If it keeps using an old lookup file with search disabled, remove it and load it again to clear that file's six-hour cache.
+Load `extension/dist` in Chrome as above. If it was loaded before, press its reload arrow on `chrome://extensions`. Each popup opening checks for an updated card list; an unchanged list is reused without downloading it again. If the site is unavailable, the popup uses its saved list and shows when it was saved.
 
 Then open each of these and open the extension's toolbar popup. An untracked page should search immediately:
 

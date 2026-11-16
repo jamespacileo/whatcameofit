@@ -270,7 +270,9 @@ export interface Export {
   card_sources?: ExportedCardSource[];
 }
 
-const SUPPORTED_SCHEMA_VERSION = 1;
+// 2: the pipeline leaves claims awaiting audit out (docs/adr/0007). An export from
+// pipeline code older than that hold says 1 and is refused.
+const SUPPORTED_SCHEMA_VERSION = 2;
 
 function exportPath(): string {
   const configured = process.env.EXPORT_FILE;

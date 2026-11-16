@@ -1,0 +1,202 @@
+{
+  "release_commit": "7e4464262e3e4552a956062e03be28e82d0581fe",
+  "checked_at": "2026-11-16T05:16:35.186Z",
+  "public_cards": 173,
+  "public_data_matches_rehearsed_build": true,
+  "all_258_exact_mappings_unchanged": true,
+  "installed_extension": {
+    "version": "0.9.19",
+    "build": 27,
+    "source_commit": "7e4464262e3e4552a956062e03be28e82d0581fe",
+    "resource_hashes_verified": 35,
+    "native_verified": false
+  },
+  "method": "Fresh original Hacker News URL requests plus installed composition/exact-source functions; S032/S036 installed requests also sent. Request counts follow the verified tracked-source branch; local guarded checks separately prove zero paid/source work. No article or post body retained.",
+  "website_form_verified": [
+    "S030",
+    "S031",
+    "S032"
+  ],
+  "website_observations": {
+    "S032": {
+      "recorded_at": "2026-11-16T05:18:23.703Z",
+      "finding": "Original post form shows deliberate tracked-source reuse; opened correct ER-100 card, January animal stage, October safety summary and NCT07290244."
+    },
+    "S030": {
+      "recorded_at": "2026-11-16T05:18:55.345Z",
+      "finding": "Original post form shows deliberate tracked-source reuse; correct laboratory card opened. Expanded paper shows Nature Communications, DOI 10.1038/s41467-025-64982-y and Europe PMC 41188228 with attributed subject heading."
+    },
+    "S031": {
+      "recorded_at": "2026-11-16T05:19:22.603Z",
+      "finding": "Original post form shows deliberate tracked-source reuse; separate keratin laboratory card and DOI 10.1002/adhm.202502465 verified with attributed human/animal index headings."
+    }
+  },
+  "access_checks": {
+    "S028": {
+      "url": "https://www.reddit.com/r/medicine/comments/1mz19xa/how_do_we_feel_about_suzetrigine_so_far/",
+      "checked_on": "2026-11-16",
+      "outcome": "blocked",
+      "method": "Fresh in-app browser navigation; Reddit reports network-security block. No challenge completed, post body retained or lookup submitted."
+    }
+  },
+  "release": {
+    "pr": 197,
+    "main": "7e4464262e3e4552a956062e03be28e82d0581fe",
+    "production_ci": 43808697407,
+    "worker_version": "ef869215-5d23-409f-aed4-d39e899024e3",
+    "deployed_at": "2026-11-16T05:15:49.2921291Z",
+    "validation": {
+      "pipeline_tests": 1562,
+      "site_tests": 658,
+      "extension_tests": 170,
+      "lint_types_rehearsal": "pass",
+      "independent_reviews": "Both clear at 90355b3eef1ceeb2f0ab722685647a36a9e8510a"
+    }
+  },
+  "summary": {
+    "corpus_verdicts": {
+      "review": 32,
+      "pass": 138,
+      "partial": 60,
+      "blocked": 28
+    },
+    "knowledge_cards": {
+      "review": 33,
+      "not applicable": 10,
+      "no card": 59,
+      "not checked": 28,
+      "match": 128
+    }
+  },
+  "request_checks": {
+    "S030": {
+      "url": "https://news.ycombinator.com/item?id=45826995",
+      "slug": "enamel-repair-elastin-like-recombinamer",
+      "http": 200,
+      "started_at": "2026-11-16T05:16:33.851Z",
+      "ms": 279,
+      "source": "Read from a post on Hacker News. The linked article at nottingham.ac.uk is already tracked; its card is shown without another article read or automatic search.",
+      "post": {
+        "platform": "Hacker News",
+        "article": "https://www.nottingham.ac.uk/news/new-gel-restores-dental-enamel-and-could-revolutionise-tooth-repair",
+        "article_host": "nottingham.ac.uk",
+        "article_read": false
+      },
+      "article_tracked": true,
+      "candidates": 0,
+      "post_api_requests": 1,
+      "model_requests": 0,
+      "article_requests": 0,
+      "registry_requests": 0,
+      "installed_composition_checked": true,
+      "exact_source_kind": "tracked",
+      "native_verified": false
+    },
+    "S031": {
+      "url": "https://news.ycombinator.com/item?id=44922571",
+      "slug": "keratin-film-enamel-repair",
+      "http": 200,
+      "started_at": "2026-11-16T05:16:34.295Z",
+      "ms": 240,
+      "source": "Read from a post on Hacker News. The linked article at kcl.ac.uk is already tracked; its card is shown without another article read or automatic search.",
+      "post": {
+        "platform": "Hacker News",
+        "article": "https://www.kcl.ac.uk/news/toothpaste-made-from-hair-provides-natural-root-to-repair-teeth",
+        "article_host": "kcl.ac.uk",
+        "article_read": false
+      },
+      "article_tracked": true,
+      "candidates": 0,
+      "post_api_requests": 1,
+      "model_requests": 0,
+      "article_requests": 0,
+      "registry_requests": 0,
+      "installed_composition_checked": true,
+      "exact_source_kind": "tracked",
+      "native_verified": false
+    },
+    "S032": {
+      "url": "https://news.ycombinator.com/item?id=46811037",
+      "slug": "er-100-open-angle-glaucoma",
+      "http": 200,
+      "started_at": "2026-11-16T05:16:34.572Z",
+      "ms": 367,
+      "source": "Read from a post on Hacker News. The linked article at technologyreview.com is already tracked; its card is shown without another article read or automatic search.",
+      "post": {
+        "platform": "Hacker News",
+        "article": "https://www.technologyreview.com/2026/01/27/1131796/the-first-human-test-of-a-rejuvenation-method-will-begin-shortly/",
+        "article_host": "technologyreview.com",
+        "article_read": false
+      },
+      "article_tracked": true,
+      "candidates": 0,
+      "post_api_requests": 1,
+      "model_requests": 0,
+      "article_requests": 0,
+      "registry_requests": 0,
+      "installed_composition_checked": true,
+      "exact_source_kind": "tracked",
+      "native_verified": false,
+      "installed_request_ms": 63,
+      "installed_request_sent": true
+    },
+    "S036": {
+      "url": "https://www.linkedin.com/posts/torresphd_results-from-phase-2-courage-trial-demonstrating-activity-7511422117729472512-JZUS",
+      "slug": "semaglutide-trevogrumab-obesity",
+      "http": 200,
+      "started_at": "2026-11-16T05:16:35.147Z",
+      "ms": 38,
+      "source": "Read by your browser from the post on LinkedIn you have open. The linked article at investor.regeneron.com is already tracked; its card is shown without another article read or automatic search.",
+      "post": {
+        "platform": "LinkedIn",
+        "article": "https://investor.regeneron.com/news-releases/news-release-details/results-phase-2-courage-trial-demonstrating-potential-improve/",
+        "article_host": "investor.regeneron.com",
+        "article_read": false,
+        "read_in_browser": true
+      },
+      "article_tracked": true,
+      "candidates": 0,
+      "post_api_requests": 0,
+      "model_requests": 0,
+      "article_requests": 0,
+      "registry_requests": 0,
+      "installed_composition_checked": true,
+      "installed_request_sent": true,
+      "native_verified": false,
+      "scope": "Fresh public browser-visible LinkedIn source link, manually supplied through installed composition to released service. Native collector/popup/storage not exercised."
+    }
+  },
+  "sheet_verification": {
+    "verified_at": "2026-11-16T05:21:32.160Z",
+    "spreadsheet_id": "15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA",
+    "ranges": [
+      "URLs!A1:AF1",
+      "URLs!A194:AF194",
+      "URLs!A236:AF238",
+      "URLs!A242:AF242",
+      "Summary!A1:I10"
+    ],
+    "values_verified": 81,
+    "other_cells_preserved": 161,
+    "formulas_formats_validation_notes_preserved": true,
+    "total_row": [
+      "Total",
+      "258",
+      "138",
+      "60",
+      "0",
+      "28",
+      "32",
+      "0",
+      ""
+    ],
+    "rendered_layout": "Unverified: native Google Sheet requires identity verification; API format and structure checks used."
+  },
+  "rows": {
+    "S030": {"lookup_answer": "Elastin-like recombinamer matrix for Enamel erosion and exposed dentine", "tracked_claim": "enamel-repair-elastin-like-recombinamer", "trial_records": 0, "likely_records": 0, "top_record": "10.1038/s41467-025-64982-y · origin paper; no human trial", "test_result": "pass", "reason": "Fresh original Hacker News URL returns the distinct laboratory enamel card. Shared site/Safari wording correctly says the tracked article was reused without another read or search. Released website form, card and installed composition/exact-source functions pass. No model, article or registry call; native collector/popup/storage remain unverified. Nottingham origin-paper details now appear from Europe PMC 41188228; this remains a laboratory study.", "how_read": "released service and website form; official Hacker News reader; installed Safari functions", "ms": 279, "last_tested": "2026-11-16T05:16:33.851Z", "tested_build": "site 7e4464262e3e; installed Safari 0.9.19 (27)", "site_result": "Recorded 2026-11-16T05:18:55.345Z: released website form and card verified. Original post form shows deliberate tracked-source reuse; correct laboratory card opened. Expanded paper shows Nature Communications, DOI 10.1038/s41467-025-64982-y and Europe PMC 41188228 with attributed subject heading.", "extension_result": "Signed Safari 0.9.19 (27), signature and all 35 resources verified. Installed presenter, request composition and exact-source functions pass. Fresh original URL separately sent to released service. Native collector/popup/storage remain unverified; computer control reports locked.", "knowledge_card_result": "match", "knowledge_card_notes": "enamel-repair-elastin-like-recombinamer; Fresh original Hacker News URL returns the distinct laboratory enamel card. Shared site/Safari wording correctly says the tracked article was reused without another read or search. Released website form, card and installed composition/exact-source functions pass. No model, article or registry call; native collector/popup/storage remain unverified. Nottingham origin-paper details now appear from Europe PMC 41188228; this remains a laboratory study.", "social_linked_release": "runs/2026-11-16-social-linked-release.json", "source_provenance_release": "runs/2026-11-16-source-provenance-release.json", "website_observation": {"recorded_at": "2026-11-16T05:18:55.345Z", "finding": "Original post form shows deliberate tracked-source reuse; correct laboratory card opened. Expanded paper shows Nature Communications, DOI 10.1038/s41467-025-64982-y and Europe PMC 41188228 with attributed subject heading."}},
+    "S031": {"lookup_answer": "Keratin film for Early enamel lesions", "tracked_claim": "keratin-film-enamel-repair", "trial_records": 0, "likely_records": 0, "top_record": "10.1002/adhm.202502465 · origin paper; no human trial", "test_result": "pass", "reason": "Fresh original Hacker News URL returns the distinct laboratory enamel card. Shared site/Safari wording correctly says the tracked article was reused without another read or search. Released website form, card and installed composition/exact-source functions pass. No model, article or registry call; native collector/popup/storage remain unverified.", "how_read": "released service and website form; official Hacker News reader; installed Safari functions", "ms": 240, "last_tested": "2026-11-16T05:16:34.295Z", "tested_build": "site 7e4464262e3e; installed Safari 0.9.19 (27)", "site_result": "Recorded 2026-11-16T05:19:22.603Z: released website form and card verified. Original post form shows deliberate tracked-source reuse; separate keratin laboratory card and DOI 10.1002/adhm.202502465 verified with attributed human/animal index headings.", "extension_result": "Signed Safari 0.9.19 (27), signature and all 35 resources verified. Installed presenter, request composition and exact-source functions pass. Fresh original URL separately sent to released service. Native collector/popup/storage remain unverified; computer control reports locked.", "knowledge_card_result": "match", "knowledge_card_notes": "keratin-film-enamel-repair; Fresh original Hacker News URL returns the distinct laboratory enamel card. Shared site/Safari wording correctly says the tracked article was reused without another read or search. Released website form, card and installed composition/exact-source functions pass. No model, article or registry call; native collector/popup/storage remain unverified.", "social_linked_release": "runs/2026-11-16-social-linked-release.json", "source_provenance_release": "runs/2026-11-16-source-provenance-release.json", "website_observation": {"recorded_at": "2026-11-16T05:19:22.603Z", "finding": "Original post form shows deliberate tracked-source reuse; separate keratin laboratory card and DOI 10.1002/adhm.202502465 verified with attributed human/animal index headings."}},
+    "S032": {"lookup_answer": "ER-100 for Open-angle glaucoma; exact linked article", "tracked_claim": "er-100-open-angle-glaucoma", "trial_records": "", "likely_records": "", "top_record": "NCT07290244 · verified released card; no fresh scoring", "test_result": "pass", "reason": "Fresh original Hacker News URL and installed link-only request return the verified ER-100 open-angle glaucoma card, whose NCT07290244 record matches the reported cohort. January animal evidence is distinguished from October human safety observations; the current status remains phase 1. No new model, article or registry call. Native collector/popup/storage remain unverified.", "how_read": "released service and website form; official Hacker News reader; installed Safari functions", "ms": 367, "last_tested": "2026-11-16T05:16:34.572Z", "tested_build": "site 7e4464262e3e; installed Safari 0.9.19 (27)", "site_result": "Recorded 2026-11-16T05:18:23.703Z: released website form and card verified. Original post form shows deliberate tracked-source reuse; opened correct ER-100 card, January animal stage, October safety summary and NCT07290244.", "extension_result": "Signed Safari 0.9.19 (27), signature and all 35 resources verified. Installed presenter, request composition and exact-source functions pass. Installed link-only request also sent to released service. Native collector/popup/storage remain unverified; computer control reports locked.", "knowledge_card_result": "match", "knowledge_card_notes": "er-100-open-angle-glaucoma; Fresh original Hacker News URL and installed link-only request return the verified ER-100 open-angle glaucoma card, whose NCT07290244 record matches the reported cohort. January animal evidence is distinguished from October human safety observations; the current status remains phase 1. No new model, article or registry call. Native collector/popup/storage remain unverified.", "source_provenance_release": "runs/2026-11-16-source-provenance-release.json", "website_observation": {"recorded_at": "2026-11-16T05:18:23.703Z", "finding": "Original post form shows deliberate tracked-source reuse; opened correct ER-100 card, January animal stage, October safety summary and NCT07290244."}},
+    "S036": {"lookup_answer": "Semaglutide plus trevogrumab for Obesity; exact linked article", "tracked_claim": "semaglutide-trevogrumab-obesity", "trial_records": "", "likely_records": "", "top_record": "NCT06299098 · verified released card; no fresh scoring", "test_result": "pass", "reason": "Fresh browser-visible LinkedIn safety link, manually supplied through installed Safari 0.9.19 composition, returns the exact semaglutide-plus-trevogrumab obesity card. Provenance correctly says the tracked article was reused without a read or search. No model or source call; native collector/popup/storage remain unverified.", "how_read": "live browser-observed outgoing link; installed Safari composition; released service", "ms": 38, "last_tested": "2026-11-16T05:16:35.147Z", "tested_build": "site 7e4464262e3e; installed Safari 0.9.19 (27)", "site_result": "2026-11-16T05:16:35.147Z: released service returns exact linked-article card from browser-supplied link; original social URL alone remains unsupported.", "extension_result": "Signed Safari 0.9.19 (27), signature and all 35 resources verified. Installed presenter, request composition and exact-source functions pass. Installed link-only request also sent to released service. Native collector/popup/storage remain unverified; computer control reports locked.", "knowledge_card_result": "match", "knowledge_card_notes": "semaglutide-trevogrumab-obesity; Fresh browser-visible LinkedIn safety link, manually supplied through installed Safari 0.9.19 composition, returns the exact semaglutide-plus-trevogrumab obesity card. Provenance correctly says the tracked article was reused without a read or search. No model or source call; native collector/popup/storage remain unverified.", "native_safari_result": {"checked_date": "2026-11-15", "outcome": "trial match", "native_lookup_completed": true, "trial": "NCT06299098", "score": 0.91, "displayed_possible_matches": 1, "knowledge_card": "no card", "note": "Public post lookup retains the complete semaglutide-plus-trevogrumab combination and returns COURAGE. No screenshot or audio verification.", "version": "0.9.12 (21)", "release_commit": "123f41f10d5ab14c883e78ec31384ce8694babda"}, "native_safari_history": [{"checked_date": "2026-11-15", "outcome": "trial match", "native_lookup_completed": true, "trial": "NCT06299098", "score": 0.9, "knowledge_card": "no card", "note": "Dismissed LinkedIn sign-in invitation using its public Dismiss control; native popup retained semaglutide plus trevogrumab and showed COURAGE.", "tested_build": "native Safari 0.9.10 (19); earlier raw service run 299f3002676c", "extension_result": "2026-11-15 native Safari 0.9.10 (19): trial match. NCT06299098 at 90%. Dismissed LinkedIn sign-in invitation using its public Dismiss control; native popup retained semaglutide plus trevogrumab and showed COURAGE. Earlier evidence: Safari 0.9.10 reader in live Chrome; bound public LinkedIn COURAGE caption; sidebar and comments excluded; no screenshot or audio; production 299f3002676c. HTTP 200. Complete semaglutide-plus-trevogrumab regimen retained; COURAGE NCT06299098 scores 75%. The score retains uncertainty; no knowledge card returned. Caption-only check."}], "combination_release": "runs/2026-11-16-combination-release.json", "courage_wrapper_release": "runs/2026-11-16-linkedin-wrapper-release.json", "source_provenance_release": "runs/2026-11-16-source-provenance-release.json"},
+    "S028": {"lookup_answer": "", "tracked_claim": "", "trial_records": "", "likely_records": "", "top_record": "", "test_result": "blocked", "reason": "Fresh public Reddit page is blocked by network security. No post content was available and no new lookup was submitted. The earlier acute postoperative pain reading and no-card result remain in history; no fresh trial or card match is claimed.", "how_read": "fresh public browser access check only", "ms": null, "last_tested": "2026-11-16", "tested_build": "current public Reddit access; no service or native-extension rerun", "site_result": "Fresh public Reddit page is blocked by network security. No post content was available and no new lookup was submitted. The earlier acute postoperative pain reading and no-card result remain in history; no fresh trial or card match is claimed.", "extension_result": "Post unavailable; native collector/popup/storage not exercised.", "knowledge_card_result": "not checked", "knowledge_card_notes": "Fresh public Reddit page is blocked by network security. No post content was available and no new lookup was submitted. The earlier acute postoperative pain reading and no-card result remain in history; no fresh trial or card match is claimed.", "source_provenance_release": "runs/2026-11-16-source-provenance-release.json"}
+  }
+}

@@ -1,0 +1,222 @@
+{
+  "checked_at": "2026-11-16T02:05:00.182779+00:00",
+  "base_commit": "e7c29246facc0ccdeb2b992ee33c7e6ac19480a4",
+  "released": true,
+  "scope": "Reading instructions and saved-answer invalidation; two normally extracted and prepared cards. No change to trial-scoring instructions, registry limits, clinical status rules or permissions.",
+  "reading_diagnosis": {
+    "baseline": "Fresh configured-model readings reduced the insert alias to its ingredient, omitted the lung-disease population, and named ER-100 plus its activation agent as a combination. Earlier released N007 preferred an oral-drug trial. The minimal two-record reproduction used a synthetic scope-only gist, not the discarded released gist.",
+    "candidate": {
+      "N007": {
+        "intervention": "Duravyu",
+        "indication": "Wet age-related macular degeneration",
+        "names": [
+          "vorolanib intravitreal insert"
+        ],
+        "gist_scope": {
+          "intravitreal": true,
+          "insert": true,
+          "activation": false,
+          "doxycycline": false
+        },
+        "candidates": [
+          {
+            "id": "NCT06683742",
+            "answer": "not_a_match",
+            "score": 0.34
+          },
+          {
+            "id": "NCT03710863",
+            "answer": "not_a_match",
+            "score": 0
+          }
+        ]
+      },
+      "A052": {
+        "intervention": "rentosertib",
+        "indication": "Reducing predicted biological aging measured by proteomic aging clocks in participants with confirmed idiopathic pulmonary fibrosis (IPF)",
+        "names": [],
+        "gist_scope": {
+          "intravitreal": false,
+          "insert": false,
+          "activation": false,
+          "doxycycline": false
+        },
+        "candidates": [
+          {
+            "id": "NCT05975983",
+            "answer": "match",
+            "score": 1
+          },
+          {
+            "id": "NCT05938920",
+            "answer": "match",
+            "score": 1
+          }
+        ]
+      },
+      "A079": {
+        "intervention": "ER-100",
+        "indication": "Open-angle glaucoma in adults",
+        "names": [],
+        "gist_scope": {
+          "intravitreal": true,
+          "insert": false,
+          "activation": true,
+          "doxycycline": true
+        },
+        "candidates": [
+          {
+            "id": "NCT07290244",
+            "answer": "match",
+            "score": 0.95
+          }
+        ]
+      }
+    },
+    "limitation": "The corrected N007 reading excludes oral vorolanib (0.00) but the bounded live scorer remains uncertain about LUCIA (0.34). This is not a complete live-scoring pass. The independently verified product card covers the original source address. A052 still needs a verified card and purpose-specific evidence review."
+  },
+  "validation": {
+    "synthetic_live_cases": [
+      "genuine combination retained",
+      "explicit activation kept separate",
+      "biomarker disease population retained",
+      "unrelated roundup remains negative"
+    ],
+    "synthetic_requests": 4,
+    "fresh_reading_requests": 6,
+    "bounded_scoring_requests": 3,
+    "additional_minimal_reproduction_requests": 1,
+    "cache_regression": "Both previous-version rejection tests failed before the version changes; 50 site/extension checks and 20 pipeline lookup checks passed afterwards.",
+    "full_suite": {
+      "exit_code": 0,
+      "pipeline": [
+        "1562"
+      ],
+      "node_test_totals": [
+        "656",
+        "170"
+      ],
+      "lint_and_types": "passed"
+    },
+    "strict_spec": "passed",
+    "public_rehearsal": "passed; repeated sequentially after full checks",
+    "independent_reviews": {
+      "standards": "clear",
+      "specification": "clear"
+    }
+  },
+  "cards": [
+    {
+      "corpus_id": "N007",
+      "claim_id": 568,
+      "slug": "duravyu-wet-amd",
+      "intervention": "Duravyu",
+      "verified_aliases": [
+        "vorolanib intravitreal insert",
+        "EYP-1901"
+      ],
+      "indication": "Wet age-related macular degeneration",
+      "approved_trials": [
+        "NCT06683742",
+        "NCT06668064",
+        "NCT05381948"
+      ],
+      "tentative_trials": [
+        "NCT04747197"
+      ],
+      "excluded_indications": [
+        "diabetic macular edema",
+        "nonproliferative diabetic retinopathy"
+      ],
+      "stage": "phase_3",
+      "reported_outcome": "LUCIA missed its primary noninferiority endpoint; secondary findings do not reverse that result. No failure flag or invented approval was entered.",
+      "participant_counts": "Both Phase 3 registry records retain 400 planned; the company reports 475 in LUCIA and 432 in LUGANO. They are not rewritten as registry counts.",
+      "related_papers": [
+        {
+          "doi": "10.1016/j.xops.2024.100527",
+          "scope": "DAVIO Phase 1 report, compatible EYP-1901 insert in wet AMD; metadata only."
+        },
+        {
+          "doi": "10.1371/journal.pone.0304782",
+          "scope": "Preclinical comparative kinase research discussed in EYP-1901 development; related metadata only, not clinical efficacy or the LUCIA report."
+        }
+      ],
+      "source_urls": [
+        "https://www.healio.com/news/ophthalmology/20261020/duravyu-misses-primary-endpoint-in-second-phase-3-wet-amd-trial",
+        "https://eyepoint.bio/our-programs/",
+        "https://investors.eyepoint.bio/news-releases/news-release-details/eyepoint-announces-topline-results-lucia-second-pivotal-phase-3",
+        "https://pubmed.ncbi.nlm.nih.gov/38881599/",
+        "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0304782"
+      ],
+      "preparation_seconds": 18,
+      "new_trial_readings": 6
+    },
+    {
+      "corpus_id": "A079",
+      "claim_id": 569,
+      "slug": "er-100-open-angle-glaucoma",
+      "intervention": "ER-100",
+      "indication": "Open-angle glaucoma",
+      "approved_trials": [
+        "NCT07290244"
+      ],
+      "stage": "phase_1",
+      "scope": "Doxycycline activates gene expression; prednisolone is supportive care. The reported three adults are the early OAG cohort, distinct from the registry plan of 18 OAG/NAION participants. Preliminary uncontrolled visual-field observations do not establish efficacy.",
+      "source_urls": [
+        "https://www.lifebiosciences.com/life-biosciences-announces-first-in-human-data-from-ongoing-phase-1-trial-evaluating-er-100-in-optic-neuropathies/"
+      ],
+      "preparation_seconds": 11,
+      "new_trial_readings": 6
+    }
+  ],
+  "registry_record_sha256": {
+    "https://clinicaltrials.gov/study/NCT06683742": "7452b22b3f52b28230c2e0e4b684e92c6452413ed419fab3776c0e0a96ae847f",
+    "https://clinicaltrials.gov/study/NCT06668064": "ff01ef78db9fefc4bf8c69f3e1e8e6856ee6fb5005b2c0be1087f66d375461fa",
+    "https://clinicaltrials.gov/study/NCT05381948": "4cc547dc5cde8efaacaf9f473640654e74ee8d58cdc08f5e97597de52bae4e60",
+    "https://clinicaltrials.gov/study/NCT07290244": "f0e40d3b4437a7737bb2ab666b6675fe98498c97d22434e5892f04582b81bded"
+  },
+  "export_delta": {
+    "before": 165,
+    "after": 167,
+    "added": [
+      "duravyu-wet-amd",
+      "er-100-open-angle-glaucoma"
+    ],
+    "existing_cards_changed": 0,
+    "removed": 0,
+    "shared_metadata_changes": [
+      "generated_at",
+      "last_checked_at"
+    ]
+  },
+  "efficiency": {
+    "new_calls_per_lookup": 0,
+    "candidate_limit_unchanged": 60,
+    "record_character_limit_unchanged": 1500,
+    "unchanged_trial_reading_repeat": {
+      "read": 0,
+      "reused": 4,
+      "stored": 0,
+      "model_calls": 0
+    }
+  },
+  "safari": {
+    "candidate_version": "0.9.17",
+    "installed_version": "0.9.17 (25)",
+    "note": "Signed universal update installed with unchanged permissions and a 0.9.15 rollback. All 35 packaged resources and installed mapping/reuse functions verified; native popup and browser storage remain unverified."
+  },
+  "remaining": [
+    "native popup and storage reuse remain unverified",
+    "N007 bounded live scorer remains uncertain about LUCIA despite correct exact-card coverage",
+    "A052 card and other corpus coverage remain incomplete"
+  ],
+  "release": {
+    "pull_request": 186,
+    "commit": "17437c8b19169727a188fc381ed73588f5169184",
+    "ci_run": 43790600268,
+    "result": "success",
+    "worker_id": "066c1802-430c-4560-8560-772122b61d8d",
+    "deployed_at": "2026-11-16T02:15:38.9708768Z",
+    "evidence": "extension/test-corpus/runs/2026-11-16-reading-scope-release.json"
+  }
+}

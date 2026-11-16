@@ -1,0 +1,214 @@
+{
+  "decided_at": "2026-11-16T00:38:58.267292+00:00",
+  "decider": "assistant",
+  "published": false,
+  "model_calls": 0,
+  "counts": {
+    "exclude": 3,
+    "compatible": 10,
+    "hold": 5
+  },
+  "compatible_decisions_unchanged": true,
+  "review_state_policy": "Normal review decisions are approval or rejection, not pending. Unconfirmed associations are excluded until source clarification; this is not a definitive mismatch finding. Original scores and documentary hold reasons are retained.",
+  "changes": [
+    {
+      "claim": "orforglipron-type-2-diabetes",
+      "claim_id": 539,
+      "trial_id": "NCT06993792",
+      "match_id": 16955,
+      "previous_state": "approved",
+      "previous_score": 1.0,
+      "decision": "rejected",
+      "documentary_disposition": "exclude",
+      "reason": "The registry design declares SCREENING. Its only primary outcome is the number allocated to each study over 4 weeks. The summary explicitly sends screened participants onward to GZP1/NCT06972459 or GZP2/NCT06972472. This allocation record is not a further independent treatment trial; GZP2 is already attached.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT06993792"
+      ],
+      "event_ids": [
+        10352,
+        10353
+      ],
+      "raw_payload_sha256": {
+        "10352": "f4e2bd8da347f26a0f8d5404ca19b4e42d00f4c2a1ecf4e2da6bc813a2b0f20a",
+        "10353": "f4e2bd8da347f26a0f8d5404ca19b4e42d00f4c2a1ecf4e2da6bc813a2b0f20a"
+      }
+    },
+    {
+      "claim": "tirzepatide-overweight-or-obesity",
+      "claim_id": 453,
+      "trial_id": "NCT06143956",
+      "match_id": 14808,
+      "previous_state": "approved",
+      "previous_score": 1.0,
+      "decision": "rejected",
+      "documentary_disposition": "exclude",
+      "reason": "The registry design declares SCREENING and the sole primary outcome is allocation to ISAs. Its own summary calls this the CWMM screening record. Treatment of interest belongs to LAA2/NCT06603571, which the sponsor identifies as the actual eloralintide/tirzepatide study. Do not count this screening record as an additional tirzepatide treatment trial.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT06143956",
+        "https://trials.lilly.com/en-US/trial/533180"
+      ],
+      "event_ids": [
+        9653,
+        9654
+      ],
+      "raw_payload_sha256": {
+        "9653": "cf8df02ef4581ba1fb9b89c110d15a6a2f469cad339f882d1d8a73b261b25931",
+        "9654": "cf8df02ef4581ba1fb9b89c110d15a6a2f469cad339f882d1d8a73b261b25931"
+      }
+    },
+    {
+      "claim": "tirzepatide-overweight-or-obesity",
+      "claim_id": 453,
+      "trial_id": "NCT07701005",
+      "match_id": 14834,
+      "previous_state": "approved",
+      "previous_score": 1.0,
+      "decision": "rejected",
+      "documentary_disposition": "hold",
+      "reason": "Exclude until source clarification establishes the named intervention scope; not a definitive mismatch finding. There is a named 73-person tirzepatide exposure cohort and body-weight/BMI secondary outcomes, but the detailed description explicitly pools semaglutide and tirzepatide as a class and says the aim is class-level early hepatic/metabolic index response rather than comparing individual agents. The registry does not establish a separately tested tirzepatide weight effect. Preserve uncertainty instead of treating pooled class exposure as verified single-treatment evidence.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT07701005"
+      ],
+      "event_ids": [
+        9724,
+        9725,
+        9726
+      ],
+      "raw_payload_sha256": {
+        "9724": "8c2fbde75db4e3f4d90203b2b6e260591274f1eb90bdb928048b407ae74d5a6e",
+        "9725": "8c2fbde75db4e3f4d90203b2b6e260591274f1eb90bdb928048b407ae74d5a6e",
+        "9726": "8c2fbde75db4e3f4d90203b2b6e260591274f1eb90bdb928048b407ae74d5a6e"
+      }
+    },
+    {
+      "claim": "very-low-calorie-diet-type-2-diabetes",
+      "claim_id": 383,
+      "trial_id": "NCT04363710",
+      "match_id": 15240,
+      "previous_state": "approved",
+      "previous_score": 0.95,
+      "decision": "rejected",
+      "documentary_disposition": "exclude",
+      "reason": "The registry itself distinguishes VLCD 600\u2013800 kcal/day from LCD 800\u20131000 kcal/day and states its objective is LCD. Experimental arm and intervention description explicitly prescribe 800\u20131000 kcal/day for 8 weeks. A broad calorie-restriction synonym would change the named intervention.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT04363710"
+      ],
+      "event_ids": [
+        9923,
+        9924,
+        9925
+      ],
+      "raw_payload_sha256": {
+        "9923": "c3be7741c511ff2a932f30386c5449b1773a7d3c734236a8a894dac10efb973c",
+        "9924": "c3be7741c511ff2a932f30386c5449b1773a7d3c734236a8a894dac10efb973c",
+        "9925": "c3be7741c511ff2a932f30386c5449b1773a7d3c734236a8a894dac10efb973c"
+      }
+    },
+    {
+      "claim": "very-low-calorie-diet-type-2-diabetes",
+      "claim_id": 383,
+      "trial_id": "NCT03225339",
+      "match_id": 15330,
+      "previous_state": "approved",
+      "previous_score": 1.0,
+      "decision": "rejected",
+      "documentary_disposition": "hold",
+      "reason": "Exclude until source clarification establishes the named intervention scope; not a definitive mismatch finding. The registry names low-energy diet plus physical activity. The original protocol prescribes approximately 800 kcal/day, but itself distinguishes prior VLED work under 800; the primary results report specifies 800\u2013820 kcal/day. This is a real diabetes-remission intervention, but its equivalence to the current specifically named VLCD claim should not be assumed from total-diet-replacement synonyms. Resolve the claim scope, not the outcome.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT03225339",
+        "https://link.springer.com/article/10.1186/s13063-018-2660-1",
+        "https://doi.org/10.1016/S2213-8587(20)30117-0"
+      ],
+      "event_ids": [
+        9990,
+        9991,
+        9992
+      ],
+      "raw_payload_sha256": {
+        "9990": "69a1e597e3eba033fe219b2f96bfb005b81572a80836eb8be3bf14feb3107abb",
+        "9991": "69a1e597e3eba033fe219b2f96bfb005b81572a80836eb8be3bf14feb3107abb",
+        "9992": "69a1e597e3eba033fe219b2f96bfb005b81572a80836eb8be3bf14feb3107abb"
+      }
+    },
+    {
+      "claim": "very-low-calorie-diet-type-2-diabetes",
+      "claim_id": 383,
+      "trial_id": "NCT04805996",
+      "match_id": 15264,
+      "previous_state": "approved",
+      "previous_score": 0.81,
+      "decision": "rejected",
+      "documentary_disposition": "hold",
+      "reason": "Exclude until source clarification establishes the named intervention scope; not a definitive mismatch finding. The primary report explicitly identifies NCT04805996 and specifies Modifast 820\u2013890 kcal/day for 12 weeks, describing a low-calorie TDR intervention. Weight and HbA1c are co-primary, so indication is clear; the specifically named very-low-calorie category is not. Do not silently broaden the card to all TDR.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT04805996",
+        "https://diabetes.jmir.org/2026/1/e93074"
+      ],
+      "event_ids": [
+        9987,
+        9988,
+        9989
+      ],
+      "raw_payload_sha256": {
+        "9987": "98d11bca26a65571bd99ad27a93318a1f0d5737d988427313a48b1f46099eb43",
+        "9988": "98d11bca26a65571bd99ad27a93318a1f0d5737d988427313a48b1f46099eb43",
+        "9989": "98d11bca26a65571bd99ad27a93318a1f0d5737d988427313a48b1f46099eb43"
+      }
+    },
+    {
+      "claim": "very-low-calorie-diet-type-2-diabetes",
+      "claim_id": 383,
+      "trial_id": "NCT05744232",
+      "match_id": 15250,
+      "previous_state": "approved",
+      "previous_score": 0.95,
+      "decision": "rejected",
+      "documentary_disposition": "hold",
+      "reason": "Exclude until source clarification establishes the named intervention scope; not a definitive mismatch finding. Registry intervention and primary report specify low-energy TDR at approximately 860 kcal/day. Its safety aim in a diabetes-remission program is legitimate and not a reason to exclude. The unresolved point is whether this calorie category belongs to the current specifically named VLCD card; do not infer it from similar weight-management intent.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT05744232",
+        "https://www.thelancet.com/action/showPdf?pii=S2215036625001269",
+        "https://doi.org/10.1016/j.cct.2024.107542"
+      ],
+      "event_ids": [
+        9953,
+        9954
+      ],
+      "raw_payload_sha256": {
+        "9953": "70f3e6d92abd46e1549e0dd8942ad597bbf4ab1fcb554973f562a7c794b0bbac",
+        "9954": "70f3e6d92abd46e1549e0dd8942ad597bbf4ab1fcb554973f562a7c794b0bbac"
+      }
+    },
+    {
+      "claim": "very-low-calorie-diet-type-2-diabetes",
+      "claim_id": 383,
+      "trial_id": "NCT07270068",
+      "match_id": 15244,
+      "previous_state": "approved",
+      "previous_score": 0.82,
+      "decision": "rejected",
+      "documentary_disposition": "hold",
+      "reason": "Exclude until source clarification establishes the named intervention scope; not a definitive mismatch finding. The registry describes a hypocaloric TDR regimen of approximately 800\u2013850 kcal/day with food reintroduction. Diabetes remission is primary. The record does not call its tested regimen VLCD; current card scope needs resolution before treating this dose/category as synonymous. Do not reject merely for including routine lifestyle support.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT07270068"
+      ],
+      "event_ids": [
+        9933,
+        9934
+      ],
+      "raw_payload_sha256": {
+        "9933": "b46b739202e6f1a88213ef8f47fb2d3695dafe03d37f9a060b2681f0e3428af8",
+        "9934": "b46b739202e6f1a88213ef8f47fb2d3695dafe03d37f9a060b2681f0e3428af8"
+      }
+    }
+  ],
+  "readback_verification": {
+    "checked_at": "2026-11-16T00:38:58.932546+00:00",
+    "matches": 8,
+    "events": 20,
+    "original_scores_preserved": true,
+    "raw_payload_hashes_preserved": true,
+    "decisions_as_assistant": true,
+    "diet_claim_still_pending": true
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "checked_at": "2026-11-16T09:33:47.005Z",
+  "deployment": {
+    "main_commit": "0d4cc5f3c87cce2a0380c48784ab88a68d02e058",
+    "run_id": 43839912830,
+    "pr": 211,
+    "conclusion": "success",
+    "completed_at": "2026-11-16T09:32:26Z",
+    "jobs": [
+      {
+        "name": "Tests and build",
+        "conclusion": "success"
+      },
+      {
+        "name": "Deploy production",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "installed_version": "0.9.22",
+  "installed_build": 30,
+  "resource_hashes_verified": 35,
+  "public_cards": 178,
+  "all_published_source_mappings_match": true,
+  "opens": [
+    {
+      "kind": "tracked",
+      "ms": 158.498,
+      "savedAt": null
+    },
+    {
+      "kind": "tracked",
+      "ms": 46.354,
+      "savedAt": null
+    }
+  ],
+  "index_requests": [
+    {
+      "status": 200,
+      "conditional": true,
+      "ms": 150.951
+    },
+    {
+      "status": 304,
+      "conditional": true,
+      "ms": 46.216
+    }
+  ],
+  "model_requests": 0,
+  "registry_requests": 0,
+  "article_body_requests": 0,
+  "lookup_api_requests": 0,
+  "method": "Installed controller with synthetic old index and in-memory storage against the released public index; actual native popup evidence is recorded separately.",
+  "native": {
+    "checked_at": "2026-11-16T09:29:16.864745+00:00",
+    "version": "0.9.22",
+    "build": 30,
+    "original_url": "https://pelagepharma.com/press-releases/pelage-pharmaceuticals-announces-positive-phase-2a-clinical-trial-results-for-pp405-in-regenerative-hair-loss-therapy/",
+    "initial_popup": "correct PP405 card with Phase 2, software-review disclosure and link to pp405-androgenetic-alopecia",
+    "reopened_popup": "same correct card; old clinical-only answer no longer hides it",
+    "native_popup": true,
+    "native_repeat": true,
+    "collector": "not exercised: exact source match precedes page collection",
+    "native_network_counts": "not instrumented; do not infer HTTP304 from UI alone",
+    "media": "not tested",
+    "site_deployment_at_observation": "PR211 main production pipeline still running; existing public data unchanged",
+    "source_screenshots_or_bodies_retained": false,
+    "post_release_checked_at": "2026-11-16T09:33:46.416109+00:00",
+    "website_form_verified": true,
+    "website_card_verified": true,
+    "post_release_native_popup": true,
+    "site_deployment_at_final_observation": "0d4cc5f3c87cce2a0380c48784ab88a68d02e058 deployed; smoke checks pass"
+  },
+  "before_fix": {
+    "date": "2026-11-16",
+    "after_evidence_commit": "c64da97a664536401799c4d16a86337e79681e1a",
+    "website": "Browser control recovered. Fresh home-page A072 form submission returned the PP405 card. Opening it showed all three trial identities, 78 actual / 600 planned / 200 planned, the exploratory subgroup qualification, planned women's study and software-review disclosure.",
+    "native_safari": "Opened A072 in a new Safari tab and clicked the enabled extension toolbar button. The actual popup read the page and returned topical PP405 for androgenetic alopecia in men and women, with NCT06393452 100%, NCT07819435 97%, NCT07907783 93%. It showed no knowledge card. Closing/reopening the popup showed Previous result with the same answer, verifying browser-local reuse. No screenshot or source text retained.",
+    "scope": "Native collector/popup and local saved-result reuse were observed for this article only. Image handling, other source rows and full storage contents were not inspected. Installed files remain version 0.9.21 (29); runtime version was not independently displayed in the popup.",
+    "diagnosis": "Controller may reuse its publication index for six hours. The API only checks exact outgoing article links on post paths; browser pageUrl and direct article URLs currently proceed to reading/scoring. Investigate an exact original-source path before paid work, while preserving source provenance, screenshot intent, URL precedence and shared-cache privacy.",
+    "status": "Native gap reproduced, not fixed. Do not claim native card success. Supersedes only the earlier access blocker; historical evidence remains intact."
+  },
+  "review": {
+    "reviewed_head": "ad0f8c50658eea533f467bed628bed0b7b2ae7e7",
+    "base": "87d00501451dfdf968f26fdba516c4bbcf720d20",
+    "pr": "https://github.com/jamespacileo/whatcameofit/pull/211",
+    "standards": "clear at06205cf; finalmerge includes unrelated main changes only",
+    "specification": "clear atad0f8c after ETag correction",
+    "regression_tests": 174,
+    "local_rehearsal": "stopped when upstream export schema changed; full final PR CI rehearsal passed",
+    "pr_ci_run": 43839391021,
+    "pr_ci_conclusion": "success",
+    "main_commit": "0d4cc5f3c87cce2a0380c48784ab88a68d02e058",
+    "main_ci_run": 43839912830,
+    "published_data": "unchanged; full current main snapshot preserved",
+    "unpublished_export": "pp405-linked-export-v2.json requires audit of nine other existing-card changes"
+  },
+  "summary": {
+    "corpus_verdicts": {
+      "review": 31,
+      "pass": 144,
+      "partial": 53,
+      "blocked": 30
+    },
+    "knowledge_cards": {
+      "review": 32,
+      "not applicable": 10,
+      "no card": 52,
+      "not checked": 30,
+      "match": 134
+    }
+  },
+  "sheet_verification": {"verified_at": "2026-11-16T09:35:17.260Z", "spreadsheet_url": "https://docs.google.com/spreadsheets/d/15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA/edit?ouid=118272730050776001505", "changed_values_verified": 17, "other_inspected_cells_preserved": 113, "inspected_formatting_formulas_validation_notes_chips_preserved": true, "native_render": "unverified: Google requires identity re-verification; connector values and inspected metadata verified"},
+  "scope": "A072 native card refresh correction only. S033 publication, S038 identity wording, inaccessible URLs and independent multi-claim implementation remain pending.",
+  "rows": {
+    "A072": {"lookup_answer":"PP405 for Androgenetic alopecia","tracked_claim":"pp405-androgenetic-alopecia","trial_records":"","likely_records":"","top_record":"NCT06393452, NCT07819435 and NCT07907783 · verified released card; no fresh scoring","test_result":"pass","reason":"A072 reaches the correct PP405 / androgenetic alopecia card in the released website and actual installed Safari popup, including after reopening. Conditional publication-index refresh fixes the older native trial-only result. Clinical evidence and matching rules are unchanged.","how_read":"released website form/card; native Safari popup; installed controller replay with a synthetic old index","ms":158.498,"last_tested":"2026-11-16T09:33:46.416109+00:00","tested_build":"site 0d4cc5f3c87c; installed Safari 0.9.22 (30)","site_result":"Fresh released website form returns the PP405 card. Its three trial identities and qualified early-study evidence remain intact. All published exact-source mappings match the unchanged 178-card publication snapshot.","extension_result":"Signed universal Safari 0.9.22 (30), 35 packaged resource hashes verified. Actual popup and reopen show the correct card. Separate installed-controller replay against the public index replaces a synthetic old index, then reuses HTTP 304; only two static index requests, with no page-body, lookup API, model or registry requests. Native network counts were not instrumented; collection/media paths were not exercised by this exact-source match.","knowledge_card_result":"match","knowledge_card_notes":"pp405-androgenetic-alopecia; original-source identity verified. The old 0.9.21 native no-card diagnosis is preserved in the run record; previous evidence remains in history.","pp405_release":"runs/2026-11-16-pp405-release.json","closest_tracked_claim":"","popup_refresh_release":"runs/2026-11-16-popup-refresh-release.json"}
+  }
+}

@@ -138,7 +138,7 @@ test("only whole answers are kept: no errors, misses, partial streams or answers
   assert.equal(kept[0].found.gist, undefined, "the model's summary is not kept");
   assert.equal(reusable(kept, "page", "print", now + 1).found.about_a_treatment, false);
   assert.equal(reusable(kept, "page", "print", now + RESULT_TTL), null);
-  for (const version of [1, 2, 3, 4, 5, 6, 7, 8, 9]) {
+  for (const version of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
     assert.equal(reusable([{ ...kept[0], version }], "page", "print", now + 1), null, "entries kept before the corpus corrections are not reused");
   }
 });
@@ -240,6 +240,13 @@ function popup(overrides = {}) {
   // One staged body per paid request, the first ready before it is asked for.
   const streams = [staged()];
   let current = true;
+  const send = async (_url, options) => {
+    const body = JSON.parse(options.body);
+    if (body.cacheOnly) { calls.probes.push(body); return Response.json({ cacheMiss: true }); }
+    calls.posts.push({ body, signal: options.signal });
+    if (calls.posts.length > streams.length) streams.push(staged());
+    return streams[calls.posts.length - 1].response;
+  };
   const controller = createPopupController({
     site: { url: "https://service.example.org" },
     storage: { get: async () => stored, set: async (values) => { calls.writes.push(values); Object.assign(stored, values); } },
@@ -247,16 +254,11 @@ function popup(overrides = {}) {
     isCurrentPage: async () => current,
     readPage: async () => articleRequest,
     capturePage: async () => { calls.captures += 1; return { image: { dataUrl: "data:image/jpeg;base64,AAAA", width: 1, height: 1 }, pageUrl: tab.url }; },
-    fetch: async (_url, options) => {
-      const body = JSON.parse(options.body);
-      if (body.cacheOnly) { calls.probes.push(body); return Response.json({ cacheMiss: true }); }
-      calls.posts.push({ body, signal: options.signal });
-      if (calls.posts.length > streams.length) streams.push(staged());
-      return streams[calls.posts.length - 1].response;
-    },
     describeAnswer: (found) => ({ ...found }),
     present: (state) => calls.states.push(state),
     ...overrides,
+    fetch: (url, options) => options.method === "POST"
+      ? (overrides.fetch ?? send)(url, options) : Promise.resolve(Response.json(stored.lookup.index)),
   });
   return { controller, calls, stored, stream: streams[0], streams, navigate: () => { current = false; } };
 }
@@ -436,6 +438,7 @@ test("a page with a saved answer waits for its fingerprint: a match sends nothin
       readTab: async () => tab, isCurrentPage: async () => true,
       readPage: async (_tab, _signal, { onContext } = {}) => { onContext({ pageUrl: tab.url }); await pause(5); read = true; return { ...articleRequest, contentFingerprint: print }; },
       fetch: async (_url, options) => {
+        if (options.method !== "POST") return Response.json(index);
         const body = JSON.parse(options.body);
         if (body.cacheOnly) { calls.probes.push(read); return Response.json({ cacheMiss: true }); }
         calls.posts.push(body);
@@ -451,6 +454,33 @@ test("a page with a saved answer waits for its fingerprint: a match sends nothin
       assert.deepEqual(calls.probes, [true], "probed once the content was known to have changed");
       assert.equal(calls.posts.length, 1);
     }
+    controller.close();
+  }
+});
+
+test("reused popup answers rebind cards against the loaded index without another lookup", async () => {
+  for (const condition of ["tinnitus", "another condition"]) {
+    const checkedAt = Date.now() - 60_000;
+    const found = { ...positive, names: ["EX-1"], tracked: [{ slug: "archived", headline: "Old card", page: "/archived" }] };
+    const current = { ...index, claims: { current: { names: ["EX-1"], indication: condition, headline: "New card", page: "/current" } } };
+    const stored = { lookup: { version: 2, index: current, savedAt: Date.now() }, results: remember([], tab.key, "article-print", found, checkedAt) };
+    const states = [];
+    const controller = createPopupController({
+      site: { url: "https://service.example.org" },
+      storage: { get: async () => stored, set: async values => Object.assign(stored, values) },
+      readTab: async () => tab, isCurrentPage: async () => true,
+      readPage: async () => ({ ...articleRequest, contentFingerprint: "article-print" }),
+      fetch: async (_url, options) => {
+        assert.notEqual(options.method, "POST", "saved clinical work is reused");
+        return Response.json(current);
+      },
+      describeAnswer: answer => ({ ...answer }), present: state => states.push(state),
+    });
+    await controller.open();
+    const last = states.at(-1);
+    assert.equal(last.kind, "answer");
+    assert.deepEqual(last.shown.tracked, condition === "tinnitus" ? [{ slug: "current", headline: "New card", page: "/current" }] : []);
+    assert.equal(last.cachedAt, checkedAt);
     controller.close();
   }
 });
@@ -515,6 +545,7 @@ async function runPopup({ selection = "", collected = sciencePage(), address = S
   try {
     const files = {
       "popup.js": "extension/src/popup.js", "controller.js": "extension/src/controller.js", "results.js": "extension/src/results.js",
+      "tracked.js": "site/worker/tracked.mjs", "names.js": "site/worker/names.mjs",
       "visual.js": "extension/src/visual.js", "source-url.js": "site/src/lib/source-url.mjs", "lookup.js": "extension/src/lookup.js",
       "kept.js": "extension/src/kept.js", "watch.js": "extension/src/watch.js", "open-page.js": "extension/src/open-page.js",
       "short-links.js": "extension/src/short-links.js", "article-key.js": "site/src/lib/article-key.mjs",
@@ -523,7 +554,9 @@ async function runPopup({ selection = "", collected = sciencePage(), address = S
     };
     for (const [name, source] of Object.entries(files)) {
       const content = (await fs.readFile(path.join(root, source), "utf8")).replaceAll("./article-key.mjs", "./article-key.js")
-        .replace("../../site/src/lib/source-url.mjs", "./source-url.js");
+        .replace("../../site/src/lib/source-url.mjs", "./source-url.js")
+        .replace("../../site/worker/tracked.mjs", "./tracked.js")
+        .replace("./names.mjs", "./names.js");
       await fs.writeFile(path.join(directory, name), content);
     }
     await fs.writeFile(path.join(directory, "package.json"), '{"type":"module"}');

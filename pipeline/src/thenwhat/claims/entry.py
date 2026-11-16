@@ -71,6 +71,10 @@ class ArchiveRefused(EntryError):
     pass
 
 
+class AuditRefused(EntryError):
+    pass
+
+
 class DuplicateClaim(EntryError):
     """Another claim already covers this intervention and indication."""
 
@@ -485,3 +489,28 @@ def unarchive_claim(session: Session, slug: str) -> Claim:
     claim.archive_reason = None
     session.flush()
     return claim
+
+
+def awaiting_audit(session: Session) -> list[Claim]:
+    """Claims approved by rule that are held off the site until their batch is audited,
+    oldest hold first. Archived ones are included: unarchiving does not clear the hold."""
+    return list(
+        session.scalars(
+            select(Claim)
+            .where(Claim.awaiting_audit_at.is_not(None))
+            .order_by(Claim.awaiting_audit_at, Claim.slug)
+        )
+    )
+
+
+def clear_audit(session: Session, slugs: list[str]) -> list[Claim]:
+    """Let claims whose audit passed be published from the next export on. Every slug is
+    checked before any hold is cleared, so a refusal clears nothing."""
+    claims = [claim_by_slug(session, slug) for slug in slugs]
+    not_held = [claim.slug for claim in claims if claim.awaiting_audit_at is None]
+    if not_held:
+        raise AuditRefused(f"Not awaiting audit: {', '.join(not_held)}. Nothing was cleared.")
+    for claim in claims:
+        claim.awaiting_audit_at = None
+    session.flush()
+    return claims

@@ -1,5 +1,55 @@
 # Design
 
+## Popup publication freshness
+
+Native Safari on A072 returned three relevant trials without the published PP405 card; the released website already displayed that exact-source card. The popup reused its six-hour index before considering its saved clinical answer. Revalidate the static index once per popup opening with its saved ETag. A 304 reuses the saved index without downloading its body; a changed index replaces the old one before exact-source matching or clinical-answer reuse. Keep the existing five-second index bound and dated offline fallback, and send no page URL or text with this static request. Preserve clinical answers and their original check time; no global result invalidation or new model work is required. Background refresh remains twice daily. This explicitly supersedes the prior local index refresh-policy preservation, not clinical-answer lifetime. Safari advances to 0.9.22.
+
+The first normal 178-card export changed only PP405's reference list relative to PR #174. Main then introduced audit holds and export schema 2 through PR #208, so that older export is not eligible for publication. A fresh normal schema-2 export contains additional changes to nine existing cards from concurrent reading work. Keep that export private for audit, retain main's entire reviewed snapshot for the popup release, and publish the verified Dermatology Times reference only after auditing the complete normal export. Never splice selected cards or relabel an older export's schema.
+
+## Independent claims on one page
+
+The operator chose separate matches and cards for each identifiable independent claim on 2026-11-16. Extend the reading and presentation contract to retain each intervention/indication pair separately, with its own scores, uncertainty, provenance and matching cards. Preserve a genuinely studied combination as one complete regimen. Disease-only or unspecified treatment references do not become invented claims. Read the source once, reuse fetched public records and completed eligible work across claims, and retain existing request/deadline limits. If those limits prevent complete processing, state which claims remain unchecked rather than silently choosing one or presenting partial coverage as complete. This behavior remains pending implementation and release verification.
+
+## PP405 androgenetic-alopecia coverage
+
+Create one normally extracted and prepared PP405 card for androgenetic alopecia from A072's primary company report. Keep the 78-person completed trial and its exploratory male-subgroup finding distinct from the later AWAKEN trial in men and separately registered trial in women. Verify all three primary records, retain the female trial's estimated start without inventing a start event, and preserve the existing lower-phase rule for Phase 2/3. The first trial's healthy-volunteers flag does not override its explicit AGA inclusion criteria. Assistant approval of its reported subgroup statement and the additional trial preserves their scores and non-human attribution. Normal export also refreshes shared organisation read timestamps on five existing cards, with no other prior-card changes. Exact A072 lookup uses the index; specific AGA readings can associate the new card, while broad hair-loss/growth wording remains unresolved. Current S038 caption review establishes source identity only; released social behavior and native Safari require separate evidence.
+
+## Optional substance-source delay
+
+The emrusolmin preparation spent 95 seconds in resolution before optional GSRS enrichment reported four failed attempts. An offline loop through its public client seam reproduced 131 simulated seconds for a read-timeout outage with conservative one-second pacing on each attempt. Removing pacing saved only four seconds; reducing to one attempt still took 31 seconds, and the one-name input ruled out alias enumeration. Give GSRS two default attempts and five-second network inactivity timeouts, using the existing shared retry path; other clients retain four attempts and thirty seconds. The same loop then takes 13 simulated seconds. This is not a total deadline: connect/read phases, source-declared Retry-After, shared pacing and separate successful requests can extend elapsed time. Preserve source-requested delays, contact headers, exact identity rules, caches and explicit refusal. Failed requests are not cached as empty successes, and a later recovered response remains eligible for normal reuse. No model, scoring, public Worker, extension or published-data behavior changes.
+
+## Emrusolmin MSA coverage
+
+S008's public Mastodon post links to MSA Leben's report of TOPAS-MSA. Add one normally prepared card for emrusolmin in adults with multiple system atrophy, with the German report and Teva's November 2 announcement attached. Keep the main trial and its open-label extension; exclude healthy-volunteer and Parkinson disease records. The dated announcement of planned discontinuation after interim futility is not a final efficacy result or a decision about the entire programme. The current registry states still differ from that announcement, so retain the registry-derived phase 2 and explain the difference in the summary instead of fabricating termination events. Record assistant approval honestly. Normal export adds one card and changes none of the existing 174. The existing exact linked-source path then serves S008 without clinical model/registry or article-body work; no matcher, cache, extension resource or permission change is needed. Preparation exposed 95 seconds in resolution with a four-attempt optional GSRS failure; retain that as an open efficiency issue and do not repeat unchanged work.
+
+## Journal short link and melanoma references
+
+S006's public Bluesky post links through `nej.md` to the NEJM report of INTerpath-001. The shared address reader treated that short URL as an article, so it missed the exact published destination. Add only this observed host to the existing shortener list; retain the same current robots check, redirect bound and refusal path. Both service-read and browser-read post requests then reuse the tracked destination without a journal-body read or model/registry search. S019's public Substack article independently names the same complete regimen, resected stage IIB–IV melanoma population and NCT05933577. Attach both canonical references to the existing card using normal article entry. The NEJM review covers its public abstract, not subscriber-only full text. Change no clinical decisions, status or first-report date. Normal export changes only that card's two references. Safari advances to 0.9.21 with unchanged permissions. Clinical readings and scores are unchanged, so retain valid cached answers and their lifetime; the release rerun explicitly refreshes S006 and uses the new published index for exact S019 matching.
+
+## Additional verified Hacker News sources
+
+S017's current Ars Technica source explicitly reports intismeran plus pembrolizumab in surgically resected stage IIB–IV melanoma, matching the existing card and primary NCT05933577 record. Add its October 22 reference without changing the card's first-report date, clinical summary or trial decisions. S018's Broad Institute source concerns the distinct PrP-targeting divalent siRNA used in NCT07444580, whose registry name and specific aliases identify the molecule. It is not ION717, generic RNA interference or gene editing. The April 22 source describes animal evidence before the registry's May 15 actual human-trial start; keep the animal first-report stage separate from the derived current phase 1 status. Summarise the October presymptomatic-cohort update without claiming efficacy. Respect the automatic reader's 403; source verification came from the public browser page and official structured registry. Fetch the explicitly cited origin paper after approval and leave unreviewed follow-ups unpublished. Normal source-entry and publication paths provide exact linked-source matches without changing readers, scoring, caches or extension resources.
+
+## Source provenance and earlier ER-100 coverage
+
+Released S030/S031 checks exposed two presentation overclaims. Exact tracked linked-article responses intentionally skip an article read, but the presenter described that as a refusal. Use the existing `article_tracked` flag in the shared presenter, retaining the browser/service distinction and ordinary refusal wording. Existing answers gain the corrected wording without invalidation or new work; Safari advances to 0.9.19. An origin paper approved after preparation can lack exported facts even though Europe PMC holds it. Say details are unavailable here, not that the index lacks a record. Normal fetching retrieved Nottingham's original paper (41188228) without a model call; its two newly found follow-up events remain pending and excluded from publication.
+
+S032's January MIT Technology Review article explicitly identifies ER-100's initial glaucoma cohort and NCT07290244. The current primary registry record confirms the existing open-angle glaucoma card's treatment and cohort. Add only that verified reference through normal entry. Its earlier date moves the first report to 2026-01-27, so confirm the then-animal stage as an assistant and distinguish the January plans from October's small human safety update in the summary. Retain the later trial events and phase 1 status. This uses the existing exact-source path without another extraction, model search or broadening the indication to the registry's separate NAION cohort.
+
+## Enamel-paper subject headings
+
+The keratin enamel paper uses extracted human teeth and wool-derived material, but its Europe PMC record has both human and animal subject headings. Those tags do not establish a study in living participants. Preserve the source metadata and confirmed in-vitro stage; label the tags as subject headings on paper entries. Count trial records and papers separately in the claim facts, counting each structured paper once regardless of its roles or missing metadata. Keep the legacy-export fallback. This is presentation only: it changes no trial match, clinical stage, source request, schema or extension resource.
+
+## Registry search projection and treatment roles
+
+The earlier scoring formatter accepted descriptions and arm membership from full records, but name/title searches omitted those fields in their API projection. Request study type, descriptions and arm roles/membership in the existing searches on both paths. Query selection, source pacing, cache lifetime, page limits and candidate counts stay unchanged. A changed fields parameter naturally gives a different source-cache key; there is no per-candidate enrichment fetch.
+
+Within the existing 1,500-character scoring input, put conditions, study type, title and compact arm roles/membership before verbose intervention descriptions. Missing or truncated information cannot establish compatibility. Align the Worker's fourth answer with the existing private-pipeline rule, distinguish expanded access, and explicitly preserve complete-regimen identity when a search finds a single medicine only inside combination arms. Bump shared/local clinical-answer versions, while keeping reusable public source responses. Validate on the applicable saved corpus readings and candidate sets without rereading article text; record that replay separately from fresh page and native Safari release verification.
+
+The first full replay exposed duplicate membership wasting the bounded input: ER-100's repeated arm labels cut off the sentence identifying its activation agent. Remove only an intervention's arm label whose exact same name/membership is already present in the arm list; retain unmatched or inconsistent labels. This keeps the activation detail within the existing limit without extra tokens or requests. Explicit vaccine-adjuvant and activation roles are part of preparation/delivery, not proof of a separate experimental combination. Missing aliases or patient-setting details still remain uncertain rather than being filled in from outside knowledge.
+
+The replay also exposed a short official title carrying a setting omitted by the brief title: NCT06961006 names first-line advanced melanoma only in its official title. Use the complete official title as the primary title when it fits the existing 240-character title allowance; otherwise keep the brief title first and the shortened official title secondary. This restores the setting without raising the record limit. Clarify that a monotherapy arm for another medicine cannot establish monotherapy for the medicine being matched (NCT07349537).
+
 ## Claim identity after a read
 
 The source-reading seam joined different vaccine products when both were extracted as
@@ -21,6 +71,21 @@ constraint. Include the new outcome and identity/treatment-kind costs in the fun
 Already-tracked URLs and completed leads still require no model calls; only a new read
 that formerly took the shortcut gains one bounded decision. Existing acceptance
 thresholds, source pacing and automatic publication rules remain unchanged.
+
+## Card publication after an answer was saved
+
+A deterministic service replay exposed a reuse gap: a completed answer stored before
+a card was published returned its old empty `tracked` list without reading the new
+index. The extension's local answer did the same even with a newer loaded index.
+Extract the existing exact-condition and complete-regimen comparison into one pure
+shared module; use it for fresh scoring, shared-answer reuse and local-answer reuse.
+Keep clinical work and its original timestamp unchanged. The service reads its static
+index only for a positive cache hit, with a 500 ms bound; unavailable metadata omits
+card associations, not the clinical answer. The extension uses the index it already
+loaded, preserving the six-hour refresh policy. Fresh server answers are not rebound
+against a possibly older extension index. No result-cache version bump, provider
+request, broader equivalence rule or stored source content is needed. Release the
+extension change as 0.9.14.
 
 ## Context
 
@@ -128,3 +193,11 @@ A correction can remove an approved trial after a vocabulary term was gathered. 
 ## Registry condition-query refusal
 
 ClinicalTrials.gov refused the precise first-line nonsquamous lung-cancer condition as too complicated. The client already tries a condition's telling words after a valid empty response, but a parser refusal skipped that bounded fallback. Distinguish an explicitly named condition-field refusal from treatment and unknown-field refusals, and share the existing two-wording search between broad-name and search-phrase discovery. Try a distinct fallback at most once; retain the hundred-candidate cap and source pacing. If no usable query remains, report the refusal rather than claiming a successful empty search. Only candidate discovery wording changes: the stored claim and full indication used by scoring remain unchanged. No model call or additional ordinary-success request is introduced.
+
+## LinkedIn safety-link article coverage
+
+The current S036 post uses LinkedIn's `/safety/go/?url=...` link. The shared address reader knew `/redir/` but discarded the new wrapper as a within-platform link, losing the verified COURAGE source. Add the observed wrapper path to the existing HTTP(S)-only normalization table and attach the verified September 2025 source to the two-drug card. Keep post identity and condition comparison unchanged. This enables the existing tracked-linked-article fast path without model calls. Safari advances to 0.9.18; the normalized outgoing link changes the local content fingerprint, so the previous missing-link answer is not reusable without a global cache reset.
+
+## Follow-up offsets after later treatment events
+
+A066's primary outcome is assessed within six days after the third monthly diet cycle. The stored reading lost that anchor and presented six days as follow-up from the start. Extend the pure reading checks to refuse explicit offsets after numbered/final cycles, later doses/infusions/sessions and treatment completion. Inspect the full field, including words omitted by the quote. This is a bounded refusal rule, not a general temporal parser; never calculate a total from cycle schedules. Clarify the existing model instructions and advance their version to two. Recheck earlier stored readings at export without changing their provenance or paying for rereads; keep the registry's full wording as the fallback. Trial facts, matches and status remain unchanged. The initial audit of 2,805 readings across 961 trial records found the pending diet card affected. Independent review extended the guard to qualified anchors such as third monthly cycle and treatment completion; the final audit also found three misleading offsets on the existing MDMA/PTSD card (NCT05219175, NCT06954025 and NCT07704762). Their original readings remain stored while the next normal export omits the unsafe durations. A targeted reread omitted the unsafe duration, and an unchanged repeat asked nothing.

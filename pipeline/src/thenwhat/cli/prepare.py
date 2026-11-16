@@ -51,7 +51,10 @@ def _prepare(plan: ClaimPlan) -> list[str]:
         if every_step_succeeded and settings_or_exit().approve_drafts_by_rule:
             decided = decide_prepared_lead_claim(session, plan.slug, now=datetime.now(UTC))
             if decided is ReviewState.APPROVED:
-                report.append("  approved by rule, now that its registries have been searched")
+                report.append(
+                    "  approved by rule, now that its registries have been searched;"
+                    " held off the site until audited"
+                )
             elif decided is ReviewState.REJECTED:
                 report.append("  rejected by rule: its intervention is a description, not a name")
     return [f"{plan.slug} ({time.monotonic() - started:.0f}s)", *report]

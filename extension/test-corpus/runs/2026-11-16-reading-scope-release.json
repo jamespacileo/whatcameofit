@@ -1,0 +1,728 @@
+{
+  "release_commit": "17437c8b19169727a188fc381ed73588f5169184",
+  "pr": 186,
+  "checked_at": "2026-11-16T02:16:23.416Z",
+  "public_cards": 167,
+  "public_data_matches_rehearsed_build": true,
+  "corpus": {
+    "rows": 258,
+    "changed_rows": [
+      "A079",
+      "N007"
+    ],
+    "method": "All released exact source-address mappings; not a fresh 258-page reading or registry run."
+  },
+  "cache_probe": {
+    "cache_only": {
+      "checked_at": "2026-11-16T02:16:33.965Z",
+      "http": 200,
+      "elapsed_ms": 39,
+      "server_timing": null,
+      "body": {
+        "about_a_treatment": true,
+        "treatment": "rentosertib",
+        "condition": "Change in predicted biological age markers in people with confirmed idiopathic pulmonary fibrosis (IPF)",
+        "names": [
+          "rentosertib"
+        ],
+        "known_names": [
+          "INS018_055"
+        ],
+        "registry_numbers": [],
+        "paper_numbers": [],
+        "papers_unchecked": 0,
+        "details": {
+          "trial_name": null,
+          "participants": 42,
+          "sponsor": null
+        },
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT05975983",
+            "url": "https://clinicaltrials.gov/study/NCT05975983",
+            "score": 1,
+            "answer": "match",
+            "agrees": [
+              "participants"
+            ],
+            "title": "Study Evaluating INS018_055 Administered Orally to Subjects With Idiopathic Pulmonary Fibrosis",
+            "conditions": [
+              "Idiopathic Pulmonary Fibrosis (IPF)"
+            ],
+            "interventions": [
+              "INS018_055",
+              "Placebo"
+            ],
+            "phases": [
+              "PHASE2"
+            ],
+            "state": "RECRUITING"
+          },
+          {
+            "id": "NCT05938920",
+            "url": "https://clinicaltrials.gov/study/NCT05938920",
+            "score": 1,
+            "answer": "match",
+            "agrees": [],
+            "title": "Study Evaluating INS018_055 Administered Orally to Subjects With Idiopathic Pulmonary Fibrosis (IPF)",
+            "conditions": [
+              "Idiopathic Pulmonary Fibrosis (IPF)"
+            ],
+            "interventions": [
+              "INS018_055",
+              "Placebo"
+            ],
+            "phases": [
+              "PHASE2"
+            ],
+            "state": "COMPLETED"
+          },
+          {
+            "id": "NCT07687459",
+            "url": "https://clinicaltrials.gov/study/NCT07687459",
+            "score": 0.98,
+            "answer": "match",
+            "agrees": [],
+            "title": "Study Evaluation Rentosertib (INS018_055) Administered Orally in Patients With Idiopathic Pulmonary Fibrosis (IPF)",
+            "conditions": [
+              "Idiopathic Pulmonary Fibrosis"
+            ],
+            "interventions": [
+              "INS018_055 tablets",
+              "Placebo"
+            ],
+            "phases": [
+              "PHASE3"
+            ],
+            "state": "RECRUITING"
+          },
+          {
+            "id": "NCT05154240",
+            "url": "https://clinicaltrials.gov/study/NCT05154240",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": [],
+            "title": "A Phase 1, Evaluate the Safety, Tolerability, and Pharmacokinetics of INS018_055 in Healthy Subjects",
+            "conditions": [
+              "Idiopathic Pulmonary Fibrosis"
+            ],
+            "interventions": [
+              "INS018_055",
+              "Placebo"
+            ],
+            "phases": [
+              "PHASE1"
+            ],
+            "state": "COMPLETED"
+          }
+        ],
+        "unscored": 0,
+        "post": null,
+        "research": {
+          "papers": [
+            {
+              "id": "https://openalex.org/W7211874164",
+              "title": "Integration of proteomic aging clocks in a phase 2a clinical trial supports simultaneous geroprotective assessment",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "article",
+              "journal": "Nature Biotechnology",
+              "url": "https://doi.org/10.1038/s41587-026-03286-y",
+              "linked": true,
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W7164029510",
+              "title": "Artificial Intelligence Detection Scores in Screening Mammography for Early Breast Cancer Alerts",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "article",
+              "journal": "Radiology",
+              "url": "https://doi.org/10.1148/radiol.251309",
+              "linked": true
+            },
+            {
+              "id": "https://openalex.org/W4409180738",
+              "title": "Explainable artificial intelligence to diagnose early Parkinson’s disease via voice analysis",
+              "source": "openalex",
+              "year": 2025,
+              "kind": "article",
+              "journal": "Scientific Reports",
+              "url": "https://doi.org/10.1038/s41598-025-96575-6",
+              "linked": true
+            },
+            {
+              "id": "https://openalex.org/W7161583001",
+              "title": "A39-06 Inhaled Rentosertib (INS018_055) Exhibits High Safety and Tolerability in Animal Models",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "article",
+              "journal": "American Journal of Respiratory and Critical Care Medicine",
+              "url": "https://doi.org/10.1093/ajrccm/aamag162.2232",
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W4416637329",
+              "title": "Rentosertib, a generative AI-discovered TNIK inhibitor improves lung function in IPF patients",
+              "source": "openalex",
+              "year": 2025,
+              "kind": "conference-abstract",
+              "journal": "European Respiratory Journal",
+              "url": "https://doi.org/10.1183/13993003.congress-2025.oa1251",
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W7161552457",
+              "title": "A39-05 Inhaled Rentosertib (INS018_055) Achieves High and Specific Pulmonary Exposure in Healthy And Fibrotic Lungs",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "article",
+              "journal": "American Journal of Respiratory and Critical Care Medicine",
+              "url": "https://doi.org/10.1093/ajrccm/aamag162.2231",
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W7161607458",
+              "title": "C103-02 Inhaled Rentosertib (ISM018_055), a Selective TNIK Inhibitor, Improves Lung Function and Reduces Fibrosis and Inflammation in Animal Models of Pulmonary Fibrosis",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "article",
+              "journal": "American Journal of Respiratory and Critical Care Medicine",
+              "url": "https://doi.org/10.1093/ajrccm/aamag162.2797",
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W7161574526",
+              "title": "A39-07 Study Design of a Phase 1, Randomized, Double Blind, Placebo-controlled Study to Assess the Safety, Tolerability, and Pharmacokinetics of Inhaled Rentosertib (INS018_055)",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "article",
+              "journal": "American Journal of Respiratory and Critical Care Medicine",
+              "url": "https://doi.org/10.1093/ajrccm/aamag162.2233",
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W4410974018",
+              "title": "A generative AI-discovered TNIK inhibitor for idiopathic pulmonary fibrosis: a randomized phase 2a trial",
+              "source": "openalex",
+              "year": 2025,
+              "kind": "article",
+              "journal": "Nature Medicine",
+              "url": "https://doi.org/10.1038/s41591-025-03743-2",
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W4413309526",
+              "title": "Age-related diseases as a testbed for anti-aging therapeutics: the case of idiopathic pulmonary fibrosis",
+              "source": "openalex",
+              "year": 2025,
+              "kind": "review",
+              "journal": "Aging",
+              "url": "https://doi.org/10.18632/aging.206301",
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W7127080050",
+              "title": "From Prompt to Drug: Toward Pharmaceutical Superintelligence",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "review",
+              "journal": "ACS Central Science",
+              "url": "https://doi.org/10.1021/acscentsci.5c01473",
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W7151098382",
+              "title": "Toward actionable interventions in human aging (12th ARDD meeting, 2025)",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "article",
+              "journal": "Aging",
+              "url": "https://doi.org/10.18632/aging.206368",
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W7118008795",
+              "title": "Idiopathic Pulmonary Fibrosis: A Comprehensive Review of Risk Factors, Genetics, Diagnosis, and Therapeutic Approaches",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "review",
+              "journal": "Biomedicines",
+              "url": "https://doi.org/10.3390/biomedicines14010090"
+            },
+            {
+              "id": "https://openalex.org/W7160550361",
+              "title": "From Inflammation to Precision Medicine: Mechanistic Insights into Asthma, COPD, and IPF",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "review",
+              "journal": "Biomedicines",
+              "url": "https://doi.org/10.3390/biomedicines14051055"
+            },
+            {
+              "id": "https://openalex.org/W7204100126",
+              "title": "Geroprotective Effects of Drugs Modulating Metabolic Pathways: Perspectives of Pharmacology in Anti-Aging Therapy",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "review",
+              "journal": "International Journal of Molecular Sciences",
+              "url": "https://doi.org/10.3390/ijms27177521"
+            },
+            {
+              "id": "https://openalex.org/W7223131605",
+              "title": "Can autonomous Agentic-AI systems accelerate drug discovery and development in the next decade?",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "review",
+              "journal": "Briefings in Bioinformatics",
+              "url": "https://doi.org/10.1093/bib/bbag583"
+            },
+            {
+              "id": "https://openalex.org/W7167836994",
+              "title": "The use of artificial intelligence (AI) in neuropsychiatric drug discovery: current challenges and future directions",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "review",
+              "journal": "Translational Psychiatry",
+              "url": "https://doi.org/10.1038/s41398-026-04153-9"
+            }
+          ],
+          "organisations": [
+            {
+              "id": "https://ror.org/01mz2wq83",
+              "name": "Insilico Medicine (United States)",
+              "url": "https://ror.org/01mz2wq83",
+              "country": "United States",
+              "website": "https://insilico.com/",
+              "score": 1,
+              "matchedName": "Insilico Medicine"
+            }
+          ],
+          "availability": {
+            "openalex": "ok",
+            "ror": "ok"
+          }
+        },
+        "cache": {
+          "checkedAt": 1794795393869,
+          "shared": true
+        }
+      }
+    },
+    "ordinary_repeat": {
+      "checked_at": "2026-11-16T02:16:33.988Z",
+      "http": 200,
+      "elapsed_ms": 23,
+      "server_timing": null,
+      "body": {
+        "about_a_treatment": true,
+        "treatment": "rentosertib",
+        "condition": "Change in predicted biological age markers in people with confirmed idiopathic pulmonary fibrosis (IPF)",
+        "names": [
+          "rentosertib"
+        ],
+        "known_names": [
+          "INS018_055"
+        ],
+        "registry_numbers": [],
+        "paper_numbers": [],
+        "papers_unchecked": 0,
+        "details": {
+          "trial_name": null,
+          "participants": 42,
+          "sponsor": null
+        },
+        "tracked": [],
+        "candidates": [
+          {
+            "id": "NCT05975983",
+            "url": "https://clinicaltrials.gov/study/NCT05975983",
+            "score": 1,
+            "answer": "match",
+            "agrees": [
+              "participants"
+            ],
+            "title": "Study Evaluating INS018_055 Administered Orally to Subjects With Idiopathic Pulmonary Fibrosis",
+            "conditions": [
+              "Idiopathic Pulmonary Fibrosis (IPF)"
+            ],
+            "interventions": [
+              "INS018_055",
+              "Placebo"
+            ],
+            "phases": [
+              "PHASE2"
+            ],
+            "state": "RECRUITING"
+          },
+          {
+            "id": "NCT05938920",
+            "url": "https://clinicaltrials.gov/study/NCT05938920",
+            "score": 1,
+            "answer": "match",
+            "agrees": [],
+            "title": "Study Evaluating INS018_055 Administered Orally to Subjects With Idiopathic Pulmonary Fibrosis (IPF)",
+            "conditions": [
+              "Idiopathic Pulmonary Fibrosis (IPF)"
+            ],
+            "interventions": [
+              "INS018_055",
+              "Placebo"
+            ],
+            "phases": [
+              "PHASE2"
+            ],
+            "state": "COMPLETED"
+          },
+          {
+            "id": "NCT07687459",
+            "url": "https://clinicaltrials.gov/study/NCT07687459",
+            "score": 0.98,
+            "answer": "match",
+            "agrees": [],
+            "title": "Study Evaluation Rentosertib (INS018_055) Administered Orally in Patients With Idiopathic Pulmonary Fibrosis (IPF)",
+            "conditions": [
+              "Idiopathic Pulmonary Fibrosis"
+            ],
+            "interventions": [
+              "INS018_055 tablets",
+              "Placebo"
+            ],
+            "phases": [
+              "PHASE3"
+            ],
+            "state": "RECRUITING"
+          },
+          {
+            "id": "NCT05154240",
+            "url": "https://clinicaltrials.gov/study/NCT05154240",
+            "score": 0,
+            "answer": "other_indication",
+            "agrees": [],
+            "title": "A Phase 1, Evaluate the Safety, Tolerability, and Pharmacokinetics of INS018_055 in Healthy Subjects",
+            "conditions": [
+              "Idiopathic Pulmonary Fibrosis"
+            ],
+            "interventions": [
+              "INS018_055",
+              "Placebo"
+            ],
+            "phases": [
+              "PHASE1"
+            ],
+            "state": "COMPLETED"
+          }
+        ],
+        "unscored": 0,
+        "post": null,
+        "research": {
+          "papers": [
+            {
+              "id": "https://openalex.org/W7211874164",
+              "title": "Integration of proteomic aging clocks in a phase 2a clinical trial supports simultaneous geroprotective assessment",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "article",
+              "journal": "Nature Biotechnology",
+              "url": "https://doi.org/10.1038/s41587-026-03286-y",
+              "linked": true,
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W7164029510",
+              "title": "Artificial Intelligence Detection Scores in Screening Mammography for Early Breast Cancer Alerts",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "article",
+              "journal": "Radiology",
+              "url": "https://doi.org/10.1148/radiol.251309",
+              "linked": true
+            },
+            {
+              "id": "https://openalex.org/W4409180738",
+              "title": "Explainable artificial intelligence to diagnose early Parkinson’s disease via voice analysis",
+              "source": "openalex",
+              "year": 2025,
+              "kind": "article",
+              "journal": "Scientific Reports",
+              "url": "https://doi.org/10.1038/s41598-025-96575-6",
+              "linked": true
+            },
+            {
+              "id": "https://openalex.org/W7161583001",
+              "title": "A39-06 Inhaled Rentosertib (INS018_055) Exhibits High Safety and Tolerability in Animal Models",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "article",
+              "journal": "American Journal of Respiratory and Critical Care Medicine",
+              "url": "https://doi.org/10.1093/ajrccm/aamag162.2232",
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W4416637329",
+              "title": "Rentosertib, a generative AI-discovered TNIK inhibitor improves lung function in IPF patients",
+              "source": "openalex",
+              "year": 2025,
+              "kind": "conference-abstract",
+              "journal": "European Respiratory Journal",
+              "url": "https://doi.org/10.1183/13993003.congress-2025.oa1251",
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W7161552457",
+              "title": "A39-05 Inhaled Rentosertib (INS018_055) Achieves High and Specific Pulmonary Exposure in Healthy And Fibrotic Lungs",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "article",
+              "journal": "American Journal of Respiratory and Critical Care Medicine",
+              "url": "https://doi.org/10.1093/ajrccm/aamag162.2231",
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W7161607458",
+              "title": "C103-02 Inhaled Rentosertib (ISM018_055), a Selective TNIK Inhibitor, Improves Lung Function and Reduces Fibrosis and Inflammation in Animal Models of Pulmonary Fibrosis",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "article",
+              "journal": "American Journal of Respiratory and Critical Care Medicine",
+              "url": "https://doi.org/10.1093/ajrccm/aamag162.2797",
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W7161574526",
+              "title": "A39-07 Study Design of a Phase 1, Randomized, Double Blind, Placebo-controlled Study to Assess the Safety, Tolerability, and Pharmacokinetics of Inhaled Rentosertib (INS018_055)",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "article",
+              "journal": "American Journal of Respiratory and Critical Care Medicine",
+              "url": "https://doi.org/10.1093/ajrccm/aamag162.2233",
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W4410974018",
+              "title": "A generative AI-discovered TNIK inhibitor for idiopathic pulmonary fibrosis: a randomized phase 2a trial",
+              "source": "openalex",
+              "year": 2025,
+              "kind": "article",
+              "journal": "Nature Medicine",
+              "url": "https://doi.org/10.1038/s41591-025-03743-2",
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W4413309526",
+              "title": "Age-related diseases as a testbed for anti-aging therapeutics: the case of idiopathic pulmonary fibrosis",
+              "source": "openalex",
+              "year": 2025,
+              "kind": "review",
+              "journal": "Aging",
+              "url": "https://doi.org/10.18632/aging.206301",
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W7127080050",
+              "title": "From Prompt to Drug: Toward Pharmaceutical Superintelligence",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "review",
+              "journal": "ACS Central Science",
+              "url": "https://doi.org/10.1021/acscentsci.5c01473",
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W7151098382",
+              "title": "Toward actionable interventions in human aging (12th ARDD meeting, 2025)",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "article",
+              "journal": "Aging",
+              "url": "https://doi.org/10.18632/aging.206368",
+              "institutions": [
+                "Insilico Medicine (United States)"
+              ]
+            },
+            {
+              "id": "https://openalex.org/W7118008795",
+              "title": "Idiopathic Pulmonary Fibrosis: A Comprehensive Review of Risk Factors, Genetics, Diagnosis, and Therapeutic Approaches",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "review",
+              "journal": "Biomedicines",
+              "url": "https://doi.org/10.3390/biomedicines14010090"
+            },
+            {
+              "id": "https://openalex.org/W7160550361",
+              "title": "From Inflammation to Precision Medicine: Mechanistic Insights into Asthma, COPD, and IPF",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "review",
+              "journal": "Biomedicines",
+              "url": "https://doi.org/10.3390/biomedicines14051055"
+            },
+            {
+              "id": "https://openalex.org/W7204100126",
+              "title": "Geroprotective Effects of Drugs Modulating Metabolic Pathways: Perspectives of Pharmacology in Anti-Aging Therapy",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "review",
+              "journal": "International Journal of Molecular Sciences",
+              "url": "https://doi.org/10.3390/ijms27177521"
+            },
+            {
+              "id": "https://openalex.org/W7223131605",
+              "title": "Can autonomous Agentic-AI systems accelerate drug discovery and development in the next decade?",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "review",
+              "journal": "Briefings in Bioinformatics",
+              "url": "https://doi.org/10.1093/bib/bbag583"
+            },
+            {
+              "id": "https://openalex.org/W7167836994",
+              "title": "The use of artificial intelligence (AI) in neuropsychiatric drug discovery: current challenges and future directions",
+              "source": "openalex",
+              "year": 2026,
+              "kind": "review",
+              "journal": "Translational Psychiatry",
+              "url": "https://doi.org/10.1038/s41398-026-04153-9"
+            }
+          ],
+          "organisations": [
+            {
+              "id": "https://ror.org/01mz2wq83",
+              "name": "Insilico Medicine (United States)",
+              "url": "https://ror.org/01mz2wq83",
+              "country": "United States",
+              "website": "https://insilico.com/",
+              "score": 1,
+              "matchedName": "Insilico Medicine"
+            }
+          ],
+          "availability": {
+            "openalex": "ok",
+            "ror": "ok"
+          }
+        },
+        "cache": {
+          "checkedAt": 1794795393869,
+          "shared": true
+        }
+      }
+    },
+    "same_candidates": true,
+    "same_checked_at": true
+  },
+  "installed_extension": {
+    "version": "0.9.17",
+    "build": 25,
+    "resource_hashes_verified": 35,
+    "old_answers_refused": true,
+    "new_answers_reused": true,
+    "native_verified": false,
+    "method": "Signed installed-resource replay only; no native popup or browser-storage verification."
+  },
+  "website_browser": {
+    "verified": true,
+    "verified_at": "2026-11-16T02:20:14Z",
+    "method": "Released homepage URL entry followed by opening each returned card in the in-app browser.",
+    "rows": {
+      "N007": {
+        "exact_source_recognized": true,
+        "card": "duravyu-wet-amd",
+        "verified": [
+          "intravitreal insert identity",
+          "missed primary endpoint explicit",
+          "NCT06683742 and NCT06668064 retained",
+          "no oral vorolanib trial"
+        ]
+      },
+      "A079": {
+        "exact_source_recognized": true,
+        "card": "er-100-open-angle-glaucoma",
+        "verified": [
+          "NCT07290244",
+          "doxycycline activation role",
+          "three-person interim cohort versus 18-person registry plan",
+          "efficacy not established"
+        ]
+      }
+    }
+  },
+  "summary": {
+    "corpus_verdicts": {
+      "review": 32,
+      "pass": 120,
+      "partial": 80,
+      "blocked": 26
+    },
+    "knowledge_cards": {
+      "review": 32,
+      "not applicable": 10,
+      "no card": 80,
+      "match": 110,
+      "not checked": 26
+    }
+  },
+  "saved_reading_associations": {
+    "method": "Rebind previously saved structured readings using before/after indexes, preferring the later released result; no fresh source read or model score.",
+    "rows_accounted_for": 258,
+    "readings": 109,
+    "changes": [
+      {
+        "id": "N007",
+        "before": [],
+        "after": [
+          {
+            "slug": "duravyu-wet-amd",
+            "headline": "Duravyu misses the primary endpoint in the LUCIA wet AMD trial",
+            "page": "/duravyu-wet-amd"
+          }
+        ]
+      }
+    ]
+  },
+  "sheet_verification": {"verified_at": "2026-11-16T02:21:30.884Z", "updated_cells": 49, "preserved_cells": 97, "formulas_formats_validation_chips_preserved": true, "summary": ["Total", "258", "120", "80", "0", "26", "32", "0"], "native_layout_verified": false, "layout_note": "The Google-rendered Sheet requires sign-in; best-effort API verification preserved existing formatting and dimensions.", "spreadsheet_id": "15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA", "ranges": ["URLs!H62:P62", "URLs!Z62:AF62", "URLs!H184:P184", "URLs!Z184:AF184", "URLs!H230:P230", "URLs!Z230:AF230", "Summary!B1"]},
+  "rows": {
+    "N007": {"lookup_answer": "Duravyu for Wet age-related macular degeneration", "tracked_claim": "duravyu-wet-amd", "trial_records": "", "likely_records": "", "top_record": "NCT05381948, NCT06668064, NCT06683742 · verified released card; no fresh scoring", "test_result": "pass", "reason": "Released website recognizes the exact Healio URL and opens the verified intravitreal Duravyu/EYP-1901 card. LUCIA and LUGANO are retained; oral vorolanib is not a card trial. The missed primary endpoint is explicit. Bounded live scoring remains uncertain about LUCIA; this pass is for the exact-card path.", "how_read": "released website URL lookup and card; installed Safari function replay", "ms": null, "last_tested": "2026-11-16T02:20:14Z", "tested_build": "site 17437c8b1916; Safari 0.9.17 (25), native popup unverified", "site_result": "2026-11-16T02:20:14Z: production 17437c8b1916. Released website recognizes the exact Healio URL and opens the verified intravitreal Duravyu/EYP-1901 card. LUCIA and LUGANO are retained; oral vorolanib is not a card trial. The missed primary endpoint is explicit. Bounded live scoring remains uncertain about LUCIA; this pass is for the exact-card path.", "extension_result": "Installed signed Safari 0.9.17 (25): all 35 resource hashes verified; installed exact-address and reuse functions pass, including rejection of older answers. This is function replay, not native popup or browser-storage verification. Computer control still reports the Mac locked after the unlock confirmation.", "knowledge_card_result": "match", "knowledge_card_notes": "duravyu-wet-amd; complete product and population verified. Native Safari popup remains unverified.", "trial_role_release": "runs/2026-11-15-trial-role-release.json", "reading_scope_release": "runs/2026-11-16-reading-scope-release.json"},
+    "A079": {"lookup_answer": "ER-100 for Open-angle glaucoma", "tracked_claim": "er-100-open-angle-glaucoma", "trial_records": "", "likely_records": "", "top_record": "NCT07290244 · verified released card; no fresh scoring", "test_result": "pass", "reason": "Released website recognizes the exact Life Biosciences URL and opens the ER-100 glaucoma card. NCT07290244 is retained; doxycycline is an activation agent. The three-person interim report is distinguished from the 18-person registry plan and does not establish efficacy.", "how_read": "released website URL lookup and card; installed Safari function replay", "ms": null, "last_tested": "2026-11-16T02:20:14Z", "tested_build": "site 17437c8b1916; Safari 0.9.17 (25), native popup unverified", "site_result": "2026-11-16T02:20:14Z: production 17437c8b1916. Released website recognizes the exact Life Biosciences URL and opens the ER-100 glaucoma card. NCT07290244 is retained; doxycycline is an activation agent. The three-person interim report is distinguished from the 18-person registry plan and does not establish efficacy.", "extension_result": "Installed signed Safari 0.9.17 (25): all 35 resource hashes verified; installed exact-address and reuse functions pass, including rejection of older answers. This is function replay, not native popup or browser-storage verification. Computer control still reports the Mac locked after the unlock confirmation.", "knowledge_card_result": "match", "knowledge_card_notes": "er-100-open-angle-glaucoma; complete product and population verified. Native Safari popup remains unverified.", "trial_role_release": "runs/2026-11-15-trial-role-release.json", "reading_scope_release": "runs/2026-11-16-reading-scope-release.json"},
+    "A052": {"lookup_answer": "rentosertib for Change in predicted biological age markers in people with confirmed idiopathic pulmonary fibrosis (IPF)", "tracked_claim": "", "trial_records": 4, "likely_records": 3, "top_record": "NCT05975983 · 100% · Study Evaluating INS018_055 Administered Orally to Subjects With Idiopathic Pulmonary Fibrosis", "test_result": "partial", "reason": "Released reading now retains aging-clock measurements in participants with idiopathic pulmonary fibrosis. The primary paper identifies NCT05938920 as the reported 42-person proteomic subset; other IPF candidates are not proof of anti-aging benefit or the reported study. No matching knowledge card yet.", "how_read": "Fresh released address lookup", "ms": 9125, "last_tested": "2026-11-16T02:16:33.925Z", "tested_build": "service 17437c8b1916; Safari 0.9.17 (25), native popup unverified", "site_result": "2026-11-16T02:16:33.925Z: production 17437c8b1916. Released reading now retains aging-clock measurements in participants with idiopathic pulmonary fibrosis. The primary paper identifies NCT05938920 as the reported 42-person proteomic subset; other IPF candidates are not proof of anti-aging benefit or the reported study. No matching knowledge card yet.", "extension_result": "Installed signed Safari 0.9.17 (25): all 35 resource hashes verified; installed exact-address and reuse functions pass, including rejection of older answers. This is function replay, not native popup or browser-storage verification. Computer control still reports the Mac locked after the unlock confirmation. The released response is used only for installed-function reuse checks.", "knowledge_card_result": "no card", "knowledge_card_notes": "Scope reading corrected; a verified card for the proteomic-aging claim in IPF remains to be prepared. Do not substitute a general anti-aging or other-drug card.", "trial_role_release": "runs/2026-11-15-trial-role-release.json", "reading_scope_release": "runs/2026-11-16-reading-scope-release.json"}
+  }
+}

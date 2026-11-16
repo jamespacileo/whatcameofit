@@ -17,6 +17,8 @@ import { makeRegistry } from "./registry.mjs";
 import { followShort } from "./short.mjs";
 import { readBody, sourceUrl, validateImage } from "./visual.mjs";
 import { previousResult, storeResult } from "./results.mjs";
+import { withCurrentClaims } from "./tracked.mjs";
+import { bounded } from "./public-cache.mjs";
 import { makeResearch } from "./research.mjs";
 import { eventStream, serverTiming, stageTimes } from "./stream.mjs";
 import { handleTrial } from "./trials.mjs";
@@ -30,6 +32,8 @@ const MAX_SHORT_LINKS = 3;
 // An independent reading that would let a browser-read result be shared. It is only
 // worth this long: past it the reader's own content is searched and nothing is shared.
 const PROOF_TIMEOUT_MS = 3_000;
+// Reading today's static cards must not hold up a completed saved clinical answer.
+const INDEX_TIMEOUT_MS = 500;
 const UNREADABLE = { robots: "unreadable_robots", unreadable: "unreadable", address: "address" };
 
 function answer(body, status = 200, timings = null) {
@@ -153,7 +157,7 @@ export async function handle(request, env, tools) {
     const reader = request.headers.get("CF-Connecting-IP") ?? "unknown";
     const limits = await Promise.all([env.LOOKUP_PER_READER.limit({ key: reader }), env.LOOKUP_IN_ALL.limit({ key: "all" })]);
     if (limits.some(limit => !limit.success)) return refuse(429, "busy");
-    return answer(await previousResult(env.LOOKUP_RESULTS, pageUrl) ?? { cacheMiss: true });
+    return answer(await currentResult(env, pageUrl, here) ?? { cacheMiss: true });
   }
   const address = typeof sent?.url === "string" ? sent.url.trim() : "";
   let text = typeof sent?.text === "string" ? sent.text.trim() : "";
@@ -188,7 +192,7 @@ export async function handle(request, env, tools) {
   // A caller's context URL must never relabel a different independently fetched URL.
   const cacheUrl = address ? sourceUrl(address) : pageUrl;
   if (!image && sent?.refresh !== true && cacheUrl) {
-    const cached = await previousResult(env.LOOKUP_RESULTS, cacheUrl);
+    const cached = await currentResult(env, cacheUrl, here);
     if (cached) return answer(cached);
   }
 
@@ -211,15 +215,26 @@ export async function handle(request, env, tools) {
   });
 }
 
+async function lookupIndex(env, here) {
+  return env.ASSETS.fetch(new Request(new URL("/lookup.json", here)))
+    .then(response => response.ok ? response.json() : { claims: {} })
+    .catch(() => ({ claims: {} }));
+}
+
+async function currentResult(env, address, here) {
+  const found = await previousResult(env.LOOKUP_RESULTS, address);
+  if (found?.about_a_treatment !== true) return found;
+  const index = await bounded(() => lookupIndex(env, here), INDEX_TIMEOUT_MS, { claims: {} });
+  return withCurrentClaims(found, index);
+}
+
 /** One lookup after its request is accepted: a status, the body to answer with and, for
  * an answer, how to keep it for the next reader: only once complete, and only when public. */
 async function lookUpFor({ sent, read, text, links, platform, image, pageUrl, cacheUrl, here, env, tools, onCore, timings }) {
   try {
     const { model, registry, papers, research, fetch: get = fetch, proofTimeoutMs = PROOF_TIMEOUT_MS,
       paperAllowanceMs, paperSpacingMs } = tools ?? realTools(env);
-    const index = await env.ASSETS.fetch(new Request(new URL("/lookup.json", here)))
-      .then((response) => (response.ok ? response.json() : { claims: {} }))
-      .catch(() => ({ claims: {} }));
+    const index = await lookupIndex(env, here);
 
     let page;
     let post = null;

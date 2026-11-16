@@ -1,0 +1,909 @@
+{
+  "reviewed_head": "c97b00d1cc8578273a794b79e35b87473d4c07c3",
+  "added_cards": 16,
+  "trial_count": 109,
+  "verification": "All 109 freshly fetched CT.gov trial titles, phases, participant counts, states and full exported fact structures agree exactly with PR174 (full facts compared using repository pure read_trial). This checks extraction but does not validate association scope. No DB, repository, branch, Sheet or UI mutation.",
+  "requirements": [
+    "CLAUDE.md: A trial matches a claim only when it tests the intervention for the claim indication. Never approve by score alone.",
+    "openspec/specs/claims/spec.md: exactly one intervention for one indication.",
+    "openspec/specs/entity-resolution/spec.md: candidate trial match is whether record is a trial of intervention for indication.",
+    "pipeline/src/thenwhat/decide/steps.py TRIAL_QUESTION: comparator/background-only and combination-only rules.",
+    "openspec/specs/status-derivation/spec.md: phase derived only from approved standing trials."
+  ],
+  "counts": {
+    "verified_documentary_compatibility": 78,
+    "uncertain": 18,
+    "documentary_mismatch": 13
+  },
+  "cards": [
+    {
+      "slug": "670-nm-deep-red-light-exposure-age-related-decline-in",
+      "public_status": "no_trial_found",
+      "card_disposition": "limited_search_no_contradiction",
+      "note": "No approved trial to validate. Independent CT.gov name/condition checks found no clearly matching trial, but these are not exhaustive worldwide searches and historical article statements were not fully re-read.",
+      "trials": []
+    },
+    {
+      "slug": "bionaut-medical-microrobot-drug-delivery-system-brainstem",
+      "public_status": "no_trial_found",
+      "card_disposition": "limited_search_no_contradiction",
+      "note": "No approved trial to validate. Independent CT.gov name/condition checks found no clearly matching trial, but these are not exhaustive worldwide searches and historical article statements were not fully re-read.",
+      "trials": []
+    },
+    {
+      "slug": "electrically-accelerated-and-enhanced-remineralisation-tooth",
+      "public_status": "preclinical_only",
+      "card_disposition": "limited_search_no_contradiction",
+      "note": "No approved trial to validate. Independent CT.gov name/condition checks found no clearly matching trial, but these are not exhaustive worldwide searches and historical article statements were not fully re-read.",
+      "trials": []
+    },
+    {
+      "slug": "live-attenuated-hsv-2-vaccine-herpes-simplex-virus-infection",
+      "public_status": "no_trial_found",
+      "card_disposition": "identity_uncertain",
+      "note": "Live attenuated HSV-2 vaccine is a class description, not a unique candidate name. The historical Halford candidate is HSV-2 0\u0394NLS; do not assume modern RVx-201 formulation equivalence. No comprehensive candidate-name registry search completed.",
+      "trials": []
+    },
+    {
+      "slug": "lsd-microdosing-alzheimers-disease",
+      "public_status": "no_trial_found",
+      "card_disposition": "limited_search_no_contradiction",
+      "note": "No approved trial to validate. Independent CT.gov name/condition checks found no clearly matching trial, but these are not exhaustive worldwide searches and historical article statements were not fully re-read.",
+      "trials": []
+    },
+    {
+      "slug": "lugdunin-mrsa-and-other-staph-infections",
+      "public_status": "preclinical_only",
+      "card_disposition": "limited_search_no_contradiction",
+      "note": "No approved trial to validate. Independent CT.gov name/condition checks found no clearly matching trial, but these are not exhaustive worldwide searches and historical article statements were not fully re-read.",
+      "trials": []
+    },
+    {
+      "slug": "md3606-influenza",
+      "public_status": "preclinical_only",
+      "card_disposition": "limited_search_no_contradiction",
+      "note": "No approved trial to validate. Independent CT.gov name/condition checks found no clearly matching trial, but these are not exhaustive worldwide searches and historical article statements were not fully re-read.",
+      "trials": []
+    },
+    {
+      "slug": "orforglipron-type-2-diabetes",
+      "public_status": "phase_3",
+      "card_disposition": "uncertain_associations",
+      "note": "Historical article statements and every eligibility nuance not comprehensively verified; table concerns trial identity, intervention, indication, role and exported facts.",
+      "trials": [
+        {
+          "trial_id": "NCT04426474",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT04426474",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05048719",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05048719",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05086445",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05086445",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05803421",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Diabetes program compares orforglipron with insulin glargine, with CV safety primary; valid drug/diabetes treatment scope, not excluded for a safety primary outcome.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05803421",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT05872620",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "ATTAIN-2 has body weight primary but HbA1c, fasting glucose and glycemic-target secondary endpoints in T2D; do not reject just for primary weight outcome.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05872620",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT05971940",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05971940",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT06010004",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06010004",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT06045221",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06045221",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT06109311",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06109311",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT06192108",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06192108",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT06972472",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06972472",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT06993792",
+          "disposition": "uncertain",
+          "reason": "Master protocol screens/allocates to child trials, including already counted NCT06972472. Primary outcome is number allocated to each study. Medicine/condition compatible, but independent-treatment-trial count and attribution need resolution; do not blanket reject.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06993792",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT07613307",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07613307",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT07668336",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07668336",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT07739537",
+          "disposition": "uncertain",
+          "reason": "Recall-by-genotype physiology study with acute orforglipron challenge, accepting people with and without T2D. Early-phase pharmacodynamics can be relevant; unclear whether this is treatment evidence for the card or metabolic characterization. Preserve uncertainty.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07739537",
+          "used_for_public_status": false
+        }
+      ]
+    },
+    {
+      "slug": "pep005-hiv-infection",
+      "public_status": "preclinical_only",
+      "card_disposition": "limited_search_no_contradiction",
+      "note": "No approved trial to validate. Independent CT.gov name/condition checks found no clearly matching trial, but these are not exhaustive worldwide searches and historical article statements were not fully re-read. PEP005 = ingenol mebutate: 2019 paper DOI 10.1172/jci.insight.126027 examines HIV latency in five treated people with actinic keratoses. This does not create a matching registry trial or change announcement evidence stage, but prevents an unqualified present-day assertion that all work is preclinical.",
+      "trials": []
+    },
+    {
+      "slug": "psilocybin-severe-treatment-resistant-depression",
+      "public_status": "phase_3",
+      "card_disposition": "blocked_documentary_mismatch",
+      "note": "Historical article statements and every eligibility nuance not comprehensively verified; table concerns trial identity, intervention, indication, role and exported facts.",
+      "trials": [
+        {
+          "trial_id": "NCT04433858",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT04433858",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT04670081",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT04670081",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05029466",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05029466",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05220410",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05220410",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05381974",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05381974",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT06132178",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Factorial psilocybin dose/rTMS study includes full-dose psilocybin + sham rTMS; supports drug treatment scope despite combination arms.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06132178",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT06230757",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06230757",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT06341426",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06341426",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT07164755",
+          "disposition": "documentary_mismatch",
+          "reason": "Ancillary cytokine/mRNA analysis of stored blood samples from the PsiDeR trial. Arms are blood-sample groups and there are no administered interventions; not another psilocybin treatment trial.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07164755",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT07210112",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Includes psilocybin + trazodone placebo arm, so not combination-only. Preserve psilocybin identity despite trazodone combination arms.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07210112",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT07226232",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Veterans with current MDE and failure of >=2 adequate antidepressant courses; MADRS >=20. Direct psilocybin randomized comparison. Severity population includes broader-than-severe patients; do not claim every enrollee has severe depression.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07226232",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT07373535",
+          "disposition": "documentary_mismatch",
+          "reason": "All participants receive two 25 mg psilocybin sessions; randomization concerns preferred versus nonpreferred music/mindfulness psychotherapy. Psilocybin is background to the comparison.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07373535",
+          "used_for_public_status": false
+        }
+      ]
+    },
+    {
+      "slug": "romidepsin-social-deficits-associated-with-autism-spectrum",
+      "public_status": "preclinical_only",
+      "card_disposition": "limited_search_no_contradiction",
+      "note": "No approved trial to validate. Independent CT.gov name/condition checks found no clearly matching trial, but these are not exhaustive worldwide searches and historical article statements were not fully re-read.",
+      "trials": []
+    },
+    {
+      "slug": "tirzepatide-overweight-or-obesity",
+      "public_status": "phase_3",
+      "card_disposition": "blocked_documentary_mismatch",
+      "note": "Historical article statements and every eligibility nuance not comprehensively verified; table concerns trial identity, intervention, indication, role and exported facts.",
+      "trials": [
+        {
+          "trial_id": "NCT04184622",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT04184622",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT04311411",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT04311411",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT04657016",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT04657016",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT04660643",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT04660643",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT05024032",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05024032",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT05536804",
+          "disposition": "uncertain",
+          "reason": "Primary purpose/outcome is CKD/renal sinus fat, but explicitly measures percent body-weight change as secondary. Do not reject solely from primary outcome; resolve whether this supports both indications.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05536804",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05822830",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05822830",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT06047548",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06047548",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT06143956",
+          "disposition": "uncertain",
+          "reason": "Master screening protocol; tirzepatide appears only within ISA LAA2 description alongside LY3841136. Primary outcome allocation to ISAs. Need actual ISA to establish drug-alone role and avoid counting master screening as a treatment trial.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06143956",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT06588296",
+          "disposition": "documentary_mismatch",
+          "reason": "Tirzepatide occurs only in ixekizumab + tirzepatide arm; other arm is ixekizumab. No tirzepatide-alone arm. Multi-medicine regimen violates single-medicine matching rule.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06588296",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT06606821",
+          "disposition": "documentary_mismatch",
+          "reason": "Tirzepatide is tested for coronary plaque lipid content, atheroma burden and coronary flow reserve. Obesity is eligibility; no weight-loss efficacy outcome is registered. Other indication: coronary disease.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06606821",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT06643728",
+          "disposition": "uncertain",
+          "reason": "Bimagrumab/tirzepatide factorial-style study includes tirzepatide-alone arms but calls them ACTIVE_COMPARATOR. Title says alone or combination; determine co-investigational intent before classifying comparator-only.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06643728",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT06648031",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Contains DehydraTECH tirzepatide arm with safety/weight/glycemic outcomes. Generic claim has no explicit route/formulation restriction; no invented route restriction.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06648031",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT06737042",
+          "disposition": "documentary_mismatch",
+          "reason": "Tirzepatide is ACTIVE_COMPARATOR to three GZR18 experimental dose arms. Comparator-only role.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06737042",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT06864026",
+          "disposition": "uncertain",
+          "reason": "Single-arm study adds tirzepatide to existing ixekizumab in PsA; weight loss is co-primary. Need consistent rule for established background therapy versus multi-medicine experimental regimen.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06864026",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT06918405",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06918405",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT07078838",
+          "disposition": "documentary_mismatch",
+          "reason": "Tirzepatide is tested for antiproliferative effect on endometrial cancer/EIN; registered outcomes are tumor proliferation/response. Obesity is eligibility, not the tested indication.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07078838",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT07099742",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07099742",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT07292519",
+          "disposition": "uncertain",
+          "reason": "AUD treatment study with common CBT; heavy-drinking days primary and weight/metabolic effects secondary. Medicine is varied, so not background-only, but indication scope requires judgment.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07292519",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT07326111",
+          "disposition": "uncertain",
+          "reason": "PCOS ovarian-function primary purpose but explicit body-weight reduction outcomes. Do not reject solely from primary outcome; indication scope requires judgment.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07326111",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT07364175",
+          "disposition": "uncertain",
+          "reason": "Weight loss using tirzepatide is the intervention for hypertension, with weight secondary. Both scopes plausible; avoid automatic other-indication rejection.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07364175",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT07438444",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07438444",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT07481747",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07481747",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT07588438",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07588438",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT07619508",
+          "disposition": "documentary_mismatch",
+          "reason": "Retrospective target-trial emulation compares cardiovascular events/mortality with tirzepatide versus semaglutide. No weight outcome is registered. Other indication: cardiovascular risk reduction.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07619508",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT07622992",
+          "disposition": "uncertain",
+          "reason": "Preoperative tirzepatide then bariatric surgery versus other preparation strategies; weight loss measured after surgery. Need consistent treatment-setting/regimen interpretation, since generic obesity claim has no explicit setting restriction.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07622992",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT07701005",
+          "disposition": "uncertain",
+          "reason": "Retrospective MASLD/metabolic-risk study includes body weight/BMI secondary outcomes. Preserve uncertainty about obesity-treatment scope.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07701005",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT07809568",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07809568",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT07908940",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07908940",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT07931196",
+          "disposition": "documentary_mismatch",
+          "reason": "Ancillary molecular/microbiome analysis of RESIST; every group receives tirzepatide and randomization is resistance training. Drug is background, not independently tested here.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07931196",
+          "used_for_public_status": false
+        }
+      ]
+    },
+    {
+      "slug": "tulsa-prostate-cancer",
+      "public_status": "phase_1",
+      "card_disposition": "blocked_documentary_mismatch",
+      "note": "Historical article statements and every eligibility nuance not comprehensively verified; table concerns trial identity, intervention, indication, role and exported facts.",
+      "trials": [
+        {
+          "trial_id": "NCT01686958",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT01686958",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT02766543",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT02766543",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT03668652",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT03668652",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT03814252",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT03814252",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT03996005",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT03996005",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT04808427",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT04808427",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05001477",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05001477",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05027477",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05027477",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05438563",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05438563",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05917860",
+          "disposition": "documentary_mismatch",
+          "reason": "TULSA is delivered only after neoadjuvant degarelix; single arm is the whole degarelix + TULSA regimen. Official title and primary outcomes concern effects of neoadjuvant degarelix. Sole source of TULSA phase_1.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05917860",
+          "used_for_public_status": true
+        }
+      ]
+    },
+    {
+      "slug": "uterus-transplant-inability-to-give-birth-because-of-an",
+      "public_status": "phase_3",
+      "card_disposition": "verified_documentary_compatibility",
+      "note": "Historical article statements and every eligibility nuance not comprehensively verified; table concerns trial identity, intervention, indication, role and exported facts.",
+      "trials": [
+        {
+          "trial_id": "NCT01844362",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT01844362",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT02388802",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT02388802",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT02409147",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT02409147",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT02573415",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT02573415",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT02656550",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT02656550",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT02741102",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT02741102",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT02987023",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT02987023",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT03048396",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT03048396",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT03138226",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT03138226",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT03252795",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT03252795",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT03277430",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Uterus transplantation for congenital/acquired absence; registered phase_3 legitimately drives stored phase_3, even though most transplantation records have no applicable phase.",
+          "source_url": "https://clinicaltrials.gov/study/NCT03277430",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT03284073",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT03284073",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT03307356",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT03307356",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT03581019",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT03581019",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT03590405",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT03590405",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT03689842",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT03689842",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT04026893",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT04026893",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT04244409",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT04244409",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT04314869",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT04314869",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05263076",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05263076",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05646992",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05646992",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05726305",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05726305",
+          "used_for_public_status": false
+        }
+      ]
+    },
+    {
+      "slug": "vagus-nerve-stimulation-persistent-vegetative-state",
+      "public_status": "trial_registered",
+      "card_disposition": "verified_documentary_compatibility",
+      "note": "Historical article statements and every eligibility nuance not comprehensively verified; table concerns trial identity, intervention, indication, role and exported facts.",
+      "trials": [
+        {
+          "trial_id": "NCT01260090",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT01260090",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT02591069",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Vagus stimulation in chronic vegetative/minimally conscious states, >=6 months. Registry status UNKNOWN and NA phase; exported trial_registered reflects approved-event rules, not evidence of current recruitment.",
+          "source_url": "https://clinicaltrials.gov/study/NCT02591069",
+          "used_for_public_status": true
+        }
+      ]
+    },
+    {
+      "slug": "very-low-calorie-diet-type-2-diabetes",
+      "public_status": "phase_3",
+      "card_disposition": "blocked_documentary_mismatch",
+      "note": "Historical article statements and every eligibility nuance not comprehensively verified; table concerns trial identity, intervention, indication, role and exported facts.",
+      "trials": [
+        {
+          "trial_id": "NCT00627484",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT00627484",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT01447524",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT01447524",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT01945840",
+          "disposition": "documentary_mismatch",
+          "reason": "Very-low-calorie diet is explicitly an ACTIVE_COMPARATOR; gut hormone infusion is EXPERIMENTAL. Comparator for another intervention, contrary to trial-role rule.",
+          "source_url": "https://clinicaltrials.gov/study/NCT01945840",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT03225339",
+          "disposition": "uncertain",
+          "reason": "DIADEM lifestyle intervention combines low-energy replacement diet with physical activity; no caloric amount in registry. Likely relevant, but exact VLCD category not established by record inspected.",
+          "source_url": "https://clinicaltrials.gov/study/NCT03225339",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT04363710",
+          "disposition": "uncertain",
+          "reason": "Registry explicitly calls intervention Low Calorie Diet, 800\u20131000 kcal/day, distinguishes it from 600\u2013800 kcal VLCD, then increases intake. Check intended dietary category before accepting under very-low-calorie name.",
+          "source_url": "https://clinicaltrials.gov/study/NCT04363710",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT04805996",
+          "disposition": "uncertain",
+          "reason": "Total diet replacement with eHealth; registry wording inspected does not establish caloric amount. Need establish the explicit very-low-calorie category.",
+          "source_url": "https://clinicaltrials.gov/study/NCT04805996",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT04957589",
+          "disposition": "documentary_mismatch",
+          "reason": "VLCD is given in both arms; the difference under test is added high-intensity interval training for muscle preservation. VLCD-only arm is ACTIVE_COMPARATOR.",
+          "source_url": "https://clinicaltrials.gov/study/NCT04957589",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05295160",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05295160",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05491005",
+          "disposition": "documentary_mismatch",
+          "reason": "All diabetic participants receive the same 850 kcal diet. Randomization is eHealth versus face-to-face follow-up; the healthy nonrandomized group receives no intervention. Diet is background to delivery-method comparison.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05491005",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05606471",
+          "disposition": "documentary_mismatch",
+          "reason": "VLCD-only and semaglutide-only arms are ACTIVE_COMPARATOR; combined regimen is EXPERIMENTAL. Primary outcomes are muscle protein synthesis/breakdown. Sole source of VLCD phase_3 (phase_4 mapped to phase_3).",
+          "source_url": "https://clinicaltrials.gov/study/NCT05606471",
+          "used_for_public_status": true
+        },
+        {
+          "trial_id": "NCT05626842",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05626842",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05744232",
+          "disposition": "uncertain",
+          "reason": "Tests dietary safety/disordered-eating outcomes in T2D using approximately 860 kcal/day. Relevant safety study can count; clarify claimed very-low-calorie category instead of rejecting for lack of efficacy primary outcome.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05744232",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05754775",
+          "disposition": "uncertain",
+          "reason": "Korean low-calorie total-food-replacement intervention; registry discusses prior VLCD studies but gives no caloric amount for its own diet. Compatibility with very-low-calorie restriction not established.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05754775",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT05984459",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT05984459",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT06211556",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06211556",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT06363747",
+          "disposition": "uncertain",
+          "reason": "Adds Optifast to common once-weekly GLP-1 therapy; diet is varied, so not comparator/background-only. Combination and standard-background interpretation should be consistent; do not reject solely because medicine is present.",
+          "source_url": "https://clinicaltrials.gov/study/NCT06363747",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT07270068",
+          "disposition": "uncertain",
+          "reason": "Total diet replacement starts around 800\u2013850 kcal/day. Establish intended very-low-calorie category; it does directly test diabetes remission.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07270068",
+          "used_for_public_status": false
+        },
+        {
+          "trial_id": "NCT07635121",
+          "disposition": "verified_documentary_compatibility",
+          "reason": "Named intervention and registered population are compatible; inspected arm structure establishes treatment/research exposure for that condition. No contradictory role identified. This is scope compatibility, not an efficacy conclusion.",
+          "source_url": "https://clinicaltrials.gov/study/NCT07635121",
+          "used_for_public_status": false
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "146 unchanged cards not independently re-audited.",
+    "11 archives checked against PR rationale, not full independent duplicate/source audit.",
+    "All source news articles, reported statements, promises and related-paper associations not comprehensively re-read.",
+    "No-trial absence is not proved across every registry or alias.",
+    "Use of secondary outcomes, broad populations, dietary calories, and standard background care requires consistent decisions; uncertainty is preserved."
+  ]
+}

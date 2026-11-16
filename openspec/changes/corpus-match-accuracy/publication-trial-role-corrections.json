@@ -1,0 +1,289 @@
+{
+  "decided_at": "2026-11-16T00:28:21.945378+00:00",
+  "reviewed_pr": 174,
+  "reviewed_head": "c97b00d1cc8578273a794b79e35b87473d4c07c3",
+  "decider": "assistant",
+  "published": false,
+  "correction_model_calls": 0,
+  "corrections": [
+    {
+      "claim": "psilocybin-severe-treatment-resistant-depression",
+      "claim_id": 381,
+      "trial_id": "NCT07164755",
+      "source_url": "https://clinicaltrials.gov/study/NCT07164755",
+      "match_id": 14282,
+      "previous_score": 0.92,
+      "previous_state": "approved",
+      "decision": "rejected",
+      "reason": "Ancillary cytokine/mRNA analysis of stored blood samples from the PsiDeR trial. Arms are blood-sample groups and there are no administered interventions; not another psilocybin treatment trial.",
+      "event_ids": [
+        8548,
+        8549
+      ],
+      "raw_payload_sha256": {
+        "8548": "30eb8702de9b9c8b16e149ac4d60b4c822aee382c00d0f526beabb494f40f126",
+        "8549": "30eb8702de9b9c8b16e149ac4d60b4c822aee382c00d0f526beabb494f40f126"
+      }
+    },
+    {
+      "claim": "psilocybin-severe-treatment-resistant-depression",
+      "claim_id": 381,
+      "trial_id": "NCT07373535",
+      "source_url": "https://clinicaltrials.gov/study/NCT07373535",
+      "match_id": 14286,
+      "previous_score": 0.98,
+      "previous_state": "approved",
+      "decision": "rejected",
+      "reason": "All participants receive two 25 mg psilocybin sessions; randomization concerns preferred versus nonpreferred music/mindfulness psychotherapy. Psilocybin is background to the comparison.",
+      "event_ids": [
+        8558
+      ],
+      "raw_payload_sha256": {
+        "8558": "17a66834b2d2340271f4cc6e1d45135f28993ac43c4f8aa9074e6e33648e7fc5"
+      }
+    },
+    {
+      "claim": "tirzepatide-overweight-or-obesity",
+      "claim_id": 453,
+      "trial_id": "NCT06588296",
+      "source_url": "https://clinicaltrials.gov/study/NCT06588296",
+      "match_id": 14797,
+      "previous_score": 0.89,
+      "previous_state": "approved",
+      "decision": "rejected",
+      "reason": "Tirzepatide occurs only in ixekizumab + tirzepatide arm; other arm is ixekizumab. No tirzepatide-alone arm. Multi-medicine regimen violates single-medicine matching rule.",
+      "event_ids": [
+        9630,
+        9631,
+        9632
+      ],
+      "raw_payload_sha256": {
+        "9630": "901edd3c25113094f054ea7e0a3f4300c6aff77d0b95dbcec8297b03a62791fc",
+        "9631": "901edd3c25113094f054ea7e0a3f4300c6aff77d0b95dbcec8297b03a62791fc",
+        "9632": "901edd3c25113094f054ea7e0a3f4300c6aff77d0b95dbcec8297b03a62791fc"
+      }
+    },
+    {
+      "claim": "tirzepatide-overweight-or-obesity",
+      "claim_id": 453,
+      "trial_id": "NCT06606821",
+      "source_url": "https://clinicaltrials.gov/study/NCT06606821",
+      "match_id": 14826,
+      "previous_score": 0.98,
+      "previous_state": "approved",
+      "decision": "rejected",
+      "reason": "Tirzepatide is tested for coronary plaque lipid content, atheroma burden and coronary flow reserve. Obesity is eligibility; no weight-loss efficacy outcome is registered. Other indication: coronary disease.",
+      "event_ids": [
+        9695,
+        9696
+      ],
+      "raw_payload_sha256": {
+        "9695": "77c028ca0bb728ffee33a0c2a1fb99376a3cd7b5528997a0ed1ec8b39dbff5b6",
+        "9696": "77c028ca0bb728ffee33a0c2a1fb99376a3cd7b5528997a0ed1ec8b39dbff5b6"
+      }
+    },
+    {
+      "claim": "tirzepatide-overweight-or-obesity",
+      "claim_id": 453,
+      "trial_id": "NCT06737042",
+      "source_url": "https://clinicaltrials.gov/study/NCT06737042",
+      "match_id": 14835,
+      "previous_score": 0.8,
+      "previous_state": "approved",
+      "decision": "rejected",
+      "reason": "Tirzepatide is ACTIVE_COMPARATOR to three GZR18 experimental dose arms. Comparator-only role.",
+      "event_ids": [
+        9729,
+        9730,
+        9731
+      ],
+      "raw_payload_sha256": {
+        "9729": "08f0d68e3fb14edb51305d2de86bc5ffd48ddee97f2e7d2aa6d502f6043b4ab7",
+        "9730": "08f0d68e3fb14edb51305d2de86bc5ffd48ddee97f2e7d2aa6d502f6043b4ab7",
+        "9731": "08f0d68e3fb14edb51305d2de86bc5ffd48ddee97f2e7d2aa6d502f6043b4ab7"
+      }
+    },
+    {
+      "claim": "tirzepatide-overweight-or-obesity",
+      "claim_id": 453,
+      "trial_id": "NCT07078838",
+      "source_url": "https://clinicaltrials.gov/study/NCT07078838",
+      "match_id": 14783,
+      "previous_score": 0.86,
+      "previous_state": "approved",
+      "decision": "rejected",
+      "reason": "Tirzepatide is tested for antiproliferative effect on endometrial cancer/EIN; registered outcomes are tumor proliferation/response. Obesity is eligibility, not the tested indication.",
+      "event_ids": [
+        9577
+      ],
+      "raw_payload_sha256": {
+        "9577": "b2c9389d055a279cffebb97ecefcbd3fc18e139305e7c4b0ea78fff3aab7d6a2"
+      }
+    },
+    {
+      "claim": "tirzepatide-overweight-or-obesity",
+      "claim_id": 453,
+      "trial_id": "NCT07619508",
+      "source_url": "https://clinicaltrials.gov/study/NCT07619508",
+      "match_id": 14805,
+      "previous_score": 0.98,
+      "previous_state": "approved",
+      "decision": "rejected",
+      "reason": "Retrospective target-trial emulation compares cardiovascular events/mortality with tirzepatide versus semaglutide. No weight outcome is registered. Other indication: cardiovascular risk reduction.",
+      "event_ids": [
+        9648,
+        9649,
+        9650
+      ],
+      "raw_payload_sha256": {
+        "9648": "4266a38df8709adac34e2bf0038c6d116a3ffad8c34f5480346e3a5e6e80174d",
+        "9649": "4266a38df8709adac34e2bf0038c6d116a3ffad8c34f5480346e3a5e6e80174d",
+        "9650": "4266a38df8709adac34e2bf0038c6d116a3ffad8c34f5480346e3a5e6e80174d"
+      }
+    },
+    {
+      "claim": "tirzepatide-overweight-or-obesity",
+      "claim_id": 453,
+      "trial_id": "NCT07931196",
+      "source_url": "https://clinicaltrials.gov/study/NCT07931196",
+      "match_id": 14819,
+      "previous_score": 0.95,
+      "previous_state": "approved",
+      "decision": "rejected",
+      "reason": "Ancillary molecular/microbiome analysis of RESIST; every group receives tirzepatide and randomization is resistance training. Drug is background, not independently tested here.",
+      "event_ids": [
+        9685
+      ],
+      "raw_payload_sha256": {
+        "9685": "cd9bb31910021faa10bcc8c71c68e86cd5e8d7567b7f949d3347e3e14b7812f5"
+      }
+    },
+    {
+      "claim": "tulsa-prostate-cancer",
+      "claim_id": 348,
+      "trial_id": "NCT05917860",
+      "source_url": "https://clinicaltrials.gov/study/NCT05917860",
+      "match_id": 15061,
+      "previous_score": 1.0,
+      "previous_state": "approved",
+      "decision": "rejected",
+      "reason": "TULSA is delivered only after neoadjuvant degarelix; single arm is the whole degarelix + TULSA regimen. Official title and primary outcomes concern effects of neoadjuvant degarelix. Sole source of TULSA phase_1.",
+      "event_ids": [
+        9711,
+        9712
+      ],
+      "raw_payload_sha256": {
+        "9711": "9b9f8ec84d98bd29fad6ca6b0df1fc21dbac320b36592cc9fabde0d59bbb2309",
+        "9712": "9b9f8ec84d98bd29fad6ca6b0df1fc21dbac320b36592cc9fabde0d59bbb2309"
+      }
+    },
+    {
+      "claim": "very-low-calorie-diet-type-2-diabetes",
+      "claim_id": 383,
+      "trial_id": "NCT01945840",
+      "source_url": "https://clinicaltrials.gov/study/NCT01945840",
+      "match_id": 15219,
+      "previous_score": 0.86,
+      "previous_state": "approved",
+      "decision": "rejected",
+      "reason": "Very-low-calorie diet is explicitly an ACTIVE_COMPARATOR; gut hormone infusion is EXPERIMENTAL. Comparator for another intervention, contrary to trial-role rule.",
+      "event_ids": [
+        9877
+      ],
+      "raw_payload_sha256": {
+        "9877": "9ea5678a2d23ac94b42facb863860d4f2aadcfb87a992f43ea7258ef5c14f3ff"
+      }
+    },
+    {
+      "claim": "very-low-calorie-diet-type-2-diabetes",
+      "claim_id": 383,
+      "trial_id": "NCT04957589",
+      "source_url": "https://clinicaltrials.gov/study/NCT04957589",
+      "match_id": 15223,
+      "previous_score": 0.99,
+      "previous_state": "approved",
+      "decision": "rejected",
+      "reason": "VLCD is given in both arms; the difference under test is added high-intensity interval training for muscle preservation. VLCD-only arm is ACTIVE_COMPARATOR.",
+      "event_ids": [
+        9889,
+        9890,
+        9891
+      ],
+      "raw_payload_sha256": {
+        "9889": "0c92d87af591f4b3986f40ae88ca2ae3875fcd33f0cd5373b29831c72f1cd767",
+        "9890": "0c92d87af591f4b3986f40ae88ca2ae3875fcd33f0cd5373b29831c72f1cd767",
+        "9891": "0c92d87af591f4b3986f40ae88ca2ae3875fcd33f0cd5373b29831c72f1cd767"
+      }
+    },
+    {
+      "claim": "very-low-calorie-diet-type-2-diabetes",
+      "claim_id": 383,
+      "trial_id": "NCT05491005",
+      "source_url": "https://clinicaltrials.gov/study/NCT05491005",
+      "match_id": 15256,
+      "previous_score": 0.95,
+      "previous_state": "approved",
+      "decision": "rejected",
+      "reason": "All diabetic participants receive the same 850 kcal diet. Randomization is eHealth versus face-to-face follow-up; the healthy nonrandomized group receives no intervention. Diet is background to delivery-method comparison.",
+      "event_ids": [
+        9962,
+        9963
+      ],
+      "raw_payload_sha256": {
+        "9962": "52ef3369c79d38a5d2ece4bd3917dba0e2e704b617cc6379ea384cae74ba5c40",
+        "9963": "52ef3369c79d38a5d2ece4bd3917dba0e2e704b617cc6379ea384cae74ba5c40"
+      }
+    },
+    {
+      "claim": "very-low-calorie-diet-type-2-diabetes",
+      "claim_id": 383,
+      "trial_id": "NCT05606471",
+      "source_url": "https://clinicaltrials.gov/study/NCT05606471",
+      "match_id": 15234,
+      "previous_score": 0.93,
+      "previous_state": "approved",
+      "decision": "rejected",
+      "reason": "VLCD-only and semaglutide-only arms are ACTIVE_COMPARATOR; combined regimen is EXPERIMENTAL. Primary outcomes are muscle protein synthesis/breakdown. Sole source of VLCD phase_3 (phase_4 mapped to phase_3).",
+      "event_ids": [
+        9913,
+        9914
+      ],
+      "raw_payload_sha256": {
+        "9913": "ccb11304da33cf788162f667312ff7825770d741f0869bb055e1665a663ffb1a",
+        "9914": "ccb11304da33cf788162f667312ff7825770d741f0869bb055e1665a663ffb1a"
+      }
+    }
+  ],
+  "status_changes": [
+    {
+      "claim": "psilocybin-severe-treatment-resistant-depression",
+      "before": "phase_3",
+      "after": "phase_3"
+    },
+    {
+      "claim": "tirzepatide-overweight-or-obesity",
+      "before": "phase_3",
+      "after": "phase_3"
+    },
+    {
+      "claim": "tulsa-prostate-cancer",
+      "before": "phase_1",
+      "after": "trial_registered"
+    },
+    {
+      "claim": "very-low-calorie-diet-type-2-diabetes",
+      "before": "phase_3",
+      "after": "phase_2"
+    }
+  ],
+  "uncertain_associations_untouched": 18,
+  "readback_verification": {
+    "checked_at": "2026-11-16T00:31:57.832099+00:00",
+    "matches": 13,
+    "events": 26,
+    "original_scores_preserved": true,
+    "raw_payload_hashes_preserved": true,
+    "decisions_as_assistant": true,
+    "diet_claim_still_pending": true
+  }
+}

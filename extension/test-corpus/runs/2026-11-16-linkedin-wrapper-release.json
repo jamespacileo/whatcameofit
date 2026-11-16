@@ -1,0 +1,98 @@
+{
+  "release_commit": "36f2b83bf77bcfcd79d8584c930e08464b4067ac",
+  "checked_at": "2026-11-16T04:09:43.345Z",
+  "public_cards": 171,
+  "public_data_matches_rehearsed_build": true,
+  "all_258_exact_mappings_unchanged": true,
+  "wrapper_fingerprint_changes": true,
+  "installed_extension": {
+    "version": "0.9.18",
+    "build": 26,
+    "resource_hashes_verified": 35,
+    "native_verified": false,
+    "installed_at": "2026-11-16T04:04:59.975320+00:00",
+    "method": "Signed installed resources and functions verified. Native popup/storage unverified."
+  },
+  "release": {
+    "commit": "36f2b83bf77bcfcd79d8584c930e08464b4067ac",
+    "pr": 193,
+    "production_ci": 43801869575,
+    "ci_conclusion": "success",
+    "worker_version": "da8c6691-c9be-46db-9cf2-d9707d4d38cb",
+    "deployed_at": "2026-11-16T04:08:40Z",
+    "tests": {
+      "pipeline": 1562,
+      "site": 657,
+      "extension": 170
+    }
+  },
+  "website_browser": {
+    "verified": true,
+    "method": "Pasted the observed LinkedIn safety wrapper into the released website lookup. It displayed the correct two-drug Phase 2 card and records link."
+  },
+  "summary": {
+    "corpus_verdicts": {
+      "review": 32,
+      "pass": 134,
+      "partial": 66,
+      "blocked": 26
+    },
+    "knowledge_cards": {
+      "review": 33,
+      "not applicable": 10,
+      "no card": 65,
+      "match": 124,
+      "not checked": 26
+    }
+  },
+  "sheet_verification": {
+    "checked_at": "2026-11-16T04:11:36.689Z",
+    "values_verified": 65,
+    "other_inspected_cells_preserved": 337,
+    "formulas_formatting_validation_preserved": true,
+    "summary_counts": {
+      "urls": 258,
+      "pass": 134,
+      "partial": 66
+    },
+    "visual_verification": "Native Sheet visual inspection blocked by Google identity verification; bounded API values/formulas/formatting/validation verified.",
+    "spreadsheet_url": "https://docs.google.com/spreadsheets/d/15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA/edit?ouid=118272730050776001505"
+  },
+  "request_checks": {
+    "S036": {
+      "url": "https://www.linkedin.com/posts/torresphd_results-from-phase-2-courage-trial-demonstrating-activity-7511422117729472512-JZUS",
+      "observed_url": "https://www.linkedin.com/posts/torresphd_results-from-phase-2-courage-trial-demonstrating-share-7511422114776641537-Ssql/",
+      "source_url": "https://investor.regeneron.com/news-releases/news-release-details/results-phase-2-courage-trial-demonstrating-potential-improve/",
+      "slug": "semaglutide-trevogrumab-obesity",
+      "http": 200,
+      "ms": 58,
+      "article_tracked": true,
+      "article_read": false,
+      "candidates": 0,
+      "model_requests": 0,
+      "source_requests": 0,
+      "method": "Live browser-observed outgoing link, composed through installed Safari functions and submitted to released service. Link-only request; no native collector, popup or storage verification."
+    },
+    "A076": {
+      "url": "https://investor.regeneron.com/news-releases/news-release-details/phase-2-courage-trial-confirms-trevogrumab-prevents-lean-mass",
+      "slug": "semaglutide-trevogrumab-obesity",
+      "extension_kind": "tracked",
+      "model_requests": 0,
+      "method": "Installed Safari exact-address function against released index; no native popup/storage verification."
+    },
+    "A077": {
+      "url": "https://www.pharmacytimes.com/view/bimagrumab-semaglutide-combination-achieves-significant-weight-loss-while-preserving-muscle-mass",
+      "slug": "bimagrumab-plus-semaglutide-obesity-and-weight-loss",
+      "extension_kind": "tracked",
+      "model_requests": 0,
+      "method": "Installed Safari exact-address function against released index; no native popup/storage verification."
+    }
+  },
+  "remaining": "S045 prior fresh caption finds the correct trial but no card; current manual carousel review is not a new lookup. S053 fresh media access and current card result unresolved. Native Safari popup/storage unverified; control reports locked.",
+  "rows": {
+    "S036": {"lookup_answer": "Semaglutide plus trevogrumab for Obesity; exact linked article", "tracked_claim": "semaglutide-trevogrumab-obesity", "trial_records": "", "likely_records": "", "top_record": "NCT06299098 · verified released card; no fresh scoring", "test_result": "pass", "reason": "Current public LinkedIn post visibly links the verified COURAGE report through /safety/go/. The installed Safari request-composition function retains that article and the released service returns the correct two-drug obesity card in a link-only request, with no source read or model call. Native collection, popup and storage are unverified; the earlier caption-only no-card result remains in history.", "how_read": "live browser-observed outgoing link; installed Safari composition; released linked-article request", "ms": 58, "last_tested": "2026-11-16T04:09:43.345Z", "tested_build": "site 36f2b83bf77b; installed Safari 0.9.18 (26), native popup unverified", "site_result": "2026-11-16T04:09:43.345Z: released 36f2b83bf77b service returns the exact linked-article card. Original social URL alone remains unsupported; browser link supplied.", "extension_result": "Signed Safari 0.9.18 (26), all 35 resources and signature verified. Installed request composition preserves the observed LinkedIn safety link; released service returns the matching card. Native collection/popup/storage remain unverified because computer control still reports locked.", "knowledge_card_result": "match", "knowledge_card_notes": "semaglutide-trevogrumab-obesity; Current public LinkedIn post visibly links the verified COURAGE report through /safety/go/. The installed Safari request-composition function retains that article and the released service returns the correct two-drug obesity card in a link-only request, with no source read or model call. Native collection, popup and storage are unverified; the earlier caption-only no-card result remains in history.", "native_safari_result": {"checked_date": "2026-11-15", "outcome": "trial match", "native_lookup_completed": true, "trial": "NCT06299098", "score": 0.91, "displayed_possible_matches": 1, "knowledge_card": "no card", "note": "Public post lookup retains the complete semaglutide-plus-trevogrumab combination and returns COURAGE. No screenshot or audio verification.", "version": "0.9.12 (21)", "release_commit": "123f41f10d5ab14c883e78ec31384ce8694babda"}, "native_safari_history": [{"checked_date": "2026-11-15", "outcome": "trial match", "native_lookup_completed": true, "trial": "NCT06299098", "score": 0.9, "knowledge_card": "no card", "note": "Dismissed LinkedIn sign-in invitation using its public Dismiss control; native popup retained semaglutide plus trevogrumab and showed COURAGE.", "tested_build": "native Safari 0.9.10 (19); earlier raw service run 299f3002676c", "extension_result": "2026-11-15 native Safari 0.9.10 (19): trial match. NCT06299098 at 90%. Dismissed LinkedIn sign-in invitation using its public Dismiss control; native popup retained semaglutide plus trevogrumab and showed COURAGE. Earlier evidence: Safari 0.9.10 reader in live Chrome; bound public LinkedIn COURAGE caption; sidebar and comments excluded; no screenshot or audio; production 299f3002676c. HTTP 200. Complete semaglutide-plus-trevogrumab regimen retained; COURAGE NCT06299098 scores 75%. The score retains uncertainty; no knowledge card returned. Caption-only check."}], "combination_release": "runs/2026-11-16-combination-release.json", "fresh_caption_result": {"http": 200, "ms": 16001, "checked_at": "2026-11-16T03:46:14.840Z", "source_address": "https://www.linkedin.com/posts/torresphd_results-from-phase-2-courage-trial-demonstrating-share-7511422114776641537-Ssql/", "scope": "Fresh browser-observed caption and visible outbound article link; manually bounded, not an installed collector/native-popup test; no screenshot/video/audio.", "treatment": "semaglutide plus trevogrumab", "condition": "Weight loss and body-composition changes in patients with obesity (BMI ≥30 kg/m²) during the weight-loss phase of treatment.", "names": ["semaglutide plus trevogrumab"], "tracked": [], "trial_records": 20, "likely_records": 1, "top": [{"id": "NCT06299098", "score": 0.94}], "cache": null, "error": null, "timings": "registry;dur=1371, papers;dur=0, read;dur=12854, research;dur=1229, score;dur=1272, core;dur=15497, total;dur=15497"}, "courage_wrapper_release": "runs/2026-11-16-linkedin-wrapper-release.json"},
+    "A076": {"lookup_answer": "Semaglutide plus trevogrumab for Obesity", "tracked_claim": "semaglutide-trevogrumab-obesity", "trial_records": "", "likely_records": "", "top_record": "NCT06299098 · verified released card; no fresh scoring", "test_result": "pass", "reason": "Previously verified released website article lookup remains valid; all 258 exact source mappings are unchanged in this release. Installed Safari 0.9.18 (26) exact-address function returns the same complete-regimen card from the live index. Native popup/storage unverified.", "how_read": "prior released website verification; current installed Safari exact-address function and released index", "ms": null, "last_tested": "2026-11-16T04:09:43.345Z", "tested_build": "site 36f2b83bf77b; installed Safari 0.9.18 (26), native popup unverified", "site_result": "2026-11-16T03:44:44.573Z: production 5907850c2c5b. Released original article URL opens the correct complete-regimen Phase 2 card. No native Safari popup/storage verification.", "extension_result": "Previously verified released website article lookup remains valid; all 258 exact source mappings are unchanged in this release. Installed Safari 0.9.18 (26) exact-address function returns the same complete-regimen card from the live index. Native popup/storage unverified.", "knowledge_card_result": "match", "knowledge_card_notes": "semaglutide-trevogrumab-obesity; Previously verified released website article lookup remains valid; all 258 exact source mappings are unchanged in this release. Installed Safari 0.9.18 (26) exact-address function returns the same complete-regimen card from the live index. Native popup/storage unverified.", "combination_release": "runs/2026-11-16-combination-release.json", "courage_wrapper_release": "runs/2026-11-16-linkedin-wrapper-release.json"},
+    "A077": {"lookup_answer": "Bimagrumab plus semaglutide for Obesity", "tracked_claim": "bimagrumab-plus-semaglutide-obesity-and-weight-loss", "trial_records": "", "likely_records": "", "top_record": "NCT05616013 · verified released card; no fresh scoring", "test_result": "pass", "reason": "Previously verified released website article lookup remains valid; all 258 exact source mappings are unchanged in this release. Installed Safari 0.9.18 (26) exact-address function returns the same complete-regimen card from the live index. Native popup/storage unverified.", "how_read": "prior released website verification; current installed Safari exact-address function and released index", "ms": null, "last_tested": "2026-11-16T04:09:43.345Z", "tested_build": "site 36f2b83bf77b; installed Safari 0.9.18 (26), native popup unverified", "site_result": "2026-11-16T03:44:44.573Z: production 5907850c2c5b. Released original article URL opens the correct complete-regimen Phase 2 card. No native Safari popup/storage verification.", "extension_result": "Previously verified released website article lookup remains valid; all 258 exact source mappings are unchanged in this release. Installed Safari 0.9.18 (26) exact-address function returns the same complete-regimen card from the live index. Native popup/storage unverified.", "knowledge_card_result": "match", "knowledge_card_notes": "bimagrumab-plus-semaglutide-obesity-and-weight-loss; Previously verified released website article lookup remains valid; all 258 exact source mappings are unchanged in this release. Installed Safari 0.9.18 (26) exact-address function returns the same complete-regimen card from the live index. Native popup/storage unverified.", "native_safari_result": {"outcome": "trial match", "native_lookup_completed": true, "trial": "NCT05616013", "score": 0.97, "knowledge_card": "no card", "note": "Explicit Search again; native popup showed complete bimagrumab plus semaglutide for obesity and BELIEVE trial.", "checked_date": "2026-11-15"}, "combination_release": "runs/2026-11-16-combination-release.json", "courage_wrapper_release": "runs/2026-11-16-linkedin-wrapper-release.json"},
+    "S045": {"lookup_answer": "bimagrumab plus semaglutide for Weight loss with fat loss and preservation of lean mass in patients", "tracked_claim": "", "trial_records": 19, "likely_records": 1, "top_record": "NCT05616013 · 100%", "test_result": "partial", "reason": "Manual review covered all seven slides exposed by the public carousel, although the artwork labels them out of eight. The BELIEVE slide explicitly identifies 507 adults with obesity and the two-drug regimen. The paper distinguishes the primary 48-week period from the 72-week extension; these durations do not imply different trials. The artwork labels publication as 2025, while PubMed records March 2026. No new service or native-extension lookup was performed: the prior caption request still has the correct trial but no card.", "how_read": "fresh browser-observed public caption to released service; manually bounded, no native collector", "ms": 10044, "last_tested": "2026-11-16T03:46:24.894Z", "tested_build": "site 5907850c2c5b; Safari 0.9.17 (25), native popup unverified", "site_result": "2026-11-16T03:44:44.573Z: production 5907850c2c5b. Address-only post reading remains unavailable; see extension_result for separately scoped clinical replay.", "extension_result": "Manual review covered all seven slides exposed by the public carousel, although the artwork labels them out of eight. The BELIEVE slide explicitly identifies 507 adults with obesity and the two-drug regimen. The paper distinguishes the primary 48-week period from the 72-week extension; these durations do not imply different trials. The artwork labels publication as 2025, while PubMed records March 2026. No new service or native-extension lookup was performed: the prior caption request still has the correct trial but no card. Native popup/storage remain unverified.", "knowledge_card_result": "no card", "knowledge_card_notes": "Manual review covered all seven slides exposed by the public carousel, although the artwork labels them out of eight. The BELIEVE slide explicitly identifies 507 adults with obesity and the two-drug regimen. The paper distinguishes the primary 48-week period from the 72-week extension; these durations do not imply different trials. The artwork labels publication as 2025, while PubMed records March 2026. No new service or native-extension lookup was performed: the prior caption request still has the correct trial but no card.", "native_safari_result": {"outcome": "trial match", "native_lookup_completed": true, "trial": "NCT05616013", "score": 0.91, "knowledge_card": "no card", "note": "Public Instagram caption accessible after dismissing sign-in invitation. Native popup showed BELIEVE; carousel completeness and caption/slide discrepancy remain unverified.", "checked_date": "2026-11-15"}, "combination_release": "runs/2026-11-16-combination-release.json", "fresh_caption_result": {"http": 200, "ms": 10044, "checked_at": "2026-11-16T03:46:24.894Z", "source_address": "https://www.instagram.com/p/DWox5WkghE-/", "scope": "Fresh browser-observed caption and visible outbound article link; manually bounded, not an installed collector/native-popup test; no screenshot/video/audio.", "treatment": "bimagrumab plus semaglutide", "condition": "Weight loss with fat loss and preservation of lean mass in patients", "names": ["bimagrumab plus semaglutide"], "tracked": [], "trial_records": 19, "likely_records": 1, "top": [{"id": "NCT05616013", "score": 1}], "cache": null, "error": null, "timings": "registry;dur=853, papers;dur=0, read;dur=8925, research;dur=577, score;dur=185, core;dur=9963, total;dur=9963"}, "carousel_review": {"checked_at": "2026-11-16T04:09:43.345Z", "available_slides_reviewed": 7, "artwork_slide_denominator": 8, "primary_reference": "https://pubmed.ncbi.nlm.nih.gov/41772149/", "new_lookup": false}}
+  }
+}

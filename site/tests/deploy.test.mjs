@@ -6,7 +6,7 @@ import { deployProblems } from "../scripts/deploy-checks.mjs";
 
 const PUBLIC = "https://tracker.example.org";
 const claim = (slug, checked = true) => ({ slug, checked_by_person: checked });
-const exported = (claims, preview = false) => ({ schema_version: 1, preview, claims });
+const exported = (claims, preview = false) => ({ schema_version: 2, preview, claims });
 
 test("Scenario: Reviewed export and a public address", () => {
   const data = exported([claim("quiet-claim"), claim("phase-claim")]);

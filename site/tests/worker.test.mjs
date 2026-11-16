@@ -71,18 +71,79 @@ const INDEX = {
 
 // --- lookup -------------------------------------------------------------------------
 
+test("registry search carries arm roles and study type into bounded scoring", async () => {
+  const requests = [];
+  const registry = makeRegistry({contact: "ops@example.org", fetch: async address => {
+    const url = new URL(address); requests.push(url);
+    const fields = new Set(url.searchParams.get("fields").split(","));
+    const record = study("NCT00000001", "EX-1 compared with EX-2");
+    record.protocolSection.designModule.studyType = fields.has("StudyType") ? "INTERVENTIONAL" : undefined;
+    const include = (name, value) => fields.has(name) ? value : undefined;
+    record.protocolSection.armsInterventionsModule = {
+      interventions: [{name:"EX-1",description:include("InterventionDescription","Delivered by inhalation"),armGroupLabels:include("InterventionArmGroupLabel",["control"])},
+        {name:"EX-2",description:include("InterventionDescription","Synthetic detail ".repeat(100)),armGroupLabels:include("InterventionArmGroupLabel",["test"])},
+        {name:"Saline",description:include("InterventionDescription","Synthetic supportive care ".repeat(100)),armGroupLabels:include("InterventionArmGroupLabel",["control","test"])},
+        {name:"Rescue medicine",description:include("InterventionDescription","Synthetic rescue detail ".repeat(100)),armGroupLabels:include("InterventionArmGroupLabel",["control","test"])}],
+      armGroups: fields.has("ArmGroupLabel") ? [
+        {label:"control",type:include("ArmGroupType","ACTIVE_COMPARATOR"),interventionNames:include("ArmGroupInterventionName",["Drug: EX-1"]),description:include("ArmGroupDescription","EX-1 alone")},
+        {label:"test",type:include("ArmGroupType","EXPERIMENTAL"),interventionNames:include("ArmGroupInterventionName",["Drug: EX-2"]),description:include("ArmGroupDescription","EX-2 alone")},
+      ] : undefined,
+    };
+    const access = study("NCT00000002", "EX-1 access program");
+    access.protocolSection.designModule.studyType = include("StudyType","EXPANDED_ACCESS");
+    return Response.json({studies:[record,access],totalCount:2});
+  }});
+  const model=fakeModel({...READING,other_names:[],trial_name:"REGROW-2"});
+  model.score=async (_intro,items)=>{
+    assert.equal(items.length,2);
+    assert.match(items[0], /"study_type":"INTERVENTIONAL"/);
+    assert.match(items[0], /"type":"ACTIVE_COMPARATOR"/);
+    assert.match(items[0], /"type":"EXPERIMENTAL"/);
+    assert.match(items[0], /"interventions":\["Drug: EX-1"\]/);
+    assert.match(items[0], /Delivered by inhalation/);
+    assert.match(items[1], /"study_type":"EXPANDED_ACCESS"/);
+    for(const item of items) assert.ok(item.split("\n").slice(1).join("\n").length<=1500);
+    return items.map(()=>({answer:"not_a_match",probabilities:{match:0}}));
+  };
+  await lookUp({text:TEXT,model,registry,index:INDEX});
+  assert.equal(requests.length,2);
+  assert.ok(requests.some(url=>url.searchParams.has("query.titles")));
+  assert.ok(requests.some(url=>url.searchParams.has("query.intr")));
+});
+
+test("repeated arm labels do not crowd out how a combination is activated", async () => {
+  const record=study("NCT00000001", "Synthetic therapy in two eye conditions and three treatment cohorts with different doses");
+  record.protocolSection.identificationModule.officialTitle="Synthetic therapy for first-line unresectable disease";
+  record.protocolSection.conditionsModule.conditions=["Example eye disease with a specified patient group", "Another eye disease"];
+  const labels=["Example eye disease - lower dose EX-1 (two units per eye)","Example eye disease - higher dose EX-1 (six units per eye)","Another eye disease - selected dose EX-1"];
+  record.protocolSection.armsInterventionsModule={
+    interventions:[{name:"EX-1 synthetic genetic therapy",description:"Synthetic mechanism detail ".repeat(30),armGroupLabels:labels}],
+    armGroups:labels.map(label=>({label,type:"EXPERIMENTAL",interventionNames:["Genetic: EX-1 synthetic genetic therapy"],description:"Participants receive a dose in one eye. ".repeat(4)+"Oral auxiliary-1 activates EX-1 for eight weeks."})),
+  };
+  const model=fakeModel();
+  model.score=async(_intro,items)=>{
+    assert.match(items[0], /first-line unresectable disease/);
+    assert.match(items[0], /Oral auxiliary-1 activates EX-1/);
+    for(const label of labels)assert.ok(items[0].includes(label));
+    assert.ok(items[0].split("\n").slice(1).join("\n").length<=1500);
+    return [{answer:"match",probabilities:{match:.9}}];
+  };
+  await lookUp({text:TEXT,model,registry:fakeRegistry({"EX-1":[record]}),index:INDEX});
+});
+
 test("scoring retains routes and separate arms before a long official title", async () => {
   for (const description of ["Delivered by inhalation", "Subcutaneous injection"]) {
     const record = study("NCT00000001", "EX-1 trial");
     record.protocolSection.identificationModule.officialTitle = "A long official title ".repeat(150);
     record.protocolSection.armsInterventionsModule = {
       interventions: [
-        {name: "EX-1", description, armGroupLabels: ["A"]},
+        {name: "EX-1", description, armGroupLabels: ["A", "unpaired", "suffix-conflict"]},
         {name: "EX-2", armGroupLabels: ["B"]},
       ],
       armGroups: [
         {label: "A", interventionNames: ["Drug: EX-1"], description: "EX-1 alone"},
         {label: "B", interventionNames: ["Drug: EX-2"], description: "EX-2 alone"},
+        {label: "suffix-conflict", interventionNames: ["Drug: Product B: EX-1"]},
       ],
     };
     const model = fakeModel();
@@ -94,7 +155,8 @@ test("scoring retains routes and separate arms before a long official title", as
     const found = await lookUp({text: TEXT, model, registry: fakeRegistry({"EX-1": [record]}), index: INDEX});
     assert.equal(scored.length, 1);
     assert.ok(scored[0].includes(description));
-    assert.ok(scored[0].includes('"arms":["A"]') && scored[0].includes('"arms":["B"]'));
+    assert.ok(scored[0].includes('"interventions":["Drug: EX-1"]') && scored[0].includes('"interventions":["Drug: EX-2"]'));
+    assert.ok(scored[0].includes('"arms":["unpaired","suffix-conflict"]'));
     assert.match(scored[0], /EX-1 alone/);
     assert.match(scored[0], /EX-2 alone/);
     assert.match(scored[0], /\[truncated\]/);
@@ -553,7 +615,7 @@ test("a model named with its provider, as the pipeline's settings name it, is as
 });
 
 test("records are scored twenty to a call and probabilities that nearly sum to one are rescaled", async () => {
-  const answer = (item) => ({ item, choice: "match", probabilities: { match: 0.9, other_indication: 0.06, not_a_match: 0.02 } });
+  const answer = (item) => ({ item, choice: "match", probabilities: { match: 0.9, other_indication: 0.06, not_what_is_tested: 0, not_a_match: 0.02 } });
   const first = { answers: Array.from({ length: 20 }, (_, n) => answer(n + 1)) };
   const second = { answers: [answer(1)] };
   const { model, sent } = modelOver(first, second);
@@ -581,6 +643,7 @@ test("Scenario: Many items, one call", async () => {
             probabilities: [
               { value: "match", probability: 0.88 },
               { value: "other_indication", probability: 0.1 },
+              { value: "not_what_is_tested", probability: 0 },
               { value: "not_a_match", probability: 0.02 },
             ],
             confidence: 0.82,
@@ -600,10 +663,11 @@ test("Scenario: Many items, one call", async () => {
   const [first] = sent[0].body.questions;
   assert.deepEqual([first.type, first.name], ["choice", "item-1"]);
   assert.match(first.instructions, /^Is this record a trial[\s\S]*\n\nrecord 0$/);
-  assert.deepEqual(first.choices.map((choice) => choice.value), ["match", "other_indication", "not_a_match"]);
+  assert.deepEqual(first.choices.map((choice) => choice.value), ["match", "other_indication", "not_what_is_tested", "not_a_match"]);
   assert.match(first.choices[1].description, /different condition/);
+  assert.match(first.choices[2].description, /comparator or control/);
   assert.equal(scored.length, 60);
-  assert.deepEqual(scored[0], { answer: "match", probabilities: { match: 0.88, other_indication: 0.1, not_a_match: 0.02 } });
+  assert.deepEqual(scored[0], { answer: "match", probabilities: { match: 0.88, other_indication: 0.1, not_what_is_tested: 0, not_a_match: 0.02 } });
   // A record the API declines has no score.
   assert.equal(scored[1], null);
 });

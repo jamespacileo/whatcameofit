@@ -189,11 +189,19 @@ After the read and before any claim is joined or drafted, a decision SHALL say w
 - **THEN** the article is not added to that claim
 
 ### Requirement: A class of treatments is not one treatment
-When the treatment the read names ends in a word for a class of treatments (agonists, inhibitors, blockers, analogs and the like, singular or plural) or in a plural kind of thing (drugs, medications, medicines, treatments, therapies, vaccines, antibodies), no claim SHALL be joined or drafted and no decision SHALL be asked. The lead's outcome SHALL be not one treatment, with what was read and that it is a class. A code in the name SHALL NOT change this. The rule is checked-in and applied from the name alone. A singular category that hides several products, such as "COVID-19 vaccine", is not this rule's case: the same-claim decision compares the summaries and refuses the join (`corpus-match-accuracy`, "identity unresolved").
+When the treatment the read names is a class by a checked-in rule on the name, no claim SHALL be joined or drafted and no decision SHALL be asked; the lead's outcome SHALL be not one treatment, with what was read and that it is a class. A name is a class when, with anything it is said to be for set aside, it holds a word for a class (agonist, inhibitor, blocker, analog, modulator, mimetic, singular or plural), ends in a plural kind of thing (drugs, medications, medicines, treatments, therapies, vaccines, antibodies, prescriptions), or holds the plural of a code. A name is also a class when it holds a topic's class word, none of the topic's drugs, and what is left of it is not a name. A code in the name SHALL NOT change this. A singular category that hides several products, such as "COVID-19 vaccine", is not this rule's case: the same-claim decision compares the summaries and refuses the join (`corpus-match-accuracy`, "identity unresolved").
 
 #### Scenario: A class of treatments
 - **WHEN** a read names "GLP-1 receptor agonists" as the treatment
 - **THEN** the lead's outcome is not one treatment, its detail says a class of treatments, no claim exists and no treatment-kind decision was asked
+
+#### Scenario: A topic's class named without a drug
+- **WHEN** a read names "GLP-1 metabolic therapy" as the treatment, and GLP-1 is a topic's class word
+- **THEN** the lead's outcome is not one treatment and no decision was asked
+
+#### Scenario: A treatment described by what it does to the class's target
+- **WHEN** a read names a treatment that is described as releasing GLP-1 and names no drug of the topic
+- **THEN** the rule does not apply, because what is left of the name still names something
 
 #### Scenario: One member of a class
 - **WHEN** a read names "semaglutide" as the treatment
@@ -291,11 +299,26 @@ When no existing claim covers what the read names, a claim SHALL be drafted from
 - **THEN** no claim is created and the lead's failure names the slug
 
 ### Requirement: A read's claim is decided after it is prepared
-`thenwhat prepare` SHALL decide a claim that a lead's read drafted, by the existing rule for drafts, once every step it runs for that claim has succeeded: reading unread articles, searching the registries, reading the registries for approved matches, and reading the stored records. While a step has failed, the claim SHALL keep awaiting review. `thenwhat prepare` SHALL NOT decide a claim that no lead's read drafted. No claim a read drafted is published with a status that no registry search stands behind.
+`thenwhat prepare` SHALL decide a claim that a lead's read drafted, by the existing rule for drafts, once every step it runs for that claim has succeeded: reading unread articles, searching the registries, reading the registries for approved matches, and reading the stored records. While a step has failed, the claim SHALL keep awaiting review. `thenwhat prepare` SHALL NOT decide a claim that no lead's read drafted. No claim a read drafted is published with a status that no registry search stands behind. A claim it approves SHALL be marked awaiting audit, and SHALL stay out of every export until `thenwhat audit clear` releases it.
 
 #### Scenario: Prepared and named
 - **WHEN** `thenwhat prepare --pending` has run every step without failure for a claim a read drafted
-- **THEN** the claim is approved by rule and is published with the next export, with the status its approved evidence gives
+- **THEN** the claim is approved by rule, is marked awaiting audit, and is published, with the status its approved evidence gives, by the first export after its audit is cleared
+
+### Requirement: A prepared batch waits for its audit
+Every export SHALL leave out a claim awaiting audit, whoever runs it, SHALL give it no published time, and SHALL report how many approved, unarchived claims it left out. `thenwhat audit list` SHALL list the claims awaiting audit, oldest first, with whether each is archived. `thenwhat audit clear` SHALL release the named claims only when every one of them awaits audit, and otherwise SHALL release none. Unarchiving a claim SHALL NOT release it.
+
+#### Scenario: Held until audited
+- **WHEN** an export runs while an approved, unarchived claim awaits audit
+- **THEN** the claim is not in the export, is not listed as archived, has no published time, and the export command says one approved claim was left out
+
+#### Scenario: Audit passed
+- **WHEN** `thenwhat audit clear` names a claim awaiting audit and an export runs
+- **THEN** the claim is in the export and gets its published time
+
+#### Scenario: Not awaiting audit
+- **WHEN** `thenwhat audit clear` names a claim awaiting audit and one that does not
+- **THEN** the command exits with 1, names the claim that does not, and releases neither
 
 #### Scenario: A step that failed
 - **WHEN** a step of `thenwhat prepare` fails for a claim a read drafted

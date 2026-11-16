@@ -15,6 +15,7 @@ from sqlalchemy import ColumnElement
 
 from thenwhat.backfill.errors import BackfillError
 from thenwhat.db.models import LinkLead
+from thenwhat.extract.names import is_a_name
 
 # Each topic's words, grouped by drug: every word of one group is the same treatment under
 # another name. A group of one word, or a word that is no drug's name, stands alone.
@@ -41,6 +42,11 @@ TOPIC_DRUGS: dict[str, tuple[tuple[str, ...], ...]] = {
         ("survodutide",),
         ("mazdutide",),
     ),
+}
+# The words of a topic that name its class of treatments, not any one of them. A
+# treatment named by one of these and by no drug of the topic is the class.
+TOPIC_CLASS_WORDS: dict[str, tuple[str, ...]] = {
+    "glp-1": ("GLP-1", "GLP1", "glucagon-like peptide"),
 }
 TOPICS: dict[str, tuple[str, ...]] = {
     topic: tuple(word for drug in drugs for word in drug) for topic, drugs in TOPIC_DRUGS.items()
@@ -90,3 +96,24 @@ def other_names_of(names: Sequence[str]) -> tuple[str, ...]:
             if len(drug) > 1 and any(names_one(name, drug) for name in names):
                 found += [word for word in drug if word not in found]
     return tuple(found)
+
+
+def names_only_a_class(names: Sequence[str]) -> bool:
+    """Whether a name is a topic's class of treatments and nothing more: it holds one of
+    the topic's class words, none of its drugs, and what is left of it is no name.
+    "GLP-1 metabolic therapy" and "GLP-1" are the class. "Semaglutide" is not, nor is a
+    treatment that is described by what it does to GLP-1. The checked-in lists and the
+    name rule decide it."""
+    for topic, class_words in TOPIC_CLASS_WORDS.items():
+        drugs = [word for word in TOPICS[topic] if word not in class_words]
+        if any(names_one(name, drugs) for name in names):
+            continue
+        for name in names:
+            if not names_one(name, class_words):
+                continue
+            rest = re.sub(
+                rf"(?<!\w)(?:{_alternatives(class_words)})(?!\w)", " ", name, flags=re.IGNORECASE
+            )
+            if not is_a_name(" ".join(rest.split())):
+                return True
+    return False

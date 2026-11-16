@@ -1,7 +1,7 @@
 // What the popup shows for a page, decided from the lookup file. Synthetic data.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { isFresh, stateFor } from "../src/lookup.js";
+import { stateFor } from "../src/lookup.js";
 
 const claim = (headline) => ({ headline, page: "/x", status: "Phase 1 trial", meaning: "m" });
 const index = {
@@ -71,9 +71,3 @@ test("a saved copy is used and its date passed on", () => {
   assert.equal(state.savedAt, 1794400000000);
 });
 
-test("a copy is fresh for six hours", () => {
-  const sixHours = 6 * 60 * 60 * 1000;
-  assert.equal(isFresh(1000, 1000 + sixHours - 1, sixHours), true);
-  assert.equal(isFresh(1000, 1000 + sixHours, sixHours), false);
-  assert.equal(isFresh(undefined, 5000, sixHours), false);
-});

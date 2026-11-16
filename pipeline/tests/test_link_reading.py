@@ -644,6 +644,18 @@ def test_a_class_of_treatments_makes_no_claim_and_asks_no_decision(session: Sess
     assert reader.backend.report_asked == []
 
 
+def test_a_topics_class_named_without_a_drug_makes_no_claim(session: Session, fake_time):
+    """Scenario: A topic's class named without a drug"""
+    reader = Reader(session, fake_time, DRAFT | {"intervention": "GLP-1 metabolic therapy"})
+    lead = reader.lead()
+
+    reader.read()
+
+    assert lead.read_outcome is ReadOutcome.NOT_ONE_TREATMENT
+    assert reader.session.scalars(select(Claim)).all() == []
+    assert reader.backend.report_asked == []
+
+
 def test_an_article_that_is_not_about_one_treatment_joins_no_claim(reader: Reader):
     """Scenario: Not one treatment, though it names a tracked one"""
     claim = tracked_claim(reader.session)

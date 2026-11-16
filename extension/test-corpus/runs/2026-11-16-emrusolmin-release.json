@@ -1,0 +1,101 @@
+{
+  "release_commit": "58aa391978ce050ea289deaa13df951251d8a819",
+  "deployment": {
+    "pull_request": 204,
+    "reviewed_head": "a008ee142098b4a3764816fc866b96accd0eb5aa",
+    "main_commit": "58aa391978ce050ea289deaa13df951251d8a819",
+    "production_run": 43821427773,
+    "conclusion": "success",
+    "worker_version": "99b07483-a1ed-444d-a948-1173bc943626",
+    "deployed_at": "2026-11-16T07:10:16.5888479Z",
+    "reviews": {
+      "standards": "clear",
+      "spec": "clear"
+    }
+  },
+  "checked_at": "2026-11-16T07:11:39.346Z",
+  "public_cards": 175,
+  "public_data_matches_rehearsed_build": true,
+  "index_fetch_ms": 101,
+  "installed_extension": {
+    "version": "0.9.21",
+    "build": 29,
+    "resource_hashes_verified": 35,
+    "source_commit": "50f3a7ce6b25e7aaa363fb5d4e6f66394c5a6ab5",
+    "native_verified": false,
+    "method": "Installed resource hashes, request composition and shared presenter verified; native collector/popup/storage unverified."
+  },
+  "website_observations": {
+    "S008": {
+      "checked_at": "2026-11-16T07:12:12.610063+00:00",
+      "method": "Submit original Mastodon URL in freshly reloaded released website form, request lookup and open returned card in the in-app browser.",
+      "finding": "Original URL returns the exact emrusolmin MSA card through its tracked article, explicitly without another article read or automatic search. Card shows the two correct registry records, Phase 2, 349 actual/200 planned participants, 48-week symptom endpoint, dated interim-futility limitation and software-review disclosure."
+    }
+  },
+  "summary": {
+    "corpus_verdicts": {
+      "review": 31,
+      "pass": 143,
+      "partial": 56,
+      "blocked": 28
+    },
+    "knowledge_cards": {
+      "review": 32,
+      "not applicable": 10,
+      "no card": 55,
+      "not checked": 28,
+      "match": 133
+    }
+  },
+  "request_checks": {
+    "S008": {
+      "url": "https://mastodon.social/@msaleben/117588915506604557",
+      "slug": "emrusolmin-multiple-system-atrophy",
+      "http": 200,
+      "ms": 66,
+      "post": {
+        "platform": "Mastodon",
+        "article": "https://msaleben.de/herber-rueckschlag-in-der-msa-forschung-teva-beendet-phase-2-studie-topas-msa-mit-emrusolmin-vorzeitig/",
+        "article_host": "msaleben.de",
+        "article_read": false
+      },
+      "extension_ms": 15,
+      "article_tracked": true,
+      "candidates": 0,
+      "source": "Read from a post on Mastodon. The linked article at msaleben.de is already tracked; its card is shown without another article read or automatic search.",
+      "model_requests": 0,
+      "registry_requests": 0,
+      "article_requests": 0,
+      "post_api_requests": 1,
+      "robots_requests": 1,
+      "installed_source_requests": 0,
+      "method": "Fresh original Mastodon URL through released service. Previously observed outgoing article link supplied to installed Safari request functions and sent separately to released service. Native collector/popup/storage unverified."
+    }
+  },
+  "sheet_verification": {
+    "checked_at": "2026-11-16T07:13:12.068Z",
+    "spreadsheet_id": "15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA",
+    "ranges": [
+      "URLs!H9:P9",
+      "URLs!Z9:AF9",
+      "Summary!B1"
+    ],
+    "values_verified": 17,
+    "other_cells_preserved": 143,
+    "formats_formulas_validation_notes_chips_preserved": true,
+    "summary_total": [
+      "Total",
+      "258",
+      "143",
+      "56",
+      "0",
+      "28",
+      "31",
+      "0"
+    ],
+    "native_layout": "Unverified: browser access requires identity verification; existing styles preserved and checked through native cell metadata."
+  },
+  "rows": {
+    "S008": {"lookup_answer": "Emrusolmin for Multiple system atrophy in adults", "tracked_claim": "emrusolmin-multiple-system-atrophy", "trial_records": "", "likely_records": "", "top_record": "NCT06568237 and NCT07197866 · verified released card; no fresh scoring", "test_result": "pass", "reason": "Verified public post links to the MSA Leben report of emrusolmin in adults with multiple system atrophy. Released service and website return its exact card with NCT06568237 and NCT07197866, excluding healthy-volunteer and Parkinson disease records. The dated planned-discontinuation announcement is distinct from current registry-derived Phase 2; no final efficacy result or programme-wide failure is inferred. No model, registry or article-body request is needed for this exact linked-source match. Native Safari collector/popup/storage remain unverified.", "how_read": "fresh released service and website form; official public Mastodon API; installed Safari request functions", "ms": 66, "last_tested": "2026-11-16T07:11:39.346Z", "tested_build": "site 58aa391978ce; installed Safari 0.9.21 (29)", "site_result": "Original URL returns the exact emrusolmin MSA card through its tracked article, explicitly without another article read or automatic search. Card shows the two correct registry records, Phase 2, 349 actual/200 planned participants, 48-week symptom endpoint, dated interim-futility limitation and software-review disclosure.", "extension_result": "Installed Safari 0.9.21 (29) functions compose the observed outgoing article link; released service returns the exact card in 15 ms with no source/model/registry requests. Shared presenter and 35 resource hashes verified. Native collector/popup/storage remain unverified; computer control reports locked.", "knowledge_card_result": "match", "knowledge_card_notes": "emrusolmin-multiple-system-atrophy; Verified public post links to the MSA Leben report of emrusolmin in adults with multiple system atrophy. Released service and website return its exact card with NCT06568237 and NCT07197866, excluding healthy-volunteer and Parkinson disease records. The dated planned-discontinuation announcement is distinct from current registry-derived Phase 2; no final efficacy result or programme-wide failure is inferred. No model, registry or article-body request is needed for this exact linked-source match. Native Safari collector/popup/storage remain unverified.", "closest_tracked_claim": "", "emrusolmin_release": "runs/2026-11-16-emrusolmin-release.json", "website_observation": {"checked_at": "2026-11-16T07:12:12.610063+00:00", "method": "Submit original Mastodon URL in freshly reloaded released website form, request lookup and open returned card in the in-app browser.", "finding": "Original URL returns the exact emrusolmin MSA card through its tracked article, explicitly without another article read or automatic search. Card shows the two correct registry records, Phase 2, 349 actual/200 planned participants, 48-week symptom endpoint, dated interim-futility limitation and software-review disclosure."}}
+  }
+}
