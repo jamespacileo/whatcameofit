@@ -2035,86 +2035,148 @@ main nav.contents ul li + li {
   }
 }
 
-/* At a glance: one row per fact, its label at the left and its value, with the card
-   that describes it, at the right. A table in a frame, as a summary box is. */
+/* The line under the heading that says what a term match is, where it is first met. */
+.glance-lead {
+  margin: 0.5rem 0 0;
+  max-width: 52ch;
+  text-wrap: pretty;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* At a glance: one row per term, its label at the left and its value at the right, with
+   the source's own words in sight and a grey line that says whose they are and how well
+   the term fits. Ruled in ink above and below, as the record in brief is, with the
+   claim's own facts as one line of three at the foot. */
 .glance-rows {
   margin: 0.7rem 0 0;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  overflow: hidden;
+  border-top: 2px solid var(--ink);
 }
 
 .glance-rows > div {
   display: grid;
   grid-template-columns: 11rem minmax(0, 1fr);
   gap: 0.15rem 1.25rem;
-  padding: 0.85rem 1.1rem;
-  border-top: 1px solid var(--rule-soft);
-}
-
-.glance-rows > div:first-child {
-  border-top: 0;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--rule);
 }
 
 /* A row reached from the band is marked, as a record reached by a link is. */
 .glance-rows > div:target {
   background: var(--tint);
+  margin-inline: -0.6rem;
+  padding-inline: 0.6rem;
 }
 
 .glance-rows > div:focus {
   outline: none;
 }
 
-.glance-rows dt {
+.glance-rows dt,
+.glance-facts dt {
   font-size: 0.9rem;
   color: var(--muted);
   padding-top: 0.1rem;
 }
 
-.glance-rows dd {
+.glance-rows dd,
+.glance-facts dd {
   margin: 0;
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
 .glance-value {
-  font-weight: 600;
+  font-size: 1.08rem;
+  font-weight: 700;
 }
 
-.glance-rows .aka {
+.glance-rows .aka,
+.glance-facts .aka {
   display: block;
   font-size: 0.85rem;
   color: var(--muted);
 }
 
-/* A row's card is one press away: its summary says what is inside and, in sight, how
-   well the term fits, as every match on the site does. */
+/* The source's definition, unchanged, in quotation marks. A long one is cut to three
+   lines here and given whole in the card. */
+.glance-words {
+  margin: 0.35rem 0 0;
+  max-width: 62ch;
+  text-wrap: pretty;
+}
+
+.glance-words::before {
+  content: "\201C";
+}
+
+.glance-words::after {
+  content: "\201D";
+}
+
+.glance-words-long {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+/* Opened, the row gives the definition whole, and the card does not repeat it. */
+.glance-words-long:has(~ .glance-more[open]) {
+  display: block;
+  -webkit-line-clamp: unset;
+  line-clamp: none;
+  overflow: visible;
+}
+
+/* The row's grey line is its disclosure's summary: the words that open the card, then
+   whose words, the claim's words beside the source's term, and the match. */
 .glance-more {
   margin-top: 0.3rem;
 }
 
 .glance-more summary {
-  display: inline-flex;
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.15rem 0.55rem;
+  gap: 0.1rem 0.5rem;
   min-height: 2rem;
   cursor: pointer;
   list-style: none;
-  color: var(--blue);
-  font-size: 0.9rem;
+  font-size: 0.82rem;
+  color: var(--muted);
 }
 
 .glance-more summary::-webkit-details-marker {
   display: none;
 }
 
-/* The words and the chevron stay together; only the term match moves to a new line. */
+/* Each part carries its dot at its end, so a part that wraps never opens a line on one. */
+.glance-more summary > span:not(:last-child)::after {
+  content: "·";
+  margin-left: 0.5rem;
+  color: var(--ring);
+}
+
+.glance-filed svg {
+  vertical-align: -0.15em;
+  margin-inline: 0.2rem;
+  color: var(--ring);
+}
+
+/* The words and the chevron stay together, and lead the line. */
 .glance-more-label {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.25rem;
   white-space: nowrap;
+  color: var(--blue);
+}
+
+/* In a flex row of its own, its dot already has the gap before it. */
+.glance-more summary > span.glance-more-label:not(:last-child)::after {
+  margin-left: 0.25rem;
 }
 
 .glance-more-words {
@@ -2127,17 +2189,29 @@ main nav.contents ul li + li {
   text-decoration-thickness: 2px;
 }
 
-.glance-score {
-  color: var(--muted);
-}
-
-.glance-more[open] summary svg {
+.glance-more[open] summary svg:last-child {
   transform: rotate(180deg);
 }
 
+/* The claim's own facts, side by side under the terms. */
+.glance-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem 1.25rem;
+  margin: 0;
+  padding: 0.9rem 0 0.95rem;
+  border-bottom: 2px solid var(--ink);
+}
+
+.glance-facts dd {
+  font-weight: 600;
+}
+
+
+
 .glance-note {
   margin: 0.7rem 0 0;
-  max-width: 62ch;
+  max-width: 52ch;
   text-wrap: pretty;
   font-size: 0.85rem;
   color: var(--muted);
@@ -6323,8 +6397,26 @@ body.framed {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .glance-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .glance-facts > div:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
   .glance-more summary {
     min-height: 2.75rem;
+  }
+
+  /* On a phone the words that open the card take a line of their own, and what the
+     row matched follows on the next. */
+  .glance-more summary > .glance-more-label {
+    flex-basis: 100%;
+  }
+
+  .glance-more summary > span.glance-more-label:not(:last-child)::after {
+    content: none;
   }
 
   .phone-reported {
