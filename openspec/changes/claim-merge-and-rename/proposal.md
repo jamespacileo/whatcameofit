@@ -26,7 +26,7 @@ The audit of 2026-11-16 found two faults in the 708 published claims that no com
 
 ## Impact
 
-- Migration `0030`: `claim.merged_into_id`, `claim.registry_search_due_at`, table `claim_change`.
+- Migration `0031`: `claim.merged_into_id`, `claim.registry_search_due_at`, table `claim_change`.
 - `pipeline/src/thenwhat/claims/corrections.py` (new), `claims/entry.py` (a merged claim never answers a duplicate check; a former slug is taken), `cli/entry.py`, `cli/resolve.py`, `cli/prepare.py`, `prepare.py`, `export/build.py`.
 - `site/export.schema.json` regenerated; `site/scripts/redirects.mjs`, `site/worker/gone.mjs`, `site/worker/index.mjs` carry moved addresses to the Worker.
 - Not in this change: the browser extension still says a followed claim that was merged or re-slugged "is no longer published"; `lookup.json` does not carry moved addresses. Comparing a merged claim's articles with the kept claim's by the address key, not the address as written, waits for task 5.1 of `idempotent-runs-and-one-address`.

@@ -296,8 +296,22 @@ def merge_claims(
     ours.search_phrases = [*ours.search_phrases, *phrases]
     record["phrases_gained"] = phrases
 
+    # Read before any article moves: a lead follows its article to the kept claim in
+    # the database, and would no longer be found by the claim it pointed at.
+    leads = list(
+        session.scalars(
+            select(LinkLead)
+            .where(
+                (LinkLead.claim_id == merged.id)
+                | LinkLead.source_article_id.in_(
+                    select(SourceArticle.id).where(SourceArticle.claim_id == merged.id)
+                )
+            )
+            .order_by(LinkLead.id)
+        )
+    )
     now_at = _move_articles(session, merged, kept, result, record)
-    _move_leads(session, merged, kept, now_at, result, record)
+    _move_leads(session, leads, merged, kept, now_at, result, record)
     _move_entities(session, merged, kept, now_at, result, record)
 
     # A claim merged into the merged one earlier now leads to the kept claim, so an
@@ -413,6 +427,9 @@ def _move_articles(
         )
         if own is None:
             article.claim_id = kept.id
+            # Written at once: the database holds each promise, statement and lead to
+            # its article's claim, and moves them with the article.
+            session.flush()
             moved_articles.append(article.id)
             for promise in promises:
                 promise.claim_id = kept.id
@@ -457,6 +474,7 @@ def _move_articles(
 
 def _move_leads(
     session: Session,
+    leads: list[LinkLead],
     merged: Claim,
     kept: Claim,
     now_at: dict[int, int],
@@ -469,13 +487,6 @@ def _move_leads(
     drafted the merged claim still says so, and the record of the merge names each lead."""
     # Each as [id, the claim it pointed at, the article it pointed at].
     moved: list[list[int | None]] = record.setdefault("leads", [])
-    leads = session.scalars(
-        select(LinkLead)
-        .where(
-            (LinkLead.claim_id == merged.id) | LinkLead.source_article_id.in_(list(now_at) or [0])
-        )
-        .order_by(LinkLead.id)
-    )
     for lead in leads:
         moved.append([lead.id, lead.claim_id, lead.source_article_id])
         lead.claim_id = kept.id
@@ -718,6 +729,8 @@ def unmerge_claim(
     articles = [a for a in here(SourceArticle, record["articles"]) if a.claim_id == kept.id]
     for article in articles:
         article.claim_id = claim.id
+    # Written at once, as in the merge: what was read from an article follows it.
+    session.flush()
     for model, key in ((Promise, "promises"), (ReportedStatement, "statements")):
         read_from = dict(record[key])
         for row in here(model, list(read_from)):

@@ -1,16 +1,11 @@
 """Merged claims, former slugs, and a registry search that is due again.
 
-Revision ID: 0030
-Revises: 0028
+Revision ID: 0031
+Revises: 0030
 
 Additive only: two nullable columns on `claim` and one new, empty table. It changes and
 backfills no existing row. The pipeline image runs `alembic upgrade head` when it
 starts, so it is applied by the next `docker compose up` after it is merged.
-
-Numbered 0030 because pull request 269 (`0029_lookup_indexes_and_link_lead_checks`) was
-open with 0029 when this was written, and two migrations with one number cannot both be
-recorded. Both revise 0028. Whichever of the two is merged second must change its
-`down_revision` to the other's number, so the migrations stay one line.
 """
 
 from collections.abc import Sequence
@@ -19,8 +14,8 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
-revision: str = "0030"
-down_revision: str | None = "0028"
+revision: str = "0031"
+down_revision: str | None = "0030"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
