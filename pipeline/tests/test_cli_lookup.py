@@ -38,7 +38,7 @@ class Trials:
     def fetch_trial(self, nct_id: str) -> SourceRecord | None:
         return None
 
-    def named_trials(self, name: str) -> list[SourceRecord]:
+    def named_trials(self, name: str, condition: str | None = None) -> list[SourceRecord]:
         return []
 
 

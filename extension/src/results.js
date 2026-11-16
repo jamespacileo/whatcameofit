@@ -1,10 +1,10 @@
 // Private to this browser. A previous answer is useful, but never silently current.
-// Version 14 requires separate answers for independently reported claims.
+// Version 15 requires condition-narrowed discovery for broad study names.
 // Only completed answers can be reused.
 import { withCurrentClaims } from "../../site/worker/tracked.mjs";
 
 export const RESULT_TTL = 24 * 60 * 60 * 1000;
-const VERSION = 14;
+const VERSION = 15;
 const MAX_RESULTS = 10;
 
 /** Whether an answer is whole: not an error, a miss, a partial stream or one that is

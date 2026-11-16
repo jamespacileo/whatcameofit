@@ -207,7 +207,7 @@ class Trials(Protocol):
 
     def fetch_trial(self, nct_id: str) -> SourceRecord | None: ...
 
-    def named_trials(self, name: str) -> list[SourceRecord]: ...
+    def named_trials(self, name: str, condition: str | None = None) -> list[SourceRecord]: ...
 
 
 class Papers(Protocol):
@@ -321,7 +321,7 @@ def look_up(
         if given is not None:
             records.setdefault(given.external_id, given)
     if details.trial_name:
-        for record in trials.named_trials(details.trial_name):
+        for record in trials.named_trials(details.trial_name, reading.indication):
             records.setdefault(record.external_id, record)
     # A combination is registered under its parts as often as under the pair.
     parts = [part for name in names for part in _parts(name)]
@@ -430,7 +430,11 @@ def _look_up_many(
                 f"Claim: {reading.gist}\nIntervention: {names[0]}{aliases}.\n"
                 f"Indication: {reading.indication}.\n\nEntity to match (intervention): {names[0]}",
                 [
-                    *([("named", details.trial_name, None)] if details.trial_name else []),
+                    *(
+                        [("named", details.trial_name, reading.indication)]
+                        if details.trial_name
+                        else []
+                    ),
                     *(("search", term, reading.indication) for term in terms),
                 ],
             )
@@ -460,7 +464,7 @@ def _look_up_many(
                         continue
                     kind, term, indication = job
                     queries[job] = (
-                        trials.named_trials(term)
+                        trials.named_trials(term, indication)
                         if kind == "named"
                         else trials.search_trials(term, indication)
                     )

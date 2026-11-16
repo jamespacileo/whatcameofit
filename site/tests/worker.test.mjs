@@ -485,6 +485,21 @@ test("trials are found by a trial's name, and a name that many trials carry iden
   assert.deepEqual(await registry.named("  "), []);
 });
 
+test("a broad trial name is narrowed once by its claim's condition", async () => {
+  const { registry, asked } = registryOver({
+    '"EXAMPLE"||': { studies: [], totalCount: 24 },
+    '"EXAMPLE"|Tinnitus|': { studies: [study("NCT00000009", "nine")], totalCount: 1 },
+    '"EXAMPLE"|Migraine|': { studies: [], totalCount: 21 },
+  });
+
+  assert.deepEqual((await registry.named("EXAMPLE", { condition: "Tinnitus" })).map(s => s.protocolSection.identificationModule.nctId), ["NCT00000009"]);
+  assert.equal(asked.length, 2);
+  assert.deepEqual(await registry.named("EXAMPLE", { condition: "Migraine" }), []);
+  assert.equal(asked.length, 4);
+  assert.deepEqual(await registry.named("EXAMPLE"), []);
+  assert.equal(asked.length, 5);
+});
+
 // --- papers -------------------------------------------------------------------------
 
 function papersOver(byQuery) {

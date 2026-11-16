@@ -66,6 +66,7 @@ class FakeTrials:
         self.by_id = by_id or {}
         self.by_trial_name: dict[str, list[SourceRecord]] = {}
         self.searched: list[tuple[str, str | None]] = []
+        self.named: list[tuple[str, str | None]] = []
 
     def search_trials(self, intervention: str, condition: str | None = None) -> list[SourceRecord]:
         self.searched.append((intervention, condition))
@@ -74,7 +75,8 @@ class FakeTrials:
     def fetch_trial(self, nct_id: str) -> SourceRecord | None:
         return self.by_id.get(nct_id)
 
-    def named_trials(self, name: str) -> list[SourceRecord]:
+    def named_trials(self, name: str, condition: str | None = None) -> list[SourceRecord]:
+        self.named.append((name, condition))
         return self.by_trial_name.get(name, [])
 
 
@@ -395,6 +397,7 @@ def test_the_trial_the_text_names_is_searched_for_and_ranked_first(session: Sess
     found = find(session, trials, reading={**READING, "trial_name": "REGROW-2"})
 
     assert found.details.trial_name == "REGROW-2"
+    assert trials.named == [("REGROW-2", "tooth agenesis")]
     assert [(c.external_id, c.agrees) for c in found.candidates] == [
         ("NCT00000009", ["trial_name"]),
         ("NCT00000001", []),
@@ -592,6 +595,29 @@ def test_independent_claims_share_reading_and_records_but_not_scores_or_cards(se
         [candidate.external_id for candidate in claim.candidates if candidate.likely]
         for claim in found.claims
     ] == [["NCT00000001"], ["NCT00000002"]]
+
+
+def test_roundup_study_name_discovery_keeps_claim_conditions_separate(session: Session):
+    one = {**READING, "trial_name": "EXAMPLE", "other_names": [], "search_phrases": []}
+    two = {**one, "indication": "example condition"}
+    model, _ = llm(session, {**one, "additional_claims": [two]})
+    asked = []
+
+    class NamedTrials(FakeTrials):
+        def named_trials(self, name, condition=None):
+            assert condition is not None
+            asked.append((name, condition))
+            identifier = "NCT00000001" if condition == one["indication"] else "NCT00000002"
+            return [trial(identifier, "Synthetic study", condition)]
+
+    found = look_up(
+        session, model, ByCondition(), NamedTrials({}), text="Synthetic roundup", now=NOW
+    )
+    assert asked == [("EXAMPLE", one["indication"]), ("EXAMPLE", two["indication"])]
+    assert [[c.external_id for c in group.candidates] for group in found.claims] == [
+        ["NCT00000001"],
+        ["NCT00000002"],
+    ]
 
 
 def test_roundup_marks_failed_linked_paper_discovery_incomplete(session: Session):
