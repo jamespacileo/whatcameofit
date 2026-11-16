@@ -17,7 +17,7 @@ for drafts, so that no claim is published with a status no search stands behind.
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from sqlalchemy import ColumnElement, and_, exists, func, or_, select
@@ -47,7 +47,14 @@ from thenwhat.claims.entry import (
     named_claims,
     slug_of_claim_covering,
 )
-from thenwhat.db.models import Claim, LinkLead, LinkLeadLink, LinkShare, SourceArticle
+from thenwhat.db.models import (
+    Claim,
+    LinkLead,
+    LinkLeadLink,
+    LinkShare,
+    SourceArticle,
+    WorkEntry,
+)
 from thenwhat.decide.core import Backend, DecisionFailed
 from thenwhat.decide.steps import (
     ESTABLISHED_TREATMENT,
@@ -87,6 +94,9 @@ NO_PAGE = "the page could not be retrieved"
 # the outlet's other leads are finished without asking it.
 REFUSED_STATUS = 401
 REFUSALS_BEFORE_STOPPING = 5
+# How long an outlet's 401 answers count. `thenwhat backfill retry-outlet` asks again
+# sooner.
+REFUSALS_COUNT_FOR = timedelta(days=30)
 OUTLET_REFUSES = "not asked: its outlet answered 401 to the page reader"
 # Outcomes only a page the reader got can give.
 READ_FROM_A_PAGE = (
@@ -106,6 +116,44 @@ CLAIM_IDENTITY_LOCK = 7_468_656_001
 # An article joins a candidate claim only when the same-claim decision gives that claim
 # more than every other answer together.
 SAME_CLAIM_MAJORITY = 0.5
+
+
+class NothingToRetry(BackfillError):
+    pass
+
+
+def retry_outlet(session: Session, outlet: str) -> int:
+    """Put the outlet's leads that it refused with 401, or that were not asked because
+    of those refusals, back to not read, so the next run asks the page reader for them
+    again. Returns how many. Refuses when the outlet has no such lead."""
+    refused = or_(
+        LinkLead.read_detail == f"{NO_PAGE} (the site answered {REFUSED_STATUS})",
+        LinkLead.read_detail.startswith(OUTLET_REFUSES),
+    )
+    ids = list(
+        session.scalars(
+            select(LinkLead.id).where(
+                LinkLead.outlet == outlet,
+                LinkLead.read_outcome == ReadOutcome.CANNOT_BE_READ,
+                refused,
+            )
+        )
+    )
+    if not ids:
+        raise NothingToRetry(f"No lead of '{outlet}' was refused with 401 or left unasked.")
+    for lead in session.scalars(select(LinkLead).where(LinkLead.id.in_(ids))):
+        lead.read_outcome = None
+        lead.read_detail = None
+    for entry in session.scalars(
+        select(WorkEntry).where(
+            WorkEntry.record_kind == LinkRead.record_kind,
+            WorkEntry.step == LinkRead.name,
+            WorkEntry.record_id.in_(ids),
+        )
+    ):
+        session.delete(entry)
+    session.flush()
+    return len(ids)
 
 
 class NotMeasured(BackfillError):
@@ -249,16 +297,29 @@ class LinkRead:
                 return claim_id
         return None
 
-    def _outlet_refusals(self, session: Session, outlet: str) -> int | None:
-        """How many of the outlet's pages answered 401 to the page reader, when that is at
-        least REFUSALS_BEFORE_STOPPING and the reader got none of its pages. None while
-        the outlet may still be asked. Pages refused for another reason, or answered
-        with another status, do not count either way."""
+    def _outlet_refusals(self, session: Session, outlet: str, now: datetime) -> int | None:
+        """How many of the outlet's pages answered 401 to the page reader in the last
+        REFUSALS_COUNT_FOR, when that is at least REFUSALS_BEFORE_STOPPING and the reader
+        got none of its pages. None while the outlet may still be asked. Pages refused
+        for another reason, or answered with another status, do not count either way.
+        Older answers lapse, so a site that starts serving the reader is asked again."""
         refused_detail = f"{NO_PAGE} (the site answered {REFUSED_STATUS})"
         refused = (
             session.scalar(
-                select(func.count()).where(
-                    LinkLead.outlet == outlet, LinkLead.read_detail == refused_detail
+                select(func.count())
+                .select_from(LinkLead)
+                .join(
+                    WorkEntry,
+                    and_(
+                        WorkEntry.record_kind == self.record_kind,
+                        WorkEntry.record_id == LinkLead.id,
+                        WorkEntry.step == self.name,
+                    ),
+                )
+                .where(
+                    LinkLead.outlet == outlet,
+                    LinkLead.read_detail == refused_detail,
+                    WorkEntry.last_attempt_at >= now - REFUSALS_COUNT_FOR,
                 )
             )
             or 0
@@ -412,7 +473,7 @@ class LinkRead:
         if outlet is None:
             return self._finish(record, ReadOutcome.CANNOT_BE_READ, NO_NAME)
 
-        refusals = self._outlet_refusals(session, record.outlet)
+        refusals = self._outlet_refusals(session, record.outlet, now)
         if refusals is not None:
             return self._finish(
                 record,

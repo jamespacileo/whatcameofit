@@ -618,3 +618,57 @@ def test_topics_shows_coverage_and_an_unknown_topic_is_refused(run, session: Ses
 
     assert refused.exit_code == 1
     assert "No topic is named 'statins'" in refused.output
+
+
+# --- asking an outlet again ------------------------------------------------------------
+
+
+def test_retry_outlet_puts_its_refused_leads_back_and_refuses_an_outlet_with_none(
+    run, session: Session
+):
+    """Scenarios: Asking an outlet again, An outlet with nothing to retry"""
+    from thenwhat.backfill.link_read import NO_PAGE, OUTLET_REFUSES
+    from thenwhat.domain import ReadOutcome, WorkOutcome
+
+    for number, detail in enumerate(
+        [f"{NO_PAGE} (the site answered 401)", f"{OUTLET_REFUSES} for 5 pages and served none"]
+    ):
+        lead = LinkLead(
+            url=f"https://news.example.org/refused-{number}",
+            url_key=f"news.example.org/refused-{number}",
+            outlet="news.example.org",
+            outlet_kind=OutletKind.GENERAL_NEWS,
+            title="words a person wrote when sharing the link",
+            first_shared_at=NOW,
+            read_outcome=ReadOutcome.CANNOT_BE_READ,
+            read_detail=detail,
+        )
+        session.add(lead)
+        session.flush()
+        session.add(
+            WorkEntry(
+                record_kind="link_lead",
+                record_id=lead.id,
+                step="link_read",
+                step_version=1,
+                outcome=WorkOutcome.NOTHING_FOUND,
+                attempts=1,
+                requests_used=1,
+                fingerprint="earlier",
+                last_attempt_at=NOW,
+            )
+        )
+    session.flush()
+
+    result = run("retry-outlet", "news.example.org")
+
+    assert result.exit_code == 0, result.output
+    assert "2 leads of news.example.org are due to be read again" in result.output
+    leads = session.scalars(select(LinkLead).where(LinkLead.outlet == "news.example.org"))
+    assert {(lead.read_outcome, lead.read_detail) for lead in leads} == {(None, None)}
+    assert session.scalars(select(WorkEntry)).all() == []
+
+    refused = run("retry-outlet", "news.example.org")
+
+    assert refused.exit_code == 1
+    assert "No lead of 'news.example.org'" in refused.output
