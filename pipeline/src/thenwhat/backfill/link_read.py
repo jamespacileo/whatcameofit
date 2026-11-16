@@ -42,9 +42,11 @@ from thenwhat.claims.entry import (
     EntryError,
     claim_by_slug,
     claims_sharing_a_name,
+    core_name,
     find_article,
     free_slug_for,
     named_claims,
+    slug_of_claim_close_to,
     slug_of_claim_covering,
 )
 from thenwhat.db.models import (
@@ -409,9 +411,12 @@ class LinkRead:
         """
         names = [draft.intervention, *draft.intervention_synonyms]
         # A topic's list knows a drug's brand and generic names; a claim under any of
-        # them is a candidate, though the names share no word.
+        # them is a candidate, though the names share no word. A name's core, without
+        # its dose, schedule, form or "-assisted ..." therapy, finds candidates too:
+        # "MDMA-assisted psychotherapy" shares no whole word with "MDMA".
+        cores = [core for name in names if (core := core_name(name))]
         candidates = claims_sharing_a_name(
-            session, [*names, *other_names_of(names)], indication=draft.indication
+            session, [*names, *cores, *other_names_of(names)], indication=draft.indication
         )
         linked_by_title = named_claims(
             session,
@@ -609,7 +614,11 @@ class LinkRead:
                 detail = "; ".join(part for part in (established, how, note) if part) or None
                 return self._finish(record, ReadOutcome.ADDED_TO_CLAIM, detail)
 
-            collision = slug_of_claim_covering(session, draft.intervention, draft.indication)
+            # A claim for the same treatment and condition, as named or once dose,
+            # schedule and form are left out, means a new claim would duplicate it.
+            collision = slug_of_claim_covering(
+                session, draft.intervention, draft.indication
+            ) or slug_of_claim_close_to(session, draft.intervention, draft.indication)
             if collision is not None:
                 # The names are already taken, but identity was not established. Neither
                 # force the article onto that claim nor pay to retry an unchanged read.
