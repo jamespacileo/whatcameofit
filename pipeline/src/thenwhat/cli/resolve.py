@@ -549,6 +549,10 @@ def _related_research(
         out.print(papers.usage.line(), markup=False)
 
 
+# The steps of the registry search now running that failed and were carried on past.
+STEPS_FAILED: list[str] = []
+
+
 def _step[T](session: Session, what_failed: str, work: Callable[[], T]) -> T | None:
     """Run one step of related research in a savepoint. A decision that failed is
     reported and its log entry kept; anything else undoes the step and is reported."""
@@ -558,9 +562,11 @@ def _step[T](session: Session, what_failed: str, work: Callable[[], T]) -> T | N
                 return work()
             except DecisionFailed as failed:
                 err.print(f"{what_failed}: {failed}", markup=False)
+                STEPS_FAILED.append(what_failed)
                 return None
     except Exception as failed:
         err.print(f"{what_failed}: {failed or type(failed).__name__}", markup=False)
+        STEPS_FAILED.append(what_failed)
         return None
 
 
@@ -695,6 +701,7 @@ def resolve_command(
         reject_below = settings.match_reject_below
         accept_above = settings.match_accept_above
         refused: dict[str, str] = {}
+        STEPS_FAILED.clear()
 
         def unsearchable(term: UnsearchableTerm) -> None:
             """Say once that the registry cannot search for a term, and go on with the
@@ -784,8 +791,16 @@ def resolve_command(
             # model's recorded cost and the registries' cached answers are to be kept.
             failure = str(failed)
         else:
-            # The search this claim was due after a merge or a rename has now been made.
-            claim.registry_search_due_at = None
+            # The search this claim was due after a merge or a rename has been made only
+            # when every step succeeded and every name could be searched for: otherwise
+            # it stays due.
+            if not STEPS_FAILED and not refused:
+                claim.registry_search_due_at = None
+            elif claim.registry_search_due_at is not None:
+                err.print(
+                    "The registry search stays due: a step failed or a name was not searched for.",
+                    markup=False,
+                )
             _say_matches(
                 claim,
                 added,

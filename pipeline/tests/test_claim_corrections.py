@@ -34,6 +34,7 @@ from thenwhat.claims.entry import (
     archive_claim,
     articles_of,
     awaiting_audit,
+    clear_audit,
     promises_of,
     slug_of_claim_covering,
     unarchive_claim,
@@ -53,6 +54,7 @@ from thenwhat.domain import (
     Decider,
     EntityType,
     EventType,
+    EvidenceStage,
     OutletKind,
     ReadOutcome,
     ReviewState,
@@ -138,6 +140,10 @@ def pair(session: Session) -> tuple[Claim, Claim]:
     add_synonym(session, duplicate.slug, "VSV-EBOV", "rVSV-ZEBOV")
     article(session, duplicate.slug, SECOND, date(2016, 12, 23))
     add_promise(session, duplicate.slug, article_url=SECOND, description="licensed by 2018")
+    # Both approved and unheld, as two published claims are.
+    for claim in (kept, duplicate):
+        record_decision(claim, ReviewState.APPROVED, by=Decider.HUMAN, now=EARLIER)
+    session.flush()
     return kept, duplicate
 
 
@@ -478,8 +484,9 @@ def test_unmerge_puts_back_everything_the_merge_moved(session: Session, pair):
     assert intervention(session, kept).synonyms == []
     assert done.names_removed == ["VSV-EBOV", "rVSV-ZEBOV"]
     assert kept.first_reported_date == date(2019, 11, 12)
-    # The kept claim's hold was for what has gone back; the claim keeps its own.
-    assert kept.awaiting_audit_at is None and duplicate.awaiting_audit_at == EARLIER
+    # Undoing a merge releases no hold: the kept claim's stays, and the claim keeps its own.
+    assert kept.awaiting_audit_at == EARLIER and duplicate.awaiting_audit_at == EARLIER
+    assert done.kept_still_held
     assert slug_of_claim_covering(session, "VSV-EBOV", "Ebola virus disease") == duplicate.slug
     change = session.scalars(select(ClaimChange)).one()
     assert (change.undone_at, change.undone_by, change.undone_reason) == (
@@ -487,6 +494,67 @@ def test_unmerge_puts_back_everything_the_merge_moved(session: Session, pair):
         Decider.ASSISTANT,
         "two vaccines after all",
     )
+
+
+@pytest.mark.parametrize("state", [ReviewState.PENDING, ReviewState.REJECTED])
+def test_a_claim_never_approved_does_not_bring_its_articles_onto_the_site(
+    session: Session, pair, state: ReviewState
+):
+    """Scenario: Merged claim was never approved"""
+    kept, duplicate = pair
+    duplicate.review_state, duplicate.reviewed_at, duplicate.reviewed_by = (
+        (state, None, None) if state is ReviewState.PENDING else (state, EARLIER, Decider.RULE)
+    )
+    session.flush()
+    assert [claim.slug for claim in build_export(session, now=EARLIER).claims] == [kept.slug]
+
+    with pytest.raises(MergeRefused, match=f"is {state.value}"):
+        merge(session)
+    assert articles_of(session, kept)[0].url == FIRST and kept.awaiting_audit_at is None
+
+    done = merge(session, awaiting_audit_accepted=True)
+
+    # The kept claim has the unaudited articles and is held from the merge on, so the
+    # export leaves it out until its audit is cleared.
+    assert [a.url for a in articles_of(session, kept)] == [SECOND, FIRST]
+    assert kept.awaiting_audit_at == NOW and done.kept_now_awaits_audit
+    assert build_export(session, now=NOW).claims == []
+    clear_audit(session, [kept.slug])
+    assert [claim.slug for claim in build_export(session, now=NOW).claims] == [kept.slug]
+
+
+def test_unmerge_does_not_release_a_later_hold(session: Session, pair):
+    """Scenario: Unmerge after the kept claim was held again"""
+    kept, duplicate = pair
+    kept.review_state, kept.reviewed_at, kept.reviewed_by = ReviewState.PENDING, None, None
+    duplicate.awaiting_audit_at = EARLIER
+    session.flush()
+    merge(session, awaiting_audit_accepted=True)
+    assert kept.awaiting_audit_at == EARLIER
+    # The first hold is audited and cleared; the kept claim is then approved by rule for
+    # a read and held again, as `prepare` does.
+    clear_audit(session, [kept.slug])
+    record_decision(kept, ReviewState.APPROVED, by=Decider.RULE, now=NOW)
+    kept.awaiting_audit_at = NOW
+    session.flush()
+
+    done = unmerge_claim(session, duplicate.slug, reason="two vaccines", by=Decider.HUMAN, now=NOW)
+
+    assert kept.awaiting_audit_at == NOW and done.kept_still_held
+    assert build_export(session, now=NOW).claims == []
+
+
+def test_the_merged_claims_evidence_stage_is_written_down_not_moved(session: Session, pair):
+    kept, duplicate = pair
+    duplicate.evidence_stage = EvidenceStage.EARLY_HUMAN
+    session.flush()
+
+    done = merge(session)
+
+    assert kept.evidence_stage is None and done.stage_left is EvidenceStage.EARLY_HUMAN
+    change = session.scalars(select(ClaimChange)).one()
+    assert change.record is not None
+    assert change.record["evidence_stage"] == {"merged": "early_human", "kept": None}
 
 
 def test_unmerge_of_a_claim_that_is_not_merged_is_refused(session: Session, pair):

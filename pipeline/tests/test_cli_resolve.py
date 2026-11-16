@@ -21,7 +21,7 @@ from thenwhat.claims.entities import entities_of
 from thenwhat.claims.entry import add_claim, claim_by_slug
 from thenwhat.cli import app
 from thenwhat.cli.resolve import Research, make_brands
-from thenwhat.db.models import DecisionLog, EntityMatch, EntitySubstance
+from thenwhat.db.models import Claim, DecisionLog, EntityMatch, EntitySubstance
 from thenwhat.decide.core import BackendAnswer
 from thenwhat.domain import ClaimStatus, Decider, EvidenceStage, ReviewState
 from thenwhat.llm.client import Llm, LlmSettings
@@ -469,10 +469,16 @@ def test_resolve_approves_a_confident_candidate_by_rule_by_default(
 ):
     monkeypatch.delenv("MATCH_ACCEPT_ABOVE")
 
+    claim = session.scalars(select(Claim).where(Claim.slug == SLUG)).one()
+    claim.registry_search_due_at = datetime(2026, 11, 16, tzinfo=UTC)
+    session.flush()
+
     result = run("resolve", SLUG)
 
     assert result.exit_code == 0, result.output
     assert "1 approved by rule" in result.output
+    # A search that was due after a merge or a rename, and succeeded, is due no more.
+    assert claim.registry_search_due_at is None
     [match] = session.scalars(select(EntityMatch)).all()
     assert match.reviewed_by is Decider.RULE
 
@@ -568,10 +574,17 @@ def test_resolve_keeps_its_trial_candidates_when_the_paper_search_breaks(
             raise KeyError("results")
 
     monkeypatch.setattr("thenwhat.cli.resolve.make_research", lambda s: research(BrokenPapers()))
+    due = datetime(2026, 11, 16, tzinfo=UTC)
+    claim = session.scalars(select(Claim).where(Claim.slug == SLUG)).one()
+    claim.registry_search_due_at = due
+    session.flush()
 
     result = run("resolve", SLUG)
 
     assert result.exit_code == 0, result.output
+    # A step failed, so a search that was due after a merge or a rename stays due.
+    assert claim.registry_search_due_at == due
+    assert "The registry search stays due" in result.output
     assert "Papers were not searched for" in result.output
     assert session.scalars(select(EntityMatch)).one().source_name == "clinicaltrials.gov"
 

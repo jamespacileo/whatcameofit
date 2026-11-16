@@ -135,8 +135,8 @@ def claim_merge(
         bool,
         typer.Option(
             "--awaiting-audit-accepted",
-            help="Merge though one of the two awaits audit. The hold is kept: the kept"
-            " claim then waits for the audit too and is off the site until it is cleared.",
+            help="Merge though one of the two awaits audit, or the duplicate is pending or"
+            " rejected. The kept claim then awaits audit and is off the site until cleared.",
         ),
     ] = False,
     drop_name: Annotated[
@@ -202,6 +202,13 @@ def claim_merge(
                 f" {', '.join(done.names_left)}.",
                 markup=False,
             )
+        if done.stage_left is not None:
+            stage = done.kept.evidence_stage.value if done.kept.evidence_stage else "none"
+            out.print(
+                f"Evidence stage not moved: {done.merged.slug} had {done.stage_left.value},"
+                f" {done.kept.slug} keeps {stage}.",
+                markup=False,
+            )
         if done.same_by == SAME_BY_DECISION:
             out.print(
                 "Nothing stored showed they are one treatment: recorded as stated by you.",
@@ -209,8 +216,8 @@ def claim_merge(
             )
         if done.kept_now_awaits_audit:
             out.print(
-                f"{done.merged.slug} was awaiting audit, so {done.kept.slug} now awaits"
-                " audit too: it is OFF THE SITE from the next export until `thenwhat"
+                f"{done.merged.slug} had not passed an audit, so {done.kept.slug} now awaits"
+                " audit: it is OFF THE SITE from the next export until `thenwhat"
                 f" audit clear {done.kept.slug}`.",
                 markup=False,
             )
@@ -271,9 +278,10 @@ def claim_unmerge(
             out.print(
                 f"{done.claim.slug} was archived before the merge and still is.", markup=False
             )
-        if done.kept_hold_released:
+        if done.kept_still_held:
             out.print(
-                f"{done.kept.slug} no longer awaits audit: what it waited for went back.",
+                f"{done.kept.slug} still awaits audit and stays off the site: undoing a"
+                f" merge releases no hold. Once audited: thenwhat audit clear {done.kept.slug}",
                 markup=False,
             )
         out.print(

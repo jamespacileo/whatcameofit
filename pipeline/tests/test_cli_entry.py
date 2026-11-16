@@ -5,7 +5,7 @@ The rules themselves are tested in test_claim_entry.py and test_csv_import.py.
 
 from collections.abc import Generator
 from contextlib import contextmanager
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
@@ -21,6 +21,7 @@ from thenwhat.claims.entry import (
     promises_of,
 )
 from thenwhat.cli import app
+from thenwhat.domain import Decider, ReviewState
 
 ARTICLE_URL = "https://news.example.org/2018/teeth"
 CSV_HEADER = (
@@ -306,7 +307,11 @@ def test_unarchive_refusal_explains_and_exits_1(run, claim_with_article):
 
 @pytest.fixture
 def duplicate_claim(session: Session, claim_with_article):
-    """A second claim for the same indication under another name of the same antibody."""
+    """A second claim for the same indication under another name of the same antibody.
+    Both approved, as published claims are."""
+    claim_with_article.review_state = ReviewState.APPROVED
+    claim_with_article.reviewed_at = datetime(2026, 11, 10, tzinfo=UTC)
+    claim_with_article.reviewed_by = Decider.HUMAN
     return add_claim(
         session,
         slug="trg-035-tooth-agenesis",

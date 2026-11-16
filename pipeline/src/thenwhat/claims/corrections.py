@@ -45,7 +45,7 @@ from thenwhat.db.models import (
     ReportedStatement,
     SourceArticle,
 )
-from thenwhat.domain import Decider, EntityType, NamedBy, ReviewState
+from thenwhat.domain import Decider, EntityType, EvidenceStage, NamedBy, ReviewState
 from thenwhat.extract.names import is_a_class, is_a_name
 
 MERGE = "merge"
@@ -170,6 +170,9 @@ class Merged:
     same_by: str = ""
     # The kept claim now waits for the audit the merged claim was waiting for.
     kept_now_awaits_audit: bool = False
+    # The merged claim's evidence stage, when it differs from the kept claim's. It is
+    # not moved: the kept claim keeps its own.
+    stage_left: EvidenceStage | None = None
     # Approved registry records of the merged claim's intervention that the kept claim
     # does not hold approved, as "source id": to look for after the next search.
     to_find_again: list[str] = field(default_factory=list)
@@ -224,8 +227,9 @@ def merge_claims(
     Everything is checked before anything is changed, so a refusal changes nothing.
     The merged claim is archived and points at the kept claim; nothing is deleted, and
     every row the merge moved is written down so that `unmerge_claim` can put it back.
-    A hold for audit is never dropped: when the merged claim awaits audit, the kept
-    claim waits with it. `drop_name` leaves the merged claim's intervention name out of
+    A hold for audit is never dropped, and nothing unaudited lands in a claim on the
+    site: when the merged claim awaits audit, is still pending or was rejected, the kept
+    claim awaits audit. `drop_name` leaves the merged claim's intervention name out of
     the kept claim's synonyms, for a name that is a description.
     """
     _check_decider(by)
@@ -266,13 +270,23 @@ def merge_claims(
             " one indication. If they are one indication worded twice, say so with"
             " --different-indication-accepted and give the reason."
         )
+    # What has not passed an audit never lands in a claim that is on the site: a merged
+    # claim that is held, still pending or rejected makes the kept claim wait for audit.
     held = [claim.slug for claim in (merged, kept) if claim.awaiting_audit_at is not None]
-    if held and not awaiting_audit_accepted:
-        raise MergeRefused(
-            f"Awaiting audit: {', '.join(held)}. Audit first (thenwhat audit list), or"
-            " say so with --awaiting-audit-accepted: the kept claim then waits for the"
-            " audit too, and is off the site until `thenwhat audit clear`."
+    undecided = merged.review_state is not ReviewState.APPROVED
+    if (held or undecided) and not awaiting_audit_accepted:
+        why = (
+            f"Awaiting audit: {', '.join(held)}."
+            if held
+            else f"Claim '{merged.slug}' is {merged.review_state.value}: what it holds was"
+            " never approved or audited."
         )
+        raise MergeRefused(
+            f"{why} Audit or decide it first (thenwhat audit list, thenwhat review), or"
+            " say so with --awaiting-audit-accepted: the kept claim then awaits audit"
+            " too, and is off the site until `thenwhat audit clear`."
+        )
+    unaudited_since = merged.awaiting_audit_at or (now if undecided else None)
 
     gained, left = _names_to_gain(session, merged, kept, theirs, ours, drop_name=drop_name)
     result = Merged(
@@ -327,10 +341,20 @@ def merge_claims(
     merged.merged_into_id = kept.id
     # A hold is never dropped by merging. The merged claim keeps its own, and the kept
     # claim, which now holds what was waiting to be audited, waits from the same time.
-    if merged.awaiting_audit_at is not None and kept.awaiting_audit_at is None:
-        kept.awaiting_audit_at = merged.awaiting_audit_at
+    # So does one that was never approved: it has no hold of its own yet, and the kept
+    # claim waits from now.
+    if unaudited_since is not None and kept.awaiting_audit_at is None:
+        kept.awaiting_audit_at = unaudited_since
         result.kept_now_awaits_audit = True
     record["kept_took_hold"] = result.kept_now_awaits_audit
+    # Not moved, and the kept claim's is not changed: written down so that a status
+    # that differs afterwards can be traced.
+    record["evidence_stage"] = {
+        "merged": merged.evidence_stage.value if merged.evidence_stage else None,
+        "kept": kept.evidence_stage.value if kept.evidence_stage else None,
+    }
+    if merged.evidence_stage is not kept.evidence_stage:
+        result.stage_left = merged.evidence_stage
     kept.registry_search_due_at = now
     session.add(
         ClaimChange(
@@ -642,8 +666,8 @@ class Unmerged:
     names_removed: list[str]
     # The claim came back archived, because it was archived before it was merged.
     still_archived: bool
-    # The kept claim's hold, taken with the merge, was let go with what it was for.
-    kept_hold_released: bool
+    # The kept claim awaits audit. Undoing a merge never releases a hold, whoever set it.
+    kept_still_held: bool
 
 
 def unmerge_claim(
@@ -758,11 +782,8 @@ def unmerge_claim(
         select(func.min(SourceArticle.published_date)).where(SourceArticle.claim_id == kept.id)
     )
     kept.registry_search_due_at = now
-    # The hold the kept claim took with the merge was for what has now gone back. One
-    # an audit has cleared since stays cleared; the claim keeps its own hold throughout.
-    released = bool(record["kept_took_hold"]) and kept.awaiting_audit_at is not None
-    if released:
-        kept.awaiting_audit_at = None
+    # No hold is released here, the one the kept claim took with the merge included:
+    # by now it may be another hold. `thenwhat audit clear` releases it, after an audit.
 
     claim.merged_into_id = None
     still_archived = bool(record["merged_was_archived"])
@@ -772,7 +793,14 @@ def unmerge_claim(
     claim.registry_search_due_at = now
     change.undone_at, change.undone_by, change.undone_reason = now, by, reason
     session.flush()
-    return Unmerged(claim, kept, len(articles), names_removed, still_archived, released)
+    return Unmerged(
+        claim,
+        kept,
+        len(articles),
+        names_removed,
+        still_archived,
+        kept.awaiting_audit_at is not None,
+    )
 
 
 # --- renaming -----------------------------------------------------------------------
