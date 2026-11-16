@@ -30,6 +30,9 @@
      theme the lightest surface, so it lifts off the navy rather than sinking into it. */
   --raised: #ffffff;
   --raised-rule: #d9e2ee;
+  /* The status card's edge on the navy record band: none on the light page, where the
+     white card stands out alone; a faint blue ring in the dark theme. */
+  --band-card-rule: transparent;
   /* Lettering on a filled blue control, and that control's hover ground. */
   --on-blue: #ffffff;
   --blue-hover: #0b2545;
@@ -40,6 +43,11 @@
   --lift: rgb(11 37 69 / 0.35);
   /* Photographs and video frames: full strength on the light page. */
   --media-dim: none;
+  /* A video not yet started, in the dark theme a further step down: its poster is
+     otherwise the brightest patch of the page. */
+  --media-rest: none;
+  /* The status card's lift off the navy band. */
+  --band-card-shadow: none;
   /* The home band's dots. */
   --dot: rgb(11 37 69 / 0.11);
   /* The outline of an empty place on the path: 3:1 against the page. */
@@ -70,8 +78,9 @@
     --rule: #2b3546;
     --rule-soft: #1f2733;
     --table-head: #161d28;
-    --raised: #1a2332;
+    --raised: #202c40;
     --raised-rule: rgb(142 193 245 / 0.24);
+    --band-card-rule: rgb(142 193 245 / 0.32);
     --promise: #362b10;
     --promise-rule: #8a7230;
     --promise-mark: #d9b44a;
@@ -81,6 +90,8 @@
     --blue-fill: #6fa6e0;
     --lift: rgb(0 0 0 / 0.55);
     --media-dim: brightness(0.85);
+    --media-rest: brightness(0.7);
+    --band-card-shadow: 0 14px 32px -14px rgb(0 0 0 / 0.7);
     --dot: rgb(142 193 245 / 0.07);
     --ring: #6d7c90;
     color-scheme: dark;
@@ -99,8 +110,9 @@
     --rule: #2b3546;
     --rule-soft: #1f2733;
     --table-head: #161d28;
-    --raised: #1a2332;
+    --raised: #202c40;
     --raised-rule: rgb(142 193 245 / 0.24);
+    --band-card-rule: rgb(142 193 245 / 0.32);
     --promise: #362b10;
     --promise-rule: #8a7230;
     --promise-mark: #d9b44a;
@@ -110,6 +122,8 @@
     --blue-fill: #6fa6e0;
     --lift: rgb(0 0 0 / 0.55);
     --media-dim: brightness(0.85);
+    --media-rest: brightness(0.7);
+    --band-card-shadow: 0 14px 32px -14px rgb(0 0 0 / 0.7);
     --dot: rgb(142 193 245 / 0.07);
     --ring: #6d7c90;
     color-scheme: dark;
@@ -1299,6 +1313,14 @@ body.embed {
   border: 1px solid var(--rule);
   border-radius: var(--radius);
   filter: var(--media-dim);
+}
+
+.explainer video {
+  transition: filter 200ms ease-out;
+}
+
+.explainer:not([data-started]) video:not(:hover, :focus-visible) {
+  filter: var(--media-rest);
 }
 
 .explainer figcaption {
@@ -5840,7 +5862,8 @@ body.framed {
   margin-top: 0;
   grid-template-columns: minmax(0, 1fr);
   color: var(--ink);
-  border-color: transparent;
+  border-color: var(--band-card-rule);
+  box-shadow: var(--band-card-shadow);
 }
 
 .band.record .digest a {

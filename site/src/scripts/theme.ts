@@ -17,7 +17,12 @@ const other = (look: Look): Look => (look === "dark" ? "light" : "dark");
 
 const label = () => {
   if (!button) return;
-  const text = `Switch to ${other(showing())} appearance`;
+  // A kept look says so, because it is why the page differs from the device; the press
+  // then returns to the device.
+  const kept = stored();
+  const text = kept && kept !== deviceLook()
+    ? `Switch to ${other(kept)} appearance, as your device. ${kept === "dark" ? "Dark" : "Light"} is kept in this browser.`
+    : `Switch to ${other(showing())} appearance`;
   button.setAttribute("aria-label", text);
   button.title = text;
 };

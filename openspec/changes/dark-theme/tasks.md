@@ -19,3 +19,4 @@
 ## 3. Record
 
 - [x] 3.1 Record the dark palette in `DESIGN.md`.
+- [x] 4.2 After the second critique of 2026-11-16: restore the dark status card's ring on the record band (`--band-card-rule`, none in light), raise `--raised` to `#202c40` with a soft drop, dim the explainer to 70% until started, and say in the switch's label when a kept look differs from the device. Verify: light card unchanged (white, no edge, no shadow); dark card ringed; muted text on it 6.4:1.
