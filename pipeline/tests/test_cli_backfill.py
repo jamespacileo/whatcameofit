@@ -18,6 +18,7 @@ from backfill_support import NOW, ModelStep, QuietStep, add_trials, same_session
 from thenwhat.backfill.allowance import Allowances
 from thenwhat.backfill.mediacloud import Story
 from thenwhat.backfill.news_search import query_for
+from thenwhat.backfill.registry_load import condition_of
 from thenwhat.cli import app
 from thenwhat.cli.backfill import _hours
 from thenwhat.config import SourceAllowance
@@ -762,9 +763,16 @@ def test_load_trials_refuses_a_set_it_does_not_know(run, session: Session):
 
     assert result.exit_code == 1
     assert (
-        "No set of trials is named 'successful'. Sets: active-phase-2-3, phase-3." in result.output
+        "No set of trials is named 'successful'. Sets: active-phase-2-3, interventional, phase-3."
+        in result.output
     )
     assert session.scalars(select(RegistryTrial)).all() == []
+
+
+def test_the_set_of_every_trial_is_every_interventional_study():
+    """Every trial means every interventional study, whatever its phase, state or kind of
+    intervention; observational studies are not asked for."""
+    assert condition_of("interventional") == "AREA[StudyType]INTERVENTIONAL"
 
 
 def test_load_trials_refuses_a_set_and_a_condition_together(run):
