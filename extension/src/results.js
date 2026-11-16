@@ -1,10 +1,10 @@
 // Private to this browser. A previous answer is useful, but never silently current.
-// Version 11 excludes answers scored without study types and trial-arm roles.
+// Version 12 excludes readings that could discard formulation, population or activation roles.
 // Only completed answers can be reused.
 import { withCurrentClaims } from "../../site/worker/tracked.mjs";
 
 export const RESULT_TTL = 24 * 60 * 60 * 1000;
-const VERSION = 11;
+const VERSION = 12;
 const MAX_RESULTS = 10;
 
 /** Whether an answer is whole: not an error, a miss, a partial stream or one that is

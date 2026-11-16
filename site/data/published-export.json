@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-16T01:25:26.177943Z",
-  "last_checked_at": "2026-11-16T01:23:45.637266Z",
+  "generated_at": "2026-11-16T02:01:57.153132Z",
+  "last_checked_at": "2026-11-16T02:00:32.031877Z",
   "preview": false,
   "sources": [
     {
@@ -50701,6 +50701,596 @@
       ]
     },
     {
+      "slug": "duravyu-wet-amd",
+      "headline": "Duravyu misses the primary endpoint in the LUCIA wet AMD trial",
+      "summary": "Healio reported that the Phase 3 LUCIA trial of Duravyu, a vorolanib intravitreal insert also called EYP-1901, missed its primary visual-acuity noninferiority endpoint versus aflibercept. EyePoint reported improvements in secondary measures, including treatment burden, and planned further analysis. Those secondary findings do not reverse the missed primary endpoint.",
+      "vertical": "eyes-and-ears",
+      "approach": null,
+      "intervention": {
+        "name": "Duravyu",
+        "synonyms": [
+          "vorolanib intravitreal insert",
+          "EYP-1901"
+        ]
+      },
+      "indication": "Wet age-related macular degeneration",
+      "first_reported_date": "2026-10-20",
+      "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
+      "checked_by_person": false,
+      "status": {
+        "code": "phase_3",
+        "overlay_years": null,
+        "updated_at": "2026-11-16T02:00:30.862518Z",
+        "explained_by": [
+          11743,
+          11742,
+          11740,
+          11741
+        ],
+        "history": [
+          {
+            "on": "2022-05-19",
+            "code": "trial_registered"
+          },
+          {
+            "on": "2022-06-30",
+            "code": "phase_2"
+          },
+          {
+            "on": "2024-10-22",
+            "code": "phase_3"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://www.healio.com/news/ophthalmology/20261020/duravyu-misses-primary-endpoint-in-second-phase-3-wet-amd-trial",
+          "outlet": "Healio",
+          "title": "Duravyu misses primary endpoint in second phase 3 wet AMD trial",
+          "published_date": "2026-10-20",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [],
+      "events": [
+        {
+          "id": 11744,
+          "type": "trial_registered",
+          "event_date": "2022-05-19",
+          "date_basis": "first posted",
+          "summary": "Trial NCT05381948 registered (Phase 2).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05381948",
+          "trial_id": "NCT05381948",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11745,
+          "type": "trial_status_change",
+          "event_date": "2022-06-30",
+          "date_basis": "start date",
+          "summary": "Trial NCT05381948 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05381948",
+          "trial_id": "NCT05381948",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11746,
+          "type": "trial_status_change",
+          "event_date": "2024-04-24",
+          "date_basis": "completion date",
+          "summary": "Trial NCT05381948 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05381948",
+          "trial_id": "NCT05381948",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11743,
+          "type": "trial_status_change",
+          "event_date": "2024-10-22",
+          "date_basis": "start date",
+          "summary": "Trial NCT06668064 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06668064",
+          "trial_id": "NCT06668064",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11742,
+          "type": "trial_registered",
+          "event_date": "2024-10-31",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06668064 registered (Phase 3).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06668064",
+          "trial_id": "NCT06668064",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11740,
+          "type": "trial_registered",
+          "event_date": "2024-11-12",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06683742 registered (Phase 3).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06683742",
+          "trial_id": "NCT06683742",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11741,
+          "type": "trial_status_change",
+          "event_date": "2024-11-27",
+          "date_basis": "start date",
+          "summary": "Trial NCT06683742 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06683742",
+          "trial_id": "NCT06683742",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11747,
+          "type": "trial_results_posted",
+          "event_date": "2025-10-02",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT05381948.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05381948",
+          "trial_id": "NCT05381948",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06668064",
+          "url": "https://clinicaltrials.gov/study/NCT06668064",
+          "score": 0.88,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "A 2-year Study of EYP-1901 in Subjects With Wet Age Related Macular Degeneration (wAMD) (LUGANO) Primary Efficacy Will be Determined at Week 56. For: Wet Age Related Macular Degeneration, wAMD. Tests: EYP-1901, Aflibercept (2.0 mg). Phase 3, active not recruiting."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06683742",
+          "url": "https://clinicaltrials.gov/study/NCT06683742",
+          "score": 0.85,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "A 2-year Study of EYP-1901 in Subjects With Wet Age Related Macular Degeneration (wAMD) (LUCIA) Primary Efficacy Will be Determined at Week 56. For: Wet Age Related Macular Degeneration, wAMD. Tests: EYP-1901, Aflibercept (2.0 mg). Phase 3, active not recruiting."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT05381948",
+          "url": "https://clinicaltrials.gov/study/NCT05381948",
+          "score": 0.82,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "Study of EYP-1901 in Subjects With Wet Age Related Macular Degeneration (wAMD). For: Wet Age-related Macular Degeneration. Tests: EYP-1901, Aflibercept 2mg/0.05mL Inj,Oph. Phase 2, completed."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT04747197",
+          "url": "https://clinicaltrials.gov/study/NCT04747197",
+          "score": 0.75,
+          "state": "candidate",
+          "reading": "match",
+          "decided_by": null,
+          "summary": "First in Human Study to Evaluate the Safety and Tolerability of EYP-1901 in Patients With Wet Age Related Macular Degeneration (wAMD). For: Wet Age-related Macular Degeneration. Tests: EYP-1901. Phase 1, completed."
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT05381948",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT05381948",
+          "title": "Study of EYP-1901 in Subjects With Wet Age Related Macular Degeneration (wAMD)",
+          "phases": [
+            "phase_2"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-16T02:00:32.031877Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 161,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "triple",
+            "comparators": [
+              "active"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "EyePoint Pharmaceuticals, Inc.",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Average Change in Best Corrected Visual Acuity (BCVA) From Baseline Averaged Over Weeks 28 and 32",
+                "time_frame": "Baseline (Day 1) and Weeks 28 and 32"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Average Change in Best Corrected Visual Acuity (BCVA) From Baseline Averaged Over Weeks 28 and 32",
+                  "time_frame": "Baseline (Day 1) and Weeks 28 and 32",
+                  "unit": "score on a scale",
+                  "measure": "least_squares_mean",
+                  "spread_kind": "Standard Error",
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "Aflibercept 2 mg",
+                      "analysed": "54",
+                      "value": "1.17",
+                      "spread": "0.830",
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "EYP-1901 2060 mcg",
+                      "analysed": "50",
+                      "value": "1.05",
+                      "spread": "0.866",
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "EYP-1901 3090 mcg",
+                      "analysed": "52",
+                      "value": "0.87",
+                      "spread": "0.841",
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": [
+                    {
+                      "groups": [
+                        "Aflibercept 2 mg",
+                        "EYP-1901 2060 mcg"
+                      ],
+                      "p_value": "0.919",
+                      "method": "Mixed Model for Repeated Measures (MMRM)",
+                      "test": null
+                    },
+                    {
+                      "groups": [
+                        "Aflibercept 2 mg",
+                        "EYP-1901 3090 mcg"
+                      ],
+                      "p_value": "0.795",
+                      "method": "MMRM",
+                      "test": null
+                    }
+                  ]
+                }
+              ],
+              "outcomes_total": 1
+            }
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Weeks 28 and 32",
+              "number": 32,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-16T02:00:32.031877Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Best Corrected Visual Acuity (BCVA)",
+              "number": null,
+              "unit": null,
+              "code": "body_measure",
+              "confidence": 0.9,
+              "read_on": "2026-11-16T02:00:32.031877Z"
+            }
+          ]
+        },
+        {
+          "trial_id": "NCT06668064",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06668064",
+          "title": "A 2-year Study of EYP-1901 in Subjects With Wet Age Related Macular Degeneration (wAMD) (LUGANO) Primary Efficacy Will be Determined at Week 56",
+          "phases": [
+            "phase_3"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-11-16T02:00:31.517818Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 400,
+              "basis": "planned"
+            },
+            "allocation": "randomised",
+            "masking": "quadruple",
+            "comparators": [
+              "active"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "EyePoint Pharmaceuticals, Inc.",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Average change in best corrected visual acuity (BCVA)",
+                "time_frame": "Weeks 52 and 56"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": null
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Weeks 52 and 56",
+              "number": 56,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-16T02:00:31.517818Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "best corrected visual acuity (BCVA)",
+              "number": null,
+              "unit": null,
+              "code": "body_measure",
+              "confidence": 0.87,
+              "read_on": "2026-11-16T02:00:31.517818Z"
+            }
+          ]
+        },
+        {
+          "trial_id": "NCT06683742",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06683742",
+          "title": "A 2-year Study of EYP-1901 in Subjects With Wet Age Related Macular Degeneration (wAMD) (LUCIA) Primary Efficacy Will be Determined at Week 56",
+          "phases": [
+            "phase_3"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-11-16T02:00:31.022114Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 400,
+              "basis": "planned"
+            },
+            "allocation": "randomised",
+            "masking": "quadruple",
+            "comparators": [
+              "active"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "EyePoint Pharmaceuticals, Inc.",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Average change in best corrected visual acuity (BCVA)",
+                "time_frame": "Weeks 52 and 56"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": null
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Weeks 52 and 56",
+              "number": 56,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-16T02:00:31.022114Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "visual acuity",
+              "number": null,
+              "unit": null,
+              "code": "physical_test",
+              "confidence": 0.83,
+              "read_on": "2026-11-16T02:00:31.022114Z"
+            }
+          ]
+        }
+      ],
+      "papers": [
+        {
+          "identifier": "10.1016/j.xops.2024.100527",
+          "url": "https://doi.org/10.1016/j.xops.2024.100527",
+          "record_url": "https://europepmc.org/article/MED/38881599",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "indication_named",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "Phase I DAVIO Trial: EYP-1901 Bioerodible, Sustained-Delivery Vorolanib Insert in Patients With Wet Age-Related Macular Degeneration. 2024. article. Ophthalmology Science"
+            }
+          ],
+          "facts_as_of": "2026-11-16T02:00:28.431600Z",
+          "facts": {
+            "title": "Phase I DAVIO Trial: EYP-1901 Bioerodible, Sustained-Delivery Vorolanib Insert in Patients With Wet Age-Related Macular Degeneration.",
+            "journal": "Ophthalmology science",
+            "year": 2024,
+            "kinds": [
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": []
+          }
+        },
+        {
+          "identifier": "10.1371/journal.pone.0304782",
+          "url": "https://doi.org/10.1371/journal.pone.0304782",
+          "record_url": "https://europepmc.org/article/MED/38833447",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 0.93,
+              "reasons": [
+                "indication_named",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "Vorolanib, sunitinib, and axitinib: A comparative study of vascular endothelial growth factor receptor inhibitors and their anti-angiogenic effects. 2024. article. PLoS ONE"
+            }
+          ],
+          "facts_as_of": "2026-11-16T02:00:28.917268Z",
+          "facts": {
+            "title": "Vorolanib, sunitinib, and axitinib: A comparative study of vascular endothelial growth factor receptor inhibitors and their anti-angiogenic effects.",
+            "journal": "PloS one",
+            "year": 2024,
+            "kinds": [
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": [
+              "people",
+              "animals"
+            ]
+          }
+        }
+      ],
+      "background": [],
+      "organisations": [
+        {
+          "name": "EyePoint Pharmaceuticals",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.healio.com/news/ophthalmology/20261020/duravyu-misses-primary-endpoint-in-second-phase-3-wet-amd-trial"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "EyePoint Pharmaceuticals, Inc.",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT05381948",
+                "NCT06668064",
+                "NCT06683742"
+              ]
+            }
+          ]
+        }
+      ],
+      "reported_statements": []
+    },
+    {
       "slug": "electrically-accelerated-and-enhanced-remineralisation-tooth",
       "headline": "EAER aims to repair tooth decay without drilling or injections",
       "summary": "Researchers at King’s College London developed Electrically Accelerated and Enhanced Remineralisation (EAER), a two-step technique that prepares damaged enamel and uses a small electric current to move minerals into the repair site. The article says it may be available within three years and could also be used to whiten teeth.",
@@ -52405,6 +52995,291 @@
           "confidence": 0.88,
           "article_url": "https://www.yahoo.com/news/science/articles/drug-could-reduce-death-risk-122310256.html",
           "read_on": "2026-11-14"
+        }
+      ]
+    },
+    {
+      "slug": "er-100-open-angle-glaucoma",
+      "headline": "ER-100 phase 1 update reports tolerability and preliminary visual-field changes in glaucoma participants",
+      "summary": "Life Biosciences reported a Day 56 safety update in three adults with open-angle glaucoma given intravitreal ER-100. Oral doxycycline induced its gene expression for eight weeks; it was an activation agent, not a separate experimental glaucoma treatment. Two participants had preliminary visual-field improvements. This early, uncontrolled safety cohort does not establish efficacy.",
+      "vertical": "eyes-and-ears",
+      "approach": null,
+      "intervention": {
+        "name": "ER-100",
+        "synonyms": []
+      },
+      "indication": "Open-angle glaucoma",
+      "first_reported_date": "2026-10-08",
+      "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
+      "checked_by_person": false,
+      "status": {
+        "code": "phase_1",
+        "overlay_years": null,
+        "updated_at": "2026-11-16T02:00:25.412682Z",
+        "explained_by": [
+          11738,
+          11739
+        ],
+        "history": [
+          {
+            "on": "2025-12-18",
+            "code": "trial_registered"
+          },
+          {
+            "on": "2026-03-02",
+            "code": "phase_1"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://www.lifebiosciences.com/life-biosciences-announces-first-in-human-data-from-ongoing-phase-1-trial-evaluating-er-100-in-optic-neuropathies/",
+          "outlet": "Life Biosciences",
+          "title": "Life Biosciences announces first-in-human data from ongoing Phase 1 trial evaluating ER-100 in optic neuropathies",
+          "published_date": "2026-10-08",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [],
+      "events": [
+        {
+          "id": 11738,
+          "type": "trial_registered",
+          "event_date": "2025-12-18",
+          "date_basis": "first posted",
+          "summary": "Trial NCT07290244 registered (Phase 1).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT07290244",
+          "trial_id": "NCT07290244",
+          "trial_phases": [
+            "phase_1"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11739,
+          "type": "trial_status_change",
+          "event_date": "2026-03-02",
+          "date_basis": "start date",
+          "summary": "Trial NCT07290244 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT07290244",
+          "trial_id": "NCT07290244",
+          "trial_phases": [
+            "phase_1"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT07290244",
+          "url": "https://clinicaltrials.gov/study/NCT07290244",
+          "score": 1,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "Evaluating ER-100 for Safety in People With Glaucoma or Non-Arteritic Anterior Ischemic Optic Neuropathy (Optic Nerve Conditions). For: Open Angle Glaucoma (OAG), NAION( Non-arteritic Anterior Ischemic Optic Neuropathy). Tests: ER-100 epigenetic therapy. Phase 1, recruiting."
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT07290244",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT07290244",
+          "title": "Evaluating ER-100 for Safety in People With Glaucoma or Non-Arteritic Anterior Ischemic Optic Neuropathy (Optic Nerve Conditions)",
+          "phases": [
+            "phase_1"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-11-16T02:00:25.858547Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 18,
+              "basis": "planned"
+            },
+            "allocation": "non_randomised",
+            "masking": "none",
+            "comparators": [],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Life Biosciences Inc.",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Incidence of Treatment-Emergent Adverse Events (TEAEs) During and Post-Doxycycline Activation Period",
+                "time_frame": "Baseline to Day 56, Day 112"
+              },
+              {
+                "measure": "Incidence of Dose-Limiting Toxicities During and Post-Doxycycline Activation Period",
+                "time_frame": "Baseline to Day 56, Day 112"
+              },
+              {
+                "measure": "Change in Safety Laboratory Tests (Liver Function Tests - LFTs) During and Post-Doxycycline Activation Period",
+                "time_frame": "Baseline to Day 56, Day 112"
+              }
+            ],
+            "primary_outcomes_total": 22,
+            "why_stopped": null,
+            "results": null
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Day 112",
+              "number": 112,
+              "unit": "days",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-16T02:00:25.858547Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Incidence",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 0.99,
+              "read_on": "2026-11-16T02:00:25.858547Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "Day 112",
+              "number": 112,
+              "unit": "days",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-16T02:00:25.858547Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "Incidence",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 0.99,
+              "read_on": "2026-11-16T02:00:25.858547Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 2,
+              "field": "time_frame",
+              "words": "Day 112",
+              "number": 112,
+              "unit": "days",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-16T02:00:25.858547Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 2,
+              "field": "measure",
+              "words": "Safety Laboratory Tests (Liver Function Tests - LFTs)",
+              "number": null,
+              "unit": null,
+              "code": "body_measure",
+              "confidence": 0.95,
+              "read_on": "2026-11-16T02:00:25.858547Z"
+            }
+          ]
+        }
+      ],
+      "papers": [],
+      "background": [],
+      "organisations": [
+        {
+          "name": "Life Biosciences",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.lifebiosciences.com/life-biosciences-announces-first-in-human-data-from-ongoing-phase-1-trial-evaluating-er-100-in-optic-neuropathies/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Life Biosciences Inc.",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT07290244"
+              ]
+            }
+          ]
+        }
+      ],
+      "reported_statements": [
+        {
+          "text": "A single intravitreal dose given with daily oral doxycycline was well-tolerated in three participants through Day 56.",
+          "kind": "safety",
+          "firmness": "fact",
+          "speaker": "company",
+          "basis": "people",
+          "confidence": 1,
+          "article_url": "https://www.lifebiosciences.com/life-biosciences-announces-first-in-human-data-from-ongoing-phase-1-trial-evaluating-er-100-in-optic-neuropathies/",
+          "read_on": "2026-11-16"
+        },
+        {
+          "text": "No dose-limiting toxicities, serious adverse events, or adverse events of special interest were reported.",
+          "kind": "safety",
+          "firmness": "fact",
+          "speaker": "company",
+          "basis": "people",
+          "confidence": 0.99,
+          "article_url": "https://www.lifebiosciences.com/life-biosciences-announces-first-in-human-data-from-ongoing-phase-1-trial-evaluating-er-100-in-optic-neuropathies/",
+          "read_on": "2026-11-16"
+        },
+        {
+          "text": "The therapy is designed to restore retinal ganglion cell function by resetting cellular gene-expression patterns.",
+          "kind": "how_it_works",
+          "firmness": "possibility",
+          "speaker": "company",
+          "basis": "not_said",
+          "confidence": 0.81,
+          "article_url": "https://www.lifebiosciences.com/life-biosciences-announces-first-in-human-data-from-ongoing-phase-1-trial-evaluating-er-100-in-optic-neuropathies/",
+          "read_on": "2026-11-16"
+        },
+        {
+          "text": "An oral prednisolone taper is used to reduce the risk of inflammation related to an AAV-2 immune response.",
+          "kind": "safety",
+          "firmness": "fact",
+          "speaker": "company",
+          "basis": "not_said",
+          "confidence": 1,
+          "article_url": "https://www.lifebiosciences.com/life-biosciences-announces-first-in-human-data-from-ongoing-phase-1-trial-evaluating-er-100-in-optic-neuropathies/",
+          "read_on": "2026-11-16"
         }
       ]
     },

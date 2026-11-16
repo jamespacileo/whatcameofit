@@ -1,11 +1,11 @@
 // Only independently public reports enter this shared, expiring results library.
-// No page text, screenshots or reader identifiers are persisted. Version 10 excludes
-// answers scored without study types and trial-arm roles.
+// No page text, screenshots or reader identifiers are persisted. Version 11 excludes
+// readings that could discard formulation, study population or activation roles.
 import { articleKey } from "../src/lib/article-key.mjs";
 import { bounded } from "./public-cache.mjs";
 import { sourceUrl } from "./visual.mjs";
 const TTL = 86400;
-const VERSION = 10;
+const VERSION = 11;
 // The longest one shared-result read or write is waited on.
 const CACHE_TIMEOUT_MS = 500;
 async function keyFor(address) {
