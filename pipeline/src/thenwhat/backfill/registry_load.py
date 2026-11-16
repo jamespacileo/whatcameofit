@@ -20,10 +20,38 @@ OpenSession = Callable[[], AbstractContextManager[Session]]
 
 RECORD_KIND = "registry_trial"
 # The registry's expression for the trials the first backfill starts from.
+_DRUG_OR_BIOLOGICAL = "(AREA[InterventionType]DRUG OR AREA[InterventionType]BIOLOGICAL)"
 PHASE_3_DRUG_OR_BIOLOGICAL = (
-    "AREA[StudyType]INTERVENTIONAL AND AREA[Phase]PHASE3 AND "
-    "(AREA[InterventionType]DRUG OR AREA[InterventionType]BIOLOGICAL)"
+    f"AREA[StudyType]INTERVENTIONAL AND AREA[Phase]PHASE3 AND {_DRUG_OR_BIOLOGICAL}"
 )
+# Trials under way now in phase 2 or 3: recruiting, not yet recruiting, enrolling by
+# invitation, or active and no longer recruiting. The registry counted 23,548 of them
+# on 2026-11-16, 17,373 in phase 2 and 7,331 in phase 3 (a trial in both is counted in
+# each).
+ACTIVE_PHASE_2_OR_3 = (
+    "AREA[StudyType]INTERVENTIONAL AND (AREA[Phase]PHASE2 OR AREA[Phase]PHASE3) AND "
+    "AREA[OverallStatus](RECRUITING OR ACTIVE_NOT_RECRUITING OR ENROLLING_BY_INVITATION "
+    f"OR NOT_YET_RECRUITING) AND {_DRUG_OR_BIOLOGICAL}"
+)
+# The sets of trials a load can be asked for by name. A set is only which trials are
+# stored: it says nothing of how any of them turned out.
+TRIAL_SETS = {
+    "phase-3": PHASE_3_DRUG_OR_BIOLOGICAL,
+    "active-phase-2-3": ACTIVE_PHASE_2_OR_3,
+}
+
+
+class UnknownTrialSet(Exception):
+    """No set of trials has the name given."""
+
+
+def condition_of(name: str) -> str:
+    """The registry's expression for a named set of trials."""
+    if name not in TRIAL_SETS:
+        raise UnknownTrialSet(
+            f"No set of trials is named '{name}'. Sets: {', '.join(sorted(TRIAL_SETS))}."
+        )
+    return TRIAL_SETS[name]
 
 
 class TrialList(Protocol):
