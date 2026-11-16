@@ -194,6 +194,12 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 - [x] 12.4 Verify with tests: prepare marks the claim, the export skips it until cleared, and the command refuses a claim not held while clearing nothing.
 - [x] 12.5 Raise the export's schema version to 2 and have the site read only 2, so an export from pipeline code older than the hold stops the build; verify with a site test.
 
+## 15. Outlets that refuse the reader
+
+Batch 1 (2026-11-16) spent 83 of its 300 reader requests on two outlets that answered 401 to every page: reuters.com (44) and wsj.com (39). By batch 2 they stood at 50 and 43, with no page served.
+
+- [x] 15.1 Finish a lead without asking the reader when its outlet answered 401 to at least five pages and served none; verify with tests that such a lead makes no request and that an outlet which served a page is still asked.
+
 ## Workflow follow-up
 
 - Archive `backfill-work-ledger` before this change is archived, so that `work-ledger` exists in the main specs.

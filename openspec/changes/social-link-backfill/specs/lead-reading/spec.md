@@ -356,3 +356,14 @@ A lead linked by its title to a claim that already has the configured number of 
 #### Scenario: After a limited run
 - **WHEN** 200 leads have been through the reading step
 - **THEN** the report gives each count and the two costs, and no request is sent
+
+### Requirement: An outlet that refuses the reader page after page is not asked again
+Before asking the page reader for a lead's page, the read SHALL count the outlet's leads whose page the site answered with 401. When there are at least five and none of the outlet's leads has given an outcome only a served page gives (added to a claim, a new claim, needs a vertical, not one treatment, business news, identity unresolved), the lead SHALL be finished as cannot be read, saying the outlet answered 401 for that many pages and served none, and the reader SHALL NOT be asked. Whether a site is asked stays the reader's decision (ADR 0006): this acts on the site's own answers, and only on 401.
+
+#### Scenario: An outlet that refuses the reader
+- **WHEN** five of an outlet's pages were answered 401 and none was served, and another of its leads is due
+- **THEN** that lead cannot be read, its reason names the five refusals, and no request is made
+
+#### Scenario: An outlet that served a page
+- **WHEN** an outlet has five 401 answers and one lead that was read from its page
+- **THEN** its next lead is asked of the reader as before
