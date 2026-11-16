@@ -1,5 +1,15 @@
 # Design
 
+## Popup publication freshness
+
+Native Safari on A072 returned three relevant trials without the published PP405 card; the released website already displayed that exact-source card. The popup reused its six-hour index before considering its saved clinical answer. Revalidate the static index once per popup opening with its saved ETag. A 304 reuses the saved index without downloading its body; a changed index replaces the old one before exact-source matching or clinical-answer reuse. Keep the existing five-second index bound and dated offline fallback, and send no page URL or text with this static request. Preserve clinical answers and their original check time; no global result invalidation or new model work is required. Background refresh remains twice daily. This explicitly supersedes the prior local index refresh-policy preservation, not clinical-answer lifetime. Safari advances to 0.9.22.
+
+The normal 178-card export is complete. The two independently audited claim restorations already merged through PR #174 are preserved; only PP405's verified Dermatology Times reference differs from that publication snapshot. Stage the complete normal export rather than splicing individual cards.
+
+## Independent claims on one page
+
+The operator chose separate matches and cards for each identifiable independent claim on 2026-11-16. Extend the reading and presentation contract to retain each intervention/indication pair separately, with its own scores, uncertainty, provenance and matching cards. Preserve a genuinely studied combination as one complete regimen. Disease-only or unspecified treatment references do not become invented claims. Read the source once, reuse fetched public records and completed eligible work across claims, and retain existing request/deadline limits. If those limits prevent complete processing, state which claims remain unchecked rather than silently choosing one or presenting partial coverage as complete. This behavior remains pending implementation and release verification.
+
 ## PP405 androgenetic-alopecia coverage
 
 Create one normally extracted and prepared PP405 card for androgenetic alopecia from A072's primary company report. Keep the 78-person completed trial and its exploratory male-subgroup finding distinct from the later AWAKEN trial in men and separately registered trial in women. Verify all three primary records, retain the female trial's estimated start without inventing a start event, and preserve the existing lower-phase rule for Phase 2/3. The first trial's healthy-volunteers flag does not override its explicit AGA inclusion criteria. Assistant approval of its reported subgroup statement and the additional trial preserves their scores and non-human attribution. Normal export also refreshes shared organisation read timestamps on five existing cards, with no other prior-card changes. Exact A072 lookup uses the index; specific AGA readings can associate the new card, while broad hair-loss/growth wording remains unresolved. Current S038 caption review establishes source identity only; released social behavior and native Safari require separate evidence.

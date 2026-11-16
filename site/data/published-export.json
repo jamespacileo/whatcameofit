@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-16T07:46:27.298183Z",
+  "generated_at": "2026-11-16T07:50:10.172181Z",
   "last_checked_at": "2026-11-16T07:22:51.045087Z",
   "preview": false,
   "sources": [
@@ -176265,6 +176265,14 @@
           "outlet": "Pelage Pharmaceuticals",
           "title": "Pelage Pharmaceuticals Announces Positive Phase 2a Clinical Trial Results for PP405 in Regenerative Hair Loss Therapy",
           "published_date": "2025-06-17",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://www.dermatologytimes.com/view/reactivating-the-follicle-pp405-moves-toward-late-stage-trials-for-alopecia",
+          "outlet": "Dermatology Times",
+          "title": "Reactivating the Follicle: PP405 Moves Toward Late-Stage Trials for Alopecia",
+          "published_date": "2026-03-28",
           "archive_url": null,
           "published_by": null
         },

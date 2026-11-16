@@ -4,6 +4,21 @@ Associates automatic article and post lookups with existing knowledge cards only
 
 ## ADDED Requirements
 
+### Requirement: Independent claims receive separate answers
+Several identifiable independent intervention/indication pairs SHALL receive separate matches and card associations, retaining each pair's scores, scope, provenance and uncertainty. Genuine combinations SHALL remain whole; unspecified treatments SHALL not acquire invented identities. One source reading and eligible fetched records SHALL be reused within existing request and deadline limits. Unprocessed claims SHALL remain explicitly unchecked.
+
+#### Scenario: Roundup identifies two independent treatments
+- **WHEN** the source separately describes two identifiable treatments and their conditions
+- **THEN** each receives its own answer and compatible cards, without combining the treatments or assigning one claim's trial to the other
+
+#### Scenario: A genuine combination and a vague reference coexist
+- **WHEN** the source describes a studied two-treatment regimen and an unspecified new drug
+- **THEN** the complete regimen remains one claim and the vague reference establishes no invented treatment or match
+
+#### Scenario: Existing work limits prevent complete coverage
+- **WHEN** the lookup cannot finish all identified claims within its existing bounds
+- **THEN** the answer identifies the unchecked claims and does not imply the whole page was verified
+
 ### Requirement: An unspecified drug does not establish treatment identity
 Both lookup readers SHALL distinguish a specifically described unnamed intervention from disease and generic drug wording alone. The latter SHALL produce a negative identification without invented products or aliases, term search, scoring or research enrichment. Specific descriptions and reported study identities SHALL remain usable evidence, without automatically establishing a match. Obsolete saved answers SHALL be invalidated; no extra model call SHALL be added.
 

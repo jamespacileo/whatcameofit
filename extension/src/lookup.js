@@ -4,11 +4,6 @@
 // upgrade sees current service settings. The background check writes the same shape.
 export const CACHE_VERSION = 2;
 
-/** Whether a copy saved at `savedAt` may still be used without asking the site again. */
-export function isFresh(savedAt, now, maxAge) {
-  return typeof savedAt === "number" && now - savedAt < maxAge;
-}
-
 /**
  * @param {string | null} key the current page's address in comparison form, or null
  *   when the tab is not a web page

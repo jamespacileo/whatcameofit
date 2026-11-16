@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createPopupController } from "../src/controller.js";
+import { remember } from "../src/results.js";
 
 const tab = { id: 7, url: "https://news.example.org/report", key: "news.example.org/report" };
 const index = { articles: {}, claims: {}, live: "/api/lookup" };
@@ -59,11 +60,12 @@ test("tracked, non-web and disabled-service pages never read the page or start a
     const { controller, calls } = setup({
       readTab: async () => one.current,
       storage: { get: async () => ({ lookup: { version: 2, index: one.lookup, savedAt: Date.now() } }) },
+      fetch: async (url, options) => { calls.fetch.push({ url, options }); return Response.json(one.lookup); },
     });
     await controller.open();
     assert.equal(calls.states.at(-1).kind, one.kind);
     assert.equal(calls.read.length, 0);
-    assert.equal(calls.fetch.length, 0);
+    assert.equal(calls.fetch.length, one.current.key ? 1 : 0);
   }
 });
 
@@ -72,8 +74,96 @@ test("a fresh cached index still starts the page search", async () => {
     storage: { get: async () => ({ lookup: { version: 2, index, savedAt: Date.now() } }) },
   });
   await controller.open();
+  assert.equal(calls.fetch.length, 2);
+  assert.equal(calls.fetch[1].options.method, "POST");
+});
+
+test("a newly published exact-source card supersedes the recent index and saved clinical answer", async () => {
+  const claim = { headline: "EX-1 for tinnitus", page: "/ex1-tinnitus", status: "Phase 1 trial" };
+  const latest = { ...index, articles: { [tab.key]: ["ex1"] }, claims: { ex1: claim } };
+  const writes = [];
+  const clinical = { ...answer, about_a_treatment: true, names: ["Topical EX-1"], condition: "Tinnitus in adults", tracked: [] };
+  const { controller, calls } = setup({
+    storage: {
+      get: async () => ({ lookup: { version: 2, index, savedAt: Date.now(), etag: '"old"' },
+        results: remember([], tab.key, "article-print", clinical, Date.now() - 1000) }),
+      set: async values => writes.push(values),
+    },
+    readPage: async current => { calls.read.push(current); return { ...request, contentFingerprint: "article-print" }; },
+    fetch: async (url, options) => {
+      calls.fetch.push({ url, options });
+      if (options.method === "POST") return Response.json(clinical);
+      return Response.json(latest, { headers: { ETag: '"new"' } });
+    },
+  });
+  await controller.open();
+  assert.equal(calls.states.at(-1).kind, "tracked");
+  assert.deepEqual(calls.states.at(-1).claims, [claim]);
+  assert.equal(calls.read.length, 0);
   assert.equal(calls.fetch.length, 1);
-  assert.equal(calls.fetch[0].options.method, "POST");
+  assert.equal(calls.fetch[0].options.headers["If-None-Match"], '"old"');
+  assert.equal(writes.find(value => value.lookup)?.lookup.etag, '"new"');
+});
+
+test("an unchanged index uses no response body and reuses the completed clinical answer", async () => {
+  const checkedAt = Date.now() - 1000;
+  const clinical = { ...answer, about_a_treatment: true, names: ["EX-1"], condition: "Tinnitus", tracked: [] };
+  const stored = { lookup: { version: 2, index, savedAt: checkedAt, etag: '"same"' },
+    results: remember([], tab.key, "article-print", clinical, checkedAt) };
+  const { controller, calls } = setup({
+    storage: { get: async () => stored, set: async values => Object.assign(stored, values) },
+    readPage: async () => ({ ...request, contentFingerprint: "article-print" }),
+    fetch: async (url, options) => {
+      calls.fetch.push({ url, options });
+      assert.equal(options.headers["If-None-Match"], '"same"');
+      assert.equal(options.body, undefined, "no page context is sent with the index request");
+      return { status: 304, ok: false, json: () => assert.fail("304 has no body") };
+    },
+  });
+  await controller.open();
+  assert.equal(calls.fetch.length, 1);
+  assert.equal(calls.states.at(-1).kind, "answer");
+  assert.equal(calls.states.at(-1).cachedAt, checkedAt);
+  assert.deepEqual(stored.lookup.index, index);
+  assert.ok(stored.lookup.savedAt >= checkedAt);
+});
+
+test("an updated index removes an old exact-source association", async () => {
+  const old = { ...index, articles: { [tab.key]: ["old"] }, claims: { old: { page: "/old", headline: "Old card" } } };
+  const { controller, calls } = setup({
+    storage: { get: async () => ({ lookup: { version: 2, index: old, savedAt: Date.now() } }), set: async () => {} },
+  });
+  await controller.open();
+  assert.equal(calls.states.at(-1).kind, "answer");
+  assert.equal(calls.states.some(state => state.kind === "tracked"), false);
+});
+
+test("failed or stalled revalidation uses the dated saved index and never writes a late response", async () => {
+  const savedAt = Date.now() - 1000;
+  const saved = { ...index, articles: { [tab.key]: ["old"] }, claims: { old: { page: "/old", headline: "Saved card" } } };
+  for (const failure of ["offline", "stalled"]) {
+    const response = deferred();
+    const writes = [];
+    let signal;
+    const { controller, calls } = setup({
+      indexTimeoutMs: 20,
+      storage: { get: async () => ({ lookup: { version: 2, index: saved, savedAt } }), set: async value => writes.push(value) },
+      fetch: async (_url, options) => {
+        signal = options.signal;
+        if (failure === "offline") throw new Error("offline");
+        return response.promise;
+      },
+    });
+    await controller.open();
+    assert.equal(calls.states.at(-1).kind, "tracked");
+    assert.equal(calls.states.at(-1).savedAt, savedAt);
+    assert.equal(calls.read.length, 0);
+    if (failure === "stalled") assert.equal(signal.aborted, true);
+    response.resolve(Response.json(index));
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(writes.some(value => value.lookup), false);
+    controller.close();
+  }
 });
 
 test("changing automatic search settings preserves own-site pages without reading or saving them", async () => {
@@ -89,6 +179,7 @@ test("changing automatic search settings preserves own-site pages without readin
           get: async () => ({ lookup: { version: 2, index: lookup, savedAt: Date.now() }, sharing: { version: 1, enabled } }),
           set: async (values) => { writes.push(values); },
         },
+        fetch: async (url, options) => { calls.fetch.push({ url, options }); return Response.json(lookup); },
       });
       await controller.open();
       const original = calls.states.at(-1);
@@ -98,7 +189,7 @@ test("changing automatic search settings preserves own-site pages without readin
         assert.deepEqual(calls.states.at(-1), original, `${path || "home"}: setting ${setting}`);
       }
       assert.equal(calls.read.length, 0);
-      assert.equal(calls.fetch.length, 0);
+      assert.equal(calls.fetch.filter(call => call.options.method === "POST").length, 0);
       assert.ok(writes.every((values) => !Object.hasOwn(values, "recent")));
       controller.close();
     }

@@ -6,6 +6,8 @@ Released corpus checks found a trial match accompanied by a knowledge card for a
 
 ## What Changes
 
+- Show separate matches and cards for each identifiable independent claim on a page, as the operator chose on 2026-11-16; keep genuine combination regimens together and retain uncertainty for unidentified claims.
+- Revalidate the extension's published card index when its popup opens, using conditional requests to avoid transferring an unchanged index and retaining bounded offline fallback. Newly published exact-source cards must precede saved clinical answers.
 - Require the same condition and complete intervention when associating a live answer with an existing card; uncertainty must not become a positive association.
 - Respect explicit patient populations and treatment settings when scoring registry trials, including a separately linked first-line trial in an article about previously treated patients.
 - Capture the currently visible slide within an identity-bound carousel, respecting ancestor clipping and the existing consent/privacy limits.
