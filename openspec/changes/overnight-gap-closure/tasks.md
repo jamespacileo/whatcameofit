@@ -2,6 +2,12 @@
 
 Each task names its lane and model. "Here" is the one session that writes to the working database.
 
+## 0. Unattended from the start
+
+- [ ] 0.1 Tell every running session the rule: do not ask; choose the practical, reversible option; list it under "Decisions made unattended"; never take an action the plan reserves for the operator
+- [ ] 0.2 Start the hand-over note and add to it as the night goes: decisions, done, not done, morning list
+- [ ] 0.3 Keep the machine awake and the watcher for approved branches running
+
 ## 1. Reddit backfill to the site (data lane, here)
 
 - [ ] 1.1 Let the read run finish; confirm nothing readable is left and the 115 held leads were not asked

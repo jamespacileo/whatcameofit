@@ -34,6 +34,28 @@ A finding SHALL block a merge only when it is one of these: records could be los
 - **WHEN** a review finds that a request can still reach an outlet the page reader has stopped
 - **THEN** the pull request is not merged, the finding goes back to its session, and the fix is read again before the merge
 
+### Requirement: Unattended work decides for itself and writes the decision down
+When the operator has said they cannot be asked, no session or subagent SHALL stop to ask a question. Where it would have asked, it SHALL take the option that is most practical and can be undone, carry on, and record the decision: what the choice was, what it chose, why, and how to undo it. The record SHALL be where the operator will read it first: the pull request's description for a session, the hand-over note for the session that coordinates.
+
+#### Scenario: A choice between two reasonable approaches
+- **WHEN** an unattended session meets a choice its instructions do not settle
+- **THEN** it takes the more practical, reversible option, finishes the task, and lists the decision in its pull request under a heading the operator can find
+
+#### Scenario: A blocked step
+- **WHEN** an unattended session cannot complete a step
+- **THEN** it does the rest of its task, says plainly what was not done and why, and does not wait
+
+### Requirement: What cannot be undone waits, whatever else proceeds
+Unattended work SHALL NOT take an action that cannot be undone or that the operator reserved, and SHALL queue it for the operator with what is needed to decide: applying a rekey or any merge of stored records; deleting data; passing a spending or request ceiling; creating accounts or cloud resources; installing or changing a scheduled job beyond pausing and resuming it; sending a message to anyone outside; accepting a source's terms. Publishing claims that passed the audit is not such an action when the operator has already agreed to it. Everything that does not depend on a queued action SHALL go on without it.
+
+#### Scenario: The rekey overnight
+- **WHEN** the survey of duplicate leads is ready and the operator is away
+- **THEN** the counts are written for the operator, the rekey is not applied, and the trial reload and the pull requests proceed
+
+#### Scenario: A ceiling is reached
+- **WHEN** the night's model spend reaches its budget with work still due
+- **THEN** the work that spends stops, the rest goes on, and the hand-over says what is still due
+
 ### Requirement: A change that needs a migration is merged with its migration
 A pull request that adds a migration SHALL NOT be merged while a run is writing to the working database from an older checkout, unless the migration only adds and the older code runs unchanged against it. Its merge, the backup, and the migration SHALL be done together, by the one session that writes to the working database.
 

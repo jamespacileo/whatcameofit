@@ -82,6 +82,29 @@ One delegated task on the cheaper model, with exact instructions: add the fields
 - A session is archived when its pull request merges.
 - Pull requests from other sessions of the operator's (267, 269 and site work) are not this plan's to merge.
 
+### Nobody to ask until morning
+
+The operator said on the evening of 16 November that they cannot answer anything until the morning. So:
+
+- **No session asks.** Each is told: where you would ask, choose the practical, reversible option, finish, and list the decision under "Decisions made unattended" in the pull request. A session that stops to ask is told once to proceed by this rule.
+- **This session decides the rest** on the same rule and keeps one hand-over note: every decision, what was done, what was not, and the morning list.
+- **Defaults, so that each need not be decided twice:**
+
+| Situation | Default |
+|---|---|
+| Auditor flags a judgement call | Archive: it can be restored; a wrong claim on the site cannot be unseen |
+| Two held claims archive each other as duplicates | Keep the better-named one |
+| A review finding is not on the blocking list | Merge and list it |
+| A fix round does not arrive within 45 minutes | Merge if nothing blocking is left; otherwise leave it open and move on |
+| Two pull requests conflict | The one already reviewed merges first; the other's session resolves |
+| A step in the data lane fails once | Retry once; then skip it, note it, and do what does not depend on it |
+| Migration 0028 is not purely additive | Apply neither migration tonight; the reload waits |
+| The wider-record field list is disputed | Take the union of what both sides ask for; a field too many costs bytes |
+| A source answers outside what its terms describe | Stop asking it; note it |
+| A specification leaves a product choice open | Write both options and a recommendation; do not pick for the operator |
+
+- **Waits for the operator regardless:** applying the rekey; any deletion; anything past a ceiling; cloud resources; the letter to the publisher; accepting terms; running the claim merge and rename commands on real claims. Everything else proceeds without them.
+
 ### Stops
 
 The data lane stops and leaves a note, without retrying, when: model spend tonight reaches $10; the page reader answers `ROUTER_BUSY` repeatedly or reads slow well past 7 seconds (drop to 3 in flight first); the dump cannot be verified; a migration fails; the audit archives more than 70% of a round (publish what cleared, do not start another read run); a deployment's checks fail twice.
