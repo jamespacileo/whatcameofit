@@ -541,6 +541,16 @@ test("Scenario: Page that describes itself in its tags", () => {
   assert.deepEqual([bare.headline, bare.summary, bare.published, bare.body], ["Teeth & gums", null, null, null]);
 });
 
+test("the article's own publication date is preferred to a tag named only date, as in the pipeline", () => {
+  // Seen on medscape.com on 2026-11-16: its "date" tag held the day it was changed.
+  const changed = readPage('<head><meta name="date" content="9/6/2026"><script type="application/ld+json">'
+    + '{"@type": "NewsArticle", "datePublished": "2026-09-05", "dateModified": "2026-09-06"}</script></head>');
+  const named = readPage('<head><meta name="parsely-pub-date" content="2026-03-04T09:30:00Z">'
+    + '<script type="application/ld+json">{"datePublished": "2026-03-05"}</script></head>');
+
+  assert.deepEqual([changed.published, named.published], ["2026-09-05", "2026-03-04T09:30:00Z"]);
+});
+
 test("Scenario: Page that carries the article as structured data", () => {
   const page = readPage(RICH_PAGE);
   const text = pageAsText(page);

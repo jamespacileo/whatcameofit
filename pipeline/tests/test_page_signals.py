@@ -198,6 +198,28 @@ def test_a_date_in_a_tag_is_preferred_to_one_shown_in_words():
     assert published_day(page.published) == date(2026, 10, 22)
 
 
+def test_the_article_s_own_publication_date_is_preferred_to_a_tag_named_only_date():
+    # Seen on medscape.com on 2026-11-16: its "date" tag held the day it was changed.
+    page = read_page(
+        '<html><head><meta name="date" content="9/6/2026">'
+        '<script type="application/ld+json">{"@type": "NewsArticle",'
+        ' "datePublished": "2026-09-05", "dateModified": "2026-09-06"}</script>'
+        "</head><body></body></html>"
+    )
+
+    assert published_day(page.published) == date(2026, 9, 5)
+
+
+def test_a_tag_that_names_publication_is_preferred_to_structured_data():
+    page = read_page(
+        '<html><head><meta name="parsely-pub-date" content="2026-03-04T09:30:00Z">'
+        '<script type="application/ld+json">{"datePublished": "2026-03-05"}</script>'
+        "</head><body></body></html>"
+    )
+
+    assert published_day(page.published) == date(2026, 3, 4)
+
+
 @pytest.mark.parametrize(
     ("given", "day"),
     [
