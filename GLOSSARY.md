@@ -34,6 +34,7 @@ Domain terms for thenwhat. Behavior is specified in `openspec/`; this file only 
 | **Follow-up paper** | A paper that cites the origin paper and either shares an author with it or names the intervention. |
 | **Review state** | Pending, approved or rejected. Applies to draft claims, matches and evidence events. A decision is made by a rule, a human, the seed loader or an assistant; approval by rule publishes. |
 | **Archived** | Taken off the public site by the operator. The address answers 410; the database keeps the record. Not a review state. |
+| **Awaiting audit** | A claim that `thenwhat prepare` approved by rule for a link lead's read, held out of every export until the audit of its batch clears it (`thenwhat audit clear`) or archives it. Never published, so its address never existed. Not a review state, and not a review gate for a person: the audit checks a batch, and an approved claim stays approved. |
 | **Confidence** | A match's score shown as a word and a percentage, such as "High match · 92%", with its reasons. An automatic estimate of matching the reported treatment and condition, never a verdict on the treatment. |
 | **Source** | An article or post the pipeline read: its address, outlet, title and date, never its text. Has a page listing its claim or up to five candidates. |
 | **Stage reading** | How a model read a claim's evidence stage from its first report, with a score. In the sure band it confirms the stage by rule. In the lower band it is shown on the claim page marked low confidence, and decides nothing. |

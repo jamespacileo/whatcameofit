@@ -623,10 +623,20 @@ test("Scenario: Offline build", () => {
 
 test("an export that does not match the schema stops the build", () => {
   const broken = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-bad-")), "export.json");
-  fs.writeFileSync(broken, JSON.stringify({ schema_version: 1, claims: "not a list" }));
+  fs.writeFileSync(broken, JSON.stringify({ schema_version: 2, claims: "not a list" }));
   const result = build(broken, fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-site-bad-")));
   assert.notEqual(result.status, 0);
   assert.match(result.stdout + result.stderr, /does not match export\.schema\.json/);
+});
+
+test("an export from pipeline code older than the audit hold stops the build", () => {
+  // Version 1 exporters do not know which claims await audit, so they would publish them.
+  const fixture = JSON.parse(fs.readFileSync(new URL("./fixture-export.json", import.meta.url), "utf8"));
+  const old = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-old-")), "export.json");
+  fs.writeFileSync(old, JSON.stringify({ ...fixture, schema_version: 1 }));
+  const result = build(old, fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-site-old-")));
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout + result.stderr, /has schema version 1; this site reads version 2/);
 });
 
 test("Scenario: Claim with an approach", () => {

@@ -137,6 +137,9 @@ class Claim(Reviewed, Base):
     # Taken off the public site by the operator. The record stays; the reason is never exported.
     archived_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
     archive_reason: Mapped[str | None] = mapped_column(Text)
+    # Approved by `thenwhat prepare` for a link lead's read, and held off the site until
+    # the batch it came in has been audited (`thenwhat audit clear`). Never exported.
+    awaiting_audit_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
 
 
