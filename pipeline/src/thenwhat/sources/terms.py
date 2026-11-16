@@ -106,6 +106,26 @@ _LISTED = (
         accepted=True,
         in_data_file=True,
     ),
+    # Read only to give a brand its ingredient as a name to search the trial registry
+    # for. Nothing from it is published. It stays out of the data file until the operator
+    # decides where the statement NLM asks for is shown (docs/sources.md).
+    SourceTerms(
+        name="rxnorm",
+        title="RxNorm, through the RxNav API",
+        licence="RxNorm's own content, which NLM states needs no licence; RxNav terms of service",
+        # The statement NLM asks an application that uses its data to carry.
+        credit=(
+            "This product uses publicly available data from the U.S. National Library of"
+            " Medicine (NLM), National Institutes of Health, Department of Health and"
+            " Human Services; NLM is not responsible for the product and does not endorse"
+            " or recommend this or any other product."
+        ),
+        home_url="https://www.nlm.nih.gov/research/umls/rxnorm/index.html",
+        terms_url="https://lhncbc.nlm.nih.gov/RxNav/TermsofService.html",
+        read_on=date(2026, 11, 16),
+        accepted=True,
+        in_data_file=False,
+    ),
     # The three below are read for target and drug cards. The operator accepted Open
     # Targets' own data and UniProt's function descriptions for the page and the data
     # file on 2026-11-14 (knowledge-cards, 2a.18; docs/sources.md), and ChEMBL's
