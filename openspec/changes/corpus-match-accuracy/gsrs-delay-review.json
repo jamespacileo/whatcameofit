@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-16",
+  "observed": "Emrusolmin preparation took 131 seconds; resolution took 95 seconds and reported four failed attempts at optional GSRS development-code enrichment.",
+  "reproduction": "Offline public Gsrs.substances_named/codes_for seam, mocked network timeouts, simulated clock and an isolated database transaction. One name is sufficient: no article, model or live network dependency.",
+  "ranked_hypotheses_and_probes": [
+    {
+      "hypothesis": "Default retry count multiplies long request waits.",
+      "prediction": "One attempt substantially lowers outage duration.",
+      "result": "Default: 131 simulated seconds. One attempt: 31 seconds."
+    },
+    {
+      "hypothesis": "Source pacing causes most of the delay.",
+      "prediction": "Removing only pacing eliminates most elapsed time.",
+      "result": "127 simulated seconds without pacing, only four fewer; not the dominant cause."
+    },
+    {
+      "hypothesis": "Enumerating intervention aliases causes the delay.",
+      "prediction": "A single name eliminates the delay.",
+      "result": "The failing minimal case uses one name; delay remains."
+    }
+  ],
+  "fix": "Only GSRS defaults become two attempts and five-second network inactivity timeouts per phase. Shared source defaults remain four attempts and thirty seconds; existing explicit overrides remain supported.",
+  "limits": "Not a whole-operation deadline. Network phases, Retry-After, shared pacing and separate successful requests can make total elapsed time longer. No global retry weakening, source-pacing change, alternative reader, model call, clinical scoring change or cache invalidation.",
+  "offline_verification": {
+    "red": "ReadTimeout and ConnectTimeout regressions failed before the fix: four attempts rather than two. Long Retry-After control already passed.",
+    "green": "138 affected source/resolve tests passed. Original offline loop fell from 131 to 13 simulated seconds; refusal remains explicit and no failure is cached. Later success is requested afresh and reused normally.",
+    "full_checks": "make check passed: 1,565 pipeline, 660 site, 170 extension tests, lint and types. Strict OpenSpec validation passed."
+  },
+  "candidate_live": {
+    "outcome": "explicit source refusal",
+    "reason": "gsrs did not answer after 2 attempts.",
+    "checked_at": "2026-11-16T07:09:39.938000+00:00",
+    "elapsed_seconds": 16.043,
+    "max_attempts": 2,
+    "request_inactivity_timeout_seconds": 5,
+    "private_claim_changes": false,
+    "method": "One candidate GSRS lookup for the public intervention name in a rolled-back isolated test-database transaction; no prepare/model/clinical-registry work. This measures actual elapsed time, not a guaranteed whole-operation deadline."
+  },
+  "release": "Pending independent review and CI deployment. This is a private-pipeline change; public snapshot, Worker logic and signed Safari 0.9.21 resources are unchanged."
+}

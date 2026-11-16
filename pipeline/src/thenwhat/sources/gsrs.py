@@ -60,6 +60,10 @@ class Gsrs(Source):
     name = "gsrs"
     # No limit is stated. One request a second is well under what a person browsing sends.
     default_rate_per_second = 1.0
+    # Code enrichment is optional; a stalled source must not occupy minutes of prepare.
+    # Keep one transient retry and the shared Retry-After/pacing/refusal behavior.
+    default_max_attempts = 2
+    request_timeout = 5.0
 
     def substances_named(self, name: str) -> list[SourceRecord]:
         """Every substance GSRS lists under exactly this name, whatever its case, each
