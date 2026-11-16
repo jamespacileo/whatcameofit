@@ -14,6 +14,7 @@ from thenwhat.claims.promises import parse_promise_date
 from thenwhat.claims.verticals import APPROACHES, VERTICALS
 from thenwhat.db.models import Claim, Entity, EntitySubstance, Promise, SourceArticle
 from thenwhat.domain import EntityType, ReviewState
+from thenwhat.sources.rxnorm import not_searched
 
 MAX_SLUG_LENGTH = 60
 MAX_SUMMARY_LENGTH = 500
@@ -395,7 +396,8 @@ def claims_of_a_named_substance(
     The name is shared only whole: the registry's chemical names run to many words, and
     a word of one is no name for the treatment. This finds candidates and decides
     nothing. A claim for the same condition, or that condition narrowed, comes first,
-    then the oldest. A rejected draft is never a candidate.
+    then the oldest. A rejected draft is never a candidate. Nor is a claim found only
+    by the antigen a source of brands lists a vaccine under.
     """
     wanted = [words for name in names if (words := name_key(name).split())]
     if not wanted:
@@ -412,13 +414,30 @@ def claims_of_a_named_substance(
             EntitySubstance.payload["substance"]["_name"].astext,
             func.jsonb_path_query_array(EntitySubstance.payload, cast(_SUBSTANCE_NAMES, JSONPATH)),
             EntitySubstance.codes,
+            EntitySubstance.source_name,
+            EntitySubstance.payload["product_codes"],
         )
         .join(Entity, Entity.claim_id == Claim.id)
         .join(EntitySubstance, EntitySubstance.entity_id == Entity.id)
         .where(Entity.type == EntityType.INTERVENTION, Claim.review_state != ReviewState.REJECTED)
         .order_by(Claim.id)
     )
-    for claim_id, slug, condition, name, summary, substance, listed, codes in rows:
+    for (
+        claim_id,
+        slug,
+        condition,
+        name,
+        summary,
+        substance,
+        listed,
+        codes,
+        source,
+        products,
+    ) in rows:
+        # A vaccine's antigen is no name for it, and an ingredient whose brand is not
+        # yet known to be no vaccine is not taken for one (`not_searched`).
+        if not_searched(source, {} if products is None else {"product_codes": products}):
+            continue
         registered = [
             name_key(other).split()
             for other in (substance, *(listed or ()), *(codes or ()))

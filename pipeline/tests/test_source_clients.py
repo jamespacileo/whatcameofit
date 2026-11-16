@@ -1564,6 +1564,58 @@ def test_a_vaccine_brand_is_found_under_its_antigen_with_its_vaccine_code(
     assert replay.requests[4].url.params["propName"] == "CVX"
 
 
+def test_a_monoclonal_antibody_with_a_cvx_code_is_no_vaccine(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: A brand CDC gives a code that is not a vaccine's"""
+    source, replay = brands(session, fake_time, fixture_json, "rxcui_beyfortus")
+
+    [record] = source.substances_named("Beyfortus")
+
+    # CDC codes nirsevimab 306 and 307, as it codes immune globulins: not vaccines.
+    assert record.payload["substance"]["_name"] == "nirsevimab"
+    assert record.payload["product_codes"] == {
+        "2642412": fixture_json("rxnorm/property_cvx_2642412.json"),
+        "2642415": fixture_json("rxnorm/property_cvx_2642415.json"),
+    }
+    assert vaccine_codes(record.payload) == []
+
+
+def test_a_brand_with_more_branded_drugs_than_are_read_finds_nothing(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Part of a brand's answer is missing. A vaccine code on a branded drug
+    not asked about could be missed, so none is guessed."""
+    many = {
+        "relatedGroup": {
+            "conceptGroup": [
+                {
+                    "tty": "SBD",
+                    "conceptProperties": [{"rxcui": str(2700000 + n)} for n in range(21)],
+                }
+            ]
+        }
+    }
+
+    def route(request: httpx.Request):
+        last = request.url.path.rsplit("/", 1)[-1]
+        if last == "rxcui.json":
+            return fixture_json("rxnorm/rxcui_elevidys.json")
+        if last == "properties.json":
+            return fixture_json("rxnorm/properties_2641681.json")
+        if request.url.params["tty"] == "SBD":
+            return many
+        return fixture_json("rxnorm/related_in_2641681.json")
+
+    replay = Replay(route)
+    source = RxNorm(
+        session, contact_email=CONTACT, transport=httpx.MockTransport(replay), time=fake_time
+    )
+
+    assert source.substances_named("Elevidys") == []
+    assert not any(r.url.path.endswith("/property.json") for r in replay.requests)
+
+
 def test_a_brand_whose_branded_drugs_are_missing_finds_nothing(
     session: Session, fake_time, fixture_json
 ):

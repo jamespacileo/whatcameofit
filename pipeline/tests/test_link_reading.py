@@ -31,6 +31,7 @@ from thenwhat.backfill.link_read import (
     ReadClient,
     held_outlets,
     reads_naming_archived_claims,
+    reads_naming_live_claims,
 )
 from thenwhat.backfill.link_screen import REGISTRY_TRIAL, TITLE_NAMES_CLAIM
 from thenwhat.backfill.outlet_hold import OUTLET_HOLD, OUTLET_TURN_LOCK
@@ -1405,12 +1406,33 @@ def test_a_read_whose_slug_an_archived_claim_has_is_listed_as_overlapping_it(ses
     reader = Reader(session, fake_time, OWNED_DRAFT | {"indication": "Alcohol-use disorder"})
     claim = claim_owning_the_slug(session, "alcohol use disorder", older=0)
     archive_claim(session, claim.slug, reason="synthetic fault", now=NOW)
+    # Were the decision asked, it would say the article reports that claim.
+    reader.backend.same_claim = claim.slug
     lead = reader.lead()
 
     reader.read()
 
+    # An archived claim is not joined: it is not even offered.
+    assert reader.backend.same_claim_asked == []
     assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.IDENTITY_UNRESOLVED, None)
+    assert len(articles_of(session, claim)) == 0
     assert reads_naming_archived_claims(session) == [(lead, claim)]
+    assert reads_naming_live_claims(session) == []
+
+
+def test_a_read_whose_slug_a_rejected_claim_has_is_listed_as_overlapping_it(session, fake_time):
+    """Scenario: A read whose new slug a rejected claim has. The slug stays the rejected
+    claim's, as every slug does, so no claim is drafted; the read is listed with it."""
+    reader = Reader(session, fake_time, OWNED_DRAFT | {"indication": "Alcohol-use disorder"})
+    claim = claim_owning_the_slug(session, "alcohol use disorder", older=0)
+    record_decision(claim, ReviewState.REJECTED, by=Decider.RULE, now=NOW)
+    lead = reader.lead()
+
+    report = reader.read()
+
+    assert report.failed == 0 and reader.backend.same_claim_asked == []
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.IDENTITY_UNRESOLVED, None)
+    assert reads_naming_live_claims(session) == [(lead, claim)]
 
 
 def test_rejected_equal_name_is_recorded_as_unresolved_without_retry(reader: Reader):

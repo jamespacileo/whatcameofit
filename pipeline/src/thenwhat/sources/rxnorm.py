@@ -31,9 +31,47 @@ INGREDIENT = "IN"
 BRANDED_DRUG = "SBD"
 # The property that holds a branded drug's code in CDC's vaccine code set.
 VACCINE_CODE = "CVX"
-# How many of a brand's branded drugs are asked for a vaccine code. RxNorm gives the
-# code to each of a vaccine's branded drugs, so the first few say it.
-MAX_PRODUCTS = 5
+# How many branded drugs a brand may have and still be asked about. Each is asked for
+# its vaccine code until one has one; a brand with more finds nothing, as a name more
+# concepts carry does: a vaccine code on a drug not asked about could be missed.
+MAX_PRODUCTS = 20
+# CVX codes that CDC's table gives products that are not vaccines: immune globulins,
+# antitoxins, monoclonal antibodies (nirsevimab, Beyfortus, is 306 and 307), tuberculin
+# skin tests, and the codes for "RSV, unspecified" and "unknown vaccine or immune
+# globulin". Their ingredient is a drug, searched as a name. From the table as read on
+# 2026-11-16 (docs/sources.md); a code CDC adds later counts as a vaccine until listed.
+NOT_VACCINES = frozenset(
+    {
+        "12",
+        "13",
+        "27",
+        "29",
+        "30",
+        "34",
+        "36",
+        "71",
+        "79",
+        "86",
+        "87",
+        "93",
+        "95",
+        "96",
+        "97",
+        "117",
+        "145",
+        "154",
+        "156",
+        "157",
+        "180",
+        "181",
+        "304",
+        "306",
+        "307",
+        "315",
+        "332",
+        "999",
+    }
+)
 # A name that more concepts than this carry identifies none, and none is read.
 MAX_CONCEPTS = 5
 # A brand's ingredients change rarely. NLM recommends keeping answers 12 to 24 hours at
@@ -90,9 +128,10 @@ def _codes_in(answer: Any) -> list[str]:
 
 
 def vaccine_codes(payload: Any) -> list[str]:
-    """The CVX codes RxNorm gives the branded drugs of the brand a record was found
-    under: the brand is a vaccine, and its ingredient an antigen, when there are any.
-    Empty for a record from another source, or kept before the codes were read."""
+    """The CVX codes of vaccines RxNorm gives the branded drugs of the brand a record
+    was found under: the brand is a vaccine, and its ingredient an antigen, when there
+    are any. A code CDC gives a product that is not a vaccine does not count. Empty for
+    a record from another source, or kept before the codes were read."""
     if not isinstance(payload, dict):
         return []
     answers = payload.get("product_codes")
@@ -103,8 +142,22 @@ def vaccine_codes(payload: Any) -> list[str]:
         for answer in answers.values()
         if isinstance(answer, dict)
         for code in _codes_in(answer)
+        if code not in NOT_VACCINES
     ]
     return sorted(set(found))
+
+
+def not_searched(source_name: str, payload: Any) -> bool:
+    """Whether a kept substance's name is kept from searches and from finding claims:
+    an RxNorm ingredient of a vaccine brand, or one kept before RxNorm's vaccine codes
+    were read, whose brand is not known to be no vaccine until it is looked up again."""
+    if source_name != "rxnorm":
+        return False
+    return (
+        not isinstance(payload, dict)
+        or "product_codes" not in payload
+        or bool(vaccine_codes(payload))
+    )
 
 
 def _brand(record: dict[str, Any], asked: str) -> dict[str, Any] | None:
@@ -196,19 +249,25 @@ class RxNorm(Source):
         return list(records.values())
 
     def _products(self, brand: str) -> tuple[dict[str, Any], datetime] | None:
-        """The brand's branded drugs, and the vaccine code each of the first
-        `MAX_PRODUCTS` carries, as fetched, with the time of the last answer. None when
-        an answer is missing: without them a vaccine could not be told from a drug."""
+        """The brand's branded drugs, and the vaccine code of each, asked until one is a
+        vaccine's, as fetched, with the time of the last answer. None when an answer is
+        missing, or the brand has more than `MAX_PRODUCTS`: without them a vaccine could
+        not be told from a drug."""
         drugs = self._get(f"{API}/rxcui/{brand}/related.json", {"tty": BRANDED_DRUG}, ttl=KEPT_FOR)
         if drugs is None or not isinstance(drugs.payload, dict):
             return None
         codes: dict[str, Any] = {}
         fetched_at = drugs.fetched_at
-        for drug in _branded_drugs(drugs.payload)[:MAX_PRODUCTS]:
+        products = _branded_drugs(drugs.payload)
+        if len(products) > MAX_PRODUCTS:
+            return None
+        for drug in products:
             answer = self._get(
                 f"{API}/rxcui/{drug}/property.json", {"propName": VACCINE_CODE}, ttl=KEPT_FOR
             )
             if answer is None or not isinstance(answer.payload, dict):
                 return None
             codes[drug], fetched_at = answer.payload, answer.fetched_at
+            if vaccine_codes({"product_codes": codes}):
+                break
         return {"products": drugs.payload, "product_codes": codes}, fetched_at

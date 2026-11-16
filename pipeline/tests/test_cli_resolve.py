@@ -125,7 +125,7 @@ class Brands:
         payload: dict = {"substance": concept | {"_name": concept["name"]}, "brand": {}}
         if name == "Gumvax":
             # RxNorm marks this brand a vaccine: its branded drug has a CVX code.
-            cvx = {"propName": "CVX", "propValue": "999"}
+            cvx = {"propName": "CVX", "propValue": "204"}
             payload["product_codes"] = {"112": {"propConceptGroup": {"propConcept": [cvx]}}}
         return [SourceRecord("rxnorm", "111", "https://rxnorm.test/111", payload, NOW)]
 
@@ -378,7 +378,7 @@ def test_entity_codes_says_a_vaccine_brands_antigen_is_not_searched(run, session
     said = " ".join(result.output.split())
     assert (
         "gum-vaccine: GSRS lists no substance named 'Gumvax'. RxNorm lists it as a brand of"
-        " examplevirus antigen (RxCUI 111), and as a vaccine (CVX 999): the ingredient is an"
+        " examplevirus antigen (RxCUI 111), and as a vaccine (CVX 204): the ingredient is an"
         " antigen, kept but not searched as a name."
     ) in said
     [kept] = session.scalars(select(EntitySubstance)).all()

@@ -943,6 +943,8 @@ def ingredient(identifier: str, name: str, brand: str) -> SourceRecord:
         "substance": concept | {"_name": name},
         "brand": {"rxcui": "b-1", "name": brand, "tty": "BN"},
         "ingredients": {"relatedGroup": {"conceptGroup": [{"tty": "IN"}]}},
+        # Its one branded drug, with no vaccine code.
+        "product_codes": {"b-2": {}},
     }
     return SourceRecord("rxnorm", identifier, f"https://rxnorm.test/{identifier}", payload, NOW)
 
@@ -998,7 +1000,7 @@ def test_a_vaccine_brands_antigen_is_kept_and_not_searched_as_a_name(session: Se
     )
     found = ingredient("111", "examplevirus antigen", "Toothvax")
     found.payload["product_codes"] = {
-        "b-2": {"propConceptGroup": {"propConcept": [{"propName": "CVX", "propValue": "999"}]}}
+        "b-2": {"propConceptGroup": {"propConcept": [{"propName": "CVX", "propValue": "204"}]}}
     }
     trials = FakeTrials(
         {"examplevirus antigen": [trial("NCT00000009", "Another maker's examplevirus vaccine")]}
@@ -1018,6 +1020,43 @@ def test_a_vaccine_brands_antigen_is_kept_and_not_searched_as_a_name(session: Se
     assert kept is not None and kept.payload == found.payload
     assert trials.searched == ["Toothvax"]
     assert added == []
+
+
+def test_an_ingredient_kept_before_vaccines_were_told_apart_is_searched_once_looked_up_again(
+    session: Session,
+):
+    """Scenario: An ingredient kept before vaccines were told apart"""
+    claim = add_claim(
+        session,
+        slug="toothvax-tooth-agenesis",
+        headline="Vaccine regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="Toothvax",
+        indication="tooth agenesis",
+    )
+    found = ingredient("111", "examplevirus antigen", "Toothvax")
+    brands = FakeBrands({"Toothvax": [found]})
+    give_development_codes(session, claim, substances=FakeSubstances({}), brands=brands)
+    [intervention] = entities_of(session, claim)
+    kept = session.get(EntitySubstance, intervention.id)
+    assert kept is not None
+    # As kept on 2026-11-16, before the vaccine codes were read.
+    kept.payload = {key: value for key, value in kept.payload.items() if key != "product_codes"}
+    session.flush()
+    trials = FakeTrials({"examplevirus antigen": [trial("NCT00000009", "Examplevirus antigen")]})
+
+    resolve_claim(
+        session, claim, trials=trials, dois=FakeDois(set()), backend=Scoring(0.9), now=NOW
+    )
+    assert trials.searched == ["Toothvax"]
+
+    # Looked up again, the brand is known to be no vaccine, and its ingredient searched.
+    give_development_codes(session, claim, substances=FakeSubstances({}), brands=brands)
+    trials.searched.clear()
+    resolve_claim(
+        session, claim, trials=trials, dois=FakeDois(set()), backend=Scoring(0.9), now=NOW
+    )
+    assert trials.searched == ["Toothvax", "examplevirus antigen"]
 
 
 def test_the_source_of_brands_is_not_asked_when_the_registry_answered(session: Session):
