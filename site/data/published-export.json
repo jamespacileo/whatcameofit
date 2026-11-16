@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-16T02:01:57.153132Z",
-  "last_checked_at": "2026-11-16T02:00:32.031877Z",
+  "generated_at": "2026-11-16T02:23:57.815010Z",
+  "last_checked_at": "2026-11-16T02:15:15.735202Z",
   "preview": false,
   "sources": [
     {
@@ -12523,7 +12523,7 @@
             "country": "United States",
             "website": "https://insilico.com",
             "score": 1,
-            "read_at": "2026-11-14T19:53:41.742717Z"
+            "read_at": "2026-11-16T02:14:53.742895Z"
           },
           "roles": [
             {
@@ -198706,6 +198706,403 @@
           "confidence": 0.9,
           "article_url": "https://www.nytimes.com/2020/11/19/health/Covid-WHO-remdesivir.html",
           "read_on": "2026-11-15"
+        }
+      ]
+    },
+    {
+      "slug": "rentosertib-proteomic-ageing-ipf",
+      "headline": "Rentosertib linked to younger biological-age readings in a small IPF trial",
+      "summary": "A secondary analysis of samples from 42 participants in an idiopathic pulmonary fibrosis trial found lower biological-age estimates across six proteomic clocks during rentosertib treatment. The underlying Phase 2a trial enrolled 71 people; 42 supplied the complete samples used for this analysis. The measurements cannot separate changes in aging biology from improvement in lung disease and do not establish longer life or reversed human aging.",
+      "vertical": "ageing",
+      "approach": null,
+      "intervention": {
+        "name": "rentosertib",
+        "synonyms": [
+          "INS018_055"
+        ]
+      },
+      "indication": "Proteomic biological-age markers in idiopathic pulmonary fibrosis",
+      "first_reported_date": "2026-09-13",
+      "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
+      "checked_by_person": false,
+      "status": {
+        "code": "phase_2",
+        "overlay_years": null,
+        "updated_at": "2026-11-16T02:23:57.056323Z",
+        "explained_by": [
+          11753,
+          11752
+        ],
+        "history": [
+          {
+            "on": "2023-06-19",
+            "code": "phase_2"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://www.medicalnewstoday.com/articles/ai-designed-lung-disease-drug-lowers-biological-age-markers-early-trial",
+          "outlet": "Medical News Today",
+          "title": "Longevity: AI-designed drug appears to slow down aging in trial",
+          "published_date": "2026-09-13",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [],
+      "events": [
+        {
+          "id": 11753,
+          "type": "trial_status_change",
+          "event_date": "2023-06-19",
+          "date_basis": "start date",
+          "summary": "Trial NCT05938920 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05938920",
+          "trial_id": "NCT05938920",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11752,
+          "type": "trial_registered",
+          "event_date": "2023-07-11",
+          "date_basis": "first posted",
+          "summary": "Trial NCT05938920 registered (Phase 2).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05938920",
+          "trial_id": "NCT05938920",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11754,
+          "type": "trial_status_change",
+          "event_date": "2024-08-08",
+          "date_basis": "completion date",
+          "summary": "Trial NCT05938920 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05938920",
+          "trial_id": "NCT05938920",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11755,
+          "type": "trial_results_posted",
+          "event_date": "2025-12-02",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT05938920.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05938920",
+          "trial_id": "NCT05938920",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT05938920",
+          "url": "https://clinicaltrials.gov/study/NCT05938920",
+          "score": 1,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "Study Evaluating INS018_055 Administered Orally to Subjects With Idiopathic Pulmonary Fibrosis (IPF). For: Idiopathic Pulmonary Fibrosis (IPF). Tests: INS018_055, Placebo. Phase 2, completed."
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT05938920",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT05938920",
+          "title": "Study Evaluating INS018_055 Administered Orally to Subjects With Idiopathic Pulmonary Fibrosis (IPF)",
+          "phases": [
+            "phase_2"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-16T02:15:15.735202Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 71,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "double",
+            "comparators": [
+              "placebo"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "InSilico Medicine Hong Kong Limited",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Percentage of Participants Who Had at Least 1 Treatment-emergent Adverse Event (TEAE)",
+                "time_frame": "From first dose of study drug until end of study (EOS) visit i.e. up to 13 weeks (+10 days)"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Percentage of Participants Who Had at Least 1 Treatment-emergent Adverse Event (TEAE)",
+                  "time_frame": "From first dose of study drug until end of study (EOS) visit i.e. up to 13 weeks (+10 days)",
+                  "unit": "Participants",
+                  "measure": "count_of_participants",
+                  "spread_kind": null,
+                  "rows": 4,
+                  "groups": [],
+                  "comparisons": []
+                }
+              ],
+              "outcomes_total": 1
+            }
+          },
+          "papers": [
+            "10.1038/s41591-025-03743-2"
+          ],
+          "readings": [
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Treatment-emergent Adverse Event (TEAE)",
+              "number": null,
+              "unit": null,
+              "code": "side_effects",
+              "confidence": 0.99,
+              "read_on": "2026-11-16T02:15:15.735202Z"
+            }
+          ]
+        }
+      ],
+      "papers": [
+        {
+          "identifier": "10.1038/s41587-026-03286-y",
+          "url": "https://doi.org/10.1038/s41587-026-03286-y",
+          "record_url": "https://europepmc.org/article/MED/42706338",
+          "roles": [
+            {
+              "role": "origin",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            },
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_institution",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "Integration of proteomic aging clocks in a phase 2a clinical trial supports simultaneous geroprotective assessment. 2026. article. Nature Biotechnology"
+            }
+          ],
+          "facts_as_of": "2026-11-16T02:15:03.788660Z",
+          "facts": {
+            "title": "Integration of proteomic aging clocks in a phase 2a clinical trial supports simultaneous geroprotective assessment.",
+            "journal": "Nature biotechnology",
+            "year": 2026,
+            "kinds": [
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": []
+          }
+        },
+        {
+          "identifier": "10.1038/s41591-025-03743-2",
+          "url": "https://doi.org/10.1038/s41591-025-03743-2",
+          "record_url": "https://europepmc.org/article/MED/40461817",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT05938920",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            },
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 0.98,
+              "reasons": [
+                "named_institution",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "A generative AI-discovered TNIK inhibitor for idiopathic pulmonary fibrosis: a randomized phase 2a trial. 2025. article. Nature Medicine"
+            }
+          ],
+          "facts_as_of": "2026-11-16T02:15:22.180175Z",
+          "facts": {
+            "title": "A generative AI-discovered TNIK inhibitor for idiopathic pulmonary fibrosis: a randomized phase 2a trial.",
+            "journal": "Nature medicine",
+            "year": 2025,
+            "kinds": [
+              "randomised_trial",
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1183/13993003.congress-2025.oa1251",
+          "url": "https://doi.org/10.1183/13993003.congress-2025.oa1251",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "named_institution",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "Rentosertib, a generative AI-discovered TNIK inhibitor improves lung function in IPF patients. 2025. conference-abstract. European Respiratory Journal"
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
+        },
+        {
+          "identifier": "10.1164/ajrccm.2025.211.abstracts.a5354",
+          "url": "https://doi.org/10.1164/ajrccm.2025.211.abstracts.a5354",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "named_institution",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "Biomarker Analysis Reveals Antifibrotic and Anti-inflammatory Signatures in Idiopathic Pulmonary Fibrosis Patients Treated With INS018_055, an AI-discovered TNIK Inhibitor, in a 12-week Phase 2a Study. 2025. conference-abstract. American Journal of Respiratory and Critical Care Medicine"
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
+        }
+      ],
+      "background": [],
+      "organisations": [
+        {
+          "name": "Insilico Medicine (United States)",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "01mz2wq83",
+            "url": "https://ror.org/01mz2wq83",
+            "name": "Insilico Medicine (United States)",
+            "kinds": [
+              "company"
+            ],
+            "country": "United States",
+            "website": "https://insilico.com",
+            "score": 1,
+            "read_at": "2026-11-16T02:14:53.742895Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.medicalnewstoday.com/articles/ai-designed-lung-disease-drug-lowers-biological-age-markers-early-trial"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "InSilico Medicine Hong Kong Limited",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT05938920"
+              ]
+            }
+          ]
+        }
+      ],
+      "reported_statements": [
+        {
+          "text": "Some changes in aging-clock readings could reflect improvement in the participants' underlying lung disease rather than a change in aging.",
+          "kind": "effect",
+          "firmness": "possibility",
+          "speaker": "other_expert",
+          "basis": "people",
+          "confidence": 0.94,
+          "article_url": "https://www.medicalnewstoday.com/articles/ai-designed-lung-disease-drug-lowers-biological-age-markers-early-trial",
+          "read_on": "2026-11-16"
+        },
+        {
+          "text": "Safely targeting biological processes linked to several age-related diseases could have broader effects than treating diseases one by one.",
+          "kind": "what_it_could_lead_to",
+          "firmness": "possibility",
+          "speaker": "other_expert",
+          "basis": "not_said",
+          "confidence": 0.92,
+          "article_url": "https://www.medicalnewstoday.com/articles/ai-designed-lung-disease-drug-lowers-biological-age-markers-early-trial",
+          "read_on": "2026-11-16"
         }
       ]
     },
