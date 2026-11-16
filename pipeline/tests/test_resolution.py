@@ -32,7 +32,7 @@ from thenwhat.domain import (
     TrialPhase,
 )
 from thenwhat.resolve.codes import Listing, give_development_codes
-from thenwhat.resolve.service import redo_rule_approvals, resolve_claim
+from thenwhat.resolve.service import combination_search, redo_rule_approvals, resolve_claim
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord, UnsearchableTerm
 
@@ -683,6 +683,40 @@ def test_trial_found_only_by_a_search_phrase_becomes_a_candidate(session: Sessio
 
     assert [match.external_id for match in matches(session)] == ["NCT00000011", "NCT00000012"]
     assert trials.searched == [device, "median nerve stimulation"]
+
+
+def test_a_combination_is_also_searched_for_all_its_treatments_together(session: Session):
+    """Scenario: A combination"""
+    claim = new_claim(
+        session,
+        slug="aspirin-avelumab",
+        intervention="aspirin plus avelumab",
+        indication="Triple-negative breast cancer",
+    )
+    together = "(aspirin) AND (avelumab)"
+    trials = FakeTrials({together: [trial("NCT00000021", "Aspirin and avelumab")]})
+
+    resolve(session, claim, trials=trials)
+
+    assert trials.searched == ["aspirin plus avelumab", together]
+    assert [match.external_id for match in matches(session)] == ["NCT00000021"]
+
+
+@pytest.mark.parametrize(
+    ("name", "search"),
+    [
+        (
+            "UV1 vaccine plus pembrolizumab with GM-CSF",
+            "(UV1 vaccine) AND (pembrolizumab) AND (GM-CSF)",
+        ),
+        ("emtricitabine/tenofovir", "(emtricitabine) AND (tenofovir)"),
+        ("nivolumab + ipilimumab", "(nivolumab) AND (ipilimumab)"),
+        ("semaglutide", None),
+        ("EX-1 antibody", None),
+    ],
+)
+def test_combination_search(name: str, search: str | None):
+    assert combination_search(name) == search
 
 
 def test_a_search_phrase_is_kept_apart_from_the_names(session: Session):
