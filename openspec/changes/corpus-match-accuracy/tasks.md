@@ -114,6 +114,12 @@
 
 The separately retained registry-summary experiment is draft PR #180. Its tests pass but clinical acceptance fails; do not deploy it or install its candidate Safari 0.9.16 package. Released corpus/Sheet verdicts remain unchanged by that experiment.
 
+## Preventive breast-cancer vaccine coverage
+
+- [x] Read A083's primary Cleveland Clinic report and the named NCT04674306 registry record. Draft through normal extraction, replace the descriptive intervention with the registry's α-lactalbumin vaccine name and verified aliases, and preserve the preventive aim and mixed cohorts. Keep immune response separate from demonstrated cancer prevention.
+- [x] Complete normal preparation in 90 seconds, retaining one compatible Phase 1 trial, four registry events and two metadata-only related conference abstracts. Record the optional GSRS outage without repeating unchanged preparation. Approve the prepared claim as assistant and stage the normal 165-card export; all 164 existing cards are unchanged.
+- [ ] Independently review and deploy the vaccine card, verify A083 against the released site and installed extension functions, and update the corpus and Google Sheet. Native Safari popup and reuse remain a separate pending check.
+
 ## Publication batch reconciliation
 
 - [x] Independently review PR #174's 16 added cards and 109 registry records. All exported trial facts match the freshly fetched records; association review finds 78 compatible, 13 documentary mismatches and 18 uncertain. Preserve the separate review scope: the 146 shared cards and all source statements were not comprehensively re-audited.
