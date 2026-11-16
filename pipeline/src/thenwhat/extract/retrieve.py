@@ -264,7 +264,10 @@ def _answer_of(response: httpx.Response) -> _Answer:
         answered = response.json()
     except ValueError:
         answered = None
-    if isinstance(answered, dict) and answered.get("success") is False:
+    # A refusal carried on a 429 is still the reader's answer about the site, however
+    # long the wait it states: an outlet the reader has stopped for hours is not the
+    # reader being overloaded.
+    if isinstance(answered, dict) and answered.get("success") is not True:
         code = answered.get("code")
         reason = answered.get("reason")
         if code == NOT_ALLOWED_CODE and isinstance(reason, str) and reason.strip():

@@ -429,3 +429,22 @@ A read SHALL draft no claim, and SHALL record the lead as not one treatment, whe
 #### Scenario: A condition that is not one condition of people
 - **WHEN** a read names DHA for "Cancer", or GS-441524 for feline infectious peritonitis
 - **THEN** no claim is drafted, and the lead says no one condition, or an animal's condition
+
+### Requirement: An outlet the reader has stopped is left until its wait is over
+When the page reader answers "not now" for a lead's page and states a wait longer than none, the read SHALL keep, for the lead's outlet, the time that wait ends, where every process and every later run sees it. Until that time a due lead of the outlet SHALL be left as "not now" leaves it (no outcome, no attempt, still due) without a request to the reader and without a request taken from its allowance. After that time the outlet SHALL be asked again. A hold SHALL NOT be shortened by a later answer that states a shorter wait. A "not now" carried on HTTP 429 SHALL be read as the reader's answer about the outlet however long its wait, never as the reader being overloaded. Whether and when an outlet is asked stays the reader's decision (ADR 0006): the hold only keeps the reader's own answer for as long as the reader said. `thenwhat backfill plan` SHALL say how many due leads are held, outlet by outlet, and until when.
+
+#### Scenario: An outlet the reader has stopped is left until its wait is over
+- **WHEN** the reader answers "not now" with a wait of two hours for one lead of an outlet, and four more of the outlet's leads are due
+- **THEN** no other request is made for that outlet in the run, and a run an hour later makes none either and counts no attempt
+
+#### Scenario: The wait is over
+- **WHEN** the two hours have passed and a run starts
+- **THEN** the outlet's leads are asked of the reader again
+
+#### Scenario: Another outlet meanwhile
+- **WHEN** one outlet is held and a lead of another outlet is due
+- **THEN** the other outlet's lead is read as usual
+
+#### Scenario: The plan says what is held
+- **WHEN** an outlet is held and has four leads due
+- **THEN** the plan names the outlet, the four leads and the time the hold ends

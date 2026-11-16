@@ -26,8 +26,9 @@ from sqlalchemy import ColumnElement, and_, exists, func, or_, select
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.address import article_key, without_tracking
-from thenwhat.backfill.allowance import Allowances
+from thenwhat.backfill.allowance import Allowances, held_until, holds_under
 from thenwhat.backfill.errors import BackfillError, SpendCeilingReached
+from thenwhat.backfill.ledger import due_records
 from thenwhat.backfill.link_evaluation import reading_refusal
 from thenwhat.backfill.link_screen import CLAIM, REGISTRY_TRIAL, TITLE_NAMES_CLAIM
 from thenwhat.backfill.link_triage import is_passed
@@ -118,6 +119,13 @@ NOT_NOW_BEFORE_LEAVING = 3
 # of one outlet's pages is the likeliest way to lose such a route.
 OUTLET_JUST_ASKED = "not asked in this run: its outlet was asked a moment ago"
 OUTLET_NOT_NOW = "not asked in this run: the page reader could not get its outlet's last pages"
+# The reader states a wait with every "not now": seconds for a site it is pacing, hours
+# for an outlet it has stopped because the outlet refuses it. Until that wait is over
+# the outlet's leads are left without a request, in this run and in every later one.
+# The backfill of 2026-11-16 asked two outlets that had banned the reader's machine
+# three times in every run. The hold is kept under this name and the outlet's.
+OUTLET_HOLD = "reader:"
+OUTLET_STOPPED = "not asked: the page reader says its outlet cannot be asked before"
 # Outcomes only a page the reader got can give.
 READ_FROM_A_PAGE = (
     ReadOutcome.ADDED_TO_CLAIM,
@@ -206,6 +214,37 @@ def retry_outlet(session: Session, outlet: str) -> int:
         entry.stale = True
     session.flush()
     return len(ids)
+
+
+@dataclass(frozen=True, slots=True)
+class HeldOutlet:
+    """An outlet the page reader said cannot be asked before a time, and how many of its
+    leads are due and wait for that."""
+
+    outlet: str
+    until: datetime
+    leads: int
+
+
+def held_outlets(
+    session: Session, step: "LinkRead", attempt_limit: int, now: datetime
+) -> list[HeldOutlet]:
+    """The outlets held now that have leads due, the one with most leads first. Asks
+    nothing: the plan says what a run would leave alone."""
+    holds = holds_under(session, OUTLET_HOLD, now)
+    if not holds:
+        return []
+    due = dict(
+        session.execute(
+            due_records(step, attempt_limit)
+            .with_only_columns(LinkLead.outlet, func.count())
+            .where(LinkLead.outlet.in_(holds))
+            .order_by(None)
+            .group_by(LinkLead.outlet)
+        ).all()
+    )
+    held = [HeldOutlet(outlet, holds[outlet], leads) for outlet, leads in due.items()]
+    return sorted(held, key=lambda one: (-one.leads, one.outlet))
 
 
 class NotMeasured(BackfillError):
@@ -553,6 +592,12 @@ class LinkRead:
                 f"{OUTLET_REFUSES} for {refusals} pages and served none",
             )
 
+        held = held_until(session, OUTLET_HOLD + record.outlet, now)
+        if held is not None:
+            # The reader said when this outlet may be asked again, in this run or an
+            # earlier one. Until then: no request, no allowance, no attempt.
+            return Deferred(f"{OUTLET_STOPPED} {held:%Y-%m-%d %H:%M} UTC: {record.outlet}")
+
         # The page reader is asked for the page. Whether the outlet may be asked, and how
         # often, is the reader's to decide; the pipeline acts on its answer.
         # Decided and noted in one step: two workers must not both find the outlet free.
@@ -580,6 +625,13 @@ class LinkRead:
             # with no attempt counted, and the run goes on with other leads.
             with self._outlets:
                 self._not_now[record.outlet] = self._not_now.get(record.outlet, 0) + 1
+            if later.retry_after_seconds:
+                # Kept in its own short transaction, as a claim on an allowance is:
+                # other workers and later runs see it at once.
+                client.allowances.hold(
+                    OUTLET_HOLD + record.outlet,
+                    now + timedelta(seconds=later.retry_after_seconds),
+                )
             return Deferred(str(later))
         except NotAllowed as refused:
             return self._finish(

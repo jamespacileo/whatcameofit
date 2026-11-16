@@ -227,6 +227,12 @@ Batch 2's audit (2026-11-16) archived 39 of 132 claims; batch 3's archived 54 of
 
 - [x] 16.3 Refuse at the read a class named by its plural, a vaccine or schedule name with no product, a condition that is no one condition ("Cancer") and an animal's condition. Measured on the database: of 619 claims these refuse 1 live ("COVID-19 vaccination" for cardiovascular events) and 28 archived. A target-and-kind rule ("anti-PD-1 immunotherapy") was dropped: it also refused anti-USAG-1 antibody and CAR-T for stiff person syndrome. Verify with tests.
 
+## 17. Backfill of 2026-11-16: stopped outlets and second claims
+
+The backfill of 2026-11-16 read about 800 pages and drafted 257 claims; the audit archived 152. The page reader now stops an outlet that refuses it and answers `NOT_NOW` on HTTP 429 with a wait of minutes to hours; the read step left such an outlet after three answers in a run and asked it again in the next. 39 of the archives were second claims for a treatment that already had one, drafted because the article used a brand, a code or a description and the claim another name.
+
+- [x] 17.1 Keep the time a "not now" wait ends for the lead's outlet beside the sources' pauses, leave the outlet's due leads without a request until then, across runs, and say in `thenwhat backfill plan` how many leads are held; read a `NOT_NOW` on a 429 as the outlet's answer however long its wait. Verify with tests on a synthetic reader: a stopped outlet is not asked in the next run, is asked after the wait, and another outlet is read meanwhile. Not verified against the live reader.
+
 ## Workflow follow-up
 
 - Archive `backfill-work-ledger` before this change is archived, so that `work-ledger` exists in the main specs.

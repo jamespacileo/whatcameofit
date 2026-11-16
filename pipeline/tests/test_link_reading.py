@@ -29,6 +29,7 @@ from thenwhat.backfill.link_read import (
     LinkRead,
     NotMeasured,
     ReadClient,
+    held_outlets,
 )
 from thenwhat.backfill.link_screen import REGISTRY_TRIAL, TITLE_NAMES_CLAIM
 from thenwhat.backfill.runner import RunReport, run_step
@@ -184,7 +185,7 @@ class Reader:
             make_checker=lambda at: StatementChecker(self.backend),
             make_backend=lambda at: self.backend,
         )
-        self.step = step()
+        self.step = step(time=fake_time)
 
     def lead(
         self,
@@ -433,11 +434,58 @@ def test_a_lead_whose_site_cannot_be_asked_now_stays_due_and_the_run_goes_on(rea
     assert other.read_outcome is ReadOutcome.NEW_CLAIM
     assert report.remaining_due == 1
 
-    # A later run, with the site answering again, reads it.
+    # A later run, once the wait the reader stated is over and the site answers, reads it.
     reader.page_reader.not_now.clear()
+    reader.time.advance(timedelta(seconds=601))
     reader.read()
 
     assert busy.read_outcome is not None
+
+
+def test_an_outlet_the_reader_has_stopped_is_not_asked_until_its_wait_is_over(reader: Reader):
+    """Scenario: An outlet the reader has stopped is left until its wait is over"""
+    stopped = [
+        reader.lead(f"https://www.theguardian.com/science/2019/may/0{n}/synthetic-teeth-{n}")
+        for n in range(1, 5)
+    ]
+    other = reader.lead("https://www.bbc.co.uk/news/health-synthetic-teeth")
+    reader.page_reader.not_now["www.theguardian.com"] = 7200
+
+    def asked_of_the_outlet() -> int:
+        return sum("theguardian.com" in body["url"] for body in reader.page_reader.asked)
+
+    began = reader.time.now()
+    first = reader.read()
+
+    # One request told the pipeline; the outlet's other leads cost none. Another outlet
+    # is read as usual.
+    assert (asked_of_the_outlet(), first.deferred) == (1, 4)
+    assert other.read_outcome is ReadOutcome.NEW_CLAIM
+    [held] = held_outlets(reader.session, reader.step, 3, reader.time.now())
+    assert (held.outlet, held.leads) == ("theguardian.com", 4)
+    assert held.until == began + timedelta(seconds=7200)
+
+    # The next run, an hour on, is a new step with nothing remembered: still no request,
+    # no attempt, no outcome.
+    reader.time.advance(timedelta(hours=1))
+    reader.step = step(time=reader.time)
+    second = reader.read()
+
+    assert (asked_of_the_outlet(), second.deferred, second.processed) == (1, 4, 0)
+    assert all(lead.read_outcome is None for lead in stopped)
+    assert reader.session.scalars(select(WorkEntry).where(WorkEntry.step == "link_read")).all() == [
+        reader.entry(other)
+    ]
+
+    # After the wait the outlet is asked again and, answering, is read.
+    reader.page_reader.not_now.clear()
+    reader.time.advance(timedelta(hours=1, seconds=1))
+    reader.step = step(time=reader.time)
+    reader.read()
+
+    assert asked_of_the_outlet() == 5
+    assert all(lead.read_outcome is not None for lead in stopped)
+    assert held_outlets(reader.session, reader.step, 3, reader.time.now()) == []
 
 
 def test_the_reader_down_ends_the_run_with_leads_due_and_attempts_unchanged(reader: Reader):
@@ -1473,15 +1521,15 @@ def test_a_read_is_measured_under_the_leads_address_with_what_it_asked(
 
 
 def test_an_outlet_the_reader_cannot_get_is_left_after_three_pages(reader: Reader):
-    """An outlet whose pages the reader keeps saying "not now" for is asked three times
-    in a run and then left: its other leads stay due, cost no request and count no
-    attempt, and the run goes on to other outlets."""
+    """An outlet whose pages the reader keeps saying "not now" for, stating no wait, is
+    asked three times in a run and then left: its other leads stay due, cost no request
+    and count no attempt, and the run goes on to other outlets."""
     blocked = [
         reader.lead(f"https://www.theguardian.com/science/2019/may/0{n}/synthetic-teeth-{n}")
         for n in range(1, 7)
     ]
     other = reader.lead("https://www.bbc.co.uk/news/health-synthetic-teeth")
-    reader.page_reader.not_now["www.theguardian.com"] = 60
+    reader.page_reader.not_now["www.theguardian.com"] = 0
 
     report = reader.read()
 

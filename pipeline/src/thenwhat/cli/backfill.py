@@ -27,7 +27,7 @@ from thenwhat.backfill.link_evaluation import (
 )
 from thenwhat.backfill.link_funnel import funnel
 from thenwhat.backfill.link_load import load_links
-from thenwhat.backfill.link_read import LinkRead, ReadClient, retry_outlet
+from thenwhat.backfill.link_read import LinkRead, ReadClient, held_outlets, retry_outlet
 from thenwhat.backfill.link_readers import posts_of
 from thenwhat.backfill.link_report import IN_SCOPE_KINDS, screening_report
 from thenwhat.backfill.link_topics import coverage
@@ -174,6 +174,23 @@ def _allowance_line(source: str, allowance: SourceAllowance, status: AllowanceSt
     return line
 
 
+def _held_lines(session: Session, step: LinkRead, attempt_limit: int) -> list[str]:
+    """How many due leads wait for an outlet the page reader has stopped, outlet by
+    outlet. A run leaves them without a request until the time given."""
+    held = held_outlets(session, step, attempt_limit, datetime.now(UTC))
+    if not held:
+        return []
+    total = sum(one.leads for one in held)
+    lines = [
+        f"  held: {total:,} of the due leads are not asked, because the page reader "
+        "said their outlet cannot be asked yet"
+    ]
+    lines += [
+        f"    {one.outlet}: {one.leads:,} held until {one.until:%Y-%m-%d %H:%M} UTC" for one in held
+    ]
+    return lines
+
+
 def _dollars(amount: Decimal) -> str:
     return f"${amount.quantize(Decimal('0.01'))}"
 
@@ -264,6 +281,9 @@ def plan_command() -> None:
                         )
                 else:
                     out.print("  asks no source: the due records need 0 requests", markup=False)
+                if isinstance(step, LinkRead):
+                    for line in _held_lines(session, step, settings.backfill_attempt_limit):
+                        out.print(line, markup=False)
                 spend = model_spend_of(step)
                 if spend is not None:
                     out.print(

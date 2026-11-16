@@ -426,3 +426,28 @@ def test_a_site_that_cannot_be_asked_now_is_not_mistaken_for_a_busy_reader():
     probe = _busy_retriever(reader, slept).probe("https://news.example.org/a")
 
     assert (probe.answer, slept, len(reader.asked)) == (NOT_NOW, [], 1)
+
+
+def test_an_outlet_the_reader_has_stopped_for_hours_is_its_refusal_with_the_wait():
+    """A NOT_NOW on a 429 is the reader's answer about the outlet however long the wait:
+    it is never waited out, and never read as the reader being overloaded."""
+    from reader_support import SyntheticReader
+    from thenwhat.extract.retrieve import NotNow
+
+    reader = SyntheticReader()
+    reader.answer = lambda: httpx.Response(
+        429,
+        headers={"Retry-After": "14400"},
+        json={
+            "code": "NOT_NOW",
+            "reason": "news.example.org refuses the reader; stopped for now",
+            "retryAfter": 14400,
+        },
+    )
+    slept: list[float] = []
+
+    with pytest.raises(NotNow, match="news.example.org refuses") as stopped:
+        _busy_retriever(reader, slept).retrieve("https://news.example.org/a")
+
+    assert stopped.value.retry_after_seconds == 14400
+    assert (slept, len(reader.asked)) == ([], 1)
