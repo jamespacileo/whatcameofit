@@ -16,6 +16,7 @@ The operator chose, on 16 November 2026, a mark on the claim over a separate sta
 - Every export leaves out a claim awaiting audit, whoever runs it, and says how many it left out. Such a claim is never published, so it gets no published time and its address never answers 410.
 - `thenwhat audit clear <slug>…` releases claims whose audit passed. A claim that should not be published is archived instead. `thenwhat audit list` shows what is held.
 - Unarchiving a claim does not clear its mark.
+- The export's schema version goes to 2, and the site reads only 2. An export written by pipeline code from before this decision (an old image, a branch cut earlier) does not know the mark and would publish held claims; it says 1, and the site build refuses it.
 
 ## What does not change
 

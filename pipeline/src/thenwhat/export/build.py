@@ -99,7 +99,9 @@ from thenwhat.terms.genes import TARGET_REASON_CODES
 from thenwhat.terms.kinds import KIND_REASON_CODES
 from thenwhat.terms.records import read_record
 
-SCHEMA_VERSION = 1
+# 2: claims awaiting audit are left out (ADR 0007). The site reads only this version, so
+# an export written by code that does not know the hold is refused, not published.
+SCHEMA_VERSION = 2
 # Registries the clients read. Always listed, as their terms ask for attribution.
 SOURCES = [
     ("ClinicalTrials.gov", "https://clinicaltrials.gov/"),

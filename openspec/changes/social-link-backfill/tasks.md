@@ -191,6 +191,7 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 - [x] 12.2 Leave held claims out of every export and give them no published time; the export command counts what it left out.
 - [x] 12.3 Add `thenwhat audit list` and `thenwhat audit clear`, which releases all the named claims or none; unarchive says when a claim is still held.
 - [x] 12.4 Verify with tests: prepare marks the claim, the export skips it until cleared, and the command refuses a claim not held while clearing nothing.
+- [x] 12.5 Raise the export's schema version to 2 and have the site read only 2, so an export from pipeline code older than the hold stops the build; verify with a site test.
 
 ## Workflow follow-up
 
