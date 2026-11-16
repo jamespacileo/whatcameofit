@@ -38,7 +38,31 @@ Rules:
 - Inside the extension's popup the popup's own treatment governs, in the extension and where the site draws it on the extension page: the latest promise is a rounded pale amber box (13px corners) with no dashed rule (`extension/src/popup.css`, `.facts .promise`), because the drawn popup must match the real one. Amber still means "promised" and nothing else.
 - Amber is kept for a promise that exists. An empty Promised cell is white, with "Nothing promised for this year." for screen readers; the column heading stays amber. Where a past year has a promise and no record, "No record" is in ink at body size, not in grey: the same words, easier to find. A claim with no dated promise has no Promised column, and says "No dated promise on record." above the table.
 - There is no colour for any status. No red, no green.
-- Light only. No dark theme.
+- Two themes, light and dark, with the same meanings. See "Dark theme".
+
+## Dark theme
+
+Asked for by the operator on 2026-11-16 (openspec change `dark-theme`). The same evidence digest under low light: the page is a deep neutral slate, not navy, so the masthead, the record band and the footer keep their navy (`--footer`, unchanged) as a hue of their own. The accent is the lifted blue the masthead already used. Amber still means "promised" and nothing else, and no status has a colour.
+
+| Token | Dark value |
+|---|---|
+| `--paper` | `#121821` |
+| `--ground` | `#0c1118` |
+| `--ink` | `#e4eaf3` |
+| `--blue` | `#8ec1f5` |
+| `--muted` | `#a3b0c2` |
+| `--panel`, `--tint`, `--tag` | `#17202d`, `#1d2838`, `#2a4163` |
+| `--rule`, `--rule-soft` | `#2b3546`, `#1f2733` |
+| `--table-head` | `#161d28` (light `#f8fafd`) |
+| `--promise`, `--promise-rule`, `--promise-mark` | `#29220f`, `#6f5d2c`, `#d9b44a` |
+| `--ring` | `#6d7c90` |
+| `--on-blue`, `--blue-hover` | `#0c1118`, `#c4ddf8` (light: white, the footer navy) |
+
+- `--on-navy-ink` is the white lettering on the navy grounds, white in both themes; `--paper` is never used for it. A filled blue control letters with `--on-blue` and hovers to `--blue-hover`.
+- With no choice stored, the site follows the device, live and with no script. The masthead's appearance control, at its end, steps from "as your device" to the look the page is not showing, then the other, then back; it is drawn as half a disc, a sun or a moon in white line, 44 pixels square, and only where a script can act on it. The choice is kept in the browser and set before the first paint.
+- Printed pages, the embed and the drawn extension popup (`.theme-light`) stay light.
+- Contrast on the dark page, calculated on 2026-11-16: text 14.7:1, blue 9.4:1, blue on the panel 8.7:1, blue on the tag 5.5:1, secondary text 8.1:1 and on amber 7.2:1, the promise mark 9.0:1, the empty-place ring 4.2:1, lettering on a filled blue control 10.0:1.
+- Checked by eye on the home and claim pages at desktop and phone width; a scan of every other page found no light surface left. The reviewer has not judged it.
 
 ## Type
 
