@@ -7,7 +7,7 @@
 
 ## 2. Pipeline
 
-- [x] 2.1 Migration `0031`: `claim.merged_into_id`, `claim.registry_search_due_at`, table `claim_change`
+- [x] 2.1 Migration `0032`: `claim.merged_into_id`, `claim.registry_search_due_at`, table `claim_change`
 - [x] 2.2 `thenwhat claim merge`, one success and one refusal
 - [x] 2.3 `thenwhat entity rename`, with `--old-is-description` and `--reslug`, one success and one refusal
 - [x] 2.4 A merged claim answers no duplicate check; a former slug stays taken; `unarchive` refuses a merged claim
@@ -21,7 +21,7 @@
 
 ## 4. Apply (operator's assistant, after review)
 
-- [ ] 4.1 Apply migration `0031` to the working database
+- [ ] 4.1 Apply migration `0032` to the working database
 - [ ] 4.2 Merge the three duplicate pairs found on 2026-11-16
 - [ ] 4.3 Rename and unarchive the 29 claims archived for their intervention's name
 - [ ] 4.4 `thenwhat prepare --due`, check the records each merge listed, export and deploy

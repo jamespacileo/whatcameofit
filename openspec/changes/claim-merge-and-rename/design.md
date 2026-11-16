@@ -81,4 +81,4 @@ Functions taking a session against the test database: `merge_claims`, `rename_in
 
 **Smaller corrections.** A claim archived before its merge keeps that date and reason. A moved entity keeps its `registry` mark. When the kept claim already has the paper or organisation, the matches saying which one it is move to the kept claim's entity where it lacks them. A synonym of the merged intervention that breaks an entry rule is left out and reported. Two person entities are never joined on a name: the merged claim keeps its own. A claim that takes a former slug back leaves the earlier change row as written; the export skips a former slug that is the claim's current one. The redirect is cached for five minutes, not an hour.
 
-**Migration.** `0031`, additive: two nullable columns and a new empty table, nothing backfilled. The pipeline image runs `alembic upgrade head` when it starts, so it is applied by the next `docker compose up` after merge.
+**Migration.** `0032`, additive: two nullable columns and a new empty table, nothing backfilled. The pipeline image runs `alembic upgrade head` when it starts, so it is applied by the next `docker compose up` after merge.
