@@ -51,3 +51,10 @@ When the substance registry lists no substance under any of an intervention's na
 #### Scenario: Brand neither source lists
 - **WHEN** neither the substance registry nor the second source lists any of the names
 - **THEN** nothing is kept, the command says that neither lists it, and the trial registry is searched as before
+
+### Requirement: The brand source is credited with the statement it asks for
+While the source of brands is recorded as accepted, the export's list of data sources SHALL name it with its address, and the site SHALL show, where it lists its data sources, the statement the source's terms ask an application to carry, word for word.
+
+#### Scenario: Method page
+- **WHEN** a reader opens the part of the method page that says where the data comes from
+- **THEN** the source of brands is named, what it is used for is said, and the statement its terms ask for is shown in full

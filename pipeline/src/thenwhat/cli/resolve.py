@@ -46,7 +46,13 @@ from thenwhat.resolve.service import (
     rescore_claim,
     resolve_claim,
 )
-from thenwhat.sources.base import SourceError, UnsearchableTerm
+from thenwhat.sources.base import (
+    MissingContact,
+    MissingKey,
+    SourceError,
+    TermsNotRecorded,
+    UnsearchableTerm,
+)
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref
 from thenwhat.sources.europepmc import EuropePmc
@@ -117,8 +123,9 @@ def make_substances(session: Session) -> Substances:
 
 
 def make_brands(session: Session) -> Substances | None:
-    """The source of brands, or None while the operator has not accepted its terms: a
-    source whose terms are read but not accepted is not asked."""
+    """The source of brands, or None when the list of sources does not record its terms
+    as accepted by the operator: a source whose terms are read but not accepted is not
+    asked."""
     if not SOURCES[RxNorm.name].accepted:
         return None
     return RxNorm(session, contact_email=settings_or_exit().contact_email)
@@ -308,6 +315,9 @@ def entity_codes(
                     answer = give_development_codes(
                         session, claim, substances=substances, brands=brands
                     )
+            except (MissingContact, MissingKey, TermsNotRecorded):
+                # The setup is wrong, not the source: no claim could be looked up.
+                raise
             except SourceError as not_asked:
                 failed += 1
                 err.print(
@@ -328,11 +338,13 @@ def entity_codes(
             f" substance, and gave {coded} of them at least one development code."
             f" RxNorm lists {by_brand} more as a brand of one ingredient."
         )
-        if failed:
-            err.print(
-                f"{failed} were not looked up, and what was kept for them is unchanged."
-                " Run this again for them."
-            )
+    # Outside the session, so what was kept for the other claims is not undone.
+    if failed:
+        err.print(
+            f"{failed} were not looked up, and what was kept for them is unchanged."
+            " Run this again for them."
+        )
+        raise typer.Exit(code=1)
 
 
 @entity_app.command("people")

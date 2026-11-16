@@ -107,6 +107,9 @@ SOURCES = [
     ("ClinicalTrials.gov", "https://clinicaltrials.gov/"),
     ("Europe PMC", "https://europepmc.org/"),
     ("Crossref", "https://www.crossref.org/"),
+    # Read for a brand's ingredient, which is only searched for. NLM asks an application
+    # that uses its data to carry a statement, which the site shows beside this list.
+    ("RxNorm", LISTED_SOURCES["rxnorm"].home_url),
 ]
 # Registries with no client yet, listed only when an exported event came from one.
 OTHER_REGISTRIES = {"jRCT": "https://jrct.mhlw.go.jp/"}

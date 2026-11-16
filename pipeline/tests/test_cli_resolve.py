@@ -25,7 +25,12 @@ from thenwhat.db.models import DecisionLog, EntityMatch, EntitySubstance
 from thenwhat.decide.core import BackendAnswer
 from thenwhat.domain import ClaimStatus, Decider, EvidenceStage, ReviewState
 from thenwhat.llm.client import Llm, LlmSettings
-from thenwhat.sources.base import SourceRecord, SourceUnavailable, UnsearchableTerm
+from thenwhat.sources.base import (
+    MissingContact,
+    SourceRecord,
+    SourceUnavailable,
+    UnsearchableTerm,
+)
 from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.rxnorm import RxNorm
 from thenwhat.sources.terms import SOURCES
@@ -112,6 +117,8 @@ class Brands:
     def substances_named(self, name: str) -> list[SourceRecord]:
         if name == "Downvax":
             raise SourceUnavailable("rxnorm did not answer after 2 attempts.")
+        if name == "Unsetvax":
+            raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
         if name != "Toothvax":
             return []
         concept = {"rxcui": "111", "name": "examplevirus antigen", "tty": "IN"}
@@ -337,7 +344,8 @@ def test_entity_codes_goes_on_past_a_claim_whose_source_did_not_answer(run, sess
 
     result = run("entity", "codes", "a-down", "b-branded")
 
-    assert result.exit_code == 0, result.output
+    # A claim was not looked up, so the command does not end as a success.
+    assert result.exit_code == 1, result.output
     said = " ".join(result.output.split())
     assert (
         "a-down: development codes were not looked up: rxnorm did not answer after 2 attempts."
@@ -349,11 +357,33 @@ def test_entity_codes_goes_on_past_a_claim_whose_source_did_not_answer(run, sess
     assert kept.external_id == "111"
 
 
+def test_entity_codes_stops_at_a_setup_that_cannot_ask_any_source(run, session: Session):
+    for slug, intervention in [("a-unset", "Unsetvax"), ("b-branded", "Toothvax")]:
+        add_claim(
+            session,
+            slug=slug,
+            headline="Vaccine regrows teeth",
+            vertical="mouth-and-teeth",
+            intervention=intervention,
+            indication="tooth agenesis",
+        )
+
+    result = run("entity", "codes", "a-unset", "b-branded")
+
+    # Not passed over as one claim's failure: no later claim is tried.
+    assert result.exit_code != 0
+    assert "CONTACT_EMAIL is not set" in result.output
+    assert "b-branded" not in result.output
+    assert session.scalars(select(EntitySubstance)).all() == []
+
+
 def test_the_source_of_brands_is_not_asked_until_its_terms_are_accepted(
     run, session: Session, monkeypatch: pytest.MonkeyPatch
 ):
-    # `make_brands` here is the command's own, taken before the fixture replaced it.
-    assert SOURCES["rxnorm"].accepted is False
+    # A stand-in whose terms are read and not accepted, in the place of the source of
+    # brands. `make_brands` is the command's own, taken before the fixture replaced it.
+    unaccepted = dataclasses.replace(SOURCES["ror"], name="rxnorm", accepted=False)
+    monkeypatch.setitem(SOURCES, "rxnorm", unaccepted)
     assert make_brands(session) is None
     monkeypatch.setattr("thenwhat.cli.resolve.make_brands", make_brands)
     add_claim(
@@ -376,7 +406,7 @@ def test_the_source_of_brands_is_not_asked_until_its_terms_are_accepted(
     assert session.scalars(select(EntitySubstance)).all() == []
 
     # Once the operator accepts them, the command builds the client.
-    monkeypatch.setitem(SOURCES, "rxnorm", dataclasses.replace(SOURCES["rxnorm"], accepted=True))
+    monkeypatch.setitem(SOURCES, "rxnorm", dataclasses.replace(unaccepted, accepted=True))
     monkeypatch.setenv("CONTACT_EMAIL", "ops@thenwhat.test")
     assert isinstance(make_brands(session), RxNorm)
 
