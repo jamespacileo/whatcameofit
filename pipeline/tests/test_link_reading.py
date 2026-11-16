@@ -1470,3 +1470,55 @@ def test_a_read_is_measured_under_the_leads_address_with_what_it_asked(
     assert inside, "the read made decisions, and each is measured"
     assert {made.trace for made in inside} == {lead.url_key}
     assert all(made.step.startswith(("decision:", "read")) for made in inside)
+
+
+def test_an_outlet_the_reader_cannot_get_is_left_after_three_pages(reader: Reader):
+    """An outlet whose pages the reader keeps saying "not now" for is asked three times
+    in a run and then left: its other leads stay due, cost no request and count no
+    attempt, and the run goes on to other outlets."""
+    blocked = [
+        reader.lead(f"https://www.theguardian.com/science/2019/may/0{n}/synthetic-teeth-{n}")
+        for n in range(1, 7)
+    ]
+    other = reader.lead("https://www.bbc.co.uk/news/health-synthetic-teeth")
+    reader.page_reader.not_now["www.theguardian.com"] = 60
+
+    report = reader.read()
+
+    asked = [body["url"] for body in reader.page_reader.asked]
+    assert sum("theguardian.com" in url for url in asked) == 3
+    assert report.deferred == 6
+    assert all(lead.read_outcome is None for lead in blocked)
+    assert other.read_outcome is ReadOutcome.NEW_CLAIM
+
+    # A later run starts fresh, as each run makes its own step: the outlet is asked
+    # again and, answering, is read.
+    reader.page_reader.not_now.clear()
+    reader.step = step()
+    reader.read()
+
+    assert all(lead.read_outcome is not None for lead in blocked)
+
+
+def test_one_outlets_pages_are_not_asked_for_back_to_back(reader: Reader):
+    """With a gap set, a second lead on an outlet asked a moment ago is left for a later
+    run, with no request and no attempt, and other outlets are read meanwhile."""
+    reader.step = step(outlet_gap_seconds=30, time=reader.time)
+    first = reader.lead("https://www.theguardian.com/science/2019/may/01/synthetic-teeth-1")
+    second = reader.lead("https://www.theguardian.com/science/2019/may/02/synthetic-teeth-2")
+    other = reader.lead("https://www.bbc.co.uk/news/health-synthetic-teeth")
+
+    report = reader.read()
+
+    asked = [body["url"] for body in reader.page_reader.asked]
+    assert sum("theguardian.com" in url for url in asked) == 1
+    assert report.deferred == 1
+    assert sorted(lead.read_outcome is None for lead in (first, second)) == [False, True]
+    assert other.read_outcome is not None
+
+    # Once the gap has passed, a later run asks the outlet again.
+    reader.time.advance(timedelta(seconds=31))
+    reader.step = step(outlet_gap_seconds=30, time=reader.time)
+    reader.read()
+
+    assert first.read_outcome is not None and second.read_outcome is not None
