@@ -4,7 +4,7 @@
 
 News reports medical "breakthroughs" that are rarely mentioned again. thenwhat tracks what happened afterwards: each claim gets a status derived from dated, sourced evidence in public registries. Items are approved by deterministic rules, every match shown carries its confidence score, and a wrong item is removed by archiving it.
 
-`thenwhat` is the repository codename for [What came of it?](https://whatcameofit.com). The public site runs on Cloudflare; the curation pipeline and database stay local. GitHub tests each proposed change and deploys the committed snapshot from `main`.
+`thenwhat` is the repository codename for [What came of it?](https://whatcameofit.com). The public site runs on Cloudflare; the curation pipeline and database stay local. GitHub tests each proposed change, publishes a preview of it for its pull request, and deploys the committed snapshot from `main`.
 
 ## Setup
 
