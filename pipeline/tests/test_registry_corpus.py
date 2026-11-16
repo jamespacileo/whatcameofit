@@ -253,6 +253,53 @@ def test_a_sponsor_who_is_a_person_is_not_named_in_a_column(fixture_json):
     assert (fields["sponsor_class"], fields["lead_sponsor_name"]) == ("INDIVIDUAL", None)
 
 
+def _sponsors_of(trial: RegistryTrial) -> dict:
+    return trial.raw_payload["protocolSection"]["sponsorCollaboratorsModule"]
+
+
+def test_a_person_who_sponsors_or_collaborates_is_not_named_in_the_stored_record(
+    session: Session, fake_time, fixture_json
+):
+    registry = Registry(fixture_json)
+    by_person = registry.first["studies"][0]["protocolSection"]
+    by_person["sponsorCollaboratorsModule"] = {
+        "leadSponsor": {"name": "A made-up person", "class": "INDIVIDUAL"},
+        "collaborators": [
+            {"name": "Another made-up person", "class": "INDIVIDUAL"},
+            {"name": "A made-up university", "class": "OTHER"},
+        ],
+    }
+    by_organisation = registry.second["studies"][0]["protocolSection"]
+    by_organisation["sponsorCollaboratorsModule"] = {
+        "leadSponsor": {"name": "A made-up company", "class": "INDUSTRY"},
+        "collaborators": [{"name": "A made-up institute", "class": "NIH"}],
+    }
+
+    load(session, fake_time, registry)
+
+    trials = {trial.external_id: trial for trial in stored(session)}
+    person_sponsored = trials[by_person["identificationModule"]["nctId"]]
+    assert _sponsors_of(person_sponsored) == {
+        "leadSponsor": {"class": "INDIVIDUAL"},
+        "collaborators": [
+            {"class": "INDIVIDUAL"},
+            {"name": "A made-up university", "class": "OTHER"},
+        ],
+    }
+    assert person_sponsored.lead_sponsor_name is None
+    company_sponsored = trials[by_organisation["identificationModule"]["nctId"]]
+    assert _sponsors_of(company_sponsored) == {
+        "leadSponsor": {"name": "A made-up company", "class": "INDUSTRY"},
+        "collaborators": [{"name": "A made-up institute", "class": "NIH"}],
+    }
+    assert company_sponsored.lead_sponsor_name == "A made-up company"
+    # Everything else is stored as the registry gave it.
+    assert (
+        person_sponsored.raw_payload["protocolSection"]["conditionsModule"]
+        == (by_person["conditionsModule"])
+    )
+
+
 def _widened(registry: Registry) -> Registry:
     """The same trials as the registry gives them with the wider record: every listing
     field as before, plus activity and results fields."""
