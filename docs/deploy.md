@@ -28,6 +28,14 @@ Staging first asks the running pipeline for a normal export with preview mode di
 
 Decided by the operator on 16 November 2026 (change `pull-request-previews`). Every pull request from a branch of this repository gets its own copy of the site on its own Worker, `thenwhat-pr-<number>`, at `https://thenwhat-pr-<number>.<account subdomain>.workers.dev`. The `Pull request preview` workflow publishes it when the pull request opens, replaces it on every push, and deletes the Worker when the pull request is merged or closed. One comment on the pull request carries the address, links to the main pages and files, the claims the pull request adds, the commit, the build log and the Worker's dashboard page. Every run and re-run edits that same comment (`site/scripts/pr-preview-comment.mjs`); a failed build and the removal are written into it too. The workflow does not wait for the tests, so the address is usually ready before `Tests and build` finishes; a preview existing says nothing about whether the checks pass.
 
+How a preview is kept quick (change `fast-ci-and-deploy`, measured on pull request 267 on 16 November 2026):
+
+- **A copy says what it was made from.** `site/scripts/build-key.mjs` hashes every tracked file under `site/` except the tests and notes, with the settings the build and the Worker are given. The copy serves that key at `/build-key.txt`. The workflow's first step, `make pr-preview-state`, reads it back: when it equals this commit's key, nothing is installed, built or sent, and only the comment is edited. Such a run takes about 11 s. A setting the build newly reads must be added to `SETTINGS` in that file.
+- **Drawn card images are kept.** Drawing the three cards of every claim was 76 s of an 82 s build. `site/src/lib/card-image.ts` keeps each drawn card in `site/.cache/cards` under the hash of the description handed to the renderer, its size, the fonts and the renderers' versions, so a build draws only cards that changed. `CARD_STORE=off` draws everything; `CARD_STORE=<folder>` keeps them elsewhere. The built files are byte for byte the same with and without the store.
+- **GitHub keeps the cards and the installed dependencies between runs** (`site-cards-*` and `site-deps-*` in the repository's Actions caches). A pull request reads its own and those kept by runs on `main`; `CI and deploy` keeps them on `main`. Deleting them costs one slow run and nothing else.
+
+With all three, a push that changes the site republishes in about 50 s: 11 s to start the job and restore the stores, 20 s to build, 9 s for Wrangler to send, 2 s for the comment. Before, it was about 146 s.
+
 A preview differs from production in these ways, all set in `site/wrangler.preview.jsonc` and `site/scripts/pr-preview.mjs`:
 
 - It is built from the pull request's own `site/data/published-export.json`, as a public build for the production address, so canonical links, feeds and embed snippets name `whatcameofit.com`.
@@ -45,6 +53,7 @@ To publish or remove one by hand:
 ```sh
 PR_NUMBER=12 make pr-preview-check   # builds and rehearses; publishes nothing
 PR_NUMBER=12 make pr-preview
+PR_NUMBER=12 make pr-preview-state   # says whether the published copy is already this commit's
 npx --prefix site wrangler delete --name thenwhat-pr-12 --config site/wrangler.preview.jsonc
 ```
 
