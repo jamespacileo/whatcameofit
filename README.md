@@ -326,6 +326,15 @@ thenwhat backfill topics                        # how far each topic you named i
 - Topics you want covered first, such as GLP-1 drugs, are a name and its words in `backfill/topics.py`. A lead whose title names one is read before the others, and is read when triage held it (never when triage rejected it). `thenwhat backfill topics` shows, for each topic, where its leads stand and what each of its claims holds: articles, approved trials, approved papers and background cards.
 - `funnel` lists the outlets whose pages gave no date. That list is how the page reader learns an outlet's markup.
 
+## The daily run
+
+`scripts/daily-run.sh` is one day's upkeep of the private database as a single run: the newest shared links, a capped number of reads, the registries again for published claims, then a summary. It stops at the audit and publishes nothing. `docs/daily-run.md` has what it does, how it is installed as a launchd job, and how the audit and the publish stay a deliberate act.
+
+```sh
+sh scripts/daily-run.sh --dry-run   # every command a run would start; touches nothing
+sh scripts/daily-run.sh summary     # what the last run did
+```
+
 ## Development
 
 Needs [uv](https://docs.astral.sh/uv/), Node 22.23.4 or later, make and Docker.
