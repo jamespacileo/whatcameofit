@@ -32,7 +32,11 @@ BODY_FROM = 500
 MAX_LINKED = 5
 HEADLINE_TAGS = ("og:title", "twitter:title")
 SUMMARY_TAGS = ("og:description", "description", "twitter:description")
-DATE_TAGS = ("article:published_time", "date", "dc.date", "pubdate", "parsely-pub-date")
+# Tags that name the day of publication, read before the article's structured data.
+PUBLISHED_TAGS = ("article:published_time", "pubdate", "parsely-pub-date")
+# Tags that name only "a date", read after it: medscape.com puts the day an article was
+# changed in its "date" tag (seen 2026-11-16).
+DATE_TAGS = ("date", "dc.date")
 # Elements, by id, in which an outlet shows its date as words and gives it in no tag.
 # sciencedaily.com: seen on four of its pages on 2026-11-14.
 DATE_ELEMENT_IDS = ("date_posted",)
@@ -114,7 +118,10 @@ def read_page(html: str, main: str | None = None) -> Page:
         text=text,
         headline=_first(tags, HEADLINE_TAGS) or described.get("headline") or collector.title,
         summary=_first(tags, SUMMARY_TAGS) or described.get("description"),
-        published=_first(tags, DATE_TAGS) or described.get("datePublished") or collector.posted,
+        published=_first(tags, PUBLISHED_TAGS)
+        or described.get("datePublished")
+        or _first(tags, DATE_TAGS)
+        or collector.posted,
         body=described.get("articleBody"),
         main_text=text if main is not None else None,
         registry_numbers=_unique(
