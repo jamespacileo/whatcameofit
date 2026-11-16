@@ -1,4 +1,4 @@
-.PHONY: smoke-research check lint types db-up test site-test site-build extension-test extension extension-safari public-export publish-data deploy-check deploy deploy-ci-check deploy-ci lookup-dev
+.PHONY: smoke-research check lint types db-up test scripts-test site-test site-build extension-test extension extension-safari public-export publish-data deploy-check deploy deploy-ci-check deploy-ci lookup-dev
 
 DB_PORT ?= 5433
 export SITE_URL ?= https://whatcameofit.com
@@ -7,7 +7,7 @@ export TEST_DATABASE_URL ?= postgresql+psycopg://thenwhat:thenwhat@127.0.0.1:$(D
 
 # Everything CI runs. Needs Docker for the database; no internet access is
 # needed once dependencies and the Postgres image are present.
-check: lint types test site-test site-build extension-test
+check: lint types test scripts-test site-test site-build extension-test
 
 lint:
 	uv run --directory pipeline ruff check .
@@ -22,6 +22,12 @@ db-up:
 # The round-trip test builds the site, so the site's dependencies must be installed.
 test: db-up site/node_modules
 	uv run --directory pipeline pytest -q
+
+# The daily job's script, against a stand-in for the pipeline: no database, no network.
+scripts-test:
+	sh -n scripts/daily-run.sh
+	@if command -v shellcheck >/dev/null; then shellcheck scripts/daily-run.sh scripts/tests/daily-run.test.sh; fi
+	sh scripts/tests/daily-run.test.sh
 
 site/node_modules: site/package-lock.json
 	npm --prefix site ci
