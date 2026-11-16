@@ -1,7 +1,7 @@
 {
   "checked_at": "2026-11-16T03:33:05.606453+00:00",
   "by": "assistant",
-  "released": false,
+  "released": true,
   "claims": [
     472,
     509,
@@ -140,11 +140,24 @@
       "S053"
     ],
     "native_safari": "Not verified: current control connection reports locked despite user unlock confirmations.",
-    "social_limits": "New release replay still required. S045 retains a reported caption/slide follow-up discrepancy; S053 video/audio completeness must not be inferred from caption checks."
+    "social_limits": "New release replay still required. S045 retains a reported caption/slide follow-up discrepancy; S053 video/audio completeness must not be inferred from caption checks.",
+    "fresh_social_results": {
+      "S036": "partial: correct trial, no card",
+      "S045": "partial: correct trial, no card; caption only",
+      "S053": "partial; current card result requires review because fresh access reached an age-entry screen"
+    }
   },
   "validation": {
-    "public_rehearsal": "pending",
-    "independent_reviews": "pending",
-    "released_checks": "pending"
+    "public_rehearsal": "passed",
+    "independent_reviews": "clear: standards and specification at cad0856",
+    "released_checks": "Article/card checks passed: released data, all258 exact mappings, two original article URL submissions, three cards and installed exact-address functions. Fresh S036/S045 captions return correct trials but no card because their condition wording differs; historical reassociation passes do not override fresh results. S053 fresh access and native popup/storage remain unverified.",
+    "strict_spec": "passed"
+  },
+  "release": {
+    "pr": 192,
+    "commit": "5907850c2c5b70fb2587e1c2ecec8b99617c42cc",
+    "ci_run": 43799588560,
+    "worker_id": "8a5dab28-25d6-4bbb-a556-9e86b4c7478e",
+    "checks": "1562 pipeline,656 site,170 extension tests; lint/types and public rehearsal passed"
   }
 }

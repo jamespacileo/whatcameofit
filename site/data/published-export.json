@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-16T03:34:51.308267Z",
+  "generated_at": "2026-11-16T03:51:20.602750Z",
   "last_checked_at": "2026-11-16T02:15:15.735202Z",
   "preview": false,
   "sources": [
@@ -213736,6 +213736,14 @@
           "outlet": "Regeneron",
           "title": "Interim Results from Ongoing Phase 2 COURAGE Trial Confirm Potential to Improve the Quality of Semaglutide (GLP-1 receptor agonist)-induced Weight Loss by Preserving Lean Mass",
           "published_date": "2025-06-02",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://investor.regeneron.com/news-releases/news-release-details/results-phase-2-courage-trial-demonstrating-potential-improve/",
+          "outlet": "Regeneron",
+          "title": "Results from Phase 2 COURAGE Trial Demonstrating Potential to Improve Quality of GLP-1 receptor agonist-induced Weight Loss by Preserving Lean Mass, Presented at EASD",
+          "published_date": "2025-09-17",
           "archive_url": null,
           "published_by": null
         },
