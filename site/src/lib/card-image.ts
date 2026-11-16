@@ -1,5 +1,6 @@
 // The status card as an image, in three shapes drawn from one description.
 // Wide is the link preview; square and tall are for image-led networks.
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { Resvg } from "@resvg/resvg-js";
@@ -110,6 +111,53 @@ const fonts = [
 ];
 
 type Node = { type: string; props: Record<string, unknown> };
+
+// Drawing a card is the slow part of a build: about 35 ms each, and there are three
+// for every claim. A drawn card is kept under the hash of everything that decides its
+// pixels (the description handed to the renderer, its size, the fonts and the two
+// renderers' versions), so a build redraws only the cards that changed. The store is a
+// convenience and never the record: a missing or unreadable entry is drawn again.
+// CARD_STORE names the folder; CARD_STORE=off draws everything.
+const STORE = process.env.CARD_STORE ?? ".cache/cards";
+const version = (name: string) =>
+  JSON.parse(fs.readFileSync(path.resolve(`node_modules/${name}/package.json`), "utf8")).version;
+const RENDERER = createHash("sha256")
+  .update(`satori ${version("satori")} resvg ${version("@resvg/resvg-js")}`)
+  .update(fonts[0].data)
+  .update(fonts[1].data)
+  .digest("hex");
+
+async function png(node: Node, width: number, height: number): Promise<Uint8Array> {
+  const draw = async () => {
+    const svg = await satori(node as never, { width, height, fonts });
+    return new Uint8Array(new Resvg(svg, { fitTo: { mode: "width", value: width } }).render().asPng());
+  };
+  if (STORE === "off") return draw();
+  const key = createHash("sha256")
+    .update(RENDERER)
+    .update(`${width}x${height}`)
+    .update(JSON.stringify(node))
+    .digest("hex");
+  const file = path.resolve(STORE, `${key}.png`);
+  try {
+    const kept = new Uint8Array(fs.readFileSync(file));
+    // Marked as used, so a store can be cleared of cards no build draws any more.
+    fs.utimesSync(file, new Date(), new Date());
+    return kept;
+  } catch {
+    // Not drawn before.
+  }
+  const drawn = await draw();
+  try {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    // Written beside and renamed, so a build that is stopped leaves no half-written card.
+    fs.writeFileSync(`${file}.${process.pid}.tmp`, drawn);
+    fs.renameSync(`${file}.${process.pid}.tmp`, file);
+  } catch {
+    // A store that cannot be written costs time, never a card.
+  }
+  return drawn;
+}
 const box = (style: Record<string, unknown>, children: unknown): Node => ({
   type: "div",
   props: { style: { display: "flex", ...style }, children },
@@ -340,14 +388,7 @@ function content(claim: ExportedClaim): CardContent {
 
 export async function cardPng(claim: ExportedClaim, which: Shape): Promise<Uint8Array> {
   const layout = LAYOUTS[which];
-  const svg = await satori(draw(cardFor(claim), layout) as never, {
-    width: layout.width,
-    height: layout.height,
-    fonts,
-  });
-  return new Uint8Array(
-    new Resvg(svg, { fitTo: { mode: "width", value: layout.width } }).render().asPng(),
-  );
+  return png(draw(cardFor(claim), layout), layout.width, layout.height);
 }
 
 type IconLine = [tag: string, attributes: Record<string, string>];
@@ -477,12 +518,7 @@ export async function topicPng(
   claims: ExportedClaim[],
 ): Promise<Uint8Array> {
   const { width, height } = LAYOUTS.wide;
-  const svg = await satori(drawTopic(vertical, topicCardFor(vertical, claims)) as never, {
-    width,
-    height,
-    fonts,
-  });
-  return new Uint8Array(new Resvg(svg, { fitTo: { mode: "width", value: width } }).render().asPng());
+  return png(drawTopic(vertical, topicCardFor(vertical, claims)), width, height);
 }
 
 /**
@@ -521,6 +557,5 @@ export async function sitePng(): Promise<Uint8Array> {
       ]),
     ],
   );
-  const svg = await satori(card as never, { width, height, fonts });
-  return new Uint8Array(new Resvg(svg, { fitTo: { mode: "width", value: width } }).render().asPng());
+  return png(card, width, height);
 }
