@@ -67,10 +67,11 @@ import {
 } from "../lib/paper-facts";
 import {
   TRIALS_NOTE,
-  TRIALS_SHOWN,
+  TRIALS_PER_PHASE,
   trialDates,
   isPaperMatch,
   orderTrials,
+  phaseGroups,
   withResults,
 } from "../lib/trial-facts";
 import { FOLLOWED_SHOWN, followedName, followedReports } from "../lib/reports";
@@ -139,8 +140,8 @@ const possible = candidates.length;
 // Each trial once, furthest phase first, with the match that brought it to the claim.
 const trials = orderTrials(claim.trials ?? []);
 const trialIds = new Set(trials.map((trial) => trial.trial_id));
-// The fold says when it holds posted results, so a reader knows to open it.
-const foldedResults = withResults(trials.slice(TRIALS_SHOWN));
+// The trials by furthest phase, furthest first; each phase shows its first ten.
+const trialGroups = phaseGroups(trials);
 const matchOf = (trialId: string) =>
   registryMatches.find((match) => match.state === "approved" && match.external_id === trialId);
 const bridge = digestBridge(claim);
@@ -188,8 +189,9 @@ const timetableNote = [
   plural(counts.records, "record"),
   "newest first",
 ].join(" · ");
-// The trials table's columns, named once for both the shown trials and the rest.
-const TRIAL_COLUMNS = ["Trial", "Compared with", "Design", "State", "Results"];
+// The trials table's columns, named once for every phase's table. Only the first
+// table shows them; the others carry them for a screen reader.
+const TRIAL_COLUMNS = ["People", "Compared with", "Main measure", "State", "Trial"];
 const posted = withResults(trials);
 const trialsNote = [
   plural(trials.length, "trial"),
@@ -846,45 +848,52 @@ const sections = [
         <section class="trials" data-pagefind-ignore>
           <FoldHead id="trials" phone="folded" note={trialsNote}>Trials on record</FoldHead>
           <p class="take-why">{TRIALS_NOTE}</p>
-          <div class="trial-table" role="table" aria-label="Trials on record">
-            <div class="trial-row trial-columns" role="row">
-              {TRIAL_COLUMNS.map((name) => (
-                <span role="columnheader">{name}</span>
-              ))}
-            </div>
-            {trials.slice(0, TRIALS_SHOWN).map((trial) => (
-                <Trial
-                  trial={trial}
-                  match={matchOf(trial.trial_id)}
-                  approach={claim.approach}
-                  dates={trialDates(claim.events, trial.trial_id)}
-                />
-            ))}
-          </div>
-          {trials.length > TRIALS_SHOWN && (
-            <details class="trials-rest">
-              <summary>
-                The other {trials.length - TRIALS_SHOWN} of {trials.length} trials
-                {foldedResults > 0 && ` (${foldedResults} with results posted)`}
-                <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
-              </summary>
-              <div class="trial-table" role="table" aria-label="The other trials on record">
-                <div class="trial-row trial-columns" role="row">
+          {trialGroups.map((group, index) => {
+            const shown = group.trials.slice(0, TRIALS_PER_PHASE);
+            const rest = group.trials.slice(TRIALS_PER_PHASE);
+            const restPosted = withResults(rest);
+            const groupPosted = withResults(group.trials);
+            const table = (list: typeof trials, label: string, head: boolean) => (
+              <div class="trial-table" role="table" aria-label={label}>
+                <div class={head ? "trial-row trial-columns" : "trial-row trial-columns visually-hidden"} role="row">
                   {TRIAL_COLUMNS.map((name) => (
                     <span role="columnheader">{name}</span>
                   ))}
                 </div>
-                {trials.slice(TRIALS_SHOWN).map((trial) => (
+                {list.map((trial) => (
                   <Trial
-                  trial={trial}
-                  match={matchOf(trial.trial_id)}
-                  approach={claim.approach}
-                  dates={trialDates(claim.events, trial.trial_id)}
-                />
+                    trial={trial}
+                    match={matchOf(trial.trial_id)}
+                    approach={claim.approach}
+                    dates={trialDates(claim.events, trial.trial_id)}
+                    showPhase={group.mixed}
+                  />
                 ))}
               </div>
-            </details>
-          )}
+            );
+            return (
+              <div class="trial-phase-group">
+                <h3 class="trial-phase-head">
+                  {group.name}
+                  <span class="entry-note">
+                    {plural(group.trials.length, "trial")}
+                    {groupPosted > 0 && ` · ${groupPosted} with posted results`}
+                  </span>
+                </h3>
+                {table(shown, `${group.name}: trials on record`, index === 0)}
+                {rest.length > 0 && (
+                  <details class="trials-rest">
+                    <summary>
+                      The other {rest.length} of {group.trials.length} trials
+                      {restPosted > 0 && ` (${restPosted} with results posted)`}
+                      <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+                    </summary>
+                    {table(rest, `The other ${group.name} trials`, false)}
+                  </details>
+                )}
+              </div>
+            );
+          })}
         </section>
       )
     }

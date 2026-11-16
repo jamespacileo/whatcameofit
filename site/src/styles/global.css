@@ -6209,7 +6209,7 @@ body.framed {
 
 /* The trials table: one row to read across for each trial; a row opens to the rest. */
 .trial-table {
-  --trial-cols: minmax(0, 1.45fr) minmax(0, 1.25fr) minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
+  --trial-cols: minmax(0, 0.95fr) minmax(0, 1fr) minmax(0, 1.9fr) minmax(0, 0.95fr) minmax(0, 0.95fr);
   border: 1px solid var(--rule);
   border-radius: var(--radius);
   overflow: hidden;
@@ -6322,6 +6322,61 @@ body.framed {
   margin-left: 1.9rem;
 }
 
+/* Trials by phase: each phase is a heading over its own table; only the first table
+   shows the column names, the others keep them for a screen reader. */
+.trial-phase-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.7rem;
+  margin: 1.6rem 0 0.55rem;
+  font-size: 1.05rem;
+}
+
+.take-why + .trial-phase-group .trial-phase-head {
+  margin-top: 0.4rem;
+}
+
+.trial-phase-head .entry-note {
+  font-weight: 400;
+}
+
+.trial-row.trial-columns.visually-hidden {
+  position: absolute;
+  padding: 0;
+}
+
+.trial-columns.visually-hidden + .trial-group {
+  border-top: 0;
+}
+
+.trial-by,
+.trial-cell .trial-phase {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.trial-posted {
+  display: block;
+  margin-top: 0.15rem;
+  font-weight: 600;
+}
+
+.trial-measure-words {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+.trial-id a {
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+}
+
 .trial-detail {
   padding: 0.2rem 1.1rem 1.1rem;
 }
@@ -6352,6 +6407,18 @@ body.framed {
 
   .trial-lead {
     grid-column: 1 / -1;
+  }
+
+  .trial-row {
+    grid-auto-flow: dense;
+  }
+
+  .trial-measure {
+    grid-column: 1 / -1;
+  }
+
+  .trial-measure-words {
+    display: inline;
   }
 
   .trial-cell .lbl {

@@ -108,7 +108,7 @@ const BASIS_WORDS: Record<string, string> = {
 
 /** What the section says of itself, once, above the trials. */
 export const TRIALS_NOTE =
-  "Each trial on record for this treatment and condition, furthest phase first. The facts are a selection, unaltered, from the trial's registry record. Results are the numbers the trial's sponsor posted to the registry. A score is about the match, not about the treatment.";
+  "Each trial on record for this treatment and condition, grouped by its furthest phase, furthest first. The facts are a selection, unaltered, from the trial's registry record. Results are the numbers the trial's sponsor posted to the registry. A score is about the match, not about the treatment.";
 
 export const NO_P_VALUE = "Comparison posted with no p value";
 
@@ -206,6 +206,39 @@ export function withResults(trials: ExportedTrial[]): number {
   return trials.filter((trial) => trial.facts?.results).length;
 }
 
+/** How many trials of one phase are shown before the rest of that phase fold away. */
+export const TRIALS_PER_PHASE = 10;
+
+export const NO_PHASE_GROUP = "No phase given";
+
+export interface PhaseGroup {
+  /** "Phase 3", "Phase 2 and Phase 1/Phase 2", or "No phase given". */
+  name: string;
+  /** In the order `orderTrials` gives them. */
+  trials: ExportedTrial[];
+  /** More than one phase wording in the group, so each row names its own. */
+  mixed: boolean;
+}
+
+/** Ordered trials grouped by their furthest phase, furthest first. A trial of Phase 1/Phase 2
+ * sits with Phase 2. A trial with no phase, or "not applicable", is in the last group. */
+export function phaseGroups(trials: ExportedTrial[]): PhaseGroup[] {
+  const byRank = new Map<number, ExportedTrial[]>();
+  for (const trial of orderTrials(trials)) {
+    const rank = Math.max(0, phaseRank(trial));
+    byRank.set(rank, [...(byRank.get(rank) ?? []), trial]);
+  }
+  return [...byRank.entries()]
+    .sort(([a], [b]) => b - a)
+    .map(([rank, members]) => {
+      if (rank === 0) return { name: NO_PHASE_GROUP, trials: members, mixed: false };
+      const words = [
+        ...new Set(members.map((trial) => phaseText(trial.phases.filter((code) => code !== "not_applicable"))!)),
+      ].sort((a, b) => a.length - b.length || (a < b ? -1 : 1));
+      return { name: words.join(" and "), trials: members, mixed: words.length > 1 };
+    });
+}
+
 /** "83 participants enrolled" or "400 participants planned". */
 export function participantsText(facts: ExportedTrialFacts | null): string | null {
   const stated = facts?.participants;
@@ -296,8 +329,6 @@ export function isPaperMatch(match: { source_name: string }): boolean {
 }
 
 /** How many trials the page shows before the rest go behind one press. */
-export const TRIALS_SHOWN = 5;
-
 // A trial's entry in plain words (openspec site-publishing, change plain-trial-entries):
 // a heading a lay reader can read, the design and state said plainly, and posted results
 // as a table. The registry's exact terms stay one press away, in the entry's fold.

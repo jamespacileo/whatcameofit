@@ -16,6 +16,7 @@ import {
   measureText,
   orderTrials,
   participantsText,
+  phaseGroups,
   plainFacts,
   resultTable,
   sponsorText,
@@ -333,4 +334,31 @@ test("Scenario: Fold with no results", () => {
 
 test("plain wording says nothing of how a trial turned out", () => {
   assert.throws(() => assertNoOutcomeVerdict(["Results were significant"]), /Verdict wording/);
+});
+
+// Openspec site-publishing (change trials-by-phase): "A long list of trials opens with the furthest".
+test("Scenario: Claim with fifteen trials across three phases", () => {
+  const trials = [
+    ...["NCT31", "NCT32", "NCT33", "NCT34"].map((id) => trial(id, ["phase_3"])),
+    ...Array.from({ length: 7 }, (_, i) => trial(`NCT2${i}`, ["phase_2"])),
+    ...Array.from({ length: 3 }, (_, i) => trial(`NCT12${i}`, ["phase_1", "phase_2"])),
+    trial("NCT00", ["not_applicable"]),
+  ];
+  const groups = phaseGroups(trials);
+  assert.deepEqual(
+    groups.map((group) => [group.name, group.trials.length, group.mixed]),
+    [
+      ["Phase 3", 4, false],
+      ["Phase 2 and Phase 1/Phase 2", 10, true],
+      ["No phase given", 1, false],
+    ],
+  );
+});
+
+test("Scenario: Claim with twelve Phase 2 trials", () => {
+  const groups = phaseGroups(Array.from({ length: 12 }, (_, i) => trial(`NCT${i}`, ["phase_2"])));
+  assert.equal(groups.length, 1);
+  assert.equal(groups[0].trials.length, 12);
+  // Ten shown is the page's rule; the group keeps them in the order orderTrials gives.
+  assert.deepEqual(groups[0].trials, orderTrials(groups[0].trials));
 });
