@@ -25,7 +25,7 @@ The daily run SHALL NOT start a step over the trials it loads.
 - **THEN** those trials are due for `news_search`, and the run starts no `news_search`
 
 ### Requirement: Database address
-The daily run SHALL reach the database at an address given to it for the host, and SHALL NOT start when none is set. The address SHALL NOT appear in its log or summary.
+The daily run SHALL reach the database at an address given to it for the host, and SHALL NOT start when none is set. The address SHALL NOT appear in its log or summary; the summary SHALL name the setting it came from. The property list that carries it SHALL be installed readable by its owner alone.
 
 #### Scenario: No database address
 - **WHEN** neither `DATABASE_URL` nor `DAILY_RUN_DATABASE_URL` is set in the environment or the settings file
@@ -33,4 +33,8 @@ The daily run SHALL reach the database at an address given to it for the host, a
 
 #### Scenario: The property list carries it
 - **WHEN** the property list is written with `DAILY_RUN_DATABASE_URL` set
-- **THEN** it gives the job `DATABASE_URL` with that address
+- **THEN** it gives the job `DATABASE_URL` with that address, and says to install it mode 600
+
+#### Scenario: Where the address came from
+- **WHEN** a run ends
+- **THEN** its summary names the setting the database address came from, and not the address

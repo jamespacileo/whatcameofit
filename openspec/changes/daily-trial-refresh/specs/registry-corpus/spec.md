@@ -12,3 +12,7 @@ Bulk loads SHALL identify the client with the configured contact address, stay w
 #### Scenario: The allowance runs out part way
 - **WHEN** the registry's allowance is used up after the first page of a load
 - **THEN** the trials of that page are stored, the command reports them and says it stopped, it exits without an error, and the next changes-only load asks from the same date as this one did
+
+#### Scenario: The registry asks the load to wait
+- **WHEN** the registry still answers "too many requests" after the client's retries
+- **THEN** the pause is recorded for the registry with the wait it stated, the load stops with what it stored and exits without an error, and a load started before the pause ends sends no request

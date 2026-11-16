@@ -10,6 +10,7 @@
 #   sh scripts/daily-run.sh pause        no run starts until `resume`
 #   sh scripts/daily-run.sh resume       let runs start again
 #   sh scripts/daily-run.sh plist        the launchd property list, with this checkout's paths
+#                                        (it holds the database password: install it mode 600)
 #
 # It never clears an audit, archives, exports, commits or pushes. A claim a read drafts
 # is held awaiting audit (docs/adr/0007), and releasing it stays a deliberate act.
@@ -90,6 +91,7 @@ case "$command" in
     if [ -n "$database" ]; then
       entry="    <key>DATABASE_URL</key><string>$(printf '%s' "$database" |
         sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g')</string>"
+      echo "This property list holds the database password. Install it readable by you alone: (umask 077 && sh scripts/daily-run.sh plist > ~/Library/LaunchAgents/$label.plist), as in docs/daily-run.md." >&2
     else
       echo "DAILY_RUN_DATABASE_URL is not set, so the property list gives the job no database address. Set it in $env_file and write the property list again." >&2
     fi
@@ -336,6 +338,7 @@ write_summary() {
     echo "# Daily run, $today"
     echo
     echo "Started $started, ended $(date '+%H:%M'). Outcome: $outcome."
+    [ -n "$database_from" ] && echo "Database address from $database_from."
     [ -n "$stopped" ] && echo "Stopped: $stopped. The steps after that point did not run."
     echo
     echo "## What ran"

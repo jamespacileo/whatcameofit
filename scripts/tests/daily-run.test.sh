@@ -108,6 +108,8 @@ grep -q 'Trials: Loaded 1,240 trials updated since 2026-11-16 in 2 requests: 85 
 [ "$(cat "$calls.database")" = "postgresql+psycopg://thenwhat:pw@127.0.0.1:5433/thenwhat" ] ||
   fail "run: the pipeline was not given DAILY_RUN_DATABASE_URL"
 grep -q 'pw@' "$state/latest.md" && fail "run: the summary shows the database address"
+grep -q '^Database address from DAILY_RUN_DATABASE_URL.$' "$state/latest.md" ||
+  fail "run: the summary does not say where the database address came from"
 grep -q '2 of 3 published claims: 2 new events, 1 claims failed' "$summary" || fail "run: the summary lacks the refresh"
 [ "$(cat "$state/refresh-offset")" = 2 ] || fail "run: the next refresh would not start at the third claim"
 
@@ -161,7 +163,15 @@ grep -q "<string>$root/scripts/daily-run.sh</string>" "$tmp/case/plist" || fail 
 grep -q '@[A-Z_]*@' "$tmp/case/plist" && fail "plist: a blank was left"
 grep -q '<key>DATABASE_URL</key><string>postgresql+psycopg://thenwhat:a&amp;b&lt;c|d@127.0.0.1:5433/thenwhat</string>' "$tmp/case/plist" ||
   fail "plist: the database address is missing or not escaped"
-[ -s "$tmp/case/plist.err" ] && fail "plist: a warning with the address set"
+grep -q 'holds the database password. Install it readable by you alone: (umask 077' "$tmp/case/plist.err" ||
+  fail "plist: it does not say to install it mode 600"
+grep -q 'not set' "$tmp/case/plist.err" && fail "plist: it says the address is not set"
+# The install line the docs give writes the file mode 600.
+grep -qF '(umask 077 && sh scripts/daily-run.sh plist > ~/Library/LaunchAgents/com.thenwhat.daily-run.plist)' "$here/../docs/daily-run.md" ||
+  fail "plist: the docs do not give the install line with umask 077"
+(umask 022 && umask 077 && HOME="$home" CALLS="$calls" sh "$root/scripts/daily-run.sh" plist >"$tmp/case/installed.plist" 2>/dev/null)
+[ "$(stat -f '%Lp' "$tmp/case/installed.plist" 2>/dev/null || stat -c '%a' "$tmp/case/installed.plist")" = 600 ] ||
+  fail "plist: written under umask 077 it is not mode 600"
 if command -v plutil >/dev/null 2>&1; then
   plutil -lint "$tmp/case/plist" >/dev/null || fail "plist: not a property list"
 fi
@@ -188,6 +198,8 @@ fresh
 (export DATABASE_URL="postgresql+psycopg://from-plist@127.0.0.1:5433/thenwhat" && job) || true
 [ "$(cat "$calls.database")" = "postgresql+psycopg://from-plist@127.0.0.1:5433/thenwhat" ] ||
   fail "environment: DATABASE_URL was not passed on"
+grep -q '^Database address from DATABASE_URL in the environment.$' "$state/latest.md" ||
+  fail "environment: the summary does not say the address came from the environment"
 
 # 12. The registry's allowance is used up during the trials load: the run goes on and
 #     is not failed, and the summary says the load stopped. (The run still fails, on
