@@ -230,7 +230,7 @@ When the read names an intervention and an indication that an existing claim cov
 - **THEN** it stays approved, and no field the operator reviewed is changed
 
 ### Requirement: The same story in other words
-When no existing claim has the read's intervention and indication as written, the claims whose intervention shares a name with the read's, followed by the claims that screening found named in the lead's title, SHALL be candidates, up to a fixed number. A rejected claim SHALL NOT be a candidate. A name is shared when a claim's intervention name or synonym equals one of the names the read gives, or when one sits whole inside the other, word for word. A decision SHALL say whether the article reports one of the candidates or none of them. It SHALL be shown each side's treatment and condition and nothing of the article's text. The article reports a candidate when the treatment is the same and the article's condition is the candidate's condition, a narrower form of it or a wider wording of it; a different condition is a different claim. The article SHALL be added to the candidate the decision gives the highest probability when two things hold: the probability that the article reports one of the candidates, which is one minus the probability the decision gives to none of them, is at or above the configured probability, 0.6 unless set; and that candidate's own probability is more than half. Otherwise a new claim SHALL be drafted. Being added SHALL change nothing of the claim that adding any article does not change: the claim keeps the indication and headline it was first given. The decision SHALL be logged.
+When no existing claim has the read's intervention and indication as written, the claims whose intervention shares a name with the read's, followed by the claims that screening found named in the lead's title, SHALL be candidates, up to a fixed number. A rejected claim SHALL NOT be a candidate. A name is shared when a claim's intervention name or synonym equals one of the names the read gives, or when one sits whole inside the other, word for word. A name is shared as well when one of the names the read gives equals, whole, a name the registry of substances gives the claim's substance in the record kept with the claim's intervention: what the registry calls the substance, any name it lists for it and has not withdrawn, or a development code. A word of one of those names SHALL NOT make a candidate. This widens only which claims are offered; the decision and its two tests are unchanged. A decision SHALL say whether the article reports one of the candidates or none of them. It SHALL be shown each side's treatment and condition and nothing of the article's text. The article reports a candidate when the treatment is the same and the article's condition is the candidate's condition, a narrower form of it or a wider wording of it; a different condition is a different claim. The article SHALL be added to the candidate the decision gives the highest probability when two things hold: the probability that the article reports one of the candidates, which is one minus the probability the decision gives to none of them, is at or above the configured probability, 0.6 unless set; and that candidate's own probability is more than half. Otherwise a new claim SHALL be drafted. Being added SHALL change nothing of the claim that adding any article does not change: the claim keeps the indication and headline it was first given. The decision SHALL be logged.
 
 #### Scenario: The same story in another outlet's words
 - **WHEN** a claim exists for esketamine for major depressive disorder and suicidal thinking, and a lead's read names esketamine for treatment-resistant depression, and the decision gives that claim 0.9 and none of the candidates 0.1
@@ -267,6 +267,18 @@ When no existing claim has the read's intervention and indication as written, th
 #### Scenario: No claim shares the name
 - **WHEN** no claim's intervention shares a name with the read's and screening linked the lead's title to no claim
 - **THEN** no decision is asked and a new claim is drafted
+
+#### Scenario: A brand the registry of substances lists for a claim's substance
+- **WHEN** a claim was entered under a generic name, the record of its substance lists a brand, and a lead's read names only the brand for the claim's condition
+- **THEN** the claim is a candidate, shown under the name it was entered by, and the article is added to it when the decision says it is the same claim
+
+#### Scenario: A development code the registry lists
+- **WHEN** a read names a treatment by a code the registry of substances lists for a claim's substance
+- **THEN** that claim is a candidate
+
+#### Scenario: Another treatment for the condition of a claim filed under a substance
+- **WHEN** a read names a treatment that shares only a word with one of the names of a claim's substance, for the same condition
+- **THEN** the claim is not a candidate, no decision is asked and a new claim is drafted
 
 #### Scenario: A claim screening found in the title
 - **WHEN** screening linked the lead's title to a claim whose intervention name the read does not share

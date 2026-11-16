@@ -281,6 +281,41 @@ def test_claims_with_an_equal_name_come_first_and_every_condition_comes_back(ses
     assert sharing(session, "spravato") == ["esketamine-spray-pain"]
 
 
+def test_a_claim_shares_a_name_the_registry_of_substances_gives_its_substance(session: Session):
+    from thenwhat.db.models import EntitySubstance
+
+    named(session, "exampletumab-depression", "exampletumab")
+    named(session, "ketamine-depression", "ketamine")
+    entity = session.scalars(select(Entity).where(Entity.name == "exampletumab")).one()
+    session.add(
+        EntitySubstance(
+            entity_id=entity.id,
+            source_name="gsrs",
+            external_id="synthetic-substance",
+            url="https://gsrs.test/synthetic-substance",
+            payload={
+                "substance": {"_name": "EXAMPLETUMAB ALFA"},
+                "names": [
+                    {"name": "Moodera", "type": "bn"},
+                    {"name": "exampletumab hydrochloride monohydrate", "type": "sys"},
+                    {"name": "Oldera", "type": "bn", "deprecated": True},
+                ],
+            },
+            fetched_at=datetime(2026, 11, 16, tzinfo=UTC),
+            codes=["EX-77"],
+        )
+    )
+    session.flush()
+
+    # A brand, a development code and the registry's own name for the substance, whole.
+    assert sharing(session, "moodera") == ["exampletumab-depression"]
+    assert sharing(session, "EX-77") == ["exampletumab-depression"]
+    assert sharing(session, "Exampletumab alfa") == ["exampletumab-depression"]
+    # Not a word of one of its names, and not a name the registry has withdrawn.
+    assert sharing(session, "hydrochloride") == []
+    assert sharing(session, "Oldera") == []
+
+
 def test_no_more_claims_are_offered_than_the_decision_is_shown(session: Session):
     for number in range(MAX_NAMED_CLAIMS + 2):
         named(session, f"esketamine-condition-{number}", "esketamine", f"condition {number}")

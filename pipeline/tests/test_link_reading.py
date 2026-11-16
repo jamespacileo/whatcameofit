@@ -984,6 +984,77 @@ def test_a_brand_name_is_offered_the_claim_entered_under_the_generic_name(sessio
     )
 
 
+def filed_under_a_substance(session: Session, claim: Claim, *names: str) -> None:
+    """Keep a synthetic record of the registry of substances with the claim's
+    intervention: what the registry calls the substance, then the other names it lists."""
+    from thenwhat.db.models import Entity, EntitySubstance
+    from thenwhat.domain import EntityType
+
+    entity = session.scalars(
+        select(Entity).where(Entity.claim_id == claim.id, Entity.type == EntityType.INTERVENTION)
+    ).one()
+    session.add(
+        EntitySubstance(
+            entity_id=entity.id,
+            source_name="gsrs",
+            external_id="synthetic-substance",
+            url="https://gsrs.test/synthetic-substance",
+            payload={
+                "substance": {"_name": names[0].upper()},
+                "names": [{"name": name, "type": "bn"} for name in names],
+            },
+            fetched_at=NOW,
+            codes=[],
+        )
+    )
+    session.flush()
+
+
+def test_a_brand_the_substance_record_names_joins_the_claim_under_the_generic(session, fake_time):
+    """Scenario: A brand the registry of substances lists for a claim's substance"""
+    reader = Reader(
+        session,
+        fake_time,
+        DRAFT | {"intervention": "Toothera", "intervention_synonyms": []},
+    )
+    claim = tracked_claim(session)
+    filed_under_a_substance(session, claim, "exampletumab", "Toothera", "exampletumab sodium")
+    reader.backend.same_claim = claim.slug
+    lead = reader.lead()
+
+    reader.read()
+
+    # The names share no word; the substance's record is what offered the claim. The
+    # decision still settles it, shown the claim under the name it was entered by.
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.ADDED_TO_CLAIM, claim.id)
+    assert (
+        "- ex-1-tooth-agenesis: EX-1 antibody for tooth agenesis"
+        in (reader.backend.same_claim_asked[0])
+    )
+    assert session.scalar(select(func.count()).select_from(Claim)) == 1
+
+
+def test_another_treatment_for_the_same_condition_still_drafts_its_own_claim(session, fake_time):
+    """Scenario: Another treatment for the condition of a claim filed under a substance"""
+    reader = Reader(
+        session,
+        fake_time,
+        DRAFT | {"intervention": "sodium fluoride varnish", "intervention_synonyms": ["Varnex"]},
+    )
+    claim = tracked_claim(session)
+    filed_under_a_substance(session, claim, "exampletumab", "Toothera", "exampletumab sodium")
+    # Were the claim offered, the decision would take it: it must not be offered.
+    reader.backend.same_claim = claim.slug
+    lead = reader.lead()
+
+    reader.read()
+
+    # A word of one of the substance's names ("sodium") is no name for the treatment.
+    assert reader.backend.same_claim_asked == []
+    assert lead.read_outcome is ReadOutcome.NEW_CLAIM and lead.claim_id != claim.id
+    assert claim_of(session, lead).indication == "tooth agenesis"
+
+
 def test_a_dose_or_assisted_therapy_is_offered_the_claim_and_never_drafts_a_duplicate(
     session, fake_time
 ):
