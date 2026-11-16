@@ -28,9 +28,11 @@ from thenwhat.claims.entry import (
     archive_claim,
     articles_of,
     claim_count,
+    core_name,
     find_claim,
     promises_of,
     rename_slug,
+    slug_of_claim_close_to,
     unarchive_claim,
 )
 from thenwhat.db.models import Claim, Entity
@@ -404,3 +406,54 @@ def test_unarchiving_puts_it_back(session: Session):
 
     assert claim.archived_at is None
     assert claim.archive_reason is None
+
+
+# --- the same treatment once dose, schedule and form are left out -------------------
+
+
+@pytest.mark.parametrize(
+    ("name", "core"),
+    [
+        ("Semaglutide 2.4 mg once-weekly injections", "semaglutide"),
+        ("MDMA-assisted psychotherapy", "mdma"),
+        ("ivermectin 600 \u00b5g/kg once daily for 6 days", "ivermectin"),
+        ("high-dose oral ivermectin for five days", "ivermectin"),
+        ("esketamine nasal spray", "esketamine nasal spray"),
+        ("COVID-19 vaccine", "covid-19 vaccine"),
+    ],
+)
+def test_core_name(name: str, core: str):
+    assert core_name(name) == core
+
+
+def close_claim(session: Session, slug: str, intervention: str, indication: str) -> None:
+    add_claim(
+        session,
+        slug=slug,
+        headline="A synthetic headline",
+        vertical="mouth-and-teeth",
+        intervention=intervention,
+        indication=indication,
+    )
+
+
+def test_a_claim_close_to_a_new_one_is_found_by_its_core_name(session: Session):
+    """Scenario: A duplicate refused"""
+    close_claim(session, "daraxonrasib-pancreatic-cancer", "daraxonrasib", "Pancreatic cancer")
+
+    assert (
+        slug_of_claim_close_to(session, "Daraxonrasib 300 mg daily", "Advanced pancreatic cancer")
+        == "daraxonrasib-pancreatic-cancer"
+    )
+
+
+def test_a_condition_about_other_people_is_not_close(session: Session):
+    """Scenario: Another condition that ends with the same words"""
+    close_claim(session, "orforglipron-obesity", "orforglipron", "Obesity")
+
+    assert (
+        slug_of_claim_close_to(
+            session, "orforglipron", "Obstructive sleep apnoea in people with obesity"
+        )
+        is None
+    )

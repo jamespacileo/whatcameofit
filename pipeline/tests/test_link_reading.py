@@ -870,6 +870,41 @@ def test_a_brand_name_is_offered_the_claim_entered_under_the_generic_name(sessio
     )
 
 
+def test_a_dose_or_assisted_therapy_is_offered_the_claim_and_never_drafts_a_duplicate(
+    session, fake_time
+):
+    """Scenarios: A name with a dose or an assisted therapy, A duplicate refused"""
+    reader = Reader(
+        session,
+        fake_time,
+        DRAFT
+        | {
+            "intervention": "MDMA-assisted psychotherapy",
+            "intervention_synonyms": [],
+            "indication": "Post-traumatic stress disorder",
+        },
+    )
+    claim = add_claim(
+        session,
+        slug="mdma-ptsd",
+        headline="A synthetic headline",
+        vertical="mouth-and-teeth",
+        intervention="MDMA",
+        indication="Post-traumatic stress disorder (PTSD)",
+    )
+    # The decision does not establish that they are the same.
+    lead = reader.lead()
+
+    reader.read()
+
+    assert (
+        "- mdma-ptsd: MDMA for Post-traumatic stress disorder (PTSD)"
+        in (reader.backend.same_claim_asked[0])
+    )
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.IDENTITY_UNRESOLVED, None)
+    assert lead.read_detail is not None and claim.slug in lead.read_detail
+
+
 # --- one story, several outlets --------------------------------------------------------
 
 # Four synthetic reads shaped like one much-shared story: each outlet words the treatment

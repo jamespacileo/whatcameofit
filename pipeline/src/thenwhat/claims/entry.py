@@ -192,6 +192,74 @@ def slug_of_claim_covering(session: Session, intervention: str, indication: str)
     return None
 
 
+# What a name says about how a treatment is given, besides the treatment: a dose, how
+# often, the form it comes in, and the therapy a drug is given alongside. Batch 1's audit
+# (2026-11-16) found reads that drafted "semaglutide 2.4 mg once-weekly injections" and
+# "MDMA-assisted psychotherapy" beside the live semaglutide and MDMA claims.
+# Compared names are casefolded, which turns the micro sign into the Greek mu.
+_DOSE = re.compile(r"\b\d+(?:[.,]\d+)?\s*(?:mg|mcg|μg|ug|g|ml|iu|units?|%)(?:/\s*kg)?(?![\w-])")
+_COUNT = r"(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|twelve)"
+_HOW_GIVEN = re.compile(
+    r"\b(?:(?:once|twice|three times)[- ](?:a[- ])?(?:daily|weekly|monthly|day|week|month)"
+    rf"|for {_COUNT} (?:days?|weeks?|months?)"
+    r"|(?:high|low|standard)[- ]dose|oral|daily|weekly|monthly"
+    r"|injections?|tablets?|pills?|capsules?|doses?|dosing)\b"
+)
+_ASSISTED = re.compile(r"-assisted\b.*$")
+
+
+def core_name(text: str) -> str:
+    """The treatment a name names once its dose, schedule, form and any "-assisted ..."
+    therapy are left out, in the compared form: "semaglutide 2.4 mg once-weekly
+    injections" and "MDMA-assisted psychotherapy" give "semaglutide" and "mdma". A route
+    or a formulation that makes another product ("nasal spray", "extended release") is
+    kept. Used to find candidates and to refuse a duplicate, never to join one."""
+    key = name_key(text)
+    key = _ASSISTED.sub("", key)
+    key = _HOW_GIVEN.sub(" ", _DOSE.sub(" ", key))
+    return tidy(key.strip(" ,;-"))
+
+
+_BRACKETED = re.compile(r"\([^)]*\)")
+# A word that starts a phrase about someone or something else: "sleep apnoea in people
+# with obesity" is not a kind of obesity.
+_LINKING = {"in", "with", "after", "for", "of", "among", "without", "during", "from", "to", "at"}
+
+
+def _conditions_overlap(first: str, second: str) -> bool:
+    """Whether one condition is the other, or the other with words that only narrow it
+    put in front: "advanced pancreatic cancer" and "pancreatic cancer". Words in
+    brackets are left out ("post-traumatic stress disorder (PTSD)"). A condition that
+    only ends with the other after "in", "with" or the like is another condition."""
+    short, long = sorted(
+        (tidy(_BRACKETED.sub(" ", name_key(text))).split() for text in (first, second)), key=len
+    )
+    if not short or long[len(long) - len(short) :] != short:
+        return False
+    return not _LINKING & set(long[: len(long) - len(short)])
+
+
+def slug_of_claim_close_to(session: Session, intervention: str, indication: str) -> str | None:
+    """Slug of a claim that stands for the same treatment and condition once dose,
+    schedule and form are left out of the treatment's names, and one condition's words
+    sit inside the other's. A rejected draft does not count. Only refuses a new claim:
+    whether an article joins this one is still decided."""
+    wanted = core_name(intervention)
+    if not wanted:
+        return None
+    rows = session.execute(
+        select(Claim.slug, Claim.indication, Entity.name, Entity.synonyms)
+        .join(Entity, Entity.claim_id == Claim.id)
+        .where(Entity.type == EntityType.INTERVENTION, Claim.review_state != ReviewState.REJECTED)
+        .order_by(Claim.id)
+    )
+    for slug, condition, name, synonyms in rows:
+        names = {core_name(known) for known in [name, *synonyms]}
+        if wanted in names and _conditions_overlap(indication, condition):
+            return slug
+    return None
+
+
 # How many claims are offered to the decision that says whether an article reports one
 # of them. An intervention with more claims than this is rare; the oldest are kept.
 MAX_NAMED_CLAIMS = 8

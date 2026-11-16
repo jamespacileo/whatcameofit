@@ -194,6 +194,12 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 - [x] 12.4 Verify with tests: prepare marks the claim, the export skips it until cleared, and the command refuses a claim not held while clearing nothing.
 - [x] 12.5 Raise the export's schema version to 2 and have the site read only 2, so an export from pipeline code older than the hold stops the build; verify with a site test.
 
+## 14. Batch 1 audit faults: duplicates by dose or form
+
+Batch 1's audit (2026-11-16) archived 7 claims as duplicates of live ones, drafted because a dose, a schedule or "-assisted psychotherapy" kept the names from matching. Measured on 336 claims, the rule below pairs 13, every one a duplicate the audit archived or would archive, and none for another condition once "in", "with" and the like stop a match.
+
+- [x] 14.1 Offer the same-claim decision the claims sharing a read's core name, and refuse a new claim whose core name and condition are a claim's; record the lead as identity unresolved. Verify with tests: the claim is offered, the duplicate is refused, and a condition about other people is not matched.
+
 ## Workflow follow-up
 
 - Archive `backfill-work-ledger` before this change is archived, so that `work-ledger` exists in the main specs.
