@@ -6,5 +6,5 @@
 - [x] Describe previews in `docs/deploy.md`.
 - [x] Open a pull request and confirm the preview is published, answers with `X-Robots-Tag: noindex`, and that `/api/lookup` answers "not set up".
 - [x] Push to it and confirm the same Worker is replaced and the comment edited.
-- [ ] Close it and confirm the Worker is deleted and the comment says so.
-- [ ] Sync the `deployment` spec and archive this change.
+- [x] Close it and confirm the Worker is deleted and the comment says so.
+- [x] Sync the `deployment` spec and archive this change.
