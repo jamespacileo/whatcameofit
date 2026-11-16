@@ -2,6 +2,13 @@
 
 ## ADDED Requirements
 
+### Requirement: Missing paper facts do not establish index absence
+A listed paper with no exported index facts SHALL say those details are unavailable here. It SHALL NOT infer that the index holds no record: the paper may not yet have been fetched. Available facts SHALL retain their normal source attribution and fetched timestamp.
+
+#### Scenario: Origin paper is approved after preparation
+- **WHEN** the exported origin paper has no fetched facts
+- **THEN** its entry describes unavailable details without claiming the index lacks the paper
+
 ### Requirement: No-trial wording does not imply a human study
 Status explanations, topic summaries and guide text for `no_trial_found` SHALL describe the absence of a matched trial record without asserting a study in people. Confirmed first-report evidence SHALL remain separately visible where available. `preclinical_only` explanations SHALL describe confirmed laboratory or animal evidence.
 

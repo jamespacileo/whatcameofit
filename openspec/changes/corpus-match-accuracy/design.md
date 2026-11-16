@@ -1,5 +1,11 @@
 # Design
 
+## Source provenance and earlier ER-100 coverage
+
+Released S030/S031 checks exposed two presentation overclaims. Exact tracked linked-article responses intentionally skip an article read, but the presenter described that as a refusal. Use the existing `article_tracked` flag in the shared presenter, retaining the browser/service distinction and ordinary refusal wording. Existing answers gain the corrected wording without invalidation or new work; Safari advances to 0.9.19. An origin paper approved after preparation can lack exported facts even though Europe PMC holds it. Say details are unavailable here, not that the index lacks a record. Normal fetching retrieved Nottingham's original paper (41188228) without a model call; its two newly found follow-up events remain pending and excluded from publication.
+
+S032's January MIT Technology Review article explicitly identifies ER-100's initial glaucoma cohort and NCT07290244. The current primary registry record confirms the existing open-angle glaucoma card's treatment and cohort. Add only that verified reference through normal entry. Its earlier date moves the first report to 2026-01-27, so confirm the then-animal stage as an assistant and distinguish the January plans from October's small human safety update in the summary. Retain the later trial events and phase 1 status. This uses the existing exact-source path without another extraction, model search or broadening the indication to the registry's separate NAION cohort.
+
 ## Enamel-paper subject headings
 
 The keratin enamel paper uses extracted human teeth and wool-derived material, but its Europe PMC record has both human and animal subject headings. Those tags do not establish a study in living participants. Preserve the source metadata and confirmed in-vitro stage; label the tags as subject headings on paper entries. Count trial records and papers separately in the claim facts, counting each structured paper once regardless of its roles or missing metadata. Keep the legacy-export fallback. This is presentation only: it changes no trial match, clinical stage, source request, schema or extension resource.

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-16T04:31:11.559518Z",
+  "generated_at": "2026-11-16T05:03:42.185229Z",
   "last_checked_at": "2026-11-16T02:15:15.735202Z",
   "preview": false,
   "sources": [
@@ -53038,7 +53038,7 @@
         {
           "identifier": "10.1038/s41467-025-64982-y",
           "url": "https://doi.org/10.1038/s41467-025-64982-y",
-          "record_url": null,
+          "record_url": "https://europepmc.org/article/MED/41188228",
           "roles": [
             {
               "role": "origin",
@@ -53051,8 +53051,20 @@
               "summary": null
             }
           ],
-          "facts_as_of": null,
-          "facts": null
+          "facts_as_of": "2026-11-16T04:55:09.884509Z",
+          "facts": {
+            "title": "Biomimetic supramolecular protein matrix restores structure and properties of human dental enamel.",
+            "journal": "Nature communications",
+            "year": 2025,
+            "kinds": [
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
         }
       ],
       "background": [],
@@ -53926,7 +53938,7 @@
     {
       "slug": "er-100-open-angle-glaucoma",
       "headline": "ER-100 phase 1 update reports tolerability and preliminary visual-field changes in glaucoma participants",
-      "summary": "Life Biosciences reported a Day 56 safety update in three adults with open-angle glaucoma given intravitreal ER-100. Oral doxycycline induced its gene expression for eight weeks; it was an activation agent, not a separate experimental glaucoma treatment. Two participants had preliminary visual-field improvements. This early, uncontrolled safety cohort does not establish efficacy.",
+      "summary": "January 2026 coverage described planned human testing of ER-100 for glaucoma after animal studies. In October, Life Biosciences reported a Day 56 safety update in three adults with open-angle glaucoma given intravitreal ER-100. Oral doxycycline induced its gene expression for eight weeks; it was an activation agent, not a separate experimental glaucoma treatment. Two participants had preliminary visual-field improvements. This early, uncontrolled safety cohort does not establish efficacy.",
       "vertical": "eyes-and-ears",
       "approach": null,
       "intervention": {
@@ -53934,8 +53946,8 @@
         "synonyms": []
       },
       "indication": "Open-angle glaucoma",
-      "first_reported_date": "2026-10-08",
-      "evidence_stage": "early_human",
+      "first_reported_date": "2026-01-27",
+      "evidence_stage": "animal",
       "evidence_stage_reading": null,
       "checked_by_person": false,
       "status": {
@@ -53958,6 +53970,14 @@
         ]
       },
       "articles": [
+        {
+          "url": "https://www.technologyreview.com/2026/01/27/1131796/the-first-human-test-of-a-rejuvenation-method-will-begin-shortly/",
+          "outlet": "MIT Technology Review",
+          "title": "The first human test of a rejuvenation method will begin “shortly”",
+          "published_date": "2026-01-27",
+          "archive_url": null,
+          "published_by": null
+        },
         {
           "url": "https://www.lifebiosciences.com/life-biosciences-announces-first-in-human-data-from-ongoing-phase-1-trial-evaluating-er-100-in-optic-neuropathies/",
           "outlet": "Life Biosciences",
