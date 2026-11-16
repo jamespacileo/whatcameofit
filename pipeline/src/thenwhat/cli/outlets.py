@@ -101,7 +101,10 @@ def outlets_command(
     ] = None,
 ) -> None:
     """Ask the page reader for every tracked article once and record, per outlet, whether
-    the article was read and which signals its pages carry. No article text is kept."""
+    the article was read and which signals its pages carry. No article text is kept. An
+    outlet the reader has said cannot be asked yet is not asked: its articles are recorded
+    as held."""
+    from thenwhat.cli import entry
     from thenwhat.cli.extract import make_retriever
 
     with entry_session() as session:
@@ -112,6 +115,7 @@ def outlets_command(
                 measure=make_measure() if with_lookup else None,
                 workers=workers,
                 on_article=_tell,
+                open_session=lambda: entry.open_session(),
             )
         except ReaderUnavailable as down:
             # Nothing is reported: a report would count the reader's failure as the outlets'.

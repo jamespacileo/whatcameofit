@@ -1,7 +1,7 @@
 """Triage of link leads from their titles. Scenario names are from openspec lead-triage.
 Every lead here is synthetic, and the backend is a fake: no model is called."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pytest
@@ -172,6 +172,19 @@ def test_a_lead_out_of_scope_is_never_triaged(session: Session):
     assert session.scalars(select(LlmUsage)).all() == []
 
 
+def test_a_run_narrowed_to_a_period_scores_no_older_lead(session: Session):
+    """With a first day set, a lead first shared before it is not scored and no call
+    is made for it; without one the same lead is scored."""
+    [lead] = add_leads(session, ["A trial result"])
+    backend = Headlines(session)
+    day_after = (WHEN + timedelta(days=1)).date()
+
+    narrowed = triage(session, backend, LinkTriage(Clock(), since=day_after))
+
+    assert (narrowed.processed, backend.calls, lead.triage_score) == (0, [], None)
+    assert triage(session, backend, LinkTriage(Clock(), since=WHEN.date())).done == 1
+
+
 def test_a_lead_the_backend_gives_no_answer_for_has_no_score(session: Session):
     """Scenario: The backend declines a question"""
     titles = [f"A trial result {n}" for n in range(19)] + ["An unanswerable headline"]
@@ -298,3 +311,21 @@ def test_leads_that_name_a_topic_are_scored_first(session: Session):
     assert leads[-1].title == "Zepbound in a synthetic trial"
     assert any("Zepbound" in headline for headline in backend.calls[0])
     assert all(lead.triage_score is not None for lead in leads)
+
+
+# --- measured ----------------------------------------------------------------------
+
+
+def test_a_triage_call_is_measured_once_and_names_each_lead(session: Session, measured_spans):
+    """processing-metrics, Every step is measured: one call scores twenty leads, so it
+    is one measurement that names them, with the decision inside it measured apart."""
+    leads = add_leads(session, [f"A trial result number {n}" for n in range(3)])
+    measured_spans.clear()
+
+    triage(session, Headlines(session))
+
+    decision, step = measured_spans
+    assert (step.step, step.step_version, step.batch) == ("link_triage", 1, 3)
+    assert step.traces == [lead.url_key for lead in leads]
+    assert (decision.step, decision.batch) == (f"decision:{LEAD_TRIAGE}", 3)
+    assert decision.traces == step.traces

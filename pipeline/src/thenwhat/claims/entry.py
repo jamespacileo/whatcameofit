@@ -6,12 +6,13 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date, datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import cast, func, select
+from sqlalchemy.dialects.postgresql import JSONPATH
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.promises import parse_promise_date
 from thenwhat.claims.verticals import APPROACHES, VERTICALS
-from thenwhat.db.models import Claim, Entity, Promise, SourceArticle
+from thenwhat.db.models import Claim, Entity, EntitySubstance, Promise, SourceArticle
 from thenwhat.domain import EntityType, ReviewState
 
 MAX_SLUG_LENGTH = 60
@@ -337,6 +338,64 @@ def claims_sharing_a_name(
         found.append((not exact, not equal, claim_id, NamedClaim(slug, name, condition, summary)))
     found.sort(key=lambda entry: entry[:3])
     return [claim for _, _, _, claim in found[:MAX_NAMED_CLAIMS]]
+
+
+# Every name the registry of substances lists for a claim's substance, leaving out any
+# it has withdrawn, from the record kept with the intervention.
+_SUBSTANCE_NAMES = "$.names[*] ? (!(@.deprecated == true)).name"
+# How many claims found only by their substance's names are offered to the same-claim
+# decision, beside the claims `claims_sharing_a_name` gives: they are added to those,
+# and never take the place of one.
+MAX_SUBSTANCE_CLAIMS = 8
+
+
+def claims_of_a_named_substance(
+    session: Session, names: Sequence[str], *, indication: str = ""
+) -> list[NamedClaim]:
+    """Claims whose substance the registry of substances gives one of these names, in
+    the record kept with the claim's intervention: what it calls the substance, a brand,
+    another name it has not withdrawn, or a development code. A claim entered as
+    lecanemab is found by Leqembi, and one entered as BAN2401 by either, though they
+    share no word.
+
+    The name is shared only whole: the registry's chemical names run to many words, and
+    a word of one is no name for the treatment. This finds candidates and decides
+    nothing. A claim for the same condition, or that condition narrowed, comes first,
+    then the oldest. A rejected draft is never a candidate.
+    """
+    wanted = [words for name in names if (words := name_key(name).split())]
+    if not wanted:
+        return []
+    found: list[tuple[bool, int, NamedClaim]] = []
+    rows = session.execute(
+        select(
+            Claim.id,
+            Claim.slug,
+            Claim.indication,
+            Entity.name,
+            Claim.summary,
+            # Only the names are read from the substance's record, which is large.
+            EntitySubstance.payload["substance"]["_name"].astext,
+            func.jsonb_path_query_array(EntitySubstance.payload, cast(_SUBSTANCE_NAMES, JSONPATH)),
+            EntitySubstance.codes,
+        )
+        .join(Entity, Entity.claim_id == Claim.id)
+        .join(EntitySubstance, EntitySubstance.entity_id == Entity.id)
+        .where(Entity.type == EntityType.INTERVENTION, Claim.review_state != ReviewState.REJECTED)
+        .order_by(Claim.id)
+    )
+    for claim_id, slug, condition, name, summary, substance, listed, codes in rows:
+        registered = [
+            name_key(other).split()
+            for other in (substance, *(listed or ()), *(codes or ()))
+            if isinstance(other, str)
+        ]
+        if not any(mine == theirs for mine in wanted for theirs in registered):
+            continue
+        same_condition = bool(indication) and _conditions_overlap(indication, condition)
+        found.append((not same_condition, claim_id, NamedClaim(slug, name, condition, summary)))
+    found.sort(key=lambda entry: entry[:2])
+    return [claim for _, _, claim in found[:MAX_SUBSTANCE_CLAIMS]]
 
 
 def add_claim(

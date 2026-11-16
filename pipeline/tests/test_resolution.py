@@ -31,7 +31,7 @@ from thenwhat.domain import (
     ReviewState,
     TrialPhase,
 )
-from thenwhat.resolve.codes import Listing, give_development_codes
+from thenwhat.resolve.codes import Listing, give_development_codes, one_substance
 from thenwhat.resolve.service import combination_search, redo_rule_approvals, resolve_claim
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord, UnsearchableTerm
@@ -875,14 +875,194 @@ def test_names_listed_under_two_substances_give_no_code(session: Session):
         indication="tooth agenesis",
     )
     add_synonym(session, claim.slug, "exampletinib", "Toothgrow")
-    salt = substance("s-2", "Exampletinib mesylate", ("Toothgrow", "bn"), ("XYZ-9", "cd"))
-    registry = FakeSubstances({"exampletinib": [EX1], "Toothgrow": [salt]})
+    other = substance("s-2", "Otherstatin", ("Toothgrow", "bn"), ("XYZ-9", "cd"))
+    registry = FakeSubstances({"exampletinib": [EX1], "Toothgrow": [other]})
 
     answer = give_development_codes(session, claim, substances=registry)
 
     assert answer is not None and answer.listing is Listing.SEVERAL_SUBSTANCES
     assert answer.codes == []
     assert session.scalars(select(EntitySubstance)).all() == []
+
+
+def test_a_substance_and_its_forms_are_one_substance(session: Session):
+    """Scenario: A brand listed under a substance and its salt"""
+    claim = add_claim(
+        session,
+        slug="tooth-regrowth",
+        headline="Drug regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="Toothgrow",
+        indication="tooth agenesis",
+    )
+    salt = substance("s-2", "Exampletinib mesylate", ("Toothgrow", "bn"), ("XYZ-9", "cd"))
+    suffixed = substance("s-3", "EXAMPLETINIB-ABCD", ("Toothgrow", "bn"))
+    registry = FakeSubstances({"Toothgrow": [salt, EX1, suffixed]})
+
+    answer = give_development_codes(session, claim, substances=registry)
+
+    assert answer is not None and answer.listing is Listing.ONE_SUBSTANCE
+    assert (answer.substances, answer.codes) == (["Exampletinib (UNII UNII000001)"], ["ABC-123"])
+    [kept] = session.scalars(select(EntitySubstance)).all()
+    assert kept.external_id == "s-1"
+
+
+def test_a_name_that_only_begins_like_another_is_another_substance(session: Session):
+    """Exampletinib and exampletinibat share letters, not a name: they stay two."""
+    claim = add_claim(
+        session,
+        slug="tooth-regrowth",
+        headline="Drug regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="Toothgrow",
+        indication="tooth agenesis",
+    )
+    lookalike = substance("s-4", "Exampletinibat", ("Toothgrow", "bn"))
+    registry = FakeSubstances({"Toothgrow": [EX1, lookalike]})
+
+    answer = give_development_codes(session, claim, substances=registry)
+
+    assert answer is not None and answer.listing is Listing.SEVERAL_SUBSTANCES
+
+
+def ingredient(identifier: str, name: str, brand: str) -> SourceRecord:
+    """An ingredient as the source of brands returns it for one of its brands."""
+    concept = {"rxcui": identifier, "name": name, "tty": "IN"}
+    payload = {
+        "substance": concept | {"_name": name},
+        "brand": {"rxcui": "b-1", "name": brand, "tty": "BN"},
+        "ingredients": {"relatedGroup": {"conceptGroup": [{"tty": "IN"}]}},
+    }
+    return SourceRecord("rxnorm", identifier, f"https://rxnorm.test/{identifier}", payload, NOW)
+
+
+class FakeBrands(FakeSubstances):
+    name = "rxnorm"
+
+
+def test_a_brand_the_registry_does_not_list_is_searched_by_its_ingredient(session: Session):
+    """Scenario: Brand the substance registry does not list, of one ingredient"""
+    claim = add_claim(
+        session,
+        slug="toothvax-tooth-agenesis",
+        headline="Vaccine regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="Toothvax",
+        indication="tooth agenesis",
+    )
+    found = ingredient("111", "examplevirus antigen", "Toothvax")
+    brands = FakeBrands({"Toothvax": [found]})
+    trials = FakeTrials(
+        {"examplevirus antigen": [trial("NCT00000009", "Examplevirus antigen in adults")]}
+    )
+
+    answer = give_development_codes(session, claim, substances=FakeSubstances({}), brands=brands)
+    added = resolve_claim(
+        session, claim, trials=trials, dois=FakeDois(set()), backend=Scoring(0.9), now=NOW
+    )
+
+    assert answer is not None and answer.listing is Listing.ONE_SUBSTANCE
+    assert (answer.sources, answer.source) == (("gsrs", "rxnorm"), "rxnorm")
+    assert (answer.substances, answer.codes) == (["examplevirus antigen (RxCUI 111)"], [])
+    [intervention] = entities_of(session, claim)
+    kept = session.get(EntitySubstance, intervention.id)
+    assert kept is not None
+    assert (kept.source_name, kept.external_id, kept.codes) == ("rxnorm", "111", [])
+    assert kept.payload == found.payload and kept.fetched_at == NOW
+    # The ingredient is searched as a name, and is not stored as one.
+    assert intervention.synonyms == [] and intervention.search_phrases == []
+    assert trials.searched == ["Toothvax", "examplevirus antigen"]
+    assert [match.external_id for match in added] == ["NCT00000009"]
+
+
+def test_the_source_of_brands_is_not_asked_when_the_registry_answered(session: Session):
+    """Scenario: The substance registry lists the intervention"""
+    claim = add_claim(
+        session,
+        slug="tooth-regrowth",
+        headline="Drug regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="exampletinib",
+        indication="tooth agenesis",
+    )
+    add_synonym(session, claim.slug, "exampletinib", "Toothgrow")
+    other = substance("s-2", "Otherstatin", ("Toothgrow", "bn"))
+    brands = FakeBrands({"Toothgrow": [ingredient("111", "exampletinib", "Toothgrow")]})
+
+    one = give_development_codes(
+        session, claim, substances=FakeSubstances({"exampletinib": [EX1]}), brands=brands
+    )
+    # Nor when the registry lists the names under two substances: that is an answer.
+    two = give_development_codes(
+        session,
+        claim,
+        substances=FakeSubstances({"exampletinib": [EX1], "Toothgrow": [other]}),
+        brands=brands,
+    )
+
+    assert one is not None and (one.listing, one.sources) == (Listing.ONE_SUBSTANCE, ("gsrs",))
+    assert two is not None and two.listing is Listing.SEVERAL_SUBSTANCES
+    assert brands.asked == []
+
+
+def test_a_brand_of_two_ingredients_or_of_none_keeps_nothing(session: Session):
+    """Scenarios: Brand of more than one ingredient; Brand neither source lists"""
+    claim = add_claim(
+        session,
+        slug="toothvax-tooth-agenesis",
+        headline="Vaccine regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="Toothvax",
+        indication="tooth agenesis",
+    )
+    two = FakeBrands(
+        {
+            "Toothvax": [
+                ingredient("111", "examplevirus antigen, serotype 1", "Toothvax"),
+                ingredient("112", "examplevirus antigen, serotype 2", "Toothvax"),
+            ]
+        }
+    )
+
+    several = give_development_codes(session, claim, substances=FakeSubstances({}), brands=two)
+    none = give_development_codes(
+        session, claim, substances=FakeSubstances({}), brands=FakeBrands({})
+    )
+
+    assert several is not None and several.listing is Listing.SEVERAL_SUBSTANCES
+    assert several.source == "rxnorm" and len(several.substances) == 2
+    assert none is not None and none.listing is Listing.NOT_LISTED
+    assert none.sources == ("gsrs", "rxnorm")
+    assert session.scalars(select(EntitySubstance)).all() == []
+
+
+def test_an_ingredient_whose_name_opens_anothers_is_another_ingredient(session: Session):
+    """Scenario: Brand of two ingredients, one's name opening the other's"""
+    claim = add_claim(
+        session,
+        slug="toothvax-tooth-agenesis",
+        headline="Vaccine regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="Toothvax",
+        indication="tooth agenesis",
+    )
+    # In the registry of substances these would be a substance and its form. Two
+    # ingredients of a brand are two molecules.
+    found = [
+        ingredient("111", "examplevirus antigen", "Toothvax"),
+        ingredient("112", "examplevirus antigen adjuvant", "Toothvax"),
+    ]
+    assert one_substance(found) is found[0]
+
+    answer = give_development_codes(
+        session, claim, substances=FakeSubstances({}), brands=FakeBrands({"Toothvax": found})
+    )
+
+    assert answer is not None and answer.listing is Listing.SEVERAL_SUBSTANCES
+    assert session.scalars(select(EntitySubstance)).all() == []
+    # One ingredient reached twice, under one name, is one.
+    twice = [found[0], ingredient("113", "Examplevirus  antigen", "Toothvax")]
+    assert one_substance(twice, forms=False) is found[0]
 
 
 def test_a_substance_no_longer_listed_loses_its_codes(session: Session):

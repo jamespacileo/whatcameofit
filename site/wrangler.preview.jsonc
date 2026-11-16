@@ -1,0 +1,28 @@
+// A pull request's copy of the site, for reviewing a change before it is merged.
+// One Worker per pull request, named thenwhat-pr-<number> by scripts/pr-preview.mjs
+// and reached only at its workers.dev address. Publish with `make pr-preview`
+// (see docs/deploy.md), never with `wrangler deploy` alone. Production is
+// wrangler.jsonc and is not touched by anything here.
+{
+  "name": "thenwhat-pr",
+  "compatibility_date": "2026-10-01",
+  "main": "./worker/index.mjs",
+  "workers_dev": true,
+  "preview_urls": false,
+  // Nothing a reader sends is logged; see worker/index.mjs.
+  "observability": { "enabled": false },
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "html_handling": "drop-trailing-slash",
+    "run_worker_first": ["/*", "!/_astro/*", "!/pagefind/*"]
+  },
+  // Its own counter, so a pull request's copy never uses up production's.
+  "ratelimits": [
+    { "name": "TRIAL_RECORD_READS", "namespace_id": "4113", "simple": { "limit": 60, "period": 60 } }
+  ]
+  // Deliberately absent: the custom domain, the LOOKUP_RESULTS namespace, the lookup's
+  // rate limits and every secret. /api/lookup therefore answers "not set up", no model
+  // is ever asked, and nothing a copy does can reach production's saved results.
+}

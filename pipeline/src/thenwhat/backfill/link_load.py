@@ -16,9 +16,10 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.address import article_key
+from thenwhat.backfill.address import KEY_VERSION, article_key
 from thenwhat.backfill.ledger import mark_changed
 from thenwhat.backfill.link_readers import SharedLink, Skip
+from thenwhat.backfill.link_rekey import refuse_stale_keys
 from thenwhat.backfill.outlet_kinds import kind_of
 from thenwhat.backfill.steps import Step
 from thenwhat.db.models import LinkLead, LinkShare
@@ -64,6 +65,7 @@ def store(
         .values(
             url=post.url,
             url_key=key,
+            url_key_version=KEY_VERSION,
             outlet=outlet,
             outlet_kind=kind_of(outlet),
             title=post.title,
@@ -114,7 +116,11 @@ def load_links(
     steps: Sequence[Step],
 ) -> LoadReport:
     """Store every post of a file that links to an address, and count the rest by the
-    reason they were skipped. Posts are saved a thousand at a time."""
+    reason they were skipped. Posts are saved a thousand at a time. Refused while a
+    stored lead is keyed under an earlier form of the address key: its article would be
+    stored a second time under the new one."""
+    with open_session() as session:
+        refuse_stale_keys(session)
     report = LoadReport()
     for chunk in batched(posts, POSTS_PER_TRANSACTION):
         with open_session() as session:

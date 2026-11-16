@@ -20,3 +20,9 @@ test("every shared form of one article gives its key", () => {
 test("an address that is not a web page has no key", () => {
   for (const address of cases.none) assert.equal(articleKey(address), null, address);
 });
+
+test("two different articles never share a key", () => {
+  for (const [one, other] of cases.different) {
+    assert.notEqual(articleKey(one), articleKey(other), `${one} and ${other}`);
+  }
+});

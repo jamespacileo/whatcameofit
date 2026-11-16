@@ -8,7 +8,9 @@ import {
   isDrugsTarget,
   mechanismTexts,
   moleculeKindText,
+  scoreLabel,
   type ExportedCard,
+  type ExportedCardSource,
 } from "./background";
 import { matchWords } from "./confidence";
 
@@ -99,14 +101,50 @@ export function bandFacts(cards: GlanceCards): BandFact[] {
   return facts;
 }
 
-/** What stands for a score on a card made by rule, after "Term match:". */
-const RULE_MATCH_WORDS: Record<string, string> = {
-  drug: "by exact name",
-  target: "from the drug’s record",
-};
-
-/** A row's score, said as being about the term so it is never read as about the
- * treatment: "Term match: high, 81%", or the rule that stands for it. */
+/** A row's score, said as being about the term: "Term match: high, 81%". */
 export function termMatchText(card: Pick<ExportedCard, "kind" | "score">): string {
-  return `Term match: ${card.score === null ? RULE_MATCH_WORDS[card.kind] : matchWords(card.score)}`;
+  return scoreLabel(card, matchWords);
+}
+
+/** The scores a row's grey line shows, one per card in the row, each naming what was
+ * matched. A drug row's value is what the drug's record says, so its first score is the
+ * record's ("Drug record: by exact name"), never the kind of molecule's; a kind card
+ * inside the same row keeps its own score in sight ("Kind term: high, 94%"). */
+export function rowMatchTexts(cards: Pick<ExportedCard, "kind" | "score">[]): string[] {
+  const [first, ...rest] = cards;
+  if (!first) return [];
+  if (first.kind !== "drug") return [termMatchText(first)];
+  const words = (card: Pick<ExportedCard, "kind" | "score">) =>
+    termMatchText(card).replace(/^Term match: /, "");
+  return [`Drug record: ${words(first)}`, ...rest.map((card) => `Kind term: ${words(card)}`)];
+}
+
+/** A source's short name for a row's grey line: the abbreviation its title gives in
+ * brackets ("MeSH"), or its title up to any "through …" ("ChEMBL"). The full credit is
+ * inside the row's disclosure. */
+export function sourceName(source: Pick<ExportedCardSource, "title">): string {
+  const bracketed = source.title.match(/\(([^)]+)\)\s*$/);
+  return bracketed ? bracketed[1] : source.title.split(",")[0];
+}
+
+/** A definition this long or shorter is shown whole in its row and not again in the
+ * card; a longer one is shown in its row cut to three lines, and whole in the card. */
+export const SHORT_DEFINITION = 240;
+
+/** The source's term for a row matched from the claim's own words (the treatment, the
+ * drug, the condition), when it differs from those words other than in case: the claim
+ * says "Lung cancer", the vocabulary files it as "Lung Neoplasms". Otherwise null. */
+export function filedAs(row: GlanceRow, card: Pick<ExportedCard, "label">, claimWords: string): string | null {
+  if (row !== "treatment" && row !== "drug" && row !== "condition") return null;
+  return card.label.toLowerCase() === claimWords.toLowerCase() ? null : card.label;
+}
+
+/** The start of a row's grey line: whose words the definition above it is, or, with no
+ * definition in the row, which source the term is from. A gene's definition says what
+ * its product does, as its card does. */
+export function wordsLine(card: Pick<ExportedCard, "kind">, source: Pick<ExportedCardSource, "title">, withWords: boolean): string {
+  const name = sourceName(source);
+  if (!withWords) return `From ${name}`;
+  const whose = name.endsWith("s") ? `${name}’` : `${name}’s`;
+  return card.kind === "target" ? `What this gene’s product does, in ${whose} words` : `In ${whose} words`;
 }

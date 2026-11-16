@@ -92,7 +92,7 @@ test("Scenario: A day with nothing dated", () => {
 test("Scenario: A kind read aloud", () => {
   const record = group(dated, "d-2025-09-01");
   assert.match(record, /data-kind="record"/);
-  assert.match(record, /<span class="row-label">Registry record<\/span>/);
+  assert.match(record, /<span class="visually-hidden">Registry record\. <\/span>/);
   assert.match(group(dated, "d-2025-09-08"), /<span class="visually-hidden">News report\. <\/span>/);
   assert.match(dated, /data-kind="promise"[\s\S]*?<span class="row-label">Promised date<\/span>/);
   // The field that shows one kind is the script's, and names each kind in words.
@@ -106,12 +106,19 @@ test("Scenario: A kind read aloud", () => {
 test("Scenario: A report of an animal study, and what the records add", () => {
   const row = group(dated, "d-2025-09-08");
   assert.match(row, /<a class="followed" href="\/phase-claim"[^>]*>\s*“Example report 5”\s*<\/a>/);
-  assert.match(row, /On record now<\/span>\s*<strong class="status-name">Phase 3 trial<\/strong>/);
+  // The headline and the claim lead; the status is the column after them, a button
+  // that opens the detail under the row (openspec latest-rows).
+  assert.ok(row.indexOf("row-title") < row.indexOf('class="row-now"'));
+  // Its name is short: the status and what it opens. The counts and sentences describe it.
+  assert.match(row, /<button type="button" class="row-now" aria-expanded="false" aria-controls="more-phase-claim-2025-09-08" aria-label="Phase 3 trial\. More on phase-claim agent" aria-describedby="more-phase-claim-2025-09-08-said" data-row-open>\s*<strong class="status-name">Phase 3 trial<\/strong>/);
+  // What the column says is named once, above the list.
+  assert.equal(count(dated, 'class="list-key"'), 1);
+  assert.match(row, /<div class="row-more" id="more-phase-claim-2025-09-08" role="region" aria-label="More on phase-claim agent" data-row-more>/);
   assert.match(row, /<p class="row-then">\s*<strong>[^<]+<\/strong>\s+when first reported, [^<]*\. Large late-stage trial in people\.<\/p>/);
   assert.match(row, /Large late-stage trial in people/);
   // What the records add is said in words: the counts in sight, the row's sentences
   // for a screen reader only. The records by date are drawn on the claim page.
-  assert.match(row, /<p class="row-counts">\d+ trials?( · \d+ with results posted)?<span class="visually-hidden"> [^<]*trials on record[^<]*<\/span><\/p>/);
+  assert.match(row, /<span class="row-counts" id="more-phase-claim-2025-09-08-said">\d+ trials?( · \d+ with results posted)?<span class="visually-hidden"> [^<]*trials on record[^<]*<\/span><\/span>/);
   assert.ok(!row.includes("record-strip"));
   assert.ok(!row.includes("row-adds"));
 });
@@ -123,14 +130,20 @@ test("Scenario: Home page: no record strip and no key in the day list", () => {
 
 test("Scenario: An approval that changed the status, and a record that changed nothing", () => {
   const changed = group(dated, "d-2025-09-01");
-  assert.match(changed, /<span class="new-tag">Changed<\/span>\s*<span>Was: Phase 2 trial\. Now: Phase 3 trial\.<\/span>/);
+  assert.match(changed, /class="row-now is-changed"[^>]*aria-label="Changed from Phase 2 trial to Phase 3 trial\. More on phase-claim agent"/);
+  assert.match(changed, /<span class="new-tag">Changed<\/span>\s*<span class="row-was">from Phase 2 trial<\/span><\/span>\s*<strong class="status-name">Phase 3 trial<\/strong>/);
+  // What was recorded is said of the record, not in a status's words.
+  assert.match(changed, /<li class="row-item is-record"><a href="[^"]+">NCT00000002<\/a><span>results posted<\/span>/);
   const paper = group(dated, "d-2025-09-05");
   assert.ok(!paper.includes("Changed"));
-  assert.match(paper, /Status now:\s*<strong class="status-name">Phase 3 trial<\/strong>/);
+  assert.match(paper, /class="row-now" [^>]*aria-label="Phase 3 trial\. More on phase-claim agent"/);
   // Scenario: A follow-up paper scored 0.6.
   assert.match(paper, /Medium match · 60%/);
-  // A registry row names the report it belongs to.
-  assert.match(paper, /The report:\s*<a href="\/phase-claim">“Example report 5”<\/a>/);
+  // A registry row leads with the report it belongs to, and says how long ago the claim
+  // was first reported; what was recorded is one dated item.
+  assert.match(paper, /<span class="row-age">First reported 6 years ago<\/span>/);
+  assert.match(paper, /<h4 class="row-title"><a href="\/phase-claim">“Example report 5”<\/a><\/h4>/);
+  assert.match(paper, /<li class="row-item is-record"><a href="https:\/\/registry\.example\/record\/4">[^<]+<\/a><span>Follow-up paper<\/span><span class="when">5 Sep 2025<\/span><\/li>/);
 });
 
 test("Scenario: Promises still to come", () => {

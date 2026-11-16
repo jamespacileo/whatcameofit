@@ -27,16 +27,23 @@ from thenwhat.backfill.link_evaluation import (
 )
 from thenwhat.backfill.link_funnel import funnel
 from thenwhat.backfill.link_load import load_links
-from thenwhat.backfill.link_read import LinkRead, ReadClient, retry_outlet
+from thenwhat.backfill.link_read import LinkRead, ReadClient, held_outlets, retry_outlet
 from thenwhat.backfill.link_readers import posts_of
+from thenwhat.backfill.link_rekey import (
+    refuse_stale_keys,
+    refuse_while_steps_run,
+    rekey_links,
+    survey,
+)
 from thenwhat.backfill.link_report import IN_SCOPE_KINDS, screening_report
 from thenwhat.backfill.link_topics import coverage
 from thenwhat.backfill.link_triage import DecisionClient, LinkTriage, Standing
 from thenwhat.backfill.mediacloud import MediaCloud
 from thenwhat.backfill.registered import registered_steps
 from thenwhat.backfill.registry_load import (
-    PHASE_3_DRUG_OR_BIOLOGICAL,
     TrialList,
+    UnknownTrialSet,
+    condition_of,
     load_trials,
 )
 from thenwhat.backfill.runner import RunReport, run_step
@@ -63,6 +70,7 @@ from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.config import Settings, SourceAllowance
 from thenwhat.domain import Decider, LeadVerdict, OutletKind
+from thenwhat.measure.report import measured_cost_of_a_record
 from thenwhat.sources.base import SourceError
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 
@@ -172,25 +180,54 @@ def _allowance_line(source: str, allowance: SourceAllowance, status: AllowanceSt
     return line
 
 
+def _held_lines(session: Session, step: LinkRead, attempt_limit: int) -> list[str]:
+    """How many due leads wait for an outlet the page reader has stopped, outlet by
+    outlet. A run leaves them without a request until the time given."""
+    held = held_outlets(session, step, attempt_limit, datetime.now(UTC))
+    if not held:
+        return []
+    total = sum(one.leads for one in held)
+    lines = [
+        f"  held: {total:,} of the due leads are not asked, because the page reader "
+        "said their outlet cannot be asked yet"
+    ]
+    lines += [
+        f"    {one.outlet}: {one.leads:,} held until {one.until:%Y-%m-%d %H:%M} UTC" for one in held
+    ]
+    return lines
+
+
 def _dollars(amount: Decimal) -> str:
     return f"${amount.quantize(Decimal('0.01'))}"
 
 
-def _spend_line(session: Session, settings: Settings, spend: ModelSpend, due: int) -> str:
+def _spend_line(
+    session: Session, settings: Settings, spend: ModelSpend, due: int, step_name: str
+) -> str:
     """What a model step's due records would cost beside what is left of the month's
-    ceiling. No cost is given while a price is not configured."""
+    ceiling. The cost of a record is the measured one where a week or more of
+    measurements exist for the step, and the step's own estimate otherwise. No cost is
+    given while a price is not configured."""
     try:
         prices = prices_for(settings, spend.door)
     except PricesNotSet as missing:
         return f"  calls a model: no cost can be given, {missing}"
-    cost = cost_of(spend, prices, due)
-    left = left_this_month(session, settings, datetime.now(UTC))
+    now = datetime.now(UTC)
+    measured = measured_cost_of_a_record(session, step_name, today=now.date())
+    left = left_this_month(session, settings, now)
+    if measured is not None:
+        cost = measured.per_record * due
+        basis = f"measured over {measured.days} days"
+        covered = None if measured.per_record <= 0 else int(left // measured.per_record)
+    else:
+        cost = cost_of(spend, prices, due)
+        basis = "estimated"
+        covered = records_covered(spend, prices, left)
     line = (
-        f"  calls a model: the due records need about {_dollars(cost)}; "
+        f"  calls a model: the due records need about {_dollars(cost)} ({basis}); "
         f"{_dollars(left)} of the month's {_dollars(settings.llm_monthly_budget_usd)} "
         "ceiling is left"
     )
-    covered = records_covered(spend, prices, left)
     if covered is None or covered >= due:
         return f"{line}, which covers them all"
     return f"{line}, which covers {covered:,} of the {due:,} due records"
@@ -250,9 +287,15 @@ def plan_command() -> None:
                         )
                 else:
                     out.print("  asks no source: the due records need 0 requests", markup=False)
+                if isinstance(step, LinkRead):
+                    for line in _held_lines(session, step, settings.backfill_attempt_limit):
+                        out.print(line, markup=False)
                 spend = model_spend_of(step)
                 if spend is not None:
-                    out.print(_spend_line(session, settings, spend, counts.due), markup=False)
+                    out.print(
+                        _spend_line(session, settings, spend, counts.due, step.name),
+                        markup=False,
+                    )
                 if counts.needs_attention:
                     out.print(
                         f"  {counts.needs_attention:,} failed "
@@ -299,6 +342,11 @@ def run_command(
                 f"`{step.name}` publishes what it makes, so a run says how many records it "
                 "may process. Run it again with --limit."
             )
+        if step.record_kind == "link_lead":
+            # A lead keyed under an earlier form would be compared with addresses in
+            # the current one, and miss.
+            with open_session() as session:
+                refuse_stale_keys(session)
         check_ready = getattr(step, "check_ready", None)
         if check_ready is not None:
             with open_session() as session:
@@ -350,12 +398,19 @@ def run_command(
 @backfill_app.command("load-trials")
 def load_trials_command(
     condition: Annotated[
-        str,
+        str | None,
         typer.Option(
             help="Which trials to load, in the registry's own expression language. "
-            "The default is phase 3 interventional trials of a drug or biological."
+            "Use this or --trials, not both."
         ),
-    ] = PHASE_3_DRUG_OR_BIOLOGICAL,
+    ] = None,
+    trials: Annotated[
+        str | None,
+        typer.Option(
+            help="A named set of interventional trials of a drug or biological: "
+            "phase-3 (the default) or active-phase-2-3, those under way now."
+        ),
+    ] = None,
     changes_only: Annotated[
         bool,
         typer.Option(
@@ -370,6 +425,15 @@ def load_trials_command(
     events and never reach the export. Loading again updates each trial in place.
     """
     settings = settings_or_exit()
+    if condition is not None and trials is not None:
+        err.print("Give --condition or --trials, not both.")
+        raise typer.Exit(code=1)
+    if condition is None:
+        try:
+            condition = condition_of(trials or "phase-3")
+        except UnknownTrialSet as unknown:
+            err.print(str(unknown))
+            raise typer.Exit(code=1) from None
     with refusals():
         steps = steps_for(settings)
         allowances = make_allowances(settings)
@@ -428,6 +492,54 @@ def load_links_command(
     )
     for reason, number in sorted(report.skipped.items()):
         out.print(f"  skipped, {reason.value}: {number:,}", markup=False)
+
+
+@backfill_app.command("rekey-links")
+def rekey_links_command(
+    apply: Annotated[
+        bool,
+        typer.Option("--apply", help="Do it. Without this, only say what would be done."),
+    ] = False,
+) -> None:
+    """Bring stored link leads to the current form of the address key.
+
+    Needed once after the address key changes; loading and the link steps are refused
+    until it is done. Two leads that are one article under the current form become one
+    lead with the shares of both, and the one that was scored or read is kept. Sends no
+    request and calls no model, and makes no lead due again for a step that does. It
+    can be stopped and run again. Stop every load and run first: it is refused while a
+    step worked on a link lead in the last ten minutes.
+    """
+    settings = settings_or_exit()
+    with refusals():
+        steps = steps_for(settings)
+        if not apply:
+            with open_session() as session:
+                report = survey(session)
+            out.print(
+                f"{report.checked:,} link leads are keyed under an earlier form: "
+                f"{report.unchanged:,} keep their key, {report.rekeyed:,} would get a new "
+                f"key, {report.merged:,} would be merged into another lead. Nothing was "
+                "changed. Run it again with --apply.",
+                markup=False,
+            )
+            return
+        with open_session() as session:
+            refuse_while_steps_run(session, datetime.now(UTC))
+        report = rekey_links(open_session, steps)
+    out.print(
+        f"Brought {report.checked:,} link leads up to date: {report.unchanged:,} kept "
+        f"their key, {report.rekeyed:,} got a new key, {report.merged:,} were merged into "
+        f"another lead ({report.shares_moved:,} shares moved).",
+        markup=False,
+    )
+    for one, other in sorted(set(report.claims_to_compare)):
+        out.print(
+            f"  claims {one} and {other} each came from a lead of one article: compare them.",
+            markup=False,
+        )
+    if report.merged or report.rekeyed:
+        out.print("Run `thenwhat backfill run link_screen` to screen them again.", markup=False)
 
 
 @backfill_app.command("retry-outlet")

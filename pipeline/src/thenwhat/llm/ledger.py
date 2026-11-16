@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from thenwhat.db.models import LlmUsage
 from thenwhat.llm.errors import BudgetExceeded
+from thenwhat.measure import spans as measure
 
 MICRO_DOLLAR = Decimal("0.000001")
 
@@ -44,6 +45,7 @@ def record_usage(
     cost_usd: Decimal,
     now: datetime,
 ) -> None:
+    measure.add_model(input_tokens, output_tokens, cost_usd)
     # Provider work has already happened. Its cost must survive a later rollback of
     # claim work, just as source request turns do. A connection-bound test session
     # uses a savepoint; production engine-bound sessions commit independently.

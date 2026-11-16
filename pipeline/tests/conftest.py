@@ -125,3 +125,17 @@ class FakeTime:
 @pytest.fixture
 def fake_time() -> FakeTime:
     return FakeTime()
+
+
+# --- measurements ----------------------------------------------------------------
+
+
+@pytest.fixture
+def measured_spans() -> Iterator[list[Any]]:
+    """Record every span made during a test, in the order they finished."""
+    from thenwhat.measure import spans as measure
+
+    kept: list[Any] = []
+    measure.use(measure.Recorder(sink=kept.append, writer="test"))
+    yield kept
+    measure.use(None)

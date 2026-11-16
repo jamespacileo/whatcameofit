@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
+from thenwhat.backfill.outlet_hold import LEFT_FOR_LATER
 from thenwhat.claims.entry import (
     ClaimNotFound,
     add_article,
@@ -61,7 +62,14 @@ def test_a_claim_needs_its_unread_articles_read_then_a_search_then_a_fetch(sessi
 
     assert plan.unread_articles == ["https://news.example.org/b"]
     assert steps_for(plan) == [
-        ["extract", "article", "one", "--article-url", "https://news.example.org/b"],
+        [
+            "extract",
+            "article",
+            "one",
+            "--article-url",
+            "https://news.example.org/b",
+            "--unless-held",
+        ],
         ["resolve", "one"],
         ["fetch", "one"],
         ["readings", "one"],
@@ -115,12 +123,15 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
 
     ran: list[list[str]] = []
 
-    def fake_step(arguments: list[str]) -> tuple[bool, str]:
+    def fake_step(arguments: list[str]) -> tuple[int, str]:
         ran.append(arguments)
-        failed = (arguments[0] == "extract" and arguments[-1].endswith("/blocked")) or (
+        address = arguments[4] if arguments[0] == "extract" else ""
+        if address.endswith("/held"):
+            return (LEFT_FOR_LATER, "Left for later. Its outlet cannot be asked yet.")
+        failed = address.endswith("/blocked") or (
             arguments[0] == "terms" and arguments[-1].endswith("no-terms")
         )
-        return (not failed, "could not be read" if failed else "done")
+        return (1 if failed else 0, "could not be read" if failed else "done")
 
     monkeypatch.setattr("thenwhat.cli.entry.open_session", test_session)
     monkeypatch.setattr("thenwhat.cli.prepare.run_step", fake_step)
@@ -243,6 +254,24 @@ def test_prepare_approves_a_reads_claim_only_when_every_step_succeeded(run, sess
         if (claim := find_claim(session, slug))
     }
     assert states == {"searched": ReviewState.APPROVED, "unsearched": ReviewState.PENDING}
+
+
+def test_an_article_of_a_held_outlet_is_left_for_later_and_its_claim_waits(run, session: Session):
+    """Scenario: Prepare comes to an article of a stopped outlet"""
+    claim_with_articles(session, "waiting", "https://news.example.org/held")
+    drafted_by_a_read(session, "waiting")
+
+    result, ran = run("prepare", "waiting")
+
+    assert result.exit_code == 0, result.output
+    # Asked not to ask a held outlet, reported as left for later and not as failed, and
+    # the claim's other steps ran.
+    assert ran[0][-1] == "--unless-held"
+    assert [step[0] for step in ran] == ["extract", "resolve", "fetch", "readings", "terms"]
+    assert "read left for later" in result.output and "failed" not in result.output
+    # Not decided: a later run reads the article first.
+    claim = find_claim(session, "waiting")
+    assert claim is not None and claim.review_state is ReviewState.PENDING
 
 
 def test_a_claim_whose_terms_failed_is_still_decided(run, session: Session):

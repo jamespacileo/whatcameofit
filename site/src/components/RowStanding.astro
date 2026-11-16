@@ -1,0 +1,162 @@
+---
+// Where a row's claim stands, in the row's right-hand column (openspec latest-rows): the
+// status in words, its place on the path, a change or a no-signal note, and the counts.
+// The column is one button. It opens the row's detail under the row: what the evidence
+// was when first reported, what the status means, the path with each place named, why
+// the claim stands there, its latest promise and the links. Without scripting, and on
+// paper, the detail is open.
+import ChevronDown from "@lucide/astro/icons/chevron-down";
+import type { ExportedClaim, StatusCode } from "../lib/export";
+import { statusSlug } from "../lib/guide";
+import { countsLine, rowSentences } from "../lib/row-sentences";
+import {
+  EVIDENCE_STAGES,
+  STATUS_GLOSSES,
+  STATUS_LABELS,
+  STATUS_MEANINGS,
+  STAGE_PATH,
+  latestPromise,
+  overlayText,
+} from "../lib/status";
+import { statusReason } from "../lib/status-reason";
+import { formatDate } from "../lib/timetable";
+import { withResults } from "../lib/trial-facts";
+import ClockMark from "./ClockMark.astro";
+import PromiseText from "./PromiseText.astro";
+import StageTrack from "./StageTrack.astro";
+
+interface Props {
+  claim: ExportedClaim;
+  /** The day the row is filed under, for the sentences a screen reader is given. */
+  date: string;
+  /** The detail's id: unique on the page. */
+  id: string;
+  /** Set where the row stands for a change of the claim's status that day. */
+  change?: { code: StatusCode; before: StatusCode } | null;
+}
+
+const { claim, date, id, change = null } = Astro.props;
+const code = change?.code ?? claim.status.code;
+const label = STATUS_LABELS[code];
+const nowLabel = STATUS_LABELS[claim.status.code];
+const overlay = overlayText(claim.status.overlay_years);
+const stage = claim.evidence_stage ? EVIDENCE_STAGES[claim.evidence_stage] : null;
+// The no-signal note is said in the column, once; the detail gives the gloss alone.
+const gloss = STATUS_GLOSSES[claim.status.code];
+// A count of nothing is not said: "No trial record found" already says it.
+const counts = claim.trials?.length ? countsLine({ trials: claim.trials.length, results: withResults(claim.trials) }) : null;
+const before = change ? STATUS_LABELS[change.before] : null;
+// The button's name is short: what it says and what it opens. The counts and the
+// row's sentences are its description.
+const name = `${change ? `Changed from ${before} to ${label}` : label}. More on ${claim.intervention.name}`;
+const descId = `${id}-said`;
+const sentences = rowSentences(claim, date);
+const promise = latestPromise(claim);
+const reason = statusReason(claim);
+const trialCount = claim.trials?.length ?? 0;
+---
+
+<button
+  type="button"
+  class:list={["row-now", { "is-changed": change }]}
+  aria-expanded="false"
+  aria-controls={id}
+  aria-label={name}
+  aria-describedby={counts || sentences.length > 0 ? descId : undefined}
+  data-row-open
+>
+  {
+    change && (
+      <span class="row-change">
+        <span class="new-tag">Changed</span>
+        <span class="row-was">from {before}</span>
+      </span>
+    )
+  }
+  <strong class="status-name">{label}</strong>
+  <StageTrack code={code} off />
+  {
+    overlay && (
+      <span class="row-note">
+        <ClockMark />
+        {overlay}
+      </span>
+    )
+  }
+  {
+    (counts || sentences.length > 0) && (
+      <span class="row-counts" id={descId}>
+        {counts}
+        {sentences.length > 0 && <span class="visually-hidden"> {sentences.join(" ")}</span>}
+      </span>
+    )
+  }
+  <span class="row-chev" aria-hidden="true"><ChevronDown size={16} stroke-width={2} /></span>
+</button>
+<div class="row-more" id={id} role="region" aria-label={`More on ${claim.intervention.name}`} data-row-more>
+  <div>
+    <div class="row-more-body">
+      <p class="row-then">
+        <strong>{stage ?? "Not recorded"}</strong>{" "}
+        {[`when first reported${claim.first_reported_date ? `, ${formatDate(claim.first_reported_date)}` : ""}.`, `${gloss}.`].join(" ")}
+      </p>
+      <div class="row-meaning">
+        {
+          change && change.code !== claim.status.code && (
+            <p class="row-since">That day it changed to {label}. On record now: {nowLabel}.</p>
+          )
+        }
+        <p class="row-more-head">{nowLabel}</p>
+        <p>{STATUS_MEANINGS[claim.status.code]}</p>
+        {
+          STAGE_PATH.includes(claim.status.code) ? (
+            <StageTrack code={claim.status.code} named />
+          ) : (
+            <p class="row-off">“{nowLabel}” is not a place on the path from preclinical to approved.</p>
+          )
+        }
+      </div>
+      {
+        reason && (
+          <p>
+            <span class="row-more-head">Why it has this status</span> {reason}
+          </p>
+        )
+      }
+      {
+        promise && (
+          <p class="row-promise">
+            <span class="row-label">Promised</span> <PromiseText promise={promise} />
+          </p>
+        )
+      }
+      <p class="row-links">
+        {
+          trialCount > 0 ? (
+            <a href={`/${claim.slug}#trials`}>See the {trialCount === 1 ? "trial" : `${trialCount} trials`} on record</a>
+          ) : (
+            <a href={`/${claim.slug}`}>See the records</a>
+          )
+        }
+        <a href={`/guide/${statusSlug(claim.status.code)}`}>What “{nowLabel}” does and does not tell you</a>
+      </p>
+      {claim.status.updated_at && <p class="row-when">Status set by rule, {formatDate(claim.status.updated_at)}.</p>}
+    </div>
+  </div>
+</div>
+
+<script>
+  // The detail is closed once the script runs, and kept out of the way of the keyboard
+  // and a screen reader while it is closed. Without the script it stays open.
+  for (const more of document.querySelectorAll<HTMLElement>("[data-row-more]")) more.inert = true;
+  document.addEventListener("click", (event) => {
+    const button = (event.target as Element).closest<HTMLButtonElement>("[data-row-open]");
+    if (!button) return;
+    const open = button.getAttribute("aria-expanded") !== "true";
+    button.setAttribute("aria-expanded", String(open));
+    const more = document.getElementById(button.getAttribute("aria-controls")!);
+    if (!more) return;
+    more.toggleAttribute("data-open", open);
+    more.inert = !open;
+  });
+</script>

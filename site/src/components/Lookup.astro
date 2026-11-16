@@ -774,7 +774,7 @@ const sentenceJson = sentences
     const item = element("li", undefined, closest ? "hit-row is-closest" : "hit-row");
     const now = element("div", undefined, "hit-now");
     if (closest) now.append(element("span", "Closest match", "row-label"));
-    now.append(element("strong", claim.status, "status-name"));
+    now.append(element("span", "On record now: ", "visually-hidden"), element("strong", claim.status, "status-name"));
     const track = stageTrack(claim.place, places);
     if (track) now.append(track);
     if (claim.first_reported) now.append(element("span", `First reported ${claim.first_reported}`, "hit-when"));
@@ -793,7 +793,8 @@ const sentenceJson = sentences
     main.append(heading, meta);
     const found = foundIn(claim.page, words, detail);
     if (found.length) main.append(foundList(found, words, closest ? 3 : 2));
-    item.append(now, main);
+    // The headline is read first, as in the day list; where it stands follows it.
+    item.append(main, now);
     return item;
   }
 

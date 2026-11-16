@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Latest rows</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #ffffff; --ink: #0f1f38; --blue: #14427f; --muted: #46566b;
+  --panel: #f1f5fb; --tint: #e6eef8; --tag: #d6e2f2; --rule: #d9e2ee; --rule-soft: #e9eff5;
+  --promise: #fff7df; --promise-rule: #d9c88a; --ground: #f4f7fb; --footer: #0b2545;
+  --faint: #d3dce8; --hover: #f7f9fc;
+  /* Stage ramp: one hue family, paler in the lab, deepest at approval. No red, no green. */
+  --s-pre: #6a5ca3; --s-reg: #3a6fa8; --s-p1: #3b7bc0; --s-p2: #2a62a6; --s-p3: #14427f; --s-app: #0b2545;
+  --s-off: #8a94a3;
+  --shadow: 0 6px 24px -8px rgb(15 31 56 / 0.22), 0 2px 6px -2px rgb(15 31 56 / 0.12);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #161a21; --ink: #e7edf6; --blue: #9cc8f7; --muted: #a6b2c3;
+    --panel: #1d2533; --tint: #243044; --tag: #2b3a52; --rule: #2c3544; --rule-soft: #232a36;
+    --promise: #3a321a; --promise-rule: #8a7a3e; --ground: #0f1217; --footer: #0b1830;
+    --faint: #354052; --hover: #1b212b;
+    --s-pre: #b0a4e6; --s-reg: #6fa3dc; --s-p1: #7cb2ee; --s-p2: #93c3f6; --s-p3: #b0d6ff; --s-app: #ddeeff;
+    --s-off: #7d8797;
+    --shadow: 0 8px 28px -8px rgb(0 0 0 / 0.6), 0 2px 6px -2px rgb(0 0 0 / 0.4);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #161a21; --ink: #e7edf6; --blue: #9cc8f7; --muted: #a6b2c3;
+  --panel: #1d2533; --tint: #243044; --tag: #2b3a52; --rule: #2c3544; --rule-soft: #232a36;
+  --promise: #3a321a; --promise-rule: #8a7a3e; --ground: #0f1217; --footer: #0b1830;
+  --faint: #354052; --hover: #1b212b;
+  --s-pre: #b0a4e6; --s-reg: #6fa3dc; --s-p1: #7cb2ee; --s-p2: #93c3f6; --s-p3: #b0d6ff; --s-app: #ddeeff;
+  --s-off: #7d8797;
+  --shadow: 0 8px 28px -8px rgb(0 0 0 / 0.6), 0 2px 6px -2px rgb(0 0 0 / 0.4);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { font-size: 106.25%; }
+body {
+  margin: 0; background: var(--ground); color: var(--ink);
+  font-family: Figtree, "Helvetica Neue", Arial, sans-serif; line-height: 1.55;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+::selection { background: var(--tag); color: var(--ink); }
+a { color: var(--blue); text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 4px; }
+button { font: inherit; color: inherit; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Page frame ---------- */
+.top {
+  max-width: 64rem; margin: 0 auto; padding: 2rem clamp(1rem, 4vw, 2rem) 0;
+  display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: end; justify-content: space-between;
+}
+.top h1 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.1rem); line-height: 1.15; }
+.top p { margin: 0.35rem 0 0; color: var(--muted); max-width: 46ch; }
+.switches { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; padding: 3px; background: var(--paper); }
+.seg button {
+  border: 0; background: none; padding: 0.3rem 0.85rem; border-radius: 999px; cursor: pointer;
+  font-size: 0.85rem; font-weight: 600; color: var(--muted);
+}
+.seg button[aria-pressed="true"] { background: var(--blue); color: var(--paper); }
+
+.key {
+  max-width: 64rem; margin: 1.25rem auto 0; padding: 0 clamp(1rem, 4vw, 2rem);
+}
+.key-inner {
+  background: var(--paper); border: 1px solid var(--rule); border-radius: 0.85rem;
+  padding: 0.9rem 1.1rem; display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: center;
+  font-size: 0.82rem; color: var(--muted);
+}
+.key-inner strong { color: var(--ink); font-weight: 700; margin-right: 0.2rem; }
+.key-item { display: inline-flex; align-items: center; gap: 0.45rem; }
+.key-ramp { display: inline-flex; align-items: flex-end; gap: 0.6rem; flex-wrap: wrap; }
+.key-ramp span { display: inline-flex; align-items: center; gap: 0.3rem; }
+
+.variants {
+  max-width: 64rem; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2rem) 4rem;
+  display: grid; gap: 2.5rem; margin-top: 2rem;
+}
+.variant { display: grid; gap: 0.9rem; }
+.variant-head { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; align-items: baseline; }
+.variant-head h2 { margin: 0; font-size: 1.2rem; }
+.variant-head .letter {
+  display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 0.45rem;
+  background: var(--blue); color: var(--paper); font-size: 0.85rem; margin-right: 0.5rem; vertical-align: 0.1em;
+}
+.variant-head p { margin: 0; color: var(--muted); font-size: 0.9rem; flex-basis: 100%; max-width: 72ch; }
+.notes { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.notes li { font-size: 0.78rem; padding: 0.15rem 0.6rem; border-radius: 999px; background: var(--tint); color: var(--ink); }
+
+.sheet {
+  background: var(--paper); border: 1px solid var(--rule); border-radius: 0.85rem;
+  padding: 1.1rem clamp(0.9rem, 3vw, 1.6rem) 1.3rem;
+}
+.sheet-top { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+.sheet-top h3 { margin: 0; font-size: 1.45rem; }
+.sheet-top span { font-size: 0.82rem; color: var(--muted); }
+.day { margin-top: 1.1rem; }
+.day-head {
+  display: flex; flex-wrap: wrap; gap: 0 0.6rem; align-items: baseline; padding-bottom: 0.45rem; border-bottom: 1px solid var(--rule);
+  font-size: 0.95rem;
+}
+.day-head strong { font-weight: 700; }
+.day-head span { color: var(--muted); font-size: 0.82rem; }
+.rows { list-style: none; margin: 0; padding: 0; }
+.empty { color: var(--muted); font-size: 0.9rem; padding: 1rem 0; }
+mark { background: var(--tag); color: inherit; border-radius: 3px; padding: 0 0.1em; }
+
+/* ---------- Shared marks ---------- */
+.tile {
+  flex: none; width: 18px; height: 18px; border-radius: 5px; display: inline-grid; place-items: center;
+  font-size: 10px; font-weight: 800; color: #fff; line-height: 1;
+}
+.reg-mark {
+  flex: none; width: 18px; height: 18px; border-radius: 5px; display: inline-grid; place-items: center;
+  background: var(--tint); color: var(--blue);
+}
+.reg-mark svg, .ic { width: 13px; height: 13px; }
+.ic { flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ladder { display: block; flex: none; overflow: visible; }
+.ladder rect { fill: var(--faint); }
+.ladder rect.here { fill: var(--c); }
+.ladder.none rect { fill: none; stroke: var(--faint); stroke-dasharray: 2 1.5; }
+.st-pre { --c: var(--s-pre); } .st-reg { --c: var(--s-reg); } .st-p1 { --c: var(--s-p1); }
+.st-p2 { --c: var(--s-p2); } .st-p3 { --c: var(--s-p3); } .st-app { --c: var(--s-app); } .st-off { --c: var(--s-off); }
+.st-label { color: var(--c); font-weight: 700; }
+.counts { display: inline-flex; gap: 0.7rem; align-items: center; color: var(--muted); font-size: 0.8rem; }
+.counts span { display: inline-flex; gap: 0.25rem; align-items: center; }
+.counts .zero { opacity: 0.75; }
+.topic { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--muted); }
+.topic i { width: 7px; height: 7px; border-radius: 2px; background: var(--tc); display: inline-block; }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.55rem; font-size: 0.8rem; color: var(--muted); }
+.meta .outlet { color: var(--ink); font-weight: 600; }
+.chev { transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1); }
+[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.age {
+  display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; font-weight: 700;
+  padding: 0.05rem 0.45rem; border-radius: 999px; background: var(--tint); color: var(--ink);
+}
+
+/* Status pop: the stage path named, opened on hover or focus of a status block. */
+.has-pop { position: relative; }
+.pop {
+  position: absolute; z-index: 5; right: 0; top: calc(100% + 6px); width: 17rem;
+  background: var(--paper); border: 1px solid var(--rule); border-radius: 0.7rem; box-shadow: var(--shadow);
+  padding: 0.75rem 0.85rem; font-size: 0.8rem; color: var(--muted); text-align: left;
+  opacity: 0; translate: 0 -4px; pointer-events: none; visibility: hidden;
+  transition: opacity 160ms ease-out, translate 200ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 160ms;
+}
+.has-pop:hover .pop, .has-pop:focus-within .pop {
+  opacity: 1; translate: 0 0; visibility: visible; pointer-events: auto;
+  transition-delay: 220ms, 220ms, 0s;
+}
+.pop b { color: var(--ink); display: block; font-size: 0.9rem; margin-bottom: 0.15rem; }
+.pop p { margin: 0 0 0.55rem; }
+.path { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; margin: 0.3rem 0 0.5rem; }
+.path span {
+  font-size: 0.66rem; text-align: center; padding: 0.3rem 0.1rem; border-radius: 4px; background: var(--rule-soft);
+  color: var(--muted); line-height: 1.15;
+}
+.path span.here { background: var(--c); color: var(--paper); font-weight: 700; }
+
+/* Drawer: the detail a row keeps one press away. */
+.drawer {
+  display: grid; grid-template-rows: 0fr; transition: grid-template-rows 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.drawer > div { overflow: hidden; }
+.open > .drawer, .open .drawer { grid-template-rows: 1fr; }
+.drawer-body {
+  margin-top: 0.6rem; padding: 0.7rem 0.85rem; border-radius: 0.6rem; background: var(--panel);
+  font-size: 0.85rem; display: grid; gap: 0.35rem;
+}
+.drawer-body p { margin: 0; }
+.drawer-body .k { color: var(--muted); font-size: 0.75rem; font-weight: 700; display: block; }
+.drawer-body .promise { background: var(--promise); border-radius: 0.45rem; padding: 0.35rem 0.55rem; }
+.drawer-links { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; font-size: 0.82rem; font-weight: 600; }
+.toggle {
+  border: 0; background: none; cursor: pointer; color: var(--muted); padding: 0.2rem; border-radius: 6px;
+  display: inline-grid; place-items: center;
+}
+.toggle:hover { color: var(--ink); background: var(--rule-soft); }
+.row-link { color: inherit; text-decoration: none; }
+.row-link:hover { text-decoration: underline; text-decoration-color: var(--rule); }
+
+/* ================= Variant A: headline left, status right ================= */
+.va-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) 9.5rem; gap: 0.4rem 1.5rem;
+  padding: 1rem 0; border-bottom: 1px solid var(--rule-soft);
+}
+.va-row:last-child { border-bottom: 0; }
+.va-main { min-width: 0; }
+.va-title { margin: 0.3rem 0 0.25rem; font-size: 1.12rem; line-height: 1.3; font-weight: 700; text-wrap: balance; }
+.va-claim { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--muted); }
+.va-claim span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.va-status {
+  align-self: start; background: var(--panel); border-radius: 0.65rem; padding: 0.55rem 0.7rem 0.6rem;
+  display: grid; gap: 0.35rem; justify-items: start;
+}
+.va-status .st-label { font-size: 0.92rem; line-height: 1.2; }
+.va-row .drawer { grid-column: 1 / -1; }
+.va-rec { grid-template-columns: minmax(0, 1fr) 9.5rem; }
+.va-rec .va-what { display: flex; gap: 0.5rem; align-items: flex-start; font-size: 0.95rem; }
+.va-rec .va-what b { font-weight: 700; }
+.va-rec .va-status { background: none; padding: 0.15rem 0.7rem; grid-auto-flow: column; justify-content: start; align-items: center; gap: 0.5rem; }
+.va-rec .va-status .st-label { font-size: 0.82rem; white-space: nowrap; }
+.va-about { margin: 0.35rem 0 0 1.6rem; font-size: 0.8rem; color: var(--muted); }
+.va-about a { color: var(--muted); }
+
+/* ================= Variant B: one scan line ================= */
+.vb-row { border-bottom: 1px solid var(--rule-soft); }
+.vb-line {
+  display: grid; grid-template-columns: 18px minmax(0, 1fr) auto 1.6rem; gap: 0.75rem; align-items: center;
+  padding: 0.6rem 0.35rem; border-radius: 0.5rem;
+}
+.vb-row:hover .vb-line { background: var(--hover); }
+.vb-title {
+  font-weight: 650; font-size: 0.98rem; line-height: 1.3; min-width: 0;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.vb-title.rec { font-weight: 500; }
+.vb-title.rec b { font-weight: 700; }
+.vb-stage { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.8rem; min-width: 7.6rem; justify-content: flex-end; }
+.vb-row .drawer-body { margin: 0 0.35rem 0.6rem calc(18px + 1.1rem); }
+.vb-sub {
+  display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 0.75rem; align-items: center;
+  padding: 0 0.35rem 0.55rem; font-size: 0.8rem; color: var(--muted);
+}
+.vb-sub .elbow { width: 18px; height: 14px; color: var(--faint); justify-self: center; }
+
+/* ================= Variant C: claim threads ================= */
+.vc-row { padding: 1rem 0; border-bottom: 1px solid var(--rule-soft); }
+.vc-row:last-child { border-bottom: 0; }
+.vc-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1.25rem; align-items: start; }
+.vc-title { margin: 0.25rem 0 0; font-size: 1.08rem; line-height: 1.3; font-weight: 700; text-wrap: balance; }
+.vc-title.old { font-size: 0.98rem; font-weight: 600; }
+.vc-badge { display: grid; justify-items: end; gap: 0.3rem; text-align: right; }
+.vc-badge .st-label { font-size: 0.9rem; }
+.thread {
+  margin: 0.7rem 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 0.35rem;
+}
+.thread li {
+  display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; padding: 0.2rem 0.6rem 0.2rem 0.3rem;
+  border-radius: 999px; background: var(--panel); color: var(--ink);
+}
+.thread li.news { background: transparent; box-shadow: inset 0 0 0 1px var(--rule); }
+.thread li .d { color: var(--muted); }
+.thread li .tile, .thread li .reg-mark { width: 16px; height: 16px; }
+
+/* ================= Variant D: then → now ================= */
+.vd-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) 13.5rem; gap: 0.4rem 1.5rem; padding: 1rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.vd-row:last-child { border-bottom: 0; }
+.vd-title { margin: 0.3rem 0 0.2rem; font-size: 1.08rem; line-height: 1.3; font-weight: 700; text-wrap: balance; }
+.vd-shift {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0.4rem;
+  background: var(--panel); border-radius: 0.65rem; padding: 0.55rem 0.65rem; align-self: start;
+}
+.vd-end { display: grid; grid-template-rows: auto 22px auto; align-items: end; gap: 0.25rem; justify-items: center; align-self: start; text-align: center; font-size: 0.72rem; line-height: 1.2; }
+.vd-end .when { color: var(--muted); font-size: 0.66rem; text-transform: none; }
+.vd-end .ev { color: var(--muted); font-weight: 700; }
+.vd-arrow { color: var(--muted); width: 16px; height: 16px; }
+.vd-same { color: var(--muted); font-size: 0.66rem; grid-column: 1 / -1; text-align: center; margin-top: -0.1rem; }
+.ev-glyph { width: 26px; height: 18px; color: var(--muted); }
+.vd-row .drawer { grid-column: 1 / -1; }
+
+@media (max-width: 40rem) {
+  .va-row, .va-rec { grid-template-columns: minmax(0, 1fr); }
+  .va-status { grid-auto-flow: column; justify-content: start; align-items: center; gap: 0.6rem; justify-self: start; }
+  .vb-line { grid-template-columns: 18px minmax(0, 1fr) 1.6rem; }
+  .vb-stage { min-width: 0; grid-column: 2; grid-row: 2; justify-content: flex-start; }
+  .vb-line .toggle { grid-column: 3; grid-row: 1; }
+  .vc-top { grid-template-columns: minmax(0, 1fr); }
+  .vc-badge { justify-items: start; text-align: left; grid-auto-flow: column; align-items: center; justify-content: start; gap: 0.5rem; }
+  .vd-row { grid-template-columns: minmax(0, 1fr); }
+  .vd-shift { max-width: 16rem; }
+  .pop { right: auto; left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0s !important; transition-delay: 0s !important; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div>
+    <h1>Latest: row variants</h1>
+    <p>The same seven items from the Latest list, drawn four ways. Hover a status for its path; press the chevron for the detail each row now keeps out of sight.</p>
+  </div>
+  <div class="switches">
+    <div class="seg" role="group" aria-label="List shown">
+      <button type="button" data-view="latest" aria-pressed="true">Latest</button>
+      <button type="button" data-view="search" aria-pressed="false">Search “cancer”</button>
+    </div>
+    <div class="seg" role="group" aria-label="Theme">
+      <button type="button" data-theme-set="light" aria-pressed="false">Light</button>
+      <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+    </div>
+  </div>
+</header>
+
+<section class="key" aria-label="Key">
+  <div class="key-inner" id="key"></div>
+</section>
+
+<main class="variants" id="variants"></main>
+
+<script>
+// ---------- Mock data: the rows in the operator's screenshot. "then" stages are illustrative. ----------
+const STAGES = [
+  { code: "preclinical_only", label: "Preclinical only", short: "Preclinical", place: "Pre­clinical", cls: "st-pre" },
+  { code: "trial_registered", label: "Trial registered", short: "Registered", place: "Regis­tered", cls: "st-reg" },
+  { code: "phase_1", label: "Phase 1 trial", short: "Phase 1", place: "Phase 1", cls: "st-p1" },
+  { code: "phase_2", label: "Phase 2 trial", short: "Phase 2", place: "Phase 2", cls: "st-p2" },
+  { code: "phase_3", label: "Phase 3 trial", short: "Phase 3", place: "Phase 3", cls: "st-p3" },
+  { code: "approved", label: "Approved", short: "Approved", place: "Approved", cls: "st-app" },
+];
+const MEANING = {
+  preclinical_only: "Studied in the laboratory or in animals. No trial in people is on record.",
+  trial_registered: "A trial in people is registered. No phase is given yet.",
+  phase_3: "The furthest trial on record is Phase 3: a large trial comparing it with the usual care.",
+};
+const EVIDENCE = {
+  in_vitro: "Laboratory", animal: "Animal study", early_human: "Early human study", late_human: "Late human study",
+};
+const TOPICS = { Cancer: "#c9895a", "Brain and nerves": "#8b7fbf", "Heart, blood and circulation": "#c46f86", Pain: "#5aa39a" };
+const OUTLETS = {
+  nyt: { name: "The New York Times", domain: "nytimes.com", letter: "T", bg: "#1b1b1b" },
+  morse: { name: "The Morse Method", domain: "drjessemorse.substack.com", letter: "M", bg: "#9a6b3c" },
+  bbc: { name: "BBC News", domain: "bbc.co.uk", letter: "B", bg: "#b80000" },
+  extra: { name: "Extra.ie", domain: "extra.ie", letter: "X", bg: "#e5462a" },
+  indy: { name: "The Independent", domain: "independent.co.uk", letter: "I", bg: "#d4213d" },
+  sciam: { name: "Scientific American", domain: "scientificamerican.com", letter: "S", bg: "#222" },
+};
+const CLAIMS = {
+  ivo: { name: "ivonescimab", indication: "Lung cancer", topic: "Cancer", status: "phase_3", trials: 15, results: 0,
+         then: "late_human", firstReported: "15 Nov 2026", reason: "A Phase 3 trial of ivonescimab for lung cancer is on record (NCT07936578)." },
+  mrna: { name: "Intismeran autogene plus pembrolizumab", indication: "Completely resected stage IIB–IV cutaneous melanoma",
+          topic: "Cancer", status: "phase_3", trials: 2, results: 0, then: "late_human", firstReported: "13 Nov 2026",
+          promise: "Approval application expected in 2027", reason: "Two trials are on record; the furthest is Phase 3." },
+  tic: { name: "Wrist-worn median nerve stimulation device", indication: "Tourette syndrome", topic: "Brain and nerves",
+         status: "trial_registered", trials: 3, results: 3, then: "early_human", firstReported: "12 Nov 2026",
+         reason: "Three trials are registered with no phase given; all three have results posted." },
+  bci: { name: "Intracortical brain-computer interface", indication: "Locked-in syndrome", topic: "Brain and nerves",
+         status: "trial_registered", trials: 1, results: 0, then: "early_human", firstReported: "26 Mar 2022",
+         reason: "One trial is registered (NCT07933549), dated 12 Nov 2026." },
+  heart: { name: "Temporary genetic instructions injected into the heart to activate repair proteins",
+           indication: "Heart failure after a heart attack", topic: "Heart, blood and circulation", status: "preclinical_only",
+           trials: 0, results: 0, then: "animal", firstReported: "11 Nov 2026",
+           reason: "Animal study when first reported. No trial in people on record." },
+  suz: { name: "suzetrigine", indication: "Acute pain", topic: "Pain", status: "phase_3", trials: 6, results: 4,
+         then: "late_human", firstReported: "20 Aug 2024", reason: "A Phase 3 trial of suzetrigine for acute pain is on record." },
+};
+const DAYS = [
+  { label: "Sunday 15 November", items: [
+    { kind: "report", claim: "ivo", outlet: "nyt", date: "15 Nov 2026", title: "F.D.A. Rejects Closely Watched Lung Cancer Drug From China" },
+  ]},
+  { label: "Friday 13 November", items: [
+    { kind: "report", claim: "mrna", outlet: "morse", date: "13 Nov 2026", title: "A Personalized mRNA Cancer Vaccine Just Won a Phase 3 Trial. Here’s What It Did." },
+    { kind: "record", claim: "ivo", id: "NCT07936578", date: "13 Nov 2026", what: "Trial registered",
+      report: { outlet: "nyt", date: "15 Nov 2026", title: "F.D.A. Rejects Closely Watched Lung Cancer Drug From China" } },
+  ]},
+  { label: "Thursday 12 November", items: [
+    { kind: "report", claim: "tic", outlet: "bbc", date: "12 Nov 2026", title: "Tourette syndrome: The life-changing device helping to stop tics" },
+    { kind: "record", claim: "bci", id: "NCT07933549", date: "12 Nov 2026", what: "Trial registered",
+      report: { outlet: "indy", date: "26 Mar 2022", title: "Paralysed man communicates first words in months using brain implant: ‘I want a beer’" } },
+  ]},
+  { label: "Wednesday 11 November", items: [
+    { kind: "report", claim: "heart", outlet: "extra", date: "11 Nov 2026", title: "Scientists suggest new treatment could see hearts repair themselves in major breakthrough" },
+  ]},
+  { label: "Tuesday 10 November", items: [
+    { kind: "record", claim: "suz", id: "NCT07928011", date: "10 Nov 2026", what: "Trial registered",
+      report: { outlet: "sciam", date: "20 Aug 2024", title: "New Painkiller Could Bring Relief to Millions—Without Addiction Risk" } },
+  ]},
+];
+
+// ---------- Glyphs (authored SVG, one 2px stroke) ----------
+const I = {
+  flask: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3"/><path d="M7.5 15h9"/></svg>',
+  check: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.6 2.5L16 9.5"/></svg>',
+  reg: '<svg viewBox="0 0 24 24" aria-hidden="true" class="ic"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M12 10v6M9 13h6"/></svg>',
+  chev: '<svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px"><path d="m6 9 6 6 6-6"/></svg>',
+  arrow: '<svg class="ic vd-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  elbow: '<svg class="elbow" viewBox="0 0 18 14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 0v6a3 3 0 0 0 3 3h8"/></svg>',
+  quote: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h13"/></svg>',
+};
+// Evidence when first reported, drawn by what was studied: a dish, an animal, people.
+const EV_GLYPH = {
+  in_vitro: '<svg class="ev-glyph" viewBox="0 0 26 18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><ellipse cx="13" cy="11" rx="9" ry="4"/><path d="M4 11V8.5c0-2.2 4-4 9-4s9 1.8 9 4V11"/></svg>',
+  animal: '<svg class="ev-glyph" viewBox="0 0 26 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 13c2-5 6-7 11-7 3 0 5 1 6.5 2.5L23 8"/><circle cx="20.3" cy="6.2" r="1.6"/><path d="M14 6c0-2 1-3 2.5-3M3 13h16c2 0 3-1 3-2M23 8l-1 3"/></svg>',
+  early_human: '<svg class="ev-glyph" viewBox="0 0 26 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="13" cy="5" r="3"/><path d="M7 17c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>',
+  late_human: '<svg class="ev-glyph" viewBox="0 0 26 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="6" r="2.4"/><circle cx="13" cy="5" r="2.8"/><circle cx="19" cy="6" r="2.4"/><path d="M2.5 17c0-2.6 2-4.6 4.5-4.6M8 17c0-2.9 2.2-5.4 5-5.4s5 2.5 5 5.4M23.5 17c0-2.6-2-4.6-4.5-4.6"/></svg>',
+};
+
+const stageOf = (code) => STAGES.find((s) => s.code === code);
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+// Six bars rising along the path; only the claim's place is filled. A position, not progress.
+function ladder(code, size = 1.25) {
+  const place = STAGES.findIndex((s) => s.code === code);
+  const w = 34 * size, h = 16 * size, bw = 3.6 * size, gap = (w - 6 * bw) / 5;
+  const bars = STAGES.map((s, i) => {
+    const bh = (5 + i * 2.2) * size;
+    return `<rect x="${(i * (bw + gap)).toFixed(1)}" y="${(h - bh).toFixed(1)}" width="${bw}" height="${bh.toFixed(1)}" rx="${1.2 * size}" class="${i === place ? "here" : ""}"/>`;
+  }).join("");
+  const s = stageOf(code);
+  return `<svg class="ladder ${s ? s.cls : "none"}" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${s ? `Place ${place + 1} of 6 on the path from preclinical to approved` : "Not recorded"}">${bars}</svg>`;
+}
+function tile(key) {
+  const o = OUTLETS[key];
+  return `<span class="tile" style="background:${o.bg}" aria-hidden="true">${o.letter}</span>`;
+}
+const regMark = `<span class="reg-mark" aria-hidden="true">${I.reg}</span>`;
+function counts(c) {
+  const t = `<span class="${c.trials ? "" : "zero"}" title="${c.trials} trial${c.trials === 1 ? "" : "s"} on record">${I.flask}${c.trials}<span class="vh"> trials on record</span></span>`;
+  const r = c.results ? `<span title="${c.results} with results posted">${I.check}${c.results}<span class="vh"> with results posted</span></span>` : "";
+  return `<span class="counts">${t}${r}</span>`;
+}
+function topicTag(t) { return `<span class="topic"><i style="--tc:${TOPICS[t]}"></i>${t}</span>`; }
+function pop(c) {
+  const s = stageOf(c.status);
+  const path = STAGES.map((x) => `<span class="${x.code === c.status ? "here" : ""}">${x.place}</span>`).join("");
+  return `<div class="pop ${s.cls}" role="tooltip"><b>${s.label}</b><p>${MEANING[c.status] || ""}</p><div class="path">${path}</div><p>${c.reason}</p><a href="#">What “${s.label}” does and does not tell you</a></div>`;
+}
+function statusBlock(c, cls = "") {
+  const s = stageOf(c.status);
+  return `<span class="st-label ${s.cls} ${cls}">${s.label}</span>`;
+}
+function drawer(item, c, id) {
+  const ev = EVIDENCE[c.then];
+  const lines = [];
+  if (item.kind === "report") {
+    lines.push(`<p><span class="k">Claim</span>${esc(c.name)} · ${esc(c.indication)}</p>`);
+  }
+  lines.push(`<p><span class="k">When first reported, ${c.firstReported}</span>${ev}</p>`);
+  lines.push(`<p><span class="k">On record now</span>${c.trials} trial${c.trials === 1 ? "" : "s"}${c.results ? `, ${c.results} with results posted` : ""}. ${c.reason}</p>`);
+  if (c.promise) lines.push(`<p class="promise"><span class="k">Promised</span>${c.promise}</p>`);
+  lines.push(`<div class="drawer-links"><a href="#">See the records</a><a href="#">Why “${stageOf(c.status).label}”</a></div>`);
+  return `<div class="drawer" id="${id}"><div><div class="drawer-body">${lines.join("")}</div></div></div>`;
+}
+const toggleBtn = (id, what) => `<button class="toggle" type="button" aria-expanded="false" aria-controls="${id}" data-toggle><span class="vh">More on ${esc(what)}</span>${I.chev}</button>`;
+
+// ---------- Search ----------
+let query = "";
+const hl = (s) => {
+  const t = esc(s);
+  if (!query) return t;
+  return t.replace(new RegExp(`(${query})`, "ig"), "<mark>$1</mark>");
+};
+const matches = (item) => {
+  if (!query) return true;
+  const c = CLAIMS[item.claim];
+  const hay = [item.title, item.report?.title, c.name, c.indication, c.topic].join(" ").toLowerCase();
+  return hay.includes(query);
+};
+
+// ---------- Variant A ----------
+function rowA(item, n) {
+  const c = CLAIMS[item.claim];
+  const id = `a-${n}`;
+  if (item.kind === "report") {
+    const o = OUTLETS[item.outlet];
+    return `<li class="va-row" data-row>
+      <div class="va-main">
+        <div class="meta">${tile(item.outlet)}<span class="outlet">${o.name}</span><span>${item.date}</span>${topicTag(c.topic)}</div>
+        <h4 class="va-title"><a class="row-link" href="#">“${hl(item.title)}”</a></h4>
+        <div class="va-claim"><span>${hl(c.name)} · ${hl(c.indication)}</span>${toggleBtn(id, c.name)}</div>
+      </div>
+      <div class="va-status has-pop" tabindex="0">${statusBlock(c)}${ladder(c.status)}${counts(c)}${pop(c)}</div>
+      ${drawer(item, c, id)}
+    </li>`;
+  }
+  const r = item.report;
+  return `<li class="va-row va-rec" data-row>
+    <div class="va-main">
+      <div class="va-what">${regMark}<span><b>${item.what}.</b> <a href="#">${hl(c.name)}</a> · ${hl(c.indication)}</span></div>
+      <p class="va-about">${tile(r.outlet)} “${hl(r.title)}” · ${OUTLETS[r.outlet].name}, ${r.date}</p>
+    </div>
+    <div class="va-status has-pop" tabindex="0">${ladder(c.status)}${statusBlock(c)}${pop(c)}</div>
+  </li>`;
+}
+
+// ---------- Variant B ----------
+function rowB(item, n, list) {
+  const c = CLAIMS[item.claim];
+  const s = stageOf(c.status);
+  const id = `b-${n}`;
+  const stage = `<span class="vb-stage has-pop" tabindex="0">${ladder(c.status)}<span class="st-label ${s.cls}">${s.short}</span>${pop(c)}</span>`;
+  if (item.kind === "report") {
+    const o = OUTLETS[item.outlet];
+    return `<li class="vb-row" data-row>
+      <div class="vb-line">${tile(item.outlet)}<a class="row-link vb-title" href="#" title="${o.name}, ${item.date}">“${hl(item.title)}”</a>${stage}${toggleBtn(id, c.name)}</div>
+      ${drawer(item, c, id).replace('class="drawer-body">', `class="drawer-body"><p class="meta"><span class="outlet">${o.name}</span><span>${o.domain}</span><span>${item.date}</span>${topicTag(c.topic)}</p>`)}
+    </li>`;
+  }
+  return `<li class="vb-row" data-row>
+    <div class="vb-line">${regMark}<span class="vb-title rec"><b>Registered</b> ${hl(c.name)} · ${hl(c.indication)}</span>${stage}${toggleBtn(id, c.name)}</div>
+    <div class="vb-sub">${I.elbow}<span>${tile(item.report.outlet)} “${hl(item.report.title)}” · ${item.report.date.slice(-4)}</span></div>
+    ${drawer(item, c, id)}
+  </li>`;
+}
+
+// ---------- Variant C: one thread per claim, its events as chips ----------
+// Every item of a claim joins the thread, which sits under the day of its newest item.
+function threadsC(items, allItems) {
+  const keys = [...new Set(items.map((i) => i.claim))];
+  return keys.map((key, n) => {
+    const evs = allItems.filter((i) => i.claim === key);
+    const c = CLAIMS[key];
+    const lead = evs.find((e) => e.kind === "report");
+    const id = `c-${n}-${key}`;
+    const chips = evs.map((e) => e.kind === "report"
+      ? `<li class="news">${tile(e.outlet)}<span>${OUTLETS[e.outlet].name}</span><span class="d">${e.date.slice(0, 6)}</span></li>`
+      : `<li>${regMark}<a href="#">${e.id}</a><span>registered</span><span class="d">${e.date.slice(0, 6)}</span></li>`).join("");
+    let head;
+    if (lead) {
+      head = `<div class="meta">${topicTag(c.topic)}</div><h4 class="vc-title"><a class="row-link" href="#">“${hl(lead.title)}”</a></h4>`;
+    } else {
+      const r = evs[0].report;
+      const years = 2026 - Number(r.date.slice(-4));
+      const age = years > 0 ? `<span class="age">First reported ${years} year${years === 1 ? "" : "s"} ago</span>` : "";
+      head = `<div class="meta">${topicTag(c.topic)}${age}</div>
+        <h4 class="vc-title old"><a class="row-link" href="#">“${hl(r.title)}”</a></h4>`;
+    }
+    const firstNews = lead ? "" : `<li class="news">${tile(evs[0].report.outlet)}<span>${OUTLETS[evs[0].report.outlet].name}</span><span class="d">${evs[0].report.date}</span></li>`;
+    return `<li class="vc-row" data-row>
+      <div class="vc-top">
+        <div>${head}</div>
+        <div class="vc-badge has-pop" tabindex="0">${statusBlock(c)}${ladder(c.status)}${counts(c)}${pop(c)}</div>
+      </div>
+      <ul class="thread" aria-label="Dated in this list">${firstNews}${chips}<li style="background:none;padding:0">${toggleBtn(id, c.name)}</li></ul>
+      ${drawer({ kind: "report" }, c, id)}
+    </li>`;
+  }).join("");
+}
+
+// ---------- Variant D ----------
+function rowD(item, n) {
+  const c = CLAIMS[item.claim];
+  const s = stageOf(c.status);
+  const id = `d-${n}`;
+  const thenDate = item.kind === "report" ? item.date : item.report.date;
+  const shift = `<div class="vd-shift has-pop" tabindex="0">
+      <div class="vd-end"><span class="when">Reported ${thenDate.slice(-4) === "2026" ? thenDate.slice(0, 6) : thenDate.slice(-4)}</span>${EV_GLYPH[c.then]}<span class="ev">${EVIDENCE[c.then]}</span></div>
+      ${I.arrow}
+      <div class="vd-end"><span class="when">Now</span>${ladder(c.status)}<span class="st-label ${s.cls}">${s.label}</span></div>
+      ${pop(c)}
+    </div>`;
+  if (item.kind === "report") {
+    const o = OUTLETS[item.outlet];
+    return `<li class="vd-row" data-row>
+      <div>
+        <div class="meta">${tile(item.outlet)}<span class="outlet">${o.name}</span><span>${item.date}</span>${topicTag(c.topic)}</div>
+        <h4 class="vd-title"><a class="row-link" href="#">“${hl(item.title)}”</a></h4>
+        <div class="va-claim">${counts(c)}${toggleBtn(id, c.name)}</div>
+      </div>
+      ${shift}
+      ${drawer(item, c, id)}
+    </li>`;
+  }
+  const r = item.report;
+  return `<li class="vd-row" data-row>
+    <div>
+      <div class="meta">${regMark}<span class="outlet">${item.id} registered</span><span>${item.date}</span>${topicTag(c.topic)}</div>
+      <h4 class="vd-title" style="font-size:1rem;font-weight:600"><a class="row-link" href="#">“${hl(r.title)}”</a></h4>
+      <div class="va-claim">${tile(r.outlet)}<span>${OUTLETS[r.outlet].name}</span>${toggleBtn(id, c.name)}</div>
+    </div>
+    ${shift}
+    ${drawer(item, c, id)}
+  </li>`;
+}
+
+const VARIANTS = [
+  { letter: "A", name: "Headline left, status right",
+    about: "The quoted headline leads, read left to right; where the claim stands sits in a fixed column on the right, so the eye runs down one edge to compare statuses. The claim's name stays as one quiet line. A registry record shrinks to a single line with its report under it.",
+    notes: ["Status column fixed at 9.5rem", "Counts as icons", "“See the records” → whole headline is the link", "Then-stage, promise → drawer"],
+    render: (items) => items.map((it, i) => rowA(it, i)).join("") },
+  { letter: "B", name: "One scan line",
+    about: "Every item is a line: outlet mark, headline, stage. Outlet, date and claim move into the drawer; the day heading already carries the date. A record keeps its old report on an elbow line, so the reader sees which story it answers.",
+    notes: ["Densest: ~2× rows per screen", "Outlet named on hover (title) and in drawer", "Short stage words: “Phase 3”, “Registered”"],
+    render: (items) => items.map((it, i) => rowB(it, i)).join("") },
+  { letter: "C", name: "One thread per claim",
+    about: "Items for the same claim join into one row, so the ivonescimab report and its registry record no longer repeat the headline. What was dated becomes chips: white for a news report, panel blue for a registry record. A record answering an old story says how long ago it was reported.",
+    notes: ["Duplicates merged by claim", "Chip colour = kind (as named in key)", "“First reported 4 years ago” in sight"],
+    threads: true, render: (items, all) => threadsC(items, all) },
+  { letter: "D", name: "Then → now",
+    about: "The right column compares two drawings: what was studied when the story ran (dish, animal, a person, people) and where the claim stands now on the path. The comparison is drawn, not concluded: an arrow, no wording about better or worse.",
+    notes: ["Answers “what came of it?” in one glance", "Evidence glyphs need a key", "Widest status column: 13.5rem"],
+    render: (items) => items.map((it, i) => rowD(it, i)).join("") },
+];
+
+function renderKey() {
+  const ramp = STAGES.map((s) => `<span>${ladder(s.code, 0.8)}<span class="st-label ${s.cls}">${s.short}</span></span>`).join("");
+  const ev = Object.entries(EVIDENCE).map(([k, v]) => `<span class="key-item">${EV_GLYPH[k]}${v}</span>`).join("");
+  document.getElementById("key").innerHTML = `
+    <span class="key-item"><strong>Stage now</strong></span><span class="key-ramp">${ramp}</span>
+    <span class="key-item">${tile("bbc")} News report</span>
+    <span class="key-item">${regMark} Registry record</span>
+    <span class="key-item">${I.flask} Trials on record</span>
+    <span class="key-item">${I.check} With results posted</span>
+    <span class="key-item"><strong>When reported (D)</strong></span>${ev}`;
+}
+
+function render() {
+  const html = VARIANTS.map((v) => {
+    const all = DAYS.flatMap((d) => d.items).filter(matches);
+    const placed = new Set();
+    const days = DAYS.map((d) => {
+      let items = d.items.filter(matches);
+      if (v.threads) {
+        items = items.filter((i) => !placed.has(i.claim));
+        items.forEach((i) => placed.add(i.claim));
+      }
+      if (!items.length) return "";
+      const reports = items.filter((i) => i.kind === "report").length;
+      const records = items.length - reports;
+      const counted = v.threads ? all.filter((i) => items.some((x) => x.claim === i.claim) && d.items.includes(i)) : items;
+      const r2 = counted.filter((i) => i.kind === "report").length, c2 = counted.length - r2;
+      const said = v.threads ? [r2 && `${r2} report${r2 > 1 ? "s" : ""}`, c2 && `${c2} registry record${c2 > 1 ? "s" : ""}`].filter(Boolean).join(", ") : [reports && `${reports} report${reports > 1 ? "s" : ""}`, records && `${records} registry record${records > 1 ? "s" : ""}`].filter(Boolean).join(", ");
+      return `<section class="day"><h4 class="day-head"><strong>${d.label}</strong><span>${said}</span></h4><ul class="rows">${v.render(items, all)}</ul></section>`;
+    }).join("") || `<p class="empty">Nothing in this list mentions “${query}”.</p>`;
+    return `<article class="variant" id="variant-${v.letter}">
+      <header class="variant-head"><h2><span class="letter">${v.letter}</span>${v.name}</h2><p>${v.about}</p></header>
+      <ul class="notes">${v.notes.map((n) => `<li>${n}</li>`).join("")}</ul>
+      <div class="sheet"><div class="sheet-top"><h3>${query ? `Search: “${query}”` : "Latest"}</h3><span>Registries last checked Monday 16 November 2026</span></div>${days}</div>
+    </article>`;
+  }).join("");
+  document.getElementById("variants").innerHTML = html;
+}
+
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-toggle]");
+  if (t) {
+    const open = t.getAttribute("aria-expanded") !== "true";
+    t.setAttribute("aria-expanded", String(open));
+    t.closest("[data-row]").classList.toggle("open", open);
+    return;
+  }
+  const v = e.target.closest("[data-view]");
+  if (v) {
+    document.querySelectorAll("[data-view]").forEach((b) => b.setAttribute("aria-pressed", String(b === v)));
+    query = v.dataset.view === "search" ? "cancer" : "";
+    render();
+    return;
+  }
+  const th = e.target.closest("[data-theme-set]");
+  if (th) {
+    document.documentElement.dataset.theme = th.dataset.themeSet;
+    document.querySelectorAll("[data-theme-set]").forEach((b) => b.setAttribute("aria-pressed", String(b === th)));
+  }
+});
+
+renderKey();
+render();
+</script>
+</body>
+</html>

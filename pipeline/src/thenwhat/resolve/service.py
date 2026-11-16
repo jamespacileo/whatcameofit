@@ -25,6 +25,7 @@ from thenwhat.decide.steps import (
     score_matches,
 )
 from thenwhat.domain import Decider, EntityType, ReviewState
+from thenwhat.measure import spans as measure
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord, UnsearchableTerm
 from thenwhat.sources.clinicaltrials import ClinicalTrials
@@ -149,6 +150,9 @@ class DoiLookup(Protocol):
     def work(self, doi: str) -> SourceRecord | None: ...
 
 
+@measure.measuring(
+    "registry_search", trace_of=lambda session, claim, **_: measure.claim_trace(claim.slug)
+)
 def resolve_claim(
     session: Session,
     claim: Claim,

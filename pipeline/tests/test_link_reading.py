@@ -29,8 +29,10 @@ from thenwhat.backfill.link_read import (
     LinkRead,
     NotMeasured,
     ReadClient,
+    held_outlets,
 )
 from thenwhat.backfill.link_screen import REGISTRY_TRIAL, TITLE_NAMES_CLAIM
+from thenwhat.backfill.outlet_hold import OUTLET_HOLD, OUTLET_TURN_LOCK
 from thenwhat.backfill.runner import RunReport, run_step
 from thenwhat.claims.entry import add_article, add_claim, articles_of
 from thenwhat.config import SourceAllowance
@@ -184,7 +186,7 @@ class Reader:
             make_checker=lambda at: StatementChecker(self.backend),
             make_backend=lambda at: self.backend,
         )
-        self.step = step()
+        self.step = step(time=fake_time)
 
     def lead(
         self,
@@ -433,11 +435,58 @@ def test_a_lead_whose_site_cannot_be_asked_now_stays_due_and_the_run_goes_on(rea
     assert other.read_outcome is ReadOutcome.NEW_CLAIM
     assert report.remaining_due == 1
 
-    # A later run, with the site answering again, reads it.
+    # A later run, once the wait the reader stated is over and the site answers, reads it.
     reader.page_reader.not_now.clear()
+    reader.time.advance(timedelta(seconds=601))
     reader.read()
 
     assert busy.read_outcome is not None
+
+
+def test_an_outlet_the_reader_has_stopped_is_not_asked_until_its_wait_is_over(reader: Reader):
+    """Scenario: An outlet the reader has stopped is left until its wait is over"""
+    stopped = [
+        reader.lead(f"https://www.theguardian.com/science/2019/may/0{n}/synthetic-teeth-{n}")
+        for n in range(1, 5)
+    ]
+    other = reader.lead("https://www.bbc.co.uk/news/health-synthetic-teeth")
+    reader.page_reader.not_now["www.theguardian.com"] = 7200
+
+    def asked_of_the_outlet() -> int:
+        return sum("theguardian.com" in body["url"] for body in reader.page_reader.asked)
+
+    began = reader.time.now()
+    first = reader.read()
+
+    # One request told the pipeline; the outlet's other leads cost none. Another outlet
+    # is read as usual.
+    assert (asked_of_the_outlet(), first.deferred) == (1, 4)
+    assert other.read_outcome is ReadOutcome.NEW_CLAIM
+    [held] = held_outlets(reader.session, reader.step, 3, reader.time.now())
+    assert (held.outlet, held.leads) == ("theguardian.com", 4)
+    assert held.until == began + timedelta(seconds=7200)
+
+    # The next run, an hour on, is a new step with nothing remembered: still no request,
+    # no attempt, no outcome.
+    reader.time.advance(timedelta(hours=1))
+    reader.step = step(time=reader.time)
+    second = reader.read()
+
+    assert (asked_of_the_outlet(), second.deferred, second.processed) == (1, 4, 0)
+    assert all(lead.read_outcome is None for lead in stopped)
+    assert reader.session.scalars(select(WorkEntry).where(WorkEntry.step == "link_read")).all() == [
+        reader.entry(other)
+    ]
+
+    # After the wait the outlet is asked again and, answering, is read.
+    reader.page_reader.not_now.clear()
+    reader.time.advance(timedelta(hours=1, seconds=1))
+    reader.step = step(time=reader.time)
+    reader.read()
+
+    assert asked_of_the_outlet() == 5
+    assert all(lead.read_outcome is not None for lead in stopped)
+    assert held_outlets(reader.session, reader.step, 3, reader.time.now()) == []
 
 
 def test_the_reader_down_ends_the_run_with_leads_due_and_attempts_unchanged(reader: Reader):
@@ -934,6 +983,117 @@ def test_a_brand_name_is_offered_the_claim_entered_under_the_generic_name(sessio
         "- semaglutide-obesity: semaglutide for obesity in adults"
         in (reader.backend.same_claim_asked[0])
     )
+
+
+def filed_under_a_substance(session: Session, claim: Claim, *names: str) -> None:
+    """Keep a synthetic record of the registry of substances with the claim's
+    intervention: what the registry calls the substance, then the other names it lists."""
+    from thenwhat.db.models import Entity, EntitySubstance
+    from thenwhat.domain import EntityType
+
+    entity = session.scalars(
+        select(Entity).where(Entity.claim_id == claim.id, Entity.type == EntityType.INTERVENTION)
+    ).one()
+    session.add(
+        EntitySubstance(
+            entity_id=entity.id,
+            source_name="gsrs",
+            external_id="synthetic-substance",
+            url="https://gsrs.test/synthetic-substance",
+            payload={
+                "substance": {"_name": names[0].upper()},
+                "names": [{"name": name, "type": "bn"} for name in names],
+            },
+            fetched_at=NOW,
+            codes=[],
+        )
+    )
+    session.flush()
+
+
+def test_a_brand_the_substance_record_names_joins_the_claim_under_the_generic(session, fake_time):
+    """Scenario: A brand the registry of substances lists for a claim's substance"""
+    reader = Reader(
+        session,
+        fake_time,
+        DRAFT | {"intervention": "Toothera", "intervention_synonyms": []},
+    )
+    claim = tracked_claim(session)
+    filed_under_a_substance(session, claim, "exampletumab", "Toothera", "exampletumab sodium")
+    reader.backend.same_claim = claim.slug
+    lead = reader.lead()
+
+    reader.read()
+
+    # The names share no word; the substance's record is what offered the claim. The
+    # decision still settles it, shown the claim under the name it was entered by.
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.ADDED_TO_CLAIM, claim.id)
+    assert (
+        "- ex-1-tooth-agenesis: EX-1 antibody for tooth agenesis"
+        in (reader.backend.same_claim_asked[0])
+    )
+    assert session.scalar(select(func.count()).select_from(Claim)) == 1
+
+
+def test_claims_found_by_their_substance_take_no_place_from_a_claim_found_by_name(
+    session, fake_time
+):
+    """Scenario: More claims under the substance than the decision was shown before"""
+    reader = Reader(
+        session,
+        fake_time,
+        DRAFT | {"intervention": "Toothera gel", "intervention_synonyms": ["Toothera"]},
+    )
+    # Eight older claims found only through their substance's record, for other
+    # conditions, and then the claim the read's own name finds.
+    for number in range(8):
+        other = add_claim(
+            session,
+            slug=f"exampletumab-condition-{number}",
+            headline="A synthetic headline",
+            vertical="mouth-and-teeth",
+            intervention=f"exampletumab form {number}",
+            indication=f"condition {number}",
+        )
+        filed_under_a_substance(session, other, "exampletumab", "Toothera")
+    by_name = add_claim(
+        session,
+        slug="toothera-gel-tooth-agenesis",
+        headline="A synthetic headline",
+        vertical="mouth-and-teeth",
+        intervention="Toothera gel",
+        indication="tooth agenesis",
+    )
+    reader.backend.same_claim = by_name.slug
+    lead = reader.lead()
+
+    reader.read()
+
+    shown = reader.backend.same_claim_asked[0]
+    assert "- toothera-gel-tooth-agenesis: Toothera gel for tooth agenesis" in shown
+    assert all(f"- exampletumab-condition-{number}:" in shown for number in range(8))
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.ADDED_TO_CLAIM, by_name.id)
+
+
+def test_another_treatment_for_the_same_condition_still_drafts_its_own_claim(session, fake_time):
+    """Scenario: Another treatment for the condition of a claim filed under a substance"""
+    reader = Reader(
+        session,
+        fake_time,
+        DRAFT | {"intervention": "sodium fluoride varnish", "intervention_synonyms": ["Varnex"]},
+    )
+    claim = tracked_claim(session)
+    filed_under_a_substance(session, claim, "exampletumab", "Toothera", "exampletumab sodium")
+    # Were the claim offered, the decision would take it: it must not be offered.
+    reader.backend.same_claim = claim.slug
+    lead = reader.lead()
+
+    reader.read()
+
+    # A word of one of the substance's names ("sodium") is no name for the treatment.
+    assert reader.backend.same_claim_asked == []
+    assert lead.read_outcome is ReadOutcome.NEW_CLAIM and lead.claim_id != claim.id
+    assert claim_of(session, lead).indication == "tooth agenesis"
 
 
 def test_a_dose_or_assisted_therapy_is_offered_the_claim_and_never_drafts_a_duplicate(
@@ -1447,3 +1607,146 @@ def test_a_trial_the_page_names_becomes_a_scored_candidate_and_is_not_approved_b
     assert match.score == pytest.approx(0.9) and match.review_state is ReviewState.PENDING
     # No literature source is configured, so the paper is left unrecorded.
     assert registry.fetched == ["NCT04184622"]
+
+
+# --- measured ------------------------------------------------------------------------
+
+
+def test_a_read_is_measured_under_the_leads_address_with_what_it_asked(
+    reader: Reader, measured_spans
+):
+    """processing-metrics, An address can be followed end to end: the read and every
+    decision made inside it are measured under the lead's address key, and the page
+    reader's request is counted in the read."""
+    lead = reader.lead("https://www.theguardian.com/science/2019/may/04/synthetic-teeth")
+    measured_spans.clear()
+
+    reader.read()
+
+    read = measured_spans[-1]
+    assert (read.step, read.trace, read.outcome) == ("link_read", lead.url_key, "done")
+    assert read.requests.get("reader", 0) >= 1
+    inside = measured_spans[:-1]
+    assert inside, "the read made decisions, and each is measured"
+    assert {made.trace for made in inside} == {lead.url_key}
+    assert all(made.step.startswith(("decision:", "read")) for made in inside)
+
+
+def test_an_outlets_turn_is_held_from_the_look_at_its_hold_to_the_readers_answer(
+    reader: Reader, engine
+):
+    """Scenario: Two workers, one stopped outlet. A second worker cannot look at the
+    outlet's hold, and so cannot ask, while the first worker's request is in flight; it
+    may once the answer, and any hold it brought, is kept."""
+    reader.lead()
+    turn = select(
+        func.pg_try_advisory_lock(OUTLET_TURN_LOCK, func.hashtext(OUTLET_HOLD + "theguardian.com"))
+    )
+    free_in_flight: list[bool] = []
+
+    def stopped() -> httpx.Response:
+        with engine.connect() as another_worker:
+            free_in_flight.append(bool(another_worker.scalar(turn)))
+        return httpx.Response(
+            429,
+            json={"success": False, "code": "NOT_NOW", "reason": "stopped", "retryAfter": 3600},
+        )
+
+    reader.page_reader.answer = stopped
+
+    reader.read()
+
+    assert free_in_flight == [False]
+    # The hold was kept, and the turn is free again for the worker that waited: it finds
+    # the hold and asks nothing.
+    [held] = held_outlets(reader.session, reader.step, 3, reader.time.now())
+    assert held.outlet == "theguardian.com"
+    with engine.connect() as another_worker:
+        assert another_worker.scalar(turn) is True
+        # The lock is the connection's, and the connection goes back to a pool.
+        another_worker.execute(select(func.pg_advisory_unlock_all()))
+
+
+def test_a_wait_past_a_day_holds_the_outlet_for_a_day_and_ends_no_run(reader: Reader):
+    """Scenario: A wait no reader means. Milliseconds, or a number no time can hold, is
+    read as a day."""
+    reader.lead()
+    reader.page_reader.not_now["www.theguardian.com"] = 1e300
+    began = reader.time.now()
+
+    report = reader.read()
+
+    assert (report.deferred, report.failed, report.stopped) == (1, 0, None)
+    [held] = held_outlets(reader.session, reader.step, 3, reader.time.now())
+    assert held.until == began + timedelta(hours=24)
+
+
+def test_an_outlet_the_reader_cannot_get_is_left_after_three_pages(reader: Reader):
+    """An outlet whose pages the reader keeps saying "not now" for, stating no wait, is
+    asked three times in a run and then left: its other leads stay due, cost no request
+    and count no attempt, and the run goes on to other outlets."""
+    blocked = [
+        reader.lead(f"https://www.theguardian.com/science/2019/may/0{n}/synthetic-teeth-{n}")
+        for n in range(1, 7)
+    ]
+    other = reader.lead("https://www.bbc.co.uk/news/health-synthetic-teeth")
+    reader.page_reader.not_now["www.theguardian.com"] = 0
+
+    report = reader.read()
+
+    asked = [body["url"] for body in reader.page_reader.asked]
+    assert sum("theguardian.com" in url for url in asked) == 3
+    assert report.deferred == 6
+    assert all(lead.read_outcome is None for lead in blocked)
+    assert other.read_outcome is ReadOutcome.NEW_CLAIM
+
+    # A later run starts fresh, as each run makes its own step: the outlet is asked
+    # again and, answering, is read.
+    reader.page_reader.not_now.clear()
+    reader.step = step()
+    reader.read()
+
+    assert all(lead.read_outcome is not None for lead in blocked)
+
+
+def test_one_outlets_pages_are_not_asked_for_back_to_back(reader: Reader):
+    """With a gap set, a second lead on an outlet asked a moment ago is left for a later
+    run, with no request and no attempt, and other outlets are read meanwhile."""
+    reader.step = step(outlet_gap_seconds=30, time=reader.time)
+    first = reader.lead("https://www.theguardian.com/science/2019/may/01/synthetic-teeth-1")
+    second = reader.lead("https://www.theguardian.com/science/2019/may/02/synthetic-teeth-2")
+    other = reader.lead("https://www.bbc.co.uk/news/health-synthetic-teeth")
+
+    report = reader.read()
+
+    asked = [body["url"] for body in reader.page_reader.asked]
+    assert sum("theguardian.com" in url for url in asked) == 1
+    assert report.deferred == 1
+    assert sorted(lead.read_outcome is None for lead in (first, second)) == [False, True]
+    assert other.read_outcome is not None
+
+    # Once the gap has passed, a later run asks the outlet again.
+    reader.time.advance(timedelta(seconds=31))
+    reader.step = step(outlet_gap_seconds=30, time=reader.time)
+    reader.read()
+
+    assert first.read_outcome is not None and second.read_outcome is not None
+
+
+def test_a_run_narrowed_to_a_period_leaves_older_leads_due(reader: Reader):
+    """With a first day set, only leads first shared on or after it are read; an older
+    lead is not read and stays out of the run's count of what is due."""
+    older = reader.lead(
+        "https://www.theguardian.com/science/2019/may/04/synthetic-teeth",
+        shared_at=datetime(2024, 6, 1, tzinfo=UTC),
+    )
+    newer = reader.lead(
+        "https://www.bbc.co.uk/news/health-synthetic-teeth",
+        shared_at=datetime(2025, 3, 1, tzinfo=UTC),
+    )
+    reader.step = step(read_since=date(2025, 1, 1))
+
+    report = reader.read()
+
+    assert (older.read_outcome, report.remaining_due) == (None, 0)
+    assert newer.read_outcome is not None

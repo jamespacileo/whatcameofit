@@ -114,6 +114,45 @@ ISRCTN, EU CTIS, WHO ICTRP, PubMed E-utilities, NIH RePORTER, UKRI Gateway to Re
 - **Behavior (observed 2026-11-12):** three made-up trial records as three `choice` questions were answered in 1.96 seconds using 709 input tokens: the right option for each, probabilities summing to 1. A question the model declines comes back as `{"type": "refusal"}`; the pipeline treats it as no answer.
 - **How the pipeline uses it:** as the decision backend `openai-decisions` (`DECISION_BACKEND`), for scoring candidate records and any other bounded choice. The probabilities are the model's own estimate and are not calibrated, like the other backend's.
 
+- **Read again 2026-11-16**, from the same guide, for what else it offers. Not tried.
+  - **Questions a request:** 1 to 400, up from 200 in the public beta. Triage sends 20.
+  - **Prompt caching:** the guide says Decisions places an implicit cache breakpoint at the end of the shared `input`, so that repeated requests with the same shared input "receive discounted cache-read pricing". `usage.input_tokens_details` reports `cached_tokens` and `cache_write_tokens`. A cache write is charged at its own rate. Breakpoints are not supported in a question's instructions, so wording that rides with each question is never cached, which is how triage is asked today.
+  - **Regions and retention:** Zero Data Retention for eligible customers; regional processing in the United States and Europe (EEA and Switzerland).
+
+## OpenAI platform features read for the backfill (none in use)
+
+Read on 2026-11-16 from OpenAI's guides, to see what could lower the cost or raise the rate of the backfill (`openspec/changes/work-reuse-and-metrics`). Nothing here is in use and no request was sent. Prices are on OpenAI's pricing page and were not read; read them, and the terms, before any of this is tried.
+
+### Prompt caching
+
+- **Guide:** <https://developers.openai.com/api/docs/guides/prompt-caching>
+- **What it is:** a request whose prompt begins with a prefix an earlier request already sent is billed at a reduced cached-input rate for that prefix, "discounted up to 95%". It applies by itself; no setting turns it on.
+- **Limits:** the whole prefix must match. A prefix shorter than the minimum cacheable length is not cached: 1,024 tokens for the newest models, and varying with the request for earlier ones. Entries are kept for a minimum lifetime of about 30 minutes, up to 24 hours with extended retention. The guide says the cache holds the model's internal state for the prefix, not the prompt's text, for at most 24 hours.
+- **For the pipeline:** only if the triage wording is moved into the shared input and is long enough. To be measured on the fixed sample before any change (`work-reuse-and-metrics`, design decision 6).
+
+### Batch API
+
+- **Guide:** <https://developers.openai.com/api/docs/guides/batch>
+- **What it is:** requests collected in one file and answered within 24 hours, at "50% lower costs", from "a separate pool of significantly higher rate limits".
+- **Limits:** up to 50,000 requests and 200 MB a batch; up to 2,000 batches an hour.
+- **Endpoints listed:** Responses, Chat Completions, Embeddings, Moderations, and image generation and edits. **The Decisions endpoint is not listed**, so triage and match scoring could not use it as read.
+- **For the pipeline:** the extraction call of a backfill read, where nobody is waiting. **Not to be tried before this is settled:** a batch's input file holds each request's content at OpenAI until it is processed, and for a read that content is the article's text. The project stores article text nowhere. Whether a file awaiting processing at a provider counts, how long it is kept, and whether Zero Data Retention covers it were not established.
+
+### Embeddings
+
+- **Guide:** <https://developers.openai.com/api/docs/guides/embeddings>
+- **What it is:** a list of numbers for a text, close for texts that mean similar things. Can be sent through the Batch API.
+- **For the pipeline:** grouping the same story's headlines across outlets where the wording differs, and as an input to the prefilter if a linear model over words cannot hold the required recall. A headline as shared is what would be sent; it is kept privately with its lead today and reaches no export.
+
+### Read and set aside
+
+- **Fine-tuning:** the guide says the platform is being wound down and is closed to new users. No triage model can be tuned there.
+- **Evals:** the guide says the Evals platform is being deprecated. Evaluation stays in the project's own commands.
+- **Fast mode** (called priority processing until 30 July 2026): faster at a premium for each token. Not for a backfill.
+- **Flex processing:** cheaper and slower, in beta on some models, and a request may be refused when capacity is short. Possible later for work that is neither urgent nor batchable.
+- **Web search tool:** the model fetches pages itself. Not used: only the page reader asks a news site (`docs/adr/0006`).
+- **File search and vector stores:** would hold content at OpenAI. Not used.
+
 ## Social media posts
 
 A reader may give the address of a post in place of an article's. A post is read only on a platform that offers posts to software without signing in, and only that one post, once, when a reader asks. The text is shown to the model and dropped; who wrote the post is never read out. Code: `site/worker/post.mjs`, `thenwhat.extract.post`.
@@ -179,6 +218,8 @@ Reddit submission dumps published by third parties are a separate matter, decide
 - **Not followed by the service:** `t.co`, X's shortener, whose robots.txt says `Disallow: /` to every client but named search engines.
 - **NEJM short links, checked 2026-11-16:** `nej.md` uses the same bounded redirect reader. Its robots rules allowed the checked path, which returned a 301 to the canonical journal article. No journal text is fetched by the redirect reader; the normal current robots check remains required on every lookup. A tracked destination returns its existing card without an article read or model search.
 - **Opened by the reader's browser instead:** the extension asks `t.co` for the link's page, as a click would, without cookies or a referrer, and reads the address the page names (observed: a 200 page that gives the address in a refresh tag, in its title and in a script). It does not go on to the article. One request per link, three links at most per search (`extension/src/short-links.js`).
+- **Shorteners among link leads, counted 2026-11-16 (openspec `idempotent-runs-and-one-address`; nothing built, no request sent):** of 612,148 link leads loaded from the Hacker News and Reddit files, 125 are on a shortener, all on two outlets' own: `on.wsj.com` (74) and `on.ft.com` (51). None is on `t.co`, `bit.ly`, `lnkd.in`, `news.google.com` or `apple.news`. A further 68 are `web.archive.org` copies and 3 are `google.com/url` links; both name the address they lead to inside their own address, so no request is needed to unfurl them.
+- **Proposed for the pipeline, waiting for the operator:** a lead on a listed shortener is unfurled by the pipeline asking that host for its redirect only (the `Location` header), with the contact User-Agent, one request a second per host, four redirects at most, no cookies and no referrer, after reading the host's robots.txt at the start of each run. The request stops at the first address off the list and never fetches it, so no news page is asked by this route (ADR 0006 is untouched). The list would be the hosts already read above (`bit.ly`, `trib.al`, `tinyurl.com`, `buff.ly`, `redd.it`, `nej.md`). **To read before either is added:** robots.txt and terms of `on.wsj.com` and `on.ft.com`. **Never on the list:** `t.co` (robots.txt, above); `lnkd.in`, `news.google.com` and `apple.news`, which answer with a page and not a redirect and whose terms have not been read.
 
 
 ## OpenAlex literature search
@@ -264,6 +305,31 @@ Read before the client was written (openspec `live-lookup`, task 4.3). It maps a
 - **What is not used:** structures, chemical and systematic names, relationships, references and the code systems under `codes` (CAS numbers and the like, which are identifiers in other databases, not names a trial is filed under).
 - **Not asked from the site's Worker.** The public lookup service does not ask GSRS: that would send the treatment's name from the reader's search to a further host, which the words beside the search button do not say. It is the operator's decision (see `openspec/changes/live-lookup/design.md`).
 
+## RxNorm, through the RxNav API
+
+Read before the client was written (openspec `live-lookup`, task 4.3a). It gives a brand name its ingredient, such as delandistrogene moxeparvovec for Elevidys, and is asked only when GSRS lists nothing under an intervention's names.
+
+- **Checked:** 2026-11-16
+- **Accepted by the operator on 2026-11-16**, in these words: "accept RxNorm's terms and turn it on". `sources/terms.py` records RxNorm as accepted, so `resolve` and `entity codes` ask it. A source recorded there as not accepted is not asked (`cli.resolve.make_brands`), and `entity codes` says so.
+- **The NLM statement, decided 2026-11-16:** it is shown, word for word, on the site's method page under "Where the data comes from" (`site/src/pages/how-it-works.astro`), beside the list of data sources. The export's `sources` list names RxNorm, so the footer of every page and that list link to it as they do ClinicalTrials.gov, Europe PMC and Crossref. NLM's logo is not used, and its name appears only in the statement and the credit.
+- **Why this source and not openFDA drug labels:** both were read and tried on the same date with a generic client name and no key. RxNorm found four of six brands tried (Dengvaxia, Elevidys, Ervebo, Leqembi) and openFDA's `openfda.brand_name.exact` two (Elevidys, Leqembi): the labels of several vaccines carry no `openfda` block. RxNorm also marks a concept as a brand (`BN`) or an ingredient (`IN`) itself, where a label's `generic_name` is free text that mixes a substance with its forms ("LECANEMAB, LECANEMAB-IRMB"). openFDA allows 240 requests a minute and 1,000 a day from one address without a key (<https://open.fda.gov/apis/authentication/>), and its data is CC0 (<https://open.fda.gov/terms/>); neither was the reason.
+- **Terms:** <https://lhncbc.nlm.nih.gov/RxNav/TermsofService.html>. "RxNav and the RxNorm API provide non-proprietary content from RxNorm, developed by the National Library of Medicine." "With one exception, no license is needed to use these APIs"; the exception is RxClass, which carries SNOMED CT and is not used. The page announces that the RxNav suite is to be renamed "RxNorm Tools" in early 2027 and its documentation moved to `https://lhncbc.nlm.nih.gov/RxNorm-Tools`; it says the tools' functionality is not affected. Check the API host again then.
+- **Terms that bind the site:** NLM "request[s] that any application that makes use of NLM data include the following statement: 'This product uses publicly available data from the U.S. National Library of Medicine (NLM), National Institutes of Health, Department of Health and Human Services; NLM is not responsible for the product and does not endorse or recommend this or any other product.'" The NLM name and logo may not be used with the application. Nothing from RxNorm is published beyond its name in the list of sources: an ingredient's name is a search term, as a GSRS code is, and the export does not carry it. The statement is recorded as the source's credit line in `sources/terms.py` and shown on the site (above).
+- **API:** `https://rxnav.nlm.nih.gov/REST`, documented at <https://lhncbc.nlm.nih.gov/RxNav/APIs/RxNormAPIs.html>. The pipeline asks three things. A concept by exact name: `GET /rxcui.json?name=<name>&search=0`. The concept's own record: `GET /rxcui/<rxcui>/properties.json`. Its ingredients: `GET /rxcui/<rxcui>/related.json?tty=IN`.
+- **Authentication:** none. A UMLS Terminology Services key, sent as `Authorization: Bearer`, is optional and raises the limit; it is not used.
+- **Rate limit:** "no more than 20 requests per second per IP address"; requests over it "may not be serviced". With a key, 100 a second. NLM "recommends caching results for a 12-24 hour period". The client sends two requests a second with the contact User-Agent and keeps each answer for thirty days; the vocabulary is released monthly (version `02-Nov-2026` on this date, from `GET /version.json`). There is no `robots.txt` on the API host (404 on this date). Answers carry `X-Rate-Tier: std`.
+- **Optional lookup waits:** as for GSRS: two attempts, five-second network timeouts, the shared backoff and any longer `Retry-After`. An outage reports that codes were not looked up and stores nothing.
+- **Behavior (observed, generic client name, no key):**
+  - `search=0` is the exact search: "Only difference of upper/lowercase is ignored" (<https://lhncbc.nlm.nih.gov/RxNav/APIs/api-RxNorm.findRxcuiByString.html>). `search=1`, `2` and `9` are normalised and approximate matches, which set word order, punctuation and salt forms aside; the client never asks them. "Elevidys" answers `{"idGroup":{"rxnormId":["2641681"]}}`; "ele vidys", "Advair Diskus" and "Corbevax" answer `{"idGroup":{}}`, with status 200.
+  - A concept's record gives `rxcui`, `name` and `tty`, the term type: `BN` for a brand name, `IN` for an ingredient. "Elevidys" is `BN`; "aspirin" is `IN`. A full product name such as "Wegovy 2.4 MG in 0.75 ML Auto-Injector" is found as a branded drug (`SBD`). The client takes a concept only when it is `BN` and its `name` equals the name asked for, ignoring case and runs of spaces.
+  - `related.json?tty=IN` answers `relatedGroup.conceptGroup`, a list with one group for `IN` whose `conceptProperties` are the ingredients, or with no `conceptProperties` when there are none. Elevidys has one (delandistrogene moxeparvovec, 2641675). Advair has two (salmeterol, fluticasone). Dengvaxia has four, one for each serotype ("dengue virus live antigen, CYD serotype 1" to "4"). The ingredient is the base substance: Gleevec's is imatinib, and imatinib mesylate is a "precise ingredient" (`PIN`), which is not read.
+  - An unknown identifier answers 200 with `{}` for the record and an `IN` group with no concepts for the ingredients.
+  - What it covers: products marketed in the United States. Found on this date: Dengvaxia, Elevidys, Ervebo, Leqembi, Zolgensma, Casgevy, Lyfgenia, Kymriah, Shingrix, Arexvy, Beyfortus, Ixchiq, Mounjaro, Wegovy. Not found: Corbevax, Qdenga and Mosquirix (not marketed in the United States), and Spikevax and Comirnaty, which the exact search does not list as names at all.
+- **The rule (no loose matching):** an ingredient is taken only when GSRS lists nothing under any of the intervention's names, RxNorm lists one of them as a brand, and the brands found lead to exactly one ingredient. Ingredients with different names are several: GSRS's allowance for a substance and its salt or suffixed form is not applied, as two RxNorm ingredients are two molecules even when one's name opens the other's. An answer is whole or nothing: a name more than five concepts carry, or a brand concept whose record or list of ingredients is missing, gives nothing. A brand of two ingredients, or a vaccine RxNorm files under one ingredient for each strain, gives nothing. No part of a name is tried, no spelling is corrected, and no model is asked. `resolve` and `entity codes` name the source that answered.
+- **What is kept:** in `entity_substance`, per intervention, under the source name `rxnorm`: the ingredient's concept as fetched (with its name copied to `_name`, where a GSRS record has its own), the brand's record, the answer listing the brand's ingredients, the fetch time, the ingredient's identifier (RxCUI) and its RxNav page. No code is kept: RxNorm marks no name as one.
+- **What is not used:** dose forms, strengths, packs, NDC codes, drug classes (RxClass), precise ingredients, and every other vocabulary RxNorm carries (`allsrc` is left at its default, RxNorm's own names only).
+- **Not asked from `lookup` or the site's Worker.** A live lookup asks GSRS for codes only, as before.
+
 ## Open Targets Platform
 
 Read for the drug and target cards (openspec `knowledge-cards`, task 1.2). The client reads targets only: a search of targets for a word of an intervention's name, and a target's record by its identifier (group 2a). Since the operator's decision on share-alike material (task 6.1, below) it also reads a drug by its own name, with its kind of molecule and mechanisms. A target link is stored and checked, and since the operator's acceptance on 2026-11-14 (task 2a.18, below) an approved one gives a target card.
@@ -334,6 +400,16 @@ Read on 2026-11-14 for a proposed backfill that starts from article addresses pe
 - **How the operator obtains it:** download the monthly files wanted from the dataset's `data/` folder. No request is sent by the pipeline.
 - **Rate limit and authentication:** none for the pipeline; the hub's own limits apply to the download.
 
+- **Checked again 2026-11-16:** the hub's file list still ends at 2026-08, last changed 2026-08-23, so the 2026-08 file stops on that day. Months 2025-01 to 2026-07 are 19 files, 1.4 GB. `scripts/fetch_link_files.py` downloads the months the archive holds in full and leaves out the newest one listed.
+
+### ClickHouse public copy of Hacker News (used for months the archive lacks)
+
+- **Checked:** 2026-11-16. [Playground page](https://clickhouse.com/docs/getting-started/playground), which says queries run as a read-only user and "the service also has quotas on its usage". No terms page for the data was found; the items are the same ones the official API publishes, and the parquet archive above names this copy as its own origin.
+- **What it is:** the table `hackernews.hackernews` behind ClickHouse's SQL playground, asked over HTTPS at `sql-clickhouse.clickhouse.com` as the user `demo` with no password. On this date its newest item was minutes old. The host the playground page names, `play.clickhouse.com`, answered 404 for this table.
+- **Limits (observed):** an answer of more than 10,000 rows or 10 MB is refused, a query may run 60 seconds, and one shape of query may be sent 20 times an hour (`QUOTA_EXCEEDED`, with the time the hour ends). The script asks for a month in pages of 10,000 by item number and waits out a quota refusal.
+- **Fields asked for:** `id`, `type`, `url`, `title`, `time`, `score`, `dead`, `deleted`, for stories with a link only. `by` and `text` are never named in a query. The script writes them as a monthly parquet file with the archive's column names, so the same reader takes it. A story with no link is not in these files; the reader would skip it anyway.
+- **Scores:** as the copy held them on the day asked. A recent story's score is still moving.
+
 ### Hacker News on BigQuery (not read)
 
 - **Checked:** not read on 2026-11-14. It needs a Google Cloud project of the operator's, and offers nothing the parquet archive lacks. Read its terms before using it.
@@ -353,7 +429,16 @@ Read on 2026-11-14 for a proposed backfill that starts from article addresses pe
 - **Limits applied to that decision (proposed by the assistant, not yet confirmed line by line):** what is kept from a submission is the address of the article it links to, the subreddit, the time, the score and the title it was shared under. The title is kept with the link lead, privately: the operator labels a sample of leads from their titles, and a reworded triage has to score the same title again (change `social-link-backfill`, design decision 4). It never reaches the export or the site. An earlier wording of this entry said the title would be dropped after triage; that could not be done. The author, the post's id and address, its text and its comments are never read out of the file or kept. Nothing in the export says an article was found through Reddit. Only link submissions are read; comment files are not downloaded.
 - **Not a legal reading:** the decision rests on the operator's own view. Two points for whoever revisits it: the question Reddit raises is its terms of access, not copyright, and "fair use" is a United States doctrine while the operator is in the United Kingdom. Addresses and dates are facts, which is why only they are kept.
 - **Rate limit and authentication:** none; the files are downloaded once by torrent and read locally.
-- **Crossref Event Data's Reddit events:** allowed under the same decision and the same limits, if that archive is used.
+- **Crossref Event Data's Reddit events:** allowed under the same decision and the same limits, if that archive is used. Checked 2026-11-16: Crossref stopped the service on 23 April 2026; a final archive (2017-02-17 to 2026-04-23, up to 282 GB) is listed on [Academic Torrents](https://academictorrents.com/details/16396475b640d8487a6b723eada8a440fb33d3ce). Not downloaded.
+
+### Arctic Shift search interface (used for chosen communities, 2025 on)
+
+- **Checked:** 2026-11-16. [Interface documentation](https://github.com/ArthurHeitmann/arctic_shift/blob/master/api/README.md), read directly. It is the same third-party archive as the dumps above, so the operator's decision of 2026-11-14 and its limits apply unchanged. The operator approved fetching through it on 2026-11-16.
+- **Why not the dumps:** the monthly submission files for 2025-01 to 2026-10 are about 17 GB each, some 375 GB, and the per-community release ends at 2023-12. The interface answers for one community and a range of dates, and on this date held posts made the same day.
+- **Authentication:** none. **Rate limit:** set by the server's load, not published as a number. A 429 carries `X-RateLimit-Reset` in seconds; a 422 with "Timeout. Maybe slow down a bit" was seen twice on single requests. The documentation says: "this is a free service, so be considerate. If you want to process massive amounts of data, use the monthly dumps instead." The script sends one request a second, waits as told on a 429 and backs off on a timeout.
+- **Field names, checked on live answers without printing any post (task 1.3 of `social-link-backfill`):** `url`, `subreddit`, `created_utc`, `score`, `title`, `is_self` and `removed_by_category` are all present, as `design.md` decision 3 expects. `is_self` and `removed_by_category` cannot be asked for alone (`fields=` refuses them), so whole submissions are answered.
+- **What is written:** `scripts/fetch_link_files.py` reduces each submission to those seven fields as it arrives and writes one zstandard-compressed file a community, one JSON object a line, in `data/link-files/reddit/`. The author, the text, the post's id and its address reach no file; the id is held in memory to tell one page from the next.
+- **Scores and removals:** as the archive captured them, usually soon after posting. A removal after capture is not known to it.
 
 ## Live lookup source reuse (14 November 2026)
 

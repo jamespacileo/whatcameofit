@@ -1,29 +1,13 @@
 ---
-// A news report in the day-by-day list: what is on record leads in its own column, on
-// the panel blue; the outlet's title, quoted, is beside it on white. What the evidence
-// was when first reported opens under the row on hover or focus, and is always shown
-// on a touch screen, on paper and to a screen reader. The button in the status card's
-// corner opens what the status means, the path named, and why this claim stands there.
-import Info from "@lucide/astro/icons/info";
+// A news report in the day-by-day list (openspec latest-rows): the outlet, date and
+// topic, the outlet's title quoted, opening the claim, and the claim it is about lead
+// on the left; where the claim stands is the column on the right, which opens the
+// row's detail under it.
 import type { ReportRow } from "../lib/day-list";
-import { statusSlug } from "../lib/guide";
 import { followedNameFor } from "../lib/reports";
-import { countsLine, rowSentences } from "../lib/row-sentences";
-import {
-  EVIDENCE_STAGES,
-  STATUS_GLOSSES,
-  STATUS_LABELS,
-  STATUS_MEANINGS,
-  latestPromise,
-  overlayText,
-} from "../lib/status";
-import { statusReason } from "../lib/status-reason";
 import { formatDate } from "../lib/timetable";
-import { withResults } from "../lib/trial-facts";
 import Outlet from "./Outlet.astro";
-import Pop from "./Pop.astro";
-import PromiseText from "./PromiseText.astro";
-import StageTrack from "./StageTrack.astro";
+import RowStanding from "./RowStanding.astro";
 
 interface Props {
   row: ReportRow;
@@ -38,19 +22,8 @@ const { claim } = row;
 const [first] = row.reports;
 // Named as on the claim page, so the headline pressed here is carried to its place there.
 const name = picked ? null : followedNameFor(claim, first.url);
-const promise = latestPromise(claim);
-const overlay = overlayText(claim.status.overlay_years);
-const stage = claim.evidence_stage ? EVIDENCE_STAGES[claim.evidence_stage] : null;
-// What the records add, in words: the counts in sight, the row's sentences for a
-// screen reader. The claim page draws the records by date.
-const counts = claim.trials ? countsLine({ trials: claim.trials.length, results: withResults(claim.trials) }) : null;
-const sentences = rowSentences(claim, row.date);
-const gloss = `${STATUS_GLOSSES[claim.status.code]}${overlay ? `. ${overlay}` : ""}`;
-const label = STATUS_LABELS[claim.status.code];
-const reason = statusReason(claim);
-const trialCount = claim.trials?.length ?? 0;
-// One panel per row: a claim picked for the day of the last check also has a row of its own.
-const whyId = `why-${claim.slug}-${row.date}${picked ? "-picked" : ""}`;
+// One detail per row: a claim picked for the day of the last check also has a row of its own.
+const moreId = `more-${claim.slug}-${row.date}${picked ? "-picked" : ""}`;
 ---
 
 <li
@@ -62,52 +35,12 @@ const whyId = `why-${claim.slug}-${row.date}${picked ? "-picked" : ""}`;
   data-on={row.date}
   data-picked={picked ? "" : undefined}
 >
-  <div class="row-now">
-    <span class="row-label">On record now</span>
-    <strong class="status-name">{label}</strong>
-    <StageTrack code={claim.status.code} />
-    <Pop id={whyId} label={`Why “${label}”`} class="info row-why">
-      <Info slot="trigger" size={17} stroke-width={1.9} aria-hidden="true" />
-      <p class="pop-head">{label}</p>
-      <p>{STATUS_MEANINGS[claim.status.code]}</p>
-      <StageTrack code={claim.status.code} named />
-      {
-        reason && (
-          <div class="pop-reason">
-            <p class="pop-reason-head">Why this claim is here</p>
-            <p>{reason}</p>
-          </div>
-        )
-      }
-      <p class="pop-note">
-        {
-          trialCount > 0 ? (
-            <a href={`/${claim.slug}#trials`}>
-              See the {trialCount === 1 ? "trial" : `${trialCount} trials`} on record
-            </a>
-          ) : (
-            <a href={`/${claim.slug}`}>See the records</a>
-          )
-        }
-      </p>
-      <p class="pop-note">
-        <a href={`/guide/${statusSlug(claim.status.code)}`}>
-          What “{label}” does and does not tell you
-        </a>
-      </p>
-      {
-        claim.status.updated_at && (
-          <p class="pop-note pop-when">Status set by rule, {formatDate(claim.status.updated_at)}.</p>
-        )
-      }
-    </Pop>
-  </div>
   <div class="row-main">
     <p class="row-source">
       <span class="visually-hidden">News report. </span>
       {row.reports.map((report) => <Outlet url={report.url} outlet={report.outlet} />)}
       <span class="when">{formatDate(row.date)}</span>
-      <span class="row-topic">{topic}</span>
+      {topic && <span class="row-topic">{topic}</span>}
     </p>
     <h4 class="row-title">
       <a
@@ -118,36 +51,9 @@ const whyId = `why-${claim.slug}-${row.date}${picked ? "-picked" : ""}`;
         “{first.title}”
       </a>
     </h4>
-    {
-      (counts || sentences.length > 0) && (
-        <p class="row-counts">
-          {counts}
-          {sentences.length > 0 && <span class="visually-hidden"> {sentences.join(" ")}</span>}
-        </p>
-      )
-    }
-    <p class="row-foot">
-      <span class="row-claim">
-        {claim.intervention.name} · {claim.indication}
-      </span>
-      <a href={`/${claim.slug}`}>
-        See the records<span class="visually-hidden"> for {claim.intervention.name}</span>
-      </a>
+    <p class="row-claim">
+      <span class="row-intervention">{claim.intervention.name}</span> · {claim.indication}
     </p>
-    <div class="row-more">
-      <div>
-        <p class="row-then">
-          <strong>{stage ?? "Not recorded"}</strong>{" "}
-          {[`when first reported${claim.first_reported_date ? `, ${formatDate(claim.first_reported_date)}` : ""}.`, `${gloss}.`].join(" ")}
-        </p>
-        {
-          promise && (
-            <p class="row-promise">
-              <span class="row-label">Promised</span> <PromiseText promise={promise} />
-            </p>
-          )
-        }
-      </div>
-    </div>
   </div>
+  <RowStanding claim={claim} date={row.date} id={moreId} />
 </li>

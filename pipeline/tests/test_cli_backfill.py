@@ -18,6 +18,7 @@ from backfill_support import NOW, ModelStep, QuietStep, add_trials, same_session
 from thenwhat.backfill.allowance import Allowances
 from thenwhat.backfill.mediacloud import Story
 from thenwhat.backfill.news_search import query_for
+from thenwhat.backfill.registry_load import condition_of
 from thenwhat.cli import app
 from thenwhat.cli.backfill import _hours
 from thenwhat.config import SourceAllowance
@@ -403,6 +404,69 @@ def test_a_reddit_load_is_refused_while_no_community_is_configured(
     assert session.scalars(select(LinkLead)).all() == []
 
 
+# --- rekey-links -------------------------------------------------------------------------
+
+
+def earlier_lead(session: Session) -> LinkLead:
+    """A lead as the first form of the address key stored it."""
+    lead = LinkLead(
+        url="https://www.theguardian.com/science/a?mbid=synd_feed",
+        url_key="theguardian.com/science/a?mbid=synd_feed",
+        url_key_version=1,
+        outlet="theguardian.com",
+        outlet_kind=OutletKind.GENERAL_NEWS,
+        title="One",
+        first_shared_at=datetime(2019, 5, 3, 10, 30, tzinfo=UTC),
+    )
+    session.add(lead)
+    session.flush()
+    return lead
+
+
+def test_rekey_links_says_what_it_would_do_and_does_it_when_told(run, session: Session):
+    """Scenarios: Looking before bringing the leads up to date, A stored lead's key changes"""
+    lead = earlier_lead(session)
+
+    looked = run("rekey-links")
+    done = run("rekey-links", "--apply")
+
+    assert looked.exit_code == 0, looked.output
+    assert "1 link leads are keyed under an earlier form" in looked.output
+    assert "1 would get a new key" in looked.output
+    assert done.exit_code == 0, done.output
+    assert "Brought 1 link leads up to date: 0 kept their key, 1 got a new key" in done.output
+    session.refresh(lead)
+    assert lead.url_key == "theguardian.com/science/a"
+
+
+def test_rekey_links_is_refused_while_a_step_has_just_worked_on_a_lead(
+    run, session: Session, tmp_path: Path
+):
+    """Scenario: A run is under way"""
+    run("load-links", "hackernews", str(stories_file(tmp_path)))
+    run("run", "link_screen")
+
+    result = run("rekey-links", "--apply")
+
+    assert result.exit_code == 1
+    assert "Stop every run and load" in result.output
+
+
+def test_loading_and_link_steps_are_refused_until_the_leads_are_up_to_date(
+    run, session: Session, tmp_path: Path
+):
+    """Scenario: Loading before the stored leads are up to date"""
+    earlier_lead(session)
+
+    load = run("load-links", "hackernews", str(stories_file(tmp_path)))
+    step = run("run", "link_screen")
+
+    assert (load.exit_code, step.exit_code) == (1, 1)
+    assert "thenwhat backfill rekey-links --apply" in load.output
+    assert "thenwhat backfill rekey-links --apply" in step.output
+    assert len(session.scalars(select(LinkLead)).all()) == 1
+
+
 # --- links -------------------------------------------------------------------------------
 
 
@@ -672,3 +736,110 @@ def test_retry_outlet_puts_its_refused_leads_back_and_refuses_an_outlet_with_non
 
     assert refused.exit_code == 1
     assert "No lead of 'news.example.org'" in refused.output
+
+
+def test_plan_uses_a_steps_measured_cost_once_a_week_is_measured(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    """processing-metrics, A saving is claimed only from measurements: with a week of
+    measurements the plan gives what a record did cost, not the step's estimate."""
+    from datetime import timedelta
+
+    from thenwhat.db.models import MeasureDaily
+
+    model_step(monkeypatch, "100")
+    add_trials(session, 100)
+    today = datetime.now(UTC).date()
+    for back in range(1, 8):
+        session.add(
+            MeasureDaily(
+                day=today - timedelta(days=back),
+                step="demo-model",
+                step_version=1,
+                writer="mini",
+                outcome="done",
+                spans=50,
+                records=1000,
+                reused=0,
+                ran_seconds=1.0,
+                waited_seconds=0.0,
+                waited_by_cause={},
+                requests_by_source={},
+                tokens_in=0,
+                tokens_out=0,
+                cost_usd=Decimal("0"),
+                inner_cost_usd=Decimal("1.00"),
+                rows_written=0,
+            )
+        )
+    session.flush()
+
+    result = run("plan")
+
+    assert result.exit_code == 0, result.output
+    # A thousand records a day cost $1.00: a tenth of a cent each, so $0.10 for 100.
+    assert "the due records need about $0.10 (measured over 7 days)" in result.output
+
+
+def test_plan_says_when_a_cost_is_the_steps_own_estimate(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    model_step(monkeypatch, "100")
+    add_trials(session, 100)
+
+    result = run("plan")
+
+    assert "the due records need about $0.40 (estimated)" in result.output
+
+
+def test_load_trials_asks_for_a_named_set(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch, fake_time, fixture_json
+):
+    """The trials under way now in phase 2 or 3 are asked for by name, in the registry's
+    own expression."""
+    page = fixture_json("clinicaltrials/list_page_2.json")
+    asked: list[str] = []
+
+    def registry(request: httpx.Request) -> httpx.Response:
+        asked.append(request.url.params.get("filter.advanced", ""))
+        return httpx.Response(200, json=page)
+
+    monkeypatch.setattr(
+        "thenwhat.cli.backfill.make_registry",
+        lambda lookups, settings: ClinicalTrials(
+            lookups,
+            contact_email=settings.contact_email,
+            transport=httpx.MockTransport(registry),
+            time=fake_time,
+        ),
+    )
+
+    result = run("load-trials", "--trials", "active-phase-2-3")
+
+    assert result.exit_code == 0, result.output
+    assert "AREA[Phase]PHASE2 OR AREA[Phase]PHASE3" in asked[0]
+    assert "RECRUITING OR ACTIVE_NOT_RECRUITING" in asked[0]
+
+
+def test_load_trials_refuses_a_set_it_does_not_know(run, session: Session):
+    result = run("load-trials", "--trials", "successful")
+
+    assert result.exit_code == 1
+    assert (
+        "No set of trials is named 'successful'. Sets: active-phase-2-3, interventional, phase-3."
+        in result.output
+    )
+    assert session.scalars(select(RegistryTrial)).all() == []
+
+
+def test_the_set_of_every_trial_is_every_interventional_study():
+    """Every trial means every interventional study, whatever its phase, state or kind of
+    intervention; observational studies are not asked for."""
+    assert condition_of("interventional") == "AREA[StudyType]INTERVENTIONAL"
+
+
+def test_load_trials_refuses_a_set_and_a_condition_together(run):
+    result = run("load-trials", "--trials", "phase-3", "--condition", "AREA[Phase]PHASE1")
+
+    assert result.exit_code == 1
+    assert "Give --condition or --trials, not both." in result.output

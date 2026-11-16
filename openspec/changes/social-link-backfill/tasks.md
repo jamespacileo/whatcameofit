@@ -229,6 +229,18 @@ Batch 2's audit (2026-11-16) archived 39 of 132 claims; batch 3's archived 54 of
 
 - [x] 16.4 Ask the registry of substances for a name's core name too, so a dose does not stop the lookup (batch 5's audit: "semaglutide 2.4 mg" for COVID-19 had no substance beside "Wegovy" for COVID-19). Verify with a test.
 
+## 17. Backfill of 2026-11-16: stopped outlets and second claims
+
+The backfill of 2026-11-16 read about 800 pages and drafted 257 claims; the audit archived 152. The page reader now stops an outlet that refuses it and answers `NOT_NOW` on HTTP 429 with a wait of minutes to hours; the read step left such an outlet after three answers in a run and asked it again in the next. 39 of the archives were second claims for a treatment that already had one, drafted because the article used a brand, a code or a description and the claim another name.
+
+- [x] 17.1 Keep the time a "not now" wait ends for the lead's outlet beside the sources' pauses, leave the outlet's due leads without a request until then, across runs, and say in `thenwhat backfill plan` how many leads are held; read a `NOT_NOW` on a 429 as the outlet's answer however long its wait. Verify with tests on a synthetic reader: a stopped outlet is not asked in the next run, is asked after the wait, and another outlet is read meanwhile. Not verified against the live reader.
+- [x] 17.2 Offer the same-claim decision the claims whose substance record, kept from the registry of substances, lists one of the read's names whole: the substance's name, a brand or other name not withdrawn, or a development code. The decision and its thresholds are unchanged. Verify with tests on synthetic articles: a read naming a brand joins the claim entered under the generic, and another treatment for the same condition still drafts its own claim. A claim with no substance record (a product the registry does not list, or a claim not yet prepared) is found as before, by its name, synonyms and title only.
+- [x] 17.3 Review of PR 258: give one worker at a time an outlet's turn, across processes, from the look at its hold to the reader's answer, so no request is in flight for an outlet another request is about to stop. Verify with a test that the turn is not free while a request is in flight and is free after.
+- [x] 17.4 Review of PR 258: read a stated wait longer than 24 hours as 24 hours. Verify with tests that a wait in milliseconds and one no time can hold give a hold of a day and end no run.
+- [x] 17.5 Review of PR 258: add the claims found by their substance's names after the candidates offered before, up to eight more, so none takes a place. Verify with a test that a claim found by name is still offered beside eight found by substance.
+- [x] 17.6 Apply the hold to `thenwhat statements` and `thenwhat outlets` (the operator, 2026-11-16), from one module the read step shares. Verify with tests: each asks a stopped outlet once, keeps the hold, and asks nothing more of it within the wait. `thenwhat lookup` and `thenwhat extract` read one address the operator gives and are left as they were.
+- [x] 17.7 Review of PR 264: a held outlet is no failure of `thenwhat statements`, which says the article was left for later and exits 0 when nothing else went wrong. `thenwhat prepare` reads a claim's unread articles with `extract article --unless-held`, so a held or just-stopped outlet is not asked, the article is reported as left for later, the other steps run and the claim waits. Verify with tests of each command. The operator's own `extract article`, `extract new` and `lookup` still ask the reader.
+
 ## Workflow follow-up
 
 - Archive `backfill-work-ledger` before this change is archived, so that `work-ledger` exists in the main specs.

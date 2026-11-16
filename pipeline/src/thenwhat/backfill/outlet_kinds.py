@@ -68,6 +68,29 @@ GENERAL_NEWS = frozenset(
         "wired.com",
         "wsj.com",
         "yahoo.com",
+        # Added 2026-11-16, on the operator's decision of that day, from the unlisted domains
+        # that shared links most often named a health word in their titles.
+        "abc.net.au",
+        "arstechnica.com",
+        "axios.com",
+        "businessinsider.com",
+        "english.elpais.com",
+        "gizmodo.com",
+        "neurosciencenews.com",
+        "newyorker.com",
+        "nypost.com",
+        "phys.org",
+        "politico.com",
+        "propublica.org",
+        "qz.com",
+        "scmp.com",
+        "techcrunch.com",
+        "technologyreview.com",
+        "thehill.com",
+        "theregister.com",
+        "theverge.com",
+        "vice.com",
+        "vox.com",
     ]
 )
 TRADE_PRESS = frozenset(
@@ -132,6 +155,9 @@ PRESS_RELEASE = frozenset(
         "prnewswire.co.uk",
         "prnewswire.com",
         "prweb.com",
+        # Institutions' own news pages, added 2026-11-16 on the same decision.
+        "directorsblog.nih.gov",
+        "news.mit.edu",
     ]
 )
 # The name each listed outlet goes by, as a source article shows it: the name the
@@ -254,6 +280,30 @@ OUTLET_NAMES: dict[str, str] = {
     "prnewswire.co.uk": "PR Newswire",
     "prnewswire.com": "PR Newswire",
     "prweb.com": "PRWeb",
+    # Added 2026-11-16.
+    "abc.net.au": "ABC News (Australia)",
+    "arstechnica.com": "Ars Technica",
+    "axios.com": "Axios",
+    "businessinsider.com": "Business Insider",
+    "directorsblog.nih.gov": "NIH Director's Blog",
+    "english.elpais.com": "El País",
+    "gizmodo.com": "Gizmodo",
+    "neurosciencenews.com": "Neuroscience News",
+    "news.mit.edu": "MIT News",
+    "newyorker.com": "The New Yorker",
+    "nypost.com": "New York Post",
+    "phys.org": "Phys.org",
+    "politico.com": "Politico",
+    "propublica.org": "ProPublica",
+    "qz.com": "Quartz",
+    "scmp.com": "South China Morning Post",
+    "techcrunch.com": "TechCrunch",
+    "technologyreview.com": "MIT Technology Review",
+    "thehill.com": "The Hill",
+    "theregister.com": "The Register",
+    "theverge.com": "The Verge",
+    "vice.com": "Vice",
+    "vox.com": "Vox",
 }
 
 # Patient-community news sites of one publisher share this ending, for example

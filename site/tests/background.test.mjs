@@ -167,8 +167,8 @@ test("a drug card says what the record says, in the site's words, with no percen
     "Agonist of Glucagon-like peptide 1 receptor",
     "Binds to Receptor tyrosine-protein kinase erbB-2",
   ]);
-  assert.equal(scoreLabel(drug, () => "never asked"), "Matched by exact name");
-  assert.equal(scoreLabel(card({ score: 0.9 }), (score) => `scored ${score}`), "scored 0.9");
+  assert.equal(scoreLabel(drug, () => "never asked"), "Term match: by exact name");
+  assert.equal(scoreLabel(card({ score: 0.9 }), (score) => `scored ${score}`), "Term match: scored 0.9");
   assert.deepEqual(reasonTexts(drug), [
     "The drug database’s own name for this drug is the same as “Tirzepatide”, a name this claim uses. Matched by that rule, so there is no percentage.",
   ]);
@@ -186,7 +186,7 @@ test("a drug card says what the record says, in the site's words, with no percen
   });
   assert.equal(isDrugsTarget(itsTarget), true);
   assert.equal(cardKindText(itsTarget), "What the drug acts on, as its record says");
-  assert.equal(scoreLabel(itsTarget, () => ""), "From the drug’s record");
+  assert.equal(scoreLabel(itsTarget, () => ""), "Term match: from the drug’s record");
   assert.match(DRUG_NOTE, /nothing here is a reason to start or stop a medicine/);
   // Nothing the site says of a drug recommends it or says what it is used for.
   for (const words of [cardKindText(drug), ...mechanismTexts(drug), ...reasonTexts(drug), DRUG_NOTE]) {
