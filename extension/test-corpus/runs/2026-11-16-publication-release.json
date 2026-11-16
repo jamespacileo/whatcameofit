@@ -1,0 +1,280 @@
+{
+  "checked_at": "2026-11-16T01:10:28.831Z",
+  "release_commit": "48d0e89c6f0f059200d90bfcca466456d1338553",
+  "pr": 182,
+  "public_cards": 164,
+  "public_articles": 262,
+  "generated_at": "2026-11-16T00:58:59.622702Z",
+  "public_data_matches_staged_snapshot": true,
+  "excluded_associations": 22,
+  "preserved_article_links": [
+    {
+      "url": "https://finance.yahoo.com/news/shares-dialysis-providers-drop-ozempics-100259954.html",
+      "slug": "semaglutide-chronic-kidney-disease-in-people-with-type-2"
+    },
+    {
+      "url": "https://www.ctvnews.ca/health/article/health-canada-approves-ozempic-to-reduce-kidney-deterioration-in-people-with-diabetes/",
+      "slug": "semaglutide-chronic-kidney-disease-in-people-with-type-2"
+    },
+    {
+      "url": "https://www.cnbc.com/2025/01/28/novo-nordisks-ozempic-wins-fda-approval-for-chronic-kidney-disease.html",
+      "slug": "semaglutide-chronic-kidney-disease-in-people-with-type-2"
+    },
+    {
+      "url": "https://www.biospace.com/novo-s-wegovy-shows-stronger-weight-loss-effects-in-women-than-men-study",
+      "slug": "semaglutide-2-4-mg-weekly-heart-failure-with-preserved"
+    },
+    {
+      "url": "https://abcnews.go.com/Health/wireStory/lost-weight-wegovy-stop-taking-109831498",
+      "slug": "semaglutide-obesity"
+    }
+  ],
+  "pages": [
+    {
+      "slug": "670-nm-deep-red-light-exposure-age-related-decline-in",
+      "http": 200,
+      "bytes": 63957,
+      "sha256": "7b2b53af8965e3d2f11950700522869a1bc8f74c99f9fdbaeccd592c29058c28"
+    },
+    {
+      "slug": "bionaut-medical-microrobot-drug-delivery-system-brainstem",
+      "http": 200,
+      "bytes": 71097,
+      "sha256": "c862b2f1041b66479bb5ba0cb9bc362e9d0cc4ee39a80c8eaa1da294652a903a"
+    },
+    {
+      "slug": "electrically-accelerated-and-enhanced-remineralisation-tooth",
+      "http": 200,
+      "bytes": 67105,
+      "sha256": "2362711b37baf7830b7057a13869f75c4a0cc0241f118f062af55c0cc94cca39"
+    },
+    {
+      "slug": "fasting-mimicking-diet-mild-to-moderate-crohns-disease",
+      "http": 200,
+      "bytes": 86123,
+      "sha256": "bccb662123635647e51df1b7c4a6d991ec0cbb9fc6717e2b40b8549538f961d4"
+    },
+    {
+      "slug": "live-attenuated-hsv-2-vaccine-herpes-simplex-virus-infection",
+      "http": 200,
+      "bytes": 69458,
+      "sha256": "b303e84633f553b1d3833e00d549eeda1dd7e61022843beca11dc9261cda8989"
+    },
+    {
+      "slug": "lsd-microdosing-alzheimers-disease",
+      "http": 200,
+      "bytes": 69135,
+      "sha256": "56c1eb4ca6c1a921978d3e71be04606508fa8488ea7bd4ec26d3d4aecc924ce3"
+    },
+    {
+      "slug": "lugdunin-mrsa-and-other-staph-infections",
+      "http": 200,
+      "bytes": 68926,
+      "sha256": "5fa87f06753f0fc4dcdc1a709d8a6dc5b9283efee6dedadab47223875375d0d2"
+    },
+    {
+      "slug": "md3606-influenza",
+      "http": 200,
+      "bytes": 73472,
+      "sha256": "75d38731473c3bfe31c0d67c6bbb7106e1c789e7110325176b8f0fdbf98970cf"
+    },
+    {
+      "slug": "orforglipron-type-2-diabetes",
+      "http": 200,
+      "bytes": 235312,
+      "sha256": "10aa0953f4040f3225b16251daed1fcd1b6cab10d745c34648e839ac7f38b10f"
+    },
+    {
+      "slug": "pep005-hiv-infection",
+      "http": 200,
+      "bytes": 76404,
+      "sha256": "e3f4fe645b3a3df7cf62703a7d839d86b788e359c238ea08e96ef30bc24f7d9a"
+    },
+    {
+      "slug": "psilocybin-severe-treatment-resistant-depression",
+      "http": 200,
+      "bytes": 164838,
+      "sha256": "b24ed8c28b18d8b1867eb4398838b9edd0d71bcaff08b70f3618417b975d11e6"
+    },
+    {
+      "slug": "romidepsin-social-deficits-associated-with-autism-spectrum",
+      "http": 200,
+      "bytes": 69994,
+      "sha256": "62c68866773a2a7b66bf77ee96c3cf0cd0e6b7e0b54beb89b514df362a8f941f"
+    },
+    {
+      "slug": "semaglutide-obesity",
+      "http": 200,
+      "bytes": 276117,
+      "sha256": "4cf902ccafb3cb40b7a0fb0f819348dedf2d193072b33e0c0267dd6a2427a68e"
+    },
+    {
+      "slug": "tirzepatide-overweight-or-obesity",
+      "http": 200,
+      "bytes": 332333,
+      "sha256": "7185c86c5f92a5ec57d765b508772fd90506865e194028035072de5520235c20"
+    },
+    {
+      "slug": "tulsa-prostate-cancer",
+      "http": 200,
+      "bytes": 160177,
+      "sha256": "9c3c5ae20f87ed21f2b4d217331025d4d038aa3e5853f5664cba86c7a7d75937"
+    },
+    {
+      "slug": "uterus-transplant-inability-to-give-birth-because-of-an",
+      "http": 200,
+      "bytes": 265870,
+      "sha256": "e083871b2cf4377218d601879b933c20f4f31ca95eb630ebeb82a886214217ad"
+    },
+    {
+      "slug": "vagus-nerve-stimulation-persistent-vegetative-state",
+      "http": 200,
+      "bytes": 96732,
+      "sha256": "01c99f875d3b4a81f41964641c19147482153049b059b04e42a8909b72cfb307"
+    },
+    {
+      "slug": "very-low-calorie-diet-type-2-diabetes",
+      "http": 200,
+      "bytes": 165060,
+      "sha256": "7ca4f2160900c00349d88ea6b22926f35c8d223ef06141e1386bb8f77e4a37c5"
+    },
+    {
+      "slug": "brp-obesity",
+      "http": 200,
+      "bytes": 77386,
+      "sha256": "45d4101188b9f2d7014776fea2d091e1c245a30236741466321b11b21b45b26c"
+    },
+    {
+      "slug": "mdma-post-traumatic-stress-disorder-ptsd",
+      "http": 200,
+      "bytes": 534864,
+      "sha256": "cf80c236467ecb73a4e06d6dc0bb81ee3c0cb9e16b3d29617242944c707cc9aa"
+    },
+    {
+      "slug": "remdesivir-covid-19",
+      "http": 200,
+      "bytes": 174314,
+      "sha256": "7a4bbfe21db65cefbf7cbb7850ea323b6e1899551ad9799f63b22bad0dd7a335"
+    },
+    {
+      "slug": "semaglutide-2-4-mg-weekly-heart-failure-with-preserved",
+      "http": 200,
+      "bytes": 126294,
+      "sha256": "44c9748baa29c8ef751891bc9cb252e80110cfab32c8dba708b8d825b363972b"
+    },
+    {
+      "slug": "semaglutide-chronic-kidney-disease-in-people-with-type-2",
+      "http": 200,
+      "bytes": 150504,
+      "sha256": "dc6b7a36aab7ef33bc30595050c026a535a779fa3e6f7fd1c32fef2b69924d7b"
+    }
+  ],
+  "corpus": {
+    "rows": 258,
+    "all_source_mappings_match_candidate": true,
+    "changed_rows": [
+      "A066"
+    ],
+    "paid_registry_reruns": 0,
+    "method": "All source-address associations checked against the released static index; only A066 changes. This does not reread 258 pages."
+  },
+  "installed_extension": {
+    "version": "0.9.15",
+    "build": 24,
+    "resource_hashes_verified": 35,
+    "method": "Pure exact-address function from the installed signed app with the released index; not the native popup.",
+    "native_verified": false,
+    "example": {
+      "kind": "tracked",
+      "pages": [
+        "/fasting-mimicking-diet-mild-to-moderate-crohns-disease"
+      ]
+    }
+  },
+  "limitations": [
+    "Public index, data and HTTP page checks are not native Safari evidence.",
+    "Six unresolved associations remain excluded and seven archived article URLs lack an active verified survivor."
+  ],
+  "completed_at": "2026-11-16T01:10:29.450Z",
+  "website_browser": {
+    "verified_at": "2026-11-16T01:11:34.270271+00:00",
+    "browser": "in-app browser",
+    "url_submission": "Exact Stanford source URL entered into released home search; returned the matching tracked card.",
+    "opened_card": "fasting-mimicking-diet-mild-to-moderate-crohns-disease",
+    "only_trial": "NCT04147585",
+    "participants": "Registry 86 actual; article summary 97; kept distinct.",
+    "timing": "Expanded trial detail retains the assessment after the third monthly cycle. No detached total duration is shown.",
+    "native_safari": false
+  },
+  "release_checks": {
+    "pr": 182,
+    "reviewed_head": "37d8e084b1678555557a29141d66b17273b75f45",
+    "standards_review": "clear",
+    "spec_review": "clear",
+    "pr_ci": 43783763681,
+    "production_ci": 43784059650,
+    "production_conclusion": "success",
+    "worker_version": "69bdd316-95a2-4811-85b6-f07233663f69",
+    "deployed_at": "2026-11-16T01:08:14.9661864Z",
+    "tests": {
+      "pipeline": 1562,
+      "site": 656,
+      "extension": 170,
+      "corpus": 9
+    },
+    "strict_openspec": "pass",
+    "public_deployment_rehearsal": "pass"
+  },
+  "summary": {
+    "corpus_verdicts": {
+      "review": 34,
+      "pass": 117,
+      "partial": 81,
+      "blocked": 26
+    },
+    "knowledge_cards": {
+      "review": 32,
+      "not applicable": 10,
+      "no card": 83,
+      "match": 107,
+      "not checked": 26
+    }
+  },
+  "sheet_verification": {
+    "verified_at": "2026-11-16T01:12:47.031Z",
+    "spreadsheet_url": "https://docs.google.com/spreadsheets/d/15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA/edit?ouid=118272730050776001505",
+    "ranges": [
+      "URLs!H207:P207",
+      "URLs!Z207:AF207",
+      "Summary!B1"
+    ],
+    "expected_cells_verified": 17,
+    "unchanged_row_cells": 16,
+    "formatting_validation_and_chips_preserved": true,
+    "neighbour_formulas_preserved": true,
+    "summary_labels": [
+      "Group",
+      "URLs",
+      "pass",
+      "partial",
+      "fail",
+      "blocked",
+      "review",
+      "not run"
+    ],
+    "summary_totals": [
+      "Total",
+      258,
+      117,
+      81,
+      0,
+      26,
+      34,
+      0
+    ],
+    "native_visual": "Google-rendered Sheet stopped at Verify that it is you; native layout remains unverified. Existing formatting and validation checked through API."
+  },
+  "rows": {
+    "A066": {"lookup_answer": "fasting-mimicking diet for Mild-to-moderate Crohn’s disease", "tracked_claim": "fasting-mimicking-diet-mild-to-moderate-crohns-disease", "trial_records": "", "likely_records": "", "top_record": "NCT04147585 · verified on the released card; no fresh registry scoring", "test_result": "pass", "reason": "The released website recognizes the exact Stanford URL and opens the mild-to-moderate Crohn’s diet card. Its sole registered trial is NCT04147585; the third-cycle timing is intact. Earlier automatic-search identity problems remain in history. No new native Safari pass is claimed.", "how_read": "released website URL lookup and card; installed Safari function replay", "ms": null, "last_tested": "2026-11-16T01:11:34.270271+00:00", "tested_build": "site 48d0e89c6f0f; installed Safari 0.9.15 (24), native popup unverified", "site_result": "2026-11-16T01:11:34.270271+00:00: production 48d0e89c6f0f. In-app browser URL submission shows “This article is one we track” and the correct card. The opened card shows NCT04147585 only, 86 registry participants separately from the report’s 97, and the full third-cycle outcome time frame. No paid registry search on this exact-card path.", "extension_result": "Installed Safari 0.9.15 (24): all 35 resource hashes match the signed installation receipt. Its exact-address function returns the new card with the released index. This is a function replay, not a native popup or browser-storage reuse check. Native automation still reports the Mac locked after the unlock reply.", "knowledge_card_result": "match", "knowledge_card_notes": "fasting-mimicking-diet-mild-to-moderate-crohns-disease; exact article, intervention and population verified on the released website. NCT04147585 retained; unrelated NCT05382897 excluded. Registry timing stays anchored after the third monthly cycle. Native Safari remains unverified.", "trial_role_release": "runs/2026-11-15-trial-role-release.json", "preparation_audit": "../../openspec/changes/corpus-match-accuracy/diet-card-preparation.json", "publication_release": "runs/2026-11-16-publication-release.json"}
+  }
+}

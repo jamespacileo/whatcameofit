@@ -1,0 +1,255 @@
+{
+  "checked_at": "2026-11-16T02:58:09.912437+00:00",
+  "released": true,
+  "scope": "Ten verified article references and clinical-trial associations on the two existing daraxonrasib cards. This is not a comprehensive re-review of all published papers or statements.",
+  "references_added": [
+    {
+      "id": "A012",
+      "url": "https://www.ladbible.com/news/science/pancreatic-cancer-treatment-pill-daraxonrasib-double-survival-time-751047-20260601",
+      "outlet": "LADbible",
+      "title": "New daily pill can double survival time for world's deadliest cancer patients",
+      "published": "2026-06-01",
+      "identity_evidence": "The 500-person phase 3 comparison, 248/252 allocation and 13.2/6.6-month RAS G12 result identify the RASolute 302 report. Its broad headline does not broaden the card population."
+    },
+    {
+      "id": "A027",
+      "url": "https://www.aponet.de/artikel/bauchspeicheldruesenkrebs-neues-medikament-verdoppelt-in-studie-die-ueberlebenszeit-33426",
+      "outlet": "aponet.de",
+      "title": "Bauchspeicheldrüsenkrebs: Neues Medikament verdoppelt in Studie die Überlebenszeit",
+      "published": "2026-06-03",
+      "identity_evidence": "Links the primary paper DOI 10.1056/NEJMoa2605555 and reports the matching overall survival and progression-free survival figures. Visible article date is June 3; generic metadata date is not used."
+    },
+    {
+      "id": "A028",
+      "url": "https://www.pharmazeutische-zeitung.de/neues-medikament-verdoppelt-ueberlebenszeit-165686/",
+      "outlet": "Pharmazeutische Zeitung",
+      "title": "Pankreaskarzinom: Neues Medikament verdoppelt Überlebenszeit",
+      "published": "2026-06-01",
+      "identity_evidence": "Explicitly names RASolute 302 and links DOI 10.1056/NEJMoa2605555."
+    },
+    {
+      "id": "A029",
+      "url": "https://www.newsweekjapan.jp/articles/-/324447",
+      "outlet": "Newsweek Japan",
+      "title": "膵臓がん治療の「ゲームチェンジャー」 死亡リスクを60%減らす革新的な新薬 | ニューズウィーク日本版 オフィシャルサイト",
+      "published": "2026-06-03",
+      "identity_evidence": "The freely visible Japanese introduction explicitly names daraxonrasib in previously treated metastatic pancreatic cancer. Later account-gated pages were not read."
+    },
+    {
+      "id": "A033",
+      "url": "https://www.foxnews.com/health/new-pancreatic-cancer-pill-could-reshape-treatment-early-trial-results-stun-researchers.amp",
+      "outlet": "Fox News",
+      "title": "New pancreatic cancer pill nearly doubles survival time in breakthrough trial",
+      "published": "2026-05-18",
+      "identity_evidence": "Main page names RASolute 302, previously treated metastatic disease, 500 patients and the matching 13.2/6.7-month result."
+    },
+    {
+      "id": "A040",
+      "url": "https://www.yahoo.com/news/science/articles/breakthrough-drug-nearly-doubles-survival-183205832.html",
+      "outlet": "Yahoo News",
+      "title": "Breakthrough drug nearly doubles survival with advanced pancreatic cancer – an oncologist explains how daraxonrasib overcame an ‘undruggable’ disease",
+      "published": "2026-06-02",
+      "identity_evidence": "Links NCT06625320 and DOI 10.1056/NEJMoa2605555; main content describes previously treated metastatic disease and matching survival figures."
+    },
+    {
+      "id": "A041",
+      "url": "https://health.yahoo.com/conditions/cancer/pancreatic-cancer/articles/pancreatic-cancer-drug-nearly-doubles-195720621.html",
+      "outlet": "Yahoo Health",
+      "title": "New Pancreatic Cancer Drug Nearly Doubles Survival. Here’s What Patients Should Know",
+      "published": "2026-04-14",
+      "identity_evidence": "Main content describes progression after prior treatment and matching 13.2/6.7-month survival figures. Linked NCT07491445 is the separately discussed first-line study, not the reported efficacy trial."
+    },
+    {
+      "id": "A049",
+      "url": "https://www.cnbc.com/2026/04/13/pancreatic-cancer-drug-daraxonrasib-from-revolution-medicines-succeeds-in-trial.html",
+      "outlet": "CNBC",
+      "title": "Revolution Medicines says its potential breakthrough pancreatic cancer drug succeeds in late-stage trial",
+      "published": "2026-04-13",
+      "identity_evidence": "April 13 report describes prior treatment and the distinctive 13.2/6.7-month late-stage trial result. This moves the first recorded report date earlier without changing the trial or approval evidence."
+    },
+    {
+      "id": "A051",
+      "url": "https://www.webmd.com/cancer/pancreatic-cancer/daraxonrasib-study-pancreatic-cancer",
+      "outlet": "WebMD",
+      "title": "FDA Approves Daraxonrasib (Rasonque) for Metastatic Pancreatic Cancer",
+      "published": "2026-07-08",
+      "identity_evidence": "Current article names RASolute 302 and links DOI 10.1056/NEJMoa2605555, with the previously treated metastatic population. Current title includes later approval; supplied original publication metadata 07/08/2026 is July 8 in the US outlet date convention, not the approval date."
+    },
+    {
+      "id": "A054",
+      "url": "https://www.statnews.com/2026/06/04/readout-loud-podcast-revolution-medicines-pancreatic-cancer-patient-asco/",
+      "outlet": "STAT Readout LOUD",
+      "title": "What RevMed's pancreatic cancer drug meant for one patient",
+      "published": "2026-06-04",
+      "identity_evidence": "The public show notes link the May 31 ASCO results report, whose public introduction links the NEJM paper. The linked patient story describes metastatic disease after chemotherapy. This verifies the daraxonrasib segment and show notes, not the full audio or unrelated topics."
+    }
+  ],
+  "held_references": [
+    {
+      "id": "A019",
+      "reason": "Short press-coverage blurb does not identify the prior-treatment population or trial; do not infer a narrow card from the drug name."
+    },
+    {
+      "id": "A042",
+      "reason": "Early-access report has compatible survival figures but access-setting and population linkage need further verification; no exact binding added."
+    }
+  ],
+  "reader": {
+    "articles_attempted": 12,
+    "articles_read": 12,
+    "concurrency": 2,
+    "model_calls": 0,
+    "article_text_stored": false
+  },
+  "clinical_review": {
+    "claim_id": 125,
+    "slug": "pancreatic-cancer-daraxonrasib",
+    "decider": "assistant",
+    "retained_trial_ids": [
+      "NCT05379985",
+      "NCT06128551",
+      "NCT06625320",
+      "NCT07491445"
+    ],
+    "retention_reason": "Each retained record includes a daraxonrasib monotherapy arm in advanced/metastatic disease. The broad card does not restrict line of therapy. The separate narrow card retains only RASolute 302 as its approved trial.",
+    "excluded": [
+      {
+        "match_id": 7578,
+        "trial_id": "NCT07252232",
+        "previous_state": "approved",
+        "score_preserved": 0.99,
+        "reason": "Resected PDAC after surgery; not advanced pancreatic cancer.",
+        "source": "https://clinicaltrials.gov/study/NCT07252232"
+      },
+      {
+        "match_id": 7569,
+        "trial_id": "NCT07898813",
+        "previous_state": "approved",
+        "score_preserved": 0.99,
+        "reason": "Resectable PDAC in a perioperative surgery pathway; not advanced disease.",
+        "source": "https://clinicaltrials.gov/study/NCT07898813"
+      },
+      {
+        "match_id": 7567,
+        "trial_id": "NCT07805954",
+        "previous_state": "approved",
+        "score_preserved": 1.0,
+        "reason": "Daraxonrasib appears only with zoldonrasib, not as monotherapy.",
+        "source": "https://clinicaltrials.gov/study/NCT07805954"
+      },
+      {
+        "match_id": 7574,
+        "trial_id": "NCT07756281",
+        "previous_state": "approved",
+        "score_preserved": 1.0,
+        "reason": "Daraxonrasib appears only with SNV1521, not as monotherapy.",
+        "source": "https://clinicaltrials.gov/study/NCT07756281"
+      },
+      {
+        "match_id": 8830,
+        "trial_id": "NCT06360354",
+        "previous_state": "approved",
+        "score_preserved": 1.0,
+        "reason": "RMC-6236 appears only with anvumetostat, not as monotherapy.",
+        "source": "https://clinicaltrials.gov/study/NCT06360354"
+      },
+      {
+        "match_id": 7573,
+        "trial_id": "NCT07349537",
+        "previous_state": "approved",
+        "score_preserved": 0.99,
+        "reason": "Daraxonrasib appears only with RMC-5127, not as monotherapy.",
+        "source": "https://clinicaltrials.gov/study/NCT07349537"
+      },
+      {
+        "match_id": 8828,
+        "trial_id": "NCT06040541",
+        "previous_state": "pending",
+        "score_preserved": 0.58,
+        "reason": "RMC-6236 appears only with RMC-9805; the single-drug arm tests RMC-9805.",
+        "source": "https://clinicaltrials.gov/study/NCT06040541"
+      },
+      {
+        "match_id": 7563,
+        "trial_id": "NCT07492680",
+        "previous_state": "pending",
+        "score_preserved": 0.26,
+        "reason": "Daraxonrasib appears only in navlimetostat combinations; the single-drug arms test navlimetostat.",
+        "source": "https://clinicaltrials.gov/study/NCT07492680"
+      }
+    ],
+    "rejected_event_ids": [
+      539,
+      540,
+      533,
+      589,
+      590,
+      593,
+      594,
+      787,
+      788,
+      591,
+      592
+    ],
+    "raw_payloads_unchanged": true,
+    "derived_stage_before": "phase_3",
+    "derived_stage_after": "phase_3"
+  },
+  "registry_payload_sha256": {
+    "https://clinicaltrials.gov/study/NCT07491445": "f8dd68a4dd191f9013186cf58e68b20de14095297c350353575c62290c0a1fac",
+    "https://clinicaltrials.gov/study/NCT07898813": "a2d2842b8480d98b9f0a86a16d1ce73a6d6d7c2a6d050bc6cbba2063ef447fad",
+    "https://clinicaltrials.gov/study/NCT06625320": "023c797096c96d0e1518debee66a90015e0a61d2ab285e8ebe839621e2ac015a",
+    "https://clinicaltrials.gov/study/NCT07252232": "1c790058745688ffc7767daea65437d05a5f5c521a4c87b15099b7905d0744ac",
+    "https://clinicaltrials.gov/study/NCT06128551": "8c848a7963c2d906b171bad96882641292611f2538007ff58c1e3710d235e616",
+    "https://clinicaltrials.gov/study/NCT07805954": "dc1d284a69fdd8009ed50ad8e6749cb9b32b816dabdc1367408c8e21eb931f36",
+    "https://clinicaltrials.gov/study/NCT07349537": "66395f6bc4b47598437464da5e9d6b5c844fcdb561e8d7371e5153450c44aef3",
+    "https://clinicaltrials.gov/study/NCT07756281": "5bd5af7eaa202aa7274ea2e0c314e428f6307645dde79d81e699e26ca41f4d4b",
+    "https://clinicaltrials.gov/study/NCT05379985": "f3106ec917da3586105572d2444d52bff21257dd72e050d1688f30c33ba44b16",
+    "https://clinicaltrials.gov/study/NCT06360354": "6c036bc9af9b8de3d83fd41ebb7a74f7552e178161c0b921bfdf1f855ccd889b",
+    "https://clinicaltrials.gov/study/NCT06445062": "5cec82be7ebf30a702fa610ef749176207fb5ddcf8c44bbf4c26b0307f38bbd1",
+    "https://clinicaltrials.gov/study/NCT07573215": "c97418780f521f196f8793c527e9b870ea34fae75277f6ab1f7b3c4833c737a5"
+  },
+  "export_delta": {
+    "before": 168,
+    "after": 168,
+    "existing_cards_unchanged": 166,
+    "changed": {
+      "daraxonrasib-previously-treated-metastatic-pancreatic-cancer": [
+        "summary",
+        "first_reported_date",
+        "articles"
+      ],
+      "pancreatic-cancer-daraxonrasib": [
+        "status",
+        "events",
+        "matches",
+        "trials",
+        "organisations"
+      ]
+    },
+    "added": [],
+    "removed": []
+  },
+  "validation": {
+    "public_rehearsal": "passed",
+    "strict_spec": "passed",
+    "standards_review": "clear: no actionable findings",
+    "specification_review": "clear: no actionable findings",
+    "released_checks": "passed: public data, all 258 exact mappings, eleven browser URL submissions, both changed cards and installed extension functions; native popup/storage unverified",
+    "sheet_readback": "passed: 209 edited values and 833 other inspected cells preserved, including formulas, formats and validation",
+    "corpus_cache_tests": "9 passed"
+  },
+  "remaining": [
+    "Native Safari popup and browser-storage reuse remain unverified; automation still reports the Mac locked after the latest unlock confirmation.",
+    "A019, A042 and other corpus gaps remain unresolved."
+  ],
+  "release": {
+    "pr": 190,
+    "commit": "da97c75ebf5a1a660a5a0c6f15bc5fe4363fac23",
+    "ci_run": 43795920862,
+    "worker_id": "7b840088-0f90-498f-b1d1-3b3d660f7106",
+    "deployed_at": "2026-11-16T03:08:36Z",
+    "checks": "1562 pipeline, 656 site, 170 extension; lint/types and public rehearsal passed",
+    "evidence": "extension/test-corpus/runs/2026-11-16-daraxonrasib-coverage-release.json"
+  }
+}

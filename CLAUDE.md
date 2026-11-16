@@ -45,6 +45,7 @@ worktrees via `wt`, archive via quarantine).
 - A trial matches a claim only when it tests the intervention for the claim's indication. Never approve by score alone, by hand or by rule, a candidate marked as scored without the indication.
 - Prepare many claims with `thenwhat prepare`, not one command per step per claim.
 - A claim that a link lead's read drafts stays pending until `thenwhat prepare --pending` has searched its registries, then is approved by rule. Run it after every read run and before any export.
+- A claim `prepare` approves for a read is held awaiting audit, and no export publishes it until `thenwhat audit clear` releases it (`docs/adr/0007-a-read-batch-waits-for-its-audit.md`). The audit archives what is wrong and clears the rest.
 - A review decision you make yourself is recorded with `--as-assistant`. The claim is published like any other, and the export marks it `checked_by_person: false`.
 
 ## Layout

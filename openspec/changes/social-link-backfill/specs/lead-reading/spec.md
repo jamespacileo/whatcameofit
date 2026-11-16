@@ -291,11 +291,26 @@ When no existing claim covers what the read names, a claim SHALL be drafted from
 - **THEN** no claim is created and the lead's failure names the slug
 
 ### Requirement: A read's claim is decided after it is prepared
-`thenwhat prepare` SHALL decide a claim that a lead's read drafted, by the existing rule for drafts, once every step it runs for that claim has succeeded: reading unread articles, searching the registries, reading the registries for approved matches, and reading the stored records. While a step has failed, the claim SHALL keep awaiting review. `thenwhat prepare` SHALL NOT decide a claim that no lead's read drafted. No claim a read drafted is published with a status that no registry search stands behind.
+`thenwhat prepare` SHALL decide a claim that a lead's read drafted, by the existing rule for drafts, once every step it runs for that claim has succeeded: reading unread articles, searching the registries, reading the registries for approved matches, and reading the stored records. While a step has failed, the claim SHALL keep awaiting review. `thenwhat prepare` SHALL NOT decide a claim that no lead's read drafted. No claim a read drafted is published with a status that no registry search stands behind. A claim it approves SHALL be marked awaiting audit, and SHALL stay out of every export until `thenwhat audit clear` releases it.
 
 #### Scenario: Prepared and named
 - **WHEN** `thenwhat prepare --pending` has run every step without failure for a claim a read drafted
-- **THEN** the claim is approved by rule and is published with the next export, with the status its approved evidence gives
+- **THEN** the claim is approved by rule, is marked awaiting audit, and is published, with the status its approved evidence gives, by the first export after its audit is cleared
+
+### Requirement: A prepared batch waits for its audit
+Every export SHALL leave out a claim awaiting audit, whoever runs it, SHALL give it no published time, and SHALL report how many approved, unarchived claims it left out. `thenwhat audit list` SHALL list the claims awaiting audit, oldest first, with whether each is archived. `thenwhat audit clear` SHALL release the named claims only when every one of them awaits audit, and otherwise SHALL release none. Unarchiving a claim SHALL NOT release it.
+
+#### Scenario: Held until audited
+- **WHEN** an export runs while an approved, unarchived claim awaits audit
+- **THEN** the claim is not in the export, is not listed as archived, has no published time, and the export command says one approved claim was left out
+
+#### Scenario: Audit passed
+- **WHEN** `thenwhat audit clear` names a claim awaiting audit and an export runs
+- **THEN** the claim is in the export and gets its published time
+
+#### Scenario: Not awaiting audit
+- **WHEN** `thenwhat audit clear` names a claim awaiting audit and one that does not
+- **THEN** the command exits with 1, names the claim that does not, and releases neither
 
 #### Scenario: A step that failed
 - **WHEN** a step of `thenwhat prepare` fails for a claim a read drafted

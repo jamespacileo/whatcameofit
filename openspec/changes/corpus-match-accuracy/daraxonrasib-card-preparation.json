@@ -1,0 +1,245 @@
+{
+  "checked_at": "2026-11-15T21:53:31.725576+00:00",
+  "claim": "daraxonrasib-previously-treated-metastatic-pancreatic-cancer",
+  "primary_source": "https://www.dana-farber.org/newsroom/news-releases/2026/rason-inhibitor-doubles-median-overall-survival-in-results-of-phase-3-trial-for-patients-with-metastatic-pancreatic-cancer",
+  "corpus_id": "A018",
+  "source_date": "2026-05-31",
+  "extracted_indication": "metastatic pancreatic cancer",
+  "corrected_indication": "Previously treated metastatic pancreatic cancer",
+  "scope_reason": "Retain the source report\u2019s explicit prior-treatment restriction; the separate first-line trial is not the report\u2019s main finding.",
+  "preparation_seconds": 34,
+  "trial_readings_reused": 1,
+  "trial_readings_new": 1,
+  "records": [
+    {
+      "match_id": 17754,
+      "trial_id": "NCT06445062",
+      "source_url": "https://clinicaltrials.gov/study/NCT06445062",
+      "fetched_at": "2026-11-15T21:48:47.707913+00:00",
+      "previous_score": 0.87,
+      "previous_decider": "rule",
+      "event_ids": [
+        11697,
+        11698
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "Every daraxonrasib subprotocol combines it with other anticancer agents; none establishes the reported daraxonrasib monotherapy in the previously treated setting."
+    },
+    {
+      "match_id": 17741,
+      "trial_id": "NCT07573215",
+      "source_url": "https://clinicaltrials.gov/study/NCT07573215",
+      "fetched_at": "2026-11-15T21:48:46.722455+00:00",
+      "previous_score": 0.95,
+      "previous_decider": "rule",
+      "event_ids": [
+        11694
+      ],
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "Expanded-access treatment program for people unable to enter a trial; it is not a trial testing the reported intervention and cannot support a trial event."
+    }
+  ],
+  "additional_candidate_rejections": [
+    {
+      "match_id": 17750,
+      "trial_id": "NCT07756281",
+      "previous_score": 0.69,
+      "previous_state": "pending",
+      "decision": "rejected",
+      "decider": "assistant",
+      "source_url": "https://clinicaltrials.gov/study/NCT07756281",
+      "reason": "The experimental regimen is SNV1521 plus daraxonrasib; no daraxonrasib monotherapy arm.",
+      "verified_at": "2026-11-15T22:08:39.017196+00:00",
+      "api_url": "https://clinicaltrials.gov/api/v2/studies/NCT07756281"
+    },
+    {
+      "match_id": 17757,
+      "trial_id": "NCT06922591",
+      "previous_score": 0.55,
+      "previous_state": "pending",
+      "decision": "rejected",
+      "decider": "assistant",
+      "source_url": "https://clinicaltrials.gov/study/NCT06922591",
+      "reason": "The experimental regimen is TNG462 plus RMC-6236; no daraxonrasib monotherapy arm.",
+      "verified_at": "2026-11-15T22:08:39.388945+00:00",
+      "api_url": "https://clinicaltrials.gov/api/v2/studies/NCT06922591"
+    },
+    {
+      "match_id": 17755,
+      "trial_id": "NCT06040541",
+      "previous_score": 0.5,
+      "previous_state": "pending",
+      "decision": "rejected",
+      "decider": "assistant",
+      "source_url": "https://clinicaltrials.gov/study/NCT06040541",
+      "reason": "The trial tests RMC-9805 alone or with RMC-6236; no daraxonrasib monotherapy arm.",
+      "verified_at": "2026-11-15T22:08:39.779890+00:00",
+      "api_url": "https://clinicaltrials.gov/api/v2/studies/NCT06040541"
+    },
+    {
+      "match_id": 17745,
+      "trial_id": "NCT07349537",
+      "previous_score": 0.35,
+      "previous_state": "pending",
+      "decision": "rejected",
+      "decider": "assistant",
+      "source_url": "https://clinicaltrials.gov/study/NCT07349537",
+      "reason": "Daraxonrasib is administered only with RMC-5127; no daraxonrasib monotherapy arm.",
+      "verified_at": "2026-11-15T22:08:40.858358+00:00",
+      "api_url": "https://clinicaltrials.gov/api/v2/studies/NCT07349537"
+    },
+    {
+      "match_id": 17747,
+      "trial_id": "NCT07492680",
+      "previous_score": 0.15,
+      "previous_state": "pending",
+      "decision": "rejected",
+      "decider": "assistant",
+      "source_url": "https://clinicaltrials.gov/study/NCT07492680",
+      "reason": "Daraxonrasib is administered only with navlimetostat, with or without chemotherapy.",
+      "verified_at": "2026-11-15T22:08:41.237211+00:00",
+      "api_url": "https://clinicaltrials.gov/api/v2/studies/NCT07492680"
+    },
+    {
+      "match_id": 17744,
+      "trial_id": "NCT07898813",
+      "previous_score": 0.07,
+      "previous_state": "pending",
+      "decision": "rejected",
+      "decider": "assistant",
+      "source_url": "https://clinicaltrials.gov/study/NCT07898813",
+      "reason": "Perioperative resectable PDAC; explicitly excludes metastatic disease and prior pancreatic treatment.",
+      "verified_at": "2026-11-15T22:08:41.570544+00:00",
+      "api_url": "https://clinicaltrials.gov/api/v2/studies/NCT07898813"
+    },
+    {
+      "match_id": 17738,
+      "trial_id": "NCT07491445",
+      "previous_score": 0.06,
+      "previous_state": "pending",
+      "decision": "rejected",
+      "decider": "assistant",
+      "source_url": "https://clinicaltrials.gov/study/NCT07491445",
+      "reason": "First-line metastatic study; explicitly excludes prior systemic therapy for metastatic disease.",
+      "verified_at": "2026-11-15T22:08:41.923748+00:00",
+      "api_url": "https://clinicaltrials.gov/api/v2/studies/NCT07491445"
+    }
+  ],
+  "claim_state": "approved",
+  "correction_model_calls": 0,
+  "approved_trials": [
+    "NCT06625320"
+  ],
+  "status": "approved",
+  "paper_decisions": [
+    {
+      "match_id": 17762,
+      "doi": "10.1158/1538-7445.am2026-lb407",
+      "decision": "rejected",
+      "reason": "First-line daraxonrasib with chemotherapy; different setting and regimen.",
+      "decider": "assistant"
+    },
+    {
+      "match_id": 17767,
+      "doi": "10.1158/1538-7445.am2026-lb337",
+      "decision": "rejected",
+      "reason": "First-line monotherapy; different treatment setting.",
+      "decider": "assistant"
+    },
+    {
+      "match_id": 17768,
+      "doi": "10.1016/j.annonc.2026.05.382",
+      "decision": "rejected",
+      "reason": "Zoldonrasib plus daraxonrasib; different complete regimen.",
+      "decider": "assistant"
+    },
+    {
+      "match_id": 17770,
+      "doi": "10.1002/cncr.70513",
+      "decision": "rejected",
+      "source_url": "https://acsjournals.onlinelibrary.wiley.com/doi/10.1002/cncr.70513",
+      "reason": "Publisher labels this CancerScope; its text summarizes the NEJM trial and expert commentary rather than reporting an independent study.",
+      "decider": "assistant"
+    },
+    {
+      "match_id": 17774,
+      "doi": "10.3322/caac.70097",
+      "decision": "rejected",
+      "source_url": "https://acsjournals.onlinelibrary.wiley.com/doi/full/10.3322/caac.70097",
+      "reason": "Publisher labels this Perspectives; it summarizes the NEJM trial and expert interpretation rather than reporting an independent study.",
+      "decider": "assistant"
+    },
+    {
+      "match_id": 17764,
+      "doi": "10.1158/1538-7445.am2025-lb281",
+      "decision": "retained",
+      "source_url": "https://aacrjournals.org/cancerres/article/85/8_Supplement_2/LB281/761862/Abstract-LB281-Mechanisms-of-resistance-to-the-RAS",
+      "reason": "The primary abstract includes clinical resistance analysis after daraxonrasib monotherapy in previously treated metastatic PDAC, as well as preclinical combination experiments."
+    }
+  ],
+  "paper_review_limit": "The Zenodo re-analysis remains a rule-approved metadata match, labelled software; its primary landing page was unavailable during this review. No new trial/status conclusion was derived from it.",
+  "background": {
+    "outcome": "unavailable",
+    "source": "mesh",
+    "attempts": 4,
+    "message": "mesh did not answer after 4 attempts.",
+    "stored_terms": 0,
+    "retry_performed": false
+  },
+  "statement_decisions": [
+    {
+      "id": 2867,
+      "decision": "rejected",
+      "decider": "assistant",
+      "reason": "The statement called 0.40 a hazard rather than a hazard ratio; do not publish that misleading statistical wording. The accurately phrased median-survival comparison remains in the claim summary."
+    }
+  ],
+  "regulatory_event": {
+    "event_id": 11720,
+    "type": "regulatory_decision",
+    "event_date": "2026-08-26",
+    "source_name": "FDA",
+    "source_url": "https://www.fda.gov/drugs/cancer-approvals/fda-approves-daraxonrasib-metastatic-pancreatic-adenocarcinoma",
+    "outcome": "approved",
+    "reviewed_by": "assistant",
+    "entry_method": "Normal event add command with manual payload and entry timestamp, followed by assistant event approval.",
+    "scope": "Adults with metastatic pancreatic adenocarcinoma after at least one prior systemic therapy or when multiagent systemic therapy is unsuitable."
+  },
+  "verified_aliases": [
+    "RMC-6236",
+    "Rasonque"
+  ],
+  "claim_reviewed_by": "assistant",
+  "checked_by_person": false,
+  "status_before_regulatory_event": "phase_3",
+  "completed_at": "2026-11-15T22:04:22.781377+00:00",
+  "export": {
+    "before_count": 156,
+    "after_count": 157,
+    "existing_claims_changed": {},
+    "only_added_claim": "daraxonrasib-previously-treated-metastatic-pancreatic-cancer",
+    "status_explained_by": [
+      11720
+    ]
+  },
+  "retained_uncertain_candidates": [
+    {
+      "match_id": 17756,
+      "trial_id": "NCT05379985",
+      "reason": "The broader solid-tumor cohort includes PDAC and RMC-6236 monotherapy; prior standard therapy is permitted. No proven regimen/setting conflict, but exact population match remains uncertain.",
+      "source_url": "https://clinicaltrials.gov/study/NCT05379985",
+      "api_url": "https://clinicaltrials.gov/api/v2/studies/NCT05379985",
+      "fetched_at": "2026-11-15T22:08:40.128515+00:00"
+    },
+    {
+      "match_id": 17742,
+      "trial_id": "NCT06128551",
+      "reason": "The phase 2 daraxonrasib monotherapy arm includes previously treated advanced/metastatic G12C solid tumors and PDAC. Other combination arms do not negate that arm; exact population match remains uncertain.",
+      "source_url": "https://clinicaltrials.gov/study/NCT06128551",
+      "api_url": "https://clinicaltrials.gov/api/v2/studies/NCT06128551",
+      "fetched_at": "2026-11-15T22:08:40.496383+00:00"
+    }
+  ]
+}

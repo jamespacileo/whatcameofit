@@ -99,7 +99,9 @@ from thenwhat.terms.genes import TARGET_REASON_CODES
 from thenwhat.terms.kinds import KIND_REASON_CODES
 from thenwhat.terms.records import read_record
 
-SCHEMA_VERSION = 1
+# 2: claims awaiting audit are left out (ADR 0007). The site reads only this version, so
+# an export written by code that does not know the hold is refused, not published.
+SCHEMA_VERSION = 2
 # Registries the clients read. Always listed, as their terms ask for attribution.
 SOURCES = [
     ("ClinicalTrials.gov", "https://clinicaltrials.gov/"),
@@ -1201,14 +1203,19 @@ def build_export(
     Each claim's status is derived again first, because the no-signal overlay depends
     on today's date. A claim exported for the first time gets its published time.
 
-    Every approved, unarchived claim is included, whoever decided it; a claim the
-    assistant decided says it was not checked by a person.
+    Every approved, unarchived claim is included, whoever decided it, except one held
+    awaiting the audit of its batch; a claim the assistant decided says it was not
+    checked by a person.
     """
     claims: list[ExportedClaim] = []
     last_checked: datetime | None = None
     for claim in session.scalars(
         select(Claim)
-        .where(Claim.review_state == ReviewState.APPROVED, Claim.archived_at.is_(None))
+        .where(
+            Claim.review_state == ReviewState.APPROVED,
+            Claim.archived_at.is_(None),
+            Claim.awaiting_audit_at.is_(None),
+        )
         .order_by(Claim.slug)
     ):
         # Every approved claim is published, whoever decided it (openspec auto-publish).

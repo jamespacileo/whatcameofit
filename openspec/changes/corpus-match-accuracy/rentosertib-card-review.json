@@ -1,0 +1,149 @@
+{
+  "checked_at": "2026-11-16T02:26:00Z",
+  "released": true,
+  "corpus_id": "A052",
+  "claim_id": 570,
+  "slug": "rentosertib-proteomic-ageing-ipf",
+  "scope": "Oral rentosertib and proteomic biological-age markers in IPF. Not general human rejuvenation or longevity.",
+  "preparation": {
+    "seconds": 43,
+    "resolve_seconds": 27,
+    "fetch_seconds": 9,
+    "readings_seconds": 8,
+    "trials_read": 3,
+    "new_readings": 6
+  },
+  "primary_paper": "https://www.nature.com/articles/s41587-026-03286-y",
+  "primary_trial": "NCT05938920",
+  "participant_scope": {
+    "trial_enrollment": 71,
+    "consented_proteomics": 43,
+    "complete_samples": 42
+  },
+  "limits": [
+    "The proteomic clocks cannot separate aging biology from improvement in IPF.",
+    "Biomarker changes do not establish longer life or reversed aging.",
+    "The single retained registry trial measures safety and lung function; its secondary proteomic analysis is identified by the primary paper."
+  ],
+  "retained_trials": [
+    {
+      "match_id": 17942,
+      "id": "NCT05938920",
+      "reason": "The primary aging-clock paper explicitly identifies this trial; its complete proteomic subset has 42 participants out of 71 enrolled."
+    }
+  ],
+  "excluded_trials": [
+    {
+      "match_id": 17939,
+      "id": "NCT07687459",
+      "reason": "Phase 3 IPF trial includes general serum proteomics, but its record does not specify biological-age clocks. Insufficient evidence for this narrower claim; exclusion is not proof the study could never support it."
+    },
+    {
+      "match_id": 17940,
+      "id": "NCT05975983",
+      "reason": "Separate US Phase 2a IPF trial. The 2025 abstract mentions future antifibrotic biomarker validation, but no verified aging-clock analysis links this trial to the narrow claim."
+    }
+  ],
+  "excluded_papers": [
+    {
+      "match_id": 17944,
+      "doi": "10.1093/ajrccm/aamag162.2232"
+    },
+    {
+      "match_id": 17945,
+      "doi": "10.1093/ajrccm/aamag162.2231"
+    },
+    {
+      "match_id": 17946,
+      "doi": "10.1093/ajrccm/aamag162.2233"
+    },
+    {
+      "match_id": 17947,
+      "doi": "10.1093/ajrccm/aamag162.2797"
+    }
+  ],
+  "paper_exclusion_reason": "Inhaled formulation studies, not the oral proteomic-ageing report. First three were tentative; last was rule approved. All excluded through normal assistant review.",
+  "retained_papers": [
+    {
+      "doi": "10.1038/s41587-026-03286-y",
+      "role": "origin and related; deduplicated on export"
+    },
+    {
+      "doi": "10.1038/s41591-025-03743-2",
+      "role": "underlying 71-person phase 2a trial, registry-linked results"
+    },
+    {
+      "doi": "10.1183/13993003.congress-2025.oa1251",
+      "role": "related conference abstract of same 71-person oral trial; metadata only"
+    },
+    {
+      "doi": "10.1164/ajrccm.2025.211.abstracts.a5354",
+      "role": "related proteomic analysis of same trial; 43 collected samples versus 42 complete samples in later paper; metadata only"
+    }
+  ],
+  "decisions": {
+    "by": "assistant",
+    "original_scores_preserved": true,
+    "raw_payloads_preserved": true,
+    "events_rejected": [
+      11748,
+      11749,
+      11750,
+      11751
+    ],
+    "events_retained": [
+      11752,
+      11753,
+      11754,
+      11755
+    ],
+    "private_stage_before": "phase_3",
+    "candidate_stage_after": "phase_2",
+    "clinical_efficacy_inference": false,
+    "pending_statements_left_pending": [
+      2891,
+      2892,
+      2893
+    ]
+  },
+  "export_delta": {
+    "before": 167,
+    "after": 168,
+    "added": [
+      "rentosertib-proteomic-ageing-ipf"
+    ],
+    "existing_cards_unchanged": 166,
+    "existing_metadata_only_change": {
+      "slug": "biological-ageing-glp-1-drugs",
+      "field": "organisations: Insilico Medicine ROR record read_at",
+      "before": "2026-11-14T19:53:41.742717Z",
+      "after": "2026-11-16T02:14:53.742895Z"
+    },
+    "removed": []
+  },
+  "registry_payload_sha256": {
+    "https://clinicaltrials.gov/study/NCT07687459": "677796b00050db4618e83fd880ea8b88be4bb35d496a02f10f4f6a2d5a5e656d",
+    "https://clinicaltrials.gov/study/NCT05975983": "ae10b17490d143740744a8d7b6eeeb85df2146c7a82ac708977aaff1f7349dec",
+    "https://clinicaltrials.gov/study/NCT05938920": "5d0c6f5461f80365ed261501661c50c2b6b5d1a167d8440c8582526789920d04"
+  },
+  "validation": {
+    "review": "clear: independent standards and specification reviews",
+    "public_rehearsal": "passed",
+    "released_checks": "passed: exact URL in website, released index/data, installed signed extension function replay, and Sheet readback",
+    "strict_spec": "passed",
+    "standards_review": "clear: no actionable findings",
+    "specification_review": "clear: no actionable findings"
+  },
+  "remaining": [
+    "native Safari popup and browser-storage reuse remain unverified",
+    "other corpus coverage remains incomplete"
+  ],
+  "release": {
+    "pr": 188,
+    "commit": "db09bbe6ed37c6e5134f8c9e8accfab4a6b4ef2e",
+    "ci_run": 43792862635,
+    "worker_id": "b62c777a-bf12-49d5-88c6-10549e46b42e",
+    "checks": "1562 pipeline, 656 site, 170 extension; lint/types and public rehearsal passed",
+    "evidence": "extension/test-corpus/runs/2026-11-16-rentosertib-release.json"
+  }
+}

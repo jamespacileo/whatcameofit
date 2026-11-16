@@ -1,0 +1,199 @@
+{
+  "checked_at": "2026-11-16T04:35:00Z",
+  "released": true,
+  "corpus_ids": [
+    "S023",
+    "S030",
+    "S031"
+  ],
+  "cards": [
+    {
+      "id": 572,
+      "slug": "keratin-film-enamel-repair",
+      "corpus_id": "S031",
+      "source_url": "https://www.kcl.ac.uk/news/toothpaste-made-from-hair-provides-natural-root-to-repair-teeth",
+      "source_date": "2025-08-13",
+      "origin_paper": {
+        "title": "Biomimetic Mineralization of Keratin Scaffolds for Enamel Regeneration",
+        "doi": "10.1002/adhm.202502465"
+      },
+      "scope": "A 2025 laboratory study used wool-derived keratin films to guide mineral growth on artificially demineralized, extracted human teeth. The repaired enamel showed changes in structure and mechanical properties. This was not a trial of treatment in patients or whole-tooth regrowth. Toothpaste and professionally applied gels were proposed future uses; clinical benefit and durability were not established by this study.",
+      "decisions": {
+        "claim": "approved by assistant after preparation",
+        "evidence_stage": "in_vitro",
+        "status": "preclinical_only",
+        "approved_trial_count": 0,
+        "origin_match": "approved by assistant after primary-paper identity review",
+        "rejected_statement_ids": [
+          2898,
+          2899,
+          2901
+        ],
+        "rejected_trial_ids": [],
+        "promise": "Original source forecast retained, not clinical availability."
+      }
+    },
+    {
+      "id": 573,
+      "slug": "enamel-repair-elastin-like-recombinamer",
+      "corpus_id": "S030",
+      "source_url": "https://www.nottingham.ac.uk/news/new-gel-restores-dental-enamel-and-could-revolutionise-tooth-repair",
+      "source_date": "2025-11-04",
+      "origin_paper": {
+        "title": "Biomimetic supramolecular protein matrix restores structure and properties of human dental enamel",
+        "doi": "10.1038/s41467-025-64982-y"
+      },
+      "scope": "A 2025 study used an elastin-like recombinamer matrix to guide mineral growth on extracted human enamel and dentine. Laboratory tests assessed the resulting structure and mechanical properties, including responses to wear and acid. This was not a clinical trial and did not show that lost whole teeth can regrow. The university reported a company aim to introduce a first product in 2026; that forecast does not establish clinical availability or benefit.",
+      "decisions": {
+        "claim": "approved by assistant after preparation",
+        "evidence_stage": "in_vitro",
+        "status": "preclinical_only",
+        "approved_trial_count": 0,
+        "origin_match": "approved by assistant after primary-paper identity review",
+        "rejected_statement_ids": [
+          2905
+        ],
+        "rejected_trial_ids": [
+          "NCT07866482",
+          "NCT06837779",
+          "NCT03976583",
+          "NCT00752089",
+          "NCT07111403"
+        ],
+        "promise": "Original source forecast retained, not clinical availability."
+      }
+    }
+  ],
+  "export_delta": {
+    "before": 171,
+    "after": 173,
+    "added": [
+      "keratin-film-enamel-repair",
+      "enamel-repair-elastin-like-recombinamer"
+    ],
+    "changed": [
+      "daraxonrasib-previously-treated-metastatic-pancreatic-cancer"
+    ],
+    "existing_cards_unchanged": 170,
+    "removed": []
+  },
+  "source_policy": "Normal configured page reader and registry preparation. No source bodies retained. NIH shortener robots refusal respected; no new client or bypass.",
+  "efficiency": {
+    "prepare_batch_seconds": 12,
+    "local_checks": {
+      "checked_at": "2026-11-16T04:32:20.202Z",
+      "public_cards": 173,
+      "method": "Local released Worker code with staged index, fresh official Hacker News API, and fail-closed paid/source request guards. No post body stored.",
+      "checks": [
+        {
+          "id": "S030",
+          "url": "https://news.ycombinator.com/item?id=45826995",
+          "slug": "enamel-repair-elastin-like-recombinamer",
+          "http": 200,
+          "ms": 300,
+          "post": {
+            "platform": "Hacker News",
+            "article": "https://www.nottingham.ac.uk/news/new-gel-restores-dental-enamel-and-could-revolutionise-tooth-repair",
+            "article_host": "nottingham.ac.uk",
+            "article_read": false
+          },
+          "post_api_requests": 1,
+          "article_requests": 0,
+          "model_requests": 0,
+          "registry_requests": 0
+        },
+        {
+          "id": "S031",
+          "url": "https://news.ycombinator.com/item?id=44922571",
+          "slug": "keratin-film-enamel-repair",
+          "http": 200,
+          "ms": 224,
+          "post": {
+            "platform": "Hacker News",
+            "article": "https://www.kcl.ac.uk/news/toothpaste-made-from-hair-provides-natural-root-to-repair-teeth",
+            "article_host": "kcl.ac.uk",
+            "article_read": false
+          },
+          "post_api_requests": 1,
+          "article_requests": 0,
+          "model_requests": 0,
+          "registry_requests": 0
+        }
+      ]
+    }
+  },
+  "presentation_correction": "Europe PMC human/animal subject headings include laboratory tissue/material sources. Show them as subject headings, not proof of a study in living participants; list trial and paper counts separately. Preserve raw metadata and confirmed stage. No extension resource changes.",
+  "unresolved": {
+    "S034": "Fresh Reddit access presents CAPTCHA. Historical New Scientist link is not newly attached or counted as a released pass.",
+    "native_safari": "0.9.18 (26) installed and resources previously verified; computer control still reports locked. No native popup or storage success claimed."
+  },
+  "existing_card_reference": {
+    "slug": "daraxonrasib-previously-treated-metastatic-pancreatic-cancer",
+    "source_url": "https://www.asco.org/about-asco/press-center/multi-selective-ras-inhibitor-nearly-doubles-survival-pancreatic-cancer",
+    "source_date": "2026-05-31",
+    "identity": "ASCO report identifies RASolute 302/NCT06625320 in previously treated metastatic pancreatic cancer; it is compatible with the existing card, not first-line RASolute 303.",
+    "fresh_runtime": {
+      "id": "S023",
+      "checked_at": "2026-11-16T04:26:30.442Z",
+      "http": 200,
+      "ms": 6123,
+      "treatment": "daraxonrasib",
+      "condition": "Previously treated metastatic pancreatic cancer",
+      "tracked": [
+        "daraxonrasib-previously-treated-metastatic-pancreatic-cancer"
+      ],
+      "article_tracked": false,
+      "post": {
+        "platform": "Facebook",
+        "article": "https://go.nih.gov/yMfvxQL",
+        "article_host": "go.nih.gov",
+        "article_read": false,
+        "read_in_browser": true
+      },
+      "source": null,
+      "trial_records": 22,
+      "likely_records": 2,
+      "top": [
+        {
+          "id": "NCT06625320",
+          "score": 0.99
+        },
+        {
+          "id": "NCT05379985",
+          "score": 0.54
+        },
+        {
+          "id": "NCT06128551",
+          "score": 0.33
+        }
+      ],
+      "method": "Fresh manually bounded public post caption and observed NIH link, composed with installed Safari 0.9.18 functions; no native collector/popup/storage verification."
+    }
+  },
+  "release": {
+    "commit": "c1d2ac86ab6318a46eecf979f8342821f6b45b08",
+    "pr": 195,
+    "production_ci": 43805655414,
+    "ci_conclusion": "success",
+    "worker_version": "9c272524-d9ee-448b-94a2-925d8e22be70",
+    "deployed_at": "2026-11-16T04:45:55Z",
+    "tests": {
+      "pipeline": 1562,
+      "site": 658,
+      "extension": 170
+    }
+  },
+  "installed_extension": {
+    "version": "0.9.18",
+    "build": 26,
+    "resource_hashes_verified": 35,
+    "native_verified": false,
+    "source_commit": "36f2b83bf77bcfcd79d8584c930e08464b4067ac",
+    "method": "Existing signed resources unchanged. Installed composition/exact-address functions checked against release; native popup/storage unverified."
+  },
+  "validation": {
+    "independent_reviews": "Standards and specification reviews clear at 57b3b9d after method/glossary/design wording alignment.",
+    "public_rehearsal": "Passed; production CI verifies full suite and public build.",
+    "released_checks": "Live data/index match rehearsal; all 258 exact address mappings unchanged. Fresh Hacker News service requests, website forms, installed Safari functions and public card content verified. Fresh Facebook caption returns correct trial/card. Native popup/storage and Reddit CAPTCHA remain unresolved."
+  }
+}

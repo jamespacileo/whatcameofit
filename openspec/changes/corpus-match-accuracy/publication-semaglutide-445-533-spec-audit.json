@@ -1,0 +1,335 @@
+{
+  "created_at_utc": "2026-11-16T00:53:36.073579+00:00",
+  "base_main": "6b72d585",
+  "scope": "Read-only clinical intervention/indication/role audit of all 16 approved CTgov matches for archived claim445, and two approved HFpEF matches for claim533. No efficacy inference from registration. No mutations except this audit and public raw registry cache.",
+  "raw_registry_file": "Private fresh registry cache; not committed. Integrity recorded by raw_sha256.",
+  "raw_sha256": "668828375f2f5b5e4fcc1bea67f8f521673c5720e1c946219adc88eb38ef50be",
+  "claim445": {
+    "slug": "semaglutide-obesity",
+    "recommendation": "Clinical scope supports restoring broad semaglutide-for-obesity after excluding NCT05870462 and withholding NCT07701005; 14 supported associations remain. No route restriction added.",
+    "matches": [
+      {
+        "match_id": 14522,
+        "nct_id": "NCT03693430",
+        "disposition": "compatible",
+        "basis": "Semaglutide versus placebo, common lifestyle support; percentage weight change and >=5% weight reduction are primary outcomes at 104 weeks.",
+        "evidence_fields": [
+          "armsInterventionsModule",
+          "outcomesModule.primaryOutcomes"
+        ],
+        "source_url": "https://clinicaltrials.gov/study/NCT03693430",
+        "registry_status": "COMPLETED",
+        "registry_phases": [
+          "PHASE3"
+        ],
+        "registry_last_update": "2023-07-06"
+      },
+      {
+        "match_id": 13646,
+        "nct_id": "NCT03548935",
+        "disposition": "compatible",
+        "basis": "STEP 1: semaglutide versus placebo, common lifestyle support; weight change and >=5% weight reduction primary outcomes at 68 weeks.",
+        "evidence_fields": [
+          "armsInterventionsModule",
+          "outcomesModule.primaryOutcomes"
+        ],
+        "source_url": "https://clinicaltrials.gov/study/NCT03548935",
+        "registry_status": "COMPLETED",
+        "registry_phases": [
+          "PHASE3"
+        ],
+        "registry_last_update": "2021-11-19"
+      },
+      {
+        "match_id": 13647,
+        "nct_id": "NCT03574597",
+        "disposition": "compatible",
+        "basis": "SELECT: semaglutide versus placebo for cardiovascular outcomes; genuine registered body-weight change secondary outcome establishes obesity scope.",
+        "evidence_fields": [
+          "armsInterventionsModule",
+          "outcomesModule.secondaryOutcomes"
+        ],
+        "source_url": "https://clinicaltrials.gov/study/NCT03574597",
+        "registry_status": "COMPLETED",
+        "registry_phases": [
+          "PHASE3"
+        ],
+        "registry_last_update": "2024-08-30"
+      },
+      {
+        "match_id": 14471,
+        "nct_id": "NCT07701005",
+        "disposition": "hold_uncertain",
+        "basis": "Separate semaglutide and tirzepatide exposure cohorts and weight/BMI secondary measures are listed, but detailed description expressly pools both drugs for class-level responses. An agent-specific obesity investigation is not established; withhold positive association.",
+        "evidence_fields": [
+          "descriptionModule.detailedDescription",
+          "armsInterventionsModule.armGroups",
+          "outcomesModule.secondaryOutcomes"
+        ],
+        "source_url": "https://clinicaltrials.gov/study/NCT07701005",
+        "registry_status": "COMPLETED",
+        "registry_phases": [],
+        "registry_last_update": "2026-07-15"
+      },
+      {
+        "match_id": 14472,
+        "nct_id": "NCT05606471",
+        "disposition": "compatible_primary_paper_resolves_role",
+        "basis": "Registry alone suggests comparator-only semaglutide beside experimental semaglutide+VLCD. Primary report PMID38996661 explicitly studies each intervention individually and combined for weight, body composition and glycemic outcomes; it identifies this NCT. Retain single-drug association on that additional evidence. Same evidence revises prior VLCD-T2D comparator-only exclusion. Registry activity remains UNKNOWN; paper does not silently rewrite registry facts.",
+        "evidence_fields": [
+          "armsInterventionsModule.armGroups",
+          "outcomesModule.secondaryOutcomes",
+          "primary report purpose/methods",
+          "HRA study identity/results"
+        ],
+        "source_url": "https://clinicaltrials.gov/study/NCT05606471",
+        "registry_status": "UNKNOWN",
+        "registry_phases": [
+          "PHASE4"
+        ],
+        "registry_last_update": "2022-11-04",
+        "additional_primary_sources": [
+          "https://pubmed.ncbi.nlm.nih.gov/38996661/",
+          "https://doi.org/10.1016/j.clnu.2024.06.034",
+          "https://www.hra.nhs.uk/planning-and-improving-research/application-summaries/research-summaries/glp-1-agonism-with-vlcd/"
+        ],
+        "prior_audit_revision": "Prior VLCD-T2D exclusion based only on registry comparator role should be reconsidered using the primary report; no prior artifact overwritten."
+      },
+      {
+        "match_id": 14447,
+        "nct_id": "NCT05870462",
+        "disposition": "exclude_other_indication",
+        "basis": "SEMA-VR tests cardiovascular vessel-repair mechanisms: all registered outcomes are vascular regenerative cell frequencies. Obesity/T2D are participant conditions; no obesity efficacy or obesity-treatment safety endpoint establishes this claim. Exclusion is indication mismatch, not merely BASIC_SCIENCE design.",
+        "evidence_fields": [
+          "descriptionModule",
+          "outcomesModule.primaryOutcomes",
+          "outcomesModule.secondaryOutcomes"
+        ],
+        "source_url": "https://clinicaltrials.gov/study/NCT05870462",
+        "registry_status": "UNKNOWN",
+        "registry_phases": [
+          "PHASE4"
+        ],
+        "registry_last_update": "2023-07-25"
+      },
+      {
+        "match_id": 14448,
+        "nct_id": "NCT05746039",
+        "disposition": "compatible",
+        "basis": "Single-arm semaglutide feasibility/tolerability for weight loss in advanced lung disease with BMI>=30; body-composition secondary measures. Relevant obesity safety/feasibility study despite phase1/2 and comorbidity.",
+        "evidence_fields": [
+          "descriptionModule.briefSummary",
+          "eligibilityModule",
+          "armsInterventionsModule",
+          "outcomesModule"
+        ],
+        "source_url": "https://clinicaltrials.gov/study/NCT05746039",
+        "registry_status": "RECRUITING",
+        "registry_phases": [
+          "PHASE1",
+          "PHASE2"
+        ],
+        "registry_last_update": "2026-04-21"
+      },
+      {
+        "match_id": 14450,
+        "nct_id": "NCT07272837",
+        "disposition": "compatible",
+        "basis": "Prospective semaglutide muscle-safety study; eligibility explicitly includes starting semaglutide for weight loss or T2D. Muscle/cardiac mass and body-fat tracking concern treatment-associated muscle loss. Observational record, not an efficacy RCT; no phase assigned.",
+        "evidence_fields": [
+          "descriptionModule.briefSummary",
+          "eligibilityModule.eligibilityCriteria",
+          "outcomesModule.primaryOutcomes",
+          "designModule"
+        ],
+        "source_url": "https://clinicaltrials.gov/study/NCT07272837",
+        "registry_status": "RECRUITING",
+        "registry_phases": [],
+        "registry_last_update": "2026-07-17"
+      },
+      {
+        "match_id": 14452,
+        "nct_id": "NCT05302596",
+        "disposition": "compatible",
+        "basis": "Semaglutide added to standard lifestyle/exercise versus that standard care alone in age>=65/BMI>=30; body weight and composition primary outcomes. Broad claim has no age restriction.",
+        "evidence_fields": [
+          "eligibilityModule",
+          "armsInterventionsModule.armGroups",
+          "outcomesModule.primaryOutcomes"
+        ],
+        "source_url": "https://clinicaltrials.gov/study/NCT05302596",
+        "registry_status": "COMPLETED",
+        "registry_phases": [
+          "PHASE2"
+        ],
+        "registry_last_update": "2025-04-17"
+      },
+      {
+        "match_id": 14453,
+        "nct_id": "NCT07592546",
+        "disposition": "compatible",
+        "basis": "Semaglutide weight-loss treatment group versus lean reference group; BMI, waist/hip, fat and body-composition primary measures accompany vascular/neurocognitive endpoints. Direct weight-loss investigation.",
+        "evidence_fields": [
+          "descriptionModule",
+          "armsInterventionsModule.armGroups",
+          "outcomesModule.primaryOutcomes"
+        ],
+        "source_url": "https://clinicaltrials.gov/study/NCT07592546",
+        "registry_status": "RECRUITING",
+        "registry_phases": [
+          "PHASE4"
+        ],
+        "registry_last_update": "2026-10-26"
+      },
+      {
+        "match_id": 14454,
+        "nct_id": "NCT06967389",
+        "disposition": "compatible",
+        "basis": "MODERN: children with class2/3 obesity receive semaglutide; stated weight-loss research purpose and BMI/waist/body-composition secondaries. Broad claim has no adult-only restriction. Registered observational, no phase.",
+        "evidence_fields": [
+          "descriptionModule",
+          "armsInterventionsModule",
+          "outcomesModule.secondaryOutcomes",
+          "designModule"
+        ],
+        "source_url": "https://clinicaltrials.gov/study/NCT06967389",
+        "registry_status": "RECRUITING",
+        "registry_phases": [],
+        "registry_last_update": "2026-07-21"
+      },
+      {
+        "match_id": 14464,
+        "nct_id": "NCT07858331",
+        "disposition": "compatible",
+        "basis": "PIVOT: semaglutide with nutrition/movement coaching versus usual care in obesity/CKD; weight change primary. Coaching is supportive weight management, no second experimental medicine; do not portray program effect as isolated drug effect.",
+        "evidence_fields": [
+          "armsInterventionsModule.armGroups",
+          "outcomesModule.primaryOutcomes"
+        ],
+        "source_url": "https://clinicaltrials.gov/study/NCT07858331",
+        "registry_status": "NOT_YET_RECRUITING",
+        "registry_phases": [
+          "PHASE4"
+        ],
+        "registry_last_update": "2026-10-05"
+      },
+      {
+        "match_id": 14467,
+        "nct_id": "NCT06396416",
+        "disposition": "compatible",
+        "basis": "OK-TRANSPLANT2: semaglutide with nutrition/movement coaching versus usual care; obesity treatment feasibility primary and weight/body-composition secondary outcomes. Same supportive-care boundary as PIVOT.",
+        "evidence_fields": [
+          "armsInterventionsModule.armGroups",
+          "outcomesModule"
+        ],
+        "source_url": "https://clinicaltrials.gov/study/NCT06396416",
+        "registry_status": "RECRUITING",
+        "registry_phases": [
+          "PHASE4"
+        ],
+        "registry_last_update": "2026-06-29"
+      },
+      {
+        "match_id": 14469,
+        "nct_id": "NCT06803888",
+        "disposition": "compatible",
+        "basis": "Head-to-head obesity investigation of bariatric surgery, semaglutide and tirzepatide with separate arms and weight loss primary. All arms labelled ACTIVE_COMPARATOR; the purpose explicitly co-investigates the separate therapies, so this is not incidental comparator-only exposure.",
+        "evidence_fields": [
+          "descriptionModule",
+          "armsInterventionsModule.armGroups",
+          "outcomesModule.primaryOutcomes"
+        ],
+        "source_url": "https://clinicaltrials.gov/study/NCT06803888",
+        "registry_status": "ACTIVE_NOT_RECRUITING",
+        "registry_phases": [
+          "PHASE4"
+        ],
+        "registry_last_update": "2026-09-03"
+      },
+      {
+        "match_id": 16241,
+        "nct_id": "NCT03611582",
+        "disposition": "compatible",
+        "basis": "STEP3: semaglutide versus placebo with common intensive behavioral therapy; weight change and >=5% weight loss primary.",
+        "evidence_fields": [
+          "armsInterventionsModule",
+          "outcomesModule.primaryOutcomes"
+        ],
+        "source_url": "https://clinicaltrials.gov/study/NCT03611582",
+        "registry_status": "COMPLETED",
+        "registry_phases": [
+          "PHASE3"
+        ],
+        "registry_last_update": "2021-11-11"
+      },
+      {
+        "match_id": 16242,
+        "nct_id": "NCT03552757",
+        "disposition": "compatible",
+        "basis": "STEP2: separate semaglutide 1.0mg and 2.4mg arms versus placebo in overweight/obesity with T2D; weight outcomes primary. Broad claim has no dose or diabetes exclusion.",
+        "evidence_fields": [
+          "armsInterventionsModule",
+          "outcomesModule.primaryOutcomes"
+        ],
+        "source_url": "https://clinicaltrials.gov/study/NCT03552757",
+        "registry_status": "COMPLETED",
+        "registry_phases": [
+          "PHASE3"
+        ],
+        "registry_last_update": "2021-11-09"
+      }
+    ]
+  },
+  "claim533": {
+    "recommended_indication": "Obesity-related heart failure with preserved ejection fraction",
+    "matches": [
+      {
+        "match_id": 17196,
+        "nct_id": "NCT04788511",
+        "disposition": "compatible_with_narrowed_indication",
+        "basis": "Official title explicitly names obesity-related HFpEF. Eligibility BMI>=30, NYHA II-IV, LVEF>=45%; semaglutide 2.4mg weekly versus placebo; KCCQ-CSS and body weight primary outcomes. HbA1c>=6.5% excluded.",
+        "source_url": "https://clinicaltrials.gov/study/NCT04788511",
+        "evidence_fields": [
+          "identificationModule.officialTitle",
+          "eligibilityModule.eligibilityCriteria",
+          "armsInterventionsModule",
+          "outcomesModule.primaryOutcomes"
+        ],
+        "registry_status": "COMPLETED",
+        "registry_phases": [
+          "PHASE3"
+        ],
+        "registry_enrollment": {
+          "count": 529,
+          "type": "ACTUAL"
+        }
+      },
+      {
+        "match_id": 17198,
+        "nct_id": "NCT04916470",
+        "disposition": "compatible_with_narrowed_indication",
+        "basis": "Official title explicitly names obesity-related HFpEF. Eligibility BMI>=30, NYHA II-IV, LVEF>=45%; semaglutide 2.4mg weekly versus placebo; KCCQ-CSS and body weight primary outcomes. T2D required for >=90 days; HbA1c<=10%.",
+        "source_url": "https://clinicaltrials.gov/study/NCT04916470",
+        "evidence_fields": [
+          "identificationModule.officialTitle",
+          "eligibilityModule.eligibilityCriteria",
+          "armsInterventionsModule",
+          "outcomesModule.primaryOutcomes"
+        ],
+        "registry_status": "COMPLETED",
+        "registry_phases": [
+          "PHASE3"
+        ],
+        "registry_enrollment": {
+          "count": 617,
+          "type": "ACTUAL"
+        }
+      }
+    ]
+  },
+  "limitations": [
+    "No full news/article-summary or regulatory-approval audit; this is intervention/indication/role review.",
+    "No claim that every eligible semaglutide trial has been found.",
+    "No unreported treatment effects inferred; registry activity status retained literally."
+  ]
+}

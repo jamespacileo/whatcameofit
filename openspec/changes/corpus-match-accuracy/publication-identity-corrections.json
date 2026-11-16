@@ -1,0 +1,86 @@
+{
+  "decided_at": "2026-11-16T00:49:05.055144+00:00",
+  "decider": "assistant",
+  "published": false,
+  "model_calls": 0,
+  "identity_corrections": [
+    {
+      "claim_id": 398,
+      "slug": "live-attenuated-hsv-2-vaccine-herpes-simplex-virus-infection",
+      "before": {
+        "intervention": "Live attenuated HSV-2 vaccine",
+        "indication": "Herpes simplex virus infection, including genital herpes"
+      },
+      "after": {
+        "intervention": "Theravax HSV-2",
+        "indication": "Recurrent genital herpes",
+        "aliases": [
+          "Theravax",
+          "TheravaxHSV-2"
+        ]
+      },
+      "source_url": "https://www.prnewswire.com/news-releases/first-ever-human-trial-of-a-live-attenuated-functioning-therapeutic-herpes-vaccine-300345431.html",
+      "reason": "The manufacturer identifies Halford\u2019s 2016 therapeutic candidate and recurrent genital-herpes population. The Wired account identifies the same developer, trial and completers. Only candidate identity is taken from the announcement; its promotional benefit and safety assertions are not adopted. RVx-201 and predecessor mutants are not added as aliases. The published slug and source-bound statements are preserved."
+    }
+  ],
+  "article_links": [
+    {
+      "source_article_id": 695,
+      "archived_claim_id": 548,
+      "surviving_claim_id": 554,
+      "surviving_slug": "semaglutide-chronic-kidney-disease-in-people-with-type-2",
+      "new_article_id": 728,
+      "article_url": "https://finance.yahoo.com/news/shares-dialysis-providers-drop-ozempics-100259954.html",
+      "primary_source_url": "https://www.novonordisk.com/content/nncorp/global/en/news-and-media/news-and-ir-materials/news-details.html?id=166327",
+      "reason": "FLOW early-stop announcement identifies semaglutide for chronic kidney disease with type 2 diabetes.",
+      "verification_limit": "Existing stored article title/summary and underlying primary event identify the claim; a fresh full-page news read was unavailable. Only reference metadata is copied; no statements, promises or article text."
+    },
+    {
+      "source_article_id": 674,
+      "archived_claim_id": 531,
+      "surviving_claim_id": 554,
+      "surviving_slug": "semaglutide-chronic-kidney-disease-in-people-with-type-2",
+      "new_article_id": 729,
+      "article_url": "https://www.ctvnews.ca/health/article/health-canada-approves-ozempic-to-reduce-kidney-deterioration-in-people-with-diabetes/",
+      "primary_source_url": "https://www.novonordisk.ca/news-and-media/press-releases/2025/health-canada-approves-ozempic--to-reduce-risks-of-egfr.html",
+      "reason": "The Canadian approval announcement identifies Ozempic as semaglutide and explicitly restricts the kidney indication to adults with type 2 diabetes and chronic kidney disease.",
+      "verification_limit": "Existing stored article title/summary and underlying primary event identify the claim; a fresh full-page news read was unavailable. Only reference metadata is copied; no statements, promises or article text."
+    },
+    {
+      "source_article_id": 692,
+      "archived_claim_id": 531,
+      "surviving_claim_id": 554,
+      "surviving_slug": "semaglutide-chronic-kidney-disease-in-people-with-type-2",
+      "new_article_id": 730,
+      "article_url": "https://www.cnbc.com/2025/01/28/novo-nordisks-ozempic-wins-fda-approval-for-chronic-kidney-disease.html",
+      "primary_source_url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2025/209637Orig1s025ltr.pdf",
+      "reason": "The FDA approval letter confirms the same semaglutide, type 2 diabetes and chronic kidney disease identity.",
+      "verification_limit": "Existing stored article title/summary and underlying primary event identify the claim; a fresh full-page news read was unavailable. Only reference metadata is copied; no statements, promises or article text."
+    }
+  ],
+  "claim_approvals": [
+    {
+      "claim_id": 566,
+      "slug": "fasting-mimicking-diet-mild-to-moderate-crohns-disease",
+      "source_url": "https://pubmed.ncbi.nlm.nih.gov/41530382/",
+      "trial_id": "NCT04147585",
+      "reason": "The primary paper confirms the fasting-mimicking diet and mild-to-moderate Crohn\u2019s population after normal preparation. The 97-person paper sample and registry enrollment remain distinct. The later-cycle duration was refused by the released reading guard; pending safety/early-benefit statements remain pending."
+    }
+  ],
+  "verification": {
+    "verified_at": "2026-11-16T00:50:32.010603+00:00",
+    "identities_and_three_links_read_back": true,
+    "diet_approved_by": "assistant",
+    "theravax_prepare": {
+      "succeeded": true,
+      "duration_seconds": 8,
+      "new_candidate_matches": 0,
+      "status": "no_trial_found",
+      "limitation": "No registered matching trial found; this is not a claim that no human use occurred."
+    },
+    "usage_since_correction": {
+      "calls": 0,
+      "cost_usd": "0"
+    }
+  }
+}

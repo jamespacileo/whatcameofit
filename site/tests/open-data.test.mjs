@@ -122,7 +122,7 @@ const claim = (slug, extra = {}) => ({
 });
 
 const exported = (preview = false) => ({
-  schema_version: 1,
+  schema_version: 2,
   generated_at: "2025-01-01T00:00:00Z",
   last_checked_at: "2024-12-31T00:00:00Z",
   preview,

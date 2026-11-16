@@ -1,0 +1,171 @@
+{
+  "checked_at": "2026-11-16T01:26:17.452205+00:00",
+  "corpus_id": "A083",
+  "claim_id": 567,
+  "slug": "alpha-lactalbumin-vaccine-tnbc-prevention",
+  "source_url": "https://newsroom.clevelandclinic.org/2025/12/11/cleveland-clinic-presents-final-results-of-phase-1-clinical-trial-of-preventive-breast-cancer-vaccine-study",
+  "registry_url": "https://clinicaltrials.gov/study/NCT04674306",
+  "identity_review": {
+    "checked_at": "2026-11-16T01:22:19.714801+00:00",
+    "claim_id": 567,
+    "slug": "alpha-lactalbumin-vaccine-tnbc-prevention",
+    "source_url": "https://newsroom.clevelandclinic.org/2025/12/11/cleveland-clinic-presents-final-results-of-phase-1-clinical-trial-of-preventive-breast-cancer-vaccine-study",
+    "registry_url": "https://clinicaltrials.gov/study/NCT04674306",
+    "before": {
+      "intervention": "α-lactalbumin-targeting breast cancer vaccine",
+      "summary": "Cleveland Clinic reported that its Phase 1 trial of an investigational vaccine targeting α-lactalbumin found an immune response in 74% of 35 participants. The vaccine was described as safe and well tolerated, with mostly mild injection-site skin inflammation. A Phase 2 study is planned to assess efficacy.",
+      "review_state": "rejected"
+    },
+    "after": {
+      "intervention": "α-lactalbumin vaccine",
+      "aliases": [
+        "alpha-lactalbumin vaccine",
+        "aLA breast cancer vaccine"
+      ],
+      "indication": "Prevention of triple-negative breast cancer",
+      "summary": "Cleveland Clinic reported an immune response in 74% of 35 Phase 1 participants. The study included people at risk of recurrence after triple-negative breast cancer treatment and cancer-free people with inherited risk; one cohort also received pembrolizumab. The report described tolerability and dose finding, not demonstrated cancer prevention. It said a Phase 2 efficacy study was planned for late 2026.",
+      "review_state": "rejected"
+    },
+    "reason": "Use the registry-named candidate, preserving the preventive aim and mixed cohorts. Zymosan is identified by the registry as the vaccine adjuvant, not a separate investigated treatment. The standalone vaccine cohorts support this identity even though one additional cohort receives standard-of-care pembrolizumab. Immune response is not evidence that cancer was prevented. No trial or claim approval performed by this correction."
+  },
+  "trial_review": {
+    "trial_id": "NCT04674306",
+    "match_id": 17881,
+    "score": 0.91,
+    "original_decider": "rule",
+    "verified_by": "assistant",
+    "assessment": "Compatible. Registry prevention cohort explicitly studies cancer-free individuals with genetic risk; other cohorts study recurrence risk after treatment. Zymosan is the vaccine preparation adjuvant. A pembrolizumab cohort does not negate the standalone vaccine cohorts. The article names this exact registration.",
+    "phase": "early_phase_1",
+    "current_registry_state": "completed",
+    "participants": {
+      "registry_actual": 35,
+      "article_reported": 35
+    },
+    "registry_events": [
+      {
+        "id": 11734,
+        "external": "NCT04674306",
+        "type": "trial_registered",
+        "date": "2020-12-19",
+        "state": "approved",
+        "by": "rule"
+      },
+      {
+        "id": 11735,
+        "external": "NCT04674306",
+        "type": "trial_status_change",
+        "date": "2021-10-01",
+        "state": "approved",
+        "by": "rule"
+      },
+      {
+        "id": 11736,
+        "external": "NCT04674306",
+        "type": "trial_status_change",
+        "date": "2025-12-29",
+        "state": "approved",
+        "by": "rule"
+      },
+      {
+        "id": 11737,
+        "external": "NCT04674306",
+        "type": "trial_results_posted",
+        "date": "2026-07-17",
+        "state": "approved",
+        "by": "rule"
+      }
+    ],
+    "raw_record_sha256": "b1420d56c36c4d6ca22930aad805b0d1d356626608d754b12fee8a7d707a2d6c",
+    "outcomes": "Three maximum-tolerated-dose outcomes at Day 84; no cancer-prevention efficacy result inferred. Six bounded readings retain exact record wording.",
+    "results": "Posted 2026-07-17; multi-row treatment outcome keeps numbers hidden, other cohorts retain NA. Posted results do not advance the phase."
+  },
+  "paper_review": [
+    {
+      "doi": "10.1136/jitc-2024-sitc2024.0631",
+      "primary_url": "https://jitc.bmj.com/content/jitc/12/Suppl_2/A726.full.pdf",
+      "assessment": "Primary conference abstract confirms NCT04674306 and the same preventive/recurrence cohorts. It explicitly says Phase I cannot establish clinical efficacy. Metadata-only related paper, not the source of the 2025 final percentages."
+    },
+    {
+      "doi": "10.1158/1538-7445.sabcs23-po2-17-12",
+      "assessment": "Indexed title and institutional identity match this earlier Phase I vaccine report. Publisher full text was unavailable; retain as a metadata-only related conference abstract, without inferred results."
+    }
+  ],
+  "statements": {
+    "retained": [
+      2878
+    ],
+    "pending_not_published": [
+      2879
+    ],
+    "reason": "The report supports the 74% immune-response statement across cohorts. Earlier mouse result remains pending. Summary avoids a blanket safety conclusion or demonstrated prevention."
+  },
+  "efficiency": {
+    "prepare_seconds": 90,
+    "resolve_seconds": 84,
+    "fetch_seconds": 1,
+    "readings_seconds": 5,
+    "optional_source_limit": "GSRS development-code discovery did not answer after four attempts. No unchanged full preparation repeat.",
+    "provider_calls_since_draft": 7,
+    "provider_cost_usd": 0.00177,
+    "usage": [
+      {
+        "at": "2026-11-16 01:21:30.149741+00:00",
+        "purpose": "extraction",
+        "cost": "0.000910"
+      },
+      {
+        "at": "2026-11-16 01:21:31.570465+00:00",
+        "purpose": "decision:statement_check",
+        "cost": "0.000237"
+      },
+      {
+        "at": "2026-11-16 01:23:39.677401+00:00",
+        "purpose": "decision:entity_match",
+        "cost": "0.000156"
+      },
+      {
+        "at": "2026-11-16 01:23:39.866270+00:00",
+        "purpose": "decision:evidence_stage",
+        "cost": "0.000029"
+      },
+      {
+        "at": "2026-11-16 01:23:43.209787+00:00",
+        "purpose": "decision:paper_match",
+        "cost": "0.000198"
+      },
+      {
+        "at": "2026-11-16 01:23:44.752822+00:00",
+        "purpose": "decision:origin_paper",
+        "cost": "0.000054"
+      },
+      {
+        "at": "2026-11-16 01:23:50.225176+00:00",
+        "purpose": "readings",
+        "cost": "0.000186"
+      }
+    ],
+    "unchanged_readings_repeat": {
+      "trials_read": 0,
+      "trials_reused": 1,
+      "readings_stored": 0,
+      "new_provider_calls": 0
+    }
+  },
+  "snapshot": {
+    "base_commit": "2c247bb001f93a3c50ccf1f3ca9073334efde8b8",
+    "previous_cards": 164,
+    "cards": 165,
+    "added": [
+      "alpha-lactalbumin-vaccine-tnbc-prevention"
+    ],
+    "removed": [],
+    "changed_shared_cards": [],
+    "preview": false,
+    "method": "Normal public export and normal staging; no manual snapshot edits."
+  },
+  "release_verification": {
+    "state": "pending",
+    "native_safari": "Unverified: automation still reports Mac locked. Existing installed 0.9.15 resources are unchanged by this data-only addition.",
+    "corpus_and_sheet": "Current released verdict retained until deployment and verification."
+  }
+}

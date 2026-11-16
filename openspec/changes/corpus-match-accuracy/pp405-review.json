@@ -1,0 +1,218 @@
+{
+  "date": "2026-11-16",
+  "claim": "pp405-androgenetic-alopecia",
+  "rows": [
+    "A072",
+    "S033",
+    "S038",
+    "S049",
+    "S050"
+  ],
+  "source_review": [
+    {
+      "id": "A072",
+      "url": "https://pelagepharma.com/press-releases/pelage-pharmaceuticals-announces-positive-phase-2a-clinical-trial-results-for-pp405-in-regenerative-hair-loss-therapy/",
+      "published": "2025-06-17",
+      "method": "Primary company report read through web and normal configured page-reader extraction; no article body retained.",
+      "finding": "Topical PP405 for androgenetic alopecia. The report describes 78 participants, four weeks of dosing, safety/pharmacokinetic objectives and an exploratory week-eight density response in a subgroup of men with more extensive hair loss. It does not establish benefit across the whole population, comparative superiority, sustained benefit or approval."
+    },
+    {
+      "url": "https://pelagepharma.com/press-releases/pp405-awaken-trial-first-patient-dosed/",
+      "published": "2026-10-14",
+      "method": "Primary report read through web; attached through normal reference entry. It was not separately extracted by the model.",
+      "finding": "Names NCT07819435 and the Phase 2/3 AWAKEN study in men; plans a separate Phase 2 study in women. These are later studies, distinct from the earlier 78-person report."
+    },
+    {
+      "id": "S038",
+      "url": "https://www.instagram.com/p/De1Sw5Pj-xV/",
+      "method": "Current public caption read in the browser on 2026-11-16. Caption-only source review, not a fresh app lookup or image inspection.",
+      "finding": "Explicitly names PP405, androgenetic alopecia, 78 participants, exploratory male subgroup and the later AWAKEN announcement. Retain this specificity when rerunning; do not import neighboring comments."
+    }
+  ],
+  "trial_review": {
+    "source": "Fresh ClinicalTrials.gov structured records with payloads/timestamps retained privately in pp405-primary-records.json and the normal evidence database.",
+    "records": [
+      {
+        "id": "NCT06393452",
+        "match_id": 18001,
+        "score": 0.98,
+        "decided_by": "rule",
+        "scope": "PP405 0.05% topical gel, adults aged 18–55 of both sexes with androgenetic alopecia; 78 actual participants; completed phase 2 with posted results.",
+        "details": "The registry healthy-volunteers flag is true, but inclusion explicitly requires androgenetic alopecia; it is not a wrong-indication healthy-only study. Twenty primary safety/tolerability outcomes are retained as the total; the standard public selection shows three, with their original randomized/extension timing. Hair-density subgroup claims remain source-reported statements, not primary registry results."
+      },
+      {
+        "id": "NCT07819435",
+        "match_id": 18003,
+        "score": 0.9,
+        "decided_by": "rule",
+        "scope": "AWAKEN: same topical product in men aged 18–55 with androgenetic alopecia; 600 planned; actual start 2026-09-21; phase 2/3, under way.",
+        "details": "Week-24 hair-count primary outcome; extended treatment through week 52. Existing status rules intentionally count a combined phase trial at its lower phase; keep derived Phase 2."
+      },
+      {
+        "id": "NCT07907783",
+        "match_id": 18002,
+        "score": 0.76,
+        "decided_by": "assistant",
+        "scope": "Same topical product in women aged 18–65 with androgenetic alopecia; 200 planned; phase 2, not yet recruiting; estimated November start only.",
+        "details": "Verified intervention/indication and approved as assistant, preserving the score. Fetch adds only its October 30 registration event, not an invented start. Week-24 hair-count outcome."
+      }
+    ],
+    "events": "Seven approved registry events; six approved by rule before the manual match review, then one registration event fetched normally. No fabricated efficacy or approval event.",
+    "papers": "One low-scored ex-vivo conference abstract remains pending; other unrelated papers remain rejected. No origin paper invented."
+  },
+  "publication_review": {
+    "workflow": "No private duplicate found. Normal extraction creates claim 576 with rule approval and early-human stage. Prepare completes in 22 seconds, including 14-second resolve, one-second fetch and six-second readings. After approving the additional match, targeted fetch/readings process only that record; two unchanged records are reused.",
+    "decisions": "Assistant approves match 18002 and subgroup statement 2915 only, retaining scores. Three other low-confidence statements remain pending; one copied statement was refused by extraction. Claim stays approved by rule and checked_by_person false.",
+    "summary": "Corrected headline/summary explicitly attribute the early findings and exploratory subgroup, distinguish the later trials, and avoid an approval or established long-term efficacy claim. Approach set to drug. First-report date is the earliest attached report, 2025-06-17.",
+    "normal_export": "176 cards: one addition, 170 prior cards identical, five prior cards change only the read_at of shared ROR records. No topic, clinical, trial, status or article change on those existing cards. No snapshot splicing.",
+    "existing_card_changes": [
+      {
+        "path": "knee-osteoarthritis-genicular-artery-embolisation.organisations[19].record.read_at",
+        "before": "2026-11-15T13:22:05.912289Z",
+        "after": "2026-11-16T07:19:11.290008Z"
+      },
+      {
+        "path": "kidney-failure-pig-kidney-transplant.organisations[0].record.read_at",
+        "before": "2026-11-14T20:04:34.786165Z",
+        "after": "2026-11-16T07:19:11.752419Z"
+      },
+      {
+        "path": "periodontal-zinc-oxide-membrane.organisations[0].record.read_at",
+        "before": "2026-11-15T13:22:05.912289Z",
+        "after": "2026-11-16T07:19:11.290008Z"
+      },
+      {
+        "path": "biological-ageing-glp-1-drugs.organisations[8].record.read_at",
+        "before": "2026-11-15T13:22:05.912289Z",
+        "after": "2026-11-16T07:19:11.290008Z"
+      },
+      {
+        "path": "tulsa-prostate-cancer.organisations[0].record.read_at",
+        "before": "2026-11-15T13:22:05.912289Z",
+        "after": "2026-11-16T07:19:11.290008Z"
+      }
+    ]
+  },
+  "candidate": {
+    "checked_at": "2026-11-16T07:28:40.433Z",
+    "base_commit": "961d274c1a4b8e7f654d293aa0860f326f5dc13d",
+    "public_cards": 176,
+    "added_claim": "pp405-androgenetic-alopecia",
+    "unchanged_cards": 170,
+    "existing_card_changes": [
+      {
+        "path": "knee-osteoarthritis-genicular-artery-embolisation.organisations[19].record.read_at",
+        "before": "2026-11-15T13:22:05.912289Z",
+        "after": "2026-11-16T07:19:11.290008Z"
+      },
+      {
+        "path": "kidney-failure-pig-kidney-transplant.organisations[0].record.read_at",
+        "before": "2026-11-14T20:04:34.786165Z",
+        "after": "2026-11-16T07:19:11.752419Z"
+      },
+      {
+        "path": "periodontal-zinc-oxide-membrane.organisations[0].record.read_at",
+        "before": "2026-11-15T13:22:05.912289Z",
+        "after": "2026-11-16T07:19:11.290008Z"
+      },
+      {
+        "path": "biological-ageing-glp-1-drugs.organisations[8].record.read_at",
+        "before": "2026-11-15T13:22:05.912289Z",
+        "after": "2026-11-16T07:19:11.290008Z"
+      },
+      {
+        "path": "tulsa-prostate-cancer.organisations[0].record.read_at",
+        "before": "2026-11-15T13:22:05.912289Z",
+        "after": "2026-11-16T07:19:11.290008Z"
+      }
+    ],
+    "mapping_changes": [
+      {
+        "id": "A072",
+        "before": [],
+        "after": [
+          "pp405-androgenetic-alopecia"
+        ]
+      }
+    ],
+    "exact_article_matching_ms": 0.122,
+    "model_requests": 0,
+    "registry_requests": 0,
+    "article_requests": 0,
+    "publication_index_requests": 1,
+    "clinical_controls": [
+      {
+        "condition": "Androgenetic alopecia",
+        "slugs": [
+          "pp405-androgenetic-alopecia"
+        ]
+      },
+      {
+        "condition": "Hair loss",
+        "slugs": []
+      },
+      {
+        "condition": "Hair growth",
+        "slugs": []
+      },
+      {
+        "condition": "Alopecia (hair loss)",
+        "slugs": []
+      }
+    ],
+    "limits": "Candidate exact article lookup and synthetic structured-reading controls only. Does not establish fresh social caption/media behavior or native Safari. Five existing cards change only shared organisation read timestamps."
+  },
+  "verification": {
+    "public_rehearsal": "make deploy-ci-check passed for the normal staged 176-card snapshot.",
+    "scope": "All 258 exact source mappings checked; only A072 changes. Synthetic specific/broad condition controls are not fresh social results. Existing social verdicts remain unchanged until released checks.",
+    "release": {
+      "pull_request": 206,
+      "reviewed_head": "d17a35ddd12e634f3ae4c31f8947b6dec8f94a61",
+      "main_commit": "dd829eb1475f6490471c6fcbcd8fafcef6f62a12",
+      "production_run": 43825309273,
+      "conclusion": "success",
+      "reviews": {
+        "standards": "clear",
+        "spec": "clear"
+      }
+    },
+    "native_safari": "Unverified. Installed signed Safari 0.9.21 (29) code is unchanged; this publication needs only the updated index.",
+    "regressions": "Production CI passed tests/build, deployment rehearsal, deployment and released smoke checks.",
+    "released_result_file": "extension/test-corpus/runs/2026-11-16-pp405-release.json",
+    "sheet_read_back": {
+      "checked_at": "2026-11-16T08:09:48.472Z",
+      "spreadsheet_id": "15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA",
+      "url": "https://docs.google.com/spreadsheets/d/15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA/edit?ouid=118272730050776001505",
+      "changed_values": 81,
+      "values_verified": true,
+      "preserved_inspected_cells": 161,
+      "metadata_preserved": true,
+      "summary_total": [
+        "Total",
+        "258",
+        "144",
+        "53",
+        "0",
+        "30",
+        "31",
+        "0"
+      ],
+      "visual_layout": "Native Google-rendered layout unavailable; existing formats and structure checked through cell metadata."
+    },
+    "released_findings": "A072 exact source matches its released card. Fresh S033 and S038 manual text/links through installed request functions return three trial candidates but no card; precise wording differs from exact card identity. Both current TikTok pages stop at age verification. Website form unavailable after browser-control timeouts; native Safari remains unavailable.",
+    "timing_limits": "Mac load average was 55.32 during this check; local timings are observations under load, not representative performance. Server-Timing reports Instagram core 7790 ms and Reddit core 9176 ms."
+  },
+  "follow_up": {
+    "reddit_reference": {
+      "url": "https://www.reddit.com/r/tressless/comments/1s6gl49/pelage_pp405_new_hair_growth_from_inactive/",
+      "access": "Public requested post readable in browser; no CAPTCHA solved.",
+      "scope": "Post title, text and two outgoing links only; images, full video and comments not used.",
+      "article": "https://www.dermatologytimes.com/view/reactivating-the-follicle-pp405-moves-toward-late-stage-trials-for-alopecia",
+      "article_title": "Reactivating the Follicle: PP405 Moves Toward Late-Stage Trials for Alopecia",
+      "article_published": "2026-03-28",
+      "article_review": "Direct interview with Pelage's chief medical officer and chief executive names topical PP405 and NCT06393452, 78 participants, safety/pharmacokinetic objectives and exploratory findings. Same trial as the verified AGA card. The source's generic alopecia wording alone would be insufficient, but the explicit trial identity resolves the report. Later phase plans are dated claims, not proof a trial had begun."
+    },
+    "publication": "Reference attached privately through normal article entry; normal export still running, not staged or released.",
+    "instagram": "Preserve current accurate treatment/population reading. Investigate accurate card association without weakening route, regimen or indication boundaries; do not count synthetic controls or old readings as new matches."
+  }
+}

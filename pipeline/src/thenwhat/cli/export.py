@@ -6,9 +6,11 @@ from typing import Annotated
 
 import typer
 
+from thenwhat.claims.entry import awaiting_audit
 from thenwhat.cli.console import out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
+from thenwhat.domain import ReviewState
 from thenwhat.export.build import write_export, write_schema
 
 
@@ -21,7 +23,8 @@ def export_command(
         typer.Option("--write-schema", help="Also write the export's JSON Schema to this file."),
     ] = None,
 ) -> None:
-    """Write the JSON file the site is built from: approved, unarchived claims and events."""
+    """Write the JSON file the site is built from: approved, unarchived claims and events.
+    A claim awaiting audit is left out and counted."""
     if schema_path is not None:
         write_schema(schema_path)
         out.print(f"Wrote schema to {schema_path}.", markup=False)
@@ -40,3 +43,14 @@ def export_command(
         unchecked = sum(1 for claim in export.claims if not claim.checked_by_person)
         if unchecked:
             out.print(f"{unchecked} of them have not been checked by a person.", markup=False)
+        held = sum(
+            1
+            for claim in awaiting_audit(session)
+            if claim.review_state is ReviewState.APPROVED and claim.archived_at is None
+        )
+        if held:
+            noun = "claim was" if held == 1 else "claims were"
+            out.print(
+                f"{held} approved {noun} left out: awaiting audit (thenwhat audit list).",
+                markup=False,
+            )

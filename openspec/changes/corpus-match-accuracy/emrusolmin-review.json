@@ -1,0 +1,150 @@
+{
+  "date": "2026-11-16",
+  "claim": "emrusolmin-multiple-system-atrophy",
+  "source_review": {
+    "id": "S008",
+    "post": "https://mastodon.social/@msaleben/117588915506604557",
+    "article": "https://msaleben.de/herber-rueckschlag-in-der-msa-forschung-teva-beendet-phase-2-studie-topas-msa-mit-emrusolmin-vorzeitig/",
+    "article_title": "Herber R\u00fcckschlag in der MSA-Forschung: Teva beendet Phase-2-Studie TOPAS-MSA mit Emrusolmin vorzeitig",
+    "article_published": "2026-11-09",
+    "official_report": "https://www.tevausa.com/news-and-media/press-releases/teva-to-discontinue-phase-2-topas-msa-study-of-emrusolmin-tev-286-following-interim-futility-analysis/",
+    "official_report_published": "2026-11-02",
+    "source_access": "Public addressed Mastodon post and linked German article read in browser; official Teva release read through web search/open. No source body or screenshot retained.",
+    "identity": "Emrusolmin (TEV-56286, anle138b) for multiple system atrophy in adults. Main trial NCT06568237, separate open-label extension NCT07197866. Primary registry payloads and timestamps retained privately in msa-primary-records.json.",
+    "status_limit": "Teva announced discontinuation of TOPAS-MSA following interim futility, not final efficacy results or a decision on the entire programme. Current registry payloads still say ACTIVE_NOT_RECRUITING for TOPAS-MSA and RECRUITING for its extension. Preserve the registry-derived status and explicitly date the reported discontinuation in the summary; do not fabricate a terminated event or a human-only failure flag.",
+    "duplicate_check": "No published or private claim found under emrusolmin, anle138b or 56286 on 2026-11-16.",
+    "mutations_performed": true,
+    "private_work": "Prepared through the normal workflow in 131 seconds, with assistant claim/stage approval and wrong-organisation rejection. Normal 175-card snapshot released in PR #204; all prior 174 cards unchanged."
+  },
+  "trial_review": {
+    "source": "ClinicalTrials.gov structured API; original payloads and fetch timestamps retained in the private database and msa-primary-records.json.",
+    "approved": [
+      {
+        "trial": "NCT06568237",
+        "score": 0.99,
+        "decided_by": "rule",
+        "scope": "TOPAS-MSA: oral TEV-56286/emrusolmin in adults aged 30\u201375 with multiple system atrophy, phase 2; 349 actual participants; placebo control; two 48-week symptom-score primary outcomes.",
+        "current_registry_state": "ACTIVE_NOT_RECRUITING",
+        "last_posted": "2026-11-05"
+      },
+      {
+        "trial": "NCT07197866",
+        "score": 0.96,
+        "decided_by": "rule",
+        "scope": "Separate open-label extension of TEV-56286 in adults aged 30+ with multiple system atrophy, phase 2; 200 planned participants; two 100-week safety primary outcomes.",
+        "current_registry_state": "RECRUITING",
+        "last_posted": "2026-10-09"
+      }
+    ],
+    "excluded_wrong_indication": [
+      "NCT04208152",
+      "NCT04685265",
+      "NCT05532358",
+      "NCT06627231",
+      "NCT06911567",
+      "NCT07674940"
+    ],
+    "excluded_reason": "Five healthy-volunteer studies and one Parkinson disease study do not test this claim indication. Six candidates rejected by rule; scores and original records retained.",
+    "events": "Four approved registry registration/start events only. No results, termination, regulatory approval or failure flag invented from the press release.",
+    "readings": "Eight structured readings retain two 48-week symptom endpoints and two 100-week safety endpoints; no efficacy result is inferred."
+  },
+  "publication_review": {
+    "first_report": "2026-11-02, the earliest attached source; not claimed to be the first-ever report about this molecule.",
+    "stage": "early_human confirmed as assistant, separately from registry-derived current phase_2.",
+    "statements": "Seven approved source-qualified summaries. The lower-confidence pending safety statement remains excluded. Two reported plans retain null dates.",
+    "organisation": "Rejected candidate 17999 matching Teva Pharmaceutical Industries to EVA Pharma in Egypt. Unresolved company identities remain plain names. FDA is named_in_report only, not an approval event.",
+    "limits": "No background vocabulary card or origin paper is invented. checked_by_person remains false.",
+    "export": "Normal public export and standard staging; 175 cards, one addition, all previous 174 exactly unchanged. Only top-level generated_at and last_checked_at also change; topics unchanged."
+  },
+  "efficiency": {
+    "prepare_elapsed_seconds": 131,
+    "resolve_elapsed_seconds": 95,
+    "observed_delay": "Optional GSRS development-code lookup did not answer after four attempts. This is an unresolved efficiency issue; no repeated unchanged preparation or extra provider experiment was performed.",
+    "candidate_lookup": "Exact linked-source reuse requires only the current Mastodon robots check and official public post API. No model, registry, or article-body requests.",
+    "provider_cost": "Not attributed per claim; no exact cost claim."
+  },
+  "candidate": {
+    "checked_at": "2026-11-16T07:00:35.759Z",
+    "base_commit": "0c7e74d1e9b2844a1e7784e06c2bceef576adf76",
+    "public_cards": 175,
+    "unchanged_cards": 174,
+    "added_claim": "emrusolmin-multiple-system-atrophy",
+    "changed_fields": [
+      "generated_at",
+      "last_checked_at",
+      "claims:one addition"
+    ],
+    "check": {
+      "id": "S008",
+      "url": "https://mastodon.social/@msaleben/117588915506604557",
+      "http": 200,
+      "ms": 291,
+      "slug": "emrusolmin-multiple-system-atrophy",
+      "requests": [
+        {
+          "url": "https://mastodon.social/robots.txt",
+          "status": 200
+        },
+        {
+          "url": "https://mastodon.social/api/v1/statuses/117588915506604557",
+          "status": 200
+        }
+      ],
+      "model_requests": 0,
+      "registry_requests": 0,
+      "article_requests": 0
+    },
+    "limits": "Candidate Worker with live official public Mastodon response and current robots check, guarded against model/registry/article work. Not released or native Safari verification. No source bodies retained."
+  },
+  "verification": {
+    "public_rehearsal": "make deploy-ci-check passed for the staged 175-card snapshot.",
+    "release": {
+      "pull_request": 204,
+      "reviewed_head": "a008ee142098b4a3764816fc866b96accd0eb5aa",
+      "main_commit": "58aa391978ce050ea289deaa13df951251d8a819",
+      "production_run": 43821427773,
+      "conclusion": "success",
+      "worker_version": "99b07483-a1ed-444d-a948-1173bc943626",
+      "deployed_at": "2026-11-16T07:10:16.5888479Z",
+      "reviews": {
+        "standards": "clear",
+        "spec": "clear"
+      }
+    },
+    "safari": "Data-only publication; signed installed Safari 0.9.21 (29) code is unchanged. Native collector/popup/storage remain unverified because computer control reports locked.",
+    "corpus_sheet": "Released S008 original URL, website form/card and installed functions pass; corpus and native Sheet updated/read back. 143 pass, 56 partial, 31 review, 28 blocked; 133 matching cards. Native collector/popup/storage and Google-rendered layout remain unverified.",
+    "regressions": "Production CI passed all 2,392 tests (1,562 pipeline, 660 site, 170 extension), lint/types and public rehearsal.",
+    "released_result_file": "extension/test-corpus/runs/2026-11-16-emrusolmin-release.json",
+    "installed_safari": {
+      "version": "0.9.21",
+      "build": 29,
+      "resource_hashes_verified": 35,
+      "source_commit": "50f3a7ce6b25e7aaa363fb5d4e6f66394c5a6ab5",
+      "native_verified": false,
+      "method": "Installed resource hashes, request composition and shared presenter verified; native collector/popup/storage unverified."
+    },
+    "sheet_read_back": {
+      "checked_at": "2026-11-16T07:13:12.068Z",
+      "spreadsheet_id": "15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA",
+      "ranges": [
+        "URLs!H9:P9",
+        "URLs!Z9:AF9",
+        "Summary!B1"
+      ],
+      "values_verified": 17,
+      "other_cells_preserved": 143,
+      "formats_formulas_validation_notes_chips_preserved": true,
+      "summary_total": [
+        "Total",
+        "258",
+        "143",
+        "56",
+        "0",
+        "28",
+        "31",
+        "0"
+      ],
+      "native_layout": "Unverified: browser access requires identity verification; existing styles preserved and checked through native cell metadata."
+    }
+  }
+}
