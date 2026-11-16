@@ -1,12 +1,18 @@
 # Tasks
 
+## PP405 androgenetic-alopecia coverage
+
+- [x] Verify A072 and the later primary AWAKEN report, read S038's current public caption, and check all three primary trial records. Prepare the new card normally in 22 seconds. Approve the verified women-only trial and source-qualified subgroup statement as assistant; retain the planned/actual distinction, early safety objectives and existing lower-phase rule for the combined Phase 2/3 trial. Targeted follow-up reads one new record and reuses two unchanged records.
+- [x] Stage the normal 176-card snapshot and audit the complete delta: one addition, 170 existing cards unchanged and five shared-organisation read timestamps refreshed. Public rehearsal passes. Check all 258 exact mappings (only A072 changes) and synthetic specific/broad condition controls without model or registry calls.
+- [ ] Complete independent reviews and CI deployment; rerun A072 and accessible affected social URLs against released site/installed functions, preserve explicit media/access limits, and update/read back the corpus and Google Sheet.
+
 ## Emrusolmin MSA coverage
 
 - [x] Verify the public S008 post, linked MSA Leben report, Teva announcement and primary registry records. Prepare one card through the normal workflow in 131 seconds; retain the two MSA trials, exclude six wrong-indication studies and reject the wrong company identity. Approve the card and early-human stage as assistant. Distinguish the reported planned discontinuation from current registry-derived phase 2.
 - [x] Stage the normal 175-card snapshot, verifying all prior 174 cards unchanged, and pass the public rehearsal. Guarded candidate Worker check returns S008's exact card in 291 ms with two official-source requests and no model, registry or article-body requests.
 - [x] Complete clear independent reviews and deploy PR #204/main 58aa391978ce through successful CI 43821427773 (Worker 99b07483-a1ed-444d-a948-1173bc943626). All 2,392 tests, lint/types and rehearsal pass. Released S008 original URL returns the exact card in 66 ms; installed Safari 0.9.21 request functions return it in 15 ms with 35 resource hashes verified. The website form and card pass. Update the corpus, preserving history, and read back 17 Sheet values while preserving 143 inspected neighbors and metadata. Totals: 143 pass, 56 partial, 31 review, 28 blocked; 133 matching cards. Native Safari collector/popup/storage and rendered Sheet layout remain unverified.
 - [x] Reproduce the optional GSRS timeout delay offline and isolate long per-request waits and four attempts as the cause. Narrow GSRS defaults to two attempts and five-second inactivity waits while preserving Retry-After, source pacing, cache/recovery behavior and other clients. Original simulated outage improves from 131 to 13 seconds; one candidate live lookup refuses explicitly after 16.043 seconds. Full checks pass: 1,565 pipeline, 660 site and 170 extension tests. This is not a total-duration guarantee.
-- [ ] Complete independent reviews and release the optional GSRS wait correction through CI; verify the released source policy without repeating full claim preparation or paid work.
+- [x] Complete clear independent reviews and release the optional GSRS wait correction through PR #205/main 961d274c1a4b; production CI 43823139376 passed and deployed Worker b1f9d329-6dea-4d19-8b8c-b7d4881f09c2. Verify merged source defaults and the offline loop, plus the unchanged 175-card public snapshot, without repeated preparation or paid calls. Safari resources are unchanged.
 
 ## Journal and Substack melanoma sources
 

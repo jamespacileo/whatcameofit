@@ -36,5 +36,18 @@
     "private_claim_changes": false,
     "method": "One candidate GSRS lookup for the public intervention name in a rolled-back isolated test-database transaction; no prepare/model/clinical-registry work. This measures actual elapsed time, not a guaranteed whole-operation deadline."
   },
-  "release": "Pending independent review and CI deployment. This is a private-pipeline change; public snapshot, Worker logic and signed Safari 0.9.21 resources are unchanged."
+  "release": {
+    "pull_request": 205,
+    "reviewed_head": "489c5f5bf8c926df04cb1731e673158040d0ec47",
+    "main_commit": "961d274c1a4b8e7f654d293aa0860f326f5dc13d",
+    "production_run": 43823139376,
+    "conclusion": "success",
+    "worker_version": "b1f9d329-6dea-4d19-8b8c-b7d4881f09c2",
+    "deployed_at": "2026-11-16T07:24:35.5498935Z",
+    "reviews": {
+      "standards": "clear",
+      "spec": "clear"
+    },
+    "verification": "Merged source policy verified: GSRS defaults 2 attempts/5 seconds; Source and ClinicalTrials defaults 4/30. Offline loop passes at 13 simulated seconds. Released public snapshot exactly matches the prior 175-card build. No repeat prepare or paid call was required. Safari resources are unchanged."
+  }
 }
