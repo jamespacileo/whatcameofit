@@ -13,7 +13,7 @@ import math
 import threading
 import time as system_time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import httpx
@@ -108,6 +108,8 @@ class Probe:
     # The site's HTTP status, as the reader reports it.
     status: int | None = None
     page: Page | None = None
+    # With NOT_NOW: the wait the reader stated. Not part of how the address answered.
+    retry_after_seconds: float | None = field(default=None, compare=False)
 
 
 # The reader answers 429 with a Retry-After when it is at capacity, which is not a
@@ -174,7 +176,7 @@ class ArticleRetriever:
         ReaderUnavailable when the reader itself could not be asked: that is not the
         outlet's answer."""
         data = self._ask(url)
-        return Probe(data.answer, data.status, data.page)
+        return Probe(data.answer, data.status, data.page, data.retry_after_seconds)
 
     def json(self, url: str) -> Any:
         """The JSON a platform's own interface for software serves at this address, or
