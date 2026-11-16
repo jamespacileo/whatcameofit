@@ -1,0 +1,77 @@
+{
+  "checked_at": "2026-11-16T00:08:20.171435+00:00",
+  "claim": "fasting-mimicking-diet-mild-to-moderate-crohns-disease",
+  "claim_id": 566,
+  "corpus_id": "A066",
+  "source_url": "https://med.stanford.edu/news/all-news/2026/01/crohns-disease-diet.html",
+  "source_date": "2026-01-13",
+  "primary_paper": "https://pubmed.ncbi.nlm.nih.gov/41530382/",
+  "doi": "10.1038/s41591-025-04173-w",
+  "trial": "https://clinicaltrials.gov/study/NCT04147585",
+  "extracted_indication": "Crohn’s disease",
+  "corrected_indication": "Mild-to-moderate Crohn’s disease",
+  "scope_reason": "Retain the explicit disease-severity population reported by the article and primary paper.",
+  "trial_identity_reason": "The primary paper explicitly registers NCT04147585; the registry brief summary equates IRCD and FMD and specifies mild-to-moderate Crohn disease. This is documentary identity evidence, not approval by score alone.",
+  "enrollment_difference": "The paper and report describe 97 randomized participants; the current registry enrollment field is 86. Preserve each source as given and do not count participant-number agreement.",
+  "preparation_seconds": 22,
+  "correction_model_calls": 0,
+  "decider": "assistant",
+  "aliases_added": [
+    "Intermittent Reduced Calorie Diet",
+    "IRCD"
+  ],
+  "matches": [
+    {
+      "match_id": 17852,
+      "trial_id": "NCT04147585",
+      "previous_score": 0.7,
+      "decision": "approved",
+      "reason": "The primary paper explicitly registers NCT04147585; the registry brief summary equates IRCD and FMD and specifies mild-to-moderate Crohn disease. This is documentary identity evidence, not approval by score alone."
+    },
+    {
+      "match_id": 17824,
+      "trial_id": "NCT05382897",
+      "previous_score": 0.61,
+      "decision": "rejected",
+      "reason": "The trial targets depressive symptoms in people with IBD; it is not the reported Stanford trial of Crohn disease activity."
+    }
+  ],
+  "claim_state": "pending",
+  "published": false,
+  "verified_paper": {
+    "pubmed": "41530382",
+    "published": "2026-01-13",
+    "explicit_registry_number": "NCT04147585",
+    "reported_group_sizes": [
+      65,
+      32
+    ],
+    "same_intervention_and_population": true
+  },
+  "fetched_trial": {
+    "registered": "2019-11-01",
+    "started": "2019-12-18",
+    "completed": "2024-05-06",
+    "registry_enrollment": 86,
+    "registry_enrollment_basis": "actual",
+    "fetched_at": "2026-11-16T00:08:21.325552Z",
+    "new_events": 3,
+    "status": "trial_registered",
+    "phases": [
+      "not_applicable"
+    ]
+  },
+  "pending_publication_checks": [
+    {
+      "issue": "Incorrect relative follow-up reading",
+      "observed": "The reading extracts within 6 days as follow_up=6 days, although the registry time frame is within 6 days after the third monthly diet cycle. This is not six days from the study start.",
+      "decision": "Keep claim pending until this reading is corrected or safely omitted; preserve raw trial record and this audit."
+    },
+    {
+      "issue": "Normal export includes changes already prepared in PR174",
+      "observed": "Normal approved export has162cards:16 additions and11archives versus published157. Matches PR174 snapshot except remdesivir no-signal overlay advanced from4to5years at UTC midnight.",
+      "decision": "Reconcile and review that existing publication work before producing a new normal public snapshot; do not silently overwrite or publish another draft."
+    }
+  ],
+  "preview_only": true
+}

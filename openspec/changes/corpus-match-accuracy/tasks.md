@@ -102,3 +102,13 @@
 - [x] Verify released A033 shared reuse in 109/116 ms with unchanged candidates and check time, and replay four released responses through the installed signed extension functions. This does not establish native popup or browser-storage reuse.
 - [x] Update and read back the 13 Google Sheet rows and Summary!B1: 137 changed cells and 466 read-back values verified, with formulas, validation and formatting preserved. Corpus totals are 116 pass, 81 partial, 35 review and 26 blocked; 106 rows have matching cards. Native Sheet layout remains unverified behind sign-in.
 - [ ] Finish native Safari 0.9.15 popup and unchanged-page reuse checks once the Mac is unlocked; keep prior native evidence separate from installed-resource replay.
+
+## Stanford diet card coverage
+
+- [x] Draft A066 through normal article extraction and preparation (22 seconds), retaining the explicit mild-to-moderate Crohn's disease population. Verify the primary paper's explicit NCT04147585 registration and the registry's IRCD/FMD alias. Approve that match and reject the unrelated depression-in-IBD trial as assistant, retaining original scores and raw records. Fetch its three registry events and keep the claim pending.
+- [x] Record the report/paper's 97 participants separately from the current registry's 86; do not invent participant agreement. Build a private preview in a rolled-back transaction, without publishing or approving the draft.
+- [ ] Correct or safely omit the erroneous six-day follow-up reading: the record measures within six days after the third monthly diet cycle, not six days from study start. Keep the claim pending until the resulting card is accurate.
+- [ ] Reconcile the normal export's pre-existing PR #174 additions/archives before publishing a new snapshot. The current 162-card database export matches that PR except the expected remdesivir no-signal anniversary change at midnight; do not silently absorb that separate publication work.
+- [ ] Review and publish the completed card, then verify A066 against the released site/extension and update its corpus and Sheet result.
+
+The separately retained registry-summary experiment is draft PR #180. Its tests pass but clinical acceptance fails; do not deploy it or install its candidate Safari 0.9.16 package. Released corpus/Sheet verdicts remain unchanged by that experiment.
