@@ -37,6 +37,8 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
+          # The base is the checkout's first parent: the comment lists the claims added since it.
+          fetch-depth: 2
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 24
@@ -53,23 +55,23 @@ jobs:
           CHROME_STORE_URL: ${{ vars.CHROME_STORE_URL }}
           SAFARI_STORE_URL: ${{ vars.SAFARI_STORE_URL }}
           CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
-      - name: Say where it is
+      # One comment, edited in place on every run and re-run, whether the build passed or not.
+      - name: Update the pull request's comment
+        if: ${{ !cancelled() }}
         env:
           GH_TOKEN: ${{ github.token }}
+          STATE: ${{ steps.preview.outcome == 'success' && 'published' || 'failed' }}
           PREVIEW_URL: ${{ steps.preview.outputs.url }}
-          WORKER: ${{ steps.preview.outputs.worker }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          body="$MARKER
-          **Preview:** $PREVIEW_URL
-
-          Worker \`$WORKER\`, built from \`$HEAD_SHA\`. Replaced on every push and deleted when this pull request closes. Not indexed, and without the registry search."
+          node site/scripts/pr-preview-comment.mjs > comment.md
           comments="repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments"
           existing=$(gh api "$comments" --paginate --jq ".[] | select(.user.type == \"Bot\" and (.body | contains(\"$MARKER\"))) | .id" | head -n 1)
           if [ -n "$existing" ]; then
-            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$existing" -f body="$body" --silent
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$existing" -F body=@comment.md --silent
           else
-            gh api --method POST "$comments" -f body="$body" --silent
+            gh api --method POST "$comments" -F body=@comment.md --silent
           fi
 
   remove:
@@ -107,5 +109,9 @@ jobs:
           if [ -n "$existing" ]; then
             gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$existing" \
               -f body="$MARKER
-          Preview removed: this pull request is closed and \`thenwhat-pr-$PR_NUMBER\` was deleted." --silent
+          ### Preview removed
+
+          This pull request is closed and \`thenwhat-pr-$PR_NUMBER\` was deleted. Its address no longer answers.
+
+          <sub>[removal log]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)</sub>" --silent
           fi

@@ -3,6 +3,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { deployProblems, pullRequestWorker } from "../scripts/deploy-checks.mjs";
+import { MARKER, addedClaims, previewComment } from "../scripts/pr-preview-comment.mjs";
 
 const PUBLIC = "https://tracker.example.org";
 const claim = (slug, checked = true) => ({ slug, checked_by_person: checked });
@@ -65,3 +66,43 @@ for (const number of [undefined, "", "0", "-1", "12 --name thenwhat", "thenwhat"
     assert.equal(pullRequestWorker(number), null);
   });
 }
+
+const PREVIEW = "https://thenwhat-pr-12.example.workers.dev";
+
+test("the comment links the preview, its pages, the added claims and the build", () => {
+  const added = addedClaims(exported([claim("old-claim")]), exported([claim("old-claim"), claim("new-claim")]));
+  const body = previewComment({
+    state: "published",
+    url: PREVIEW,
+    worker: "thenwhat-pr-12",
+    sha: "9e1838e0de388b80467f49aabb40c2dcdfb7fe79",
+    repoUrl: "https://github.com/example/tracker",
+    runUrl: "https://github.com/example/tracker/actions/runs/7",
+    claims: 2,
+    added,
+  });
+
+  assert.deepEqual(added, ["new-claim"]);
+  assert.ok(body.startsWith(MARKER));
+  assert.match(body, /\[How it works\]\(https:\/\/thenwhat-pr-12\.example\.workers\.dev\/how-it-works\)/);
+  assert.match(body, /\[new-claim\]\(https:\/\/thenwhat-pr-12\.example\.workers\.dev\/new-claim\)/);
+  assert.doesNotMatch(body, /old-claim/);
+  assert.match(body, /\[`9e1838e`\]\(https:\/\/github\.com\/example\/tracker\/commit\/9e1838e0/);
+  assert.match(body, /\[build log\]\(https:\/\/github\.com\/example\/tracker\/actions\/runs\/7\)/);
+});
+
+test("a long list of added claims is cut short and counted", () => {
+  const added = Array.from({ length: 25 }, (_, index) => `claim-${index}`);
+  const body = previewComment({ state: "published", url: PREVIEW, worker: "thenwhat-pr-12", added });
+
+  assert.equal(body.match(/^- \[claim-/gm).length, 10);
+  assert.match(body, /and 15 more/);
+});
+
+test("a failed build says so in the same comment and offers no address", () => {
+  const body = previewComment({ state: "failed", worker: "thenwhat-pr-12", sha: "abcdef1234" });
+
+  assert.ok(body.startsWith(MARKER));
+  assert.match(body, /not updated/i);
+  assert.doesNotMatch(body, /workers\.dev/);
+});
