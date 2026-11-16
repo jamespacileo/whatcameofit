@@ -1,11 +1,11 @@
 // Only independently public reports enter this shared, expiring results library.
-// No page text, screenshots or reader identifiers are persisted. Version 14 requires
-// condition-narrowed discovery for broad study names.
+// No page text, screenshots or reader identifiers are persisted. Version 15 requires
+// explicit study identity when the intervention is identified only by its study.
 import { articleKey } from "../src/lib/article-key.mjs";
 import { bounded } from "./public-cache.mjs";
 import { sourceUrl } from "./visual.mjs";
 const TTL = 86400;
-const VERSION = 14;
+const VERSION = 15;
 // The longest one shared-result read or write is waited on.
 const CACHE_TIMEOUT_MS = 500;
 async function keyFor(address) {

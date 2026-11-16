@@ -88,6 +88,10 @@ const CHOICES = [
 ];
 const OPTIONS = CHOICES.map(([option]) => option);
 const QUESTION = [ASKED, ...CHOICES.map(([option, when]) => `- ${option}: ${when}`),
+  "When the intervention is identified only as the experimental treatment in a named trial or paper, the candidate must establish that same study identity. " +
+  "A similar condition, outcome or broad treatment category cannot establish the unspecified intervention. " +
+  "If that identity is absent or conflicting, choose not_a_match; never infer a missing intervention from the candidate. " +
+  "This does not exclude other studies of a specifically named treatment merely because their study names differ. " +
   "Explicit restrictions such as prior treatment, disease stage, biomarkers or age are part of the indication. " +
   "Compare prior treatment within the disease setting specified by the claim. " +
   "First-line and later-line requirements conflict when they concern the same setting. " +
