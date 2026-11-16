@@ -1,11 +1,18 @@
 # Tasks
 
+## Unspecified treatment identification
+
+- [x] Reproduce S016 returning an 87% trial candidate from an unnamed pancreatic-cancer drug while its Economist article is inaccessible. Reproduce the same search trigger with a synthetic report. Distinguish specific descriptions and explicit study identities from generic drug wording in both lookup readers and their field schemas; add no model call or source request.
+- [x] Pass seven final live synthetic controls, recording the two intermediate control failures and evaluation usage in `unspecified-treatment-review.json`. Keep the bounded manual regression in `site/scripts/check-reading-identity.mjs`; it is outside offline CI. Invalidate old shared and browser results and prepare Safari 0.9.20.
+- [ ] Complete regression checks and independent review, deploy through production CI, install signed Safari, and rerun S016 against released versions. Record its identity/access limit without claiming a verified clinical or card match.
+
 ## Additional Hacker News source coverage
 
 - [x] Read S017/S018's current outgoing links from the official Hacker News API; review both public articles and primary NCT05933577/NCT07444580 records without retaining article text.
 - [x] Add the verified October 22 Ars Technica reference to the existing complete melanoma-regimen card. Draft and normally prepare the distinct PrP-siRNA prion-disease card, preserve registry aliases, confirm its animal first-report stage as assistant, and retain only NCT07444580 as its approved trial. Preparation takes 65 seconds; the automatic article reader's 403 is respected. The browser-reviewed source and primary registry establish identity.
 - [x] Approve the explicit origin DOI and claim as assistant, then fetch its indexed paper facts. Leave seven new follow-up events and other undecided paper candidates pending. Stage the normal 174-card export: one new card, one added melanoma article, and 172 existing cards unchanged. The preparation ledger window records four model calls costing $0.001580; this is timing-based attribution, not a per-claim ledger key.
-- [ ] Complete production rehearsal, guarded linked-source checks and independent review; deploy the data update and rerun S017/S018 against the released site and installed Safari functions before updating corpus/Sheet. Native collector/popup/storage checks remain pending.
+- [x] Complete production rehearsal, guarded linked-source checks and both independent reviews; release PR #199/main 8e6ed5691ab1 through successful production CI 43811718658. Fresh S017/S018 return their correct cards in 295/257 ms with no model, article or registry requests. Both original website forms and installed Safari 0.9.19 request/presenter/exact-source functions pass. Native collector/popup/storage checks remain pending while automation reports the Mac locked.
+- [x] Update the two corpus rows with superseded evidence in history and compact row formatting. Update URLs!H18:P19, Z18:AF19 and Summary!B1; read back all 33 values and preserve 145 other inspected cells plus formatting, formulas, validation, notes and chips. Totals: 140 pass, 58 partial, 32 review, 28 blocked; 130 matching cards. Native Sheet layout remains unverified behind identity verification.
 
 ## Linked social coverage and enamel evidence
 

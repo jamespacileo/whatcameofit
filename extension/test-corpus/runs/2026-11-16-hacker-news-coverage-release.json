@@ -1,0 +1,128 @@
+{
+  "release_commit": "8e6ed5691ab1e93ed3e651c686cb753f862822bf",
+  "checked_at": "2026-11-16T05:44:35.790Z",
+  "public_cards": 174,
+  "public_data_matches_rehearsed_build": true,
+  "all_258_exact_mappings_unchanged": true,
+  "installed_extension": {
+    "version": "0.9.19",
+    "build": 27,
+    "resource_hashes_verified": 35,
+    "native_verified": false,
+    "source_commit": "7e4464262e3e4552a956062e03be28e82d0581fe",
+    "method": "Installed signed 0.9.19 resources unchanged. Composition, presenter and exact-address functions checked against the new public index; native collector/popup/storage unverified."
+  },
+  "website_observations": {
+    "S017": {
+      "recorded_at": "2026-11-16T05:45:56.774Z",
+      "finding": "Original Hacker News URL through the released website form returns the intismeran plus pembrolizumab melanoma card with accurate tracked-article provenance."
+    },
+    "S018": {
+      "recorded_at": "2026-11-16T05:46:18.038Z",
+      "finding": "Original Hacker News URL through the released website form returns the specific PrP-targeting divalent siRNA card with accurate tracked-article provenance. Card shows April animal evidence separately from the current phase 1 study, NCT07444580 and one origin paper."
+    }
+  },
+  "website_form_verified": [
+    "S017",
+    "S018"
+  ],
+  "summary": {
+    "corpus_verdicts": {
+      "review": 32,
+      "pass": 140,
+      "partial": 58,
+      "blocked": 28
+    },
+    "knowledge_cards": {
+      "review": 33,
+      "not applicable": 10,
+      "no card": 57,
+      "not checked": 28,
+      "match": 130
+    }
+  },
+  "request_checks": {
+    "S017": {
+      "url": "https://news.ycombinator.com/item?id=50235217",
+      "slug": "melanoma-mrna-vaccine-intismeran",
+      "source": "Read from a post on Hacker News. The linked article at arstechnica.com is already tracked; its card is shown without another article read or automatic search.",
+      "http": 200,
+      "ms": 295,
+      "post": {
+        "platform": "Hacker News",
+        "article": "https://arstechnica.com/health/2026/10/personalized-mrna-cancer-vaccine-cut-melanoma-death-recurrence-by-42/",
+        "article_host": "arstechnica.com",
+        "article_read": false
+      },
+      "article_tracked": true,
+      "candidates": 0,
+      "model_requests": 0,
+      "article_requests": 0,
+      "registry_requests": 0,
+      "post_api_requests": 1,
+      "extension_ms": 50,
+      "extension_kind": "tracked",
+      "method": "Fresh original URL through released service and official Hacker News reader. Returned source link composed through installed Safari 0.9.19 functions and sent to released service; exact source lookup also verified. Native collector/popup/storage unverified."
+    },
+    "S018": {
+      "url": "https://news.ycombinator.com/item?id=50028027",
+      "slug": "prp-sirna-prion-disease",
+      "source": "Read from a post on Hacker News. The linked article at broadinstitute.org is already tracked; its card is shown without another article read or automatic search.",
+      "http": 200,
+      "ms": 257,
+      "post": {
+        "platform": "Hacker News",
+        "article": "https://www.broadinstitute.org/news/clinical-trial-prion-disease-drug-candidate-begins-enrolling-participants",
+        "article_host": "broadinstitute.org",
+        "article_read": false
+      },
+      "article_tracked": true,
+      "candidates": 0,
+      "model_requests": 0,
+      "article_requests": 0,
+      "registry_requests": 0,
+      "post_api_requests": 1,
+      "extension_ms": 69,
+      "extension_kind": "tracked",
+      "method": "Fresh original URL through released service and official Hacker News reader. Returned source link composed through installed Safari 0.9.19 functions and sent to released service; exact source lookup also verified. Native collector/popup/storage unverified."
+    }
+  },
+  "sheet_verification": {
+    "checked_at": "2026-11-16T05:47:48.139Z",
+    "spreadsheet_url": "https://docs.google.com/spreadsheets/d/15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA/edit?ouid=118272730050776001505",
+    "ids": [
+      "S017",
+      "S018"
+    ],
+    "ranges": [
+      "URLs!H18:P19",
+      "URLs!Z18:AF19",
+      "Summary!B1"
+    ],
+    "values_verified": 33,
+    "other_inspected_cells_preserved": 145,
+    "formats_formulas_notes_validation_chips_preserved": true,
+    "summary_total": [
+      "Total",
+      "258",
+      "140",
+      "58",
+      "0",
+      "28",
+      "32",
+      "0"
+    ],
+    "rendered_layout_verified": false,
+    "layout_limit": "Native sheet requires identity verification; no new login attempt. Existing formatting inspected and preserved."
+  },
+  "deployment": {
+    "pull_request": 199,
+    "main_commit": "8e6ed5691ab1e93ed3e651c686cb753f862822bf",
+    "production_run": 43811718658,
+    "conclusion": "success"
+  },
+  "rows": {
+    "S017": {"lookup_answer": "Intismeran autogene plus pembrolizumab for Completely resected stage IIB–IV cutaneous melanoma", "tracked_claim": "melanoma-mrna-vaccine-intismeran", "trial_records": "", "likely_records": "", "top_record": "NCT05933577 · verified released card; no fresh scoring", "test_result": "pass", "reason": "Verified Ars article reports the complete intismeran-plus-pembrolizumab regimen in the resected melanoma setting. Fresh original Hacker News URL, released website form and installed Safari request functions return the correct card. No model, article or registry calls on the tracked-source path. Native collector/popup/storage remain unverified.", "how_read": "released service and website form; official Hacker News reader; installed Safari functions", "ms": 295, "last_tested": "2026-11-16T05:44:35.790Z", "tested_build": "site 8e6ed5691ab1; installed Safari 0.9.19 (27)", "site_result": "Original Hacker News URL through the released website form returns the intismeran plus pembrolizumab melanoma card with accurate tracked-article provenance.", "extension_result": "Signed Safari 0.9.19 (27) resources verified. Installed request composition, exact-source lookup and presenter pass; composed request sent to released service in 50 ms. Native collector/popup/storage remain unverified; computer control reports locked.", "knowledge_card_result": "match", "knowledge_card_notes": "melanoma-mrna-vaccine-intismeran; Verified Ars article reports the complete intismeran-plus-pembrolizumab regimen in the resected melanoma setting. Fresh original Hacker News URL, released website form and installed Safari request functions return the correct card. No model, article or registry calls on the tracked-source path. Native collector/popup/storage remain unverified.", "trial_role_release": "runs/2026-11-15-trial-role-release.json", "hacker_news_coverage_release": "runs/2026-11-16-hacker-news-coverage-release.json", "website_observation": {"recorded_at": "2026-11-16T05:45:56.774Z", "finding": "Original Hacker News URL through the released website form returns the intismeran plus pembrolizumab melanoma card with accurate tracked-article provenance."}},
+    "S018": {"lookup_answer": "PrP-siRNA for Prion disease", "tracked_claim": "prp-sirna-prion-disease", "trial_records": "", "likely_records": "", "top_record": "NCT07444580 · verified released card; no fresh scoring", "test_result": "pass", "reason": "Verified Broad article and PRiSM registry identify PrP-targeting divalent siRNA, distinct from ION717 and gene editing. April animal evidence remains separate from the phase 1 safety study; origin paper 10.1093/nar/gkag287 / PMID42033217. Fresh original Hacker News URL, released website form and installed Safari request functions return the correct card. No model, article or registry calls on the tracked-source path. Native collector/popup/storage remain unverified.", "how_read": "released service and website form; official Hacker News reader; installed Safari functions", "ms": 257, "last_tested": "2026-11-16T05:44:35.790Z", "tested_build": "site 8e6ed5691ab1; installed Safari 0.9.19 (27)", "site_result": "Original Hacker News URL through the released website form returns the specific PrP-targeting divalent siRNA card with accurate tracked-article provenance. Card shows April animal evidence separately from the current phase 1 study, NCT07444580 and one origin paper.", "extension_result": "Signed Safari 0.9.19 (27) resources verified. Installed request composition, exact-source lookup and presenter pass; composed request sent to released service in 69 ms. Native collector/popup/storage remain unverified; computer control reports locked.", "knowledge_card_result": "match", "knowledge_card_notes": "prp-sirna-prion-disease; Verified Broad article and PRiSM registry identify PrP-targeting divalent siRNA, distinct from ION717 and gene editing. April animal evidence remains separate from the phase 1 safety study; origin paper 10.1093/nar/gkag287 / PMID42033217. Fresh original Hacker News URL, released website form and installed Safari request functions return the correct card. No model, article or registry calls on the tracked-source path. Native collector/popup/storage remain unverified.", "hacker_news_coverage_release": "runs/2026-11-16-hacker-news-coverage-release.json", "website_observation": {"recorded_at": "2026-11-16T05:46:18.038Z", "finding": "Original Hacker News URL through the released website form returns the specific PrP-targeting divalent siRNA card with accurate tracked-article provenance. Card shows April animal evidence separately from the current phase 1 study, NCT07444580 and one origin paper."}}
+  }
+}
