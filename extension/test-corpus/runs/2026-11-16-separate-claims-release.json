@@ -1,0 +1,307 @@
+{
+  "release_commit": "bcf6bfe3f2fb1344aa22898d1906e4499963e0e9",
+  "deployment_run": 43848671369,
+  "deployment_conclusion": "success",
+  "deployment_completed_at": "2026-11-16T10:30:19Z",
+  "installed_extension": {
+    "version": "0.9.23",
+    "build": 31,
+    "enabled_native_preferences_verified": true,
+    "resource_hashes_verified": 35,
+    "permissions_unchanged": true
+  },
+  "method": "Fresh actual Safari popup on public pages; released website form. No copied post body, screenshot or model gist retained. Native latency and request counts not instrumented.",
+  "site_address_results": {
+    "S021": "Threads text-paste guidance",
+    "S022": "Threads text-paste guidance",
+    "S027": "Telegram text-paste guidance",
+    "N013": "Instagram text-paste guidance"
+  },
+  "native_results": {
+    "S021": {
+      "claims": [
+        {
+          "intervention": "Enfortumab vedotin plus pembrolizumab",
+          "indication": "Bladder cancer",
+          "displayed_possible": 10,
+          "first_record": "NCT03924895",
+          "confidence": 0.71,
+          "state": "partial",
+          "limitation": "page search allowance"
+        },
+        {
+          "intervention": "Left atrial appendage closure",
+          "indication": "Atrial fibrillation",
+          "displayed_possible": 1,
+          "first_record": "NCT03463317",
+          "confidence": 0.95
+        },
+        {
+          "intervention": "Editing HBG1 and HBG2 promoters",
+          "indication": "Sickle cell disease",
+          "displayed_possible": 0
+        }
+      ],
+      "cards": [],
+      "reply_claims_excluded": true
+    },
+    "S022": {
+      "claims": [
+        {
+          "intervention": "Colonoscopy intervals",
+          "indication": "Colorectal cancer",
+          "displayed_possible": 2,
+          "first_record": "NCT02319928",
+          "confidence": 0.58,
+          "state": "partial"
+        },
+        {
+          "intervention": "Sodium bicarbonate",
+          "indication": "Critically ill adults",
+          "displayed_possible": 1,
+          "first_record": "NCT05697770",
+          "confidence": 0.99
+        },
+        {
+          "intervention": "Blinatumomab",
+          "indication": "Replacing chemotherapy in pediatric ALL",
+          "displayed_possible": 1,
+          "first_record": "NCT03643276",
+          "confidence": 0.56
+        },
+        {
+          "intervention": "Maternal diet",
+          "indication": "Reducing allergy in infants",
+          "displayed_possible": 0,
+          "state": "unchecked"
+        }
+      ],
+      "cards": []
+    },
+    "S027": {
+      "claims": [
+        {
+          "intervention": "Dietary pattern, fast food versus fruit and vegetables",
+          "indication": "Biological aging in young adults"
+        },
+        {
+          "intervention": "Juice cleanse",
+          "indication": "Gut microbiome changes"
+        },
+        {
+          "intervention": "Omega-3 supplements plus regular exercise",
+          "indication": "Biological aging"
+        }
+      ],
+      "all_check_state": "unchecked",
+      "reason": "source_unavailable",
+      "cards": [],
+      "provenance": "Exact Telegram message plus linked Medical News Today article",
+      "neighboring_suzetrigine_excluded": true
+    },
+    "N013": {
+      "first_attempt": "The search could not be made; nothing found or ruled out",
+      "retry": "Same search failure after one later retry; caption accessible, cause not yet diagnosed",
+      "cards": []
+    }
+  },
+  "site_paste_result": {
+    "id": "S022",
+    "claims": 4,
+    "colonoscopy_matches": 0,
+    "blinatumomab_matches": 0,
+    "sodium_bicarbonate_possible": 5,
+    "allergy_possible": [
+      {
+        "id": "NCT01542970",
+        "confidence": 0.88
+      }
+    ],
+    "cards": [],
+    "judgment": "fail: trial of Lactobacillus reuteri and omega-3 supplementation is not the reported PrEggNut maternal egg/peanut dietary intervention"
+  },
+  "verified_source_identities": {
+    "RUBY": {
+      "nct": "NCT04853576",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT04853576",
+        "https://www.nejm.org/doi/abs/10.1056/NEJMoa2415550"
+      ],
+      "live_registry_title_query_total": 24,
+      "existing_named_limit": 20
+    },
+    "PrEggNut": {
+      "registration": "ACTRN12618000937213",
+      "source": "https://www.anzctr.org.au/Trial/Registration/TrialReview.aspx?id=375199",
+      "intervention": "Maternal diet rich in eggs and peanuts"
+    }
+  },
+  "checked_at": "2026-11-16T10:39:31.152314+00:00",
+  "pre_release": {
+    "phase": "reviewed_pre_release",
+    "source_head": "c700a5d744a91cc3b709810dc192c962cb80cdf4",
+    "pull_request": "https://github.com/jamespacileo/whatcameofit/pull/218",
+    "validation": {
+      "pipeline_passed": 1592,
+      "site_passed": 671,
+      "extension_passed": 175,
+      "strict_openspec": "pass",
+      "diff_check": "pass",
+      "detector_findings": 0
+    },
+    "live_readings": {
+      "requests": 4,
+      "reported_input_tokens": 9185,
+      "reported_output_tokens": 924,
+      "source_requests": 0,
+      "cases": [
+        {
+          "id": "two-independent",
+          "pass": true,
+          "ms": 4227,
+          "claims": [
+            [
+              "EX-1",
+              "Tinnitus symptoms"
+            ],
+            [
+              "EX-2",
+              "Migraine frequency"
+            ]
+          ]
+        },
+        {
+          "id": "combination-and-single",
+          "pass": true,
+          "ms": 3590,
+          "claims": [
+            [
+              "EX-3 plus EX-4",
+              "Tics"
+            ],
+            [
+              "EX-5",
+              "Tinnitus"
+            ]
+          ]
+        },
+        {
+          "id": "combination-and-unspecified",
+          "pass": true,
+          "ms": 3254,
+          "claims": [
+            [
+              "EX-6 plus EX-7",
+              "Tinnitus"
+            ]
+          ]
+        },
+        {
+          "id": "company-profile",
+          "pass": true,
+          "ms": 2137,
+          "claims": []
+        }
+      ]
+    },
+    "live_matching": [
+      {
+        "id": "independent-live-scores",
+        "pass": true,
+        "milliseconds": 3447,
+        "claims": [
+          {
+            "treatment": "EX-1",
+            "condition": "Tinnitus",
+            "state": "complete",
+            "cards": [
+              "one"
+            ],
+            "matches": [
+              "NCT00000001"
+            ]
+          },
+          {
+            "treatment": "EX-2 plus EX-3",
+            "condition": "Migraine",
+            "state": "complete",
+            "cards": [
+              "two"
+            ],
+            "matches": [
+              "NCT00000002"
+            ]
+          }
+        ]
+      },
+      {
+        "usage": {
+          "requests": 2,
+          "input_tokens": 2305,
+          "output_tokens": 237
+        }
+      }
+    ],
+    "usage_note": "Token counts sum the usage fields returned by the provider; they are not an invoice or proof all decision tokens were reported. No unchanged live cases were repeated.",
+    "reviews": {
+      "standards": "clear after shared candidate mapping/ranking extraction",
+      "spec": "clear after citation-only likely and failed paper completeness fixes",
+      "visual": "ship for grouped results in desktop, phone and fixed360 popup",
+      "documentation": "incumbent system preserved; no system migration"
+    },
+    "limits": {
+      "discovery_queries": 12,
+      "scored_claim_record_pairs": 60,
+      "linked_papers": 3,
+      "one_reading": true,
+      "optional_research": "not_checked for multiple claims",
+      "partial_results_reusable": false
+    },
+    "body_storage": "No real article/post bodies or screenshots persisted; visual captures use synthetic data only."
+  },
+  "remaining": [
+    "S021 named RUBY discovery excludes 24 title hits before indication narrowing",
+    "S022 wrong PrEggNut candidate in website paste mode; no cards",
+    "S027 all claims unchecked after a source failure",
+    "N013 native lookup failed twice despite readable public caption",
+    "Independent accurate knowledge cards remain to be published/associated"
+  ],
+  "media_scope": "Public captions/text and links; no full carousel, video or audio verification",
+  "counts": {
+    "review": 27,
+    "pass": 144,
+    "partial": 54,
+    "blocked": 32,
+    "fail": 1
+  },
+  "card_counts": {
+    "review": 28,
+    "not applicable": 10,
+    "no card": 54,
+    "not checked": 32,
+    "match": 134
+  },
+  "sheet_verification": {
+    "checked_at": "2026-11-16T10:40:31.826Z",
+    "changed_values_verified": 77,
+    "other_inspected_values_preserved": 133,
+    "all_inspected_metadata_preserved": true,
+    "totals": [
+      "Total",
+      "258",
+      "144",
+      "54",
+      "1",
+      "32",
+      "27",
+      "0"
+    ],
+    "visual": "Native rendering unavailable behind Google identity verification; existing wrap and formatting metadata preserved"
+  },
+  "rows": {
+    "S021": {"test_result": "partial", "reason": "Native Safari separates all three addressed claims and excludes replies. It finds two trial groups but misses RUBY and returns no cards.", "how_read": "released website form and actual installed Safari popup", "lookup_answer": "3 separate claims; 2 groups with possible trials; RUBY missing", "trial_records": "", "likely_records": 11, "top_record": "NCT03924895 (71%); NCT03463317 (95%); RUBY NCT04853576 missing", "tracked_claim": "", "closest_tracked_claim": "", "ms": null, "last_tested": "2026-11-16T10:39:31.152314+00:00", "tested_build": "site bcf6bfe3f2fb; installed Safari 0.9.23 (31)", "site_result": "Fresh released website form identifies the browser-only platform and offers text paste; address alone does not read the post.", "extension_result": "Three groups: enfortumab vedotin plus pembrolizumab (10 possible trials, partial allowance); LAA closure (NCT03463317); HBG1/HBG2 editing (no match). No cards. Signed universal build, all 35 resources verified and version enabled in native preferences. Full media and request counts not instrumented.", "knowledge_card_result": "no card", "knowledge_card_notes": "No knowledge cards returned. Per-claim trial results do not establish a published card match.", "separate_claims_release": "runs/2026-11-16-separate-claims-release.json"},
+    "S022": {"test_result": "fail", "reason": "Grouping works, but the website text path returns an unrelated omega-3/probiotic trial for PrEggNut. Native has three trial groups and an unchecked fourth. No cards; not an accuracy pass.", "how_read": "released website form and actual installed Safari popup", "lookup_answer": "4 separate claims; website paste suggests wrong PrEggNut trial", "trial_records": "", "likely_records": 4, "top_record": "Native: NCT02319928 (58%); NCT05697770 (99%); NCT03643276 (56%). Site: wrong NCT01542970 for PrEggNut (88%).", "tracked_claim": "", "closest_tracked_claim": "", "ms": null, "last_tested": "2026-11-16T10:39:31.152314+00:00", "tested_build": "site bcf6bfe3f2fb; installed Safari 0.9.23 (31)", "site_result": "Fresh released website form identifies the browser-only platform and offers text paste; address alone does not read the post. Fresh paste of the four visible reports shows four groups, but incorrectly suggests NCT01542970 for PrEggNut at 88%; colonoscopy and blinatumomab have no likely match in this site run. No cards.", "extension_result": "Four groups: colonoscopy (2 possible); sodium bicarbonate (1); blinatumomab (1); maternal diet unchecked within allowance. No cards. Signed universal build, all 35 resources verified and version enabled in native preferences. Full media and request counts not instrumented.", "knowledge_card_result": "no card", "knowledge_card_notes": "No knowledge cards returned. Per-claim trial results do not establish a published card match.", "separate_claims_release": "runs/2026-11-16-separate-claims-release.json"},
+    "S027": {"test_result": "blocked", "reason": "Exact Telegram message and linked article produce three separate claims, but every group is explicitly unchecked because a source could not be reached. No clinical coverage established.", "how_read": "released website form and actual installed Safari popup", "lookup_answer": "3 separate claims; all unchecked after source failure", "trial_records": "", "likely_records": "", "top_record": "", "tracked_claim": "", "closest_tracked_claim": "", "ms": null, "last_tested": "2026-11-16T10:39:31.152314+00:00", "tested_build": "site bcf6bfe3f2fb; installed Safari 0.9.23 (31)", "site_result": "Fresh released website form identifies the browser-only platform and offers text paste; address alone does not read the post.", "extension_result": "Three diet/aging, juice-cleansing/microbiome and omega-3-plus-exercise/aging groups. All say source unavailable; no neighboring suzetrigine claim. Signed universal build, all 35 resources verified and version enabled in native preferences. Full media and request counts not instrumented.", "knowledge_card_result": "not checked", "knowledge_card_notes": "No knowledge cards returned. Search incomplete; card coverage not established.", "separate_claims_release": "runs/2026-11-16-separate-claims-release.json"},
+    "N013": {"test_result": "blocked", "reason": "The public caption is readable, but the installed lookup fails twice. No treatment or trial is ruled out. The cause remains under investigation.", "how_read": "released website form and actual installed Safari popup", "lookup_answer": "lookup could not be made; same result after one later retry", "trial_records": "", "likely_records": "", "top_record": "", "tracked_claim": "", "closest_tracked_claim": "", "ms": null, "last_tested": "2026-11-16T10:39:31.152314+00:00", "tested_build": "site bcf6bfe3f2fb; installed Safari 0.9.23 (31)", "site_result": "Fresh released website form identifies the browser-only platform and offers text paste; address alone does not read the post.", "extension_result": "Actual installed popup reports the search could not be made, both initially and after one later retry. Public caption visible; no results or cards established. Signed universal build, all 35 resources verified and version enabled in native preferences. Full media and request counts not instrumented.", "knowledge_card_result": "not checked", "knowledge_card_notes": "No knowledge cards returned. Search incomplete; card coverage not established.", "separate_claims_release": "runs/2026-11-16-separate-claims-release.json"}
+  }
+}
