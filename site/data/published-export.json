@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-16T06:24:02.138516Z",
-  "last_checked_at": "2026-11-16T05:29:15.509618Z",
+  "generated_at": "2026-11-16T06:54:31.014203Z",
+  "last_checked_at": "2026-11-16T06:52:40.495825Z",
   "preview": false,
   "sources": [
     {
@@ -52177,6 +52177,539 @@
           "confidence": 1,
           "article_url": "http://www.theguardian.com/society/2014/jun/16/fillings-dentists-tooth-decay-treatment",
           "read_on": "2026-11-15"
+        }
+      ]
+    },
+    {
+      "slug": "emrusolmin-multiple-system-atrophy",
+      "headline": "Emrusolmin was studied as a way to slow multiple system atrophy",
+      "summary": "Emrusolmin, also recorded as TEV-56286 and anle138b, is an oral small molecule being studied in adults with multiple system atrophy. Teva announced on 2 November 2026 that it would discontinue the phase 2 TOPAS-MSA trial after a planned interim analysis met its futility criterion. This was a predictive interim assessment, not a final efficacy analysis or a decision about the entire programme. Registry records retrieved on 16 November still list TOPAS-MSA as active, not recruiting, and its separate extension as recruiting. The status below comes from those registry records.",
+      "vertical": "brain-and-nerves",
+      "approach": "drug",
+      "intervention": {
+        "name": "Emrusolmin",
+        "synonyms": [
+          "TEV-'286",
+          "TEV-286",
+          "anle138b"
+        ]
+      },
+      "indication": "Multiple system atrophy in adults",
+      "first_reported_date": "2026-11-02",
+      "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
+      "checked_by_person": false,
+      "status": {
+        "code": "phase_2",
+        "overlay_years": null,
+        "updated_at": "2026-11-16T06:52:39.855759Z",
+        "explained_by": [
+          11772,
+          11773,
+          11770,
+          11771
+        ],
+        "history": [
+          {
+            "on": "2024-08-23",
+            "code": "trial_registered"
+          },
+          {
+            "on": "2024-10-02",
+            "code": "phase_2"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://www.tevausa.com/news-and-media/press-releases/teva-to-discontinue-phase-2-topas-msa-study-of-emrusolmin-tev-286-following-interim-futility-analysis/",
+          "outlet": "Teva Pharmaceuticals",
+          "title": "Teva to Discontinue Phase 2 TOPAS-MSA Study of emrusolmin Following Interim Futility Analysis",
+          "published_date": "2026-11-02",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://msaleben.de/herber-rueckschlag-in-der-msa-forschung-teva-beendet-phase-2-studie-topas-msa-mit-emrusolmin-vorzeitig/",
+          "outlet": "MSA Leben",
+          "title": "Herber Rückschlag in der MSA-Forschung: Teva beendet Phase-2-Studie TOPAS-MSA mit Emrusolmin vorzeitig",
+          "published_date": "2026-11-09",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [
+        {
+          "description": "A comprehensive analysis of TOPAS-MSA and available open-label extension data will follow.",
+          "parsed_date": null,
+          "article_url": "https://www.tevausa.com/news-and-media/press-releases/teva-to-discontinue-phase-2-topas-msa-study-of-emrusolmin-tev-286-following-interim-futility-analysis/"
+        },
+        {
+          "description": "Teva plans to share TOPAS-MSA findings with the scientific community after completing its comprehensive analysis.",
+          "parsed_date": null,
+          "article_url": "https://www.tevausa.com/news-and-media/press-releases/teva-to-discontinue-phase-2-topas-msa-study-of-emrusolmin-tev-286-following-interim-futility-analysis/"
+        }
+      ],
+      "events": [
+        {
+          "id": 11772,
+          "type": "trial_registered",
+          "event_date": "2024-08-23",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06568237 registered (Phase 2).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06568237",
+          "trial_id": "NCT06568237",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11773,
+          "type": "trial_status_change",
+          "event_date": "2024-10-02",
+          "date_basis": "start date",
+          "summary": "Trial NCT06568237 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06568237",
+          "trial_id": "NCT06568237",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11770,
+          "type": "trial_registered",
+          "event_date": "2025-09-29",
+          "date_basis": "first posted",
+          "summary": "Trial NCT07197866 registered (Phase 2).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT07197866",
+          "trial_id": "NCT07197866",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11771,
+          "type": "trial_status_change",
+          "event_date": "2025-09-30",
+          "date_basis": "start date",
+          "summary": "Trial NCT07197866 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT07197866",
+          "trial_id": "NCT07197866",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06568237",
+          "url": "https://clinicaltrials.gov/study/NCT06568237",
+          "score": 0.99,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "A Trial to Test if TEV-56286 is Effective for Treatment of Participants With Multiple System Atrophy. For: Multiple System Atrophy. Tests: TEV-56286, Placebo. Phase 2, active not recruiting."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT07197866",
+          "url": "https://clinicaltrials.gov/study/NCT07197866",
+          "score": 0.96,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "An Extension Trial to Test if TEV-56286 is Effective in Relieving Multiple System Atrophy. For: Multiple System Atrophy. Tests: TEV-56286. Phase 2, recruiting."
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT06568237",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06568237",
+          "title": "A Trial to Test if TEV-56286 is Effective for Treatment of Participants With Multiple System Atrophy",
+          "phases": [
+            "phase_2"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-11-16T06:52:40.495825Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 349,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "quadruple",
+            "comparators": [
+              "placebo"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Teva Branded Pharmaceutical Products R&D LLC",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "For non-EU: Change From Baseline in the Modified Unified Multiple System Atrophy Rating Scale (UMSARS) Part I Score (excluding item 11)",
+                "time_frame": "Baseline to Week 48"
+              },
+              {
+                "measure": "For EU: Change From Baseline in the Total UMSARS Score Part I and Part II Combined",
+                "time_frame": "Baseline to Week 48"
+              }
+            ],
+            "primary_outcomes_total": 2,
+            "why_stopped": null,
+            "results": null
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Week 48",
+              "number": 48,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-16T06:52:40.495825Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Modified Unified Multiple System Atrophy Rating Scale (UMSARS) Part I Score (excluding item 11)",
+              "number": null,
+              "unit": null,
+              "code": "symptom_score",
+              "confidence": 1,
+              "read_on": "2026-11-16T06:52:40.495825Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "Week 48",
+              "number": 48,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-16T06:52:40.495825Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "Total UMSARS Score Part I and Part II Combined",
+              "number": null,
+              "unit": null,
+              "code": "symptom_score",
+              "confidence": 1,
+              "read_on": "2026-11-16T06:52:40.495825Z"
+            }
+          ]
+        },
+        {
+          "trial_id": "NCT07197866",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT07197866",
+          "title": "An Extension Trial to Test if TEV-56286 is Effective in Relieving Multiple System Atrophy",
+          "phases": [
+            "phase_2"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-11-16T06:52:40.013713Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 200,
+              "basis": "planned"
+            },
+            "allocation": null,
+            "masking": "none",
+            "comparators": [],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Teva Branded Pharmaceutical Products R&D LLC",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Number of participants experiencing an adverse event",
+                "time_frame": "Baseline to Week 100"
+              },
+              {
+                "measure": "Number of participants who withdrew from the trial due to an adverse event",
+                "time_frame": "Baseline to Week 100"
+              }
+            ],
+            "primary_outcomes_total": 2,
+            "why_stopped": null,
+            "results": null
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Baseline to Week 100",
+              "number": 100,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-16T06:52:40.013713Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "adverse event",
+              "number": null,
+              "unit": null,
+              "code": "side_effects",
+              "confidence": 0.99,
+              "read_on": "2026-11-16T06:52:40.013713Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "Baseline to Week 100",
+              "number": 100,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-16T06:52:40.013713Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "adverse event",
+              "number": null,
+              "unit": null,
+              "code": "side_effects",
+              "confidence": 0.99,
+              "read_on": "2026-11-16T06:52:40.013713Z"
+            }
+          ]
+        }
+      ],
+      "papers": [],
+      "background": [],
+      "organisations": [
+        {
+          "name": "FDA",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://msaleben.de/herber-rueckschlag-in-der-msa-forschung-teva-beendet-phase-2-studie-topas-msa-mit-emrusolmin-vorzeitig/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "MODAG GmbH",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.tevausa.com/news-and-media/press-releases/teva-to-discontinue-phase-2-topas-msa-study-of-emrusolmin-tev-286-following-interim-futility-analysis/",
+                "https://msaleben.de/herber-rueckschlag-in-der-msa-forschung-teva-beendet-phase-2-studie-topas-msa-mit-emrusolmin-vorzeitig/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Teva",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://msaleben.de/herber-rueckschlag-in-der-msa-forschung-teva-beendet-phase-2-studie-topas-msa-mit-emrusolmin-vorzeitig/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Teva Pharmaceutical Industries Ltd.",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.tevausa.com/news-and-media/press-releases/teva-to-discontinue-phase-2-topas-msa-study-of-emrusolmin-tev-286-following-interim-futility-analysis/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Teva Pharmaceuticals",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.tevausa.com/news-and-media/press-releases/teva-to-discontinue-phase-2-topas-msa-study-of-emrusolmin-tev-286-following-interim-futility-analysis/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "United States Food and Drug Administration",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "034xvzb47",
+            "url": "https://ror.org/034xvzb47",
+            "name": "United States Food and Drug Administration",
+            "kinds": [
+              "funder",
+              "government"
+            ],
+            "country": "United States",
+            "website": "https://www.fda.gov/",
+            "score": 1,
+            "read_at": "2026-11-15T20:37:43.164955Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.tevausa.com/news-and-media/press-releases/teva-to-discontinue-phase-2-topas-msa-study-of-emrusolmin-tev-286-following-interim-futility-analysis/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Teva Branded Pharmaceutical Products R&D LLC",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT06568237",
+                "NCT07197866"
+              ]
+            }
+          ]
+        }
+      ],
+      "reported_statements": [
+        {
+          "text": "The interim futility analysis indicated a low probability that the study would meet its primary efficacy endpoint if continued.",
+          "kind": "effect",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "people",
+          "confidence": 0.98,
+          "article_url": "https://www.tevausa.com/news-and-media/press-releases/teva-to-discontinue-phase-2-topas-msa-study-of-emrusolmin-tev-286-following-interim-futility-analysis/",
+          "read_on": "2026-11-16"
+        },
+        {
+          "text": "Emrusolmin is designed to target alpha-synuclein aggregation, a mechanism believed to be involved in multiple system atrophy.",
+          "kind": "how_it_works",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "not_said",
+          "confidence": 0.83,
+          "article_url": "https://www.tevausa.com/news-and-media/press-releases/teva-to-discontinue-phase-2-topas-msa-study-of-emrusolmin-tev-286-following-interim-futility-analysis/",
+          "read_on": "2026-11-16"
+        },
+        {
+          "text": "The decision to stop TOPAS-MSA is not a final decision about the broader emrusolmin program.",
+          "kind": "what_it_could_lead_to",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "not_said",
+          "confidence": 0.99,
+          "article_url": "https://www.tevausa.com/news-and-media/press-releases/teva-to-discontinue-phase-2-topas-msa-study-of-emrusolmin-tev-286-following-interim-futility-analysis/",
+          "read_on": "2026-11-16"
+        },
+        {
+          "text": "The interim review suggested the trial was unlikely to meet its primary efficacy endpoint by the planned end.",
+          "kind": "effect",
+          "firmness": "possibility",
+          "speaker": "article",
+          "basis": "people",
+          "confidence": 0.97,
+          "article_url": "https://msaleben.de/herber-rueckschlag-in-der-msa-forschung-teva-beendet-phase-2-studie-topas-msa-mit-emrusolmin-vorzeitig/",
+          "read_on": "2026-11-16"
+        },
+        {
+          "text": "No new safety concerns were identified in the interim analysis.",
+          "kind": "safety",
+          "firmness": "fact",
+          "speaker": "company",
+          "basis": "people",
+          "confidence": 0.82,
+          "article_url": "https://msaleben.de/herber-rueckschlag-in-der-msa-forschung-teva-beendet-phase-2-studie-topas-msa-mit-emrusolmin-vorzeitig/",
+          "read_on": "2026-11-16"
+        },
+        {
+          "text": "The candidate was developed to influence the aggregation of alpha-synuclein in the nervous system.",
+          "kind": "how_it_works",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "not_said",
+          "confidence": 0.87,
+          "article_url": "https://msaleben.de/herber-rueckschlag-in-der-msa-forschung-teva-beendet-phase-2-studie-topas-msa-mit-emrusolmin-vorzeitig/",
+          "read_on": "2026-11-16"
+        },
+        {
+          "text": "The study tested whether the candidate could slow the progression of multiple system atrophy.",
+          "kind": "what_it_could_lead_to",
+          "firmness": "possibility",
+          "speaker": "article",
+          "basis": "people",
+          "confidence": 0.94,
+          "article_url": "https://msaleben.de/herber-rueckschlag-in-der-msa-forschung-teva-beendet-phase-2-studie-topas-msa-mit-emrusolmin-vorzeitig/",
+          "read_on": "2026-11-16"
         }
       ]
     },
