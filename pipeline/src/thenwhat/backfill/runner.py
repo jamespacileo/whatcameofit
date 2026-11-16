@@ -10,7 +10,7 @@ from typing import Any, cast
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.errors import SourceStop
-from thenwhat.backfill.ledger import count, due_records, record_outcome
+from thenwhat.backfill.ledger import count, due_records, record_outcome, take_due
 from thenwhat.backfill.steps import (
     BatchStep,
     CountingClient,
@@ -66,14 +66,10 @@ def process_next(
     id, its outcome and its error, or None when nothing is due. The outcome is None for
     a record that another run finished first.
     """
-    query = due_records(step, attempt_limit)
-    if skip:
-        query = query.where(step.model.id.not_in(skip.copy()))
-    record = session.scalars(
-        query.limit(1).with_for_update(skip_locked=True, of=step.model)
-    ).first()
-    if record is None:
+    taken = take_due(session, step, attempt_limit, size=1, skip=skip)
+    if not taken:
         return None
+    record = taken[0]
     if record.id in skip:
         return record.id, None, None
     # Another run may have finished this record between this query's view of the ledger
@@ -160,12 +156,7 @@ def process_batch(
     record that fails alone has a failure recorded. Returns what became of each record,
     or None when nothing is due.
     """
-    query = due_records(step, attempt_limit)
-    if skip:
-        query = query.where(step.model.id.not_in(skip.copy()))
-    records = list(
-        session.scalars(query.limit(size).with_for_update(skip_locked=True, of=step.model))
-    )
+    records = take_due(session, step, attempt_limit, size=size, skip=skip)
     if not records:
         return None
     still_due = set(

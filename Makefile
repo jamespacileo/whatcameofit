@@ -1,4 +1,4 @@
-.PHONY: smoke-research check lint types db-up test scripts-test site-test site-build extension-test extension extension-safari public-export publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check lint types db-up test scripts-test site-test site-build extension-test extension extension-safari public-export publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
 
 DB_PORT ?= 5433
 export SITE_URL ?= https://whatcameofit.com
@@ -26,12 +26,18 @@ test: db-up site/node_modules
 # The daily job's script, against a stand-in for the pipeline: no database, no network.
 scripts-test:
 	sh -n scripts/daily-run.sh
+	sh -n scripts/worktree-setup.sh
 	@if command -v shellcheck >/dev/null; then shellcheck scripts/daily-run.sh scripts/tests/daily-run.test.sh; fi
 	sh scripts/tests/daily-run.test.sh
 
+# Cloned from the main checkout where the lockfile is the same (a new worktree, in
+# seconds), else installed with npm ci. See scripts/worktree-setup.sh.
 site/node_modules: site/package-lock.json
-	npm --prefix site ci
-	@touch site/node_modules
+	sh scripts/worktree-setup.sh site
+
+# Everything a new checkout or worktree needs before `make check`.
+setup:
+	sh scripts/worktree-setup.sh
 
 site-test: site/node_modules
 	ASTRO_TELEMETRY_DISABLED=1 npm --prefix site test
