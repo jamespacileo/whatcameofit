@@ -103,12 +103,16 @@ def later_event_offset(number: int, unit: str, time_frame: str) -> bool:
     later_ordinal = (
         r"(?:(?:[2-9]|\d{2,})(?:st|nd|rd|th)?|second|third|fourth|fifth|sixth|last|final)"
     )
+    # Allow short modifiers such as "monthly diet" or "treatment", without
+    # crossing punctuation into another clause or interpreting a schedule.
+    modifiers = r"(?:[a-z0-9][a-z0-9-]*\s+){0,3}"
     event = (
-        rf"(?:{ordinal}\s+(?:cycle|course)\b"
+        rf"(?:{ordinal}\s+{modifiers}(?:cycle|course)\b"
         rf"|(?:cycle|course)\s+{ordinal}\b"
-        rf"|{later_ordinal}\s+(?:dose|infusion|session)\b"
+        rf"|{later_ordinal}\s+{modifiers}(?:dose|infusion|session)\b"
         rf"|(?:dose|infusion|session)\s+{later_ordinal}\b"
-        r"|(?:completion|end|discontinuation)\s+of\s+(?:the\s+)?(?:treatment|therapy|intervention)\b)"
+        r"|(?:completion|end|discontinuation)\s+of\s+(?:the\s+)?(?:treatment|therapy|intervention)\b"
+        r"|(?:treatment|therapy|intervention)\s+(?:completion|end|discontinuation)\b)"
     )
     return (
         re.search(

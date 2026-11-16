@@ -167,12 +167,16 @@ def test_a_later_cycle_offset_is_not_follow_up_from_the_start():
     "time_frame",
     [
         "6 days after the third cycle",
+        "6 days after the third monthly cycle",
+        "6 days after the third monthly diet cycle",
+        "6 days after the final treatment cycle",
         "6 days following cycle 3",
         "6 days after the first cycle",
         "6 days after the second dose",
         "6 days following infusion 12",
         "6 days after the final session",
         "6 days after completion of treatment",
+        "6 days after treatment completion",
         "6 days after the end of the therapy",
     ],
 )
@@ -521,11 +525,12 @@ def test_a_second_run_with_nothing_changed_asks_the_model_nothing(session: Sessi
     assert len(session.scalars(select(LlmUsage)).all()) == 1
 
 
+@pytest.mark.parametrize("anchor", ["3rd cycle", "the third monthly cycle", "treatment completion"])
 def test_later_cycle_offset_is_refused_stored_and_reused_without_a_second_call(
-    session: Session, claim: Claim, fixture_json
+    session: Session, claim: Claim, fixture_json, anchor: str
 ):
     outcomes = copy.deepcopy(OUTCOMES)
-    outcomes[0]["timeFrame"] = "Assessed within 6 days after 3rd cycle of treatment"
+    outcomes[0]["timeFrame"] = f"Assessed within 6 days after {anchor}"
     store_record(
         session,
         claim,
@@ -769,11 +774,12 @@ def test_a_reading_below_the_bar_is_not_exported(session: Session, claim: Claim)
     ]
 
 
+@pytest.mark.parametrize("anchor", ["3rd cycle", "the third monthly cycle", "treatment completion"])
 def test_export_rechecks_legacy_offsets_without_changing_the_read_or_calling_a_model(
-    session: Session, claim: Claim, fixture_json
+    session: Session, claim: Claim, fixture_json, anchor: str
 ):
     outcomes = copy.deepcopy(OUTCOMES)
-    outcomes[0]["timeFrame"] = "Assessed within 6 days after 3rd cycle of treatment"
+    outcomes[0]["timeFrame"] = f"Assessed within 6 days after {anchor}"
     store_record(
         session,
         claim,
