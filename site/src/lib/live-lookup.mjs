@@ -35,12 +35,13 @@ export const LIVE = {
 };
 
 // Where the text came from when the reader gave a post's address.
-function sourceOf(post) {
+function sourceOf(post, articleTracked) {
   if (!post) return null;
   // A post the reader had open was read by their own browser, not by this site.
   const from = post.read_in_browser
     ? `Read by your browser from the post on ${post.platform} you have open`
     : `Read from a post on ${post.platform}`;
+  if (articleTracked && post.article) return `${from}. The linked article at ${post.article_host} is already tracked; its card is shown without another article read or automatic search.`;
   if (post.article_read) return `${from} and the article it links to at ${post.article_host}.`;
   if (post.article) return `${from}. The article it links to at ${post.article_host} could not be read, so only the post was used.`;
   if (post.only_short_links) return `${from}. It links through a shortened address that this site may not follow, so only the post was used.`;
@@ -194,7 +195,7 @@ export function describeAnswer(answer) {
   const notices = [NOTICES[1], LIVE.source];
   const source = answer.source?.kind === "screenshot"
     ? "Read from the visible screenshot and caption. A video contributes only its current frame, not its audio. This identifies what the post claims; it does not establish that the claim is true."
-    : sourceOf(answer.post);
+    : sourceOf(answer.post, answer.article_tracked);
   const nothing = { subject: null, searchedAlso: null, trialSaid: null, tracked: [], likely: [], mentioned: [], mentionedLead: LIVE.mentionedLead, rest: null, none: null, papersUnchecked: null, research: null };
   // A post that links to an article the site tracks: its reviewed page is the answer,
   // and no automatic search was made, so nothing is marked as one.

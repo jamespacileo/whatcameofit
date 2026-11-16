@@ -1,0 +1,395 @@
+{
+  "root_cause": "Synthetic disease-only headlines could be treated as specific interventions, and the schema contradicted instructions permitting unnamed descriptions. S016 itself contains an explicit trial citation; the initial assessment overlooked that source detail and did not establish a wrong registry match.",
+  "change": "Equivalent reading instructions and intervention field descriptions distinguish specific methods/targets or study identities from disease-only headlines. No new model call or source request is added. Shared v12 and local v13 refuse old readings; Safari package is 0.9.20.",
+  "baseline": {
+    "phase": "baseline",
+    "checked_at": "2026-11-16T05:48:22.370Z",
+    "method": "Synthetic reports through configured live reading model and actual lookUp orchestrator, with counted empty registry/research seams; no source text retained.",
+    "rows": [
+      {
+        "id": "disease-only",
+        "expected": false,
+        "about_a_treatment": true,
+        "treatment": "Unnamed new pancreatic cancer drug",
+        "condition": "Helping people with pancreatic cancer live longer",
+        "candidates": 0,
+        "calls": {
+          "search": 2,
+          "named": 0,
+          "fetch": 0,
+          "score": 0,
+          "research": 1
+        },
+        "ms": 3888,
+        "pass": false
+      }
+    ],
+    "usage": [
+      {
+        "prompt_tokens": 1451,
+        "completion_tokens": 274,
+        "total_tokens": 1725,
+        "prompt_tokens_details": {
+          "cached_tokens": 1418,
+          "cache_write_tokens": 30,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 171,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    ]
+  },
+  "intermediate_control_failures": [
+    {
+      "checked_at": "2026-11-16T05:49:54.778Z",
+      "failed": [
+        "identified-study"
+      ]
+    },
+    {
+      "checked_at": "2026-11-16T05:50:54.705Z",
+      "failed": [
+        "described"
+      ]
+    }
+  ],
+  "final_live_controls": [
+    {
+      "phase": "candidate",
+      "checked_at": "2026-11-16T05:51:35.008Z",
+      "method": "Synthetic reports through configured live reading model and actual lookUp orchestrator, with counted empty registry/research seams; no source text retained.",
+      "rows": [
+        {
+          "id": "disease-only",
+          "expected": false,
+          "about_a_treatment": false,
+          "treatment": null,
+          "condition": null,
+          "candidates": 0,
+          "calls": {
+            "search": 0,
+            "named": 0,
+            "fetch": 0,
+            "score": 0,
+            "research": 0
+          },
+          "ms": 2311,
+          "pass": true
+        },
+        {
+          "id": "described",
+          "expected": true,
+          "about_a_treatment": true,
+          "treatment": "Wrist-worn median nerve electrical stimulation device",
+          "condition": "Reducing tics in people with Tourette syndrome",
+          "candidates": 0,
+          "calls": {
+            "search": 3,
+            "named": 0,
+            "fetch": 0,
+            "score": 0,
+            "research": 1
+          },
+          "ms": 2299,
+          "pass": true
+        },
+        {
+          "id": "named",
+          "expected": true,
+          "about_a_treatment": true,
+          "treatment": "EX-1",
+          "condition": "Symptoms of example disease",
+          "candidates": 0,
+          "calls": {
+            "search": 1,
+            "named": 0,
+            "fetch": 0,
+            "score": 0,
+            "research": 1
+          },
+          "ms": 1797,
+          "pass": true
+        },
+        {
+          "id": "identified-study",
+          "expected": true,
+          "about_a_treatment": true,
+          "treatment": "experimental treatment in NCT01234567",
+          "condition": "Pancreatic cancer",
+          "candidates": 0,
+          "calls": {
+            "search": 1,
+            "named": 1,
+            "fetch": 1,
+            "score": 0,
+            "research": 1
+          },
+          "ms": 2426,
+          "pass": true
+        }
+      ],
+      "usage": [
+        {
+          "prompt_tokens": 1612,
+          "completion_tokens": 152,
+          "total_tokens": 1764,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 1609,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 64,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          }
+        },
+        {
+          "prompt_tokens": 1619,
+          "completion_tokens": 189,
+          "total_tokens": 1808,
+          "prompt_tokens_details": {
+            "cached_tokens": 1579,
+            "cache_write_tokens": 37,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 65,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          }
+        },
+        {
+          "prompt_tokens": 1602,
+          "completion_tokens": 148,
+          "total_tokens": 1750,
+          "prompt_tokens_details": {
+            "cached_tokens": 1579,
+            "cache_write_tokens": 20,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 63,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          }
+        },
+        {
+          "prompt_tokens": 1618,
+          "completion_tokens": 217,
+          "total_tokens": 1835,
+          "prompt_tokens_details": {
+            "cached_tokens": 1579,
+            "cache_write_tokens": 36,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 114,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          }
+        }
+      ]
+    },
+    {
+      "phase": "candidate-extra",
+      "checked_at": "2026-11-16T05:52:46.761Z",
+      "method": "Synthetic reports through configured live reading model and actual lookUp orchestrator, with counted empty registry/research seams; no source text retained.",
+      "rows": [
+        {
+          "id": "headline-only",
+          "expected": false,
+          "about_a_treatment": false,
+          "treatment": null,
+          "condition": null,
+          "candidates": 0,
+          "calls": {
+            "search": 0,
+            "named": 0,
+            "fetch": 0,
+            "score": 0,
+            "research": 0
+          },
+          "ms": 1970,
+          "pass": true
+        },
+        {
+          "id": "different-disease",
+          "expected": false,
+          "about_a_treatment": false,
+          "treatment": null,
+          "condition": null,
+          "candidates": 0,
+          "calls": {
+            "search": 0,
+            "named": 0,
+            "fetch": 0,
+            "score": 0,
+            "research": 0
+          },
+          "ms": 2398,
+          "pass": true
+        },
+        {
+          "id": "specific-target",
+          "expected": true,
+          "about_a_treatment": true,
+          "treatment": "Antibody against USAG-1",
+          "condition": "New tooth growth in mice with missing teeth",
+          "candidates": 0,
+          "calls": {
+            "search": 2,
+            "named": 0,
+            "fetch": 0,
+            "score": 0,
+            "research": 1
+          },
+          "ms": 3755,
+          "pass": true
+        }
+      ],
+      "usage": [
+        {
+          "prompt_tokens": 1600,
+          "completion_tokens": 134,
+          "total_tokens": 1734,
+          "prompt_tokens_details": {
+            "cached_tokens": 1579,
+            "cache_write_tokens": 18,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 46,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          }
+        },
+        {
+          "prompt_tokens": 1601,
+          "completion_tokens": 147,
+          "total_tokens": 1748,
+          "prompt_tokens_details": {
+            "cached_tokens": 1579,
+            "cache_write_tokens": 19,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 64,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          }
+        },
+        {
+          "prompt_tokens": 1611,
+          "completion_tokens": 373,
+          "total_tokens": 1984,
+          "prompt_tokens_details": {
+            "cached_tokens": 1579,
+            "cache_write_tokens": 29,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 269,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          }
+        }
+      ]
+    }
+  ],
+  "live_evaluation_usage": {
+    "calls": 16,
+    "prompt_tokens": 25360,
+    "completion_tokens": 3399
+  },
+  "limitations": [
+    "Live language-model classifications are probabilistic, not exhaustive accuracy proof.",
+    "Synthetic controls use fake registries and establish only identification/request behavior.",
+    "Fresh complete S016 inputs retain the explicitly cited trial but return no tracked card. The linked Economist article remains inaccessible; native Safari collector/popup/storage remain unverified."
+  ],
+  "reported_observation": {
+    "id": "S016",
+    "url": "https://news.ycombinator.com/item?id=48517199",
+    "checked_at": "2026-11-16T05:38:00.484Z",
+    "http": 200,
+    "ms": 7169,
+    "keys": [
+      "about_a_treatment",
+      "gist",
+      "treatment",
+      "condition",
+      "names",
+      "known_names",
+      "registry_numbers",
+      "paper_numbers",
+      "papers_unchecked",
+      "details",
+      "candidates",
+      "unscored",
+      "tracked",
+      "research",
+      "post"
+    ],
+    "treatment": "unnamed new pancreatic cancer drug",
+    "condition": "Pancreatic cancer; longer survival times",
+    "post": {
+      "platform": "Hacker News",
+      "article": "https://economist.com/science-and-technology/2026/06/12/treating-pancreatic-tumours-may-have-revealed-cancers-master-switch",
+      "article_host": "economist.com",
+      "article_read": false
+    },
+    "tracked": [],
+    "candidates": 1,
+    "top": [
+      {
+        "id": "NCT06625320",
+        "score": 0.87
+      }
+    ],
+    "timings": "registry;dur=974, papers;dur=0, read;dur=4356, research;dur=1247, score;dur=1330, core;dur=6639, total;dur=6639",
+    "browser_source_access": "Fresh Economist page reports access temporarily restricted; no challenge or feedback submitted."
+  },
+  "source_identity_correction": {
+    "finding": "The complete official Hacker News post supplies NCT06625320 in its text and links. The direct lookup did not invent that number. The first manually composed extension request omitted the post body and registry link, so its negative answer was expected for its incomplete input.",
+    "action": "Reran both paths using complete source information, checked the stated trial against its primary registry record, and preserved the initial run as a test-input correction. The unneeded draft trial-number guard was not committed, deployed or installed.",
+    "source": {
+      "text_characters": 146,
+      "registry_numbers": [
+        "NCT06625320"
+      ],
+      "registry_link_supplied": true,
+      "article_readable": false,
+      "primary_record_checked_at": "2026-11-16T06:11:41.857Z",
+      "primary_record": {
+        "id": "NCT06625320",
+        "title": "Phase 3 Study of Daraxonrasib (RMC-6236) in Patients With Previously Treated Metastatic Pancreatic Ductal Adenocarcinoma (PDAC)",
+        "conditions": [
+          "Pancreatic Cancer",
+          "PDAC",
+          "PDAC - Pancreatic Ductal Adenocarcinoma"
+        ],
+        "interventions": [
+          "RMC-6236",
+          "Gemcitabine",
+          "nab-paclitaxel",
+          "Irinotecan",
+          "Liposomal irinotecan",
+          "5-fluorouracil",
+          "leucovorin",
+          "Oxaliplatin"
+        ]
+      }
+    }
+  }
+}

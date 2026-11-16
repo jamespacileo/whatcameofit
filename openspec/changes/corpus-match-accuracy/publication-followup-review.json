@@ -1,0 +1,281 @@
+{
+  "baseline_pr174_head": "c97b00d1cc8578273a794b79e35b87473d4c07c3",
+  "scope": "Independent follow-up on exactly the 18 uncertain associations. No production/data mutation.",
+  "counts": {
+    "exclude": 3,
+    "compatible": 10,
+    "hold": 5
+  },
+  "decision_rule": "Named complete intervention for named indication. Genuine secondary weight/glycemic outcomes establish scope. Safety/pharmacodynamics are not excluded. Differentiate established standard background care from a new experimental combination. Do not broaden specifically named diet categories via synonyms.",
+  "rows": [
+    {
+      "trial_id": "NCT06993792",
+      "slug": "orforglipron-type-2-diabetes",
+      "disposition": "exclude",
+      "suggested_reading": "not_what_is_tested",
+      "evidence_and_reason": "The registry design declares SCREENING. Its only primary outcome is the number allocated to each study over 4 weeks. The summary explicitly sends screened participants onward to GZP1/NCT06972459 or GZP2/NCT06972472. This allocation record is not a further independent treatment trial; GZP2 is already attached.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT06993792"
+      ],
+      "primary_purpose": "SCREENING",
+      "primary_outcomes": [
+        "Number of Participants Allocated to Each Study"
+      ]
+    },
+    {
+      "trial_id": "NCT07739537",
+      "slug": "orforglipron-type-2-diabetes",
+      "disposition": "compatible",
+      "suggested_reading": "match",
+      "evidence_and_reason": "The detailed description restricts drug challenge to individuals with diabetes or prediabetes after baseline testing. Participants receive orforglipron for approximately two weeks; the primary drug-response endpoint is the difference in postprandial glucose AUC with versus without drug, plus insulin secretion/sensitivity. This directly tests glycemic pharmacodynamics and must not be excluded merely because the purpose code is OTHER or the study is short.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT07739537"
+      ],
+      "primary_purpose": "OTHER",
+      "primary_outcomes": [
+        "Physiologic characterization by MMTT",
+        "The acute drug challenges"
+      ]
+    },
+    {
+      "trial_id": "NCT05536804",
+      "slug": "tirzepatide-overweight-or-obesity",
+      "disposition": "compatible",
+      "suggested_reading": "match",
+      "evidence_and_reason": "Randomized tirzepatide versus placebo in overweight/obesity. Although renal sinus fat is primary, percent change in body weight at week 52 is a registered secondary efficacy outcome. Therefore the named intervention is tested for weight effects as well as CKD.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT05536804"
+      ],
+      "primary_purpose": "TREATMENT",
+      "primary_outcomes": [
+        "Percent Change from Baseline in Renal Sinus Fat Content (MRI)"
+      ]
+    },
+    {
+      "trial_id": "NCT06143956",
+      "slug": "tirzepatide-overweight-or-obesity",
+      "disposition": "exclude",
+      "suggested_reading": "not_what_is_tested",
+      "evidence_and_reason": "The registry design declares SCREENING and the sole primary outcome is allocation to ISAs. Its own summary calls this the CWMM screening record. Treatment of interest belongs to LAA2/NCT06603571, which the sponsor identifies as the actual eloralintide/tirzepatide study. Do not count this screening record as an additional tirzepatide treatment trial.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT06143956",
+        "https://trials.lilly.com/en-US/trial/533180"
+      ],
+      "primary_purpose": "SCREENING",
+      "primary_outcomes": [
+        "Number of Participants Allocated to Each ISA"
+      ]
+    },
+    {
+      "trial_id": "NCT06643728",
+      "slug": "tirzepatide-overweight-or-obesity",
+      "disposition": "compatible",
+      "suggested_reading": "match",
+      "evidence_and_reason": "Both official title and stated purpose explicitly investigate bimagrumab and tirzepatide alone or in combination. Part A includes two tirzepatide-alone dose arms with bimagrumab placebo and a double-placebo arm; percent body-weight change is primary. ACTIVE_COMPARATOR labels do not erase this explicit independent treatment evaluation. This differs from GZR18 comparator-only NCT06737042.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT06643728"
+      ],
+      "primary_purpose": "TREATMENT",
+      "primary_outcomes": [
+        "Percent Change from Baseline in Body Weight"
+      ]
+    },
+    {
+      "trial_id": "NCT06864026",
+      "slug": "tirzepatide-overweight-or-obesity",
+      "disposition": "compatible",
+      "suggested_reading": "match",
+      "evidence_and_reason": "Ixekizumab is pre-existing routine treatment for about 3 months before the decision to initiate tirzepatide. Only tirzepatide is registered as the study intervention, given per label; achievement of at least 10% weight loss is co-primary. This tests new tirzepatide exposure on established PsA standard care, rather than initiating a new experimental two-drug regimen.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT06864026"
+      ],
+      "primary_purpose": "TREATMENT",
+      "primary_outcomes": [
+        "Percentage of Participants Achieving Normalized Functioning Health Assessment Questionnaire - Disability Index (HAQ-DI) \u22640.5 at 12 Months of Therapy",
+        "Percentage of Participants Achieving at Least a 10% Weight Loss at 12 Months of Therapy"
+      ]
+    },
+    {
+      "trial_id": "NCT07292519",
+      "slug": "tirzepatide-overweight-or-obesity",
+      "disposition": "compatible",
+      "suggested_reading": "match",
+      "evidence_and_reason": "Tirzepatide versus saline with identical Take Control CBT in both arms. The summary explicitly makes cardiometabolic treatment effects a secondary aim, and body weight and waist circumference are registered outcomes. The claim has no restriction against participants with AUD. This is not incidental overweight alone.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT07292519"
+      ],
+      "primary_purpose": "TREATMENT",
+      "primary_outcomes": [
+        "Heavy Drinking Days"
+      ]
+    },
+    {
+      "trial_id": "NCT07326111",
+      "slug": "tirzepatide-overweight-or-obesity",
+      "disposition": "compatible",
+      "suggested_reading": "match",
+      "evidence_and_reason": "Tirzepatide versus placebo in overweight/obesity plus PCOS. Secondary efficacy outcomes explicitly measure percent body-weight change and proportions achieving 5%, 10%, 15% and 20% loss. The ovarian-function primary outcome does not exclude genuine weight-treatment scope.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT07326111"
+      ],
+      "primary_purpose": "TREATMENT",
+      "primary_outcomes": [
+        "Improvement of ovarian dysfunction as defined by menstrual irregularity in overweight or obesity-related PCOS",
+        "Key Secondary - Improvement of ovarian dysfunction as defined by ovulation frequency in overweight or obesity-related PCOS"
+      ]
+    },
+    {
+      "trial_id": "NCT07364175",
+      "slug": "tirzepatide-overweight-or-obesity",
+      "disposition": "compatible",
+      "suggested_reading": "match",
+      "evidence_and_reason": "The design explicitly compares intensive weight loss achieved with tirzepatide against standard care for obesity-related hypertension. Body weight, body fat and waist:hip ratio are registered secondary outcomes. Tirzepatide is varied and weight loss is the named strategy, not an incidental participant characteristic.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT07364175"
+      ],
+      "primary_purpose": "TREATMENT",
+      "primary_outcomes": [
+        "Ambulatory systolic blood pressure"
+      ]
+    },
+    {
+      "trial_id": "NCT07701005",
+      "slug": "tirzepatide-overweight-or-obesity",
+      "disposition": "hold",
+      "suggested_reading": "uncertain",
+      "evidence_and_reason": "There is a named 73-person tirzepatide exposure cohort and body-weight/BMI secondary outcomes, but the detailed description explicitly pools semaglutide and tirzepatide as a class and says the aim is class-level early hepatic/metabolic index response rather than comparing individual agents. The registry does not establish a separately tested tirzepatide weight effect. Preserve uncertainty instead of treating pooled class exposure as verified single-treatment evidence.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT07701005"
+      ],
+      "primary_purpose": null,
+      "primary_outcomes": [
+        "Change in Fibrosis-4 Index (FIB-4)",
+        "Change in AST-to-Platelet Ratio Index (APRI)",
+        "Change in Hepatic Steatosis Index (HSI)",
+        "Change in Triglyceride-Glucose (TyG) Index"
+      ]
+    },
+    {
+      "trial_id": "NCT07622992",
+      "slug": "tirzepatide-overweight-or-obesity",
+      "disposition": "compatible",
+      "suggested_reading": "match",
+      "evidence_and_reason": "The registered strategy directly varies preoperative tirzepatide for 60 days against ketogenic diet and standard preparation; all subsequently receive standard OAGB surgery. The primary outcome is total weight loss after surgery, and tirzepatide is stopped before surgery. This is an explicitly tested obesity-treatment strategy in a surgical setting; the generic claim has no contrary setting restriction. Registry labels observational although narrative describes randomization; preserve its registered study-kind fact, do not invent a phase.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT07622992"
+      ],
+      "primary_purpose": null,
+      "primary_outcomes": [
+        "Percentage of Total Weight Loss at 1 Year Post-Surgery"
+      ]
+    },
+    {
+      "trial_id": "NCT04363710",
+      "slug": "very-low-calorie-diet-type-2-diabetes",
+      "disposition": "exclude",
+      "suggested_reading": "not_a_match",
+      "evidence_and_reason": "The registry itself distinguishes VLCD 600\u2013800 kcal/day from LCD 800\u20131000 kcal/day and states its objective is LCD. Experimental arm and intervention description explicitly prescribe 800\u20131000 kcal/day for 8 weeks. A broad calorie-restriction synonym would change the named intervention.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT04363710"
+      ],
+      "primary_purpose": "PREVENTION",
+      "primary_outcomes": [
+        "HbA1c in percentage",
+        "Fasting Blood Glucose in millimoles per liter and Fasting Insulin Level in picomole per liter will be combined to report HOMA IR",
+        "Weight in kilogram and height in meters will be combined to report BMI in Kg/m^2"
+      ]
+    },
+    {
+      "trial_id": "NCT05754775",
+      "slug": "very-low-calorie-diet-type-2-diabetes",
+      "disposition": "compatible",
+      "suggested_reading": "match",
+      "evidence_and_reason": "The registered primary outcome is diabetes remission. Its linked primary report identifies NCT05754775 and explains that the tested program begins with a VLCD of 800 kcal/day, then increases to 1000/1200 with reintroduction and maintenance. Thus the initially unstated calorie category is now established by the primary report; later refeeding does not negate the initial VLCD intervention.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT05754775",
+        "https://www.mdpi.com/2072-6643/17/9/1530"
+      ],
+      "primary_purpose": "TREATMENT",
+      "primary_outcomes": [
+        "Remission"
+      ]
+    },
+    {
+      "trial_id": "NCT03225339",
+      "slug": "very-low-calorie-diet-type-2-diabetes",
+      "disposition": "hold",
+      "suggested_reading": "uncertain",
+      "evidence_and_reason": "The registry names low-energy diet plus physical activity. The original protocol prescribes approximately 800 kcal/day, but itself distinguishes prior VLED work under 800; the primary results report specifies 800\u2013820 kcal/day. This is a real diabetes-remission intervention, but its equivalence to the current specifically named VLCD claim should not be assumed from total-diet-replacement synonyms. Resolve the claim scope, not the outcome.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT03225339",
+        "https://link.springer.com/article/10.1186/s13063-018-2660-1",
+        "https://doi.org/10.1016/S2213-8587(20)30117-0"
+      ],
+      "primary_purpose": "TREATMENT",
+      "primary_outcomes": [
+        "Weight loss"
+      ]
+    },
+    {
+      "trial_id": "NCT04805996",
+      "slug": "very-low-calorie-diet-type-2-diabetes",
+      "disposition": "hold",
+      "suggested_reading": "uncertain",
+      "evidence_and_reason": "The primary report explicitly identifies NCT04805996 and specifies Modifast 820\u2013890 kcal/day for 12 weeks, describing a low-calorie TDR intervention. Weight and HbA1c are co-primary, so indication is clear; the specifically named very-low-calorie category is not. Do not silently broaden the card to all TDR.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT04805996",
+        "https://diabetes.jmir.org/2026/1/e93074"
+      ],
+      "primary_purpose": "TREATMENT",
+      "primary_outcomes": [
+        "Weight loss",
+        "HbA1c"
+      ]
+    },
+    {
+      "trial_id": "NCT06363747",
+      "slug": "very-low-calorie-diet-type-2-diabetes",
+      "disposition": "compatible",
+      "suggested_reading": "match",
+      "evidence_and_reason": "The detailed protocol recruits T2D patients already on stable GLP-1 therapy. Both arms continue the same standard medicines and counseling; only the experimental arm adds Optifast, explicitly registered as VLCD at 800 kcal/day. HbA1c is primary. Diet is the differing study intervention, not background; standard concurrent medicines do not turn it into an experimental multi-drug regimen.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT06363747"
+      ],
+      "primary_purpose": "TREATMENT",
+      "primary_outcomes": [
+        "Glycemic Control"
+      ]
+    },
+    {
+      "trial_id": "NCT05744232",
+      "slug": "very-low-calorie-diet-type-2-diabetes",
+      "disposition": "hold",
+      "suggested_reading": "uncertain",
+      "evidence_and_reason": "Registry intervention and primary report specify low-energy TDR at approximately 860 kcal/day. Its safety aim in a diabetes-remission program is legitimate and not a reason to exclude. The unresolved point is whether this calorie category belongs to the current specifically named VLCD card; do not infer it from similar weight-management intent.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT05744232",
+        "https://www.thelancet.com/action/showPdf?pii=S2215036625001269",
+        "https://doi.org/10.1016/j.cct.2024.107542"
+      ],
+      "primary_purpose": "TREATMENT",
+      "primary_outcomes": [
+        "Global score of disordered eating psychopathology"
+      ]
+    },
+    {
+      "trial_id": "NCT07270068",
+      "slug": "very-low-calorie-diet-type-2-diabetes",
+      "disposition": "hold",
+      "suggested_reading": "uncertain",
+      "evidence_and_reason": "The registry describes a hypocaloric TDR regimen of approximately 800\u2013850 kcal/day with food reintroduction. Diabetes remission is primary. The record does not call its tested regimen VLCD; current card scope needs resolution before treating this dose/category as synonymous. Do not reject merely for including routine lifestyle support.",
+      "sources": [
+        "https://clinicaltrials.gov/study/NCT07270068"
+      ],
+      "primary_purpose": "TREATMENT",
+      "primary_outcomes": [
+        "Proportion of patients achieving diabetes remission"
+      ]
+    }
+  ],
+  "remaining_limits": "Five holds are not verified matches and should not be silently published as such. Four need a diet-identity/scope decision; one needs a rule/evidence decision on pooled class-level observational research. This does not re-audit every card or every source claim."
+}

@@ -49,6 +49,14 @@ the other fields empty.
 A condition or intended benefit may use everyday words: studying a topical for hair
 growth or a drug to regrow missing teeth is specific enough without a formal
 diagnosis. Keep that stated target; do not invent a diagnosis from a drug name alone.
+Keep the explicitly studied population and treatment setting in the indication.
+If the report measures a biomarker or other surrogate in people with a stated
+disease, retain both that measured target and that population; do not turn it into
+a general claim about healthy people or replace the reported target with the disease.
+Keep any explicit route, formulation and delivery restriction in the gist, even
+when the intervention itself is a short product name. A product and its active
+ingredient are not interchangeable across formulations. Other names must describe
+the same complete product, not discard its explicit route or formulation.
 First distinguish a treatment report from incidental mentions of medicines. A report
 describes a therapeutic claim, medical research, a trial starting or its results
 (including negative results), preclinical work, or observational treatment evidence.
@@ -62,8 +70,17 @@ A company history listing its founding, offices and products remains a company
 profile even if one product's indication, mechanism or past regulatory approval is
 stated. Those catalogue facts are not the post's own therapeutic research claim.
 Do not select a product from that history or turn its hashtags into a new finding.
-An unnamed but described treatment can be a valid claim: keep its descriptive name
-and uncertainty instead of inventing a product. Trial permission is not approval of
+A product name is not required. A specifically described method, material or target
+(such as median nerve electrical stimulation or an antibody against a named protein)
+is a valid intervention: set about_a_treatment true and retain its description.
+An explicit trial or paper identifier for the reported experimental treatment also
+qualifies; use "experimental treatment in [identifier]" if no better name is supplied.
+A bare citation in unrelated material does not qualify. Do not invent products or aliases.
+A disease, hoped-for benefit and "new drug" or "unnamed treatment" alone do NOT identify
+an intervention. In that case return about_a_treatment false, empty identification
+fields and a gist explaining that the treatment could not be identified from what was read.
+Do not fill this gap from a linked URL, the condition or your own knowledge.
+Trial permission is not approval of
 a treatment, and animal or laboratory findings are not evidence of human efficacy.
 Identify one intervention-condition pair. A real combination regimen is one
 intervention, but unrelated treatments listed in a round-up are not a combination.
@@ -74,6 +91,10 @@ When the reported experiment adds one named treatment to another, name the compl
 combination in intervention (A plus B), even if the report also highlights an A-only
 arm. Do not reduce that combination to its newest or most discussed component.
 Use A alone only when the report's main therapeutic claim is explicitly A alone.
+An ingredient used only to activate the treatment, a vaccine adjuvant, or supportive
+care is not a second experimental treatment. Keep its stated role in the gist,
+without turning the product into a combination regimen. Apply this only when the
+text explicitly establishes that role; do not infer it from a medicine's name.
 Choose a single pair only when it is clearly the main subject. Otherwise return
 about_a_treatment false with empty identification fields and explain in the gist
 that the text contains several separate claims, rather than merging their names.
@@ -89,17 +110,25 @@ class Reading(BaseModel):
     gist: str = Field(
         default="",
         max_length=300,
-        description="What was reported, in one neutral line of your own words.",
+        description=(
+            "What was reported, in one neutral line of your own words, retaining explicit"
+            " route, formulation, delivery and activation details."
+        ),
     )
     intervention: ShortText | None = Field(
         default=None,
-        description="The drug, device or method, by its name alone: no maker or mechanism.",
+        description=(
+            "The drug, device or method by its name, or a short specific description when no"
+            " product name is given. Null when only a disease, benefit and generic drug wording"
+            " are supplied."
+        ),
     )
     other_names: list[ShortText] = Field(
         default_factory=list,
         description=(
-            "Other names the text gives it: a brand name, a code such as ABC-123, or a generic"
-            " name. For a combination, only whole-regimen aliases, never individual components."
+            "Other names the text gives the same complete product: a brand name, a code such"
+            " as ABC-123, or a generic name retaining any explicit route or formulation."
+            " For a combination, only whole-regimen aliases, never individual components."
             " Never a description such as 'the drug'. Empty if there is none."
         ),
     )
@@ -123,7 +152,12 @@ class Reading(BaseModel):
         ),
     )
     indication: ShortText | None = Field(
-        default=None, description="The condition it is reported to treat, in medical words."
+        default=None,
+        description=(
+            "The reported condition or intended benefit, retaining any explicitly studied"
+            " patient population and treatment setting. A measured biomarker is not proof"
+            " of a broader clinical benefit."
+        ),
     )
     trial_name: ShortText | None = Field(
         default=None,

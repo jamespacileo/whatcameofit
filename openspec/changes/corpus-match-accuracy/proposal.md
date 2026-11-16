@@ -12,11 +12,14 @@ Released corpus checks found a trial match accompanied by a knowledge card for a
 - Record trial matching, card identity, release and method separately for all corpus rows, including legitimate negatives and inaccessible content.
 - Preserve accurate background-card scope for complete regimens, and prevent unpublished claims with an unknown evidence stage from being labelled preclinical. Confirm a sufficiently confident recorded stage by rule while preserving human decisions.
 - Reuse exact published address mappings and completed eligible results before paid work, and measure fresh/reused work without weakening accuracy.
+- Reassociate reused clinical answers with the available publication index, so newly published cards appear and removed or corrected associations are not retained in old answers.
 - Preserve completed background-card work and provider usage when a later source operation fails.
 - Keep extracted alternate names within the complete intervention's scope and correct known overbroad unpublished aliases before publishing new cards.
 - Preserve registry intervention descriptions and arm membership for route and regimen comparisons within the existing scoring limit.
+- Request those details in registry searches as well as individual records, include study type and arm roles, and distinguish comparator/background use, combination-only trials and expanded access from a trial of the claim's complete intervention.
 - Recover from an explicitly refused registry condition with the existing bounded discovery fallback, while preserving full clinical scope for scoring and keeping treatment-name refusals explicit.
 - Compare claim summaries even when names are equal, record unresolved identity collisions without repeated work, and retain specific product names supplied by articles.
+- Reduce optional substance-source outage waits while preserving source-declared retry delays, successful-response reuse and explicit failure reporting.
 
 ## Capabilities
 
@@ -27,6 +30,7 @@ Released corpus checks found a trial match accompanied by a knowledge card for a
 
 ### Modified Capabilities
 
+- `paper-facts`: identify human/animal indexing terms as subject headings, without implying a trial in living participants.
 - `source-clients`: permit one existing condition-keyword fallback after an explicit condition-field parse refusal, without rewriting treatment names or expanding candidate limits.
 - `knowledge-cards`: keep component cards from representing complete regimens; include verified vocabulary entry-name evidence in term checks and support explicit, bounded rereads of undecided terms.
 - `llm-usage`: commit incurred provider usage independently of the caller's transaction.

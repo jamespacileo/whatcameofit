@@ -8,13 +8,13 @@ import {
   PAPER_KIND_WORDS,
   PAPERS_NOTE,
   assertNoPaperVerdict,
-  countSubjects,
+  countRecords,
   groupPapers,
   paperAnchor,
   paperName,
   paperStanding,
   studiedInText,
-  subjectCountText,
+  recordCountText,
   unlabelledPaperCodes,
 } from "../src/lib/paper-facts.ts";
 
@@ -59,9 +59,9 @@ test("a paper with no journal or kind shows what its record does state", () => {
 
 test("Scenario: Paper of a study in mice, and a paper with no statement", () => {
   const filed = (studied_in) => studiedInText(paper("10.5555/a", ["origin"], { facts: facts({ studied_in }) }));
-  assert.equal(filed(["animals"]), "Europe PMC files it as a study in animals");
-  assert.equal(filed(["people"]), "Europe PMC files it as a study in people");
-  assert.equal(filed(["people", "animals"]), "Europe PMC files it as a study in people and in animals");
+  assert.equal(filed(["animals"]), "Europe PMC subject headings: animals");
+  assert.equal(filed(["people"]), "Europe PMC subject headings: humans");
+  assert.equal(filed(["people", "animals"]), "Europe PMC subject headings: humans and animals");
   assert.equal(filed([]), null);
   assert.equal(studiedInText(paper("10.5555/a", ["origin"], { facts: null })), null);
 });
@@ -89,11 +89,11 @@ test("Scenario: Claim with three trials and one mouse paper", () => {
     trials: [trial("NCT1"), trial("NCT2"), trial("NCT3")],
     papers: [paper("10.5555/mouse", ["origin"], { facts: facts({ studied_in: ["animals"] }) })],
   };
-  assert.deepEqual(countSubjects(claim), { people: 3, animals: 1 });
-  assert.equal(subjectCountText(countSubjects(claim)), "3 in people · 1 in animals");
+  assert.deepEqual(countRecords(claim), { trials: 3, papers: 1 });
+  assert.equal(recordCountText(countRecords(claim)), "3 trial records · 1 paper");
 });
 
-test("a paper filed as a study in people is counted with the trials", () => {
+test("human and animal subject headings do not add trial records", () => {
   const claim = {
     trials: [trial("NCT1")],
     papers: [
@@ -102,13 +102,19 @@ test("a paper filed as a study in people is counted with the trials", () => {
       paper("10.5555/c", ["related"], { facts: null }),
     ],
   };
-  assert.equal(subjectCountText(countSubjects(claim)), "3 in people · 1 in animals");
+  assert.equal(recordCountText(countRecords(claim)), "1 trial record · 3 papers");
 });
 
-test("Scenario: Claim with no such record", () => {
+test("papers with missing facts still count, while an empty record set does not", () => {
   const claim = { trials: [], papers: [paper("10.5555/a", ["origin"])] };
-  assert.equal(subjectCountText(countSubjects(claim)), null);
-  assert.equal(subjectCountText(countSubjects({})), null);
+  assert.equal(recordCountText(countRecords(claim)), "1 paper");
+  assert.equal(recordCountText(countRecords({})), null);
+});
+
+test("laboratory material subject headings do not imply a human trial", () => {
+  const claim = { trials: [], papers: [paper("10.5555/lab", ["origin", "related"], { facts: facts({ studied_in: ["people", "animals"] }) })] };
+  assert.deepEqual(countRecords(claim), { trials: 0, papers: 1 });
+  assert.equal(recordCountText(countRecords(claim)), "1 paper");
 });
 
 test("Scenario: Kind code without site wording", () => {

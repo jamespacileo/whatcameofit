@@ -1,0 +1,140 @@
+{
+  "decided_at": "2026-11-16T00:55:38.264510+00:00",
+  "decider": "assistant",
+  "published": false,
+  "model_calls": 0,
+  "exclusions": [
+    {
+      "claim_id": 445,
+      "slug": "semaglutide-obesity",
+      "match_id": 14471,
+      "trial_id": "NCT07701005",
+      "previous_score": 0.99,
+      "decision": "rejected",
+      "disposition": "hold_uncertain",
+      "reason": "Separate semaglutide and tirzepatide exposure cohorts and weight/BMI secondary measures are listed, but detailed description expressly pools both drugs for class-level responses. An agent-specific obesity investigation is not established; withhold positive association.",
+      "source_url": "https://clinicaltrials.gov/study/NCT07701005",
+      "event_ids": [
+        9460,
+        9461,
+        9462
+      ],
+      "raw_payload_sha256": {
+        "9460": "8c2fbde75db4e3f4d90203b2b6e260591274f1eb90bdb928048b407ae74d5a6e",
+        "9461": "8c2fbde75db4e3f4d90203b2b6e260591274f1eb90bdb928048b407ae74d5a6e",
+        "9462": "8c2fbde75db4e3f4d90203b2b6e260591274f1eb90bdb928048b407ae74d5a6e"
+      }
+    },
+    {
+      "claim_id": 445,
+      "slug": "semaglutide-obesity",
+      "match_id": 14447,
+      "trial_id": "NCT05870462",
+      "previous_score": 0.98,
+      "decision": "rejected",
+      "disposition": "exclude_other_indication",
+      "reason": "SEMA-VR tests cardiovascular vessel-repair mechanisms: all registered outcomes are vascular regenerative cell frequencies. Obesity/T2D are participant conditions; no obesity efficacy or obesity-treatment safety endpoint establishes this claim. Exclusion is indication mismatch, not merely BASIC_SCIENCE design.",
+      "source_url": "https://clinicaltrials.gov/study/NCT05870462",
+      "event_ids": [
+        9423,
+        9424
+      ],
+      "raw_payload_sha256": {
+        "9423": "572209d293dc8e764901942f81cd0466f4e1949acf92bf98c17120e0e693e986",
+        "9424": "572209d293dc8e764901942f81cd0466f4e1949acf92bf98c17120e0e693e986"
+      }
+    }
+  ],
+  "restorations": [
+    {
+      "claim_id": 445,
+      "slug": "semaglutide-obesity",
+      "prior_archive": {
+        "at": "2026-11-15 18:36:33.516054+00:00",
+        "reason": "Held at audit 2026-11-15 by an assistant; restore with unarchive once fixed. Approved trial matches include trials that do not test this treatment for this condition, so the status is unverified."
+      },
+      "approved_trials_after": 14,
+      "status_before": "phase_3",
+      "status_after": "phase_3",
+      "reason": "All 16 approved registry associations reviewed; one unrelated-indication record and one unresolved class-level record excluded. Fourteen supported records retained."
+    },
+    {
+      "claim_id": 383,
+      "slug": "very-low-calorie-diet-type-2-diabetes",
+      "match_id": 15234,
+      "trial_id": "NCT05606471",
+      "previous_decision": "rejected",
+      "decision": "approved",
+      "score_preserved": 0.93,
+      "events": [
+        {
+          "event_id": 9913,
+          "type": "trial_registered",
+          "event_date": "2022-11-04",
+          "raw_payload_sha256": "ccb11304da33cf788162f667312ff7825770d741f0869bb055e1665a663ffb1a"
+        },
+        {
+          "event_id": 9914,
+          "type": "trial_status_change",
+          "event_date": "2021-09-15",
+          "raw_payload_sha256": "ccb11304da33cf788162f667312ff7825770d741f0869bb055e1665a663ffb1a"
+        }
+      ],
+      "status_before": "phase_2",
+      "status_after": "phase_3",
+      "primary_source_urls": [
+        "https://pubmed.ncbi.nlm.nih.gov/38996661/",
+        "https://www.hra.nhs.uk/planning-and-improving-research/application-summaries/research-summaries/glp-1-agonism-with-vlcd/"
+      ],
+      "reason": "Newly checked primary publication explicitly investigates each intervention individually and combined for weight/body composition/glycemic outcomes. It resolves the registry role ambiguity and reverses the earlier comparator-only exclusion. The old audit is retained. Registry activity remains UNKNOWN, and no completed-trial event is invented."
+    }
+  ],
+  "article_links": [
+    {
+      "source_article_id": 697,
+      "archived_claim_id": 550,
+      "surviving_claim_id": 533,
+      "surviving_slug": "semaglutide-2-4-mg-weekly-heart-failure-with-preserved",
+      "new_article_id": 733,
+      "article_url": "https://www.biospace.com/novo-s-wegovy-shows-stronger-weight-loss-effects-in-women-than-men-study",
+      "primary_source_url": "https://www.biospace.com/novo-s-wegovy-shows-stronger-weight-loss-effects-in-women-than-men-study",
+      "scope": "Reference metadata only; no statements, promises or article text copied."
+    },
+    {
+      "source_article_id": 711,
+      "archived_claim_id": 557,
+      "surviving_claim_id": 445,
+      "surviving_slug": "semaglutide-obesity",
+      "new_article_id": 734,
+      "article_url": "https://abcnews.go.com/Health/wireStory/lost-weight-wegovy-stop-taking-109831498",
+      "primary_source_url": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2025/215256s024lbl.pdf",
+      "scope": "Reference metadata only; no statements, promises or article text copied."
+    }
+  ],
+  "identity_corrections": [
+    {
+      "claim_id": 445,
+      "slug": "semaglutide-obesity",
+      "before_aliases": [
+        "Ozempic"
+      ],
+      "after_aliases": [
+        "Ozempic",
+        "Wegovy"
+      ],
+      "source_url": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2025/215256s024lbl.pdf",
+      "reason": "FDA label identifies Wegovy as semaglutide for obesity. Reconciled this verified alias on the surviving broad card while retaining archived duplicate557 unchanged; no route or regimen alias was widened."
+    },
+    {
+      "claim_id": 533,
+      "slug": "semaglutide-2-4-mg-weekly-heart-failure-with-preserved",
+      "before_indication": "Heart failure with preserved ejection fraction",
+      "after_indication": "Obesity-related heart failure with preserved ejection fraction",
+      "source_urls": [
+        "https://clinicaltrials.gov/study/NCT04788511",
+        "https://clinicaltrials.gov/study/NCT04916470"
+      ],
+      "reason": "Both retained STEP-HFpEF trials and the linked reports explicitly study obesity-related HFpEF; preserve that population on the card."
+    }
+  ]
+}

@@ -1,0 +1,205 @@
+{
+  "reviewed_on": "2026-11-16",
+  "source_review": {
+    "checked_on": "2026-11-16",
+    "mutations_performed": true,
+    "sources": [
+      {
+        "corpus_id": "S016",
+        "post_id": 48517199,
+        "article": "https://economist.com/science-and-technology/2026/06/12/treating-pancreatic-tumours-may-have-revealed-cancers-master-switch",
+        "verification": "Official Hacker News API link only; article not yet reviewed."
+      },
+      {
+        "corpus_id": "S017",
+        "post_id": 50235217,
+        "article": "https://arstechnica.com/health/2026/10/personalized-mrna-cancer-vaccine-cut-melanoma-death-recurrence-by-42/",
+        "title": "Moderna and Merck say their mRNA cancer vaccine cut death, recurrence by 42%",
+        "published": "2026-10-22",
+        "verification": "Current public article read in browser, no body retained. Reports phase 3 intismeran plus Keytruda in 1,137 patients with surgically removed stage IIB\u2013IV melanoma. Correct candidate is existing melanoma-mrna-vaccine-intismeran; source not yet attached. Date equals existing first report; verify primary trial before normal entry.",
+        "primary_verification": "NCT05933577 official API confirms phase 3 intismeran plus pembrolizumab, disease-free after resection of stage IIB/IIC/III/IV cutaneous melanoma, with the same experimental regimen and Keytruda comparator. No source reference added yet.",
+        "reference_added": true
+      },
+      {
+        "corpus_id": "S018",
+        "post_id": 50028027,
+        "article": "https://www.broadinstitute.org/news/clinical-trial-prion-disease-drug-candidate-begins-enrolling-participants",
+        "title": "Clinical trial of a prion disease drug candidate begins enrolling participants",
+        "published": "2026-04-22",
+        "verification": "Current primary institution article read in browser, no body retained. Divalent small interfering RNA targeting PrP; PRiSM NCT07444580 initially targets symptomatic prion disease. October 16 update reports presymptomatic genetic-risk recruitment. Separate ION717 trial is not this candidate. No corresponding public card found; private duplicate check and primary-record verification pending.",
+        "trial": "NCT07444580",
+        "origin_paper": "10.1093/nar/gkag287",
+        "primary_verification": "NCT07444580 official API confirms phase 1 PrP-siRNA, intrathecal divalent siRNA targeting PRNP mRNA. Registry aliases: 2439-s4, 2439-exNA, divalent siRNA 2439-exNA. Symptomatic and presymptomatic experimental arms are distinct; observational arm receives no drug. Origin structure references PMID42033217.",
+        "private_duplicate_check": "No claim with prion in slug or headline found in private database; no public prion/divalent card found. No claim created yet.",
+        "private_draft": "prp-sirna-prion-disease",
+        "initial_stage": "animal confirmed as assistant: April report describes mouse evidence; registry actual trial start is May 15, after the April 22 source date.",
+        "preparation": "Named normal prepare command started; approval, export and release pending."
+      }
+    ],
+    "primary_records_verified_on": "2026-11-16",
+    "primary_record_proof": "next-hn-primary-records.json"
+  },
+  "new_card": {
+    "claim_id": 574,
+    "slug": "prp-sirna-prion-disease",
+    "intervention": "PrP-siRNA",
+    "indication": "Prion disease",
+    "aliases": [
+      "2439-exNA",
+      "2439-s4",
+      "divalent siRNA 2439-exNA"
+    ],
+    "claim_decider": "assistant",
+    "first_reported": "2026-04-22",
+    "first_report_stage": "animal",
+    "stage_decider": "assistant",
+    "current_status": "phase_1",
+    "approved_trial": {
+      "id": "NCT07444580",
+      "match_id": 17969,
+      "score": 1.0,
+      "decision": "rule",
+      "independently_verified": true,
+      "actual_start": "2026-05-15"
+    },
+    "origin_paper": {
+      "doi": "10.1093/nar/gkag287",
+      "pubmed_id": "42033217",
+      "match_id": 17970,
+      "decision": "assistant",
+      "facts_fetched_at": "2026-11-16T05:30:39.365438Z"
+    },
+    "pending_events": [
+      {
+        "id": 11763,
+        "type": "followup_paper",
+        "source_url": "https://europepmc.org/article/PPR/PPR1330668"
+      },
+      {
+        "id": 11764,
+        "type": "followup_paper",
+        "source_url": "https://europepmc.org/article/PPR/PPR1349506"
+      },
+      {
+        "id": 11765,
+        "type": "followup_paper",
+        "source_url": "https://europepmc.org/article/MED/42813369"
+      },
+      {
+        "id": 11766,
+        "type": "followup_paper",
+        "source_url": "https://europepmc.org/article/MED/42851615"
+      },
+      {
+        "id": 11767,
+        "type": "followup_paper",
+        "source_url": "https://europepmc.org/article/MED/42425332"
+      },
+      {
+        "id": 11768,
+        "type": "followup_paper",
+        "source_url": "https://europepmc.org/article/MED/42189860"
+      },
+      {
+        "id": 11769,
+        "type": "followup_paper",
+        "source_url": "https://europepmc.org/article/PPR/PPR940230"
+      }
+    ],
+    "publication_limit": "Pending follow-ups and undecided related papers are not promoted. Only the named original paper and NCT07444580 are approved evidence. No clinical efficacy assertion."
+  },
+  "normal_export": {
+    "claims": 174,
+    "new_claims": [
+      "prp-sirna-prion-disease"
+    ],
+    "changed_existing_claims": {
+      "melanoma-mrna-vaccine-intismeran": [
+        "articles"
+      ]
+    },
+    "unchanged_existing_claims": 172,
+    "removed_claims": []
+  },
+  "preparation": {
+    "elapsed_seconds": 65,
+    "automatic_article_read": "403 refused; not bypassed",
+    "source_review": "Fresh public browser article and official registry reviewed; no source text retained",
+    "usage_window": {
+      "window_start": "2026-11-16T05:27:59+00:00",
+      "window_end": "2026-11-16T05:30:40+00:00",
+      "scope": "Private pipeline ledger during this preparation window; timing-based attribution, not a per-claim ledger key.",
+      "purposes": {
+        "decision:entity_match": {
+          "calls": 2,
+          "input_tokens": 2186,
+          "output_tokens": 0,
+          "cost_usd": 0.000219
+        },
+        "decision:paper_match": {
+          "calls": 1,
+          "input_tokens": 12011,
+          "output_tokens": 0,
+          "cost_usd": 0.001201
+        },
+        "readings": {
+          "calls": 1,
+          "input_tokens": 647,
+          "output_tokens": 190,
+          "cost_usd": 0.00016
+        }
+      },
+      "calls": 4,
+      "cost_usd": 0.00158
+    }
+  },
+  "released": false,
+  "next_step": "Complete rehearsal, guarded fresh linked-source checks, independent review, release and corpus/Sheet updates.",
+  "candidate_checks": {
+    "checked_at": "2026-11-16T05:34:16.766Z",
+    "public_cards": 174,
+    "method": "Local candidate Worker code with staged index, fresh official Hacker News API, and fail-closed paid/source request guards. No post body stored.",
+    "checks": [
+      {
+        "id": "S017",
+        "url": "https://news.ycombinator.com/item?id=50235217",
+        "slug": "melanoma-mrna-vaccine-intismeran",
+        "http": 200,
+        "ms": 281,
+        "post": {
+          "platform": "Hacker News",
+          "article": "https://arstechnica.com/health/2026/10/personalized-mrna-cancer-vaccine-cut-melanoma-death-recurrence-by-42/",
+          "article_host": "arstechnica.com",
+          "article_read": false
+        },
+        "post_api_requests": 1,
+        "article_requests": 0,
+        "model_requests": 0,
+        "registry_requests": 0
+      },
+      {
+        "id": "S018",
+        "url": "https://news.ycombinator.com/item?id=50028027",
+        "slug": "prp-sirna-prion-disease",
+        "http": 200,
+        "ms": 224,
+        "post": {
+          "platform": "Hacker News",
+          "article": "https://www.broadinstitute.org/news/clinical-trial-prion-disease-drug-candidate-begins-enrolling-participants",
+          "article_host": "broadinstitute.org",
+          "article_read": false
+        },
+        "post_api_requests": 1,
+        "article_requests": 0,
+        "model_requests": 0,
+        "registry_requests": 0
+      }
+    ]
+  },
+  "validation": {
+    "production_rehearsal": "pass",
+    "openspec_strict": "pass",
+    "public_card_count": 174,
+    "extension_resources": "Unchanged Safari 0.9.19 (27)"
+  }
+}

@@ -69,6 +69,7 @@ test("a link wrapped by a social site or a cache is read as the article inside i
     `https://www.google.com/url?q=${encodeURIComponent(inner)}`,
     `https://out.reddit.com/t3_abc?url=${encodeURIComponent(inner)}&token=x`,
     `https://www.linkedin.com/redir/redirect?url=${encodeURIComponent(inner)}&urlhash=x`,
+    `https://www.linkedin.com/safety/go/?url=${encodeURIComponent(inner)}&urlhash=x`,
     `https://l.instagram.com/?u=${encodeURIComponent(inner)}&e=x`,
     "https://www-example-org.cdn.ampproject.org/c/s/www.example.org/news/tooth-study",
     "https://www-example-org.cdn.ampproject.org/v/s/www.example.org/news/tooth-study?amp_js_v=0.1",
@@ -78,6 +79,13 @@ test("a link wrapped by a social site or a cache is read as the article inside i
     "https://12ft.io/https://www.example.org/news/tooth-study",
   ]) {
     assert.equal(article(address), key, address);
+  }
+});
+
+test("LinkedIn safety redirects do not recover invalid or unsupported article targets", () => {
+  for (const target of ["javascript:alert(1)", "data:text/plain,example", "file:///tmp/example", "not an address"]) {
+    const wrapper = `https://www.linkedin.com/safety/go/?url=${encodeURIComponent(target)}`;
+    assert.equal(readAddress(wrapper).kind, "post", target);
   }
 });
 

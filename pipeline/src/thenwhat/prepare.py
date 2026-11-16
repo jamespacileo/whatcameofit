@@ -73,6 +73,8 @@ def decide_prepared_lead_claim(session: Session, slug: str, *, now: datetime) ->
 
     The read leaves such a claim pending so that it is not published before its registries
     have been searched (openspec lead-reading). Call this only after that search succeeded.
+    An approved claim is also marked awaiting audit, which keeps it out of every export
+    until the audit of its batch clears it.
     """
     claim = find_claim(session, slug)
     if claim is None or claim.review_state is not ReviewState.PENDING:
@@ -95,4 +97,6 @@ def decide_prepared_lead_claim(session: Session, slug: str, *, now: datetime) ->
         else ReviewState.REJECTED
     )
     record_decision(claim, state, by=Decider.RULE, now=now)
+    if state is ReviewState.APPROVED:
+        claim.awaiting_audit_at = now
     return state

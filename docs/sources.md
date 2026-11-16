@@ -6,6 +6,8 @@ Terms, authentication and rate limits for each external source. Check an entry a
 
 ## ClinicalTrials.gov API v2
 
+- **Search field projection rechecked (2026-11-15):** the [current terms](https://clinicaltrials.gov/terms-conditions), [API documentation](https://clinicaltrials.gov/data-api/api) and [field metadata](https://clinicaltrials.gov/api/v2/studies/metadata) were checked before changing the clients. Public requests still require no key. Search responses include descriptions and arm roles only when the requested `fields` includes `StudyType`, `InterventionDescription`, `InterventionArmGroupLabel`, `ArmGroupLabel`, `ArmGroupType`, `ArmGroupDescription` and `ArmGroupInterventionName`. A paired request for NCT06445062, NCT07573215 and NCT06625320 returned 2,870 bytes with the old projection and 8,688 with these fields; no individual-record request was added. The clients retain their existing query/page bounds, pacing, request allowances and cache lifetimes. The registry's [study glossary](https://clinicaltrials.gov/expert-search) distinguishes expanded access from interventional studies: access outside a clinical trial must not be presented as a trial match. Attribution, processing-date and modification disclosures described below remain applicable. No new published rate limit was found in the pages checked.
+
 - **Checked:** 2026-11-15; terms and API documentation rechecked for condition-query fallback.
 - **Terms:** <https://clinicaltrials.gov/about-site/terms-conditions> (last updated 31 January 2023)
 - **API:** <https://clinicaltrials.gov/data-api/api>
@@ -175,6 +177,7 @@ Reddit submission dumps published by third parties are a separate matter, decide
 - **Checked:** 2026-11-12, by reading each one's robots.txt.
 - **Followed by the service:** a shortened link in a post, when the shortener's robots.txt allows it. `bit.ly`, `trib.al`, `tinyurl.com` and `buff.ly` allowed everything on that date; `redd.it` too. Only the redirect is read (`site/worker/short.mjs`), four steps at most, three links per post.
 - **Not followed by the service:** `t.co`, X's shortener, whose robots.txt says `Disallow: /` to every client but named search engines.
+- **NEJM short links, checked 2026-11-16:** `nej.md` uses the same bounded redirect reader. Its robots rules allowed the checked path, which returned a 301 to the canonical journal article. No journal text is fetched by the redirect reader; the normal current robots check remains required on every lookup. A tracked destination returns its existing card without an article read or model search.
 - **Opened by the reader's browser instead:** the extension asks `t.co` for the link's page, as a click would, without cookies or a referrer, and reads the address the page names (observed: a 200 page that gives the address in a refresh tag, in its title and in a script). It does not go on to the article. One request per link, three links at most per search (`extension/src/short-links.js`).
 
 
@@ -248,6 +251,7 @@ Read before the client was written (openspec `live-lookup`, task 4.3). It maps a
 - **API:** `https://gsrs.ncats.nih.gov/api/v1`. The pipeline asks two things. A substance by exact name: `GET /substances/search?q=root_names_name:"^<name>$"&top=5&fdim=0`. Its names: `GET /substances(<uuid>)/names`.
 - **Authentication:** none (observed). Names an organisation has marked protected are not served without signing in, and are not sought.
 - **Rate limit:** none stated on the licensing page or in the API's answers. There is no `robots.txt` on the host (404 on this date). The client sends one request a second with the contact User-Agent, and keeps each answer for thirty days.
+- **Optional lookup waits (2026-11-16):** two attempts with five-second network inactivity timeouts per phase, retaining the existing increasing backoff and any longer `Retry-After`. These are not a whole-operation deadline; shared pacing and a source-requested wait may take longer. An outage reports that codes were not looked up, stores no empty success and does not block the remaining preparation steps. Other registry clients retain their existing defaults.
 - **Behavior (observed, generic client name, no key):**
   - The search answers 200 with `total`, `count` and `content`, a list of substances in a short form: `uuid`, `_name`, `approvalID` (the UNII), `substanceClass`, `status`, a structure where there is one, and `_names` with a count and the address of the names. `fdim=0` leaves most of the search's facet counts out of the answer.
   - `^…$` asks for a whole name, whatever its case: "baxdro" and "USAN" (which is inside "BAXDROSTAT [USAN]") find nothing. It does set punctuation aside: "cin 107" finds the substance whose code is "CIN-107". The client therefore reads each substance's names and keeps the substance only when one of them equals the name asked for, ignoring case and runs of spaces and nothing else.

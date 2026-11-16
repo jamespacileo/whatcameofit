@@ -14,7 +14,13 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entities import add_entity, add_synonym, entities_of, set_origin_paper
-from thenwhat.claims.entry import add_article, add_claim, add_promise, archive_claim
+from thenwhat.claims.entry import (
+    add_article,
+    add_claim,
+    add_promise,
+    archive_claim,
+    clear_audit,
+)
 from thenwhat.db.models import (
     Claim,
     ClaimTerm,
@@ -222,6 +228,23 @@ def test_claim_archived_before_it_was_published_is_not_listed(session: Session):
     archive_claim(session, SLUG, reason="never right", now=NOW)
 
     assert exported(session, now=NOW)["archived"] == []
+
+
+def test_claim_awaiting_audit_is_left_out_until_its_hold_is_cleared(session: Session):
+    """Scenarios: Held until audited, Audit passed"""
+    claim = new_claim(session)
+    claim.awaiting_audit_at = EARLIER
+    session.flush()
+
+    held = exported(session, now=NOW)
+
+    assert held["claims"] == [] and held["archived"] == []
+    assert claim.published_at is None
+
+    clear_audit(session, [SLUG])
+
+    assert [claim["slug"] for claim in exported(session, now=NOW)["claims"]] == [SLUG]
+    assert claim.published_at == NOW
 
 
 # --- what a claim carries ----------------------------------------------------------
