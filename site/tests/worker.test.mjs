@@ -983,6 +983,15 @@ test("an archived claim's address answers 410 with the date it was taken down", 
   assert.doesNotMatch(page, /reason/i);
 });
 
+test("a merged or renamed claim's address leads to the page it is at now", async () => {
+  forgetGoneList();
+  const env = { ASSETS: assetsWithGone([{ slug: "vsv-ebov", to: "ervebo" }, { slug: "tooth-regrowth", on: "2026-11-14" }]) };
+  const response = await handle(new Request("https://example.org/vsv-ebov?from=feed"), env);
+  assert.equal(response.status, 301);
+  assert.equal(response.headers.get("Location"), "https://example.org/ervebo?from=feed");
+  assert.equal((await handle(new Request("https://example.org/tooth-regrowth"), env)).status, 410);
+});
+
 test("every other page is handed to the files unchanged", async () => {
   forgetGoneList();
   const env = { ASSETS: assetsWithGone([{ slug: "tooth-regrowth", on: "2026-11-14" }]) };

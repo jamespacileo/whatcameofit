@@ -40,8 +40,13 @@ const file = path.join(DIST, "_redirects");
 if (lines.length > 0) fs.writeFileSync(file, `${lines.join("\n")}\n`);
 else fs.rmSync(file, { force: true });
 // Archived claims, for the Worker: each address answers 410 (worker/gone.mjs). Written
-// even when empty, so a claim put back is served again after the next deploy.
-const gone = (data.archived ?? []).map(({ slug, on }) => ({ slug, on }));
+// even when empty, so a claim put back is served again after the next deploy. A claim
+// merged into another, or renamed, is listed with the slug its address now leads to,
+// and the Worker answers it with a permanent redirect.
+const gone = [
+  ...(data.archived ?? []).map(({ slug, on }) => ({ slug, on })),
+  ...(data.moved ?? []).map(({ slug, to }) => ({ slug, to })),
+];
 fs.writeFileSync(path.join(DIST, "gone.json"), `${JSON.stringify(gone)}\n`);
 
 console.log(`Redirect check passed: ${lines.length} retired topic ${lines.length === 1 ? "address" : "addresses"}.`);

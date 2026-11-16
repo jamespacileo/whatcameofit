@@ -95,6 +95,13 @@ def prepare_command(
     pending: Annotated[
         bool, typer.Option("--pending", help="Every claim that awaits review.")
     ] = False,
+    due: Annotated[
+        bool,
+        typer.Option(
+            "--due",
+            help="Every claim whose registry search is due again after a merge or a rename.",
+        ),
+    ] = False,
     workers: Annotated[
         int, typer.Option(min=1, max=8, help="How many claims to work on at once.")
     ] = 4,
@@ -109,14 +116,27 @@ def prepare_command(
     run has read it. Nothing is approved here beyond what those steps approve by
     rule, with one exception: a claim that a link lead's read drafted is decided by the
     rule for drafts once every step for it has succeeded, the terms step aside.
+
+    A merge or a rename leaves a claim's registry search due again, because the
+    intervention gained or changed a name; `--due` prepares every such claim, and the
+    search that succeeds clears it.
     """
-    if not slugs and not pending:
-        err.print("Name the claims to prepare, or use --pending for every claim awaiting review.")
+    if not slugs and not pending and not due:
+        err.print(
+            "Name the claims to prepare, or use --pending for every claim awaiting review,"
+            " or --due for every claim whose registry search is due again."
+        )
         raise typer.Exit(code=1)
     with entry_session() as session:
-        plans = plan_claims(session, slugs or None)
+        plans = plan_claims(session, slugs or None, pending=pending, due=due)
     if not plans:
-        out.print("No claim awaits review.")
+        out.print(
+            "No claim awaits review."
+            if pending and not due
+            else "No claim awaits review or a registry search."
+            if pending
+            else "No claim's registry search is due."
+        )
         return
     with ThreadPoolExecutor(max_workers=workers) as pool:
         for report in pool.map(_prepare, plans):
