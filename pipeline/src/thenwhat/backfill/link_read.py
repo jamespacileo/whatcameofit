@@ -16,6 +16,7 @@ for drafts, so that no claim is published with a status no search stands behind.
 """
 
 import re
+import threading
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -283,6 +284,8 @@ class LinkRead:
         # each outlet was last asked.
         self._outlet_gap = outlet_gap_seconds
         self._last_asked: dict[str, float] = {}
+        # A run's workers share this step, so they share what it knows of each outlet.
+        self._outlets = threading.Lock()
 
     # --- which leads, and in what order ---------------------------------------------
 
@@ -545,19 +548,22 @@ class LinkRead:
 
         # The page reader is asked for the page. Whether the outlet may be asked, and how
         # often, is the reader's to decide; the pipeline acts on its answer.
-        if self._not_now.get(record.outlet, 0) >= NOT_NOW_BEFORE_LEAVING:
-            # The reader could not get this outlet's last pages. Its other leads are
-            # left for a later run without asking: no request, no allowance, no attempt.
-            return Deferred(f"{OUTLET_NOT_NOW}: {record.outlet}")
-        asked_at = self._last_asked.get(record.outlet)
-        if (
-            self._outlet_gap > 0
-            and asked_at is not None
-            and self._time.monotonic() - asked_at < self._outlet_gap
-        ):
-            # One outlet's pages are not asked for back to back. The lead stays due.
-            return Deferred(f"{OUTLET_JUST_ASKED}: {record.outlet}")
-        self._last_asked[record.outlet] = self._time.monotonic()
+        # Decided and noted in one step: two workers must not both find the outlet free.
+        with self._outlets:
+            if self._not_now.get(record.outlet, 0) >= NOT_NOW_BEFORE_LEAVING:
+                # The reader could not get this outlet's last pages. Its other leads are
+                # left for a later run without asking: no request, no allowance, no
+                # attempt.
+                return Deferred(f"{OUTLET_NOT_NOW}: {record.outlet}")
+            asked_at = self._last_asked.get(record.outlet)
+            if (
+                self._outlet_gap > 0
+                and asked_at is not None
+                and self._time.monotonic() - asked_at < self._outlet_gap
+            ):
+                # One outlet's pages are not asked for back to back. The lead stays due.
+                return Deferred(f"{OUTLET_JUST_ASKED}: {record.outlet}")
+            self._last_asked[record.outlet] = self._time.monotonic()
         client.allowances.claim(READER)
         client.requests_made += 1
         try:
@@ -565,7 +571,8 @@ class LinkRead:
         except NotNow as later:
             # The site has not refused: it cannot be asked just now. The lead stays due
             # with no attempt counted, and the run goes on with other leads.
-            self._not_now[record.outlet] = self._not_now.get(record.outlet, 0) + 1
+            with self._outlets:
+                self._not_now[record.outlet] = self._not_now.get(record.outlet, 0) + 1
             return Deferred(str(later))
         except NotAllowed as refused:
             return self._finish(
@@ -580,7 +587,8 @@ class LinkRead:
         except ThinPage:
             return self._finish(record, ReadOutcome.CANNOT_BE_READ, "too little article text")
         # The reader got a page from this outlet: it can be asked again.
-        self._not_now.pop(record.outlet, None)
+        with self._outlets:
+            self._not_now.pop(record.outlet, None)
         page = retrieved.page
         day = published_day(page.published if page else None)
         if day is None:
