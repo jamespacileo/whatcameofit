@@ -9,10 +9,10 @@ import time as system_time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 import httpx
-from sqlalchemy import select
+from sqlalchemy import CursorResult, delete, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -116,6 +116,16 @@ def require_contact(contact: str) -> None:
     """Refuse to send a request when no contact address is configured."""
     if not contact:
         raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
+
+
+def forget_expired(session: Session, now: datetime) -> int:
+    """Delete the cached answers whose lifetime has passed, and say how many. None of
+    them would be used again: a request whose answer has expired is sent afresh, and the
+    new answer replaces the old."""
+    deleted = cast(
+        CursorResult[Any], session.execute(delete(HttpCache).where(HttpCache.expires_at <= now))
+    )
+    return deleted.rowcount
 
 
 class Time(Protocol):
