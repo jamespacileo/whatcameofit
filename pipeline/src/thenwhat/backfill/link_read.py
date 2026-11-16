@@ -373,9 +373,13 @@ class LinkRead:
     def inputs(self, record: LinkLead) -> dict[str, Any]:
         return {"key": record.url_key}
 
+    def first(self) -> ColumnElement[bool] | None:
+        """The leads whose title names one of the operator's topics come first."""
+        return self._names_a_topic
+
     def order(self) -> list[ColumnElement[Any]]:
-        """First the leads whose title names one of the operator's topics, then those
-        linked to a registry trial, then the most shared."""
+        """After those of a topic: the leads linked to a registry trial, then the most
+        shared."""
         linked = exists().where(
             LinkLeadLink.link_lead_id == LinkLead.id,
             LinkLeadLink.record_kind == REGISTRY_TRIAL,
@@ -385,8 +389,7 @@ class LinkRead:
             .where(LinkShare.link_lead_id == LinkLead.id)
             .scalar_subquery()
         )
-        topical = [] if self._names_a_topic is None else [self._names_a_topic.desc()]
-        return [*topical, linked.desc(), shared.desc()]
+        return [linked.desc(), shared.desc()]
 
     def check_ready(self, session: Session) -> None:
         """Refuse to read anything until triage has been measured (openspec

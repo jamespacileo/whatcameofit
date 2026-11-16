@@ -41,6 +41,10 @@ export function possibleMatchNote(score: number): string {
   return `Possible match: ${matchWords(score)}`;
 }
 
+/** What a match score is and is not, in the panel its chip opens. */
+export const MATCH_MEANING =
+  "How well this record matches the reported treatment and condition. It says nothing about whether the treatment works.";
+
 /** Why the record scored as it did, from how it was read. */
 const READINGS:Record<string, string> = {
   match: "Read as a study of this treatment for this condition.",
@@ -79,9 +83,24 @@ export function stageReadingNote(
   reading: { score: number; also: { stage: string; score: number }[] },
   stageName: (code: string) => string,
 ): string {
-  const also = reading.also.map((share) => `${stageName(share.stage).toLowerCase()}, ${percent(share.score)}%`);
-  return (
-    `Low confidence · ${percent(reading.score)}%. Not confirmed, so it does not decide the status.` +
-    (also.length ? ` Also read as: ${also.join("; ")}.` : "")
-  );
+  const { chip, note, also } = stageReading(reading, stageName);
+  return `${chip}. ${note}` + (also ? ` ${also}` : "");
 }
+
+/** The same note in the parts its chip shows: the chip's words, the sentence that stays in
+ * sight beside it, and the other stages for its panel. */
+export function stageReading(
+  reading: { score: number; also: { stage: string; score: number }[] },
+  stageName: (code: string) => string,
+): { chip: string; note: string; also: string | null } {
+  const also = reading.also.map((share) => `${stageName(share.stage).toLowerCase()}, ${percent(share.score)}%`);
+  return {
+    chip: `Low confidence · ${percent(reading.score)}%`,
+    note: "Not confirmed, so it does not decide the status.",
+    also: also.length ? `Also read as: ${also.join("; ")}.` : null,
+  };
+}
+
+/** What a lower-band reading is, in the panel its chip opens. */
+export const LOW_READING_MEANING =
+  "A reading that was not sure enough to confirm. It is shown with its score and never sets a status.";

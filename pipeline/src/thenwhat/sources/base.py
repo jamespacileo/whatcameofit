@@ -9,10 +9,10 @@ import time as system_time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 import httpx
-from sqlalchemy import select
+from sqlalchemy import CursorResult, delete, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -70,6 +70,15 @@ class SourceUnavailable(SourceError):
     """The registry kept failing after every allowed attempt."""
 
 
+class SourceThrottled(SourceUnavailable):
+    """The registry's last answer, after every allowed attempt, was "too many requests".
+    `retry_after` is the wait it stated in seconds, or None when it stated none."""
+
+    def __init__(self, message: str, retry_after: float | None) -> None:
+        super().__init__(message)
+        self.retry_after = retry_after
+
+
 class UnsearchableTerm(SourceError):
     """The registry cannot search for a term and says why. A source reports this
     after any bounded condition-discovery fallback; treatment names are not simplified."""
@@ -116,6 +125,16 @@ def require_contact(contact: str) -> None:
     """Refuse to send a request when no contact address is configured."""
     if not contact:
         raise MissingContact("CONTACT_EMAIL is not set, so no request was sent.")
+
+
+def forget_expired(session: Session, now: datetime) -> int:
+    """Delete the cached answers whose lifetime has passed, and say how many. None of
+    them would be used again: a request whose answer has expired is sent afresh, and the
+    new answer replaces the old."""
+    deleted = cast(
+        CursorResult[Any], session.execute(delete(HttpCache).where(HttpCache.expires_at <= now))
+    )
+    return deleted.rowcount
 
 
 class Time(Protocol):
@@ -324,7 +343,9 @@ class Source:
         """One GET, or one POST of `body` as JSON, with bounded retries. None means the
         registry said not-found."""
         headers = {"User-Agent": user_agent(self._contact)} | self._extra_headers()
+        throttled: float | None = None  # the stated wait, when the last answer was a 429
         for attempt in range(self._max_attempts):
+            throttled = None
             self._wait_for_turn()
             measure.add_request(self.name)
             stated_delay = 0.0
@@ -346,10 +367,17 @@ class Source:
                         f"{self.name} refused the request with status {response.status_code}."
                     )
                 stated_delay = _retry_after(response)
+                if response.status_code == 429:
+                    throttled = stated_delay
             if attempt + 1 < self._max_attempts:
                 delay = max(2.0**attempt, stated_delay)
                 self._time.sleep(delay)
                 measure.add_wait(self.name, delay)
+        if throttled is not None:
+            raise SourceThrottled(
+                f"{self.name} said it was asked too often, {self._max_attempts} times running.",
+                throttled or None,
+            )
         raise SourceUnavailable(f"{self.name} did not answer after {self._max_attempts} attempts.")
 
     def _extra_headers(self) -> dict[str, str]:

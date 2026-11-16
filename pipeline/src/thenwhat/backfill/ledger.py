@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import ColumnElement, Select, and_, func, or_, select
+from sqlalchemy import ColumnElement, Select, and_, func, not_, or_, select
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.steps import Step
@@ -40,17 +40,68 @@ def _is_due(attempt_limit: int) -> ColumnElement[bool]:
     )
 
 
-def due_records(step: Step, attempt_limit: int) -> Select[Any]:
-    """The records in the step's scope with no finished entry at its current version, or
-    whose input changed since. A record that failed stays due until its attempts run out."""
+def _first_of(step: Step) -> ColumnElement[bool] | None:
+    """The condition of the records a step wants before every other, if it names one."""
+    first = getattr(step, "first", None)
+    return first() if first is not None else None
+
+
+def _due(step: Step, attempt_limit: int, *, first_leads: bool) -> Select[Any]:
     order = getattr(step, "order", None)
+    first = _first_of(step) if first_leads else None
     return (
         select(step.model)
         .outerjoin(WorkEntry, _entry_of(step))
         .where(step.scope(), _is_due(attempt_limit))
         # A step may say which due records come first; the record's id settles the rest.
-        .order_by(*(order() if order is not None else ()), step.model.id)
+        .order_by(
+            *(() if first is None else (first.desc(),)),
+            *(order() if order is not None else ()),
+            step.model.id,
+        )
     )
+
+
+def due_records(step: Step, attempt_limit: int) -> Select[Any]:
+    """The records in the step's scope with no finished entry at its current version, or
+    whose input changed since. A record that failed stays due until its attempts run out."""
+    return _due(step, attempt_limit, first_leads=True)
+
+
+# Set on a step once a run has found fewer of its first records due than it asked for.
+_FIRST_RAN_OUT = "_first_ran_out"
+
+
+def take_due(
+    session: Session, step: Step, attempt_limit: int, *, size: int, skip: set[int]
+) -> list[Any]:
+    """Up to `size` due records that no other run holds, in the step's order, their rows
+    held until the transaction ends.
+
+    The records a step wants first are asked for on their own, and the rest by id. Asked
+    for as one list, every due record had to be weighed and sorted before each pick:
+    nine seconds for twenty of 145,000 due headlines, measured on 2026-11-16. Once the
+    first records run out the step is not asked for them again in this run: one that
+    becomes due later takes its turn by id.
+    """
+
+    def held(query: Select[Any], limit: int) -> list[Any]:
+        if skip:
+            query = query.where(step.model.id.not_in(skip.copy()))
+        return list(
+            session.scalars(query.limit(limit).with_for_update(skip_locked=True, of=step.model))
+        )
+
+    rest = _due(step, attempt_limit, first_leads=False)
+    first = _first_of(step)
+    if first is None or getattr(step, _FIRST_RAN_OUT, False):
+        return held(rest, size)
+    found = held(rest.where(first), size)
+    if len(found) < size:
+        setattr(step, _FIRST_RAN_OUT, True)
+        others = rest.where(not_(first), step.model.id.not_in([one.id for one in found]))
+        found += held(others, size - len(found))
+    return found
 
 
 @dataclass(frozen=True, slots=True)

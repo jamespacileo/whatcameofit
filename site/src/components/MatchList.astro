@@ -1,11 +1,11 @@
 ---
-// Matched records: the record on the left, how sure the match is on the right, how it
-// was read one press away. Used for the papers of an export made before openspec
+// Matched records: the record on the left, how sure the match is on the right as a chip, how it
+// was read in the chip's panel. Used for the papers of an export made before openspec
 // paper-facts; registry records are laid out by RegistryRecords. Openspec auto-publish:
 // "Confidence is shown with every match".
-import ChevronDown from "@lucide/astro/icons/chevron-down";
-import { matchNote, readingOf } from "../lib/confidence";
+import { MATCH_MEANING, matchWords, readingOf } from "../lib/confidence";
 import type { ExportedMatch } from "../lib/export";
+import Score from "./Score.astro";
 import TrialDetailsLink from "./TrialDetailsLink.astro";
 
 interface Props {
@@ -32,13 +32,10 @@ const { matches } = Astro.props;
             <span class="entry-note">{match.summary.replace(`${match.external_id}: `, "")}</span>
           )}
         </span>
-        <details class="match-why">
-          <summary>
-            <span>{matchNote(match.score)}</span>
-            <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
-          </summary>
-          <p>{readingOf(match.reading)}</p>
-        </details>
+        <Score about="Match to this claim" words={matchWords(match.score)}>
+          <span>{readingOf(match.reading)}</span>
+          <span>{MATCH_MEANING}</span>
+        </Score>
       </li>
     ))
   }
